@@ -14,8 +14,17 @@
 // audit actor `service` with source `worker` (JOB_ACTOR); a service actor holds no permission and never decides a
 // business approval. Retries and the failure queue are ADR-0008 §4's (5 attempts, then ops.failed).
 import { createHash } from "node:crypto";
-import { insertAuditEvent, sql, type AuditActor, type Db, type Tx } from "@mth/db";
-import { outboxPayloadSchema } from "@mth/shared/schemas";
+import { insertAuditEvent, sql, type AuditActor, type Db, type DbOrTx, type Tx } from "@mth/db";
+import { DEFAULTS } from "@mth/shared";
+import {
+  decideDelivery,
+  hhmm,
+  NO_DELIVERY_SETTINGS,
+  outboxPayloadSchema,
+  type DeliveryInput,
+  type DeliverySettings,
+  type DigestMode,
+} from "@mth/shared/schemas";
 
 /**
  * A UUIDv7 (ADR-0003) from the database's mth_uuid_v7() (0010; EXECUTE granted to mth_app). The API generates its ids
@@ -155,6 +164,16 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
     },
   });
   const notificationId = await uuidv7(tx);
+  // T-DG5-BE-L (ADR-0044 §5; REQ-S12-025): the twin of the API's delivery lines (tasks/service.ts).
+  const delivery = decideDelivery(
+    new Date(),
+    await loadDeliveryInput(tx, {
+      organizationId: input.organizationId,
+      userId: input.assigneeUserId,
+      kind: input.kind,
+    }),
+  );
+  const urgency = delivery.reason === "urgent" ? "urgent" : "normal";
   const notification = await tx
     .insertInto("inbox_notification")
     .values({
@@ -167,6 +186,9 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
       message_key: input.messageKey,
       message_params: params,
       dedupe_key: input.dedupeKey,
+      urgency, // T-DG5-BE-L
+      delivery_state: delivery.state, // T-DG5-BE-L
+      deliver_after: delivery.deliverAfter, // T-DG5-BE-L
       created_by: by,
       updated_by: by,
     })
@@ -185,9 +207,111 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
         recipient_user_id: { from: null, to: input.assigneeUserId },
         work_item_id: { from: null, to: id },
         dedupe_key: { from: null, to: input.dedupeKey },
+        delivery_state: { from: null, to: delivery.state }, // T-DG5-BE-L
+        deliver_after: { from: null, to: delivery.deliverAfter?.toISOString() ?? null }, // T-DG5-BE-L
       },
     });
   return { outcome: "created", workItemId: id };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// T-DG5-BE-L (ADR-0044 §5; REQ-S12-025): the twin of apps/api tasks/notification-policy.ts `effectiveSettingsOf` and
+// `loadDeliveryInput` (the worker imports no API code). Own preference row, else the organization defaults (in the
+// user's time zone: profile, else organization default, else Asia/Riyadh), else none; the organization's business-day
+// rule with its active default calendar. Reads only. The parity test in
+// apps/api/test/integration/tasks/notification-delivery.test.ts proves both write the same rows.
+const DEFAULT_DIGEST_TIME = "08:00";
+
+export interface EffectiveDeliverySettings {
+  readonly own: DeliverySettings | null;
+  readonly effective: DeliverySettings;
+  readonly workingDaysOnly: boolean;
+}
+
+export async function effectiveDeliverySettings(db: DbOrTx, userId: string): Promise<EffectiveDeliverySettings> {
+  const u = await db
+    .selectFrom("app_user as u")
+    .innerJoin("organization as o", "o.id", "u.organization_id")
+    .select(["u.organization_id", "u.timezone", "o.default_timezone"])
+    .where("u.id", "=", userId)
+    .executeTakeFirstOrThrow();
+  const timezone = u.timezone ?? u.default_timezone ?? DEFAULTS.timezone;
+  const own = await db
+    .selectFrom("notification_preference")
+    .selectAll()
+    .where("user_id", "=", userId)
+    .executeTakeFirst();
+  const policy = await db
+    .selectFrom("notification_policy")
+    .selectAll()
+    .where("organization_id", "=", u.organization_id)
+    .executeTakeFirst();
+  const ownSettings: DeliverySettings | null = own
+    ? {
+        quietHoursStart: own.quiet_hours_start === null ? null : hhmm(own.quiet_hours_start),
+        quietHoursEnd: own.quiet_hours_end === null ? null : hhmm(own.quiet_hours_end),
+        timezone: own.timezone,
+        digestMode: own.digest_mode as DigestMode,
+        digestTime: hhmm(own.digest_time),
+      }
+    : null;
+  const effective: DeliverySettings =
+    ownSettings ??
+    (policy
+      ? {
+          quietHoursStart: policy.default_quiet_hours_start === null ? null : hhmm(policy.default_quiet_hours_start),
+          quietHoursEnd: policy.default_quiet_hours_end === null ? null : hhmm(policy.default_quiet_hours_end),
+          timezone,
+          digestMode: policy.default_digest_mode as DigestMode,
+          digestTime: DEFAULT_DIGEST_TIME,
+        }
+      : NO_DELIVERY_SETTINGS(timezone));
+  return { own: ownSettings, effective, workingDaysOnly: policy?.non_urgent_working_days_only ?? false };
+}
+
+export async function loadDeliveryInput(
+  db: DbOrTx,
+  input: { readonly organizationId: string; readonly userId: string; readonly kind: string },
+): Promise<DeliveryInput> {
+  const kind = await db
+    .selectFrom("work_item_kind")
+    .select("urgency")
+    .where("code", "=", input.kind)
+    .executeTakeFirst();
+  const urgency = kind?.urgency === "urgent" ? "urgent" : "normal";
+  const { effective, workingDaysOnly: enabled } = await effectiveDeliverySettings(db, input.userId);
+  const calendar = enabled
+    ? await db
+        .selectFrom("business_calendar")
+        .select(["id", "workweek", "timezone"])
+        .where("organization_id", "=", input.organizationId)
+        .where("is_default", "=", true)
+        .where("status", "=", "active")
+        .executeTakeFirst()
+    : undefined;
+  const holidays = calendar
+    ? await db
+        .selectFrom("business_calendar_holiday")
+        .select([sql<string>`date_from::text`.as("date_from"), sql<string>`date_to::text`.as("date_to")])
+        .where("calendar_id", "=", calendar.id)
+        .where("status", "=", "active")
+        .orderBy("date_from")
+        .execute()
+    : [];
+  return {
+    urgency,
+    settings: effective,
+    workingDays: {
+      enabled,
+      calendar: calendar
+        ? {
+            workweek: calendar.workweek.map(Number),
+            holidays: holidays.map((h) => ({ dateFrom: h.date_from, dateTo: h.date_to })),
+          }
+        : null,
+      timezone: calendar?.timezone ?? effective.timezone,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------------------------

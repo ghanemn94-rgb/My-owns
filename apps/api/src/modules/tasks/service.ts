@@ -10,7 +10,9 @@
 // The worker cannot import API code (ADR-0002 rule 5), so apps/worker/src/kit.ts carries a twin of this function over
 // the same `@mth/db` calls; apps/api/test/integration/tasks/work-items.test.ts checks that both write the same rows.
 import { insertAuditEvent, type AuditActor, type Tx } from "@mth/db";
+import { decideDelivery } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
+import { loadDeliveryInput } from "./notification-policy.ts"; // T-DG5-BE-L (ADR-0044 §5)
 
 export type MessageParamValue = string | number | boolean | null;
 
@@ -105,6 +107,17 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
     },
   });
   const notificationId = uuidv7();
+  // T-DG5-BE-L (ADR-0044 §5; REQ-S12-025): the notification's delivery (urgent: at once; else quiet hours, digest,
+  // business days). The work item above is never held: My Work shows it at once. Twin lines in the worker kit.
+  const delivery = decideDelivery(
+    new Date(),
+    await loadDeliveryInput(tx, {
+      organizationId: input.organizationId,
+      userId: input.assigneeUserId,
+      kind: input.kind,
+    }),
+  );
+  const urgency = delivery.reason === "urgent" ? "urgent" : "normal";
   const notification = await tx
     .insertInto("inbox_notification")
     .values({
@@ -117,6 +130,9 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
       message_key: input.messageKey,
       message_params: params,
       dedupe_key: input.dedupeKey,
+      urgency, // T-DG5-BE-L
+      delivery_state: delivery.state, // T-DG5-BE-L
+      deliver_after: delivery.deliverAfter, // T-DG5-BE-L
       created_by: by,
       updated_by: by,
     })
@@ -135,6 +151,8 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
         recipient_user_id: { from: null, to: input.assigneeUserId },
         work_item_id: { from: null, to: id },
         dedupe_key: { from: null, to: input.dedupeKey },
+        delivery_state: { from: null, to: delivery.state }, // T-DG5-BE-L
+        deliver_after: { from: null, to: delivery.deliverAfter?.toISOString() ?? null }, // T-DG5-BE-L
       },
     });
   return { outcome: "created", workItemId: id };

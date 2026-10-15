@@ -139,3 +139,5 @@ export * from "./report.ts";
 export * from "./dependency-slips.ts";
 // P5 slice E (T-DG5-BE-K; ADR-0044 §3, §4): approval routes and the tracked conditions of a conditional approval.
 export * from "./approval-routes.ts";
+// P5 slice E (T-DG5-BE-L; ADR-0044 §5): notification preferences, policy and digests, and the pure delivery decision.
+export * from "./notifications.ts";
