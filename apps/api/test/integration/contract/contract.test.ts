@@ -906,7 +906,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // bodies; the other seven KBE-C operations are GETs).
     // T-DG5-KBE-D: + createOwnerUpdate, updateOwnerUpdate, reopenOwnerUpdate (3 JSON bodies; submitOwnerUpdate is
     // bodiless, listOwnerUpdates, getOwnerUpdate and listOwnerUpdateRevisions are GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([364, 363, 1]);
+    // T-DG5-BE-K: + decideApprovalRouteStep, closeGateCondition (2 JSON bodies). T-DG5-BE-L: + putMyNotificationPreferences,
+    // putNotificationPolicy (2 JSON bodies).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([368, 367, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
