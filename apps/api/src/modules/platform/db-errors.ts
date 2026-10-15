@@ -2783,6 +2783,29 @@ export function mapP5OwnerUpdateError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P5 slice F (T-DG5-BE-M; ADR-0046 §5, §8): the 0081 export-job guards a request can reach. The API checks the format
+ * and the snapshot first (reporting/exports/jobs.ts), so these answer only a race (a snapshot discarded between the
+ * check and the insert; a job that finished while a cancel waited). The request key is resolved by ON CONFLICT in the
+ * API, and every other export_job guard is the worker's own state machine (reaching it from a request is a 500).
+ *   export_job_format_offered                                -> 422 export.format_not_offered
+ *   export_job_snapshot_exportable                           -> 422 export.snapshot_discarded
+ *   export_job_transition, export_job_finished_frozen        -> 422 export.not_cancellable
+ */
+export function mapP5ExportError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "export_job_format_offered":
+      return problems.businessRule("export.format_not_offered", "This output cannot be exported in that format.");
+    case "export_job_snapshot_exportable":
+      return problems.businessRule("export.snapshot_discarded", "A discarded snapshot cannot be exported.");
+    case "export_job_transition":
+    case "export_job_finished_frozen":
+      return problems.businessRule("export.not_cancellable", "Only a queued or running export can be cancelled.");
+    default:
+      return null;
+  }
+}
+
+/**
  * P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4): the 0089 guards of the playbook catalogue seeded by 0092. mth_app holds
  * SELECT only on playbook_block and playbook_block_link, and the reader never writes, so reaching one of these is a
  * programming error (500), never a user-facing refusal:
@@ -2818,6 +2841,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Report !== null) return p5Report;
   const p5OwnerUpdate = mapP5OwnerUpdateError(error); // P5 slice F (T-DG5-KBE-D; ADR-0045 §11)
   if (p5OwnerUpdate !== null) return p5OwnerUpdate;
+  const p5Export = mapP5ExportError(error); // P5 slice F (T-DG5-BE-M; ADR-0046 §8)
+  if (p5Export !== null) return p5Export;
   const p5PlaybookBlock = mapP5PlaybookBlockError(error); // P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4)
   if (p5PlaybookBlock !== null) return p5PlaybookBlock;
   if (constraint.endsWith("_version_step"))

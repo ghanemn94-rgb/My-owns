@@ -19,6 +19,7 @@
 import { sql, type Db, type Tx } from "@mth/db";
 import { z } from "zod";
 import { createWorkItemOnce, jobActor } from "../kit.ts";
+import { EXPORT_QUEUE, runExport, workerExportStore } from "../reports/export-runner.ts";
 import type { JobHandler } from "./spec.ts";
 
 export const OWNER_UPDATE_TASKS_QUEUE = "reports.owner_update_tasks";
@@ -170,4 +171,9 @@ export async function createOwnerUpdateTasks(db: Db, input: unknown, jobId: stri
 
 export const REPORTS_HANDLERS: readonly JobHandler[] = [
   { queue: OWNER_UPDATE_TASKS_QUEUE, handle: createOwnerUpdateTasks },
+  // T-DG5-BE-M (ADR-0046 §5): reports.export renders one export job (apps/worker/src/reports/export-runner.ts).
+  {
+    queue: EXPORT_QUEUE,
+    handle: (db, data, jobId, attempt) => runExport(db, data, jobId, attempt, { store: workerExportStore() }),
+  },
 ];
