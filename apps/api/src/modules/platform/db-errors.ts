@@ -2939,6 +2939,65 @@ export function mapP5LaunchPlanError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P5 slice G (T-DG5-KBE-E; ADR-0047 §2, §8): the 0085 kpi_restatement guards a request can reach in a race. The API
+ * refuses first, under the kpiRestatement advisory lock and the row lock, with the same codes (kpi/restatements.ts); these answer a
+ * concurrent writer that passed the API's check first, and the deferred COMMIT checks. Every other kpi_restatement guard
+ * (identity, counts, applied run, reissue offers) is refused by the API or written only by the worker, so reaching one
+ * from a request is a programming error (500).
+ *   kpi_restatement_one_open_key                             -> 409 kpi_restatement.open_exists
+ *   kpi_restatement_version_approved                         -> 422 kpi_restatement.version_not_approved
+ *   kpi_restatement_period_closed                            -> 422 kpi_restatement.period_not_closed
+ *   kpi_restatement_period_draft_only, kpi_restatement_status_step,
+ *   kpi_restatement_reconciliation_at_submit                 -> 422 kpi_restatement.not_draft
+ *   kpi_restatement_reconciled                               -> 422 kpi_restatement.nothing_to_reconcile
+ *   kpi_restatement_sod                                      -> 403 kpi_restatement.self_decision
+ *   kpi_restatement_reject_note                              -> 422 kpi_restatement.note_required
+ *   kpi_restatement_decision_frozen                          -> 422 kpi_restatement.not_submitted
+ */
+export function mapP5KpiRestatementError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "kpi_restatement_one_open_key":
+      return problems.duplicate("kpi_restatement.open_exists", "This KPI already has a restatement in progress.");
+    case "kpi_restatement_version_approved":
+      return problems.businessRule(
+        "kpi_restatement.version_not_approved",
+        "A restatement applies an approved KPI version (active or superseded) of this KPI.",
+      );
+    case "kpi_restatement_period_closed":
+      return problems.businessRule(
+        "kpi_restatement.period_not_closed",
+        "Only closed reporting periods of the KPI's frequency can be restated; an open period takes the new version from now on.",
+      );
+    case "kpi_restatement_period_draft_only":
+    case "kpi_restatement_status_step":
+    case "kpi_restatement_reconciliation_at_submit":
+      return problems.businessRule(
+        "kpi_restatement.not_draft",
+        "Only a draft restatement can be changed or submitted.",
+      );
+    case "kpi_restatement_reconciled":
+      return problems.businessRule(
+        "kpi_restatement.nothing_to_reconcile",
+        "None of the selected periods has a value to restate.",
+      );
+    case "kpi_restatement_sod":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "kpi_restatement.self_decision",
+        title: "Forbidden",
+        detail: "The requester of a restatement cannot decide it.",
+      });
+    case "kpi_restatement_reject_note":
+      return problems.businessRule("kpi_restatement.note_required", "A rejection needs a note.");
+    case "kpi_restatement_decision_frozen":
+      return problems.businessRule("kpi_restatement.not_submitted", "Only a submitted restatement can be decided.");
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2964,6 +3023,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5CutoffPack !== null) return p5CutoffPack;
   const p5LaunchPlan = mapP5LaunchPlanError(error); // P5 slice H (T-DG5-BE-P; ADR-0048 §9)
   if (p5LaunchPlan !== null) return p5LaunchPlan;
+  const p5KpiRestatement = mapP5KpiRestatementError(error); // P5 slice G (T-DG5-KBE-E; ADR-0047 §8)
+  if (p5KpiRestatement !== null) return p5KpiRestatement;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

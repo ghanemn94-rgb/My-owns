@@ -920,7 +920,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // putNotificationPolicy (2 JSON bodies). T-DG5-BE-L2: + reviewMeetingCutoffPack (1 JSON body; getMeetingCutoffPack
     // is a GET). T-DG5-BE-M: + createExport (1 JSON body; cancelExport is bodiless, the other three are GETs).
     // T-DG5-BE-Q2: none (its four operations are bodiless GETs).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([370, 369, 1]);
+    // T-DG5-KBE-E: + createKpiRestatement (1 JSON body; submitKpiRestatement and withdrawKpiRestatement are bodiless,
+    // the other three are GETs).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([371, 370, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
