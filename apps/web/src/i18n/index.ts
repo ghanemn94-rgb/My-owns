@@ -98,6 +98,9 @@ import enDependencies from "./en/dependencies.json" with { type: "json" };
 import enCapacity from "./en/capacity.json" with { type: "json" };
 import enBusinessCases from "./en/businessCases.json" with { type: "json" };
 import enBenefitFormulas from "./en/benefitFormulas.json" with { type: "json" };
+// P5 slice A namespace (T-DG5-FE-B): the Playbook Studio, methodology-migration and source-coverage screens.
+import arStudio from "./ar/studio.json" with { type: "json" };
+import enStudio from "./en/studio.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -144,6 +147,7 @@ export const catalogues = {
     changeRequestsP4: arChangeRequestsP4,
     phasesP4: arPhasesP4,
     traceability: arTraceability,
+    studio: arStudio,
   },
   en: {
     common: enCommon,
@@ -188,6 +192,7 @@ export const catalogues = {
     changeRequestsP4: enChangeRequestsP4,
     phasesP4: enPhasesP4,
     traceability: enTraceability,
+    studio: enStudio,
   },
 } as const;
 

@@ -140,9 +140,7 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
     const features = new Set(P5_PLANNED_ROUTES.map((r) => r.feature));
     // The P5 areas and screens of D-144 item 1.
     for (const f of [
-      "studio",
-      "methodologyMigrations",
-      "sourceCoverage",
+      // "studio", "methodologyMigrations", "sourceCoverage": built by T-DG5-FE-B (checked below).
       "formBuilder",
       "procedureBuilder",
       "myProcedures",
@@ -174,6 +172,10 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
     }
     // The P4 seam stays empty (D-114).
     expect(P4_PLANNED_ROUTES).toEqual([]);
+    // T-DG5-FE-B: the slice A screens are built; their nav entries and routes are no longer placeholders.
+    expect(P5_PLANNED_ROUTES.filter((r) => r.owner === "FE-B")).toEqual([]);
+    for (const path of ["admin/studio", "admin/methodology-migrations", "admin/source-coverage"])
+      expect(paths, path).toContain(path);
   });
 
   for (const locale of LOCALES) {
