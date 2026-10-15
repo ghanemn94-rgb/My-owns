@@ -41,6 +41,7 @@ import { registerScheduleNetworkRoutes } from "./schedule-network.ts";
 // P4 slice K (T-DG4-BE-M3; ADR-0038 §9): portfolios and workstreams.
 import { registerStructureRoutes } from "./structure.ts";
 import { registerOwnerUpdateRoutes } from "./updates.ts"; // P5 KBE-D (stub by T-DG5-BE-A)
+import { registerDependencySlipRoutes } from "./dependency-slips.ts"; // P5 T-DG5-BE-J (ADR-0044 §7)
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
 // The gate annotation's inherited approvals (ADR-0021 §5; F-DG3-120): the third member of the GateFactsProvider.
@@ -84,6 +85,7 @@ export function registerPortfolioModule(app: FastifyInstance, deps: ModuleDeps):
     ...registerWaveRoutes(app, deps),
     ...registerDeliverableRoutes(app, deps),
     ...registerMilestoneRoutes(app, deps),
+    ...registerDependencySlipRoutes(app, deps), // T-DG5-BE-J: listDependencySlips (REQ-S12-012)
     ...registerRoadmapRoutes(app, deps),
     // BE-D: prioritization.
     ...registerPrioritizationRoutes(app, deps),

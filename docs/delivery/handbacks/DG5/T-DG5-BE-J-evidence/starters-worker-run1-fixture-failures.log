@@ -1,0 +1,122 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-j
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv8nsf7z_bec0aeb9 (server_encoding UTF8); applied 82 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/starters.test.ts (22 tests | 4 failed) 2684ms
+   ✓ registration (ADR-0044 §1; D-142 R3) > every starter queue with a registered handler is wrapped on its OWN queue; every other handler is untouched 3ms
+   ✓ registration (ADR-0044 §1; D-142 R3) > starterOutcome: duplicate -> existing, skipped -> skipped, anything else -> done 0ms
+   × REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_actual_accepted on kpi.recalculate (kpi.actual_accepted) 52ms
+     → expected { outcome: 'already_run', …(2) } to deeply equal { outcome: 'done', …(2) }
+   ✓ REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_actual_accepted on benefits.recalculate_pending (kpi.values_recalculated) 44ms
+   × REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_deviation on raid.corrective_kpi (kpi.deviation_evaluated) 27ms
+     → no result
+   × REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_deviation on raid.corrective_benefit (benefit.variance_evaluated) 4ms
+     → no result
+   × REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.adoption_control_failed on adoption.indicator_evaluated (kpi.deviation_evaluated) 4ms
+     → no result
+   ✓ REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.benefit_evidence on benefits.finance_queue (benefit.evidence_submitted) 31ms
+   ✓ REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.job_failed on automation.job_failed (job.failed) 20ms
+   ✓ REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.dependency_slip on portfolio.dependency_slip (dependency.slipped) 35ms
+   ✓ REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.reporting_period_open on kpi.reporting_period_open 58ms
+   ✓ REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.decision_sla on governance.decision_sla_scan 38ms
+   ✓ REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.decision_sla on approval.escalation_scan 38ms
+   ✓ REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.blocker_red on governance.blocker_escalation_scan 50ms
+   ✓ REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.bau_handover_accepted on sustainment.review_scan 77ms
+   ✓ REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.bau_handover_accepted on sustainment.control_check_scan 32ms
+   ✓ failure on the last attempt; the failure-queue retry resumes the same execution > failed (automation.retries_exhausted) then attempt 2 succeeded; nothing duplicated 25ms
+   ✓ failure on the last attempt; the failure-queue retry resumes the same execution > the handler's result object is returned as it is, and its error is rethrown as it is 14ms
+   ✓ failure on the last attempt; the failure-queue retry resumes the same execution > a trigger the version does not name runs the handler unrecorded 2ms
+   ✓ REQ-S12-004: new transformation instantiation (starter 1, worker part) > one set of entry-phase checklist rows and role tasks; replay x3 and a retry create no duplicates 75ms
+   ✓ REQ-S12-004: new transformation instantiation (starter 1, worker part) > a role already held in the transformation gets no task; the v1 event is still consumed 35ms
+   ✓ REQ-S12-004: new transformation instantiation (starter 1, worker part) > with launchPlan, the port receives the start date and key launch_plan:<id>; the no-op default writes nothing 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_actual_accepted on kpi.recalculate (kpi.actual_accepted)
+AssertionError: expected { outcome: 'already_run', …(2) } to deeply equal { outcome: 'done', …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "evaluationCount": 0,[22m
+[32m-   "outcome": "done",[39m
+[31m+   "outcome": "already_run",[39m
+[2m    "runId": "01a13c73-6310-74ba-a853-2bac3d516c21",[22m
+[2m  }[22m
+
+ ❯ apps/worker/test/integration/starters.test.ts:270:21
+    268|         retryLimit: 5,
+    269|       });
+    270|       expect(first).toEqual(expected);
+       |                     ^
+    271|       const replays = [];
+    272|       for (let i = 0; i < 3; i += 1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_deviation on raid.corrective_kpi (kpi.deviation_evaluated)
+Error: no result
+ ❯ SelectQueryBuilderImpl.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:328:19
+ ❯ apps/worker/src/handlers/raid.ts:476:19
+    474|   return done(
+    475|     await runOnce(db, CORRECTIVE_CONSUMERS.kpi, envelope.idempotencyKe…
+    476|       const kpi = await tx
+       |                   ^
+    477|         .selectFrom("kpi_definition")
+    478|         .select(["name"])
+ ❯ apps/worker/src/kit.ts:58:39
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/kysely.js:571:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ Object.handleKpiDeviation [as handle] apps/worker/src/handlers/raid.ts:475:5
+ ❯ apps/worker/test/integration/starters.test.ts:263:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_deviation on raid.corrective_benefit (benefit.variance_evaluated)
+Error: no result
+ ❯ SelectQueryBuilderImpl.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:328:19
+ ❯ apps/worker/src/handlers/raid.ts:518:23
+    516|   return done(
+    517|     await runOnce(db, CORRECTIVE_CONSUMERS.benefit, envelope.idempoten…
+    518|       const benefit = await tx
+       |                       ^
+    519|         .selectFrom("benefit")
+    520|         .select(["transformation_id", "organization_id", "title"])
+ ❯ apps/worker/src/kit.ts:58:39
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/kysely.js:571:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ Object.handleBenefitVariance [as handle] apps/worker/src/handlers/raid.ts:517:5
+ ❯ apps/worker/test/integration/starters.test.ts:263:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.adoption_control_failed on adoption.indicator_evaluated (kpi.deviation_evaluated)
+Error: no result
+ ❯ SelectQueryBuilderImpl.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:328:19
+ ❯ apps/worker/src/handlers/adoption.ts:355:24
+    353|   };
+    354|   const r = await runOnce(db, ADOPTION_INDICATOR_CONSUMER, envelope.id…
+    355|     const evaluation = await tx
+       |                        ^
+    356|       .selectFrom("kpi_evaluation")
+    357|       .select([
+ ❯ apps/worker/src/kit.ts:58:39
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/kysely.js:571:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ Object.handleIndicatorEvaluated [as handle] apps/worker/src/handlers/adoption.ts:354:13
+ ❯ apps/worker/test/integration/starters.test.ts:263:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 18 passed (22)
+   Start at  22:05:49
+   Duration  9.08s (transform 1.89s, setup 0ms, collect 3.25s, tests 2.68s, environment 0ms, prepare 116ms)
+

@@ -254,7 +254,8 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
             aggregateType: "transformation",
             aggregateId: id,
             eventType: "transformation.created",
-            schemaVersion: 1,
+            // T-DG5-BE-J (ADR-0044 §2): v2 carries the optional 90-day plan choice (null without it).
+            schemaVersion: 2,
             idempotencyKey: `transformation.created:${id}`,
             payload: {
               transformationId: id,
@@ -265,6 +266,7 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
               standaloneDeliverableType: row.standalone_deliverable_type,
               createdBy: principal.userId!,
               occurredAt: row.created_at.toISOString(),
+              launchPlan: body.launchPlan === undefined ? null : { startDate: body.launchPlan.startDate },
             },
           });
           return { status: 201, body: toTransformation(row) };

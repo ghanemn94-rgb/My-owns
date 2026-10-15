@@ -184,6 +184,9 @@ describe("idempotent consumer (processed_message ledger)", () => {
       .selectFrom("audit_event")
       .selectAll()
       .where("transformation_id", "=", s.transformationId)
+      // T-DG5-BE-J (ADR-0044 §2): starter 1 now also writes the checklist rows, role tasks and its execution, each
+      // with its own audit event; the starter's own request event is still written exactly once.
+      .where("action", "like", "transformation.starter_automation_%")
       .execute();
     expect(audit).toHaveLength(1);
     expect(audit[0]).toMatchObject({

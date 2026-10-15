@@ -26,6 +26,30 @@ export const transformationCreatedV1 = z.strictObject({
 export type TransformationCreatedV1 = z.infer<typeof transformationCreatedV1>;
 
 /**
+ * T-DG5-BE-J (ADR-0044 §2; p5-plan §3 row 15): v2 adds the optional 90-day plan choice made at creation
+ * (`launchPlan: {startDate} | null`). The v1 consumer is kept for events already in flight.
+ */
+export const transformationCreatedV2 = transformationCreatedV1.extend({
+  launchPlan: z.strictObject({ startDate: z.iso.date() }).nullable(),
+});
+export type TransformationCreatedV2 = z.infer<typeof transformationCreatedV2>;
+
+/**
+ * T-DG5-BE-J (ADR-0044 §7, §8; REQ-S12-012): a critical dependency slipped (one per dependency_slip row); consumer
+ * portfolio.dependency_slip (starter 9) notifies each affected owner once. The producer (apps/api portfolio/
+ * slip-events.ts) and the consumer parse it with this schema. It is deliberately NOT in OUTBOX_EVENT_SCHEMAS yet: the
+ * automation dry run validates a sample strictly against a registered schema, and the slice D dry-run tests sample
+ * `dependency.slipped` by its condition fields only (handback T-DG5-BE-J §5, for the architect).
+ */
+export const dependencySlippedV1 = z.strictObject({
+  slipId: uuid,
+  dependencyId: uuid,
+  transformationId: uuid,
+  slipDays: z.number().int().min(1).max(3650),
+});
+export type DependencySlippedV1 = z.infer<typeof dependencySlippedV1>;
+
+/**
  * P4 (ADR-0025 §3; T-DG4-BE-A): a job schedule was enabled, disabled or rescheduled through updateJobSchedule. The
  * worker re-registers every enabled schedule with pg-boss and unschedules every disabled one (apps/worker/src/schedules.ts).
  */
@@ -126,7 +150,7 @@ export const automationFailureRetryRequestedV1 = z.strictObject({
 export type AutomationFailureRetryRequestedV1 = z.infer<typeof automationFailureRetryRequestedV1>;
 
 export const OUTBOX_EVENT_SCHEMAS = {
-  "transformation.created": { 1: transformationCreatedV1 },
+  "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
   "kpi.threshold_changed": { 1: kpiThresholdChangedV1 },
   "kpi.trajectory_approved": { 1: kpiTrajectoryApprovedV1 },

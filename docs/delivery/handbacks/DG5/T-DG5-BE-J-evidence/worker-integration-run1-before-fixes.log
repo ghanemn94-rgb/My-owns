@@ -1,0 +1,126 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-j
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv8o0sfl_21ae4478 (server_encoding UTF8); applied 82 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/starters.test.ts (24 tests) 2987ms
+ ❯ |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts (14 tests | 1 failed) 3485ms
+   × the event-to-queue registry (D-102) > kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue 12ms
+     → dependency.slipped: expected 'portfolio.dependency_slip' to be 'automation.evaluate' // Object.is equality
+   ✓ the event-to-queue registry (D-102) > job ids: the event id for one queue; distinct, deterministic UUIDs per (event, queue) for several 1ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  345ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > all or none: when one queue's send fails, no job and no mark commit, and the failure is recorded 36ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > an event type with no queue is a recorded relay failure; a single-queue event keeps job id = event id 26ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > red or amber and adverse: one intervention per link, scope and period, one adoption.check_failed each 69ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > green / favourable creates none 20ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > green / within creates none 19ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > unknown / unknown creates none 20ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > stale / unknown creates none 69ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > not_computable / unknown creates none 54ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > a removed link gets no intervention; two active links get one each 87ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > no active user in the owner chain: owner NULL (unassigned) and no work item; no calendar: due date NULL 32ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > refuses an event that does not match its evaluation (programming error, nothing written) 30ms
+ ✓ |integration| apps/worker/test/integration/raid-corrective.test.ts (10 tests) 4078ms
+   ✓ raid.corrective_control and raid.corrective_adoption through the production worker (REQ-S12-016) > a failed control check opens one owned case with a 5-working-day follow-up and one work item; replay and restart create none  998ms
+ ✓ |integration| apps/worker/test/integration/kpi-recalculate.test.ts (5 tests) 5651ms
+   ✓ kpi.recalculate through the relay and the production worker (REQ-S07-013, REQ-S12-006) > writes one run; a redelivery and a restarted worker write no second run  1012ms
+   ✓ kpi.recalculate: a failure on the last attempt is recorded as a failed run (ADR-0027 §8 step 4; T-DG4-KBE-R1) > through the production worker: the attempt that pg-boss retries records nothing, the final attempt records the failed run and the job dead-letters  1440ms
+ ✓ |integration| apps/worker/test/integration/gates.test.ts (8 tests) 4265ms
+   ✓ gate.submitted -> approver tasks (REQ-S12-009) > one task per required approver referencing the snapshot; redelivery none; supersession cancels; the decider's task is done  1286ms
+   ✓ gate.submitted -> approver tasks (REQ-S12-009) > no approver on the transformation: one routing.role_unmapped notice to the submitter, never a silent skip  330ms
+   ✓ gate.decided -> enable the next phase and the approved scope (REQ-S12-010) > G2 approval creates the four Design steps and their tasks once; a redelivery creates none  862ms
+   ✓ gate.decided -> enable the next phase and the approved scope (REQ-S12-010) > a G5 approval creates tasks only for its approved scope item and condition (a second initiative gets none)  390ms
+   ✓ parity and wiring (D-102) > the worker's approver resolution equals the API's canDecide for the same people  456ms
+   ✓ gate.exception_expiry_scan (REQ-S04-013) > notifies the requester and the approver exactly once after expiry; a second scan none; status and gate unchanged  553ms
+ ✓ |integration| apps/worker/test/integration/sustainment-scans.test.ts (5 tests) 1562ms
+   ✓ sustainment.review_scan after closure (REQ-S11-004, REQ-S03-002, REQ-PB-083) > the closed transformation's BAU area gets its next review on time, once; its linked KPI accepts an actual  632ms
+ ✓ |integration| apps/worker/test/integration/kpi-period-open-restart.test.ts (1 test) 11041ms
+   ✓ kill the worker partway through kpi.reporting_period_open and restart it (T-DG4-KBE-R1 item 4) > the restart opens the remaining period once and creates no duplicate period or task  8131ms
+ ✓ |integration| apps/worker/test/integration/meeting-series.test.ts (5 tests) 5135ms
+   ✓ governance.meeting_series_generate (REQ-PB-060 A01) > through the production worker: a sent job generates the meetings once  1843ms
+ ✓ |integration| apps/worker/test/integration/blocker-escalation.test.ts (4 tests) 2371ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > an amber cycle, or a cycle without an observation, in between ends the run  518ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > a decided ask lets a new red run create a new one; a disabled rule creates nothing  497ms
+   ✓ REQ-PB-082: a blocker red for N consecutive cycles gets exactly one open executive ask > an owner party that maps to no executive gives an unassigned ask and a notice to the lead; the scan skips a blocker whose latest cycle is not red  342ms
+ ✓ |integration| apps/worker/test/integration/decision-sla-escalation.test.ts (5 tests) 1084ms
+ ✓ |integration| apps/worker/test/integration/benefits-queue.test.ts (2 tests) 4844ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  1440ms
+   ✓ benefits.recalculate_pending (REQ-S07-014, REQ-S12-006) > an accepted KPI actual gives one pending value per benefit and run; replay none; a newer value supersedes  692ms
+ ✓ |integration| apps/worker/test/integration/automation-failure-queue.test.ts (2 tests) 14146ms
+   ✓ REQ-S12-020: kill the worker mid-job and restart it > completes the job once; nothing enters the failure queue  5877ms
+   ✓ REQ-S12-020: after the retry limit the job is in the failure queue; a retry completes it once > captures the last attempt, keeps ops.failed, and resolves through the retry dispatcher  5276ms
+ ❯ |integration| apps/worker/test/integration/outbox.test.ts (10 tests | 1 failed) 8334ms
+   ✓ pg-boss schema (installed by mth-db migrate) > migration 0006 is exactly pg-boss 11's construction plan without its transaction wrapper 1ms
+   ✓ pg-boss schema (installed by mth-db migrate) > runs as mth_app with migrate=false (the version check passes; no DDL rights needed) 4ms
+   ✓ outbox relay idempotency > publishes each event exactly once, even when relayed twice 46ms
+   ✓ outbox relay idempotency > is safe after a crash between send and mark (the replayed send is a no-op) 12ms
+   ✓ outbox relay idempotency > never double-publishes with concurrent relays (FOR UPDATE SKIP LOCKED) 97ms
+   ✓ outbox relay idempotency > records an unroutable event as a relay failure instead of dropping it 7ms
+   × idempotent consumer (processed_message ledger) > processes a duplicate delivery once: one ledger row, one audit event 106ms
+     → expected [ { …(17) }, { …(17) }, …(17) ] to have a length of 1 but got 19
+   ✓ idempotent consumer (processed_message ledger) > rejects a malformed envelope (so pg-boss retries it and finally dead-letters it) 6ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  3861ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1171ms
+ ✓ |integration| apps/worker/test/integration/supervise-cadence.test.ts (9 tests) 15354ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > with the shipped defaults: pg-boss supervision every 60 s, every timer finite, no TimeoutNaNWarning  3819ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > honours a configured WORKER_SUPERVISE_INTERVAL_SECONDS  2885ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=0 at start-up (exit 78, names the variable, pg-boss never starts)  1210ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=601 at start-up (exit 78, names the variable, pg-boss never starts)  1274ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=1.5 at start-up (exit 78, names the variable, pg-boss never starts)  1294ms
+   ✓ the shipped worker entry point supervises on a bounded cadence (F-DG4-128) > refuses WORKER_SUPERVISE_INTERVAL_SECONDS=abc at start-up (exit 78, names the variable, pg-boss never starts)  1075ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > createBoss(url) with no options (the original main.ts call) supervises every 60 s  325ms
+   ✓ createBoss never leaves the supervision cadence to pg-boss (F-DG4-128) > the worker's loaded configuration (the main.ts call) gives the configured cadence  323ms
+ ✓ |integration| apps/worker/test/integration/restart.test.ts (1 test) 8536ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  6507ms
+ ✓ |integration| apps/worker/test/integration/schedules.test.ts (2 tests) 2955ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 2906ms
+ ✓ |integration| apps/worker/test/integration/worker-attempt.test.ts (1 test) 4198ms
+   ✓ worker.ts passes the job's attempt to its handler (T-DG4-BE-R2) > first attempt {retryCount 0, retryLimit 1} fails and is retried; the retry sees {1, 1}, the final attempt  1116ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts > the event-to-queue registry (D-102) > kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue
+AssertionError: dependency.slipped: expected 'portfolio.dependency_slip' to be 'automation.evaluate' // Object.is equality
+
+Expected: [32m"automation.evaluate"[39m
+Received: [31m"portfolio.dependency_slip"[39m
+
+ ❯ apps/worker/test/integration/adoption-below-trajectory.test.ts:305:42
+    303|       if (AUTOMATION_EVENT_QUEUES[eventType] === AUTOMATION_EVALUATE) {
+    304|         // At most one domain consumer, then the engine (an event with…
+    305|         expect(queues.at(-1), eventType).toBe(AUTOMATION_EVALUATE);
+       |                                          ^
+    306|         expect(queues.length, eventType).toBeLessThanOrEqual(2);
+    307|       } else expect(queues, eventType).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/worker/test/integration/outbox.test.ts > idempotent consumer (processed_message ledger) > processes a duplicate delivery once: one ledger row, one audit event
+AssertionError: expected [ { …(17) }, { …(17) }, …(17) ] to have a length of 1 but got 19
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 19[39m
+
+ ❯ apps/worker/test/integration/outbox.test.ts:188:19
+    186|       .where("transformation_id", "=", s.transformationId)
+    187|       .execute();
+    188|     expect(audit).toHaveLength(1);
+       |                   ^
+    189|     expect(audit[0]).toMatchObject({
+    190|       action: "transformation.starter_automation_requested",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 16 passed (18)
+      Tests  2 failed | 108 passed (110)
+   Start at  22:12:19
+   Duration  136.26s (transform 6.29s, setup 0ms, collect 29.46s, tests 102.93s, environment 0ms, prepare 109ms)
+
