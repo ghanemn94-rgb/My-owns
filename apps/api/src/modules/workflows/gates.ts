@@ -113,6 +113,8 @@ import {
   gateExceptionRefusals,
 } from "./gate-exceptions.ts";
 import { recordRequestExecution, REQUEST_STARTERS } from "../platform/index.ts";
+// T-DG5-BE-K (ADR-0044 §3): the Studio conditional-approval switch checked on a G5 decision.
+import { assertConditionalApprovalAllowed } from "./conditional-approval.ts";
 
 const G = "/api/v1/transformations/:transformationId/gates";
 const tParams = z.strictObject({ transformationId: z.uuid() });
@@ -1107,6 +1109,9 @@ async function decideGate(tx: Tx, request: FastifyRequest, transformationId: str
   const agreed = agreementRule(gateCode, body);
   // 4b. P4 (T-DG4-BE-K; ADR-0035 §5): the G5 scale scope: required with a G5 approval, refused otherwise.
   const scope = scaleScopeRule(gateCode, body);
+  // 4c. T-DG5-BE-K (ADR-0044 §3; D-142 Q2): conditions only where the pinned methodology enables conditional approval.
+  if (scope !== null)
+    await assertConditionalApprovalAllowed(tx, transformationId, gateCode, (scope.conditions ?? []).length);
   // 5. Sequence: an approval never skips a phase or a preceding gate (F-DG2-205); nothing is written otherwise.
   if (body.outcome === "approved") {
     const outOfSequence = await sequenceProblem(tx, transformationId, def, defs);

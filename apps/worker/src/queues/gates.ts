@@ -12,6 +12,8 @@ export const GATES_QUEUES: readonly QueueSpec[] = [
   { name: "gates.submitted" },
   { name: "gates.decided" },
   { name: "gate.exception_expiry_scan" },
+  // T-DG5-BE-K (ADR-0044 §3): gate.condition_escalation_scan, started daily by its job_schedule row (0075).
+  { name: "gate.condition_escalation_scan" },
 ];
 export const GATES_EVENT_QUEUES: Readonly<Record<string, string>> = {
   "gate.submitted": "gates.submitted",

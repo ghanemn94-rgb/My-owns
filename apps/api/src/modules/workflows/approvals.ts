@@ -87,6 +87,8 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
+// T-DG5-BE-K (ADR-0044 §4): sequential and parallel approval routes (step creation, the route refusal, cancellation).
+import { cancelOpenRouteSteps, instantiateApprovalRoute, isRoutedApproval } from "./approval-routes.ts";
 
 const JSON_BODY = ["application/json"] as const;
 /** Per subject record (ADR-0016 §6): a module updating a record that is the subject of an open approval takes it too. */
@@ -189,6 +191,12 @@ export const approvalRefusals = {
   // T-DG5-BE-C (ADR-0040 §4, §8): the approval types whose provider sets `decideThroughSubject`.
   decideThroughRecord: () =>
     problems.businessRule("approval.decide_through_record", "Decide this request from its record."),
+  // T-DG5-BE-K (ADR-0044 §4, §10): an approval with route steps is decided step by step.
+  decideThroughRoute: () =>
+    problems.businessRule(
+      "approval.decide_through_route",
+      "This approval follows a configured route; decide your route step instead.",
+    ),
 } as const;
 
 // ------------------------------------------------------------------------------------------------ subject registry
@@ -650,7 +658,10 @@ export async function requestApprovalInTx(
       sod_policy: { from: null, to: row.sod_policy },
     },
   });
-  await createApproverTasks(tx, audit, row, routed.approverUserIds);
+  // T-DG5-BE-K (ADR-0044 §4): a routed type gets its round's steps (and step tasks) instead of the assignee tasks.
+  const routedSteps =
+    SUBJECTS.get(input.approvalType)?.decideThroughSubject !== true && (await instantiateApprovalRoute(tx, audit, row));
+  if (!routedSteps) await createApproverTasks(tx, audit, row, routed.approverUserIds);
   return row;
 }
 
@@ -736,6 +747,8 @@ async function decideApproval(tx: Tx, request: FastifyRequest, approvalId: strin
   }
   // T-DG5-BE-C (ADR-0040 §4): a type decided from its record (methodology_migration); nothing is written.
   if (SUBJECTS.get(a.approval_type)?.decideThroughSubject === true) throw approvalRefusals.decideThroughRecord();
+  // T-DG5-BE-K (ADR-0044 §4): a routed approval is decided through its steps; nothing is written.
+  if (await isRoutedApproval(tx, a)) throw approvalRefusals.decideThroughRoute();
   return decideApprovalInTx(tx, auditContextOf(request), {
     approvalId,
     principal: fresh,
@@ -766,6 +779,12 @@ export interface ApprovalDecideInput {
   readonly onBehalfOfUserId?: string;
   /** The approval's version the caller saw (the route's If-Match), read at check 5 so the DG4 check order holds. */
   readonly expectedApprovalVersion?: number | (() => number);
+  /**
+   * T-DG5-BE-K (ADR-0044 §4 "Completion"): set only by approval-routes.ts when the last route step completes the
+   * approval. The step decider's capacity (the step's role, or the DG4 delegate of a holder) was checked there, so it
+   * replaces check 3 (the DG4 assignee rule); every other check runs unchanged.
+   */
+  readonly routeStepActing?: { readonly onBehalfOf: string | null };
 }
 
 /**
@@ -787,7 +806,7 @@ export async function decideApprovalInTx(
   const a = await findApproval(tx, input.approvalId, true);
   if (!a) throw problems.notFound();
   const target = input.target ?? (await targetOfApproval(tx, a));
-  const acting = await actingCapacity(tx, fresh, a, target, body.onBehalfOfUserId);
+  const acting = input.routeStepActing ?? (await actingCapacity(tx, fresh, a, target, body.onBehalfOfUserId));
   const me = fresh.userId!;
   if (a.sod_policy === "requester_excluded" && (me === a.requested_by || acting.onBehalfOf === a.requested_by))
     throw approvalRefusals.sodRequester().withDenial(denialOf("approval.decide", target));
@@ -1038,7 +1057,9 @@ export async function resubmitApprovalInTx(
     },
     "done",
   );
-  await createApproverTasks(tx, audit, updated, await assigneeApprovers(tx, updated, target));
+  // T-DG5-BE-K (ADR-0044 §4): a routed approval's next round gets a fresh set of steps (the previous round's route).
+  if (!(await instantiateApprovalRoute(tx, audit, updated)))
+    await createApproverTasks(tx, audit, updated, await assigneeApprovers(tx, updated, target));
   return updated;
 }
 
@@ -1083,6 +1104,8 @@ export async function withdrawApprovalInTx(
     { organizationId: a.organization_id, subjectType: "approval", subjectId: a.id },
     "cancelled",
   );
+  // T-DG5-BE-K (ADR-0044 §4): a withdrawn approval's open route steps are cancelled.
+  await cancelOpenRouteSteps(tx, audit, a);
   return updated;
 }
 

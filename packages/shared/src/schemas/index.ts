@@ -137,3 +137,5 @@ export * from "./procedures.ts";
 export * from "./report.ts";
 // P5 slice E (T-DG5-BE-J; ADR-0044 §7): the critical dependency slip response mirrors.
 export * from "./dependency-slips.ts";
+// P5 slice E (T-DG5-BE-K; ADR-0044 §3, §4): approval routes and the tracked conditions of a conditional approval.
+export * from "./approval-routes.ts";
