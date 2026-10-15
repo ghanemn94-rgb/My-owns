@@ -1,0 +1,180 @@
+port-policy: PostgreSQL listening on port 24300 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-e
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mv9tchhh_90ad7271 (server_encoding UTF8); applied 83 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/change-requests.test.ts (10 tests) 5084ms
+   ✓ change requests: create, read, edit, withdraw (S-4) > draft CR-nn with ETag 1; AUD 403; outside and ADM-only 404; exact 400/409/422 refusals; one audit event per mutation  399ms
+   ✓ REQ-PB-065 routing, SoD and the frozen impact assessment > a business_scope request is routed to the person mapped to SP; the requester cannot decide; SP's approval applies it  322ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > with no policy the DG3 re-approval is unchanged; beyond a configured threshold it is 422, within it 200; budget likewise  538ms
+   ✓ REQ-S07-015: a KPI target change (preview, refusal, approval, the old version readable) > the preview lists the bound benefit and the approved G2 decision; a direct second activation is 422; after BO's approval v2 is active and v1 readable  520ms
+   ✓ REQ-S04-014: a new version of an approved G4 benefit formula creates one change request > one automatic benefit_logic request routed to Finance; the DG3 response unchanged; G4 decision and snapshot byte-identical  946ms
+   ✓ S-4 commit-time authorization and S-1 free text > raise, edit, submit, withdraw and the policy: a TL revoked mid-request gets 403 and nothing is written  398ms
+ ✓ |integration| apps/api/test/integration/workflows/phases.test.ts (14 tests) 5411ms
+   ✓ the phase catalogue (REQ-PB-014) > GET /phases: exactly six phases in order; names, purposes and key outputs equal B0021; objectives equal the phase blocks  391ms
+   ✓ guided phase steps (REQ-S04-001) > each of the six phases shows steps, required evidence, owners (Unknown when unassigned) and a review queue  501ms
+   ✓ guided phase steps (REQ-S04-001) > an unmet completion rule cannot be put in review or accepted (422); SQL cannot bypass the rule  363ms
+   ✓ guided phase steps (REQ-S04-001) > other completion rules are evaluated server-side (RAID register empty -> 422; no open corrective case -> met)  482ms
+   ✓ guided phase steps (REQ-S04-001) > the owner cannot accept their own step (403); a non-owner cannot progress it (403); an owner is required (422)  315ms
+   ✓ guided phase steps (REQ-S04-001) > the review queue: one task per reviewer-role holder (never the owner); accept closes them and enables the next owned step once  352ms
+   ✓ guided phase steps (REQ-S04-001) > return with a note, then back to review; a return without a note is 400; invalid transitions are 422  447ms
+   ✓ steps never move a gate (REQ-S04-002: completing every phase task leaves the gate Draft) > completing all five Diagnose steps leaves G1 draft, with no submission and an unchanged gate instance  977ms
+   ✓ authorization, If-Match and audit on every write (S-4) > AUD (read-only) gets 403 on every write and nothing is written; an outsider gets 404  321ms
+   ✓ authorization, If-Match and audit on every write (S-4) > If-Match: 428 when missing, 409 when stale; If-Match "0" on an existing row is 409; creates are version 1  359ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-exceptions.test.ts (14 tests) 9005ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > the gate page lists the missing items; one missing item -> 422 listing exactly it (DG2 form); nothing written  910ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > with accepted unexpired exceptions -> 201; the snapshot and the frozen criterion rows record each exception  732ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > a pending, rejected or other-criterion exception does not cover (422 as in DG2)  518ms
+   ✓ the waiver record (REQ-S04-013) > a waiver without expiry or compensating action -> 400; past expiry and a non-mandatory key -> 422; nothing written  329ms
+   ✓ the waiver record (REQ-S04-013) > the requester cannot decide (403); a non-approver cannot (403); ADM-only 403; AUD 403 on every write  440ms
+   ✓ the waiver record (REQ-S04-013) > one hop of delegation: a delegate holding gate_exception.decide decides for the approver (recorded on behalf)  399ms
+   ✓ expiry (REQ-S04-013; clock injected) > after expires_on the exception no longer covers: the live view and the submission report the criterion missing again  675ms
+   ✓ expiry (REQ-S04-013; clock injected) > approving a submission whose recorded exception has expired -> 422 gate.exception_expired; changes requested is allowed  635ms
+   ✓ expiry (REQ-S04-013; clock injected) > approving a submission whose recorded exception was revoked -> 422 gate.exception_revoked (exact text); nothing written; reject allowed  790ms
+   ✓ expiry (REQ-S04-013; clock injected) > revoked AND expired reports the revoke; an unrevoked, unexpired exception still lets the approver approve  1175ms
+   ✓ expiry (REQ-S04-013; clock injected) > the injected clock also moves the create check: an expiry before the injected business date -> 422  308ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > revoke needs a reason (400) and an accepted exception (422); after revoke the criterion is missing again  844ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > withdraw: the requester only, pending only, If-Match 428/409; decision If-Match 428/409  633ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > the approver gets one gate_exception_to_decide item on request; it is done once decided; list filters  404ms
+ ✓ |integration| apps/api/test/integration/workflows/g5-g6.test.ts (13 tests) 6350ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an open High-impact risk without an approved disposition: 422 whose detail and errors list 'Risk closure'; nothing written  578ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an approved disposition completes Risk closure (a pending one does not; a medium risk never counts)  888ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > G5 configured to BO: an SP decision is 403 gate.not_approver, a BO decision with the scale scope is 201  675ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > the scale-scope rules (ADR-0035 §5): required with a G5 approval, refused elsewhere, items inside the organization  665ms
+   ✓ G5 decision rights (D-094; ADR-0035 §8) > AUD 403 on the G5 submission and decision; an ADM-only caller 403 on the decision (D-094); nothing written  361ms
+   ✓ G1-G4 refusals keep the DG2 key form (ADR-0035 §2: the label form is G5/G6 only) > a G4 submission with gaps names the criterion keys in its detail, as in DG3  322ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > without an accepted BAU handover: 422 listing 'Ownership transfer'; nothing written  346ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > with every fact: 201 with a frozen g6 snapshot; an edit afterwards leaves it unchanged; the SP approval changes no phase, closes nothing and writes no DG delivery record  1592ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > G6 allows SP only: a BO cannot be configured as its approver (DG2 422 gate.approver_role_not_allowed)  374ms
+ ✓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts (17 tests) 14141ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > a Modular G3 waiver with no initiative: 201 pending, version 1, audited gate_dispensation.create  637ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > every other Modular waiver keeps the DG3 refusal: G1, G2, and G3 with an initiative (recorded for A/B)  395ms
+   ✓ ADR-0021 W2: who decides a Modular-links waiver > G3's approver (SP) accepts it (200); the recorder (403) and a non-approver (403 gate.not_approver) cannot  314ms
+   ✓ ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged  867ms
+   ✓ ADR-0038 B1 at G3 submission > only the outcome link missing: missing lists it alone  707ms
+   ✓ ADR-0038 B1 at G3 submission > links supplied: no modularLinks member even with a waiver in force (the snapshot is the DG3 one)  792ms
+   ✓ ADR-0038 B1 at G3 submission > which waiver: the latest expiry, ties broken by the greatest id  1526ms
+   ✓ ADR-0038 B1 at G3 submission > pending, rejected, revoked or expired (injected exception clock) waivers → 422 gate.modular_links_missing; nothing written  2636ms
+   ✓ ADR-0038 B1 at G3 approval > the waiver in force: approval 201, G3 approved; the decision is the SP's  722ms
+   ✓ ADR-0038 B1 at G3 approval > revoked after submission → 422 gate.modular_waiver_revoked with the revoke date; a later waiver does not rescue it; reject stays allowed  564ms
+   ✓ ADR-0038 B1 at G3 approval > expired by approval time (injected clock) → 422 gate.modular_waiver_expired with the expiry date; nothing written  643ms
+   ✓ ADR-0038 B1 at G3 approval > revoked and expired: the revoke is reported  507ms
+   ✓ ADR-0038 B1 at G3 approval > a Modular G3 submitted with its links (no modularLinks) is decided exactly as before  726ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > revoked: params = { date: the revoke's business date }, the date in detail  530ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > expired: params = { date: expires_on }, the date in detail  551ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > A/B transcript (T-DG4-BE-R4): the revoked and expired approval refusals and the submission refusal  1132ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > no other problem gains the member: the G3 submission refusal without a waiver has no params  647ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/versions.test.ts (10 tests) 1665ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/actuals.test.ts (11 tests) 2446ms
+   ✓ review route (REQ-S07-012) > a submitted value is not used until a reviewer accepts it; the accept writes one audit event  327ms
+   ✓ review route (REQ-S07-012) > a rejection needs a reason and gives the submitter a correction task; a new value answers it  348ms
+ ✓ |integration| apps/api/test/integration/workflows/approval-routes.test.ts (9 tests) 4767ms
+   ✓ sequential route (REQ-S10-015) > step 2 has no work item or notification until step 1 approves; the last step decides the approval  867ms
+   ✓ sequential route (REQ-S10-015) > the requester never decides a step (403 approval_route.self_decision) and gets no step task  541ms
+   ✓ sequential route (REQ-S10-015) > commit-time re-authorization: a BO whose grant is revoked after sign-in is refused, nothing written  537ms
+   ✓ parallel route (REQ-S10-015) > every step is notified at once; one person decides at most one step; request changes -> next round  707ms
+   ✓ parallel route (REQ-S10-015) > a reject on one step cancels the other open step and rejects the approval  399ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (shipped v1): no steps, the DG4 decision route decides it  407ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (any): no steps, the DG4 decision route decides it  345ms
+   ✓ withdrawal and the admin route list > withdrawing a routed approval cancels its open steps  388ms
+   ✓ withdrawal and the admin route list > listApprovalRoutes: the version's routes (TL, AUD read); BO without methodology.read 403; unknown 400  397ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/trajectories.test.ts (8 tests) 1225ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-reviews.test.ts (6 tests) 5279ms
+   ✓ the criteria review table (REQ-S04-009) > each criterion row returns all nine fields; unreviewed rows show the six review fields as 'not reviewed' (null)  1144ms
+   ✓ the criteria review table (REQ-S04-009) > the latest review is shown; the review list is oldest first; a criterion outside the submission is 404  626ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > the first review moves Submitted -> Under Review (one audit event); the approver decides from Under Review  845ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > a direct Draft -> Approved is refused (409, nothing written); all seven statuses exist  316ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > refusals: submitter 403, condition 422, foreign risk 422, AUD 403, If-Match 428; nothing written  1219ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > the submitter holding a reviewer role is refused with 403 gate.reviewer_is_submitter (SoD)  722ms
+ ✓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts (5 tests) 4856ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > 422 gate.modular_links_missing listing both items; nothing written; 201 once both are supplied  935ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > an accepted, unexpired G3 waiver lets it through; an expired or a pending one does not  1534ms
+   ✓ End-to-End G1-G4: unaffected by the Modular precondition (byte comparison in the handback) > the full chain with no baseline and no outcome link: every refusal and success as in DG2/DG3  1685ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/create-service.test.ts (3 tests) 333ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/version-approval.test.ts (6 tests) 2044ms
+   ✓ requestKpiVersionApproval (business approval of a KPI version) > requests through the approval service at the draft version; approving does not activate; activation does  396ms
+   ✓ requestKpiVersionApproval (business approval of a KPI version) > the requester cannot decide their own request (SoD 403 approval.sod_requester); BO alone cannot request  313ms
+   ✓ requestKpiVersionApproval (business approval of a KPI version) > after changes are requested the draft can be edited and the approval resubmitted at the new version  352ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 2906ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  382ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/formulas.test.ts (8 tests) 1594ms
+   ✓ REQ-S07-011: circular references > A05: KPI A = B + 1 and B = A * 2 is rejected as circular, naming the path  307ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/pipeline.test.ts (6 tests) 2193ms
+   ✓ the accept pipeline (REQ-S07-013, REQ-S12-006) > one accept -> one audit event, one run (also after a redelivery), one values_recalculated; RAG from the trajectory  358ms
+   ✓ the accept pipeline (REQ-S07-013, REQ-S12-006) > review route: no run and Unknown until a reviewer accepts; then one run and the value  338ms
+   ✓ roll-up across scopes (REQ-S07-006, REQ-S07-010) > a scope missing in the current period makes the roll-up Unknown (no zero), with a scope_missing finding  371ms
+ ✓ |integration| apps/api/test/integration/workflows/impact.test.ts (3 tests) 2058ms
+   ✓ TOM change after G3: preview, T11 routing, a returned request with one assessment per submitted version > lists the gap, the preserved G3 decision and T10 Portfolio; changes requested -> edit -> submit -> resubmit -> approve  470ms
+   ✓ charter scope change after G1: a new charter version; the earlier one stays readable > SP approves; charter version + 1 with its charter_version snapshot; reads are scoped  790ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/formula-recalc.test.ts (1 test) 1518ms
+   ✓ a formula KPI recalculated from accepted input actuals (T-DG4-KBE-R1 item 4) > is Unknown until every input is accepted, then a + b of the accepted values, re-evaluated on each acceptance  965ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts (9 tests) 5824ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the Sponsor's G5 decision is 201  787ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > every grant of the Sponsor revoked after authentication: 403, no decision, one authorization.denied  500ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > only the approver role revoked (the read remains): 403 gate.not_approver, no decision, one authorization.denied  573ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > the Sponsor's session ended after authentication: 401, no decision, no audit row  577ms
+   ✓ submitGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TL's G1 submission is 201  986ms
+   ✓ submitGate re-checks authorization at commit time (F-DG4-103) > the TL's grants revoked after authentication: 403, no submission, gate unchanged, one authorization.denied  736ms
+   ✓ updateGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TO configures the G5 approver (200)  505ms
+   ✓ updateGate re-checks authorization at commit time (F-DG4-103) > the TO's grants revoked after authentication: 403, approver unchanged, one authorization.denied  404ms
+   ✓ updateGate re-checks authorization at commit time (F-DG4-103) > only the configure right revoked (the read remains through another role): 403, one authorization.denied naming gate.configure  496ms
+ ✓ |integration| apps/api/test/integration/workflows/be-r5-ab-transcript.test.ts (6 tests) 3678ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > updateGate (G5, G6): 428, 409, AUD 403, ADM-only/outsider 404, 422 role not allowed, 200, 422 submission pending  736ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > submitGate: G5 out of sequence 422 first; G1 201 with accepted exceptions; the G1 view  966ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > submitGate G5/G6 refusals: AUD 403, outsider 404, 428, 409, criteria incomplete, out of sequence  575ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > decideGate G5: outsider 404, ADM-only/AUD/BO/submitter 403, 409 superseded, 422 scale scope, SP 201, then 409  600ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > decideGate G6: changes requested 201, then a second submission approved 201 by the Sponsor  527ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-conditions.test.ts (5 tests) 3716ms
+   ✓ v1: conditional G5 within its scope (REQ-S04-011 A08; DG4 behaviour re-run) > a conditional G5 limited to one BU blocks a scale transition for another BU; no scope -> 422  966ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > catalogue default: on for G5 only  479ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched off in a published v2: conditions -> 422 gate.conditional_approval_disabled, nothing written  602ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched on explicitly in a v2: conditions are accepted  592ms
+   ✓ tracked to closure (listGateConditions, closeGateCondition) > open / overdue / closed; only the owner closes, once; AUD reads but cannot close  808ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/thresholds.test.ts (5 tests) 1215ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/cumulative-lineage.test.ts (5 tests) 1041ms
+   ✓ a cumulative roll-up names the actual versions of each scope's whole window (ADR-0027 amendment C5) > C5 missing-scope rule: a scope with earlier values but no current actual is missing; Unknown; no entry; no finding  391ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/status.test.ts (5 tests) 3581ms
+   ✓ override display (REQ-S07-009) > an override in force changes displayedRag only; after expiry the calculated RAG displays again  2015ms
+   ✓ comparability (REQ-S07-005) > a 4-week period after a 5-week period: trend not_comparable and a not_comparable finding  382ms
+ ✓ |integration| apps/api/test/integration/workflows/be-r4-ab-transcript.test.ts (4 tests) 3012ms
+   ✓ A/B transcript (T-DG4-BE-R4): existing responses of the touched modules > schedule durations and the network (portfolio/schedule-network.ts), with 400/401/403/404/409/428 problems  418ms
+   ✓ A/B transcript (T-DG4-BE-R4): existing responses of the touched modules > scale scope, transitions and the gate list (workflows/scale.ts, gates.ts)  1200ms
+   ✓ A/B transcript (T-DG4-BE-R4): existing responses of the touched modules > the chair's minutes task (governance/minutes.ts) as My Work lists it  866ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/data-quality.test.ts (5 tests) 851ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/formula-lineage.test.ts (2 tests) 1710ms
+   ✓ formula lineage nests through a formula source (ADR-0027 amendment C1) > N = s * 2 over S = a + b names a's and b's accepted actual versions one level down  884ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/transformation-periods.test.ts (5 tests) 841ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/periods.test.ts (4 tests) 840ms
+ ✓ |integration| apps/api/test/integration/workflows/scale-scope-business-units.test.ts (4 tests) 3126ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > a Sponsor with only a transformation grant reads every active unit of the organization, never another's  684ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > a unit set inactive after an approved scope named it is listed with selectable false; an unnamed inactive unit is not  976ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > cursor paging by code then id walks the same set; another transformation's cursor is 400  887ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > outside scope 404 (another organization's officer, ADM-only); unauthenticated 401  432ms
+ ✓ |integration| apps/api/test/integration/workflows/risk-dispositions.test.ts (3 tests) 2089ms
+   ✓ risk dispositions (REQ-PB-020) > creates the row, its audit event and one pending risk_disposition approval routed to SP  656ms
+   ✓ risk dispositions (REQ-PB-020) > only an open risk: a closed risk or an issue is 422 risk_disposition.not_open_risk; AUD 403; nothing written  564ms
+   ✓ risk dispositions (REQ-PB-020) > G5 configured to BO: routed to the T11 Go-live / scale party BO; unmapped BO -> 422 routing.role_unmapped, nothing written  667ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/entity-group.test.ts (1 test) 1417ms
+   ✓ REQ-S16-014: the KPI entity group through the API > creates and reads each entity with authorization enforced (AUD 403 on writes, 200 on reads)  897ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/overrides.test.ts (4 tests) 3168ms
+   ✓ RAG overrides (REQ-S07-009) > refuses a missing reason, evidence or expiry and an invalid expiry with their own 422, nothing written  458ms
+   ✓ RAG overrides (REQ-S07-009) > is no longer in force after its expiry, with no job (the read compares the expiry with the current time)  1784ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-events.test.ts (2 tests) 3028ms
+   ✓ gate.submitted / gate.decided (ADR-0035 §7) > submission, supersession and decision each write exactly one event in their transaction; refusals write none  1945ms
+   ✓ gate.submitted / gate.decided (ADR-0035 §7) > a G5 approval's event names its scope item and condition ids and the next phase realize  791ms
+ ✓ |integration| apps/api/test/integration/workflows/scale.test.ts (2 tests) 1725ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > before G5: 422 invalid-transition naming G5; the scope reads approved = false; nothing written  879ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > after the G5 approval: inside the scope 201 with its audit event; outside 422; a repeat 409; AUD/ADM 403  656ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/fixture-dates.test.ts (3 tests) 1210ms
+   ✓ insertFinding ad-hoc period dates (T-DG4-KBE-R1 item 2) > is deterministic: a fresh organization's periods are 2031-01-02, -03, -04 in call order  345ms
+   ✓ insertFinding ad-hoc period dates (T-DG4-KBE-R1 item 2) > is unique per call, also for 12 concurrent calls in one organization  407ms
+
+ Test Files  36 passed (36)
+      Tests  224 passed (224)
+   Start at  17:29:09
+   Duration  238.33s (transform 7.22s, setup 0ms, collect 118.74s, tests 114.95s, environment 0ms, prepare 85ms)
+

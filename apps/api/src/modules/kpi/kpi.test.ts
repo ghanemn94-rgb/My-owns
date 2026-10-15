@@ -125,6 +125,15 @@ const KPI_P4_KBE_C_OPERATIONS = [
 ];
 /** The ARCH-R1 repair operation of the kpi module (ADR-0027 amendment A1; routed by T-DG4-KBE-R2). */
 const KPI_P4_ARCH_R1_OPERATIONS = ["listTransformationReportingPeriods"];
+/** P5 slice G (T-DG5-KBE-E; ADR-0047 §2): the six KPI-restatement operations of kpi/restatements.ts. */
+const KPI_P5_KBE_E_OPERATIONS = [
+  "listKpiRestatements",
+  "createKpiRestatement",
+  "getKpiRestatement",
+  "getKpiRestatementReconciliation",
+  "submitKpiRestatement",
+  "withdrawKpiRestatement",
+];
 /**
  * Routes whose permission the contract summary does not name in parentheses (T-DG3-KBE-C): the B0087 examples are a
  * global catalogue read with no 403 in the contract ("authenticated", like GET /dependency-types), and the formula
@@ -218,7 +227,7 @@ describe("kpi module (P2)", () => {
     expect(mod.VALUE_FRESHNESS).toEqual(["unknown", "stale", "current"]);
   });
 
-  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B, the P4 KBE-C and the ARCH-R1 operations, and reports them", async () => {
+  it("registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B, the P4 KBE-C, the ARCH-R1 and the P5 KBE-E operations, and reports them", async () => {
     const { routes, registration } = await registered();
     const byKey = new Map(contractOps.map((o) => [o.key, o.operationId]));
     const ids = routes.map((r) => byKey.get(r.key));
@@ -231,12 +240,17 @@ describe("kpi module (P2)", () => {
         ...KPI_P4_KBE_B_OPERATIONS,
         ...KPI_P4_KBE_C_OPERATIONS,
         ...KPI_P4_ARCH_R1_OPERATIONS,
+        ...KPI_P5_KBE_E_OPERATIONS,
       ].sort(),
     );
     expect(registration.module).toBe("kpi");
     expect(registration.status).toBe("active");
     expect(registration.routes).toHaveLength(
-      48 + KPI_P4_KBE_B_OPERATIONS.length + KPI_P4_KBE_C_OPERATIONS.length + KPI_P4_ARCH_R1_OPERATIONS.length,
+      48 +
+        KPI_P4_KBE_B_OPERATIONS.length +
+        KPI_P4_KBE_C_OPERATIONS.length +
+        KPI_P4_ARCH_R1_OPERATIONS.length +
+        KPI_P5_KBE_E_OPERATIONS.length,
     );
     expect(Object.isFrozen(registration)).toBe(true);
   });
@@ -281,6 +295,8 @@ describe("kpi module (P2)", () => {
         "kpi_actual.submit",
         "kpi_actual.accept",
         "rag.override",
+        // P5 slice G (T-DG5-KBE-E).
+        "kpi_restatement.request",
       ]),
     );
   });

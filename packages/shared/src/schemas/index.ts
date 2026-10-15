@@ -147,3 +147,5 @@ export * from "./notifications.ts";
 export * from "./cutoff.ts";
 // P5 slice F (T-DG5-KBE-D; ADR-0045 §6, §11; p5-work-split §F.3): structured owner updates and their revisions.
 export * from "./owner-updates.ts";
+// P5 slice G (T-DG5-KBE-E; ADR-0047 §2, §8, §9; p5-work-split §G.1): KPI restatements and their reconciliation.
+export * from "./kpi-restatement.ts";

@@ -73,6 +73,19 @@ export const RECALCULATE_EVENTS = [
   "kpi.version_activated",
 ] as const;
 
+/**
+ * The non-actual triggers that apply a KPI change PROSPECTIVELY (ADR-0047 §1, REQ-S07-016 "a prospective target change
+ * leaves last quarter's RAG unchanged"; T-DG5-KBE-E): they recalculate the latest OPEN period of the KPI's frequency
+ * only, never a closed one. This changes DG4's ADR-0028 §6 rule ("the latest open or closed period"), a reopen
+ * candidate the orchestrator decides (ADR-0047 §1). The documented alternative, should the orchestrator decline it, is
+ * this set reduced to `version_activated` alone (thresholds and trajectories keep the DG4 rule).
+ */
+export const OPEN_PERIOD_ONLY_TRIGGERS: ReadonlySet<string> = new Set([
+  "version_activated",
+  "threshold_changed",
+  "trajectory_approved",
+]);
+
 type Trigger = {
   readonly kind: "actual_accepted" | "threshold_changed" | "trajectory_approved" | "version_activated";
   readonly recordType: "kpi_actual" | "kpi_rag_threshold" | "target_trajectory" | "kpi_version";
@@ -860,9 +873,13 @@ async function runCalculation(
       periodIds = [trigger.reportingPeriodId!];
       scopes = [{ kind: trigger.scopeKind!, id: trigger.scopeId! }];
     } else {
-      // The KPI's current reporting period: the latest open or closed period of its frequency (ADR-0028 §6).
+      // The KPI's current reporting period (ADR-0028 §6), applied PROSPECTIVELY (ADR-0047 §1; T-DG5-KBE-E): for the
+      // triggers in OPEN_PERIOD_ONLY_TRIGGERS it is the latest OPEN period of its frequency, so a closed period keeps
+      // its latest evaluation and RAG (it changes only through an approved restatement's own run); with no open period
+      // the run evaluates nothing. Any other trigger keeps the DG4 rule: the latest open or closed period.
+      const openOnly = OPEN_PERIOD_ONLY_TRIGGERS.has(trigger.kind);
       const current = [...ctx.periods]
-        .filter((p) => p.frequency === kpi.frequency && p.status !== "scheduled")
+        .filter((p) => p.frequency === kpi.frequency && (openOnly ? p.status === "open" : p.status !== "scheduled"))
         .sort((a, b) => (a.periodEnd < b.periodEnd ? 1 : -1))[0];
       periodIds = current ? [current.id] : [];
       const slotScopes = current
