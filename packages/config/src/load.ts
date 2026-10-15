@@ -9,7 +9,7 @@
 //  - Error messages name the variable, never the value (secrets must not reach logs).
 import { readFileSync } from "node:fs";
 import { z } from "zod";
-import { AUTH_MODES, ENV_VARS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+import { AUTH_MODES, ENV_VARS, MTH_ENVS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
 
 export type Service = "api" | "worker" | "db-cli";
 
@@ -47,6 +47,13 @@ export interface AppConfig {
   readonly rateLimit: { readonly perMinute: number; readonly authPerMinute: number };
   readonly logLevel: (typeof LOG_LEVELS)[number];
   readonly trustProxy: readonly string[];
+  /**
+   * The deployment's environment (ADR-0050 §1): MTH_ENV, else production when NODE_ENV=production, else NODE_ENV. Only
+   * a database's own marker decides whether its data is synthetic; this value only refuses demo commands.
+   */
+  readonly mthEnv: (typeof MTH_ENVS)[number];
+  /** The demo reset's admin URL (ADR-0050 §6), or null. A secret: never logged. */
+  readonly demoAdminDatabaseUrl: string | null;
   /** Worker-only settings (F-DG4-128). Always present; defaulted when unset. */
   readonly worker: { readonly superviseIntervalSeconds: number };
 }
@@ -162,6 +169,14 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     "WORKER_SUPERVISE_INTERVAL_SECONDS",
     z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
   );
+  const mthEnvSet = field("MTH_ENV", z.enum(MTH_ENVS));
+  const demoAdminDatabaseUrl = field(
+    "MTH_DEMO_ADMIN_DATABASE_URL",
+    z.string().refine(postgresUrl, "must be a postgres:// URL"),
+  );
+  // ADR-0050 §1: MTH_ENV defaults from NODE_ENV, so a production NODE_ENV never defaults into demo mode. An explicit
+  // MTH_ENV=demo with NODE_ENV=production is a demo deployment running the production build, and is allowed.
+  const mthEnv = mthEnvSet ?? (nodeEnv === "production" ? "production" : nodeEnv);
   const trustProxy = (raw.TRUST_PROXY ?? "")
     .split(",")
     .map((s) => s.trim())
@@ -232,6 +247,8 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     logLevel: logLevel!,
     trustProxy,
     worker: { superviseIntervalSeconds: superviseIntervalSeconds! },
+    mthEnv: mthEnv!,
+    demoAdminDatabaseUrl: demoAdminDatabaseUrl ?? null,
   });
 }
 

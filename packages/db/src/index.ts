@@ -47,4 +47,43 @@ export {
   type BootstrapResult,
 } from "./bootstrap.ts";
 export { assertDevSeedAllowed, DevSeedRefused, devSeedFile, seedDev } from "./dev-seed.ts";
+// P5 slice J (T-DG5-BE-S; ADR-0050): the demo environment's marker, refusals, seed, reset, checksum and coverage.
+export {
+  assertSeedDemoAllowed,
+  BOOTSTRAP_DEMO_REFUSAL,
+  DEMO_DATASET_CODE,
+  DEMO_DATASET_VERSION,
+  DEMO_REFUSAL_EXIT,
+  DEMO_RESET_LOCK_CLASS,
+  DEMO_RESET_LOCK_KEY,
+  DEMO_SYNTHETIC_CLOCK,
+  DemoRefused,
+  readDeploymentEnvironment,
+  RESET_DEMO_REFUSALS,
+  resetDemoConfigRefusal,
+  SEED_DEMO_REFUSALS,
+  seedDemoRefusal,
+  type DeploymentEnvironment,
+  type EnvironmentKind,
+} from "./demo/guard.ts";
+export { checksumLines, datasetChecksum, recordCounts } from "./demo/checksum.ts";
+export {
+  DEMO_COVERAGE_CONDITIONS,
+  DEMO_TRANSFORMATION_ID,
+  runCoverage,
+  type CoverageCondition,
+  type CoverageResult,
+} from "./demo/coverage.ts";
+export {
+  DEMO_ID_PATTERN,
+  maintenanceUrl,
+  seedDemo,
+  withDemoLock,
+  type DemoDatasetModule,
+  type DemoRunSummary,
+  type DemoSeedContext,
+  type DemoSeedOptions,
+} from "./demo/seed.ts";
+export { databaseNameOf, resetDemo, urlForDatabase, type DemoResetOptions } from "./demo/reset.ts";
+export { runDemoCommand, type DemoCliConfig, type DemoCliIo } from "./demo/cli.ts";
 export { sql, type Expression, type SqlBool } from "kysely";

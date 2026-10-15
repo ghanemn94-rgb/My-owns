@@ -178,3 +178,54 @@ describe("loadConfig", () => {
     ]);
   });
 });
+
+// T-DG5-BE-S (ADR-0050 §1, §6; D-142 Q7): the deployment environment and the demo reset's admin URL.
+describe("MTH_ENV and MTH_DEMO_ADMIN_DATABASE_URL (ADR-0050)", () => {
+  const prodBase = {
+    ...base,
+    NODE_ENV: "production",
+    AUTH_MODE: "oidc",
+    APP_BASE_URL: "https://hub.example.invalid",
+    OIDC_ISSUER_URL: "https://idp.example.invalid/realms/mth",
+    OIDC_CLIENT_ID: "mth",
+    OIDC_CLIENT_SECRET: "synthetic-test-value",
+  };
+
+  it("defaults to production when NODE_ENV=production, else to the NODE_ENV value", () => {
+    expect(loadConfig("api", prodBase).mthEnv).toBe("production");
+    expect(loadConfig("api", base).mthEnv).toBe("test");
+    expect(loadConfig("api", { ...base, NODE_ENV: "development" }).mthEnv).toBe("development");
+    expect(loadConfig("db-cli", { NODE_ENV: "production", DATABASE_OWNER_URL: "postgres://o@h/d" }).mthEnv).toBe(
+      "production",
+    );
+  });
+
+  it("an explicit value wins, including demo on a production build (the demo deployment)", () => {
+    expect(loadConfig("api", { ...prodBase, MTH_ENV: "demo" }).mthEnv).toBe("demo");
+    expect(loadConfig("worker", { ...base, MTH_ENV: "production" }).mthEnv).toBe("production");
+  });
+
+  it("refuses an unknown value, naming the variable", () => {
+    expect(problemsOf(() => loadConfig("api", { ...base, MTH_ENV: "staging" }))).toEqual([
+      expect.stringMatching(/^MTH_ENV is invalid/),
+    ]);
+  });
+
+  it("the demo admin URL is optional, must be a postgres URL, and is a secret (never in the error text)", () => {
+    expect(loadConfig("worker", base).demoAdminDatabaseUrl).toBeNull();
+    const url = "postgresql://mth_demo_admin:pw@127.0.0.1:5432/postgres";
+    expect(loadConfig("worker", { ...base, MTH_DEMO_ADMIN_DATABASE_URL: url }).demoAdminDatabaseUrl).toBe(url);
+    const problems = problemsOf(() =>
+      loadConfig("worker", { ...base, MTH_DEMO_ADMIN_DATABASE_URL: "http://x/secret" }),
+    );
+    expect(problems).toEqual([expect.stringMatching(/^MTH_DEMO_ADMIN_DATABASE_URL is invalid/)]);
+    expect(problems.join("\n")).not.toContain("secret");
+    const dir = mkdtempSync(join(process.env["TMPDIR"] ?? tmpdir(), "cfg-"));
+    const file = join(dir, "demo-admin-url");
+    writeFileSync(file, `${url}\n`);
+    expect(
+      loadConfig("db-cli", { NODE_ENV: "test", DATABASE_OWNER_URL: url, MTH_DEMO_ADMIN_DATABASE_URL_FILE: file })
+        .demoAdminDatabaseUrl,
+    ).toBe(url);
+  });
+});

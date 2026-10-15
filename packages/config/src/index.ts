@@ -143,6 +143,24 @@ export const ENV_VARS = {
     default: "60",
     usedBy: ["worker"],
   },
+  // P5 slice J (T-DG5-BE-S; ADR-0050 §1, §6; D-142 Q7).
+  MTH_ENV: {
+    description:
+      "production | demo | development | test: the deployment's environment. Default: production when " +
+      "NODE_ENV=production, else the NODE_ENV value. A demo deployment sets demo explicitly; mth-db seed-demo is " +
+      "refused when it is production, and mth-db reset-demo needs demo",
+    required: false,
+    secret: false,
+    usedBy: ["api", "worker", "db-cli"],
+  },
+  MTH_DEMO_ADMIN_DATABASE_URL: {
+    description:
+      "Demo deployments only: PostgreSQL URL of a role with CREATEDB that may drop and re-create the demo database " +
+      "(mth-db reset-demo and the worker's demo.reset job). The API reads only whether it is set (resetConfigured)",
+    required: false,
+    secret: true,
+    usedBy: ["api", "worker", "db-cli"],
+  },
   TRUST_PROXY: {
     description: "Comma-separated reverse-proxy addresses whose X-Forwarded-* headers are trusted",
     required: false,
@@ -156,6 +174,10 @@ export type EnvVarName = keyof typeof ENV_VARS;
 
 /** Allowed AUTH_MODE values; `dev` must be rejected at startup when NODE_ENV=production (ADR-0005). */
 export const AUTH_MODES = ["oidc", "dev"] as const;
+
+/** Allowed MTH_ENV values (ADR-0050 §1). */
+export const MTH_ENVS = ["production", "demo", "development", "test"] as const;
+export type MthEnv = (typeof MTH_ENVS)[number];
 export type AuthMode = (typeof AUTH_MODES)[number];
 
 /**
