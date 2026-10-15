@@ -109,6 +109,14 @@ export const CONFIG_ELEMENT_ATTRIBUTES = {
     ...common,
     bodyEn: freeText(1, 20000).optional(),
     bodyAr: freeText(1, 20000).optional(),
+    // T-DG5-BE-Q2 (ADR-0049 §2, §4, §6): the reader namespaces' attributes. `provenance`/`questionTag` on
+    // `profile.<element_ref>`, `linksAdded`/`linksRemoved` ({targetKind, targetKey}[], at most 50) on `block.<Bxxxx>`.
+    // Their values are checked by the API's reader rules with the §11 codes (422 methodology_reader.*), then by the
+    // 0089 guard; the shape here only admits the keys.
+    provenance: z.unknown().optional(),
+    questionTag: z.unknown().optional(),
+    linksAdded: z.unknown().optional(),
+    linksRemoved: z.unknown().optional(),
   }),
   phase: z.strictObject(common),
   gate: z.strictObject({

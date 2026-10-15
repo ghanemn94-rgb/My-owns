@@ -36,6 +36,9 @@ import { registerMethodologyMigrationRoutes } from "./migrations.ts"; // BE-C
 import { registerScoringDefaultsRoutes } from "./scoring-defaults.ts"; // KBE-A
 import { registerMethodologyReaderRoutes } from "./reader.ts"; // BE-Q (slice I)
 import { registerMethodologySourceLinkRoutes } from "./source-links.ts"; // BE-Q (slice I)
+import { registerMethodologySearchRoutes } from "./search.ts"; // BE-Q2 (slice I)
+import { registerMethodologyProvenanceRoutes } from "./provenance.ts"; // BE-Q2 (slice I)
+import { registerMethodologyElementProfileRoutes } from "./element-profiles.ts"; // BE-Q2 (slice I)
 
 const CATALOGUE = "/api/v1/transformations/:transformationId/methodology";
 const TOM_DIMENSION = "/api/v1/methodology/tom-dimensions/:dimensionCode";
@@ -81,6 +84,10 @@ export function registerMethodologyModule(
     ...registerScoringDefaultsRoutes(app, deps),
     ...registerMethodologyReaderRoutes(app, deps, resolver), // BE-Q (slice I)
     ...registerMethodologySourceLinkRoutes(app, deps, resolver), // BE-Q (slice I)
+    ...registerMethodologySearchRoutes(app, deps, resolver), // BE-Q2 (slice I)
+    ...registerMethodologyProvenanceRoutes(app, deps, resolver), // BE-Q2 (slice I)
+    // BE-Q2 (slice I): also puts the reader-namespace rules in front of the methodology kind's validateElement.
+    ...registerMethodologyElementProfileRoutes(app, deps, resolver),
   ];
   return Object.freeze({
     module: "methodology",
