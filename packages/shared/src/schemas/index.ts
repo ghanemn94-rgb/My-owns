@@ -137,3 +137,5 @@ export * from "./procedures.ts";
 export * from "./report.ts";
 // P5 slice E (T-DG5-BE-J; ADR-0044 §7): the critical dependency slip response mirrors.
 export * from "./dependency-slips.ts";
+// P5 slice E (T-DG5-BE-L; ADR-0044 §5): notification preferences, policy and digests, and the pure delivery decision.
+export * from "./notifications.ts";

@@ -6,7 +6,7 @@ import type { ModuleDeps } from "../platform/index.ts";
 import { createWorkItemOnce, registerTasksModule, SYSTEM_MANAGED_KINDS, taskRefusals, toWorkItem } from "./index.ts";
 
 describe("tasks module (P4)", () => {
-  it("registers the five task and inbox operations", async () => {
+  it("registers the five task and inbox operations and the five P5 notification operations (T-DG5-BE-L)", async () => {
     const app = Fastify({ logger: false });
     try {
       const r = registerTasksModule(app, {} as ModuleDeps);
@@ -18,6 +18,12 @@ describe("tasks module (P4)", () => {
           "POST /api/v1/work-items/:workItemId/complete",
           "GET /api/v1/me/inbox",
           "POST /api/v1/me/inbox/:notificationId/read",
+          // T-DG5-BE-L (ADR-0044 §5): preferences, policy and the own digest read (tasks/notification-policy.ts).
+          "GET /api/v1/me/notification-preferences",
+          "PUT /api/v1/me/notification-preferences",
+          "GET /api/v1/admin/notification-policy",
+          "PUT /api/v1/admin/notification-policy",
+          "GET /api/v1/me/notification-digests/:digestId",
         ].sort(),
       );
     } finally {

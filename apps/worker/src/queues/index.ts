@@ -18,6 +18,7 @@ import { REPORTS_EVENT_QUEUES, REPORTS_QUEUES } from "./reports.ts";
 import { LAUNCH_EVENT_QUEUES, LAUNCH_QUEUES } from "./launch.ts";
 import { DEMO_EVENT_QUEUES, DEMO_QUEUES } from "./demo.ts";
 import { PORTFOLIO_EVENT_QUEUES, PORTFOLIO_QUEUES } from "./portfolio.ts"; // T-DG5-BE-J (ADR-0044 §7, §8)
+import { DIGESTS_QUEUES } from "./digests.ts"; // T-DG5-BE-L (ADR-0044 §5, §8)
 import {
   ensurePlatformQueues,
   PLATFORM_EVENT_QUEUES,
@@ -58,6 +59,7 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...LAUNCH_QUEUES,
   ...DEMO_QUEUES,
   ...PORTFOLIO_QUEUES,
+  ...DIGESTS_QUEUES, // T-DG5-BE-L
 ];
 
 /**

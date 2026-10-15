@@ -297,7 +297,8 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .selectFrom("inbox_notification")
       .selectAll()
       .select(CREATED_US.as("created_us"))
-      .where("recipient_user_id", "=", userId);
+      .where("recipient_user_id", "=", userId)
+      .where("delivery_state", "=", "delivered"); // T-DG5-BE-L (ADR-0044 §5): held and digested rows are not listed
     if (query.unreadOnly) q = q.where("read_at", "is", null);
     if (after)
       q = q.where(sql<boolean>`(${CREATED_US}, id) < (${String(after[0])}::bigint, ${String(after[1])}::uuid)`);
@@ -311,6 +312,7 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .selectFrom("inbox_notification")
       .select((eb) => eb.fn.countAll<string>().as("n"))
       .where("recipient_user_id", "=", userId)
+      .where("delivery_state", "=", "delivered") // T-DG5-BE-L: the unread count of the listed rows
       .where("read_at", "is", null)
       .executeTakeFirstOrThrow();
     return { items: page.items.map(toInboxNotification), nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
