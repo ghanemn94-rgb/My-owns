@@ -2751,6 +2751,27 @@ export function mapP5ReportError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4): the 0089 guards of the playbook catalogue seeded by 0092. mth_app holds
+ * SELECT only on playbook_block and playbook_block_link, and the reader never writes, so reaching one of these is a
+ * programming error (500), never a user-facing refusal:
+ *   playbook_block_immutable, playbook_block_ordinal_matches, playbook_block_section_before,
+ *   playbook_block_ordinal_key, playbook_block_link_target_shape, playbook_block_link_ordinal_key -> 500
+ */
+export function mapP5PlaybookBlockError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "playbook_block_immutable":
+    case "playbook_block_ordinal_matches":
+    case "playbook_block_section_before":
+    case "playbook_block_ordinal_key":
+    case "playbook_block_link_target_shape":
+    case "playbook_block_link_ordinal_key":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2764,6 +2785,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Automation !== null) return p5Automation;
   const p5Report = mapP5ReportError(error); // P5 slice F (T-DG5-KBE-C; ADR-0045 §11)
   if (p5Report !== null) return p5Report;
+  const p5PlaybookBlock = mapP5PlaybookBlockError(error); // P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4)
+  if (p5PlaybookBlock !== null) return p5PlaybookBlock;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
