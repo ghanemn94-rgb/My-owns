@@ -12,6 +12,7 @@ import { benefitEvidenceSubmittedV1, benefitValueDecidedV1, benefitVarianceEvalu
 import { checkFailedPayload } from "./corrective.ts";
 // P4 slice D (T-DG4-BE-G; ADR-0032 §8.3): a blocker RAG observed in one meeting cycle.
 import { blockerStatusRecordedV1 } from "./executive-decisions.ts";
+import { jobRunRequestedV1 } from "./job-operations.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -179,6 +180,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   // automation.failure_retry (apps/worker queues/automation.ts).
   "job.failed": { 1: jobFailedV1 },
   "automation_failure.retry_requested": { 1: automationFailureRetryRequestedV1 },
+  // T-DG5-BE-I2 (ADR-0043 §6): "run now" of a scheduled job; consumer jobs.run_now (apps/worker queues/automation.ts).
+  "job.run_requested": { 1: jobRunRequestedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

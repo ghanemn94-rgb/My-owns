@@ -18,3 +18,12 @@ export {
   type WorkingCalendar,
   type WorkingDayResult,
 } from "./working-days.ts";
+// P5 (ADR-0043 §6; T-DG5-BE-I2): the next run of a five-field cron in a time zone (the jobs operations view).
+export {
+  CRON_LOOKAHEAD_DAYS,
+  cronLocalParts,
+  cronMatchesLocal,
+  nextCronRun,
+  parseCron,
+  type CronSchedule,
+} from "./cron-next.ts";
