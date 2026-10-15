@@ -2857,6 +2857,60 @@ export function mapP5MethodologyReaderError(error: PgErrorLike): HttpProblem | n
   }
 }
 
+/**
+ * P5 slice H (T-DG5-BE-P; ADR-0048 §9): the 0086 launch_plan/launch_task guards a request can reach. The API refuses
+ * first under the launchPlan lock with the same codes (launch/plan.ts, tasks.ts, predecessors.ts); these are
+ * the database's last line. The template-identity guards are never reachable from a request (500).
+ *   launch_plan_transformation_key, launch_plan_idempotency_key -> 409 launch_plan.exists
+ *   launch_task_status_step                                      -> 422 launch_task.status_step
+ *   launch_task_completed_dates_fixed                            -> 422 launch_task.completed_dates_fixed
+ *   launch_task_output_record, launch_task_output_link           -> 422 launch_task.output_record_invalid
+ *   launch_task_predecessor_no_cycle, launch_task_predecessor_not_self -> 422 launch_task.predecessor_cycle
+ *   launch_task_predecessor_same_plan                            -> 422 launch_task.predecessor_other_plan
+ *   launch_plan_identity_fixed, launch_plan_shift_recorded, launch_task_identity_fixed, launch_task_template_match,
+ *   launch_task_created_not_started, launch_task_predecessor_immutable -> 500
+ */
+export function mapP5LaunchPlanError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "launch_plan_transformation_key":
+    case "launch_plan_idempotency_key":
+      return problems.duplicate("launch_plan.exists", "This transformation already has a 90-day launch plan.");
+    case "launch_task_status_step":
+      return problems.businessRule("launch_task.status_step", "This status change is not allowed for the task.");
+    case "launch_task_completed_dates_fixed":
+      return problems.businessRule(
+        "launch_task.completed_dates_fixed",
+        "A completed task keeps its dates; reopen it first.",
+      );
+    case "launch_task_output_record":
+    case "launch_task_output_link":
+      return problems.businessRule(
+        "launch_task.output_record_invalid",
+        "The output must be a record of the required type in this transformation.",
+      );
+    case "launch_task_predecessor_no_cycle":
+    case "launch_task_predecessor_not_self":
+      return problems.businessRule(
+        "launch_task.predecessor_cycle",
+        "This predecessor would make the tasks depend on each other in a loop.",
+      );
+    case "launch_task_predecessor_same_plan":
+      return problems.businessRule(
+        "launch_task.predecessor_other_plan",
+        "A predecessor must be a task of the same launch plan.",
+      );
+    case "launch_plan_identity_fixed":
+    case "launch_plan_shift_recorded":
+    case "launch_task_identity_fixed":
+    case "launch_task_template_match":
+    case "launch_task_created_not_started":
+    case "launch_task_predecessor_immutable":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -2878,6 +2932,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5PlaybookBlock !== null) return p5PlaybookBlock;
   const p5MethodologyReader = mapP5MethodologyReaderError(error); // P5 slice I (T-DG5-BE-Q2; ADR-0049 §6, §11)
   if (p5MethodologyReader !== null) return p5MethodologyReader;
+  const p5LaunchPlan = mapP5LaunchPlanError(error); // P5 slice H (T-DG5-BE-P; ADR-0048 §9)
+  if (p5LaunchPlan !== null) return p5LaunchPlan;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
