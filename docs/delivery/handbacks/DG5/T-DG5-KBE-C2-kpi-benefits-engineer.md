@@ -1,11 +1,43 @@
 # Handback T-DG5-KBE-C2 (kpi-benefits-engineer): the diagnostic, TOM, business-case, roadmap and gate-pack assemblers
 
+## Continuation run (T-DG5-KBE-C2B)
+
+- **This run:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-KBE-C2B-kpi-benefits-engineer-20261014T232612Z-6ee650c7","session_id":"6ee650c7-ce20-44ea-88bb-0bfc9ec5e019"}`.
+  - **Assignment:** `docs/delivery/assignments/DG5/T-DG5-KBE-C2B.md`. I verified sha256 `84bd593f…cf648d` at the start.
+  - **Time:** start `2026-10-14T23:26:26Z`, end `2026-10-15T00:26:49Z` (`date -u`, after the final Prettier check).
+- **Interrupted run:** `DG5-T-DG5-KBE-C2-kpi-benefits-engineer-20261014T214748Z-ee1c75f3` (session `ee1c75f3-998a-4b2e-8ac6-290a7a713cbb`). A container restart stopped it (exit 143) while it was writing this handback. The orchestrator committed its tree as WIP `4459ddf` on `dg5/kbe-c2` (D-147, D-151).
+- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` exited 0 at the start of this run (`PASS gate DG4 (historical)`, printed to the console). It exited 0 again at the end (`validate-dg4-historical-end-B.txt`).
+
+**What I found (handback compared with the tree):**
+
+1. Every file in §1 exists and ends cleanly; none is truncated. Each of the five assemblers ends with its `assemble` export, and both test files close their `describe`.
+   - `assembler.ts` has the five registry lines and imports, under the `// KBE-C2` comment.
+   - The test counts match the handback: 9 unit tests, 8 integration tests.
+   - The reads named in §2 are present: `presentCases`, `activeLinesOf`, `toBusinessCaseLine`, `loadCaseTotals`, `toDiagnosticItem`/`toDiagnosticFinding`, `toTomGap`/`toCapability` and `loadGateDefinitions`. `ENGINE_VERSION` is imported read-only from `@mth/shared/calc`.
+   - `assertBasesNeverMixed` is in the integration test.
+   - The computed-member fix of §8 item 2 is in: `business-cases.ts` has no `sections[…]`.
+2. The handback was incomplete. `__END__`, `__CHECKS__` and `__REMAINS__` were still placeholders. I have filled them in (§3, §9).
+3. The interrupted run's check logs are not evidence for the final tree:
+   - `business-cases.ts` changed at 22:31Z, after its `typecheck.txt`, `build.txt`, `lint.txt`, `openapi-lint.txt` and `prettier.txt` (22:14Z–22:19Z).
+   - Its last unit log, `unit-locale-unset.txt` (started 23:21Z), was cut off by the restart. It shows exit status pending and 1 failed test plus 1 error: `apps/api/src/architecture.test.ts` timed out at 30 s under load.
+   - Its run-2 log, `unit-locale-unset-run2-timeout-under-load.txt`, shows the same `architecture.test.ts` timeout. It also shows one `apps/web/src/pages/raid/raid.test.tsx` failure under load ("Unable to find role=\"link\" and name \"Synthetic call the vendor\"").
+   - Neither file is in my scope, and both pass in the `-B` runs below.
+   - Its `integration.txt` (230 files, 2232 tests, exit 0) ran on the tree after the 22:31Z change. I re-ran it anyway.
+   - All of these logs are kept unchanged for provenance and superseded by the `-B` logs.
+4. No part of §F.2 was left unimplemented. I made **no source change** in this run. The only changes are this handback and the `-B` logs.
+
+**What I re-ran on the final tree:** every acceptance check, one after another so that the runs did not load each other. The results are in §3, all with exit 0.
+
+## Original run (T-DG5-KBE-C2), corrected where no longer true
+
 - **Stage:** P5 / DG5 (BUILDING). Section: `docs/architecture/p5-work-split.md` §F.2.
 - **Invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-KBE-C2-kpi-benefits-engineer-20261014T214748Z-ee1c75f3","session_id":"ee1c75f3-998a-4b2e-8ac6-290a7a713cbb"}`.
 - **Assignment:** `docs/delivery/assignments/DG5/T-DG5-KBE-C2.md`. I verified sha256 `cda563ee…d824f` at the start.
-- **Base:** worktree `/home/user/wt/dg5-kbe-c2`, branch `dg5/kbe-c2`, `HEAD` `b8c9769` (D-150, W7 merged). Changes are left **uncommitted** for the orchestrator.
-- **Time:** start `2026-10-14T21:48:04Z` (`date -u`); end `__END__` (`date -u`).
-- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` exited 0 at the start (`PASS gate DG4 (historical)`; `T-DG5-KBE-C2-evidence/validate-dg4-historical-start.txt`) and at the end (§3).
+- **Base:** worktree `/home/user/wt/dg5-kbe-c2`, branch `dg5/kbe-c2`. The base is `b8c9769` (D-150, W7 merged).
+  - The orchestrator committed the interrupted run's work as WIP `4459ddf` after the restart.
+  - This continuation's changes (this handback and the `-B` logs) are left **uncommitted**.
+- **Time:** start `2026-10-14T21:48:04Z` (`date -u`). That run had no end time: it was stopped at about 23:2xZ.
+- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` exited 0 at the start (`PASS gate DG4 (historical)`; `T-DG5-KBE-C2-evidence/validate-dg4-historical-start.txt`). It exited 0 again at the end of the continuation (§3).
 - **Two gate systems.** A gate pack records what the product gate's evaluators and its decision say; it approves nothing. Product gates G1–G6 are business approvals inside the product, and nothing here reads or writes DG0–DG7. The G1 submission and Sponsor decision in the tests are synthetic demo actions that approve nothing real. All test data is synthetic.
 
 ## 1. Changed files
@@ -114,7 +146,26 @@ Environment:
 - Empty `.claude/.cc-writes` folders inside source folders were removed before the runs.
 - Four W8 tasks ran concurrently.
 
-__CHECKS__
+**Final results (continuation run T-DG5-KBE-C2B).** All checks ran on the final tree, which is WIP `4459ddf` plus this handback. They ran one after another. The `-B` logs are the evidence:
+
+| # | Command | Exit | Result | Log |
+|---|---|---|---|---|
+| 1 | `pnpm -r typecheck` | 0 | every package `Done` | `typecheck-B.txt` |
+| 1 | `pnpm -r build` | 0 | every package `Done` | `build-B.txt` |
+| 1 | `pnpm lint` (`eslint . --max-warnings=0`) | 0 | no output | `lint-B.txt` |
+| 1 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | 0 | "All matched files use Prettier code style!" in every batch | `prettier-B.txt` |
+| 1 | `pnpm openapi:lint` | 0 | `PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations` | `openapi-lint-B.txt` |
+| 2 | `pnpm test`, locale unset (`env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE`) | 0 | unit-node 106 files / 1894 tests passed; unit-web 72 / 1400 passed; unit-formula-nocodegen 3 / 259 passed, 2 skipped (261) | `unit-locale-unset-B.txt` |
+| 2 | `pnpm test`, `LANG=C.UTF-8 LC_ALL=C.UTF-8` | 0 | the same counts: 106/1894, 72/1400, 3/259 + 2 skipped | `unit-locale-c-utf8-B.txt` |
+| 3 | `QA_PG_PORT=23950 MTH_PORT_POOL=23951-23999 tests/qa/support/with-pg.sh pnpm test:integration` | 0 | 230 files / 2232 tests passed (PostgreSQL 16.13 on port 23950, first attempt; 1584.9 s), including `kbe-c2-assemblers.test.ts` (8 tests) | `integration-B.txt` |
+| 4 | `node tools/gates/validate.mjs --historical --stage DG4` | 0 | `PASS gate DG4 (historical)` | `validate-dg4-historical-end-B.txt` |
+
+- **Unit tests of this task:** `kbe-c2.test.ts`, 9/9, in both locales.
+- **Pinned counts:** no change. There is no media-type or rate-limit delta in `contract.test.ts`, and no other pinned count changed.
+- **Skips:** the 2 skipped tests in `unit-formula-nocodegen` are already skipped at the base. They are not mine.
+- **Failures:** there was no failed, flaky or timed-out test in any `-B` run.
+- **Earlier failures, disclosed in the continuation section:** the interrupted run's unit logs show load timeouts in `architecture.test.ts` and one `raid.test.tsx` failure under load. They did not recur.
+- **Superseded logs:** the original run's logs without `-B` are kept for provenance only.
 
 ## 4. Operations routed (delta to my pending list)
 
@@ -150,12 +201,20 @@ None found.
    - **Three were test mistakes:** `limit=200` above the routes' maximum of 100.
    - **One was a real defect:** an investment line without an amount was labelled `not_applicable` instead of Unknown, because an explicit n/a state also applied when the value was missing. Fixed with `presentState`: a missing amount is always Unknown. A unit test covers it.
    - **Re-run:** 8/8.
-2. First full `pnpm test` (locale unset), exit 1: 2 failures, `architecture.test.ts` and `reporting.test.ts`. The boundary scanner flagged `c.sections[field]` in `business-cases.ts`, a computed member with a non-literal key. I replaced it with accessor functions. Both files then pass (143/143), and the full rerun is in §3. The failed log is kept as `unit-locale-unset-run1-failed.txt`.
+2. First full `pnpm test` (locale unset), exit 1: 2 failures, `architecture.test.ts` and `reporting.test.ts`. The boundary scanner flagged `c.sections[field]` in `business-cases.ts`, a computed member with a non-literal key. I replaced it with accessor functions. Both files then pass (143/143), and the final runs are in §3. The failed log is kept as `unit-locale-unset-run1-failed.txt`.
+4. Two later full unit runs of the interrupted run failed under load, in files I did not touch:
+   - `unit-locale-unset-run2-timeout-under-load.txt`: an `architecture.test.ts` 30 s timeout and a `raid.test.tsx` failure.
+   - `unit-locale-unset.txt`: the same timeout. The restart cut this log off.
+   - Neither recurred in the continuation's `-B` runs, which ran one after another (§3).
 3. My first attempt to start the integration run in the background exited at once without running any test: the job was started with `&` inside an already-backgrounded shell, and it ended with that shell. It was restarted properly; the result is in §3.
 
 ## 9. What remains
 
-__REMAINS__
+- §F.2 is complete in code and tests. There is no separable second half.
+- **REQ-S13-004** completes with KBE-D2 (`meeting_minutes`, `executive_dashboard`, `handover`) and FE-E (generate screens).
+- **REQ-S13-008** completes with BE-M/BE-N (labels in the files) and FE-E.
+- **i18n keys:** the en/ar texts for the `report.diagnostic.*`, `report.tom.*`, `report.business_cases.*`, `report.roadmap.*`, `report.gate_pack.*`, `report.gate_criterion.*` and `report.formula_validation.*` keys belong to FE-E (web) and BE-N (export label table) (§6 item 5, §F.11 item 10).
+- **Optional port requests for the orchestrator:** §5 items 1 and 2. Neither blocks this task.
 
 ## 10. Merge instructions
 
