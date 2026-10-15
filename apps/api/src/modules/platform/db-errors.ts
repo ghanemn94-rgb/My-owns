@@ -3050,6 +3050,54 @@ export function mapP5FinancialMetricError(error: PgErrorLike): HttpProblem | nul
   }
 }
 
+/**
+ * P5 slice H (T-DG5-KBE-G; ADR-0048 §6, §9): the 0086 health-check scheme guards a Studio request can reach. The kind
+ * provider (health/provider.ts) refuses first with the same codes (element edits, preview, compatibility); these
+ * answer the publish guard `health_scheme_publish_guard` (it raises the `p5_health_scheme_problem` result as its
+ * constraint name) and the element guard's two health rules, reached only in a race or by a programming error.
+ *   health_scheme_definition                         -> 422 health_scheme.definition_invalid (proposed; no §9 row)
+ *   health_scheme_yes_no_required                    -> 422 health_scheme.yes_no_required
+ *   health_scheme_credit, methodology_element_health_credit -> 422 health_scheme.credit_invalid
+ *   health_scheme_na_needs_percent                   -> 422 health_scheme.na_needs_percent
+ *   health_scheme_bands_invalid, methodology_element_health_band -> 422 health_scheme.bands_invalid
+ *   health_scheme_own_bands_required                 -> 422 health_scheme.own_bands_required
+ */
+export function mapP5HealthSchemeError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "health_scheme_definition":
+      return problems.businessRule(
+        "health_scheme.definition_invalid",
+        "A scheme's definition needs a score basis (points or percent of the applicable questions) and 25 questions.",
+      );
+    case "health_scheme_yes_no_required":
+      return problems.businessRule("health_scheme.yes_no_required", "A scheme keeps Yes = 1 and No = 0.");
+    case "health_scheme_credit":
+    case "methodology_element_health_credit":
+      return problems.businessRule(
+        "health_scheme.credit_invalid",
+        "Partial credit is a decimal between 0 and 1; N/A has no credit.",
+      );
+    case "health_scheme_na_needs_percent":
+      return problems.businessRule(
+        "health_scheme.na_needs_percent",
+        "A scheme with N/A scores as a percentage of the applicable questions.",
+      );
+    case "health_scheme_bands_invalid":
+    case "methodology_element_health_band":
+      return problems.businessRule(
+        "health_scheme.bands_invalid",
+        "Bands need one band starting at 0 and distinct starting scores within the maximum score.",
+      );
+    case "health_scheme_own_bands_required":
+      return problems.businessRule(
+        "health_scheme.own_bands_required",
+        "A scheme with partial credit or N/A needs its own interpretation bands; the four source bands cannot be reused.",
+      );
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3079,6 +3127,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5KpiRestatement !== null) return p5KpiRestatement;
   const p5FinancialMetric = mapP5FinancialMetricError(error); // P5 slice G (T-DG5-KBE-F; ADR-0047 §8)
   if (p5FinancialMetric !== null) return p5FinancialMetric;
+  const p5HealthScheme = mapP5HealthSchemeError(error); // P5 slice H (T-DG5-KBE-G; ADR-0048 §9)
+  if (p5HealthScheme !== null) return p5HealthScheme;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

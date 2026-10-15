@@ -44,7 +44,7 @@ import { pinNewTransformationToForms, registerFormsModule } from "./modules/form
 // T-DG5-BE-H (ADR-0043 §2): the AutomationActionRegistry port and the action descriptors of their owning modules.
 import { createAutomationActionRegistry, setAutomationActionRegistry } from "./modules/automation/registry.ts";
 import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
-import { registerHealthModule } from "./modules/health/index.ts";
+import { registerHealthCheckSchemeProvider, registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
 import { launchPlanGenerator } from "./modules/launch/port.ts";
 import { registerLaunchPlanPort } from "./modules/automation/ports/launch-plan.ts";
@@ -394,6 +394,7 @@ export async function buildServer(options: ServerOptions): Promise<{
   // version in its create transaction (DG1-DG4 transformations stay unpinned and read forms v1).
   registerTransformationInitializer("forms.pin", pinNewTransformationToForms);
   registerLaunchPlanPort(launchPlanGenerator); // T-DG5-BE-P (ADR-0044 §1, ADR-0048 §1): the S12-004 LaunchPlanPort of the API process
+  registerHealthCheckSchemeProvider(); // T-DG5-KBE-G (ADR-0048 §6): the health_check_scheme kind provider (default key health-check)
   // T-DG5-BE-H: the registry line; each action owner adds one registration line below it (BE-J: launch_procedure).
   const automationActions = createAutomationActionRegistry();
   for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)
