@@ -143,3 +143,5 @@ export * from "./dependency-slips.ts";
 export * from "./approval-routes.ts";
 // P5 slice E (T-DG5-BE-L; ADR-0044 §5): notification preferences, policy and digests, and the pure delivery decision.
 export * from "./notifications.ts";
+// P5 slice F (T-DG5-KBE-D; ADR-0045 §6, §11; p5-work-split §F.3): structured owner updates and their revisions.
+export * from "./owner-updates.ts";

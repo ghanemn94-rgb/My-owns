@@ -44,6 +44,8 @@ import { registerOwnerUpdateRoutes } from "./updates.ts"; // P5 KBE-D (stub by T
 import { registerDependencySlipRoutes } from "./dependency-slips.ts"; // P5 T-DG5-BE-J (ADR-0044 §7)
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
+// P5 KBE-D (ADR-0045 §6): the executive pack reads the submitted owner updates of a period through this service.
+export { ownerUpdateDueKey, submittedUpdatesOfPeriod } from "./updates.ts";
 // The gate annotation's inherited approvals (ADR-0021 §5; F-DG3-120): the third member of the GateFactsProvider.
 export { loadInheritedApprovalFacts } from "./dispensations.ts";
 export { t08ScheduleFlags } from "./roadmap.ts";

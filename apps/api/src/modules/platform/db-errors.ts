@@ -2752,6 +2752,37 @@ export function mapP5ReportError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P5 slice F (T-DG5-KBE-D; ADR-0045 §6, §11): the 0080 owner-update guards a request can reach in a race (the API
+ * refuses first: it checks the subject, the period and the state under the row lock and a shared lock on the period,
+ * but a concurrent create can still pass the existence check first). Every other owner_update guard is refused by the
+ * API first, so reaching it is a programming error (500).
+ *   owner_update_subject_period_key                          -> 409 owner_update.exists
+ *   owner_update_period_open                                 -> 422 owner_update.period_not_open
+ *   owner_update_submitted_frozen                            -> 422 owner_update.not_draft
+ *   owner_update_submitted_has_content                       -> 422 owner_update.empty
+ */
+export function mapP5OwnerUpdateError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "owner_update_subject_period_key":
+      return problems.duplicate(
+        "owner_update.exists",
+        "An update for this subject and reporting period already exists.",
+      );
+    case "owner_update_period_open":
+      return problems.businessRule(
+        "owner_update.period_not_open",
+        "Updates can be written only while their reporting period is open.",
+      );
+    case "owner_update_submitted_frozen":
+      return problems.businessRule("owner_update.not_draft", "Only a draft update can be changed or submitted.");
+    case "owner_update_submitted_has_content":
+      return problems.businessRule("owner_update.empty", "Write at least one of the eight fields before submitting.");
+    default:
+      return null;
+  }
+}
+
+/**
  * P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4): the 0089 guards of the playbook catalogue seeded by 0092. mth_app holds
  * SELECT only on playbook_block and playbook_block_link, and the reader never writes, so reaching one of these is a
  * programming error (500), never a user-facing refusal:
@@ -2785,6 +2816,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Automation !== null) return p5Automation;
   const p5Report = mapP5ReportError(error); // P5 slice F (T-DG5-KBE-C; ADR-0045 §11)
   if (p5Report !== null) return p5Report;
+  const p5OwnerUpdate = mapP5OwnerUpdateError(error); // P5 slice F (T-DG5-KBE-D; ADR-0045 §11)
+  if (p5OwnerUpdate !== null) return p5OwnerUpdate;
   const p5PlaybookBlock = mapP5PlaybookBlockError(error); // P5 slice I (T-DG5-BE-Q; ADR-0049 §1, §4)
   if (p5PlaybookBlock !== null) return p5PlaybookBlock;
   if (constraint.endsWith("_version_step"))
