@@ -137,3 +137,5 @@ export * from "./procedures.ts";
 export * from "./report.ts";
 // P5 slice E (T-DG5-BE-J; ADR-0044 §7): the critical dependency slip response mirrors.
 export * from "./dependency-slips.ts";
+// P5 slice F (T-DG5-KBE-D; ADR-0045 §6, §11; p5-work-split §F.3): structured owner updates and their revisions.
+export * from "./owner-updates.ts";
