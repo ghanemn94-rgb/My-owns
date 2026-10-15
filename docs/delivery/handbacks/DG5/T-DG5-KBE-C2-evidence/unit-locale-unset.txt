@@ -1,0 +1,326 @@
+
+> mobily-transformation-hub@0.1.0 test /home/user/wt/dg5-kbe-c2
+> s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-c2
+
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (41 tests) 8946ms
+   ✓ kpi module (P2) > registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B, the P4 KBE-C and the ARCH-R1 operations, and reports them  374ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  8249ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 37145ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  5709ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  5472ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  16274ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  6564ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  2976ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 5911ms
+   ✓ workflows module (P2) > registers its routes, each declaring access; every mutation declares a write permission  466ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  5430ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 5344ms
+   ✓ reporting module (P1 scaffold, D-048) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  5261ms
+ ❯ |unit-node| apps/api/src/architecture.test.ts (139 tests | 1 failed) 60675ms
+   ✓ API module boundaries (ADR-0002) > has only mapped module directories, and every P1/P2 module has a public index.ts 3ms
+   ✓ API module boundaries (ADR-0002) > the P2 modules methodology and evidence each have their own test suite (p2-work-split §2) 0ms
+   ✓ API module boundaries (ADR-0002) > the P3 module portfolio has its own test suite and exactly the ADR-0021 §1 dependencies (p3-work-split §2) 14ms
+   ✓ API module boundaries (ADR-0002) > the P4 modules exist, each with its own test suite, and only governance imports workflows (p4-plan §2) 10ms
+   ✓ API module boundaries (ADR-0002) > the P5 modules exist, each with its own test suite; methodology imports none of them (p5-plan §2, §3 seam 24) 23ms
+   ✓ API module boundaries (ADR-0002) > workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle) 0ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048)  374ms
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 39399ms
+     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ API module boundaries (ADR-0002) > the declared module graph is acyclic, and audit/access depend on no business module 8ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A static deep import is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A2 type-only deep import is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > B dynamic import, literal is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > B2 dynamic import, template literal is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > C re-export is a violation 26ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D createRequire is a violation 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D2 node:module itself is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > D3 createRequire via namespace is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > E computed import() is a violation 7ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > E2 computed import() via variable is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F require literal is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F2 require computed is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > G import-equals require is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > H import type() is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > I composition root is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > J undeclared module (via its index) is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > K unknown package is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L getBuiltinModule + computed member is a violation 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L2 computed member of process is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L3 loader name as a string key is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L4 process aliased is a violation 3ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L5 process destructured is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L6 computed member of globalThis is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > L7 globalThis.process is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M new Function dynamic import is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M2 Function() call is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M3 Function aliased is a violation 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M4 globalThis.Function is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M5 eval is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M6 AsyncFunction via .constructor is a violation 3ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M7 ['constructor'] member is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N1 AsyncFunction via aliased .constructor is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N2 constructor destructured is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N3 Reflect.construct of .constructor is a violation 69ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N4 getPrototypeOf(...).constructor aliased is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N5 generator constructor, shorthand destructuring is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N6 destructuring assignment with a string key is a violation 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N7 computed constructor key in a binding pattern is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > N8 constructor key as a string value is a violation 7ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M8 node:vm is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > M9 worker_threads is a violation 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P1 constructed key f["constr" + "uctor"] is a violation (round-4 lint: 'missed') 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P2 Reflect.get(fn, "constructor") is a violation (round-4 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P3 Reflect.get with a constructed key is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P4 constructed key held in a variable is a violation (round-4 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P5 template-literal key is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P6 optional-chain constructed key is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P7 constructed key in a destructuring pattern is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P8 descriptors: the constructor without its name is a violation (round-4 lint: 'missed') 8ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P9 own property names, then a variable key is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P10 __proto__ is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P11 loader name as a string handed to a helper is a violation (round-4 lint: 'missed') 18ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P12 process.binding is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P13 node:inspector (in-process evaluation) is a violation (round-4 lint: 'missed') 43ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P14 node:child_process is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P15 look-alike member o.eval (was an allowed form) is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P16 constructor as an object key, fed to a keyed reader (was an allowed form) is a violation (round-4 lint: 'missed') 3ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X6 node:process default import .dlopen is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X7 node:process default import .binding is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > X8 node:process named import dlopen is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > A1 node:sqlite loadExtension is a violation (round-4 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R1 node:test in-process run is a violation (round-4 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > R2 process.execve is a violation (round-4 lint: 'missed') 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P17 module.constructor is a violation (round-4 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P18 aliased AsyncFunction constructor (F-DG1-121 N1) is a violation (round-4 lint: 'caught') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P19 new Function (F-DG1-117 M) is a violation (round-4 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > S1 crypto.setEngine (named import) is a violation (round-9 lint: 'missed') 5ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > S2 crypto.setEngine (namespace import) is a violation (round-9 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > S3 crypto["setEngine"] (string key) is a violation (round-9 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD1 process.kill(self, SIGUSR1) starts the inspector (F-DG1-129 N1) is a violation (default-deny; round-8 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD2 process._debugProcess(self) (F-DG1-129 N2 / F-DG1-213 D2) is a violation (default-deny; round-8 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD3 process._kill is a violation (default-deny; round-8 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD4 F-DG1-213 D1 full route as module source is a violation (default-deny; round-8 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD5 process.execve is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD6 process.binding is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD7 process.dlopen is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD8 process.abort is a violation (default-deny; round-8 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD9 optional-chained process?.kill is a violation (default-deny; round-8 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD10 node:inspector is a violation (default-deny; round-8 lint: 'caught') 16ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD11 node:inspector/promises is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD12 node:sqlite is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD13 node:test is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD14 node:vm is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD15 node:worker_threads is a violation (default-deny; round-8 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD16 node:wasi is a violation (default-deny; round-8 lint: 'missed') 14ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD17 node:v8 is a violation (default-deny; round-8 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD18 node:http is a violation (default-deny; round-8 lint: 'missed') 3ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD19 node:net is a violation (default-deny; round-8 lint: 'missed') 3ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > DD20 a built-in a later Node version might add is a violation (default-deny; round-8 lint: 'missed') 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > default-deny keeps the allow-listed built-ins and process members clean (D-055 positive controls) 7ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: E1 Object.values(ns).find by fn.name is a violation (round-11 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: E2 new Map(Object.entries(ns)).get(built key) is a violation (round-11 lint: 'missed') 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: E3 Object.entries(ns).find by regex over keys is a violation (round-11 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: E4 for-of over Object.entries(default binding) is a violation (round-11 lint: 'missed') 6ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: E5 dynamic import() then enumerate is a violation (round-11 lint: 'missed') 8ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N1 namespace import is a violation (round-11 lint: 'missed') 3ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N2 default import is a violation (round-11 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N3 default + named import is a violation (round-11 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N4 named default import is a violation (round-11 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N5 export star is a violation (round-11 lint: 'missed') 97ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N6 export star as is a violation (round-11 lint: 'missed') 5ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N7 re-export default is a violation (round-11 lint: 'missed') 5ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N8 import-equals require is a violation (round-11 lint: 'missed') 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N9 dynamic import() literal is a violation (round-11 lint: 'missed') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-132/133 rule 5: N10 require() literal is a violation (round-11 lint: 'caught') 1ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-130/132: named node:crypto imports and their members stay allowed (positive control) 7ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-133: enumerating a PLAIN object stays allowed (identity/routes.ts, access/rules.ts idiom) 7ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 5 applies only to node:crypto: namespace/default imports of other allow-listed built-ins stay allowed 2ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > allowed forms stay clean (public index of a declared dependency, shared packages, own files) 8ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > a module's own test may read the module map and the lint, but its runtime files may not 11ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > T-DG4-BE-R3 (ADR-0032 amendment G1): governance may import raid; raid may never import governance (a cycle) 17ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > a scaffold may not reach a business module it does not declare (reporting -> workflows) 31ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: walk() collects every buildable JS/TS file (.[cm]?[jt]sx?), incl. nested ones, and no other file 27ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end  369ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations 10ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed 147ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules 187ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-135: zz.test.mts importing ../../modules.ts or vitest is a violation; zz.test.ts doing so is allowed 32ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-143: test-only packages (ajv, ajv-formats, yaml) are violations in module source, allowed only in *.test.ts 134ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked 8ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing 90ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end 35ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-217: a planted .d.ts in a module directory is walked and linted end to end without throwing 111ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > scanSource reports what it saw (paths resolve relative to the planted file) 1ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1147ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/config imports only @mth/shared 57ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  4558ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  12430ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  877ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 4641ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  1994ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  1368ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  622ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  524ms
+ ✓ |unit-node| packages/shared/src/kpi/property.test.ts (11 tests) 4327ms
+   ✓ RAG > higher-is-better: a lower actual never gives a better RAG (monotonic), relative and absolute  305ms
+   ✓ changes > pp = (x₁ − x₀) × 100 exactly, and relative × |x₀| = x₁ − x₀ (to precision 80)  813ms
+   ✓ trajectory > linear expected values lie between the neighbouring points; step values are point values  1656ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 4723ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  4646ms
+ ✓ |unit-node| packages/shared/src/forms/property.test.ts (6 tests) 3667ms
+   ✓ property: no float on any path > number values round-trip exactly through validation and JSON (3000 cases, seed 389297)  660ms
+   ✓ property: no float on any path > currency amounts round-trip exactly, e.g. 1500000.10 SAR (3000 cases)  523ms
+   ✓ property: percentages are stored as fractions > "p%" and typed "p" store p / 100; the API fraction stores itself (3000 cases)  1145ms
+   ✓ property: percentages are stored as fractions > a percentage whose fraction needs more than 6 decimals is refused, never rounded (3000 cases)  531ms
+   ✓ property: Arabic-Indic digits are refused (the DG3 decimal rule) > any Arabic-Indic digit makes a number refused with validation.decimal (3000 cases)  536ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts (36 tests) 1595ms
+   ✓ property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation > stored value, 2-digit display and 0–100 view all match for 3125 combinations  1499ms
+ ✓ |unit-node| packages/shared/src/adoption/measures.test.ts (24 tests) 1444ms
+   ✓ properties (seeded) > never 0 for an empty denominator: Unknown with value null exactly when the denominator is 0  743ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 2122ms
+   ✓ evidence module (P2) > its declared boundary holds  1809ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/areas.test.ts (35 tests) 1828ms
+   ✓ combine (ADR-0037 §3 precedence) > property: Unknown or Stale inputs never combine to green, and the result is one of the inputs' ranks (2000 seeded sets)  1040ms
+   ✓ Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, D-119) > property: per currency and basis, the decimal sum of the basis's contributing lines equals its headline (300 seeded sets)  346ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 611ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 525ms
+ ✓ |unit-node| packages/config/src/load.test.ts (29 tests) 280ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 1269ms
+   ✓ blank free text (F-DG2-150) > invisible-only U+16FE4 KHITAN SMALL SCRIPT FILLER, alone and repeated, is blank and not present (F-DG2-160)  306ms
+ ✓ |unit-node| packages/shared/src/forms/validate.test.ts (103 tests) 33ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 666ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts (140 tests) 402ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 448ms
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow)  325ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (15 tests) 207ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 116ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts (12 tests) 426ms
+   ✓ F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG is the worst of them (N4 item 1) > property: the RAG is combine(every basis line), each line is its own basis's exact gap, never a cross-basis sum (500 seeded sets)  343ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (52 tests) 273ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 586ms
+ ✓ |unit-node| apps/api/src/modules/raid/raid.test.ts (7 tests) 90ms
+ ✓ |unit-node| apps/api/src/modules/tasks/tasks.test.ts (5 tests) 72ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 105ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 159ms
+ ✓ |unit-node| apps/api/src/modules/governance/governance.test.ts (2 tests) 200ms
+ ✓ |unit-node| apps/api/src/modules/sustainment/sustainment.test.ts (2 tests) 138ms
+(node:728) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 169ms
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (4 tests) 166ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts (22 tests) 40ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 73ms
+ ✓ |unit-node| tests/qa/unit/a05-calc-units.test.ts (15 tests) 95ms
+ ✓ |unit-node| packages/shared/src/kpi/rag.test.ts (38 tests) 67ms
+ ✓ |unit-node| apps/api/src/modules/health/health.test.ts (2 tests) 26ms
+ ✓ |unit-node| packages/shared/src/kpi/purity.test.ts (14 tests) 41ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 104ms
+ ✓ |unit-node| apps/api/src/modules/benefits/benefits.test.ts (2 tests) 87ms
+ ✓ |unit-node| apps/api/src/modules/benefits/register-rules.test.ts (45 tests) 66ms
+ ✓ |unit-node| packages/shared/src/time/working-days.test.ts (19 tests) 188ms
+ ✓ |unit-node| apps/api/src/modules/procedures/definitions.test.ts (8 tests) 200ms
+ ✓ |unit-node| packages/shared/src/schedule/critical-path.test.ts (13 tests) 32ms
+ ✓ |unit-node| apps/api/src/modules/automation/automation.test.ts (2 tests) 252ms
+ ✓ |unit-node| packages/shared/src/kpi/a05.test.ts (17 tests) 82ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 25ms
+ ✓ |unit-node| apps/api/src/modules/benefits/totals.test.ts (15 tests) 919ms
+   ✓ REQ-S16-025: decimal arithmetic (D01, D02) > rounding happens once, at presentation, half up  559ms
+   ✓ computeTotals (ADR-0030 §7) > REQ-PB-058: a shared benefit is summed once; excluded benefits are listed and never summed  321ms
+ ✓ |unit-node| apps/api/src/modules/forms/forms.test.ts (2 tests) 41ms
+ ✓ |unit-node| packages/shared/src/governance/recurrence.test.ts (19 tests) 42ms
+ ✓ |unit-node| apps/api/src/modules/adoption/adoption.test.ts (2 tests) 90ms
+ ✓ |unit-node| apps/api/src/modules/launch/launch.test.ts (2 tests) 43ms
+ ✓ |unit-node| apps/api/src/modules/methodology/studio-core.test.ts (7 tests) 27ms
+ ✓ |unit-node| apps/api/src/modules/automation/content.test.ts (8 tests) 13ms
+ ✓ |unit-node| packages/shared/src/forms/normalize.test.ts (18 tests) 210ms
+ ✓ |unit-node| packages/shared/src/forms/field-types.test.ts (39 tests) 151ms
+ ✓ |unit-node| packages/shared/src/schemas/missing-links.test.ts (10 tests) 13ms
+ ✓ |unit-node| packages/shared/src/kpi/types.test.ts (40 tests) 49ms
+ ✓ |unit-node| apps/api/src/modules/procedures/procedures.test.ts (2 tests) 57ms
+ ✓ |unit-node| packages/shared/src/schemas/scoring-defaults.test.ts (12 tests) 27ms
+ ✓ |unit-node| packages/shared/src/kpi/aggregate.test.ts (20 tests) 72ms
+ ✓ |unit-node| apps/api/src/modules/kpi/p3-gate-facts.test.ts (9 tests) 23ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 44ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/budget.test.ts (13 tests) 78ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/k1-value-class.test.ts (7 tests) 54ms
+ ✓ |unit-node| packages/shared/src/kpi/measures.test.ts (30 tests) 37ms
+ ✓ |unit-node| packages/shared/src/schedule/working-day-slip.test.ts (11 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/kpi/formulas.test.ts (10 tests) 202ms
+ ✓ |unit-node| apps/api/src/modules/benefits/d2-rules.test.ts (15 tests) 37ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/provisional.test.ts (22 tests) 37ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/sequencing.test.ts (9 tests) 15ms
+ ✓ |unit-node| packages/shared/src/schemas/report.test.ts (6 tests) 57ms
+ ✓ |unit-node| packages/shared/src/schemas/roadmap.test.ts (6 tests) 11ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts (26 tests) 136ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 35ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts (22 tests) 53ms
+ ✓ |unit-node| apps/api/src/modules/raid/corrective.test.ts (4 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/schedule.test.ts (14 tests) 59ms
+ ✓ |unit-node| apps/api/src/modules/workflows/g4.test.ts (5 tests) 23ms
+ ✓ |unit-node| packages/shared/src/adoption/form-schema.test.ts (8 tests) 57ms
+ ✓ |unit-node| apps/api/src/modules/kpi/totals.test.ts (20 tests) 59ms
+ ✓ |unit-node| packages/shared/src/kpi/status.test.ts (25 tests) 11ms
+ ✓ |unit-node| packages/shared/src/kpi/trajectory.test.ts (14 tests) 82ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5.test.ts (3 tests) 24ms
+ ✓ |unit-node| packages/shared/src/kpi/periods.test.ts (26 tests) 84ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-c2.test.ts (9 tests) 22ms
+ ✓ |unit-node| apps/api/src/modules/workflows/t08-cycle-problem.test.ts (2 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kbe-c.test.ts (9 tests) 21ms
+ ✓ |unit-node| packages/shared/src/schemas/corrective.test.ts (10 tests) 50ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4.test.ts (5 tests) 26ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts (12 tests) 23ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 32ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/capacity.test.ts (4 tests) 34ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-reports.test.ts (3 tests) 23ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 43ms
+ ✓ |unit-node| apps/api/src/modules/methodology/source-coverage.test.ts (1 test) 8ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/automation/conditions.test.ts (4 tests) 21ms
+ ✓ |unit-node| apps/api/src/modules/methodology/compatibility.test.ts (3 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/readiness-transform.test.ts (4 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/governance/raci.test.ts (2 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ apps/api/src/architecture.test.ts:200:3
+    198|   // F-DG2-143: this walks and lints every module file (~1-1.5 s alone…
+    199|   // explicit timeout instead of vitest's 5 s default.
+    200|   it(
+       |   ^
+    201|     "every import respects dependsOn, public surfaces and allowed pack…
+    202|     () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-worker]: Timeout calling "onTaskUpdate"
+ ❯ Object.onTimeoutError node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10
+ ❯ Timeout._onTimeout node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62
+ ❯ listOnTimeout node:internal/timers:585:17
+ ❯ processTimers node:internal/timers:521:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 105 passed (106)
+      Tests  1 failed | 1893 passed (1894)
+     Errors  1 error
+   Start at  23:21:00
+   Duration  198.12s (transform 16.87s, setup 0ms, collect 283.94s, tests 154.08s, environment 72ms, prepare 39.21s)
+
