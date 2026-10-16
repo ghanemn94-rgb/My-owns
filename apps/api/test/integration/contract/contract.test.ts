@@ -119,6 +119,7 @@ import { exerciseP5BeCOperations, P5_MIRRORS_BE_C } from "./p5-exercises-be-c.ts
 import { exerciseP5KbeAOperations, P5_MIRRORS_KBE_A } from "./p5-exercises-kbe-a.ts";
 import { exerciseP5BeDOperations, P5_MIRRORS_BE_D } from "./p5-exercises-be-d.ts";
 import { exerciseP5BeEOperations, P5_MIRRORS_BE_E } from "./p5-exercises-be-e.ts";
+import { exerciseP5BeE2Operations, P5_MIRRORS_BE_E2 } from "./p5-exercises-be-e2.ts"; // T-DG5-BE-E2
 import { exerciseP5BeFOperations, P5_MIRRORS_BE_F } from "./p5-exercises-be-f.ts";
 import { exerciseP5BeF2Operations, P5_MIRRORS_BE_F2 } from "./p5-exercises-be-f2.ts";
 import { exerciseP5BeGOperations, P5_MIRRORS_BE_G } from "./p5-exercises-be-g.ts";
@@ -337,6 +338,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_KBE_A,
   ...P5_MIRRORS_BE_D,
   ...P5_MIRRORS_BE_E,
+  ...P5_MIRRORS_BE_E2, // T-DG5-BE-E2
   ...P5_MIRRORS_BE_F,
   ...P5_MIRRORS_BE_F2,
   ...P5_MIRRORS_BE_G,
@@ -721,6 +723,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 BE-E operations (p5-exercises-be-e.ts)", async () => {
     await exerciseP5BeEOperations(p3());
   });
+  it("P5 BE-E2 operations (p5-exercises-be-e2.ts)", async () => {
+    await exerciseP5BeE2Operations(p3());
+  });
   it("P5 BE-F operations (p5-exercises-be-f.ts)", async () => {
     await exerciseP5BeFOperations(p3());
   });
@@ -941,8 +946,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // (5 JSON bodies; the other four are GETs). T-DG5-BE-C2: none. Sum (D-156): 370 + 1 + 4 + 5 = 380.
     // T-DG5-KBE-E2: + decideKpiRestatement (1 JSON body; listKpiRestatementReissueOffers is a GET). 380 + 1 = 381.
     // T-DG5-BE-P2: + putDayNinetyResponse (1 JSON body; getDayNinetyTest is a GET, completeDayNinetyTest is bodiless).
-    // 381 + 1 = 382 (the orchestrator reconciles the concurrent W13 deltas, D-079).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([382, 381, 1]);
+    // T-DG5-BE-E2: + bulkUpdateFormRecords, createFormDraft, updateFormDraft, closeFormDraft (4 JSON bodies;
+    // exportFormRecords, listFormDrafts and getFormDraft are GETs). 381 + 4 = 385.
+    // Sum (D-159): 381 + 1 (BE-P2) + 4 (BE-E2) + 0 (KBE-D2, BE-O) = 386.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([386, 385, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

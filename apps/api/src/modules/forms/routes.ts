@@ -3,8 +3,11 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
 import { registerFormAttachmentRoutes } from "./attachments.ts";
+import { registerFormBulkRoutes } from "./bulk.ts";
 import { registerFormCommentRoutes } from "./comments.ts";
 import { registerCustomValueRoutes } from "./custom-values.ts";
+import { registerFormDraftRoutes } from "./drafts.ts";
+import { registerFormExportRoutes } from "./export.ts";
 import { registerFormHistoryRoutes } from "./history.ts";
 import { registerFormsKindProvider } from "./provider.ts";
 import { registerFormSchemaReadRoutes } from "./schema-reads.ts";
@@ -19,6 +22,8 @@ export function registerFormRoutes(app: FastifyInstance, deps: ModuleDeps): stri
     ...registerFormHistoryRoutes(app, deps), // T-DG5-BE-E: listFormRecordVersions
     ...registerFormCommentRoutes(app, deps), // T-DG5-BE-E: listFormRecordComments, createFormRecordComment
     ...registerFormAttachmentRoutes(app, deps), // T-DG5-BE-E: listFormRecordAttachments, attachFormRecordEvidence, removeFormRecordAttachment
-    // BE-E2 (export, bulk, drafts) registers here.
+    ...registerFormExportRoutes(app, deps), // T-DG5-BE-E2: exportFormRecords
+    ...registerFormBulkRoutes(app, deps), // T-DG5-BE-E2: bulkUpdateFormRecords
+    ...registerFormDraftRoutes(app, deps), // T-DG5-BE-E2: listFormDrafts, createFormDraft, getFormDraft, updateFormDraft, closeFormDraft
   ];
 }
