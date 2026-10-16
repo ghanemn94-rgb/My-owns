@@ -332,6 +332,29 @@ export function sendCreated<B extends { id: string; version: number }>(
   return sendVersioned(reply, result.status, result.body, `${base}/${result.body.id}`);
 }
 
+// T-DG5-BE-E2 (ADR-0041 §5 "Bulk editing where suitable"; p5-work-split §B.4): each register's own update function,
+// exposed to the forms module's all-or-nothing bulk edit. registerRegister records the PATCH's update core under the
+// register's table, so a bulk item goes through exactly the same gates, validation, checks, version step, audit event
+// and follow-up writes as a single PATCH, inside the caller's transaction. The PATCH route itself is unchanged.
+/** One update through a register's own update function (the bulk edit's input; `body` is the PATCH body). */
+export interface RegisterUpdateInput {
+  readonly transformationId: string;
+  readonly recordId: string;
+  readonly expectedVersion: number;
+  readonly body: unknown;
+}
+/** A register's update function: runs in `tx` and returns the record's new version. */
+export type RegisterUpdater = (
+  tx: Tx,
+  request: FastifyRequest,
+  input: RegisterUpdateInput,
+) => Promise<{ id: string; version: number }>;
+const REGISTER_UPDATERS = new Map<string, RegisterUpdater>();
+/** The update function of the register stored in `table`, when that register is served by this kit. */
+export function registerUpdaterOf(table: string): RegisterUpdater | undefined {
+  return REGISTER_UPDATERS.get(table);
+}
+
 /** Registers the register's routes on the app. Returns "METHOD path" strings for the module registration. */
 export function registerRegister<Row extends RegisterRow, Api extends { id: string; version: number }>(
   app: FastifyInstance,
@@ -481,8 +504,13 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
     });
     return { ctx, seen };
   };
-  const finishLock = async (tx: Tx, request: FastifyRequest, params: ReadonlyMap<string, string>) => {
-    const expected = requireIfMatch(request);
+  const finishLock = async (
+    tx: Tx,
+    request: FastifyRequest,
+    params: ReadonlyMap<string, string>,
+    expectedVersion: () => number = () => requireIfMatch(request),
+  ) => {
+    const expected = expectedVersion();
     const current = await findRow(tx, params, true);
     if (!current) throw problems.notFound();
     if (current.version !== expected) throw problems.versionConflict(current.version);
@@ -491,47 +519,78 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
     return current;
   };
 
+  /** The update core of the PATCH (and of a bulk item, T-DG5-BE-E2): gates, validation, lock, checks, write, audit. */
+  const updateRow = async (
+    tx: Tx,
+    request: FastifyRequest,
+    params: ReadonlyMap<string, string>,
+    rawBody: unknown,
+    expectedVersion?: () => number,
+  ): Promise<Row> => {
+    const { ctx } = await lockForChange(tx, request, params, spec.updateRules ?? spec.writeRules);
+    const body = parseBody(spec.updateSchema, rawBody) as LooseRow;
+    const current = await finishLock(tx, request, params, expectedVersion);
+    const changes = spec.updateValues(body as never, current, ctx);
+    const nextStatus = new Map(Object.entries(changes)).get("status");
+    if (nextStatus !== undefined && nextStatus !== current.status) {
+      if (nextStatus === "archived")
+        throw problems.invalidTransition("Use the archive operation (a reason is mandatory) to archive a record.");
+      const allowed = spec.transitions?.get(String(current.status)) ?? [];
+      if (!allowed.includes(String(nextStatus)))
+        throw problems.invalidTransition(
+          `The record cannot move from ${String(current.status)} to ${String(nextStatus)}.`,
+        );
+    }
+    if (spec.check) await spec.check({ ...(current as unknown as LooseRow), ...changes }, ctx, current);
+    const updated = (await loose(tx)
+      .updateTable(spec.table)
+      .set({ ...changes, ...bumpStamps(ctx.userId) })
+      .where("id", "=", current.id)
+      .where("version", "=", current.version)
+      .returningAll()
+      .executeTakeFirstOrThrow()) as unknown as Row;
+    await record(tx, ctx.audit, {
+      action: `${spec.table}.update`,
+      recordType: spec.table,
+      recordId: current.id,
+      organizationId: ctx.organizationId,
+      transformationId: ctx.transformationId,
+      priorVersion: current.version,
+      newVersion: updated.version,
+      changes: diffFields(current as unknown as LooseRow, updated as unknown as LooseRow, spec.auditFields),
+    });
+    if (spec.afterUpdate) await spec.afterUpdate(current, updated, ctx);
+    return updated;
+  };
+
   if (ops.update) {
     routes.push(`PATCH ${itemPath}`);
     app.patch(itemPath, { config: writeAccess }, async (request, reply) => {
       const params = paramsOf(request, itemParams);
       const row = await db.transaction().execute(async (tx) => {
-        const { ctx } = await lockForChange(tx, request, params, spec.updateRules ?? spec.writeRules);
-        const body = parseBody(spec.updateSchema, request.body) as LooseRow;
-        const current = await finishLock(tx, request, params);
-        const changes = spec.updateValues(body as never, current, ctx);
-        const nextStatus = new Map(Object.entries(changes)).get("status");
-        if (nextStatus !== undefined && nextStatus !== current.status) {
-          if (nextStatus === "archived")
-            throw problems.invalidTransition("Use the archive operation (a reason is mandatory) to archive a record.");
-          const allowed = spec.transitions?.get(String(current.status)) ?? [];
-          if (!allowed.includes(String(nextStatus)))
-            throw problems.invalidTransition(
-              `The record cannot move from ${String(current.status)} to ${String(nextStatus)}.`,
-            );
-        }
-        if (spec.check) await spec.check({ ...(current as unknown as LooseRow), ...changes }, ctx, current);
-        const updated = (await loose(tx)
-          .updateTable(spec.table)
-          .set({ ...changes, ...bumpStamps(ctx.userId) })
-          .where("id", "=", current.id)
-          .where("version", "=", current.version)
-          .returningAll()
-          .executeTakeFirstOrThrow()) as unknown as Row;
-        await record(tx, ctx.audit, {
-          action: `${spec.table}.update`,
-          recordType: spec.table,
-          recordId: current.id,
-          organizationId: ctx.organizationId,
-          transformationId: ctx.transformationId,
-          priorVersion: current.version,
-          newVersion: updated.version,
-          changes: diffFields(current as unknown as LooseRow, updated as unknown as LooseRow, spec.auditFields),
-        });
-        if (spec.afterUpdate) await spec.afterUpdate(current, updated, ctx);
+        const updated = await updateRow(tx, request, params, request.body);
         return renderOne(tx, updated);
       });
       return sendVersioned(reply, 200, row);
+    });
+    // T-DG5-BE-E2: the same update core, for the forms bulk edit (a nested register's parent is the row's own).
+    REGISTER_UPDATERS.set(spec.table, async (tx, request, input) => {
+      const entries: [string, string][] = [
+        ["transformationId", input.transformationId],
+        [spec.idParam, input.recordId],
+      ];
+      if (spec.parent) {
+        const row = await loose(tx)
+          .selectFrom(spec.table)
+          .select([spec.parent.column])
+          .where("id", "=", input.recordId)
+          .where("transformation_id", "=", input.transformationId)
+          .executeTakeFirst();
+        if (!row) throw problems.notFound();
+        entries.push([spec.parent.param, String(new Map(Object.entries(row)).get(spec.parent.column))]);
+      }
+      const updated = await updateRow(tx, request, new Map(entries), input.body, () => input.expectedVersion);
+      return { id: updated.id, version: updated.version };
     });
   }
 

@@ -127,6 +127,8 @@ export * from "./scoring-defaults.ts";
 export * from "./forms.ts";
 // P5 slice B mirrors of BE-E (T-DG5-BE-E; p5-work-split §B.3): version history, comments, attachments (ADR-0041 §5).
 export * from "./forms-framework.ts";
+// P5 slice B mirrors of BE-E2 (T-DG5-BE-E2; p5-work-split §B.4): export, bulk edit and drafts (ADR-0041 §5).
+export * from "./forms-records.ts";
 // P5 slice D (T-DG5-BE-H; ADR-0043 §1-§4; p5-work-split §D.1): automation rule content, requests and response mirrors.
 export * from "./automation.ts";
 // P5 slice D (T-DG5-BE-I2; ADR-0043 §6): the jobs operations view mirrors and the job.run_requested event.

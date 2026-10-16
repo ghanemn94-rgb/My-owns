@@ -12,9 +12,12 @@ export {
   maybeIdempotent,
   openWrite,
   registerRegister,
+  registerUpdaterOf, // T-DG5-BE-E2: each kit register's own update function, for the forms bulk edit (ADR-0041 §5)
   sendCreated,
   writableTransformation,
   type LooseRow,
+  type RegisterUpdateInput,
+  type RegisterUpdater,
   type ParentSpec,
   type RegisterRow,
   type RegisterPresenter,
