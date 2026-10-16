@@ -13,6 +13,8 @@ import { captureJobFailure, FAILURE_RETRY_QUEUE, failureRetryJobId, settleRetrie
 import { handleJobScheduleUpdated, syncSchedules } from "./schedules.ts";
 // T-DG5-BE-I2 (ADR-0043 §6): the run history of scheduled jobs and the run-now dispatcher.
 import { dispatchRunNow, recordJobRun, RUN_NOW_QUEUE } from "./job-runs.ts";
+// T-DG5-BE-P (ADR-0044 §1, ADR-0048 §1): the worker's S12-004 launch-plan generator (starter 1 runs here).
+import { wireWorkerLaunchPlanPort } from "./automation/ports/launch-plan-generator.ts";
 
 export interface WorkerLogger {
   info(obj: object, msg: string): void;
@@ -45,6 +47,7 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
   const log = options.log ?? consoleLogger;
   const pollingIntervalSeconds = options.jobPollingIntervalSeconds ?? 2;
 
+  wireWorkerLaunchPlanPort(); // T-DG5-BE-P: starter 1's optional 90-day plan (ADR-0044 §2 step 3)
   await ensureQueues(boss, options.queuePolicy);
   await schedulePurge(boss, options.timeZone);
 

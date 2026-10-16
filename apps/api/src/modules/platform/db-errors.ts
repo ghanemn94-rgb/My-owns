@@ -2940,6 +2940,55 @@ export function mapP5LaunchPlanError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P5 slice H (T-DG5-BE-P2; ADR-0048 §4, §9): the 0086 day_ninety_test/day_ninety_response guards a request can reach.
+ * The API refuses first under the test's row lock with the same codes (launch/day-ninety.ts); these are the database's
+ * last line (a concurrent writer that passed the API's check first).
+ *   day_ninety_test_completed_complete                         -> 422 day_ninety_test.incomplete
+ *   day_ninety_test_completed_final, day_ninety_response_test_open -> 422 day_ninety_test.completed
+ *   day_ninety_response_evidence_fkey                          -> 422 validation.reference (/evidenceId)
+ *   day_ninety_response_key, day_ninety_test_created_open, day_ninety_response_identity_fixed,
+ *   day_ninety_test_answered_count                             -> 500 (unreachable: every response write holds the
+ *                                                                 test's row lock and steps its version)
+ */
+export function mapP5DayNinetyError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "day_ninety_test_completed_complete":
+      return problems.businessRule(
+        "day_ninety_test.incomplete",
+        "Answer all six questions before completing the Day-90 leadership test.",
+      );
+    case "day_ninety_test_completed_final":
+    case "day_ninety_response_test_open":
+      return problems.businessRule(
+        "day_ninety_test.completed",
+        "The Day-90 leadership test is complete; its responses can no longer change.",
+      );
+    case "day_ninety_response_evidence_fkey":
+      return new HttpProblem({
+        status: 422,
+        type: "urn:mth:problem:validation",
+        code: "validation.reference",
+        title: "Business rule violated",
+        detail: "No such evidence in this transformation.",
+        errors: [
+          {
+            pointer: "/evidenceId",
+            code: "validation.validation.reference",
+            message: "No such evidence in this transformation.",
+          },
+        ],
+      });
+    case "day_ninety_response_key":
+    case "day_ninety_test_created_open":
+    case "day_ninety_response_identity_fixed":
+    case "day_ninety_test_answered_count":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * P5 slice G (T-DG5-KBE-E; ADR-0047 §2, §8): the 0085 kpi_restatement guards a request can reach in a race. The API
  * refuses first, under the kpiRestatement advisory lock and the row lock, with the same codes (kpi/restatements.ts); these answer a
  * concurrent writer that passed the API's check first, and the deferred COMMIT checks. Every other kpi_restatement guard
@@ -3149,6 +3198,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5CutoffPack !== null) return p5CutoffPack;
   const p5LaunchPlan = mapP5LaunchPlanError(error); // P5 slice H (T-DG5-BE-P; ADR-0048 §9)
   if (p5LaunchPlan !== null) return p5LaunchPlan;
+  const p5DayNinety = mapP5DayNinetyError(error); // P5 slice H (T-DG5-BE-P2; ADR-0048 §9)
+  if (p5DayNinety !== null) return p5DayNinety;
   const p5KpiRestatement = mapP5KpiRestatementError(error); // P5 slice G (T-DG5-KBE-E; ADR-0047 §8)
   if (p5KpiRestatement !== null) return p5KpiRestatement;
   const p5FinancialMetric = mapP5FinancialMetricError(error); // P5 slice G (T-DG5-KBE-F; ADR-0047 §8)
