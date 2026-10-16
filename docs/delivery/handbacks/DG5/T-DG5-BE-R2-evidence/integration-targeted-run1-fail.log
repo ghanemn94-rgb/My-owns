@@ -1,0 +1,140 @@
+port-policy: PostgreSQL listening on port 23250 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-r2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvaw3uj2_d76d9125 (server_encoding UTF8); applied 84 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/navigation/navigation.test.ts (8 tests | 1 failed) 693ms
+   ✓ REQ-S03-007: the 14 areas and their contents > an ADM test user holding every role default sees the 14 areas, each with its M0100-M0113 contents 130ms
+   ✓ REQ-S03-007: the 14 areas and their contents > the 14 area labels render in en and ar (nav.json), and en differs from ar 34ms
+   ✓ REQ-S03-007: the 14 areas and their contents > a Workstream Lead does not see Administration (and its items are not sent with a flag) 26ms
+   ✓ REQ-S03-007: the 14 areas and their contents > TO sees Administration for the Studio review page; AUD sees it read-only (access only) 30ms
+   ✓ REQ-S03-007: the 14 areas and their contents > a user without any grant sees only the session items (My Work; the playbook's source and guidance) 13ms
+   ✓ visibility from the database's grants, the same for every scope > the same role at two different business units gives the same answer (no scope parameter) 35ms
+   ✓ visibility from the database's grants, the same for every scope > a revoked grant hides its items on the next request 40ms
+   × refusals > 400 on an undeclared parameter; 401 without a session 29ms
+     → expected [ 400, 'validation' ] to deeply equal [ 400, 'validation.failed' ]
+ ❯ |integration| apps/api/test/integration/text-scan/export-templates.test.ts (23 tests | 2 failed) 4250ms
+   ✓ the template literals and label tables > no literal of the report and export code claims official PMI status or names DG0-DG7  677ms
+   ✓ the template literals and label tables > no label of the frame and content tables does (en) 7ms
+   ✓ the template literals and label tables > no label of the frame and content tables does (ar) 1ms
+   ✓ a rendered sample export: pdf, en > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7  765ms
+   ✓ a rendered sample export: pdf, en > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 246ms
+   ✓ a rendered sample export: pdf, ar > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7  956ms
+   × a rendered sample export: pdf, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 880ms
+     → expected Set{ 'engineering_gate' } to deeply equal Set{ 'official_pmi_claim', …(1) }
+   ✓ a rendered sample export: docx, en > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 84ms
+   ✓ a rendered sample export: docx, en > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 30ms
+   ✓ a rendered sample export: docx, ar > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 28ms
+   × a rendered sample export: docx, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 34ms
+     → expected Set{ 'engineering_gate' } to deeply equal Set{ 'official_pmi_claim', …(1) }
+   ✓ a rendered sample export: xlsx, en > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 29ms
+   ✓ a rendered sample export: xlsx, en > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 8ms
+   ✓ a rendered sample export: xlsx, ar > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 8ms
+   ✓ a rendered sample export: xlsx, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 9ms
+   ✓ a rendered sample export: pptx, en > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 138ms
+   ✓ a rendered sample export: pptx, en > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 123ms
+   ✓ a rendered sample export: pptx, ar > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 25ms
+   ✓ a rendered sample export: pptx, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 19ms
+   ✓ a rendered sample export: csv, en > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 3ms
+   ✓ a rendered sample export: csv, en > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 2ms
+   ✓ a rendered sample export: csv, ar > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7 2ms
+   ✓ a rendered sample export: csv, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text) 1ms
+ ❯ |integration| apps/api/test/integration/text-scan/sql-agreement.test.ts (4 tests | 1 failed) 1725ms
+   ✓ SQL and TypeScript agree > the server runs the pinned C ctype (the mirrors' character classes) 10ms
+   ✓ SQL and TypeScript agree > on the claim corpus, with the expected answers 13ms
+   ✓ SQL and TypeScript agree > on the engineering-gate corpus, with the expected answers 1ms
+   × SQL and TypeScript agree > on every UI string (en, ar) and every API literal 1582ms
+     → invalid byte sequence for encoding "UTF8": 0x00
+ ✓ |integration| apps/api/test/integration/text-scan/problem-texts.test.ts (6 tests) 78ms
+ ✓ |integration| apps/api/test/integration/text-scan/ui-strings.test.ts (8 tests) 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/navigation/navigation.test.ts > refusals > 400 on an undeclared parameter; 401 without a session
+AssertionError: expected [ 400, 'validation' ] to deeply equal [ 400, 'validation.failed' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    400,[22m
+[32m-   "validation.failed",[39m
+[31m+   "validation",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/navigation/navigation.test.ts:151:41
+    149|     const session = await signIn(api.app, w.leadA1.subject);
+    150|     const bad = await call<Body>(api.app, "GET", `${N}?transformationI…
+    151|     expect([bad.status, bad.body.code]).toEqual([400, "validation.fail…
+       |                                         ^
+    152|     expect((await call(api.app, "GET", N)).status).toBe(401);
+    153|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/export-templates.test.ts > a rendered sample export: pdf, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text)
+AssertionError: expected Set{ 'engineering_gate' } to deeply equal Set{ 'official_pmi_claim', …(1) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  Set {[22m
+[2m    "engineering_gate",[22m
+[32m-   "official_pmi_claim",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/text-scan/export-templates.test.ts:92:55
+     90|       ];
+     91|       const { texts } = await sample(format, language, planted);
+     92|       expect(new Set(scan(texts).map((v) => v.rule))).toEqual(new Set(…
+       |                                                       ^
+     93|     });
+     94|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/export-templates.test.ts > a rendered sample export: docx, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text)
+AssertionError: expected Set{ 'engineering_gate' } to deeply equal Set{ 'official_pmi_claim', …(1) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  Set {[22m
+[2m    "engineering_gate",[22m
+[32m-   "official_pmi_claim",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/text-scan/export-templates.test.ts:92:55
+     90|       ];
+     91|       const { texts } = await sample(format, language, planted);
+     92|       expect(new Set(scan(texts).map((v) => v.rule))).toEqual(new Set(…
+       |                                                       ^
+     93|     });
+     94|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/sql-agreement.test.ts > SQL and TypeScript agree > on every UI string (en, ar) and every API literal
+error: invalid byte sequence for encoding "UTF8": 0x00
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ sqlRule apps/api/test/integration/text-scan/sql-agreement.test.ts:19:13
+     17| 
+     18| async function sqlRule(fn: "p5_claims_official_pmi" | "p5_mentions_eng…
+     19|   const r = await api.owner.query<{ a: boolean[] | null }>(
+       |             ^
+     20|     `SELECT array_agg(${fn}(t) ORDER BY i) AS a FROM unnest($1::text[]…
+     21|     [texts],
+ ❯ apps/api/test/integration/text-scan/sql-agreement.test.ts:57:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  3 failed | 2 passed (5)
+      Tests  4 failed | 45 passed (49)
+   Start at  11:34:11
+   Duration  27.25s (transform 5.38s, setup 0ms, collect 16.78s, tests 6.80s, environment 0ms, prepare 84ms)
+
