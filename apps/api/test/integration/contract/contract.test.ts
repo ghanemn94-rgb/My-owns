@@ -142,6 +142,7 @@ import { exerciseP5KbeFOperations, P5_MIRRORS_KBE_F } from "./p5-exercises-kbe-f
 import { exerciseP5BePOperations, P5_MIRRORS_BE_P } from "./p5-exercises-be-p.ts";
 import { exerciseP5BeP2Operations, P5_MIRRORS_BE_P2 } from "./p5-exercises-be-p2.ts"; // T-DG5-BE-P2
 import { exerciseP5KbeGOperations, P5_MIRRORS_KBE_G } from "./p5-exercises-kbe-g.ts";
+import { exerciseP5KbeG2Operations, P5_MIRRORS_KBE_G2 } from "./p5-exercises-kbe-g2.ts"; // T-DG5-KBE-G2
 import { exerciseP5BeQOperations, P5_MIRRORS_BE_Q } from "./p5-exercises-be-q.ts";
 import { exerciseP5BeQ2Operations, P5_MIRRORS_BE_Q2 } from "./p5-exercises-be-q2.ts"; // T-DG5-BE-Q2
 import { exerciseP5BeROperations, P5_MIRRORS_BE_R } from "./p5-exercises-be-r.ts";
@@ -361,6 +362,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_P,
   ...P5_MIRRORS_BE_P2, // T-DG5-BE-P2
   ...P5_MIRRORS_KBE_G,
+  ...P5_MIRRORS_KBE_G2, // T-DG5-KBE-G2
   ...P5_MIRRORS_BE_Q,
   ...P5_MIRRORS_BE_Q2, // T-DG5-BE-Q2
   ...P5_MIRRORS_BE_R,
@@ -792,6 +794,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 KBE-G operations (p5-exercises-kbe-g.ts)", async () => {
     await exerciseP5KbeGOperations(p3());
   });
+  it("P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)", async () => {
+    await exerciseP5KbeG2Operations(p3());
+  });
   it("P5 BE-Q operations (p5-exercises-be-q.ts)", async () => {
     await exerciseP5BeQOperations(p3());
   });
@@ -949,7 +954,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG5-BE-E2: + bulkUpdateFormRecords, createFormDraft, updateFormDraft, closeFormDraft (4 JSON bodies;
     // exportFormRecords, listFormDrafts and getFormDraft are GETs). 381 + 4 = 385.
     // Sum (D-159): 381 + 1 (BE-P2) + 4 (BE-E2) + 0 (KBE-D2, BE-O) = 386.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([386, 385, 1]);
+    // T-DG5-KBE-G2: + createHealthCheck, updateHealthCheck, putHealthCheckAnswer, putHealthCheckActions (4 JSON bodies;
+    // listHealthChecks and getHealthCheck are GETs, submitHealthCheck is bodiless). 386 + 4 = 390 (the orchestrator
+    // reconciles this pin with the other W14 handbacks).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([390, 389, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

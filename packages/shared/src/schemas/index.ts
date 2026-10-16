@@ -156,3 +156,5 @@ export * from "./kpi-restatement.ts";
 // P5 slice G (T-DG5-KBE-F; ADR-0047 §4, §5; p5-work-split §G.3): the formula preview and the optional NPV/ROI/payback
 // extension (settings, cash flows, metrics).
 export * from "./financial-metrics.ts";
+// P5 slice H (T-DG5-KBE-G2; ADR-0048 §5, §7, §9-§11; p5-work-split §H.4): health-check assessments (HealthAssessment).
+export * from "./health.ts";

@@ -37,7 +37,8 @@ describe("health-check schemes and questions (T-DG5-KBE-G)", () => {
     const app = Fastify({ logger: false });
     try {
       const registration = registerHealthModule(app, {} as ModuleDeps);
-      expect(registration.routes).toEqual([
+      // T-DG5-KBE-G2 appends the seven assessment routes after these three (assessments.test.ts pins the full list).
+      expect(registration.routes.slice(0, 3)).toEqual([
         "GET /api/v1/health-check-questions",
         "GET /api/v1/admin/health-check-schemes",
         "GET /api/v1/admin/health-check-schemes/:schemeVersionId",

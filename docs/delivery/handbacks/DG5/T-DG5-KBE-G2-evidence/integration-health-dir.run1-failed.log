@@ -1,0 +1,55 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-g2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvamw883_f495e289 (server_encoding UTF8); applied 83 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/health/assessments.test.ts (15 tests | 1 failed) 11300ms
+   × REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > the 25 questions render verbatim (B0150), in order, each with a provisional Arabic text 407ms
+     → expected 'Is the baseline trusted by Finance?' to be 'Are 3-5 business outcomes measurable?' // Object.is equality
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > a new assessment is a draft under scheme v1 (unpinned), version 1, incomplete (0/25), with no score or band 290ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > REQ-S14-002: 24 answers give completion {answered: 24, total: 25}, score null and band null; submit gives 422 incomplete  872ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > submitting a complete assessment without three actions gives 422 health_check.actions_required  839ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > validates bodies: duplicate ranks, blank text, unknown fields, bad dates, question codes (400) 264ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > reassessments are tracked in sequence; at most one draft (409 draft_exists)  859ms
+   ✓ REQ-S14-001 / REQ-PB-092: score and the four B0152 bands > 25 answers with 17 Yes give score 17, out of 25, band 16-20, and scoringAssumption true  910ms
+   ✓ REQ-S14-001 / REQ-PB-092: score and the four B0152 bands > scores 21, 16, 10 and 9 map to the four B0152 texts verbatim  2329ms
+   ✓ REQ-S14-001 / REQ-PB-092: score and the four B0152 bands > the database refuses a submitted score that differs from its own computation (500, nothing written)  594ms
+   ✓ REQ-S14-003 (A07 part): existing assessments keep their scheme version and band > an assessment submitted under v1 keeps v1, its score and its band after v2 is published and the pin migrated  1686ms
+   ✓ REQ-S14-003 (A07 part): existing assessments keep their scheme version and band > a v1 draft refuses N/A (422 response_not_allowed); an all-N/A v2 assessment is not computable (422)  665ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > AUD, SP and WL get 403 on every write; an outsider 404; nothing is written  323ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > If-Match: 428 when missing, 409 when stale, on every write; two leaders answering at once get one 409 245ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > one audit event per mutated row, in the same transaction 265ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > authorization is re-checked at commit time: a grant revoked while the request waits gives 403, nothing written 172ms
+ ✓ |integration| apps/api/test/integration/health/health-schemes.test.ts (7 tests) 1341ms
+   ✓ REQ-S14-003: a scheme with N/A needs its own bands (ADR-0048 §6, §9) > with its own bands and percent_of_applicable it previews, passes compatibility, is reviewed and publishes  430ms
+ ✓ |integration| apps/api/test/integration/health/health-scoring-db.test.ts (2 tests) 6280ms
+   ✓ shared health-check functions = the 0086 database functions > 1,000 generated answer sets give the same score, maximum and band as p5_health_assessment_result  4395ms
+   ✓ shared health-check functions = the 0086 database functions > 300 generated schemes give the same publish-rule result as p5_health_scheme_problem  1737ms
+ ✓ |integration| apps/api/test/integration/health/s16-021-group.test.ts (1 test) 1636ms
+   ✓ REQ-S16-021: each entity of the group is created and read through the API, with authorization enforced > BAUHandover, Control, ControlCheck, ImprovementItem, Lesson and HealthAssessment  1418ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/health/assessments.test.ts > REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > the 25 questions render verbatim (B0150), in order, each with a provisional Arabic text
+AssertionError: expected 'Is the baseline trusted by Finance?' to be 'Are 3-5 business outcomes measurable?' // Object.is equality
+
+Expected: [32m"[7mAre 3-5 business outcomes measurabl[27me?"[39m
+Received: [31m"[7mIs the baseline trusted by Financ[27me?"[39m
+
+ ❯ apps/api/test/integration/health/assessments.test.ts:236:36
+    234|     expect(r.body.items.map((x: Body) => x.textEn)).toEqual(b0150Quest…
+    235|     expect(r.body.items.map((x: Body) => x.code)).toEqual(Array.from({…
+    236|     expect(r.body.items[1].textEn).toBe("Are 3-5 business outcomes mea…
+       |                                    ^
+    237|   });
+    238| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 24 passed (25)
+   Start at  07:16:19
+   Duration  43.94s (transform 6.71s, setup 0ms, collect 19.73s, tests 20.56s, environment 0ms, prepare 126ms)
+
