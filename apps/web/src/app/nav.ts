@@ -194,7 +194,10 @@ export interface NavSubPage {
     // T-DG5-FE-A: the P5 screens of FE-B…FE-G (P5_SUBPAGES), "not available yet" until their task builds them.
     | P5SubPageId
     // T-DG5-FE-D: the jobs operations view (REQ-S12-022: last success, next run, failures, repair).
-    | "jobOperations";
+    | "jobOperations"
+    // T-DG5-FE-E: the evidence register (REQ-S13-010) and owner updates (REQ-S09-011) of each transformation.
+    | "evidenceRegister"
+    | "ownerUpdates";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -335,6 +338,9 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   ...P5_SUBPAGES,
   // T-DG5-FE-D: Administration > Operations > Jobs (REQ-S12-022; job.read, ADR-0043 §6).
   { id: "jobOperations", area: "admin", path: "/admin/jobs/operations", requiresAny: ["job.read"] },
+  // T-DG5-FE-E: Evidence and Reports > Evidence register (REQ-S13-010); Initiatives and Roadmaps > Updates (REQ-S09-011).
+  { id: "evidenceRegister", area: "evidence", path: "/evidence-reports/evidence-register" },
+  { id: "ownerUpdates", area: "initiatives", path: "/initiatives-roadmaps/updates" },
 ];
 
 /**
@@ -441,9 +447,25 @@ export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentI
   // M0111: native deliverables, attachments, snapshots and generated packs.
   evidence: [
     { id: "deliverables", tabs: ["evidence", "traceability"] },
-    { id: "attachments", tabs: ["evidence"] },
-    { id: "snapshots", tabs: ["gates"], p5: ["reports"] },
-    { id: "packs", p5: ["reports", "exports", "presentation"] },
+    {
+      id: "attachments",
+      tabs: ["evidence"],
+      links: [{ path: "/evidence-reports/evidence-register", labelKey: "nav.sub.evidenceRegister" }],
+    },
+    // T-DG5-FE-E: reports and snapshots, exports, presentation mode and the evidence register are delivered (F-DG4-160).
+    {
+      id: "snapshots",
+      tabs: ["gates"],
+      links: [{ path: "/evidence-reports/reports", labelKey: "nav.sub.reports" }],
+    },
+    {
+      id: "packs",
+      links: [
+        { path: "/evidence-reports/reports", labelKey: "nav.sub.reports" },
+        { path: "/evidence-reports/exports", labelKey: "nav.sub.exports" },
+        { path: "/evidence-reports/presentation", labelKey: "nav.sub.presentation" },
+      ],
+    },
   ],
   // M0112: handovers, controls, lessons and improvement backlog.
   bau: [

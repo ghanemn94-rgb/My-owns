@@ -6,12 +6,12 @@
 //
 // Declared but not reachable here: 401 (the identity hook's own suite); 429 (the rate limiter's own suite); 403 on
 // listExports (any signed-in user may list their own jobs; the list is filtered, never refused).
+import { exportJob, exportJobPage } from "@mth/shared/schemas";
 import { expect } from "vitest";
 import type { z } from "zod";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
 import { RenderError } from "../../../../../packages/reporting/src/model.ts";
 import { runExport, type ExportRunnerDeps } from "../../../../worker/src/reports/export-runner.ts";
-import { exportJob, exportJobPage } from "../../../src/modules/reporting/exports/jobs.ts";
 import { testEvidenceDir, signIn, type P5ExerciseContext } from "../../support/harness.ts";
 import { ifm, setupP2World } from "../../support/p2-fixtures.ts";
 

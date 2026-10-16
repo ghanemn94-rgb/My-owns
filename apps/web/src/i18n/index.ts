@@ -108,6 +108,9 @@ import enForms from "./en/forms.json" with { type: "json" };
 // notification preferences and the meeting cut-off pack.
 import arWorkflowsP5 from "./ar/workflowsP5.json" with { type: "json" };
 import enWorkflowsP5 from "./en/workflowsP5.json" with { type: "json" };
+// P5 slice F namespace (T-DG5-FE-E): reports and snapshots, exports, presentation mode, owner updates, evidence register.
+import arReportsP5 from "./ar/reportsP5.json" with { type: "json" };
+import enReportsP5 from "./en/reportsP5.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -157,6 +160,7 @@ export const catalogues = {
     studio: arStudio,
     forms: arForms,
     workflowsP5: arWorkflowsP5,
+    reportsP5: arReportsP5,
   },
   en: {
     common: enCommon,
@@ -204,6 +208,7 @@ export const catalogues = {
     studio: enStudio,
     forms: enForms,
     workflowsP5: enWorkflowsP5,
+    reportsP5: enReportsP5,
   },
 } as const;
 

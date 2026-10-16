@@ -99,6 +99,12 @@ function MeetingView({ meeting: m }: { meeting: Meeting }) {
           {t("workflowsP5.cutoff.openPack")}
         </Link>
       </p>
+      {/* T-DG5-FE-E (REQ-S10-013): Governance > Meetings > Present: the read-only pack, live or as a snapshot. */}
+      <p className="small" data-link="presentation">
+        <Link className="link" to={`/transformations/${m.transformationId}/meetings/${m.id}/presentation`}>
+          {t("reportsP5.presentation.open")}
+        </Link>
+      </p>
       {frozen ? (
         <ReadOnlyNote
           body={t("governanceP4.meeting.frozen", { status: t(`governanceP4.meetingStatus.${m.status}`) })}

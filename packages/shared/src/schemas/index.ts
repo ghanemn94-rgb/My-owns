@@ -158,3 +158,9 @@ export * from "./kpi-restatement.ts";
 export * from "./financial-metrics.ts";
 // P5 slice H (T-DG5-KBE-G2; ADR-0048 §5, §7, §9-§11; p5-work-split §H.4): health-check assessments (HealthAssessment).
 export * from "./health.ts";
+// P5 slice F (T-DG5-FE-E; D-155 d; ADR-0046 §5): the export-job mirrors (promoted from the API's exports/jobs.ts).
+export * from "./export-jobs.ts";
+// P5 slice F (T-DG5-FE-E; D-159 e; ADR-0045 §7): the meeting presentation mirror (promoted from BE-O's contract exercise).
+export * from "./presentation.ts";
+// P5 slice F (T-DG5-FE-E; D-159 e; ADR-0045 §8): the evidence register and versions mirrors (promoted likewise).
+export * from "./evidence-register.ts";
