@@ -194,7 +194,9 @@ export interface NavSubPage {
     // T-DG5-FE-A: the P5 screens of FE-B…FE-G (P5_SUBPAGES), "not available yet" until their task builds them.
     | P5SubPageId
     // T-DG5-FE-D: the jobs operations view (REQ-S12-022: last success, next run, failures, repair).
-    | "jobOperations";
+    | "jobOperations"
+    // T-DG5-FE-F: the health check scoring schemes (REQ-S14-003; Administration > Playbook Studio > Health check scoring).
+    | "healthSchemes";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -335,6 +337,8 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   ...P5_SUBPAGES,
   // T-DG5-FE-D: Administration > Operations > Jobs (REQ-S12-022; job.read, ADR-0043 §6).
   { id: "jobOperations", area: "admin", path: "/admin/jobs/operations", requiresAny: ["job.read"] },
+  // T-DG5-FE-F: Administration > Health check scoring (REQ-S14-003), beside the Studio entries (methodology.read).
+  { id: "healthSchemes", area: "admin", path: "/admin/health-schemes", requiresAny: ["methodology.read"] },
 ];
 
 /**
@@ -365,7 +369,15 @@ export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentI
   // M0103: searchable source, guidance and executable procedures.
   playbook: [
     { id: "source", p5: ["reader"] },
-    { id: "guidance", tabs: ["phases"], p5: ["launchPlan", "healthCheck"] },
+    // T-DG5-FE-F: the 90-day launch plan and the health check are delivered (F-DG4-160).
+    {
+      id: "guidance",
+      tabs: ["phases"],
+      links: [
+        { path: "/playbook/launch-plan", labelKey: "nav.sub.launchPlan" },
+        { path: "/playbook/health-check", labelKey: "nav.sub.healthCheck" },
+      ],
+    },
     // T-DG5-FE-D: my procedures is delivered (F-DG4-160).
     { id: "procedures", links: [{ path: "/playbook/procedures", labelKey: "nav.sub.myProcedures" }] },
   ],

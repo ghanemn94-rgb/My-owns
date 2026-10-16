@@ -108,6 +108,10 @@ import enForms from "./en/forms.json" with { type: "json" };
 // notification preferences and the meeting cut-off pack.
 import arWorkflowsP5 from "./ar/workflowsP5.json" with { type: "json" };
 import enWorkflowsP5 from "./en/workflowsP5.json" with { type: "json" };
+// P5 slices G and H namespace (T-DG5-FE-F): the 90-day launch plan, the Day-90 leadership test, the health check and
+// its scoring schemes, KPI restatement, formula preview and the optional financial metrics.
+import arLaunchHealthP5 from "./ar/launchHealthP5.json" with { type: "json" };
+import enLaunchHealthP5 from "./en/launchHealthP5.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -157,6 +161,7 @@ export const catalogues = {
     studio: arStudio,
     forms: arForms,
     workflowsP5: arWorkflowsP5,
+    launchHealthP5: arLaunchHealthP5,
   },
   en: {
     common: enCommon,
@@ -204,6 +209,7 @@ export const catalogues = {
     studio: enStudio,
     forms: enForms,
     workflowsP5: enWorkflowsP5,
+    launchHealthP5: enLaunchHealthP5,
   },
 } as const;
 

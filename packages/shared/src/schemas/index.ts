@@ -151,6 +151,8 @@ export * from "./cutoff.ts";
 export * from "./owner-updates.ts";
 // P5 slice H (T-DG5-BE-P; ADR-0048 §1-§3; p5-work-split §H.1): the 90-day launch plan, its tasks and predecessors.
 export * from "./launch.ts";
+// P5 slice H (T-DG5-BE-P2 mirrors, promoted by T-DG5-FE-F; D-159 d): the Day-90 leadership test.
+export * from "./day-ninety.ts";
 // P5 slice G (T-DG5-KBE-E; ADR-0047 §2, §8, §9; p5-work-split §G.1): KPI restatements and their reconciliation.
 export * from "./kpi-restatement.ts";
 // P5 slice G (T-DG5-KBE-F; ADR-0047 §4, §5; p5-work-split §G.3): the formula preview and the optional NPV/ROI/payback

@@ -344,6 +344,35 @@ const NotificationDigestPage = lazyPage(() =>
   import("../pages/notification-preferences/NotificationPreferencesPage.tsx").then((m) => m.DigestPage),
 );
 const CutoffPackPage = lazyPage(() => import("../pages/cutoff-pack/CutoffPackPage.tsx").then((m) => m.CutoffPackPage));
+// P5 slices G and H (T-DG5-FE-F; p5-plan §5.1 row FE-F; ADR-0047, ADR-0048).
+const LaunchPlanEntryPage = lazyPage(() =>
+  import("../pages/launch-plan/LaunchPlanPage.tsx").then((m) => m.LaunchPlanEntryPage),
+);
+const LaunchPlanPage = lazyPage(() => import("../pages/launch-plan/LaunchPlanPage.tsx").then((m) => m.LaunchPlanPage));
+const DayNinetyTestPage = lazyPage(() =>
+  import("../pages/day-90-test/DayNinetyTestPage.tsx").then((m) => m.DayNinetyTestPage),
+);
+const HealthCheckEntryPage = lazyPage(() =>
+  import("../pages/health-check/HealthCheckPage.tsx").then((m) => m.HealthCheckEntryPage),
+);
+const HealthCheckPage = lazyPage(() =>
+  import("../pages/health-check/HealthCheckPage.tsx").then((m) => m.HealthCheckPage),
+);
+const HealthSchemesPage = lazyPage(() =>
+  import("../pages/health-schemes/HealthSchemesPage.tsx").then((m) => m.HealthSchemesPage),
+);
+const KpiRestatementsPage = lazyPage(() =>
+  import("../pages/kpi-restatement/KpiRestatementPages.tsx").then((m) => m.KpiRestatementsPage),
+);
+const KpiRestatementPage = lazyPage(() =>
+  import("../pages/kpi-restatement/KpiRestatementPages.tsx").then((m) => m.KpiRestatementPage),
+);
+const FormulaPreviewPage = lazyPage(() =>
+  import("../pages/formula-preview/FormulaPreviewPage.tsx").then((m) => m.FormulaPreviewPage),
+);
+const FinancialMetricsPage = lazyPage(() =>
+  import("../pages/financial-metrics/FinancialMetricsPage.tsx").then((m) => m.FinancialMetricsPage),
+);
 
 /**
  * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
@@ -389,7 +418,10 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
   // FE-B (slice A): built by T-DG5-FE-B, see the Studio, migration and source-coverage routes below.
   // FE-D (slices C, D, E): built by T-DG5-FE-D, see the procedure, automation, route and preference routes below.
-  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B" && s.owner !== "FE-C" && s.owner !== "FE-D").map((s) => ({
+  // FE-F (slices G, H): built by T-DG5-FE-F, see the launch-plan and health-check routes below.
+  ...P5_SUBPAGES.filter(
+    (s) => s.owner !== "FE-B" && s.owner !== "FE-C" && s.owner !== "FE-D" && s.owner !== "FE-F",
+  ).map((s) => ({
     path: s.path.slice(1),
     feature: s.p5Feature,
     owner: s.owner,
@@ -403,15 +435,8 @@ export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   { path: "transformations/:id/exports", feature: "exports", owner: "FE-E" },
   { path: "transformations/:id/presentation", feature: "presentation", owner: "FE-E" },
   { path: "transformations/:id/owner-updates", feature: "ownerUpdates", owner: "FE-E" },
-  // FE-F (slices G, H): launch plan, Day-90 test, health check, health schemes, KPI restatement, formula preview,
-  // optional financial metrics.
-  { path: "transformations/:id/launch-plan", feature: "launchPlan", owner: "FE-F" },
-  { path: "transformations/:id/day-90-test", feature: "day90Test", owner: "FE-F" },
-  { path: "transformations/:id/health-check", feature: "healthCheck", owner: "FE-F" },
-  { path: "admin/health-schemes", feature: "healthSchemes", owner: "FE-F" },
-  { path: "transformations/:id/kpis/:kpiId/restatements", feature: "kpiRestatement", owner: "FE-F" },
-  { path: "transformations/:id/benefit-formulas/:formulaId/preview", feature: "formulaPreview", owner: "FE-F" },
-  { path: "transformations/:id/financial-metrics", feature: "financialMetrics", owner: "FE-F" },
+  // FE-F (slices G, H): the launch plan, Day-90 test, health check, health schemes, KPI restatement, formula preview
+  // and optional financial metrics are built by T-DG5-FE-F, see below.
   // FE-G (slices I, J): one playbook block in the reader, and the guided demo walkthrough.
   { path: "playbook/reader/:blockRef", feature: "readerBlock", owner: "FE-G" },
   { path: "walkthrough", feature: "walkthrough", owner: "FE-G" },
@@ -611,6 +636,20 @@ export const routes: RouteObject[] = [
       { path: "my-work/notification-preferences", element: <NotificationPreferencesPage /> },
       { path: "me/notification-digests/:digestId", element: <NotificationDigestPage /> },
       { path: "transformations/:id/meetings/:meetingId/cutoff-pack", element: <CutoffPackPage /> },
+      // P5 slices G and H (T-DG5-FE-F; p5-plan §5.1; ADR-0047, ADR-0048): the 90-day launch plan and its Day-90
+      // leadership test, the health check and its scoring schemes, KPI restatement, formula preview and the optional
+      // financial metrics. The Day-90 and restatement paths are the backend's work-item links (day_ninety_test_due,
+      // kpi_restatement_to_decide).
+      { path: "playbook/launch-plan", element: <LaunchPlanEntryPage /> },
+      { path: "playbook/health-check", element: <HealthCheckEntryPage /> },
+      { path: "transformations/:id/launch-plan", element: <LaunchPlanPage /> },
+      { path: "transformations/:id/day-90-test", element: <DayNinetyTestPage /> },
+      { path: "transformations/:id/health-check", element: <HealthCheckPage /> },
+      { path: "admin/health-schemes", element: <HealthSchemesPage /> },
+      { path: "transformations/:id/kpis/:kpiId/restatements", element: <KpiRestatementsPage /> },
+      { path: "transformations/:id/kpi-restatements/:restatementId", element: <KpiRestatementPage /> },
+      { path: "transformations/:id/benefit-formulas/:formulaId/preview", element: <FormulaPreviewPage /> },
+      { path: "transformations/:id/financial-metrics", element: <FinancialMetricsPage /> },
       ...p4PlannedRoutes,
       ...p5PlannedRoutes,
       ...landingRoutes,

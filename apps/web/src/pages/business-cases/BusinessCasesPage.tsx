@@ -162,6 +162,12 @@ function CaseRegister() {
         ) : null
       }
     >
+      {/* T-DG5-FE-F (REQ-S08-019): the optional NPV, ROI and payback extension. */}
+      <p className="small" data-link="financial-metrics">
+        <Link className="link" to={`/transformations/${ws.tid}/financial-metrics`}>
+          {t("launchHealthP5.finance.title")}
+        </Link>
+      </p>
       <QueryState query={cases}>
         {(list) => (
           <RegisterTable

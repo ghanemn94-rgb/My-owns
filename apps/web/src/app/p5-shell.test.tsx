@@ -147,8 +147,7 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
       "reports",
       "exports",
       "presentation",
-      "launchPlan",
-      "healthCheck",
+      // "launchPlan", "healthCheck": built by T-DG5-FE-F (checked below).
       "reader",
       "branding",
       "demo",
@@ -189,6 +188,21 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
       "admin/automation/failures",
       "admin/approval-routes",
       "my-work/notification-preferences",
+    ])
+      expect(paths, path).toContain(path);
+    // T-DG5-FE-F: the slice G and H screens are built; their nav entries and routes are no longer placeholders.
+    expect(P5_PLANNED_ROUTES.filter((r) => r.owner === "FE-F")).toEqual([]);
+    for (const path of [
+      "playbook/launch-plan",
+      "playbook/health-check",
+      "transformations/:id/launch-plan",
+      "transformations/:id/day-90-test",
+      "transformations/:id/health-check",
+      "admin/health-schemes",
+      "transformations/:id/kpis/:kpiId/restatements",
+      "transformations/:id/kpi-restatements/:restatementId",
+      "transformations/:id/benefit-formulas/:formulaId/preview",
+      "transformations/:id/financial-metrics",
     ])
       expect(paths, path).toContain(path);
   });

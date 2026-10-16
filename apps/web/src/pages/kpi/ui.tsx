@@ -188,6 +188,12 @@ export function KpiSubNav({ tid, kpiId }: { tid: string; kpiId?: string }) {
       ? [
           { to: `${base}/kpis/${kpiId}`, label: t("kpiP4.nav.kpi"), icon: "info" as IconName },
           { to: `${base}/kpis/${kpiId}/actuals`, label: t("kpiP4.nav.update"), icon: "pencil" as IconName },
+          // T-DG5-FE-F (REQ-S07-016): the KPI's restatements.
+          {
+            to: `${base}/kpis/${kpiId}/restatements`,
+            label: t("launchHealthP5.restatement.title"),
+            icon: "refresh" as IconName,
+          },
         ]
       : []),
     { to: `${base}/kpi-review`, label: t("kpiP4.nav.review"), icon: "check" },

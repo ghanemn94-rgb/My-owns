@@ -17,7 +17,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { api } from "../../api/client.ts";
 import { p3Keys, useP3Refresh } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
@@ -75,6 +75,12 @@ function FormulaBody({ formula }: { formula: BenefitFormula }) {
   return (
     <div data-benefit-formula={formula.code}>
       <SectionNav sections={sections} />
+      {/* T-DG5-FE-F (REQ-S08-005): the preview of examples, unit and edge cases. */}
+      <p className="small" data-link="formula-preview">
+        <Link className="link" to={`/transformations/${ws.tid}/benefit-formulas/${formula.id}/preview`}>
+          {t("launchHealthP5.preview.title")}
+        </Link>
+      </p>
       <RowSection key={`${formula.id}-${formula.version}`} formula={formula} canEdit={canEdit} />
       {canEdit ? (
         <Section id="builder" title={t("benefitFormulas.builder.title")} intro={t("benefitFormulas.builder.intro")}>

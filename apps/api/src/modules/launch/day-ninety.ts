@@ -30,7 +30,18 @@
 // transaction. A Day-90 answer is an assessment by a leader, not a G1-G6 business approval; nothing here reads or
 // writes DG0-DG7.
 import { sql, type DbOrTx, type Tx } from "@mth/db";
-import { freeText, timestamp, truncateText, uuid, version } from "@mth/shared/schemas";
+import {
+  dayNinetyAnswer,
+  dayNinetyCompletion,
+  dayNinetyEvidenceSuggestion,
+  dayNinetyQuestion,
+  dayNinetyResponse,
+  dayNinetyResponsePut,
+  dayNinetyTest,
+  truncateText,
+  type DayNinetySuggestion,
+  type DayNinetyTest,
+} from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
@@ -69,56 +80,20 @@ const LABEL_MAX = 200;
 
 // ------------------------------------------------------------------------------------------------ the contract (zod)
 // The zod mirrors of the OpenAPI components DayNinetyEvidenceSuggestion, DayNinetyResponse, DayNinetyQuestion,
-// Completion, DayNinetyTest and DayNinetyResponsePut (docs/api/openapi.yaml is the source of truth). They live here
-// because packages/shared/src/schemas/launch.ts is outside T-DG5-BE-P2's file ownership; the handback proposes moving
-// them there (with the barrel line) for FE-F.
+// Completion, DayNinetyTest and DayNinetyResponsePut (docs/api/openapi.yaml is the source of truth). Written here by
+// T-DG5-BE-P2 and promoted unchanged to packages/shared/src/schemas/day-ninety.ts by T-DG5-FE-F (D-159 d); re-exported
+// under their original names so this module, its test and the contract exercises keep one definition.
 
-export const dayNinetyAnswer = z.enum(["yes", "no"]);
-export const dayNinetyEvidenceSuggestion = z.strictObject({
-  recordType: z.string(),
-  recordId: uuid,
-  label: z.string(),
-  state: z.string().nullable(),
-});
-export const dayNinetyResponse = z.strictObject({
-  answer: dayNinetyAnswer,
-  comment: z.string().nullable(),
-  evidenceId: uuid.nullable(),
-  respondedBy: uuid,
-  updatedAt: timestamp,
-});
-export const dayNinetyQuestion = z.strictObject({
-  code: z.string(),
-  ordinal: z.number().int(),
-  textEn: z.string(),
-  textAr: z.string(),
-  sourceRef: z.string(),
-  response: dayNinetyResponse.nullable(),
-  evidenceSuggestions: z.array(dayNinetyEvidenceSuggestion).max(MAX_SUGGESTIONS),
-});
-export const completion = z.strictObject({
-  answered: z.number().int().min(0),
-  total: z.number().int(),
-  complete: z.boolean(),
-});
-export const dayNinetyTest = z.strictObject({
-  id: uuid,
-  planId: uuid,
-  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  status: z.enum(["open", "completed"]),
-  completion,
-  questions: z.array(dayNinetyQuestion).max(6),
-  completedAt: timestamp.nullable(),
-  completedBy: uuid.nullable(),
-  version,
-});
-export const dayNinetyResponsePut = z.strictObject({
-  answer: dayNinetyAnswer,
-  comment: freeText(1, 2000).nullable().optional(),
-  evidenceId: uuid.nullable().optional(),
-});
-export type DayNinetyTest = z.infer<typeof dayNinetyTest>;
-export type DayNinetySuggestion = z.infer<typeof dayNinetyEvidenceSuggestion>;
+export {
+  dayNinetyAnswer,
+  dayNinetyEvidenceSuggestion,
+  dayNinetyResponse,
+  dayNinetyQuestion,
+  dayNinetyCompletion as completion,
+  dayNinetyTest,
+  dayNinetyResponsePut,
+};
+export type { DayNinetyTest, DayNinetySuggestion };
 
 // ------------------------------------------------------------------------------------------------ problems (ADR-0048 §9)
 
