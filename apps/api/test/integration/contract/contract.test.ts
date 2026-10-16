@@ -955,9 +955,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // exportFormRecords, listFormDrafts and getFormDraft are GETs). 381 + 4 = 385.
     // Sum (D-159): 381 + 1 (BE-P2) + 4 (BE-E2) + 0 (KBE-D2, BE-O) = 386.
     // T-DG5-KBE-G2: + createHealthCheck, updateHealthCheck, putHealthCheckAnswer, putHealthCheckActions (4 JSON bodies;
-    // listHealthChecks and getHealthCheck are GETs, submitHealthCheck is bodiless). 386 + 4 = 390 (the orchestrator
-    // reconciles this pin with the other W14 handbacks).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([390, 389, 1]);
+    // listHealthChecks and getHealthCheck are GETs, submitHealthCheck is bodiless). T-DG5-BE-R: + putBrandingSettings
+    // (1 JSON body). T-DG5-BE-E3, T-DG5-KBE-H: none. Sum (D-160): 386 + 4 (KBE-G2) + 1 (BE-R) = 391.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([391, 390, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
