@@ -148,6 +148,7 @@ import { exerciseP5BeQ2Operations, P5_MIRRORS_BE_Q2 } from "./p5-exercises-be-q2
 import { exerciseP5BeROperations, P5_MIRRORS_BE_R } from "./p5-exercises-be-r.ts";
 import { exerciseP5BeR2Operations, P5_MIRRORS_BE_R2 } from "./p5-exercises-be-r2.ts"; // T-DG5-BE-R2
 import { exerciseP5BeSOperations, P5_MIRRORS_BE_S } from "./p5-exercises-be-s.ts";
+import { exerciseP5BeT2Operations, P5_MIRRORS_BE_T2 } from "./p5-exercises-be-t2.ts"; // T-DG5-BE-T2
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -369,6 +370,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_R,
   ...P5_MIRRORS_BE_R2, // T-DG5-BE-R2
   ...P5_MIRRORS_BE_S,
+  ...P5_MIRRORS_BE_T2, // T-DG5-BE-T2
 };
 
 let api: TestApi;
@@ -814,6 +816,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 BE-S operations (p5-exercises-be-s.ts)", async () => {
     await exerciseP5BeSOperations(p3());
   });
+  it("P5 BE-T2 operations (p5-exercises-be-t2.ts)", async () => {
+    await exerciseP5BeT2Operations(p3());
+  }); // T-DG5-BE-T2
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {

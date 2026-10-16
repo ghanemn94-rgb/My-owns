@@ -28,6 +28,7 @@ import { auditContextOf, denialOf, principalOf, refreshPrincipal, type Principal
 import { record } from "../audit/index.ts";
 import { enqueueOutboxEvent } from "../jobs/index.ts";
 import type { ModuleDeps } from "../platform/index.ts";
+import { registerWalkthroughRoutes } from "./walkthrough.ts";
 import {
   ADVISORY_LOCK_CLASSES,
   etag,
@@ -286,5 +287,5 @@ export function registerEnvironmentRoutes(app: FastifyInstance, deps: ModuleDeps
     return reply.code(202).send(result);
   });
 
-  return [`GET ${ENVIRONMENT}`, `GET ${STATUS}`, `POST ${RESETS}`];
+  return [`GET ${ENVIRONMENT}`, `GET ${STATUS}`, `POST ${RESETS}`, ...registerWalkthroughRoutes(app, deps)]; // T-DG5-BE-T2
 }
