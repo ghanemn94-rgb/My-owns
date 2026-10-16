@@ -4,8 +4,9 @@
 // time, snapshot ID, the issue version or "Draft — not an issued report", methodology version, approval state of the
 // sources), every section in content order (fields and metrics as label/value tables, tables with every row and their
 // totals, text, lists, "No records" for an empty section), the legend of the validation labels, and on every page a
-// footer with the issue line and "Page n of m". Until slice I's branding port ships (BE-R), the header carries the shipped
-// product name it is given and the footer carries no provenance line (p5-work-split §F.6).
+// footer with the issue line and "Page n of m". The header carries the product name it is given (the worker reads slice I's
+// branding port at generation time, T-DG5-BE-R) and a band in the configured primary colour, and the configured report
+// header; under the footer line, the configured report footer and the provenance statement (B0004).
 //
 // Direction and fonts: Arabic documents have a right-to-left base direction (text aligned right, tables mirrored with
 // the first column on the right, `/Lang (ar-SA)` and `/ViewerPreferences << /Direction /R2L >>`); English documents are
@@ -33,6 +34,8 @@ const MARGIN_X = 42;
 const MARGIN_TOP = 46;
 const MARGIN_BOTTOM = 56;
 const FOOTER_SIZE = 7.5;
+/** T-DG5-BE-R: the size of the report footer and provenance lines under the issue line. */
+const EXTRA_FOOTER_SIZE = 6;
 
 const INK = "#1A1F36";
 const MUTED = "#5A6275";
@@ -298,8 +301,11 @@ class PdfWriter {
     this.y += 8;
   }
 
-  /** The footer of every page: the issue line on the start side, "Page n of m" on the end side. */
-  footers(issue: string, pageLabel: (n: number, m: number) => string): void {
+  /**
+   * The footer of every page: the issue line on the start side, "Page n of m" on the end side; below them (T-DG5-BE-R)
+   * the configured report footer and the provenance statement, start-aligned, at most two lines each.
+   */
+  footers(issue: string, pageLabel: (n: number, m: number) => string, extra: readonly string[] = []): void {
     const range = this.doc.bufferedPageRange();
     const y = this.pageHeight - MARGIN_BOTTOM + 18;
     const half = (this.right - this.left) / 2;
@@ -321,6 +327,13 @@ class PdfWriter {
         const x = this.rtl ? this.left : this.right - page.width;
         this.drawLine(page, x, x + page.width, y, FOOTER_SIZE, MUTED);
       }
+      let ey = y + FOOTER_SIZE + 2;
+      for (const text of extra)
+        for (const line of this.lines(text, EXTRA_FOOTER_SIZE, 400, this.right - this.left).slice(0, 2)) {
+          const x = this.rtl ? this.right - line.width : this.left;
+          this.drawLine(line, x, x + line.width, ey, EXTRA_FOOTER_SIZE, MUTED);
+          ey += EXTRA_FOOTER_SIZE + 1.5;
+        }
     }
   }
 }
@@ -371,7 +384,11 @@ export async function renderPdf(input: ReportDocument, o: RenderOptions): Promis
   });
 
   const w = new PdfWriter(doc, labels, page);
+  // T-DG5-BE-R (ADR-0049 §8; REQ-S15-004): a configured branding colours the header band of the first page; the
+  // product name stays in the ink colour, so a light brand colour never makes text unreadable. Defaults draw no band.
+  if (paged.brandColour !== null) doc.rect(0, 0, page.width, 10).fill(paged.brandColour);
   w.text(paged.productName, 15, 700, INK, 2);
+  if (paged.reportHeader !== null) w.text(paged.reportHeader, 9, 400, MUTED, 4); // T-DG5-BE-R
   w.text(paged.title, 12.5, 700, INK, 6);
   w.table(paged.frame);
   const total = paged.sections.length;
@@ -384,7 +401,7 @@ export async function renderPdf(input: ReportDocument, o: RenderOptions): Promis
   }
   w.heading(paged.legendTitle, 11);
   w.table(paged.legend);
-  w.footers(issueLine(o.snapshot, labels), (n, m) => labels.text("export.page", { n, m }));
+  w.footers(issueLine(o.snapshot, labels), (n, m) => labels.text("export.page", { n, m }), paged.footerLines);
   doc.end();
   await ended;
   return {

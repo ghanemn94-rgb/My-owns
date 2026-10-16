@@ -2,8 +2,9 @@
 //
 // The same paged view as the PDF (layout/blocks.ts): the header block, every section in content order, the legend,
 // an "About this file" section, and a footer with the issue line ("Draft — not an issued report" for a generated
-// snapshot) and "Page n of m" as page fields. Until slice I's branding port ships (BE-R) the header carries the shipped
-// product name it is given and no provenance line.
+// snapshot) and "Page n of m" as page fields. The header carries the product name it is given and the
+// configured report header; the footer the configured report footer and the provenance statement (B0004), all read by
+// the worker from slice I's branding port at generation time (T-DG5-BE-R).
 //
 // Direction: in Arabic every paragraph is `bidirectional` (`<w:bidi/>`), tables are `visuallyRightToLeft`
 // (`<w:bidiVisual/>`) and paragraphs are aligned to their start; runs holding right-to-left script are `rightToLeft`
@@ -174,6 +175,7 @@ export async function renderDocx(input: ReportDocument, o: RenderOptions): Promi
   const paged = pagedDocument(content, o, labels);
   const b = new DocxBuilder(o.language);
   b.heading(paged.productName, 30);
+  if (paged.reportHeader !== null) b.add(...b.paragraphs(paged.reportHeader, { size: 18, color: "5A6275" })); // T-DG5-BE-R
   b.heading(paged.title, 26);
   b.block(paged.frame);
   const total = paged.sections.length;
@@ -191,6 +193,8 @@ export async function renderDocx(input: ReportDocument, o: RenderOptions): Promi
 
   const rtl = o.language === "ar";
   const footerParagraphs = [
+    // T-DG5-BE-R: the configured report footer and the provenance statement (B0004), then the issue line.
+    ...paged.footerLines.flatMap((t) => b.paragraphs(t, { size: 12, color: "5A6275" }, 0)),
     ...b.paragraphs(issueLine(o.snapshot, labels), { size: 14, color: "5A6275" }, 0),
     new Paragraph({
       bidirectional: rtl,

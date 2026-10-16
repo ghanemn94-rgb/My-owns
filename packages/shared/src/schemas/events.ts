@@ -15,6 +15,8 @@ import { blockerStatusRecordedV1 } from "./executive-decisions.ts";
 import { jobRunRequestedV1 } from "./job-operations.ts";
 // P5 slice G (T-DG5-KBE-E2; ADR-0047 §3, §7): an approved KPI restatement, consumed once by kpi.recalculate.
 import { kpiRestatementApprovedV1 } from "./kpi-restatement.ts";
+// P5 slice I (T-DG5-BE-R; ADR-0049 §12): a new branding version is current.
+import { brandingPublishedV1 } from "./branding.ts";
 
 export const transformationCreatedV1 = z.strictObject({
   transformationId: uuid,
@@ -208,6 +210,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "demo.reset_requested": { 1: demoResetRequestedV1 },
   // T-DG5-KBE-E2 (ADR-0047 §3, §7): the restatement run and the reissue offers; consumer kpi.recalculate (queues/kpi.ts).
   "kpi_restatement.approved": { 1: kpiRestatementApprovedV1 },
+  // T-DG5-BE-R (ADR-0049 §8, §12): a branding version was published; consumer platform.branding_published (worker).
+  "branding.published": { 1: brandingPublishedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

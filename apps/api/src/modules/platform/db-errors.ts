@@ -3251,6 +3251,74 @@ export function mapP5DemoEnvironmentError(error: PgErrorLike): HttpProblem | nul
   }
 }
 
+/**
+ * P5 slice I (T-DG5-BE-R; ADR-0049 §8, §11): the 0089 branding guards. The service checks the colours, fonts, logo and
+ * text pairs first with the same codes; the two text rules (p5_claims_official_pmi, p5_mentions_engineering_gate) are
+ * answered here, and the rest only in a race or by a programming error:
+ *   branding_version_no_pmi_claim               -> 422 branding.prohibited_claim
+ *   branding_version_no_engineering_gate        -> 422 branding.engineering_gate_reference
+ *   branding_version_logo_complete, branding_version_logo_png_check -> 422 branding.logo_invalid
+ *   branding_version_primary_colour_check, branding_version_secondary_colour_check -> 422 branding.colour_invalid
+ *   branding_version_font_latin_check, branding_version_font_arabic_check -> 422 branding.font_unavailable
+ *   branding_version_header_pair, branding_version_footer_pair -> 422 branding.text_pair_required
+ *   branding_version_step, branding_version_organization_version_key, branding_setting_organization_key,
+ *   branding_setting_current_latest             -> 409 version conflict (two saves raced past the lock's If-Match check)
+ *   branding_version_colour_approval, branding_setting_version_matches, branding_setting_current_fkey -> 500
+ */
+export function mapP5BrandingError(error: PgErrorLike): HttpProblem | null {
+  const businessRule = (code: string, detail: string) => problems.businessRule(code, detail);
+  switch (error.constraint ?? "") {
+    case "branding_version_no_pmi_claim":
+      return businessRule(
+        "branding.prohibited_claim",
+        "Branding text must not claim official PMI status or certification.",
+      );
+    case "branding_version_no_engineering_gate":
+      return businessRule(
+        "branding.engineering_gate_reference",
+        "Branding text must not name an engineering delivery gate.",
+      );
+    case "branding_version_logo_complete":
+    case "branding_version_logo_png_check":
+      return businessRule(
+        "branding.logo_invalid",
+        "The logo must be a PNG image of at most 256 KiB, with alternative text in English and Arabic.",
+      );
+    case "branding_version_primary_colour_check":
+    case "branding_version_secondary_colour_check":
+      return businessRule("branding.colour_invalid", "Colours must be six-digit hexadecimal values such as #0078FF.");
+    case "branding_version_font_latin_check":
+    case "branding_version_font_arabic_check":
+      return businessRule(
+        "branding.font_unavailable",
+        "Only the bundled fonts IBM Plex Sans and IBM Plex Sans Arabic can be selected.",
+      );
+    case "branding_version_header_pair":
+    case "branding_version_footer_pair":
+      return businessRule(
+        "branding.text_pair_required",
+        "Enter the report header and footer in both English and Arabic, or leave both empty.",
+      );
+    case "branding_version_step":
+    case "branding_version_organization_version_key":
+    case "branding_setting_organization_key":
+    case "branding_setting_current_latest":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "branding_version_colour_approval":
+    case "branding_setting_version_matches":
+    case "branding_setting_current_fkey":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3288,6 +3356,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5HealthCheck !== null) return p5HealthCheck;
   const p5DemoEnvironment = mapP5DemoEnvironmentError(error); // P5 slice J (T-DG5-BE-S; ADR-0050 §1-§6)
   if (p5DemoEnvironment !== null) return p5DemoEnvironment;
+  const p5Branding = mapP5BrandingError(error); // P5 slice I (T-DG5-BE-R; ADR-0049 §8, §11)
+  if (p5Branding !== null) return p5Branding;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

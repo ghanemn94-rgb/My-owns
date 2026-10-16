@@ -35,8 +35,19 @@ export interface RenderOptions {
   readonly language: ExportLanguage;
   /** The output's title in the export language (the report definition's label). */
   readonly title: string;
-  /** The product name (slice I's branding port once BE-R ships it; until then the DG1 product name). */
-  readonly branding: { readonly productName: string };
+  /**
+   * The branding current at generation time (slice I's branding port, T-DG5-BE-R): the product name in the export
+   * language, and the primary colour of a configured branding version (null or absent at version 0, the defaults).
+   */
+  readonly branding: {
+    readonly productName: string;
+    readonly primaryColour?: string | null;
+    /** The configured report header and footer in the export language (both null at version 0). */
+    readonly reportHeader?: string | null;
+    readonly reportFooter?: string | null;
+    /** The provenance footer line: the verbatim B0004 statement in the export language (REQ-PB-001). */
+    readonly provenance?: string | null;
+  };
   readonly snapshot: SnapshotIdentity;
   /** IANA time zone the as-of time is printed in (default Asia/Riyadh). */
   readonly timeZone?: string;
