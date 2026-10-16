@@ -1,19 +1,61 @@
 # Handback T-DG5-BE-O: meeting presentation, the evidence register and versions (p5-work-split §F.7)
 
 - **Agent:** backend-workflow-engineer
-- **Invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-O-backend-workflow-engineer-20261016T011130Z-d6d38dac","session_id":"d6d38dac-bab6-40a0-a61b-0eb28e15d059"}`
-- **Stage / gate:** P5, DG5 (BUILDING). Worktree `/home/user/wt/dg5-be-o`, branch `dg5/be-o`, base `HEAD` = `cca2ba571e2030f7a35a4667961ca5625543cc80`. The changes are **uncommitted**, for the orchestrator to integrate.
-- **Assignment:** `docs/delivery/assignments/DG5/T-DG5-BE-O.md` (sha256 `7baab72e…1c043`, verified before starting).
-- **Time:** started `2026-10-16T01:14:58Z`, ended __END__ (`date -u`).
-- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` → `PASS gate DG4 (historical)`, exit 0, at the start and again at the end (`validate-dg4-historical.log`).
+- **Invocation references:**
+  - interrupted first run (T-DG5-BE-O): `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-O-backend-workflow-engineer-20261016T011130Z-d6d38dac","session_id":"d6d38dac-bab6-40a0-a61b-0eb28e15d059"}`;
+  - continuation run (T-DG5-BE-OB): `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-OB-backend-workflow-engineer-20261016T030711Z-7046d351","session_id":"7046d351-ced3-41a3-8378-f463f9eaea9b"}`.
+- **Stage / gate:** P5, DG5 (BUILDING). Worktree `/home/user/wt/dg5-be-o`, branch `dg5/be-o`.
+  - The integration base is `cca2ba571e2030f7a35a4667961ca5625543cc80`.
+  - The first run's work sits in the WIP commit `3e3dca9` on top of that base (D-158). The continuation run's changes are **uncommitted**, on top of `3e3dca9`.
+  - The orchestrator integrates the diff `cca2ba5..` plus the working tree.
+- **Assignments:**
+  - `docs/delivery/assignments/DG5/T-DG5-BE-O.md` (first run; sha256 `7baab72e…1c043`, verified by that run);
+  - `docs/delivery/assignments/DG5/T-DG5-BE-OB.md` (continuation; sha256 `f818d0af076d55b96c8c2fb3c455fed14ccba79ef04decd1ef724d0cde465923`, verified at the start of this run).
+- **Time:**
+  - first run: started `2026-10-16T01:14:58Z`, stopped by the container restart at about 03:01Z, with no end line;
+  - continuation run: started `2026-10-16T03:12:59Z`, ended `2026-10-16T05:03:15Z` (`date -u`, before the final prettier check).
+- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` → `PASS gate DG4 (historical)`, exit 0.
+  - Re-run by the continuation at its start (`validate-dg4-historical-start-B.log`) and at its end (`validate-dg4-historical-end-B.log`).
+  - The first run's `validate-dg4-historical.log` is kept for provenance.
 - **Product gates.** G1–G6 are business approvals inside the product. Nothing here grants or records one. A pack issue is not an approval. Nothing reads or writes DG0–DG7 records. All test data is synthetic.
+
+## Continuation run (T-DG5-BE-OB)
+
+**The interrupted run.** `DG5-T-DG5-BE-O-backend-workflow-engineer-20261016T011130Z-d6d38dac` was stopped by the container restart at about 03:01Z on 2026-10-16. Its work is the WIP commit `3e3dca9` (D-158). This run finished and confirmed that work. It did not redo it.
+
+**What I found.**
+1. **Every file in §1 exists and contains what §1 says.** I read each source file in full, and the tail of each test file. None is truncated:
+   - `governance/presentation.ts`: the port, the exact `presentation.snapshot_mismatch` text, snapshot and live modes.
+   - `evidence/register.ts`: 15 link-source entries over 14 tables: `evidence_link`, plus 13 domain tables including the agenda materials array. `benefit_evidence` is listed twice (benefit and measurement).
+   - `evidence/routes.ts`: three additive hunks.
+   - `evidence.test.ts`: 13 routes.
+   - `p5-pending-be-o.ts`: `[]` plus `P5_PENDING_TESTS_BE_O`.
+   - `p5-exercises-be-o.ts`: 180 lines, ending with the versions refusals.
+   - The two integration test files have 9 tests each; the fixtures file is complete.
+2. **The handback was a draft with two placeholders:** the end time and the whole of §3 (checks). Both are now filled in from this run's own checks.
+3. **The first run's logs** are kept for provenance only. None of them is used as evidence here:
+   - `integration.log` is **truncated**: 1,482 lines, no summary and no `exit=` line. The run was cut off mid-suite.
+   - `unit-locale-unset.log` and `unit-c-utf8.log` end with **exit 1**. The failures were in files outside my scope:
+     - `src/pages/raid/raid.test.tsx` "action register … edit sends If-Match" (an element not found), in both locales;
+     - under C.UTF-8 only, `apps/api/src/architecture.test.ts` (a 30 s timeout).
+   - The first run's single-file reruns (`unit-*-rerun-*.log`) passed. That run was concurrent with three other W13 tasks, which points to load.
+   - This run's full suites passed without those failures (§3).
+   - `targeted-presentation-first-run.log` (exit 1) is the first run's first attempt at its new presentation test. It failed on the test's own assertion (`expected undefined to be 'Synthetic: new decision title'`). `targeted-presentation-evidence-register.log` is that run's green rerun after it corrected the test. This run re-ran the final test inside the full integration suite (`integration-B.log`).
+4. **No part of §F.7 or of the added scope was left unfinished in code.** Nothing changed in source or tests during this run. The only open item is the one the first run already named: the REQ-S10-013 live test with the real assembler waits for KBE-D2 and the `server.ts` line in §5.1.
+5. **The top level of the worktree has empty, read-only, untracked files.** They are `.bashrc`, `.bash_profile`, `.gitconfig`, `.gitmodules`, `.mcp.json`, `.profile`, `.ripgreprc`, `.zprofile`, `.zshrc`, `CLAUDE.local.md`, `.idea`, `.vscode`, all dated 02:05Z.
+   - They are sandbox mount points created by the runner, not by me. They are not part of this change; do not integrate them.
+   - Prettier checks them (`--ignore-unknown`) and they pass.
+
+**What I re-ran.** Every acceptance check, on the final tree, with real output. The logs carry the `-B` suffix (§3).
+
+**What I changed.** Only this handback, and the new `-B` logs.
 
 ## 1. Files changed
 
 | File | Purpose |
 |---|---|
 | `apps/api/src/modules/governance/presentation.ts` | Fills BE-A's stub. Routes `getMeetingPresentation`, with the exact ADR-0045 §11 refusal `presentation.snapshot_mismatch`. Snapshot mode reads `report_snapshot`. Live mode goes through the governance-owned port `setMeetingPackAssembler` (see §5: governance cannot import reporting). |
-| `apps/api/src/modules/evidence/register.ts` (new) | Routes `listEvidenceRegister` and `listEvidenceVersions`. `EVIDENCE_LINK_SOURCES` lists `evidence_link` plus the 13 domain link sources. Each list runs in one read-only REPEATABLE READ transaction. |
+| `apps/api/src/modules/evidence/register.ts` (new) | Routes `listEvidenceRegister` and `listEvidenceVersions`. `EVIDENCE_LINK_SOURCES` lists `evidence_link` plus the 13 domain link tables (14 entries: `benefit_evidence` twice). Each list runs in one read-only REPEATABLE READ transaction. |
 | `apps/api/src/modules/evidence/routes.ts` | The registration line, the two route keys in `EVIDENCE_MODULE_ROUTES`, and two header lines. Nothing else changed: the DG2 upload, review and download paths are untouched. |
 | `apps/api/src/modules/evidence/evidence.test.ts` | Unit test: the module now registers 13 routes (was 11), and both new routes declare `transformation.read`. |
 | `apps/api/test/support/p5-pending-be-o.ts` | Pending operations list is now `[]`. Adds `P5_PENDING_TESTS_BE_O`: the REQ-S10-013 live test stays pending until KBE-D2 merges (the BE-J precedent). |
@@ -84,7 +126,38 @@ Acceptance: *"A01;A12: an uploaded file stores a SHA-256 checksum and version 1;
 
 ## 3. Checks actually run (logs in `docs/delivery/handbacks/DG5/T-DG5-BE-O-evidence/`)
 
-__CHECKS__
+All commands were run by the continuation run T-DG5-BE-OB on the final tree, which is `3e3dca9` plus this handback and its logs; no source or test file changed in this run.
+- **Environment:** Node 24.21.0 (`/opt/nvm/versions/node/v24.21.0/bin`), offline, in the worktree `/home/user/wt/dg5-be-o`. Harness ports were in 24900–24949 only.
+- **Logs:** every log below is this run's own (`-B` suffix). It starts with its `date -u` and ends with the real `exit=` line.
+- **Older logs:** the logs without `-B` are the interrupted first run's, kept for provenance only (see the continuation section).
+
+| # | Command | Log | Exit | Result |
+|---|---|---|---|---|
+| 4 | `node tools/gates/validate.mjs --historical --stage DG4` (start) | `validate-dg4-historical-start-B.log` | 0 | `PASS gate DG4 (historical)` |
+| 1 | `pnpm -r typecheck` | `typecheck-B.log` | 0 | every package `Done` |
+| 1 | `pnpm -r build` | `build-B.log` | 0 | every package `Done` |
+| 1 | `pnpm lint` (`eslint . --max-warnings=0`) | `lint-B.log` | 0 | no output, no warning |
+| 1 | `pnpm openapi:lint` | `openapi-lint-B.log` | 0 | `PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations` |
+| 1 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | `prettier-B.log` | 0 | `All matched files use Prettier code style!`. Run twice on the final tree, with this handback included; run 2 follows the last edit of this cell. Both runs are in the log |
+| 2 | `env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE pnpm test` (locale unset) | `unit-locale-unset-B.log` | 0 | unit-node 127 files / **2099 passed**; unit-web 74 files / **1429 passed**; unit-formula-nocodegen 3 files / **259 passed, 2 skipped** (261). 0 failed |
+| 2 | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | `unit-c-utf8-B.log` | 0 | the same counts: 2099 / 1429 / 259 passed + 2 skipped. 0 failed |
+| 3 | `QA_PG_PORT=24901 MTH_PORT_POOL=24902-24949 tests/qa/support/with-pg.sh pnpm test:integration` | `integration-B.log` | none (stopped) | **stopped by the tool's 30-minute background limit, not by a failure.** 250 of 260 files had reported: 2470 tests, **2469 passed, 1 skipped, 0 failed** |
+| 3 | the same harness on the 10 files not yet reported (ports 24910/24911-24949) | `integration-rest-B.log` | 0 | **10 files, 24 passed**, 0 failed |
+| 3 | `QA_PG_PORT=24920 MTH_PORT_POOL=24921-24949 tests/qa/support/with-pg.sh pnpm test:integration` (full single invocation) | `integration-full-B.log` | 0 | **260 files passed; 2494 tests: 2493 passed, 1 skipped, 0 failed** (04:34:37Z–05:01:26Z). This is the acceptance run |
+| 4 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | `validate-dg4-historical-end-B.log` | 0 | `PASS gate DG4 (historical)` |
+
+**Disclosures:**
+- **Unit skips.** The 2 skipped unit tests are in `packages/shared/src/formula/fuzz.test.ts`. They are pre-existing, outside my scope, and skipped the same way in the first run's logs.
+- **Integration skip.** The 1 skipped integration test is the pending REQ-S10-013 live test in `presentation.test.ts` (`it.runIf(assemblerOf("meeting_pack") !== undefined)`). It is listed in `P5_PENDING_TESTS_BE_O` and starts running once KBE-D2 merges (§2, §7).
+- **My new tests**, with the same counts in `integration-B.log` and `integration-full-B.log`:
+  - `governance/presentation.test.ts`: 9 tests, 8 passed, 1 skipped;
+  - `evidence/evidence-register.test.ts`: 9 passed;
+  - `contract/contract.test.ts`: 78 passed, including the three BE-O exercises and the empty pending list;
+  - the DG2 `evidence.test.ts`: 6 passed.
+- **Pinned counts:** unchanged. The operation count is 846 and the media-type triple delta is 0 (§4).
+- **Process failures in this run, both disclosed:**
+  1. A first C.UTF-8 unit start at 03:34:04Z was killed together with its shell, because it was backgrounded with `&`, before Vitest printed anything. The full re-run is the one in `unit-c-utf8-B.log`, and that log says so.
+  2. The first integration invocation was stopped at the 30-minute background limit. It is annotated at its end.
 
 ## 4. Operations routed (delta to `p5-pending-be-o.ts`)
 
@@ -136,7 +209,10 @@ None found. I searched `apps/web/src/i18n/{en,ar}` and `apps/web/src` for "plann
 
 ## 8. Merge instructions
 
-- No migrations. The change applies cleanly on `cca2ba5`.
+- No migrations.
+- **What to integrate:** the diff from `cca2ba5` to the working tree, which is the WIP commit `3e3dca9` plus this run's uncommitted handback and `-B` logs. It applies on `cca2ba5`.
+  - Do not take the empty top-level sandbox files listed in the continuation section.
+  - The first run's logs without `-B` are provenance. Keep or drop them as D-158 decides.
 - **Expected overlaps:**
   - `evidence/routes.ts`: three small additive hunks (import, route keys, registration line).
   - `governance/presentation.ts`: mine only.

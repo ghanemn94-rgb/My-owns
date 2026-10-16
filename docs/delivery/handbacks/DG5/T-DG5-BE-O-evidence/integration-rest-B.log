@@ -1,0 +1,45 @@
+Fri Oct 16 04:33:44 UTC 2026
+Second invocation: the 10 integration files that had not reported when integration-B.log (250 of 260 files passed, 0 failed) was killed at the 30-minute background limit:
+apps/api/test/integration/adoption/entity-group-metric-link.test.ts
+apps/api/test/integration/adoption/metric-link-read.test.ts
+apps/api/test/integration/contract/benefit-register-mirror.test.ts
+apps/api/test/integration/kpi-p4/fixture-dates.test.ts
+apps/api/test/integration/portfolio/unpaged-lists.test.ts
+apps/api/test/integration/reporting/orphans.test.ts
+apps/worker/test/integration/maintenance.test.ts
+apps/worker/test/integration/worker-attempt.test.ts
+packages/db/test/integration/migrate.test.ts
+packages/db/test/integration/scratch-drop.test.ts
+port-policy: PostgreSQL listening on port 24910 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration /home/user/wt/dg5-be-o
+> vitest run --project integration apps/api/test/integration/adoption/entity-group-metric-link.test.ts apps/api/test/integration/adoption/metric-link-read.test.ts apps/api/test/integration/contract/benefit-register-mirror.test.ts apps/api/test/integration/kpi-p4/fixture-dates.test.ts apps/api/test/integration/portfolio/unpaged-lists.test.ts apps/api/test/integration/reporting/orphans.test.ts apps/worker/test/integration/maintenance.test.ts apps/worker/test/integration/worker-attempt.test.ts packages/db/test/integration/migrate.test.ts packages/db/test/integration/scratch-drop.test.ts
+
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-o
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvah36j1_08fbabd6 (server_encoding UTF8); applied 83 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/orphans.test.ts (3 tests) 1015ms
+ ✓ |integration| apps/api/test/integration/adoption/metric-link-read.test.ts (2 tests) 632ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 2084ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  1760ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 1793ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/fixture-dates.test.ts (3 tests) 568ms
+ ✓ |integration| apps/worker/test/integration/worker-attempt.test.ts (1 test) 3351ms
+   ✓ worker.ts passes the job's attempt to its handler (T-DG4-BE-R2) > first attempt {retryCount 0, retryLimit 1} fails and is retried; the retry sees {1, 1}, the final attempt  1118ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 6724ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  6263ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  460ms
+ ✓ |integration| apps/api/test/integration/contract/benefit-register-mirror.test.ts (1 test) 501ms
+ ✓ |integration| apps/api/test/integration/adoption/entity-group-metric-link.test.ts (1 test) 377ms
+ ✓ |integration| apps/api/test/integration/portfolio/unpaged-lists.test.ts (1 test) 569ms
+   ✓ unpaged P3 lists refuse limit; paged lists accept it (ADR-0021 §11 item 6) > 400 on limit for every unpaged list; 200 with {items} and no nextCursor without it  414ms
+
+ Test Files  10 passed (10)
+      Tests  24 passed (24)
+   Start at  04:33:46
+   Duration  40.49s (transform 4.68s, setup 0ms, collect 20.10s, tests 17.61s, environment 0ms, prepare 78ms)
+
+exit=0
+Fri Oct 16 04:34:27 UTC 2026
