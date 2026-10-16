@@ -1,0 +1,95 @@
+port-policy: PostgreSQL listening on port 23401 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvb70q8q_a22581c7 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/environment/walkthrough.test.ts (15 tests | 3 failed) 10416ms
+   × production gives 409 environment.not_demo (ADR-0050 §9) > with and without a transformation, for every signed-in user; nothing is written 234ms
+     → expected 60 to be 57 // Object.is equality
+   ✓ the twelve M0349 steps (REQ-S18-004) > without a transformation: twelve verbatim steps in order, none completed; step 1 opens the create form 43ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > a fresh demo database: a transformation created through the API completes step 1 only; 2-12 incomplete 241ms
+   × the twelve M0349 steps (REQ-S18-004) > a seeded (dataset) transformation is not one 'created in this demo database': step 1 stays incomplete 24ms
+     → getDemoWalkthrough: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a14595-c83f-75c8-bbfa-5af37e231535"}: expected 404 to be 200 // Object.is equality
+   ✓ the twelve M0349 steps (REQ-S18-004) > 404 outside the caller's scope and for an unknown id (never disclosed); 400; 401 202ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 2 diagnose and agree baseline: FIN validates the baseline; a later edit makes it stale again  310ms
+   × each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 3 define outcomes/KPIs: an outcome, a KPI definition and their T02 link 321ms
+     → define_outcomes_kpis after its workflow: expected false to be true // Object.is equality
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 4 design TOM: a target-state canvas cell and a TOM gap (either alone is not enough)  442ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  439ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 6 update delivery/adoption: a submitted owner update, then a completed training record  376ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 7 submit KPI actual: the KPI owner submits the period's actual  429ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  541ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  528ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 10 generate report: a generated snapshot completes it; a discarded one does not  341ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  621ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/walkthrough.test.ts > production gives 409 environment.not_demo (ADR-0050 §9) > with and without a transformation, for every signed-in user; nothing is written
+AssertionError: expected 60 to be 57 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 57[39m
+[31m+ 60[39m
+
+ ❯ apps/api/test/integration/environment/walkthrough.test.ts:162:39
+    160|       }
+    161|     }
+    162|     expect(await auditCount(prod.db)).toBe(before);
+       |                                       ^
+    163|   });
+    164| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/walkthrough.test.ts > the twelve M0349 steps (REQ-S18-004) > a seeded (dataset) transformation is not one 'created in this demo database': step 1 stays incomplete
+AssertionError: getDemoWalkthrough: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a14595-c83f-75c8-bbfa-5af37e231535"}: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ ok apps/api/test/integration/environment/walkthrough.test.ts:126:76
+    124| 
+    125| const ok = (res: { status: number; body: Body }, status: number, what:…
+    126|   expect(res.status, `${what}: ${JSON.stringify(res.body).slice(0, 800…
+       |                                                                            ^
+    127|   return res.body;
+    128| };
+ ❯ walk apps/api/test/integration/environment/walkthrough.test.ts:132:10
+ ❯ completion apps/api/test/integration/environment/walkthrough.test.ts:137:16
+ ❯ apps/api/test/integration/environment/walkthrough.test.ts:236:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/walkthrough.test.ts > each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 3 define outcomes/KPIs: an outcome, a KPI definition and their T02 link
+AssertionError: define_outcomes_kpis after its workflow: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ becomesTrue apps/api/test/integration/environment/walkthrough.test.ts:146:53
+    144|   await workflow();
+    145|   const after = await completion(t, session);
+    146|   expect(after[code], `${code} after its workflow`).toBe(true);
+       |                                                     ^
+    147|   return after;
+    148| }
+ ❯ apps/api/test/integration/environment/walkthrough.test.ts:316:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 passed (15)
+   Start at  16:39:41
+   Duration  29.62s (transform 7.24s, setup 0ms, collect 13.56s, tests 10.42s, environment 0ms, prepare 499ms)
+
