@@ -30,8 +30,12 @@ import type {
 import { businessCasesAssembler } from "./assemblers/business-cases.ts";
 import { charterAssembler } from "./assemblers/charter.ts";
 import { diagnosticAssembler } from "./assemblers/diagnostic.ts";
+import { executiveDashboardAssembler } from "./assemblers/executive-dashboard.ts";
 import { executivePackAssembler } from "./assemblers/executive-pack.ts";
 import { gatePackAssembler } from "./assemblers/gate-pack.ts";
+import { handoverAssembler } from "./assemblers/handover.ts";
+import { meetingMinutesAssembler } from "./assemblers/meeting-minutes.ts";
+import { meetingPackAssembler } from "./assemblers/meeting-pack.ts";
 import { registersAssembler } from "./assemblers/registers.ts";
 import { roadmapAssembler } from "./assemblers/roadmap.ts";
 import { tomAssembler } from "./assemblers/tom.ts";
@@ -121,7 +125,11 @@ function assemblers(): ReadonlyMap<ReportDefinitionCode, Assembler> {
     ["gate_pack", gatePackAssembler],
     // KBE-D (p5-work-split §F.3): executive_pack.
     ["executive_pack", executivePackAssembler],
-    // KBE-D2: meeting_minutes, executive_dashboard, handover, meeting_pack.
+    // KBE-D2 (p5-work-split §F.4): meeting_minutes, executive_dashboard, handover, meeting_pack.
+    ["meeting_minutes", meetingMinutesAssembler],
+    ["executive_dashboard", executiveDashboardAssembler],
+    ["handover", handoverAssembler],
+    ["meeting_pack", meetingPackAssembler],
   ]);
   return registry;
 }

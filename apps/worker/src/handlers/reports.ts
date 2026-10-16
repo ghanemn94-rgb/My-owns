@@ -17,9 +17,10 @@
 // service (jobActor); a service holds no permission and a task approves nothing (product gates G1-G6 are business
 // approvals inside the product; nothing here touches the engineering gates DG0-DG7).
 import { sql, type Db, type Tx } from "@mth/db";
+import { REPORT_CONTENT_LABELS } from "@mth/shared";
 import { z } from "zod";
 import { createWorkItemOnce, jobActor } from "../kit.ts";
-import { EXPORT_QUEUE, runExport, workerExportStore } from "../reports/export-runner.ts";
+import { EXPORT_QUEUE, runExport, workerExportStore, type ExportRunnerDeps } from "../reports/export-runner.ts";
 import type { JobHandler } from "./spec.ts";
 
 export const OWNER_UPDATE_TASKS_QUEUE = "reports.owner_update_tasks";
@@ -169,11 +170,19 @@ export async function createOwnerUpdateTasks(db: Db, input: unknown, jobId: stri
   return { periods: periods.length, created, existing };
 }
 
+/**
+ * The production dependencies of `reports.export` (T-DG5-KBE-D2; D-157 a; p5-work-split §F.11 item 10; REQ-S13-009): the
+ * worker's export-file store and the en/ar content label table of every `report.*` key the assemblers emit
+ * (`@mth/shared` REPORT_CONTENT_LABELS; the worker imports no API code, ADR-0002), so an Arabic export prints Arabic
+ * content headings and labels, never English fallbacks.
+ */
+export const exportRunnerDeps = (): ExportRunnerDeps => ({ store: workerExportStore(), labels: REPORT_CONTENT_LABELS });
+
 export const REPORTS_HANDLERS: readonly JobHandler[] = [
   { queue: OWNER_UPDATE_TASKS_QUEUE, handle: createOwnerUpdateTasks },
   // T-DG5-BE-M (ADR-0046 §5): reports.export renders one export job (apps/worker/src/reports/export-runner.ts).
   {
     queue: EXPORT_QUEUE,
-    handle: (db, data, jobId, attempt) => runExport(db, data, jobId, attempt, { store: workerExportStore() }),
+    handle: (db, data, jobId, attempt) => runExport(db, data, jobId, attempt, exportRunnerDeps()),
   },
 ];
