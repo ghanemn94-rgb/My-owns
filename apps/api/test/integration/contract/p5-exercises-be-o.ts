@@ -1,11 +1,180 @@
-// P5 contract exercises of BE-O (p5-plan §5.1, p5-work-split §2 rule 14). Stub created by T-DG5-BE-A and already
-// called by contract.test.ts: BE-O exercises each operation it routes here, through `ctx.mirrored`, in the same change
-// that removes the operation from its p5-pending list, and lists each success body's zod mirror below.
-import type { z } from "zod";
-import type { P5ExerciseContext } from "../../support/harness.ts";
+// P5 contract exercises of BE-O (p5-work-split §F.7 and §2 rule 14; T-DG5-BE-O): getMeetingPresentation,
+// listEvidenceRegister and listEvidenceVersions, each with a success and every declared refusal it can reach, through
+// the validating client. Every value is SYNTHETIC; nothing approves anything or touches the engineering gates DG0-DG7.
+//
+// The meeting pack read in snapshot mode is stored by `storeMeetingPack` (presentation-fixtures.ts: the row the
+// generate route writes) until KBE-D2's meeting_pack assembler merges; the live mode is exercised through the
+// presentation port with a stub assembler (route and contract plumbing; the REQ-S10-013 live test is pending).
+// Declared but not reachable here: 429 (the rate limiter's own suite).
+//
+// The zod mirrors below follow the OpenAPI components MeetingPresentation, EvidenceRegisterPage and
+// EvidenceVersionPage exactly; `@mth/shared/schemas` has no mirror of them yet (packages/shared is outside this task's
+// files; the handback asks the orchestrator whether to promote these there).
+import { EVIDENCE_TYPES, reportDocument, type ReportDocument } from "@mth/shared/schemas";
+import { expect } from "vitest";
+import { z } from "zod";
+import { setMeetingPackAssembler } from "../../../src/modules/governance/presentation.ts";
+import { call, signIn, type P5ExerciseContext } from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+import { businessToday, plusDays, setupMeetingWorld } from "../governance/meeting-fixtures.ts";
+import { storeMeetingPack } from "../governance/presentation-fixtures.ts";
 
-export const P5_MIRRORS_BE_O: Readonly<Record<string, z.ZodType>> = {};
+const uuid = z.uuid();
+const timestamp = z.iso.datetime({ offset: true });
+const businessDate = z.iso.date();
 
-export async function exerciseP5BeOOperations(_ctx: P5ExerciseContext): Promise<void> {
-  // Nothing routed yet.
+const meetingPresentation = z.strictObject({
+  meetingId: uuid,
+  mode: z.enum(["live", "snapshot"]),
+  snapshotId: uuid.nullable(),
+  document: reportDocument,
+});
+const evidenceRegisterLink = z.strictObject({ recordType: z.string(), recordId: uuid, via: z.string() });
+const evidenceRegisterItem = z.strictObject({
+  evidenceId: uuid,
+  title: z.string(),
+  kind: z.enum(["file", "note", "external_link", "file_reference"]),
+  evidenceType: z.enum(EVIDENCE_TYPES),
+  source: z.string().nullable(),
+  ownerUserId: uuid,
+  observationStart: businessDate.nullable(),
+  observationEnd: businessDate.nullable(),
+  uploadedAt: timestamp,
+  currentRevision: z.number().int().min(1).nullable(),
+  recordVersion: z.number().int().min(1),
+  sha256: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .nullable(),
+  reviewStatus: z.enum(["unverified", "verified", "rejected"]),
+  accessibilityStatus: z.enum(["unchecked", "accessible", "inaccessible"]),
+  status: z.enum(["active", "archived"]),
+  links: z.array(evidenceRegisterLink),
+});
+const evidenceVersion = z.strictObject({
+  contentId: uuid,
+  revision: z.number().int().min(1),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  sizeBytes: z.number().int().min(0),
+  contentType: z.string(),
+  fileName: z.string(),
+  uploadedBy: uuid,
+  uploadedAt: timestamp,
+});
+
+export const P5_MIRRORS_BE_O: Readonly<Record<string, z.ZodType>> = {
+  getMeetingPresentation: meetingPresentation,
+  listEvidenceRegister: z.strictObject({ items: z.array(evidenceRegisterItem), nextCursor: z.string().nullable() }),
+  listEvidenceVersions: z.strictObject({ items: z.array(evidenceVersion), nextCursor: z.string().nullable() }),
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+
+export async function exerciseP5BeOOperations(ctx: P5ExerciseContext): Promise<void> {
+  const { api, world: w, mirrored } = ctx;
+  const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call<Body>(api.app, m, u, o);
+  const code = (r: { status: number; body: unknown }) => [r.status, (r.body as { code?: string }).code];
+  const x = await setupMeetingWorld(api, w);
+  const today = await businessToday(api);
+  const T = `/api/v1/transformations/${x.transformationId}`;
+  const nobody = await signIn(api.app, w.nobody.subject);
+  const officeB = await signIn(api.app, w.officeB.subject);
+  const meeting = async (days: number) => {
+    const res = await send("POST", `${T}/meetings`, {
+      session: x.lead.session,
+      body: {
+        forumId: x.forums.transformation_review,
+        scheduledDate: plusDays(today, days),
+        startTime: "09:00",
+        durationMinutes: 60,
+      },
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    return res.body.id as string;
+  };
+
+  // getMeetingPresentation: 200 (snapshot; live through the port; AUD), 400, 401, 403, 404, 422.
+  const a = await meeting(10);
+  const b = await meeting(11);
+  const packA = await storeMeetingPack(api, send, {
+    transformationId: x.transformationId,
+    meetingId: a,
+    author: x.lead,
+    sections: [],
+  });
+  const packB = await storeMeetingPack(api, send, {
+    transformationId: x.transformationId,
+    meetingId: b,
+    author: x.lead,
+    sections: [],
+  });
+  const P = (m: string, s?: string) => `${T}/meetings/${m}/presentation${s === undefined ? "" : `?snapshotId=${s}`}`;
+  const snap = await mirrored("GET", P(a, packA.id), { session: x.lead.session });
+  expect(snap.status).toBe(200);
+  expect(snap.body).toMatchObject({ meetingId: a, mode: "snapshot", snapshotId: packA.id });
+  expect((await mirrored("GET", P(a, packA.id), { session: x.auditor.session })).status).toBe(200);
+  const previous = setMeetingPackAssembler(async () => ({ ...packA.document }) as ReportDocument);
+  try {
+    const live = await mirrored("GET", P(a), { session: x.lead.session });
+    expect(live.status).toBe(200);
+    expect(live.body).toMatchObject({ meetingId: a, mode: "live", snapshotId: null });
+  } finally {
+    setMeetingPackAssembler(previous);
+  }
+  expect((await mirrored("GET", `${P(a)}?snapshotId=nope`, { session: x.lead.session })).status).toBe(400);
+  expect((await mirrored("GET", P(a, packA.id))).status).toBe(401);
+  expect((await mirrored("GET", P(a, packA.id), { session: nobody })).status).toBe(403);
+  expect((await mirrored("GET", P(a, packA.id), { session: officeB })).status).toBe(404);
+  expect((await mirrored("GET", P(crypto.randomUUID()), { session: x.lead.session })).status).toBe(404);
+  expect(code(await mirrored("GET", P(a, packB.id), { session: x.lead.session }))).toEqual([
+    422,
+    "presentation.snapshot_mismatch",
+  ]);
+
+  // listEvidenceRegister: 200 (TL; AUD), 400, 401, 403, 404.
+  const e = await send("POST", `${T}/evidence`, {
+    session: x.lead.session,
+    body: { kind: "file", title: "Synthetic register extract", ownerUserId: x.lead.id },
+  });
+  expect(e.status, JSON.stringify(e.body)).toBe(201);
+  const up = await send("POST", `${T}/evidence/${e.body.id}/content`, {
+    session: x.lead.session,
+    headers: { ...ifm(e.body.version), "content-type": "application/octet-stream", "x-file-name": "extract.csv" },
+    body: Buffer.from("a,b\n1,2\n"),
+  });
+  expect(up.status, JSON.stringify(up.body)).toBe(200);
+  const note = await send("POST", `${T}/evidence`, {
+    session: x.lead.session,
+    body: { kind: "note", title: "Synthetic register note", noteBody: "Synthetic", ownerUserId: x.lead.id },
+  });
+  expect(note.status).toBe(201);
+  const R = `${T}/evidence-register`;
+  const reg = await mirrored("GET", R, { session: x.lead.session });
+  expect(reg.status).toBe(200);
+  const items = (reg.body as Body).items as Body[];
+  expect(items.find((i) => i.evidenceId === e.body.id)).toMatchObject({ currentRevision: 1 });
+  expect(items.find((i) => i.evidenceId === note.body.id)).toMatchObject({ sha256: null, source: null });
+  expect((await mirrored("GET", `${R}?evidenceType=document&limit=1`, { session: x.auditor.session })).status).toBe(
+    200,
+  );
+  expect((await mirrored("GET", `${R}?reviewStatus=nope`, { session: x.lead.session })).status).toBe(400);
+  expect((await mirrored("GET", R)).status).toBe(401);
+  expect((await mirrored("GET", R, { session: nobody })).status).toBe(403);
+  expect((await mirrored("GET", R, { session: officeB })).status).toBe(404);
+
+  // listEvidenceVersions: 200 (a file; a note has none), 400, 401, 403, 404.
+  const V = (id: string) => `${T}/evidence/${id}/versions`;
+  const versions = await mirrored("GET", V(e.body.id), { session: x.auditor.session });
+  expect(versions.status).toBe(200);
+  expect(((versions.body as Body).items as Body[]).map((v) => v.revision)).toEqual([1]);
+  expect((await mirrored("GET", V(note.body.id), { session: x.lead.session })).body).toEqual({
+    items: [],
+    nextCursor: null,
+  });
+  expect((await mirrored("GET", `${V(e.body.id)}?limit=0`, { session: x.lead.session })).status).toBe(400);
+  expect((await mirrored("GET", V(e.body.id))).status).toBe(401);
+  expect((await mirrored("GET", V(e.body.id), { session: nobody })).status).toBe(403);
+  expect((await mirrored("GET", V(e.body.id), { session: officeB })).status).toBe(404);
+  expect((await mirrored("GET", V(crypto.randomUUID()), { session: x.lead.session })).status).toBe(404);
 }
