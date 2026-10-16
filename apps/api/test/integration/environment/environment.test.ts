@@ -179,7 +179,7 @@ describe("GET /admin/environment (demo.reset; ADM_TECH)", () => {
       datasetVersion: "1.0.0",
       syntheticClockAt: "2026-09-01T06:00:00.000Z",
       checksumSha256: seeded.checksumSha256,
-      coverage: {},
+      coverage: seeded.coverage,
       coverageComplete: false,
     });
     expect(res.body.latestRun.recordCounts).toEqual(seeded.recordCounts);
