@@ -18,6 +18,8 @@ import { useForumName } from "../forums/ForumsPage.tsx";
 import { DueDate, P4FormDialog, textOf } from "../my-work/p4ui.tsx";
 import { govPaths, useForums, useMeetings } from "./api.ts";
 import { GovSubNav, MEETING_WRITE_PERMISSIONS, MeetingStatusText, NS, QuorumState } from "./ui.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function MeetingsPage() {
   const { t } = useTranslation();
@@ -60,6 +62,7 @@ function MeetingsBody() {
           ) : null
         }
       >
+        <ExtensionNote recordType="meeting_record" />
         <div className="filters" role="group" aria-label={t("governanceP4.filters")}>
           <div className="filters__select">
             <label htmlFor="meeting-filter-forum">{t("governanceP4.meetings.forum")}</label>

@@ -28,6 +28,8 @@ import { useWorkspace } from "../../components/Workspace.tsx";
 import { formatDateTime, formatDecimal } from "../../lib/format.ts";
 import { useBusinessCases } from "../business-cases/api.ts";
 import { BusinessApprovalTag, PORTFOLIO_NS } from "./common.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 /** Statuses on which a funding decision can be recorded (approve/reject/defer on selected; revoke on funded). */
 export const FUNDABLE_STATUSES: ReadonlySet<string> = new Set(["selected", "funded"]);
@@ -78,6 +80,7 @@ export function FundingSection({ initiative: i, readOnly }: { initiative: Initia
         </>
       }
     >
+      <ExtensionNote recordType="funding_approval" />
       <QueryState query={list}>
         {(items) => {
           const sorted = [...items].sort((a, b) => b.decidedAt.localeCompare(a.decidedAt));

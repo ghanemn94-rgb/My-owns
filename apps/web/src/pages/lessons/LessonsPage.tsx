@@ -30,6 +30,8 @@ import {
   type LessonSearchHit,
 } from "../bau/api.ts";
 import { Code, NS, StatusText, SustainSubNav } from "../bau/ui.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function LessonsPage() {
   const { t } = useTranslation();
@@ -165,6 +167,7 @@ function LessonsBody() {
           ) : null
         }
       >
+        <ExtensionNote recordType="lesson" />
         {runner.alert}
         <div className="filters" role="group" aria-label={t("sustainP4.filters")}>
           <div className="filters__select">

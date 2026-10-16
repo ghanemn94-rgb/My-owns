@@ -34,6 +34,8 @@ import { ChangeStatusText } from "./ChangeStatus.tsx";
 import { CR_NS } from "./CreateChangeRequest.tsx";
 import { ImpactItemsTable, MaterialityText } from "./Impact.tsx";
 import { editableFields } from "./subjects.ts";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function ChangeRequestPage() {
   const { t } = useTranslation();
@@ -155,6 +157,7 @@ function RequestView({ cr }: { cr: ChangeRequest }) {
           ) : null
         }
       >
+        <ExtensionNote recordType="change_request" />
         {cr.status === "draft" ? (
           <p className="banner banner--info" role="note" data-state="saved-draft">
             <Icon name="pencil" /> {t("changeRequestsP4.detail.draftNote")}

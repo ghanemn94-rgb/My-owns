@@ -42,6 +42,8 @@ import {
   SustainSubNav,
   vocabOptions,
 } from "./ui.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function ControlsPage() {
   const { t } = useTranslation();
@@ -78,6 +80,7 @@ function ControlsBody() {
     <>
       <SustainSubNav tid={ws.tid} />
       <Section id="bau-controls" title={t("sustainP4.controls.tableTitle")}>
+        <ExtensionNote recordType="control" />
         <ControlsTable />
       </Section>
       <Section id="bau-checks" title={t("sustainP4.checks.tableTitle")} intro={t("sustainP4.checks.intro")}>
