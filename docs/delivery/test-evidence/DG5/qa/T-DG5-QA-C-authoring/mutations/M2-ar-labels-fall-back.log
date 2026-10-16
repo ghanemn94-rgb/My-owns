@@ -1,0 +1,160 @@
+### M2-ar-labels-fall-back
+file: packages/reporting/src/labels.ts
+sed: s/const own = content?.\[language\] ?? {};/const own = content?.["en"] ?? {};/
+135c135
+<   const own = content?.[language] ?? {};
+---
+>   const own = content?.["en"] ?? {};
+test: tests/qa/integration/a15-outputs-every-definition.test.ts -t "every file carries"
+port-policy: PostgreSQL listening on port 23730 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.xktMGY/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbi3i5h_6cfdf480 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a15-outputs-every-definition.test.ts (5 tests | 1 failed | 4 skipped) 23961ms
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > the API lists the twelve definitions and each one was generated here
+   × A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout 19721ms
+     → expected { 'charter/pdf/ar': [ …(2) ], …(31) } to deeply equal {}
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file, in every format, prints the B0004 provenance statement in its language (ADR-0046 §2, REQ-PB-001)
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > a format the definition does not offer is refused (422 export.format_not_offered); nothing is queued
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > an export is the requester's own: another user of the organization gets 404 on the job and the file
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a15-outputs-every-definition.test.ts > A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout
+AssertionError: expected { 'charter/pdf/ar': [ …(2) ], …(31) } to deeply equal {}
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- {}[39m
+[31m+ {[39m
+[31m+   "business_cases/docx/ar": [[39m
+[31m+     "English title \"Business cases\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Code\",\"Level\",\"Title\",\"Currency\",\"Baseline validation\",\"Sections not completed\",\"Benefit owner\",\"Initiative owner\",\"Finance validator\",\"Status\",\"Business case sections\",\"Business case\"]",[39m
+[31m+   ],[39m
+[31m+   "business_cases/pdf/ar": [[39m
+[31m+     "English title \"Business cases\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Code\",\"Level\",\"Title\",\"Currency\",\"Baseline validation\",\"Sections not completed\",\"Benefit owner\",\"Initiative owner\",\"Finance validator\",\"Status\",\"Business case sections\",\"Business case\"]",[39m
+[31m+   ],[39m
+[31m+   "business_cases/xlsx/ar": [[39m
+[31m+     "English title \"Business cases\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Business case sections\",\"Investment and benefit lines\",\"Code\",\"Level\",\"Title\",\"Currency\",\"Baseline validation\",\"Sections not completed\",\"Benefit owner\",\"Initiative owner\",\"Finance validator\",\"Business case\"]",[39m
+[31m+   ],[39m
+[31m+   "charter/docx/ar": [[39m
+[31m+     "English title \"Transformation charter\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Executive sponsor\",\"Transformation lead\",\"Case for change\",\"In scope\",\"Out of scope\",\"Baseline date\",\"Target horizon\",\"Target horizon (unit)\",\"Governance forum\",\"Decision rights\",\"Success definition\",\"If we change (capabilities / journeys / operating model)\"]",[39m
+[31m+   ],[39m
+[31m+   "charter/pdf/ar": [[39m
+[31m+     "English title \"Transformation charter\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Executive sponsor\",\"Transformation lead\",\"Case for change\",\"In scope\",\"Out of scope\",\"Baseline date\",\"Target horizon\",\"Target horizon (unit)\",\"Governance forum\",\"Decision rights\",\"Success definition\",\"Which will create (financial / strategic benefits)\"]",[39m
+[31m+   ],[39m
+[31m+   "diagnostic/docx/ar": [[39m
+[31m+     "English title \"Current-state diagnostic\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Current-state diagnostic\",\"Dimension\",\"Current state\",\"Evidence or baseline\",\"Root cause\",\"Impact\",\"Impact amount\",\"Confidence\",\"Owner\",\"Status\",\"Medium\",\"Active\"]",[39m
+[31m+   ],[39m
+[31m+   "diagnostic/pdf/ar": [[39m
+[31m+     "English title \"Current-state diagnostic\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Current-state diagnostic\",\"Dimension\",\"Current state\",\"Evidence or baseline\",\"Root cause\",\"Impact\",\"Impact amount\",\"Confidence\",\"Owner\",\"Status\",\"Medium\",\"Active\"]",[39m
+[31m+   ],[39m
+[31m+   "diagnostic/xlsx/ar": [[39m
+[31m+     "English title \"Current-state diagnostic\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Current-state diagnostic\",\"Findings\",\"Baselines\",\"Value pools\",\"Dimension\",\"Current state\",\"Evidence or baseline\",\"Root cause\",\"Impact\",\"Impact amount\",\"Confidence\",\"Owner\"]",[39m
+[31m+   ],[39m
+[31m+   "executive_dashboard/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Dashboard\",\"Business date\",\"Time zone\",\"RAG policy\",\"Default policy\",\"Outcomes\",\"Status (RAG)\",\"Outcome KPIs\",\"Items\",\"Record type\",\"Code\",\"Due date\"]",[39m
+[31m+   ],[39m
+[31m+   "executive_dashboard/pptx/ar": [[39m
+[31m+     "English label fallbacks: [\"Dashboard\",\"Business date\",\"Time zone\",\"Default policy\",\"RAG policy\",\"Outcomes\",\"Status (RAG)\",\"Outcome KPIs\",\"Items\",\"Owner\",\"Due date\",\"Code\"]",[39m
+[31m+   ],[39m
+[31m+   "executive_dashboard/xlsx/ar": [[39m
+[31m+     "English label fallbacks: [\"Items\",\"Dashboard\",\"Business date\",\"Time zone\",\"RAG policy\",\"Default policy\",\"Outcomes\",\"Status (RAG)\",\"Outcome KPIs\",\"Validated value (profit and cash)\",\"Portfolio\",\"Top initiatives\"]",[39m
+[31m+   ],[39m
+[31m+   "executive_pack/docx/ar": [[39m
+[31m+     "English label fallbacks: [\"Owner update\",\"Update\",\"No update submitted\",\"Current metrics\",\"Outcomes\",\"Portfolio\",\"Dependencies\",\"Green\",\"Decisions\",\"People & adoption\",\"Outcome KPIs\",\"Validated value (profit and cash)\"]",[39m
+[31m+   ],[39m
+[31m+   "executive_pack/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Owner update\",\"Update\",\"No update submitted\",\"Current metrics\",\"Outcomes\",\"Portfolio\",\"Dependencies\",\"Green\",\"Decisions\",\"People & adoption\",\"Outcome KPIs\",\"Validated value (profit and cash)\"]",[39m
+[31m+   ],[39m
+[31m+   "executive_pack/pptx/ar": [[39m
+[31m+     "English label fallbacks: [\"Owner update\",\"No update submitted\",\"Update\",\"Current metrics\",\"Outcomes\",\"Portfolio\",\"Green\",\"Dependencies\",\"Decisions\",\"People & adoption\",\"Outcome KPIs\",\"Validated value (profit and cash)\"]",[39m
+[31m+   ],[39m
+[31m+   "gate_pack/docx/ar": [[39m
+[31m+     "English label fallbacks: [\"Phase\",\"Gate status\",\"Submitted\",\"Approval state (recorded, not an approval)\",\"Approver role\",\"Executive Sponsor\",\"Submission no.\",\"Submitted at\",\"Submitted by\",\"Submission note\",\"Due date\",\"Submission snapshot SHA-256\"]",[39m
+[31m+   ],[39m
+[31m+   "gate_pack/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Phase\",\"Gate status\",\"Submitted\",\"Approval state (recorded, not an approval)\",\"Approver role\",\"Executive Sponsor\",\"Submitted at\",\"Submitted by\",\"Submission note\",\"Due date\",\"Submission snapshot SHA-256\",\"Decision\"]",[39m
+[31m+   ],[39m
+[31m+   "gate_pack/pptx/ar": [[39m
+[31m+     "English label fallbacks: [\"Phase\",\"Submitted\",\"Gate status\",\"Approval state (recorded, not an approval)\",\"Executive Sponsor\",\"Approver role\",\"Submission no.\",\"Submitted at\",\"Submitted by\",\"Submission note\",\"Due date\",\"Submission snapshot SHA-256\"]",[39m
+[31m+   ],[39m
+[31m+   "handover/docx/ar": [[39m
+[31m+     "English title \"BAU handover\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Code\",\"Performance area\",\"Cycle\",\"Status\",\"Receiving owner\",\"KPI owner\",\"Operating procedures\",\"Capability readiness\",\"Unresolved accepted risks\",\"Benefit monitoring cadence\",\"Monthly\",\"Data access\"]",[39m
+[31m+   ],[39m
+[31m+   "handover/pdf/ar": [[39m
+[31m+     "English title \"BAU handover\" in an Arabic file",[39m
+[31m+     "English label fallbacks: [\"Code\",\"Performance area\",\"Cycle\",\"Status\",\"Receiving owner\",\"KPI owner\",\"Operating procedures\",\"Capability readiness\",\"Unresolved accepted risks\",\"Benefit monitoring cadence\",\"Monthly\",\"Data access\"]",[39m
+[31m+   ],[39m
+[31m+   "meeting_minutes/docx/ar": [[39m
+[31m+     "English label fallbacks: [\"Forum (English)\",\"Forum (Arabic)\",\"Scheduled date\",\"Starts at\",\"Ends at\",\"Time zone\",\"Location\",\"Meeting status\",\"Held\",\"Chair\",\"Secretary\",\"Quorum\"]",[39m
+[31m+   ],[39m
+[31m+   "meeting_minutes/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Forum (English)\",\"Forum (Arabic)\",\"Scheduled date\",\"Starts at\",\"Ends at\",\"Time zone\",\"Location\",\"Meeting status\",\"Held\",\"Chair\",\"Secretary\",\"Quorum\"]",[39m
+[31m+   ],[39m
+[31m+   "meeting_pack/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Forum (English)\",\"Forum (Arabic)\",\"Scheduled date\",\"Starts at\",\"Ends at\",\"Time zone\",\"Location\",\"Meeting status\",\"Scheduled\",\"Chair\",\"Secretary\",\"Quorum\"]",[39m
+[31m+   ],[39m
+[31m+   "meeting_pack/pptx/ar": [[39m
+[31m+     "English label fallbacks: [\"Forum (English)\",\"Forum (Arabic)\",\"Scheduled date\",\"Starts at\",\"Ends at\",\"Time zone\",\"Location\",\"Scheduled\",\"Meeting status\",\"Chair\",\"Secretary\",\"Quorum\"]",[39m
+[31m+   ],[39m
+[31m+   "registers/csv/ar": [[39m
+[31m+     "English label fallbacks: [\"Filters\",\"No filters\",\"Title\",\"Code\",\"Type\",\"Description\",\"Impact\",\"Probability\",\"Owner\",\"Due date\",\"Mitigation\",\"Status\"]",[39m
+[31m+   ],[39m
+[31m+   "registers/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Filters\",\"No filters\",\"Title\",\"Code\",\"Type\",\"Description\",\"Impact\",\"Probability\",\"Owner\",\"Due date\",\"Mitigation\",\"Status\"]",[39m
+[31m+   ],[39m
+[31m+   "registers/xlsx/ar": [[39m
+[31m+     "English label fallbacks: [\"Title\",\"Filters\",\"No filters\",\"Code\",\"Type\",\"Description\",\"Impact\",\"Probability\",\"Owner\",\"Due date\",\"Mitigation\",\"Status\"]",[39m
+[31m+   ],[39m
+[31m+   "roadmap/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Code\",\"Name (English)\",\"Name (Arabic)\",\"Purpose (English)\",\"Purpose (Arabic)\",\"Planned start\",\"Planned end\",\"Owner\",\"Status\",\"Active\",\"Initiatives\",\"Name\"]",[39m
+[31m+   ],[39m
+[31m+   "roadmap/pptx/ar": [[39m
+[31m+     "English label fallbacks: [\"Status\",\"Owner\",\"Planned end\",\"Planned start\",\"Purpose (Arabic)\",\"Purpose (English)\",\"Name (Arabic)\",\"Name (English)\",\"Code\",\"Active\",\"Initiatives\",\"Objective\"]",[39m
+[31m+   ],[39m
+[31m+   "roadmap/xlsx/ar": [[39m
+[31m+     "English label fallbacks: [\"Initiatives\",\"Milestones\",\"Dependencies\",\"Code\",\"Name (English)\",\"Name (Arabic)\",\"Purpose (English)\",\"Purpose (Arabic)\",\"Planned start\",\"Planned end\",\"Owner\",\"Status\"]",[39m
+[31m+   ],[39m
+[31m+   "tom/docx/ar": [[39m
+[31m+     "English label fallbacks: [\"Target operating model canvas\",\"Dimension\",\"Current design\",\"Target design\",\"Owner\",\"Status\",\"Customer & Value Proposition\",\"Products & Services\",\"Journeys & Processes\",\"Organization\",\"Governance & Decision Rights\",\"People & Capabilities\"]",[39m
+[31m+   ],[39m
+[31m+   "tom/pdf/ar": [[39m
+[31m+     "English label fallbacks: [\"Target operating model canvas\",\"Dimension\",\"Current design\",\"Target design\",\"Owner\",\"Status\",\"Customer & Value Proposition\",\"Products & Services\",\"Journeys & Processes\",\"Organization\",\"Governance & Decision Rights\",\"People & Capabilities\"]",[39m
+[31m+   ],[39m
+[31m+   "tom/xlsx/ar": [[39m
+[31m+     "English label fallbacks: [\"Target operating model canvas\",\"Gaps\",\"Design decisions\",\"Dependencies\",\"Capabilities\",\"Dimension\",\"Current design\",\"Target design\",\"Owner\",\"Status\",\"Customer & Value Proposition\",\"Products & Services\"]",[39m
+[31m+   ],[39m
+[31m+ }[39m
+
+ ❯ tests/qa/integration/a15-outputs-every-definition.test.ts:246:22
+    244|     expect(files).toBeGreaterThanOrEqual(2 * definitions.reduce((n, d)…
+    245|     matrixRan = true;
+    246|     expect(failures).toEqual({});
+       |                      ^
+    247|   }, 600_000);
+    248| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:49:46
+   Duration  39.68s (transform 5.77s, setup 0ms, collect 11.07s, tests 23.96s, environment 0ms, prepare 127ms)
+
+EXIT=1

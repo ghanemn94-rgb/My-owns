@@ -1,0 +1,66 @@
+### M4-raid-filter-ignored
+file: apps/api/src/modules/reporting/reports/assemblers/registers.ts
+sed: 103s/if (f.type !== undefined)/if (false)/
+103c103
+<   if (f.type !== undefined) q = q.where("entry_type", "=", f.type);
+---
+>   if (false) q = q.where("entry_type", "=", f.type);
+test: tests/qa/integration/a15-selected-records-and-injection.test.ts -t "REQ-S13-005: an XLSX"
+port-policy: PostgreSQL listening on port 23730 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.xktMGY/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbi4svg_7c63444e (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > the dangerous texts and the plain risk were accepted by the API (the refusals, if any, are listed)
+A15 RAID texts: [["\"=HYPERLINK(\\\"http://exa",201,null],["\"+SUM(1,2) QA-A15 plus-p",201,null],["\"-2+3 QA-A15 minus-prefi",201,null],["\"@SUM(1,2) QA-A15 at-pre",201,null],["\"\\tQA-A15 tab-prefixed r",201,null],["\"\\rQA-A15 CR-prefixed ri",201,null],["\"QA-A15 synthetic risk, ",201,null],["\"QA-A15 synthetic issue:",201,null]]
+
+ ❯ |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts (7 tests | 2 failed | 4 skipped) 1248ms
+   ✓ REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > the dangerous texts and the plain risk were accepted by the API (the refusals, if any, are listed) 3ms
+   × REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (en): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row 146ms
+     → expected [ Array(8) ] to deeply equal [ Array(7) ]
+   × REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (ar): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row 77ms
+     → expected [ Array(8) ] to deeply equal [ Array(7) ]
+   ↓ REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > XLSX: each such description is an inline string with a quote prefix, never a formula
+   ↓ REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > CSV: each such description is written with a leading apostrophe; other text is unchanged
+   ↓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (en) lists every criterion of G1 by its en label
+   ↓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (ar) lists every criterion of G1 by its ar label
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (en): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row
+ FAIL  |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (ar): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row
+AssertionError: expected [ Array(8) ] to deeply equal [ Array(7) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,6 +1,7 @@[39m
+[2m  [[22m
+[31m+   "I-01",[39m
+[2m    "R-01",[22m
+[2m    "R-02",[22m
+[2m    "R-03",[22m
+[2m    "R-04",[22m
+[2m    "R-05",[22m
+
+ ❯ tests/qa/integration/a15-selected-records-and-injection.test.ts:105:33
+    103|       const allCodes = new Set([...riskRows, ...issueRows].map((r) => …
+    104|       const shown = new Set(v.pieces.filter((t) => allCodes.has(t)));
+    105|       expect([...shown].sort()).toEqual(riskRows.map((r) => r.code as …
+       |                                 ^
+    106|       expect(contains(v, ISSUE_TEXT)).toBe(false);
+    107|       for (const r of riskRows) expect(v.pieces, `risk ${r.code}`).toC…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 4 skipped (7)
+   Start at  21:50:47
+   Duration  15.81s (transform 5.31s, setup 0ms, collect 10.35s, tests 1.25s, environment 0ms, prepare 66ms)
+
+EXIT=1
