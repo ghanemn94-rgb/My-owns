@@ -87,6 +87,9 @@ import {
 import { registerReportingModule } from "./modules/reporting/index.ts";
 // T-DG4-KBE-G2 (ADR-0037 §1 item 3): the workspace header's gate-readiness port (the raidDependencyPort precedent).
 import { setWorkflowsReadPort } from "./modules/reporting/ports.ts";
+import { setMeetingPackAssembler } from "./modules/governance/presentation.ts";
+import { assemblerOf } from "./modules/reporting/reports/assembler.ts";
+import { assembleReport } from "./modules/reporting/reports/snapshots.ts";
 import { registerTransformationInitializer, registerTransformationRoutes } from "./modules/transformations/index.ts";
 // T-DG4-KBE-C / T-DG4-BE-R1: the approval service for the kpi and sustainment ports, through workflows' public
 // interface (workflows/index.ts exports it since BE-C).
@@ -395,6 +398,21 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerTransformationInitializer("forms.pin", pinNewTransformationToForms);
   registerLaunchPlanPort(launchPlanGenerator); // T-DG5-BE-P (ADR-0044 §1, ADR-0048 §1): the S12-004 LaunchPlanPort of the API process
   registerHealthCheckSchemeProvider(); // T-DG5-KBE-G (ADR-0048 §6): the health_check_scheme kind provider (default key health-check)
+  // T-DG5-BE-O (ADR-0045 §7; D-159): the live presentation of a meeting is reporting's meeting_pack document (KBE-D2's
+  // assembler). A port, because reporting depends on governance and the reverse import would close a module cycle.
+  setMeetingPackAssembler(async (db, { transformationId, meetingId }) =>
+    assemblerOf("meeting_pack") === undefined
+      ? null
+      : (
+          await assembleReport(db, {
+            definitionCode: "meeting_pack",
+            transformationId,
+            subjectId: meetingId,
+            reportingPeriodId: undefined,
+            parameters: {},
+          })
+        ).document,
+  );
   // T-DG5-BE-H: the registry line; each action owner adds one registration line below it (BE-J: launch_procedure).
   const automationActions = createAutomationActionRegistry();
   for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)
