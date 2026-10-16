@@ -40,7 +40,7 @@ import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/or
 import { registerJobOperationRoutes, registerJobScheduleRoutes } from "./modules/jobs/index.ts";
 // P5 modules (p5-plan §3 seam 24; T-DG5-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAutomationModule } from "./modules/automation/index.ts";
-import { pinNewTransformationToForms, registerFormsModule } from "./modules/forms/index.ts";
+import { pinNewTransformationToForms, registerFormsModule, setFormBulkUpdaters } from "./modules/forms/index.ts";
 // T-DG5-BE-H (ADR-0043 §2): the AutomationActionRegistry port and the action descriptors of their owning modules.
 import { createAutomationActionRegistry, setAutomationActionRegistry } from "./modules/automation/registry.ts";
 import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
@@ -50,10 +50,10 @@ import { launchPlanGenerator } from "./modules/launch/port.ts";
 import { registerLaunchPlanPort } from "./modules/automation/ports/launch-plan.ts";
 import { registerProceduresModule, wireProcedureApprovals } from "./modules/procedures/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
-import { registerAdoptionModule } from "./modules/adoption/index.ts";
-import { registerBenefitsModule } from "./modules/benefits/index.ts";
-import { registerGovernanceModule } from "./modules/governance/index.ts";
-import { registerRaidModule } from "./modules/raid/index.ts";
+import { registerAdoptionModule, updateStakeholderGroup } from "./modules/adoption/index.ts";
+import { registerBenefitsModule, updateBenefitRecord } from "./modules/benefits/index.ts";
+import { registerGovernanceModule, updateExecutiveDecision } from "./modules/governance/index.ts";
+import { registerRaidModule, updateRaidEntry } from "./modules/raid/index.ts";
 import { registerSustainmentModule, wireTransitionDecisionApprovals } from "./modules/sustainment/index.ts";
 import { registerTasksModule } from "./modules/tasks/index.ts";
 import {
@@ -61,6 +61,7 @@ import {
   loadPortfolioGateFacts,
   registerPortfolioModule,
   t08ScheduleFlags,
+  updateInitiative,
 } from "./modules/portfolio/index.ts";
 import {
   createClientErrorHandler,
@@ -99,6 +100,7 @@ import {
   requestApprovalInTx,
   toApprovals,
   type GateFactsProvider,
+  updateDesignDecision,
 } from "./modules/workflows/index.ts";
 // T-DG4-BE-D (ADR-0031 §2): the RAID Dependency-entry port, implemented by the T08 service (the KBE-C import precedent).
 import { raidDependencyPort } from "./modules/workflows/t08-dependencies.ts";
@@ -413,6 +415,16 @@ export async function buildServer(options: ServerOptions): Promise<{
           })
         ).document,
   );
+  // T-DG5-BE-E3 (D-159 a; ADR-0041 §5): the forms bulk map, one line per register whose PATCH core its own module
+  // exports (forms imports none of these modules under ADR-0002; no P5 module imports workflows).
+  setFormBulkUpdaters({
+    T04: updateDesignDecision,
+    T05: updateInitiative,
+    T13: updateStakeholderGroup,
+    T14: updateBenefitRecord,
+    T15: updateRaidEntry,
+    T16: updateExecutiveDecision,
+  });
   // T-DG5-BE-H: the registry line; each action owner adds one registration line below it (BE-J: launch_procedure).
   const automationActions = createAutomationActionRegistry();
   for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)

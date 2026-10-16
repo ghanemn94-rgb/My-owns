@@ -8,6 +8,8 @@ import type { RaidDependencyPort } from "./dependency-port.ts";
 import { registerRaidRoutes } from "./routes.ts";
 
 export type { RaidDependencyChanges, RaidDependencyCreate, RaidDependencyPort } from "./dependency-port.ts";
+// T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T15 PATCH core, passed to the forms bulk edit by the composition root.
+export { updateRaidEntry } from "./register.ts";
 // T-DG4-BE-R3 (ADR-0032 amendment G1): the one action insert, also used by governance's meeting actions.
 export {
   createLinkedAction,

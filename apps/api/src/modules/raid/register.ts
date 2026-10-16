@@ -54,7 +54,13 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { assertActiveUsers, assertSameTransformation, openWrite, type WriteContext } from "../transformations/index.ts";
+import {
+  assertActiveUsers,
+  assertSameTransformation,
+  openWrite,
+  type RegisterUpdater,
+  type WriteContext,
+} from "../transformations/index.ts";
 import type { DependencyRow, RaidDependencyPort } from "./dependency-port.ts";
 
 export const RAID = "/api/v1/transformations/:transformationId/raid";
@@ -356,13 +362,22 @@ async function lockRaidEntry(tx: Tx, transformationId: string, id: string): Prom
   return current;
 }
 
-async function updateEntry(tx: Tx, request: FastifyRequest, port: RaidDependencyPort | undefined): Promise<void> {
-  const { transformationId, raidEntryId } = parseEntryParams(request.params);
+/**
+ * The PATCH core of a RAID entry. `expected` is read where the PATCH always read If-Match (after the gates and the body
+ * validation), so the single-record route answers exactly as before (T-DG5-BE-E3).
+ */
+async function updateEntry(
+  tx: Tx,
+  request: FastifyRequest,
+  port: RaidDependencyPort | undefined,
+  input: { transformationId: string; raidEntryId: string; body: unknown; expected: () => number },
+): Promise<{ id: string; version: number }> {
+  const { transformationId, raidEntryId } = input;
   const ctx = await openRaidWrite(tx, request, transformationId);
   const table = await recordTableOf(tx, transformationId, raidEntryId);
   if (table === "dependency") await requireDependencyEdit(ctx);
-  const body = parseBody(raidEntryUpdate, request.body);
-  const expected = requireIfMatch(request);
+  const body = parseBody(raidEntryUpdate, input.body);
+  const expected = input.expected();
 
   if (table === "dependency") {
     const p = portOf(port);
@@ -372,7 +387,7 @@ async function updateEntry(tx: Tx, request: FastifyRequest, port: RaidDependency
     if (body.probability !== undefined) checkProbability("dependency", body.probability);
     // A dependency's RAID status is Open (open or at risk) or Closed (resolved); it has no In progress.
     if (body.status === "in_progress") throw STATUS_TRANSITION();
-    await p.update(ctx, current, {
+    const changed = await p.update(ctx, current, {
       ...(body.description !== undefined ? { description: body.description } : {}),
       ...(body.impact !== undefined ? { impact: body.impact } : {}),
       ...(body.ownerUserId !== undefined ? { ownerUserId: body.ownerUserId } : {}),
@@ -380,7 +395,7 @@ async function updateEntry(tx: Tx, request: FastifyRequest, port: RaidDependency
       ...(body.mitigation !== undefined ? { mitigation: body.mitigation } : {}),
       ...(body.initiativeId !== undefined ? { toInitiativeId: body.initiativeId } : {}),
     });
-    return;
+    return { id: changed.id, version: changed.version };
   }
 
   const current = await lockRaidEntry(tx, transformationId, raidEntryId);
@@ -418,7 +433,22 @@ async function updateEntry(tx: Tx, request: FastifyRequest, port: RaidDependency
     newVersion: updated.version,
     changes: diffFields(current, updated, [...RAID_ENTRY_AUDIT_FIELDS]),
   });
+  return { id: updated.id, version: updated.version };
 }
+
+/**
+ * T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T15 PATCH core for the forms bulk edit, inside the caller's transaction:
+ * the same gates, validation, version check, update and `raid_entry.update` audit event as a single PATCH. A T15 form
+ * record is a `raid_entry` row (forms locks it there first), so the Dependency branch is not reached through this
+ * export; were it reached, the unwired port fails closed (500), as an unwired PATCH does.
+ */
+export const updateRaidEntry: RegisterUpdater = (tx, request, input) =>
+  updateEntry(tx, request, undefined, {
+    transformationId: input.transformationId,
+    raidEntryId: input.recordId,
+    body: input.body,
+    expected: () => input.expectedVersion,
+  });
 
 async function closeEntry(tx: Tx, request: FastifyRequest, port: RaidDependencyPort | undefined): Promise<void> {
   const { transformationId, raidEntryId } = parseEntryParams(request.params);
@@ -541,7 +571,12 @@ export function registerRaidRegisterRoutes(
   app.patch(RAID_ITEM, { config: write }, async (request, reply) => {
     const { transformationId, raidEntryId } = parseEntryParams(request.params);
     const body = await db.transaction().execute(async (tx) => {
-      await updateEntry(tx, request, port);
+      await updateEntry(tx, request, port, {
+        transformationId,
+        raidEntryId,
+        body: request.body,
+        expected: () => requireIfMatch(request),
+      });
       return presentOne(tx, transformationId, raidEntryId);
     });
     return sendVersioned(reply, 200, body);

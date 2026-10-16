@@ -6,6 +6,8 @@ import { registerFormRoutes } from "./routes.ts";
 
 // T-DG5-BE-D (ADR-0041 §4): the forms pin of a new transformation, registered as a TransformationInitializer in server.ts.
 export { pinNewTransformationToForms } from "./pin-initializer.ts";
+// T-DG5-BE-E3 (D-159 a): the forms bulk map of the module-owned register cores, wired by server.ts.
+export { setFormBulkUpdaters, type FormBulkUpdaters } from "./bulk.ts";
 
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG5-BE-A

@@ -24,3 +24,5 @@ export function registerBenefitsModule(app: FastifyInstance, deps: ModuleDeps): 
 }
 // P4 slice J (T-DG4-KBE-G; ADR-0037 §1): read-only benefit facts of the dashboards (slice B counting rules).
 export { loadBenefitDashboardFacts, loadBenefitLineEvidence, type BenefitDashboardFacts } from "./dashboard-facts.ts";
+// T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T14 PATCH core, passed to the forms bulk edit by the composition root.
+export { updateBenefitRecord } from "./register.ts";

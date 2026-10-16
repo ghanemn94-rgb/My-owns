@@ -61,8 +61,13 @@ export async function readableInitiative(
 }
 
 /** If-Match (428 / 400), then the row lock and the version check (409); after the read and write gates. */
-export async function lockInitiativeForWrite(tx: Tx, request: FastifyRequest, initiativeId: string) {
-  const expected = requireIfMatch(request);
+export async function lockInitiativeForWrite(
+  tx: Tx,
+  request: FastifyRequest,
+  initiativeId: string,
+  expectedVersion: () => number = () => requireIfMatch(request), // T-DG5-BE-E3: the bulk item's version
+) {
+  const expected = expectedVersion();
   const current = await tx
     .selectFrom("initiative")
     .selectAll()

@@ -566,29 +566,13 @@ describe("bulk editing (REQ-S05-001)", () => {
     expect(await auditOfRequest(api.db, reqId(r))).toEqual([]);
   });
 
-  it("refusals: not bulk-editable field, register without an exposed update, too many, not allowed; AUD 403", async () => {
+  it("refusals: not bulk-editable field, too many, not allowed; AUD 403", async () => {
     const g = gaps[0]!;
     expect(
       codeOf(
         await call<Body>(api.app, "POST", B(), {
           session: lead,
           body: { items: [{ recordId: g.id, version: g.version, sourceFields: { gap: "x" } }] },
-        }),
-      ),
-    ).toEqual([422, "form_record.bulk_field_not_editable"]);
-    // T15 (RAID) has bulk-editable owners, but its register exposes no update function to the bulk edit yet.
-    const risk = await call<Body>(api.app, "POST", `/api/v1/transformations/${t}/raid`, {
-      session: lead,
-      body: { type: "risk", description: "Synthetic", impact: "low", probability: "low", ownerUserId: w.office.id },
-    });
-    expect(risk.status, JSON.stringify(risk.body)).toBe(201);
-    expect(
-      codeOf(
-        await call<Body>(api.app, "POST", `${records(t, "T15")}/bulk`, {
-          session: lead,
-          body: {
-            items: [{ recordId: risk.body.id, version: risk.body.version, sourceFields: { owner: w.leadA1.id } }],
-          },
         }),
       ),
     ).toEqual([422, "form_record.bulk_field_not_editable"]);

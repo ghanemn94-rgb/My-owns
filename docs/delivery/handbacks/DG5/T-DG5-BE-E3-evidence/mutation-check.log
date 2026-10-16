@@ -1,0 +1,239 @@
+# Mutation check (not kept): forms/bulk.ts updaterOf with MODULE_UPDATERS disabled via sed, then restored from a copy.
+$ QA_PG_PORT=23000 MTH_PORT_POOL=23001-23049 tests/qa/support/with-pg.sh pnpm exec vitest run --project integration apps/api/test/integration/forms/form-bulk-registers.test.ts
+port-policy: PostgreSQL listening on port 23000 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-e3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvamwzcr_e1a338fb (server_encoding UTF8); applied 83 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts (21 tests | 14 failed) 1660ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T15 > a stale version on one of owners on 3 T15 records: the recoverable 409 lists that record only; none is written 61ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T15 > owners on 3 T15 records: all committed through the module's own update, one raid_entry.update audit event each, versions + 1 28ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-5ef6-74ca-a5b9-cf6575c09cff"}: expected 422 to be 200 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T15 > AUD gets 403 on the T15 bulk edit and nothing is written 34ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T04 > a stale version on one of T04 `due_date` on 2 records: the recoverable 409 lists that record only; none is written 19ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T04 > T04 `due_date` on 2 records: all committed through the module's own update, one decision.update audit event each, versions + 1 18ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-5f76-719f-be4f-21c543ba59bf"}: expected 422 to be 200 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T04 > AUD gets 403 on the T04 bulk edit and nothing is written 13ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T16 > a stale version on one of T16 `owner` on 2 records: the recoverable 409 lists that record only; none is written 13ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T16 > T16 `owner` on 2 records: all committed through the module's own update, one executive_decision.update audit event each, versions + 1 20ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-5ff0-7100-956e-8dabb4b128ae"}: expected 422 to be 200 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T16 > AUD gets 403 on the T16 bulk edit and nothing is written 17ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T05 > a stale version on one of T05 `workstream_lead` on 2 records: the recoverable 409 lists that record only; none is written 19ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T05 > T05 `workstream_lead` on 2 records: all committed through the module's own update, one initiative.update audit event each, versions + 1 21ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-6062-7149-ab04-4491b25cebf5"}: expected 422 to be 200 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T05 > AUD gets 403 on the T05 bulk edit and nothing is written 10ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T13 > a stale version on one of T13 `current_stance` on 2 records: the recoverable 409 lists that record only; none is written 22ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T13 > T13 `current_stance` on 2 records: all committed through the module's own update, one stakeholder_group.update audit event each, versions + 1 19ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-60d8-7509-af6a-8495f1df6040"}: expected 422 to be 200 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T13 > AUD gets 403 on the T13 bulk edit and nothing is written 13ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T14 > a stale version on one of T14 `owner` on 2 records: the recoverable 409 lists that record only; none is written 26ms
+     → expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T14 > T14 `owner` on 2 records: all committed through the module's own update, one benefit.update audit event each, versions + 1 25ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-6178-730c-97f6-fa6b32d647e4"}: expected 422 to be 200 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T14 > AUD gets 403 on the T14 bulk edit and nothing is written 17ms
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > the owning module's own rules apply: a T16 owner who cannot decide executive asks is refused, nothing written 114ms
+     → expected [ 422, …(1) ] to deeply equal [ 422, …(1) ]
+   × bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > the T04/T16 discriminator holds: a T16 record is not a T04 record (404), and nothing is written 58ms
+     → expected 422 to be 404 // Object.is equality
+   ✓ bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > a field the form does not mark bulk-editable is still refused on a module-owned register (T15 description) 42ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T15 > a stale version on one of owners on 3 T15 records: the recoverable 409 lists that record only; none is written
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T04 > a stale version on one of T04 `due_date` on 2 records: the recoverable 409 lists that record only; none is written
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T16 > a stale version on one of T16 `owner` on 2 records: the recoverable 409 lists that record only; none is written
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T05 > a stale version on one of T05 `workstream_lead` on 2 records: the recoverable 409 lists that record only; none is written
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T13 > a stale version on one of T13 `current_stance` on 2 records: the recoverable 409 lists that record only; none is written
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T14 > a stale version on one of T14 `owner` on 2 records: the recoverable 409 lists that record only; none is written
+AssertionError: expected [ 422, …(2) ] to deeply equal [ 409, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   409,[39m
+[32m-   "form_record.bulk_conflict",[39m
+[32m-   "One of the selected records changed. Nothing was saved; reload and try again.",[39m
+[31m+   422,[39m
+[31m+   "form_record.bulk_field_not_editable",[39m
+[31m+   "This field cannot be bulk edited.",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:221:56
+    219|         if (fresh !== undefined) expect(before.map((x) => x.value)).to…
+    220|         const r = await bulk(records.map((x, i) => ({ recordId: x.id, …
+    221|         expect([r.status, r.body.code, r.body.detail]).toEqual([
+       |                                                        ^
+    222|           409,
+    223|           "form_record.bulk_conflict",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T15 > owners on 3 T15 records: all committed through the module's own update, one raid_entry.update audit event each, versions + 1
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-5ef6-74ca-a5b9-cf6575c09cff"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:245:50
+    243|       it(`${subject}: all committed through the module's own update, o…
+    244|         const r = await bulk(records.map((x) => ({ recordId: x.id, ver…
+    245|         expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                                  ^
+    246|         expect(r.body.items).toEqual(records.map((x) => ({ recordId: x…
+    247|         const after = await rowsOf(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T04 > T04 `due_date` on 2 records: all committed through the module's own update, one decision.update audit event each, versions + 1
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-5f76-719f-be4f-21c543ba59bf"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:245:50
+    243|       it(`${subject}: all committed through the module's own update, o…
+    244|         const r = await bulk(records.map((x) => ({ recordId: x.id, ver…
+    245|         expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                                  ^
+    246|         expect(r.body.items).toEqual(records.map((x) => ({ recordId: x…
+    247|         const after = await rowsOf(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T16 > T16 `owner` on 2 records: all committed through the module's own update, one executive_decision.update audit event each, versions + 1
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-5ff0-7100-956e-8dabb4b128ae"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:245:50
+    243|       it(`${subject}: all committed through the module's own update, o…
+    244|         const r = await bulk(records.map((x) => ({ recordId: x.id, ver…
+    245|         expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                                  ^
+    246|         expect(r.body.items).toEqual(records.map((x) => ({ recordId: x…
+    247|         const after = await rowsOf(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T05 > T05 `workstream_lead` on 2 records: all committed through the module's own update, one initiative.update audit event each, versions + 1
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-6062-7149-ab04-4491b25cebf5"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:245:50
+    243|       it(`${subject}: all committed through the module's own update, o…
+    244|         const r = await bulk(records.map((x) => ({ recordId: x.id, ver…
+    245|         expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                                  ^
+    246|         expect(r.body.items).toEqual(records.map((x) => ({ recordId: x…
+    247|         const after = await rowsOf(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T13 > T13 `current_stance` on 2 records: all committed through the module's own update, one stakeholder_group.update audit event each, versions + 1
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-60d8-7509-af6a-8495f1df6040"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:245:50
+    243|       it(`${subject}: all committed through the module's own update, o…
+    244|         const r = await bulk(records.map((x) => ({ recordId: x.id, ver…
+    245|         expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                                  ^
+    246|         expect(r.body.items).toEqual(records.map((x) => ({ recordId: x…
+    247|         const after = await rowsOf(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > T14 > T14 `owner` on 2 records: all committed through the module's own update, one benefit.update audit event each, versions + 1
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This field cannot be bulk edited.","code":"form_record.bulk_field_not_editable","requestId":"01a14392-6178-730c-97f6-fa6b32d647e4"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:245:50
+    243|       it(`${subject}: all committed through the module's own update, o…
+    244|         const r = await bulk(records.map((x) => ({ recordId: x.id, ver…
+    245|         expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                                  ^
+    246|         expect(r.body.items).toEqual(records.map((x) => ({ recordId: x…
+    247|         const after = await rowsOf(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > the owning module's own rules apply: a T16 owner who cannot decide executive asks is refused, nothing written
+AssertionError: expected [ 422, …(1) ] to deeply equal [ 422, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    422,[22m
+[32m-   "executive_decision.owner_not_executive",[39m
+[31m+   "form_record.bulk_field_not_editable",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:299:23
+    297|       },
+    298|     });
+    299|     expect(codeOf(r)).toEqual([422, "executive_decision.owner_not_exec…
+       |                       ^
+    300|     expect(await rowsOf("decision", "owner_user_id", [a.id, c.id])).to…
+    301|     expect(await auditOfRequest(api.db, reqId(r))).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts > bulk edit through the module-owned register cores (D-159 a; REQ-S05-001) > the T04/T16 discriminator holds: a T16 record is not a T04 record (404), and nothing is written
+AssertionError: expected 422 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/forms/form-bulk-registers.test.ts:311:22
+    309|       body: { items: [{ recordId: a.id, version: a.version, sourceFiel…
+    310|     });
+    311|     expect(r.status).toBe(404);
+       |                      ^
+    312|     expect(await rowsOf("decision", "owner_user_id", [a.id])).toEqual([
+    313|       { id: a.id, version: a.version, value: b.users.bo.id },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  14 failed | 7 passed (21)
+   Start at  07:16:54
+   Duration  14.94s (transform 5.53s, setup 0ms, collect 10.22s, tests 1.66s, environment 0ms, prepare 128ms)
+
+exit=1 (expected: the mutation is detected)

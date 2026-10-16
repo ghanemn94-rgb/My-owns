@@ -36,6 +36,7 @@ import {
   type ExecutiveDecision,
   type ExecutiveDecisionOptionInput,
   type ExecutiveDecisionOutcome,
+  type ExecutiveDecisionUpdate,
 } from "@mth/shared/schemas";
 import { PROBLEM_TYPES, type FieldError } from "@mth/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -83,6 +84,7 @@ import {
 } from "../tasks/index.ts";
 import { blockerAskOpen, lockBlockerAsk, blockerExists } from "./blocker-escalation.ts";
 import { computeDecisionRightDue } from "./decision-rights.ts";
+import type { RegisterUpdater } from "../transformations/index.ts";
 
 const JSON_BODY = ["application/json"] as const;
 const CREATE = "executive_decision.create" as const;
@@ -773,6 +775,231 @@ function diff(before: ReadonlyMap<string, unknown>, after: ReadonlyMap<string, u
 
 // ------------------------------------------------------------------------------------------------ routes
 
+/**
+ * The PATCH core of an executive decision (T16), on an already validated body. `expected` is read where the PATCH
+ * always read If-Match (after the gates), so the single-record route answers exactly as before (T-DG5-BE-E3).
+ */
+async function updateExecutiveDecisionRow(
+  tx: Tx,
+  request: FastifyRequest,
+  input: {
+    transformationId: string;
+    decisionId: string;
+    body: ExecutiveDecisionUpdate;
+    expected: () => number;
+  },
+): Promise<DecisionRow> {
+  const { transformationId, decisionId, body } = input;
+  const { userId, principal, target } = await requireT16Action(tx, request, transformationId, CREATE);
+  const ctx: T16Context = { principal, userId, audit: auditContextOf(request), target };
+  const expected = input.expected();
+  const current = await loadExecutiveDecision(tx, transformationId, decisionId, true);
+  if (current.version !== expected) throw problems.versionConflict(current.version);
+  if (current.ask_origin === null || current.status === "decided" || current.status === "cancelled")
+    throw executiveDecisionRefusals.closed(current.status);
+  if (body.ownerUserId !== undefined && !(await holdsExecutiveDecide(tx, body.ownerUserId, target)))
+    throw executiveDecisionRefusals.ownerNotExecutive();
+  const today = await organizationBusinessToday(tx, target.organizationId);
+  if (body.requiredDate !== undefined && body.requiredDate < today) throw executiveDecisionRefusals.requiredDatePast();
+  // Options: the n-th option keeps label n (an existing row is edited in place, a missing one inserted); options
+  // beyond the new list are withdrawn, never deleted (decision_option_label_key covers withdrawn labels too).
+  const options = await tx
+    .selectFrom("decision_option")
+    .selectAll()
+    .where("decision_id", "=", decisionId)
+    .orderBy("ordinal")
+    .forUpdate()
+    .execute();
+  const activeAfter: { id: string; label: string }[] = [];
+  if (body.options !== undefined) {
+    for (const [i, o] of body.options.entries()) {
+      const label = OPTION_LABELS.charAt(i);
+      const existing = options.find((x) => x.label === label);
+      const description = o.description ?? null;
+      if (!existing) {
+        const oid = uuidv7();
+        await tx
+          .insertInto("decision_option")
+          .values({
+            id: oid,
+            organization_id: current.organization_id,
+            transformation_id: transformationId,
+            decision_id: decisionId,
+            label,
+            title: o.title,
+            description,
+            ordinal: i + 1,
+            created_by: userId,
+            updated_by: userId,
+          })
+          .execute();
+        await record(tx, ctx.audit, {
+          action: "decision_option.create",
+          recordType: "decision_option",
+          recordId: oid,
+          organizationId: current.organization_id,
+          transformationId,
+          newVersion: 1,
+          changes: {
+            decision_id: { from: null, to: decisionId },
+            label: { from: null, to: label },
+            title: { from: null, to: o.title },
+          },
+        });
+        activeAfter.push({ id: oid, label });
+      } else {
+        if (existing.title !== o.title || existing.description !== description || existing.status !== "active") {
+          await tx
+            .updateTable("decision_option")
+            .set({
+              title: o.title,
+              description,
+              status: "active",
+              version: sql<number>`version + 1`,
+              updated_at: sql<Date>`now()`,
+              updated_by: userId,
+            })
+            .where("id", "=", existing.id)
+            .execute();
+          await record(tx, ctx.audit, {
+            action: "decision_option.update",
+            recordType: "decision_option",
+            recordId: existing.id,
+            organizationId: current.organization_id,
+            transformationId,
+            priorVersion: existing.version,
+            newVersion: existing.version + 1,
+            changes: {
+              title: { from: existing.title, to: o.title },
+              description: { from: existing.description, to: description },
+              status: { from: existing.status, to: "active" },
+            },
+          });
+        }
+        activeAfter.push({ id: existing.id, label });
+      }
+    }
+    const count = body.options.length;
+    for (const x of options.filter((o) => o.ordinal > count && o.status === "active")) {
+      await tx
+        .updateTable("decision_option")
+        .set({
+          status: "withdrawn",
+          version: sql<number>`version + 1`,
+          updated_at: sql<Date>`now()`,
+          updated_by: userId,
+        })
+        .where("id", "=", x.id)
+        .execute();
+      await record(tx, ctx.audit, {
+        action: "decision_option.withdraw",
+        recordType: "decision_option",
+        recordId: x.id,
+        organizationId: current.organization_id,
+        transformationId,
+        priorVersion: x.version,
+        newVersion: x.version + 1,
+        changes: { status: { from: "active", to: "withdrawn" } },
+      });
+    }
+  } else {
+    for (const o of options) if (o.status === "active") activeAfter.push({ id: o.id, label: o.label });
+  }
+  // Recommendation: a label must name an active option after this change; a recommended option that was just
+  // withdrawn must be replaced in the same request.
+  let recommendation: { recommendation_option_id: string | null; recommendation_text: string | null } | null = null;
+  if (body.recommendation !== undefined) {
+    if (isLabel(body.recommendation)) {
+      const o = activeAfter.find((x) => x.label === body.recommendation);
+      if (!o) throw executiveDecisionRefusals.optionUnknown("/recommendation");
+      recommendation = { recommendation_option_id: o.id, recommendation_text: null };
+    } else recommendation = { recommendation_option_id: null, recommendation_text: body.recommendation };
+  } else if (
+    current.recommendation_option_id !== null &&
+    !activeAfter.some((x) => x.id === current.recommendation_option_id)
+  )
+    throw executiveDecisionRefusals.optionUnknown("/recommendation");
+  const requiredDate = body.requiredDate ?? current.due_date;
+  const rightId = body.decisionRightId !== undefined ? body.decisionRightId : current.decision_right_id;
+  const slaChanged = body.requiredDate !== undefined || body.decisionRightId !== undefined;
+  // ADR-0032 §6: recomputed when the required date or the T11 row changes, from the ask's CREATION business date
+  // (a T11 working-day SLA counts from when the ask was raised, not from the edit).
+  const raisedOn = await organizationBusinessDateAt(tx, target.organizationId, current.created_at);
+  const sla = slaChanged && requiredDate !== null ? await slaOf(tx, target, rightId, requiredDate, raisedOn) : null;
+  const updated = await tx
+    .updateTable("decision")
+    .set({
+      ...(body.title !== undefined ? { title: body.title } : {}),
+      ...(body.whyNow !== undefined ? { why_now: body.whyNow } : {}),
+      ...(body.impactOfDelay !== undefined ? { impact_of_delay: body.impactOfDelay } : {}),
+      ...(body.ownerUserId !== undefined ? { owner_user_id: body.ownerUserId } : {}),
+      ...(body.requiredDate !== undefined ? { due_date: body.requiredDate } : {}),
+      ...(body.context !== undefined ? { context: body.context } : {}),
+      ...(body.decisionRightId !== undefined ? { decision_right_id: body.decisionRightId } : {}),
+      ...(recommendation ?? {}),
+      ...(sla !== null ? { sla_due_date: sla.slaDueDate, sla_unknown_reason: sla.slaUnknownReason } : {}),
+      version: sql<number>`version + 1`,
+      updated_at: sql<Date>`now()`,
+      updated_by: userId,
+    })
+    .where("id", "=", decisionId)
+    .where("version", "=", current.version)
+    .returningAll()
+    .executeTakeFirst();
+  if (!updated) throw problems.versionConflict(current.version + 1);
+  await record(tx, ctx.audit, {
+    action: "executive_decision.update",
+    recordType: "decision",
+    recordId: decisionId,
+    organizationId: current.organization_id,
+    transformationId,
+    priorVersion: current.version,
+    newVersion: updated.version,
+    changes: {
+      ...diff(decisionFields(current), decisionFields(updated)),
+      ...(body.options !== undefined ? { options: { from: null, to: activeAfter.map((x) => x.label).join("/") } } : {}),
+    },
+  });
+  // A new or re-owned open ask: one My Work item for its owner (ADR-0032 §6); the previous owner's item closes
+  // (A -> B -> A leaves one open item, for A), and a required-date change moves its due date (T-DG4-BE-R1).
+  if (updated.owner_user_id !== null && updated.owner_user_id !== current.owner_user_id)
+    await reassignWorkItemOfSubject(
+      tx,
+      t16Actor(ctx),
+      ownerWorkItemInput(ctx, updated, updated.owner_user_id, updated.due_date),
+    );
+  if (updated.due_date !== current.due_date)
+    await rescheduleWorkItemsOfSubject(
+      tx,
+      t16Actor(ctx),
+      {
+        organizationId: current.organization_id,
+        subjectType: "decision",
+        subjectId: decisionId,
+        kinds: [EXECUTIVE_DECISION_DUE_KIND],
+      },
+      updated.due_date,
+    );
+  return updated;
+}
+
+/**
+ * T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T16 PATCH core for the forms bulk edit, inside the caller's transaction:
+ * the same body checks, gates, version check, rules, `executive_decision.update` audit event and My Work follow-ups
+ * (owner reassignment, due-date reschedule) as a single PATCH.
+ */
+export const updateExecutiveDecision: RegisterUpdater = async (tx, request, input) => {
+  checkUpdateOptions(input.body);
+  const body = parseBody(executiveDecisionUpdate, input.body);
+  const updated = await updateExecutiveDecisionRow(tx, request, {
+    transformationId: input.transformationId,
+    decisionId: input.recordId,
+    body,
+    expected: () => input.expectedVersion,
+  });
+  return { id: updated.id, version: updated.version };
+};
+
 export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   const LOG = "/api/v1/transformations/:transformationId/executive-decisions";
   const ONE = `${LOG}/:decisionId`;
@@ -849,202 +1076,14 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
     const { transformationId, decisionId } = parse(decisionParams, request.params, "params");
     checkUpdateOptions(request.body);
     const body = parseBody(executiveDecisionUpdate, request.body);
-    const row = await db.transaction().execute(async (tx) => {
-      const { userId, principal, target } = await requireT16Action(tx, request, transformationId, CREATE);
-      const ctx: T16Context = { principal, userId, audit: auditContextOf(request), target };
-      const expected = requireIfMatch(request);
-      const current = await loadExecutiveDecision(tx, transformationId, decisionId, true);
-      if (current.version !== expected) throw problems.versionConflict(current.version);
-      if (current.ask_origin === null || current.status === "decided" || current.status === "cancelled")
-        throw executiveDecisionRefusals.closed(current.status);
-      if (body.ownerUserId !== undefined && !(await holdsExecutiveDecide(tx, body.ownerUserId, target)))
-        throw executiveDecisionRefusals.ownerNotExecutive();
-      const today = await organizationBusinessToday(tx, target.organizationId);
-      if (body.requiredDate !== undefined && body.requiredDate < today)
-        throw executiveDecisionRefusals.requiredDatePast();
-      // Options: the n-th option keeps label n (an existing row is edited in place, a missing one inserted); options
-      // beyond the new list are withdrawn, never deleted (decision_option_label_key covers withdrawn labels too).
-      const options = await tx
-        .selectFrom("decision_option")
-        .selectAll()
-        .where("decision_id", "=", decisionId)
-        .orderBy("ordinal")
-        .forUpdate()
-        .execute();
-      const activeAfter: { id: string; label: string }[] = [];
-      if (body.options !== undefined) {
-        for (const [i, o] of body.options.entries()) {
-          const label = OPTION_LABELS.charAt(i);
-          const existing = options.find((x) => x.label === label);
-          const description = o.description ?? null;
-          if (!existing) {
-            const oid = uuidv7();
-            await tx
-              .insertInto("decision_option")
-              .values({
-                id: oid,
-                organization_id: current.organization_id,
-                transformation_id: transformationId,
-                decision_id: decisionId,
-                label,
-                title: o.title,
-                description,
-                ordinal: i + 1,
-                created_by: userId,
-                updated_by: userId,
-              })
-              .execute();
-            await record(tx, ctx.audit, {
-              action: "decision_option.create",
-              recordType: "decision_option",
-              recordId: oid,
-              organizationId: current.organization_id,
-              transformationId,
-              newVersion: 1,
-              changes: {
-                decision_id: { from: null, to: decisionId },
-                label: { from: null, to: label },
-                title: { from: null, to: o.title },
-              },
-            });
-            activeAfter.push({ id: oid, label });
-          } else {
-            if (existing.title !== o.title || existing.description !== description || existing.status !== "active") {
-              await tx
-                .updateTable("decision_option")
-                .set({
-                  title: o.title,
-                  description,
-                  status: "active",
-                  version: sql<number>`version + 1`,
-                  updated_at: sql<Date>`now()`,
-                  updated_by: userId,
-                })
-                .where("id", "=", existing.id)
-                .execute();
-              await record(tx, ctx.audit, {
-                action: "decision_option.update",
-                recordType: "decision_option",
-                recordId: existing.id,
-                organizationId: current.organization_id,
-                transformationId,
-                priorVersion: existing.version,
-                newVersion: existing.version + 1,
-                changes: {
-                  title: { from: existing.title, to: o.title },
-                  description: { from: existing.description, to: description },
-                  status: { from: existing.status, to: "active" },
-                },
-              });
-            }
-            activeAfter.push({ id: existing.id, label });
-          }
-        }
-        const count = body.options.length;
-        for (const x of options.filter((o) => o.ordinal > count && o.status === "active")) {
-          await tx
-            .updateTable("decision_option")
-            .set({
-              status: "withdrawn",
-              version: sql<number>`version + 1`,
-              updated_at: sql<Date>`now()`,
-              updated_by: userId,
-            })
-            .where("id", "=", x.id)
-            .execute();
-          await record(tx, ctx.audit, {
-            action: "decision_option.withdraw",
-            recordType: "decision_option",
-            recordId: x.id,
-            organizationId: current.organization_id,
-            transformationId,
-            priorVersion: x.version,
-            newVersion: x.version + 1,
-            changes: { status: { from: "active", to: "withdrawn" } },
-          });
-        }
-      } else {
-        for (const o of options) if (o.status === "active") activeAfter.push({ id: o.id, label: o.label });
-      }
-      // Recommendation: a label must name an active option after this change; a recommended option that was just
-      // withdrawn must be replaced in the same request.
-      let recommendation: { recommendation_option_id: string | null; recommendation_text: string | null } | null = null;
-      if (body.recommendation !== undefined) {
-        if (isLabel(body.recommendation)) {
-          const o = activeAfter.find((x) => x.label === body.recommendation);
-          if (!o) throw executiveDecisionRefusals.optionUnknown("/recommendation");
-          recommendation = { recommendation_option_id: o.id, recommendation_text: null };
-        } else recommendation = { recommendation_option_id: null, recommendation_text: body.recommendation };
-      } else if (
-        current.recommendation_option_id !== null &&
-        !activeAfter.some((x) => x.id === current.recommendation_option_id)
-      )
-        throw executiveDecisionRefusals.optionUnknown("/recommendation");
-      const requiredDate = body.requiredDate ?? current.due_date;
-      const rightId = body.decisionRightId !== undefined ? body.decisionRightId : current.decision_right_id;
-      const slaChanged = body.requiredDate !== undefined || body.decisionRightId !== undefined;
-      // ADR-0032 §6: recomputed when the required date or the T11 row changes, from the ask's CREATION business date
-      // (a T11 working-day SLA counts from when the ask was raised, not from the edit).
-      const raisedOn = await organizationBusinessDateAt(tx, target.organizationId, current.created_at);
-      const sla = slaChanged && requiredDate !== null ? await slaOf(tx, target, rightId, requiredDate, raisedOn) : null;
-      const updated = await tx
-        .updateTable("decision")
-        .set({
-          ...(body.title !== undefined ? { title: body.title } : {}),
-          ...(body.whyNow !== undefined ? { why_now: body.whyNow } : {}),
-          ...(body.impactOfDelay !== undefined ? { impact_of_delay: body.impactOfDelay } : {}),
-          ...(body.ownerUserId !== undefined ? { owner_user_id: body.ownerUserId } : {}),
-          ...(body.requiredDate !== undefined ? { due_date: body.requiredDate } : {}),
-          ...(body.context !== undefined ? { context: body.context } : {}),
-          ...(body.decisionRightId !== undefined ? { decision_right_id: body.decisionRightId } : {}),
-          ...(recommendation ?? {}),
-          ...(sla !== null ? { sla_due_date: sla.slaDueDate, sla_unknown_reason: sla.slaUnknownReason } : {}),
-          version: sql<number>`version + 1`,
-          updated_at: sql<Date>`now()`,
-          updated_by: userId,
-        })
-        .where("id", "=", decisionId)
-        .where("version", "=", current.version)
-        .returningAll()
-        .executeTakeFirst();
-      if (!updated) throw problems.versionConflict(current.version + 1);
-      await record(tx, ctx.audit, {
-        action: "executive_decision.update",
-        recordType: "decision",
-        recordId: decisionId,
-        organizationId: current.organization_id,
+    const row = await db.transaction().execute(async (tx) =>
+      updateExecutiveDecisionRow(tx, request, {
         transformationId,
-        priorVersion: current.version,
-        newVersion: updated.version,
-        changes: {
-          ...diff(decisionFields(current), decisionFields(updated)),
-          ...(body.options !== undefined
-            ? { options: { from: null, to: activeAfter.map((x) => x.label).join("/") } }
-            : {}),
-        },
-      });
-      // A new or re-owned open ask: one My Work item for its owner (ADR-0032 §6); the previous owner's item closes
-      // (A -> B -> A leaves one open item, for A), and a required-date change moves its due date (T-DG4-BE-R1).
-      if (updated.owner_user_id !== null && updated.owner_user_id !== current.owner_user_id)
-        await reassignWorkItemOfSubject(
-          tx,
-          t16Actor(ctx),
-          ownerWorkItemInput(ctx, updated, updated.owner_user_id, updated.due_date),
-        );
-      if (updated.due_date !== current.due_date)
-        await rescheduleWorkItemsOfSubject(
-          tx,
-          t16Actor(ctx),
-          {
-            organizationId: current.organization_id,
-            subjectType: "decision",
-            subjectId: decisionId,
-            kinds: [EXECUTIVE_DECISION_DUE_KIND],
-          },
-          updated.due_date,
-        );
-      return updated;
-    });
+        decisionId,
+        body,
+        expected: () => requireIfMatch(request),
+      }),
+    );
     const [out] = await toExecutiveDecisions(db, [row]);
     return sendVersioned(reply, 200, out!);
   });

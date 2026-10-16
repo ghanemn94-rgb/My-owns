@@ -9,9 +9,9 @@
 // completed) initiative is read-only. Warnings (deliverable count outside 3-7, no gap link, no executive owner) are
 // hints, never rejections. Every mutation: authorization re-checked at commit (BE18A), validation, If-Match (creates are
 // version 1) and one audit event; no client or remote I/O inside the transaction.
-import { diffFields, type InitiativeRow } from "@mth/db";
+import { diffFields, type InitiativeRow, type Tx } from "@mth/db";
 import { initiativeCreate, initiativeStatus, initiativeUpdate } from "@mth/shared/schemas";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import { principalOf, requireTransformationRead } from "../access/index.ts";
@@ -25,6 +25,8 @@ import {
   parse,
   parseBody,
   parseQuery,
+  problems,
+  requireIfMatch,
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
@@ -36,6 +38,7 @@ import {
   openWrite,
   pick,
   sendCreated,
+  type RegisterUpdater,
   type WriteContext,
 } from "../transformations/index.ts";
 import {
@@ -105,6 +108,65 @@ async function checkReferences(
   ]);
   await assertSameTransformation(ctx.tx, "roadmap_wave", ctx.transformationId, values.wave_id, "/waveId");
 }
+
+/**
+ * The PATCH core of an initiative (T05). `transformationId`, when given, must be the initiative's own (404 otherwise);
+ * `expected` is read where the PATCH always read If-Match, so the single-record route answers exactly as before
+ * (T-DG5-BE-E3).
+ */
+async function updateInitiativeRow(
+  tx: Tx,
+  request: FastifyRequest,
+  input: { initiativeId: string; transformationId?: string; body: unknown; expected: () => number },
+): Promise<InitiativeRow> {
+  const { initiativeId } = input;
+  const { row: seen } = await readableInitiative(tx, request, initiativeId);
+  if (input.transformationId !== undefined && seen.transformation_id !== input.transformationId)
+    throw problems.notFound();
+  const ctx = await openWrite(tx, request, seen.transformation_id, EDIT, null, { atCommit: true });
+  const update = parseBody(initiativeUpdate, input.body);
+  const current = await lockInitiativeForWrite(tx, request, initiativeId, input.expected);
+  assertEditable(current);
+  const changes = pick(update, FIELD_COLUMNS);
+  const start =
+    "planned_start" in changes ? (changes["planned_start"] as string | null) : dateText(current.planned_start);
+  const end = "planned_end" in changes ? (changes["planned_end"] as string | null) : dateText(current.planned_end);
+  assertPlannedRange(start, end);
+  await checkReferences(ctx, changes);
+  const updated = await tx
+    .updateTable("initiative")
+    .set({ ...changes, ...bumpStamps(ctx.userId) })
+    .where("id", "=", current.id)
+    .where("version", "=", current.version)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+  await record(tx, ctx.audit, {
+    action: "initiative.update",
+    recordType: "initiative",
+    recordId: current.id,
+    organizationId: ctx.organizationId,
+    transformationId: ctx.transformationId,
+    priorVersion: current.version,
+    newVersion: updated.version,
+    changes: diffFields(current, updated, [...INITIATIVE_AUDIT_FIELDS]),
+  });
+  return updated;
+}
+
+/**
+ * T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T05 PATCH core for the forms bulk edit, inside the caller's transaction:
+ * the same read and write gates (re-checked at commit), validation, lock, version check, editability, references and
+ * `initiative.update` audit event as a single PATCH.
+ */
+export const updateInitiative: RegisterUpdater = async (tx, request, input) => {
+  const updated = await updateInitiativeRow(tx, request, {
+    initiativeId: input.recordId,
+    transformationId: input.transformationId,
+    body: input.body,
+    expected: () => input.expectedVersion,
+  });
+  return { id: updated.id, version: updated.version };
+};
 
 export function registerInitiativeRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
   const read = { access: { permission: "transformation.read" as const } };
@@ -186,33 +248,10 @@ export function registerInitiativeRoutes(app: FastifyInstance, { db }: ModuleDep
   app.patch(`${BASE}/:initiativeId`, { config: edit }, async (request, reply) => {
     const { initiativeId } = parse(idParams, request.params, "params");
     const body = await db.transaction().execute(async (tx) => {
-      const { row: seen } = await readableInitiative(tx, request, initiativeId);
-      const ctx = await openWrite(tx, request, seen.transformation_id, EDIT, null, { atCommit: true });
-      const update = parseBody(initiativeUpdate, request.body);
-      const current = await lockInitiativeForWrite(tx, request, initiativeId);
-      assertEditable(current);
-      const changes = pick(update, FIELD_COLUMNS);
-      const start =
-        "planned_start" in changes ? (changes["planned_start"] as string | null) : dateText(current.planned_start);
-      const end = "planned_end" in changes ? (changes["planned_end"] as string | null) : dateText(current.planned_end);
-      assertPlannedRange(start, end);
-      await checkReferences(ctx, changes);
-      const updated = await tx
-        .updateTable("initiative")
-        .set({ ...changes, ...bumpStamps(ctx.userId) })
-        .where("id", "=", current.id)
-        .where("version", "=", current.version)
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      await record(tx, ctx.audit, {
-        action: "initiative.update",
-        recordType: "initiative",
-        recordId: current.id,
-        organizationId: ctx.organizationId,
-        transformationId: ctx.transformationId,
-        priorVersion: current.version,
-        newVersion: updated.version,
-        changes: diffFields(current, updated, [...INITIATIVE_AUDIT_FIELDS]),
+      await updateInitiativeRow(tx, request, {
+        initiativeId,
+        body: request.body,
+        expected: () => requireIfMatch(request),
       });
       return loadInitiative(tx, initiativeId);
     });
