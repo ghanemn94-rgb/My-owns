@@ -120,6 +120,20 @@ const PRODUCED: Record<string, Params> = {
   "gates.notice.gate_exception_expired": { gateCode: "G3", criterionKey: "g3.design", expiresOn: "2026-12-31" },
   // the gates worker's routing work item (worker handlers/gates.ts GATE_ROUTING_UNMAPPED_MESSAGE)
   "routing.role_unmapped": { gateCode: "G3", submissionNo: 2, roleCode: "SP" },
+  // P5 slices G and H (T-DG5-FE-F; D-156 j, D-159 d): the Day-90 test task (worker handlers/launch.ts), the restatement
+  // decision task (api kpi/restatements.ts) and the reissue offer (worker handlers/kpi.ts).
+  "launch.task.day_ninety_test_due": {
+    transformationCode: "TR-01",
+    transformationName: "Synthetic roaming",
+    scheduledDate: "2026-12-30",
+  },
+  "kpi_restatement.to_decide": { kpiName: "Synthetic churn", periodCount: 2 },
+  "kpi_restatement.reissue_offer": {
+    kpiName: "Synthetic churn",
+    definitionCode: "executive_pack",
+    issueVersion: 1,
+    periodLabel: "2026-Q1",
+  },
 };
 
 const DATES = ["dueDate", "periodStart", "periodEnd", "slaDueDate", "expiresOn", "meetingDate"];

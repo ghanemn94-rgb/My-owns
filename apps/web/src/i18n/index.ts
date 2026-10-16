@@ -111,6 +111,10 @@ import enWorkflowsP5 from "./en/workflowsP5.json" with { type: "json" };
 // P5 slice F namespace (T-DG5-FE-E): reports and snapshots, exports, presentation mode, owner updates, evidence register.
 import arReportsP5 from "./ar/reportsP5.json" with { type: "json" };
 import enReportsP5 from "./en/reportsP5.json" with { type: "json" };
+// P5 slices G and H namespace (T-DG5-FE-F): the 90-day launch plan, the Day-90 leadership test, the health check and
+// its scoring schemes, KPI restatement, formula preview and the optional financial metrics.
+import arLaunchHealthP5 from "./ar/launchHealthP5.json" with { type: "json" };
+import enLaunchHealthP5 from "./en/launchHealthP5.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -161,6 +165,7 @@ export const catalogues = {
     forms: arForms,
     workflowsP5: arWorkflowsP5,
     reportsP5: arReportsP5,
+    launchHealthP5: arLaunchHealthP5,
   },
   en: {
     common: enCommon,
@@ -209,6 +214,7 @@ export const catalogues = {
     forms: enForms,
     workflowsP5: enWorkflowsP5,
     reportsP5: enReportsP5,
+    launchHealthP5: enLaunchHealthP5,
   },
 } as const;
 

@@ -197,7 +197,9 @@ export interface NavSubPage {
     | "jobOperations"
     // T-DG5-FE-E: the evidence register (REQ-S13-010) and owner updates (REQ-S09-011) of each transformation.
     | "evidenceRegister"
-    | "ownerUpdates";
+    | "ownerUpdates"
+    // T-DG5-FE-F: the health check scoring schemes (REQ-S14-003; Administration > Playbook Studio > Health check scoring).
+    | "healthSchemes";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -341,6 +343,8 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   // T-DG5-FE-E: Evidence and Reports > Evidence register (REQ-S13-010); Initiatives and Roadmaps > Updates (REQ-S09-011).
   { id: "evidenceRegister", area: "evidence", path: "/evidence-reports/evidence-register" },
   { id: "ownerUpdates", area: "initiatives", path: "/initiatives-roadmaps/updates" },
+  // T-DG5-FE-F: Administration > Health check scoring (REQ-S14-003), beside the Studio entries (methodology.read).
+  { id: "healthSchemes", area: "admin", path: "/admin/health-schemes", requiresAny: ["methodology.read"] },
 ];
 
 /**
@@ -371,7 +375,15 @@ export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentI
   // M0103: searchable source, guidance and executable procedures.
   playbook: [
     { id: "source", p5: ["reader"] },
-    { id: "guidance", tabs: ["phases"], p5: ["launchPlan", "healthCheck"] },
+    // T-DG5-FE-F: the 90-day launch plan and the health check are delivered (F-DG4-160).
+    {
+      id: "guidance",
+      tabs: ["phases"],
+      links: [
+        { path: "/playbook/launch-plan", labelKey: "nav.sub.launchPlan" },
+        { path: "/playbook/health-check", labelKey: "nav.sub.healthCheck" },
+      ],
+    },
     // T-DG5-FE-D: my procedures is delivered (F-DG4-160).
     { id: "procedures", links: [{ path: "/playbook/procedures", labelKey: "nav.sub.myProcedures" }] },
   ],
