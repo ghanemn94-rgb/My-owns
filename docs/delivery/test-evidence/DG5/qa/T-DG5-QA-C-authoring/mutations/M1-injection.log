@@ -1,0 +1,68 @@
+### M1-injection
+file: packages/reporting/src/injection.ts
+sed: s/return startsLikeFormula(text) ? { text: `'${text}`, prefixed: true } : { text, prefixed: false };/return { text, prefixed: false };/
+31c31
+<   return startsLikeFormula(text) ? { text: `'${text}`, prefixed: true } : { text, prefixed: false };
+---
+>   return { text, prefixed: false };
+test: tests/qa/integration/a15-selected-records-and-injection.test.ts -t "REQ-S13-006"
+port-policy: PostgreSQL listening on port 23730 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.xktMGY/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbi30af_15c04d13 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts (7 tests | 2 failed | 5 skipped) 1397ms
+   ↓ REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > the dangerous texts and the plain risk were accepted by the API (the refusals, if any, are listed)
+   ↓ REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (en): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row
+   ↓ REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (ar): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row
+   × REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > XLSX: each such description is an inline string with a quote prefix, never a formula 154ms
+     → quotePrefix for "=HYPERLINK(\"http://example.invalid/qa-a15\",\"open\")": expected false to be true // Object.is equality
+   × REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > CSV: each such description is written with a leading apostrophe; other text is unchanged 72ms
+     → escaped "=HYPERLINK(\"http://example.invalid/qa-a15\",\"open\")": expected [ 'Product', …(112) ] to include '\'=HYPERLINK("http://example.invalid/…'
+   ↓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (en) lists every criterion of G1 by its en label
+   ↓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (ar) lists every criterion of G1 by its ar label
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > XLSX: each such description is an inline string with a quote prefix, never a formula
+AssertionError: quotePrefix for "=HYPERLINK(\"http://example.invalid/qa-a15\",\"open\")": expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ tests/qa/integration/a15-selected-records-and-injection.test.ts:131:86
+    129|       expect(cell!.formula).toBeNull();
+    130|       expect(cell!.type).toBe("inlineStr");
+    131|       expect(wb.quotePrefix[cell!.style], `quotePrefix for ${JSON.stri…
+       |                                                                                      ^
+    132|     }
+    133|     // A plain text keeps its exact characters and needs no prefix.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > CSV: each such description is written with a leading apostrophe; other text is unchanged
+AssertionError: escaped "=HYPERLINK(\"http://example.invalid/qa-a15\",\"open\")": expected [ 'Product', …(112) ] to include '\'=HYPERLINK("http://example.invalid/…'
+ ❯ tests/qa/integration/a15-selected-records-and-injection.test.ts:144:57
+    142|     const fields = v.csvRows!.flat();
+    143|     for (const text of accepted().filter((t) => DANGEROUS.includes(t))…
+    144|       expect(fields, `escaped ${JSON.stringify(text)}`).toContain(`'${…
+       |                                                         ^
+    145|       expect(fields, `raw ${JSON.stringify(text)}`).not.toContain(text…
+    146|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 skipped (7)
+   Start at  21:49:23
+   Duration  20.32s (transform 7.14s, setup 0ms, collect 14.55s, tests 1.40s, environment 0ms, prepare 127ms)
+
+EXIT=1

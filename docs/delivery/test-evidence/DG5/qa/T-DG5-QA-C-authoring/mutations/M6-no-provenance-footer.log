@@ -1,0 +1,118 @@
+### M6-no-provenance-footer
+file: apps/worker/src/reports/export-runner.ts
+sed: s/^  if (row === undefined) return null;$/  if (row !== null) return null;/
+326c326
+<   if (row === undefined) return null;
+---
+>   if (row !== null) return null;
+test: tests/qa/integration/a15-outputs-every-definition.test.ts -t "every file"
+port-policy: PostgreSQL listening on port 23730 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.xktMGY/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbi5qiu_dd3ddb69 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a15-outputs-every-definition.test.ts (5 tests | 1 failed | 3 skipped) 26522ms
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > the API lists the twelve definitions and each one was generated here
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout  22994ms
+   × A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file, in every format, prints the B0004 provenance statement in its language (ADR-0046 §2, REQ-PB-001) 11ms
+     → expected [ 'charter/pdf/en', …(63) ] to deeply equal []
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > a format the definition does not offer is refused (422 export.format_not_offered); nothing is queued
+   ↓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > an export is the requester's own: another user of the organization gets 404 on the job and the file
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a15-outputs-every-definition.test.ts > A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file, in every format, prints the B0004 provenance statement in its language (ADR-0046 §2, REQ-PB-001)
+AssertionError: expected [ 'charter/pdf/en', …(63) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "charter/pdf/en",[39m
+[31m+   "charter/pdf/ar",[39m
+[31m+   "charter/docx/en",[39m
+[31m+   "charter/docx/ar",[39m
+[31m+   "diagnostic/pdf/en",[39m
+[31m+   "diagnostic/pdf/ar",[39m
+[31m+   "diagnostic/docx/en",[39m
+[31m+   "diagnostic/docx/ar",[39m
+[31m+   "diagnostic/xlsx/en",[39m
+[31m+   "diagnostic/xlsx/ar",[39m
+[31m+   "tom/pdf/en",[39m
+[31m+   "tom/pdf/ar",[39m
+[31m+   "tom/docx/en",[39m
+[31m+   "tom/docx/ar",[39m
+[31m+   "tom/xlsx/en",[39m
+[31m+   "tom/xlsx/ar",[39m
+[31m+   "business_cases/pdf/en",[39m
+[31m+   "business_cases/pdf/ar",[39m
+[31m+   "business_cases/docx/en",[39m
+[31m+   "business_cases/docx/ar",[39m
+[31m+   "business_cases/xlsx/en",[39m
+[31m+   "business_cases/xlsx/ar",[39m
+[31m+   "roadmap/pdf/en",[39m
+[31m+   "roadmap/pdf/ar",[39m
+[31m+   "roadmap/pptx/en",[39m
+[31m+   "roadmap/pptx/ar",[39m
+[31m+   "roadmap/xlsx/en",[39m
+[31m+   "roadmap/xlsx/ar",[39m
+[31m+   "registers/xlsx/en",[39m
+[31m+   "registers/xlsx/ar",[39m
+[31m+   "registers/csv/en",[39m
+[31m+   "registers/csv/ar",[39m
+[31m+   "registers/pdf/en",[39m
+[31m+   "registers/pdf/ar",[39m
+[31m+   "executive_dashboard/pdf/en",[39m
+[31m+   "executive_dashboard/pdf/ar",[39m
+[31m+   "executive_dashboard/pptx/en",[39m
+[31m+   "executive_dashboard/pptx/ar",[39m
+[31m+   "executive_dashboard/xlsx/en",[39m
+[31m+   "executive_dashboard/xlsx/ar",[39m
+[31m+   "executive_pack/pdf/en",[39m
+[31m+   "executive_pack/pdf/ar",[39m
+[31m+   "executive_pack/pptx/en",[39m
+[31m+   "executive_pack/pptx/ar",[39m
+[31m+   "executive_pack/docx/en",[39m
+[31m+   "executive_pack/docx/ar",[39m
+[31m+   "gate_pack/pdf/en",[39m
+[31m+   "gate_pack/pdf/ar",[39m
+[31m+   "gate_pack/pptx/en",[39m
+[31m+   "gate_pack/pptx/ar",[39m
+[31m+   "gate_pack/docx/en",[39m
+[31m+   "gate_pack/docx/ar",[39m
+[31m+   "meeting_minutes/pdf/en",[39m
+[31m+   "meeting_minutes/pdf/ar",[39m
+[31m+   "meeting_minutes/docx/en",[39m
+[31m+   "meeting_minutes/docx/ar",[39m
+[31m+   "meeting_pack/pdf/en",[39m
+[31m+   "meeting_pack/pdf/ar",[39m
+[31m+   "meeting_pack/pptx/en",[39m
+[31m+   "meeting_pack/pptx/ar",[39m
+[31m+   "handover/pdf/en",[39m
+[31m+   "handover/pdf/ar",[39m
+[31m+   "handover/docx/en",[39m
+[31m+   "handover/docx/ar",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a15-outputs-every-definition.test.ts:251:31
+    249|   it("every file, in every format, prints the B0004 provenance stateme…
+    250|     expect(matrixRan, "the export matrix above must have run").toBe(tr…
+    251|     expect(provenanceMissing).toEqual([]);
+       |                               ^
+    252|   });
+    253| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 3 skipped (5)
+   Start at  21:51:31
+   Duration  43.21s (transform 6.12s, setup 0ms, collect 11.25s, tests 26.52s, environment 0ms, prepare 88ms)
+
+EXIT=1

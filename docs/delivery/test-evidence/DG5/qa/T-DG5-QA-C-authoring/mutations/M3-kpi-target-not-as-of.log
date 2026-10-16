@@ -1,0 +1,55 @@
+### M3-kpi-target-not-as-of
+file: apps/api/src/modules/reporting/reports/assemblers/registers.ts
+sed: 351s/\.where("status", "=", "active")/.where("status", "in", ["active", "draft"]).orderBy("version_no", "desc")/
+351c351
+<           .where("status", "=", "active")
+---
+>           .where("status", "in", ["active", "draft"]).orderBy("version_no", "desc")
+test: tests/qa/integration/a15-snapshots-and-packs.test.ts -t "REQ-S13-007"
+port-policy: PostgreSQL listening on port 23730 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.xktMGY/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbi4etl_8ea1e18f (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a15-snapshots-and-packs.test.ts (15 tests | 15 skipped) 1348ms
+   ↓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > GET the issued snapshot: unchanged content and hash, the old target, never the new one
+   ↓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > its versions still cite the KPI version in force at the as-of time (v1), not v2
+   ↓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > the live report refreshes to the new target
+   ↓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (en) of the issued snapshot exported after the change shows the old target and the issue
+   ↓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (ar) of the issued snapshot exported after the change shows the old target and the issue
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > the snapshot holds the workstream's update verbatim and a metrics section for it
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (en) prints the submitted update text and the workstream
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (ar) prints the submitted update text and the workstream
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > docx (en) prints the submitted update text and the workstream
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > docx (ar) prints the submitted update text and the workstream
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (en) prints the submitted update text and the workstream
+   ↓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (ar) prints the submitted update text and the workstream
+   ↓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > changing the linked decision before the cut-off changes the live presentation
+   ↓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the issued meeting pack remains the snapshot after a later change; the live view follows the change
+   ↓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the cut-off creates ONE draft agenda with the current open asks; its items are not published before review
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a15-snapshots-and-packs.test.ts > REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions
+AssertionError: expected [ '120' ] to include '100'
+ ❯ tests/qa/integration/a15-snapshots-and-packs.test.ts:95:57
+     93|     );
+     94|     expect(issued).toMatchObject({ status: "issued", issueVersion: 1 }…
+     95|     expect(decimalsIn(rowsOf(issued.content, k.kpiId))).toContain("100…
+       |                                                         ^
+     96|     // The later KPI change: target 100 -> 120 through an approved cha…
+     97|     const CR = `${base}/change-requests`;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 skipped (15)
+   Start at  21:50:29
+   Duration  15.73s (transform 5.39s, setup 0ms, collect 10.32s, tests 1.35s, environment 0ms, prepare 87ms)
+
+EXIT=1
