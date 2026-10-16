@@ -1,11 +1,66 @@
 # Handback T-DG5-KBE-D2 (kpi-benefits-engineer): the minutes, executive-dashboard, handover and meeting-pack assemblers, and the export content label table
 
+## Continuation run (T-DG5-KBE-D2B)
+
+- **Interrupted run:** `DG5-T-DG5-KBE-D2-kpi-benefits-engineer-20261016T011110Z-cd89881e` (session `cd89881e-004f-449f-ae1f-7eba1bc86c11`). A container restart stopped it at about 03:01Z on 2026-10-16. Its material is kept for provenance under `docs/delivery/test-evidence/DG5/KBE-D2-orphaned/` in the main repository. Its work is WIP commit `7cbf544` on `dg5/kbe-d2`.
+- **This run:** `DG5-T-DG5-KBE-D2B-kpi-benefits-engineer-20261016T030651Z-7d7db98a` (session `7d7db98a-7a83-4054-b257-f0c0e2ae2c65`). Started 03:12:57Z (`date -u`); finished 04:47Z (`date -u` after the last check).
+
+### What I found
+
+I compared the handback with the tree.
+
+- **Files.** Every file in §1 exists and contains what §1 says, and none of them is truncated:
+  - the four assemblers each end with their complete `Assembler` export;
+  - the registry has the four lines;
+  - `exportRunnerDeps()` passes `labels: REPORT_CONTENT_LABELS` in `apps/worker/src/handlers/reports.ts`;
+  - the barrel line is in `packages/shared/src/index.ts`;
+  - the label table has 863 keys in both `en` and `ar`. I counted them by importing the module: no Arabic value is empty, and every Arabic value contains Arabic script;
+  - the test counts match: `kbe-d2.test.ts` 13, `content-labels.test.ts` 5, `kbe-d2-assemblers.test.ts` 6, `export-labels.test.ts` 2.
+- **§F.4 and the D-157 (a) scope** were complete in the code. No implementation item was unfinished, so I changed no source file.
+- **Placeholders and incomplete records in the handback.**
+  - The placeholders for the end time, the C.UTF-8 exit code and the C.UTF-8 unit-web counts were never filled in.
+  - The first run's `unit-c-utf8.log` is **truncated**: it stops in the middle of unit-web, with no unit-web or formula counts and no exit line.
+  - The first run's full integration run (`integration.log`) never completed (IPC channel closed after 82/260 files).
+  - §3 and §7 still described the acceptance checks as open.
+- **Environment debris.** Five **empty `.claude/` directories** were in source folders, all created at 02:15Z during the first run: `packages/db/migrations/.claude`, `apps/api/.claude`, `apps/api/src/modules/reporting/reports/.claude`, `apps/api/src/modules/reporting/reports/assemblers/.claude` and `apps/worker/.claude`. They are not tracked by git. My pre-test search looked only for `.cc-writes` directories, so it missed them. The one under `packages/db/migrations` breaks `packages/db/test/integration/migrate.test.ts`, which copies that folder without `recursive` (see row I-1 below). I removed all five with `rmdir`.
+- **Read-only placeholder files.** The worktree also has empty, read-only, untracked files at its top level: `.bashrc`, `.bash_profile`, `.profile`, `.zshrc`, `.zprofile`, `.gitconfig`, `.gitmodules`, `.ripgreprc`, `.mcp.json`, `CLAUDE.local.md`, `.idea` and `.vscode`. These are the sandbox's mount placeholders, not my files. I left them alone.
+
+### What I finished
+
+- I filled in every placeholder:
+  - the header now carries both runs' times and invocation references;
+  - §3 is relabelled as the first run's historical record, and its row 8 and its C.UTF-8 counts now say plainly that the log is truncated with no exit;
+  - §7 is rewritten to match the re-run results.
+- No code change was needed.
+
+### What I re-ran (all on the final tree; logs under `docs/delivery/handbacks/DG5/T-DG5-KBE-D2-evidence/`, each with a `-B` suffix)
+
+Environment: Node 24.21.0 (`/opt/nvm/versions/node/v24.21.0/bin`), offline, worktree `/home/user/wt/dg5-kbe-d2`, 4 CPUs. The other W13 agents were running at the same time (load average 4 to 20 during the runs).
+
+| # | Command | Exit | Result | Log |
+|---|---|---|---|---|
+| B-1 | `node tools/gates/validate.mjs --historical --stage DG4` (start) | **0** | `PASS gate DG4 (historical)` | `validate-historical-DG4-start-B.log` |
+| B-2 | `pnpm -r typecheck` | **0** | every package Done | `typecheck-B.log` |
+| B-3 | `pnpm -r build` | **0** | every package Done, including web | `build-B.log` |
+| B-4 | `pnpm lint` (`eslint . --max-warnings=0`) | **0** | no output | `lint-B.log` |
+| B-5 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` (at the end, after the handback edits) | **0** | `All matched files use Prettier code style!` (run after the last handback edit) | `prettier-B.log` |
+| B-6 | `pnpm openapi:lint` | **0** | `PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations` (unchanged) | `openapi-lint-B.log` |
+| B-7 | `pnpm test`, locale unset (`env -u LANG -u LC_ALL -u LC_CTYPE`) | **0** | unit-node **129 files, 2117/2117**; unit-web **74 files, 1429/1429**; unit-formula-nocodegen **3 files, 259 passed, 2 skipped (261)**. No failure and no timeout. | `unit-locale-unset-B.log` |
+| B-8 | `pnpm test`, `LC_ALL=C.UTF-8` (`LANG` and `LC_CTYPE` unset) | **0** | unit-node **129 files, 2117/2117**; unit-web **74 files, 1429/1429**; unit-formula-nocodegen **3 files, 259 passed, 2 skipped (261)**. No failure and no timeout. | `unit-c-utf8-B.log` |
+| I-1 | `QA_PG_PORT=24850 MTH_PORT_POOL=24851-24899 tests/qa/support/with-pg.sh pnpm test:integration` (first attempt) | **1** | **259 of 260 files passed; 2481 passed, 3 failed (2484).** The 3 failures are all in `packages/db/test/integration/migrate.test.ts`: `Error: Recursive option not enabled, cannot copy a directory: …/packages/db/migrations/.claude/`. They were caused by the stray empty directory described above, not by a code defect. Every other suite passed, including `contract.test.ts` (78/78), `kbe-d2-assemblers.test.ts` (6/6) and `export-labels.test.ts` (2/2). | `integration-B.log` |
+| I-2 | the same command, after removing the five empty `.claude/` directories | **0** | **260 of 260 files, 2484/2484 tests passed** (30 min 55 s; PostgreSQL on port 24850, first attempt). This includes `migrate.test.ts` 7/7, `contract.test.ts` 78/78 with its pinned counts, `kbe-d2-assemblers.test.ts` 6/6 and `export-labels.test.ts` 2/2. **This is the acceptance-3 result.** | `integration-rerun-B.log` |
+| B-9 | `node tools/gates/validate.mjs --historical --stage DG4` (end) | **0** | `PASS gate DG4 (historical)` | `validate-historical-DG4-end-B.log` |
+
+- **Pinned counts:** no change. No operation was routed (§4), and `contract.test.ts` passed with its pinned counts unchanged.
+- **Flaky tests and timeouts:** the load timeouts of the first run (`pdf.test.ts`, `architecture.test.ts`) did not recur in B-7 or B-8. The whole `architecture.test.ts` file took 30.2 s under C.UTF-8 (139/139 passed). Under heavier load its slowest test can still exceed its 30 s limit (the F-DG4-143 to F-DG4-148 class, seen in the first run). The I-1 failure has the deterministic cause described above.
+
 - **Stage / gate:** P5, DG5 (BUILDING). Task T-DG5-KBE-D2, p5-work-split §F.4, with the D-157 (a) added scope (the export content label table, REQ-S13-009).
 - **Invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-KBE-D2-kpi-benefits-engineer-20261016T011110Z-cd89881e","session_id":"cd89881e-004f-449f-ae1f-7eba1bc86c11"}`.
 - **Assignment:** `/home/user/My-owns/docs/delivery/assignments/DG5/T-DG5-KBE-D2.md`. Its SHA-256 `8fb089e9…7a522` matched before I started.
-- **Base:** worktree `/home/user/wt/dg5-kbe-d2`, branch `dg5/kbe-d2`, `HEAD` = `cca2ba571e2030f7a35a4667961ca5625543cc80`. All changes are **uncommitted**, for the orchestrator to integrate.
-- **Time:** started 01:14:58Z; finished __END__ (see §3).
-- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` exited **0** at the start ("PASS gate DG4 (historical)"; `T-DG5-KBE-D2-evidence/validate-historical-DG4-start.log`). It was re-run at the end (§3).
+- **Continuation invocation reference:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-KBE-D2B-kpi-benefits-engineer-20261016T030651Z-7d7db98a","session_id":"7d7db98a-7a83-4054-b257-f0c0e2ae2c65"}`. Assignment `/home/user/My-owns/docs/delivery/assignments/DG5/T-DG5-KBE-D2B.md`; its SHA-256 `32f8c8ff…17440` matched before I started.
+- **Base:** worktree `/home/user/wt/dg5-kbe-d2`, branch `dg5/kbe-d2`. The first run worked on `cca2ba571e2030f7a35a4667961ca5625543cc80`. After the restart the orchestrator committed that work as WIP `7cbf544` (D-158), and that commit is the continuation run's `HEAD`. The continuation run's own changes (this handback and the `-B` logs) are **uncommitted**, for the orchestrator to integrate.
+- **Time:** the first run started at 01:14:58Z and was stopped by the container restart at about 03:01Z. The continuation run started at 03:12:57Z and finished at 04:47Z (`date -u` after the last check) (see the continuation section).
+- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` exited **0** at the start ("PASS gate DG4 (historical)"; `T-DG5-KBE-D2-evidence/validate-historical-DG4-start.log`). The first run re-ran it at its end (§3). The continuation run ran it again at its start and at its end (rows B-1 and B-9).
 - **Approvals:** none granted. Product gates G1-G6 are business approvals inside the product. Approving minutes, accepting a handover, the G1 submission and issuing a pack are in-product record steps on SYNTHETIC test data, and they approve nothing real. Nothing here touches DG0-DG7.
 
 ## 1. Changed files
@@ -122,7 +177,9 @@ The assignment's three requirements:
 
   Every format of each definition's catalogue `formats`, in `en` and in `ar`, is rendered by the real `@mth/reporting` `render` with the production labels. The union of `missingLabels` is empty: **PASS**. `content-labels.test.ts` adds the closed-set completeness check for values the seeded worlds do not contain.
 
-## 3. Checks actually run
+## 3. Checks of the first run (historical; superseded by the continuation run's re-runs)
+
+This section records what the interrupted first run did, kept for provenance. **It is not the acceptance evidence.** The acceptance evidence is the continuation run's re-runs on the final tree (the `-B` logs in the continuation section at the top).
 
 Environment: Node 24.21.0, pnpm workspace, offline, worktree `/home/user/wt/dg5-kbe-d2`. Harness ports: `QA_PG_PORT=24850`, `MTH_PORT_POOL=24851-24899`. Empty `.claude/.cc-writes` directories were removed before the tests.
 
@@ -137,7 +194,7 @@ All logs are under `docs/delivery/handbacks/DG5/T-DG5-KBE-D2-evidence/`.
 | 5 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | **0** | All matched files use Prettier code style. Re-checked at the end on `apps packages docs/delivery/handbacks`: 0. | `prettier.log`, `prettier-final.log` |
 | 6 | `pnpm openapi:lint` | **0** | PASS, OpenAPI 3.1.1, 846 operations (unchanged) | `openapi-lint.log` |
 | 7 | `pnpm test`, locale unset (`env -u LANG -u LC_ALL -u LC_CTYPE`) | **1** | See below | `unit-locale-unset.log` |
-| 8 | `pnpm test`, `LC_ALL=C.UTF-8` | __CUTF8EXIT__ | See below | `unit-c-utf8.log` |
+| 8 | `pnpm test`, `LC_ALL=C.UTF-8` | **none recorded** | The log is truncated: the restart stopped it during unit-web. See below. | `unit-c-utf8.log` |
 | 9 | `QA_PG_PORT=24860 MTH_PORT_POOL=24861-24899 tests/qa/support/with-pg.sh pnpm test:integration` | **1** | **Did not complete**: the fork crashed, see below | `integration.log` |
 | 10 | Integration, the two KBE-D2 files (after the final code) | **0** | 2 files, **8/8** | `integration-kbe-d2-files.log` |
 | 11 | Integration, all of `apps/api/test/integration/reporting/` (after the final code) | **0** | **27 files, 184/184** | `integration-reporting-folder.log` |
@@ -155,7 +212,7 @@ All logs are under `docs/delivery/handbacks/DG5/T-DG5-KBE-D2-evidence/`.
 
 **Unit tests, C.UTF-8 (row 8).**
 
-- Counts: unit-node 2110 passed, **7 failed** (2117); __CUTF8WEB__.
+- Counts: unit-node 2110 passed, **7 failed** (2117). unit-web was still running when the container restart stopped the run, so the log ends mid-run with **no unit-web or unit-formula-nocodegen counts and no exit line**.
 - **All 7 are timeouts with no assertion failure**, at load average 24-26 (two integration runs and the other W13 agents were running): 6 in `pdf.test.ts` and `architecture.test.ts` (46 s against 30 s). This run started after the boundary fix.
 - Re-run alone under `LC_ALL=C.UTF-8`: **152/152** (`unit-c-utf8-rerun-timeouts.log`).
 
@@ -188,8 +245,8 @@ The export headings were the remaining untrue output. Before this task an Arabic
 
 ## 7. What remains
 
-1. **Full integration suite (acceptance 3): not completed.** A serial `QA_PG_PORT=<port> MTH_PORT_POOL=<rest> tests/qa/support/with-pg.sh pnpm test:integration` on the integrated tree is still needed. My run crashed on an IPC channel close after 82/260 files with 0 failures (§3, row 9). The reporting folder and my files pass on the final code (rows 10-11).
-2. **Unit runs (acceptance 2)** show only load timeouts in BE-N's `pdf.test.ts` and in `architecture.test.ts`, and each re-run alone passes in both locales. A full `pnpm test` with both locales, on a quieter machine at merge, is still needed.
+1. **Acceptance checks 1 to 4 are done.** The continuation run re-ran every one of them on the final tree, and each passed (rows B-1 to B-9 and I-2 at the top). Items 1 and 2 of the first run's list (the incomplete full integration run and the unit runs with load timeouts) are therefore closed.
+2. **For the orchestrator and the owner of `packages/db/test/integration/migrate.test.ts` (not my file):** `copyMigrations` copies `packages/db/migrations/` file by file without `recursive`, so any stray directory there (here an empty `.claude/` left by the sandbox) fails three of its tests (row I-1). It would help to remove such directories before integration runs, or to have the test skip directories.
 3. Optional, for the owners: public read services for meetings, agendas and handovers in `governance/index.ts` and `sustainment/index.ts` (§5 item 2).
 4. For FE-E: the web generate screens for these four outputs (p5-work-split §F.10 "Completes with"). For BE-O: the presentation's live mode through `assemblerOf("meeting_pack")`.
 
