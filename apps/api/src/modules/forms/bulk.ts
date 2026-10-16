@@ -6,7 +6,8 @@
 //     422 form_record.bulk_too_many;
 //   - `sourceFields` names source columns by their form field key (T15 `owner`, T08 `needed_by_date`, ...). Only the
 //     columns marked bulk_editable (owner, due dates, impact/probability/stance, confidence) of a register whose own
-//     update function is exposed (transformations/register-kit.ts `registerUpdaterOf`) are accepted; any other key is
+//     update function is exposed (transformations/register-kit.ts `registerUpdaterOf`, or a module core in the
+//     FormBulkUpdaters map below: T04, T05, T13, T14, T15, T16; T-DG5-BE-E3) are accepted; any other key is
 //     422 form_record.bulk_field_not_editable. Each item goes through that update function: the register's own gates,
 //     validation, business checks, version step, audit event and follow-up writes, exactly as a single PATCH;
 //   - `customFieldValues` sets extension-field values (merged into the record's stored values; null clears one),
@@ -35,7 +36,7 @@ import { auditContextOf } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { createConfigResolver } from "../methodology/index.ts";
 import { HttpProblem, parse, parseBody, problems, type ModuleDeps } from "../platform/index.ts";
-import { registerUpdaterOf } from "../transformations/index.ts";
+import { registerUpdaterOf, type RegisterUpdater } from "../transformations/index.ts";
 import { currentRecordVersion } from "./drafts.ts";
 import { extensionDefinitions, mapFormDbError, resolveForm, type ResolvedFormField } from "./provider.ts";
 import { assertWorking, formRefusals, loadRecordType, recordExists, requireRecordWrite } from "./record-types.ts";
@@ -66,6 +67,31 @@ export const bulkRefusals = {
       })),
     }),
 };
+
+/**
+ * T-DG5-BE-E3 (D-159 a; ADR-0041 §5): the forms bulk map of the registers whose PATCH core lives in their own module.
+ * Under the ADR-0002 module graph forms imports none of these modules (and no P5 module imports workflows), so each
+ * module exports its core through its index.ts and the composition root passes it in here, one line per register (the
+ * meeting-pack assembler pattern, D-159). Each core runs inside the bulk transaction exactly as its single PATCH does:
+ * the module's own authorization, validation, optimistic concurrency, audit event and follow-up writes.
+ */
+export interface FormBulkUpdaters {
+  readonly T04: RegisterUpdater; // Design Decision Log: workflows/decisions.ts updateDesignDecision
+  readonly T05: RegisterUpdater; // Initiative Card: portfolio/initiatives.ts updateInitiative
+  readonly T13: RegisterUpdater; // Stakeholder & Adoption Plan: adoption/register.ts updateStakeholderGroup
+  readonly T14: RegisterUpdater; // Benefits Register: benefits/register.ts updateBenefitRecord
+  readonly T15: RegisterUpdater; // RAID: raid/register.ts updateRaidEntry
+  readonly T16: RegisterUpdater; // Executive Decision Log: governance/executive-decisions.ts updateExecutiveDecision
+}
+const MODULE_UPDATERS = new Map<string, RegisterUpdater>();
+/** Wires the module cores (server.ts). Unwired, their source fields stay 422 bulk_field_not_editable (fail closed). */
+export function setFormBulkUpdaters(updaters: FormBulkUpdaters): void {
+  MODULE_UPDATERS.clear();
+  for (const [recordType, updater] of Object.entries(updaters)) MODULE_UPDATERS.set(recordType, updater);
+}
+/** The update function a bulk item of `rt` goes through: its module's core, else its register-kit update. */
+const updaterOf = (rt: FormRecordTypeRow): RegisterUpdater | undefined =>
+  MODULE_UPDATERS.get(rt.code) ?? (rt.table_name === null ? undefined : registerUpdaterOf(rt.table_name));
 
 /** The register's PATCH body key of a typed column (`owner_user_id` -> `ownerUserId`). */
 const bodyKeyOf = (column: string) => column.replace(/_([a-z0-9])/g, (_m, c: string) => c.toUpperCase());
@@ -193,7 +219,7 @@ async function bulkUpdate(tx: Tx, request: FastifyRequest, p: z.infer<typeof par
   const pinned = await resolver.pinnedVersion(tx, p.transformationId, "form_schema");
   const form = await resolveForm(tx, pinned.versionId, rt);
   const columns = bulkColumns(form.fields, rt);
-  const updater = registerUpdaterOf(rt.table_name);
+  const updater = updaterOf(rt);
 
   // Business rules on the request as a whole, before any record is read or written.
   for (const item of body.items) {

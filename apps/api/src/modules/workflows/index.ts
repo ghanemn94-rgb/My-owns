@@ -33,6 +33,8 @@ import { registerConditionalApprovalRoutes } from "./conditional-approval.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
+// T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T04 PATCH core, passed to the forms bulk edit by the composition root.
+export { updateDesignDecision } from "./decisions.ts";
 // P3 (ADR-0021 §1, T-DG3-BE-A): the interface through which the G4 evaluators read portfolio and kpi facts.
 export type { GateFactsProvider, InheritedApprovalFact, KpiP3GateFacts, PortfolioGateFacts } from "./g4.ts";
 // P3 (ADR-0023 §4-§5, T-DG3-BE-C): the seam through which portfolio supplies the T08 schedule flags.

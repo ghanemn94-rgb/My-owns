@@ -49,6 +49,7 @@ import {
   pick,
   ruleProblem,
   sendCreated,
+  type RegisterUpdater,
   type WriteContext,
 } from "../transformations/index.ts";
 import { nextCode } from "./codes.ts";
@@ -249,8 +250,14 @@ async function readableDecision(db: DbOrTx, request: FastifyRequest, decisionId:
 }
 
 /** If-Match + lock of a design decision in one of `statuses` (after the read and write gates). */
-async function finishDecisionLock(tx: Tx, request: FastifyRequest, decisionId: string, statuses: readonly string[]) {
-  const expected = requireIfMatch(request);
+async function finishDecisionLock(
+  tx: Tx,
+  request: FastifyRequest,
+  decisionId: string,
+  statuses: readonly string[],
+  expectedVersion: () => number = () => requireIfMatch(request),
+) {
+  const expected = expectedVersion();
   const current = await tx
     .selectFrom("decision")
     .selectAll()
@@ -300,6 +307,69 @@ const DECISION_STATUS_TRANSITIONS: ReadonlyMap<string, readonly string[]> = new 
   ["deferred", ["open", "cancelled"]],
 ]);
 
+/**
+ * The PATCH core of a design decision (T04). `transformationId`, when given, must be the decision's own (404
+ * otherwise); `expected` is read where the PATCH always read If-Match, so the single-record route answers exactly as
+ * before (T-DG5-BE-E3).
+ */
+async function updateDecision(
+  tx: Tx,
+  request: FastifyRequest,
+  input: { decisionId: string; transformationId?: string; body: unknown; expected: () => number },
+): Promise<DecisionRow> {
+  const { decisionId } = input;
+  const { decision: seen } = await readableDecision(tx, request, decisionId);
+  if (input.transformationId !== undefined && seen.transformation_id !== input.transformationId)
+    throw problems.notFound();
+  const ctx = await openWrite(tx, request, seen.transformation_id, EDIT, null);
+  const body = parseBody(decisionUpdate, input.body);
+  const { current } = await finishDecisionLock(tx, request, decisionId, ["open", "deferred"], input.expected);
+  const changes = pick(body, [
+    ["title", "title"],
+    ["context", "context"],
+    ["ownerUserId", "owner_user_id"],
+    ["dueDate", "due_date"],
+    ["tomDimensionCode", "tom_dimension_code"],
+    ["recommendationOptionId", "recommendation_option_id"],
+    ["recommendationText", "recommendation_text"],
+    ["status", "status"],
+  ]);
+  if (body.status !== undefined && body.status !== current.status) {
+    if (!(DECISION_STATUS_TRANSITIONS.get(current.status) ?? []).includes(body.status))
+      throw problems.invalidTransition(`A decision cannot move from ${current.status} to ${body.status}.`);
+  }
+  if (body.recommendationOptionId) {
+    const option = await tx
+      .selectFrom("decision_option")
+      .select(["status"])
+      .where("id", "=", body.recommendationOptionId)
+      .where("decision_id", "=", decisionId)
+      .executeTakeFirst();
+    if (!option || option.status !== "active")
+      throw ruleProblem(
+        "decision.option_unknown",
+        "Recommend an active option of this decision.",
+        "/recommendationOptionId",
+      );
+  }
+  await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }]);
+  return bumpDecision(tx, ctx, current, changes, "decision.update");
+}
+
+/**
+ * T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T04 PATCH core for the forms bulk edit, inside the caller's transaction:
+ * the same read and write gates, validation, lock, version check, rules and `decision.update` audit event.
+ */
+export const updateDesignDecision: RegisterUpdater = async (tx, request, input) => {
+  const updated = await updateDecision(tx, request, {
+    decisionId: input.recordId,
+    transformationId: input.transformationId,
+    body: input.body,
+    expected: () => input.expectedVersion,
+  });
+  return { id: updated.id, version: updated.version };
+};
+
 export function registerDecisionRoutes(app: FastifyInstance, db: Db): string[] {
   const read = { access: { permission: "transformation.read" as const } };
   const edit = { access: { permission: "decision.edit" as const } };
@@ -348,40 +418,11 @@ export function registerDecisionRoutes(app: FastifyInstance, db: Db): string[] {
   app.patch(`${BASE}/:decisionId`, { config: edit }, async (request, reply) => {
     const { decisionId } = parse(idParams, request.params, "params");
     const decision = await db.transaction().execute(async (tx) => {
-      const { decision: seen } = await readableDecision(tx, request, decisionId);
-      const ctx = await openWrite(tx, request, seen.transformation_id, EDIT, null);
-      const body = parseBody(decisionUpdate, request.body);
-      const { current } = await finishDecisionLock(tx, request, decisionId, ["open", "deferred"]);
-      const changes = pick(body, [
-        ["title", "title"],
-        ["context", "context"],
-        ["ownerUserId", "owner_user_id"],
-        ["dueDate", "due_date"],
-        ["tomDimensionCode", "tom_dimension_code"],
-        ["recommendationOptionId", "recommendation_option_id"],
-        ["recommendationText", "recommendation_text"],
-        ["status", "status"],
-      ]);
-      if (body.status !== undefined && body.status !== current.status) {
-        if (!(DECISION_STATUS_TRANSITIONS.get(current.status) ?? []).includes(body.status))
-          throw problems.invalidTransition(`A decision cannot move from ${current.status} to ${body.status}.`);
-      }
-      if (body.recommendationOptionId) {
-        const option = await tx
-          .selectFrom("decision_option")
-          .select(["status"])
-          .where("id", "=", body.recommendationOptionId)
-          .where("decision_id", "=", decisionId)
-          .executeTakeFirst();
-        if (!option || option.status !== "active")
-          throw ruleProblem(
-            "decision.option_unknown",
-            "Recommend an active option of this decision.",
-            "/recommendationOptionId",
-          );
-      }
-      await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId ?? null, pointer: "/ownerUserId" }]);
-      await bumpDecision(tx, ctx, current, changes, "decision.update");
+      await updateDecision(tx, request, {
+        decisionId,
+        body: request.body,
+        expected: () => requireIfMatch(request),
+      });
       return loadDecision(tx, decisionId);
     });
     return sendVersioned(reply, 200, decision);

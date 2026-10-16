@@ -53,6 +53,8 @@ describe("workflows module (P2)", () => {
       "resubmitApprovalInTx",
       "setDecisionRightRouter",
       "toApprovals",
+      // T-DG5-BE-E3 (D-159 a; ADR-0041 §5): the T04 PATCH core, passed to the forms bulk edit by the composition root.
+      "updateDesignDecision",
       "withdrawApprovalInTx",
     ]);
   });

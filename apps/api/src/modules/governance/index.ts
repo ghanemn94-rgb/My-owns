@@ -18,6 +18,9 @@ import { registerEscalationRoutes } from "./escalations.ts";
 import { registerCutOffRoutes } from "./cut-off.ts";
 import { registerPresentationRoutes } from "./presentation.ts";
 
+// T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T16 PATCH core, passed to the forms bulk edit by the composition root.
+export { updateExecutiveDecision } from "./executive-decisions.ts";
+
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG4-BE-A
  * created them as stubs; p4-plan §5.1). The module reports "scaffold" until a route exists, then "active".

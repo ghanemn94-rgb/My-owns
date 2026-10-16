@@ -75,7 +75,7 @@ import {
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { assertActiveUsers, openWrite, type WriteContext } from "../transformations/index.ts";
+import { assertActiveUsers, openWrite, type RegisterUpdater, type WriteContext } from "../transformations/index.ts";
 
 export type StakeholderGroupRow = Selectable<StakeholderGroupTable>;
 type ChampionRow = Selectable<StakeholderChampionTable>;
@@ -529,12 +529,20 @@ async function lockGroup(tx: Tx, transformationId: string, id: string): Promise<
   return row;
 }
 
-async function updateGroup(tx: Tx, request: FastifyRequest): Promise<StakeholderGroupRow> {
-  const { transformationId, stakeholderGroupId } = parse(groupParams, request.params, "params");
+/**
+ * The PATCH core of a stakeholder group (T13). `expected` is read where the PATCH always read If-Match (after the
+ * gates, the lock and the body validation), so the single-record route answers exactly as before (T-DG5-BE-E3).
+ */
+async function updateGroup(
+  tx: Tx,
+  request: FastifyRequest,
+  input: { transformationId: string; stakeholderGroupId: string; body: unknown; expected: () => number },
+): Promise<StakeholderGroupRow> {
+  const { transformationId, stakeholderGroupId } = input;
   const ctx = await openAdoptionWrite(tx, request, transformationId);
   const current = await lockGroup(tx, transformationId, stakeholderGroupId);
-  const body = parseT13Body(stakeholderGroupUpdate, request.body);
-  const expected = requireIfMatch(request);
+  const body = parseT13Body(stakeholderGroupUpdate, input.body);
+  const expected = input.expected();
   if (current.version !== expected) throw problems.versionConflict(current.version);
   if (current.status === "archived") throw GROUP_ARCHIVED();
   await assertActiveUsers(tx, ctx.organizationId, [{ id: body.ownerUserId, pointer: "/ownerUserId" }]);
@@ -576,6 +584,20 @@ async function updateGroup(tx: Tx, request: FastifyRequest): Promise<Stakeholder
   });
   return updated;
 }
+
+/**
+ * T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T13 PATCH core for the forms bulk edit, inside the caller's transaction:
+ * the same gates, lock, validation, version check, rules and `stakeholder_group.update` audit event as a single PATCH.
+ */
+export const updateStakeholderGroup: RegisterUpdater = async (tx, request, input) => {
+  const updated = await updateGroup(tx, request, {
+    transformationId: input.transformationId,
+    stakeholderGroupId: input.recordId,
+    body: input.body,
+    expected: () => input.expectedVersion,
+  });
+  return { id: updated.id, version: updated.version };
+};
 
 async function archiveGroup(tx: Tx, request: FastifyRequest): Promise<StakeholderGroupRow> {
   const { transformationId, stakeholderGroupId } = parse(groupParams, request.params, "params");
@@ -1041,7 +1063,13 @@ export function registerAdoptionRegisterRoutes(app: FastifyInstance, { db }: Mod
 
   app.patch(STAKEHOLDER_GROUP, { config: write }, async (request, reply) => {
     const body = await db.transaction().execute(async (tx) => {
-      const row = await updateGroup(tx, request);
+      const { transformationId, stakeholderGroupId } = parse(groupParams, request.params, "params");
+      const row = await updateGroup(tx, request, {
+        transformationId,
+        stakeholderGroupId,
+        body: request.body,
+        expected: () => requireIfMatch(request),
+      });
       return (await presentGroups(tx, [row]))[0]!;
     });
     return sendVersioned(reply, 200, body);

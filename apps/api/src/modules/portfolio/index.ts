@@ -50,6 +50,8 @@ export { ownerUpdateDueKey, submittedUpdatesOfPeriod } from "./updates.ts";
 export { loadInheritedApprovalFacts } from "./dispensations.ts";
 export { t08ScheduleFlags } from "./roadmap.ts";
 export { latestFundingState } from "./funding.ts";
+// T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T05 PATCH core, passed to the forms bulk edit by the composition root.
+export { updateInitiative } from "./initiatives.ts";
 export { loadDispensations, loadSequencingFacts } from "./dispensations.ts";
 export {
   checkDirectionForLaunch,

@@ -78,6 +78,7 @@ import {
   maybeIdempotent,
   openWrite,
   sendCreated,
+  type RegisterUpdater,
   type WriteContext,
 } from "../transformations/index.ts";
 import { countingFor, NOT_COUNTED } from "./counting.ts";
@@ -982,10 +983,20 @@ async function createBenefit(tx: Tx, ctx: WriteContext, body: BenefitCreate): Pr
   return row;
 }
 
-async function updateBenefit(tx: Tx, request: FastifyRequest, transformationId: string, benefitId: string) {
+/**
+ * The PATCH core of a benefit (T14). `body` defaults to the request's and `expected` to its If-Match, both read where
+ * the PATCH always read them, so the single-record route answers exactly as before (T-DG5-BE-E3).
+ */
+async function updateBenefit(
+  tx: Tx,
+  request: FastifyRequest,
+  transformationId: string,
+  benefitId: string,
+  input: { body: unknown; expected: () => number } = { body: request.body, expected: () => requireIfMatch(request) },
+) {
   const ctx = await openBenefitWrite(tx, request, transformationId, BENEFIT_EDIT);
-  const body = parseBody(benefitUpdate, request.body);
-  const expected = requireIfMatch(request);
+  const body = parseBody(benefitUpdate, input.body);
+  const expected = input.expected();
   const current = await lockBenefit(tx, transformationId, benefitId);
   checkBenefitVersion(current, expected);
   const changes = columnsOf(body);
@@ -1024,6 +1035,19 @@ async function updateBenefit(tx: Tx, request: FastifyRequest, transformationId: 
   if (overlapKeysChanged(current, updated)) await runKeysChangedHooks(tx, ctx, { before: current, after: updated });
   return updated;
 }
+
+/**
+ * T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T14 PATCH core for the forms bulk edit, inside the caller's transaction:
+ * the same gates (re-checked at commit), validation, version check, baseline re-validation rule, business rules,
+ * `benefit.update` audit event and overlap hooks as a single PATCH.
+ */
+export const updateBenefitRecord: RegisterUpdater = async (tx, request, input) => {
+  const updated = await updateBenefit(tx, request, input.transformationId, input.recordId, {
+    body: input.body,
+    expected: () => input.expectedVersion,
+  });
+  return { id: updated.id, version: updated.version };
+};
 
 async function archiveBenefit(tx: Tx, request: FastifyRequest, transformationId: string, benefitId: string) {
   const ctx = await openBenefitWrite(tx, request, transformationId, BENEFIT_EDIT);
