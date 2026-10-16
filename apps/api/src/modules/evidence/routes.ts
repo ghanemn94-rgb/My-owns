@@ -8,6 +8,8 @@
 //   /transformations/{id}/evidence-links                list, create (evidence.create + edit rights on the record)
 //   .../evidence-links/{linkId}/remove                  remove with a reason (the row stays); the SAME record-level
 //                                                       edit rights as creating the link (F-DG2-142)
+//   /transformations/{id}/evidence-register             the register (transformation.read; register.ts, T-DG5-BE-O)
+//   .../evidence/{evidenceId}/versions                  content revisions (transformation.read; register.ts)
 // A new content revision, or a change of a link's URL / a note's text, resets the item to `unverified`: a verification
 // is bound to the content the reviewer saw (reviewed_content_id).
 // Separation of duties (F-DG2-140, REQ-S13-012): nobody verifies content they supplied. The content author is kept in
@@ -70,6 +72,7 @@ import {
   type LooseRow,
   type RegisterSpec,
 } from "../transformations/index.ts";
+import { registerEvidenceRegisterRoutes } from "./register.ts";
 import { toEvidence, toEvidenceLink } from "./repository.ts";
 import {
   EVIDENCE_MAX_BYTES,
@@ -221,6 +224,9 @@ export const EVIDENCE_MODULE_ROUTES = [
   `GET ${LINKS}`,
   `POST ${LINKS}`,
   `POST ${LINKS}/:linkId/remove`,
+  // T-DG5-BE-O (ADR-0045 §8; REQ-S13-010): the evidence register and the versions list (register.ts).
+  `GET ${T}/evidence-register`,
+  `GET ${ITEM}/versions`,
 ] as const;
 
 export const EVIDENCE_MODULE: ModuleRegistration = Object.freeze({
@@ -416,6 +422,7 @@ export function registerEvidenceModule(
   registerContentRoutes(app, db, store);
   registerReviewRoute(app, db);
   registerLinkRoutes(app, db);
+  registerEvidenceRegisterRoutes(app, db); // T-DG5-BE-O (ADR-0045 §8): the evidence register and versions
   return EVIDENCE_MODULE;
 }
 
