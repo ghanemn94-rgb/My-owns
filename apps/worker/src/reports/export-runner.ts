@@ -59,7 +59,7 @@ export interface ExportRunnerDeps {
   readonly store: ExportFileStore;
   /** The content label table (`report.*` keys) in en and ar; the frame labels are built into @mth/reporting. */
   readonly labels?: LabelTable;
-  /** The product name printed in the file header (slice I's branding port replaces it once BE-R ships). */
+  /** The product name printed in the file header while no branding version is published (version 0). */
   readonly productName?: string;
   /** Test seam: called after each rendered section (before the status check). */
   readonly afterSection?: (done: number, total: number) => void | Promise<void>;
@@ -261,6 +261,72 @@ async function loadSource(db: Db, job: ExportJobRow) {
   return s;
 }
 
+/**
+ * T-DG5-BE-R (ADR-0049 §8 render-time reads; REQ-S01-002, REQ-S15-004): the organization's branding CURRENT at
+ * generation time, read outside any transaction just before rendering, so the next generated file carries a newly
+ * published product name and colour without a code change or redeploy. The worker imports no API code, so this is the
+ * API's `BrandingReadPort.current` (apps/api admin/branding-port.ts) in one query. No branding row = version 0: the
+ * shipped product name and no brand colour (the defaults). A file already stored never changes.
+ */
+export async function brandingAtGeneration(
+  db: Db,
+  organizationId: string,
+): Promise<{
+  versionNo: number;
+  productNameEn: string;
+  productNameAr: string;
+  primaryColour: string;
+  reportHeaderEn: string | null;
+  reportHeaderAr: string | null;
+  reportFooterEn: string | null;
+  reportFooterAr: string | null;
+} | null> {
+  const row = await db
+    .selectFrom("branding_setting as s")
+    .innerJoin("branding_version as v", (j) =>
+      j.onRef("v.organization_id", "=", "s.organization_id").onRef("v.version_no", "=", "s.current_version_no"),
+    )
+    .select([
+      "v.version_no",
+      "v.product_name_en",
+      "v.product_name_ar",
+      "v.primary_colour",
+      "v.report_header_en",
+      "v.report_header_ar",
+      "v.report_footer_en",
+      "v.report_footer_ar",
+    ])
+    .where("s.organization_id", "=", organizationId)
+    .executeTakeFirst();
+  return row === undefined
+    ? null
+    : {
+        versionNo: row.version_no,
+        productNameEn: row.product_name_en,
+        productNameAr: row.product_name_ar,
+        primaryColour: row.primary_colour,
+        reportHeaderEn: row.report_header_en,
+        reportHeaderAr: row.report_header_ar,
+        reportFooterEn: row.report_footer_en,
+        reportFooterAr: row.report_footer_ar,
+      };
+}
+
+/**
+ * T-DG5-BE-R (ADR-0045 "every file carries ... slice I's provenance footer (B0004)"; REQ-PB-001): the provenance
+ * statement, verbatim from the immutable playbook-block catalogue (0092; the Arabic is the provisional translation),
+ * or null when the catalogue has no B0004 row. Never invented here.
+ */
+export async function provenanceFooter(db: Db, language: "en" | "ar"): Promise<string | null> {
+  const row = await db
+    .selectFrom("playbook_block")
+    .select(["text_en", "text_ar"])
+    .where("block_ref", "=", "B0004")
+    .executeTakeFirst();
+  if (row === undefined) return null;
+  return language === "ar" ? row.text_ar : row.text_en;
+}
+
 const isLastAttempt = (a: JobAttempt | undefined): boolean => a === undefined || a.retryCount >= a.retryLimit;
 
 /** One run of `reports.export` (see the header). `data` is the relay's envelope of `export_job.requested`. */
@@ -281,11 +347,23 @@ export async function runExport(
     const src = await loadSource(db, job);
     const format = job.format as ExportFormat;
     const language = job.language as "en" | "ar";
+    const brand = await brandingAtGeneration(db, job.organization_id); // T-DG5-BE-R: the branding port at generation
+    const provenance = await provenanceFooter(db, language);
+    const ar = language === "ar";
     const result = await render(src.content as ReportDocument, {
       format,
       language,
       title: language === "ar" ? src.label_ar : src.label_en,
-      branding: { productName: deps.productName ?? DEFAULTS.productName },
+      branding:
+        brand === null
+          ? { productName: deps.productName ?? DEFAULTS.productName, provenance }
+          : {
+              productName: ar ? brand.productNameAr : brand.productNameEn,
+              primaryColour: brand.primaryColour,
+              reportHeader: ar ? brand.reportHeaderAr : brand.reportHeaderEn,
+              reportFooter: ar ? brand.reportFooterAr : brand.reportFooterEn,
+              provenance,
+            },
       snapshot: {
         id: src.id,
         status: src.status as "generated" | "issued" | "superseded" | "discarded",

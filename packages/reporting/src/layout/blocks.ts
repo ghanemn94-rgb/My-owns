@@ -31,6 +31,12 @@ export interface PagedSection {
 
 export interface PagedDocument {
   readonly productName: string;
+  /** T-DG5-BE-R: the header colour (the configured branding's primary colour, #RRGGBB), or null for the defaults. */
+  readonly brandColour: string | null;
+  /** T-DG5-BE-R: the configured report header line, or null. */
+  readonly reportHeader: string | null;
+  /** T-DG5-BE-R: the footer lines above the issue line: the configured report footer, then the provenance (B0004). */
+  readonly footerLines: readonly string[];
   readonly title: string;
   /** The header block every file carries (product, output, transformation, ..., issue or Draft line). */
   readonly frame: TableBlock;
@@ -106,6 +112,11 @@ function sectionBlocks(s: ReportSection, labels: Labels): Block[] {
 export function pagedDocument(doc: ReportDocument, o: RenderOptions, labels: Labels): PagedDocument {
   return {
     productName: o.branding.productName,
+    brandColour: /^#[0-9A-F]{6}$/.test(o.branding.primaryColour ?? "") ? o.branding.primaryColour! : null, // T-DG5-BE-R
+    reportHeader: o.branding.reportHeader ?? null,
+    footerLines: [o.branding.reportFooter, o.branding.provenance].filter(
+      (t): t is string => typeof t === "string" && t !== "",
+    ),
     title: o.title,
     frame: keyValue(frameRows(doc, o, labels)),
     sections: doc.sections.map((s) => ({

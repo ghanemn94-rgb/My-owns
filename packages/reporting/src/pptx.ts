@@ -5,8 +5,8 @@
 // section in content order, each table split over as many slides as its rows need with the header row repeated and
 // "<title> (continued)" on the following slides, then the legend and "About this file". Every slide carries the issue
 // line and "Slide n of m". A gate pack therefore lists every criterion of the gate, each with its state and evidence
-// (REQ-S13-005). Until slice I's branding port ships (BE-R) the title slide carries the shipped product name it is given and
-// no provenance line.
+// (REQ-S13-005). The title slide carries the product name it is given, and the closing "About this file" slide the configured
+// report header and footer and the provenance statement (B0004), read by the worker at generation time (T-DG5-BE-R).
 //
 // Direction: in Arabic the presentation is `rtlMode`, every text box and table cell is right-to-left (`rtl="1"`) and
 // right-aligned with `lang="ar-SA"`, and table columns are mirrored (the first column on the right). The families are
@@ -143,7 +143,13 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
       { title: paged.legendTitle, blocks: [paged.legend] },
       {
         title: labels.text("export.about"),
-        blocks: [{ kind: "paragraph", text: labels.text("export.fonts_note.pptx") }],
+        blocks: [
+          { kind: "paragraph", text: labels.text("export.fonts_note.pptx") },
+          // T-DG5-BE-R: the configured report header and footer and the provenance statement (B0004).
+          ...[paged.reportHeader, ...paged.footerLines]
+            .filter((t): t is string => t !== null)
+            .map((text) => ({ kind: "paragraph" as const, text })),
+        ],
       },
     ],
     labels,

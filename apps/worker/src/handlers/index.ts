@@ -24,6 +24,7 @@ import { runAsStarter, withStarterRules } from "../automation/starters.ts";
 import { handleTransformationCreated as handleTransformationCreatedDg4, type HandlerOutcome } from "./platform.ts";
 import { PORTFOLIO_HANDLERS } from "./portfolio.ts";
 import { DIGESTS_HANDLERS } from "./digests.ts"; // T-DG5-BE-L (ADR-0044 §5, §8)
+import { BRANDING_HANDLERS } from "./branding.ts"; // T-DG5-BE-R (ADR-0049 §12)
 
 export { purgeExpired, STARTER_AUTOMATION_CONSUMER, type HandlerOutcome, type PurgeResult } from "./platform.ts";
 export type { JobHandler } from "./spec.ts";
@@ -60,4 +61,5 @@ export const DOMAIN_HANDLERS: readonly JobHandler[] = withStarterRules([
   ...DEMO_HANDLERS,
   ...PORTFOLIO_HANDLERS,
   ...DIGESTS_HANDLERS, // T-DG5-BE-L
+  ...BRANDING_HANDLERS, // T-DG5-BE-R
 ]);

@@ -24,7 +24,7 @@ import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/
 import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
 import { registerAccessP2Routes, registerAccessP4Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
-import { colorTokens, tokensAreProvisional } from "@mth/design-tokens";
+import { colorTokens, deriveDarkerShade, tokenSource, tokensAreProvisional } from "@mth/design-tokens";
 import { registerAdminRoutes, registerBrandingRoutes, registerEnvironmentRoutes } from "./modules/admin/index.ts";
 import {
   RateLimitSubjects,
@@ -339,7 +339,13 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);
   registerAccessP2Routes(app, deps);
-  registerBrandingRoutes(app, { colorTokens, tokensAreProvisional });
+  // T-DG5-BE-R (ADR-0049 §8): the versioned branding routes; the token route merges the current version's colours and
+  // re-derives the ADR-0009 §3 shades from the same single token source at read time.
+  registerBrandingRoutes(
+    app,
+    { colorTokens, tokensAreProvisional, derived: tokenSource.derived, deriveDarkerShade },
+    deps,
+  );
   // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs) and the BE-B access
   // route files (groups, role mappings, delegations). The workspace header is served by reporting (ADR-0037 §11).
   registerCalendarRoutes(app, deps);
