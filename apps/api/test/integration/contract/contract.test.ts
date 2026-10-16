@@ -139,6 +139,7 @@ import { exerciseP5KbeEOperations, P5_MIRRORS_KBE_E } from "./p5-exercises-kbe-e
 import { exerciseP5KbeE2Operations, P5_MIRRORS_KBE_E2 } from "./p5-exercises-kbe-e2.ts"; // T-DG5-KBE-E2
 import { exerciseP5KbeFOperations, P5_MIRRORS_KBE_F } from "./p5-exercises-kbe-f.ts";
 import { exerciseP5BePOperations, P5_MIRRORS_BE_P } from "./p5-exercises-be-p.ts";
+import { exerciseP5BeP2Operations, P5_MIRRORS_BE_P2 } from "./p5-exercises-be-p2.ts"; // T-DG5-BE-P2
 import { exerciseP5KbeGOperations, P5_MIRRORS_KBE_G } from "./p5-exercises-kbe-g.ts";
 import { exerciseP5BeQOperations, P5_MIRRORS_BE_Q } from "./p5-exercises-be-q.ts";
 import { exerciseP5BeQ2Operations, P5_MIRRORS_BE_Q2 } from "./p5-exercises-be-q2.ts"; // T-DG5-BE-Q2
@@ -356,6 +357,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_KBE_E2,
   ...P5_MIRRORS_KBE_F,
   ...P5_MIRRORS_BE_P,
+  ...P5_MIRRORS_BE_P2, // T-DG5-BE-P2
   ...P5_MIRRORS_KBE_G,
   ...P5_MIRRORS_BE_Q,
   ...P5_MIRRORS_BE_Q2, // T-DG5-BE-Q2
@@ -779,6 +781,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 BE-P operations (p5-exercises-be-p.ts)", async () => {
     await exerciseP5BePOperations(p3());
   });
+  it("P5 BE-P2 operations (p5-exercises-be-p2.ts)", async () => {
+    await exerciseP5BeP2Operations(p3());
+  });
   it("P5 KBE-G operations (p5-exercises-kbe-g.ts)", async () => {
     await exerciseP5KbeGOperations(p3());
   });
@@ -935,7 +940,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG5-BE-P: + generateLaunchPlan, updateLaunchPlan, createLaunchTask, updateLaunchTask, putLaunchTaskPredecessors
     // (5 JSON bodies; the other four are GETs). T-DG5-BE-C2: none. Sum (D-156): 370 + 1 + 4 + 5 = 380.
     // T-DG5-KBE-E2: + decideKpiRestatement (1 JSON body; listKpiRestatementReissueOffers is a GET). 380 + 1 = 381.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([381, 380, 1]);
+    // T-DG5-BE-P2: + putDayNinetyResponse (1 JSON body; getDayNinetyTest is a GET, completeDayNinetyTest is bodiless).
+    // 381 + 1 = 382 (the orchestrator reconciles the concurrent W13 deltas, D-079).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([382, 381, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);

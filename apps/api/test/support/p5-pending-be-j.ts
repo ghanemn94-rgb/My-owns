@@ -12,10 +12,7 @@ export const P5_PENDING_TESTS_BE_J: readonly {
   readonly requirement: string;
   readonly test: string;
   readonly unblockedBy: string;
-}[] = [
-  {
-    requirement: "REQ-S12-004",
-    test: "with the plan flag the 90-day tasks are dated from the start date (day d = start date + d calendar days)",
-    unblockedBy: "T-DG5-BE-P (the LaunchPlanPort implementation, registered in the worker and in server.ts)",
-  },
-];
+}[] = [];
+// T-DG5-BE-P: REQ-S12-004 "with the plan flag the 90-day tasks are dated from the start date (day d = start date + d
+// calendar days)" passes in apps/worker/test/integration/starters.test.ts with the worker's generator
+// (apps/worker/src/automation/ports/launch-plan-generator.ts, wired in worker.ts).

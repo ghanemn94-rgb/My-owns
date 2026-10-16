@@ -18,6 +18,7 @@ import { insertAuditEvent } from "@mth/db";
 import type PgBoss from "pg-boss";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerLaunchPlanPort, type LaunchPlanRequest } from "../../src/automation/ports/launch-plan.ts";
+import { workerLaunchPlanGenerator } from "../../src/automation/ports/launch-plan-generator.ts";
 import { runAsStarter, STARTER_RULE_BY_QUEUE, starterOutcome, withStarterRule } from "../../src/automation/starters.ts";
 import { DOMAIN_HANDLERS, handleTransformationCreated } from "../../src/handlers/index.ts";
 import { handleTransformationCreated as dg4TransformationCreated } from "../../src/handlers/platform.ts";
@@ -676,6 +677,69 @@ describe("REQ-S12-004: new transformation instantiation (starter 1, worker part)
         .where("action", "=", "transformation.starter_automation_requested")
         .executeTakeFirstOrThrow();
       expect(audit.reason).toContain("automation.port_unavailable");
+    } finally {
+      registerLaunchPlanPort(null);
+    }
+  });
+
+  // T-DG5-BE-P (ADR-0048 §1; D-142 Q6): REQ-S12-004 "with the plan flag the 90-day tasks are dated from the start date".
+  it("with the plan flag the 90-day tasks are dated from the start date (day d = start date + d calendar days)", async () => {
+    registerLaunchPlanPort(workerLaunchPlanGenerator);
+    try {
+      const seed = await seedTransformationWithOutbox(env.db);
+      const row = await env.db
+        .selectFrom("transformation")
+        .select("organization_id")
+        .where("id", "=", seed.transformationId)
+        .executeTakeFirstOrThrow();
+      const base = v2({ transformationId: seed.transformationId, userId: seed.userId }, { startDate: "2026-10-01" });
+      const e = {
+        ...base,
+        organizationId: row.organization_id,
+        payload: { ...base.payload, organizationId: row.organization_id },
+      };
+      expect(await handleTransformationCreated(env.db, e, "tc-plan-real")).toBe("done");
+      for (let i = 0; i < 3; i += 1) await handleTransformationCreated(env.db, e, `tc-plan-real-${i}`);
+      const plans = await env.db
+        .selectFrom("launch_plan")
+        .select(["id", "start_date", "generated_via"])
+        .where("transformation_id", "=", seed.transformationId)
+        .execute();
+      expect(plans).toEqual([{ id: plans[0]!.id, start_date: "2026-10-01", generated_via: "automation" }]);
+      const tasks = await env.db
+        .selectFrom("launch_task")
+        .select(["window_code", "task_kind", "start_date", "due_date"])
+        .where("plan_id", "=", plans[0]!.id)
+        .execute();
+      expect(tasks).toHaveLength(33);
+      const span = (w: string) => [
+        ...new Set(tasks.filter((t) => t.window_code === w).map((t) => `${t.start_date}..${t.due_date}`)),
+      ];
+      expect(span("days_0_30")).toEqual(["2026-10-01..2026-10-31"]);
+      expect(span("days_31_60")).toEqual(["2026-11-01..2026-11-30"]);
+      expect(span("days_61_90").sort()).toEqual(["2026-12-01..2026-12-30", "2026-12-30..2026-12-30"]);
+      const test = await env.db
+        .selectFrom("day_ninety_test")
+        .select("scheduled_date")
+        .where("plan_id", "=", plans[0]!.id)
+        .executeTakeFirstOrThrow();
+      expect(test.scheduled_date).toBe("2026-12-30");
+      const audit = await env.db
+        .selectFrom("audit_event")
+        .select(["reason"])
+        .where("record_id", "=", seed.transformationId)
+        .where("action", "=", "transformation.starter_automation_requested")
+        .execute();
+      expect(audit).toHaveLength(1);
+      expect(audit[0]!.reason).toContain("90-day plan: created from 2026-10-01");
+      const planAudit = await env.db
+        .selectFrom("audit_event")
+        .select(["action", "actor_type", "source", "on_behalf_of_user_id"])
+        .where("record_id", "=", plans[0]!.id)
+        .execute();
+      expect(planAudit).toEqual([
+        { action: "launch_plan.generate", actor_type: "service", source: "worker", on_behalf_of_user_id: seed.userId },
+      ]);
     } finally {
       registerLaunchPlanPort(null);
     }

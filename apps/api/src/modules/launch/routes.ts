@@ -6,6 +6,8 @@ import { registerLaunchPlanRoutes } from "./plan.ts";
 import { registerLaunchPredecessorRoutes } from "./predecessors.ts";
 import { registerLaunchTaskRoutes } from "./tasks.ts";
 import { registerLaunchTemplateRoutes } from "./template.ts";
+// T-DG5-BE-P2 (p5-work-split §H.2; ADR-0048 §4): the Day-90 leadership test.
+import { registerDayNinetyRoutes } from "./day-ninety.ts";
 
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerLaunchRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
@@ -14,5 +16,6 @@ export function registerLaunchRoutes(app: FastifyInstance, deps: ModuleDeps): st
     ...registerLaunchPlanRoutes(app, deps),
     ...registerLaunchTaskRoutes(app, deps),
     ...registerLaunchPredecessorRoutes(app, deps),
+    ...registerDayNinetyRoutes(app, deps), // T-DG5-BE-P2
   ];
 }
