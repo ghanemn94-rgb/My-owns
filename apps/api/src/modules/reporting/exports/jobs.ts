@@ -17,7 +17,19 @@
 // An export approves nothing; product gates G1-G6 are business approvals and nothing here touches DG0-DG7.
 import type { Db, DbOrTx, ExportJobProgressRow, ExportJobRow, Tx } from "@mth/db";
 import { PROBLEM_TYPES } from "@mth/shared";
-import { outboxPayloadSchema, REPORT_FORMATS, reportDefinitionCode, type ReportSubjectType } from "@mth/shared/schemas";
+import {
+  EXPORT_ERROR_CODES,
+  EXPORT_STAGES,
+  EXPORT_STATUSES,
+  exportCreate,
+  exportJob,
+  exportJobPage,
+  exportLiveSelection,
+  outboxPayloadSchema,
+  type ExportCreate,
+  type ExportJob,
+  type ReportSubjectType,
+} from "@mth/shared/schemas";
 import type { FastifyRequest } from "fastify";
 import { sql } from "kysely";
 import { v7 as uuidv7 } from "uuid";
@@ -47,14 +59,18 @@ import {
 import { generateSnapshot, requireReportPermission } from "../reports/snapshots.ts";
 
 export const EXPORT_REQUESTED_EVENT = "export_job.requested";
-export const EXPORT_STATUSES = ["queued", "running", "succeeded", "failed", "cancelled"] as const;
-export const EXPORT_STAGES = ["queued", "loading", "rendering", "storing", "done"] as const;
-export const EXPORT_ERROR_CODES = [
-  "export.render_failed",
-  "export.too_large",
-  "export.source_unavailable",
-  "export.retries_exhausted",
-] as const;
+// The closed sets, ExportCreate and the ExportJob mirrors live in @mth/shared/schemas (export-jobs.ts; promoted by
+// T-DG5-FE-E, D-155 d) so the API, the contract exercise and the web share one definition; re-exported here unchanged.
+export {
+  EXPORT_ERROR_CODES,
+  EXPORT_STAGES,
+  EXPORT_STATUSES,
+  exportCreate,
+  exportJob,
+  exportJobPage,
+  exportLiveSelection,
+};
+export type { ExportCreate, ExportJob };
 
 // ------------------------------------------------------------------------------------------------ schemas (zod mirrors)
 
@@ -63,60 +79,6 @@ const idempotencyKey = z
   .min(8)
   .max(128)
   .regex(/^[A-Za-z0-9_-]+$/);
-
-/** OpenAPI `ExportLiveSelection`. */
-export const exportLiveSelection = z.strictObject({
-  definitionCode: reportDefinitionCode,
-  subjectId: z.uuid().optional(),
-  reportingPeriodId: z.uuid().optional(),
-  parameters: z.record(z.string(), z.unknown()).optional(),
-});
-
-/** OpenAPI `ExportCreate`: exactly one of `snapshotId` or `report`. */
-export const exportCreate = z
-  .strictObject({
-    snapshotId: z.uuid().optional(),
-    report: exportLiveSelection.optional(),
-    format: z.enum(REPORT_FORMATS),
-    language: z.enum(["en", "ar"]),
-  })
-  .refine((b) => (b.snapshotId === undefined) !== (b.report === undefined), {
-    message: "validation.export_source",
-    path: ["snapshotId"],
-  });
-export type ExportCreate = z.infer<typeof exportCreate>;
-
-const nullableTimestamp = z.iso.datetime({ offset: true }).nullable();
-
-/** OpenAPI `ExportJob` (the success body of createExport, getExport and cancelExport). */
-export const exportJob = z.strictObject({
-  id: z.uuid(),
-  transformationId: z.uuid(),
-  snapshotId: z.uuid(),
-  format: z.enum(REPORT_FORMATS),
-  language: z.enum(["en", "ar"]),
-  status: z.enum(EXPORT_STATUSES),
-  stage: z.enum(EXPORT_STAGES),
-  percent: z.number().int().min(0).max(100),
-  sectionsDone: z.number().int().min(0),
-  sectionsTotal: z.number().int().min(0).nullable(),
-  attemptCount: z.number().int().min(0),
-  startedAt: nullableTimestamp,
-  finishedAt: nullableTimestamp,
-  fileName: z.string().nullable(),
-  contentType: z.string().nullable(),
-  fileSha256: z
-    .string()
-    .regex(/^[0-9a-f]{64}$/)
-    .nullable(),
-  fileSizeBytes: z.number().int().min(1).nullable(),
-  errorCode: z.enum(EXPORT_ERROR_CODES).nullable(),
-  cancelledAt: nullableTimestamp,
-  version: z.number().int().min(1),
-  createdAt: z.iso.datetime({ offset: true }),
-});
-export type ExportJob = z.infer<typeof exportJob>;
-export const exportJobPage = z.strictObject({ items: z.array(exportJob), nextCursor: z.string().nullable() });
 
 export const exportListQuery = z.strictObject({
   cursor: cursorSchema,

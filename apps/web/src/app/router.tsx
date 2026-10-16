@@ -344,6 +344,33 @@ const NotificationDigestPage = lazyPage(() =>
   import("../pages/notification-preferences/NotificationPreferencesPage.tsx").then((m) => m.DigestPage),
 );
 const CutoffPackPage = lazyPage(() => import("../pages/cutoff-pack/CutoffPackPage.tsx").then((m) => m.CutoffPackPage));
+// P5 slice F screens (T-DG5-FE-E; p5-plan §5.1 row FE-E): reports and snapshots, exports, presentation mode, owner
+// updates and the evidence register.
+const ReportsEntryPage = lazyPage(() => import("../pages/reports/ReportsPage.tsx").then((m) => m.ReportsEntryPage));
+const ReportsPage = lazyPage(() => import("../pages/reports/ReportsPage.tsx").then((m) => m.ReportsPage));
+const SnapshotPage = lazyPage(() => import("../pages/reports/SnapshotPage.tsx").then((m) => m.SnapshotPage));
+const EvidenceRegisterEntryPage = lazyPage(() =>
+  import("../pages/reports/EvidenceRegisterPage.tsx").then((m) => m.EvidenceRegisterEntryPage),
+);
+const EvidenceRegisterPage = lazyPage(() =>
+  import("../pages/reports/EvidenceRegisterPage.tsx").then((m) => m.EvidenceRegisterPage),
+);
+const ExportsPage = lazyPage(() => import("../pages/exports/ExportsPage.tsx").then((m) => m.ExportsPage));
+const PresentationEntryPage = lazyPage(() =>
+  import("../pages/presentation/PresentationPage.tsx").then((m) => m.PresentationEntryPage),
+);
+const PresentationMeetingsPage = lazyPage(() =>
+  import("../pages/presentation/PresentationPage.tsx").then((m) => m.PresentationMeetingsPage),
+);
+const PresentationPage = lazyPage(() =>
+  import("../pages/presentation/PresentationPage.tsx").then((m) => m.PresentationPage),
+);
+const OwnerUpdatesEntryPage = lazyPage(() =>
+  import("../pages/updates/OwnerUpdatesPage.tsx").then((m) => m.OwnerUpdatesEntryPage),
+);
+const OwnerUpdatesPage = lazyPage(() =>
+  import("../pages/updates/OwnerUpdatesPage.tsx").then((m) => m.OwnerUpdatesPage),
+);
 
 /**
  * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
@@ -389,7 +416,10 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
   // FE-B (slice A): built by T-DG5-FE-B, see the Studio, migration and source-coverage routes below.
   // FE-D (slices C, D, E): built by T-DG5-FE-D, see the procedure, automation, route and preference routes below.
-  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B" && s.owner !== "FE-C" && s.owner !== "FE-D").map((s) => ({
+  // FE-E (slice F): built by T-DG5-FE-E, see the report, export, presentation, owner-update and evidence-register routes.
+  ...P5_SUBPAGES.filter(
+    (s) => s.owner !== "FE-B" && s.owner !== "FE-C" && s.owner !== "FE-D" && s.owner !== "FE-E",
+  ).map((s) => ({
     path: s.path.slice(1),
     feature: s.p5Feature,
     owner: s.owner,
@@ -397,12 +427,7 @@ export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
   // FE-C (slice B; ADR-0041): built by T-DG5-FE-C, see the form-builder routes below.
   // FE-D (slices C, D, E): the procedure definition, methodology coverage, procedure instance, automation rule and
   // failure-queue routes are built by T-DG5-FE-D, see below.
-  // FE-E (slice F): a transformation's reports, one issued snapshot, its exports, presentation mode, owner updates.
-  { path: "transformations/:id/reports", feature: "reports", owner: "FE-E" },
-  { path: "transformations/:id/reports/:snapshotId", feature: "reportSnapshot", owner: "FE-E" },
-  { path: "transformations/:id/exports", feature: "exports", owner: "FE-E" },
-  { path: "transformations/:id/presentation", feature: "presentation", owner: "FE-E" },
-  { path: "transformations/:id/owner-updates", feature: "ownerUpdates", owner: "FE-E" },
+  // FE-E (slice F): the report, snapshot, export, presentation and owner-update routes are built by T-DG5-FE-E, see below.
   // FE-F (slices G, H): launch plan, Day-90 test, health check, health schemes, KPI restatement, formula preview,
   // optional financial metrics.
   { path: "transformations/:id/launch-plan", feature: "launchPlan", owner: "FE-F" },
@@ -611,6 +636,21 @@ export const routes: RouteObject[] = [
       { path: "my-work/notification-preferences", element: <NotificationPreferencesPage /> },
       { path: "me/notification-digests/:digestId", element: <NotificationDigestPage /> },
       { path: "transformations/:id/meetings/:meetingId/cutoff-pack", element: <CutoffPackPage /> },
+      // P5 slice F (T-DG5-FE-E; p5-plan §5.1; ADR-0045, ADR-0046): reports and snapshots (generate, issue, discard,
+      // reissue), exports with progress, presentation mode, owner updates and the evidence register. The owner-update
+      // path is the `owner_update_due` work item's link (apps/worker/src/handlers/reports.ts).
+      { path: "evidence-reports/reports", element: <ReportsEntryPage /> },
+      { path: "evidence-reports/exports", element: <ExportsPage /> },
+      { path: "evidence-reports/presentation", element: <PresentationEntryPage /> },
+      { path: "evidence-reports/evidence-register", element: <EvidenceRegisterEntryPage /> },
+      { path: "initiatives-roadmaps/updates", element: <OwnerUpdatesEntryPage /> },
+      { path: "transformations/:id/reports", element: <ReportsPage /> },
+      { path: "transformations/:id/reports/:snapshotId", element: <SnapshotPage /> },
+      { path: "transformations/:id/exports", element: <ExportsPage /> },
+      { path: "transformations/:id/presentation", element: <PresentationMeetingsPage /> },
+      { path: "transformations/:id/meetings/:meetingId/presentation", element: <PresentationPage /> },
+      { path: "transformations/:id/owner-updates", element: <OwnerUpdatesPage /> },
+      { path: "transformations/:id/evidence-register", element: <EvidenceRegisterPage /> },
       ...p4PlannedRoutes,
       ...p5PlannedRoutes,
       ...landingRoutes,

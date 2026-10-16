@@ -7,65 +7,26 @@
 // presentation port with a stub assembler (route and contract plumbing; the REQ-S10-013 live test is pending).
 // Declared but not reachable here: 429 (the rate limiter's own suite).
 //
-// The zod mirrors below follow the OpenAPI components MeetingPresentation, EvidenceRegisterPage and
-// EvidenceVersionPage exactly; `@mth/shared/schemas` has no mirror of them yet (packages/shared is outside this task's
-// files; the handback asks the orchestrator whether to promote these there).
-import { EVIDENCE_TYPES, reportDocument, type ReportDocument } from "@mth/shared/schemas";
+// The zod mirrors of the OpenAPI components MeetingPresentation, EvidenceRegisterPage and EvidenceVersionPage live in
+// `@mth/shared/schemas` (presentation.ts, evidence-register.ts; promoted from this file by T-DG5-FE-E, D-159 e).
+import {
+  evidenceRegisterPage,
+  evidenceVersionPage,
+  meetingPresentation,
+  type ReportDocument,
+} from "@mth/shared/schemas";
 import { expect } from "vitest";
-import { z } from "zod";
+import type { z } from "zod";
 import { setMeetingPackAssembler } from "../../../src/modules/governance/presentation.ts";
 import { call, signIn, type P5ExerciseContext } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
 import { businessToday, plusDays, setupMeetingWorld } from "../governance/meeting-fixtures.ts";
 import { storeMeetingPack } from "../governance/presentation-fixtures.ts";
 
-const uuid = z.uuid();
-const timestamp = z.iso.datetime({ offset: true });
-const businessDate = z.iso.date();
-
-const meetingPresentation = z.strictObject({
-  meetingId: uuid,
-  mode: z.enum(["live", "snapshot"]),
-  snapshotId: uuid.nullable(),
-  document: reportDocument,
-});
-const evidenceRegisterLink = z.strictObject({ recordType: z.string(), recordId: uuid, via: z.string() });
-const evidenceRegisterItem = z.strictObject({
-  evidenceId: uuid,
-  title: z.string(),
-  kind: z.enum(["file", "note", "external_link", "file_reference"]),
-  evidenceType: z.enum(EVIDENCE_TYPES),
-  source: z.string().nullable(),
-  ownerUserId: uuid,
-  observationStart: businessDate.nullable(),
-  observationEnd: businessDate.nullable(),
-  uploadedAt: timestamp,
-  currentRevision: z.number().int().min(1).nullable(),
-  recordVersion: z.number().int().min(1),
-  sha256: z
-    .string()
-    .regex(/^[0-9a-f]{64}$/)
-    .nullable(),
-  reviewStatus: z.enum(["unverified", "verified", "rejected"]),
-  accessibilityStatus: z.enum(["unchecked", "accessible", "inaccessible"]),
-  status: z.enum(["active", "archived"]),
-  links: z.array(evidenceRegisterLink),
-});
-const evidenceVersion = z.strictObject({
-  contentId: uuid,
-  revision: z.number().int().min(1),
-  sha256: z.string().regex(/^[0-9a-f]{64}$/),
-  sizeBytes: z.number().int().min(0),
-  contentType: z.string(),
-  fileName: z.string(),
-  uploadedBy: uuid,
-  uploadedAt: timestamp,
-});
-
 export const P5_MIRRORS_BE_O: Readonly<Record<string, z.ZodType>> = {
   getMeetingPresentation: meetingPresentation,
-  listEvidenceRegister: z.strictObject({ items: z.array(evidenceRegisterItem), nextCursor: z.string().nullable() }),
-  listEvidenceVersions: z.strictObject({ items: z.array(evidenceVersion), nextCursor: z.string().nullable() }),
+  listEvidenceRegister: evidenceRegisterPage,
+  listEvidenceVersions: evidenceVersionPage,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
