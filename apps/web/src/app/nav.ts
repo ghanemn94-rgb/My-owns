@@ -374,7 +374,8 @@ export type LandingAreaId = Exclude<AreaId, "myWork" | "executive" | "transforma
 export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentItem[]>> = {
   // M0103: searchable source, guidance and executable procedures.
   playbook: [
-    { id: "source", p5: ["reader"] },
+    // T-DG5-FE-G: the searchable playbook reader is delivered (F-DG4-160).
+    { id: "source", links: [{ path: "/playbook/reader", labelKey: "nav.sub.reader" }] },
     // T-DG5-FE-F: the 90-day launch plan and the health check are delivered (F-DG4-160).
     {
       id: "guidance",

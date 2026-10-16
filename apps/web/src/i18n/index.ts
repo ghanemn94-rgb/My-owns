@@ -115,6 +115,10 @@ import enReportsP5 from "./en/reportsP5.json" with { type: "json" };
 // its scoring schemes, KPI restatement, formula preview and the optional financial metrics.
 import arLaunchHealthP5 from "./ar/launchHealthP5.json" with { type: "json" };
 import enLaunchHealthP5 from "./en/launchHealthP5.json" with { type: "json" };
+// P5 slices I and J namespace (T-DG5-FE-G): the playbook reader, provenance badges and question tags, Branding Settings,
+// the demo labels, the environment screen and the guided walkthrough.
+import arPlaybookP5 from "./ar/playbookP5.json" with { type: "json" };
+import enPlaybookP5 from "./en/playbookP5.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -166,6 +170,7 @@ export const catalogues = {
     workflowsP5: arWorkflowsP5,
     reportsP5: arReportsP5,
     launchHealthP5: arLaunchHealthP5,
+    playbookP5: arPlaybookP5,
   },
   en: {
     common: enCommon,
@@ -215,6 +220,7 @@ export const catalogues = {
     workflowsP5: enWorkflowsP5,
     reportsP5: enReportsP5,
     launchHealthP5: enLaunchHealthP5,
+    playbookP5: enPlaybookP5,
   },
 } as const;
 

@@ -147,24 +147,31 @@ describe("visibility from held permissions (REQ-S03-007)", () => {
 });
 
 describe("availability (F-DG4-160)", () => {
-  it("is planned only for items whose P5 screen is not delivered; the Studio is delivered", () => {
+  // T-DG5-FE-G: every P5 screen a navigation item opens is delivered (FE-B to FE-G), so no item is planned (F-DG4-160).
+  it("is planned only for items whose P5 screen is not delivered; every P5 screen is delivered", () => {
     const nav = navigationFor(ofRoles(...ROLE_CODES));
     const planned = nav.areas.flatMap((a) => a.items.filter((i) => i.availability === "planned").map((i) => i.code));
-    expect(planned).toEqual([
-      "source",
-      "procedures",
-      "packs",
-      "forms",
-      "workflows",
-      "automation",
-      "branding",
-      "environment",
-    ]);
-    expect([...DELIVERED_P5_SCREENS]).toEqual(["studio"]);
+    expect(planned).toEqual([]);
+    expect([...DELIVERED_P5_SCREENS].sort()).toEqual(
+      [
+        "automation",
+        "branding",
+        "demo",
+        "formBuilder",
+        "myProcedures",
+        "procedureBuilder",
+        "reader",
+        "reports",
+        "studio",
+      ].sort(),
+    );
   });
 
   it("flips an item to working when its screen joins the delivered list", () => {
-    const delivered = new Set<P5Screen>([...DELIVERED_P5_SCREENS, "branding"]);
+    const without = new Set<P5Screen>([...DELIVERED_P5_SCREENS].filter((s) => s !== "branding"));
+    const before = navigationFor(ofRoles("ADM_TECH"), without).areas.find((a) => a.code === "administration")!;
+    expect(before.items.find((i) => i.code === "branding")?.availability).toBe("planned");
+    const delivered = new Set<P5Screen>([...without, "branding"]);
     const admin = navigationFor(ofRoles("ADM_TECH"), delivered).areas.find((a) => a.code === "administration")!;
     expect(admin.items.find((i) => i.code === "branding")?.availability).toBe("working");
   });
@@ -188,19 +195,8 @@ describe("the web label keys (apps/web/src/i18n/{en,ar}/nav.json)", () => {
    * Item label keys the web catalogue does not have yet (the four areas without a landing-page contents list). The
    * BE-R2 handback proposes their en and ar texts to the owner of nav.json; this list may only shrink.
    */
-  const AWAITING_WEB_KEYS = new Set(
-    (
-      [
-        ["myWork", ["assignedActions", "drafts", "reviews", "approvals", "missingUpdates", "upcomingDeadlines"]],
-        ["executive", ["outcomes", "value", "criticalInitiatives", "adoption", "blockers", "decisions"]],
-        ["transformations", ["portfolio", "workspaces"]],
-        [
-          "admin",
-          ["methodology", "forms", "workflows", "automation", "organization", "access", "branding", "environment"],
-        ],
-      ] as const
-    ).flatMap(([area, items]) => items.map((i) => `nav.contents.${area}.${i}`)),
-  );
+  // T-DG5-FE-G added the en and ar texts of the four areas (myWork, executive, transformations, admin): none awaits.
+  const AWAITING_WEB_KEYS = new Set<string>();
 
   it("every area label resolves in en and ar", () => {
     const nav = navigationFor(ofRoles(...ROLE_CODES));

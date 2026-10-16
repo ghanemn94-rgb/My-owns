@@ -19,6 +19,7 @@ import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { BLANK_CODE, Dialog, Field, REQUIRED_CODE, useFocusFirstInvalid } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
+import { SyntheticApprovalLabel } from "../../components/demo-label/DemoLabels.tsx";
 import { apiProblemText, errorMessage, fieldErrorMessage, pointerToField } from "../../lib/problem.ts";
 
 // ------------------------------------------------------------------------------------------------ problems
@@ -371,9 +372,13 @@ export function DueDate({ date, reason }: { date: string | null | undefined; rea
 export function BusinessApprovalNote({ body }: { body: string }) {
   const { t } = useTranslation();
   return (
-    <p className="banner banner--info" role="note" data-state="business-approval">
-      <Icon name="lock" /> <strong>{t("myWork.ui.businessApproval")}</strong>: {body}
-    </p>
+    <>
+      <p className="banner banner--info" role="note" data-state="business-approval">
+        <Icon name="lock" /> <strong>{t("myWork.ui.businessApproval")}</strong>: {body}
+      </p>
+      {/* T-DG5-FE-G (REQ-S21-001, ADR-0050 §2 c): in a demo database every approval is synthetic. */}
+      <SyntheticApprovalLabel />
+    </>
   );
 }
 

@@ -54,9 +54,23 @@ export type P5Screen =
 
 /**
  * The delivered P5 screens. FE tasks add their screen here in the same change that replaces its "not available yet"
- * placeholder (F-DG4-160). At this release: FE-B's Playbook Studio (T-DG5-FE-B; `/admin/studio`).
+ * placeholder (F-DG4-160). At this release every P5 screen a navigation item opens is delivered: FE-B's Playbook Studio
+ * (`/admin/studio`), FE-C's form builder (`/admin/forms`), FE-D's procedure builder, my procedures and automation
+ * (`/admin/procedures`, `/playbook/procedures`, `/admin/automation`), FE-E's reports (`/evidence-reports/reports`), and
+ * FE-G's playbook reader, Branding Settings and environment screen (`/playbook/reader`, `/admin/branding`,
+ * `/admin/demo`; T-DG5-FE-G, which also added the screens of FE-C to FE-E that had not been listed here).
  */
-export const DELIVERED_P5_SCREENS: ReadonlySet<P5Screen> = new Set<P5Screen>(["studio"]);
+export const DELIVERED_P5_SCREENS: ReadonlySet<P5Screen> = new Set<P5Screen>([
+  "studio",
+  "formBuilder",
+  "procedureBuilder",
+  "myProcedures",
+  "automation",
+  "reports",
+  "reader",
+  "branding",
+  "demo",
+]);
 
 /** "session": every signed-in user; otherwise the caller must hold ANY of the codes in at least one scope. */
 export type ItemAccess = "session" | readonly Permission[];

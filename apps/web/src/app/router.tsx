@@ -4,7 +4,7 @@ import { Navigate, createBrowserRouter, matchRoutes, type RouteObject } from "re
 import { RequireSession } from "../auth/session.tsx";
 import { RouteLoadFailed, RouteLoadingFallback } from "../components/RouteFallback.tsx";
 import { LoginPage } from "../pages/LoginPage.tsx";
-import { AREA_CONTENTS, NAV_AREAS, NAV_SUBPAGES, P5_SUBPAGES, type LandingAreaId } from "./nav.ts";
+import { AREA_CONTENTS, NAV_AREAS, NAV_SUBPAGES, type LandingAreaId } from "./nav.ts";
 import { Shell } from "./Shell.tsx";
 
 /**
@@ -70,7 +70,6 @@ const AreaEntryPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) =
 const AreaLandingPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaLandingPage));
 const NotFoundPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.NotFoundPage));
 const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P4BeingBuiltPage));
-const P5NotAvailablePage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P5NotAvailablePage));
 const ApprovalDetailPage = lazyPage(() =>
   import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalDetailPage),
 );
@@ -400,6 +399,16 @@ const FormulaPreviewPage = lazyPage(() =>
 const FinancialMetricsPage = lazyPage(() =>
   import("../pages/financial-metrics/FinancialMetricsPage.tsx").then((m) => m.FinancialMetricsPage),
 );
+// P5 slices I and J (T-DG5-FE-G): the playbook reader, Branding Settings, the environment screen and the walkthrough.
+const ReaderPage = lazyPage(() => import("../pages/playbook/ReaderPage.tsx").then((m) => m.ReaderPage));
+const BlockPage = lazyPage(() => import("../pages/playbook/BlockPage.tsx").then((m) => m.BlockPage));
+const BrandingPage = lazyPage(() => import("../pages/branding/BrandingPage.tsx").then((m) => m.BrandingPage));
+const EnvironmentPage = lazyPage(() =>
+  import("../pages/walkthrough/EnvironmentPage.tsx").then((m) => m.EnvironmentPage),
+);
+const WalkthroughPage = lazyPage(() =>
+  import("../pages/walkthrough/WalkthroughPage.tsx").then((m) => m.WalkthroughPage),
+);
 
 /**
  * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
@@ -436,39 +445,15 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
 ];
 
 /**
- * The P5 screens of FE-B…FE-G (p5-plan §1.1, §5.1; D-144 item 1), registered up front by T-DG5-FE-A. Each one shows the
- * `P5NotAvailablePage` placeholder (`nav.p5.<feature>.*`: what the screen is for, and that it is not available yet, in
- * en and ar) until its owning task replaces the element through an orchestrator merge, and removes its row here. The
- * navigation sub-entries (app/nav.ts P5_SUBPAGES) come first; then the record and transformation-scoped routes the P5
- * screens and work-item links need, so a link never leads to "page not found".
+ * The P5 screens of FE-B…FE-G (p5-plan §1.1, §5.1; D-144 item 1) were registered up front by T-DG5-FE-A, each with a
+ * "not available yet" placeholder until its owning task replaced the element. Every one is built now (FE-B: Studio,
+ * migrations, source coverage; FE-C: form builder; FE-D: procedures, automation, approval routes, preferences; FE-E:
+ * reports, exports, presentation, owner updates, evidence register; FE-F: launch plan, Day-90 test, health check and
+ * schemes, restatement, formula preview, financial metrics; FE-G: the reader and its blocks, Branding Settings, the
+ * environment screen and the walkthrough), so the seam is empty and the placeholder page and its texts are gone
+ * (T-DG5-FE-G, D-162 e). Like P4_PLANNED_ROUTES, it stays as an empty, tested seam.
  */
-export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
-  // FE-B (slice A): built by T-DG5-FE-B, see the Studio, migration and source-coverage routes below.
-  // FE-D (slices C, D, E): built by T-DG5-FE-D, see the procedure, automation, route and preference routes below.
-  // FE-E (slice F): built by T-DG5-FE-E, see the report, export, presentation, owner-update and evidence-register routes.
-  // FE-F (slices G, H): built by T-DG5-FE-F, see the launch-plan and health-check routes below.
-  ...P5_SUBPAGES.filter(
-    (s) => s.owner !== "FE-B" && s.owner !== "FE-C" && s.owner !== "FE-D" && s.owner !== "FE-E" && s.owner !== "FE-F",
-  ).map((s) => ({
-    path: s.path.slice(1),
-    feature: s.p5Feature,
-    owner: s.owner,
-  })),
-  // FE-C (slice B; ADR-0041): built by T-DG5-FE-C, see the form-builder routes below.
-  // FE-D (slices C, D, E): the procedure definition, methodology coverage, procedure instance, automation rule and
-  // failure-queue routes are built by T-DG5-FE-D, see below.
-  // FE-E (slice F): the report, snapshot, export, presentation and owner-update routes are built by T-DG5-FE-E, see below.
-  // FE-F (slices G, H): the launch plan, Day-90 test, health check, health schemes, KPI restatement, formula preview
-  // and optional financial metrics are built by T-DG5-FE-F, see below.
-  // FE-G (slices I, J): one playbook block in the reader, and the guided demo walkthrough.
-  { path: "playbook/reader/:blockRef", feature: "readerBlock", owner: "FE-G" },
-  { path: "walkthrough", feature: "walkthrough", owner: "FE-G" },
-];
-
-const p5PlannedRoutes: RouteObject[] = P5_PLANNED_ROUTES.map((r) => ({
-  path: r.path,
-  element: <P5NotAvailablePage feature={r.feature} />,
-}));
+export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
 
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
@@ -688,8 +673,15 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/kpi-restatements/:restatementId", element: <KpiRestatementPage /> },
       { path: "transformations/:id/benefit-formulas/:formulaId/preview", element: <FormulaPreviewPage /> },
       { path: "transformations/:id/financial-metrics", element: <FinancialMetricsPage /> },
+      // P5 slices I and J (T-DG5-FE-G; p5-plan §5.1; ADR-0049, ADR-0050): the playbook reader (search, provenance,
+      // badges, question tags, source links, Launch), Branding Settings, the environment screen with the demo reset, and
+      // Help > Guided walkthrough.
+      { path: "playbook/reader", element: <ReaderPage /> },
+      { path: "playbook/reader/:blockRef", element: <BlockPage /> },
+      { path: "admin/branding", element: <BrandingPage /> },
+      { path: "admin/demo", element: <EnvironmentPage /> },
+      { path: "walkthrough", element: <WalkthroughPage /> },
       ...p4PlannedRoutes,
-      ...p5PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,
       { path: "*", element: <NotFoundPage /> },

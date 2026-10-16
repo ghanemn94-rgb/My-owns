@@ -4,11 +4,11 @@
 // REVOKED at the end of each test, because journeys.spec.ts relies on `dev.nobody` having no role) and the Transformation
 // Office as the configured reviewer.
 // The journey publishes a T06 scoring-defaults version that changes one rubric descriptor only (the weights stay
-// 25/25/20/15/15), so the specs that run after it in the same stack are unaffected. It does NOT publish a methodology
-// version: a transformation pinned to a methodology version other than the seeded v1 gets empty DG2 catalogues
-// (methodology/repository.ts loadMethodologyCatalogue reads the catalogue rows of the pinned version only), which breaks
-// later specs; that backend defect is reported in the FE-B handback. Every screen is checked with axe (no serious
-// or critical violation) and captured in EN and AR. A configuration review is not a business approval, and nothing
+// 25/25/20/15/15), so the specs that run after it in the same stack are unaffected. It does not publish a methodology
+// version, which keeps the shared stack's methodology unchanged for the specs that run after it. (FE-B found that a
+// transformation pinned to a later methodology version got empty DG2 catalogues; T-DG5-BE-C2 fixed that reader, D-156,
+// so this is no longer a defect, only a choice that keeps the spec isolated.) Every screen is checked with axe (no
+// serious or critical violation) and captured in EN and AR. A configuration review is not a business approval, and nothing
 // here touches the engineering delivery gates DG0-DG7.
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
