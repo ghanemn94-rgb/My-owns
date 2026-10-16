@@ -5,3 +5,6 @@ export * from "./constants.ts";
 export * from "./permissions.ts";
 export * from "./problem.ts";
 export * from "./reports/content-labels.ts";
+// T-DG5-BE-R2 (ADR-0049 §7): the two text rules, mirrors of the SQL functions of 0089.
+export * from "./text-scan/claims.ts";
+export * from "./text-scan/engineering-gates.ts";
