@@ -220,9 +220,10 @@ describe("REQ-S18-001: seed, then reset twice: identical record counts and check
     expect(seeded.recordCounts["deployment_environment"]).toBe(1);
     expect(seeded.recordCounts).not.toHaveProperty("demo_dataset_run");
     expect(Object.keys(seeded.recordCounts)).toEqual([...Object.keys(seeded.recordCounts)].sort());
-    // No condition SQL yet (BE-T fills it): nothing is reported as 0, and the run is not complete.
-    expect(seeded.coverage).toEqual({});
-    expect(seeded.coverageNotImplemented).toEqual(DEMO_COVERAGE_CONDITIONS.map((c) => c.code));
+    // Every condition has its SQL (T-DG5-BE-T); this test dataset has no roaming transformation, so every condition
+    // counts 0 and the run is not complete.
+    expect(seeded.coverage).toEqual(Object.fromEntries(DEMO_COVERAGE_CONDITIONS.map((c) => [c.code, 0])));
+    expect(seeded.coverageNotImplemented).toEqual([]);
     expect(seeded.coverageComplete).toBe(false);
 
     // A demo user adds a record between runs: the reset discards it (a demo reset discards synthetic data by design).
