@@ -1,0 +1,105 @@
+=== MUTANT M1-incomplete: packages/shared/src/health/scoring.ts
+230c230
+<   if (answers.length < HEALTH_QUESTION_COUNT || applicable === 0)
+---
+>   if (answers.length < HEALTH_QUESTION_COUNT - 1 || applicable === 0)
+   × REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > 24 answers: completion 24/25, complete false, score null and band null (API band=null) 508ms
+     → expected '17' to be null
+   × REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > an incomplete assessment cannot be submitted (422 health_check.incomplete), even with three actions 60ms
+     → expected [ 'draft', '17', { …(6) } ] to deeply equal [ 'draft', null, null ]
+   × REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > REQ-S14-001: the 25th answer (17 Yes in all) gives score 17 of 25 and the band '16-20'; the method is an implementation assumption 12ms
+     → q25: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"qa-a16-3142aee6-2c64-49bd-84ea-91e172733d88","currentVersion":26}: expected 409 to be 200 // Object.is equality
+   × REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted 12ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"This transformation already has a health check in progress.","code":"health_check.draft_exists","requestId":"qa-a16-795dceb6-0209-4718-a833-d82b99582c04"}: expected 409 to be 201 // Object.is equality
+   × REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim 9ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"This transformation already has a health check in progress.","code":"health_check.draft_exists","requestId":"qa-a16-d33e7788-2f2b-487e-a809-3e7b0ae2751f"}: expected 409 to be 201 // Object.is equality
+   × REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > authorization: AUD reads but cannot write (403); another organization gets 404; no session 401; one draft at a time 13ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"This transformation already has a health check in progress.","code":"health_check.draft_exists","requestId":"qa-a16-049576d8-d1e8-4f3c-ac79-987a4f537dfd"}: expected 409 to be 201 // Object.is equality
+   × REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > concurrency: an answer without If-Match is 428, with a stale version 409; each accepted write is audited 39ms
+     → expected 26 to be greater than 26
+   × REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > scheme v1 is published with the four B0152 bands verbatim 1ms
+     → expected 1 to be greater than or equal to 5
+   × REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > with its own bands (the source bands removed) it publishes; v1 and every existing assessment keep their scheme, score and band 331ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"This transformation already has a health check in progress.","code":"health_check.draft_exists","requestId":"qa-a16-3f12efc1-845a-490b-b19b-fb6126811837"}: expected 409 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 4 passed (13)
+MUTANT M1-incomplete: KILLED (vitest exit 1)
+=== MUTANT M2-band-boundary: packages/shared/src/health/scoring.ts
+198c198
+<     if (min.greaterThan(score)) continue;
+---
+>     if (min.greaterThanOrEqualTo(score)) continue;
+   × REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim 464ms
+     → contract: submitHealthCheck does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"qa-a16-6299175d-8037-456a-9903-2884a4003414"}
+   × REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > authorization: AUD reads but cannot write (403); another organization gets 404; no session 401; one draft at a time 23ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"This transformation already has a health check in progress.","code":"health_check.draft_exists","requestId":"qa-a16-f196d61d-8c10-427e-b6ec-b9672dd7aebd"}: expected 409 to be 201 // Object.is equality
+   × REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > concurrency: an answer without If-Match is 428, with a stale version 409; each accepted write is audited 36ms
+     → expected 27 to be greater than 27
+   × REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > scheme v1 is published with the four B0152 bands verbatim 1ms
+     → expected 3 to be greater than or equal to 5
+   × REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > with its own bands (the source bands removed) it publishes; v1 and every existing assessment keep their scheme, score and band 549ms
+     → {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"This transformation already has a health check in progress.","code":"health_check.draft_exists","requestId":"qa-a16-95bdd903-f003-43ea-8f5f-d4dd6d908234"}: expected 409 to be 201 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 8 passed (13)
+MUTANT M2-band-boundary: KILLED (vitest exit 1)
+=== MUTANT M3-question-text: apps/api/src/modules/health/questions.ts
+28c28
+<     textEn: r.source_label_en,
+---
+>     textEn: r.source_label_en.replace("3-5", "3 to 5"),
+   × REQ-PB-091: all 25 questions render verbatim (B0150) > GET /health-check-questions returns the 25 playbook questions verbatim, in order, q01..q25 25ms
+     → expected [ …(25) ] to deeply equal [ …(25) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 12 passed (13)
+MUTANT M3-question-text: KILLED (vitest exit 1)
+=== MUTANT M4-plan-dates: apps/api/src/modules/launch/plan.ts
+62c62
+<   return new Date(Date.UTC(y, m - 1, d) + n * DAY_MS).toISOString().slice(0, 10);
+---
+>   return new Date(Date.UTC(y, m - 1, d) + (n + 1) * DAY_MS).toISOString().slice(0, 10);
+   × REQ-PB-086: the 90-day launch plan generated from the chosen start date > start 2026-10-01: Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; every B0134 action and output appears; Day-90 test on day 90 101ms
+     → Confirm sponsor 2026-10-02..2026-11-01: expected false to be true // Object.is equality
+   × REQ-PB-087: the Day-90 leadership test > all six questions render verbatim (B0136-B0141); with no answer the test is incomplete (0/6) 37ms
+     → expected '2026-12-31' to be '2026-12-30' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 9 passed (11)
+MUTANT M4-plan-dates: KILLED (vitest exit 1)
+=== MUTANT M5-redate-scope: apps/api/src/modules/launch/plan.ts
+367c367
+<     .where("status", "=", "not_started")
+---
+>     .where("status", "in", ["not_started", "in_progress"])
+   × REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > +7 days moves every unstarted task by 7 days and leaves completed (and started) tasks unchanged; the open Day-90 test moves too 130ms
+     → in_progress Roadmap: expected [ '2026-12-08', '2027-01-06' ] to deeply equal [ '2026-12-01', '2026-12-30' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+MUTANT M5-redate-scope: KILLED (vitest exit 1)
+=== MUTANT M6-day90-complete: apps/api/src/modules/launch/day-ninety.ts
+352c352
+<       complete: test.answered_count === questions.length,
+---
+>       complete: test.answered_count >= questions.length - 1,
+   × REQ-PB-087: the Day-90 leadership test > five answers: incomplete (5/6) and completion is refused; AUD cannot answer 196ms
+     → expected { answered: 5, total: 6, …(1) } to deeply equal { answered: 5, total: 6, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+MUTANT M6-day90-complete: KILLED (vitest exit 1)
+=== MUTANT M7-starter-dates: apps/worker/src/automation/ports/launch-plan-generator.ts
+115,116c115,116
+<       start_date: addCalendarDays(request.startDate, item.start_day),
+<       due_date: addCalendarDays(request.startDate, item.due_day),
+---
+>       start_date: addCalendarDays(request.startDate, item.start_day + 1),
+>       due_date: addCalendarDays(request.startDate, item.due_day + 1),
+   × REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > starter 1 generates the plan from launchPlan.startDate once; replaying the event duplicates nothing 180ms
+     → Agree North Star/outcomes: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)
+MUTANT M7-starter-dates: KILLED (vitest exit 1)
+=== MUTANT M8-three-actions-api: apps/api/src/modules/health/assessments.ts
+730c730
+<   if (actions.n !== HEALTH_CHECK_ACTIONS_REQUIRED) throw ACTIONS_REQUIRED();
+---
+>   void ACTIONS_REQUIRED;
+      Tests  13 passed (13)
+MUTANT M8-three-actions-api: SURVIVED (vitest exit 0)

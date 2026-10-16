@@ -1,0 +1,14 @@
+730c730
+<   if (actions.n !== HEALTH_CHECK_ACTIONS_REQUIRED) throw ACTIONS_REQUIRED();
+---
+>   void ACTIONS_REQUIRED;
+784c784
+<     IF (SELECT count(*) FROM health_assessment_action x WHERE x.assessment_id = NEW.id) <> 3 THEN
+---
+>     IF (SELECT count(*) FROM health_assessment_action x WHERE x.assessment_id = NEW.id) < 0 THEN
+   × REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted 437ms
+     → expected [ 200, undefined ] to deeply equal [ Array(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 200, undefined ] to deeply equal [ Array(2) ]
+      Tests  1 failed | 12 passed (13)
+MUTANT M8b: KILLED (vitest exit 1)

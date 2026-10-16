@@ -1,0 +1,100 @@
+=== MUTANT M1-incomplete: packages/shared/src/health/scoring.ts
+230c230
+<   if (answers.length < HEALTH_QUESTION_COUNT || applicable === 0)
+---
+>   if (answers.length < HEALTH_QUESTION_COUNT - 1 || applicable === 0)
+   × REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > 24 answers: completion 24/25, complete false, score null and band null (API band=null) 513ms
+     → expected '17' to be null
+   × REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > an incomplete assessment cannot be submitted (422 health_check.incomplete), even with three actions 82ms
+     → expected [ 'draft', '17', { …(6) } ] to deeply equal [ 'draft', null, null ]
+   × REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > REQ-S14-001: the 25th answer (17 Yes in all) gives score 17 of 25 and the band '16-20'; the method is an implementation assumption 24ms
+     → q25: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"qa-a16-11054bf5-03ff-412d-820d-3f9ff808a41f","currentVersion":26}: expected 409 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 10 skipped (13)
+MUTANT M1-incomplete: KILLED (vitest exit 1)
+=== MUTANT M2-band-boundary: packages/shared/src/health/scoring.ts
+198c198
+<     if (min.greaterThan(score)) continue;
+---
+>     if (min.greaterThanOrEqualTo(score)) continue;
+   × REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim 613ms
+     → contract: submitHealthCheck does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 428, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"qa-a16-8d40d62a-092c-4055-81eb-6a3c3e95c352"}
+   ✓ REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > reassessments are kept in sequence, each linked to the previous submitted one 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 11 skipped (13)
+MUTANT M2-band-boundary: KILLED (vitest exit 1)
+=== MUTANT M3-question-text: apps/api/src/modules/health/questions.ts
+28c28
+<     textEn: r.source_label_en,
+---
+>     textEn: r.source_label_en.replace("3-5", "3 to 5"),
+   × REQ-PB-091: all 25 questions render verbatim (B0150) > GET /health-check-questions returns the 25 playbook questions verbatim, in order, q01..q25 24ms
+     → expected [ …(25) ] to deeply equal [ …(25) ]
+   ✓ REQ-PB-091: all 25 questions render verbatim (B0150) > a new assessment lists 25 unanswered questions and its answers carry response, evidence, owner and action  532ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 11 skipped (13)
+MUTANT M3-question-text: KILLED (vitest exit 1)
+=== MUTANT M4-plan-dates: apps/api/src/modules/launch/plan.ts
+62c62
+<   return new Date(Date.UTC(y, m - 1, d) + n * DAY_MS).toISOString().slice(0, 10);
+---
+>   return new Date(Date.UTC(y, m - 1, d) + (n + 1) * DAY_MS).toISOString().slice(0, 10);
+   ✓ REQ-PB-086: the 90-day launch plan generated from the chosen start date > the launch template carries the three B0134 windows verbatim 13ms
+   ✓ REQ-PB-086: the 90-day launch plan generated from the chosen start date > generation is refused to AUD (403) and to another organization (404), and writes nothing 51ms
+   × REQ-PB-086: the 90-day launch plan generated from the chosen start date > start 2026-10-01: Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; every B0134 action and output appears; Day-90 test on day 90 91ms
+     → Confirm sponsor 2026-10-02..2026-11-01: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed | 8 skipped (11)
+MUTANT M4-plan-dates: KILLED (vitest exit 1)
+=== MUTANT M5-redate-scope: apps/api/src/modules/launch/plan.ts
+367c367
+<     .where("status", "=", "not_started")
+---
+>     .where("status", "in", ["not_started", "in_progress"])
+   × REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > owners are assigned; a task whose predecessor is incomplete shows 'blocked by' the predecessor 41ms
+     → {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a146a6-3307-720a-a693-73a4cade4de0"}: expected 404 to be 200 // Object.is equality
+   × REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > completing the predecessor clears 'blocked by' 1ms
+     → Cannot read properties of undefined (reading 'id')
+   × REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > +7 days moves every unstarted task by 7 days and leaves completed (and started) tasks unchanged; the open Day-90 test moves too 20ms
+     → {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a146a6-332f-7492-a1d7-fa46b10f237e"}: expected 404 to be 200 // Object.is equality
+   × REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > REQ-PB-087: the sixth answer completes the test; a completed test is final 30ms
+     → {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"qa-a16-18a990c7-fa91-4637-b765-35835596ceae"}: expected 428 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 7 skipped (11)
+MUTANT M5-redate-scope: KILLED (vitest exit 1)
+=== MUTANT M6-day90-complete: apps/api/src/modules/launch/day-ninety.ts
+352c352
+<       complete: test.answered_count === questions.length,
+---
+>       complete: test.answered_count >= questions.length - 1,
+   × REQ-PB-087: the Day-90 leadership test > all six questions render verbatim (B0136-B0141); with no answer the test is incomplete (0/6) 26ms
+     → expected 404 to be 200 // Object.is equality
+   × REQ-PB-087: the Day-90 leadership test > five answers: incomplete (5/6) and completion is refused; AUD cannot answer 54ms
+     → {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"qa-a16-a1a6b4b7-d98a-4131-b7e5-c84e96f52080"}: expected 428 to be 200 // Object.is equality
+   × REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > REQ-PB-087: the sixth answer completes the test; a completed test is final 15ms
+     → {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"qa-a16-1d9633ad-9500-43b7-91e6-d224d091b2b5"}: expected 428 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 8 skipped (11)
+MUTANT M6-day90-complete: KILLED (vitest exit 1)
+=== MUTANT M7-starter-dates: apps/worker/src/automation/ports/launch-plan-generator.ts
+115,116c115,116
+<       start_date: addCalendarDays(request.startDate, item.start_day),
+<       due_date: addCalendarDays(request.startDate, item.due_day),
+---
+>       start_date: addCalendarDays(request.startDate, item.start_day + 1),
+>       due_date: addCalendarDays(request.startDate, item.due_day + 1),
+   × REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > starter 1 generates the plan from launchPlan.startDate once; replaying the event duplicates nothing 264ms
+     → Agree North Star/outcomes: expected false to be true // Object.is equality
+   ✓ REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > without the flag no plan is generated 92ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 9 skipped (11)
+MUTANT M7-starter-dates: KILLED (vitest exit 1)
+=== MUTANT M8-three-actions-api: apps/api/src/modules/health/assessments.ts
+730c730
+<   if (actions.n !== HEALTH_CHECK_ACTIONS_REQUIRED) throw ACTIONS_REQUIRED();
+---
+>   void ACTIONS_REQUIRED;
+ ✓ |integration| tests/qa/integration/a16-health-check.test.ts (13 tests | 12 skipped) 1523ms
+   ✓ REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted  646ms
+      Tests  1 passed | 12 skipped (13)
+MUTANT M8-three-actions-api: SURVIVED (vitest exit 0)
