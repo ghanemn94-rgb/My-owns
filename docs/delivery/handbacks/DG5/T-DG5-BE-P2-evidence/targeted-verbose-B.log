@@ -1,0 +1,58 @@
+$ QA_PG_PORT=24750 MTH_PORT_POOL=24751-24769 tests/qa/support/with-pg.sh npx vitest run --project integration --reporter=verbose apps/worker/test/integration/starters.test.ts apps/worker/test/integration/day-ninety-tasks.test.ts apps/api/test/integration/launch/day-ninety.test.ts apps/api/test/integration/launch/worker-parity.test.ts
+Fri Oct 16 04:15:34 UTC 2026
+port-policy: PostgreSQL listening on port 24750 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-p2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvagftdd_288ca5e3 (server_encoding UTF8); applied 83 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > getDayNinetyTest (REQ-PB-087) > 404s before the plan exists; an outsider gets 404; 401 without a session 90ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > getDayNinetyTest (REQ-PB-087) > renders the six questions verbatim (B0136-B0141), open, scheduled on day 90, incomplete (0/6) 33ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > refuses AUD, TO and WL (403), an outsider (404); If-Match gives 428/409; a bad body or code gives 400 225ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > with 5 responses: completion {answered: 5, total: 6, complete: false}; completing gives 422 incomplete 173ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > changing a response steps the response and the test once each; the same response again writes nothing 53ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > two leaders answering on the same version: one succeeds, the other gets 409 59ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > an evidence id must be evidence of this transformation (422 validation.reference) 32ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > with all six it completes (closing the test's due tasks); a response after completion gives 422 completed 93ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > re-checks day_ninety_test.respond at commit time (a grant revoked mid-request gives 403 and writes nothing) 195ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts > evidence suggestions (ADR-0048 §4: pre-filled links, never answers) > lists at most 5 records per question from its record types, with their state 573ms
+ ✓ |integration| apps/worker/test/integration/day-ninety-tasks.test.ts > launch.day_ninety_tests (ADR-0048 §4; REQ-PB-087) > is registered for the 0086 schedule, with its queue 2ms
+ ✓ |integration| apps/worker/test/integration/day-ninety-tasks.test.ts > launch.day_ninety_tests (ADR-0048 §4; REQ-PB-087) > run twice on day 90 it creates one task per SP/TL holder, and none for AUD, TO or WL 297ms
+ ✓ |integration| apps/worker/test/integration/day-ninety-tasks.test.ts > launch.day_ninety_tests (ADR-0048 §4; REQ-PB-087) > a test not yet due (day 89 today) and a completed test get no task 466ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > registration (ADR-0044 §1; D-142 R3) > every starter queue with a registered handler is wrapped on its OWN queue; every other handler is untouched 4ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > registration (ADR-0044 §1; D-142 R3) > starterOutcome: duplicate -> existing, skipped -> skipped, anything else -> done 1ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_actual_accepted on kpi.recalculate (kpi.actual_accepted) 65ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_actual_accepted on benefits.recalculate_pending (kpi.values_recalculated) 23ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_deviation on raid.corrective_kpi (kpi.deviation_evaluated) 34ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.kpi_deviation on raid.corrective_benefit (benefit.variance_evaluated) 32ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.adoption_control_failed on raid.corrective_adoption (adoption.check_failed) 48ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.adoption_control_failed on raid.corrective_control (control_check.failed) 34ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.benefit_evidence on benefits.finance_queue (benefit.evidence_submitted) 19ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.job_failed on automation.job_failed (job.failed) 13ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each event starter, recorded once, output unchanged, replay x3 adds nothing > starter.dependency_slip on portfolio.dependency_slip (dependency.slipped) 18ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.reporting_period_open on kpi.reporting_period_open 64ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.decision_sla on governance.decision_sla_scan 28ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.decision_sla on approval.escalation_scan 30ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.blocker_red on governance.blocker_escalation_scan 32ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.bau_handover_accepted on sustainment.review_scan 40ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-001 / REQ-S12-021: each schedule starter, one execution per slot, output unchanged > starter.bau_handover_accepted on sustainment.control_check_scan 47ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > failure on the last attempt; the failure-queue retry resumes the same execution > failed (automation.retries_exhausted) then attempt 2 succeeded; nothing duplicated 23ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > failure on the last attempt; the failure-queue retry resumes the same execution > the handler's result object is returned as it is, and its error is rethrown as it is 9ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > failure on the last attempt; the failure-queue retry resumes the same execution > starter 13 on adoption.indicator_evaluated: the DG4 refusal of an unknown evaluation is rethrown unchanged and recorded 11ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > failure on the last attempt; the failure-queue retry resumes the same execution > a trigger the version does not name runs the handler unrecorded 2ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-004: new transformation instantiation (starter 1, worker part) > one set of entry-phase checklist rows and role tasks; replay x3 and a retry create no duplicates 71ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-004: new transformation instantiation (starter 1, worker part) > a role already held in the transformation gets no task; the v1 event is still consumed 65ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-004: new transformation instantiation (starter 1, worker part) > with launchPlan, the port receives the start date and key launch_plan:<id>; the no-op default writes nothing 49ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts > REQ-S12-004: new transformation instantiation (starter 1, worker part) > with the plan flag the 90-day tasks are dated from the start date (day d = start date + d calendar days) 86ms
+ ✓ |integration| apps/api/test/integration/launch/worker-parity.test.ts > the worker launch-plan generator (parity with the API generator) > writes the same plan, tasks, test and audit events; a replay writes nothing 527ms
+
+ Test Files  4 passed (4)
+      Tests  39 passed (39)
+   Start at  04:15:35
+   Duration  28.47s (transform 6.06s, setup 0ms, collect 17.35s, tests 7.92s, environment 0ms, prepare 93ms)
+
+EXIT 0
+Fri Oct 16 04:16:05 UTC 2026

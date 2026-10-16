@@ -1,10 +1,39 @@
 # Handback T-DG5-BE-P2 — the Day-90 leadership test and its task job (backend-workflow-engineer)
 
+## Continuation run (T-DG5-BE-P2B)
+
+- **This run:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-P2B-backend-workflow-engineer-20261016T030611Z-e197771b","session_id":"e197771b-bc1d-456a-a604-d3a2ba036f1c"}`.
+  - Assignment: `docs/delivery/assignments/DG5/T-DG5-BE-P2B.md`, sha256 `009f89d6…2ca0` (verified).
+  - Started `Fri Oct 16 03:12:58 UTC 2026`. The end time is in §3.
+- **Interrupted run:** `DG5-T-DG5-BE-P2-backend-workflow-engineer-20261016T011030Z-511e4c34`. A container restart stopped it at about 03:01Z, and its work was kept as WIP commit `c4de115` on `dg5/be-p2` (D-158).
+- **What I found.** I compared the handback with the tree:
+  - **Files:** every file in §1 exists, ends cleanly (none truncated) and contains what the handback says. I read the main module, the job handler and the wiring.
+  - **Worker port:** the D-156 (a) files match BE-P's `proposed-worker-port.patch` (sha256 `e2272e5b…a871`) line for line. I compared every added and removed line.
+  - **Not finished:** the end time and the final-run results (§3 held only a placeholder).
+  - **The interrupted run's last checks were not valid evidence:**
+    - `test-locale-unset.log` exited 1: an architecture-test timeout plus two unit-web waits.
+    - `test-c-utf8.log` stopped mid-run, with 7 timeouts in the first invocation.
+    - `integration-final.log` is cut off with no summary.
+    - Cause: the integration suite (started 02:15Z) and both `pnpm test` runs (02:32Z, 02:56Z) ran **at the same time**, on 4 cores shared with three other W13 agents.
+    - These logs are superseded and kept unchanged for provenance. Its earlier logs (`typecheck.log`, `build.log`, `lint.log`, `openapi-lint.log`, `prettier.log`) are superseded too.
+- **What I finished:**
+  - §3 final results, from this run's own `-B` logs. Every check was re-run on the final tree, one after another. The one overlap was the 22 s isolated architecture-test diagnosis, which ran during the C.UTF-8 `pnpm test` run (that run still passed).
+  - §1: corrected the list of foreign worktree files (`.idea` and `.vscode` are empty files, not directories), and listed the removed `.cc-writes` directories.
+  - §5 item 5: corrected the My Work fallback text.
+- **Code:** no source or test change was needed in this run.
+- **Tree housekeeping:** I removed two empty `.cc-writes` directories and their then-empty `.claude` parents: `apps/api/.claude/.cc-writes` and `docs/delivery/handbacks/DG5/T-DG5-BE-P2-evidence/.claude/.cc-writes`.
+- **Everything below** is the interrupted run's handback, corrected where it was no longer true.
+
+---
+
 - **Stage:** P5 "Configuration automation and outputs", gate DG5 (BUILDING). Section `docs/architecture/p5-work-split.md` §H.2, plus the D-156 (a) added scope (the worker side of the launch-plan port).
-- **Invocation:** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-P2-backend-workflow-engineer-20261016T011030Z-511e4c34","session_id":"511e4c34-fcbb-43b0-8d43-3d3fe1edc07a"}`. Assignment `docs/delivery/assignments/DG5/T-DG5-BE-P2.md`, sha256 `941c5113…f422` (verified).
-- **Base:** branch `dg5/be-p2` at `cca2ba5` (the integrated HEAD). **Changes are uncommitted**, as the assignment asks.
-- **Time:** started `Fri Oct 16 01:14:58 UTC 2026`; the end time is in §3.
-- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` printed `PASS gate DG4 (historical)` and exited 0, both before implementation and at the end (§3).
+- **Invocation (interrupted run):** `{"kind":"claude-code-cli-session","run_id":"DG5-T-DG5-BE-P2-backend-workflow-engineer-20261016T011030Z-511e4c34","session_id":"511e4c34-fcbb-43b0-8d43-3d3fe1edc07a"}`. Assignment `docs/delivery/assignments/DG5/T-DG5-BE-P2.md`, sha256 `941c5113…f422` (verified).
+- **Base:** branch `dg5/be-p2` at `cca2ba5` (the integrated HEAD).
+  - The orchestrator committed the interrupted run's work as WIP `c4de115` on top of `cca2ba5` (D-158).
+  - The continuation run's changes (this handback, the `-B` logs and the removed empty `.cc-writes` directories) are **uncommitted**, as the assignment asks.
+  - The full diff to integrate is `cca2ba5..` plus the working tree.
+- **Time:** the interrupted run started `Fri Oct 16 01:14:58 UTC 2026` and was stopped at about 03:01Z. The continuation run's start and end times are in the section above and in §3.
+- **Preceding gate:** `node tools/gates/validate.mjs --historical --stage DG4` printed `PASS gate DG4 (historical)` and exited 0 in the interrupted run. The continuation run ran it again on this tree, with the same result (`validate-dg4-B.log`, §3).
 - **Gates:** no G1–G6 business approval, Finance approval or IT approval is granted anywhere. A Day-90 answer is a leader's assessment, and a job never answers it. Nothing reads or writes DG0–DG7. All test data is synthetic.
 
 ## 1. Changed files
@@ -27,10 +56,10 @@
 | `apps/api/test/integration/contract/contract.test.ts` | One import, one mirror spread line and one `it` for BE-P2 (the KBE-E2 precedent), plus the media-type pin moving 381 → 382 (§5). |
 | `apps/api/test/integration/launch/day-ninety.test.ts` (new) | REQ-PB-087 integration tests (§2). |
 | `apps/worker/test/integration/day-ninety-tasks.test.ts` (new) | The job's integration tests (§2). |
-| `docs/delivery/handbacks/DG5/T-DG5-BE-P2-evidence/*.log` | Command logs (§3). |
+| `docs/delivery/handbacks/DG5/T-DG5-BE-P2-evidence/*.log` | Command logs (§3). The `*-B.log` and `*-B2.log` files are the continuation run's evidence. The others are the interrupted run's, kept for provenance and superseded. |
 
-- **Before tests** I removed the empty `apps/api/.claude/.cc-writes` and `apps/worker/.claude/.cc-writes` directories, as the assignment asks. Their now-empty `.claude` parents went too: `rmdir` removes only empty directories.
-- **Files in the worktree that are not mine:** untracked `.bash_profile`, `.bashrc`, `.gitconfig`, `.gitmodules`, `.idea/`, `.mcp.json`, `.profile`, `.ripgreprc`, `.vscode/`, `.zprofile`, `.zshrc` and `CLAUDE.local.md` were present (most of them from the start). I did not create or touch them. Leave them out of the merge.
+- **Before tests** the interrupted run removed the empty `apps/api/.claude/.cc-writes` and `apps/worker/.claude/.cc-writes` directories, as the assignment asks. Their now-empty `.claude` parents went too: `rmdir` removes only empty directories. By the continuation run, `apps/api/.claude/.cc-writes` and `docs/delivery/handbacks/DG5/T-DG5-BE-P2-evidence/.claude/.cc-writes` had appeared again, empty. I removed them the same way.
+- **Files in the worktree that are not mine:** untracked `.bash_profile`, `.bashrc`, `.gitconfig`, `.gitmodules`, `.idea`, `.mcp.json`, `.profile`, `.ripgreprc`, `.vscode`, `.zprofile`, `.zshrc` and `CLAUDE.local.md` were present (most of them from the start). All of them are empty, read-only files dated 02:15Z, owned by root; they look like sandbox mount placeholders. I did not create or touch them. Leave them out of the merge.
 
 ## 2. Behaviour delivered
 
@@ -110,9 +139,54 @@ The environment is Node 24.21.0, offline. Harness ports are 24750–24799 only: 
 - **Integration: exit 1.** 2491 passed and 1 failed, out of 2492, in 261 files. The failure was the pinned media-type triple (`[382, 381, 1]` received, `[381, 380, 1]` expected), which my one JSON-body route moves. I updated the pin (§5).
 - The logs are `run1-*.log` in the evidence folder.
 
-**Final run (on the final tree):**
+**Final run (continuation run, on the final tree):**
 
-FINAL_RESULTS_PLACEHOLDER
+These results come from the continuation run (T-DG5-BE-P2B), on the final tree. The run used its own `-B` logs in `docs/delivery/handbacks/DG5/T-DG5-BE-P2-evidence/`.
+
+- **Environment:** Node 24.21.0, offline, 4 cores shared with three concurrent W13 agents (load average 5–15).
+- **Ports:** 24750–24799 only. The full integration run used 24770 with pool 24771–24799; the targeted run used 24750 with pool 24751–24769.
+- **Order:** every check ran one after another. The one overlap was the 22 s isolated architecture-test diagnosis (03:38:19–03:38:43Z), which ran during the C.UTF-8 `pnpm test` run; that run passed.
+- **Start:** `Fri Oct 16 03:12:58 UTC 2026`.
+
+| # | Command | Log | Exit | Result |
+|---|---|---|---|---|
+| 4 | `node tools/gates/validate.mjs --historical --stage DG4` | `validate-dg4-B.log` | **0** | `PASS gate DG4 (historical)` |
+| 1 | `pnpm -r typecheck` | `typecheck-B.log` | **0** | |
+| 1 | `pnpm -r build` | `build-B.log` | **0** | |
+| 1 | `pnpm lint` | `lint-B.log` | **0** | `eslint . --max-warnings=0` |
+| 1 | `pnpm openapi:lint` | `openapi-lint-B.log` | **0** | `PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations` |
+| 1 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | `prettier-B.log` | **0** | "All matched files use Prettier code style!" (run before this handback was edited; see the re-check below) |
+| 2 | `env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | `test-c-utf8-B.log` | **0** | unit-node 128 files / **2102 passed**; unit-web 74 files / **1429 passed**; unit-formula-nocodegen 3 files / **259 passed, 2 skipped** |
+| 2 | `env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE pnpm test` (first attempt) | `test-locale-unset-B.log` | **1** | unit-node 1 failed / 2101 passed: a load timeout, disclosed below; unit-web 1429 passed; nocodegen 259 passed, 2 skipped |
+| 2 | `env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE pnpm test` (second attempt) | `test-locale-unset-B2.log` | **0** | unit-node 128 files / **2102 passed**; unit-web 74 files / **1429 passed**; unit-formula-nocodegen 3 files / **259 passed, 2 skipped** |
+| 3 | `QA_PG_PORT=24770 MTH_PORT_POOL=24771-24799 tests/qa/support/with-pg.sh pnpm test:integration` | `integration-B.log` | **0** | **261 files / 2492 tests passed**, 0 failed, 1748 s. PostgreSQL bound 24770 on attempt 1. |
+| — | targeted, verbose: `starters.test.ts`, `day-ninety-tasks.test.ts`, `day-ninety.test.ts`, `worker-parity.test.ts` | `targeted-verbose-B.log` | **0** | 4 files / 39 tests passed, each literal test named (below) |
+| — | the architecture test alone (the diagnosis of the first locale-unset attempt) | `architecture-isolated-B.log` | **0** | 139 passed; the timed-out test took 12.9 s alone, at load 14.75 |
+
+**Disclosed non-zero exit.** The first locale-unset attempt exited 1 (`test-locale-unset-B.log`). The failing test was `apps/api/src/architecture.test.ts` › "every import respects dependsOn, public surfaces and allowed packages", with "Test timed out in 30000ms" (the file took 48 s).
+- **Cause:** machine load. The load average was 14.5 on 4 cores, from the other W13 agents.
+- **It reported no boundary violation.** Run alone under the same load, it passes in 12.9 s (`architecture-isolated-B.log`).
+- **Second attempt:** the full locale-unset `pnpm test` passed with exit 0 (`test-locale-unset-B2.log`).
+- **The file is not mine.** I did not change its timeout. It is listed in §7 for its owner, under F-DG4-143..148 (deterministic under load).
+
+**The 2 skipped tests** are `packages/shared/src/formula/fuzz.test.ts` lines 600 and 833: `it.skipIf(NOCODEGEN)`, by design in the no-codegen project. They are pre-existing, not my files, and skipped the same way before this work.
+
+**Named literal tests** (from `targeted-verbose-B.log`; the full run has the same files passing):
+- `day-ninety.test.ts` › "renders the six questions verbatim (B0136-B0141), open, scheduled on day 90, incomplete (0/6)" ✓
+- `day-ninety.test.ts` › "with 5 responses: completion {answered: 5, total: 6, complete: false}; completing gives 422 incomplete" ✓
+- `day-ninety.test.ts` › "with all six it completes (closing the test's due tasks); a response after completion gives 422 completed" ✓
+- `day-ninety-tasks.test.ts` › "run twice on day 90 it creates one task per SP/TL holder, and none for AUD, TO or WL" ✓
+- `starters.test.ts` › "REQ-S12-004: new transformation instantiation (starter 1, worker part) › with the plan flag the 90-day tasks are dated from the start date (day d = start date + d calendar days)" ✓. It is not skipped: the file has no `skip`, `todo` or `skipIf`, and `P5_PENDING_TESTS_BE_J = []`.
+- `contract.test.ts` › "P5 BE-P2 operations (p5-exercises-be-p2.ts)" ✓, in the full integration run.
+
+**Pinned counts:**
+- The media-type triple is `[382, 381, 1]` (+1 JSON body, §5 item 1), and it passes in `integration-B.log`.
+- The integration test count is 2492, the same total as the interrupted run's run 1 (which had 1 failure, the pin, since fixed).
+- No other pinned count changed.
+
+**After the handback edits:** the full-tree prettier check was run again as the last command, on the final tree. Its result is in `prettier-B2.log`.
+
+**End:** `Fri Oct 16 04:26:11 UTC 2026` (before the final prettier re-check, whose log has its own timestamps).
 
 ## 4. Operations routed (delta to my pending list)
 
@@ -132,7 +206,7 @@ FINAL_RESULTS_PLACEHOLDER
    - The owning modules export no list reader for initiatives, TOM gaps, outcomes, decision rights, baselines, benefit formulas, evidence and executive asks. So `day-ninety.ts` restates read-only, transformation-scoped selects of those tables. This is the precedent of BE-P's `outputRecordExists` and of the reporting assemblers, and the architecture test accepts it.
    - "Read through the owning modules' services" (§H.2) is therefore met only for the charter and North Star. **Proposal:** the owning modules (transformations, portfolio, governance, kpi/benefits, evidence) export small `latest<Record>Refs(db, transformationId, limit)` readers, and `day-ninety.ts` switches to them.
 4. **Problem codes:** no new code. The `evidenceId` refusal reuses the existing generic `validation.reference` ("No such evidence in this transformation."), as `evidence/routes.ts` does.
-5. **Message key:** the work item uses `launch.task.day_ninety_test_due` with params `transformationCode`, `transformationName` and `scheduledDate`. There is no `myWork.message.launch__task__day_ninety_test_due` text yet. The My Work renderer falls back to the existing kind label "Day-90 leadership test due" (en and ar), which is true. Optional for the owner of `apps/web/src/i18n/*/myWork.json`: add a message text in en and ar.
+5. **Message key:** the work item uses `launch.task.day_ninety_test_due` with params `transformationCode`, `transformationName` and `scheduledDate`. There is no `myWork.message.launch__task__day_ninety_test_due` text yet. The My Work renderer (`apps/web/src/pages/my-work/messages.ts`) falls back to `myWork.message.fallback` with the existing kind label. It shows "Day-90 leadership test due: open the record for details" in English, and the matching Arabic text. Both are true. Optional for the owner of `apps/web/src/i18n/*/myWork.json`: add a message text in en and ar.
 6. **Dependencies and migrations:** no new dependency and no migration.
 
 ## 6. User-facing texts
@@ -148,6 +222,7 @@ FINAL_RESULTS_PLACEHOLDER
   - the zod-mirror move (§5 item 2);
   - the module-reader exports (§5 item 3);
   - the media-type pin reconciliation (§5 item 1).
+  - for the owner of `apps/api/src/architecture.test.ts`: its 30 s timeout on the "every import respects dependsOn …" test failed once under load (load average 14.5 on 4 cores) and passed on re-run (§3). That is a determinism-under-load concern (F-DG4-143..148), outside my ownership. I changed nothing there.
 - **Not done by design:**
   - Completing the test does **not** change the plan's `day_ninety_test` launch task. That task is a person-edited row; ADR-0048 calls it "the plan's view of the same test" without a sync rule.
   - A start-date shift after the job has created tasks does not reschedule those work items. ADR-0048 states no rule.
