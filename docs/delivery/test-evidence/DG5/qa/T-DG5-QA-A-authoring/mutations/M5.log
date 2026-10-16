@@ -1,0 +1,36 @@
+MUTATION M5-admin-approver-allowed: apps/api/src/modules/methodology/invariants.ts sed 's#if (kind === "technical_admin" || c === "AUD") throw#if (false) throw#' (sha 8cd3dc9fd676 -> 85f73bcb5a9d)
+126c126
+<     if (kind === "technical_admin" || c === "AUD") throw studioRefusals.adminApproverForbidden();
+---
+>     if (false) throw studioRefusals.adminApproverForbidden();
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  367ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected 268ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: a published version is immutable (409) 29ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S20-006: a NEW T13 record stores the added fields (no deployment between publish and use) 171ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S16-010: a custom-field value violating its schema is rejected before persistence 108ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-008: the existing transformation stays pinned to forms v1 (no new field, value refused) 73ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  384ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S02-001: the published source-coverage report counts every element set 14ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S02-001: deleting a template in a draft methodology fails the check and blocks publish 212ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-006: relabelling G3 succeeds; changing its stable ID, deleting a TOM dimension or an ADM approver is rejected 107ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  494ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  380ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S20-006: the new transformation pinned to the published methodology keeps a complete working catalogue 83ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  1775ms
+   × A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004 (display): the gate of the NEW transformation reports the approver its submissions are routed to 57ms
+     → GET /api/v1/transformations/01a146b3-ef89-735e-af18-6477178f97a8/gates/G3 -> 200 gate={"gateCode":"G3","status":"approved","approverRoleCode":"SP"} currentSubmission={"submissionNo":1,"approverRoleCode":"BO"}: expected 'SP' to be 'BO' // Object.is equality
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-008/REQ-S20-006: the existing transformation's approval is unchanged (no route steps) 33ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-010: a methodology admin who can publish receives 403 approving a funding reallocation; a business owner cannot use Studio 100ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  479ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the existing transformation still renders v1 forms; the forms migration preview lists the new required field 266ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the methodology migration lists a required G2 re-approval; executed after approval, history is unchanged 254ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > publishing defaults that total 95% is rejected 293ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > 30/20/20/15/15 and a new Feasibility rubric: a new transformation starts with them, an existing one keeps 25/25 296ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-003: the ten seeded procedures are published 40ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001: a definition missing a trigger or a completion condition is rejected 264ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  499ms
+   ✓ A06 automation builder (REQ-S12-002): a dry run creates no tasks > a dry run of an admin rule plans its action and writes no work item or notification 102ms
+   ✓ A06 branding (REQ-S01-002): the product name is configuration > a fresh install shows 'Mobily Transformation Hub'; a saved name is served at once without a code change 94ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 26 passed (27)
+exit=1
