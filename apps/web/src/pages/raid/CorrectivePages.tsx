@@ -35,6 +35,8 @@ import {
   type RaidAction,
 } from "./api.ts";
 import { Code, CORRECTIVE_WRITE_PERMISSIONS, NS, RaidSubNav, StatusText, vocabOptions } from "./ui.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 // ------------------------------------------------------------------------------------------------ small parts
 
@@ -208,6 +210,7 @@ function CorrectiveList() {
           ) : null
         }
       >
+        <ExtensionNote recordType="corrective_plan" />
         <div className="filters" role="group" aria-label={t("raidP4.register.filters")}>
           <div className="filters__select">
             <label htmlFor="case-filter-source">{t("raidP4.corrective.col.source")}</label>
@@ -347,6 +350,7 @@ function CaseBody() {
                 ) : null
               }
             >
+              <ExtensionNote recordType="corrective_plan" />
               <dl className="details" data-case-detail={k.code}>
                 <div>
                   <dt>{t("raidP4.corrective.col.source")}</dt>

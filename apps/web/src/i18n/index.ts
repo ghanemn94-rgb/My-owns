@@ -101,6 +101,9 @@ import enBenefitFormulas from "./en/benefitFormulas.json" with { type: "json" };
 // P5 slice A namespace (T-DG5-FE-B): the Playbook Studio, methodology-migration and source-coverage screens.
 import arStudio from "./ar/studio.json" with { type: "json" };
 import enStudio from "./en/studio.json" with { type: "json" };
+// P5 slice B namespace (T-DG5-FE-C): the form builder and the common form framework (ADR-0041).
+import arForms from "./ar/forms.json" with { type: "json" };
+import enForms from "./en/forms.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -148,6 +151,7 @@ export const catalogues = {
     phasesP4: arPhasesP4,
     traceability: arTraceability,
     studio: arStudio,
+    forms: arForms,
   },
   en: {
     common: enCommon,
@@ -193,6 +197,7 @@ export const catalogues = {
     phasesP4: enPhasesP4,
     traceability: enTraceability,
     studio: enStudio,
+    forms: enForms,
   },
 } as const;
 

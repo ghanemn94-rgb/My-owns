@@ -56,6 +56,8 @@ import {
   QuorumState,
   useActionRunner,
 } from "./ui.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 const FROZEN = new Set(["minutes_published", "cancelled"]);
 
@@ -171,6 +173,7 @@ function MeetingHeader({ meeting: m, forum }: { meeting: Meeting; forum: Forum |
         </span>
       }
     >
+      <ExtensionNote recordType="meeting_record" />
       {runner.alert}
       <dl className="details details--compact" data-meeting-detail={m.id}>
         <div>

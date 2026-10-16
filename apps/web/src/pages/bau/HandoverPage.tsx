@@ -34,6 +34,8 @@ import {
   type PerformanceArea,
 } from "./api.ts";
 import { AcceptanceNote, Code, NS, StatusText, SUSTAIN_WRITE_PERMISSIONS, SustainSubNav, vocabOptions } from "./ui.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function HandoversPage() {
   const { t } = useTranslation();
@@ -65,6 +67,7 @@ function HandoversBody() {
     <>
       <SustainSubNav tid={ws.tid} />
       <Section id="bau-handovers" title={t("sustainP4.handover.tableTitle")}>
+        <ExtensionNote recordType="bau_handover" />
         <HandoversTable />
       </Section>
     </>
@@ -434,6 +437,7 @@ function HandoverBody({ handover: h }: { handover: BauHandover }) {
           </span>
         }
       >
+        <ExtensionNote recordType="bau_handover" />
         <FormAlert
           error={error}
           namespaces={NS}

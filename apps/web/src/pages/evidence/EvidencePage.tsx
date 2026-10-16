@@ -23,6 +23,8 @@ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 /** Upload limit of one revision (apps/api evidence store: 25 MiB); checked before sending, re-checked by the server. */
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -257,6 +259,7 @@ function EvidenceRegister() {
           ) : null
         }
       >
+        <ExtensionNote recordType="evidence" />
         <QueryState query={evidence}>
           {(list) => (
             <RegisterTable

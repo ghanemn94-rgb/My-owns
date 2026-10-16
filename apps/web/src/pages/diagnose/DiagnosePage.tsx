@@ -34,6 +34,7 @@ import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Amount, AmountRange, Unquantified, ValuePoolTotals } from "../../components/Amount.tsx";
 import { Icon } from "../../components/Icon.tsx";
+import { ExportButton, FormToolsButton, type SourceFieldSpec } from "../../components/form-framework/index.ts";
 import { ConfidenceChip, RecordStatus, ValidationChip } from "../../components/P2Badges.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
 import { RecordDialog, type FieldSpec } from "../../components/RecordForm.tsx";
@@ -44,6 +45,8 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, pick, workstreamName, workstreamOptions } from "../../lib/methodology.ts";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function DiagnosePage() {
   const { t } = useTranslation();
@@ -141,8 +144,26 @@ function T01Section() {
     { name: "ownerUserId", kind: "person", label: t("common.field.owner") },
   ];
 
+  // T-DG5-FE-C (REQ-S05-001): the T01 source fields the form framework's editor offers (drafts, conflict view).
+  const formToolFields: SourceFieldSpec[] = [
+    { name: "currentState", kind: "textarea", label: t("diagnose.t01.currentState"), schemaKey: "current_state" },
+    { name: "rootCause", kind: "textarea", label: t("diagnose.t01.rootCause"), schemaKey: "root_cause" },
+    {
+      name: "confidence",
+      kind: "select",
+      label: t("diagnose.confidence.label"),
+      schemaKey: "confidence",
+      options: CONFIDENCES.map((c) => ({ value: c, label: t(`diagnose.confidence.${c}`) })),
+    },
+  ];
+
   return (
-    <Section id="t01" title={t("diagnose.t01.title")} intro={t("diagnose.t01.intro")}>
+    <Section
+      id="t01"
+      title={t("diagnose.t01.title")}
+      intro={t("diagnose.t01.intro")}
+      actions={<ExportButton tid={ws.tid} recordType="T01" formTitle={t("diagnose.t01.title")} />}
+    >
       <QueryState query={items}>
         {(list) => {
           const known = new Set(dimensions.map((d) => d.code));
@@ -226,19 +247,38 @@ function T01Section() {
               id: "actions",
               header: t("common.field.actions"),
               hideable: false,
-              cell: (r) =>
-                ws.canWriteRow("diagnostic.edit", "diagnostic.contribute", r.item) ? (
-                  <button
-                    type="button"
-                    className="button button--link button--small"
-                    onClick={() => setEditing({ row: r })}
-                  >
-                    <Icon name="pencil" /> {r.item ? t("common.action.edit") : t("diagnose.t01.fill")}
-                    <span className="visually-hidden">: {r.label}</span>
-                  </button>
-                ) : (
-                  <span className="muted small">{t("common.readOnly")}</span>
-                ),
+              cell: (r) => (
+                <>
+                  {ws.canWriteRow("diagnostic.edit", "diagnostic.contribute", r.item) ? (
+                    <button
+                      type="button"
+                      className="button button--link button--small"
+                      onClick={() => setEditing({ row: r })}
+                    >
+                      <Icon name="pencil" /> {r.item ? t("common.action.edit") : t("diagnose.t01.fill")}
+                      <span className="visually-hidden">: {r.label}</span>
+                    </button>
+                  ) : (
+                    <span className="muted small">{t("common.readOnly")}</span>
+                  )}
+                  {/* T-DG5-FE-C (REQ-S05-001): the common form framework of this T01 record. */}
+                  {r.item ? (
+                    <FormToolsButton
+                      tid={ws.tid}
+                      recordType="T01"
+                      recordId={r.item.id}
+                      recordLabel={r.label}
+                      record={r.item}
+                      sourceFields={formToolFields}
+                      updateUrl={`/api/v1/transformations/${ws.tid}/diagnostic-items/${r.item.id}`}
+                      canWrite={ws.can("diagnostic.edit")}
+                      canComment={ws.can("form_record.comment")}
+                      refreshRecord={refresh}
+                      currency={ws.tr.currency}
+                    />
+                  ) : null}
+                </>
+              ),
             },
           ];
           return (
@@ -728,6 +768,7 @@ function BaselinesSection() {
         ) : null
       }
     >
+      <ExtensionNote recordType="baseline" />
       <QueryState query={baselines}>
         {(list) => (
           <RegisterTable
@@ -977,6 +1018,7 @@ function ValuePoolsSection() {
         ) : null
       }
     >
+      <ExtensionNote recordType="value_pool" />
       <QueryState query={pools}>
         {(list) => {
           const active = list.filter((p) => p.status !== "archived");

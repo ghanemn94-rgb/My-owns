@@ -289,6 +289,11 @@ const MigrationPage = lazyPage(() =>
 const ConfigPinsPage = lazyPage(() =>
   import("../pages/methodology-migrations/ConfigPinsPage.tsx").then((m) => m.ConfigPinsPage),
 );
+// P5 slice B screens (T-DG5-FE-C; p5-plan §5.1 row FE-C): the form builder (the native forms and one form's fields).
+const FormBuilderPage = lazyPage(() =>
+  import("../pages/form-builder/FormBuilderPage.tsx").then((m) => m.FormBuilderPage),
+);
+const FormSchemaPage = lazyPage(() => import("../pages/form-builder/FormSchemaPage.tsx").then((m) => m.FormSchemaPage));
 
 /**
  * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
@@ -333,13 +338,12 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  */
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
   // FE-B (slice A): built by T-DG5-FE-B, see the Studio, migration and source-coverage routes below.
-  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B").map((s) => ({
+  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B" && s.owner !== "FE-C").map((s) => ({
     path: s.path.slice(1),
     feature: s.p5Feature,
     owner: s.owner,
   })),
-  // FE-C (slice B; ADR-0041): the form schema of one record type in the form builder.
-  { path: "admin/forms/:recordType", feature: "formSchema", owner: "FE-C" },
+  // FE-C (slice B; ADR-0041): built by T-DG5-FE-C, see the form-builder routes below.
   // FE-D (slices C, D, E; ADR-0042 onward): a procedure definition, the methodology coverage view, a procedure
   // instance, an automation rule and the automation failure queue.
   { path: "admin/procedures/:procedureCode", feature: "procedureDefinition", owner: "FE-D" },
@@ -534,6 +538,9 @@ export const routes: RouteObject[] = [
       { path: "transformations/:id/methodology-migrations", element: <MigrationsPage /> },
       { path: "transformations/:id/methodology-migrations/:migrationId", element: <MigrationPage /> },
       { path: "transformations/:id/config-pins", element: <ConfigPinsPage /> },
+      // P5 slice B (T-DG5-FE-C; p5-plan §5.1; ADR-0041): the form builder.
+      { path: "admin/forms", element: <FormBuilderPage /> },
+      { path: "admin/forms/:recordType", element: <FormSchemaPage /> },
       ...p4PlannedRoutes,
       ...p5PlannedRoutes,
       ...landingRoutes,

@@ -29,6 +29,8 @@ import { changePaths, useChangeControlPolicy, useChangeRequests, type PolicyRead
 import { CR_NS, CreateChangeRequestDialog } from "./CreateChangeRequest.tsx";
 import { ChangeStatusText } from "./ChangeStatus.tsx";
 import { MaterialityText } from "./Impact.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function ChangeRequestsPage() {
   const { t } = useTranslation();
@@ -148,6 +150,7 @@ function RequestsSection() {
         ) : null
       }
     >
+      <ExtensionNote recordType="change_request" />
       <div className="filter-row">
         <label className="field field--inline">
           <span className="field__label">{t("changeRequestsP4.list.statusFilter")}</span>

@@ -22,6 +22,7 @@ import { useLocale } from "../../app/locale.ts";
 import { useMe } from "../../auth/session.tsx";
 import { Field } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
+import { ExportButton, FormFramework } from "../../components/form-framework/index.ts";
 import { usePeople } from "../../components/People.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
@@ -98,6 +99,7 @@ function BenefitBody() {
         {(b) => (
           <>
             <Profile b={b} />
+            <BenefitFormTools b={b} />
             <Lifecycle b={b} />
             <Enablers b={b} />
             <Allocations b={b} />
@@ -342,6 +344,44 @@ function EditBenefitDialog({ b, onClose }: { b: Benefit; onClose: () => void }) 
       onDone={() => refresh()}
       onClose={onClose}
     />
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ form tools
+
+/**
+ * T-DG5-FE-C (REQ-S05-001; ADR-0041 §5): the common form framework of this T14 record: extension fields with inline
+ * help, drafts ("Draft saved — not submitted"), version history, comments, attachments, the recoverable conflict, and
+ * the export of the benefits register.
+ */
+function BenefitFormTools({ b }: { b: Benefit }) {
+  const { t } = useTranslation();
+  const ws = useWorkspace();
+  const refresh = useP4Refresh(ws.tid);
+  const archived = b.status === "archived";
+  return (
+    <Section
+      id="benefit-form-tools"
+      title={t("forms.framework.title", { record: b.title })}
+      actions={<ExportButton tid={ws.tid} recordType="T14" formTitle={t("benefitsP4.register.title")} />}
+    >
+      <FormFramework
+        tid={ws.tid}
+        recordType="T14"
+        recordId={b.id}
+        recordLabel={b.title}
+        record={b}
+        sourceFields={[
+          { name: "title", kind: "text", label: t("benefitsP4.field.title"), schemaKey: "benefit" },
+          { name: "description", kind: "textarea", label: t("benefitsP4.field.description") },
+        ]}
+        updateUrl={benefitPaths.benefit(ws.tid, b.id)}
+        canWrite={ws.can("benefit.edit") && !archived}
+        canComment={ws.can("form_record.comment")}
+        refreshRecord={refresh}
+        currency={ws.tr.currency}
+      />
+    </Section>
   );
 }
 

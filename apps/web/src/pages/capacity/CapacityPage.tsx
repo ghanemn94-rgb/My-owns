@@ -38,6 +38,8 @@ import {
   type ResourceRole,
 } from "./api.ts";
 import { CapacityRowsSection, DemandDialog, RolesSection } from "./editing.tsx";
+// T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
+import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
 export function CapacityPage() {
   const { t } = useTranslation();
@@ -239,6 +241,7 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
         ) : null
       }
     >
+      <ExtensionNote recordType="resource_plan" />
       <FormAlert message={error ? p3ErrorMessage(t, error) : null} />
       <QueryState
         query={demands}
