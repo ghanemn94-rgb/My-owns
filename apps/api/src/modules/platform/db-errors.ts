@@ -3148,6 +3148,84 @@ export function mapP5HealthSchemeError(error: PgErrorLike): HttpProblem | null {
 }
 
 /**
+ * P5 slice H (T-DG5-KBE-G2; ADR-0048 §5, §9): the 0086 health_assessment, health_assessment_answer and
+ * health_assessment_action guards a request can reach. The API refuses first under the assessment's row lock (and the
+ * lock class healthAssessmentSubmit at submission) with the same codes (health/assessments.ts); these are the
+ * database's last line (a concurrent writer that passed the API's check first).
+ *   health_assessment_one_draft_key, health_assessment_sequence_key -> 409 health_check.draft_exists (two concurrent
+ *                                                                    creates: the other one made the draft)
+ *   health_assessment_submitted_final, health_assessment_answer_draft_only,
+ *   health_assessment_action_draft_only                             -> 422 health_check.not_draft
+ *   health_assessment_answer_response_allowed                       -> 422 health_check.response_not_allowed
+ *   health_assessment_three_actions                                 -> 422 health_check.actions_required
+ *   health_assessment_incomplete                                    -> 422 health_check.incomplete
+ *   health_assessment_answer_evidence_fkey                          -> 422 validation.reference (/evidenceId)
+ *   health_assessment_action_improvement_fkey                       -> 422 validation.reference (/actions)
+ *   health_assessment_score_matches, health_assessment_scheme_published, health_assessment_previous_submitted,
+ *   health_assessment_created_draft, health_assessment_scheme_fixed, health_assessment_submitted_complete,
+ *   health_assessment_answered_count, health_assessment_answer_key, health_assessment_answer_identity_fixed,
+ *   health_assessment_action_rank_key, health_assessment_action_identity_fixed -> 500 (unreachable: the API writes the
+ *                                                                    shared result, the pinned published scheme, and
+ *                                                                    every child write holds the assessment's row lock)
+ */
+export function mapP5HealthCheckError(error: PgErrorLike): HttpProblem | null {
+  const reference = (pointer: string, message: string) =>
+    new HttpProblem({
+      status: 422,
+      type: "urn:mth:problem:validation",
+      code: "validation.reference",
+      title: "Business rule violated",
+      detail: "The referenced record does not exist in this transformation.",
+      errors: [{ pointer, code: "validation.reference", message }],
+    });
+  switch (error.constraint ?? "") {
+    case "health_assessment_one_draft_key":
+    case "health_assessment_sequence_key":
+      return problems.duplicate(
+        "health_check.draft_exists",
+        "This transformation already has a health check in progress.",
+      );
+    case "health_assessment_submitted_final":
+    case "health_assessment_answer_draft_only":
+    case "health_assessment_action_draft_only":
+      return problems.businessRule(
+        "health_check.not_draft",
+        "Only a health check in progress can be changed or submitted.",
+      );
+    case "health_assessment_answer_response_allowed":
+      return problems.businessRule(
+        "health_check.response_not_allowed",
+        "This response is not allowed by the health check's scoring scheme.",
+      );
+    case "health_assessment_three_actions":
+      return problems.businessRule("health_check.actions_required", "Submit the health check with its top 3 actions.");
+    case "health_assessment_incomplete":
+      return problems.businessRule(
+        "health_check.incomplete",
+        "Answer all 25 questions before submitting the health check.",
+      );
+    case "health_assessment_answer_evidence_fkey":
+      return reference("/evidenceId", "No evidence with this id in this transformation.");
+    case "health_assessment_action_improvement_fkey":
+      return reference("/actions", "No improvement_item with this id in this transformation.");
+    case "health_assessment_score_matches":
+    case "health_assessment_scheme_published":
+    case "health_assessment_previous_submitted":
+    case "health_assessment_created_draft":
+    case "health_assessment_scheme_fixed":
+    case "health_assessment_submitted_complete":
+    case "health_assessment_answered_count":
+    case "health_assessment_answer_key":
+    case "health_assessment_answer_identity_fixed":
+    case "health_assessment_action_rank_key":
+    case "health_assessment_action_identity_fixed":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
  * P5 slice J (T-DG5-BE-S; ADR-0050 §1-§6): the 0090 guards of the demo environment tables. mth_app holds SELECT only on
  * deployment_environment, demo_seed_record and demo_dataset_run (the owner-run CLI and the demo reset write them), so
  * the API reaching one of these is a programming error (500), never a user-facing refusal:
@@ -3206,6 +3284,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5FinancialMetric !== null) return p5FinancialMetric;
   const p5HealthScheme = mapP5HealthSchemeError(error); // P5 slice H (T-DG5-KBE-G; ADR-0048 §9)
   if (p5HealthScheme !== null) return p5HealthScheme;
+  const p5HealthCheck = mapP5HealthCheckError(error); // P5 slice H (T-DG5-KBE-G2; ADR-0048 §9)
+  if (p5HealthCheck !== null) return p5HealthCheck;
   const p5DemoEnvironment = mapP5DemoEnvironmentError(error); // P5 slice J (T-DG5-BE-S; ADR-0050 §1-§6)
   if (p5DemoEnvironment !== null) return p5DemoEnvironment;
   if (constraint.endsWith("_version_step"))
