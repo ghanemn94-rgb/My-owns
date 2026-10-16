@@ -294,6 +294,12 @@ function ApprovalDetail({ approval: a }: { approval: Approval }) {
         subtitle={t(`approvals.type.${a.approvalType}`, { defaultValue: a.approvalType })}
       />
       <BusinessApprovalNote body={t("approvals.businessApprovalBody")} />
+      {/* T-DG5-FE-D (REQ-S10-015): a routed approval is decided step by step on its route page. */}
+      <p className="small" data-link="approval-route">
+        <Link className="link" to={`/my-work/approvals/${a.id}/route`}>
+          {t("workflowsP5.routes.openRoute")}
+        </Link>
+      </p>
       <section className="card" aria-labelledby="approval-summary">
         <h2 id="approval-summary" className="card__title">
           {t("approvals.summary")} <ApprovalStatusChip status={a.status} />

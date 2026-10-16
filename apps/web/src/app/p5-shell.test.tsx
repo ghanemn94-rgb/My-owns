@@ -141,12 +141,9 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
     // The P5 areas and screens of D-144 item 1.
     for (const f of [
       // "studio", "methodologyMigrations", "sourceCoverage": built by T-DG5-FE-B (checked below).
+      // "procedureBuilder", "myProcedures", "automation", "approvalRoutes", "notificationPreferences": built by
+      // T-DG5-FE-D (checked below).
       "formBuilder",
-      "procedureBuilder",
-      "myProcedures",
-      "automation",
-      "approvalRoutes",
-      "notificationPreferences",
       "reports",
       "exports",
       "presentation",
@@ -175,6 +172,21 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
     // T-DG5-FE-B: the slice A screens are built; their nav entries and routes are no longer placeholders.
     expect(P5_PLANNED_ROUTES.filter((r) => r.owner === "FE-B")).toEqual([]);
     for (const path of ["admin/studio", "admin/methodology-migrations", "admin/source-coverage"])
+      expect(paths, path).toContain(path);
+    // T-DG5-FE-D: the slice C, D and E screens are built; their nav entries and routes are no longer placeholders.
+    expect(P5_PLANNED_ROUTES.filter((r) => r.owner === "FE-D")).toEqual([]);
+    for (const path of [
+      "admin/procedures",
+      "admin/procedures/:procedureCode",
+      "admin/coverage",
+      "playbook/procedures",
+      "playbook/procedures/:instanceId",
+      "admin/automation",
+      "admin/automation/rules/:ruleId",
+      "admin/automation/failures",
+      "admin/approval-routes",
+      "my-work/notification-preferences",
+    ])
       expect(paths, path).toContain(path);
   });
 

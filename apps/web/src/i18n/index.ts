@@ -101,6 +101,10 @@ import enBenefitFormulas from "./en/benefitFormulas.json" with { type: "json" };
 // P5 slice A namespace (T-DG5-FE-B): the Playbook Studio, methodology-migration and source-coverage screens.
 import arStudio from "./ar/studio.json" with { type: "json" };
 import enStudio from "./en/studio.json" with { type: "json" };
+// P5 slices C, D and E namespace (T-DG5-FE-D): procedures, automation, jobs operations, approval routes, gate conditions,
+// notification preferences and the meeting cut-off pack.
+import arWorkflowsP5 from "./ar/workflowsP5.json" with { type: "json" };
+import enWorkflowsP5 from "./en/workflowsP5.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -148,6 +152,7 @@ export const catalogues = {
     phasesP4: arPhasesP4,
     traceability: arTraceability,
     studio: arStudio,
+    workflowsP5: arWorkflowsP5,
   },
   en: {
     common: enCommon,
@@ -193,6 +198,7 @@ export const catalogues = {
     phasesP4: enPhasesP4,
     traceability: enTraceability,
     studio: enStudio,
+    workflowsP5: enWorkflowsP5,
   },
 } as const;
 
