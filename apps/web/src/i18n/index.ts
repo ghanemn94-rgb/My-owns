@@ -104,6 +104,10 @@ import enStudio from "./en/studio.json" with { type: "json" };
 // P5 slice B namespace (T-DG5-FE-C): the form builder and the common form framework (ADR-0041).
 import arForms from "./ar/forms.json" with { type: "json" };
 import enForms from "./en/forms.json" with { type: "json" };
+// P5 slices C, D and E namespace (T-DG5-FE-D): procedures, automation, jobs operations, approval routes, gate conditions,
+// notification preferences and the meeting cut-off pack.
+import arWorkflowsP5 from "./ar/workflowsP5.json" with { type: "json" };
+import enWorkflowsP5 from "./en/workflowsP5.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -152,6 +156,7 @@ export const catalogues = {
     traceability: arTraceability,
     studio: arStudio,
     forms: arForms,
+    workflowsP5: arWorkflowsP5,
   },
   en: {
     common: enCommon,
@@ -198,6 +203,7 @@ export const catalogues = {
     traceability: enTraceability,
     studio: enStudio,
     forms: enForms,
+    workflowsP5: enWorkflowsP5,
   },
 } as const;
 

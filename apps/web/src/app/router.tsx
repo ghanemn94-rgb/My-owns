@@ -294,6 +294,56 @@ const FormBuilderPage = lazyPage(() =>
   import("../pages/form-builder/FormBuilderPage.tsx").then((m) => m.FormBuilderPage),
 );
 const FormSchemaPage = lazyPage(() => import("../pages/form-builder/FormSchemaPage.tsx").then((m) => m.FormSchemaPage));
+// P5 slices C, D and E screens (T-DG5-FE-D; p5-plan §5.1 row FE-D): procedures, automation, jobs operations, approval
+// routes, gate conditions, notification preferences and the meeting cut-off pack.
+const ProceduresAdminPage = lazyPage(() =>
+  import("../pages/procedure-builder/ProceduresAdminPage.tsx").then((m) => m.ProceduresAdminPage),
+);
+const ProcedureDefinitionPage = lazyPage(() =>
+  import("../pages/procedure-builder/DefinitionPage.tsx").then((m) => m.DefinitionPage),
+);
+const MethodologyCoveragePage = lazyPage(() =>
+  import("../pages/procedure-builder/CoveragePage.tsx").then((m) => m.CoveragePage),
+);
+const MyProceduresPage = lazyPage(() =>
+  import("../pages/procedures/MyProceduresPage.tsx").then((m) => m.MyProceduresPage),
+);
+const ProcedureInstancePage = lazyPage(() =>
+  import("../pages/procedures/InstancePage.tsx").then((m) => m.InstancePage),
+);
+const AutomationRulesPage = lazyPage(() => import("../pages/automation/RulesPage.tsx").then((m) => m.RulesPage));
+const AutomationRulePage = lazyPage(() => import("../pages/automation/RulePage.tsx").then((m) => m.RulePage));
+const AutomationFailuresPage = lazyPage(() =>
+  import("../pages/automation/FailuresPage.tsx").then((m) => m.FailuresPage),
+);
+const AutomationExecutionsPage = lazyPage(() =>
+  import("../pages/automation/FailuresPage.tsx").then((m) => m.ExecutionsPage),
+);
+const AutomationExecutionPage = lazyPage(() =>
+  import("../pages/automation/FailuresPage.tsx").then((m) => m.ExecutionPage),
+);
+const JobsOperationsPage = lazyPage(() =>
+  import("../pages/admin/jobsOperations.tsx").then((m) => m.JobsOperationsPage),
+);
+const JobOperationPage = lazyPage(() => import("../pages/admin/jobsOperations.tsx").then((m) => m.JobOperationPage));
+const ApprovalRoutesPage = lazyPage(() =>
+  import("../pages/approval-routes/ApprovalRoutesPage.tsx").then((m) => m.ApprovalRoutesPage),
+);
+const ApprovalRoutePage = lazyPage(() =>
+  import("../pages/approval-routes/ApprovalRoutesPage.tsx").then((m) => m.ApprovalRoutePage),
+);
+const GateConditionsPage = lazyPage(() =>
+  import("../pages/approval-routes/GateConditionsPage.tsx").then((m) => m.GateConditionsPage),
+);
+const NotificationPreferencesPage = lazyPage(() =>
+  import("../pages/notification-preferences/NotificationPreferencesPage.tsx").then(
+    (m) => m.NotificationPreferencesPage,
+  ),
+);
+const NotificationDigestPage = lazyPage(() =>
+  import("../pages/notification-preferences/NotificationPreferencesPage.tsx").then((m) => m.DigestPage),
+);
+const CutoffPackPage = lazyPage(() => import("../pages/cutoff-pack/CutoffPackPage.tsx").then((m) => m.CutoffPackPage));
 
 /**
  * T-DG5-FE-A (REQ-S03-007): every area that is not itself a working screen opens its landing page, which lists the
@@ -338,19 +388,15 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  */
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
   // FE-B (slice A): built by T-DG5-FE-B, see the Studio, migration and source-coverage routes below.
-  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B" && s.owner !== "FE-C").map((s) => ({
+  // FE-D (slices C, D, E): built by T-DG5-FE-D, see the procedure, automation, route and preference routes below.
+  ...P5_SUBPAGES.filter((s) => s.owner !== "FE-B" && s.owner !== "FE-C" && s.owner !== "FE-D").map((s) => ({
     path: s.path.slice(1),
     feature: s.p5Feature,
     owner: s.owner,
   })),
   // FE-C (slice B; ADR-0041): built by T-DG5-FE-C, see the form-builder routes below.
-  // FE-D (slices C, D, E; ADR-0042 onward): a procedure definition, the methodology coverage view, a procedure
-  // instance, an automation rule and the automation failure queue.
-  { path: "admin/procedures/:procedureCode", feature: "procedureDefinition", owner: "FE-D" },
-  { path: "admin/coverage", feature: "methodologyCoverage", owner: "FE-D" },
-  { path: "playbook/procedures/:instanceId", feature: "procedureInstance", owner: "FE-D" },
-  { path: "admin/automation/rules/:ruleId", feature: "automationRule", owner: "FE-D" },
-  { path: "admin/automation/failures", feature: "automationFailures", owner: "FE-D" },
+  // FE-D (slices C, D, E): the procedure definition, methodology coverage, procedure instance, automation rule and
+  // failure-queue routes are built by T-DG5-FE-D, see below.
   // FE-E (slice F): a transformation's reports, one issued snapshot, its exports, presentation mode, owner updates.
   { path: "transformations/:id/reports", feature: "reports", owner: "FE-E" },
   { path: "transformations/:id/reports/:snapshotId", feature: "reportSnapshot", owner: "FE-E" },
@@ -541,6 +587,30 @@ export const routes: RouteObject[] = [
       // P5 slice B (T-DG5-FE-C; p5-plan §5.1; ADR-0041): the form builder.
       { path: "admin/forms", element: <FormBuilderPage /> },
       { path: "admin/forms/:recordType", element: <FormSchemaPage /> },
+      // P5 slices C, D and E (T-DG5-FE-D; p5-plan §5.1; ADR-0042, ADR-0043, ADR-0044): the procedure builder and
+      // coverage view, my procedures and the instance view, automation rules (builder, dry run, enable/disable,
+      // executions, failure queue, retry), the jobs operations view, approval routes, gate conditions, notification
+      // preferences and digests, and the meeting cut-off pack. The rule-version, digest and gate-condition paths are the
+      // backend's work-item links (automation_rule_review, notifications.digest, gate_condition_overdue).
+      { path: "admin/procedures", element: <ProceduresAdminPage /> },
+      { path: "admin/procedures/:procedureCode", element: <ProcedureDefinitionPage /> },
+      { path: "admin/coverage", element: <MethodologyCoveragePage /> },
+      { path: "playbook/procedures", element: <MyProceduresPage /> },
+      { path: "playbook/procedures/:instanceId", element: <ProcedureInstancePage /> },
+      { path: "admin/automation", element: <AutomationRulesPage /> },
+      { path: "admin/automation/rules/:ruleId", element: <AutomationRulePage /> },
+      { path: "admin/automation-rules/:ruleId/versions/:versionNo", element: <AutomationRulePage /> },
+      { path: "admin/automation/executions", element: <AutomationExecutionsPage /> },
+      { path: "admin/automation/executions/:executionId", element: <AutomationExecutionPage /> },
+      { path: "admin/automation/failures", element: <AutomationFailuresPage /> },
+      { path: "admin/jobs/operations", element: <JobsOperationsPage /> },
+      { path: "admin/jobs/operations/:jobCode", element: <JobOperationPage /> },
+      { path: "admin/approval-routes", element: <ApprovalRoutesPage /> },
+      { path: "my-work/approvals/:approvalId/route", element: <ApprovalRoutePage /> },
+      { path: "transformations/:id/gate-conditions", element: <GateConditionsPage /> },
+      { path: "my-work/notification-preferences", element: <NotificationPreferencesPage /> },
+      { path: "me/notification-digests/:digestId", element: <NotificationDigestPage /> },
+      { path: "transformations/:id/meetings/:meetingId/cutoff-pack", element: <CutoffPackPage /> },
       ...p4PlannedRoutes,
       ...p5PlannedRoutes,
       ...landingRoutes,

@@ -93,6 +93,12 @@ function MeetingView({ meeting: m }: { meeting: Meeting }) {
   return (
     <>
       <MeetingHeader meeting={m} forum={forum.data} />
+      {/* T-DG5-FE-D (D-155): the meeting's cut-off pack: the draft agenda and its review before publication. */}
+      <p className="small" data-link="cutoff-pack">
+        <Link className="link" to={`/transformations/${m.transformationId}/meetings/${m.id}/cutoff-pack`}>
+          {t("workflowsP5.cutoff.openPack")}
+        </Link>
+      </p>
       {frozen ? (
         <ReadOnlyNote
           body={t("governanceP4.meeting.frozen", { status: t(`governanceP4.meetingStatus.${m.status}`) })}

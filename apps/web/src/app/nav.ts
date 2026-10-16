@@ -192,7 +192,9 @@ export interface NavSubPage {
     | "portfolios"
     | "ragPolicy"
     // T-DG5-FE-A: the P5 screens of FE-B…FE-G (P5_SUBPAGES), "not available yet" until their task builds them.
-    | P5SubPageId;
+    | P5SubPageId
+    // T-DG5-FE-D: the jobs operations view (REQ-S12-022: last success, next run, failures, repair).
+    | "jobOperations";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -331,6 +333,8 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
 
   // T-DG5-FE-A: the P5 screens, appended after the DG4 entries of each area.
   ...P5_SUBPAGES,
+  // T-DG5-FE-D: Administration > Operations > Jobs (REQ-S12-022; job.read, ADR-0043 §6).
+  { id: "jobOperations", area: "admin", path: "/admin/jobs/operations", requiresAny: ["job.read"] },
 ];
 
 /**
@@ -362,7 +366,8 @@ export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentI
   playbook: [
     { id: "source", p5: ["reader"] },
     { id: "guidance", tabs: ["phases"], p5: ["launchPlan", "healthCheck"] },
-    { id: "procedures", p5: ["myProcedures"] },
+    // T-DG5-FE-D: my procedures is delivered (F-DG4-160).
+    { id: "procedures", links: [{ path: "/playbook/procedures", labelKey: "nav.sub.myProcedures" }] },
   ],
   // M0104: outcome trees, definitions, targets, actuals and performance reviews.
   strategy: [
@@ -402,8 +407,11 @@ export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentI
     {
       id: "approvals",
       tabs: ["approval-decisions"],
-      links: [{ path: "/my-work/approvals", labelKey: "nav.sub.approvals" }],
-      p5: ["approvalRoutes"],
+      // T-DG5-FE-D: the approval routes screen is delivered (F-DG4-160).
+      links: [
+        { path: "/my-work/approvals", labelKey: "nav.sub.approvals" },
+        { path: "/admin/approval-routes", labelKey: "nav.sub.approvalRoutes", requiresAny: ["methodology.read"] },
+      ],
     },
     { id: "stageGates", tabs: ["gates"] },
   ],
