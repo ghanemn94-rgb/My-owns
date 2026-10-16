@@ -45,6 +45,8 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, pick, workstreamName, workstreamOptions } from "../../lib/methodology.ts";
+// T-DG5-FE-G (REQ-PB-002, REQ-PB-011, REQ-S02-004): the template's provenance badge, question tag and source link.
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 
@@ -164,6 +166,8 @@ function T01Section() {
       intro={t("diagnose.t01.intro")}
       actions={<ExportButton tid={ws.tid} recordType="T01" formTitle={t("diagnose.t01.title")} />}
     >
+      {/* T-DG5-FE-G (REQ-PB-002, REQ-PB-011, REQ-S02-004): provenance badge, question tag and source link to B0031. */}
+      <TemplateProvenance templateCode="T01" />
       <QueryState query={items}>
         {(list) => {
           const known = new Set(dimensions.map((d) => d.code));

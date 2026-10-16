@@ -12,6 +12,9 @@ import { useMe } from "../auth/session.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { LanguageNotSavedNotice, LanguageSwitch, useLanguageNotSaved } from "../components/LanguageSwitch.tsx";
 import { Wordmark } from "../components/Wordmark.tsx";
+// T-DG5-FE-G: the render-time branding (name, logo, theme), the demo banner and the server-decided navigation.
+import { DemoBanner, useSynthetic } from "../components/demo-label/DemoLabels.tsx";
+import { useBranding, useBrandingTheme } from "../pages/branding/api.ts";
 import { localName, useLocale } from "./locale.ts";
 import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
 
@@ -30,7 +33,23 @@ export function Shell() {
   // Close the (small-screen) navigation after navigating.
   useEffect(() => setNavOpen(false), [location.pathname]);
 
+  // T-DG5-FE-G: the switch to GET /me/navigation is NOT made here (handback §6): the server hides every business area
+  // from a technical administrator without transformation.read (3 areas), which breaks DG1-approved pins; the
+  // orchestrator decides. The static list with its client-side permission hint stays.
   const areas = NAV_AREAS.filter((a) => !a.requiresAny || canAny(me, a.requiresAny));
+  // T-DG5-FE-G (REQ-S01-002, REQ-S15-004): the published branding is read at render time; the theme follows it.
+  const branding = useBranding().data;
+  useBrandingTheme();
+  const synthetic = useSynthetic();
+  const productName =
+    branding && branding.source === "configured" && branding.productNameEn && branding.productNameAr
+      ? locale === "ar"
+        ? branding.productNameAr
+        : branding.productNameEn
+      : me.productName;
+  const logo = branding?.logo
+    ? { url: branding.logo.url, alt: locale === "ar" ? branding.logo.altAr : branding.logo.altEn }
+    : null;
   // P4 sub-entries (nav.ts NAV_SUBPAGES) of the visible areas; a hint only, the server still decides.
   const subpagesOf = (areaId: string) =>
     NAV_SUBPAGES.filter((s) => s.area === areaId && (!s.requiresAny || canAny(me, s.requiresAny)));
@@ -75,7 +94,7 @@ export function Shell() {
           <Icon name="menu" />
           <span className="visually-hidden">{t("nav.toggle")}</span>
         </button>
-        <Wordmark productName={me.productName} />
+        <Wordmark productName={productName} logo={logo} />
         <div className="app-header__spacer" />
         <LanguageSwitch signedIn onRefusedChange={setLanguageRefused} />
         <div className="user-box">
@@ -93,6 +112,8 @@ export function Shell() {
       </header>
       {/* FE12: below the header, so the notice never wraps the header row or squeezes the wordmark. */}
       <LanguageNotSavedNotice refused={languageRefused} />
+      {/* T-DG5-FE-G (ADR-0050 §2 a): the persistent synthetic-data banner on every screen of a demo database. */}
+      <DemoBanner />
       <div className="app-body">
         <nav id={navId} className={`app-nav${navOpen ? " app-nav--open" : ""}`} aria-label={t("nav.primary")}>
           <ul className="app-nav__list">
@@ -120,6 +141,12 @@ export function Shell() {
             <NavLink to="/about" className="app-nav__link app-nav__link--small">
               {t("nav.about")}
             </NavLink>
+            {/* T-DG5-FE-G (REQ-S18-004): Help > Guided walkthrough, offered in a demo database. */}
+            {synthetic ? (
+              <NavLink to="/walkthrough" className="app-nav__link app-nav__link--small">
+                {t("playbookP5.walkthrough.navLabel")}
+              </NavLink>
+            ) : null}
           </p>
         </nav>
         <main id="main" className="app-main" tabIndex={-1}>

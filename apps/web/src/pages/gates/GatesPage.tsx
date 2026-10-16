@@ -13,6 +13,7 @@ import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
+import { SyntheticApprovalLabel } from "../../components/demo-label/DemoLabels.tsx";
 import { gateLabel, pick } from "../../lib/methodology.ts";
 
 export function GatesPage() {
@@ -34,12 +35,16 @@ export function GatesPage() {
 export function BusinessApprovalNote() {
   const { t } = useTranslation();
   return (
-    <p className="banner banner--info" role="note" data-business-approval="true">
-      <span className="lifecycle-chip">
-        <Icon name="lock" /> {t("gates.businessApproval")}
-      </span>{" "}
-      {t("gates.businessApprovalBody")}
-    </p>
+    <>
+      <p className="banner banner--info" role="note" data-business-approval="true">
+        <span className="lifecycle-chip">
+          <Icon name="lock" /> {t("gates.businessApproval")}
+        </span>{" "}
+        {t("gates.businessApprovalBody")}
+      </p>
+      {/* T-DG5-FE-G (REQ-S21-001, ADR-0050 §2 c): in a demo database every product-gate decision is synthetic. */}
+      <SyntheticApprovalLabel />
+    </>
   );
 }
 

@@ -16,6 +16,7 @@ import type { Locale } from "@mth/shared";
 import { useLocale } from "../../app/locale.ts";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { formatBusinessDate, formatDecimal, formatMoney } from "../../lib/format.ts";
+import { SyntheticApprovalLabel } from "../../components/demo-label/DemoLabels.tsx";
 import type { BenefitAmount } from "./api.ts";
 
 /** The page namespace (its `problem.*` texts are read before `problems.*`). */
@@ -251,9 +252,13 @@ export function RecordChip({ group, status }: { group: string; status: string })
 export function FinanceValidationNote({ body }: { body: string }) {
   const { t } = useTranslation();
   return (
-    <p className="banner banner--info" role="note" data-state="finance-validation">
-      <Icon name="lock" /> <strong>{t("benefitsP4.finance.label")}</strong>: {body}
-    </p>
+    <>
+      <p className="banner banner--info" role="note" data-state="finance-validation">
+        <Icon name="lock" /> <strong>{t("benefitsP4.finance.label")}</strong>: {body}
+      </p>
+      {/* T-DG5-FE-G (REQ-S21-001, ADR-0050 §2 c): in a demo database every Finance validation is synthetic. */}
+      <SyntheticApprovalLabel />
+    </>
   );
 }
 

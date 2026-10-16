@@ -1,6 +1,7 @@
 // P5 shell against the REAL API (apps/web/e2e/support/with-stack.sh; T-DG5-FE-A, D-144): the ten area landing pages of
 // REQ-S03-007 list the contents master prompt §3 names for each area, with where each lives; the P5 screens of
-// FE-B…FE-G are reachable from the navigation and say, in the project's language, that they are not available yet.
+// FE-B…FE-G are reachable from the navigation and open their delivered screens (T-DG5-FE-G replaced the last
+// "not available yet" placeholders: the reader, Branding and the environment screen).
 // Every page is checked with axe (no serious or critical violation) and captured as a screenshot. All data is
 // SYNTHETIC (seeded dev users).
 import { readFileSync } from "node:fs";
@@ -55,7 +56,7 @@ for (const { area, path } of LANDING) {
   });
 }
 
-test("P5: the navigation has no planned area, and a P5 screen named on a landing page opens its placeholder (Transformation Office)", async ({
+test("P5: the navigation has no planned area, and a P5 screen named on a landing page opens it (Transformation Office)", async ({
   page,
 }, info) => {
   const lang = langOf(info);
@@ -64,20 +65,16 @@ test("P5: the navigation has no planned area, and a P5 screen named on a landing
   const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
   // No area carries the "planned" tag (every area has delivered screens; F-DG4-160).
   await expect(nav.getByText(tr(lang, "nav.planned"), { exact: true })).toHaveCount(0);
-  // A P5 screen named on a landing page opens its placeholder: not available yet, no data, no form.
+  // A P5 screen named on a landing page opens it (T-DG5-FE-G: the reader is delivered; F-DG4-160).
   await page.goto("/playbook");
   await page
     .locator("[data-content-item='source']")
     .getByRole("link", { name: tr(lang, "nav.sub.reader"), exact: true })
     .click();
   await expect(page).toHaveURL(/\/playbook\/reader$/);
-  await expect(page.locator("main#main h1")).toHaveText(tr(lang, "nav.p5.reader.title"));
-  const note = page.locator("main [data-state='being-built']");
-  await expect(note).toContainText(tr(lang, "nav.p5.notAvailableTitle"));
-  await expect(note).toContainText(tr(lang, "nav.p5.notAvailableBody"));
-  await expect(page.locator("main form, main table")).toHaveCount(0);
-  await expectAccessible(page, lang, "p5-placeholder-reader");
-  await shot(page, lang, "p5-placeholder-reader");
+  await expect(page.locator("main#main h1")).toHaveText(tr(lang, "playbookP5.reader.title"));
+  await expect(page.locator("main [data-state='being-built']")).toHaveCount(0);
+  await expect(page.locator("form[data-form='reader-search']")).toBeVisible();
   // The P5 entries of the Transformation Office's areas are in the navigation.
   for (const id of ["reader", "myProcedures", "launchPlan", "healthCheck", "reports", "exports", "presentation"])
     await expect(nav.getByRole("link", { name: tr(lang, `nav.sub.${id}`), exact: true })).toBeVisible();
@@ -86,7 +83,7 @@ test("P5: the navigation has no planned area, and a P5 screen named on a landing
   expect(foreign).toEqual([]);
 });
 
-test("P5: Administration lists the P5 configuration screens; each says it is not available yet (administrator)", async ({
+test("P5: Administration lists the P5 configuration screens and opens Branding Settings (administrator)", async ({
   page,
 }, info) => {
   const lang = langOf(info);
@@ -98,9 +95,8 @@ test("P5: Administration lists the P5 configuration screens; each says it is not
     await expect(admin.getByRole("link", { name: tr(lang, `nav.sub.${id}`), exact: true })).toBeVisible();
   await admin.getByRole("link", { name: tr(lang, "nav.sub.branding"), exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/branding$/);
-  await expect(page.locator("main#main h1")).toHaveText(tr(lang, "nav.p5.branding.title"));
-  await expect(page.locator("main [data-state='being-built']")).toContainText(tr(lang, "nav.p5.notAvailableBody"));
-  await expectAccessible(page, lang, "p5-placeholder-branding");
-  await shot(page, lang, "p5-placeholder-branding");
+  // T-DG5-FE-G: Branding Settings is delivered (F-DG4-160).
+  await expect(page.locator("main#main h1")).toHaveText(tr(lang, "playbookP5.branding.title"));
+  await expect(page.locator("main [data-state='being-built']")).toHaveCount(0);
   expect(foreign).toEqual([]);
 });

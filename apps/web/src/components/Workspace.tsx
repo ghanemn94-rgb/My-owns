@@ -19,6 +19,7 @@ import { isNoPermission } from "../lib/problem.ts";
 import { LifecycleChip } from "./Badges.tsx";
 import { Icon } from "./Icon.tsx";
 import { PageHeader, usePageTitle } from "./Page.tsx";
+import { DemoRecordBadge } from "./demo-label/DemoLabels.tsx";
 import { NoPermissionState, QueryState } from "./States.tsx";
 
 /**
@@ -239,6 +240,8 @@ function FrameBody({
             <span>{tr.name}</span>
             <LifecycleChip status={tr.status} />
             {archived ? <LifecycleChip status="archived" /> : null}
+            {/* T-DG5-FE-G (REQ-PB-089, ADR-0050 §2 b): the record badge in a demo database. */}
+            <DemoRecordBadge />
             <span className="muted">
               {t("transformations.field.currentPhase")}: {t(`transformations.phase.${tr.currentPhase}`)}
             </span>

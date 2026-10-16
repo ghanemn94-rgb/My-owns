@@ -25,6 +25,7 @@ import { EmptyState, NoPermissionState, QueryState } from "../../components/Stat
 import { describeAuditAction, describeAuditChanges, type AuditValue } from "../../lib/auditChanges.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import { isNoPermission } from "../../lib/problem.ts";
+import { DemoRecordBadge, IllustrativeExampleNote } from "../../components/demo-label/DemoLabels.tsx";
 import { BusinessUnitName, UserName, useBusinessUnitIndex, useTransformationTarget } from "./common.tsx";
 
 /**
@@ -183,6 +184,8 @@ function Workspace({ tr }: { tr: Transformation }) {
           <span className="chip-row">
             <LifecycleChip status={tr.status} />
             {archived ? <LifecycleChip status="archived" /> : null}
+            {/* T-DG5-FE-G (REQ-PB-089, ADR-0050 §2 b): the record badge in a demo database. */}
+            <DemoRecordBadge />
             <span className="muted">{t(`transformations.mode.${tr.mode}`)}</span>
           </span>
         }
@@ -201,6 +204,8 @@ function Workspace({ tr }: { tr: Transformation }) {
           </>
         }
       />
+      {/* T-DG5-FE-G (ADR-0050 §2): B0144 verbatim on a transformation of the demo database. */}
+      <IllustrativeExampleNote />
 
       <WorkspaceTabs tid={tr.id} />
 

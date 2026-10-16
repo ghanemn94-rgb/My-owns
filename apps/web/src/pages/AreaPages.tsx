@@ -22,6 +22,7 @@ import { canAny } from "../auth/permissions.ts";
 import { useMe } from "../auth/session.tsx";
 import { Icon } from "../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../components/Page.tsx";
+import { AboutProvenance } from "./playbook/AboutProvenance.tsx";
 import { useProductName } from "../components/Wordmark.tsx";
 
 /** The transformations the user can see, each leading into `tab` (and `moreTabs`) of its workspace. */
@@ -248,23 +249,6 @@ export function P4BeingBuiltPage({ feature }: { feature: string }) {
   );
 }
 
-/**
- * A P5 screen registered up front by T-DG5-FE-A (app/router.tsx P5_PLANNED_ROUTES; p5-plan §5.1). It says, in en and
- * ar, what the screen is for and that it is not available yet: no data, no form, nothing presented as delivered. Its
- * owning FE task (FE-B…FE-G) replaces the route element (an orchestrator merge in app/router.tsx).
- */
-export function P5NotAvailablePage({ feature }: { feature: string }) {
-  const { t } = useTranslation();
-  const title = t(`nav.p5.${feature}.title`);
-  usePageTitle(title);
-  return (
-    <div className="page" data-p5-feature={feature}>
-      <PageHeader title={title} subtitle={t(`nav.p5.${feature}.summary`)} />
-      <BeingBuiltState title={t("nav.p5.notAvailableTitle")} body={t("nav.p5.notAvailableBody")} />
-    </div>
-  );
-}
-
 export function AboutPage() {
   const { t } = useTranslation();
   const me = useMe();
@@ -286,6 +270,8 @@ export function AboutPage() {
         </h2>
         <p>{t("common.about.methodBody")}</p>
       </section>
+      {/* T-DG5-FE-G (REQ-PB-001): the provenance statement, B0004 verbatim. */}
+      <AboutProvenance />
       <section className="card" aria-labelledby="about-defaults">
         <h2 id="about-defaults" className="card__title">
           {t("common.about.defaultsTitle")}

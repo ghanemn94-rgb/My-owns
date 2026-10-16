@@ -2,8 +2,8 @@
 // (SYNTHETIC data).
 //  - REQ-S03-007: the area landing pages list the contents master prompt §3 names for each area (M0103–M0112), each
 //    with where it lives; no area is labelled "planned" while it has delivered screens (F-DG4-160, p5-plan §3 row 18).
-//  - Every P5 screen of FE-B…FE-G has a navigation entry or a route up front, and each shows an honest "not available
-//    yet" placeholder in en and ar until its owning task replaces it.
+//  - Every P5 screen of FE-B…FE-G has a navigation entry or a route; each showed an honest "not available yet" placeholder
+//    until its owning task replaced it. Since T-DG5-FE-G every one is built, so the placeholder seam is empty.
 //  - The slice A–C request paths equal the contract's (docs/api/openapi.yaml), and the P5 query keys are scoped.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -146,16 +146,18 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
       // T-DG5-FE-D (checked below).
       // "reports", "exports", "presentation": built by T-DG5-FE-E (checked below).
       // "launchPlan", "healthCheck": built by T-DG5-FE-F (checked below).
-      "reader",
-      "branding",
-      "demo",
-    ])
+      // "reader", "branding", "demo": built by T-DG5-FE-G (checked below).
+    ] as string[])
       expect(features, f).toContain(f);
     const paths = shellChildren().map((r) => r.path);
     for (const r of P5_PLANNED_ROUTES) expect(paths, r.path).toContain(r.path);
     expect(new Set(P5_PLANNED_ROUTES.map((r) => r.path)).size).toBe(P5_PLANNED_ROUTES.length);
     for (const s of P5_SUBPAGES) expect(NAV_SUBPAGES).toContain(s);
     for (const r of P5_PLANNED_ROUTES) expect(["FE-B", "FE-C", "FE-D", "FE-E", "FE-F", "FE-G"]).toContain(r.owner);
+    // T-DG5-FE-G: the slice I and J screens are built; no P5 placeholder is left (D-162 e).
+    expect(P5_PLANNED_ROUTES).toEqual([]);
+    for (const path of ["playbook/reader", "playbook/reader/:blockRef", "admin/branding", "admin/demo", "walkthrough"])
+      expect(paths, path).toContain(path);
     for (const lang of LOCALES) {
       const t = createI18n(lang).t;
       for (const r of P5_PLANNED_ROUTES) {
@@ -222,30 +224,15 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
       expect(paths, path).toContain(path);
   });
 
-  for (const locale of LOCALES) {
-    it(`${locale}: every P5 placeholder says the screen is not available yet, with no data and no form`, async () => {
-      const nav = catalogues[locale].nav;
-      expect(nav.p5.notAvailableTitle).toBe(locale === "en" ? "Not available yet" : "غير متاح بعد");
-      for (const r of P5_PLANNED_ROUTES) {
-        const { requests } = mockApi(meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: locale })));
-        const path = "/" + r.path.replace(/:([A-Za-z]+)/g, (_, name: string) => `sample-${name}`);
-        renderApp(path, { i18n: createI18n(locale) });
-        const title = (nav.p5 as unknown as Record<string, { title: string; summary: string }>)[r.feature]!;
-        expect(await screen.findByRole("heading", { level: 1, name: title.title }), path).toBeTruthy();
-        expect(screen.getByText(title.summary)).toBeTruthy();
-        const note = screen.getByRole("note");
-        expect(note.dataset["state"]).toBe("being-built");
-        expect(within(note).getByText(nav.p5.notAvailableTitle)).toBeTruthy();
-        expect(within(note).getByText(nav.p5.notAvailableBody)).toBeTruthy();
-        expect(document.querySelector(`main [data-p5-feature='${r.feature}']`)).toBeTruthy();
-        expect(document.querySelector("main form, main table, main input")).toBeNull();
-        expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
-        // The placeholder reads nothing beyond the session.
-        expect(requests.filter((q) => !/\/api\/v1\/me$/.test(q.url) && !/\/branding\//.test(q.url))).toEqual([]);
-        cleanup();
-      }
-    });
-  }
+  it("no P5 placeholder text is left: the placeholder page and its 'not available yet' texts are gone (D-162 e)", () => {
+    for (const locale of LOCALES) {
+      const p5 = catalogues[locale].nav.p5 as unknown as Record<string, unknown>;
+      expect(p5["notAvailableTitle"], locale).toBeUndefined();
+      expect(p5["notAvailableBody"], locale).toBeUndefined();
+      for (const feature of ["reader", "readerBlock", "branding", "demo", "walkthrough"])
+        expect(p5[feature], `${locale} ${feature}`).toBeUndefined();
+    }
+  });
 
   it("Administration shows the Studio entries only with methodology.read, and is shown to the methodology admin", async () => {
     // ADM_METHOD (methodology.configure, methodology.publish, methodology.read): Administration and its Studio entries.
