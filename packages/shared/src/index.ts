@@ -4,3 +4,4 @@
 export * from "./constants.ts";
 export * from "./permissions.ts";
 export * from "./problem.ts";
+export * from "./reports/content-labels.ts";
