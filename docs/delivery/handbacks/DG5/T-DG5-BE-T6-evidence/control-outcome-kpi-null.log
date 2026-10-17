@@ -1,0 +1,44 @@
+port-policy: PostgreSQL listening on port 23900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t6
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvcpi0py_95b49534 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts (6 tests | 3 failed) 5585ms
+   ✓ REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > the whole-transformation graph is complete (not truncated) and holds each chain's diagnosed issue once 2ms
+   × REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > chain 1: "Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift" (downstream from the issue, and in the whole graph) 29ms
+     → expected 'outcome' to be 'outcome_kpi' // Object.is equality
+   × REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > chain 2: "High complaints -> Journey + service assurance -> Proactive comms + QoS monitoring -> Complaint rate -> CX + care cost" (downstream from the issue, and in the whole graph) 17ms
+     → expected 'outcome' to be 'outcome_kpi' // Object.is equality
+   × REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > chain 3: "Partner cost pressure -> Partner model + analytics -> Partner optimization -> Cost/MB, margin -> Margin improvement" (downstream from the issue, and in the whole graph) 16ms
+     → expected 'outcome' to be 'outcome_kpi' // Object.is equality
+   ✓ REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > negative: a demo user without a read right on the transformation cannot read the view 35ms
+   ✓ REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > negative: an anonymous request is refused (401) 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts > REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > chain 1: "Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift" (downstream from the issue, and in the whole graph)
+ FAIL  |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts > REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > chain 2: "High complaints -> Journey + service assurance -> Proactive comms + QoS monitoring -> Complaint rate -> CX + care cost" (downstream from the issue, and in the whole graph)
+ FAIL  |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts > REQ-PB-090: getTraceability shows the three B0147 chains as the playbook writes them > chain 3: "Partner cost pressure -> Partner model + analytics -> Partner optimization -> Cost/MB, margin -> Margin improvement" (downstream from the issue, and in the whole graph)
+AssertionError: expected 'outcome' to be 'outcome_kpi' // Object.is equality
+
+Expected: [32m"outcome[7m_kpi[27m"[39m
+Received: [31m"outcome"[39m
+
+ ❯ lineOf apps/api/test/integration/environment/demo-traceability-chains.test.ts:82:29
+     80|     );
+     81|     expect(next.length, `${last.label} -${step.kinds.join("|")}->`).to…
+     82|     expect(next[0]!.toType).toBe(step.to);
+       |                             ^
+     83|     const node = byId.get(next[0]!.toId);
+     84|     expect(node, `node ${next[0]!.toId} is in the graph`).toBeDefined(…
+ ❯ apps/api/test/integration/environment/demo-traceability-chains.test.ts:134:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  18:04:47
+   Duration  22.95s (transform 6.31s, setup 0ms, collect 12.39s, tests 5.58s, environment 2ms, prepare 107ms)
+
