@@ -12,7 +12,9 @@
 //      progress moved forward after each section (unaudited, the job_run precedent); between sections the job's status
 //      is read, and a cancelled job stops without storing a file.
 //   3. STORE, outside any transaction: the export-file store (atomic write) under `exports/<org>/<job>-a<attempt>.<ext>`
-//      (the attempt in the key, so a stale attempt can never overwrite the recorded file).
+//      (the attempt in the key, so a stale attempt can never overwrite the recorded file). The files of the job's
+//      earlier attempts (one killed after its store and before its finish) are removed through the store port when an
+//      attempt starts and again when it succeeds (T-DG5-BE-T5, D-QA-F2-3; never another job's files).
 //   4. FINISH, in one transaction under the lock: `running -> succeeded` with the file fields, progress `done`, the
 //      audit event `export_job.succeed`. A job that is no longer running (cancelled meanwhile) keeps no file.
 // Failures: a renderer's own validation error (RenderError) fails the job at once with `export.render_failed`; a file
@@ -329,6 +331,25 @@ export async function provenanceFooter(db: Db, language: "en" | "ar"): Promise<s
 
 const isLastAttempt = (a: JobAttempt | undefined): boolean => a === undefined || a.retryCount >= a.retryLimit;
 
+/** The store key of one attempt of a job (`<jobId>-a<attempt>`: each attempt writes its own file). */
+export const attemptStorageKey = (job: Pick<ExportJobRow, "id" | "organization_id" | "format">, attempt: number) =>
+  exportStorageKey(job.organization_id, `${job.id}-a${attempt}`, job.format);
+
+/**
+ * T-DG5-BE-T5 (D-167; QA-F2 D-QA-F2-3): removes the files of this job's EARLIER attempts (1 .. attempt - 1) through the
+ * store port. An attempt killed after `store.put` and before its success commit leaves its file, which no job row
+ * records; the next attempt removes it when it starts, and the succeeding attempt removes any that remain. Idempotent
+ * (`discard` of a missing object is a no-op), never touches the current attempt's key or another job's files (every
+ * key is built from this job's id), and best-effort: a store error leaves the file for the next attempt and never
+ * fails the export.
+ */
+export async function discardEarlierAttempts(
+  store: ExportFileStore,
+  job: Pick<ExportJobRow, "id" | "organization_id" | "format" | "attempt_count">,
+): Promise<void> {
+  for (let n = 1; n < job.attempt_count; n += 1) await store.discard(attemptStorageKey(job, n)).catch(() => undefined);
+}
+
 /** One run of `reports.export` (see the header). `data` is the relay's envelope of `export_job.requested`. */
 export async function runExport(
   db: Db,
@@ -342,7 +363,8 @@ export async function runExport(
   const started = await start(db, jobId, id);
   if ("result" in started) return started.result;
   const job = started.job;
-  const key = exportStorageKey(job.organization_id, `${job.id}-a${job.attempt_count}`, job.format);
+  const key = attemptStorageKey(job, job.attempt_count);
+  await discardEarlierAttempts(deps.store, job); // D-QA-F2-3: a killed earlier attempt's file
   try {
     const src = await loadSource(db, job);
     const format = job.format as ExportFormat;
@@ -430,6 +452,7 @@ export async function runExport(
       return "succeeded" as const;
     });
     if (outcome !== "succeeded") await deps.store.discard(key);
+    else await discardEarlierAttempts(deps.store, job); // D-QA-F2-3: only this attempt's file is kept
     return { exportJobId: id, outcome };
   } catch (err) {
     // No job records this attempt's file: remove it (a stored file of a failed or cancelled attempt is never kept).

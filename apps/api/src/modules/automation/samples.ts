@@ -161,6 +161,13 @@ const SAMPLES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
     jobScheduleCode: null,
     failureId: id(50),
   },
+  // T-DG5-BE-T5 (D-167): `dependency.slipped` v1 is registered, so its trigger serves a complete sample.
+  "dependency.slipped": {
+    slipId: id(60),
+    dependencyId: id(61),
+    transformationId: T,
+    slipDays: 5,
+  },
 };
 
 /**

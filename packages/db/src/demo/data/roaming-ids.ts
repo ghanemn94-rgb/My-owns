@@ -55,4 +55,8 @@ export const RT_BLOCK = {
   bauHandover: 0x054,
   healthAssessment: 0x055,
   launchPlan: 0x056,
+  /** T-DG5-BE-T5 (D-167, QA-E2 O-1): the seeded pending approval's role mapping, task and inbox notification. */
+  roleMapping: 0x057,
+  workItem: 0x058,
+  inboxNotification: 0x059,
 } as const;

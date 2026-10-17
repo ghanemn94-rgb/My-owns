@@ -1,8 +1,8 @@
 // Presentation mode of a meeting (ADR-0045 §7; REQ-S10-013, M0212; p5-work-split §F.7; T-DG5-BE-O) against a real
 // PostgreSQL. The literal tests of §F.7 for REQ-S10-013:
 //  - changing a linked decision before cut-off changes the LIVE presentation: runs as soon as a `meeting_pack`
-//    assembler is registered (KBE-D2) and the composition root wires it; PENDING until then
-//    (P5_PENDING_TESTS_BE_O, the BE-J precedent);
+//    assembler is registered (KBE-D2) and the composition root wires it (both in place since D-159; the test runs,
+//    and T-DG5-BE-T5 emptied P5_PENDING_TESTS_BE_O, D-162 e);
 //  - the issued meeting-pack snapshot still returns the old decision (snapshot mode returns the stored content);
 //  - a snapshot of another meeting -> 422 presentation.snapshot_mismatch.
 // Also: a snapshot of another output -> 422; an unknown snapshot, one of another transformation, an unknown meeting
@@ -16,7 +16,6 @@ import { setMeetingPackAssembler } from "../../../src/modules/governance/present
 import { assemblerOf } from "../../../src/modules/reporting/reports/assembler.ts";
 import { call, seedWorld, signIn, startApi, type Session, type TestApi, type World } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
-import { P5_PENDING_TESTS_BE_O } from "../../support/p5-pending-be-o.ts";
 import { businessToday, plusDays, setupMeetingWorld, type MeetingWorld } from "./meeting-fixtures.ts";
 import { decisionSection, storeMeetingPack } from "./presentation-fixtures.ts";
 import { raiseAsk } from "./t16-fixtures.ts";
@@ -209,36 +208,39 @@ describe("REQ-S10-013: presentation mode and the printable pack come from the sa
     }
   });
 
-  it.runIf(hasMeetingPackAssembler)(`${P5_PENDING_TESTS_BE_O[0]!.test} (real meeting_pack assembler)`, async () => {
-    const a = await meeting(17);
-    const ask = await raiseAsk(send, x, x.sponsor.id, plusDays(today, 20), { title: "Synthetic: pack title one" });
-    const item = await send("POST", `${T()}/meetings/${a}/agenda-items`, {
-      session: x.lead.session,
-      body: { itemKind: "executive_ask", title: "Synthetic: the vendor decision", decisionId: ask.id },
-    });
-    expect(item.status, JSON.stringify(item.body)).toBe(201);
-    const live1 = await send("GET", P(a), { session: x.lead.session });
-    expect(live1.status, JSON.stringify(live1.body).slice(0, 400)).toBe(200);
-    expect(JSON.stringify(live1.body.document)).toContain("Synthetic: pack title one");
-    const gen = await send("POST", `${T()}/reports/meeting_pack/generate`, {
-      session: x.lead.session,
-      body: { subjectId: a },
-    });
-    expect(gen.status, JSON.stringify(gen.body).slice(0, 400)).toBe(201);
-    const issued = await send("POST", `${T()}/report-snapshots/${gen.body.id}/issue`, {
-      session: x.lead.session,
-      headers: ifm(gen.body.version),
-      body: {},
-    });
-    expect(issued.status).toBe(200);
-    await renameDecision(ask.id, "Synthetic: pack title two");
-    const live2 = await send("GET", P(a), { session: x.lead.session });
-    expect(JSON.stringify(live2.body.document)).toContain("Synthetic: pack title two");
-    const pack = await send("GET", P(a, gen.body.id), { session: x.lead.session });
-    expect(pack.body.mode).toBe("snapshot");
-    expect(JSON.stringify(pack.body.document)).toContain("Synthetic: pack title one");
-    expect(JSON.stringify(pack.body.document)).not.toContain("Synthetic: pack title two");
-  });
+  it.runIf(hasMeetingPackAssembler)(
+    "changing a linked decision before cut-off changes the live presentation; the issued meeting-pack snapshot still returns the old decision (real meeting_pack assembler)",
+    async () => {
+      const a = await meeting(17);
+      const ask = await raiseAsk(send, x, x.sponsor.id, plusDays(today, 20), { title: "Synthetic: pack title one" });
+      const item = await send("POST", `${T()}/meetings/${a}/agenda-items`, {
+        session: x.lead.session,
+        body: { itemKind: "executive_ask", title: "Synthetic: the vendor decision", decisionId: ask.id },
+      });
+      expect(item.status, JSON.stringify(item.body)).toBe(201);
+      const live1 = await send("GET", P(a), { session: x.lead.session });
+      expect(live1.status, JSON.stringify(live1.body).slice(0, 400)).toBe(200);
+      expect(JSON.stringify(live1.body.document)).toContain("Synthetic: pack title one");
+      const gen = await send("POST", `${T()}/reports/meeting_pack/generate`, {
+        session: x.lead.session,
+        body: { subjectId: a },
+      });
+      expect(gen.status, JSON.stringify(gen.body).slice(0, 400)).toBe(201);
+      const issued = await send("POST", `${T()}/report-snapshots/${gen.body.id}/issue`, {
+        session: x.lead.session,
+        headers: ifm(gen.body.version),
+        body: {},
+      });
+      expect(issued.status).toBe(200);
+      await renameDecision(ask.id, "Synthetic: pack title two");
+      const live2 = await send("GET", P(a), { session: x.lead.session });
+      expect(JSON.stringify(live2.body.document)).toContain("Synthetic: pack title two");
+      const pack = await send("GET", P(a, gen.body.id), { session: x.lead.session });
+      expect(pack.body.mode).toBe("snapshot");
+      expect(JSON.stringify(pack.body.document)).toContain("Synthetic: pack title one");
+      expect(JSON.stringify(pack.body.document)).not.toContain("Synthetic: pack title two");
+    },
+  );
 });
 
 describe("presentation authorization (transformation.read; AUD reads)", () => {

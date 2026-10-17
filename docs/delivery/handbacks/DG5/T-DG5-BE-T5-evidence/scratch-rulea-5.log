@@ -1,0 +1,42 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvco1ydc_13ee3939 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/procedures/adopted-step-authorization.test.ts (2 tests | 1 failed) 1814ms
+   × D-167: an adopted step is read and acted on with T's authorization and its assignee role > T's Lead completes draft_charter; a user without TL on T gets 403 or 404; other operations keep organization scope 802ms
+     → expected [ 404, 'not_found' ] to deeply equal [ 403, 'procedure_step.not_assignee' ]
+   ✓ D-167: an adopted step is read and acted on with T's authorization and its assignee role > the organization-scope Lead keeps its rights: lists and reads the instance, and completes an adopted step  347ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/adopted-step-authorization.test.ts > D-167: an adopted step is read and acted on with T's authorization and its assignee role > T's Lead completes draft_charter; a user without TL on T gets 403 or 404; other operations keep organization scope
+AssertionError: expected [ 404, 'not_found' ] to deeply equal [ 403, 'procedure_step.not_assignee' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "procedure_step.not_assignee",[39m
+[31m+   404,[39m
+[31m+   "not_found",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/procedures/adopted-step-authorization.test.ts:168:45
+    166|       body: { inputValues: { transformationName: "Synthetic renamed" }…
+    167|     });
+    168|     expect([input.status, input.body.code]).toEqual([403, "procedure_s…
+       |                                             ^
+    169|     // ... and the list: T's Lead does not list the organization-scope…
+    170|     const listed = await call<Body>(api.app, "GET", `${I}?limit=100`, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  17:24:18
+   Duration  19.14s (transform 6.48s, setup 0ms, collect 12.49s, tests 1.81s, environment 0ms, prepare 109ms)
+

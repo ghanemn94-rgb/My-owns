@@ -399,6 +399,142 @@ export async function authorizeInstanceWrite(
   return { principal: fresh, userId: fresh.userId, target, audit: auditContextOf(request) };
 }
 
+// D-167 (Rule A clarified; REQ-S06-003). A step whose `transformation_id` was adopted (an organization-scope instance's
+// step that took the transformation T its `capture_intake` produced, 0096) is read and acted on with T's authorization
+// and the step's assignee role: T's Lead acts on `draft_charter` although nobody holds TL at organization scope. Only
+// for that step: the instance's other steps, its list and its organization-level reads keep organization scope, and
+// every organization-scope actor who could act before keeps that right (the organization scope is tried first).
+
+/** T when `step` adopted its organization-scope instance's transformation (D-166 Rule A), else null. */
+export function adoptedTransformationOf(
+  i: Pick<ProcedureInstanceRow, "transformation_id">,
+  step: Pick<ProcedureStepInstanceRow, "transformation_id">,
+): string | null {
+  return i.transformation_id === null && step.transformation_id !== null ? step.transformation_id : null;
+}
+
+/** The scopes a step is authorized in: its instance's, then (an adopted step) T's. */
+export async function stepTargets(
+  db: DbOrTx,
+  i: Pick<ProcedureInstanceRow, "organization_id" | "transformation_id">,
+  step: Pick<ProcedureStepInstanceRow, "transformation_id"> | null,
+): Promise<ResolvedTarget[]> {
+  const targets = [await instanceTarget(db, i)];
+  const t = step === null ? null : adoptedTransformationOf(i, step);
+  if (t !== null) {
+    const adopted = await resolveTarget(db, { type: "transformation", id: t });
+    if (adopted !== null) targets.push(adopted);
+  }
+  return targets;
+}
+
+/** The scope a step's assignee must hold its role in: T for an adopted step, else the instance's scope. */
+export async function stepRoleTarget(
+  db: DbOrTx,
+  i: Pick<ProcedureInstanceRow, "organization_id" | "transformation_id">,
+  step: Pick<ProcedureStepInstanceRow, "transformation_id">,
+): Promise<ResolvedTarget> {
+  const targets = await stepTargets(db, i, step);
+  return targets[targets.length - 1]!;
+}
+
+export const isNotFound = (err: unknown): boolean => err instanceof HttpProblem && err.status === 404;
+
+/** The read gate on several scopes: the first scope that grants procedure.read (404 when none does). */
+export async function requireReadInAny(
+  db: DbOrTx,
+  principal: Principal,
+  targets: readonly ResolvedTarget[],
+): Promise<ResolvedTarget> {
+  let first: unknown = null;
+  for (const t of targets) {
+    try {
+      return await requireRead(db, principal, "procedure.read", t);
+    } catch (err) {
+      first ??= err;
+    }
+  }
+  throw first ?? problems.notFound();
+}
+
+/**
+ * The read of ONE instance (getProcedureInstance; D-167): the instance's scope, else T of one of its adopted steps (the
+ * read that acting on that step needs, e.g. the version for If-Match). The instance list keeps the instance's scope.
+ */
+export async function requireInstanceOrAdoptedRead(
+  db: DbOrTx,
+  principal: Principal,
+  i: Pick<ProcedureInstanceRow, "id" | "organization_id" | "transformation_id">,
+): Promise<void> {
+  try {
+    await requireInstanceRead(db, principal, i);
+  } catch (err) {
+    if (i.transformation_id !== null || !isNotFound(err)) throw err;
+    const adopted = await db
+      .selectFrom("procedure_step_instance")
+      .select("transformation_id")
+      .distinct()
+      .where("procedure_instance_id", "=", i.id)
+      .where("transformation_id", "is not", null)
+      .orderBy("transformation_id")
+      .execute();
+    for (const a of adopted) {
+      const t = await resolveTarget(db, { type: "transformation", id: a.transformation_id! });
+      if (t === null) continue;
+      try {
+        await requireRead(db, principal, "procedure.read", t);
+        return;
+      } catch {
+        // not readable in this T either: try the next one, else the instance's own 404
+      }
+    }
+    throw err;
+  }
+}
+
+/**
+ * Commit-time authorization of a write on ONE step (D-167): `authorizeInstanceWrite` for a step that was not adopted.
+ * For an adopted step, each of its scopes (the organization first, then T) is tried with the read gate, `permission`
+ * and, when `actorStep` is given, the step-actor rule; the first scope where all hold is the acting scope. When none
+ * does, the refusal of a scope the caller can read (403) wins over a 404, as for any other step.
+ */
+export async function authorizeStepWrite(
+  tx: Tx,
+  request: FastifyRequest,
+  i: ProcedureInstanceRow,
+  step: ProcedureStepInstanceRow | null,
+  permission: Permission,
+  actorStep: ProcedureStepInstanceRow | null,
+): Promise<Acting> {
+  if (step === null || adoptedTransformationOf(i, step) === null) {
+    const acting = await authorizeInstanceWrite(tx, request, i, permission);
+    if (actorStep !== null) requireStepActor(acting, actorStep);
+    return acting;
+  }
+  const targets = await stepTargets(tx, i, step);
+  await requireReadInAny(tx, principalOf(request), targets);
+  const fresh = await refreshPrincipal(tx, request);
+  let refused: unknown = null;
+  for (const t of targets) {
+    try {
+      let target: ResolvedTarget;
+      try {
+        target = await requireRead(tx, fresh, "procedure.read", t);
+        await requireAction(tx, fresh, permission, target);
+      } catch (err) {
+        throw commitTimeDenial(err);
+      }
+      if (fresh.userId === null) throw problems.forbidden();
+      const acting: Acting = { principal: fresh, userId: fresh.userId, target, audit: auditContextOf(request) };
+      if (actorStep !== null) requireStepActor(acting, actorStep);
+      return acting;
+    } catch (err) {
+      if (refused === null || (isNotFound(refused) && !isNotFound(err))) refused = err;
+    }
+  }
+  throw refused ?? problems.notFound();
+}
+
 /** True when some grant of `grants` is of `roleCode` and applies to `target` for `permission`. */
 export function holdsRoleIn(
   grants: Principal["grants"],
@@ -648,7 +784,7 @@ const ROUTING_WAIT_CODES: ReadonlySet<string> = new Set(["routing.role_unmapped"
 
 /** True for a step that adopted its organization-scope instance's transformation (D-166 Rule A). */
 function isAdopted(b: InstanceBundle, step: ProcedureStepInstanceRow): boolean {
-  return b.instance.transformation_id === null && step.transformation_id !== null;
+  return adoptedTransformationOf(b.instance, step) !== null;
 }
 
 /**
@@ -1139,16 +1275,23 @@ async function openStep(
   const { instanceId, stepKey } = parse(stepParams, request.params, "params");
   const seen = await findInstance(tx, instanceId);
   if (seen === undefined) throw problems.notFound();
-  await requireInstanceRead(tx, principalOf(request), seen);
+  // D-167: an adopted step is read in its instance's scope or in T (the step's transformation).
+  const seenStep = await tx
+    .selectFrom("procedure_step_instance")
+    .select("transformation_id")
+    .where("procedure_instance_id", "=", instanceId)
+    .where("step_key", "=", stepKey)
+    .executeTakeFirst();
+  await requireReadInAny(tx, principalOf(request), await stepTargets(tx, seen, seenStep ?? null));
   const i = await lockAndLoad(tx, instanceId);
-  const acting = await authorizeInstanceWrite(tx, request, i, permission);
   const bundle = await loadBundle(tx, i);
   const step = bundle.steps.find((s) => s.step_key === stepKey);
   const sd = step === undefined ? undefined : bundle.stepDefinitions.get(step.step_definition_id);
-  if (step === undefined || sd === undefined) throw problems.notFound();
   // An approval step is acted on by nobody here (its business approver decides the approval): the step's own refusal
   // (decided_through_approval / not_skippable) answers instead of not_assignee.
-  if (checkActor && sd.step_kind !== "approval") requireStepActor(acting, step);
+  const actorStep = checkActor && step !== undefined && sd !== undefined && sd.step_kind !== "approval" ? step : null;
+  const acting = await authorizeStepWrite(tx, request, i, step ?? null, permission, actorStep);
+  if (step === undefined || sd === undefined) throw problems.notFound();
   const expected = requireIfMatch(request);
   if (expected !== i.version) throw problems.versionConflict(i.version);
   if (i.status !== "active") throw refusal("procedure.not_active");
@@ -1254,7 +1397,7 @@ async function assignStep(tx: Tx, request: FastifyRequest): Promise<InstanceBund
     user === undefined ||
     user.status !== "active" ||
     user.organization_id !== bundle.instance.organization_id ||
-    !holdsRoleIn(grants, step.assignee_role_code, "procedure.act", acting.target)
+    !holdsRoleIn(grants, step.assignee_role_code, "procedure.act", await stepRoleTarget(tx, bundle.instance, step))
   )
     throw new HttpProblem({
       status: 422,
@@ -1275,7 +1418,18 @@ async function linkEvidence(tx: Tx, request: FastifyRequest): Promise<InstanceBu
   const body = parseBody(procedureStepEvidence, request.body);
   const { acting, bundle, step } = await openStep(tx, request, "procedure.act", true);
   if (step.status !== "active") throw refusal("procedure_step.not_active");
-  if (bundle.instance.transformation_id === null) throw refusal("procedure_step.output_record_invalid");
+  // D-167: an adopted step's evidence is evidence of T, the step's transformation (the 0069 link guard checks only the
+  // organization for an organization-scope instance, so T is checked here).
+  const t = bundle.instance.transformation_id ?? step.transformation_id;
+  if (t === null) throw refusal("procedure_step.output_record_invalid");
+  if (bundle.instance.transformation_id === null) {
+    const ev = await tx
+      .selectFrom("evidence")
+      .select("transformation_id")
+      .where("id", "=", body.evidenceId)
+      .executeTakeFirst();
+    if (ev?.transformation_id !== t) throw refusal("procedure_step.output_record_invalid");
+  }
   await insertLink(tx, acting.audit, bundle.instance, step, "evidence", "evidence", body.evidenceId);
   return finish(tx, acting.audit, await reload(tx, bundle), "step_evidence");
 }

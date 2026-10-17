@@ -1,0 +1,21 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvco779r_46e601d2 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > REQ-S10-013: presentation mode and the printable pack come from the same records > the issued meeting-pack snapshot still returns the old decision after the linked decision changes 320ms
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > REQ-S10-013: presentation mode and the printable pack come from the same records > a snapshot of another meeting, or of another output, is 422 presentation.snapshot_mismatch 249ms
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > REQ-S10-013: presentation mode and the printable pack come from the same records > an unknown snapshot, a snapshot of another transformation and an unknown meeting are 404 222ms
+ ↓ |integration| apps/api/test/integration/governance/presentation.test.ts > REQ-S10-013: presentation mode and the printable pack come from the same records > the live mode answers 404 while no meeting_pack assembler is wired
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > REQ-S10-013: presentation mode and the printable pack come from the same records > the live mode returns the port's document at request time (route plumbing, with a stub assembler) 195ms
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > REQ-S10-013: presentation mode and the printable pack come from the same records > changing a linked decision before cut-off changes the live presentation; the issued meeting-pack snapshot still returns the old decision (real meeting_pack assembler) 298ms
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > presentation authorization (transformation.read; AUD reads) > AUD reads the presentation 7ms
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > presentation authorization (transformation.read; AUD reads) > a caller holding transformation.read nowhere is 403; one holding it elsewhere is 404; anonymous 401 16ms
+ ✓ |integration| apps/api/test/integration/governance/presentation.test.ts > presentation authorization (transformation.read; AUD reads) > malformed input is 400 (a non-UUID snapshot id, an unknown query member, a non-UUID meeting id) 25ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed | 1 skipped (9)
+   Start at  17:28:23
+   Duration  20.44s (transform 6.59s, setup 0ms, collect 12.93s, tests 2.87s, environment 0ms, prepare 74ms)
+

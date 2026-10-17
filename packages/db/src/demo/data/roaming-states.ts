@@ -1,7 +1,8 @@
 // The roaming transformation's workflow states the coverage check needs (ADR-0050 §4–§5; p5-work-split §J.2;
 // T-DG5-BE-T): the phase steps of the six phases (with the MISSING mandatory evidence: steps whose rule is
 // "evidence_linked" and that have no evidence attached), the 90-day launch plan (B0134) with its template tasks, a
-// performance area with a draft BAU handover, and one submitted 25-question health check. Runs after the chains (order 600).
+// performance area with a draft BAU handover, one submitted 25-question health check and (T-DG5-BE-T5) one pending
+// business approval in the demo Business Owner's inbox. Runs after the chains (order 600).
 // SYNTHETIC: an illustrative example, not Mobily actual performance; a seeded approval or decision approves nothing
 // real (M0412).
 import { sql } from "kysely";
@@ -254,6 +255,95 @@ async function seedHealthAssessment(ctx: DemoSeedContext): Promise<void> {
   );
 }
 
+/** The seeded pending approval (T-DG5-BE-T5, D-167; QA-E2 O-1), with its decision-rights row and design decision. */
+export const DEMO_PENDING_APPROVAL = {
+  id: rtId(RT_BLOCK.approval, 1),
+  /** The T04 design decision D-01 (roaming.ts, roaming.t04.design_decision). */
+  decisionId: rtId(RT_BLOCK.decision, 1),
+  /** The T11 row `target_state_design` (third template row): Approve = BO (Business owner), 10 working days. */
+  decisionRightId: rtId(RT_BLOCK.decisionRight, 3),
+  partyCode: "BO",
+  /** roaming.user.bo, the demo Business Owner: the person the BO party is mapped to on the roaming transformation. */
+  assigneeUserId: U.bo,
+  requestedBy: U.tl,
+} as const;
+
+/**
+ * One pending business approval in the demo Business Owner's inbox (REQ-S18-002 "pending approval"; QA-E2 O-1): the
+ * Transformation Lead asks for the T04 design decision D-01 to be decided through the T11 row "Target-state design",
+ * whose Approve party is BO. As the product records it (approvals.ts requestApprovalInTx): the BO party mapped to
+ * roaming.user.bo (role mapping), the approval (pending, round 1, routed to that person, SoD requester excluded; the
+ * 10-working-day SLA has no due date because the demo organization has no business calendar: Unknown,
+ * `calendar_not_configured`, never a guessed date), and the `approval_decision` task with its inbox notification.
+ * SYNTHETIC: a demo request by a demo user; nobody has decided it, and deciding it approves nothing real (M0412).
+ */
+async function seedPendingApproval(ctx: DemoSeedContext): Promise<void> {
+  const a = DEMO_PENDING_APPROVAL;
+  const at = ctx.at({ days: -3 });
+  await ctx.insert("role_mapping", "roaming.role_mapping.bo", {
+    id: rtId(RT_BLOCK.roleMapping, 1),
+    ...scope,
+    party_code: a.partyCode,
+    target_kind: "user",
+    user_id: a.assigneeUserId,
+    ...st(at, a.requestedBy),
+  });
+  const title = "Decide D-01: roaming pass architecture (synthetic)";
+  await ctx.insert("approval", "roaming.approval.pending", {
+    id: a.id,
+    ...scope,
+    approval_type: "decision_request",
+    subject_type: "decision",
+    subject_id: a.decisionId,
+    subject_version: 1,
+    decision_right_id: a.decisionRightId,
+    title,
+    request_note: "Synthetic demo request: please decide the roaming pass architecture (illustrative example).",
+    requested_by: a.requestedBy,
+    requested_at: at,
+    request_business_date: ctx.date(-3),
+    assignee_party_code: a.partyCode,
+    assignee_user_id: a.assigneeUserId,
+    sla_type: "working_days",
+    due_date: null,
+    due_unknown_reason: "calendar_not_configured",
+    sod_policy: "requester_excluded",
+    ...st(at, a.requestedBy),
+  });
+  const dedupe = `approval.assign:${a.id}:1:unknown:${a.assigneeUserId}`;
+  const linkPath = `/my-work/approvals/${a.id}`;
+  const params = JSON.stringify({ title, approvalType: "decision_request", roundNo: 1, dueDate: null });
+  const workItem = rtId(RT_BLOCK.workItem, 1);
+  await ctx.insert("work_item", "roaming.work_item.approval_decision", {
+    id: workItem,
+    ...scope,
+    kind: "approval_decision",
+    assignee_user_id: a.assigneeUserId,
+    subject_type: "approval",
+    subject_id: a.id,
+    link_path: linkPath,
+    message_key: "approvals.task.decide",
+    message_params: params,
+    due_date: null,
+    dedupe_key: dedupe,
+    created_source: "api",
+    ...st(at, a.requestedBy),
+  });
+  await ctx.insert("inbox_notification", "roaming.inbox_notification.approval_decision", {
+    id: rtId(RT_BLOCK.inboxNotification, 1),
+    ...scope,
+    recipient_user_id: a.assigneeUserId,
+    work_item_id: workItem,
+    link_path: linkPath,
+    message_key: "approvals.task.decide",
+    message_params: params,
+    dedupe_key: dedupe,
+    urgency: "normal",
+    delivery_state: "delivered",
+    ...st(at, a.requestedBy),
+  });
+}
+
 export const ROAMING_STATES_MODULE: DemoDatasetModule = {
   key: "roaming.states",
   order: 600,
@@ -262,5 +352,6 @@ export const ROAMING_STATES_MODULE: DemoDatasetModule = {
     await seedLaunchPlan(ctx);
     await seedBauHandover(ctx);
     await seedHealthAssessment(ctx);
+    await seedPendingApproval(ctx); // T-DG5-BE-T5 (D-167; QA-E2 O-1)
   },
 };

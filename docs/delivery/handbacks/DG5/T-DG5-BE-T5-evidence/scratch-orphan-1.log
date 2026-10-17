@@ -1,0 +1,38 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvcnjq5f_1d480511 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/exports-orphan.test.ts (2 tests | 2 skipped) 1428ms
+   ↓ D-QA-F2-3: no orphan export file after a killed attempt > attempt 1 is killed after store.put: attempt 2 removes its file when it starts; only a2 remains; other jobs untouched
+   ↓ D-QA-F2-3: no orphan export file after a killed attempt > an earlier attempt's file written while the succeeding attempt renders is removed when it succeeds
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/exports-orphan.test.ts [ apps/api/test/integration/reporting/exports-orphan.test.ts ]
+AssertionError: createRaidEntry: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A Risk needs a Probability (High, Medium or Low).","code":"raid.probability_required","requestId":"01a14ad7-f84c-71d9-8c9d-52520ec0359d","errors":[{"pointer":"/probability","code":"raid.probability_required","message":"A Risk needs a Probability (High, Medium or Low)."}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/reporting/exports-orphan.test.ts:23:76
+     21| 
+     22| const ok = (res: { status: number; body: unknown }, status: number, wh…
+     23|   expect(res.status, `${what}: ${JSON.stringify(res.body).slice(0, 800…
+       |                                                                            ^
+     24|   return res.body as Body;
+     25| };
+ ❯ apps/api/test/integration/reporting/exports-orphan.test.ts:63:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 skipped (2)
+   Start at  17:10:08
+   Duration  22.29s (transform 7.02s, setup 0ms, collect 14.71s, tests 1.43s, environment 0ms, prepare 164ms)
+
