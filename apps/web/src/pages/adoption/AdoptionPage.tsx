@@ -27,6 +27,15 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { P4FormDialog, textOf, type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
 import { useActionRunner } from "./actions.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): the form framework on T13 (extension fields in the create form, Form
+// tools to edit them, the record view) and the template's question tag in the form header.
+import {
+  ExtensionValues,
+  FormToolsButton,
+  useExtensionEntry,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 import {
   adoptionPaths,
   useAdoptionPlan,
@@ -174,6 +183,7 @@ function PlanTable() {
         </>
       }
     >
+      <TemplateProvenance templateCode="T13" />
       <QueryState query={plan}>
         {(p) => (
           <RegisterTable
@@ -206,6 +216,8 @@ function GroupsRegister() {
   const { byId } = usePeople(ws.tid);
   const [dialog, setDialog] = useState<GroupDialog | null>(null);
   const canEdit = ws.can("adoption.edit");
+  const ext = useExtensionEntry(ws.tid, "T13", ws.tr.currency, ws.can);
+  const refresh = useP4Refresh(ws.tid);
   const columns: RegisterColumn<StakeholderGroup>[] = [
     {
       id: "code",
@@ -241,12 +253,34 @@ function GroupsRegister() {
       cell: (g) => <PersonName id={g.ownerUserId} people={byId} />,
     },
     { id: "status", header: t("adoptionP4.col.status"), cell: (g) => <StatusText status={g.status} /> },
+    ...(ext.hasFields
+      ? [
+          {
+            id: "extensions",
+            header: t("forms.extensions.viewTitle"),
+            cell: (g: StakeholderGroup) => <ExtensionValues tid={ws.tid} recordType="T13" recordId={g.id} />,
+          },
+        ]
+      : []),
     {
       id: "rowActions",
       header: t("adoptionP4.col.actions"),
       hideable: false,
       cell: (g) => (
         <span className="chip-row">
+          <FormToolsButton
+            tid={ws.tid}
+            recordType="T13"
+            recordId={g.id}
+            recordLabel={`${g.code} ${g.name}`}
+            record={g}
+            sourceFields={[]}
+            updateUrl={adoptionPaths.group(ws.tid, g.id)}
+            canWrite={canEdit && g.status === "active"}
+            canComment={ws.can("form_record.comment")}
+            refreshRecord={refresh}
+            currency={ws.tr.currency}
+          />
           <button
             type="button"
             className="button button--secondary button--small"
@@ -321,7 +355,8 @@ function GroupsRegister() {
           />
         )}
       </QueryState>
-      {dialog?.kind === "create" ? <GroupDialogForm onClose={() => setDialog(null)} /> : null}
+      {ext.outcome}
+      {dialog?.kind === "create" ? <GroupDialogForm ext={ext} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "edit" ? <GroupDialogForm group={dialog.group} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "archive" ? <ArchiveGroupDialog group={dialog.group} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "people" ? <GroupPeopleDialog group={dialog.group} onClose={() => setDialog(null)} /> : null}
@@ -329,7 +364,15 @@ function GroupsRegister() {
   );
 }
 
-function GroupDialogForm({ group, onClose }: { group?: StakeholderGroup; onClose: () => void }) {
+function GroupDialogForm({
+  group,
+  ext,
+  onClose,
+}: {
+  group?: StakeholderGroup;
+  ext?: ExtensionEntry;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
@@ -419,7 +462,12 @@ function GroupDialogForm({ group, onClose }: { group?: StakeholderGroup; onClose
     <P4FormDialog
       title={group ? t("adoptionP4.groups.editTitle", { code: group.code }) : t("adoptionP4.groups.create")}
       description={t("adoptionP4.groups.formIntro")}
-      note={<ProvisionalAr />}
+      note={
+        <>
+          <ProvisionalAr />
+          {group ? null : ext?.node}
+        </>
+      }
       fields={fields}
       initial={initial}
       submitLabel={group ? t("adoptionP4.save") : t("adoptionP4.groups.createSubmit")}
@@ -431,6 +479,7 @@ function GroupDialogForm({ group, onClose }: { group?: StakeholderGroup; onClose
         const body = build(v);
         if ((body["interventionTypes"] as string[]).length === 0)
           return { fieldErrors: { [`iv_${STAKEHOLDER_INTERVENTION_TYPES[0]}`]: "validation.required" } };
+        if (!group && ext && !ext.check()) return { fieldErrors: { extensionFields: "validation" } };
         if (!group) {
           const out = { ...body };
           for (const k of ["description", "influence", "interventionPlan", "headcount", "adoptionKpiDefinitionId"])
@@ -443,7 +492,10 @@ function GroupDialogForm({ group, onClose }: { group?: StakeholderGroup; onClose
           if (JSON.stringify(val) !== JSON.stringify(before[k])) patch[k] = val;
         return Object.keys(patch).length === 0 ? { fieldErrors: { name: "validation.empty_patch" } } : patch;
       }}
-      onDone={refresh}
+      onDone={async (result) => {
+        if (!group && ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );

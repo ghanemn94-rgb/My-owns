@@ -364,7 +364,8 @@ describe.each(["en", "ar"] as const)("form framework on T14 (%s)", (locale) => {
     renderApp(`/transformations/${TR_ID}/benefits/${BENEFIT_ID}`, { i18n: createI18n(locale) });
     const root = await framework();
     fireEvent.change(await within(root).findByLabelText(locale === "en" ? "Uplift" : "الزيادة"), {
-      target: { value: "150%" },
+      // T-DG5-FE-C2: a value the web's own check accepts, so the server's stubbed 400 code is what lands on the field.
+      target: { value: "0.5" },
     });
     fireEvent.click(within(root).getByRole("button", { name: t("forms.edit.save") }));
     await waitFor(() =>

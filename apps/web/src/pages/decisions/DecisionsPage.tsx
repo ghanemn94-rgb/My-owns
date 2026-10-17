@@ -21,6 +21,9 @@ import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { tomDimensionLabel, tomDimensionOptions } from "../../lib/methodology.ts";
 // T-DG4-FE-E (REQ-PB-073): champion constraints are visible on the T04 decision page.
 import { ChampionConstraintsSection } from "../adoption/ChampionConstraints.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function DecisionsPage() {
   const { t } = useTranslation();
@@ -46,6 +49,7 @@ function DecisionLog() {
   const { people, byId } = usePeople(ws.tid);
   const refresh = useP2Refresh(ws.tid);
   const [dialog, setDialog] = useState<{ record: Decision | null } | null>(null);
+  const ext = useExtensionCreate("T04");
   const [addingOption, setAddingOption] = useState<Decision | null>(null);
   const [deciding, setDeciding] = useState<Decision | null>(null);
   const canEdit = ws.can("decision.edit");
@@ -201,6 +205,11 @@ function DecisionLog() {
           <span className="muted">{t("decisions.notDecided")}</span>
         ),
     },
+    extensionToolsColumn<Decision>(t("forms.extensions.columnHeader"), "T04", {
+      label: (d) => `${d.code} ${d.title}`,
+      canWrite: () => canEdit,
+      refresh,
+    }),
     {
       id: "actions",
       header: t("common.field.actions"),
@@ -264,6 +273,7 @@ function DecisionLog() {
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T04" />
       <QueryState query={decisions}>
         {(list) => (
           <RegisterTable
@@ -278,6 +288,7 @@ function DecisionLog() {
           />
         )}
       </QueryState>
+      {ext.outcome}
       {dialog ? (
         <RecordDialog<Decision>
           title={dialog.record ? t("decisions.editTitle", { code: dialog.record.code }) : t("decisions.add")}
@@ -297,18 +308,21 @@ function DecisionLog() {
               .map((title) => ({ title }));
             return options.length > 0 ? { ...rest, options } : rest;
           }}
-          createSchema={decisionCreate}
+          createSchema={ext.guard(decisionCreate)}
           updateSchema={decisionUpdate}
           createUrl="/api/v1/decisions"
           updateUrl={(r) => `/api/v1/decisions/${r.id}`}
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            if (!dialog.record) await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
-        />
+        >
+          {dialog.record ? null : ext.node}
+        </RecordDialog>
       ) : null}
       {addingOption ? (
         <RecordDialog<Decision>

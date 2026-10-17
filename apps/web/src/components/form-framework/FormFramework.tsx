@@ -25,7 +25,9 @@ import { Icon } from "../Icon.tsx";
 import { ConflictPanel, ErrorState, QueryState, type ConflictRow } from "../States.tsx";
 import {
   changedFieldLabels,
+  checkExtensionValue,
   currencyCodeOf,
+  extensionErrorKey,
   draftOfRecord,
   enterableExtensionFields,
   helpOf,
@@ -311,6 +313,8 @@ function EditForm(
   };
   const { notice, setNotice } = props;
   const [conflict, setConflict] = useState<{ yourVersion: number; currentVersion: number | null } | null>(null);
+  // T-DG5-FE-C2 (F-DG5-QA-A-4): the codes of the web's own check of the extension values (shared validators), by key.
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const readOnly = !props.canWrite;
   const helpByKey = new Map(props.schema.fields.map((f) => [f.key, f]));
 
@@ -385,6 +389,13 @@ function EditForm(
     setNotice(null);
     const changes = sourceChanges();
     const customDirty = customChanged();
+    // T-DG5-FE-C2: the changed extension values are checked with the API's own validators before anything is sent.
+    const local = customDirty ? localCheck(fields, values, props.currency) : {};
+    setLocalErrors(local);
+    if (Object.keys(local).length > 0) {
+      writer.setError(null);
+      return;
+    }
     if (Object.keys(changes).length === 0 && !customDirty) {
       setNotice(t("forms.edit.nothingChanged"));
       return;
@@ -503,7 +514,8 @@ function EditForm(
         </p>
       ) : null}
 
-      <fieldset className="ff-fieldset" disabled={readOnly}>
+      {/* T-DG5-FE-C2: a host whose own dialog edits the source fields passes none; the fieldset is then not shown. */}
+      <fieldset className="ff-fieldset" disabled={readOnly} hidden={props.sourceFields.length === 0}>
         <legend>{t("forms.edit.sourceTitle")}</legend>
         {props.sourceFields.map((f) => {
           const sf = f.schemaKey ? helpByKey.get(f.schemaKey) : undefined;
@@ -559,7 +571,13 @@ function EditForm(
             field={f}
             text={values.custom[f.key] ?? ""}
             currencyCode={values.currency[f.key] ?? props.currency}
-            error={fieldErrorFor(t, writer.error, `/values/${f.key}`)}
+            error={extensionFieldError(
+              t,
+              localErrors[f.key] ?? serverFieldCode(writer.error, `/values/${f.key}`),
+              f,
+              values.custom[f.key] ?? "",
+              values.currency[f.key] ?? props.currency,
+            )}
             onText={(v) => editCustom(f.key, v)}
             onCurrency={(v) => editCurrency(f.key, v)}
           />
@@ -609,6 +627,37 @@ function EditForm(
   );
 }
 
+/** The changed-or-not extension values that the shared validators refuse, as field codes by key (none: {}). */
+function localCheck(fields: readonly FormField[], values: Values, currency: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const f of fields) {
+    const r = checkExtensionValue(f, values.custom[f.key] ?? "", values.currency[f.key] ?? currency);
+    if (!r.ok) out[f.key] = r.code;
+  }
+  return out;
+}
+
+/** The server's 400 field code at `pointer`, if any. */
+function serverFieldCode(error: unknown, pointer: string): string | undefined {
+  return error instanceof ApiError ? error.fieldErrors.find((e) => e.pointer === pointer)?.code : undefined;
+}
+
+/**
+ * The message of an extension field error (T-DG5-FE-C2; F-DG5-QA-A-4): a well-formed value outside the field's
+ * min/max names the limit (local check or the server's range refusal), any other code is translated as itself.
+ */
+export function extensionFieldError(
+  t: TFunction,
+  code: string | undefined,
+  field: FormField,
+  text: string,
+  currencyCode: string,
+): string | undefined {
+  if (!code) return undefined;
+  const k = extensionErrorKey(code, field, text, currencyCode);
+  return "key" in k ? t(k.key, k.params) : fieldErrorMessage(t, k.code);
+}
+
 /** The translated message of the server's field error at `pointer` (400 field codes of ADR-0041 §10), if any. */
 function fieldErrorFor(t: TFunction, error: unknown, pointer: string): string | undefined {
   if (!(error instanceof ApiError)) return undefined;
@@ -616,7 +665,7 @@ function fieldErrorFor(t: TFunction, error: unknown, pointer: string): string | 
   return fe ? fieldErrorMessage(t, fe.code) : undefined;
 }
 
-function ExtensionInput({
+export function ExtensionInput({
   field,
   text,
   currencyCode,

@@ -16,6 +16,8 @@ import { usePeople } from "../../components/People.tsx";
 import { RecordDialog, type FieldSpec } from "../../components/RecordForm.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import type { RoadmapWave } from "./api.ts";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import type { ExtensionEntry } from "../../components/form-framework/index.ts";
 
 /** Wave problem codes (`roadmap.problem.roadmap_wave__*`) are translated from the roadmap namespace first. */
 export const ROADMAP_NS: readonly string[] = ["roadmap"];
@@ -94,7 +96,7 @@ export function EditWaveDialog({ wave, onClose }: { wave: RoadmapWave; onClose: 
   );
 }
 
-export function AddWaveDialog({ onClose }: { onClose: () => void }) {
+export function AddWaveDialog({ ext, onClose }: { ext?: ExtensionEntry; onClose: () => void }) {
   const { t } = useTranslation();
   const { tid } = useWorkspace();
   const { people } = usePeople(tid);
@@ -157,12 +159,16 @@ export function AddWaveDialog({ onClose }: { onClose: () => void }) {
       people={people}
       namespaces={ROADMAP_NS}
       submitLabel={t("roadmap.waves.add")}
-      onSaved={async () => {
+      {...(ext ? { createSchema: ext.guard() } : {})}
+      onSaved={async (saved) => {
+        await ext?.afterCreate(saved);
         if (!(await refresh())) return;
         onClose();
       }}
       onCancel={onClose}
-    />
+    >
+      {ext?.node}
+    </RecordDialog>
   );
 }
 

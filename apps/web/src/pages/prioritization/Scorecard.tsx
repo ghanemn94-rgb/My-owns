@@ -15,6 +15,9 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import { prioritizationUrls, useScoreSheet } from "./api.ts";
 import { ConflictNotice, FormAlert, codeText, isVersionConflict, p3ErrorMessage, useDecimal } from "./p3ui.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { RecordExtensionTools } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 /** The only accepted inputs, mapped to the contract's integer (no Number()/parseInt on user text). */
 const SCORE_VALUES: Record<string, number> = { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 };
@@ -33,6 +36,7 @@ export function ScorecardSection({
   const { t } = useTranslation();
   return (
     <Section id="scorecard" title={t("prioritization.scorecard.title")} intro={t("prioritization.scorecard.intro")}>
+      <TemplateProvenance templateCode="T06" />
       <div className="filters">
         <div className="filters__select">
           <label htmlFor="scorecard-initiative">{t("prioritization.scorecard.initiative")}</label>
@@ -172,82 +176,97 @@ function ScoreForm({
 
   const complete = result.completeness === "complete" && result.weightedScore !== null;
   return (
-    <form
-      ref={ref}
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        void save();
-      }}
-      aria-label={t("prioritization.scorecard.formLabel")}
-    >
-      {conflict ? <ConflictNotice onDismiss={() => setConflict(false)} /> : null}
-      <FormAlert message={serverError ? p3ErrorMessage(t, serverError) : null} />
-      <div className="grid grid--3">
-        {weightSet.weights.map((w) => (
-          <Field
-            key={w.criterionCode}
-            label={t("prioritization.scorecard.scoreFor", {
-              criterion: t(`prioritization.criterion.${w.criterionCode}`),
-              weight: fmt(w.weightPercent, 0, 2),
-            })}
-            hint={t("prioritization.scorecard.scoreHint")}
-            error={errors[w.criterionCode] ? (codeText(t, errors[w.criterionCode]!) ?? undefined) : undefined}
-          >
-            {(control) => (
-              <input
-                {...control}
-                type="number"
-                min={1}
-                max={5}
-                step={1}
-                inputMode="numeric"
-                dir="ltr"
-                name={w.criterionCode}
-                value={values[w.criterionCode] ?? ""}
-                readOnly={!editable}
-                onChange={(e) => setValues({ ...values, [w.criterionCode]: e.target.value })}
-              />
+    <>
+      <form
+        ref={ref}
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          void save();
+        }}
+        aria-label={t("prioritization.scorecard.formLabel")}
+      >
+        {conflict ? <ConflictNotice onDismiss={() => setConflict(false)} /> : null}
+        <FormAlert message={serverError ? p3ErrorMessage(t, serverError) : null} />
+        <div className="grid grid--3">
+          {weightSet.weights.map((w) => (
+            <Field
+              key={w.criterionCode}
+              label={t("prioritization.scorecard.scoreFor", {
+                criterion: t(`prioritization.criterion.${w.criterionCode}`),
+                weight: fmt(w.weightPercent, 0, 2),
+              })}
+              hint={t("prioritization.scorecard.scoreHint")}
+              error={errors[w.criterionCode] ? (codeText(t, errors[w.criterionCode]!) ?? undefined) : undefined}
+            >
+              {(control) => (
+                <input
+                  {...control}
+                  type="number"
+                  min={1}
+                  max={5}
+                  step={1}
+                  inputMode="numeric"
+                  dir="ltr"
+                  name={w.criterionCode}
+                  value={values[w.criterionCode] ?? ""}
+                  readOnly={!editable}
+                  onChange={(e) => setValues({ ...values, [w.criterionCode]: e.target.value })}
+                />
+              )}
+            </Field>
+          ))}
+        </div>
+        <div className="field">
+          <span className="field__label" id="weighted-label">
+            {t("prioritization.scorecard.weighted", { n: result.weightSetVersionNo })}
+          </span>
+          <output aria-labelledby="weighted-label" data-testid="weighted-score" data-completeness={result.completeness}>
+            {complete ? (
+              <strong>
+                <bdi>{fmt(result.weightedScore, 2, 2)}</bdi>
+              </strong>
+            ) : (
+              <span className="status-chip status-chip--unknown">{t("prioritization.incomplete")}</span>
             )}
-          </Field>
+          </output>
+          {!complete && result.missingCriteria.length > 0 ? (
+            <p className="field__hint">
+              {t("prioritization.scorecard.missing", {
+                criteria: result.missingCriteria
+                  .map((c) => t(`prioritization.criterion.${c}`))
+                  .join(t("prioritization.shared.listSeparator")),
+              })}
+            </p>
+          ) : null}
+          <p className="field__hint">{t("prioritization.scorecard.readOnly")}</p>
+        </div>
+        {editable ? (
+          <div className="form__actions">
+            <button type="submit" className="button button--primary" disabled={busy}>
+              {busy ? t("common.state.saving") : t("prioritization.scorecard.save")}
+            </button>
+            {saved ? (
+              <span role="status" className="muted">
+                {t("common.state.saved")}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+      </form>
+      {/* T-DG5-FE-C2: each saved criterion score is a T06 record (its extension values and Form tools). */}
+      <div className="record-extensions-list" data-t06-extensions={scores.length}>
+        {scores.map((s) => (
+          <RecordExtensionTools
+            key={s.id}
+            recordType="T06"
+            record={s}
+            recordLabel={t(`prioritization.criterion.${s.criterionCode}`)}
+            canWrite={editable}
+            refresh={refresh}
+          />
         ))}
       </div>
-      <div className="field">
-        <span className="field__label" id="weighted-label">
-          {t("prioritization.scorecard.weighted", { n: result.weightSetVersionNo })}
-        </span>
-        <output aria-labelledby="weighted-label" data-testid="weighted-score" data-completeness={result.completeness}>
-          {complete ? (
-            <strong>
-              <bdi>{fmt(result.weightedScore, 2, 2)}</bdi>
-            </strong>
-          ) : (
-            <span className="status-chip status-chip--unknown">{t("prioritization.incomplete")}</span>
-          )}
-        </output>
-        {!complete && result.missingCriteria.length > 0 ? (
-          <p className="field__hint">
-            {t("prioritization.scorecard.missing", {
-              criteria: result.missingCriteria
-                .map((c) => t(`prioritization.criterion.${c}`))
-                .join(t("prioritization.shared.listSeparator")),
-            })}
-          </p>
-        ) : null}
-        <p className="field__hint">{t("prioritization.scorecard.readOnly")}</p>
-      </div>
-      {editable ? (
-        <div className="form__actions">
-          <button type="submit" className="button button--primary" disabled={busy}>
-            {busy ? t("common.state.saving") : t("prioritization.scorecard.save")}
-          </button>
-          {saved ? (
-            <span role="status" className="muted">
-              {t("common.state.saved")}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-    </form>
+    </>
   );
 }

@@ -40,6 +40,9 @@ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { pick } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage } from "../../lib/problem.ts";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { RecordExtensionTools, useExtensionCreate } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function DefinePage() {
   const { t } = useTranslation();
@@ -280,6 +283,7 @@ function OutcomesSection() {
   const refresh = useP2Refresh(ws.tid);
   const [dialog, setDialog] = useState<{ record: Outcome | null; parent: string | null } | null>(null);
   const canEdit = ws.can("outcome.edit");
+  const ext = useExtensionCreate("T02");
 
   const list = (outcomes.data ?? []).filter((o) => o.status !== "archived");
   const fields: FieldSpec[] = [
@@ -366,24 +370,28 @@ function OutcomesSection() {
           </>
         )}
       </QueryState>
+      {ext.outcome}
       {dialog ? (
         <RecordDialog<Outcome>
           title={dialog.record ? t("define.outcomes.editTitle") : t("define.outcomes.add")}
           fields={fields}
           record={dialog.record}
           defaults={{ parentOutcomeId: dialog.parent, ownerUserId: null, isTopOutcome: dialog.parent === null }}
-          createSchema={outcomeCreate}
+          createSchema={ext.guard(outcomeCreate)}
           updateSchema={outcomeUpdate}
           createUrl={`/api/v1/transformations/${ws.tid}/outcomes`}
           updateUrl={(r) => `/api/v1/transformations/${ws.tid}/outcomes/${r.id}`}
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            if (!dialog.record) await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
-        />
+        >
+          {dialog.record ? null : ext.node}
+        </RecordDialog>
       ) : null}
     </Section>
   );
@@ -455,6 +463,13 @@ function OutcomeNode({
           </div>
         </dl>
         <GoodOutcomeTest outcome={outcome} />
+        <RecordExtensionTools
+          recordType="T02"
+          record={outcome}
+          recordLabel={outcome.statement}
+          canWrite={canEdit && outcome.status !== "archived"}
+          refresh={onRefresh}
+        />
         {canEdit ? (
           <div className="row-actions">
             <button type="button" className="button button--link button--small" onClick={() => onEdit(outcome)}>
@@ -760,6 +775,7 @@ function T02Section() {
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T02" />
       {canEdit && (activeOutcomes.length === 0 || activeKpis.length === 0) ? (
         <p className="muted small">{t("kpi.t02.prerequisites")}</p>
       ) : null}

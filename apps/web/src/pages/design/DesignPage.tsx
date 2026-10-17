@@ -30,6 +30,9 @@ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { pick, tomDimensionLabel, tomDimensionOptions } from "../../lib/methodology.ts";
 import { JourneysSection } from "./JourneysSection.tsx";
 import { WorkshopsSection } from "./WorkshopsSection.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function DesignPage() {
   const { t } = useTranslation();
@@ -325,6 +328,7 @@ function GapMatrixSection() {
   const { people, byId } = usePeople(ws.tid);
   const refresh = useP2Refresh(ws.tid);
   const [dialog, setDialog] = useState<{ record: TomGap | null } | null>(null);
+  const ext = useExtensionCreate("T03");
   const canCreate = ws.canAny("tom.edit", "tom.contribute");
   const decisionOf = (id: string | null): Decision | undefined =>
     id ? decisions.data?.find((d) => d.id === id) : undefined;
@@ -402,6 +406,11 @@ function GapMatrixSection() {
       cell: (g) => <RecordStatus status={g.status} />,
       sortValue: (g) => g.status,
     },
+    extensionToolsColumn<TomGap>(t("forms.extensions.columnHeader"), "T03", {
+      label: (g) => tomDimensionLabel(ws.methodology, g.dimensionCode, locale) ?? g.dimensionCode,
+      canWrite: () => ws.can("tom.edit"),
+      refresh,
+    }),
     {
       id: "actions",
       header: t("common.field.actions"),
@@ -445,6 +454,7 @@ function GapMatrixSection() {
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T03" />
       <QueryState query={gaps}>
         {(list) => (
           <RegisterTable
@@ -458,24 +468,28 @@ function GapMatrixSection() {
           />
         )}
       </QueryState>
+      {ext.outcome}
       {dialog ? (
         <RecordDialog<TomGap>
           title={dialog.record ? t("design.gaps.editTitle") : t("design.gaps.add")}
           fields={fields}
           record={dialog.record}
           defaults={{ ownerUserId: ws.meId }}
-          createSchema={tomGapCreate}
+          createSchema={ext.guard(tomGapCreate)}
           updateSchema={tomGapUpdate}
           createUrl={`/api/v1/transformations/${ws.tid}/tom-gaps`}
           updateUrl={(r) => `/api/v1/transformations/${ws.tid}/tom-gaps/${r.id}`}
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            if (!dialog.record) await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
-        />
+        >
+          {dialog.record ? null : ext.node}
+        </RecordDialog>
       ) : null}
     </Section>
   );

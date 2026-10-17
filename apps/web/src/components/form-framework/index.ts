@@ -4,3 +4,12 @@ export { ExportButton, ExportDialog } from "./ExportDialog.tsx";
 export { ExtensionBadge, ExtensionNote, EXTENSION_RECORD_TYPES, type ExtensionRecordType } from "./ExtensionBadge.tsx";
 export { FormFramework, type FormFrameworkProps, type SourceFieldSpec } from "./FormFramework.tsx";
 export { FormToolsButton } from "./FormToolsButton.tsx";
+export {
+  ExtensionValues,
+  extensionToolsColumn,
+  extensionValueText,
+  RecordExtensionTools,
+  useExtensionCreate,
+  useExtensionEntry,
+  type ExtensionEntry,
+} from "./ExtensionEntry.tsx";

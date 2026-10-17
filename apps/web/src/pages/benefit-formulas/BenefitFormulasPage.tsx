@@ -30,6 +30,9 @@ import { FinanceStateChip } from "../business-cases/finance.tsx";
 import { caseFieldMessage, FormAlert, splitProblem } from "../business-cases/formKit.tsx";
 import { FORMULAS_URL, useBenefitFormulas, useFormulaExamples } from "./api.ts";
 import { FormulaValue, typeLabel } from "./values.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { useExtensionCreate } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export const FORMULA_WRITE_PERMISSIONS = ["benefit_formula.edit", "finance.validate"] as const;
 
@@ -202,6 +205,7 @@ function FormulaRegister() {
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T09" />
       <QueryState query={formulas}>
         {(list) => (
           <RegisterTable
@@ -398,6 +402,7 @@ function CreateFormulaDialog({ onClose }: { onClose: () => void }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const focusInvalid = useFocusFirstInvalid(dialogRef);
   const idempotencyKey = useRef(newIdempotencyKey());
+  const ext = useExtensionCreate("T09");
   const err = (name: string) => (codes[name] ? caseFieldMessage(t, codes[name]) : undefined);
   const set = (name: CreateField, v: string) => setValues((x) => ({ ...x, [name]: v }));
 
@@ -417,7 +422,7 @@ function CreateFormulaDialog({ onClose }: { onClose: () => void }) {
       }
     setCodes(next);
     setFormCodes(other);
-    if (Object.keys(next).length > 0 || other.length > 0) {
+    if (!ext.check() || Object.keys(next).length > 0 || other.length > 0) {
       focusInvalid();
       return;
     }
@@ -430,6 +435,11 @@ function CreateFormulaDialog({ onClose }: { onClose: () => void }) {
         idempotencyKey: idempotencyKey.current,
       });
       if (action.stale()) return;
+      // A refusal of the extension values keeps the dialog open; a resubmit replays the create (same idempotency key).
+      if (!(await ext.afterCreate(created))) {
+        setBusy(false);
+        return;
+      }
       if (!(await refresh())) return;
       action.navigate(`/transformations/${ws.tid}/benefit-formulas/${created.id}`);
     } catch (e) {
@@ -514,6 +524,8 @@ function CreateFormulaDialog({ onClose }: { onClose: () => void }) {
           )}
         </Field>
       </form>
+      {ext.node}
+      {ext.outcome}
     </Dialog>
   );
 }

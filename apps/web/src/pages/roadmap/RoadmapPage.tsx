@@ -36,6 +36,9 @@ import {
 import { roadmapUrls, useRoadmap, type RoadmapView, type RoadmapWave } from "./api.ts";
 import { AddWaveButton, AddWaveDialog, EditWaveDialog, useWaveDialogs, useWaveEditing } from "./waves.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { RecordExtensionTools, useExtensionCreate } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function RoadmapPage() {
   const { t } = useTranslation();
@@ -101,6 +104,8 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
   const { canEdit, tid } = useWaveEditing();
   const dialogs = useWaveDialogs();
   const { byId } = usePeople(tid);
+  const ext = useExtensionCreate("T07");
+  const refreshWaves = useP3Refresh(tid);
   return (
     <Section
       id="waves"
@@ -108,6 +113,7 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
       intro={t("roadmap.waves.intro")}
       actions={canEdit ? <AddWaveButton onClick={() => dialogs.setAdding(true)} /> : null}
     >
+      <TemplateProvenance templateCode="T07" />
       {locale === "ar" ? (
         <p className="badge badge--provisional" role="note">
           {t("roadmap.waves.provisionalAr")}
@@ -125,6 +131,7 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
               <th scope="col">{t("roadmap.waves.exit")}</th>
               <th scope="col">{t("roadmap.waves.planned")}</th>
               <th scope="col">{t("roadmap.waves.owner")}</th>
+              <th scope="col">{t("forms.extensions.columnHeader")}</th>
               {canEdit ? <th scope="col">{t("roadmap.waves.actions")}</th> : null}
             </tr>
           </thead>
@@ -161,6 +168,15 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
                     <span className="muted">{t("common.value.none")}</span>
                   )}
                 </td>
+                <td>
+                  <RecordExtensionTools
+                    recordType="T07"
+                    record={w}
+                    recordLabel={text(w, "name") ?? w.code}
+                    canWrite={canEdit}
+                    refresh={refreshWaves}
+                  />
+                </td>
                 {canEdit ? (
                   <td>
                     <button
@@ -180,7 +196,8 @@ function WavesSection({ waves }: { waves: readonly RoadmapWave[] }) {
       </TableRegion>
       {active.some((w) => w.isSourceSeeded) ? <p className="muted">{t("roadmap.waves.source")}</p> : null}
       {dialogs.editing ? <EditWaveDialog wave={dialogs.editing} onClose={() => dialogs.setEditing(null)} /> : null}
-      {dialogs.adding ? <AddWaveDialog onClose={() => dialogs.setAdding(false)} /> : null}
+      {ext.outcome}
+      {dialogs.adding ? <AddWaveDialog ext={ext} onClose={() => dialogs.setAdding(false)} /> : null}
     </Section>
   );
 }

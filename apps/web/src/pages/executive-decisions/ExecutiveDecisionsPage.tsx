@@ -35,6 +35,13 @@ import {
   type ExecutiveDecision,
 } from "../meetings/api.ts";
 import { BusinessDecisionNote, Code, DECISION_WRITE_PERMISSIONS, GovSubNav, NS, OverdueFlag } from "../meetings/ui.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import {
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 /** A T16 text column: the text, or Unknown when an earlier record does not have it (never blank, never "None"). */
 function T16Text({ d, value }: { d: ExecutiveDecision; value: string | null }) {
@@ -192,6 +199,7 @@ function LogBody() {
   const log = useExecutiveDecisions(ws.tid, { ...(status ? { status } : {}), ...(overdue ? { overdue: "true" } : {}) });
   const { byId } = usePeople(ws.tid);
   const [creating, setCreating] = useState(false);
+  const ext = useExtensionCreate("T16");
   return (
     <>
       <GovSubNav tid={ws.tid} />
@@ -207,6 +215,7 @@ function LogBody() {
           ) : null
         }
       >
+        <TemplateProvenance templateCode="T16" />
         <div className="filters" role="group" aria-label={t("governanceP4.filters")}>
           <div className="filters__select">
             <label htmlFor="t16-filter-status">{t("governanceP4.meetings.status")}</label>
@@ -242,8 +251,9 @@ function LogBody() {
             />
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
-      {creating ? <CreateDecisionDialog onClose={() => setCreating(false)} /> : null}
+      {creating ? <CreateDecisionDialog ext={ext} onClose={() => setCreating(false)} /> : null}
     </>
   );
 }
@@ -289,7 +299,7 @@ function askFields(t: TFunction, people: readonly { value: string; label: string
 const optionLines = (v: string | boolean | undefined) =>
   (typeof v === "string" ? v.split("\n") : []).map((s) => s.trim()).filter((s) => s !== "");
 
-function CreateDecisionDialog({ onClose }: { onClose: () => void }) {
+function CreateDecisionDialog({ ext, onClose }: { ext?: ExtensionEntry; onClose: () => void }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
@@ -305,7 +315,9 @@ function CreateDecisionDialog({ onClose }: { onClose: () => void }) {
       submitLabel={t("governanceP4.decisions.createSubmit")}
       url={govPaths.decisions(ws.tid)}
       namespaces={NS}
+      note={ext?.node}
       toBody={(v) => {
+        if (ext && !ext.check()) return { fieldErrors: { extensionFields: "validation.invalid" } };
         const options = optionLines(v["options"]);
         if (options.length < 2) return { fieldErrors: { options: "executive_decision.options_too_few" } };
         return {
@@ -319,7 +331,10 @@ function CreateDecisionDialog({ onClose }: { onClose: () => void }) {
           ...(textOf(v["context"]) ? { context: v["context"] } : {}),
         };
       }}
-      onDone={refresh}
+      onDone={async (result) => {
+        if (ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );
@@ -424,6 +439,14 @@ function DecisionBody() {
                     </div>
                   ) : null}
                 </dl>
+                <TemplateProvenance templateCode="T16" />
+                <RecordExtensionTools
+                  recordType="T16"
+                  record={d}
+                  recordLabel={`${d.code} ${d.decision}`}
+                  canWrite={ws.can("executive_decision.create")}
+                  refresh={refresh}
+                />
               </Section>
               <Section id="t16-escalations" title={t("governanceP4.escalations.title")}>
                 <QueryState query={escalations}>{(rows) => <EscalationsTable rows={rows} />}</QueryState>
