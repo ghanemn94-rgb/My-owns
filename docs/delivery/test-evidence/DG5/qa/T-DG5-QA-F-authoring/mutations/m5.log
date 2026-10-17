@@ -1,0 +1,55 @@
+== mutation m5 applied:
+/var/tmp/mth-run.3vTTLV/claude-0/mut/m5/packages/db/dist/demo/guard.js:78:    if (mthEnv === "MUTATION-M5-never")
+== test: tests/qa/integration/a22-operational-readiness.test.ts -t "demo seed command exits"
+port-policy: PostgreSQL listening on port 23720 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.3vTTLV/claude-0/mut/m5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc28onw_4094b333 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests | 1 failed | 7 skipped) 7493ms
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > lists every job_schedule row: never-run shows lastSuccessAt null; nextRunAt is the cron's next instant in its time zone
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > a disabled schedule shows next run null 'disabled' and refuses run-now with 422 job.schedule_disabled
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > every non-admin role gets 403 on the view, a job's detail and run-now
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production
+   × REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes 2741ms
+     → expected [ +0, '' ] to deeply equal [ 3, …(1) ]
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a22-operational-readiness.test.ts > REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes
+AssertionError: expected [ +0, '' ] to deeply equal [ 3, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   3,[39m
+[32m-   "mth-db seed-demo: refused: MTH_ENV is production",[39m
+[31m+   0,[39m
+[31m+   "",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a22-operational-readiness.test.ts:336:61
+    334|       const before = await tableCounts(su(prodDb));
+    335|       const inProdMode = mthDb(["seed-demo"], { NODE_ENV: "production"…
+    336|       expect([inProdMode.status, inProdMode.stderr.trim()]).toEqual([
+       |                                                             ^
+    337|         3,
+    338|         "mth-db seed-demo: refused: MTH_ENV is production",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  07:13:41
+   Duration  22.81s (transform 6.17s, setup 0ms, collect 11.46s, tests 7.49s, environment 0ms, prepare 159ms)
+
+m5 exit=1

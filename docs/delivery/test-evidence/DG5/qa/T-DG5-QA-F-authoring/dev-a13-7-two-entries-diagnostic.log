@@ -1,0 +1,50 @@
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-f
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc0kzcm_2d273d29 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-durable-automation.test.ts (11 tests | 1 failed) 25636ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  3686ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action  1044ms
+   ✓ REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event  4381ms
+   × REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: the last of 1 + retryLimit attempts puts ONE open entry in the queue; the task is not doubled 1745ms
+     → one failure-queue entry for the unit of work: [{"id":"01a1488b-8359-7c8b-8b1e-6b085b73dbd7","source":"rule_execution","queue_name":"automation.evaluate","idempotency_key":"execution:01a1488b-7f70-7764-8382-1ce1b17a0d4e","status":"open"},{"id":"01a1488b-835e-73a4-a5ed-3ccbccb99c15","source":"job","queue_name":"automation.evaluate","idempotency_key":"transformation.created:01a1488b-7d50-705e-abb4-f0fdd08ff7a4","status":"open"}]: expected [ { …(5) }, { …(5) } ] to have a length of 1 but got 2
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused  3398ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried  1493ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder  2563ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task  2903ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > every human-only action type is refused with 422 automation_rule.human_only_action and nothing is saved 168ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run  883ms
+   ✓ A13 harness self-check > automation.evaluate is a worker queue and the bounded QA policy is in force 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-durable-automation.test.ts > REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: the last of 1 + retryLimit attempts puts ONE open entry in the queue; the task is not doubled
+AssertionError: one failure-queue entry for the unit of work: [{"id":"01a1488b-8359-7c8b-8b1e-6b085b73dbd7","source":"rule_execution","queue_name":"automation.evaluate","idempotency_key":"execution:01a1488b-7f70-7764-8382-1ce1b17a0d4e","status":"open"},{"id":"01a1488b-835e-73a4-a5ed-3ccbccb99c15","source":"job","queue_name":"automation.evaluate","idempotency_key":"transformation.created:01a1488b-7d50-705e-abb4-f0fdd08ff7a4","status":"open"}]: expected [ { …(5) }, { …(5) } ] to have a length of 1 but got 2
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+ ❯ tests/qa/integration/a13-durable-automation.test.ts:364:101
+    362|         )
+    363|         .execute();
+    364|       expect(sameWork, `one failure-queue entry for the unit of work: …
+       |                                                                                                     ^
+    365|       expect(failure.allowedActions).toEqual(["retry", "dismiss"]);
+    366|       const execs = await executionFor(rule.id, key);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  06:27:15
+   Duration  41.40s (transform 6.05s, setup 0ms, collect 11.35s, tests 25.64s, environment 0ms, prepare 86ms)
+
