@@ -1,0 +1,57 @@
+== m4 applied (diff of the disposable clone):
+ apps/worker/src/handlers/launch.ts  |  2 +-
+ e2e/a13-automation-recovery.spec.ts | 91 +++++++++++++++++++++++++++++--------
+ e2e/support/a13-a22-stack.ts        | 29 +++++++++++-
+ 3 files changed, 100 insertions(+), 22 deletions(-)
+-      dedupeKey: dayNinetyTaskKey(test.id, userId),
++      dedupeKey: `${dayNinetyTaskKey(test.id, userId)}:${Date.now()}`, // MUTATION M4
+== test: tests/qa/integration/a13-jobs-rerun.test.ts -t "Day-90"
+port-policy: PostgreSQL listening on port 23670 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.md9tJQ/claude-0/mutf2/m4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvcim1lt_22ff5395 (server_encoding UTF8); applied 87 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests | 1 failed | 4 skipped) 6082ms
+   ↓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the same Idempotency-Key returns the existing job (200) and queues nothing more
+   ↓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file
+   ↓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file
+   × A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart 3216ms
+     → three re-deliveries add nothing: expected [ …(4) ] to deeply equal [ Array(1) ]
+   ↓ A13 health check (no job exists, ADR-0048 §8): the retried submit leaves one submitted assessment, one score, three actions > the same submit replayed, and two concurrent submits, change nothing after the first
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-jobs-rerun.test.ts > A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart
+AssertionError: three re-deliveries add nothing: expected [ …(4) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a14a59-7049-71aa-9954-895f8a1ddadc:01a14a59-769f-71e1-be14-2f251526a514",[22m
+[31m+   "01a14a59-7049-71aa-9954-895f8a1ddadc:01a14a59-7891-7732-b571-62259258ef47",[39m
+[31m+   "01a14a59-7049-71aa-9954-895f8a1ddadc:01a14a59-7a84-7609-ac4b-c511dd741eb4",[39m
+[31m+   "01a14a59-7049-71aa-9954-895f8a1ddadc:01a14a59-7c78-7826-8649-4e1fa199ab55",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a13-jobs-rerun.test.ts:303:64
+    301|       for (let i = 0; i < 3; i++) await boss.send("launch.day_ninety_t…
+    302|       await drainedQueue(env, "launch.day_ninety_tests");
+    303|       expect(await items(), "three re-deliveries add nothing").toEqual…
+       |                                                                ^
+    304|       await stopInProcess();
+    305|       await startInProcess();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  14:51:58
+   Duration  23.06s (transform 6.56s, setup 0ms, collect 12.15s, tests 6.08s, environment 0ms, prepare 220ms)
+
+m4 exit=1

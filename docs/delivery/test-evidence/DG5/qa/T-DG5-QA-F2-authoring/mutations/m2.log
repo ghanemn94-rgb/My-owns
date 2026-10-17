@@ -1,0 +1,97 @@
+== m2 applied (diff of the disposable clone):
+ apps/api/src/modules/portfolio/slip-events.ts |  2 +-
+ e2e/a13-automation-recovery.spec.ts           | 91 +++++++++++++++++++++------
+ e2e/support/a13-a22-stack.ts                  | 29 ++++++++-
+ 3 files changed, 100 insertions(+), 22 deletions(-)
+-              forecastFinishAfter: predecessorFinish(i, afterSet),
++              forecastFinishAfter: ((d) => (d === null ? null : new Date(Date.parse(`${d}T00:00:00Z`) + 5 * 86_400_000).toISOString().slice(0, 10)))(predecessorFinish(i, beforeSet)), // MUTATION M2: every dependent moves by the slip
+== test: tests/qa/integration/a13-dependency-slip-rule-b.test.ts 
+port-policy: PostgreSQL listening on port 23670 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.md9tJQ/claude-0/mutf2/m2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvcii0p5_b72b8378 (server_encoding UTF8); applied 87 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts (8 tests | 3 failed) 64479ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > the 5-day slip of a predecessor whose needed-by date is breached records ONE critical slip of 5 days  935ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > the affected list: every initiative reachable from the slip, with its owner 1ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > Rule B: a dependent with no slack moves by the slip (5 days), directly and transitively 0ms
+   × REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > Rule B: a dependent with enough slack does not move 10ms
+     → expected [ '2041-06-10', '2041-06-15' ] to deeply equal [ '2041-06-10', '2041-06-10' ]
+   × REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > Rule B: a dependent without planned_start is Unknown (null) before and after, never 0 nor its own date 1ms
+     → expected [ '2041-06-15', '2041-06-20' ] to deeply equal [ null, null ]
+   × REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > each distinct affected owner is notified ONCE (one dependency_slip work item and one reminder); the predecessor's owner is not 60160ms
+     → Error: timed out after 60000 ms waiting for the dependency.slipped job; outbox [{"event_type":"dependency.slipped","publish_attempts":10,"last_error":"no schema for dependency.slipped v1"}]; jobs []
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > nothing but the slip evidence is stored: the dependents' milestones and planned dates are unchanged 44ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > the slip list is readable with transformation.read (AUD) and refused without it (another org's TL: 404/403) 111ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts > REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > Rule B: a dependent with enough slack does not move
+AssertionError: expected [ '2041-06-10', '2041-06-15' ] to deeply equal [ '2041-06-10', '2041-06-10' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "2041-06-10",[22m
+[32m-   "2041-06-10",[39m
+[31m+   "2041-06-15",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a13-dependency-slip-rule-b.test.ts:232:63
+    230|     expect(slip, "the slip of the first test").toBeDefined();
+    231|     const s3 = (slip.affected as Body[]).find((a) => a.initiativeId ==…
+    232|     expect([s3.forecastFinishBefore, s3.forecastFinishAfter]).toEqual(…
+       |                                                               ^
+    233|   });
+    234| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts > REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > Rule B: a dependent without planned_start is Unknown (null) before and after, never 0 nor its own date
+AssertionError: expected [ '2041-06-15', '2041-06-20' ] to deeply equal [ null, null ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   null,[39m
+[32m-   null,[39m
+[31m+   "2041-06-15",[39m
+[31m+   "2041-06-20",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a13-dependency-slip-rule-b.test.ts:238:63
+    236|     expect(slip, "the slip of the first test").toBeDefined();
+    237|     const s4 = (slip.affected as Body[]).find((a) => a.initiativeId ==…
+    238|     expect([s4.forecastFinishBefore, s4.forecastFinishAfter]).toEqual(…
+       |                                                               ^
+    239|   });
+    240| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts > REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > each distinct affected owner is notified ONCE (one dependency_slip work item and one reminder); the predecessor's owner is not
+Error: Error: timed out after 60000 ms waiting for the dependency.slipped job; outbox [{"event_type":"dependency.slipped","publish_attempts":10,"last_error":"no schema for dependency.slipped v1"}]; jobs []
+ ❯ tests/qa/integration/a13-dependency-slip-rule-b.test.ts:268:15
+    266|           [event.id],
+    267|         );
+    268|         throw new Error(`${String(e)}; outbox ${JSON.stringify(o.rows)…
+       |               ^
+    269|       });
+    270|       await drainedEvent(env, event.id);
+ ❯ tests/qa/integration/a13-dependency-slip-rule-b.test.ts:250:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  14:48:50
+   Duration  84.99s (transform 8.54s, setup 0ms, collect 16.16s, tests 64.48s, environment 0ms, prepare 258ms)
+
+m2 exit=1
