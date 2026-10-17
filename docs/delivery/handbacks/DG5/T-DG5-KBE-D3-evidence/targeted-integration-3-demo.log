@@ -1,0 +1,20 @@
+port-policy: PostgreSQL listening on port 23850 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-d3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbqrb7u_8c11d73e (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)
+KBE-D3 demo business_cases SUM cells: [["group_1_avoided_cost_sar","SUM(D3:D3)","1584000"],["group_1_margin_uplift_sar","SUM(D3:D3)","1920000"],["group_1_revenue_uplift_sar","SUM(D3:D3)","7128000"],["group_1_cost_cash_sar","SUM(D3:D5)","3660000"],["group_1_cost_non_cash_sar","SUM(D3:D3)","1170000"]]
+
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency)
+KBE-D3 demo benefits register SUM cells: [["totals_sar_revenue_uplift","SUM(C3:C3)","222750"],["totals_sar_revenue_uplift","SUM(E3:E3)","0"],["totals_sar_revenue_uplift","SUM(G3:G3)","99000"],["totals_sar_margin_uplift","SUM(C3:C3)","80000"],["totals_sar_margin_uplift","SUM(E3:E3)","0"],["totals_sar_margin_uplift","SUM(G3:G3)","0"],["totals_sar_avoided_cost","SUM(C3:C3)","0"],["totals_sar_avoided_cost","SUM(E3:E3)","0"],["totals_sar_avoided_cost","SUM(G3:G3)","0"]]
+
+ ✓ |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts (2 tests) 6198ms
+   ✓ REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)  418ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  01:52:14
+   Duration  25.21s (transform 6.80s, setup 0ms, collect 13.87s, tests 6.20s, environment 0ms, prepare 131ms)
+

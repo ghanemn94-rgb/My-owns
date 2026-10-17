@@ -14,9 +14,18 @@
 // `baselineState`: validated on an earlier version of the row does not count); a value pool's amounts carry the same
 // Finance validation of the same kind (ADR-0019 §3) and are labelled the same way; a missing amount or value is
 // Unknown with no number, never 0 (rule 5). Every other cell is a record field (rule 6). A baseline's unit is free
-// text, so the value column has the one unit kind `other` and the unit and currency are stated beside it; nothing is
-// summed. Approval state: not_applicable (ADR-0045 §3). Evidence cited: the active DG2 evidence links of every row.
-import { emptyReportParameters, type ReportColumn, type ReportSection, type ReportValue } from "@mth/shared/schemas";
+// text, so the value column has the one unit kind `other` and the unit and currency are stated beside it; it is never
+// summed. The value pools carry the screen's total (`totalValuePools`) as a system SUM total of the upside and downside
+// columns when every pool is in one currency (D-163); an unquantified pool makes it Unknown; no other table is summed.
+// Approval state: not_applicable (ADR-0045 §3). Evidence cited: the active DG2 evidence links of every row.
+import {
+  emptyReportParameters,
+  totalValuePools,
+  type ReportColumn,
+  type ReportRow,
+  type ReportSection,
+  type ReportValue,
+} from "@mth/shared/schemas";
 import { toDiagnosticFinding, toDiagnosticItem } from "../../../transformations/index.ts";
 import {
   citedEvidence,
@@ -32,6 +41,7 @@ import {
   type SourceRecord,
 } from "../assembler.ts";
 import { reportRefusals } from "../definitions.ts";
+import { columnTotals } from "./table-totals.ts";
 import { baselineState, NOT_APPLICABLE, type ValueState } from "../provisional.ts";
 
 const S = { items: "items", findings: "findings", baselines: "baselines", valuePools: "value_pools" } as const;
@@ -241,49 +251,67 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
   for (const b of baselines) sources.push(source(S.baselines, "baseline", b, financeState(b).validation));
 
   // ---------------------------------------------------------------------------------------------- value pools
+  const poolColumns: ReportColumn[] = [
+    column("name", "text"),
+    column("driver", "text"),
+    column("workstream", "code"),
+    column("quantification", "code"),
+    column("upside_amount", "decimal", "currency"),
+    column("downside_amount", "decimal", "currency"),
+    column("unquantified_reason", "text"),
+    column("materiality", "code"),
+    column("confidence", "code"),
+    column("validation", "code"),
+    column("owner", "text"),
+  ];
+  const poolRows: ReportRow[] = pools.map((v) => {
+    const state = financeState(v);
+    const unquantified = v.quantification_status === "unquantified";
+    return {
+      recordType: "value_pool",
+      recordId: v.id,
+      recordVersion: v.version,
+      cells: [
+        textValue(v.name),
+        textValue(v.driver),
+        codeValue(v.workstream_code, "report.diagnostic_workstream"),
+        codeValue(v.quantification_status, "report.quantification_status"),
+        // An unquantified pool has no amount: Unknown (missing), never 0.
+        decimalValue(v.upside_amount, { unitKind: "currency", currency: v.currency, state }),
+        decimalValue(v.downside_amount, { unitKind: "currency", currency: v.currency, state }),
+        // The reason applies only to an unquantified pool.
+        textValue(v.unquantified_reason, "user", unquantified ? undefined : NOT_APPLICABLE),
+        codeValue(v.materiality, "report.materiality"),
+        codeValue(v.confidence, "report.confidence"),
+        codeValue(v.validation_status, "report.validation_status"),
+        owner(v.owner_user_id),
+      ],
+    };
+  });
+  // The screen's total (DiagnosePage ValuePoolTotals: `totalValuePools`, per currency, upside and downside). One
+  // currency: a system SUM total of that figure; an unquantified pool makes it Unknown (the screen's "partial" total
+  // is never shown as complete here); several currencies: no total (never converted).
+  const poolTotals = totalValuePools(
+    pools.map((v) => ({
+      quantificationStatus: v.quantification_status,
+      upsideAmount: v.upside_amount,
+      downsideAmount: v.downside_amount,
+      currency: v.currency.trim(),
+      status: v.status,
+    })),
+  );
+  const poolTotal = poolTotals.length === 1 ? poolTotals[0]!.quantifiedTotal : null;
   sections.push({
     key: S.valuePools,
     titleKey: L("value_pools"),
     kind: "table",
     sources: pools.map((v) => ({ recordType: "value_pool", recordId: v.id, recordVersion: v.version })),
-    columns: [
-      column("name", "text"),
-      column("driver", "text"),
-      column("workstream", "code"),
-      column("quantification", "code"),
-      column("upside_amount", "decimal", "currency"),
-      column("downside_amount", "decimal", "currency"),
-      column("unquantified_reason", "text"),
-      column("materiality", "code"),
-      column("confidence", "code"),
-      column("validation", "code"),
-      column("owner", "text"),
-    ],
-    rows: pools.map((v) => {
-      const state = financeState(v);
-      const unquantified = v.quantification_status === "unquantified";
-      return {
-        recordType: "value_pool",
-        recordId: v.id,
-        recordVersion: v.version,
-        cells: [
-          textValue(v.name),
-          textValue(v.driver),
-          codeValue(v.workstream_code, "report.diagnostic_workstream"),
-          codeValue(v.quantification_status, "report.quantification_status"),
-          // An unquantified pool has no amount: Unknown (missing), never 0.
-          decimalValue(v.upside_amount, { unitKind: "currency", currency: v.currency, state }),
-          decimalValue(v.downside_amount, { unitKind: "currency", currency: v.currency, state }),
-          // The reason applies only to an unquantified pool.
-          textValue(v.unquantified_reason, "user", unquantified ? undefined : NOT_APPLICABLE),
-          codeValue(v.materiality, "report.materiality"),
-          codeValue(v.confidence, "report.confidence"),
-          codeValue(v.validation_status, "report.validation_status"),
-          owner(v.owner_user_id),
-        ],
-      };
+    columns: poolColumns,
+    rows: poolRows,
+    totals: columnTotals({ columns: poolColumns, rows: poolRows }, ["upside_amount", "downside_amount"], {
+      upside_amount: poolTotal?.upside,
+      downside_amount: poolTotal?.downside,
     }),
-    totals: [],
     emptyKey: "report.empty.no_records",
   });
   for (const v of pools) sources.push(source(S.valuePools, "value_pool", v, financeState(v).validation));

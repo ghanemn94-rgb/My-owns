@@ -12,8 +12,10 @@
 // Values (ADR-0045 §5): benefit amounts carry their value basis and Finance state (pending = `submitted` is
 // provisional, rule 1; the baseline copy is provisional unless validated, rule 3); missing amounts are Unknown and an
 // unmonetised non-financial benefit's money value is n/a, never 0. Every other cell is a record field (rule 6). The
-// three realized states are separate columns and are never added together (D-117, D-119, D-122); no total is shown,
-// because the list screens show none. KPI definitions record their active `kpi_version` as a calculation version.
+// three realized states are separate columns and are never added together (D-117, D-119, D-122). The register table
+// itself has no total (its rows mix currencies and value classes, and the list screens show none); the benefits
+// register adds the screen's totals block as one table per currency × value class with system SUM totals (D-163,
+// `benefitTotalSections`). KPI definitions record their active `kpi_version` as a calculation version.
 import type { DbOrTx, Tx } from "@mth/db";
 import {
   MONEY_COLUMN,
@@ -45,6 +47,7 @@ import {
   type VersionRef,
 } from "../assembler.ts";
 import { reportRefusals } from "../definitions.ts";
+import { columnTotals } from "./table-totals.ts";
 import {
   benefitAmountState,
   benefitBaselineState,
@@ -292,6 +295,126 @@ async function benefitRows(
     evidence,
   } satisfies RegisterRows;
 }
+
+/**
+ * The benefit totals the T14 screen shows beside the register (GET /transformations/{id}/benefit-totals, benefits/
+ * totals.ts; the BenefitsPage "Totals" block, ADR-0030 §7), as tables with system SUM totals (D-163): one table per
+ * currency × value class (never converted, never added across classes: D-117, F-DG4-121), its rows the COUNTED,
+ * monetised benefits of that class (benefit_counting.counted; a non-financial benefit without an approved valuation
+ * method is n/a and in no line), its columns the three Finance states, each a total of ONE state (validated, sustained,
+ * pending = submitted; REQ-S08-016). An open overlap holds a benefit's validated and sustained values out of the class
+ * line (REQ-S08-014): those cells are n/a with no number, never in the sum. A line with no amount makes its cell and
+ * the column's total Unknown, never 0. The rules are restated from the module-private totals service (as the register
+ * predicates above are); registers-report.test.ts compares every total with the route, figure by figure. The totals
+ * cover the whole transformation, as the screen's block does, whatever filters the register table has.
+ */
+async function benefitTotalSections(
+  db: Tx,
+  t: string,
+): Promise<{ sections: ReportSection[]; sources: SourceRecord[] }> {
+  const rows = bounded(
+    await db
+      .selectFrom("benefit_counting as c")
+      .innerJoin("benefit as b", "b.id", "c.benefit_id")
+      .leftJoin("benefit_valuation_method as m", "m.id", "b.valuation_method_id")
+      .select([
+        "b.id",
+        "b.code",
+        "b.title",
+        "b.version",
+        "b.updated_at",
+        "b.value_class",
+        "b.currency",
+        "c.overlap_open",
+        "m.status as method_status",
+      ])
+      .where("b.transformation_id", "=", t)
+      .where("c.counted", "=", true)
+      .orderBy("b.code")
+      .orderBy("b.id")
+      .limit(REPORT_MAX_TABLE_ROWS + 1)
+      .execute(),
+  );
+  const monetised = rows.filter((r) => !(r.value_class === "non_financial" && r.method_status !== "approved"));
+  const lines = await valueLines(
+    db,
+    monetised.map((r) => r.id),
+  );
+  const B = "benefits";
+  const columns = [
+    col(B, "code", "text"),
+    col(B, "title", "text"),
+    col(B, "realized_validated", "decimal", "currency"),
+    col(B, "realized_sustained", "decimal", "currency"),
+    col(B, "pending", "decimal", "currency"),
+  ];
+  const sections: ReportSection[] = [];
+  const sources: SourceRecord[] = [];
+  const currencies = [...new Set(monetised.map((r) => r.currency.trim()))].sort();
+  for (const currency of currencies)
+    for (const valueClass of BENEFIT_VALUE_CLASS_ORDER) {
+      const members = monetised.filter((r) => r.currency.trim() === currency && r.value_class === valueClass);
+      if (members.length === 0) continue;
+      const key = `totals_${currency.toLowerCase()}_${valueClass}`;
+      const cell = (r: (typeof members)[number], state: "validated" | "sustained" | "submitted") => {
+        if (r.overlap_open === true && state !== "submitted")
+          return decimalValue(null, { unitKind: "currency", currency, valueBasis: state, state: NOT_APPLICABLE });
+        const amounts = lines.filter((l) => l.benefit_id === r.id && l.value_state === state).map((l) => l.amount);
+        if (amounts.some((a) => a === null))
+          return decimalValue(null, {
+            unitKind: "currency",
+            currency,
+            valueBasis: state,
+            state: benefitAmountState("unknown", state),
+          });
+        const st: ValueState = amounts.length === 0 ? NOT_APPLICABLE : benefitAmountState("known", state);
+        return decimalValue(toColumnString(sumDecimals(amounts as string[]), MONEY_COLUMN), {
+          unitKind: "currency",
+          currency,
+          valueBasis: state,
+          state: st,
+        });
+      };
+      const tableRows: ReportRow[] = members.map((r) => ({
+        recordType: "benefit",
+        recordId: r.id,
+        recordVersion: r.version,
+        cells: [
+          textValue(r.code),
+          textValue(r.title),
+          cell(r, "validated"),
+          cell(r, "sustained"),
+          cell(r, "submitted"),
+        ],
+      }));
+      sections.push({
+        key,
+        titleKey: `report.benefit_value_class.${valueClass}`,
+        kind: "table",
+        sources: tableRows.map((x) => ({
+          recordType: x.recordType,
+          recordId: x.recordId,
+          recordVersion: x.recordVersion,
+        })),
+        columns,
+        rows: tableRows,
+        totals: columnTotals({ columns, rows: tableRows }, ["realized_validated", "realized_sustained", "pending"]),
+        emptyKey: "report.empty.no_records",
+      });
+      for (const r of members) sources.push({ ...source("benefit", r.id, r.version, r.updated_at), sectionKey: key });
+    }
+  return { sections, sources };
+}
+
+/** The value classes in the order of the screen's totals (BENEFIT_TOTAL_CLASSES; non-financial valued last). */
+const BENEFIT_VALUE_CLASS_ORDER = [
+  "revenue_uplift",
+  "margin_uplift",
+  "cash_saving",
+  "avoided_cost",
+  "working_capital_release",
+  "non_financial",
+] as const;
 
 /** The evidence linked to the listed benefits (ADR-0029 `benefit_evidence`), with its current revision. */
 async function benefitEvidence(db: Tx, t: string, ids: readonly string[]): Promise<EvidenceRef[]> {
@@ -671,6 +794,8 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     totals: [],
     emptyKey: "report.empty.no_records",
   };
+  // The benefits screen shows its totals block beside the register (the other five register screens show none).
+  const extra = p.register === "benefits" ? await benefitTotalSections(ctx.db, ctx.transformation.id) : null;
   const filters: ReportSection = {
     key: "filters",
     titleKey: "report.registers.filters",
@@ -685,8 +810,9 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
   return {
     subject: { code: ctx.transformation.code, label: ctx.transformation.name },
     approvalState: combinedApprovalState(r.sources.map((s) => s.approvalState)),
-    sections: [filters, section],
-    sources: r.sources,
+    sections: [filters, section, ...(extra?.sections ?? [])],
+    // The register's own rows first: a record used by two sections keeps its first source row.
+    sources: [...r.sources, ...(extra?.sources ?? [])],
     versions: r.versions,
     evidence: r.evidence,
   };
