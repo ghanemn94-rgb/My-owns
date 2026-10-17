@@ -299,6 +299,13 @@ export const reportDocument = z.strictObject({
   methodology: z.strictObject({ versionId: uuid, key: z.string().min(1).max(120), versionNo: version }),
   approvalState: reportApprovalState,
   sections: z.array(reportSection),
+  /**
+   * D-163 (ADR-0050 §2 (d); REQ-PB-089, REQ-S18-001): present, and `true`, exactly when the document was assembled in
+   * a demo database (`EnvironmentReadPort`): every value is a synthetic illustrative example, and every export of it
+   * prints "Illustrative example — synthetic". Absent in production, so production content and its `content_sha256`
+   * stay byte-identical to content schema version 1 (the R2 regression rule).
+   */
+  synthetic: z.literal(true).optional(),
 });
 export type ReportDocument = z.infer<typeof reportDocument>;
 

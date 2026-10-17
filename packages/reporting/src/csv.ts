@@ -2,7 +2,8 @@
 // quoting (a field is quoted when it contains a comma, a double quote, CR or LF; quotes are doubled). Header labels are
 // in the export language; CSV has no direction and no font.
 //
-// Layout: the header block (label, value), then every section in content order (its title, then its rows: a table's
+// Layout: the illustrative label of a demo snapshot (D-163), the header block (label, value), the B0004 provenance
+// statement (D-163; when the caller gives one), then every section in content order (its title, then its rows: a table's
 // column header, data rows and totals; a fields/metrics section's label, value and status rows), then the legend rows.
 // Cells follow ADR-0046 §4 exactly: text that starts like a formula is prefixed with `'`; a decimal is its canonical
 // string, unprefixed; Unknown/Stale is an empty field with its status in the companion column; a total is its
@@ -15,7 +16,9 @@ import {
   RenderError,
   emptyTableText,
   frameRows,
+  illustrativeLabel,
   legendRows,
+  provenanceText,
   sectionRows,
   tableColumns,
   tableRowCells,
@@ -56,7 +59,13 @@ export async function renderCsv(input: ReportDocument, o: RenderOptions): Promis
   const doc = parsed.data;
   const labels = createLabels(o.language, o.labels);
   const lines: string[] = [];
+  // D-163: a demo snapshot's illustrative label opens the header block (ADR-0050 §2 (d)).
+  const illustrative = illustrativeLabel(doc, labels);
+  if (illustrative !== null) lines.push(textRow(illustrative));
   for (const [label, value] of frameRows(doc, o, labels)) lines.push(textRow(label, value));
+  // D-163: the B0004 provenance statement, one row after the header rows (text: neutralized like any text field).
+  const provenance = provenanceText(o);
+  if (provenance !== null) lines.push(textRow(provenance));
   lines.push("");
   const total = doc.sections.length;
   let done = 0;

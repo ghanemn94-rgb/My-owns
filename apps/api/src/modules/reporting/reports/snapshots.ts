@@ -20,7 +20,7 @@
 // report_snapshot.series_changed. Issuing approves nothing: it freezes what the records said, and the approval state
 // is a recorded fact of the sources. Product gates G1-G6 are business approvals; nothing here relates to DG0-DG7.
 import { createHash } from "node:crypto";
-import type { Db, DbOrTx, ReportSnapshotRow, Tx } from "@mth/db";
+import { readDeploymentEnvironment, type Db, type DbOrTx, type ReportSnapshotRow, type Tx } from "@mth/db";
 import type { Permission } from "@mth/shared";
 import {
   countReportValues,
@@ -58,6 +58,24 @@ import { loadReportDefinition, reportRefusals } from "./definitions.ts";
 
 export const REPORT_SNAPSHOT_ISSUED = "report_snapshot.issued";
 const resolver = createConfigResolver();
+
+/**
+ * The environment read of report generation (D-163; ADR-0050 §2 (d); REQ-PB-089, REQ-S18-001): the `synthetic` member
+ * of admin's `EnvironmentReadPort` (admin/environment.ts), which `environmentReadPort` satisfies as it is. ADR-0002
+ * keeps `reporting` from importing `admin` (modules.ts), so this module reads the same source, the deployment marker
+ * through `@mth/db` `readDeploymentEnvironment`, with the same rule: `synthetic` exactly in a `demo` database, and a
+ * database without a marker is production (fail-safe). The integration test report-synthetic.test.ts proves both
+ * ports answer alike on a demo and a production database.
+ */
+export interface ReportEnvironmentPort {
+  read(db: DbOrTx): Promise<{ readonly synthetic: boolean }>;
+}
+
+export const reportEnvironmentPort: ReportEnvironmentPort = {
+  async read(db) {
+    return { synthetic: (await readDeploymentEnvironment(db)).synthetic };
+  },
+};
 
 // ------------------------------------------------------------------------------------------------ authorization
 
@@ -274,6 +292,10 @@ export async function assembleReport(db: Db, req: ReportRequest): Promise<Assemb
         throw problems.internal();
       }
       const methodology = { versionId: pinned.versionId, key: pinned.key, versionNo: pinned.versionNo };
+      // D-163 (ADR-0050 §2 (d); REQ-PB-089): the environment, read in this transaction (reportEnvironmentPort). In a
+      // demo database the content records `synthetic: true`, and every export of it prints the illustrative label;
+      // elsewhere the member is absent, so production content and its hash are unchanged.
+      const environment = await reportEnvironmentPort.read(tx);
       const output = await resolved.assembler.assemble({
         db: tx,
         organizationId: resolved.organizationId,
@@ -301,6 +323,7 @@ export async function assembleReport(db: Db, req: ReportRequest): Promise<Assemb
         methodology,
         approvalState: output.approvalState,
         sections: [...output.sections],
+        ...(environment.synthetic ? { synthetic: true as const } : {}),
       };
       const parsed = reportDocument.safeParse(candidate);
       // A document that fails its own schema is a programming error of an assembler, never a user error.

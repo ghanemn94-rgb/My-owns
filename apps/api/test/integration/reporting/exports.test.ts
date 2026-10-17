@@ -183,7 +183,10 @@ describe("REQ-S13-005 / REQ-S13-006: XLSX and CSV of the filtered RAID register"
 
     const wb = await readXlsx(new Uint8Array(res.rawPayload));
     const sheet = wb.sheets[1]!;
-    const rows = sheet.rows.slice(2); // title row, column header row, then the data rows
+    // Title row, column header row, then the data rows; D-163 (T-DG5-BE-N2): every sheet then ends with a blank row and
+    // the B0004 provenance statement, which are not data rows.
+    const end = sheet.rows.findIndex((r, i) => i >= 2 && r.length === 0);
+    const rows = sheet.rows.slice(2, end === -1 ? undefined : end);
     const header = sheet.rows[1]!.map((c) => c.text);
     const col = (k: string) => header.indexOf(k);
     expect(header).toEqual([

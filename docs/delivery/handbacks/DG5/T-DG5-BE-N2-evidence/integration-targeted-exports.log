@@ -1,0 +1,24 @@
+port-policy: PostgreSQL listening on port 23820 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-n2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbtwrzr_d008dbf8 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/exports.test.ts (16 tests) 9838ms
+   ✓ REQ-S13-005 / REQ-S13-006: XLSX and CSV of the filtered RAID register > XLSX contains exactly the filtered rows, cell by cell against GET /raid?type=risk; =HYPERLINK is quotePrefixed text  641ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  864ms
+   ✓ authorization: exports are authorized like the records > another user's getExport and downloadExport -> 404; the list shows only the caller's own jobs  1177ms
+   ✓ authorization: exports are authorized like the records > a requester who lost transformation.read gets 404 on download; the worker fails their queued job (source_unavailable)  628ms
+   ✓ authorization: exports are authorized like the records > AUD gets 403 on POST /exports (whatever it sends) and on cancel; a stranger 404; nothing written  499ms
+   ✓ refusals and cancel (ADR-0046 §8) > cancel of a succeeded job -> 422 export.not_cancellable; cancel while running stops the render without a file  363ms
+   ✓ refusals and cancel (ADR-0046 §8) > format not offered, a discarded snapshot, an unknown snapshot and a bad body  369ms
+ ✓ |integration| apps/api/test/integration/reporting/report-synthetic.test.ts (6 tests) 12292ms
+   ✓ snapshot generation reads the environment (EnvironmentReadPort; ADR-0050 §2 (d)) > demo: the generated snapshot and the live report record synthetic: true; the hash covers it  324ms
+   ✓ the worker prints what the snapshot records (D-163) > demo: CSV and XLSX in en and ar carry the illustrative label and the B0004 statement  864ms
+   ✓ the worker prints what the snapshot records (D-163) > production: no label in either language, and the B0004 statement on every sheet and in the CSV  677ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  03:20:28
+   Duration  66.71s (transform 9.61s, setup 0ms, collect 34.65s, tests 22.13s, environment 0ms, prepare 348ms)
+

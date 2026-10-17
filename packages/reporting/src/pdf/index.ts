@@ -41,6 +41,8 @@ const INK = "#1A1F36";
 const MUTED = "#5A6275";
 const RULE = "#C9CED8";
 const HEADER_FILL = "#EEF1F5";
+/** D-163: the illustrative label's ink (dark amber; at least 4.5:1 on white). */
+const ILLUSTRATIVE = "#7A4B00";
 
 /** The parts of pdfkit's current font object the layout uses (pdfkit's EmbeddedFont over a fontkit font). */
 interface PdfFont {
@@ -302,6 +304,22 @@ class PdfWriter {
   }
 
   /**
+   * D-163 (ADR-0050 §2 (d)): a line in the top margin of every page (the illustrative label of a demo snapshot),
+   * start-aligned, above the page's content and below the first page's brand band.
+   */
+  pageHeaders(text: string): void {
+    const range = this.doc.bufferedPageRange();
+    const line = this.lines(text, FOOTER_SIZE, 700, this.right - this.left)[0];
+    if (line === undefined) return;
+    const y = MARGIN_TOP - FOOTER_SIZE - 14;
+    for (let i = range.start; i < range.start + range.count; i++) {
+      this.doc.switchToPage(i);
+      const x = this.rtl ? this.right - line.width : this.left;
+      this.drawLine(line, x, x + line.width, y, FOOTER_SIZE, ILLUSTRATIVE);
+    }
+  }
+
+  /**
    * The footer of every page: the issue line on the start side, "Page n of m" on the end side; below them (T-DG5-BE-R)
    * the configured report footer and the provenance statement, start-aligned, at most two lines each.
    */
@@ -388,6 +406,7 @@ export async function renderPdf(input: ReportDocument, o: RenderOptions): Promis
   // product name stays in the ink colour, so a light brand colour never makes text unreadable. Defaults draw no band.
   if (paged.brandColour !== null) doc.rect(0, 0, page.width, 10).fill(paged.brandColour);
   w.text(paged.productName, 15, 700, INK, 2);
+  if (paged.illustrative !== null) w.text(paged.illustrative, 10, 700, ILLUSTRATIVE, 3); // D-163: in the header
   if (paged.reportHeader !== null) w.text(paged.reportHeader, 9, 400, MUTED, 4); // T-DG5-BE-R
   w.text(paged.title, 12.5, 700, INK, 6);
   w.table(paged.frame);
@@ -401,6 +420,7 @@ export async function renderPdf(input: ReportDocument, o: RenderOptions): Promis
   }
   w.heading(paged.legendTitle, 11);
   w.table(paged.legend);
+  if (paged.illustrative !== null) w.pageHeaders(paged.illustrative); // D-163: and on every page
   w.footers(issueLine(o.snapshot, labels), (n, m) => labels.text("export.page", { n, m }), paged.footerLines);
   doc.end();
   await ended;
