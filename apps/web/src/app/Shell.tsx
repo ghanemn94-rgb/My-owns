@@ -1,5 +1,5 @@
 // Application shell (ADR-0009, REQ-S15-001): skip link, blue-gradient header with the provisional wordmark, language
-// switch and user menu; blue primary navigation with the fourteen areas; main landmark. Layout uses logical CSS
+// switch and user menu; blue primary navigation with the areas the server returns (GET /me/navigation); main landmark. Layout uses logical CSS
 // properties only, so RTL mirrors automatically.
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useState } from "react";
@@ -17,6 +17,8 @@ import { DemoBanner, useSynthetic } from "../components/demo-label/DemoLabels.ts
 import { useBranding, useBrandingTheme } from "../pages/branding/api.ts";
 import { localName, useLocale } from "./locale.ts";
 import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
+import { useMyNavigation, visibleAreaIds } from "./me-navigation.ts";
+import { ErrorState } from "../components/States.tsx";
 
 export function Shell() {
   const { t } = useTranslation();
@@ -33,10 +35,12 @@ export function Shell() {
   // Close the (small-screen) navigation after navigating.
   useEffect(() => setNavOpen(false), [location.pathname]);
 
-  // T-DG5-FE-G: the switch to GET /me/navigation is NOT made here (handback §6): the server hides every business area
-  // from a technical administrator without transformation.read (3 areas), which breaks DG1-approved pins; the
-  // orchestrator decides. The static list with its client-side permission hint stays.
-  const areas = NAV_AREAS.filter((a) => !a.requiresAny || canAny(me, a.requiresAny));
+  // T-DG5-FE-G2 (REQ-S03-007, ADR-0049 §9; D-163 option (a)): the server decides the areas. The shell shows exactly the
+  // areas GET /me/navigation returns, in nav.ts order. While the read is pending it shows no area list (never all
+  // fourteen), and a failed read shows the error state with a retry, never a client-side guess.
+  const navigation = useMyNavigation();
+  const visible = visibleAreaIds(navigation.data);
+  const areas = visible ? NAV_AREAS.filter((a) => visible.has(a.id)) : [];
   // T-DG5-FE-G (REQ-S01-002, REQ-S15-004): the published branding is read at render time; the theme follows it.
   const branding = useBranding().data;
   useBrandingTheme();
@@ -115,7 +119,24 @@ export function Shell() {
       {/* T-DG5-FE-G (ADR-0050 §2 a): the persistent synthetic-data banner on every screen of a demo database. */}
       <DemoBanner />
       <div className="app-body">
-        <nav id={navId} className={`app-nav${navOpen ? " app-nav--open" : ""}`} aria-label={t("nav.primary")}>
+        <nav
+          id={navId}
+          className={`app-nav${navOpen ? " app-nav--open" : ""}`}
+          aria-label={t("nav.primary")}
+          aria-busy={navigation.isPending}
+          data-nav-state={navigation.isPending ? "loading" : visible ? "ready" : "error"}
+        >
+          {navigation.isPending ? (
+            <p className="app-nav__state" data-state="loading">
+              <span className="spinner" aria-hidden="true" />
+              <span>{t("nav.loading")}</span>
+            </p>
+          ) : null}
+          {!navigation.isPending && !visible ? (
+            <div className="app-nav__error">
+              <ErrorState error={navigation.error} onRetry={() => void navigation.refetch()} />
+            </div>
+          ) : null}
           <ul className="app-nav__list">
             {areas.map((area) => (
               <li key={area.id}>

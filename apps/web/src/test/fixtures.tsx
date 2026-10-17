@@ -11,6 +11,7 @@ import type { Me, Transformation } from "../api/types.ts";
 import { AppProviders, createQueryClient } from "../app/App.tsx";
 import { routes } from "../app/router.tsx";
 import { createI18n } from "../i18n/index.ts";
+import { navigationForMe } from "./navigation-fixture.ts";
 
 export const ORG_ID = "01920000-0000-7000-9000-000000000001";
 export const BU_ID = "01920000-0000-7000-9000-000000000101";
@@ -181,6 +182,9 @@ export function mockApi(...handlers: Handler[]) {
         });
       }
     }
+    // T-DG5-FE-G2: an unscripted GET /me/navigation gets the server rule's answer for the scripted /me (navigation-fixture.ts).
+    const navigation = defaultNavigation(handlers, req);
+    if (navigation) return navigation;
     return new Response(
       JSON.stringify({
         type: "urn:mth:problem:not-found",
@@ -248,4 +252,32 @@ export function renderApp(
   );
   const utils = render(options.strict ? <StrictMode>{app}</StrictMode> : app);
   return { ...utils, router, i18n, queryClient };
+}
+
+// T-DG5-FE-G2 (D-163 option (a)): the default GET /api/v1/me/navigation of the scripted API. It asks the test's own
+// handlers for GET /api/v1/me at request time (so a test that switches users gets the new user's areas) and answers
+// with the server rule's areas for that /me; a /me that is not 200 is answered with the same status.
+function defaultNavigation(handlers: readonly Handler[], req: RecordedRequest): Response | null {
+  if (req.method !== "GET" || !/\/api\/v1\/me\/navigation(?:\?|$)/.test(req.url)) return null;
+  const meReq: RecordedRequest = {
+    method: "GET",
+    url: req.url.replace(/\/navigation.*$/, ""),
+    headers: req.headers,
+    body: undefined,
+  };
+  for (const h of handlers) {
+    const res = h(meReq);
+    if (!res) continue;
+    if (res.status !== 200) {
+      return new Response(JSON.stringify(res.body ?? {}), {
+        status: res.status,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+    return new Response(JSON.stringify(navigationForMe(res.body as Me)), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return null;
 }

@@ -68,3 +68,19 @@ export function deriveDarkerShade(base: string, against: readonly string[], targ
   }
   throw new Error(`no darker shade of ${base} reaches ${target}:1`);
 }
+
+/** White: the navigation text colour (`nav.text`) that the navigation background must carry (D-163). */
+export const NAVIGATION_TEXT = "#FFFFFF";
+/** WCAG 2.1 AA for normal text: the minimum contrast of white navigation text on the navigation background. */
+export const NAVIGATION_TEXT_CONTRAST = 4.5;
+
+/**
+ * The navigation background derived from `brand.primary` (D-163, REQ-S15-004; tokens.json `derived."nav.background"`
+ * applies the same rule through `deriveDarkerShade`). It is `primary` itself when white navigation text reaches at least
+ * 4.5:1 on it (WCAG 2.1 relative luminance); otherwise it is darkened deterministically, in HSV value steps of 0.1 % (the
+ * RGB channels scaled towards black, so hue and saturation are kept), and the first (lightest) shade that reaches 4.5:1
+ * is returned. Examples: the provisional #0078FF gives #0071F1 (4.53:1), #FFD700 gives #8B7500, #003B73 stays itself.
+ */
+export function deriveNavigationBackground(primary: string): string {
+  return deriveDarkerShade(primary, [NAVIGATION_TEXT], NAVIGATION_TEXT_CONTRAST);
+}

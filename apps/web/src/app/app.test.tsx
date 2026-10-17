@@ -39,6 +39,14 @@ const buRoute = route("GET", /\/business-units/, () => ({
   body: { items: [BUSINESS_UNIT], nextCursor: null },
 }));
 
+/** The primary navigation once GET /me/navigation has answered (T-DG5-FE-G2). */
+async function readyNav(name = "Primary navigation"): Promise<HTMLElement> {
+  const nav = await screen.findByRole("navigation", { name });
+  await waitFor(() => expect(nav.dataset["navState"]).toBe("ready"));
+  return nav;
+}
+const areaLinks = (nav: HTMLElement) => [...nav.querySelectorAll<HTMLAnchorElement>("a[data-area]")];
+
 describe("bilingual shell", () => {
   it("renders Arabic RTL by default with the provisional wordmark", async () => {
     mockApi(meRoute(makeMe(ADMIN_GRANTS)));
@@ -72,15 +80,15 @@ describe("bilingual shell", () => {
     expect(within(screen.getByTestId("wordmark")).getByTestId("provisional-badge").textContent).toBe("Provisional");
   });
 
-  it("shows all fourteen areas to an administrator", async () => {
+  // T-DG5-FE-G2 (REQ-S03-007, ADR-0049 §9; D-163 option (a)): the shell shows exactly the areas GET /me/navigation
+  // returns. The technical administrator (P1 administration permissions, no transformation.read) gets My Work, Playbook
+  // and Administration from the server; a user holding the union of the role defaults gets all fourteen.
+  it("shows the areas the server returns: a technical administrator sees My Work, Playbook and Administration", async () => {
     mockApi(meRoute(makeMe(ADMIN_GRANTS, { preferredLocale: "en" })));
     renderApp("/my-work");
-    const nav = await screen.findByRole("navigation", { name: "Primary navigation" });
-    const links = within(nav)
-      .getAllByRole("link")
-      .filter((a) => a.hasAttribute("data-area"));
-    expect(links).toHaveLength(14);
-    expect(NAV_AREAS).toHaveLength(14);
+    const nav = await readyNav();
+    const links = areaLinks(nav);
+    expect(links.map((a) => a.dataset["area"])).toEqual(["myWork", "playbook", "admin"]);
     expect(within(nav).getByRole("link", { name: /Administration/ })).toBeTruthy();
     expect(
       within(nav)
@@ -89,15 +97,69 @@ describe("bilingual shell", () => {
     ).toBe("page");
   });
 
+  it("shows all fourteen areas to a user the server gives all fourteen (the union of the role defaults)", async () => {
+    mockApi(meRoute(makeMe([...ADMIN_GRANTS, ...OFFICE_GRANTS], { preferredLocale: "en" })));
+    renderApp("/my-work");
+    const nav = await readyNav();
+    expect(areaLinks(nav)).toHaveLength(14);
+    expect(NAV_AREAS).toHaveLength(14);
+    expect(areaLinks(nav).map((a) => a.dataset["area"])).toEqual(NAV_AREAS.map((a) => a.id));
+  });
+
+  it("while GET /me/navigation is pending no area list is shown (never all areas)", async () => {
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((r) => (release = r));
+    const { fetchMock } = mockApi(meRoute(makeMe([...ADMIN_GRANTS, ...OFFICE_GRANTS], { preferredLocale: "en" })));
+    const answer = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/api/v1/me/navigation")) await held;
+      return answer(input, init);
+    });
+    renderApp("/my-work");
+    const nav = await screen.findByRole("navigation", { name: "Primary navigation" });
+    await screen.findByTestId("wordmark");
+    expect(nav.dataset["navState"]).toBe("loading");
+    expect(nav.getAttribute("aria-busy")).toBe("true");
+    expect(areaLinks(nav)).toHaveLength(0);
+    expect(within(nav).getByText("Loading navigation…")).toBeTruthy();
+    release();
+    await waitFor(() => expect(areaLinks(nav)).toHaveLength(14));
+    expect(nav.getAttribute("aria-busy")).toBe("false");
+  });
+
+  it("a failed GET /me/navigation shows the error state with a retry and no area list; the retry recovers", async () => {
+    let fail = true;
+    mockApi(
+      meRoute(makeMe([...ADMIN_GRANTS, ...OFFICE_GRANTS], { preferredLocale: "en" })),
+      route("GET", /\/api\/v1\/me\/navigation$/, () => (fail ? problem(403, "forbidden") : undefined)),
+    );
+    renderApp("/my-work");
+    const nav = await screen.findByRole("navigation", { name: "Primary navigation" });
+    await waitFor(() => expect(nav.dataset["navState"]).toBe("error"));
+    expect(within(nav).getByRole("alert").dataset["state"]).toBe("error");
+    expect(areaLinks(nav)).toHaveLength(0);
+    fail = false;
+    fireEvent.click(within(nav).getByRole("button", { name: /Try again/ }));
+    await waitFor(() => expect(areaLinks(nav)).toHaveLength(14));
+    expect(within(nav).queryByRole("alert")).toBeNull();
+  });
+
+  it("a navigation body that is not the contract's shape is an error, never an empty or a full list", async () => {
+    mockApi(
+      meRoute(makeMe([...ADMIN_GRANTS, ...OFFICE_GRANTS], { preferredLocale: "en" })),
+      route("GET", /\/api\/v1\/me\/navigation$/, () => ({ status: 200, body: { items: [] } })),
+    );
+    renderApp("/my-work");
+    const nav = await screen.findByRole("navigation", { name: "Primary navigation" });
+    await waitFor(() => expect(nav.dataset["navState"]).toBe("error"));
+    expect(areaLinks(nav)).toHaveLength(0);
+  });
+
   it("hides Administration from a Workstream Lead, and the admin route shows no-permission", async () => {
     mockApi(meRoute(makeMe(WL_GRANTS, { preferredLocale: "en" })));
     renderApp("/admin");
-    const nav = await screen.findByRole("navigation", { name: "Primary navigation" });
-    expect(
-      within(nav)
-        .getAllByRole("link")
-        .filter((a) => a.hasAttribute("data-area")),
-    ).toHaveLength(13);
+    const nav = await readyNav();
+    expect(areaLinks(nav)).toHaveLength(13);
     expect(within(nav).queryByRole("link", { name: /Administration/ })).toBeNull();
     expect((await screen.findByRole("alert")).dataset["state"]).toBe("no-permission");
   });

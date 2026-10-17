@@ -32,6 +32,7 @@ import {
   type ConflictRow,
 } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
+import { deriveNavigationBackground } from "@mth/design-tokens";
 import { FormAlert } from "../my-work/p4ui.tsx";
 import {
   brandingKeys,
@@ -306,7 +307,10 @@ function SettingsForm({ s }: { s: BrandingSettings }) {
     void save(baseVersion);
   };
 
-  const navRatio = HEX_COLOUR.test(draft.secondaryColour) ? contrastRatio(WHITE, draft.secondaryColour) : null;
+  // T-DG5-FE-G2 (D-163, REQ-S15-004): the navigation background is derived from the PRIMARY colour by the one rule of
+  // @mth/design-tokens (white text >= 4.5:1); the secondary colour carries the header's white text.
+  const navShade = HEX_COLOUR.test(draft.primaryColour) ? deriveNavigationBackground(draft.primaryColour) : null;
+  const headerRatio = HEX_COLOUR.test(draft.secondaryColour) ? contrastRatio(WHITE, draft.secondaryColour) : null;
   const accentRatio = HEX_COLOUR.test(draft.primaryColour) ? contrastRatio(draft.primaryColour, PAGE_BG) : null;
   const conflictRows: ConflictRow[] = conflict
     ? (
@@ -418,13 +422,25 @@ function SettingsForm({ s }: { s: BrandingSettings }) {
             </Field>
           </div>
           <ul className="plain-list" data-list="contrast">
-            <li data-contrast="navigation" data-pass={navRatio === null ? "unknown" : navRatio >= 4.5 ? "yes" : "no"}>
-              <Swatch hex={HEX_COLOUR.test(draft.secondaryColour) ? draft.secondaryColour : WHITE} />{" "}
-              {navRatio === null
+            <li data-contrast="navigation" data-pass={navShade === null ? "unknown" : "yes"}>
+              <Swatch hex={navShade ?? WHITE} />{" "}
+              {navShade === null
                 ? t("playbookP5.branding.contrastUnknown")
-                : t(navRatio >= 4.5 ? "playbookP5.branding.contrastNavPass" : "playbookP5.branding.contrastNavFail", {
-                    ratio: navRatio.toFixed(2),
+                : t("playbookP5.branding.contrastNavDerived", {
+                    shade: `\u2066${navShade}\u2069`, // an LTR run inside Arabic text
+                    ratio: (Math.floor(contrastRatio(WHITE, navShade) * 100) / 100).toFixed(2),
                   })}
+            </li>
+            <li data-contrast="header" data-pass={headerRatio === null ? "unknown" : headerRatio >= 4.5 ? "yes" : "no"}>
+              <Swatch hex={HEX_COLOUR.test(draft.secondaryColour) ? draft.secondaryColour : WHITE} />{" "}
+              {headerRatio === null
+                ? t("playbookP5.branding.contrastUnknown")
+                : t(
+                    headerRatio >= 4.5
+                      ? "playbookP5.branding.contrastHeaderPass"
+                      : "playbookP5.branding.contrastHeaderFail",
+                    { ratio: headerRatio.toFixed(2) },
+                  )}
             </li>
             <li data-contrast="accent" data-pass={accentRatio === null ? "unknown" : accentRatio >= 3 ? "yes" : "no"}>
               <Swatch hex={HEX_COLOUR.test(draft.primaryColour) ? draft.primaryColour : WHITE} />{" "}

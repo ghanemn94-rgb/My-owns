@@ -137,9 +137,8 @@ function SnapshotView({ tid, s }: { tid: string; s: ReportSnapshot }) {
           <dd data-count="unknown">{s.unknownValueCount}</dd>
           <dt>{t("reportsP5.snapshot.contentHash")}</dt>
           <dd>
-            <bdi dir="ltr" className="code small">
-              {s.contentSha256}
-            </bdi>
+            {/* T-DG5-FE-G2 (QA-C O1): the full SHA-256, one LTR run that wraps inside its card (never overflows in RTL). */}
+            <Checksum value={s.contentSha256} />
           </dd>
         </dl>
       </section>
@@ -305,15 +304,11 @@ function RetainedSection({ tid, snapshotId }: { tid: string; snapshotId: string 
                 <tbody>
                   {items.map((x) => (
                     <tr key={x.id} data-source-record={x.recordId}>
-                      <td>
-                        <bdi dir="ltr" className="code">
-                          {x.sectionKey}
-                        </bdi>
+                      <td data-section-key={x.sectionKey}>
+                        <CodeLabel ns="sourceSection" code={x.sectionKey} />
                       </td>
-                      <td>
-                        <bdi dir="ltr" className="code">
-                          {x.recordType}
-                        </bdi>
+                      <td data-record-type={x.recordType}>
+                        <CodeLabel ns="sourceRecordType" code={x.recordType} />
                       </td>
                       <td>
                         <bdi dir="ltr">v{x.recordVersion}</bdi>
@@ -367,13 +362,7 @@ function RetainedSection({ tid, snapshotId }: { tid: string; snapshotId: string 
                       </td>
                       <td>{x.contentRevision === null ? t("reportsP5.notApplicable") : `v${x.contentRevision}`}</td>
                       <td>
-                        {x.contentSha256 ? (
-                          <bdi dir="ltr" className="code small">
-                            {x.contentSha256}
-                          </bdi>
-                        ) : (
-                          t("reportsP5.evidence.noChecksum")
-                        )}
+                        {x.contentSha256 ? <Checksum value={x.contentSha256} /> : t("reportsP5.evidence.noChecksum")}
                       </td>
                       <td>{t(`reportsP5.reviewStatus.${x.reviewStatus}`)}</td>
                     </tr>
@@ -385,5 +374,42 @@ function RetainedSection({ tid, snapshotId }: { tid: string; snapshotId: string 
         </QueryState>
       </Section>
     </>
+  );
+}
+
+/**
+ * A SHA-256 checksum (T-DG5-FE-G2; QA-C O1): the full value as one left-to-right run that may break anywhere, so it
+ * wraps inside its card or cell in Arabic too; the full value is also the title and `data-sha256`.
+ */
+export function Checksum({ value }: { value: string }) {
+  return (
+    <bdi
+      dir="ltr"
+      className="code small"
+      data-sha256={value}
+      title={value}
+      style={{ overflowWrap: "anywhere", wordBreak: "break-all" }}
+    >
+      {value}
+    </bdi>
+  );
+}
+
+/**
+ * The translated label of a snapshot source's section key or record type (T-DG5-FE-G2; QA-C O1), in en and ar. A
+ * record type falls back to the evidence register's labels; a code with no label is shown as the code itself, in an LTR
+ * run, never guessed.
+ */
+export function CodeLabel({ ns, code }: { ns: "sourceSection" | "sourceRecordType"; code: string }) {
+  const { t } = useTranslation();
+  const label =
+    t(`reportsP5.${ns}.${code}`, { defaultValue: "" }) ||
+    (ns === "sourceRecordType" ? t(`evidence.recordTypes.${code}`, { defaultValue: "" }) : "");
+  return label ? (
+    <span>{label}</span>
+  ) : (
+    <bdi dir="ltr" className="code">
+      {code}
+    </bdi>
   );
 }

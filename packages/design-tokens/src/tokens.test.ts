@@ -6,6 +6,9 @@ import {
   contrastRatio,
   cssVarName,
   deriveDarkerShade,
+  deriveNavigationBackground,
+  NAVIGATION_TEXT,
+  NAVIGATION_TEXT_CONTRAST,
   generateTokensCss,
   resolveTokens,
   tokenSource,
@@ -83,7 +86,9 @@ describe("semantic tokens", () => {
   it("emits references as var() so runtime branding overrides propagate", () => {
     const css = generateTokensCss();
     expect(css).toContain("--mth-brand-primary: #0078FF;");
-    expect(css).toContain("--mth-nav-background: var(--mth-brand-deep);");
+    // D-163: the navigation background is derived from brand.primary (a literal shade), no longer brand.deep.
+    expect(css).toContain("--mth-nav-background: #0071F1;");
+    expect(css).toContain("--mth-nav-text-muted: var(--mth-nav-text);");
     expect(css).toContain("--mth-focus-ring: var(--mth-action-primary);");
     expect(css).toMatch(/PROVISIONAL/);
     expect(generateTokensCss()).toBe(css); // deterministic
@@ -133,5 +138,62 @@ describe("contrast gate", () => {
     const src = clone();
     (src.contrastPairs.pairs as unknown[]).push({ fg: "brand.primary", bg: "surface.page", use: "text", where: "x" });
     expect(checkContrast(src).failures.length).toBeGreaterThan(0);
+  });
+});
+
+describe("navigation background derived from brand.primary (D-163, REQ-S15-004)", () => {
+  const white = "#FFFFFF";
+  it("the provisional #0078FF fails 4.5:1 behind white text, so it is darkened to #0071F1, which passes", () => {
+    expect(contrastRatio(white, "#0078FF")).toBeLessThan(4.5);
+    expect(deriveNavigationBackground("#0078FF")).toBe("#0071F1");
+    expect(contrastRatio(white, "#0071F1")).toBeGreaterThanOrEqual(4.5);
+  });
+  it("a light colour (#FFD700) is darkened, keeping its hue, until white text reaches 4.5:1", () => {
+    const nav = deriveNavigationBackground("#FFD700");
+    expect(nav).toBe("#8B7500");
+    expect(contrastRatio(white, nav)).toBeGreaterThanOrEqual(4.5);
+    // HSV value steps: every channel is scaled by the same factor (255:215:0 kept).
+    const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(nav.slice(i, i + 2), 16)) as [number, number, number];
+    expect(b).toBe(0);
+    expect(Math.abs(g / r - 215 / 255)).toBeLessThan(0.01);
+  });
+  it("a colour that already passes (#003B73) is used as it is", () => {
+    expect(contrastRatio(white, "#003B73")).toBeGreaterThanOrEqual(4.5);
+    expect(deriveNavigationBackground("#003B73")).toBe("#003B73");
+  });
+  it("is the lightest passing shade: one step lighter would fail", () => {
+    // #0071F1 is the first passing step from #0078FF; the step before it (factor + 0.001) fails.
+    const step = (hex: string, f: number) =>
+      `#${[1, 3, 5]
+        .map((i) =>
+          Math.round(Number.parseInt(hex.slice(i, i + 2), 16) * f)
+            .toString(16)
+            .padStart(2, "0"),
+        )
+        .join("")
+        .toUpperCase()}`;
+    let f = 1;
+    while (step("#0078FF", f) !== "#0071F1") f -= 0.001;
+    expect(contrastRatio(white, step("#0078FF", f + 0.001))).toBeLessThan(4.5);
+  });
+  it("tokens.json carries exactly this rule for nav.background, against white navigation text", () => {
+    const tokens = resolveTokens();
+    expect(tokens.get("nav.background")!.hex).toBe(deriveNavigationBackground(tokens.get("brand.primary")!.hex));
+    expect(tokens.get("nav.background")!.kind).toBe("derived");
+    // The rule is computed against surface.card; it stands for the navigation text only while both are white.
+    expect(tokens.get("surface.card")!.hex).toBe(NAVIGATION_TEXT);
+    expect(tokens.get("nav.text")!.hex).toBe(NAVIGATION_TEXT);
+    expect(tokens.get("nav.text-muted")!.hex).toBe(NAVIGATION_TEXT);
+    const spec = tokenSource.derived["nav.background"] as { derivedFrom: string; rule: { darkenUntil: number } };
+    expect(spec.derivedFrom).toBe("brand.primary");
+    expect(spec.rule.darkenUntil).toBe(NAVIGATION_TEXT_CONTRAST);
+    expect(tokens.get("nav.background")!.provisional).toBe(true);
+  });
+  it("the contrast gate checks white navigation text on the derived background", () => {
+    const pair = checkContrast().pairs.find(
+      (p) => p.fg === "nav.text" && p.bg === "nav.background" && p.use === "text",
+    );
+    expect(pair?.pass).toBe(true);
+    expect(pair?.bgHex).toBe("#0071F1");
   });
 });
