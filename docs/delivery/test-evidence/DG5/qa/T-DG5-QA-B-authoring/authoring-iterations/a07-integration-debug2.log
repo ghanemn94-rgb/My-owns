@@ -1,0 +1,147 @@
+port-policy: PostgreSQL listening on port 23600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc0697e_412f4402 (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state
+DEBUG-Q1BEFORE {"kpiDefinitionId":"01a14880-d54b-724a-99cb-f91241babc18","kpiName":"Synthetic KPI 932ddf","kpiVersionId":"01a14880-d581-74fa-bfe2-b0cc526184fc","unitKind":"count","currency":null,"scopeKind":"transformation","scopeId":"01a14880-d434-7099-9818-a702e112c5dc","reportingPeriodId":"01a14880-d50a-74f8-a797-b0e3e1658f7e","periodLabel":"2085-Q1","finalTarget":"100","finalTargetDate":"2079-12-31","changeLabel":"unit","actual":"90","actualStatus":"ok","actualReason":null,"expectedToDate":null,"expectedReason":"kpi.no_approved_trajectory","variance":null,"varianceRatio":null,"trend":"unknown","freshness":{"status":"fresh","dataAsOf":"2085-03-31","staleAfterDays":45},"explanation":{"key":"kpi.rag.no_approved_trajectory","params":{"actual":"90","reason":"kpi.no_approved_trajectory","expected":null,"redThreshold":null,"toleranceMode":null,"amberThreshold":null,"deviationValue":null,"thresholdSource":"none","thresholdVersion":null,"trajectoryVersion":null},"thresholdSource":"none","thresholdVersion":null,"toleranceMode":null,"amberThreshold":null,"redThreshold":null,"trajectoryVersion":null},"calculatedRag":"unknown","displayedRag":"unknown","override":null,"evaluationId":"01a14880-d659-7f3f-9cee-2d8555c08bc6","calculationRunId":"01a14880-d64d-7497-8182-76b023cbc06d"}
+
+stdout | tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact
+DEBUG-Q1AFTER {"kpiDefinitionId":"01a14880-d54b-724a-99cb-f91241babc18","kpiName":"Synthetic KPI 932ddf","kpiVersionId":"01a14880-e6e2-777f-b23b-90a9d7d338f3","unitKind":"count","currency":null,"scopeKind":"transformation","scopeId":"01a14880-d434-7099-9818-a702e112c5dc","reportingPeriodId":"01a14880-d50a-74f8-a797-b0e3e1658f7e","periodLabel":"2085-Q1","finalTarget":"120","finalTargetDate":"2079-12-31","changeLabel":"unit","actual":"90","actualStatus":"ok","actualReason":null,"expectedToDate":null,"expectedReason":"kpi.no_approved_trajectory","variance":null,"varianceRatio":null,"trend":"unknown","freshness":{"status":"fresh","dataAsOf":"2085-03-31","staleAfterDays":45},"explanation":{"key":"kpi.rag.no_approved_trajectory","params":{"actual":"90","reason":"kpi.no_approved_trajectory","expected":null,"redThreshold":null,"toleranceMode":null,"amberThreshold":null,"deviationValue":null,"thresholdSource":"none","thresholdVersion":null,"trajectoryVersion":null},"thresholdSource":"none","thresholdVersion":null,"toleranceMode":null,"amberThreshold":null,"redThreshold":null,"trajectoryVersion":null},"calculatedRag":"unknown","displayedRag":"unknown","override":null,"evaluationId":"01a14880-d659-7f3f-9cee-2d8555c08bc6","calculationRunId":"01a14880-d64d-7497-8182-76b023cbc06d"}
+
+stdout | tests/qa/integration/a07-historical-integrity.test.ts > REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback
+DEBUG-RB true 40 40 40 {"fromVersionId":"01a14880-eccd-733e-af09-53a3f1eb54fc","toVersionId":"01a14880-edea-720f-ba85-dfdc6dc2551f","titleChanged":false,"definitionChanged":false,"entries":[{"elementType":"form_field","stableKey":"T13.qa_a07_rollback_score","change":"removed","fields":[{"field":"fieldType","from":"number","to":null},{"field":"labelAr","from":"درجة تجريبية للتراجع","to":null},{"field":"labelEn","from":"Synthetic A07 rollback score","to":null},{"field":"max","from":"10","to":null},{"field":"min","from":"0","to":null},{"field":"scale","from":0,"to":null}]}]}
+
+ ❯ |integration| tests/qa/integration/a07-historical-integrity.test.ts (9 tests | 7 failed) 10390ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state 35ms
+     → expected [ 'red', 'amber', 'green' ] to include 'unknown'
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: the issued Q1 dashboard retains the calculation version and source revision of the KPI value it shows 1ms
+     → the Q1 dashboard's versions: [{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}]: expected [] to include '01a14880-d581-74fa-bfe2-b0cc526184fc'
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact 277ms
+     → expected [ 'unknown', '120', …(2) ] to deeply equal [ 'unknown', '100', …(2) ]
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact 228ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact  624ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing 120ms
+     → POST /api/v1/transformations/01a14880-d434-7099-9818-a702e112c5dc/kpi-restatements/01a14880-eb4c-7050-8983-78123948297b/decision -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"Only a person who holds the restatement approval right in this transformation can decide a restatement.","code":"kpi_restatement.no_authority","requestId":"01a14880-ebb1-74fc-af52-a282a86bc3dd"}: expected 'kpi_restatement.no_authority' to be 'kpi_restatement.self_decision' // Object.is equality
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2 260ms
+     → [{"snapshotId":"01a14880-de1f-74cc-ba72-c485481c483d","seriesId":"01a14880-de1f-74cc-ba72-c485481c483d","definitionCode":"registers","issueVersion":1,"periodLabel":null,"snapshotStatus":"issued","createdAt":"2026-10-17T06:16:10.984Z"}]: expected undefined to be defined
+   × REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback 448ms
+     → the rollback version equals the prior content: expected '96ee46853a9880c976c30768f633f784dcb5d…' to be 'b383e17bb6ac841582a2013500ff5b26d252b…' // Object.is equality
+   × contract (found while authoring A07): reading the extension values of a record that has none > GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows 116ms
+     → contract: header ETag="0" violates {"type":"string","pattern":"^\"[1-9][0-9]{0,9}\"$"}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state
+AssertionError: expected [ 'red', 'amber', 'green' ] to include 'unknown'
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:381:39
+    379|       kpi.v1.id,
+    380|     ]);
+    381|     expect(["red", "amber", "green"]).toContain(q1Before.calculatedRag…
+       |                                       ^
+    382|     expect(row.rag.value).toBe(q1Before.calculatedRag);
+    383|     expect(registerDecimals(kpis!.read.content, kpi.id)).toContain("10…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: the issued Q1 dashboard retains the calculation version and source revision of the KPI value it shows
+AssertionError: the Q1 dashboard's versions: [{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}]: expected [] to include '01a14880-d581-74fa-bfe2-b0cc526184fc'
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:395:7
+    393|       dash.versions.filter((x) => x.versionKind === "kpi_version").map…
+    394|       `the Q1 dashboard's versions: ${JSON.stringify(dash.versions)}`,
+    395|     ).toContain(kpi.v1.id);
+       |       ^
+    396|     const sourceTypes = (dash.sources.items as Body[]).map((x) => `${x…
+    397|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact
+AssertionError: expected [ 'unknown', '120', …(2) ] to deeply equal [ 'unknown', '100', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "unknown",
+-   "100",
+-   "01a14880-d581-74fa-bfe2-b0cc526184fc",
++   "120",
++   "01a14880-e6e2-777f-b23b-90a9d7d338f3",
+    "01a14880-d659-7f3f-9cee-2d8555c08bc6",
+  ]
+
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:454:109
+    452|     const q1After = await kpiStatus(q1);
+    453|     console.log("DEBUG-Q1AFTER", JSON.stringify(q1After));
+    454|     expect([q1After.calculatedRag, canon(q1After.finalTarget), q1After…
+       |                                                                                                             ^
+    455|       q1Before.calculatedRag,
+    456|       "100",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing
+AssertionError: POST /api/v1/transformations/01a14880-d434-7099-9818-a702e112c5dc/kpi-restatements/01a14880-eb4c-7050-8983-78123948297b/decision -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"Only a person who holds the restatement approval right in this transformation can decide a restatement.","code":"kpi_restatement.no_authority","requestId":"01a14880-ebb1-74fc-af52-a282a86bc3dd"}: expected 'kpi_restatement.no_authority' to be 'kpi_restatement.self_decision' // Object.is equality
+
+Expected: "kpi_restatement.self_decision"
+Received: "kpi_restatement.no_authority"
+
+ ❯ expectCode tests/qa/integration/a07-historical-integrity.test.ts:101:32
+     99|   expect(r.status, show(r)).toBe(status);
+    100|   expect(String(r.headers["content-type"])).toContain("application/pro…
+    101|   expect(r.body.code, show(r)).toBe(code);
+       |                                ^
+    102| }
+    103| 
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:627:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2
+AssertionError: [{"snapshotId":"01a14880-de1f-74cc-ba72-c485481c483d","seriesId":"01a14880-de1f-74cc-ba72-c485481c483d","definitionCode":"registers","issueVersion":1,"periodLabel":null,"snapshotStatus":"issued","createdAt":"2026-10-17T06:16:10.984Z"}]: expected undefined to be defined
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:682:45
+    680|       ).items as Body[];
+    681|       const offer = offers.find((o) => o.snapshotId === dash.id);
+    682|       expect(offer, JSON.stringify(offers)).toBeDefined();
+       |                                             ^
+    683|       expect([offer.issueVersion, offer.periodLabel, offer.snapshotSta…
+    684|       const issuedRag = dashboardKpiRow(dash.read.content).rag.value;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback
+AssertionError: the rollback version equals the prior content: expected '96ee46853a9880c976c30768f633f784dcb5d…' to be 'b383e17bb6ac841582a2013500ff5b26d252b…' // Object.is equality
+
+Expected: "b383e17bb6ac841582a2013500ff5b26d252b564e8fe169a7177efff0f77eb04"
+Received: "96ee46853a9880c976c30768f633f784dcb5dfd81a352f303f4d4b6cf4cc954d"
+
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:787:85
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > contract (found while authoring A07): reading the extension values of a record that has none > GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows
+Error: contract: header ETag="0" violates {"type":"string","pattern":"^\"[1-9][0-9]{0,9}\"$"}
+ ❯ assertContract apps/api/test/support/contract.ts:140:28
+    138|       const v = validatorFor(`${op.operationId}:${res.statusCode}:head…
+    139|       const typed = schema["type"] === "integer" ? Number(value) : Str…
+    140|       if (!v(typed)) throw new Error(`contract: header ${name}=${Strin…
+       |                            ^
+    141|     }
+    142|   }
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:850:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  06:15:48
+   Duration  23.43s (transform 4.46s, setup 0ms, collect 8.81s, tests 10.39s, environment 0ms, prepare 64ms)
+

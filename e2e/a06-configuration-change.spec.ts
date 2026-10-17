@@ -57,8 +57,12 @@ interface World {
   key: string;
   key13: string;
   txOld: string;
+  recOld?: string;
   txB?: string;
+  recB?: string;
   formsV2?: string;
+  /** D-163: the published global versions this spec replaced, restored (by rollback) in afterAll. */
+  restore: { kind: string; key: string; baseId: string }[];
 }
 let W: World;
 
@@ -143,14 +147,42 @@ async function newDraftInUi(page: Page, lang: Lang, baseId: string, summary: str
   return { path, id: path.split("/").pop()! };
 }
 
-/** Opens the T01 form framework of the first filled diagnostic record. */
-async function openT01Form(page: Page, tx: string) {
+/**
+ * Opens the T01 form framework of the diagnostic record `recordId` (the one t01Record filled). D-164: the record is
+ * addressed by its id, never by row position (the API orders items by id, the grid by dimension ordinal, and the six
+ * seeded items share one millisecond), so the UI edits exactly the record the test then reads.
+ */
+async function openT01Form(page: Page, tx: string, recordId: string) {
   await page.goto(`/transformations/${tx}/diagnose`);
-  const tools = page.locator("#t01 [data-form-tools]").first();
+  const tools = page.locator(`#t01 [data-form-tools='${recordId}']`);
+  await expect(tools).toHaveCount(1);
   await tools.click();
   const ff = page.getByRole("dialog").locator("[data-form-framework='T01']");
   await expect(ff).toBeVisible();
+  await expect(ff).toHaveAttribute("data-record-id", recordId);
   return ff;
+}
+
+/**
+ * D-163: restores a global configuration key this spec published over, by the product's own rollback (a new version
+ * equal to the replaced one, through the review pipeline), so later specs in the same stack see the original
+ * configuration. A no-op when the newest published version already is the base.
+ */
+async function restorePublished(adm: ApiSession, office: ApiSession, kind: string, key: string, baseId: string) {
+  const now = await newest(adm, kind, key);
+  if (!now || now.id === baseId) return;
+  const base = await adm.call<Body>("GET", `${V}/${baseId}`);
+  const drafts = (await adm.call<{ items: Body[] }>("GET", `${V}?kind=${kind}&status=draft`)).items.filter(
+    (v) => v.key === key && v.draftStage !== "discarded",
+  );
+  for (const d of drafts) await adm.call("POST", `${V}/${d.id}/discard`, undefined, { ifMatch: d.version });
+  const rb = await adm.call<Body>(
+    "POST",
+    `${V}/${baseId}/rollback`,
+    { reason: "Synthetic A06 clean-up: restore the configuration this acceptance spec replaced (D-163)" },
+    { ifMatch: base.version },
+  );
+  await publishThroughApi(adm, office, rb.id, kind);
 }
 
 async function checkPage(page: Page, lang: Lang, name: string) {
@@ -162,6 +194,29 @@ async function checkPage(page: Page, lang: Lang, name: string) {
 }
 
 test.describe.serial("A06 configuration change", () => {
+  // D-163: every global configuration published above is restored before the spec ends (even after a failure), so a
+  // later spec in the same stack (A03 decides G3 exceptions with its Sponsor) never inherits this spec's approver.
+  test.afterAll(async ({ playwright }) => {
+    test.setTimeout(180_000);
+    if (!W || W.restore.length === 0) return;
+    const adm = await apiSession(playwright, W.admUser);
+    const office = await apiSession(playwright, "dev.office");
+    for (const r of [...W.restore].reverse()) await restorePublished(adm, office, r.kind, r.key, r.baseId);
+    // Each key's newest published version is now a rollback of the version this spec replaced, with its definition
+    // (REQ-S06-009: "a new version equal to the prior content"; the element-level equality is asserted by
+    // tests/qa/integration/a07-historical-integrity.test.ts). A content hash is per version, so it is not compared.
+    const seen = new Set<string>();
+    for (const r of W.restore) {
+      if (seen.has(r.key)) continue;
+      seen.add(r.key);
+      const [now, base] = [await newest(adm, r.kind, r.key), await adm.call<Body>("GET", `${V}/${r.baseId}`)];
+      expect(now, `${r.kind}/${r.key} newest published`).toBeTruthy();
+      if (now.id === r.baseId) continue;
+      expect([now.origin, now.rollbackOfVersionId], `${r.kind}/${r.key} restored`).toEqual(["rollback", r.baseId]);
+      expect(now.definition, `${r.kind}/${r.key} definition`).toEqual(base.definition);
+    }
+  });
+
   test("an admin adds a field, changes a form rule and a gate approver in the UI; new published versions work at once", async ({
     page,
     browser,
@@ -184,13 +239,15 @@ test.describe.serial("A06 configuration change", () => {
       key: `qa_readiness_${lang}`,
       key13: `qa_stakeholder_score_${lang}`,
       txOld: await newTransformation(lead, `Synthetic A06 existing ${lang.toUpperCase()}`),
+      restore: [],
     };
-    await t01Record(lead, W.txOld);
+    W.recOld = await t01Record(lead, W.txOld);
 
     // ---- 1. Studio draft, the new field in the form builder, preview/compatibility, review, publish (all UI)
     await test.step("1. add a T01 field in the form builder and publish through Studio", async () => {
       const base = await newest(adm, "form_schema", "forms");
       expect(base, "a published forms version").toBeTruthy();
+      W.restore.push({ kind: "form_schema", key: "forms", baseId: base.id });
       await signIn(page, lang, admName);
       const draft = await newDraftInUi(page, lang, base.id, `Synthetic A06 (${lang}): T01 readiness field`);
       W.formsV2 = draft.id;
@@ -264,8 +321,9 @@ test.describe.serial("A06 configuration change", () => {
     await test.step("2. the Lead enters 80 on a new transformation; the existing one has no field", async () => {
       W.txB = await newTransformation(lead, `Synthetic A06 new ${lang.toUpperCase()}`);
       const recB = await t01Record(lead, W.txB);
+      W.recB = recB;
       const l = await asUser(browser, lang, "dev.lead");
-      const ff = await openT01Form(l.page, W.txB);
+      const ff = await openT01Form(l.page, W.txB, recB);
       const input = ff.locator(`[data-extension-field='${W.key}'] input`);
       await expect(input).toBeVisible();
       await input.fill("80");
@@ -278,7 +336,7 @@ test.describe.serial("A06 configuration change", () => {
       );
       expect([stored.values[W.key], stored.formSchemaVersionId]).toEqual(["80", W.formsV2]);
 
-      const ffOld = await openT01Form(l.page, W.txOld);
+      const ffOld = await openT01Form(l.page, W.txOld, W.recOld!);
       await expect(ffOld.locator(`[data-extension-field='${W.key}']`)).toHaveCount(0);
       await shot(l.page, lang, "a06-existing-transformation-old-form");
       await l.close();
@@ -304,7 +362,7 @@ test.describe.serial("A06 configuration change", () => {
       const txC = await newTransformation(lead, `Synthetic A06 newer ${lang.toUpperCase()}`);
       const recC = await t01Record(lead, txC);
       const l = await asUser(browser, lang, "dev.lead");
-      const ff = await openT01Form(l.page, txC);
+      const ff = await openT01Form(l.page, txC, recC);
       const input = ff.locator(`[data-extension-field='${W.key}'] input`);
       await input.fill("80");
       await ff.getByRole("button", { name: tr(lang, "forms.edit.save"), exact: true }).click();
@@ -330,7 +388,7 @@ test.describe.serial("A06 configuration change", () => {
       expect([ok.values[W.key], ok.formSchemaVersionId]).toEqual(["40", draft.id]);
 
       // the record pinned to the previous version is unchanged
-      const ffB = await openT01Form(l.page, W.txB!);
+      const ffB = await openT01Form(l.page, W.txB!, W.recB!);
       await expect(ffB.locator(`[data-extension-field='${W.key}'] input`)).toHaveValue("80");
       await l.close();
     });
@@ -339,6 +397,7 @@ test.describe.serial("A06 configuration change", () => {
     await test.step("4. a gate approver Sponsor -> Business Owner in Studio; a new transformation routes to BO", async () => {
       const gate = lang === "en" ? "G3" : "G5";
       const base = await newest(adm, "methodology", "playbook");
+      W.restore.push({ kind: "methodology", key: "playbook", baseId: base.id });
       const draft = await newDraftInUi(page, lang, base.id, `Synthetic A06 (${lang}): ${gate} approver`);
       const section = page.locator("#elements");
       await section.getByRole("combobox").first().selectOption("gate");

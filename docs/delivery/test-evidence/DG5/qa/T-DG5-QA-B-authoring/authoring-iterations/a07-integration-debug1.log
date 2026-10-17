@@ -1,0 +1,42 @@
+port-policy: PostgreSQL listening on port 23600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc03wvg_5d02920a (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state
+DEBUG-A07 {"v":[{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}],"s":{"items":[{"id":"01a1487f-3940-71b2-82f1-6ca1a681cfa1","sectionKey":"overview","recordType":"transformation","recordId":"01a1487f-321e-704d-a776-4d575e5c4c9d","recordVersion":1,"recordUpdatedAt":"2026-10-17T06:14:17.887Z","approvalState":null,"validationState":"not_applicable"},{"id":"01a1487f-3942-73bf-ab22-f0eb715f69d0","sectionKey":"items_outcomes","recordType":"outcome","recordId":"01a1487f-32bb-7103-83a5-75ab934ed40a","recordVersion":1,"recordUpdatedAt":"2026-10-17T06:14:18.044Z","approvalState":null,"validationState":"not_applicable"},{"id":"01a1487f-3943-74d9-8142-aaac30716952","sectionKey":"items_outcomes","recordType":"outcome_kpi","recordId":"01a1487f-3375-7360-849c-987b7b2d262d","recordVersion":1,"recordUpdatedAt":"2026-10-17T06:14:18.225Z","approvalState":null,"validationState":"not_applicable"},{"id":"01a1487f-3943-74d9-8142-ae88cefa9833","sectionKey":"items_value","recordType":"benefit","recordId":"01a1487f-344d-7599-b8a8-85b4de253032","recordVersion":1,"recordUpdatedAt":"2026-10-17T06:14:18.437Z","approvalState":null,"validationState":"not_applicable"}],"nextCursor":null},"kv":["kpi_version","methodology_version"]}
+
+ ❯ |integration| tests/qa/integration/a07-historical-integrity.test.ts (7 tests | 1 failed | 6 skipped) 6955ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state 11ms
+     → Q1 executive dashboard: expected [] to include '01a1487f-332c-765e-8b89-d7124622f47b'
+   ↓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact
+   ↓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact
+   ↓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact
+   ↓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing
+   ↓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2
+   ↓ REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state
+AssertionError: Q1 executive dashboard: expected [] to include '01a1487f-332c-765e-8b89-d7124622f47b'
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:366:9
+    364|         s.versions.filter((x) => x.versionKind === "kpi_version").map(…
+    365|         s.label,
+    366|       ).toContain(kpi.v1.id);
+       |         ^
+    367|     expect(JSON.stringify(dash!.sources), "the dashboard's source reco…
+    368|     // The approved snapshot: the gate pack of an approved G2.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  06:13:59
+   Duration  22.77s (transform 6.30s, setup 0ms, collect 12.17s, tests 6.96s, environment 0ms, prepare 79ms)
+
