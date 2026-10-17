@@ -1998,7 +1998,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 ## gate_instance
 
 - **Purpose:** A product gate (G1-G6) of one transformation: status, configured approver, current submission. Business approval inside the product; unrelated to engineering gates DG0-DG7.
-- **Migration:** `0017_p2_decisions_gates.sql`. **API module:** `workflows`. **Who writes:** system (instantiation); approver config: gate.configure (TO). **Lifecycle:** draft → submitted → approved / rejected / changes_requested / deferred (→ resubmitted).
+- **Migration:** `0017_p2_decisions_gates.sql`; `approver_configured` added by `0094_p5_gate_approver_configured.sql`. **API module:** `workflows`. **Who writes:** system (instantiation); approver config: gate.configure (TO), which also sets `approver_configured`. **Lifecycle:** draft → submitted → approved / rejected / changes_requested / deferred (→ resubmitted).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
 | Column | Type | Null | Default | Column constraints |
@@ -2018,6 +2018,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 | created_by | uuid | NOT NULL |  | FK → app_user(id) |
 | updated_at | timestamp with time zone | NOT NULL | `now()` |  |
 | updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+| approver_configured | boolean | NOT NULL | `false` | `0094` (T-DG5-BE-C4; D-164 (b)): true once `gate.configure` set the approver; backfilled from `gate_instance.configure` audit events (see "P5 repair migrations") |
 
 **Table constraints:**
 
@@ -9852,7 +9853,7 @@ Generated from the catalogue of a freshly migrated disposable database by `docs/
 |---|---|---|---|---|
 | id | uuid | NOT NULL |  | PK |
 | organization_id | uuid | NOT NULL |  | FK → organization(id) |
-| transformation_id | uuid | NULL |  | FK → transformation(id) |
+| transformation_id | uuid | NULL |  | FK → transformation(id); immutable except the Rule A transition NULL → T (`0096`, D-166; implemented by T-DG5-BE-T4 (W21); see "P5 repair migrations") |
 | procedure_instance_id | uuid | NOT NULL |  | FK → procedure_instance(id) |
 | step_definition_id | uuid | NOT NULL |  | FK → procedure_step_definition(id) |
 | step_key | text | NOT NULL |  | `CHECK ((step_key ~ '^[a-z][a-z0-9_]{1,47}$'))` |
@@ -12213,3 +12214,39 @@ No DG1–DG4 table, constraint or function changes. The DG1 operation `getBrandi
 | API (`@mth/shared/schemas`; `studio.ts` `methodology_text` reader attributes) | Shapes (OpenAPI slice I/J schemas), free-text rules, strict UTF-8, request media types, `If-Match` (`"0"` for the first branding save and the first demo reset request); the claim and engineering-gate rules in TypeScript before the database |
 | Service | Session reads; `transformation.read` for a pinned reader context; `branding.configure` and `demo.reset` with commit-time re-authorization; the resolved methodology version (latest published or pinned); navigation visibility from held permissions; demo refusal outside a demo database |
 | CLI / worker | `seed-demo`/`reset-demo`/`bootstrap` refusals (exit 3); deterministic seed (fixed ids, synthetic clock); reset by re-creating the demo database under session lock 730271; counts, checksum and coverage recorded in `demo_dataset_run` |
+
+# P5 repair migrations (0094–0096, DG5)
+
+Written by T-DG5-ARCH-R1 (2026-10-17) from the merged migrations `0094` and `0095` and from decision D-166 for `0096`. These entries are **edited by hand**, not regenerated from the catalogue as the slice sections above were. `0096` is the decided rule, implemented by T-DG5-BE-T4 (W21). It was not merged when this section was written.
+
+## Changes to earlier tables (0094–0096)
+
+| Table (owner) | Migration | Change | Classification |
+|---|---|---|---|
+| `gate_instance` (DG2, 0017) | `0094_p5_gate_approver_configured.sql` (T-DG5-BE-C4; D-164 (b), D-166) | New column `approver_configured boolean NOT NULL DEFAULT false`, with a column comment. It is set to true by the approver configuration (`PATCH /transformations/{t}/gates/{gateCode}`, `gate.configure`, audit action `gate_instance.configure`, in the same `UPDATE` and audit event). `routedApproverOf` then keeps the stored approver (ADR-0039 amendment C2). Not exposed in the contract. | additive |
+| `gate_instance` (backfill) | `0094` | `approver_configured = true` for every instance with at least one `audit_event` (`record_type = 'gate_instance'`, `record_id` = the instance, `action = 'gate_instance.configure'`). Only the new column changes: `version`, `updated_at` and `updated_by` stay byte-identical, and no audit event is written. For this one statement, `gate_instance_row_guard` and `gate_instance_audit_required` are disabled and re-enabled inside `0094`'s own transaction (D-166; a one-off exception, ADR-0039 amendment C2). `gate_instance_approver_allowed` is not involved. | data backfill; no constraint, trigger or privilege change after commit |
+| `methodology_version`, `procedure_definition`, `procedure_step_definition` (DG5 slice C, 0069) | `0095_p5_procedures_v2_baseline_assignee.sql` (T-DG5-BE-T3; D-165 QA-E O-2) | Seed rows: `procedures` **v2** (`01920005-0300-7000-8000-000000000002`, `origin = 'seed'`, `published`, `based_on_version_id` = v1, with a change summary), its ten definitions and 31 steps copied from v1, and one audit event per row (42 in total). Exactly two values differ from v1: `baseline_validation.record_baseline.responsible_role_code` BO → **TL**, and `baseline_validation.responsible_role_codes` `[BO, FIN]` → `[TL, FIN]` (REQ-PB-027). v1 is unchanged. | additive seed; no schema change |
+| `procedure_step_instance` (DG5 slice C, 0069) | `0096` (T-DG5-BE-T4, W21; D-166 Rule A) | The P2 identity guard of this table (`p2_row_guard`, constraint `procedure_step_instance_identity_immutable`) is narrowed. `transformation_id` may change only from NULL to T, once: for a step that has not started (`pending`), of an instance whose own `transformation_id` is NULL, and only to the transformation named by that instance's `capture_intake` output link. `id`, `organization_id`, `created_at` and `created_by` stay immutable, and every other change of `transformation_id` stays refused. Each adopted step takes the P2 version step and one audit event (ADR-0042 amendment V2). | narrowing of a guard for exactly one transition; every other table keeps the generic `p2_row_guard` |
+
+## `procedures` v2 (0095): the one changed step
+
+| Version | `baseline_validation.responsible_role_codes` | `record_baseline.responsible_role_code` | `validate_baseline.responsible_role_code` |
+|---|---|---|---|
+| v1 (`0069`, `01920005-0300-7000-8000-000000000001`) | `[BO, FIN]` | BO | FIN |
+| v2 (`0095`, `01920005-0300-7000-8000-000000000002`) | `[TL, FIN]` | **TL** | FIN |
+
+**Who uses v2.** A launch uses the transformation's `procedure` pin, else the newest published `procedures` version. No transformation is pinned to `procedures` at creation, so launches in unpinned transformations use v2 from now on. A `procedure` pin moves only through an approved methodology migration (ADR-0040 §1). A running instance keeps the definition row it was launched with (`procedure_instance_pinned`).
+
+## The adopted `procedure_step_instance.transformation_id` transition (0096; D-166 Rule A)
+
+| Condition | Required value |
+|---|---|
+| the trigger | completion of the `capture_intake` step of a `new_transformation_intake` instance with `outputRecordId` = T, a transformation |
+| the instance | organization scope; `procedure_instance.transformation_id` IS NULL, and it stays NULL |
+| the step | same instance; status `pending` (not started); `transformation_id` IS NULL before |
+| the new value | T, exactly the transformation named by the instance's `capture_intake` output link (`procedure_instance_link`) |
+| how often | once per step |
+| the same transaction | every not-started step of the instance is adopted; each takes the P2 version step and one audit event |
+| everything else | refused by the database (the P2 identity guard) |
+
+Approvals of the adopted steps are requested on T and routed by T's role mappings (DG4 `resolveParty`, never a fallback). Until T has a mapped Sponsor, `confirm_sponsor` keeps the next action `procedures.next_action.await_approval_unrouted`.

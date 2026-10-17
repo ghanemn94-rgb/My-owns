@@ -206,3 +206,52 @@ Weights are `weightPercent` decimal strings `^(100(\.0{1,2})?|[0-9]{1,2}(\.[0-9]
 ## Amendment (2026-10-14, T-DG5-ARCH-05; D-146): §9, who may list revision proposals
 
 D-146 accepts the scope BE-B2 implemented, and §9 is read with it. `listRevisionProposals` lists a proposal only to a caller who holds `methodology.read` **and** can read the transformation it names (`transformation.read` in that transformation's scope). A proposal about a transformation the caller cannot read is left out of the list; it is not returned as a 403. This is least privilege: a proposal's `impact` names that transformation's affected records and benefits. The row "list/get … revision proposals | `methodology.read`" in the §9 table therefore means `methodology.read` plus `transformation.read` for each listed proposal. AUD holds both read rights and reads every proposal in its scope. No other §9 row changes, and no contract operation, status or code changes.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-164 (a) (b), D-166): §3, the approver every gate read names, and `gate_instance.approver_configured`
+
+Sources: D-163 (F-DG5-QA-A-1), D-164 (a) and (b), and D-166 (accepted edits and the `0094` backfill); the T-DG5-BE-C3 handback §2 and the T-DG5-BE-C4 handback §2.1. Nothing above is removed. Where this amendment and §3 differ, this amendment wins. The ADR-0015 §2 amendment of the same date points here.
+
+### C1. One approver rule for display, routing and authorization (T-DG5-BE-C3; D-163, D-164 (a))
+
+A gate's approver is resolved **at run time** by `routedApproverOf(instance, catalogue, resolved)` (`apps/api/src/modules/workflows/gates.ts:276`). `catalogue` is the DG2 gate definition, and `resolved` is the definition of the transformation's pinned methodology version (through the `ConfigResolver` above).
+
+- When the instance was **never configured** (`approver_configured` false, C2), names no user, and its role is the catalogue default, while the pinned version sets another default: the result is the pinned version's default role, with basis `default_role`.
+- Otherwise the result is the stored approver (`approverOf`): the named user (`configured_user`), else the stored role (`default_role` when it equals the resolved default, else `configured_role`).
+
+**Every read that names a gate's approver reports this routed approver.** Nothing stored is rewritten:
+
+| Read | Where |
+|---|---|
+| `GET …/gates`, `GET …/gates/{gateCode}` and the `PATCH …/gates/{gateCode}` response (`GateInstance.approverRoleCode`, `approverUserId`) | `gateView` → `toGateInstance` (`gates.ts:159`, `:461`) |
+| a new submission's approver | `submitGate` (`gates.ts:952`), unchanged since T-DG5-BE-C |
+| "is this caller the gate's approver" (gate exceptions in person, dispensations) | `isGateApprover` (`gates.ts:398`) |
+| the routing of `gate_exception_to_decide` work items and the on-behalf-of decide check | `gate-exceptions.ts` `gateApproverConfig` |
+| the G5 disposition party | `scale.ts` `dispositionParty` |
+| the recipients of the gate-exception expiry notices (worker) | `apps/worker/src/handlers/gates.ts` `effectiveGateApproverOf`, the SQL twin (the worker imports no API code, ADR-0002); parity is tested against the API for every gate |
+| the gate pack of a gate with no submission | `WorkflowsReadPort.gateApprover` (ADR-0045 amendment of the same date) |
+
+`effectiveGateApprovers` and `effectiveGateApprover` (`gates.ts:307` onwards) give this per gate. `workflows/index.ts` exports `effectiveGateApprover`, for the composition root only.
+
+What does not change:
+- A **pending submission** is decided by the approver recorded on it (`canDecide`, `gates.ts:452–455`). A submission keeps the approver it was routed to.
+- The `gate.submitted` work items take the approver from the event payload, which is the submission's approver.
+- For a transformation pinned to `playbook` v1, `resolved` is the catalogue, so every read returns the stored row byte for byte (p5-plan R2). The `PATCH` approver check reads the resolved definition's `allowedApproverRoleCodes`, which no version overrides, so its result is unchanged.
+- The `GateInstance` schema is unchanged.
+
+Requirement rows: REQ-S06-004 (A06: "a submission is routed to the new approver", and now the gate screens name that approver) and REQ-S20-006 (records pinned to the old version are unchanged). Tests: `apps/api/test/integration/methodology/effective-approver.test.ts`.
+
+### C2. `gate_instance.approver_configured` (`0094`; T-DG5-BE-C4; D-164 (b), D-166)
+
+Before this column, "no named user and the catalogue default role" could not be told apart from "never configured" (BE-C3 handback §2.4). An explicit role-only choice of the catalogue default (for example SP for G3, on a transformation whose pinned version defaults G3 to BO) was therefore overridden by the pinned default.
+
+- **Column** (`packages/db/migrations/0094_p5_gate_approver_configured.sql`, additive): `approver_configured boolean NOT NULL DEFAULT false`, with a column comment. `packages/db/src/schema.ts` carries the type (an edit D-166 accepts).
+- **Who sets it:** only the approver configuration, `PATCH /api/v1/transformations/{transformationId}/gates/{gateCode}` (`gate.configure`; audit action `gate_instance.configure`). It sets `approver_configured = true` in the same `UPDATE` as the role and user (`gates.ts:714`), and records `changes.approverConfigured {from, to}` in the same audit event (`gates.ts:732`). The version step, `If-Match` (428 missing, 409 stale), the commit-time re-authorization and the validation are unchanged. A refused configuration (403, 409 or 428) leaves the flag false.
+- **How it is read:** when it is true, `routedApproverOf` keeps the stored approver (C1, second case). The worker twin reads the same column (`apps/worker/src/handlers/gates.ts:519`); D-166 accepts that edit for parity.
+- **Not in the contract:** the flag is not exposed, and `GateInstance` is unchanged.
+- **Backfill.** `0094` sets `approver_configured = true` for every instance that has at least one `audit_event` with `record_type = 'gate_instance'`, `record_id` = the instance and `action = 'gate_instance.configure'`. The backfill changes **only** the new column. `version`, `updated_at`, `updated_by` and every other value stay byte-identical, so ETags and the audit history do not move. No audit event is written, because the flag records a fact already in the audit trail.
+- **The narrow trigger disable (accepted by D-166).** For the backfill statement only, `0094` runs `ALTER TABLE gate_instance DISABLE TRIGGER gate_instance_row_guard` and `… DISABLE TRIGGER gate_instance_audit_required`, and re-enables both before the migration's own transaction commits (`mth-db migrate` runs each migration in one transaction). Without this, the P2 guards would force a version step and a new audit event, and would change every configured row's ETag. `gate_instance_approver_allowed` fires only on `UPDATE OF approver_role_code`, so it is not involved.
+  - `0094` is the first migration that disables a trigger. This ADR records it as a **one-off exception, not a pattern**: any further use needs its own decision.
+  - The test `apps/api/test/integration/methodology/approver-configured.test.ts` re-applies the shipped `0094` to the pre-`0094` table, in a transaction that is rolled back. A configured instance becomes true and a never-configured one stays false. The stamps are unchanged, and an update without a version step is refused again afterwards (the guards are back on).
+- The data dictionary (`gate_instance`) and the ERD list the column.
+
+Requirement row: REQ-S06-004. Product gates G1–G6 are business approvals inside the product. Nothing here grants one, and nothing here touches the engineering gates DG0–DG7.

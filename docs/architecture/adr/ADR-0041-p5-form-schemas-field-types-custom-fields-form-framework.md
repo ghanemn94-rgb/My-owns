@@ -208,3 +208,15 @@ Missing `If-Match` → 428 and stale on non-form operations → 409 with the ADR
 
 - **Database (probe, real output):** G00–G05, FS01–FS05, FE01–FE16, CV00–CV15, FD01–FD07, FC01–FC07, FA01–FA06, PM01 (`probe-output.txt`, 116/116 PASS with ADR-0042's probes).
 - **API (implementer tests, p5-work-split §B):** T01 and T14 literal (REQ-S05-001): a saved draft reopens; after an edit, history lists the new version; a comment and an attachment persist; export returns the rows; a second save with the old `If-Match` returns the recoverable 409 with `currentVersion`. REQ-S05-002: adding an extension field to T03 publishes; deleting T03 `gap` → 422 `form_schema.source_column_protected`. REQ-S06-005: `12%` stores `"0.12"`; `1500000.10` SAR reads back exactly; a calculated field naming an unknown field → 422 `form_schema.calculated_formula_invalid`. REQ-S16-010: a value violating its schema → 400/422 before persistence and the database refuses it too. REQ-S05-006: the twelve types are created and read through the operations of §1, and their forms show the badge in en and ar. AUD 403 on every write; `If-Match` 428/409; one audit event per mutation; commit-time re-authorization.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-165, D-166): §4, the ETag of a record with no extension values
+
+Sources: D-165 (QA-B P-3), D-166 (W20 integrated), and the T-DG5-BE-C4 handback §2.3. The precedent is D-153, the defaulted-record ETag rule of the 2026-10-09 amendments to ADR-0035, ADR-0036 and ADR-0037. Nothing above is removed.
+
+- **What is true now.** `getFormRecordCustomFields` (`GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields`) declares its 200 header as `ETag: $ref ETagOrZero` (`docs/api/openapi.yaml`, the operation's 200 response).
+  - When no `form_custom_value` row exists for the record, the response has `version: 0` and `ETag: "0"`, meaning that no value is stored yet.
+  - Otherwise the ETag is the row's `version` (1 or more).
+- **Unchanged.** `putFormRecordCustomFields` keeps `If-Match: IfMatchOrZero`, where `"0"` creates the row (`apps/api/src/modules/forms/custom-values.ts:80–82`). Its 200 keeps `ETag`, because a written set is version 1 or more. The server code did not change; only the contract was corrected, because the plain `ETag` header pattern forbids `"0"`.
+- **Test.** `tests/qa/integration/a07-historical-integrity.test.ts` › "GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows" passes unchanged.
+
+Requirement row: REQ-S16-010 (validated custom fields beside the typed tables, §4). No operation, problem code or media type is added.

@@ -104,9 +104,9 @@ The schedule `governance.meeting_cutoff_scan` (daily 00:30 Asia/Riyadh; starter 
 
 ### 7. Critical dependency slip (REQ-S12-012, M0232)
 
-- **Detection (API, in the transaction that changes a predecessor's milestone forecast or approved date; BE-J's `portfolio/slip-events.ts` and one named call line in the DG4 milestone update):** for each dependency whose predecessor (`from_kind = 'initiative'`) is the changed initiative, compute the predecessor finish before and after with the DG4 function `predecessorFinish` unchanged (ADR-0023 §5). It is a **slip** when the finish moves later by at least `minimumSlipDays` calendar days, and **critical** when the dependency is on the transformation's critical path (`schedule-network.ts`, ADR-0031) or the new finish is after `needed_by`. A critical slip inserts one `dependency_slip` (slip key `<predecessor initiative id>:<schedule version>`, once: DS04; `slip_days` = after − before, DS01; `critical_reason` consistent with `needed_by`, DS02; append-only, DS05) whose `affected` lists each dependent initiative reachable through the dependency graph with its owner and its forecast finish before and after, computed by the DG4 scheduling functions unchanged, and writes the outbox event `dependency.slipped` `{slipId, dependencyId, slipDays}`.
+- **Detection (API, in the transaction that changes a predecessor's milestone forecast or approved date; BE-J's `portfolio/slip-events.ts` and one named call line in the DG4 milestone update):** for each dependency whose predecessor (`from_kind = 'initiative'`) is the changed initiative, compute the predecessor finish before and after with the DG4 function `predecessorFinish` unchanged (ADR-0023 §5). It is a **slip** when the finish moves later by at least `minimumSlipDays` calendar days, and **critical** when the dependency is on the transformation's critical path (`schedule-network.ts`, ADR-0031) or the new finish is after `needed_by`. A critical slip inserts one `dependency_slip` (slip key `<predecessor initiative id>:<schedule version>`, once: DS04; `slip_days` = after − before, DS01; `critical_reason` consistent with `needed_by`, DS02; append-only, DS05) whose `affected` lists each dependent initiative reachable through the dependency graph with its owner and its forecast finish before and after, computed by the forward pass `forwardFinish` of the amendment below (Rule B, D-166; _corrected 2026-10-17, T-DG5-ARCH-R1: this said "by the DG4 scheduling functions unchanged", which do not propagate dates through dependencies_), and writes the outbox event `dependency.slipped` `{slipId, dependencyId, slipDays}`.
 - **Notification (worker, starter 9):** one `dependency_slip` work item and notification per distinct affected owner (dedupe `dependency_slip:<slipId>:<userId>`): "each affected owner once". A predecessor finish that cannot be computed (no dated milestone) raises no slip; a dependent's forecast finish that cannot be computed is `null` in `affected` and shown **Unknown**.
-- **Forecasts** stay computed on read (DG4): the moved dependent forecasts are what the DG4 schedule read returns after the change; the slip row keeps the before/after evidence. No forecast is stored or overwritten.
+- **Forecasts** are not stored. The moved dependent forecasts are the slip's own `affected` evidence (Rule B); the DG4 schedule reads are unchanged. No forecast is stored or overwritten. _Corrected 2026-10-17 (T-DG5-ARCH-R1): this said that the moved forecasts are what the DG4 schedule read returns after the change, which is not true, because no DG4 read propagates a predecessor's slip to its dependents (D-166)._
 
 ### 8. Locks, events and jobs
 
@@ -172,3 +172,41 @@ No money or rate is stored by this slice. `slip_days` is an integer count of cal
 
 - **Database (probe, PostgreSQL 16.13):** S01–S06, G04, G05, AR05, AV21–AV23, RS01–RS11, GC01–GC09, NP01–NP14, MP01–MP08, DS01–DS05 in `probe-output.txt`.
 - **Implementer tests (literal, p5-work-split §E):** REQ-S12-004: one transformation → one set of phase checklist rows and role tasks; replay ×3 creates nothing more; with the plan flag the 90-day tasks are dated from the start date (after BE-P). REQ-S12-012: a 5-day slip notifies each affected owner once, and the dependent forecasts read after the change are those of the DG4 logic. REQ-S12-015: cut-off creates one draft agenda containing the current open asks; publishing an item before review → 422 `agenda_item.pack_not_reviewed`. REQ-S10-015: sequential — step 2 has no work item until step 1 approves; parallel — both notified at once. REQ-S04-011: a conditional G5 limited to one region blocks a scale transition for another region (DG4 behaviour, re-run); no scope → 422 `gate.scale_scope_required`; with the switch off in a published v2 → 422 `gate.conditional_approval_disabled`; an overdue condition escalates once. REQ-S12-025: a non-urgent reminder created in quiet hours is delivered in the next digest; an urgent escalation is delivered immediately. Each with AUD 403 on writes, `If-Match` 428/409, one audit event per mutation.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-165, D-166): §7, the dependents' forecast impact by a defined forward pass (Rule B)
+
+Sources: D-165 (QA-F's REQ-S12-012 observation), D-166 (Rule B, verbatim below), and the T-DG5-BE-T3 handback §3.4. **Decided by D-166; implemented by T-DG5-BE-T4 (W21).** It was not merged when this amendment was written. Two §7 sentences are corrected in place, each marked "Corrected 2026-10-17". Where this amendment and §7 differ, this amendment wins.
+
+### B0. Why §7 changes
+
+- **What §7 said.** §7 computed each dependent's forecast finish "before and after" with `predecessorFinish` (ADR-0023 §5), and read the "moved" forecasts from the DG4 schedule.
+- **Why that was wrong.** `predecessorFinish` reads only an initiative's **own** milestones. The DG4 critical path (`computeCriticalPath`, `cpm-fs/1`, ADR-0031) works on recorded durations, with no milestone dates. So a predecessor's slip never moved a dependent's figure (`apps/api/src/modules/portfolio/slip-events.ts:183–184` at this commit).
+- **What the requirement asks.** REQ-S12-012 asks to "move dependent forecasts per the logic", and M0232 to "recompute forecast impacts using defined scheduling logic".
+- **The decision.** D-166 defines that logic as a finish-to-start forward pass over planned starts. Its result is recorded only in the slip's evidence.
+
+### B1. Rule B, as decided by D-166 (verbatim)
+
+- `forwardFinish(S, set)` for an initiative S over a milestone set:
+  - `own = predecessorFinish(S, set)` (ADR-0023 §5, unchanged);
+  - if S has no scheduled finish-to-start predecessor, it is `own`;
+  - otherwise `required` is the latest, over S's scheduled predecessors P, of the first date ADR-0023 §5 allows S to start after `forwardFinish(P, set)`;
+  - `shift = max(0, required − S.planned_start)` in calendar days;
+  - the result is `own + shift`.
+- If S has a scheduled predecessor but no `planned_start`, or any input date is missing, the result is Unknown (`null`), never 0 or the unshifted date.
+- Cycles cannot occur, because DG4 refuses dependency cycles.
+- A slip's `affected` entries record `forecastFinishBefore = forwardFinish(S, before set)` and `forecastFinishAfter = forwardFinish(S, after set)`, for every initiative reachable from the slipped predecessor. The sets differ only in the slipped predecessor's milestone.
+- Nothing is stored or overwritten except the slip's own `affected` evidence (ADR-0044 §7). A dependent with enough slack does not move; one with no slack moves by the slip.
+
+### B2. How Rule B sits with the rest of §7 and with DG4
+
+- **"The first date ADR-0023 §5 allows S to start after P."** ADR-0023 §5 flags a successor as `schedule.before_predecessor` when its `planned_start` is **earlier than** the predecessor finish. So the first start that rule allows is the predecessor's finish date itself. Rule B uses that rule unchanged and adds no lag or calendar of its own.
+- **Unchanged:**
+  - **detection** (the predecessor's own finish before and after, by `predecessorFinish`; `minimumSlipDays`; "critical");
+  - the `dependency_slip` row and its once-key (DS01–DS05);
+  - the outbox event `dependency.slipped {slipId, dependencyId, slipDays}`;
+  - starter 9's notification of each distinct affected owner once.
+- **Unknown.** A dependent whose `forwardFinish` cannot be computed is `null` in `affected` and is shown **Unknown**, never 0 and never the unshifted date (§7, second bullet; §11).
+- **No stored forecast.** "No forecast is stored or overwritten" stays. No DG4 table, function, read or response changes: `predecessorFinish`, the schedule flags, `getScheduleNetwork` and the critical path return what they returned before. Only the content of a new slip's `affected` changes.
+- **Rows already written.** A `dependency_slip` row is append-only (DS05). Rows written before W21 keep the `affected` they were written with.
+
+Requirement row: REQ-S12-012 (A13: "a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic"). QA-F2 (W21) tests it black-box. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
