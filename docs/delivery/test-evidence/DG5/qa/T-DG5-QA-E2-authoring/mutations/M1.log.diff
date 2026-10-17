@@ -1,0 +1,11 @@
+--- packages/db/migrations/0095_p5_procedures_v2_baseline_assignee.sql.pristine	2026-10-17 15:18:40.892115725 +0000
++++ packages/db/migrations/0095_p5_procedures_v2_baseline_assignee.sql	2026-10-17 15:18:40.907561069 +0000
+@@ -72,7 +72,7 @@
+         || '-' || substr(m.h, 21, 12))::uuid,
+        overlay(d.id::text PLACING '0311' FROM 10 FOR 4)::uuid, s.step_key, s.ordinal, s.parallel_group, s.step_kind,
+        s.name_en, s.name_ar, s.instructions_en, s.instructions_ar,
+-       CASE WHEN d.code = 'baseline_validation' AND s.step_key = 'record_baseline' THEN 'TL' ELSE s.responsible_role_code END,
++       CASE WHEN d.code = 'baseline_validation' AND s.step_key = 'record_baseline' THEN 'BO' ELSE s.responsible_role_code END,
+        s.approval_role_code, s.sla_working_days, s.condition_input_key, s.condition_operator, s.condition_value,
+        s.required_input_keys, s.evidence_required, s.output_record_type, s.output_mode, s.skippable, s.removed
+   FROM procedure_step_definition s

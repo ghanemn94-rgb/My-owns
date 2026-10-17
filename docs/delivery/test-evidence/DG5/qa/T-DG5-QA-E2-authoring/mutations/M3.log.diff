@@ -1,0 +1,11 @@
+--- apps/api/dist/modules/admin/walkthrough.js.pristine	2026-10-17 15:19:35.156974311 +0000
++++ apps/api/dist/modules/admin/walkthrough.js	2026-10-17 15:19:35.171687671 +0000
+@@ -110,7 +110,7 @@
+               OR EXISTS (SELECT 1 FROM assessment_record r WHERE r.transformation_id = ${t}::uuid
+                            AND r.kind = 'proficiency_observation' AND r.status <> 'withdrawn'))) AS done`,
+     // "a submitted KPI actual".
+-    kpi_actual_submitted: (t) => sql `SELECT EXISTS (SELECT 1 FROM kpi_actual a WHERE a.transformation_id = ${t}::uuid AND ${SUBMITTED_ACTUAL})
++    kpi_actual_submitted: (t) => sql `SELECT false AND EXISTS (SELECT 1 FROM kpi_actual a WHERE a.transformation_id = ${t}::uuid AND ${SUBMITTED_ACTUAL})
+                AS done`,
+     // "a Finance-validated benefit measurement (synthetic)": a benefit measurement in status `validated` with the
+     // approved Finance validation that decided it (ADR-0030; a human Finance decision, never made by this read).
