@@ -3,6 +3,8 @@
 // (complete, skip, assign, link evidence) and the instance actions (inputs, cancel) send If-Match with the instance
 // version the user saw; the server re-checks every rule (inputs, evidence, assignee, approval through the canonical
 // business approval). An approval step is completed only by its business approver's decision, never from here.
+// T-DG5-FE-D4 (D-166): a step whose output is `create` or `link` is completed by choosing its output record
+// (CompleteWithOutput.tsx; `outputRecordId`); an `advance` step keeps the note-only form.
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
@@ -18,6 +20,8 @@ import { formatDateTime } from "../../lib/format.ts";
 import { BusinessApprovalNote, DueDate, useUserNames } from "../my-work/p4ui.tsx";
 import { NoteForm, StatusChip, pick, useRunner, type Runner } from "../automation/ui.tsx";
 import { OverdueCell } from "./MyProceduresPage.tsx";
+import { CompleteWithOutput } from "./CompleteWithOutput.tsx";
+import { chosenOutputOf, scopeTransformationOf } from "./outputs.ts";
 import {
   INSTANCE_STATUS_CHIP,
   STEP_STATUS_CHIP,
@@ -183,7 +187,9 @@ function InstanceView({ instance: i }: { instance: ProcedureInstance }) {
       {active
         ? i.steps
             .filter((s) => s.status === "active")
-            .map((s) => <StepActions key={s.stepKey} instance={i} step={s} runner={runner} />)
+            .map((s) => (
+              <StepActions key={s.stepKey} instance={i} step={s} runner={runner} definition={definition.data ?? null} />
+            ))
         : null}
 
       <Section id="evidence" title={t("workflowsP5.procedures.evidenceTitle")}>
@@ -323,20 +329,27 @@ function StepActions({
   instance: i,
   step: s,
   runner,
+  definition,
 }: {
   instance: ProcedureInstance;
   step: ProcedureStepInstance;
   runner: Runner;
+  /** null while it loads or when it cannot be read: the note-only form (the server still refuses a missing output). */
+  definition: ProcedureDefinition | null;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
-  const tid = i.transformationId ?? "";
+  // An organization-scope instance acts in the transformation an earlier step produced (kit.inScope; D-166 Rule A).
+  const tid = scopeTransformationOf(i) ?? "";
   const transformation = useTransformation(tid || undefined);
   const users = useAllUsers(transformation.data?.organizationId, Boolean(transformation.data));
   const evidence = useRegister<Evidence>(tid, "evidence", {}, Boolean(tid));
   const [assignee, setAssignee] = useState("");
   const [evidenceId, setEvidenceId] = useState("");
   const name = pick(locale, s.nameEn, s.nameAr) ?? s.stepKey;
+  // A `create` or `link` output is named in `outputRecordId` (D-166); an `advance` output, or a step with no output,
+  // keeps the note-only form (the server reads the record an earlier step linked).
+  const output = chosenOutputOf(definition, s.stepKey);
   return (
     <Section id={`step-${s.stepKey}`} title={t("workflowsP5.procedures.stepActionsTitle", { step: name })}>
       {s.stepKind === "approval" ? (
@@ -351,6 +364,8 @@ function StepActions({
             </>
           ) : null}
         </p>
+      ) : output ? (
+        <CompleteWithOutput instance={i} step={s} recordType={output.recordType} mode={output.mode} runner={runner} />
       ) : (
         <NoteForm
           id={`complete-${s.stepKey}`}

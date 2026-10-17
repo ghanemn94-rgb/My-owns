@@ -9,8 +9,9 @@
 //    condition (`gateCode eq "G6"` on gate.decided) and the final disable keep it from acting in later specs. A starter
 //    says why it cannot be disabled.
 //  - REQ-S06-002 my procedures and the instance view: the lead launches `baseline_validation` in a fresh SYNTHETIC
-//    transformation; the instance shows its current step, the assignee role, the due date and the missing inputs;
-//    completing the BO step as the TL is refused (403 procedure_step.not_assignee).
+//    transformation; the instance shows its current step, the assignee role (TL: `procedures` v2, 0095), the due date
+//    and the missing inputs; with the inputs and evidence provided, completing the step without naming its output
+//    record is refused (422 procedure_step.output_required; T-DG5-FE-D4, D-166).
 //  - REQ-S06-001 procedure builder: the definitions of the published version; in a procedures draft (created and
 //    DISCARDED by the test), a new procedure without trigger and completion is validated (both findings listed) and its
 //    save is refused (422 procedure_definition.trigger_required); a seeded definition is edited and saved to the draft.
@@ -23,6 +24,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   SYN_RETAIL,
   apiSession,
+  escape,
   expectAccessible,
   langOf,
   shot,
@@ -74,6 +76,24 @@ async function grantMethodologyAdmin(admin: ApiSession): Promise<() => Promise<v
       );
   };
 }
+
+/** The five inputs of `baseline_validation`, by the definition's own en/ar labels (T-DG5-FE-D4). */
+const BASELINE_INPUTS: Record<Lang, readonly (readonly [string, string])[]> = {
+  en: [
+    ["Metric", "Synthetic first-contact resolution"],
+    ["Baseline value", "61.5"],
+    ["Unit", "%"],
+    ["Baseline date", "2026-10-01"],
+    ["Source", "Synthetic contact-centre extract"],
+  ],
+  ar: [
+    ["المقياس", "Synthetic first-contact resolution"],
+    ["قيمة خط الأساس", "61.5"],
+    ["الوحدة", "%"],
+    ["تاريخ خط الأساس", "2026-10-01"],
+    ["المصدر", "Synthetic contact-centre extract"],
+  ],
+};
 
 const h1 = (page: Page) => page.locator("main#main h1");
 const alertOf = (page: Page) => page.locator("main [role='alert']").first();
@@ -227,7 +247,7 @@ test("Automation: the readable builder, the dry-run refusal, a dry run with no s
   expect(foreign).toEqual([]);
 });
 
-test("My procedures: launch baseline validation; the instance shows its current step, assignee, due date and missing inputs; the TL cannot complete the BO step", async ({
+test("My procedures: launch baseline validation; the instance shows its current step, assignee, due date and missing inputs; completing without an output is refused", async ({
   page,
   playwright,
 }, info) => {
@@ -252,15 +272,41 @@ test("My procedures: launch baseline validation; the instance shows its current 
   await expect(page).toHaveURL(/\/playbook\/procedures\/[0-9a-f-]+$/);
   const current = page.locator("[data-step='record_baseline']");
   await expect(current).toHaveAttribute("data-step-status", "active");
-  await expect(current).toContainText("BO");
+  // `procedures` v2 (0095, REQ-PB-027) assigns record_baseline to TL (it was BO in v1).
+  await expect(current).toContainText("TL");
   await expect(page.locator("[data-missing-inputs='5']")).toBeVisible();
   await expect(page.locator("[data-next-action]")).toBeVisible();
   await expectAccessible(page, lang, "p5-procedure-instance");
   await shot(page, lang, "p5-procedure-instance");
-  // The main refusal: the step belongs to the BO role; the lead (TL) cannot complete it.
-  await page.getByRole("button", { name: tr(lang, "workflowsP5.procedures.complete"), exact: true }).click();
-  await expect(alertOf(page)).toHaveAttribute("data-problem", "procedure_step.not_assignee");
-  await expect(alertOf(page)).toContainText(tr(lang, "problems.procedure_step__not_assignee"));
+  // The main refusal (T-DG5-FE-D4, D-166): record_baseline is a `create` output. With its inputs provided and its
+  // evidence linked, completing it without naming the baseline it produced is refused by the server
+  // (422 procedure_step.output_required), shown by its code in en/ar. (The full path that names the baseline is
+  // e2e/p5-procedure-outputs.spec.ts.)
+  const inputs = page.locator("[data-form='procedure-inputs']");
+  for (const [label, value] of BASELINE_INPUTS[lang])
+    await inputs.getByLabel(new RegExp(`^${escape(label)}`)).fill(value);
+  await inputs.getByRole("button", { name: tr(lang, "workflowsP5.procedures.saveInputs"), exact: true }).click();
+  await expect(page.locator("[data-missing-inputs='0']")).toBeVisible();
+  const evidenceTitle = `Synthetic FE-D ${lang.toUpperCase()} procedures working paper`;
+  await lead.call("POST", `/api/v1/transformations/${created.id}/evidence`, {
+    kind: "note",
+    title: evidenceTitle,
+    ownerUserId: lead.userId,
+    noteBody: "Synthetic evidence for the record_baseline step.",
+  });
+  await page.reload();
+  const evidenceForm = page.locator("[data-form='evidence-record_baseline']");
+  await evidenceForm.getByLabel(tr(lang, "workflowsP5.procedures.evidence")).selectOption({ label: evidenceTitle });
+  await evidenceForm
+    .getByRole("button", { name: tr(lang, "workflowsP5.procedures.linkEvidence"), exact: true })
+    .click();
+  await expect(page.locator("#evidence [data-record-type='evidence']")).toHaveCount(1);
+  const complete = page.locator("[data-form='complete-record_baseline'][data-output-mode='create']");
+  await expect(complete.locator("[data-output-state='empty']")).toBeVisible();
+  await complete.getByRole("button", { name: tr(lang, "workflowsP5.procedures.complete"), exact: true }).click();
+  await expect(alertOf(page)).toHaveAttribute("data-problem", "procedure_step.output_required");
+  await expect(alertOf(page)).toContainText(tr(lang, "problems.procedure_step__output_required"));
+  await expect(current).toHaveAttribute("data-step-status", "active");
   expect(foreign).toEqual([]);
 });
 
