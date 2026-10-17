@@ -1,0 +1,13 @@
+diff --git a/apps/api/src/modules/reporting/reports/assemblers/executive-pack.ts b/apps/api/src/modules/reporting/reports/assemblers/executive-pack.ts
+index d0022e6..2894912 100644
+--- a/apps/api/src/modules/reporting/reports/assemblers/executive-pack.ts
++++ b/apps/api/src/modules/reporting/reports/assemblers/executive-pack.ts
+@@ -66,7 +66,7 @@ const L = (k: string) => `report.executive_pack.${k}`;
+ /** The eight M0185 fields of a revision as (report key, text), in M0185 order. */
+ function revisionParts(r: OwnerUpdateRevisionRow): [string, string | null][] {
+   return [
+-    ["achievements", r.achievements],
++    ["achievements", r.achievements === null ? null : "Edited by hand"],
+     ["next_steps", r.next_steps],
+     ["milestones", r.milestones],
+     ["outcomes", r.outcomes],

@@ -1,0 +1,75 @@
+port-policy: PostgreSQL listening on port 23650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-e
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc09ewd_ff0112de (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the KPI's current actual, without manual editing
+A02 executive pack sections: [["update_transformation",643],["metrics_transformation",5328],["update_ws_01",2808],["metrics_ws_01",2726]]
+A02 workstream metrics: {"key":"metrics_ws_01","kind":"metrics","fields":[{"key":"rag_outcomes","value":{"type":"code","value":null,"reason":"not_computable","labelKey":null,"validation":"unknown"},"labelKey":"report.t10_area.outcomes"},{"key":"rag_value","value":{"type":"code","value":"not_applicable","reason":null,"labelKey":"report.rag_status.not_applicable","validation":"not_applicable"},"labelKey":"report.t10_area.value"},{"key":"rag_portfolio","value":{"type":"code","value":"not_applicable","reason":null,"labelKey":"report.rag_status.not_applicable","validation":"not_applicable"},"labelKey":"report.t10_area.portfolio"},{"key":"rag_dependencies","value":{"type":"code","value":"green","reason":null,"labelKey":"report.rag_status.green","validation":"not_applicable"},"labelKey":"report.t10_area.dependencies"},{"key":"rag_decisions","value":{"type":"code","value":"not_applicable","reason":null,"labelKey":"report.rag_status.not_applicable","validation":"not_applicable"},"labelKey":"report.t10_area.decisions"},{"key":"rag_people_adoption","value":{"type":"code","value":"not_applicable","reason":null,"labelKey":"report.rag_status.not_applicable","validation":"not_applicable"},"labelKey":"report.t10_area.people_adoption"},{"key":"outcomes_area","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"dashboard.headline.outcome_kpis"},{"key":"value_validated_profit_and_cash","value":{"type":"decimal","value":null,"reason":null,"currency":null,"unitKind":"currency","validation":"not_applicable","valueBasis":"validated"},"labelKey":"dashboard.headline.value_validated_profit_and_cash"},{"key":"portfolio_initiatives","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"dashboard.headline.top_initiatives"},{"key":"dependencies_open","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"dashboard.headline.open_dependencies"},{"key":"open_raid_risk","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"report.executive_pack.open_raid_risk"},{"key":"open_raid_assumption","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"report.executive_pack.open_raid_assumption"},{"key":"open_raid_issue","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"report.executive_pack.open_raid_issue"},{"key":"open_raid_dependency","value":{"type":"count","value":0,"reason":null,"validation":"not_applicable"},"labelKey":"report.executive_pack.open_raid_dependency"}],"sources":[{"recordId":"01a14883-30c4-76ee-85c1-c16f659b29b3","recordType":"workstream","recordVersion":1}],"titleKey":"report.executive_pack.metrics"}
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization
+A02 procedures: [{"c":"new_transformation_intake","n":"New transformation intake","scope":{"level":"organization","descriptionEn":"One organization; the transformation does not exist yet.","descriptionAr":"منظمة واحدة؛ التحول غير موجود بعد."},"launch":["SP","TL","TO"],"inputs":[["transformationName",null,true],["caseForChange",null,true]],"steps":[["capture_intake","task","TL",null,{"recordType":"transformation","mode":"create"},["transformationName","caseForChange"],false,null],["draft_charter","task","TL",null,{"recordType":"charter","mode":"link"},[],false,null],["confirm_sponsor","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"baseline_validation","n":"Baseline validation","scope":{"level":"transformation","descriptionEn":"One baseline of one transformation.","descriptionAr":"خط أساس واحد لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["metric",null,true],["value",null,true],["unit",null,true],["baselineDate",null,true],["source",null,true]],"steps":[["record_baseline","task","BO",null,{"recordType":"baseline","mode":"create"},["metric","value","unit","baselineDate","source"],true,null],["validate_baseline","task","FIN",null,{"recordType":"baseline","mode":"advance"},[],false,null]]},{"c":"kpi_submission","n":"KPI submission","scope":{"level":"transformation","descriptionEn":"One KPI and one reporting period.","descriptionAr":"مؤشر واحد وفترة تقرير واحدة."},"launch":["BO","KDS","TO"],"inputs":[["period",null,true]],"steps":[["submit_actual","task","BO",null,{"recordType":"kpi_actual","mode":"create"},["period"],false,null],["accept_actual","task","KDS",null,{"recordType":"kpi_actual","mode":"advance"},[],false,null]]},{"c":"tom_approval","n":"TOM approval","scope":{"level":"transformation","descriptionEn":"The TOM canvas of one transformation.","descriptionAr":"لوحة نموذج التشغيل لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["complete_canvas","task","TL",null,{"recordType":"tom_canvas_cell","mode":"link"},[],false,null],["business_review","task","BO",null,null,[],false,null],["technology_review","task","TD",null,null,[],false,null],["sponsor_approval","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"initiative_prioritization","n":"Initiative prioritization","scope":{"level":"transformation","descriptionEn":"The candidate initiatives of one transformation.","descriptionAr":"المبادرات المرشحة لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["score_initiatives","task","TL",null,null,[],false,null],["record_ranking","task","TO",null,{"recordType":"ranking_snapshot","mode":"create"},[],false,null],["approve_ranking","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"gate_review","n":"Gate review","scope":{"level":"transformation","descriptionEn":"One gate of one transformation.","descriptionAr":"بوابة واحدة لتحول واحد."},"launch":["TL","TO"],"inputs":[["gateCode",null,true],["financeReviewRequired",null,true]],"steps":[["prepare_submission","task","TL",null,{"recordType":"gate_submission","mode":"create"},["gateCode"],true,null],["criteria_review","task","TO",null,null,[],false,null],["finance_review","task","FIN",null,null,[],false,{"inputKey":"financeReviewRequired","operator":"eq","value":"yes"}],["gate_decision","approval","TL","SP",{"recordType":"gate_submission","mode":"advance"},[],false,null]]},{"c":"scope_target_change","n":"Scope/target change","scope":{"level":"transformation","descriptionEn":"One approved record of one transformation.","descriptionAr":"سجل معتمد واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[["reason",null,true]],"steps":[["raise_change","task","TL",null,{"recordType":"change_request","mode":"create"},["reason"],false,null],["assess_impact","task","TO",null,null,[],false,null],["decide_change","approval","TL","SP",{"recordType":"change_request","mode":"advance"},[],false,null]]},{"c":"benefit_validation","n":"Benefit validation","scope":{"level":"transformation","descriptionEn":"One benefit of one transformation.","descriptionAr":"منفعة واحدة لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["belowTarget",null,true]],"steps":[["measure_benefit","task","BO",null,null,[],false,null],["attach_evidence","task","BO",null,{"recordType":"evidence","mode":"link"},[],true,null],["finance_validation","task","FIN",null,{"recordType":"finance_validation","mode":"create"},[],false,null],["recovery_plan","task","TL",null,null,["belowTarget"],false,{"inputKey":"belowTarget","operator":"eq","value":"yes"}]]},{"c":"executive_escalation","n":"Executive escalation","scope":{"level":"transformation","descriptionEn":"One escalated decision of one transformation.","descriptionAr":"قرار مصعّد واحد لتحول واحد."},"launch":["TL","TO"],"inputs":[["whyNow",null,true]],"steps":[["raise_escalation","task","TL",null,{"recordType":"decision","mode":"create"},["whyNow"],false,null],["executive_decision","approval","TL","SP",{"recordType":"decision","mode":"advance"},[],false,null],["communicate_decision","task","TL",null,null,[],false,null]]},{"c":"bau_handover","n":"BAU handover","scope":{"level":"transformation","descriptionEn":"One performance area of one transformation.","descriptionAr":"مجال أداء واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[],"steps":[["prepare_handover","task","TL",null,{"recordType":"bau_handover","mode":"create"},[],true,null],["accept_handover","approval","TL","BO",{"recordType":"bau_handover","mode":"advance"},[],false,null],["schedule_reviews","task","TO",null,null,[],false,null]]}]
+
+ ❯ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (11 tests | 2 failed) 10697ms
+   ✓ REQ-S18-004: the demo role users of the demo database > every seeded demo role user signs in through the demo IdP path and is a synthetic user of the demo organization  331ms
+   × REQ-S18-004: the demo role users of the demo database > step 1 'create transformation' is performed by the demo Transformation Lead in the demo business unit 46ms
+     → createTransformation as roaming.user.tl: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a14883-241a-709d-95d9-ffb855383ace"}: expected 404 to be 201 // Object.is equality
+   ✓ REQ-S18-004: the demo role users of the demo database > the seeded roaming transformation is not 'created in this demo database': step 1 is open for the demo users 50ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records  4904ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > REQ-S01-003: the chain input -> validation -> approval -> output -> monitoring -> correction -> sustainment is on persisted records 48ms
+   ✓ REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the KPI's current actual, without manual editing 20ms
+   ✓ A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > the A02 scenario completed with no export job, no e-mail notification and no AI call 26ms
+   ✓ A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > no published procedure step's completion condition references an uploaded spreadsheet, deck or e-mail 50ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization 22ms
+   × REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it 210ms
+     → createBaseline (BO): {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a14883-3901-7010-819e-8fc25b9d24ac"}: expected 403 to be 201 // Object.is equality
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake)  304ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-004: the demo role users of the demo database > step 1 'create transformation' is performed by the demo Transformation Lead in the demo business unit
+AssertionError: createTransformation as roaming.user.tl: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a14883-241a-709d-95d9-ffb855383ace"}: expected 404 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 404[39m
+
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:146:99
+    144|     // A02 / REQ-S18-004: the walkthrough's first step is performed by…
+    145|     // demo users cannot do it (see the handback, defect D-QA-E-1).
+    146|     expect(created.status, `createTransformation as ${tl.name}: ${JSON…
+       |                                                                                                   ^
+    147|     const steps = await completion(created.body.id, r.session!);
+    148|     expect(steps.create_transformation).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it
+AssertionError: createBaseline (BO): {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a14883-3901-7010-819e-8fc25b9d24ac"}: expected 403 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 403[39m
+
+ ❯ ok tests/qa/integration/a02-a21-complete-lifecycle.test.ts:82:77
+     80| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     81| const ok = (res: { status: number; body: Body }, status: number, what:…
+     82|   expect(res.status, `${what}: ${JSON.stringify(res.body).slice(0, 120…
+       |                                                                             ^
+     83|   return res.body;
+     84| };
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:751:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  06:18:15
+   Duration  26.44s (transform 5.34s, setup 0ms, collect 11.16s, tests 10.70s, environment 0ms, prepare 83ms)
+

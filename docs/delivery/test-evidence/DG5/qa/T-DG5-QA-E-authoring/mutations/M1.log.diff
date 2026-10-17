@@ -1,0 +1,13 @@
+diff --git a/apps/api/src/modules/admin/walkthrough.ts b/apps/api/src/modules/admin/walkthrough.ts
+index 8f74aee..8de6b26 100644
+--- a/apps/api/src/modules/admin/walkthrough.ts
++++ b/apps/api/src/modules/admin/walkthrough.ts
+@@ -149,7 +149,7 @@ export const COMPLETION_RULES: Readonly<Record<CompletionRule, Predicate>> = {
+   // "a Finance-validated benefit measurement (synthetic)": a benefit measurement in status `validated` with the
+   // approved Finance validation that decided it (ADR-0030; a human Finance decision, never made by this read).
+   benefit_validated: (t) =>
+-    sql`SELECT EXISTS (SELECT 1 FROM benefit_measurement m WHERE m.transformation_id = ${t}::uuid
++    sql`SELECT false AND EXISTS (SELECT 1 FROM benefit_measurement m WHERE m.transformation_id = ${t}::uuid
+                          AND m.status = 'validated'
+                          AND EXISTS (SELECT 1 FROM finance_validation f WHERE f.benefit_measurement_id = m.id
+                                        AND f.status = 'approved')) AS done`,
