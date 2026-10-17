@@ -36,6 +36,13 @@ import {
 import { AcceptanceNote, Code, NS, StatusText, SUSTAIN_WRITE_PERMISSIONS, SustainSubNav, vocabOptions } from "./ui.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  extensionToolsColumn,
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 export function HandoversPage() {
   const { t } = useTranslation();
@@ -89,6 +96,8 @@ export function HandoversTable({ areaId, area }: { areaId?: string; area?: Perfo
   const areaCode = (id: string) => (areas.data ?? []).find((a) => a.id === id)?.code ?? "—";
   const canPrepare =
     ws.can("bau_handover.prepare") && (!area || area.status === "establishing" || area.status === "reopened");
+  const ext = useExtensionCreate("bau_handover");
+  const refreshHandovers = useP4Refresh(ws.tid);
   const columns: RegisterColumn<BauHandover>[] = [
     {
       id: "code",
@@ -132,6 +141,11 @@ export function HandoversTable({ areaId, area }: { areaId?: string; area?: Perfo
       sortValue: (h) => BAU_HANDOVER_STATUSES.indexOf(h.status),
       filterText: (h) => t(`sustainP4.status.${h.status}`),
     },
+    extensionToolsColumn<BauHandover>(t("forms.extensions.columnHeader"), "bau_handover", {
+      label: (h) => h.code,
+      canWrite: (h) => (h.status === "draft" || h.status === "returned") && ws.can("bau_handover.prepare"),
+      refresh: refreshHandovers,
+    }),
   ];
   return (
     <>
@@ -171,7 +185,8 @@ export function HandoversTable({ areaId, area }: { areaId?: string; area?: Perfo
           />
         )}
       </QueryState>
-      {creating ? <HandoverDialog areaId={areaId} onClose={() => setCreating(false)} /> : null}
+      {ext.outcome}
+      {creating ? <HandoverDialog areaId={areaId} ext={ext} onClose={() => setCreating(false)} /> : null}
     </>
   );
 }
@@ -187,10 +202,12 @@ const CONTENT_FIELDS = [
 function HandoverDialog({
   areaId,
   handover,
+  ext,
   onClose,
 }: {
   areaId?: string | undefined;
   handover?: BauHandover;
+  ext?: ExtensionEntry;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -279,8 +296,10 @@ function HandoverDialog({
       url={handover ? sustainPaths.handover(ws.tid, handover.id) : sustainPaths.handovers(ws.tid)}
       {...(handover ? { version: handover.version } : {})}
       namespaces={NS}
+      note={handover ? null : ext?.node}
       toBody={(v) => {
         const body = build(v);
+        if (!handover && ext && !ext.check()) return { fieldErrors: { extensionFields: "validation.invalid" } };
         if (!handover) {
           const out = Object.fromEntries(Object.entries(body).filter(([, x]) => x !== null));
           return { ...out, performanceAreaId: areaId ?? v["performanceAreaId"] };
@@ -293,7 +312,10 @@ function HandoverDialog({
           ? { fieldErrors: { receivingOwnerUserId: "validation.empty_patch" } }
           : patch;
       }}
-      onDone={refresh}
+      onDone={async (result) => {
+        if (!handover && ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );
@@ -438,6 +460,13 @@ function HandoverBody({ handover: h }: { handover: BauHandover }) {
         }
       >
         <ExtensionNote recordType="bau_handover" />
+        <RecordExtensionTools
+          recordType="bau_handover"
+          record={h}
+          recordLabel={h.code}
+          canWrite={editable}
+          refresh={refresh}
+        />
         <FormAlert
           error={error}
           namespaces={NS}

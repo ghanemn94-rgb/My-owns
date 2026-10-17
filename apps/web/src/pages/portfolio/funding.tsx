@@ -30,6 +30,12 @@ import { useBusinessCases } from "../business-cases/api.ts";
 import { BusinessApprovalTag, PORTFOLIO_NS } from "./common.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 /** Statuses on which a funding decision can be recorded (approve/reject/defer on selected; revoke on funded). */
 export const FUNDABLE_STATUSES: ReadonlySet<string> = new Set(["selected", "funded"]);
@@ -58,6 +64,7 @@ export function FundingSection({ initiative: i, readOnly }: { initiative: Initia
   const { byId } = usePeople(ws.tid);
   const [recording, setRecording] = useState(false);
   const canRecord = !readOnly && FUNDABLE_STATUSES.has(i.status) && ws.can("funding.approve");
+  const ext = useExtensionCreate("funding_approval");
   return (
     <Section
       id="funding"
@@ -144,6 +151,14 @@ export function FundingSection({ initiative: i, readOnly }: { initiative: Initia
                         <PersonName id={d.decidedBy} people={byId} /> (
                         {t(`transformations.audit.role.${d.approverRoleCode}`, { defaultValue: d.approverRoleCode })})
                       </span>
+                      {/* A funding decision is append-only and has no version column: the server reads it as version 1. */}
+                      <RecordExtensionTools
+                        recordType="funding_approval"
+                        record={{ id: d.id, version: 1 }}
+                        recordLabel={d.decisionCode}
+                        canWrite={!readOnly && ws.can("funding.approve")}
+                        refresh={list.refetch}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -152,12 +167,21 @@ export function FundingSection({ initiative: i, readOnly }: { initiative: Initia
           );
         }}
       </QueryState>
-      {recording ? <FundingDialog initiative={i} onClose={() => setRecording(false)} /> : null}
+      {ext.outcome}
+      {recording ? <FundingDialog initiative={i} ext={ext} onClose={() => setRecording(false)} /> : null}
     </Section>
   );
 }
 
-function FundingDialog({ initiative: i, onClose }: { initiative: Initiative; onClose: () => void }) {
+function FundingDialog({
+  initiative: i,
+  ext,
+  onClose,
+}: {
+  initiative: Initiative;
+  ext?: ExtensionEntry;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP3Refresh(ws.tid);
@@ -212,12 +236,13 @@ function FundingDialog({ initiative: i, onClose }: { initiative: Initiative; onC
       fields={fields}
       record={null}
       defaults={{ outcome: i.status === "funded" ? "revoked" : "approved", currency: ws.tr.currency || "SAR" }}
-      createSchema={fundingDecisionCreate}
+      createSchema={ext ? ext.guard(fundingDecisionCreate) : fundingDecisionCreate}
       createUrl="/api/v1/funding-decisions"
       extra={{ initiativeId: i.id }}
       namespaces={PORTFOLIO_NS}
       submitLabel={t("portfolio.fundingDecision.confirm")}
-      onSaved={async () => {
+      onSaved={async (saved) => {
+        if (ext) await ext.afterCreate(saved);
         if (!(await refresh())) return;
         onClose();
       }}
@@ -226,6 +251,7 @@ function FundingDialog({ initiative: i, onClose }: { initiative: Initiative; onC
       <p className="small muted" data-state="in-person">
         <Icon name="lock" /> {t("portfolio.fundingDecision.inPerson")}
       </p>
+      {ext?.node}
     </RecordDialog>
   );
 }

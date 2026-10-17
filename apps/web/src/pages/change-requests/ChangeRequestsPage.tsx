@@ -31,6 +31,8 @@ import { ChangeStatusText } from "./ChangeStatus.tsx";
 import { MaterialityText } from "./Impact.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
 
 export function ChangeRequestsPage() {
   const { t } = useTranslation();
@@ -73,6 +75,7 @@ function RequestsSection() {
   const { byId } = usePeople(ws.tid);
   const [creating, setCreating] = useState(false);
   const canRaise = ws.can("change_request.raise");
+  const ext = useExtensionCreate("change_request");
   const columns: RegisterColumn<ChangeRequest>[] = [
     {
       id: "code",
@@ -131,6 +134,11 @@ function RequestsSection() {
       sortValue: (r) => r.updatedAt,
       cell: (r) => formatDateTime(r.updatedAt, locale, ws.tr.timezone),
     },
+    extensionToolsColumn<ChangeRequest>(t("forms.extensions.columnHeader"), "change_request", {
+      label: (r) => r.code,
+      canWrite: (r) => canRaise && (r.status === "draft" || r.status === "changes_requested"),
+      refresh,
+    }),
   ];
   return (
     <Section
@@ -189,10 +197,17 @@ function RequestsSection() {
           />
         )}
       </QueryState>
+      {ext.outcome}
       {creating ? (
         <CreateChangeRequestDialog
+          ext={ext}
           onClose={() => setCreating(false)}
           onDone={async (created) => {
+            // A refusal of the extension values is shown on this register, so the navigation is skipped.
+            if (!(await ext.afterCreate(created))) {
+              await refresh();
+              return true;
+            }
             const ok = await refresh();
             const id = (created as { id?: unknown } | null)?.id;
             if (ok && typeof id === "string") navigate(`/transformations/${ws.tid}/change-requests/${id}`);

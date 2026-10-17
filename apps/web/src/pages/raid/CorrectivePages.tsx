@@ -37,6 +37,13 @@ import {
 import { Code, CORRECTIVE_WRITE_PERMISSIONS, NS, RaidSubNav, StatusText, vocabOptions } from "./ui.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  extensionToolsColumn,
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 // ------------------------------------------------------------------------------------------------ small parts
 
@@ -135,6 +142,8 @@ function CorrectiveList() {
   const cases = useCorrectiveCases(ws.tid, { ...(sourceKind ? { sourceKind } : {}), ...(status ? { status } : {}) });
   const { byId } = usePeople(ws.tid);
   const [creating, setCreating] = useState(false);
+  const ext = useExtensionCreate("corrective_plan");
+  const refreshCases = useP4Refresh(ws.tid);
   const columns: RegisterColumn<CorrectiveCase>[] = [
     {
       id: "case",
@@ -194,6 +203,11 @@ function CorrectiveList() {
       sortValue: (c) => c.status,
       filterText: (c) => t(`raidP4.status.${c.status}`),
     },
+    extensionToolsColumn<CorrectiveCase>(t("forms.extensions.columnHeader"), "corrective_plan", {
+      label: (c) => `${c.code} ${c.title}`,
+      canWrite: (c) => c.status !== "closed" && ws.can("corrective_action.manage"),
+      refresh: refreshCases,
+    }),
   ];
   return (
     <>
@@ -249,13 +263,14 @@ function CorrectiveList() {
             />
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
-      {creating ? <CreateCaseDialog onClose={() => setCreating(false)} /> : null}
+      {creating ? <CreateCaseDialog ext={ext} onClose={() => setCreating(false)} /> : null}
     </>
   );
 }
 
-function CreateCaseDialog({ onClose }: { onClose: () => void }) {
+function CreateCaseDialog({ ext, onClose }: { ext?: ExtensionEntry; onClose: () => void }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
@@ -281,14 +296,22 @@ function CreateCaseDialog({ onClose }: { onClose: () => void }) {
       submitLabel={t("raidP4.corrective.createSubmit")}
       url={raidPaths.cases(ws.tid)}
       namespaces={NS}
-      toBody={(v) => ({
-        findingRef: v["findingRef"],
-        title: v["title"],
-        ...(textOf(v["recoveryPlan"]) ? { recoveryPlan: v["recoveryPlan"] } : {}),
-        ownerUserId: v["ownerUserId"],
-        followUpDate: v["followUpDate"],
-      })}
-      onDone={refresh}
+      note={ext?.node}
+      toBody={(v) =>
+        ext && !ext.check()
+          ? { fieldErrors: { extensionFields: "validation.invalid" } }
+          : {
+              findingRef: v["findingRef"],
+              title: v["title"],
+              ...(textOf(v["recoveryPlan"]) ? { recoveryPlan: v["recoveryPlan"] } : {}),
+              ownerUserId: v["ownerUserId"],
+              followUpDate: v["followUpDate"],
+            }
+      }
+      onDone={async (result) => {
+        if (ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );
@@ -351,6 +374,13 @@ function CaseBody() {
               }
             >
               <ExtensionNote recordType="corrective_plan" />
+              <RecordExtensionTools
+                recordType="corrective_plan"
+                record={k}
+                recordLabel={k.code}
+                canWrite={canManage && k.status !== "closed"}
+                refresh={refresh}
+              />
               <dl className="details" data-case-detail={k.code}>
                 <div>
                   <dt>{t("raidP4.corrective.col.source")}</dt>

@@ -33,6 +33,8 @@ import { CaseLines } from "./CaseLines.tsx";
 import { CaseTotals } from "./CaseTotals.tsx";
 import { FinanceStateChip, FinanceValidationDialog } from "./finance.tsx";
 import { caseFieldMessage, FormAlert, splitProblem } from "./formKit.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 
 export function BusinessCasePage() {
   const { t } = useTranslation();
@@ -62,6 +64,7 @@ function CaseBody({ bc }: { bc: BusinessCase }) {
   const cases = useBusinessCases(ws.tid);
   const archived = bc.status === "archived";
   const editable = ws.can("business_case.edit") && !archived;
+  const refreshCase = useP3Refresh(ws.tid);
   const initiative = initiatives.data?.find((i) => i.id === bc.initiativeId);
   const parent = cases.data?.find((c) => c.id === bc.parentCaseId);
   const sections = [
@@ -76,6 +79,13 @@ function CaseBody({ bc }: { bc: BusinessCase }) {
     <div data-business-case={bc.code}>
       <SectionNav sections={sections} />
       <Section id="summary" title={t("businessCases.summaryTitle")}>
+        <RecordExtensionTools
+          recordType="business_case"
+          record={bc}
+          recordLabel={bc.code}
+          canWrite={editable}
+          refresh={refreshCase}
+        />
         <dl className="details">
           <div>
             <dt>{t("businessCases.field.code")}</dt>

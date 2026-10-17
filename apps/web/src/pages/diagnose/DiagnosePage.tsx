@@ -49,6 +49,9 @@ import { diagnosticDimensionLabel, pick, workstreamName, workstreamOptions } fro
 import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework
+// (the T01 fill dialog, the baseline registry and the value-pool register).
+import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
 
 export function DiagnosePage() {
   const { t } = useTranslation();
@@ -95,6 +98,7 @@ function T01Section() {
   const baselines = useRegister<Baseline>(ws.tid, "baselines");
   const { people, byId } = usePeople(ws.tid);
   const [editing, setEditing] = useState<{ row: T01Row } | null>(null);
+  const ext = useExtensionCreate("T01");
 
   const kpiOptions = (kpis.data ?? [])
     .filter((k) => k.status !== "archived")
@@ -303,19 +307,23 @@ function T01Section() {
           fields={fields(editing.row)}
           record={editing.row.item}
           defaults={{ dimensionCode: editing.row.code, impactCurrency: ws.tr.currency }}
-          createSchema={diagnosticItemCreate}
+          createSchema={ext.guard(diagnosticItemCreate)}
           updateSchema={diagnosticItemUpdate}
           createUrl={`/api/v1/transformations/${ws.tid}/diagnostic-items`}
           updateUrl={(r) => `/api/v1/transformations/${ws.tid}/diagnostic-items/${r.id}`}
           people={people}
           submitLabel={t("common.action.saveDraft")}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            if (!editing.row.item) await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setEditing(null);
           }}
           onCancel={() => setEditing(null)}
-        />
+        >
+          {editing.row.item ? null : ext.node}
+        </RecordDialog>
       ) : null}
+      {ext.outcome}
     </Section>
   );
 }
@@ -640,6 +648,7 @@ function BaselinesSection() {
   const [validating, setValidating] = useState<Baseline | null>(null);
   const canEdit = ws.can("baseline.edit");
   const canValidate = ws.can("finance.validate");
+  const ext = useExtensionCreate("baseline");
 
   const fields: FieldSpec[] = [
     { name: "metric", kind: "text", label: t("kpi.baseline.metric"), required: true, maxLength: 300 },
@@ -717,6 +726,11 @@ function BaselinesSection() {
       sortValue: (b) => b.validationStatus,
     },
     { id: "owner", header: t("common.field.owner"), cell: (b) => <PersonName id={b.ownerUserId} people={byId} /> },
+    extensionToolsColumn<Baseline>(t("forms.extensions.columnHeader"), "baseline", {
+      label: (b) => b.metric,
+      canWrite: () => canEdit,
+      refresh,
+    }),
     {
       id: "actions",
       header: t("common.field.actions"),
@@ -792,19 +806,23 @@ function BaselinesSection() {
           fields={fields}
           record={dialog.record}
           defaults={{ ownerUserId: ws.meId }}
-          createSchema={baselineCreate}
+          createSchema={ext.guard(baselineCreate)}
           updateSchema={baselineUpdate}
           createUrl={`/api/v1/transformations/${ws.tid}/baselines`}
           updateUrl={(r) => `/api/v1/transformations/${ws.tid}/baselines/${r.id}`}
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            if (!dialog.record) await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
-        />
+        >
+          {dialog.record ? null : ext.node}
+        </RecordDialog>
       ) : null}
+      {ext.outcome}
       {validating ? (
         <FinanceValidationDialog
           name={validating.metric}
@@ -866,6 +884,7 @@ function ValuePoolsSection() {
   const [validating, setValidating] = useState<ValuePool | null>(null);
   const canEdit = ws.can("diagnostic.edit");
   const canValidate = ws.can("finance.validate");
+  const ext = useExtensionCreate("value_pool");
 
   const fields: FieldSpec[] = [
     { name: "name", kind: "text", label: t("common.field.name"), required: true, maxLength: 300 },
@@ -967,6 +986,11 @@ function ValuePoolsSection() {
       sortValue: (p) => p.validationStatus,
     },
     { id: "owner", header: t("common.field.owner"), cell: (p) => <PersonName id={p.ownerUserId} people={byId} /> },
+    extensionToolsColumn<ValuePool>(t("forms.extensions.columnHeader"), "value_pool", {
+      label: (p) => p.name,
+      canWrite: () => canEdit,
+      refresh,
+    }),
     {
       id: "actions",
       header: t("common.field.actions"),
@@ -1056,19 +1080,23 @@ function ValuePoolsSection() {
             materiality: "not_assessed",
             ownerUserId: ws.meId,
           }}
-          createSchema={valuePoolCreate}
+          createSchema={ext.guard(valuePoolCreate)}
           updateSchema={valuePoolUpdate}
           createUrl={`/api/v1/transformations/${ws.tid}/value-pools`}
           updateUrl={(r) => `/api/v1/transformations/${ws.tid}/value-pools/${r.id}`}
           people={people}
           submitLabel={dialog.record ? t("common.action.save") : t("common.action.create")}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            if (!dialog.record) await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setDialog(null);
           }}
           onCancel={() => setDialog(null)}
-        />
+        >
+          {dialog.record ? null : ext.node}
+        </RecordDialog>
       ) : null}
+      {ext.outcome}
       {validating ? (
         <FinanceValidationDialog
           name={validating.name}

@@ -44,6 +44,12 @@ import {
 } from "./ui.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  extensionToolsColumn,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 export function ControlsPage() {
   const { t } = useTranslation();
@@ -120,6 +126,8 @@ export function ControlsTable({ areaId }: { areaId?: string }) {
   const area = useAreaCode(ws.tid);
   const [dialog, setDialog] = useState<{ kind: "create" } | { kind: "edit" | "retire"; row: Control } | null>(null);
   const canManage = ws.can("control.manage");
+  const ext = useExtensionCreate("control");
+  const refreshControls = useP4Refresh(ws.tid);
   const columns: RegisterColumn<Control>[] = [
     {
       id: "code",
@@ -163,6 +171,11 @@ export function ControlsTable({ areaId }: { areaId?: string }) {
       sortValue: (c) => c.nextCheckDate,
     },
     { id: "status", header: t("sustainP4.col.status"), cell: (c) => <StatusText status={c.status} /> },
+    extensionToolsColumn<Control>(t("forms.extensions.columnHeader"), "control", {
+      label: (c) => `${c.code} ${c.name}`,
+      canWrite: (c) => canManage && c.status === "active",
+      refresh: refreshControls,
+    }),
     {
       id: "rowActions",
       header: t("sustainP4.col.actions"),
@@ -228,7 +241,8 @@ export function ControlsTable({ areaId }: { areaId?: string }) {
           />
         )}
       </QueryState>
-      {dialog?.kind === "create" ? <ControlDialog areaId={areaId} onClose={() => setDialog(null)} /> : null}
+      {ext.outcome}
+      {dialog?.kind === "create" ? <ControlDialog areaId={areaId} ext={ext} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "edit" ? <ControlDialog control={dialog.row} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "retire" ? <RetireControlDialog control={dialog.row} onClose={() => setDialog(null)} /> : null}
     </>
@@ -238,10 +252,12 @@ export function ControlsTable({ areaId }: { areaId?: string }) {
 function ControlDialog({
   control,
   areaId,
+  ext,
   onClose,
 }: {
   control?: Control;
   areaId?: string | undefined;
+  ext?: ExtensionEntry;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -317,8 +333,10 @@ function ControlDialog({
       url={control ? sustainPaths.control(ws.tid, control.id) : sustainPaths.controls(ws.tid)}
       {...(control ? { version: control.version } : {})}
       namespaces={NS}
+      note={control ? null : ext?.node}
       toBody={(v) => {
         const body = build(v);
+        if (!control && ext && !ext.check()) return { fieldErrors: { extensionFields: "validation.invalid" } };
         if (!control)
           return {
             ...Object.fromEntries(Object.entries(body).filter(([, x]) => x !== null)),
@@ -330,7 +348,10 @@ function ControlDialog({
         );
         return Object.keys(patch).length === 0 ? { fieldErrors: { name: "validation.empty_patch" } } : patch;
       }}
-      onDone={refresh}
+      onDone={async (result) => {
+        if (!control && ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );

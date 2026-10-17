@@ -20,6 +20,9 @@ import { govPaths, useForums, useMeetings } from "./api.ts";
 import { GovSubNav, MEETING_WRITE_PERMISSIONS, MeetingStatusText, NS, QuorumState } from "./ui.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
+import type { Meeting } from "./api.ts";
 
 export function MeetingsPage() {
   const { t } = useTranslation();
@@ -47,6 +50,7 @@ function MeetingsBody() {
   const { byId } = usePeople(ws.tid);
   const refresh = useP4Refresh(ws.tid);
   const [creating, setCreating] = useState(false);
+  const ext = useExtensionCreate("meeting_record");
   const forumById = new Map((forums.data ?? []).map((f) => [f.id, f]));
   return (
     <>
@@ -146,10 +150,17 @@ function MeetingsBody() {
                   cell: (m) => <DueDate date={m.cutoffDate} reason={m.cutoffUnknownReason} />,
                   sortValue: (m) => m.cutoffDate,
                 },
+                extensionToolsColumn<Meeting>(t("forms.extensions.columnHeader"), "meeting_record", {
+                  label: (m) =>
+                    `${name(forumById.get(m.forumId))} ${formatBusinessDate(m.scheduledDate, locale) ?? ""}`,
+                  canWrite: () => ws.can("meeting.prepare"),
+                  refresh,
+                }),
               ]}
             />
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
       {creating ? (
         <P4FormDialog
@@ -187,14 +198,22 @@ function MeetingsBody() {
           submitLabel={t("governanceP4.meetings.createSubmit")}
           url={govPaths.meetings(ws.tid)}
           namespaces={NS}
-          toBody={(v) => ({
-            forumId: v["forumId"],
-            scheduledDate: v["scheduledDate"],
-            startTime: v["startTime"],
-            durationMinutes: Number(v["durationMinutes"]),
-            ...(textOf(v["location"]) ? { location: v["location"] } : {}),
-          })}
-          onDone={refresh}
+          note={ext.node}
+          toBody={(v) =>
+            !ext.check()
+              ? { fieldErrors: { extensionFields: "validation.invalid" } }
+              : {
+                  forumId: v["forumId"],
+                  scheduledDate: v["scheduledDate"],
+                  startTime: v["startTime"],
+                  durationMinutes: Number(v["durationMinutes"]),
+                  ...(textOf(v["location"]) ? { location: v["location"] } : {}),
+                }
+          }
+          onDone={async (result) => {
+            if (result) await ext.afterCreate(result);
+            return refresh();
+          }}
           onClose={() => setCreating(false)}
         />
       ) : null}

@@ -28,6 +28,12 @@ import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { pick } from "../../lib/methodology.ts";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 /** Scope check code -> the charter's answer and evidence fields. */
 const SCOPE_FIELDS: Record<(typeof SCOPE_CHECK_CODES)[number], { answer: keyof Charter; evidence: keyof Charter }> = {
@@ -80,14 +86,19 @@ export function CharterPage() {
 function CharterBody() {
   const ws = useWorkspace();
   const charter = useCharter(ws.tid);
+  // Hoisted here so that a refusal of the extension values stays shown once the created charter replaces the form.
+  const ext = useExtensionCreate("charter");
   return (
-    <QueryState query={charter}>
-      {(view) => (view === null ? <NoCharter /> : <CharterContent view={view} />)}
-    </QueryState>
+    <>
+      {ext.outcome}
+      <QueryState query={charter}>
+        {(view) => (view === null ? <NoCharter ext={ext} /> : <CharterContent view={view} />)}
+      </QueryState>
+    </>
   );
 }
 
-function NoCharter() {
+function NoCharter({ ext }: { ext?: ExtensionEntry }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const [creating, setCreating] = useState(false);
@@ -97,6 +108,7 @@ function NoCharter() {
       <Section id="charter-form" title={t("define.charter.createTitle")}>
         <CharterForm
           view={null}
+          {...(ext ? { ext } : {})}
           onDone={async () => {
             if (!(await refresh())) return;
             setCreating(false);
@@ -200,10 +212,13 @@ function useCharterFields(): FieldSpec[] {
 
 function CharterForm({
   view,
+  ext,
   onDone,
   onCancel,
 }: {
   view: CharterView | null;
+  /** The extension fields of the charter create form (ADR-0041 §1, `charter`); not used on a new version. */
+  ext?: ExtensionEntry;
   onDone: () => Promise<unknown>;
   onCancel: () => void;
 }) {
@@ -217,7 +232,7 @@ function CharterForm({
       fields={fields}
       record={view?.charter ?? null}
       defaults={{ transformationName: ws.tr.name }}
-      createSchema={charterWrite}
+      createSchema={ext ? ext.guard(charterWrite) : charterWrite}
       updateSchema={charterUpdate}
       createUrl={url}
       updateUrl={() => url}
@@ -255,9 +270,15 @@ function CharterForm({
         },
         ...(view ? [{ title: t("define.charter.changeTitle"), fields: ["changeSummary"] }] : []),
       ]}
-      onSaved={onDone}
+      onSaved={async (saved) => {
+        // createCharter answers with the charter view; its `charter` is the created record.
+        if (!view && ext) await ext.afterCreate((saved as CharterView | null)?.charter ?? null);
+        await onDone();
+      }}
       onCancel={onCancel}
-    />
+    >
+      {view ? null : ext?.node}
+    </InlineRecordForm>
   );
 }
 
@@ -317,6 +338,13 @@ function CharterContent({ view }: { view: CharterView }) {
               ) : null
             }
           >
+            <RecordExtensionTools
+              recordType="charter"
+              record={c}
+              recordLabel={t("define.charter.fieldsTitle")}
+              canWrite={ws.can("charter.edit")}
+              refresh={refresh}
+            />
             <ol className="charter-fields">
               <CharterField n={1} label={t("define.charter.field.transformationName")}>
                 {text(c.transformationName)}

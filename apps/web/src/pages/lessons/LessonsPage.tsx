@@ -32,6 +32,12 @@ import {
 import { Code, NS, StatusText, SustainSubNav } from "../bau/ui.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  extensionToolsColumn,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 export function LessonsPage() {
   const { t } = useTranslation();
@@ -70,6 +76,8 @@ function LessonsBody() {
   const runner = useActionRunner(ws.tid, NS);
   const [dialog, setDialog] = useState<{ kind: "create" } | { kind: "edit" | "archive"; row: Lesson } | null>(null);
   const canEdit = ws.can("lesson.edit");
+  const ext = useExtensionCreate("lesson");
+  const refreshLessons = useP4Refresh(ws.tid);
   const columns: RegisterColumn<Lesson>[] = [
     {
       id: "code",
@@ -106,6 +114,11 @@ function LessonsBody() {
       sortValue: (l) => LESSON_STATUSES.indexOf(l.status),
       filterText: (l) => t(`sustainP4.status.${l.status}`),
     },
+    extensionToolsColumn<Lesson>(t("forms.extensions.columnHeader"), "lesson", {
+      label: (l) => `${l.code} ${l.title}`,
+      canWrite: (l) => canEdit && l.status !== "archived",
+      refresh: refreshLessons,
+    }),
     {
       id: "rowActions",
       header: t("sustainP4.col.actions"),
@@ -195,8 +208,9 @@ function LessonsBody() {
             />
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
-      {dialog?.kind === "create" ? <LessonDialog onClose={() => setDialog(null)} /> : null}
+      {dialog?.kind === "create" ? <LessonDialog ext={ext} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "edit" ? <LessonDialog lesson={dialog.row} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "archive" ? <ArchiveDialog lesson={dialog.row} onClose={() => setDialog(null)} /> : null}
     </>
@@ -215,7 +229,7 @@ const splitTags = (v: string | boolean | undefined): string[] =>
       ]
     : [];
 
-function LessonDialog({ lesson, onClose }: { lesson?: Lesson; onClose: () => void }) {
+function LessonDialog({ lesson, ext, onClose }: { lesson?: Lesson; ext?: ExtensionEntry; onClose: () => void }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
@@ -271,9 +285,11 @@ function LessonDialog({ lesson, onClose }: { lesson?: Lesson; onClose: () => voi
       url={lesson ? sustainPaths.lesson(ws.tid, lesson.id) : sustainPaths.lessons(ws.tid)}
       {...(lesson ? { version: lesson.version } : {})}
       namespaces={NS}
+      note={lesson ? null : ext?.node}
       toBody={(v) => {
         const body = build(v);
         if ((body["tags"] as string[]).length > 10) return { fieldErrors: { tags: "validation.too_big" } };
+        if (!lesson && ext && !ext.check()) return { fieldErrors: { extensionFields: "validation.invalid" } };
         if (!lesson) {
           const out = Object.fromEntries(Object.entries(body).filter(([, x]) => x !== null));
           if ((out["tags"] as string[]).length === 0) delete out["tags"];
@@ -285,7 +301,10 @@ function LessonDialog({ lesson, onClose }: { lesson?: Lesson; onClose: () => voi
         );
         return Object.keys(patch).length === 0 ? { fieldErrors: { title: "validation.empty_patch" } } : patch;
       }}
-      onDone={refresh}
+      onDone={async (result) => {
+        if (!lesson && ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );
