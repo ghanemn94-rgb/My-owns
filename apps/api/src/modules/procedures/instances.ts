@@ -433,7 +433,9 @@ async function updateInputs(tx: Tx, request: FastifyRequest): Promise<InstanceBu
     else merged.set(k, v);
   }
   await bumpInstance(tx, acting.audit, i, "inputs", { inputValues: Object.fromEntries(merged) });
-  return reload(tx, b);
+  // D-166 Rule A: an adopted approval step that waited for its party's mapping is routed now (steps.ts `advance`;
+  // nothing else changes while a step is active).
+  return advance(tx, acting.audit, await reload(tx, b));
 }
 
 async function cancel(tx: Tx, request: FastifyRequest): Promise<InstanceBundle> {

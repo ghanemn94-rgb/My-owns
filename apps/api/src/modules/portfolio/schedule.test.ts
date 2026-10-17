@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import {
   computeScheduleFlags,
   dependencyFlags,
+  forwardFinish,
+  forwardFinishes,
   predecessorFinish,
+  type ForwardFacts,
   SCHEDULE_FLAG_CODES,
   type ScheduleDependency,
   type ScheduleInitiative,
@@ -211,4 +214,96 @@ describe("computeScheduleFlags", () => {
       expect(out.byInitiative.has(A)).toBe(false);
     },
   );
+});
+
+// D-166 Rule B (T-DG5-BE-T4; REQ-S12-012): the finish-to-start forward pass over planned starts. A dependent with no
+// slack moves by the slip; one with enough slack does not; partial slack absorbs part of it; Unknown is null, never 0
+// and never the unshifted date.
+describe("forwardFinish (D-166 Rule B)", () => {
+  const P = "01920000-0000-7000-8000-0000000000f1";
+  const P2 = "01920000-0000-7000-8000-0000000000f2";
+  const S = "01920000-0000-7000-8000-0000000000f3";
+  const C = "01920000-0000-7000-8000-0000000000f4";
+  const fs = (from: string, to: string, status = "open") => ({ fromInitiativeId: from, toInitiativeId: to, status });
+  const at = (initiativeId: string, forecastDate: string) => ms(initiativeId, { forecastDate });
+  /** A slip of P from 2026-11-01 to 2026-11-06 (5 days); S finishes 2026-12-01 on its own milestones. */
+  const pair = (sStart: string | null): [ForwardFacts, ForwardFacts] => {
+    const initiatives = [ini(P, "INI-P"), ini(S, "INI-S", { plannedStart: sStart })];
+    const dependencies = [fs(P, S)];
+    return [
+      { initiatives, dependencies, milestones: [at(P, "2026-11-01"), at(S, "2026-12-01")] },
+      { initiatives, dependencies, milestones: [at(P, "2026-11-06"), at(S, "2026-12-01")] },
+    ];
+  };
+
+  it("no slack: the dependent moves by the slip (5 days)", () => {
+    const [before, after] = pair("2026-11-01");
+    expect([forwardFinish(S, before), forwardFinish(S, after)]).toEqual(["2026-12-01", "2026-12-06"]);
+  });
+
+  it("enough slack: the dependent does not move", () => {
+    const [before, after] = pair("2026-11-10");
+    expect([forwardFinish(S, before), forwardFinish(S, after)]).toEqual(["2026-12-01", "2026-12-01"]);
+  });
+
+  it("partial slack: 2 of the 5 days are absorbed, it moves by 3", () => {
+    const [before, after] = pair("2026-11-03");
+    expect([forwardFinish(S, before), forwardFinish(S, after)]).toEqual(["2026-12-01", "2026-12-04"]);
+  });
+
+  it("a starting date on the predecessor's finish is allowed (ADR-0023 §5): no shift", () => {
+    const [, after] = pair("2026-11-06");
+    expect(forwardFinish(S, after)).toBe("2026-12-01");
+  });
+
+  it("a chain of two: P -> S -> C, both without slack, both move by 5 (across a month end)", () => {
+    const initiatives = [
+      ini(P, "INI-P"),
+      ini(S, "INI-S", { plannedStart: "2026-11-01" }),
+      ini(C, "INI-C", { plannedStart: "2026-12-01" }),
+    ];
+    const dependencies = [fs(P, S), fs(S, C)];
+    const facts = (pFinish: string): ForwardFacts => ({
+      initiatives,
+      dependencies,
+      milestones: [at(P, pFinish), at(S, "2026-12-01"), at(C, "2027-01-29")],
+    });
+    const before = forwardFinishes(facts("2026-11-01"));
+    const after = forwardFinishes(facts("2026-11-06"));
+    expect([before(P), before(S), before(C)]).toEqual(["2026-11-01", "2026-12-01", "2027-01-29"]);
+    expect([after(P), after(S), after(C)]).toEqual(["2026-11-06", "2026-12-06", "2027-02-03"]);
+  });
+
+  it("two predecessors: the latest one decides", () => {
+    const initiatives = [ini(P, "INI-P"), ini(P2, "INI-P2"), ini(S, "INI-S", { plannedStart: "2026-11-01" })];
+    const facts: ForwardFacts = {
+      initiatives,
+      dependencies: [fs(P, S), fs(P2, S)],
+      milestones: [at(P, "2026-11-06"), at(P2, "2026-11-08"), at(S, "2026-12-01")],
+    };
+    expect(forwardFinish(S, facts)).toBe("2026-12-08");
+  });
+
+  it("a scheduled predecessor and no planned start: Unknown (null), never 0 nor the unshifted date", () => {
+    const [before, after] = pair(null);
+    expect([forwardFinish(S, before), forwardFinish(S, after)]).toEqual([null, null]);
+  });
+
+  it("any input date missing is Unknown: the predecessor's finish, or the initiative's own", () => {
+    const initiatives = [ini(P, "INI-P"), ini(S, "INI-S", { plannedStart: "2026-11-01" })];
+    expect(forwardFinish(S, { initiatives, dependencies: [fs(P, S)], milestones: [at(S, "2026-12-01")] })).toBeNull();
+    expect(forwardFinish(S, { initiatives, dependencies: [fs(P, S)], milestones: [at(P, "2026-11-06")] })).toBeNull();
+  });
+
+  it("without a scheduled predecessor it is predecessorFinish (archived and resolved dependencies do not count)", () => {
+    const initiatives = [ini(P, "INI-P"), ini(S, "INI-S", { plannedStart: null, plannedEnd: "2026-12-20" })];
+    for (const status of ["archived", "resolved"]) {
+      const facts: ForwardFacts = { initiatives, dependencies: [fs(P, S, status)], milestones: [at(P, "2026-11-30")] };
+      expect(forwardFinish(S, facts), status).toBe("2026-12-20");
+      expect(forwardFinish(S, facts)).toBe(predecessorFinish(initiatives[1]!, facts.milestones));
+    }
+    expect(
+      forwardFinish("01920000-0000-7000-8000-0000000000ff", { initiatives, dependencies: [], milestones: [] }),
+    ).toBeNull();
+  });
 });

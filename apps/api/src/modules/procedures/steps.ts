@@ -24,6 +24,14 @@
 // instance does not change while its approval is open (the 0031 subject version), so reassigning an active approval
 // step is refused. Nothing in this module approves anything; product gates G1-G6 and DG0-DG7 are untouched.
 //
+// THE INTAKE ADOPTS ITS TRANSFORMATION (D-166 Rule A; migration 0096). An organization-scope instance's steps carry no
+// transformation, so no approval of them can be requested. When the `capture_intake` step of an organization-scope
+// `new_transformation_intake` instance completes with its output transformation T, every step of the instance that has
+// not started adopts T in the same transaction (version + 1 and one audit event each); the instance keeps its
+// organization scope. The adopted approval step (`confirm_sponsor`) is requested on T and routed by T's role mappings
+// (DG4 resolveParty, never a fallback); until T has a mapped Sponsor it waits, truthfully "awaiting routing", and the
+// next action on the instance retries the request.
+//
 // OUTPUTS are real linked records (ADR-0042 §3). A step's output is produced by an OUTPUT ADAPTER registered per
 // `output_record_type` (`registerProcedureOutputAdapter`; BE-G fills the registry in procedures/outputs/**, each adapter
 // calling the owning module's exported service with the acting user). Without an adapter: a `link` output links the
@@ -631,15 +639,27 @@ export function missingStepInputs(inputs: ReadonlyMap<string, unknown>, sd: Proc
   return sd.required_input_keys.filter((k) => absent(inputs.get(k)));
 }
 
-/** The transformation an approval of this instance is requested in: its own, else the one it created (intake). */
-function approvalTransformationOf(b: InstanceBundle): string | null {
-  return (
-    b.instance.transformation_id ??
-    b.links.find((l) => l.link_kind === "output" && l.record_type === "transformation")?.record_id ??
-    null
-  );
+/** The seeded organization-scope intake and its first step (0069; D-166 Rule A). */
+export const INTAKE_PROCEDURE_CODE = "new_transformation_intake";
+export const INTAKE_CAPTURE_STEP_KEY = "capture_intake";
+
+/** The DG4 routing refusals (access/role-mappings.ts routingRefusals) an adopted step waits on instead of failing. */
+const ROUTING_WAIT_CODES: ReadonlySet<string> = new Set(["routing.role_unmapped", "routing.assignee_not_approver"]);
+
+/** True for a step that adopted its organization-scope instance's transformation (D-166 Rule A). */
+function isAdopted(b: InstanceBundle, step: ProcedureStepInstanceRow): boolean {
+  return b.instance.transformation_id === null && step.transformation_id !== null;
 }
 
+/**
+ * Requests the business approval of an active approval step, on the step's transformation (its instance's, or the one
+ * an intake step adopted; D-166 Rule A), routed to the step's approver party by THAT transformation's role mappings
+ * (DG4 resolveParty, never a fallback). A step without a transformation has nowhere to route: it stays active and reads
+ * "awaiting routing". An ADOPTED step whose party is not mapped (or not an approver) in its transformation yet also
+ * waits, truthfully unrouted, instead of failing the action that activated it: the DG4 refusal writes nothing
+ * (requestApprovalInTx resolves the party before any insert), and the request is retried by the next action on the
+ * instance (`advance`). In a transformation-scope instance the refusal stays the action's 422, as in DG4.
+ */
 async function requestStepApproval(
   tx: Tx,
   audit: AuditContext,
@@ -647,30 +667,91 @@ async function requestStepApproval(
   step: ProcedureStepInstanceRow,
   sd: ProcedureStepDefinitionRow,
 ): Promise<void> {
-  const transformationId = approvalTransformationOf(b);
-  // An organization-scope instance without a transformation yet has nowhere to route the approval: the step stays
-  // active and reads "waiting for business approval" until one exists (handback: the intake's create adapter, BE-G).
-  if (transformationId === null || step.transformation_id === null) return;
+  const transformationId = step.transformation_id;
+  if (transformationId === null) return;
   if (approvalPorts === null) throw new Error("procedures: approval ports are not wired (server.ts)");
   if (audit.actorUserId === null) throw new Error("procedures: a person's action requests a business approval");
   const target = await resolveTarget(tx, { type: "transformation", id: transformationId });
   if (target === null || target.transformationId === null) throw problems.notFound();
   const party = sd.approval_role_code ?? step.assignee_role_code;
-  await approvalPorts.requestApproval(tx, audit, {
-    organizationId: b.instance.organization_id,
-    transformationId,
-    scope: { ...target, transformationId },
-    approvalType: PROCEDURE_STEP_APPROVAL_TYPE,
-    subjectId: step.id,
-    subjectVersion: step.version,
-    title: `${b.definition.name_en}: ${sd.name_en}`.slice(0, 300),
-    requestNote: null,
-    assigneePartyCode: party,
-    decisionRightId: null,
-    slaType: null,
-    urgentReason: null,
-    due: null,
-  });
+  try {
+    await approvalPorts.requestApproval(tx, audit, {
+      organizationId: b.instance.organization_id,
+      transformationId,
+      scope: { ...target, transformationId },
+      approvalType: PROCEDURE_STEP_APPROVAL_TYPE,
+      subjectId: step.id,
+      subjectVersion: step.version,
+      title: `${b.definition.name_en}: ${sd.name_en}`.slice(0, 300),
+      requestNote: null,
+      assigneePartyCode: party,
+      decisionRightId: null,
+      slaType: null,
+      urgentReason: null,
+      due: null,
+    });
+  } catch (err) {
+    if (isAdopted(b, step) && err instanceof HttpProblem && ROUTING_WAIT_CODES.has(err.code)) return;
+    throw err;
+  }
+}
+
+/**
+ * Retries the request of every active approval step that ADOPTED a transformation and has never had an approval (it
+ * waited unrouted for its party's mapping; D-166 Rule A). Returns true when it requested one.
+ */
+async function routeWaitingApprovals(tx: Tx, audit: AuditContext, b: InstanceBundle): Promise<boolean> {
+  if (audit.actorUserId === null || b.instance.status !== "active") return false;
+  let requested = false;
+  for (const step of b.steps) {
+    if (step.status !== "active" || !isAdopted(b, step) || b.approvals.has(step.id)) continue;
+    const sd = b.stepDefinitions.get(step.step_definition_id);
+    if (sd?.step_kind !== "approval") continue;
+    await requestStepApproval(tx, audit, b, step, sd);
+    requested = true;
+  }
+  return requested;
+}
+
+/**
+ * D-166 Rule A: when the `capture_intake` step of an organization-scope `new_transformation_intake` instance completed
+ * with its output transformation T, every step of the instance that has not started (pending) adopts T, in the same
+ * transaction: the P2 version step and one audit event each. The instance keeps its organization scope. The 0096 row
+ * guard allows exactly this transition and refuses every other change of `transformation_id`.
+ */
+async function adoptIntakeTransformation(
+  tx: Tx,
+  audit: AuditContext,
+  b: InstanceBundle,
+  transformationId: string,
+): Promise<void> {
+  const by = audit.actorUserId;
+  if (by === null) throw new Error("procedures: a person's action adopts the intake's transformation");
+  for (const step of b.steps) {
+    if (step.status !== "pending" || step.transformation_id !== null) continue;
+    const updated = await tx
+      .updateTable("procedure_step_instance")
+      .set({
+        transformation_id: transformationId,
+        version: sql<number>`version + 1`,
+        updated_at: sql<Date>`now()`,
+        updated_by: by,
+      })
+      .where("id", "=", step.id)
+      .where("version", "=", step.version)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    await record(tx, audit, {
+      action: "procedure_step_instance.adopt_transformation",
+      recordType: "procedure_step_instance",
+      recordId: step.id,
+      organizationId: step.organization_id,
+      transformationId,
+      priorVersion: step.version,
+      newVersion: updated.version,
+      changes: { transformation_id: { from: null, to: transformationId } },
+    });
+  }
 }
 
 /**
@@ -680,6 +761,8 @@ async function requestStepApproval(
  */
 export async function advance(tx: Tx, audit: AuditContext, start: InstanceBundle): Promise<InstanceBundle> {
   let b = start;
+  // An adopted approval step that waited for its party's mapping is routed by the next action (D-166 Rule A).
+  if (await routeWaitingApprovals(tx, audit, b)) b = await reload(tx, b);
   for (let guard = 0; guard < 120; guard += 1) {
     const open = b.steps.filter((s) => OPEN.has(s.status));
     if (open.length === 0) return b;
@@ -1092,6 +1175,7 @@ async function completeStep(tx: Tx, request: FastifyRequest): Promise<InstanceBu
   if (sd.evidence_required && !bundle.links.some((l) => l.step_instance_id === step.id && l.link_kind === "evidence"))
     throw refusal("procedure_step.evidence_required");
   // The output (ADR-0042 §3): the adapter of its record type, else a generic `link`, else refused.
+  let adopted: string | null = null;
   if (sd.output_record_type !== null && sd.output_mode !== null) {
     const adapter = OUTPUT_ADAPTERS.get(sd.output_record_type);
     let recordId: string;
@@ -1116,6 +1200,7 @@ async function completeStep(tx: Tx, request: FastifyRequest): Promise<InstanceBu
       throw refusal("procedure_step.output_required");
     }
     await insertLink(tx, acting.audit, bundle.instance, step, "output", sd.output_record_type, recordId);
+    adopted = sd.output_record_type === "transformation" ? recordId : null;
   }
   await updateStep(tx, acting.audit, step, "complete", {
     status: "completed",
@@ -1123,6 +1208,14 @@ async function completeStep(tx: Tx, request: FastifyRequest): Promise<InstanceBu
     completion_note: body.note ?? null,
     completed: true,
   });
+  // D-166 Rule A: the intake's later steps adopt the transformation its capture step produced, before they activate.
+  if (
+    adopted !== null &&
+    bundle.instance.transformation_id === null &&
+    bundle.instance.procedure_code === INTAKE_PROCEDURE_CODE &&
+    step.step_key === INTAKE_CAPTURE_STEP_KEY
+  )
+    await adoptIntakeTransformation(tx, acting.audit, await reload(tx, bundle), adopted);
   const advanced = await advance(tx, acting.audit, await reload(tx, bundle));
   return finish(tx, acting.audit, advanced, "step_complete");
 }

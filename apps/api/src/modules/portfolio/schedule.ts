@@ -10,6 +10,9 @@
 //
 // No critical-path claim and no duration model (ADR-0023 §5): only precedence and date comparison. Dates are calendar
 // dates `YYYY-MM-DD` (the transformation's time zone), compared as text, which orders them correctly.
+//
+// `forwardFinishes` / `forwardFinish` (D-166 Rule B; T-DG5-BE-T4): the finish-to-start forward pass over planned starts
+// that a dependency slip's `affected` forecasts use (ADR-0044 §7). It builds on `predecessorFinish`, which is unchanged.
 import type { ScheduleFlag } from "@mth/shared/schemas";
 
 export const SCHEDULE_FLAG_CODES = {
@@ -76,7 +79,7 @@ export function predecessorFinish(
 }
 
 /** Does this dependency take part in the schedule checks? Archived and resolved dependencies do not. */
-export function isScheduled(dep: ScheduleDependency): boolean {
+export function isScheduled(dep: Pick<ScheduleDependency, "status" | "toInitiativeId">): boolean {
   return dep.status !== "archived" && dep.status !== "resolved" && dep.toInitiativeId !== null;
 }
 
@@ -143,4 +146,75 @@ export function computeScheduleFlags(facts: ScheduleFacts): ScheduleFlags {
     byInitiative.set(to.id, [...(byInitiative.get(to.id) ?? []), ...flags]);
   }
   return { byDependency, byInitiative };
+}
+
+// ------------------------------------------------------------------------------------------------ forward finish
+
+/** The facts of the D-166 Rule B forward pass: initiatives, one milestone set, and the dependencies. */
+export interface ForwardFacts {
+  readonly initiatives: readonly Pick<ScheduleInitiative, "id" | "plannedStart" | "plannedEnd">[];
+  readonly milestones: readonly ScheduleMilestone[];
+  readonly dependencies: readonly Pick<ScheduleDependency, "fromInitiativeId" | "toInitiativeId" | "status">[];
+}
+
+const DAY_MS = 86_400_000;
+const dayNumber = (d: string): number => Math.round(Date.parse(`${d.slice(0, 10)}T00:00:00Z`) / DAY_MS);
+const addDays = (d: string, days: number): string =>
+  new Date((dayNumber(d) + days) * DAY_MS).toISOString().slice(0, 10);
+
+/**
+ * The forecast finish of every initiative under the D-166 Rule B forward pass (REQ-S12-012; M0232 "recompute forecast
+ * impacts using defined scheduling logic"; ADR-0044 §7), over ONE milestone set. For an initiative S:
+ *  - own = predecessorFinish(S, set) (ADR-0023 §5, unchanged);
+ *  - without a scheduled finish-to-start predecessor (an initiative predecessor of a dependency that `isScheduled`), the
+ *    result is `own`;
+ *  - otherwise `required` = the latest, over S's scheduled predecessors P, of the first date ADR-0023 §5 allows S to
+ *    start after forwardFinish(P): that date itself (`schedule.before_predecessor` flags only a start BEFORE the
+ *    finish); shift = max(0, required − S.planned_start) calendar days; the result is own + shift.
+ *  - Unknown (null), never 0 nor the unshifted date, when S has a scheduled predecessor but no planned start, or any
+ *    input date is missing (own, or a predecessor's forward finish). An initiative not in the set is Unknown.
+ * Pure: nothing is stored. Cycles cannot occur (DG4 refuses dependency cycles); a revisit is Unknown, never a loop.
+ * Dates are calendar dates `YYYY-MM-DD`; a dependent with enough slack does not move, one with none moves by the slip.
+ */
+export function forwardFinishes(facts: ForwardFacts): (initiativeId: string) => string | null {
+  const initiatives = new Map(facts.initiatives.map((i) => [i.id, i]));
+  const predecessorsOf = new Map<string, string[]>();
+  for (const d of facts.dependencies) {
+    if (d.fromInitiativeId === null || d.toInitiativeId === null) continue;
+    if (!isScheduled(d)) continue;
+    predecessorsOf.set(d.toInitiativeId, [...(predecessorsOf.get(d.toInitiativeId) ?? []), d.fromInitiativeId]);
+  }
+  const memo = new Map<string, string | null>();
+  const visiting = new Set<string>();
+  const finish = (id: string): string | null => {
+    if (memo.has(id)) return memo.get(id) ?? null;
+    const s = initiatives.get(id);
+    if (s === undefined || visiting.has(id)) return null;
+    visiting.add(id);
+    const own = predecessorFinish(s, facts.milestones);
+    const preds = predecessorsOf.get(id) ?? [];
+    let result: string | null = own;
+    if (preds.length > 0) {
+      let required: string | null = null;
+      let unknown = own === null || s.plannedStart === null;
+      for (const p of preds) {
+        const f = finish(p);
+        if (f === null) unknown = true;
+        else required = later(required, f);
+      }
+      result =
+        unknown || own === null || s.plannedStart === null || required === null
+          ? null
+          : addDays(own, Math.max(0, dayNumber(required) - dayNumber(s.plannedStart)));
+    }
+    visiting.delete(id);
+    memo.set(id, result);
+    return result;
+  };
+  return finish;
+}
+
+/** forwardFinish(S, set) of D-166 Rule B for one initiative (see `forwardFinishes`). */
+export function forwardFinish(initiativeId: string, facts: ForwardFacts): string | null {
+  return forwardFinishes(facts)(initiativeId);
 }

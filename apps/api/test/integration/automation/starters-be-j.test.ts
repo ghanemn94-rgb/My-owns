@@ -7,19 +7,20 @@
 //  - REQ-S12-004, API part: `launchPlan` is accepted on create and travels in the v2 event (null without it); an
 //    impossible start date is 400;
 //  - REQ-S12-012: a 5-day slip of a critical-path dependency records one slip and, through starter 9, notifies each
-//    affected owner ONCE (replay x3 adds nothing); the dependent forecasts stored with the slip are those the DG4
-//    logic gives on the milestones read after the change; a move earlier, a non-critical dependency (critical path not
+//    affected owner ONCE (replay x3 adds nothing); the dependent forecasts stored with the slip move per D-166 Rule B
+//    (the finish-to-start forward pass over planned starts: B, with no slack, moves by the 5 days; C, with enough
+//    slack after B, does not move; T-DG5-BE-T4 replaced BE-J's before = after expectation); a move earlier, a non-critical dependency (critical path not
 //    computable, no needed-by) and a needed-by breach are each handled per ADR-0044 §7; listDependencySlips reads them
 //    (TL, AUD), 404 outside scope, 400 on a bad limit.
 // Every value is SYNTHETIC; the gate decision is a demo decision by a test person that approves nothing real. No job
 // decides anything, and nothing touches the engineering gates DG0-DG7.
+import { sql } from "@mth/db";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DOMAIN_HANDLERS } from "../../../../worker/src/handlers/index.ts";
 import { ruleAuthor } from "../../support/automation-failures.ts";
 import { DEPENDENCY_SLIP_KIND } from "../../../../worker/src/handlers/portfolio.ts";
 import { recordRequestExecution, REQUEST_STARTERS } from "../../../src/modules/platform/index.ts";
-import { predecessorFinish } from "../../../src/modules/portfolio/schedule.ts";
 import {
   call,
   createTransformationRow,
@@ -201,16 +202,19 @@ describe("REQ-S12-012: critical dependency slips", () => {
   let milestoneA: string;
   beforeAll(async () => {
     x = await seedExecutionWorld(api, w);
-    const owned = (code: string, owner: string | null) =>
+    const owned = (code: string, owner: string | null, plannedStart: string | null = null) =>
       insertAudited(api.db, x, "initiative", {
         code,
         name: `Synthetic initiative ${code}`,
         executive_owner_user_id: owner,
+        planned_start: plannedStart,
       });
     // A -> B -> C (critical chain), A -> D (owner WL), B and C both owned by BO (one notification for BO).
+    // Planned starts (D-166 Rule B): B starts on A's finish (2026-11-01, no slack); C starts 2026-12-10, nine days
+    // after B's finish (2026-12-01), so a 5-day slip of B leaves C unmoved.
     ini.A = await owned("INI-01", x.users.tl.id);
-    ini.B = await owned("INI-02", x.users.bo.id);
-    ini.C = await owned("INI-03", x.users.bo.id);
+    ini.B = await owned("INI-02", x.users.bo.id, "2026-11-01");
+    ini.C = await owned("INI-03", x.users.bo.id, "2026-12-10");
     ini.D = await owned("INI-04", x.users.wl.id);
     await newDependency(send, x, ini.A, ini.B);
     await newDependency(send, x, ini.B, ini.C);
@@ -255,35 +259,34 @@ describe("REQ-S12-012: critical dependency slips", () => {
     const slip = critical[0]!;
     expect(rows).toHaveLength(1);
     expect([slip.slip_days, String(slip.predecessor_finish_before).slice(0, 10)]).toEqual([5, "2026-11-01"]);
-    // Affected: every initiative reachable from B (B, C), with owners and forecasts by the DG4 function.
-    const milestones = await api.db
-      .selectFrom("milestone")
-      .select(["initiative_id", "status", "approved_date", "forecast_date"])
-      .where("transformation_id", "=", x.transformationId)
-      .execute();
-    const asSchedule = milestones.map((m) => ({
-      initiativeId: m.initiative_id,
-      status: m.status,
-      approvedDate: m.approved_date === null ? null : String(m.approved_date).slice(0, 10),
-      forecastDate: m.forecast_date === null ? null : String(m.forecast_date).slice(0, 10),
-    }));
-    const finish = (id: string) => predecessorFinish({ id, plannedEnd: null }, asSchedule);
+    // Affected: every initiative reachable from B (B, C), with owners and the D-166 Rule B forecasts. B: own finish
+    // 2026-12-01, required start = A's finish (11-01 before, 11-06 after), planned start 11-01 -> shift 0, then 5 ->
+    // 2026-12-01 before, 2026-12-06 after (no slack: moves by the slip). C: own finish 2027-01-10, required start =
+    // B's forward finish (12-01, then 12-06), planned start 12-10 -> shift 0 both times (enough slack: does not move).
     expect(slip.affected).toEqual([
       {
         initiativeId: ini.B,
         initiativeCode: "INI-02",
         ownerUserId: x.users.bo.id,
-        forecastFinishBefore: finish(ini.B),
-        forecastFinishAfter: finish(ini.B),
+        forecastFinishBefore: "2026-12-01",
+        forecastFinishAfter: "2026-12-06",
       },
       {
         initiativeId: ini.C,
         initiativeCode: "INI-03",
         ownerUserId: x.users.bo.id,
-        forecastFinishBefore: finish(ini.C),
-        forecastFinishAfter: finish(ini.C),
+        forecastFinishBefore: "2027-01-10",
+        forecastFinishAfter: "2027-01-10",
       },
     ]);
+    // Nothing else is stored or overwritten (ADR-0044 §7): the dependents' milestones keep their forecasts.
+    const kept = await api.db
+      .selectFrom("milestone")
+      .select(["initiative_id", sql<string | null>`forecast_date::text`.as("f")])
+      .where("initiative_id", "in", [ini.B, ini.C])
+      .orderBy("forecast_date")
+      .execute();
+    expect(kept.map((m) => m.f)).toEqual(["2026-12-01", "2027-01-10"]);
     // Starter 9 on the event, three times: BO (owner of B and C) gets ONE item and one notification.
     const event = await envelopeOf(`dependency.slipped:${slip.id}`);
     expect(event.payload).toEqual({

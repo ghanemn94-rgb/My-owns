@@ -17,7 +17,8 @@
 //  - initiative_prioritization: DG3 scores, a ranking snapshot by the TO and the Sponsor's approval;
 //  - tom_approval: a `link` output (a ready canvas cell), two parallel reviews and the Sponsor's approval;
 //  - new_transformation_intake (organization scope): the intake creates the transformation and links its charter; its
-//    Sponsor step then waits unrouted (a W7 engine gap reported in the handback).
+//    Sponsor step then waits unrouted while the new transformation has no mapped Sponsor (D-166 Rule A; the routed
+//    and decided path: intake-adoption.test.ts).
 // Every value is SYNTHETIC. The approvals decided here are demo BUSINESS approvals on synthetic records, decided by a
 // synthetic business approver (the Sponsor) through the canonical approval; they approve nothing real and have nothing
 // to do with the engineering gates DG0-DG7.
@@ -790,10 +791,9 @@ describe("new_transformation_intake (organization scope)", () => {
     ]);
     expect(c2.body.currentStepKeys).toEqual(["confirm_sponsor"]);
     expect(c2.body.status).toBe("active");
-    // KNOWN GAP (W7 engine, procedures/steps.ts requestStepApproval; reported in the T-DG5-BE-G handback, not BE-G's
-    // file): the step instances of an organization-scope procedure carry no transformation, so the engine returns
-    // before routing the Sponsor's approval even though the intake's transformation is now linked. The step waits,
-    // unrouted, and is never shown as approved or completed.
+    // D-166 Rule A (T-DG5-BE-T4): the later steps adopted the intake's transformation, so the Sponsor's approval is
+    // requested there, routed by ITS role mappings. No Sponsor is mapped in it yet, so the step waits, truthfully
+    // unrouted, and is never shown as approved or completed (the mapped and decided path: intake-adoption.test.ts).
     const sponsorStep = c2.body.steps.find((s: Body) => s.stepKey === "confirm_sponsor");
     expect([sponsorStep.status, sponsorStep.approvalId]).toEqual(["active", null]);
     expect([c2.body.nextAction.kind, c2.body.nextAction.messageKey]).toEqual([
