@@ -53,6 +53,7 @@ import {
   type VersionRef,
 } from "../assembler.ts";
 import { reportRefusals } from "../definitions.ts";
+import { columnTotals } from "./table-totals.ts";
 import { formulaVersionState, NOT_APPLICABLE, PROVISIONAL, VALIDATED, type ValueState } from "../provisional.ts";
 
 const S = { cases: "cases", sections: "case_sections", lines: "lines", totals: "totals" } as const;
@@ -397,8 +398,10 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
   // ---------------------------------------------------------------------------------------------- totals (DG3 engine)
   const totalRows: ReportRow[] = [];
   const lineById = new Map(allLines.map((l) => [l.id, l] as const));
+  const totalsByCase = new Map<string, Awaited<ReturnType<typeof loadCaseTotals>>>();
   for (const c of caseRows) {
     const totals = await loadCaseTotals(db, c);
+    totalsByCase.set(c.id, totals);
     // The lines the engine read (the case and, for the transformation case, its active initiative cases).
     const included = allLines.filter((l) => totals.includedCaseIds.includes(l.business_case_id));
     const benefitStates = (currency: string, basis: string | null) =>
@@ -458,8 +461,87 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
       column("unknown_line_count", "count"),
     ],
     rows: totalRows,
+    // The rows are different measures (gross, per value basis, cost, net) of different cases: never summed together.
     totals: [],
     emptyKey: "report.empty.no_records",
+  });
+
+  // ---------------------------------------------------------------------------------------------- line groups
+  // The lines behind each of the screen's single-basis totals (CaseTotals.tsx: gross benefits per value basis and
+  // implementation cost cash / non-cash, per currency), one table per case × group × currency, with a system SUM total
+  // whose value is the DG3 engine's figure (D-163). Gross benefits, total implementation cost and net value get no
+  // SUM: gross adds revenue uplift to margin and avoided cost to cash saving, net subtracts across bases (D-117).
+  caseRows.forEach((c, index) => {
+    const totals = totalsByCase.get(c.id)!;
+    const included = allLines.filter((l) => totals.includedCaseIds.includes(l.business_case_id));
+    const groups: { key: string; titleKey: string; lines: (l: BusinessCaseLineRow) => boolean; list: MoneyTotal[] }[] =
+      [];
+    for (const [basis, list] of Object.entries(totals.grossBenefitsByValueBasis).sort(([a], [b]) =>
+      a < b ? -1 : a > b ? 1 : 0,
+    ))
+      groups.push({
+        key: basis,
+        titleKey: `report.business_case_value_basis.${basis}`,
+        // The engine's financial benefit lines of this basis (class not strategic_non_financial).
+        lines: (l) =>
+          l.line_kind === "benefit" && l.benefit_class !== "strategic_non_financial" && l.value_basis === basis,
+        list,
+      });
+    groups.push({
+      key: "cost_cash",
+      titleKey: "report.business_case_measure.implementation_cost_cash",
+      lines: (l) => l.line_kind === "investment" && l.value_basis === "cash",
+      list: totals.implementationCostCash,
+    });
+    groups.push({
+      key: "cost_non_cash",
+      titleKey: "report.business_case_measure.implementation_cost_non_cash",
+      lines: (l) => l.line_kind === "investment" && l.value_basis === "non_cash",
+      list: totals.implementationCostNonCash,
+    });
+    for (const g of groups)
+      for (const t of g.list) {
+        const currency = t.currency.trim();
+        const members = included.filter((l) => g.lines(l) && l.currency.trim() === currency);
+        if (members.length === 0) continue;
+        const rows: ReportRow[] = members.map((l) => ({
+          recordType: "business_case_line",
+          recordId: l.id,
+          recordVersion: l.version,
+          cells: [
+            textValue(c.code, "system"),
+            textValue(l.title),
+            codeValue(l.investment_class ?? l.benefit_class, "report.business_case_line_class"),
+            decimalValue(l.amount, {
+              unitKind: "currency",
+              currency: l.currency,
+              valueBasis: "planned",
+              ...presentState(l.amount, lineState(l)),
+            }),
+          ],
+        }));
+        const columns = [
+          column("case", "text"),
+          column("title", "text"),
+          column("class", "code"),
+          column("amount", "decimal", "currency"),
+        ];
+        sections.push({
+          key: `group_${index + 1}_${g.key}_${currency.toLowerCase()}`,
+          titleKey: g.titleKey,
+          kind: "table",
+          sources: rows.map((r) => ({
+            recordType: r.recordType,
+            recordId: r.recordId,
+            recordVersion: r.recordVersion,
+          })),
+          columns,
+          rows,
+          // The screen's figure (the engine's amount, by reference); Unknown when any line has no amount.
+          totals: columnTotals({ columns, rows }, ["amount"], { amount: t.amount }),
+          emptyKey: "report.empty.no_records",
+        });
+      }
   });
 
   // ---------------------------------------------------------------------------------------------- versions

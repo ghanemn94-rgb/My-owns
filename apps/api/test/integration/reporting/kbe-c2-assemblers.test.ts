@@ -7,12 +7,16 @@
 //  - REQ-S13-008: a business case whose formula version is not validated has provisional values; an unvalidated
 //    baseline is provisional; a missing amount is Unknown with no number, never 0;
 //  - the snapshot records one `formula_version` row per formula used and the `calculation_engine` row;
-//  - value bases are never summed together (D-117, D-119, D-122): each decimal column holds one value basis, no table
-//    carries a report total, and the business-case totals are exactly the DG3 totals engine's figures, row by row.
+//  - value bases are never summed together (D-117, D-119, D-122): each decimal column holds one value basis, and the
+//    business-case totals are exactly the DG3 totals engine's figures, row by row;
+//  - D-163 (system SUM totals): the lines behind each single-basis total of the business-case screen are a table whose
+//    declared SUM total is the engine's figure; a cost group with an Unknown line has an Unknown total; a column whose
+//    rows mix currencies (the lines table) has no total; the value pools carry the screen's per-currency total.
 // All data is SYNTHETIC. Product gates G1-G6 are business approvals inside the product; the G1 submission and decision
 // below are demo actions on synthetic data and approve nothing real. Nothing here touches DG0-DG7.
 import { ENGINE_VERSION } from "@mth/shared/calc";
 import { reportSnapshot } from "@mth/shared/schemas";
+import { Decimal } from "decimal.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   call,
@@ -66,11 +70,14 @@ const rowIds = (sec: Body): string[] => sec.rows.map((r: Body) => r.recordId);
 const cell = (sec: Body, row: Body, key: string): Body => row.cells[sec.columns.findIndex((c: Body) => c.key === key)];
 const rowOf = (sec: Body, id: string): Body => sec.rows.find((r: Body) => r.recordId === id);
 
-/** Every decimal column of every table holds one value basis and one unit kind; no table carries a report total. */
+/**
+ * Every decimal column of every table holds one value basis and one unit kind. A table carries a declared total only on
+ * a decimal column of one currency (D-163): the decimal.js sum of the column's numbers, or Unknown with no number when
+ * any cell is unknown or stale (never a partial sum shown as complete).
+ */
 function assertBasesNeverMixed(s: Body): void {
   for (const sec of s.content.sections) {
     if (sec.kind !== "table") continue;
-    expect(sec.totals, `${sec.key} totals`).toEqual([]);
     sec.columns.forEach((c: Body, j: number) => {
       if (c.valueKind !== "decimal") return;
       const bases = new Set(sec.rows.map((r: Body) => r.cells[j].valueBasis));
@@ -78,6 +85,22 @@ function assertBasesNeverMixed(s: Body): void {
       expect(bases.size, `${sec.key}.${c.key} bases`).toBeLessThanOrEqual(1);
       expect(units.size, `${sec.key}.${c.key} units`).toBeLessThanOrEqual(1);
     });
+    for (const t of sec.totals) {
+      const j = sec.columns.findIndex((c: Body) => c.key === t.columnKey);
+      expect(sec.columns[j].valueKind, `${sec.key} total column`).toBe("decimal");
+      const cells = sec.rows.map((r: Body) => r.cells[j]);
+      const currencies = new Set(cells.flatMap((c: Body) => (c.currency === null ? [] : [c.currency])));
+      expect(currencies.size, `${sec.key}.${t.columnKey} currencies`).toBe(1);
+      expect(t.formula).toBe("sum");
+      if (cells.some((c: Body) => c.validation === "unknown" || c.validation === "stale"))
+        expect(t.value, `${sec.key}.${t.columnKey}`).toMatchObject({ value: null, validation: "unknown" });
+      else {
+        const sum = cells
+          .filter((c: Body) => c.value !== null)
+          .reduce((acc: Decimal, c: Body) => acc.plus(new Decimal(c.value)), new Decimal(0));
+        expect(sum.eq(new Decimal(t.value.value)), `${sec.key}.${t.columnKey} = ${sum.toFixed()}`).toBe(true);
+      }
+    }
   }
 }
 
@@ -236,6 +259,13 @@ describe("diagnostic (REQ-S13-004, REQ-S13-008)", () => {
     const pool = pools.items[0];
     expect(pool.quantificationStatus).toBe("unquantified");
     expect(cell(v, rowOf(v, pool.id), "upside_amount")).toMatchObject({ value: null, validation: "unknown" });
+    // D-163: the screen shows a per-currency value-pool total; with an unquantified pool it is "partial", so the
+    // report's SUM totals of the upside and downside columns are Unknown with no number (never a partial sum).
+    expect(new Set(pools.items.map((x: Body) => x.currency))).toEqual(new Set(["SAR"]));
+    expect(v.totals.map((x: Body) => [x.columnKey, x.value.value, x.value.validation])).toEqual([
+      ["upside_amount", null, "unknown"],
+      ["downside_amount", null, "unknown"],
+    ]);
     expect(s.provisionalValueCount).toBeGreaterThanOrEqual(1);
     expect(s.unknownValueCount).toBeGreaterThanOrEqual(2);
     // Evidence: the verified note linked to the T01 rows and the baseline.
@@ -389,6 +419,18 @@ describe("business_cases (REQ-S13-004, REQ-S13-008; D-117, D-119, D-122)", () =>
       201,
       "saving",
     );
+    const usdSaving = ok(
+      await line({
+        lineKind: "benefit",
+        class: "cost_reduction",
+        valueBasis: "cash_saving",
+        title: "Unit cost (USD)",
+        amount: "5000",
+        currency: "USD",
+      }),
+      201,
+      "USD saving",
+    );
     const unknownAmount = ok(
       await line({ lineKind: "investment", class: "opex", valueBasis: "cash", title: "Run cost (unknown)" }),
       201,
@@ -457,6 +499,47 @@ describe("business_cases (REQ-S13-004, REQ-S13-008; D-117, D-119, D-122)", () =>
     expect(totals.grossBenefitsByValueBasis.revenue_uplift[0].amount).toBe("100000");
     expect(totals.grossBenefitsByValueBasis.cash_saving[0].amount).toBe("25000");
     assertBasesNeverMixed(s);
+
+    // D-163: the lines behind each single-basis total of the screen, with a system SUM total = the engine's figure.
+    const idx = rowIds(section(s, "cases")).indexOf(kase.id) + 1;
+    const group = (key: string) => section(s, `group_${idx}_${key}`);
+    const totalOf = (key: string) => {
+      const g = group(key);
+      expect(
+        g.totals.map((x: Body) => [x.columnKey, x.formula]),
+        key,
+      ).toEqual([["amount", "sum"]]);
+      return g.totals[0].value;
+    };
+    expect(group("revenue_uplift_sar").titleKey).toBe("report.business_case_value_basis.revenue_uplift");
+    expect(rowIds(group("revenue_uplift_sar"))).toEqual([revenue.id]);
+    expect(totalOf("revenue_uplift_sar")).toMatchObject({
+      value: totals.grossBenefitsByValueBasis.revenue_uplift[0].amount,
+      currency: "SAR",
+      validation: "provisional",
+    });
+    expect(totalOf("cash_saving_sar")).toMatchObject({
+      value: totals.grossBenefitsByValueBasis.cash_saving[0].amount,
+      validation: "validated",
+    });
+    // Another currency is its own table (never converted, never added to SAR).
+    expect(rowIds(group("cash_saving_usd"))).toEqual([usdSaving.id]);
+    expect(totalOf("cash_saving_usd")).toMatchObject({
+      value: totals.grossBenefitsByValueBasis.cash_saving.find((x: Body) => x.currency === "USD").amount,
+      currency: "USD",
+      validation: "provisional",
+    });
+    // The cash cost holds an Unknown line: the screen shows a partial 40000 (1 unknown line); the report total is
+    // Unknown with no number, never a partial sum shown as complete.
+    expect(totals.implementationCostCash[0]).toMatchObject({ amount: "40000", unknownLineCount: 1 });
+    expect(rowIds(group("cost_cash_sar")).sort()).toEqual([capex.id, unknownAmount.id].sort());
+    expect(totalOf("cost_cash_sar")).toMatchObject({ value: null, validation: "unknown", reason: "not_computable" });
+    // The lines table mixes currencies, kinds and bases, and the totals table mixes measures: neither has a total.
+    expect(new Set(lines.rows.map((r: Body) => cell(lines, r, "amount").currency).filter(Boolean))).toEqual(
+      new Set(["SAR", "USD"]),
+    );
+    expect(lines.totals).toEqual([]);
+    expect(t.totals).toEqual([]);
 
     // Versions: one formula_version row per formula used, and the calculation_engine row.
     const versions = (await get(`${T}/report-snapshots/${s.id}/versions`)).items;

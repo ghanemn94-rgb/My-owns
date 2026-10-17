@@ -1,0 +1,46 @@
+port-policy: PostgreSQL listening on port 23850 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-d3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbqncts_359b6740 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/kbe-c2-assemblers.test.ts (8 tests) 6336ms
+   ✓ gate_pack: every criterion of the gate with its state and evidence (REQ-S13-004; REQ-S13-005 content) > an unsubmitted gate: every catalogue criterion, state Unknown (never complete), no evidence, not_submitted  358ms
+   ✓ gate_pack: every criterion of the gate with its state and evidence (REQ-S13-004; REQ-S13-005 content) > a submitted G1: the criteria recorded with the submission, each with its state, and the submission's evidence  594ms
+   ✓ diagnostic (REQ-S13-004, REQ-S13-008) > after Finance validates the baseline it is validated; a later edit makes it provisional again (rule 3)  319ms
+   ✓ business_cases (REQ-S13-004, REQ-S13-008; D-117, D-119, D-122) > lines and totals as the DG3 routes show them; unvalidated formula -> provisional; formula and engine versions  651ms
+   ✓ roadmap (REQ-S13-004) > contains the waves, initiatives, milestones and initiative dependencies exactly as GET /roadmap lists them  468ms
+ ✓ |integration| apps/api/test/integration/reporting/registers-report.test.ts (5 tests) 4945ms
+   ✓ ADR-0045 §1: each register returns exactly its list route's rows for the same filters > actions (overdue filter), decisions, dependencies, KPIs and benefits equal their list routes  345ms
+   ✓ size limit (ADR-0045 §1) > 5,001 rows -> 422 report.too_large and nothing written; the live report is refused the same way  2547ms
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)
+KBE-D3 demo business_cases SUM cells: [["group_1_avoided_cost_sar","SUM(D3:D3)","1584000"],["group_1_margin_uplift_sar","SUM(D3:D3)","1920000"],["group_1_revenue_uplift_sar","SUM(D3:D3)","7128000"],["group_1_cost_cash_sar","SUM(D3:D5)","3660000"],["group_1_cost_non_cash_sar","SUM(D3:D3)","1170000"]]
+
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency)
+KBE-D3 demo benefits register SUM cells: [["totals_sar_revenue_uplift","SUM(C3:C3)","222750"],["totals_sar_revenue_uplift","SUM(E3:E3)","0"],["totals_sar_revenue_uplift","SUM(G3:G3)","99000"],["totals_sar_margin_uplift","SUM(C3:C3)","80000"],["totals_sar_margin_uplift","SUM(E3:E3)","0"],["totals_sar_margin_uplift","SUM(G3:G3)","0"],["totals_sar_avoided_cost","SUM(C3:C3)","0"],["totals_sar_avoided_cost","SUM(E3:E3)","0"],["totals_sar_avoided_cost","SUM(G3:G3)","0"]]
+
+ ❯ |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts (2 tests | 1 failed) 6199ms
+   ✓ REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)  494ms
+   × REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency) 211ms
+     → totals_sar_revenue_uplift: header Title: expected undefined to be defined
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency)
+AssertionError: totals_sar_revenue_uplift: header Title: expected undefined to be defined
+ ❯ apps/api/test/integration/reporting/table-totals-demo.test.ts:197:61
+    195|         (k) => REPORT_CONTENT_LABELS.en[`report.registers.benefits.${k…
+    196|       );
+    197|       expect(columnKey, `${section.key}: header ${header}`).toBeDefine…
+       |                                                             ^
+    198|       const line = block.lines.find((l: Body) => l.valueClass === valu…
+    199|       expect(line.total.status, `${section.key}.${columnKey}`).toBe("k…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 14 passed (15)
+   Start at  01:49:10
+   Duration  53.54s (transform 10.26s, setup 0ms, collect 30.45s, tests 17.48s, environment 0ms, prepare 247ms)
+

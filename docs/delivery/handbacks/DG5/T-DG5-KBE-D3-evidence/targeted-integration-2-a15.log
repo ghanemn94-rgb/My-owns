@@ -1,0 +1,166 @@
+port-policy: PostgreSQL listening on port 23850 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-d3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbqp98n_ef7963e0 (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each of the ten outputs generates from the demo transformation
+A15 demo: not generated: {}
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic
+A15 demo: snapshot content keys: ["asOf","period","subject","sections","methodology","approvalState","schemaVersion","definitionCode","transformation"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label
+A15 demo: files with any illustrative wording: ["charter/pdf/en","charter/pdf/ar","charter/docx/en","charter/docx/ar","diagnostic/pdf/en","diagnostic/pdf/ar","diagnostic/docx/en","diagnostic/docx/ar","diagnostic/xlsx/en","diagnostic/xlsx/ar","tom/pdf/en","tom/pdf/ar","tom/docx/en","tom/docx/ar","tom/xlsx/en","tom/xlsx/ar","business_cases/pdf/en","business_cases/pdf/ar","business_cases/docx/en","business_cases/docx/ar","business_cases/xlsx/en","business_cases/xlsx/ar","roadmap/pdf/en","roadmap/pdf/ar","roadmap/pptx/en","roadmap/pptx/ar","roadmap/xlsx/en","roadmap/xlsx/ar"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register
+A15 demo XLSX formulas: {"business_cases":["SUM(D3:D3)","SUM(D3:D3)","SUM(D3:D3)","SUM(D3:D5)","SUM(D3:D3)"],"registers":["SUM(C3:C3)","SUM(E3:E3)","SUM(G3:G3)","SUM(C3:C3)","SUM(E3:E3)","SUM(G3:G3)","SUM(C3:C3)","SUM(E3:E3)","SUM(G3:G3)"]}
+
+ ❯ |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts (7 tests | 2 failed) 62909ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each of the ten outputs generates from the demo transformation 2ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each generated output names the demo transformation and cites its records as sources 96ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each output's PDF (en and ar) contains the demo transformation's ID  26382ms
+   × REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic 24ms
+     → expected [ Array(10) ] to deeply equal []
+   × REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label 26646ms
+     → expected [ 'charter/pdf/en', …(53) ] to deeply equal []
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register 114ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a benefit value that is not validated is labelled provisional in the PDF (en and ar)  3823ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts [ apps/api/test/integration/reporting/table-totals-demo.test.ts ]
+Error: Transform failed with 1 error:
+/home/user/wt/dg5-kbe-d3/apps/api/test/integration/reporting/table-totals-demo.test.ts:134:3: ERROR: Unexpected ")"
+  Plugin: vite:esbuild
+  File: /home/user/wt/dg5-kbe-d3/apps/api/test/integration/reporting/table-totals-demo.test.ts:134:3
+  
+  Unexpected ")"
+  132 |        }
+  133 |    });
+  134 |    });
+      |     ^
+  135 |    // No formula anywhere else (the About and Legend sheets carry none).
+  136 |    const all = wb.sheets.flatMap((sh) => sh.rows.flat()).filter((c) => c.formula !== null);
+  
+ ❯ failureErrorWithLog node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:1467:15
+ ❯ node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic
+AssertionError: expected [ Array(10) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "charter",[39m
+[31m+   "diagnostic",[39m
+[31m+   "tom",[39m
+[31m+   "business_cases",[39m
+[31m+   "roadmap",[39m
+[31m+   "registers",[39m
+[31m+   "executive_dashboard",[39m
+[31m+   "gate_pack",[39m
+[31m+   "handover",[39m
+[31m+   "meeting_minutes",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a15-demo-transformation-outputs.test.ts:168:23
+    166|       `A15 demo: snapshot content keys: ${JSON.stringify(Object.keys(s…
+    167|     );
+    168|     expect(notMarked).toEqual([]);
+       |                       ^
+    169|   });
+    170| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label
+AssertionError: expected [ 'charter/pdf/en', …(53) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "charter/pdf/en",[39m
+[31m+   "charter/pdf/ar",[39m
+[31m+   "charter/docx/en",[39m
+[31m+   "charter/docx/ar",[39m
+[31m+   "diagnostic/pdf/en",[39m
+[31m+   "diagnostic/pdf/ar",[39m
+[31m+   "diagnostic/docx/en",[39m
+[31m+   "diagnostic/docx/ar",[39m
+[31m+   "diagnostic/xlsx/en",[39m
+[31m+   "diagnostic/xlsx/ar",[39m
+[31m+   "tom/pdf/en",[39m
+[31m+   "tom/pdf/ar",[39m
+[31m+   "tom/docx/en",[39m
+[31m+   "tom/docx/ar",[39m
+[31m+   "tom/xlsx/en",[39m
+[31m+   "tom/xlsx/ar",[39m
+[31m+   "business_cases/pdf/en",[39m
+[31m+   "business_cases/pdf/ar",[39m
+[31m+   "business_cases/docx/en",[39m
+[31m+   "business_cases/docx/ar",[39m
+[31m+   "business_cases/xlsx/en",[39m
+[31m+   "business_cases/xlsx/ar",[39m
+[31m+   "roadmap/pdf/en",[39m
+[31m+   "roadmap/pdf/ar",[39m
+[31m+   "roadmap/pptx/en",[39m
+[31m+   "roadmap/pptx/ar",[39m
+[31m+   "roadmap/xlsx/en",[39m
+[31m+   "roadmap/xlsx/ar",[39m
+[31m+   "registers/xlsx/en",[39m
+[31m+   "registers/xlsx/ar",[39m
+[31m+   "registers/csv/en",[39m
+[31m+   "registers/csv/ar",[39m
+[31m+   "registers/pdf/en",[39m
+[31m+   "registers/pdf/ar",[39m
+[31m+   "executive_dashboard/pdf/en",[39m
+[31m+   "executive_dashboard/pdf/ar",[39m
+[31m+   "executive_dashboard/pptx/en",[39m
+[31m+   "executive_dashboard/pptx/ar",[39m
+[31m+   "executive_dashboard/xlsx/en",[39m
+[31m+   "executive_dashboard/xlsx/ar",[39m
+[31m+   "gate_pack/pdf/en",[39m
+[31m+   "gate_pack/pdf/ar",[39m
+[31m+   "gate_pack/pptx/en",[39m
+[31m+   "gate_pack/pptx/ar",[39m
+[31m+   "gate_pack/docx/en",[39m
+[31m+   "gate_pack/docx/ar",[39m
+[31m+   "handover/pdf/en",[39m
+[31m+   "handover/pdf/ar",[39m
+[31m+   "handover/docx/en",[39m
+[31m+   "handover/docx/ar",[39m
+[31m+   "meeting_minutes/pdf/en",[39m
+[31m+   "meeting_minutes/pdf/ar",[39m
+[31m+   "meeting_minutes/docx/en",[39m
+[31m+   "meeting_minutes/docx/ar",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a15-demo-transformation-outputs.test.ts:187:24
+    185|     }
+    186|     console.info(`A15 demo: files with any illustrative wording: ${JSO…
+    187|     expect(unlabelled).toEqual([]);
+       |                        ^
+    188|   }, 600_000);
+    189| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed (7)
+   Start at  01:50:38
+   Duration  80.14s (transform 6.45s, setup 0ms, collect 12.53s, tests 62.91s, environment 0ms, prepare 211ms)
+

@@ -5,9 +5,12 @@
 //  - REQ-S13-008: a pending benefit value in the benefits register has `validation: provisional` and is counted in the
 //    snapshot's provisionalValueCount; the source row is provisional; an unmonetised CX benefit's money value is n/a,
 //    a missing planned value is Unknown, never 0; value bases are separate columns, never summed;
+//  - D-163 (REQ-S13-006's system SUM totals): the benefits register carries the screen's totals block, one table per
+//    currency × value class, whose declared totals equal GET /benefit-totals figure by figure (Unknown stays Unknown);
 //  - 5,001 rows -> 422 report.too_large, nothing written.
 // All data is SYNTHETIC; nothing here grants a business or Finance approval or touches the engineering gates DG0-DG7.
 import { sql } from "@mth/db";
+import { Decimal } from "decimal.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { call, seedWorld, startApi, type Session, type TestApi, type World } from "../../support/harness.ts";
 import {
@@ -25,6 +28,9 @@ type Body = any;
 let api: TestApi;
 let w: World;
 let b: BenefitWorld;
+
+/** Decimal equality of two decimal strings (decimal.js; never a binary float): "1000.0000" = "1000". */
+const decimalEq = (a: string, b: string): boolean => new Decimal(a).eq(new Decimal(b));
 
 const ok = (res: { status: number; body: unknown }, status: number, what: string): Body => {
   expect(res.status, `${what}: ${JSON.stringify(res.body).slice(0, 800)}`).toBe(status);
@@ -238,7 +244,74 @@ describe("REQ-S13-008: provisional and unknown values in the benefits register",
       const j = t.columns.findIndex((c: Body) => c.key === key);
       expect(new Set(t.rows.map((r: Body) => r.cells[j].valueBasis)).size).toBe(1);
     }
+    // The register table mixes currencies and value classes: it carries no total (D-117, D-119, D-122).
     expect(t.totals).toEqual([]);
+  });
+
+  it("the screen's totals block: one table per currency × value class whose SUM totals equal GET /benefit-totals (D-163)", async () => {
+    const s = await registerOf({ register: "benefits" });
+    const screen = ok(
+      await call<Body>(api.app, "GET", `${b.base}/benefit-totals`, { session: b.s.tl }),
+      200,
+      "getBenefitTotals",
+    );
+    const blocks = s.content.sections.filter((x: Body) => x.key.startsWith("totals_"));
+    expect(blocks.length).toBeGreaterThan(0);
+    const STATE = { realized_validated: "validated", realized_sustained: "sustained", pending: "submitted" } as const;
+    let compared = 0;
+    for (const sec of blocks) {
+      const [, currency, ...cls] = sec.key.split("_");
+      const valueClass = cls.join("_") === "non_financial" ? "non_financial_valued" : cls.join("_");
+      const block = screen.currencies.find((c: Body) => c.currency === currency.toUpperCase());
+      expect(block, sec.key).toBeDefined();
+      expect(sec.titleKey).toBe(`report.benefit_value_class.${cls.join("_")}`);
+      // Every row is a counted benefit of this class and currency (the screen's counted-once rule).
+      const counted = await api.db
+        .selectFrom("benefit_counting as c")
+        .innerJoin("benefit as x", "x.id", "c.benefit_id")
+        .select(["x.id", "x.value_class", "x.currency", "c.counted"])
+        .where(
+          "x.id",
+          "in",
+          sec.rows.map((r: Body) => r.recordId),
+        )
+        .execute();
+      expect(counted).toHaveLength(sec.rows.length);
+      for (const r of counted) {
+        expect(r.counted).toBe(true);
+        expect(r.value_class).toBe(cls.join("_"));
+        expect(r.currency.trim()).toBe(currency.toUpperCase());
+      }
+      for (const [columnKey, state] of Object.entries(STATE)) {
+        const total = sec.totals.find((x: Body) => x.columnKey === columnKey);
+        const line = block.lines.find((l: Body) => l.valueClass === valueClass && l.state === state);
+        expect(line, `${sec.key} ${state}`).toBeDefined();
+        if (line.total.status === "known") {
+          // The decimal.js total equals the screen's figure (money scale on the screen, canonical in the report).
+          expect(total, `${sec.key}.${columnKey}`).toBeDefined();
+          expect(total.formula).toBe("sum");
+          expect(decimalEq(total.value.value, line.total.amount), `${sec.key}.${columnKey}`).toBe(true);
+          expect(total.value).toMatchObject({
+            currency: currency.toUpperCase(),
+            valueBasis: state,
+            unitKind: "currency",
+          });
+        } else {
+          // Unknown on the screen: Unknown in the report, never a partial number.
+          expect(total.value).toMatchObject({ value: null, validation: "unknown" });
+        }
+        compared += 1;
+      }
+    }
+    expect(compared).toBeGreaterThan(0);
+    // The pending total of the class holding the pending benefit is provisional (it is not validated value).
+    const pendingBlock = blocks.find((x: Body) => x.rows.some((r: Body) => r.recordId === pendingId));
+    expect(pendingBlock.totals.find((x: Body) => x.columnKey === "pending").value).toMatchObject({
+      validation: "provisional",
+      valueBasis: "submitted",
+    });
+    // The unmonetised CX benefit is in no totals table (n/a; counted apart on the screen, never summed as 0).
+    for (const sec of blocks) expect(sec.rows.map((r: Body) => r.recordId)).not.toContain(cxId);
   });
 });
 
