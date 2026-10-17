@@ -10,9 +10,17 @@
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEMO_COVERAGE_CONDITIONS, DEMO_TRANSFORMATION_ID } from "../../src/demo/coverage.ts";
-import { DEMO_KPIS } from "../../src/demo/data/kpis.ts";
+import { DEMO_ANCHORS, DEMO_KPIS } from "../../src/demo/data/kpis.ts";
 import { DEMO_BENEFITS } from "../../src/demo/data/benefits.ts";
-import { B0144_TEXT, B0145, B0147_CHAINS, DEMO_IDP_ISSUER, DEMO_USERS } from "../../src/demo/data/roaming.ts";
+import {
+  B0144_TEXT,
+  B0145,
+  B0147_CHAINS,
+  DEMO_BUSINESS_UNIT_GRANTS,
+  DEMO_IDP_ISSUER,
+  DEMO_SIGN_IN_USERS,
+  DEMO_USERS,
+} from "../../src/demo/data/roaming.ts";
 import { DEMO_ID_PATTERN, seedDemo, type DemoRunSummary } from "../../src/demo/seed.ts";
 import { migrate } from "../../src/migrate.ts";
 import { createScratchDatabase, dropScratchDatabase, roleUrl, testDatabase } from "../helpers.ts";
@@ -97,12 +105,52 @@ describe("REQ-PB-088: the roaming transformation and the seven B0145 elements", 
     const users = await rows<{ display_name: string; issuer: string; subject: string }>(
       `SELECT u.display_name, i.issuer, i.subject FROM app_user u JOIN user_identity i ON i.user_id = u.id ORDER BY i.subject`,
     );
-    expect(users.map((u) => u.subject)).toEqual(DEMO_USERS.map((u) => u.name).sort());
+    // The eight role users and (T-DG5-BE-T3, D-QA-E-1) the demo access administrator; no dev-issuer identity outside
+    // a dev-mode stack (D-165; demo-dev-binding.test.ts).
+    expect(DEMO_SIGN_IN_USERS.map((u) => u.name)).toEqual([
+      ...DEMO_USERS.map((u) => u.name),
+      "roaming.user.adm_access",
+    ]);
+    expect(users.map((u) => u.subject)).toEqual(DEMO_SIGN_IN_USERS.map((u) => u.name).sort());
     for (const u of users) {
       expect(u.issuer).toBe(DEMO_IDP_ISSUER);
       expect(u.display_name).toContain("(synthetic)");
     }
-    expect((await rows<{ n: string }>("SELECT count(*) AS n FROM app_user"))[0]!.n).toBe(String(DEMO_USERS.length));
+    expect((await rows<{ n: string }>("SELECT count(*) AS n FROM app_user"))[0]!.n).toBe(
+      String(DEMO_SIGN_IN_USERS.length),
+    );
+  });
+
+  it("T-DG5-BE-T3 (D-QA-E-1): the business-unit grants are exactly TL, TO and the demo access administrator", async () => {
+    const grants = await rows<{ subject: string; role: string; scope_type: string; scope_id: string }>(
+      `SELECT i.subject, r.code AS role, a.scope_type, a.scope_id::text
+         FROM scoped_assignment a JOIN role r ON r.id = a.role_id
+         JOIN user_identity i ON i.user_id = a.user_id
+        WHERE a.revoked_at IS NULL ORDER BY a.scope_type, i.subject, r.code`,
+    );
+    const bu = grants.filter((g) => g.scope_type === "business_unit");
+    expect(bu).toEqual(
+      DEMO_BUSINESS_UNIT_GRANTS.map((g) => ({
+        subject: DEMO_SIGN_IN_USERS.find((u) => u.id === g.userId)!.name,
+        role: g.role,
+        scope_type: "business_unit",
+        scope_id: DEMO_ANCHORS.businessUnitId,
+      })).sort((a, b) => (a.subject < b.subject ? -1 : 1)),
+    );
+    expect(bu.map((g) => g.role).sort()).toEqual(["ADM_ACCESS", "TL", "TO"]);
+    // Every role user still holds their role on the seeded roaming transformation; nobody holds an organization grant.
+    const onT = grants.filter((g) => g.scope_type === "transformation");
+    expect(onT.map((g) => [g.subject, g.role])).toEqual(
+      DEMO_USERS.map((u) => [u.name, u.role]).sort((a, b) => (a[0]! < b[0]! ? -1 : 1)),
+    );
+    for (const g of onT) expect(g.scope_id).toBe(T);
+    expect(grants.filter((g) => g.scope_type === "organization")).toEqual([]);
+    // The demo access administrator holds no business-record or approval permission (a technical_admin role).
+    const perms = await rows<{ code: string; category: string }>(
+      `SELECT p.code, p.category FROM role_permission rp JOIN role r ON r.id = rp.role_id
+         JOIN permission p ON p.code = rp.permission_code WHERE r.code = 'ADM_ACCESS'`,
+    );
+    expect(perms.filter((p) => ["business_approval", "finance_validation"].includes(p.category))).toEqual([]);
   });
 });
 

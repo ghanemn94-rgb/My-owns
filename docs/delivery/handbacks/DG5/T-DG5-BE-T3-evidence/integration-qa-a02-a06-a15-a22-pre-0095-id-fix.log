@@ -1,0 +1,137 @@
+port-policy: PostgreSQL listening on port 23861 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc8fkbp_a4f4416e (server_encoding UTF8); applied 86 migrations to a fresh database
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 executive pack sections: [["update_transformation",643],["metrics_transformation",5328],["update_ws_01",2808],["metrics_ws_01",2726]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 pack values [{"key":"value_planned_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_forecast_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_submitted_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_validated_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_gap_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_planned_top_line_sar","value":"0","currency":"SAR"},{"key":"value_forecast_top_line_sar","value":"0","currency":"SAR"},{"key":"value_submitted_top_line_sar","value":"0","currency":"SAR"},{"key":"value_validated_top_line_sar","value":"0","currency":"SAR"},{"key":"value_gap_top_line","value":null,"currency":null}] canonical [["value_planned_profit_and_cash_sar",null],["value_forecast_profit_and_cash_sar",null],["value_submitted_profit_and_cash_sar",null],["value_validated_profit_and_cash_sar",null],["value_planned_top_line_sar","0"],["value_forecast_top_line_sar","0"],["value_submitted_top_line_sar","0"],["value_validated_top_line_sar","0"]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization
+A02 procedures: [{"c":"new_transformation_intake","n":"New transformation intake","scope":{"level":"organization","descriptionEn":"One organization; the transformation does not exist yet.","descriptionAr":"منظمة واحدة؛ التحول غير موجود بعد."},"launch":["SP","TL","TO"],"inputs":[["transformationName",null,true],["caseForChange",null,true]],"steps":[["capture_intake","task","TL",null,{"recordType":"transformation","mode":"create"},["transformationName","caseForChange"],false,null],["draft_charter","task","TL",null,{"recordType":"charter","mode":"link"},[],false,null],["confirm_sponsor","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"baseline_validation","n":"Baseline validation","scope":{"level":"transformation","descriptionEn":"One baseline of one transformation.","descriptionAr":"خط أساس واحد لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["metric",null,true],["value",null,true],["unit",null,true],["baselineDate",null,true],["source",null,true]],"steps":[["record_baseline","task","TL",null,{"recordType":"baseline","mode":"create"},["metric","value","unit","baselineDate","source"],true,null],["validate_baseline","task","FIN",null,{"recordType":"baseline","mode":"advance"},[],false,null]]},{"c":"kpi_submission","n":"KPI submission","scope":{"level":"transformation","descriptionEn":"One KPI and one reporting period.","descriptionAr":"مؤشر واحد وفترة تقرير واحدة."},"launch":["BO","KDS","TO"],"inputs":[["period",null,true]],"steps":[["submit_actual","task","BO",null,{"recordType":"kpi_actual","mode":"create"},["period"],false,null],["accept_actual","task","KDS",null,{"recordType":"kpi_actual","mode":"advance"},[],false,null]]},{"c":"tom_approval","n":"TOM approval","scope":{"level":"transformation","descriptionEn":"The TOM canvas of one transformation.","descriptionAr":"لوحة نموذج التشغيل لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["complete_canvas","task","TL",null,{"recordType":"tom_canvas_cell","mode":"link"},[],false,null],["business_review","task","BO",null,null,[],false,null],["technology_review","task","TD",null,null,[],false,null],["sponsor_approval","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"initiative_prioritization","n":"Initiative prioritization","scope":{"level":"transformation","descriptionEn":"The candidate initiatives of one transformation.","descriptionAr":"المبادرات المرشحة لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["score_initiatives","task","TL",null,null,[],false,null],["record_ranking","task","TO",null,{"recordType":"ranking_snapshot","mode":"create"},[],false,null],["approve_ranking","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"gate_review","n":"Gate review","scope":{"level":"transformation","descriptionEn":"One gate of one transformation.","descriptionAr":"بوابة واحدة لتحول واحد."},"launch":["TL","TO"],"inputs":[["gateCode",null,true],["financeReviewRequired",null,true]],"steps":[["prepare_submission","task","TL",null,{"recordType":"gate_submission","mode":"create"},["gateCode"],true,null],["criteria_review","task","TO",null,null,[],false,null],["finance_review","task","FIN",null,null,[],false,{"inputKey":"financeReviewRequired","operator":"eq","value":"yes"}],["gate_decision","approval","TL","SP",{"recordType":"gate_submission","mode":"advance"},[],false,null]]},{"c":"scope_target_change","n":"Scope/target change","scope":{"level":"transformation","descriptionEn":"One approved record of one transformation.","descriptionAr":"سجل معتمد واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[["reason",null,true]],"steps":[["raise_change","task","TL",null,{"recordType":"change_request","mode":"create"},["reason"],false,null],["assess_impact","task","TO",null,null,[],false,null],["decide_change","approval","TL","SP",{"recordType":"change_request","mode":"advance"},[],false,null]]},{"c":"benefit_validation","n":"Benefit validation","scope":{"level":"transformation","descriptionEn":"One benefit of one transformation.","descriptionAr":"منفعة واحدة لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["belowTarget",null,true]],"steps":[["measure_benefit","task","BO",null,null,[],false,null],["attach_evidence","task","BO",null,{"recordType":"evidence","mode":"link"},[],true,null],["finance_validation","task","FIN",null,{"recordType":"finance_validation","mode":"create"},[],false,null],["recovery_plan","task","TL",null,null,["belowTarget"],false,{"inputKey":"belowTarget","operator":"eq","value":"yes"}]]},{"c":"executive_escalation","n":"Executive escalation","scope":{"level":"transformation","descriptionEn":"One escalated decision of one transformation.","descriptionAr":"قرار مصعّد واحد لتحول واحد."},"launch":["TL","TO"],"inputs":[["whyNow",null,true]],"steps":[["raise_escalation","task","TL",null,{"recordType":"decision","mode":"create"},["whyNow"],false,null],["executive_decision","approval","TL","SP",{"recordType":"decision","mode":"advance"},[],false,null],["communicate_decision","task","TL",null,null,[],false,null]]},{"c":"bau_handover","n":"BAU handover","scope":{"level":"transformation","descriptionEn":"One performance area of one transformation.","descriptionAr":"مجال أداء واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[],"steps":[["prepare_handover","task","TL",null,{"recordType":"bau_handover","mode":"create"},[],true,null],["accept_handover","approval","TL","BO",{"recordType":"bau_handover","mode":"advance"},[],false,null],["schedule_reviews","task","TO",null,null,[],false,null]]}]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree
+A02 seed coverage: {"gate.g1":1,"gate.g2":1,"gate.g3":1,"gate.g4":1,"gate.g5":1,"gate.g6":1,"phase.1":5,"phase.2":3,"phase.3":4,"phase.4":5,"phase.5":4,"phase.6":4,"kpi.stale":1,"adoption.gap":1,"bau.handover":1,"template.t01":6,"template.t02":3,"template.t03":3,"template.t04":1,"template.t05":3,"template.t06":15,"template.t07":4,"template.t08":1,"template.t09":3,"template.t10":6,"template.t11":4,"template.t12":6,"template.t13":1,"template.t14":3,"template.t15":1,"template.t16":1,"benefit.shared":1,"approval.pending":1,"dashboard.area_1":3,"dashboard.area_2":3,"dashboard.area_3":3,"dashboard.area_4":1,"dashboard.area_5":1,"dashboard.area_6":2,"decision.overdue":1,"evidence.missing":18,"tom.dimension_01":1,"tom.dimension_02":1,"tom.dimension_03":1,"tom.dimension_04":1,"tom.dimension_05":1,"tom.dimension_06":1,"tom.dimension_07":1,"tom.dimension_08":1,"tom.dimension_09":1,"tom.dimension_10":1,"health_assessment.submitted":1} complete=true
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed
+A02 procedures driven: {
+ "new_transformation_intake": "confirm_sponsor: approval step without an approval (step {\"stepKey\":\"confirm_sponsor\",\"ordinal\":3,\"parallelGroup\":null,\"stepKind\":\"approval\",\"nameEn\":\"Sponsor confirms the transformation\",\"nameAr\":\"تأكيد الراعي للتحول\",\"status\":\"active\",\"assigneeRoleCode\":\"SP\",\"assigneeUserId\":null,\"dueDate\":null,\"dueDateUnknownReason\":\"calendar_not_configured\",\"overdue\":null,\"activatedAt\":\"2026-10-17T10:07:30.641Z\",\"completedAt\":null,\"completedBy\":null,\"skipReason\":null,\"approvalId\":null,\"missingInputs\":[]}; nextAction {\"kind\":\"await_approval\",\"stepKey\":\"confirm_sponsor\",\"messageKey\":\"procedures.next_action.await_approval_unrouted\",\"messageParams\":{\"stepKey\":\"confirm_sponsor\",\"stepNameEn\":\"Sponsor confirms the transformation\",\"stepNameAr\":\"تأكيد الراعي للتحول\",\"roleCode\":\"SP\",\"approvalStatus\":null}}; transformationId null; subject null/null)",
+ "baseline_validation": "completed",
+ "kpi_submission": "completed",
+ "tom_approval": "completed",
+ "initiative_prioritization": "completed",
+ "gate_review": "completed",
+ "scope_target_change": "completed",
+ "benefit_validation": "completed",
+ "executive_escalation": "completed",
+ "bau_handover": "completed"
+}
+
+ ❯ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (13 tests | 2 failed) 16566ms
+   ✓ REQ-S18-004: the demo role users of the demo database > every seeded demo role user signs in through the demo IdP path and is a synthetic user of the demo organization  461ms
+   ✓ REQ-S18-004: the demo role users of the demo database > step 1 'create transformation' is performed by the demo Transformation Lead in the demo business unit 266ms
+   ✓ REQ-S18-004: the demo role users of the demo database > the seeded roaming transformation is not 'created in this demo database': step 1 is open for the demo users 35ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records  6881ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > REQ-S01-003: the chain input -> validation -> approval -> output -> monitoring -> correction -> sustainment is on persisted records 62ms
+   ✓ REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing 108ms
+   ✓ A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > the A02 scenario completed with no export job, no e-mail notification and no AI call 36ms
+   ✓ A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > no published procedure step's completion condition references an uploaded spreadsheet, deck or e-mail 70ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization 23ms
+   × REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it 76ms
+     → expected [ 'active', 'TL' ] to deeply equal [ 'active', 'BO' ]
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake)  406ms
+   ✓ REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree 39ms
+   × REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed 3873ms
+     → expected [ [ …(2) ] ] to deeply equal []
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 12027ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  393ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected  330ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  327ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  518ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  392ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  1688ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  564ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > publishing defaults that total 95% is rejected  422ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > 30/20/20/15/15 and a new Feasibility rubric: a new transformation starts with them, an existing one keeps 25/25  327ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001: a definition missing a trigger or a completion condition is rejected  387ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  511ms
+ ✓ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests) 39822ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  875ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  1415ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  6128ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  19279ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  592ms
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each of the ten outputs generates from the demo transformation
+A15 demo: not generated: {}
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic
+A15 demo: snapshot content keys: ["asOf","period","subject","sections","synthetic","methodology","approvalState","schemaVersion","definitionCode","transformation"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label
+A15 demo: files with any illustrative wording: ["charter/pdf/en","charter/pdf/ar","charter/docx/en","charter/docx/ar","diagnostic/pdf/en","diagnostic/pdf/ar","diagnostic/docx/en","diagnostic/docx/ar","diagnostic/xlsx/en","diagnostic/xlsx/ar","tom/pdf/en","tom/pdf/ar","tom/docx/en","tom/docx/ar","tom/xlsx/en","tom/xlsx/ar","business_cases/pdf/en","business_cases/pdf/ar","business_cases/docx/en","business_cases/docx/ar","business_cases/xlsx/en","business_cases/xlsx/ar","roadmap/pdf/en","roadmap/pdf/ar","roadmap/pptx/en","roadmap/pptx/ar","roadmap/xlsx/en","roadmap/xlsx/ar","registers/xlsx/en","registers/xlsx/ar","registers/csv/en","registers/csv/ar","registers/pdf/en","registers/pdf/ar","executive_dashboard/pdf/en","executive_dashboard/pdf/ar","executive_dashboard/pptx/en","executive_dashboard/pptx/ar","executive_dashboard/xlsx/en","executive_dashboard/xlsx/ar","gate_pack/pdf/en","gate_pack/pdf/ar","gate_pack/pptx/en","gate_pack/pptx/ar","gate_pack/docx/en","gate_pack/docx/ar","handover/pdf/en","handover/pdf/ar","handover/docx/en","handover/docx/ar","meeting_minutes/pdf/en","meeting_minutes/pdf/ar","meeting_minutes/docx/en","meeting_minutes/docx/ar"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register
+A15 demo XLSX formulas: {"business_cases":["SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D6)","SUM(D4:D4)"],"registers":["SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)"]}
+
+ ✓ |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts (7 tests) 73768ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each output's PDF (en and ar) contains the demo transformation's ID  31078ms
+   ✓ REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label  32467ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a benefit value that is not validated is labelled provisional in the PDF (en and ar)  4511ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it
+AssertionError: expected [ 'active', 'TL' ] to deeply equal [ 'active', 'BO' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "active",[22m
+[32m-   "BO",[39m
+[31m+   "TL",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:867:56
+    865|     expect(inst.currentStepKeys).toEqual(["record_baseline"]);
+    866|     const current = (inst.steps as Body[]).find((s) => s.stepKey === "…
+    867|     expect([current.status, current.assigneeRoleCode]).toEqual(["activ…
+       |                                                        ^
+    868|     expect(inst.nextAction.stepKey).toBe("record_baseline");
+    869|     const I = `/api/v1/procedure-instances/${inst.id}`;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed
+AssertionError: expected [ [ …(2) ] ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   [[39m
+[31m+     "new_transformation_intake",[39m
+[31m+     "confirm_sponsor: approval step without an approval (step {\"stepKey\":\"confirm_sponsor\",\"ordinal\":3,\"parallelGroup\":null,\"stepKind\":\"approval\",\"nameEn\":\"Sponsor confirms the transformation\",\"nameAr\":\"تأكيد الراعي للتحول\",\"status\":\"active\",\"assigneeRoleCode\":\"SP\",\"assigneeUserId\":null,\"dueDate\":null,\"dueDateUnknownReason\":\"calendar_not_configured\",\"overdue\":null,\"activatedAt\":\"2026-10-17T10:07:30.641Z\",\"completedAt\":null,\"completedBy\":null,\"skipReason\":null,\"approvalId\":null,\"missingInputs\":[]}; nextAction {\"kind\":\"await_approval\",\"stepKey\":\"confirm_sponsor\",\"messageKey\":\"procedures.next_action.await_approval_unrouted\",\"messageParams\":{\"stepKey\":\"confirm_sponsor\",\"stepNameEn\":\"Sponsor confirms the transformation\",\"stepNameAr\":\"تأكيد الراعي للتحول\",\"roleCode\":\"SP\",\"approvalStatus\":null}}; transformationId null; subject null/null)",[39m
+[31m+   ],[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:1445:74
+    1443|     console.log(`A02 procedures driven: ${JSON.stringify(results, null…
+    1444|     expect(Object.keys(results)).toHaveLength(10);
+    1445|     expect(Object.entries(results).filter(([, r]) => r !== "completed"…
+       |                                                                          ^
+    1446|   }, 180_000);
+    1447| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 53 passed (55)
+   Start at  10:06:59
+   Duration  171.67s (transform 7.47s, setup 0ms, collect 24.26s, tests 142.18s, environment 0ms, prepare 122ms)
+

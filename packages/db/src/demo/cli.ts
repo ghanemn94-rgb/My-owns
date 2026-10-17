@@ -4,6 +4,7 @@
 //               production, the database is production-marked, unmarked but not empty, or already a demo database.
 //   reset-demo  (MTH_ENV=demo, MTH_DEMO_ADMIN_DATABASE_URL, DATABASE_OWNER_URL of the demo database) refused (exit 3)
 //               otherwise, or when the target database is not a demo database.
+// With AUTH_MODE=dev (never NODE_ENV=production) both also bind each demo user to the dev issuer (D-165).
 // Both print the run number, the record counts and the checksum. Everything they create is SYNTHETIC: an illustrative
 // example, not Mobily actual performance; a demo approval approves nothing real.
 import { DemoRefused } from "./guard.ts";
@@ -14,6 +15,8 @@ export interface DemoCliConfig {
   readonly mthEnv: string;
   readonly ownerUrl: string;
   readonly demoAdminUrl: string | null;
+  /** D-165: bind the demo users to the dev issuer too (set by ../cli.ts in a dev-mode stack only). */
+  readonly devIssuerBinding?: boolean;
 }
 
 export interface DemoCliIo {
@@ -48,6 +51,7 @@ export async function runDemoCommand(
             runKind: "seed",
             requestedVia: "cli",
             requestedBy: null,
+            devIssuerBinding: config.devIssuerBinding === true,
           })
         : await resetDemo({
             mthEnv: config.mthEnv,
@@ -55,6 +59,7 @@ export async function runDemoCommand(
             ownerUrl: config.ownerUrl,
             requestedVia: "cli",
             requestedBy: null,
+            devIssuerBinding: config.devIssuerBinding === true,
             log: (l) => io.out(`mth-db reset-demo: ${l}`),
           });
     report(command, summary, io);

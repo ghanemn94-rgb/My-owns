@@ -1,0 +1,54 @@
+port-policy: PostgreSQL listening on port 23861 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc9nnmw_33b54d4c (server_encoding UTF8); applied 86 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 61225ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  4063ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  8184ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  4096ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  6710ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  2078ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  7491ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  15521ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  9142ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  2301ms
+ ✓ |integration| packages/db/test/integration/demo-dev-binding.test.ts (4 tests) 12491ms
+   ✓ D-165: mth-db seed-demo and the dev issuer (the real CLI) > AUTH_MODE=dev binds every demo user to the dev issuer too; the demo IdP identities are unchanged  4758ms
+   ✓ D-165: mth-db seed-demo and the dev issuer (the real CLI) > NODE_ENV=production (even with AUTH_MODE=dev) creates no dev-issuer identity  3015ms
+   ✓ D-165: mth-db seed-demo and the dev issuer (the real CLI) > a non-dev auth mode (AUTH_MODE=oidc) creates no dev-issuer identity; the demo IdP identities are unchanged  4534ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 9058ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  2469ms
+   ✓ mth-db bootstrap > refuses to run twice  1996ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  2067ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  2309ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 5376ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  4920ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  454ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 7746ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table  1004ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written  1048ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written  975ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used)  1085ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  3496ms
+ ✓ |integration| packages/db/test/integration/demo-roaming.test.ts (67 tests) 8705ms
+   ✓ REQ-S18-001 (with BE-S): the roaming dataset is deterministic > a second seed into a fresh database gives identical record counts and checksum  4120ms
+ ✓ |integration| packages/db/test/integration/demo-numbers.test.ts (10 tests) 7261ms
+   ✓ §J.3: recomputed values equal the seeded values (from the stored rows, with the engines) > is deterministic: a second seed into a fresh database gives the same counts and checksum  3361ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 3300ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2738ms
+ ✓ |integration| packages/db/test/integration/pool-bounds.test.ts (7 tests) 2853ms
+   ✓ bounded checkout (connectionTimeoutMillis) > a checkout from an exhausted pool fails after the timeout (never hangs) and is recognised  306ms
+   ✓ bounded checkout (connectionTimeoutMillis) > through Kysely the same error reaches the caller  306ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > PostgreSQL ends a transaction left idle past the limit, releasing its row lock; the pool recovers  1213ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > a transaction that keeps running statements is not affected  1016ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (28 tests) 122ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 120ms
+ ✓ |integration| packages/db/test/integration/demo-numbers-spec.test.ts (51 tests) 40ms
+
+ Test Files  12 passed (12)
+      Tests  216 passed (216)
+   Start at  10:41:16
+   Duration  126.91s (transform 1.47s, setup 0ms, collect 5.07s, tests 118.30s, environment 0ms, prepare 80ms)
+
