@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# qa-verifier (T-DG5-QA-E): a DEMO stack for the A02 acceptance e2e. A mirror of apps/web/e2e/support/with-stack.sh
+# (which initializes a production-marked path with seed-dev only; that file is not changed) with one difference: the
+# database is initialized as a DEMO database by `mth-db seed-demo` (ADR-0050 §1, §3, §6: the synthetic International
+# Roaming dataset and the demo marker), and the API runs with MTH_ENV=demo. `mth-db seed-dev` then adds the SYNTHETIC
+# dev-login users (their own synthetic organization), because the dataset's demo role users roaming.user.<role> sign
+# in only through the demo IdP of a demo deployment, which this sandbox does not have (BLOCKED, see the handback).
+# Everything is synthetic; no demo credential exists in the repository.
+#
+#   e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts --workers=1
+#
+# Environment and exit codes: as with-stack.sh (E2E_PG_PORT / QA_PG_PORT, E2E_API_PORT, MTH_PORT_POOL; 3 BLOCKED, 4 the
+# API did not become ready).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
+PG_PORT="${E2E_PG_PORT:-${QA_PG_PORT:-24331}}"
+API_PORT="${E2E_API_PORT:-3000}"
+# shellcheck source=../../tests/qa/support/pg-port.sh
+. "$ROOT/tests/qa/support/pg-port.sh"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/mth-qa-demo-e2e.XXXXXX")"
+chmod 777 "$WORK"
+PG_PID=""
+API_PID=""
+
+as_pg() {
+  if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi
+}
+cleanup() {
+  [ -n "$API_PID" ] && kill "$API_PID" 2>/dev/null || true
+  if [ -n "$PG_PID" ]; then
+    kill -INT "$PG_PID" 2>/dev/null || true
+    for _ in $(seq 1 50); do kill -0 "$PG_PID" 2>/dev/null || break; sleep 0.1; done
+    kill -KILL "$PG_PID" 2>/dev/null || true
+  fi
+  rm -rf "$WORK"
+}
+trap cleanup EXIT
+
+[ -x "$PGBIN/initdb" ] || { echo "BLOCKED: PostgreSQL binaries not found (set PGBIN)"; exit 3; }
+[ -f apps/api/dist/main.js ] && [ -f apps/web/dist/index.html ] || { echo "BLOCKED: run 'pnpm -r build' first"; exit 3; }
+
+as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
+mth_pg_start "$PGBIN" "$WORK/pg" "$WORK/pg.log" "$PG_PORT" E2E_PG_STRICT_PORT PG_PID || exit 3
+PG_PORT="$MTH_PG_PORT"
+ADMIN_URL="postgresql://postgres@127.0.0.1:${PG_PORT}/postgres"
+psql "$ADMIN_URL" -qAtc "select 1" >/dev/null || { echo "BLOCKED: disposable PostgreSQL did not start"; exit 3; }
+psql "$ADMIN_URL" -q -v ON_ERROR_STOP=1 \
+  -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" \
+  -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
+psql "$ADMIN_URL" -qAtc "select 'e2e database mth: server_encoding ' || pg_encoding_to_char(encoding) || ', lc_collate ' || datcollate || ', lc_ctype ' || datctype from pg_database where datname = 'mth'"
+
+role_url() { node -e 'const u=new URL(process.argv[1]);u.pathname="/mth";u.searchParams.set("options","-c role="+process.argv[2]);console.log(u.toString())' "$ADMIN_URL" "$1"; }
+export NODE_ENV=development AUTH_MODE=dev LOG_LEVEL=warn MTH_ENV=demo
+# Evidence file revisions (P2) go to a private directory of this run; it is deleted with the cluster at teardown.
+mkdir -p "$WORK/evidence"
+export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
+export DATABASE_OWNER_URL="$(role_url mth_owner)" DATABASE_URL="$(role_url mth_app)"
+# The journeys sign in many times in a minute; production defaults are unchanged. E2E_DEFAULT_RATE_LIMITS=1 runs the
+# API with the product's DEFAULT limits instead (both variables unset; session-end.spec.ts, F-DG2-480).
+if [ "${E2E_DEFAULT_RATE_LIMITS:-}" = "1" ]; then
+  unset AUTH_RATE_LIMIT_PER_MINUTE RATE_LIMIT_PER_MINUTE
+  echo "rate limits: product defaults (AUTH_RATE_LIMIT_PER_MINUTE and RATE_LIMIT_PER_MINUTE unset)"
+else
+  export AUTH_RATE_LIMIT_PER_MINUTE=1000 RATE_LIMIT_PER_MINUTE=10000
+fi
+
+node packages/db/dist/cli.js migrate
+node packages/db/dist/cli.js seed-demo | tail -3
+node packages/db/dist/cli.js seed-dev
+# PORT / APP_BASE_URL / E2E_BASE_URL follow the port of each attempt; after the start they hold the port in use.
+launch_api() {
+  export PORT="$1" APP_BASE_URL="http://localhost:$1" E2E_BASE_URL="http://localhost:$1"
+  node apps/api/dist/main.js >>"$WORK/api.log" 2>&1 </dev/null &
+  MTH_LAUNCHED_PID=$!
+}
+api_ready() { curl -fsS "http://localhost:$1/readyz" >/dev/null 2>&1; }
+RC=0
+mth_start_with_port_retry "API" "$API_PORT" E2E_API_STRICT_PORT API_PID "$WORK/api.log" 30 launch_api api_ready || RC=$?
+[ "$RC" = 3 ] && exit 3
+[ "$RC" = 0 ] || { echo "API not ready"; cat "$WORK/api.log"; exit 4; }
+API_PORT="$MTH_PORT"
+echo "API: $E2E_BASE_URL (APP_BASE_URL=$APP_BASE_URL, PORT=$PORT)"
+curl -fsS "$E2E_BASE_URL/readyz"
+echo
+
+set +e
+"$@"
+STATUS=$?
+set -e
+if [ "$STATUS" -ne 0 ]; then echo "---- api.log (tail)"; tail -50 "$WORK/api.log"; fi
+exit "$STATUS"

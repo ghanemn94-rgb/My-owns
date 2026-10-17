@@ -1,0 +1,14 @@
+diff --git a/apps/api/src/modules/admin/walkthrough.ts b/apps/api/src/modules/admin/walkthrough.ts
+index 8f74aee..545d6db 100644
+--- a/apps/api/src/modules/admin/walkthrough.ts
++++ b/apps/api/src/modules/admin/walkthrough.ts
+@@ -100,8 +100,7 @@ export const COMPLETION_RULES: Readonly<Record<CompletionRule, Predicate>> = {
+   // read was already checked) and it is not registered in demo_seed_record as a dataset fixture.
+   transformation_created: (t) =>
+     sql`SELECT EXISTS (SELECT 1 FROM transformation x WHERE x.id = ${t}::uuid
+-                         AND NOT EXISTS (SELECT 1 FROM demo_seed_record r
+-                                          WHERE r.record_type = 'transformation' AND r.record_id = x.id)) AS done`,
++)) AS done`,
+   // "a baseline in the DG2 agreed state": an active baseline whose validation status is `validated` (the DG2
+   // baseline lifecycle unvalidated -> validated | rejected; the Finance / Value Office validation, REQ-PB-013) and
+   // whose validation is current: a later edit makes it stale (`validated_record_version` < `version`, validateBaseline).

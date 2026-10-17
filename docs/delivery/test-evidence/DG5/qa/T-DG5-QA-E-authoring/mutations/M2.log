@@ -1,0 +1,165 @@
+port-policy: PostgreSQL listening on port 23655 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.gjS9n0/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc1gg8n_2232b57c (server_encoding UTF8); applied 85 migrations to a fresh database
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization
+A02 procedures: [{"c":"new_transformation_intake","n":"New transformation intake","scope":{"level":"organization","descriptionEn":"One organization; the transformation does not exist yet.","descriptionAr":"منظمة واحدة؛ التحول غير موجود بعد."},"launch":["SP","TL","TO"],"inputs":[["transformationName",null,true],["caseForChange",null,true]],"steps":[["capture_intake","task","TL",null,{"recordType":"transformation","mode":"create"},["transformationName","caseForChange"],false,null],["draft_charter","task","TL",null,{"recordType":"charter","mode":"link"},[],false,null],["confirm_sponsor","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"baseline_validation","n":"Baseline validation","scope":{"level":"transformation","descriptionEn":"One baseline of one transformation.","descriptionAr":"خط أساس واحد لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["metric",null,true],["value",null,true],["unit",null,true],["baselineDate",null,true],["source",null,true]],"steps":[["record_baseline","task","BO",null,{"recordType":"baseline","mode":"create"},["metric","value","unit","baselineDate","source"],true,null],["validate_baseline","task","FIN",null,{"recordType":"baseline","mode":"advance"},[],false,null]]},{"c":"kpi_submission","n":"KPI submission","scope":{"level":"transformation","descriptionEn":"One KPI and one reporting period.","descriptionAr":"مؤشر واحد وفترة تقرير واحدة."},"launch":["BO","KDS","TO"],"inputs":[["period",null,true]],"steps":[["submit_actual","task","BO",null,{"recordType":"kpi_actual","mode":"create"},["period"],false,null],["accept_actual","task","KDS",null,{"recordType":"kpi_actual","mode":"advance"},[],false,null]]},{"c":"tom_approval","n":"TOM approval","scope":{"level":"transformation","descriptionEn":"The TOM canvas of one transformation.","descriptionAr":"لوحة نموذج التشغيل لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["complete_canvas","task","TL",null,{"recordType":"tom_canvas_cell","mode":"link"},[],false,null],["business_review","task","BO",null,null,[],false,null],["technology_review","task","TD",null,null,[],false,null],["sponsor_approval","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"initiative_prioritization","n":"Initiative prioritization","scope":{"level":"transformation","descriptionEn":"The candidate initiatives of one transformation.","descriptionAr":"المبادرات المرشحة لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["score_initiatives","task","TL",null,null,[],false,null],["record_ranking","task","TO",null,{"recordType":"ranking_snapshot","mode":"create"},[],false,null],["approve_ranking","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"gate_review","n":"Gate review","scope":{"level":"transformation","descriptionEn":"One gate of one transformation.","descriptionAr":"بوابة واحدة لتحول واحد."},"launch":["TL","TO"],"inputs":[["gateCode",null,true],["financeReviewRequired",null,true]],"steps":[["prepare_submission","task","TL",null,{"recordType":"gate_submission","mode":"create"},["gateCode"],true,null],["criteria_review","task","TO",null,null,[],false,null],["finance_review","task","FIN",null,null,[],false,{"inputKey":"financeReviewRequired","operator":"eq","value":"yes"}],["gate_decision","approval","TL","SP",{"recordType":"gate_submission","mode":"advance"},[],false,null]]},{"c":"scope_target_change","n":"Scope/target change","scope":{"level":"transformation","descriptionEn":"One approved record of one transformation.","descriptionAr":"سجل معتمد واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[["reason",null,true]],"steps":[["raise_change","task","TL",null,{"recordType":"change_request","mode":"create"},["reason"],false,null],["assess_impact","task","TO",null,null,[],false,null],["decide_change","approval","TL","SP",{"recordType":"change_request","mode":"advance"},[],false,null]]},{"c":"benefit_validation","n":"Benefit validation","scope":{"level":"transformation","descriptionEn":"One benefit of one transformation.","descriptionAr":"منفعة واحدة لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["belowTarget",null,true]],"steps":[["measure_benefit","task","BO",null,null,[],false,null],["attach_evidence","task","BO",null,{"recordType":"evidence","mode":"link"},[],true,null],["finance_validation","task","FIN",null,{"recordType":"finance_validation","mode":"create"},[],false,null],["recovery_plan","task","TL",null,null,["belowTarget"],false,{"inputKey":"belowTarget","operator":"eq","value":"yes"}]]},{"c":"executive_escalation","n":"Executive escalation","scope":{"level":"transformation","descriptionEn":"One escalated decision of one transformation.","descriptionAr":"قرار مصعّد واحد لتحول واحد."},"launch":["TL","TO"],"inputs":[["whyNow",null,true]],"steps":[["raise_escalation","task","TL",null,{"recordType":"decision","mode":"create"},["whyNow"],false,null],["executive_decision","approval","TL","SP",{"recordType":"decision","mode":"advance"},[],false,null],["communicate_decision","task","TL",null,null,[],false,null]]},{"c":"bau_handover","n":"BAU handover","scope":{"level":"transformation","descriptionEn":"One performance area of one transformation.","descriptionAr":"مجال أداء واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[],"steps":[["prepare_handover","task","TL",null,{"recordType":"bau_handover","mode":"create"},[],true,null],["accept_handover","approval","TL","BO",{"recordType":"bau_handover","mode":"advance"},[],false,null],["schedule_reviews","task","TO",null,null,[],false,null]]}]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree
+A02 seed coverage: {"gate.g1":1,"gate.g2":1,"gate.g3":1,"gate.g4":1,"gate.g5":1,"gate.g6":1,"phase.1":5,"phase.2":3,"phase.3":4,"phase.4":5,"phase.5":4,"phase.6":4,"kpi.stale":1,"adoption.gap":1,"bau.handover":1,"template.t01":6,"template.t02":3,"template.t03":3,"template.t04":1,"template.t05":3,"template.t06":15,"template.t07":4,"template.t08":1,"template.t09":3,"template.t10":6,"template.t11":4,"template.t12":6,"template.t13":1,"template.t14":3,"template.t15":1,"template.t16":1,"benefit.shared":1,"approval.pending":1,"dashboard.area_1":3,"dashboard.area_2":3,"dashboard.area_3":3,"dashboard.area_4":1,"dashboard.area_5":1,"dashboard.area_6":2,"decision.overdue":1,"evidence.missing":18,"tom.dimension_01":1,"tom.dimension_02":1,"tom.dimension_03":1,"tom.dimension_04":1,"tom.dimension_05":1,"tom.dimension_06":1,"tom.dimension_07":1,"tom.dimension_08":1,"tom.dimension_09":1,"tom.dimension_10":1,"health_assessment.submitted":1} complete=true
+
+ ❯ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (13 tests | 9 failed) 6184ms
+   ✓ REQ-S18-004: the demo role users of the demo database > every seeded demo role user signs in through the demo IdP path and is a synthetic user of the demo organization  400ms
+   × REQ-S18-004: the demo role users of the demo database > step 1 'create transformation' is performed by the demo Transformation Lead in the demo business unit 89ms
+     → createTransformation as roaming.user.tl: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a148a1-d9fd-74bf-a65e-3ca70787bf0d"}: expected 404 to be 201 // Object.is equality
+   × REQ-S18-004: the demo role users of the demo database > the seeded roaming transformation is not 'created in this demo database': step 1 is open for the demo users 45ms
+     → contract: getDemoWalkthrough does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a148a1-da40-707c-9857-93af0185fcd2"}
+   × A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records 258ms
+     → contract: getDemoWalkthrough does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a148a1-db50-7195-9684-e3776d0753a1"}
+   × A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > REQ-S01-003: the chain input -> validation -> approval -> output -> monitoring -> correction -> sustainment is on persisted records 1ms
+     → the lifecycle test must run first: expected null not to be null
+   × REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing 1ms
+     → expected null not to be null
+   × A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > the A02 scenario completed with no export job, no e-mail notification and no AI call 16ms
+     → the lifecycle test must run first: expected null not to be null
+   ✓ A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > no published procedure step's completion condition references an uploaded spreadsheet, deck or e-mail 72ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization 25ms
+   × REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it 1ms
+     → expected null not to be null
+   × REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake) 1ms
+     → expected null not to be null
+   ✓ REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree 30ms
+   × REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed 1ms
+     → the lifecycle test must run first: expected null not to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-004: the demo role users of the demo database > step 1 'create transformation' is performed by the demo Transformation Lead in the demo business unit
+AssertionError: createTransformation as roaming.user.tl: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a148a1-d9fd-74bf-a65e-3ca70787bf0d"}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:168:99
+    166|     // A02 / REQ-S18-004: the walkthrough's first step is performed by…
+    167|     // demo users cannot do it (see the handback, defect D-QA-E-1).
+    168|     expect(created.status, `createTransformation as ${tl.name}: ${JSON…
+       |                                                                                                   ^
+    169|     const steps = await completion(created.body.id, r.session!);
+    170|     expect(steps.create_transformation).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-004: the demo role users of the demo database > the seeded roaming transformation is not 'created in this demo database': step 1 is open for the demo users
+Error: contract: getDemoWalkthrough does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a148a1-da40-707c-9857-93af0185fcd2"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:176:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records
+Error: contract: getDemoWalkthrough does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a148a1-db50-7195-9684-e3776d0753a1"}
+ ❯ assertContract apps/api/test/support/contract.ts:100:11
+     98|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+     99|   if (!declared) {
+    100|     throw new Error(
+       |           ^
+    101|       `contract: ${op.operationId} does not declare status ${res.statu…
+    102|     );
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ completion tests/qa/integration/a02-a21-complete-lifecycle.test.ts:121:19
+ ❯ check tests/qa/integration/a02-a21-complete-lifecycle.test.ts:225:21
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:237:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > REQ-S01-003: the chain input -> validation -> approval -> output -> monitoring -> correction -> sustainment is on persisted records
+AssertionError: the lifecycle test must run first: expected null not to be null
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:627:56
+    625| 
+    626|   it("REQ-S01-003: the chain input -> validation -> approval -> output…
+    627|     expect(L, "the lifecycle test must run first").not.toBeNull();
+       |                                                        ^
+    628|     const l = L!;
+    629|     const db = api.db;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+AssertionError: expected null not to be null
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:696:19
+    694| describe("REQ-S09-011: the executive pack's workstream section holds t…
+    695|   it("the generated pack contains the workstream lead's update text an…
+    696|     expect(L).not.toBeNull();
+       |                   ^
+    697|     const l = L!;
+    698|     const snap = ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > A21 / REQ-S01-004: exports, e-mail and AI channels disabled; no completion condition needs an off-platform artefact > the A02 scenario completed with no export job, no e-mail notification and no AI call
+AssertionError: the lifecycle test must run first: expected null not to be null
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:754:56
+    752| describe("A21 / REQ-S01-004: exports, e-mail and AI channels disabled;…
+    753|   it("the A02 scenario completed with no export job, no e-mail notific…
+    754|     expect(L, "the lifecycle test must run first").not.toBeNull();
+       |                                                        ^
+    755|     const l = L!;
+    756|     const exports = await api.db
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it
+AssertionError: expected null not to be null
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:840:19
+    838| 
+    839|   it("a baseline-validation instance shows its current step and assign…
+    840|     expect(L).not.toBeNull();
+       |                   ^
+    841|     const l = L!;
+    842|     const page = ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake)
+AssertionError: expected null not to be null
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:969:19
+    967| 
+    968|   it("each of the ten procedures can be launched in the A02 scenario's…
+    969|     expect(L).not.toBeNull();
+       |                   ^
+    970|     const l = L!;
+    971|     const page = ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed
+AssertionError: the lifecycle test must run first: expected null not to be null
+ ❯ tests/qa/integration/a02-a21-complete-lifecycle.test.ts:1061:56
+    1059| describe("REQ-S06-003: each of the ten procedures can be launched and …
+    1060|   it("drives every instance through its steps with the native workflow…
+    1061|     expect(L, "the lifecycle test must run first").not.toBeNull();
+       |                                                        ^
+    1062|     const l = L!;
+    1063|     const td = await grantedActor(api, l.admin, w.orgA.id, l.t, "TD");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 4 passed (13)
+   Start at  06:51:43
+   Duration  26.04s (transform 6.76s, setup 0ms, collect 14.33s, tests 6.18s, environment 0ms, prepare 73ms)
+

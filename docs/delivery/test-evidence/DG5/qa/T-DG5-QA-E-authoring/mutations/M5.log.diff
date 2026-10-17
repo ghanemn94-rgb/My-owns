@@ -1,0 +1,13 @@
+diff --git a/apps/api/src/modules/admin/environment.ts b/apps/api/src/modules/admin/environment.ts
+index 67c2715..dd65f68 100644
+--- a/apps/api/src/modules/admin/environment.ts
++++ b/apps/api/src/modules/admin/environment.ts
+@@ -199,7 +199,7 @@ function presentRun(r: RunRow): z.infer<typeof demoDatasetRun> {
+     syntheticClockAt: iso(r.synthetic_clock_at),
+     recordCounts: asObject(r.record_counts),
+     checksumSha256: r.checksum_sha256,
+-    coverage: asObject(r.coverage),
++    coverage: { ...(asObject(r.coverage) as Record<string, number>), "kpi.stale": 0 },
+     coverageComplete: r.coverage_complete,
+     completedAt: iso(r.completed_at),
+   };
