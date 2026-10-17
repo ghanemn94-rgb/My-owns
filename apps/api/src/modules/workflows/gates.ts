@@ -266,13 +266,20 @@ function approverOf(
  * routes to. A gate whose approver was never configured for the transformation (no named user, the catalogue default
  * role) follows the default approver of the transformation's pinned methodology version; a configured approver is
  * kept. For a v1-pinned transformation `resolved` is the catalogue definition, so this is exactly `approverOf`.
+ *
+ * T-DG5-BE-C4 (D-164 b; migration 0094): `approver_configured` is true once the approver configuration
+ * (`gate_instance.configure`) has run on the instance. The stored approver is then kept even when it is the catalogue
+ * default role with no named user, so an explicit role-only choice of the catalogue default (for example SP for G3 on
+ * a transformation whose pinned methodology defaults G3 to BO) routes to that role. A never-configured instance keeps
+ * the rule above.
  */
 function routedApproverOf(
-  instance: { approver_role_code: string; approver_user_id: string | null },
+  instance: { approver_role_code: string; approver_user_id: string | null; approver_configured: boolean },
   catalogue: GateDefinition,
   resolved: GateDefinition,
 ): Approver {
   if (
+    !instance.approver_configured &&
     instance.approver_user_id === null &&
     instance.approver_role_code === catalogue.defaultApproverRoleCode &&
     resolved.defaultApproverRoleCode !== catalogue.defaultApproverRoleCode
@@ -305,7 +312,7 @@ export async function effectiveGateApprovers(
   const defs = await resolveGateDefinitions(db, transformationId, catalogue);
   const instances = await db
     .selectFrom("gate_instance")
-    .select(["id", "gate_code", "approver_role_code", "approver_user_id"])
+    .select(["id", "gate_code", "approver_role_code", "approver_user_id", "approver_configured"])
     .where("transformation_id", "=", transformationId)
     .execute();
   const out = new Map<string, EffectiveGateApprover>();
@@ -383,7 +390,7 @@ export async function isGateApprover(
   if (!def || !base) return false;
   const instance = await db
     .selectFrom("gate_instance")
-    .select(["approver_role_code", "approver_user_id"])
+    .select(["approver_role_code", "approver_user_id", "approver_configured"])
     .where("transformation_id", "=", transformationId)
     .where("gate_code", "=", gateCode)
     .executeTakeFirst();
@@ -700,7 +707,13 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       }
       const updated = await tx
         .updateTable("gate_instance")
-        .set({ approver_role_code: body.approverRoleCode, approver_user_id: named, ...bumpStamps(ctx.userId) })
+        // T-DG5-BE-C4 (D-164 b; 0094): an explicit configuration is remembered, in the same update and audit event.
+        .set({
+          approver_role_code: body.approverRoleCode,
+          approver_user_id: named,
+          approver_configured: true,
+          ...bumpStamps(ctx.userId),
+        })
         .where("id", "=", current.id)
         .where("version", "=", current.version)
         .returningAll()
@@ -716,6 +729,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
         changes: {
           approverRoleCode: { from: current.approver_role_code, to: updated.approver_role_code },
           approverUserId: { from: current.approver_user_id, to: updated.approver_user_id },
+          approverConfigured: { from: current.approver_configured, to: updated.approver_configured },
         },
       });
       return updated;

@@ -223,6 +223,8 @@ export const automationTrigger = z.strictObject({
   hasInitiatingUser: z.boolean(),
   adminSelectable: z.boolean(),
   sourceRef: z.string(),
+  // T-DG5-BE-C4 (D-164 d): an example payload valid against the trigger's payload schema (event triggers with one).
+  samplePayload: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const automationActionType = z.strictObject({
