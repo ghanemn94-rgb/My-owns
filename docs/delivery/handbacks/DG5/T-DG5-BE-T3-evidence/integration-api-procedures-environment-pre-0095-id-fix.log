@@ -1,0 +1,51 @@
+port-policy: PostgreSQL listening on port 23861 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc8d2av_8da865c3 (server_encoding UTF8); applied 86 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/procedures/seeded-procedures.test.ts (13 tests) 8129ms
+   ✓ the ten seeded procedures (REQ-S06-003) > each of the ten launches (nine in the transformation, the intake in the organization)  446ms
+   ✓ baseline_validation creates, validates and links a baseline (REQ-S06-002, A02 part) > completing it creates a baseline, the FIN step validates it, and the validated baseline is linked  374ms
+   ✓ baseline_validation creates, validates and links a baseline (REQ-S06-002, A02 part) > refuses a baseline from before the launch, from another transformation, or already another instance's output  447ms
+   ✓ an approval step with an `advance` output (executive_escalation) > the Sponsor's approval completes the step only once the decision is decided; then the instance completes  340ms
+   ✓ tom_approval: a linked canvas cell, parallel reviews and the Sponsor's approval > links a ready canvas cell, runs both reviews in parallel and completes when the Sponsor approves  347ms
+   ✓ kpi_submission: a KPI actual submitted, then accepted, through the DG4 review route > links the submitted actual and completes once its reviewer accepted it  491ms
+   ✓ scope_target_change: a change request raised, assessed and decided by its business approver > links the submitted request and completes when the Sponsor approves the step after deciding the request  647ms
+   ✓ gate_review: the G1 submission prepared, reviewed and decided by its business approver > links the G1 submission; the finance review is not applicable; the step approval needs the gate decision  1139ms
+   ✓ bau_handover: prepared, accepted by the receiving business owner, then the recurring reviews > links the handover; the BO's step approval needs the handover accepted; the TO closes the procedure  787ms
+   ✓ benefit_validation: evidence and the Finance validation in parallel; no recovery when on target > links the evidence and the Finance decision; the recovery plan is not applicable  721ms
+   ✓ initiative_prioritization: scores, the ranking snapshot and the Sponsor's approval > links the ranking snapshot the TO recorded and completes when the Sponsor approves  735ms
+ ✓ |integration| apps/api/test/integration/procedures/procedure-instances.test.ts (10 tests) 5160ms
+   ✓ launch and the read model (REQ-S06-002, A02 part) > with a baseline adapter both steps complete, the validated baseline is linked and the instance completes  326ms
+   ✓ parallel, conditional and approval steps (a published Studio definition) > both parallel steps are active, a false condition is not applicable, the approval step completes only through the canonical approval  348ms
+   ✓ parallel, conditional and approval steps (a published Studio definition) > a running instance stays on its definition version when a newer version is published  1266ms
+   ✓ authorization, If-Match and refusals > step writes: 428 without If-Match, 409 when stale, AUD 403, not_active, skip and assign rules, cancel  399ms
+   ✓ lists > lists instances in scope (filters, cursor) and my procedures (assigned or unassigned of my role)  337ms
+ ✓ |integration| apps/api/test/integration/environment/walkthrough.test.ts (16 tests) 11199ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > 404 outside the caller's scope and for an unknown id (never disclosed); 400; 401  346ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  349ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 6 update delivery/adoption: a submitted owner update, then a completed training record  362ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  471ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  412ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  512ms
+ ✓ |integration| apps/api/test/integration/procedures/procedure-definitions.test.ts (8 tests) 3844ms
+   ✓ putProcedureDefinition and the slice A pipeline (REQ-S06-001) > a definition with a conditional and a parallel step validates, is saved in a draft, previewed, reviewed (TO) and published  1096ms
+   ✓ putProcedureDefinition and the slice A pipeline (REQ-S06-001) > an edit after preview returns the draft to editing with a new hash (the procedure rows are hashed)  517ms
+   ✓ the ADR-0042 §10 refusals > removing a seeded procedure -> 422 source_protected; an admin-authored one is marked removed  465ms
+   ✓ authorization and concurrency of the definition writes > AUD and a business role get 403 on every write; If-Match 428 and 409; 404 for an unknown or non-procedure version  726ms
+   ✓ authorization and concurrency of the definition writes > commit-time authorization: methodology.configure revoked while the request waits -> 403; nothing written  303ms
+ ✓ |integration| apps/api/test/integration/environment/environment.test.ts (14 tests) 10198ms
+   ✓ the worker's demo.reset job (ADR-0050 §6) > acknowledges before the drop, then re-creates and re-seeds the database (requested_via api); a redelivery does nothing  2949ms
+ ✓ |integration| apps/api/test/integration/environment/demo-users-new-transformation.test.ts (7 tests) 6710ms
+   ✓ D-165: the demo users sign in through the dev sign-in of a dev-mode stack > every demo user (eight role users and the access administrator) signs in as roaming.user.<role>  488ms
+   ✓ QA-E O-2: procedures v2 assigns record_baseline to TL (migration 0095) > a new transformation's baseline_validation assigns record_baseline to TL, who completes it end to end  300ms
+ ✓ |integration| apps/api/test/integration/procedures/entity-group.test.ts (5 tests) 1823ms
+   ✓ REQ-S16-015: the target operating model and procedures entity group through the API > ProcedureDefinition: put in a procedures draft and read; AUD 403; 403 without read rights  342ms
+ ✓ |integration| apps/api/test/integration/procedures/coverage.test.ts (4 tests) 665ms
+
+ Test Files  8 passed (8)
+      Tests  77 passed (77)
+   Start at  10:05:02
+   Duration  93.49s (transform 7.43s, setup 0ms, collect 39.14s, tests 47.73s, environment 0ms, prepare 300ms)
+

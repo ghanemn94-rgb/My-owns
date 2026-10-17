@@ -7,13 +7,15 @@
 // EVERYTHING here is SYNTHETIC: B0144 "Illustrative example only. Replace assumptions with validated company data."
 // It is not Mobily actual performance (M0339). A seeded approval or decision is a synthetic decision by a demo user and
 // approves nothing real (M0412); no real business, Finance or IT approval is granted. Product gate G6 never implies DG7.
-// No demo credential is stored: the demo users' identities name the demo IdP issuer of the demo deployment only.
+// No demo credential is stored: the demo users' identities name the demo IdP issuer of the demo deployment only (and,
+// in a dev-mode stack only, the dev issuer as well; D-165).
 //
 // Determinism (ADR-0050 §4): fixed literal ids (roaming-ids.ts, DEMO_ANCHORS), every time from the synthetic clock,
 // rows in a fixed order (catalogue rows by their ordinal). The product's instantiation (p4_instantiate_transformation)
 // would create the starter structure with generated ids and now(); the seed creates the same rows itself with fixed
 // ids, then calls the function and requires that it creates nothing (so the structure is exactly the product's).
 import { sql } from "kysely";
+import { DEV_ISSUER } from "../../constants.ts";
 import type { DemoDatasetModule, DemoSeedContext } from "../seed.ts";
 import { DEMO_ANCHORS } from "./kpis.ts";
 import { RT_BLOCK, rtId } from "./roaming-ids.ts";
@@ -99,6 +101,40 @@ export const DEMO_USERS: readonly { key: string; id: string; role: string; name:
   { key: "cm", id: CM_USER, role: "CM", name: "roaming.user.cm" },
 ];
 
+/**
+ * The demo access administrator (T-DG5-BE-T3, D-QA-E-1): ADM_ACCESS at the demo business unit, so the approver roles a
+ * new transformation needs (SP, BO, FIN; ADR-0020 §5: only `access.assign` grants them) can be assigned natively with
+ * POST /role-assignments. A technical administrator role: it holds no business-record or approval permission. Not one
+ * of the walkthrough's role users (DEMO_USERS), but signs in like them.
+ */
+export const DEMO_ACCESS_ADMIN: { key: string; id: string; role: string; name: string } = {
+  key: "adm_access",
+  id: rtId(RT_BLOCK.appUser, 3),
+  role: "ADM_ACCESS",
+  name: "roaming.user.adm_access",
+};
+
+/** Every demo user that signs in: the role users, then the demo access administrator. */
+export const DEMO_SIGN_IN_USERS: readonly { key: string; id: string; role: string; name: string }[] = [
+  ...DEMO_USERS,
+  DEMO_ACCESS_ADMIN,
+];
+
+/**
+ * The business-unit grants of the demo users (T-DG5-BE-T3, D-QA-E-1; ADR-0050 §7 step 1 is a NEW transformation).
+ * Least privilege: only the grants that act on a new transformation of the unit (access/rules.ts `grantApplies`):
+ *   - TL: `transformation.create`; its creator becomes TL of the new transformation (F-DG1-106 carry-over);
+ *   - TO: `transformation.create`; TO inherits downward, so it holds TO on every transformation of the unit;
+ *   - ADM_ACCESS (the demo access administrator): `access.assign` is structural, so it grants the other roles there.
+ * A business-unit grant of a non-inheriting role (SP, BO, FIN, KDS, WL, CM) would reach no transformation of the unit,
+ * so they get none: TL team-assigns WL, KDS and CM (team.assign), the access administrator assigns SP, BO and FIN.
+ */
+export const DEMO_BUSINESS_UNIT_GRANTS: readonly { key: string; userId: string; role: string }[] = [
+  { key: "tl", userId: U.tl, role: "TL" },
+  { key: "to", userId: TO_USER, role: "TO" },
+  { key: "adm_access", userId: DEMO_ACCESS_ADMIN.id, role: "ADM_ACCESS" },
+];
+
 const REASON = "Synthetic demonstration role (illustrative example; approves nothing real)";
 
 type Row = Record<string, unknown>;
@@ -131,7 +167,7 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
     created_by: null,
     updated_by: null,
   });
-  for (const u of DEMO_USERS)
+  for (const u of DEMO_SIGN_IN_USERS)
     await ctx.insert("app_user", `roaming.user.${u.key}`, {
       id: u.id,
       organization_id: ORG,
@@ -144,7 +180,7 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
       updated_by: null,
     });
   let n = 0;
-  for (const u of DEMO_USERS) {
+  for (const u of DEMO_SIGN_IN_USERS) {
     n += 1;
     await ctx.insert(
       "user_identity",
@@ -152,6 +188,21 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
       { id: rtId(RT_BLOCK.userIdentity, n), user_id: u.id, issuer: DEMO_IDP_ISSUER, subject: u.name, created_at: at },
       { organizationId: ORG },
     );
+  }
+  // D-165: in a dev-mode stack only (seed-demo with AUTH_MODE=dev, never NODE_ENV=production; demo/guard.ts
+  // `demoDevIssuerBindingAllowed`), each demo user is also bound to the dev issuer so the dev sign-in can choose them.
+  // No secret and no password; the demo IdP identities above are unchanged.
+  if (ctx.devIssuerBinding) {
+    n = 0;
+    for (const u of DEMO_SIGN_IN_USERS) {
+      n += 1;
+      await ctx.insert(
+        "user_identity",
+        `roaming.user_identity_dev.${u.key}`,
+        { id: rtId(RT_BLOCK.devUserIdentity, n), user_id: u.id, issuer: DEV_ISSUER, subject: u.name, created_at: at },
+        { organizationId: ORG },
+      );
+    }
   }
   await ctx.insert("business_unit", "roaming.business_unit", {
     id: BU,
@@ -214,6 +265,32 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
         updated_by: U.tl,
       },
       { transformationId: T },
+    );
+  }
+  // T-DG5-BE-T3 (D-QA-E-1): the business-unit grants (DEMO_BUSINESS_UNIT_GRANTS), numbered after the eight above.
+  for (const g of DEMO_BUSINESS_UNIT_GRANTS) {
+    n += 1;
+    const roleId = roleIds.get(g.role);
+    if (roleId === undefined) throw new Error(`demo seed: role ${g.role} missing`);
+    await ctx.insert(
+      "scoped_assignment",
+      `roaming.assignment_bu.${g.key}`,
+      {
+        id: rtId(RT_BLOCK.scopedAssignment, n),
+        organization_id: ORG,
+        user_id: g.userId,
+        role_id: roleId,
+        scope_type: "business_unit",
+        scope_id: BU,
+        effective_from: at,
+        reason: REASON,
+        granted_by: U.tl,
+        created_at: at,
+        updated_at: at,
+        created_by: U.tl,
+        updated_by: U.tl,
+      },
+      { organizationId: ORG, transformationId: null },
     );
   }
 }

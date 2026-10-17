@@ -30,6 +30,8 @@ export interface DemoResetOptions {
   readonly requestId?: string | null;
   readonly modules?: DemoSeedOptions["modules"];
   readonly conditions?: DemoSeedOptions["conditions"];
+  /** D-165: also bind the demo users to the dev issuer (dev-mode stack only; `demoDevIssuerBindingAllowed`). */
+  readonly devIssuerBinding?: boolean;
   readonly log?: (line: string) => void;
 }
 
@@ -114,6 +116,7 @@ export async function resetDemo(options: DemoResetOptions): Promise<DemoRunSumma
       requestId: options.requestId ?? null,
       ...(options.modules ? { modules: options.modules } : {}),
       ...(options.conditions ? { conditions: options.conditions } : {}),
+      devIssuerBinding: options.devIssuerBinding === true,
     });
   });
 }

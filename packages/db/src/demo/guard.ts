@@ -116,3 +116,15 @@ export function resetDemoConfigRefusal(mthEnv: string, adminUrl: string | null |
   if (adminUrl === null || adminUrl === undefined || adminUrl === "") return RESET_DEMO_REFUSALS.noAdminUrl;
   return null;
 }
+
+/**
+ * D-165: whether `seed-demo` (and `reset-demo`) also bind the demo users to the dev issuer, so the dev sign-in of an
+ * `AUTH_MODE=dev` stack can choose them. Only with AUTH_MODE=dev, and never with NODE_ENV=production (the same rule as
+ * `mth-db seed-dev`); in every other mode nothing changes. No secret or password is involved.
+ */
+export function demoDevIssuerBindingAllowed(env: {
+  readonly NODE_ENV?: string | undefined;
+  readonly AUTH_MODE?: string | undefined;
+}): boolean {
+  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+}

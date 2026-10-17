@@ -50,6 +50,8 @@ export interface DemoSeedContext {
   at(offset: { readonly days?: number; readonly hours?: number; readonly minutes?: number }): Date;
   /** A calendar date (YYYY-MM-DD, UTC) relative to the synthetic clock. */
   date(offsetDays: number): string;
+  /** D-165: also bind the demo users to the dev issuer (a dev-mode stack only; guard.ts demoDevIssuerBindingAllowed). */
+  readonly devIssuerBinding: boolean;
   /**
    * Inserts one row with a fixed `id`, writes its audit event (`<table>.create`, new version 1) and registers it in
    * demo_seed_record under `fixtureKey`. jsonb values must be passed as JSON text.
@@ -95,6 +97,8 @@ export interface DemoSeedOptions {
   /** The audit source of the seeded rows: cli (the CLI) or worker (the in-app reset's job). */
   readonly source?: "cli" | "worker";
   readonly requestId?: string | null;
+  /** D-165: also bind the demo users to the dev issuer. Default false; the CLI sets it in a dev-mode stack only. */
+  readonly devIssuerBinding?: boolean;
 }
 
 /** The maintenance database's URL on the same server and credentials ("postgres"). */
@@ -124,7 +128,7 @@ export async function withDemoLock<T>(url: string, fn: () => Promise<T>): Promis
   }
 }
 
-function seedContext(tx: Tx, actor: AuditActor, registered: { n: number }): DemoSeedContext {
+function seedContext(tx: Tx, actor: AuditActor, registered: { n: number }, devIssuerBinding: boolean): DemoSeedContext {
   const clock = new Date(DEMO_SYNTHETIC_CLOCK);
   const at = (o: { days?: number; hours?: number; minutes?: number }): Date =>
     new Date(clock.getTime() + (((o.days ?? 0) * 24 + (o.hours ?? 0)) * 60 + (o.minutes ?? 0)) * 60_000);
@@ -133,6 +137,7 @@ function seedContext(tx: Tx, actor: AuditActor, registered: { n: number }): Demo
     clock,
     at,
     date: (offsetDays) => at({ days: offsetDays }).toISOString().slice(0, 10),
+    devIssuerBinding,
     async insert(table, fixtureKey, row, audit) {
       if (!TABLE.test(table)) throw new Error(`demo seed: invalid table name ${table}`);
       if (!FIXTURE_KEY.test(fixtureKey)) throw new Error(`demo seed: invalid fixture key ${fixtureKey}`);
@@ -197,7 +202,7 @@ export async function seedDemo(ownerUrl: string, options: DemoSeedOptions): Prom
             ? { actorType: "system", actorUserId: null, source: "cli", requestId: options.requestId ?? null }
             : { actorType: "service", actorUserId: null, source: "worker", requestId: options.requestId ?? null };
         const registered = { n: 0 };
-        const ctx = seedContext(tx, actor, registered);
+        const ctx = seedContext(tx, actor, registered, options.devIssuerBinding === true);
         const modules = [...(options.modules ?? DEMO_DATASET_MODULES)].sort(
           (a, b) => a.order - b.order || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
         );

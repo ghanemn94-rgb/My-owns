@@ -6,6 +6,7 @@
 //   mth-db bootstrap    first organization + first technical/access administrator (see bootstrap.ts)
 //   mth-db seed-dev     SYNTHETIC dev-login users (refused with NODE_ENV=production or AUTH_MODE != dev)
 //   mth-db seed-demo    SYNTHETIC demo dataset into a migrated, empty database (ADR-0050 §3, §6)          exit 0 | 3
+//                       (AUTH_MODE=dev, never NODE_ENV=production: also binds the demo users to the dev issuer; D-165)
 //   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
 //                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
 // bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
@@ -17,7 +18,7 @@ import { parseArgs } from "node:util";
 import { ConfigError, loadConfig } from "@mth/config";
 import { bootstrap, BootstrapError } from "./bootstrap.ts";
 import { runDemoCommand } from "./demo/cli.ts";
-import { DemoRefused } from "./demo/guard.ts";
+import { DemoRefused, demoDevIssuerBindingAllowed } from "./demo/guard.ts";
 import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
 import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
@@ -47,10 +48,21 @@ async function main(argv: string[]): Promise<number> {
   }
   const config = loadConfig("db-cli");
   const ownerUrl = config.databaseOwnerUrl!;
+  // D-165: in a dev-mode stack (AUTH_MODE=dev, never NODE_ENV=production) the demo users are also bound to the dev
+  // issuer, so the dev sign-in can choose them. The same environment rule as seed-dev; nothing changes otherwise.
+  const devIssuerBinding = demoDevIssuerBindingAllowed({
+    NODE_ENV: process.env["NODE_ENV"],
+    AUTH_MODE: process.env["AUTH_MODE"],
+  });
 
   // ADR-0050 §6: the reset re-creates the database, so it checks nothing on it first (it creates it UTF8 itself).
   if (command === "reset-demo")
-    return runDemoCommand(command, { mthEnv: config.mthEnv, ownerUrl, demoAdminUrl: config.demoAdminDatabaseUrl });
+    return runDemoCommand(command, {
+      mthEnv: config.mthEnv,
+      ownerUrl,
+      demoAdminUrl: config.demoAdminDatabaseUrl,
+      devIssuerBinding,
+    });
 
   if (command === "migrate") {
     const applied = await migrate(ownerUrl, { log: (l) => console.log(`mth-db migrate: ${l}`) });
@@ -92,6 +104,7 @@ async function main(argv: string[]): Promise<number> {
         mthEnv: config.mthEnv,
         ownerUrl,
         demoAdminUrl: config.demoAdminDatabaseUrl,
+        devIssuerBinding,
       });
 
     const db = createDb(pool);

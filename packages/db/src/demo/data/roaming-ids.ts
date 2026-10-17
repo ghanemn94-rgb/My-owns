@@ -17,6 +17,8 @@ export const RT_BLOCK = {
   appUser: 0x001,
   userIdentity: 0x002,
   scopedAssignment: 0x003,
+  /** D-165: the dev-issuer identities of a dev-mode demo stack only. */
+  devUserIdentity: 0x004,
   configPin: 0x010,
   diagnosticItem: 0x011,
   tomCanvasCell: 0x012,
