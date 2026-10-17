@@ -215,6 +215,8 @@ Inputs follow ADR-0041 §3 (decimal strings, percentage fractions, currency with
 
 Sources: D-165 (QA-E O-1, O-2 and D-QA-E-2), D-166 (Rule A, verbatim below), the T-DG5-BE-T3 handback §3.3 and §3.5, and the T-DG5-BE-C4 handback §2.4. Nothing above is removed, except the one §3 sentence corrected in V3. Where this amendment and §3–§5 differ, this amendment wins.
 
+_Brought to the built state 2026-10-17 (T-DG5-ARCH-R2; D-167): V2 now describes Rule A as merged (W21, `0096` and `procedures/steps.ts`) and records D-167's clarification of who acts on an adopted step; V3 describes the output-record choice in the UI as merged (T-DG5-FE-D4). Every changed text cites the merged code by `file:line` at `f78afff`._
+
 ### V1. `procedures` v2: the baseline is recorded by the Transformation Lead (`0095`; T-DG5-BE-T3; D-165 QA-E O-2)
 
 - **Why.** In v1 (`0069`), `baseline_validation.record_baseline` is assigned to BO. BO does not hold `baseline.edit`, which REQ-PB-027 gives to TL and KDS (`0018`), so BO could not produce the step's output.
@@ -228,9 +230,9 @@ Sources: D-165 (QA-E O-1, O-2 and D-QA-E-2), D-166 (Rule A, verbatim below), the
 - **§5 reading.** The §5 table describes v1 and stays true of v1. In v2 the `baseline_validation` row reads "1 record_baseline (TL, evidence) → 2 validate_baseline (FIN)".
 - Requirement rows: REQ-S06-002 (A02: the instance shows its current step and assignee, and completing it creates a validated baseline linked to the instance), REQ-PB-027 and REQ-S06-003. Test: `apps/api/test/integration/environment/demo-users-new-transformation.test.ts` › "QA-E O-2".
 
-### V2. Rule A: the intake adopts the transformation it produced (`0096`; decided by D-166; implemented by T-DG5-BE-T4 (W21))
+### V2. Rule A: the intake adopts the transformation it produced (`0096`; decided by D-166; implemented by T-DG5-BE-T4 (W21), merged, D-167)
 
-**The gap (D-QA-E-2, BE-T3 handback §3.3).** The `confirm_sponsor` step of an organization-scope `new_transformation_intake` instance could never request its Sponsor approval. The P2 identity guard (`0010` `p2_row_guard`, attached to `procedure_step_instance` by `0069`; constraint `procedure_step_instance_identity_immutable`) keeps `procedure_step_instance.transformation_id` NULL for ever. The DG4 approval guard (`0031` `p4_approval_subject_version`) needs the subject step's `transformation_id` to equal the approval's transformation. So `requestStepApproval` returns without an approval (`apps/api/src/modules/procedures/steps.ts:653`). D-166 chooses option (a) of the handback: the narrowest change, which keeps every other identity immutable and changes neither the DG4 approval guard nor the seeded intake's shape.
+**The gap (D-QA-E-2, BE-T3 handback §3.3).** The `confirm_sponsor` step of an organization-scope `new_transformation_intake` instance could never request its Sponsor approval. The P2 identity guard (`0010` `p2_row_guard`, attached to `procedure_step_instance` by `0069`; constraint `procedure_step_instance_identity_immutable`) keeps `procedure_step_instance.transformation_id` NULL for ever. The DG4 approval guard (`0031` `p4_approval_subject_version`) needs the subject step's `transformation_id` to equal the approval's transformation. So `requestStepApproval` returned without an approval (`apps/api/src/modules/procedures/steps.ts:653` at `6f8ce12`; as merged, the same early return for a step without a transformation is `steps.ts:671`). D-166 chooses option (a) of the handback: the narrowest change, which keeps every other identity immutable and changes neither the DG4 approval guard nor the seeded intake's shape.
 
 **Rule A, as decided by D-166 (verbatim):**
 - When the `capture_intake` step of an organization-scope `new_transformation_intake` instance is completed with `outputRecordId` = T (a transformation), every step of the same instance that has not started gets `transformation_id = T` in the same transaction.
@@ -242,11 +244,38 @@ Sources: D-165 (QA-E O-1, O-2 and D-QA-E-2), D-166 (Rule A, verbatim below), the
 **What this changes in this ADR, and what it does not:**
 - **The narrowed P2 identity guard.** `0096` narrows the guard for `procedure_step_instance` only. On that table, `id`, `organization_id`, `created_at` and `created_by` stay immutable without exception. `transformation_id` may change only by the single Rule A transition above. Every other table keeps the generic `p2_row_guard` unchanged. The database is still the last line of defence: a change of `transformation_id` that is not exactly this transition is refused, whatever the caller.
 - **Unchanged.** `procedure_instance` keeps `transformation_id` NULL and its organization scope (`procedure_instance_pinned`, §3). The DG4 approval guard is unchanged. The adopted steps now satisfy it as written.
-- **Routing.** No fallback approver. Until T has a mapped Sponsor, `getProcedureInstance`'s next action stays `procedures.next_action.await_approval_unrouted` (`steps.ts:911`).
+- **Routing.** No fallback approver. Until T has a mapped Sponsor, `getProcedureInstance`'s next action stays `procedures.next_action.await_approval_unrouted` (`steps.ts:994` as merged).
 - **Who acts.** The decider must hold `approval.decide` on T and be T's mapped Sponsor. In the demo, the access administrator assigns SP on T and the TL maps it (ADR-0050 amendment D2).
 - **§4 state machine.** Unchanged: only steps that have not started (`pending`) are adopted.
 - **Data dictionary.** `procedure_step_instance.transformation_id` records the transition.
-- Requirement row: REQ-S06-003 (A02: "the ten procedures … each can be launched and completed"). This amendment records the rule as decided; the code and `0096` are T-DG5-BE-T4's (W21). It was not merged when this amendment was written.
+- Requirement row: REQ-S06-003 (A02: "the ten procedures … each can be launched and completed"). The code and `0096` are T-DG5-BE-T4's (W21), merged and verified by D-167, and described as built below.
+
+**Rule A as merged (T-DG5-BE-T4, W21; verified by D-167):**
+
+- **The database guard** (`packages/db/migrations/0096_p5_intake_adopts_transformation.sql`). A new function `procedure_step_instance_row_guard()` (`:27`) replaces `p2_row_guard` on `procedure_step_instance` only: the trigger keeps its name and is re-created on that table (`:99–100`). `p2_row_guard` itself is unchanged for every other table.
+  - INSERT keeps the P2 rules: version 1, and the organization of its transformation.
+  - UPDATE keeps `id`, `organization_id`, `created_at` and `created_by` immutable without exception (`:49–55`), and the version step `+ 1` (`:89–92`).
+  - A change of `transformation_id` is allowed only when every condition of `adoptable` holds (`:59–82`):
+    - `OLD.transformation_id IS NULL` and `NEW.transformation_id IS NOT NULL` (so once, and never to another transformation);
+    - the step is `pending` before and after (`:61`), and no other column changes except `version`, `updated_at` and `updated_by` (the `to_jsonb` comparison, `:62–63`);
+    - its instance has `transformation_id IS NULL`, status `active`, `procedure_code = 'new_transformation_intake'` and the step's organization (`:65–70`);
+    - the new value is the transformation linked by an `output` link of record type `transformation` on the instance's **completed** `capture_intake` step, in the same organization (`:71–82`).
+  - Every other change of `transformation_id` is refused with the same constraint name, `procedure_step_instance_identity_immutable` (`:83–86`). The deferred audit guard is unchanged.
+- **The API** (`apps/api/src/modules/procedures/steps.ts`). `completeStep` records the adopted transformation when the step's output record type is `transformation` (`:1203`). After the step completes, and only for an organization-scope `new_transformation_intake` instance's `capture_intake` step, it calls `adoptIntakeTransformation` (`:1211–1218`) before `advance` activates the next step.
+  - `adoptIntakeTransformation` (`:722`) updates every step that is `pending` with no transformation, under its own version check, with `version + 1`, `updated_at` and `updated_by`.
+  - Each adopted step writes one audit event, action **`procedure_step_instance.adopt_transformation`** (`:745`), with the prior and new version and `changes: {transformation_id: {from: null, to: T}}`.
+  - The instance row keeps `transformation_id` NULL and its organization scope.
+- **The routing wait** (`steps.ts:646–694`). `requestStepApproval` requests the approval on the step's own transformation, routed by T's role mappings (DG4, never a fallback). For an **adopted** step (`isAdopted`, `:650`: the instance has no transformation and the step has one), the DG4 routing refusals `routing.role_unmapped` and `routing.assignee_not_approver` (`ROUTING_WAIT_CODES`, `:647`) do not fail the action that activated it (`:694`). The DG4 request writes nothing before it resolves the party, so the step stays active with no approval, and the next action reads `await_approval_unrouted` (`:994`). In a transformation-scope instance the refusal stays the action's 422, as in DG4.
+- **The retry through the next instance action.** `advance` (`steps.ts:762`) first calls `routeWaitingApprovals` (`:703`, called at `:765`), which requests the approval of every active, adopted approval step that has none yet. `advance` runs after every step completion, skip and approved decision (`steps.ts:1219`, `:1236`, `:1330`) and after `PATCH /api/v1/procedure-instances/{instanceId}/inputs` (`updateProcedureInstanceInputs`; `instances.ts:436–438`). While `confirm_sponsor` is the active step, an inputs update is the instance action that retries the request once T's Sponsor is mapped.
+- **Tests.** `apps/api/test/integration/procedures/intake-adoption.test.ts`: through the API (`describe` at `:126`, tests at `:127`, `:173`, `:241`: adoption with one audit event per step and the instance still organization-scope; a mapped Sponsor decides and the instance completes; without a mapped Sponsor the step waits unrouted and the next action requests it once mapped) and at the database (`describe` at `:438`, tests `:446–552`: every other `transformation_id` change refused).
+
+**Who reads and acts on an adopted step (D-167 clarification).** As merged in W21, the instance's read gate and every step actor keep organization scope (`steps.ts:1142–1144`, `openStep` through `requireInstanceRead` and `authorizeInstanceWrite`). Nobody holds TL at organization scope, so the produced transformation's Lead could not act on `draft_charter`. D-167 decides:
+
+- a step adopted into T (Rule A) is read and acted on with **T's** authorization and the step's assignee role on T (complete, skip, assign, link evidence, and inputs where they apply to it);
+- the instance's other steps and its organization-level reads keep organization scope, and organization-scope actors who could act before keep their rights;
+- the instance itself does not move to T: Rule A and `0096` are unchanged.
+
+This is **decided by D-167, implemented by T-DG5-BE-T5 (W22)**. It is not in this tree (`f78afff`) and is not described here as built.
 
 ### V3. `ProcedureStepComplete`: the adapters verify and link only (T-DG5-BE-C4; D-165 QA-E O-1, D-166)
 
@@ -257,7 +286,13 @@ Sources: D-165 (QA-E O-1, O-2 and D-QA-E-2), D-166 (Rule A, verbatim below), the
 - **Refusals (the §10 codes, unchanged):** no record named, or a record that has not reached the state the step records, → 422 `procedure_step.output_required`. A record of the wrong type, out of scope, or not produced for this step → 422 `procedure_step.output_record_invalid`. The whole completion rolls back.
 - **Why.** `procedures` may not import the owning modules (`modules.ts`; the architecture test). Most of those modules export no create or decide service, and p5-work-split §C.3 forbids re-implementing one. The adapters therefore never write a domain table, decide an approval or grant a business approval.
 - **Contract.** `ProcedureStepComplete.description` (`docs/api/openapi.yaml`) states this. It is wording only; the schema is unchanged.
-- **UI.** D-166 found that the instance page completed a step with a note only and never sent `outputRecordId`. Choosing the output record in the UI is T-DG5-FE-D4's work (W21), not described here as built.
+- **UI (T-DG5-FE-D4, W21; merged, D-167).** D-166 found that the instance page completed a step with a note only and never sent `outputRecordId`. As merged, the instance page renders `CompleteWithOutput` for a step whose output is `create` or `link` (`apps/web/src/pages/procedures/InstancePage.tsx:368`):
+  - the person chooses the output record among the eligible records of the step's record type, read through that record type's own list operation (`OUTPUT_SOURCES`, `apps/web/src/pages/procedures/outputs.ts:55`; `eligibleRecords`, `outputs.ts:187`; `CompleteWithOutput.tsx:94`);
+  - when none exists yet, the form links to the native screen where the record is produced, with that module's own permissions, rules and audit event (`CompleteWithOutput.tsx:1–7`);
+  - the choice is sent as `outputRecordId` (`completeBody`, `outputs.ts:210–213`; `CompleteWithOutput.tsx:117`), with `If-Match`. The server re-checks every rule, and a refusal is shown by its code in English and Arabic;
+  - an `advance` step keeps the note-only form and sends no `outputRecordId` (`InstancePage.tsx:7`);
+  - an organization-scope intake reads the records in the transformation its first step produced (`scopeTransformationOf`, `outputs.ts:168`).
+  - Test: `apps/web/src/pages/procedures/instance-output.test.tsx` (`:173`, `:263`, `:319`, `:374`), in both locales. A completion is never a business approval.
 - Requirement rows: REQ-S06-002 and REQ-S06-003.
 
 Product gates G1–G6 are business approvals inside the product. A procedure approval step is a canonical business approval decided by its person, never by an agent. Nothing here touches the engineering gates DG0–DG7.

@@ -175,12 +175,12 @@ No money or rate is stored by this slice. `slip_days` is an integer count of cal
 
 ## Amendment (2026-10-17, T-DG5-ARCH-R1; D-165, D-166): §7, the dependents' forecast impact by a defined forward pass (Rule B)
 
-Sources: D-165 (QA-F's REQ-S12-012 observation), D-166 (Rule B, verbatim below), and the T-DG5-BE-T3 handback §3.4. **Decided by D-166; implemented by T-DG5-BE-T4 (W21).** It was not merged when this amendment was written. Two §7 sentences are corrected in place, each marked "Corrected 2026-10-17". Where this amendment and §7 differ, this amendment wins.
+Sources: D-165 (QA-F's REQ-S12-012 observation), D-166 (Rule B, verbatim below), and the T-DG5-BE-T3 handback §3.4. **Decided by D-166; implemented by T-DG5-BE-T4 (W21), merged and verified by D-167.** B3 describes it as built. _Brought to the built state 2026-10-17 (T-DG5-ARCH-R2; D-167): B3 and B4 are added, and the B0 line reference is pinned to its commit. B1 and B2 are unchanged: the merged code matches them._ Two §7 sentences are corrected in place, each marked "Corrected 2026-10-17". Where this amendment and §7 differ, this amendment wins.
 
 ### B0. Why §7 changes
 
 - **What §7 said.** §7 computed each dependent's forecast finish "before and after" with `predecessorFinish` (ADR-0023 §5), and read the "moved" forecasts from the DG4 schedule.
-- **Why that was wrong.** `predecessorFinish` reads only an initiative's **own** milestones. The DG4 critical path (`computeCriticalPath`, `cpm-fs/1`, ADR-0031) works on recorded durations, with no milestone dates. So a predecessor's slip never moved a dependent's figure (`apps/api/src/modules/portfolio/slip-events.ts:183–184` at this commit).
+- **Why that was wrong.** `predecessorFinish` reads only an initiative's **own** milestones. The DG4 critical path (`computeCriticalPath`, `cpm-fs/1`, ADR-0031) works on recorded durations, with no milestone dates. So a predecessor's slip never moved a dependent's figure (`apps/api/src/modules/portfolio/slip-events.ts:183–184` at `6f8ce12`, before W21).
 - **What the requirement asks.** REQ-S12-012 asks to "move dependent forecasts per the logic", and M0232 to "recompute forecast impacts using defined scheduling logic".
 - **The decision.** D-166 defines that logic as a finish-to-start forward pass over planned starts. Its result is recorded only in the slip's evidence.
 
@@ -208,5 +208,27 @@ Sources: D-165 (QA-F's REQ-S12-012 observation), D-166 (Rule B, verbatim below),
 - **Unknown.** A dependent whose `forwardFinish` cannot be computed is `null` in `affected` and is shown **Unknown**, never 0 and never the unshifted date (§7, second bullet; §11).
 - **No stored forecast.** "No forecast is stored or overwritten" stays. No DG4 table, function, read or response changes: `predecessorFinish`, the schedule flags, `getScheduleNetwork` and the critical path return what they returned before. Only the content of a new slip's `affected` changes.
 - **Rows already written.** A `dependency_slip` row is append-only (DS05). Rows written before W21 keep the `affected` they were written with.
+
+### B3. Rule B as merged (T-DG5-BE-T4, W21; verified by D-167)
+
+The merged code matches B1 and B2. My reading in B2 ("the first allowed start is the predecessor's forward finish date itself") is the one the code uses, and D-167 confirms it for ARCH-R1, BE-T4 and QA-F2.
+
+- **Where.** `forwardFinishes` (`apps/api/src/modules/portfolio/schedule.ts:179`) computes the forward finish of every initiative over one milestone set, memoized. `forwardFinish(S, set)` (`schedule.ts:218`) is the single-initiative form. Both are pure and store nothing. `predecessorFinish` (`schedule.ts:69`) and the schedule flags (`dependencyFlags`, `schedule.ts:91`) are unchanged.
+- **The rule, line by line.**
+  - `own = predecessorFinish(S, set)` (`schedule.ts:194`). Without a scheduled predecessor, the result is `own` (`:196`).
+  - Otherwise `required` is the latest forward finish of S's scheduled predecessors (`:198–204`), and the result is `own + max(0, required − S.planned_start)` calendar days (`:208`).
+  - **The first allowed start is the predecessor's forward finish date itself**: `required` is that date, with no lag and no "day after" (`schedule.ts:171–173`). This is ADR-0023 §5 unchanged: `schedule.before_predecessor` is raised only when `planned_start < finish` (`schedule.ts:116`). Test: "a starting date on the predecessor's finish is allowed (ADR-0023 §5): no shift" (`schedule.test.ts:254`).
+  - **Unknown.** The result is `null` when S has a scheduled predecessor and no `planned_start`, when `own` is missing, or when any predecessor's forward finish is Unknown (`:199`, `:202`, `:205–207`). An initiative not in the set, or a revisit, is `null`, never a loop (`:192`).
+- **Which predecessors count.** Only a scheduled finish-to-start dependency between two initiatives: `isScheduled` (status not `archived` or `resolved`, successor present; `schedule.ts:82–84`, applied at `:184`).
+  - **External predecessors are excluded.** A dependency with no predecessor initiative (`fromInitiativeId === null`) never enters the pass (`schedule.ts:183`). The product does not hold an external predecessor's finish, so it neither shifts nor makes Unknown a dependent's forward finish. Its own schedule flag stays Unknown, as in ADR-0023 §5 (`schedule.ts:87–88`).
+  - The slip reader loads only dependencies with both initiatives present and not `archived` or `resolved` (`slip-events.ts:89–102`), and passes them as the pass's dependencies (`slip-events.ts:150`).
+- **The slip's `affected`.** `slip-events.ts` builds the before set and the after set, which differ only in the changed milestone (`:125–135`), runs `forwardFinishes` over each (`:155–156`), and records `forecastFinishBefore` and `forecastFinishAfter` for every initiative reachable from the dependency's successor (`:177–199`; the values at `:196–197`). Detection is unchanged: the predecessor's own finish by `predecessorFinish` (`:159–160`) and `minimumSlipDays` (`:163`).
+- **Tests.** `apps/api/src/modules/portfolio/schedule.test.ts` › "forwardFinish (D-166 Rule B)" (`:222–302`: no slack, enough slack, partial slack, the finish-date start, a chain across a month end, two predecessors, and the Unknown cases). Black-box: `tests/qa/integration/a13-dependency-slip-rule-b.test.ts` (QA-F2, W21).
+
+### B4. `dependency.slipped` v1 reaches the relay (QA-F2 D-QA-F2-1; decided by D-167, implemented by T-DG5-BE-T5 (W22))
+
+- **The defect.** In this tree (`f78afff`), `dependencySlippedV1` is defined but deliberately left out of `OUTBOX_EVENT_SCHEMAS` (`packages/shared/src/schemas/events.ts:42–49`, the registry at `:175–214`). The relay refuses every `dependency.slipped` row ("no schema for dependency.slipped v1"), so starter 9 never runs and no affected owner is notified (D-167).
+- **Decided by D-167, implemented by T-DG5-BE-T5 (W22):** `dependency.slipped` v1 is registered in `OUTBOX_EVENT_SCHEMAS`; the automation builder catalogue serves its `samplePayload` (ADR-0043 amendment S2); the dry-run tests that sampled it by its condition fields only use the complete v1 payload (ADR-0043 amendment S1); and every event type the API and worker enqueue is checked against the registry by a unit test.
+- The event's v1 schema and its consumer `portfolio.dependency_slip` (starter 9) are unchanged. As defined, `dependencySlippedV1` has four members: `slipId`, `dependencyId`, `transformationId` and `slipDays` (`events.ts:49–54`). §7 and B2 name the first, second and fourth; the registered schema is that strict object, and the builder sample is its complete payload. W22 lands during this amendment's run, so it is not described here as built.
 
 Requirement row: REQ-S12-012 (A13: "a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic"). QA-F2 (W21) tests it black-box. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

@@ -233,7 +233,11 @@ Requirement row: REQ-S18-004 (A02: "all twelve walkthrough steps with the demo r
 - **Refused elsewhere.** In production mode (`NODE_ENV=production`, even with `AUTH_MODE=dev`), and in every other auth mode (for example `AUTH_MODE=oidc`), no dev identity is created.
 - **What does not change.** There is no secret and no password. The nine demo IdP identities are unchanged. The production initialization path (§3, REQ-S18-003) is untouched.
 - **Test.** `packages/db/test/integration/demo-dev-binding.test.ts` runs the real CLI in three modes, plus the pure rule.
-- **In-app reset.** At this commit the worker's in-app reset (`apps/worker/src/handlers/demo.ts`) does not pass `devIssuerBinding`, so a reset from the Environment screen in a dev-mode stack re-seeds without the dev identities. D-166 assigns keeping the binding there to T-DG5-BE-T4 (W21). It is not described here as built.
+- **In-app reset (T-DG5-BE-T4, W21; merged, D-167).** _Brought to the built state 2026-10-17 (T-DG5-ARCH-R2): at `6f8ce12` the worker did not pass `devIssuerBinding`._ As merged, the worker's in-app reset keeps the dev binding under the same rule as the CLI:
+  - `demoResetSettingsFromEnv` sets `devIssuerBinding` from `demoDevIssuerBindingAllowed({NODE_ENV, AUTH_MODE})` (`apps/worker/src/handlers/demo.ts:61–68`; the rule imported from `@mth/db`, `demo.ts:17–20`, exported at `packages/db/src/index.ts:60`, defined at `packages/db/src/demo/guard.ts:125–130`);
+  - `handleDemoReset` passes `devIssuerBinding: s.devIssuerBinding === true` to `resetDemo` (`demo.ts:110`), so absent means false and nothing is bound;
+  - a reset from the Environment screen in an `AUTH_MODE=dev`, non-production stack therefore re-creates the nine dev identities, and in every other mode none (`demo.ts:9–13`, header).
+  - Tests: `apps/worker/src/handlers/demo.test.ts:15–35` (the setting is true with `AUTH_MODE=dev` and `NODE_ENV` `development` or `test`, and false without `AUTH_MODE=dev`, including `AUTH_MODE=oidc`); `apps/worker/test/integration/demo-reset-dev-binding.test.ts` (on a real PostgreSQL, `handleDemoReset` acknowledges the request and passes the binding to a recording stand-in of `resetDemo`: true in a dev-mode stack, false otherwise).
 
 **§7 reading.** The walkthrough's steps are performed by the demo role users and, for the approver roles on the new transformation, after `roaming.user.adm_access` assigns them. The guide still writes nothing.
 

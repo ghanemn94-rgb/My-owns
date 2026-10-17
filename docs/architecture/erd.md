@@ -1919,7 +1919,7 @@ No new table or relationship. The changes to earlier tables:
 
 - `gate_instance.approver_configured` (`0094`, §1 diagram above): true once the approver configuration (`gate.configure`) has run. `routedApproverOf` then keeps the stored approver (ADR-0039 amendment C2).
 - `procedures` v2 (`0095`): seed rows of `methodology_version`, `procedure_definition` and `procedure_step_definition` (§1m). `record_baseline` is assigned to TL (ADR-0042 amendment V1).
-- `procedure_step_instance.transformation_id` (`0096`, D-166 Rule A; implemented by T-DG5-BE-T4 (W21)): one allowed transition, NULL → the transformation the intake produced, for the steps of an organization-scope `new_transformation_intake` instance that have not started (ADR-0042 amendment V2). The `procedure_instance` keeps its organization scope.
+- `procedure_step_instance.transformation_id` (`0096`, D-166 Rule A; implemented by T-DG5-BE-T4 (W21), merged, D-167; guard function `procedure_step_instance_row_guard()`): one allowed transition, NULL → the transformation the intake produced, for the steps of an organization-scope `new_transformation_intake` instance that have not started (ADR-0042 amendment V2). The `procedure_instance` keeps its organization scope.
 
 The column lists are in the data dictionary, section "P5 repair migrations (0094–0096, DG5)".
 
