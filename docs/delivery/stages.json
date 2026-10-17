@@ -1730,7 +1730,7 @@
       "id": "DG5",
       "stage": "P5",
       "name": "Configuration automation and outputs",
-      "state": "BUILDING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG4"
       ],
@@ -1748,12 +1748,25 @@
         ]
       },
       "candidate": {
-        "candidate_id": null,
-        "source_commit": null,
-        "frozen_at": null,
-        "manifest_path": null
+        "candidate_id": "sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b",
+        "source_commit": "601d7d282b4bf3293b0ca6213f29600f336a4df0",
+        "frozen_at": "2026-10-17T21:55:25Z",
+        "manifest_path": "docs/delivery/candidates/DG5/8e7d23a3ec021871.manifest.json"
       },
-      "review_rounds": [],
+      "review_rounds": [
+        {
+          "round": 1,
+          "candidate_id": "sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b",
+          "frozen_at": "2026-10-17T21:55:25Z",
+          "source_commit": "601d7d282b4bf3293b0ca6213f29600f336a4df0",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG5/round-1/qa-verifier.json"
+          },
+          "note": "DG5 gate review round 1 on candidate 8e7d23a3 (2172 files, source 601d7d2; code identical to 8c68a47 and 3edc1b2). P5 built in waves W1-W23 with continuation runs after restarts (D-141 to D-169); 846 contract operations, migrations 0062-0096, every p5-pending list empty; the 78 DG5-final requirements IMPLEMENTED (validate --register DG5 PASS). Orchestrator pre-freeze verification, no agent running: on 8c68a47 install/typecheck/build/lint/format/openapi/contrast/no-cdn and --historical --stage DG4 exit 0; unit 2335/1689/259+2 skipped with the locale unset and with C.UTF-8; integration 3030 passed + 1 skipped (migrations 0001-0096); product e2e 440/440 with the locale unset; root acceptance e2e 30/30 and demo e2e 12/12; product e2e with C.UTF-8 439 passed + 1 timeout (AUD, chromium-en, during the orchestrator's concurrent validator run; disclosed in D-169), the spec re-run alone 24/24. On 3edc1b2 (docs changed): unit in both locales and the doc-reading integration files 53/53; validate --pipeline, --register DG2-DG5 and --historical --stage DG4 exit 0."
+        }
+      ],
       "gate_record": "docs/delivery/gates/DG5.json",
       "blockers": [],
       "history": [
@@ -1765,6 +1778,11 @@
           "state": "BUILDING",
           "at": "2026-10-13T21:40:00Z",
           "note": "DG4 APPROVED (D-140). P5 starts with the planning task T-DG5-ARCH-00 (solution-architect): docs/architecture/p5-plan.md (D-141)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-17T21:55:25Z",
+          "note": "DG5 frozen for review round 1: candidate 8e7d23a3 (2172 files, source 601d7d2). Reviewers domain, code-security and qa-verifier run on the same candidate; then the release-auditor (D-169)."
         }
       ]
     },

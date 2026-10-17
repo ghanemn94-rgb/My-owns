@@ -31,11 +31,17 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
-- **DG5 (P5 "Configuration automation and outputs") is BUILDING** (78 DG5-final requirements; D-141).
+- **DG5 (P5 "Configuration automation and outputs") is REVIEWING** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-169).
+  - **Frozen for review round 1:** candidate `sha256:8e7d23a3…` (2172 files, source `601d7d2`; code identical to `8c68a47` and `3edc1b2`). The manifest is `docs/delivery/candidates/DG5/8e7d23a3ec021871.manifest.json`.
+  - **Pre-freeze verification (D-169):** green on every check. One e2e timeout under the orchestrator's own concurrent load is disclosed; its spec passes when re-run alone.
 - **Next action:**
-  1. W1–W22 are integrated (D-143 to D-168). 70 of the 78 DG5 rows are IMPLEMENTED with evidence.
-  2. AN-P5C (the last 8 rows) and ARCH-R3 (the last amendment references) run alongside the final merged-tree verification of `8c68a47`.
-  3. Then the freeze, the three reviews (domain, code-security, QA) and the audit. Before the audit, propose the D-140 auditor-sidecar ordering fix to the user.
+  1. The three round-1 reviews run on the same candidate in the main checkout, with no worktree or install activity while they run (D-082):
+     - `T-DG5-REV-DOM-R1` (domain-reviewer);
+     - `T-DG5-REV-SEC-R1` (code-security-reviewer);
+     - `T-DG5-REV-QA-R1` (qa-verifier).
+     The assignments are in `docs/delivery/assignments/DG5/round-1/`.
+  2. Then import the findings (`tools/gates/import-findings.mjs`) and repair them if needed.
+  3. Before the release-auditor runs, propose the D-140 auditor-sidecar ordering fix to the user.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
