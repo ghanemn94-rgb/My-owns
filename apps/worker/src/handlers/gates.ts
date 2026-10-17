@@ -482,6 +482,7 @@ export interface ExpiryScanResult {
  * allowed set, else the catalogue default (workflows/criteria.ts `resolveGateDefinitions`); with no pin, version 1 of
  * `playbook` (ConfigResolver `pinnedVersion`). A gate whose approver was never configured (no named user, the catalogue
  * default role) follows that default; a configured approver, and every v1-pinned transformation, keep the stored one.
+ * An instance whose approver was set through the approver configuration (`approver_configured`, 0094) keeps it too.
  */
 export async function effectiveGateApproverOf(
   tx: Tx,
@@ -491,11 +492,12 @@ export async function effectiveGateApproverOf(
     transformation_id: string;
     approver_role_code: string;
     approver_user_id: string | null;
+    approver_configured: boolean;
     catalogue_default: string;
     allowed: string[];
     pinned_default: string | null;
   }>`
-    SELECT i.transformation_id, i.approver_role_code, i.approver_user_id,
+    SELECT i.transformation_id, i.approver_role_code, i.approver_user_id, i.approver_configured,
            g.default_approver_role_code AS catalogue_default, g.allowed_approver_role_codes AS allowed,
            (SELECT CASE WHEN jsonb_typeof(e.attributes -> 'defaultApproverRoleCode') = 'string'
                         THEN e.attributes ->> 'defaultApproverRoleCode' END
@@ -513,7 +515,8 @@ export async function effectiveGateApproverOf(
   if (i === undefined) throw new Error(`gate instance ${gateInstanceId} not found`);
   const resolved =
     i.pinned_default !== null && i.allowed.includes(i.pinned_default) ? i.pinned_default : i.catalogue_default;
-  const follows = i.approver_user_id === null && i.approver_role_code === i.catalogue_default;
+  // T-DG5-BE-C4 (D-164 b; 0094): an explicitly configured approver is kept, as in the API's routedApproverOf.
+  const follows = !i.approver_configured && i.approver_user_id === null && i.approver_role_code === i.catalogue_default;
   return {
     transformationId: i.transformation_id,
     roleCode: follows ? resolved : i.approver_role_code,

@@ -14,6 +14,7 @@ import { z } from "zod";
 import { holdsAnywhere, principalOf, type Principal } from "../access/index.ts";
 import { problems, type ModuleDeps } from "../platform/index.ts";
 import { automationActionRegistry } from "./registry.ts";
+import { samplePayloadOf } from "./samples.ts";
 
 export const CATALOGUE = "/api/v1/admin/automation-catalogue";
 
@@ -67,6 +68,15 @@ function parametersSchemaOf(code: string): Record<string, unknown> {
   return rest;
 }
 
+/**
+ * T-DG5-BE-C4 (D-164 d): `samplePayload` for an event trigger whose outbox event has a payload schema (samples.ts), a
+ * complete synthetic example valid against it; omitted for every other trigger.
+ */
+function samplePayloadField(t: TriggerRow): { samplePayload?: Record<string, unknown> } {
+  const sample = samplePayloadOf(t.code, t.trigger_kind);
+  return sample === undefined ? {} : { samplePayload: sample };
+}
+
 export function presentCatalogue(rows: CatalogueRows): AutomationCatalogue {
   return {
     triggers: [...rows.triggers.values()].map((t) => ({
@@ -79,6 +89,7 @@ export function presentCatalogue(rows: CatalogueRows): AutomationCatalogue {
       hasInitiatingUser: t.initiating_user_field !== null,
       adminSelectable: t.admin_selectable,
       sourceRef: t.source_ref,
+      ...samplePayloadField(t),
     })),
     actionTypes: [...rows.actions.values()].map((a) => ({
       code: a.code,

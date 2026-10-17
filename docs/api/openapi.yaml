@@ -18256,9 +18256,9 @@ paths:
       summary: "The extension-field values of one record, with calculated fields evaluated (Not computable with the missing field named, never 0) and the version they were validated against; version 0 when none stored (transformation.read)."
       responses:
         "200":
-          description: "OK."
+          description: 'OK. ETag `"0"` (with version 0) when no value is stored yet (the D-153 defaulted-record rule).'
           headers:
-            ETag: { $ref: "#/components/headers/ETag" }
+            ETag: { $ref: "#/components/headers/ETagOrZero" }
           content:
             application/json:
               schema: { $ref: "#/components/schemas/FormCustomValues" }
@@ -25131,6 +25131,14 @@ components:
         hasInitiatingUser: { type: boolean }
         adminSelectable: { type: boolean }
         sourceRef: { type: string }
+        samplePayload:
+          type: object
+          description: >-
+            Present for an event trigger whose outbox event has a payload schema; absent for every other trigger. An
+            example payload of schema version 1, valid against the trigger's payload schema (the complete event payload
+            a dry-run sample must be, see AutomationDryRunRequest), with synthetic ids. Its transformationId, when the
+            event has one, is the fixed placeholder 00000000-0000-7000-8000-000000000000, replaced by the builder with
+            the selected transformation.
     AutomationActionType:
       type: object
       description: "humanOnly types are never selectable: approvals, investment decisions and Finance attestations stay human (REQ-S12-026)."
@@ -26217,7 +26225,14 @@ components:
         inputValues: { type: object, minProperties: 1, maxProperties: 50 }
     ProcedureStepComplete:
       type: object
-      description: "outputRecordId is required for link outputs; create and advance outputs are produced by the adapter."
+      description: >-
+        The output adapters verify and link; they never produce a record. For a create output, the record is first
+        produced natively through its owning module's own operation (with that module's permissions, rules and audit
+        event), and outputRecordId names it: the adapter checks that it is of the step's type, in the instance's scope,
+        produced since the instance was launched and not another instance's output (422
+        procedure_step.output_required when none is named). For a link output, outputRecordId names the existing
+        record. For an advance output, outputRecordId is omitted (or names the same record): the record an earlier step
+        of this instance linked must have reached the state this step records.
       additionalProperties: false
       properties:
         note: { type: [string, "null"], minLength: 1, maxLength: 4000 }

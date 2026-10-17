@@ -1,0 +1,280 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-c4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc7j1o2_b6bf57eb (server_encoding UTF8); applied 86 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (28 tests) 168ms
+ ❯ |integration| tests/qa/integration/a07-historical-integrity.test.ts (12 tests | 2 failed) 14180ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state 35ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: the issued Q1 dashboard retains the calculation version and source revision of the KPI value it shows 11ms
+     → the Q1 dashboard's versions: [{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}]: expected [] to include '01a1493d-5c1a-755b-9650-f5271737e629'
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact  614ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact  301ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact  787ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing  305ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2  480ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > the Q1 report issued earlier (the Q1 dashboard showing the KPI) is offered for reissue after the approved restatement 8ms
+     → offers: [{"snapshotId":"01a1493d-649a-71c4-8efd-64e617650967","seriesId":"01a1493d-649a-71c4-8efd-64e617650967","definitionCode":"registers","issueVersion":1,"periodLabel":null,"snapshotStatus":"issued","createdAt":"2026-10-17T09:42:08.642Z"}]: expected undefined to be defined
+   ✓ REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback  560ms
+   ✓ REQ-PB-093: changed scoring defaults apply to new transformations; an existing one keeps its weight set and rubric > defaults totalling 95% are refused at publish; 30/20/20/15/15 with a new Feasibility rubric reach only new transformations  618ms
+   ✓ REQ-S14-003: an N/A scheme without its own bands is refused; existing assessments keep their scheme version and band > adding N/A while keeping the four source bands fails the preview (own bands required) and cannot be published  407ms
+   ✓ contract (found while authoring A07): reading the extension values of a record that has none > GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows 105ms
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 12810ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  395ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected  344ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  405ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  527ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  368ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  1906ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  642ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the existing transformation still renders v1 forms; the forms migration preview lists the new required field  390ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > publishing defaults that total 95% is rejected  378ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001: a definition missing a trigger or a completion condition is rejected  303ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  483ms
+ ✓ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests) 28903ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  3471ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action  936ms
+   ✓ REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event  4566ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: after 1 + retryLimit attempts ONE rule-execution entry is in the queue; the task is not doubled  1496ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused  3531ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > both queue entries of one failed execution (the job entry and the rule-execution entry) are retried: one task, one reminder  2500ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried  1499ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder  2448ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task  3102ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run  836ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-review-publish.test.ts (14 tests) 4319ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > publish without the required review -> 422 config_version.review_required; after approval it publishes, immutable  364ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > scoring defaults that total 95 % -> 422 config_version.weights_total (REQ-PB-093); 100 % publishes  406ms
+   ✓ rollbackConfigVersion (ADR-0039 §7; REQ-S06-009) > restores an earlier version as a new version; later records stay retrievable; the audit trail shows the rollback  714ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > re-checks authorization at commit time: a grant revoked mid-request gives 403 and writes nothing  475ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests.test.ts (10 tests) 3368ms
+   ✓ change requests: create, read, edit, withdraw (S-4) > draft CR-nn with ETag 1; AUD 403; outside and ADM-only 404; exact 400/409/422 refusals; one audit event per mutation  368ms
+   ✓ REQ-PB-065 routing, SoD and the frozen impact assessment > a business_scope request is routed to the person mapped to SP; the requester cannot decide; SP's approval applies it  302ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > with no policy the DG3 re-approval is unchanged; beyond a configured threshold it is 422, within it 200; budget likewise  435ms
+   ✓ REQ-S07-015: a KPI target change (preview, refusal, approval, the old version readable) > the preview lists the bound benefit and the approved G2 decision; a direct second activation is 422; after BO's approval v2 is active and v1 readable  512ms
+   ✓ REQ-S04-014: a new version of an approved G4 benefit formula creates one change request > one automatic benefit_logic request routed to Finance; the DG3 response unchanged; G4 decision and snapshot byte-identical  501ms
+ ✓ |integration| apps/api/test/integration/workflows/phases.test.ts (14 tests) 4031ms
+   ✓ guided phase steps (REQ-S04-001) > each of the six phases shows steps, required evidence, owners (Unknown when unassigned) and a review queue  392ms
+   ✓ guided phase steps (REQ-S04-001) > the review queue: one task per reviewer-role holder (never the owner); accept closes them and enables the next owned step once  341ms
+   ✓ guided phase steps (REQ-S04-001) > return with a note, then back to review; a return without a note is 400; invalid transitions are 422  327ms
+   ✓ steps never move a gate (REQ-S04-002: completing every phase task leaves the gate Draft) > completing all five Diagnose steps leaves G1 draft, with no submission and an unchanged gate instance  572ms
+   ✓ authorization, If-Match and audit on every write (S-4) > If-Match: 428 when missing, 409 when stale; If-Match "0" on an existing row is 409; creates are version 1  396ms
+ ✓ |integration| apps/api/test/integration/methodology/methodology-migrations.test.ts (9 tests) 5477ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > v2 published: the transformation still renders v1; the plan lists the G2 re-approval; execution moves only the pin  2105ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > the preview lists the new required field (forms provider) and needs an input before submit  849ms
+   ✓ decisions, refusals and authorization > requester deciding -> 403 self_approval; decideApproval on the type -> 422 decide_through_record; request changes and resubmit  458ms
+   ✓ decisions, refusals and authorization > a moved pin -> 409 pin_moved; not approved -> 422 not_approved; target invalid; open exists; withdraw  343ms
+   ✓ decisions, refusals and authorization > AUD and TL get 403 on every write, outsiders 404; If-Match 428/409; reads by methodology.read and transformation.read  568ms
+ ✓ |integration| apps/api/test/integration/methodology/scoring-defaults.test.ts (14 tests) 5251ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > the admin changes the Feasibility rubric text and the weights to 30/20/20/15/15 in a draft and publishes it  324ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > publishing defaults that total 95% (or 105%) is refused 422 config_version.weights_total; the draft stays a draft  359ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-checks.test.ts (17 tests) 1933ms
+ ✓ |integration| apps/api/test/integration/automation/automation-rules.test.ts (13 tests) 1281ms
+ ✓ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests) 1094ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-exceptions.test.ts (14 tests) 7757ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > the gate page lists the missing items; one missing item -> 422 listing exactly it (DG2 form); nothing written  776ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > with accepted unexpired exceptions -> 201; the snapshot and the frozen criterion rows record each exception  659ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > a pending, rejected or other-criterion exception does not cover (422 as in DG2)  630ms
+   ✓ the waiver record (REQ-S04-013) > a waiver without expiry or compensating action -> 400; past expiry and a non-mandatory key -> 422; nothing written  357ms
+   ✓ the waiver record (REQ-S04-013) > the requester cannot decide (403); a non-approver cannot (403); ADM-only 403; AUD 403 on every write  407ms
+   ✓ the waiver record (REQ-S04-013) > one hop of delegation: a delegate holding gate_exception.decide decides for the approver (recorded on behalf)  397ms
+   ✓ expiry (REQ-S04-013; clock injected) > after expires_on the exception no longer covers: the live view and the submission report the criterion missing again  518ms
+   ✓ expiry (REQ-S04-013; clock injected) > approving a submission whose recorded exception has expired -> 422 gate.exception_expired; changes requested is allowed  516ms
+   ✓ expiry (REQ-S04-013; clock injected) > approving a submission whose recorded exception was revoked -> 422 gate.exception_revoked (exact text); nothing written; reject allowed  551ms
+   ✓ expiry (REQ-S04-013; clock injected) > revoked AND expired reports the revoke; an unrevoked, unexpired exception still lets the approver approve  1233ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > revoke needs a reason (400) and an accepted exception (422); after revoke the criterion is missing again  647ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > withdraw: the requester only, pending only, If-Match 428/409; decision If-Match 428/409  420ms
+ ✓ |integration| apps/api/test/integration/workflows/g5-g6.test.ts (13 tests) 4341ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an open High-impact risk without an approved disposition: 422 whose detail and errors list 'Risk closure'; nothing written  469ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an approved disposition completes Risk closure (a pending one does not; a medium risk never counts)  510ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > G5 configured to BO: an SP decision is 403 gate.not_approver, a BO decision with the scale scope is 201  367ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > the scale-scope rules (ADR-0035 §5): required with a G5 approval, refused elsewhere, items inside the organization  650ms
+   ✓ G5 decision rights (D-094; ADR-0035 §8) > AUD 403 on the G5 submission and decision; an ADM-only caller 403 on the decision (D-094); nothing written  331ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > without an accepted BAU handover: 422 listing 'Ownership transfer'; nothing written  309ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > with every fact: 201 with a frozen g6 snapshot; an edit afterwards leaves it unchanged; the SP approval changes no phase, closes nothing and writes no DG delivery record  1028ms
+ ✓ |integration| apps/api/test/integration/automation/automation-engine.test.ts (9 tests) 1645ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > an enabled admin rule on gate.decided records one execution and creates its task; conditions not met -> skipped  305ms
+   ✓ REQ-S12-021: the same event x3 -> one execution, one action, one task > sequential and concurrent replays create exactly one of each  350ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-drafts.test.ts (18 tests) 1386ms
+ ✓ |integration| apps/api/test/integration/gates/g4.test.ts (5 tests) 5227ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > 422 gate_criteria_incomplete names 'Owners', 'Finance validation', the initiative without a gap link, the missing funding and capacity commitment; nothing written  953ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > an empty portfolio is 'Initiative cards' (g4.portfolio_empty); a capacity over-allocation and Unknown are conflicts  944ms
+   ✓ G4 treats an Unknown schedule as a missing item (D-079; ADR-0021 §7, §11 item 3) > 'Schedule unknown: DEP-nn' refuses the submission; a mitigation or the missing date clears it  956ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > TL submits; FIN validates and funds; the capacity owner commits; 403/403/409 hold; SP approves -> phase transform  1302ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > the submitter cannot decide G4, even holding the approver role (403 gate.submitter_cannot_decide)  851ms
+ ✓ |integration| apps/api/test/integration/automation/automation-lifecycle.test.ts (12 tests) 1653ms
+ ✓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts (17 tests) 12935ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > a Modular G3 waiver with no initiative: 201 pending, version 1, audited gate_dispensation.create  461ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > every other Modular waiver keeps the DG3 refusal: G1, G2, and G3 with an initiative (recorded for A/B)  365ms
+   ✓ ADR-0021 W2: who decides a Modular-links waiver > G3's approver (SP) accepts it (200); the recorder (403) and a non-approver (403 gate.not_approver) cannot  387ms
+   ✓ ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged  606ms
+   ✓ ADR-0038 B1 at G3 submission > only the outcome link missing: missing lists it alone  653ms
+   ✓ ADR-0038 B1 at G3 submission > links supplied: no modularLinks member even with a waiver in force (the snapshot is the DG3 one)  585ms
+   ✓ ADR-0038 B1 at G3 submission > which waiver: the latest expiry, ties broken by the greatest id  1214ms
+   ✓ ADR-0038 B1 at G3 submission > pending, rejected, revoked or expired (injected exception clock) waivers → 422 gate.modular_links_missing; nothing written  2504ms
+   ✓ ADR-0038 B1 at G3 approval > the waiver in force: approval 201, G3 approved; the decision is the SP's  515ms
+   ✓ ADR-0038 B1 at G3 approval > revoked after submission → 422 gate.modular_waiver_revoked with the revoke date; a later waiver does not rescue it; reject stays allowed  576ms
+   ✓ ADR-0038 B1 at G3 approval > expired by approval time (injected clock) → 422 gate.modular_waiver_expired with the expiry date; nothing written  584ms
+   ✓ ADR-0038 B1 at G3 approval > revoked and expired: the revoke is reported  588ms
+   ✓ ADR-0038 B1 at G3 approval > a Modular G3 submitted with its links (no modularLinks) is decided exactly as before  678ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > revoked: params = { date: the revoke's business date }, the date in detail  666ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > expired: params = { date: expires_on }, the date in detail  529ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > A/B transcript (T-DG4-BE-R4): the revoked and expired approval refusals and the submission refusal  1331ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > no other problem gains the member: the G3 submission refusal without a waiver has no params  537ms
+ ✓ |integration| apps/api/test/integration/automation/automation-failures.test.ts (9 tests) 2029ms
+ ✓ |integration| apps/api/test/integration/automation/starters-be-j.test.ts (9 tests) 2648ms
+   ✓ REQ-S12-001: the gate starters (5 request, 6 and 7 events) > a committed submission records one execution of starter 5; starters 6 and 7 record one each, replay x3 none  626ms
+   ✓ REQ-S12-004: launchPlan on create (API part) > accepted and carried by the v2 event; absent -> null; an impossible start date -> 400  338ms
+   ✓ REQ-S12-012: a slip below the configured minimumSlipDays raises nothing (starter 9 version 2) > v2 with minimumSlipDays 7 (reviewed and published): a 5-day slip raises nothing, an 8-day slip raises one  516ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 4137ms
+   ✓ F-DG2-142 evidence-link removal needs edit rights on the record (REQ-S10-001) > repro: a WL cannot remove the TL's link on a T01 row they may not edit (403 + denial audit); the TL can  434ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > End-to-End: G2 and G3 cannot be submitted before their predecessor is approved (422 gate.out_of_sequence), nothing written  601ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > repro: a pending G3 cannot be APPROVED while G2 is unapproved (422), the phase does not jump, nothing is written  434ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > Modular entry stays valid: entering at design, G3 is not blocked by the earlier gates (only by its own criteria)  468ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 5879ms
+   ✓ starter structure and live readiness > a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are enabled (0059) but out of sequence  629ms
+   ✓ starter structure and live readiness > G1 submission without an initial charter is refused (422 gate_criteria_incomplete) and writes nothing  326ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  610ms
+   ✓ submission and decision (business approval by a person) > the submitter cannot decide, even when they hold the approver role (403 gate.submitter_cannot_decide)  616ms
+   ✓ submission and decision (business approval by a person) > configuring the approver: allowed roles only, refused while a submission is pending, needs gate.configure  488ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  1002ms
+   ✓ decision outcome text is cut on a code-point boundary (F-DG2-260) > a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD  611ms
+ ✓ |integration| apps/api/test/integration/methodology/playbook-blocks.test.ts (8 tests) 693ms
+ ✓ |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts (6 tests) 4071ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 1: a help-text-only v2; a new transformation pinned to v2 gets the same catalogue as v1 by code/key and count  428ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 2: a v3 label override is returned for its element, and only for it  334ms
+ ✓ |integration| apps/api/test/integration/workflows/approval-routes.test.ts (9 tests) 4829ms
+   ✓ sequential route (REQ-S10-015) > step 2 has no work item or notification until step 1 approves; the last step decides the approval  856ms
+   ✓ sequential route (REQ-S10-015) > the requester never decides a step (403 approval_route.self_decision) and gets no step task  431ms
+   ✓ sequential route (REQ-S10-015) > commit-time re-authorization: a BO whose grant is revoked after sign-in is refused, nothing written  401ms
+   ✓ parallel route (REQ-S10-015) > every step is notified at once; one person decides at most one step; request changes -> next round  768ms
+   ✓ parallel route (REQ-S10-015) > a reject on one step cancels the other open step and rejects the approval  449ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (shipped v1): no steps, the DG4 decision route decides it  451ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (any): no steps, the DG4 decision route decides it  439ms
+   ✓ withdrawal and the admin route list > withdrawing a routed approval cancels its open steps  456ms
+   ✓ withdrawal and the admin route list > listApprovalRoutes: the version's routes (TL, AUD read); BO without methodology.read 403; unknown 400  401ms
+ ✓ |integration| apps/api/test/integration/methodology/revision-proposals.test.ts (5 tests) 1066ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-reviews.test.ts (6 tests) 5434ms
+   ✓ the criteria review table (REQ-S04-009) > each criterion row returns all nine fields; unreviewed rows show the six review fields as 'not reviewed' (null)  1107ms
+   ✓ the criteria review table (REQ-S04-009) > the latest review is shown; the review list is oldest first; a criterion outside the submission is 404  907ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > the first review moves Submitted -> Under Review (one audit event); the approver decides from Under Review  935ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > a direct Draft -> Approved is refused (409, nothing written); all seven statuses exist  348ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > refusals: submitter 403, condition 422, foreign risk 422, AUD 403, If-Match 428; nothing written  1190ms
+   ✓ Under Review and the enforced transitions (REQ-S04-010) > the submitter holding a reviewer role is refused with 403 gate.reviewer_is_submitter (SoD)  812ms
+ ✓ |integration| tests/qa/integration/a03-modular-entry.test.ts (12 tests) 6923ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a pending waiver does not count; an accepted one lets G3 through while both links stay flagged  835ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver revoked after submission refuses the G3 approval (422 gate.modular_waiver_revoked); nothing is written  785ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver expired by approval time refuses the G3 approval (422 gate.modular_waiver_expired); in force it is approved  838ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > an expired waiver at submission time does not let G3 through  648ms
+   ✓ A03: an End-to-End G3 is unaffected by the Modular precondition > End-to-End, G1-G2 approved, G3 criteria covered, no baseline and no outcome link: G3 submission is 201  1848ms
+ ✓ |integration| apps/api/test/integration/workflows/modular-precondition.test.ts (5 tests) 5940ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > 422 gate.modular_links_missing listing both items; nothing written; 201 once both are supplied  1024ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > an accepted, unexpired G3 waiver lets it through; an expired or a pending one does not  1920ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > the DG2 order is kept: G3 criteria not met → gate_criteria_incomplete first, exactly as before  352ms
+   ✓ D-106 (e): Modular G3 submission needs the baseline and outcome links, or a waiver > only G3 carries the precondition: a Modular G4 out of sequence keeps the DG2 refusal  316ms
+   ✓ End-to-End G1-G4: unaffected by the Modular precondition (byte comparison in the handback) > the full chain with no baseline and no outcome link: every refusal and success as in DG2/DG3  2173ms
+ ✓ |integration| apps/api/test/integration/methodology/approver-configured.test.ts (4 tests) 3590ms
+   ✓ D-164 (b): an explicit role-only configuration of the catalogue default is remembered > SP configured role-only on a BO-default G3: reported SP, the next submission routes to SP, the worker agrees  1293ms
+   ✓ D-164 (b): an explicit role-only configuration of the catalogue default is remembered > a never-configured G3 on the same pinned version follows BO (today's rule), for the submission too  837ms
+   ✓ D-164 (b): an explicit role-only configuration of the catalogue default is remembered > a refused configuration leaves the flag false: AUD 403, stale 409, missing If-Match 428  504ms
+   ✓ 0094: the backfill marks every instance with a gate_instance.configure audit event > re-applied to the pre-0094 table (in a rolled-back transaction): configured → true, others false, nothing else changes  754ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 2187ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  318ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  396ms
+ ✓ |integration| apps/api/test/integration/methodology/source-coverage.test.ts (8 tests) 915ms
+ ✓ |integration| apps/api/test/integration/methodology/effective-approver.test.ts (8 tests) 3437ms
+   ✓ F-DG5-QA-A-1: a gate names the approver its submissions are routed to > a configured approver is kept: a named user on the new transformation, a configured role on the old one  371ms
+   ✓ F-DG5-QA-A-1: the gate exception of the new transformation's G3 is routed to and decided by its effective approver > the to-decide work items go to the BO holders, never the Sponsor; the Sponsor gets 403, the BO decides  649ms
+   ✓ F-DG5-QA-A-1: the gate exception of the new transformation's G3 is routed to and decided by its effective approver > on the v1-pinned transformation the exception still goes to the Sponsor (unchanged)  453ms
+ ✓ |integration| apps/api/test/integration/workflows/impact.test.ts (3 tests) 1801ms
+   ✓ TOM change after G3: preview, T11 routing, a returned request with one assessment per submitted version > lists the gap, the preserved G3 decision and T10 Portfolio; changes requested -> edit -> submit -> resubmit -> approve  451ms
+   ✓ charter scope change after G1: a new charter version; the earlier one stays readable > SP approves; charter version + 1 with its charter_version snapshot; reads are scoped  639ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-commit-time.test.ts (9 tests) 5238ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the Sponsor's G5 decision is 201  553ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > every grant of the Sponsor revoked after authentication: 403, no decision, one authorization.denied  453ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > only the approver role revoked (the read remains): 403 gate.not_approver, no decision, one authorization.denied  489ms
+   ✓ decideGate re-checks authorization at commit time (F-DG4-103) > the Sponsor's session ended after authentication: 401, no decision, no audit row  481ms
+   ✓ submitGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TL's G1 submission is 201  946ms
+   ✓ submitGate re-checks authorization at commit time (F-DG4-103) > the TL's grants revoked after authentication: 403, no submission, gate unchanged, one authorization.denied  800ms
+   ✓ updateGate re-checks authorization at commit time (F-DG4-103) > control: with nothing revoked in the window, the TO configures the G5 approver (200)  450ms
+   ✓ updateGate re-checks authorization at commit time (F-DG4-103) > the TO's grants revoked after authentication: 403, approver unchanged, one authorization.denied  402ms
+   ✓ updateGate re-checks authorization at commit time (F-DG4-103) > only the configure right revoked (the read remains through another role): 403, one authorization.denied naming gate.configure  446ms
+ ✓ |integration| apps/api/test/integration/workflows/be-r5-ab-transcript.test.ts (6 tests) 4483ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > updateGate (G5, G6): 428, 409, AUD 403, ADM-only/outsider 404, 422 role not allowed, 200, 422 submission pending  638ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > submitGate: G5 out of sequence 422 first; G1 201 with accepted exceptions; the G1 view  1247ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > submitGate G5/G6 refusals: AUD 403, outsider 404, 428, 409, criteria incomplete, out of sequence  877ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > decideGate G5: outsider 404, ADM-only/AUD/BO/submitter 403, 409 superseded, 422 scale scope, SP 201, then 409  876ms
+   ✓ A/B transcript (T-DG4-BE-R5): existing gate and work-item responses > decideGate G6: changes requested 201, then a second submission approved 201 by the Sponsor  584ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-conditions.test.ts (5 tests) 3603ms
+   ✓ v1: conditional G5 within its scope (REQ-S04-011 A08; DG4 behaviour re-run) > a conditional G5 limited to one BU blocks a scale transition for another BU; no scope -> 422  733ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > catalogue default: on for G5 only  472ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched off in a published v2: conditions -> 422 gate.conditional_approval_disabled, nothing written  820ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched on explicitly in a v2: conditions are accepted  651ms
+   ✓ tracked to closure (listGateConditions, closeGateCondition) > open / overdue / closed; only the owner closes, once; AUD reads but cannot close  701ms
+ ✓ |integration| apps/api/test/integration/automation/automation-notify-delivery.test.ts (2 tests) 757ms
+   ✓ D-153 (a): the notify action is delivered under the recipient's policy and preferences > exactly one policy-governed notification per recipient; x3 replays create nothing; the execution log records the outcome  321ms
+ ✓ |integration| apps/api/test/integration/methodology/entity-group.test.ts (3 tests) 2617ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > Transformation, Charter, GateInstance and GateDecision: created and read; AUD 403 on writes; 404 outside scope  1573ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > MethodologyVersion, Phase and GateDefinition: a draft with version-scoped rows; AUD 403; outsiders 403/404  596ms
+ ✓ |integration| apps/api/test/integration/workflows/be-r4-ab-transcript.test.ts (4 tests) 2624ms
+   ✓ A/B transcript (T-DG4-BE-R4): existing responses of the touched modules > schedule durations and the network (portfolio/schedule-network.ts), with 400/401/403/404/409/428 problems  634ms
+   ✓ A/B transcript (T-DG4-BE-R4): existing responses of the touched modules > scale scope, transitions and the gate list (workflows/scale.ts, gates.ts)  807ms
+   ✓ A/B transcript (T-DG4-BE-R4): existing responses of the touched modules > the chair's minutes task (governance/minutes.ts) as My Work lists it  712ms
+ ✓ |integration| apps/api/test/integration/methodology/v1-readers.test.ts (4 tests) 2781ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > a new transformation is pinned to playbook v1 and its resolved gate definitions are the catalogue, byte for byte  422ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > the gate list and gate views carry exactly the DG2 catalogue definitions (GET /methodology)  743ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > a v1 submission routes to the catalogue default approver (SP, default_role); the decision and the DG2 refusal are unchanged  1064ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > control: a version without rows reads as the catalogue; one with rows changes exactly the overridden fields  391ms
+ ✓ |integration| apps/api/test/integration/workflows/scale-scope-business-units.test.ts (4 tests) 2947ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > a Sponsor with only a transformation grant reads every active unit of the organization, never another's  506ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > a unit set inactive after an approved scope named it is listed with selectable false; an unnamed inactive unit is not  1026ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > cursor paging by code then id walks the same set; another transformation's cursor is 400  838ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > outside scope 404 (another organization's officer, ADM-only); unauthenticated 401  451ms
+ ✓ |integration| apps/api/test/integration/workflows/risk-dispositions.test.ts (3 tests) 2013ms
+   ✓ risk dispositions (REQ-PB-020) > creates the row, its audit event and one pending risk_disposition approval routed to SP  610ms
+   ✓ risk dispositions (REQ-PB-020) > only an open risk: a closed risk or an issue is 422 risk_disposition.not_open_risk; AUD 403; nothing written  498ms
+   ✓ risk dispositions (REQ-PB-020) > G5 configured to BO: routed to the T11 Go-live / scale party BO; unmapped BO -> 422 routing.role_unmapped, nothing written  634ms
+ ✓ |integration| apps/api/test/integration/automation/catalogue-sample-payload.test.ts (3 tests) 399ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-events.test.ts (2 tests) 1969ms
+   ✓ gate.submitted / gate.decided (ADR-0035 §7) > submission, supersession and decision each write exactly one event in their transaction; refusals write none  1220ms
+   ✓ gate.submitted / gate.decided (ADR-0035 §7) > a G5 approval's event names its scope item and condition ids and the next phase realize  559ms
+ ✓ |integration| apps/api/test/integration/workflows/scale.test.ts (2 tests) 1479ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > before G5: 422 invalid-transition naming G5; the scope reads approved = false; nothing written  618ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > after the G5 approval: inside the scope 201 with its audit event; outside 422; a repeat 409; AUD/ADM 403  612ms
+ ✓ |integration| apps/api/test/integration/automation/dry-run-sample-shape.test.ts (2 tests) 323ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 3084ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2141ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: the issued Q1 dashboard retains the calculation version and source revision of the KPI value it shows
+AssertionError: the Q1 dashboard's versions: [{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}]: expected [] to include '01a1493d-5c1a-755b-9650-f5271737e629'
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:427:7
+    425|       dash.versions.filter((x) => x.versionKind === "kpi_version").map…
+    426|       `the Q1 dashboard's versions: ${JSON.stringify(dash.versions)}`,
+    427|     ).toContain(kpi.v1.id);
+       |       ^
+    428|     const sourceTypes = (dash.sources.items as Body[]).map((x) => `${x…
+    429|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > the Q1 report issued earlier (the Q1 dashboard showing the KPI) is offered for reissue after the approved restatement
+AssertionError: offers: [{"snapshotId":"01a1493d-649a-71c4-8efd-64e617650967","seriesId":"01a1493d-649a-71c4-8efd-64e617650967","definitionCode":"registers","issueVersion":1,"periodLabel":null,"snapshotStatus":"issued","createdAt":"2026-10-17T09:42:08.642Z"}]: expected undefined to be defined
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:792:58
+    790|       ).items as Body[];
+    791|       const offer = offers.find((o) => o.snapshotId === dash.id);
+    792|       expect(offer, `offers: ${JSON.stringify(offers)}`).toBeDefined();
+       |                                                          ^
+    793|       expect([offer.issueVersion, offer.periodLabel]).toEqual([1, "208…
+    794|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 48 passed (49)
+      Tests  2 failed | 450 passed (452)
+   Start at  09:41:42
+   Duration  342.63s (transform 6.98s, setup 0ms, collect 129.84s, tests 207.65s, environment 0ms, prepare 82ms)
+

@@ -1126,6 +1126,8 @@ export interface GateInstanceTable {
   current_submission_id: string | null;
   latest_submission_no: Generated<number>;
   approved_at: NullableTimestamp;
+  /** 0094 (D-164 b): the approver was set through the approver configuration (`gate_instance.configure`). */
+  approver_configured: Generated<boolean>;
   version: Generated<number>;
   created_at: TimestampDefault;
   created_by: string;
@@ -7266,6 +7268,7 @@ export const SCHEMA_COLUMNS = {
     "current_submission_id",
     "latest_submission_no",
     "approved_at",
+    "approver_configured",
     "version",
     "created_at",
     "created_by",
