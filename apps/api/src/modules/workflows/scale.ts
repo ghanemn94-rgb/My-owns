@@ -49,6 +49,7 @@ import {
 } from "../platform/index.ts";
 import { assertActiveUsers, openWrite } from "../transformations/index.ts";
 import { registerApprovalSubject, requestApprovalInTx } from "./approvals.ts";
+import { effectiveGateApprover } from "./gates.ts";
 
 const T_BASE = "/api/v1/transformations/:transformationId";
 export const SCALE_SCOPE = `${T_BASE}/scale-scope`;
@@ -366,13 +367,9 @@ export async function getRiskDisposition(
  * `go_live_scale` when G5's configured approver role is BO (T11 "Go-live / scale"; its approve party, else BO).
  */
 async function dispositionParty(tx: Tx, transformationId: string): Promise<string> {
-  const g5 = await tx
-    .selectFrom("gate_instance")
-    .select("approver_role_code")
-    .where("transformation_id", "=", transformationId)
-    .where("gate_code", "=", "G5")
-    .executeTakeFirst();
-  if (g5?.approver_role_code !== "BO") return "SP";
+  // T-DG5-BE-C3 (F-DG5-QA-A-1): G5's EFFECTIVE approver (the one its submissions route to, ADR-0039 §3).
+  const g5 = await effectiveGateApprover(tx, transformationId, "G5");
+  if (g5?.roleCode !== "BO") return "SP";
   const t11 = await tx
     .selectFrom("transformation_decision_right")
     .select("approve_party_code")

@@ -1,0 +1,26 @@
+port-policy: PostgreSQL listening on port 23900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-c3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvbqg1yo_237938b6 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 11918ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  316ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  394ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  417ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  371ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  1619ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  536ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the existing transformation still renders v1 forms; the forms migration preview lists the new required field  314ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > publishing defaults that total 95% is rejected  313ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  424ms
+ ✓ |integration| apps/api/test/integration/methodology/effective-approver.test.ts (8 tests) 3333ms
+   ✓ F-DG5-QA-A-1: a gate names the approver its submissions are routed to > the list and the single read agree on every gate  396ms
+   ✓ F-DG5-QA-A-1: a gate names the approver its submissions are routed to > a configured approver is kept: a named user on the new transformation, a configured role on the old one  449ms
+   ✓ F-DG5-QA-A-1: the gate exception of the new transformation's G3 is routed to and decided by its effective approver > the to-decide work items go to the BO holders, never the Sponsor; the Sponsor gets 403, the BO decides  331ms
+
+ Test Files  2 passed (2)
+      Tests  35 passed (35)
+   Start at  01:43:29
+   Duration  35.30s (transform 6.31s, setup 0ms, collect 15.53s, tests 15.25s, environment 3ms, prepare 217ms)
+

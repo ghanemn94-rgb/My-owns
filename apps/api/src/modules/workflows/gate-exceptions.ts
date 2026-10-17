@@ -59,7 +59,7 @@ import {
 } from "../platform/index.ts";
 import { closeWorkItemsOfSubject, createWorkItemOnce } from "../tasks/index.ts";
 import { assertActiveUsers, bumpStamps, openWrite, type WriteContext } from "../transformations/index.ts";
-import { isGateApprover } from "./gates.ts";
+import { effectiveGateApprover, isGateApprover } from "./gates.ts";
 
 const T_BASE = "/api/v1/transformations/:transformationId";
 export const GATE_EXCEPTIONS = `${T_BASE}/gate-exceptions`;
@@ -252,16 +252,16 @@ export const exceptionSnapshotOf = (e: GateExceptionRow) => ({
 
 // ------------------------------------------------------------------------------------------------ approver rule
 
-/** The configured approver of the transformation's gate: a named user, or the approver role (DG2 gate_instance). */
+/**
+ * The approver of the transformation's gate: a named user, or the approver role (DG2 gate_instance). T-DG5-BE-C3
+ * (F-DG5-QA-A-1; ADR-0039 §3): the EFFECTIVE approver (`effectiveGateApprover`, the rule a new gate submission routes
+ * by), so the exception is routed to, and decided for, the person who decides the gate; for a v1-pinned
+ * transformation or a configured approver it is the stored one.
+ */
 async function gateApproverConfig(db: DbOrTx, transformationId: string, gateCode: string) {
-  const instance = await db
-    .selectFrom("gate_instance")
-    .select(["id", "approver_role_code", "approver_user_id"])
-    .where("transformation_id", "=", transformationId)
-    .where("gate_code", "=", gateCode)
-    .executeTakeFirst();
-  if (!instance) throw problems.notFound();
-  return instance;
+  const approver = await effectiveGateApprover(db, transformationId, gateCode);
+  if (!approver) throw problems.notFound();
+  return { id: approver.gateInstanceId, approver_role_code: approver.roleCode, approver_user_id: approver.userId };
 }
 
 /**
