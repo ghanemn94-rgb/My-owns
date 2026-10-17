@@ -1,0 +1,658 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Auditor
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - generic [ref=e20]:
+    - navigation "Primary navigation" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "My Work" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: My Work
+          - list "My Work" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Tasks and inbox" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "Approvals" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "Delegations" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "Notification preferences" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "Executive Overview" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: Executive Overview
+          - list "Executive Overview" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Dashboards" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "RAG policy" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "Transformations" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: Transformations
+        - listitem [ref=e46]:
+          - link "Playbook and Procedures" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "Phase steps and review queue" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "Playbook reader" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "My procedures" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "90-day launch plan" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "Health check" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "Strategy and KPIs" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "KPIs" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "Target Operating Model" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: Target Operating Model
+        - listitem [ref=e69]:
+          - link "Initiatives and Roadmaps" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "Portfolios" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "Owner updates" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "Governance" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: Governance
+          - list "Governance" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "Groups" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "Forums" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "Meetings" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "Executive decisions (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "Change requests" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "Risks and Actions" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: Risks and Actions
+          - list "Risks and Actions" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "RAID (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "Action register" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "Corrective actions" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "Benefits and Finance" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "Benefits register (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "Change and Adoption" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: Change and Adoption
+          - list "Change and Adoption" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Adoption plan (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "Evidence and Reports" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "Reports and snapshots" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "Exports" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "Presentation mode" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "Evidence register" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "BAU and Improvement" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "Performance areas" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "Improvement backlog" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "Lessons" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "Lesson search" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+        - listitem [ref=e137]:
+          - link "Administration" [ref=e138] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e139]: Administration
+          - list "Administration" [ref=e140]:
+            - listitem [ref=e141]:
+              - link "Calendar" [ref=e142] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e143]:
+              - link "Playbook Studio" [ref=e144] [cursor=pointer]:
+                - /url: /admin/studio
+            - listitem [ref=e145]:
+              - link "Methodology migrations" [ref=e146] [cursor=pointer]:
+                - /url: /admin/methodology-migrations
+            - listitem [ref=e147]:
+              - link "Source coverage" [ref=e148] [cursor=pointer]:
+                - /url: /admin/source-coverage
+            - listitem [ref=e149]:
+              - link "Form builder" [ref=e150] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e151]:
+              - link "Procedure builder" [ref=e152] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e153]:
+              - link "Automation" [ref=e154] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e155]:
+              - link "Approval routes" [ref=e156] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e157]:
+              - link "Branding" [ref=e158] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e159]:
+              - link "Demo environment" [ref=e160] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e161]:
+              - link "Health check scoring" [ref=e162] [cursor=pointer]:
+                - /url: /admin/health-schemes
+      - paragraph [ref=e163]:
+        - link "About this product" [ref=e164] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - navigation "Breadcrumbs" [ref=e168]:
+            - list [ref=e169]:
+              - listitem [ref=e170]:
+                - link "Transformations" [ref=e171] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e172]:
+                - text: /
+                - link "TR-0008" [ref=e173] [cursor=pointer]:
+                  - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67
+              - listitem [ref=e174]: /Team
+          - generic [ref=e176]:
+            - heading "Team" [level=1] [ref=e177]
+            - paragraph [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: TR-0008
+                - generic [ref=e181]: Synthetic P2 EN journey
+                - generic [ref=e182]:
+                  - img [ref=e183]
+                  - text: Draft – not submitted
+                - generic [ref=e185]: "Phase: Mobilize"
+        - navigation "Transformation workspace" [ref=e186]:
+          - list [ref=e187]:
+            - listitem [ref=e188]:
+              - link "Overview" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67
+            - listitem [ref=e190]:
+              - link "Diagnose" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/diagnose
+            - listitem [ref=e192]:
+              - link "Charter" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/charter
+            - listitem [ref=e194]:
+              - link "Define" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/define
+            - listitem [ref=e196]:
+              - link "Design" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/design
+            - listitem [ref=e198]:
+              - link "Portfolio" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/portfolio
+            - listitem [ref=e200]:
+              - link "Prioritization" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/prioritization
+            - listitem [ref=e202]:
+              - link "Roadmap" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/roadmap
+            - listitem [ref=e204]:
+              - link "Dependencies" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/dependencies
+            - listitem [ref=e206]:
+              - link "Capacity" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/capacity
+            - listitem [ref=e208]:
+              - link "Business cases" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/business-cases
+            - listitem [ref=e210]:
+              - link "Benefit formulas" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/benefit-formulas
+            - listitem [ref=e212]:
+              - link "Decisions" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/decisions
+            - listitem [ref=e214]:
+              - link "Gates" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/gates
+            - listitem [ref=e216]:
+              - link "Readiness" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/readiness
+            - listitem [ref=e218]:
+              - link "Dispensations" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/dispensations
+            - listitem [ref=e220]:
+              - link "Evidence" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/evidence
+            - listitem [ref=e222]:
+              - link "Team" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/team
+            - listitem [ref=e224]:
+              - link "Role mapping" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/role-mappings
+            - listitem [ref=e226]:
+              - link "Decision rights" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/decision-rights
+            - listitem [ref=e228]:
+              - link "RACI" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/raci
+            - listitem [ref=e230]:
+              - link "Transform readiness" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/transform-readiness
+            - listitem [ref=e232]:
+              - link "Approval records" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/approval-decisions
+            - listitem [ref=e234]:
+              - link "KPIs" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/kpis
+            - listitem [ref=e236]:
+              - link "Benefits register (T14)" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/benefits
+            - listitem [ref=e238]:
+              - link "RAID (T15)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/raid
+            - listitem [ref=e240]:
+              - link "Actions" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/actions
+            - listitem [ref=e242]:
+              - link "Corrective actions" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/corrective-actions
+            - listitem [ref=e244]:
+              - link "Forums" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/forums
+            - listitem [ref=e246]:
+              - link "Meetings" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/meetings
+            - listitem [ref=e248]:
+              - link "Executive decisions (T16)" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/executive-decisions
+            - listitem [ref=e250]:
+              - link "Adoption" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/adoption
+            - listitem [ref=e252]:
+              - link "BAU and performance areas" [ref=e253] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/bau
+            - listitem [ref=e254]:
+              - link "Improvement backlog" [ref=e255] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/improvement
+            - listitem [ref=e256]:
+              - link "Lessons" [ref=e257] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/lessons
+            - listitem [ref=e258]:
+              - link "Dashboard (T10)" [ref=e259] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/dashboard
+            - listitem [ref=e260]:
+              - link "Closure" [ref=e261] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/closure
+            - listitem [ref=e262]:
+              - link "Phases" [ref=e263] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/phases
+            - listitem [ref=e264]:
+              - link "Change requests" [ref=e265] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/change-requests
+            - listitem [ref=e266]:
+              - link "Traceability" [ref=e267] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/traceability
+            - listitem [ref=e268]:
+              - link "Modular entry" [ref=e269] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/modular-entry
+            - listitem [ref=e270]:
+              - link "Workstreams" [ref=e271] [cursor=pointer]:
+                - /url: /transformations/01a14b9a-1dea-734a-a8e7-aca43d7c3a67/workstreams
+        - paragraph [ref=e272]: The people named for this transformation's roles, each with the role's accountability. Assigning a team role is an access change recorded in the audit trail. It is not a business approval.
+        - note [ref=e273]:
+          - img [ref=e274]
+          - text: "Read-only view: your role assignments do not allow changes here. The server checks every change."
+        - region "Minimum governance roles" [ref=e276]:
+          - heading "Minimum governance roles" [level=2] [ref=e278]
+          - generic [ref=e279]: The six minimum governance roles of the playbook with their accountabilities (B0018). Each role should resolve to a named person or governed group for this transformation.
+          - list [ref=e280]:
+            - listitem [ref=e281]:
+              - heading "Executive Sponsor" [level=3] [ref=e283]
+              - generic [ref=e284]:
+                - generic [ref=e285]:
+                  - term [ref=e286]: Accountability
+                  - definition [ref=e287]:
+                    - generic [ref=e288]:
+                      - text: Owns enterprise outcome, removes constraints, approves major trade-offs.
+                      - generic [ref=e289]: Playbook source text (B0018)
+                - generic [ref=e290]:
+                  - term [ref=e291]: Assigned
+                  - definition [ref=e292]:
+                    - list [ref=e293]:
+                      - listitem [ref=e294]:
+                        - text: Synthetic Transformation Office
+                        - generic [ref=e295]: (This transformation)
+            - listitem [ref=e296]:
+              - heading "Transformation Lead" [level=3] [ref=e298]
+              - generic [ref=e299]:
+                - generic [ref=e300]:
+                  - term [ref=e301]: Accountability
+                  - definition [ref=e302]:
+                    - generic [ref=e303]:
+                      - text: Integrates workstreams, drives cadence, ensures outcome realization.
+                      - generic [ref=e304]: Playbook source text (B0018)
+                - generic [ref=e305]:
+                  - term [ref=e306]: Assigned
+                  - definition [ref=e307]:
+                    - list [ref=e308]:
+                      - listitem [ref=e309]:
+                        - text: Synthetic Transformation Lead
+                        - generic [ref=e310]: (This transformation)
+            - listitem [ref=e311]:
+              - heading "Business Owner" [level=3] [ref=e313]
+              - generic [ref=e314]:
+                - generic [ref=e315]:
+                  - term [ref=e316]: Accountability
+                  - definition [ref=e317]:
+                    - generic [ref=e318]:
+                      - text: Own target-state capabilities and BAU adoption.
+                      - generic [ref=e319]: Playbook source text (B0018)
+                - generic [ref=e320]:
+                  - term [ref=e321]: Assigned
+                  - definition [ref=e322]:
+                    - generic [ref=e323]:
+                      - img [ref=e324]
+                      - text: No one is assigned to this role for this transformation.
+            - listitem [ref=e326]:
+              - heading "Workstream Lead" [level=3] [ref=e328]
+              - generic [ref=e329]:
+                - generic [ref=e330]:
+                  - term [ref=e331]: Accountability
+                  - definition [ref=e332]:
+                    - generic [ref=e333]:
+                      - text: Deliver initiatives and manage dependencies.
+                      - generic [ref=e334]: Playbook source text (B0018)
+                - generic [ref=e335]:
+                  - term [ref=e336]: Assigned
+                  - definition [ref=e337]:
+                    - list [ref=e338]:
+                      - listitem [ref=e339]:
+                        - text: Synthetic Transformation Office
+                        - generic [ref=e340]: (This transformation)
+            - listitem [ref=e341]:
+              - heading "Finance / Value Office" [level=3] [ref=e343]
+              - generic [ref=e344]:
+                - generic [ref=e345]:
+                  - term [ref=e346]: Accountability
+                  - definition [ref=e347]:
+                    - generic [ref=e348]:
+                      - text: Validates baseline, benefit logic, value realization.
+                      - generic [ref=e349]: Playbook source text (B0018)
+                - generic [ref=e350]:
+                  - term [ref=e351]: Assigned
+                  - definition [ref=e352]:
+                    - generic [ref=e353]:
+                      - img [ref=e354]
+                      - text: No one is assigned to this role for this transformation.
+            - listitem [ref=e356]:
+              - heading "Transformation Office" [level=3] [ref=e358]
+              - generic [ref=e359]:
+                - generic [ref=e360]:
+                  - term [ref=e361]: Accountability
+                  - definition [ref=e362]:
+                    - generic [ref=e363]:
+                      - text: Governance, reporting, risks, dependencies, decisions, standards.
+                      - generic [ref=e364]: Playbook source text (B0018)
+                - generic [ref=e365]:
+                  - term [ref=e366]: Assigned
+                  - definition [ref=e367]:
+                    - list [ref=e368]:
+                      - listitem [ref=e369]:
+                        - text: Synthetic Transformation Office
+                        - generic [ref=e370]: (Inherited from Organization level)
+        - region "Implementation roles" [ref=e371]:
+          - heading "Implementation roles" [level=2] [ref=e373]
+          - generic [ref=e374]: "Supporting platform roles: those a Transformation Lead or the Transformation Office can assign here, and any other role already on this team."
+          - list [ref=e375]:
+            - listitem [ref=e376]:
+              - heading "KPI/Data Steward" [level=3] [ref=e378]
+              - generic [ref=e379]:
+                - generic [ref=e380]:
+                  - term [ref=e381]: Accountability
+                  - definition [ref=e382]:
+                    - generic [ref=e383]:
+                      - text: Maintains KPI definitions, baselines and data quality for assigned KPIs.
+                      - generic [ref=e384]: Platform text (M0187)
+                - generic [ref=e385]:
+                  - term [ref=e386]: Assigned
+                  - definition [ref=e387]:
+                    - generic [ref=e388]:
+                      - img [ref=e389]
+                      - text: No one is assigned to this role for this transformation.
+            - listitem [ref=e391]:
+              - heading "Tech/Data Contributor" [level=3] [ref=e393]
+              - generic [ref=e394]:
+                - generic [ref=e395]:
+                  - term [ref=e396]: Accountability
+                  - definition [ref=e397]:
+                    - generic [ref=e398]:
+                      - text: Contributes technology and data input to target-state design and dependencies.
+                      - generic [ref=e399]: Platform text (M0187)
+                - generic [ref=e400]:
+                  - term [ref=e401]: Assigned
+                  - definition [ref=e402]:
+                    - generic [ref=e403]:
+                      - img [ref=e404]
+                      - text: No one is assigned to this role for this transformation.
+            - listitem [ref=e406]:
+              - heading "Committee Member" [level=3] [ref=e408]
+              - generic [ref=e409]:
+                - generic [ref=e410]:
+                  - term [ref=e411]: Accountability
+                  - definition [ref=e412]:
+                    - generic [ref=e413]:
+                      - text: Participates in governance forums and their decisions.
+                      - generic [ref=e414]: Platform text (M0187)
+                - generic [ref=e415]:
+                  - term [ref=e416]: Assigned
+                  - definition [ref=e417]:
+                    - generic [ref=e418]:
+                      - img [ref=e419]
+                      - text: No one is assigned to this role for this transformation.
+            - listitem [ref=e421]:
+              - heading "Committee Secretary" [level=3] [ref=e423]
+              - generic [ref=e424]:
+                - generic [ref=e425]:
+                  - term [ref=e426]: Accountability
+                  - definition [ref=e427]:
+                    - generic [ref=e428]:
+                      - text: Prepares agendas and records attendance, minutes and actions for governance forums.
+                      - generic [ref=e429]: Platform text (M0187)
+                - generic [ref=e430]:
+                  - term [ref=e431]: Assigned
+                  - definition [ref=e432]:
+                    - generic [ref=e433]:
+                      - img [ref=e434]
+                      - text: No one is assigned to this role for this transformation.
+            - listitem [ref=e436]:
+              - heading "Read-only Auditor" [level=3] [ref=e438]
+              - generic [ref=e439]:
+                - generic [ref=e440]:
+                  - term [ref=e441]: Accountability
+                  - definition [ref=e442]:
+                    - generic [ref=e443]:
+                      - text: Reviews records and audit trails read-only; can never change data.
+                      - generic [ref=e444]: Platform text (M0187)
+                - generic [ref=e445]:
+                  - term [ref=e446]: Assigned
+                  - definition [ref=e447]:
+                    - list [ref=e448]:
+                      - listitem [ref=e449]:
+                        - text: Synthetic Auditor · you
+                        - generic [ref=e450]: (Inherited from Organization level)
+        - region "Team members" [ref=e451]:
+          - heading "Team members" [level=2] [ref=e453]
+          - generic [ref=e454]:
+            - generic [ref=e455]:
+              - generic [ref=e456]:
+                - generic [ref=e457]: Search
+                - searchbox "Search" [ref=e458]
+              - button "Columns" [ref=e460] [cursor=pointer]:
+                - img [ref=e461]
+                - text: Columns
+            - table "Team members of this transformation" [ref=e464]:
+              - caption [ref=e465]: Team members of this transformation
+              - rowgroup [ref=e466]:
+                - row "Person not sorted Role sorted ascending Accountability Assigned at not sorted Effective from not sorted Effective until not sorted" [ref=e467]:
+                  - columnheader "Person not sorted" [ref=e468]:
+                    - button "Person not sorted" [ref=e469] [cursor=pointer]:
+                      - text: Person
+                      - img [ref=e470]
+                      - generic [ref=e472]: not sorted
+                  - columnheader "Role sorted ascending" [ref=e473]:
+                    - button "Role sorted ascending" [ref=e474] [cursor=pointer]:
+                      - text: Role
+                      - img [ref=e475]
+                      - generic [ref=e477]: sorted ascending
+                  - columnheader "Accountability" [ref=e478]
+                  - columnheader "Assigned at not sorted" [ref=e479]:
+                    - button "Assigned at not sorted" [ref=e480] [cursor=pointer]:
+                      - text: Assigned at
+                      - img [ref=e481]
+                      - generic [ref=e483]: not sorted
+                  - columnheader "Effective from not sorted" [ref=e484]:
+                    - button "Effective from not sorted" [ref=e485] [cursor=pointer]:
+                      - text: Effective from
+                      - img [ref=e486]
+                      - generic [ref=e488]: not sorted
+                  - columnheader "Effective until not sorted" [ref=e489]:
+                    - button "Effective until not sorted" [ref=e490] [cursor=pointer]:
+                      - text: Effective until
+                      - img [ref=e491]
+                      - generic [ref=e493]: not sorted
+              - rowgroup [ref=e494]:
+                - row "Synthetic Transformation Office Executive Sponsor Owns enterprise outcome, removes constraints, approves major trade-offs. Playbook source text (B0018) This transformation 17 Oct 2026, 23:43 No end date" [ref=e495]:
+                  - rowheader "Synthetic Transformation Office" [ref=e496]
+                  - cell "Executive Sponsor" [ref=e497]
+                  - cell "Owns enterprise outcome, removes constraints, approves major trade-offs. Playbook source text (B0018)" [ref=e498]:
+                    - generic [ref=e499]:
+                      - text: Owns enterprise outcome, removes constraints, approves major trade-offs.
+                      - generic [ref=e500]: Playbook source text (B0018)
+                  - cell "This transformation" [ref=e501]
+                  - cell "17 Oct 2026, 23:43" [ref=e502]
+                  - cell "No end date" [ref=e503]
+                - row "Synthetic Auditor · you Read-only Auditor Reviews records and audit trails read-only; can never change data. Platform text (M0187) Inherited from Organization level 17 Oct 2026, 23:40 No end date" [ref=e504]:
+                  - rowheader "Synthetic Auditor · you" [ref=e505]
+                  - cell "Read-only Auditor" [ref=e506]
+                  - cell "Reviews records and audit trails read-only; can never change data. Platform text (M0187)" [ref=e507]:
+                    - generic [ref=e508]:
+                      - text: Reviews records and audit trails read-only; can never change data.
+                      - generic [ref=e509]: Platform text (M0187)
+                  - cell "Inherited from Organization level" [ref=e510]
+                  - cell "17 Oct 2026, 23:40" [ref=e511]
+                  - cell "No end date" [ref=e512]
+                - row "Synthetic Transformation Lead Transformation Lead Integrates workstreams, drives cadence, ensures outcome realization. Playbook source text (B0018) This transformation 17 Oct 2026, 23:42 No end date" [ref=e513]:
+                  - rowheader "Synthetic Transformation Lead" [ref=e514]
+                  - cell "Transformation Lead" [ref=e515]
+                  - cell "Integrates workstreams, drives cadence, ensures outcome realization. Playbook source text (B0018)" [ref=e516]:
+                    - generic [ref=e517]:
+                      - text: Integrates workstreams, drives cadence, ensures outcome realization.
+                      - generic [ref=e518]: Playbook source text (B0018)
+                  - cell "This transformation" [ref=e519]
+                  - cell "17 Oct 2026, 23:42" [ref=e520]
+                  - cell "No end date" [ref=e521]
+                - row "Synthetic Transformation Office Transformation Office Governance, reporting, risks, dependencies, decisions, standards. Playbook source text (B0018) Inherited from Organization level 17 Oct 2026, 23:40 No end date" [ref=e522]:
+                  - rowheader "Synthetic Transformation Office" [ref=e523]
+                  - cell "Transformation Office" [ref=e524]
+                  - cell "Governance, reporting, risks, dependencies, decisions, standards. Playbook source text (B0018)" [ref=e525]:
+                    - generic [ref=e526]:
+                      - text: Governance, reporting, risks, dependencies, decisions, standards.
+                      - generic [ref=e527]: Playbook source text (B0018)
+                  - cell "Inherited from Organization level" [ref=e528]
+                  - cell "17 Oct 2026, 23:40" [ref=e529]
+                  - cell "No end date" [ref=e530]
+                - row "Synthetic Transformation Office Workstream Lead Deliver initiatives and manage dependencies. Playbook source text (B0018) This transformation 17 Oct 2026, 23:44 No end date" [ref=e531]:
+                  - rowheader "Synthetic Transformation Office" [ref=e532]
+                  - cell "Workstream Lead" [ref=e533]
+                  - cell "Deliver initiatives and manage dependencies. Playbook source text (B0018)" [ref=e534]:
+                    - generic [ref=e535]:
+                      - text: Deliver initiatives and manage dependencies.
+                      - generic [ref=e536]: Playbook source text (B0018)
+                  - cell "This transformation" [ref=e537]
+                  - cell "17 Oct 2026, 23:44" [ref=e538]
+                  - cell "No end date" [ref=e539]
+            - navigation "Pagination" [ref=e540]:
+              - generic [ref=e541]: Page 1 of 1 · 5 of 5 rows
+              - generic [ref=e542]:
+                - generic [ref=e543]: Rows per page
+                - combobox "Rows per page" [ref=e544]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e545]
+              - button "Next" [disabled] [ref=e546]
+```
