@@ -37,6 +37,13 @@ import {
 } from "../prioritization/p3ui.tsx";
 import { useRoadmap, type T08Dependency } from "../roadmap/api.ts";
 import { dependencyUrls, useDependencyTypes, useT08Dependencies, type CycleNode, type DependencyType } from "./api.ts";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import {
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function DependenciesPage() {
   const { t } = useTranslation();
@@ -78,6 +85,7 @@ function DependenciesBody() {
   const [archiving, setArchiving] = useState<T08Dependency | null>(null);
   const [conflict, setConflict] = useState(false);
   const canEdit = can("dependency.edit");
+  const ext = useExtensionCreate("T08");
   const initiatives: Ini[] = (roadmap.data?.initiatives ?? []).map((i) => ({ id: i.id, code: i.code, name: i.name }));
   const ini = new Map(initiatives.map((i) => [i.id, i]));
   const typeLabel = (code: string) => {
@@ -117,6 +125,7 @@ function DependenciesBody() {
           ) : null
         }
       >
+        <TemplateProvenance templateCode="T08" />
         <QueryState
           query={deps}
           isEmpty={(d) => d.length === 0}
@@ -136,6 +145,7 @@ function DependenciesBody() {
                     <th scope="col">{t("dependencies.col.owner")}</th>
                     <th scope="col">{t("dependencies.col.statusMitigation")}</th>
                     <th scope="col">{t("dependencies.col.flags")}</th>
+                    <th scope="col">{t("forms.extensions.columnHeader")}</th>
                     {canEdit ? <th scope="col">{t("dependencies.col.actions")}</th> : null}
                   </tr>
                 </thead>
@@ -161,6 +171,15 @@ function DependenciesBody() {
                       </td>
                       <td>
                         <FlagList flags={d.flags} />
+                      </td>
+                      <td>
+                        <RecordExtensionTools
+                          recordType="T08"
+                          record={d}
+                          recordLabel={`${d.code} ${d.description}`}
+                          canWrite={canEdit && d.status !== "archived"}
+                          refresh={refresh}
+                        />
                       </td>
                       {canEdit ? (
                         <td>
@@ -191,10 +210,12 @@ function DependenciesBody() {
             </TableRegion>
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
       <TypesSection />
       {editing ? (
         <DependencyDialog
+          ext={ext}
           record={editing === "new" ? null : editing}
           initiatives={initiatives}
           types={(types.data ?? []).filter((x) => x.status === "active")}
@@ -270,6 +291,7 @@ function valuesOf(d: T08Dependency | null): FormValues {
 }
 
 function DependencyDialog({
+  ext,
   record,
   initiatives,
   types,
@@ -277,6 +299,7 @@ function DependencyDialog({
   onDone,
   onConflict,
 }: {
+  ext?: ExtensionEntry;
   record: T08Dependency | null;
   initiatives: readonly Ini[];
   types: readonly DependencyType[];
@@ -318,7 +341,7 @@ function DependencyDialog({
     if (!v.dependencyType) errs["dependencyType"] = "validation.required";
     text("mitigation", false);
     setErrors(errs);
-    if (Object.keys(errs).length > 0) {
+    if (Object.keys(errs).length > 0 || (record === null && ext && !ext.check())) {
       focusInvalid();
       return;
     }
@@ -339,11 +362,13 @@ function DependencyDialog({
     setBusy(true);
     try {
       if (record === null) {
-        await api.send(dependencyUrls.collection, {
+        const created = await api.send(dependencyUrls.collection, {
           method: "POST",
           body: { transformationId: tid, ...full },
           idempotencyKey: key,
         });
+        if (action.stale()) return;
+        await ext?.afterCreate(created);
       } else {
         const base = valuesOf(record);
         const body: Record<string, unknown> = {};
@@ -524,6 +549,7 @@ function DependencyDialog({
           />
         )}
       </Field>
+      {record ? null : ext?.node}
     </Dialog>
   );
 }

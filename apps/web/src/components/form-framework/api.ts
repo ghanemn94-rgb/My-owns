@@ -35,6 +35,7 @@ import {
   useTransformationFormSchema,
 } from "../../api/p5.ts";
 import type { Locale } from "@mth/shared";
+import { defineField, FD, validateFieldValue } from "@mth/shared/calc";
 
 export type {
   FormCustomValues,
@@ -230,4 +231,74 @@ export function threadsOf(
     comment,
     replies: comments.filter((r) => r.parentCommentId === comment.id),
   }));
+}
+
+// ------------------------------------------------------------------------------------------------ local checks
+
+/**
+ * The out-of-range limits of a field, as the user reads them (T-DG5-FE-C2; F-DG5-QA-A-4): number and date limits as
+ * stored; percentage limits (stored as fractions) as percents with decimal.js (0.5 → "50%"), never through a float.
+ */
+export function rangeLimitsOf(field: Pick<FormField, "fieldType" | "settings">): { min?: string; max?: string } {
+  const read = (k: "min" | "max"): string | undefined => {
+    const v = field.settings[k];
+    if (typeof v !== "string" || v === "") return undefined;
+    if (field.fieldType !== "percentage") return v;
+    try {
+      return `${new FD(v).times(100).toFixed()}%`;
+    } catch {
+      return v;
+    }
+  };
+  const min = read("min");
+  const max = read("max");
+  return { ...(min === undefined ? {} : { min }), ...(max === undefined ? {} : { max }) };
+}
+
+/** The result of the web's own check of one extension value (the same pure validators as the API; ADR-0041 §5). */
+export type ExtensionCheck =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly code: string; readonly range?: { readonly min?: string; readonly max?: string } };
+
+/**
+ * Checks one extension value with the shared validators before it is sent: a refusal carries the field code, and an
+ * out-of-range refusal of a well-formed value carries the field's limits so the message names them. Checks the server
+ * makes in its transaction (reference, attachment, lookup membership) are left to the server. Unknown ("") is valid
+ * unless the field is required.
+ */
+export function checkExtensionValue(field: FormField, text: string, currencyCode: string): ExtensionCheck {
+  const value = valueFromText(field, text, currencyCode);
+  if (value === null) return field.required ? { ok: false, code: "validation.required" } : { ok: true };
+  const def = defineField(field.key, field.fieldType, field.settings, {
+    defaultCurrency: currencyCode,
+    required: field.required,
+  });
+  if (!def.ok) return { ok: true }; // a setting the web cannot read: the server decides (and answers with its code)
+  const r = validateFieldValue(def.field, value, { percentageBareAs: "fraction" });
+  if (r.ok) return { ok: true };
+  return r.params["reason"] === "range"
+    ? { ok: false, code: r.code, range: rangeLimitsOf(field) }
+    : { ok: false, code: r.code };
+}
+
+/**
+ * The message key and parameters of an extension field error: an out-of-range value names its limit (en and ar);
+ * the server's 400 code for a value the local check finds out of range (the server's `validation.decimal`,
+ * `validation.percentage` or `validation.date` with reason "range") is shown the same way. Otherwise the code itself.
+ */
+export function extensionErrorKey(
+  code: string,
+  field: FormField | undefined,
+  text: string,
+  currencyCode: string,
+): { key: string; params: Record<string, string> } | { code: string } {
+  const local = field ? checkExtensionValue(field, text, currencyCode) : null;
+  const range = local && !local.ok && local.code === code ? local.range : undefined;
+  if (range && (range.min !== undefined || range.max !== undefined)) {
+    if (range.min !== undefined && range.max !== undefined)
+      return { key: "forms.extensions.range.between", params: { min: range.min, max: range.max } };
+    if (range.max !== undefined) return { key: "forms.extensions.range.max", params: { max: range.max } };
+    return { key: "forms.extensions.range.min", params: { min: range.min ?? "" } };
+  }
+  return { code };
 }

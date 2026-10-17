@@ -29,6 +29,13 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { MatrixStatus, SubmitMatrixDialog } from "../decision-rights/DecisionRightsPage.tsx";
 import { FormAlert, P4FormDialog, textOf } from "../my-work/p4ui.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import {
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 const NS = ["raci"] as const;
 type Deliverable = Raci["deliverables"][number];
@@ -60,6 +67,7 @@ function RaciBody() {
   const matrix = (matrices.data ?? []).find((m) => m.kind === "raci");
   const canEdit = ws.can("raci.edit") && matrix?.status !== "in_approval";
   const [dialog, setDialog] = useState<"add" | "submit" | null>(null);
+  const ext = useExtensionCreate("T12");
   const partyMap = new Map((parties.data ?? []).map((p) => [p.code, p]));
   return (
     <>
@@ -79,15 +87,17 @@ function RaciBody() {
           ) : null
         }
       >
+        <TemplateProvenance templateCode="T12" />
         <QueryState query={raci}>
           {(r) => <RaciGrid raci={r} parties={partyMap} canEdit={canEdit} onDone={refresh} />}
         </QueryState>
+        {ext.outcome}
       </Section>
       {dialog === "submit" && matrix ? (
         <SubmitMatrixDialog matrix={matrix} onDone={refresh} onClose={() => setDialog(null)} />
       ) : null}
       {dialog === "add" && raci.data ? (
-        <AddDeliverableDialog parties={raci.data.parties} onDone={refresh} onClose={() => setDialog(null)} />
+        <AddDeliverableDialog ext={ext} parties={raci.data.parties} onDone={refresh} onClose={() => setDialog(null)} />
       ) : null}
     </>
   );
@@ -207,6 +217,13 @@ function RaciRow({
               {t("raci.exception")}: {d.accountabilityException}
             </span>
           ) : null}
+          <RecordExtensionTools
+            recordType="T12"
+            record={d}
+            recordLabel={label}
+            canWrite={canEdit && d.status === "active"}
+            refresh={onDone}
+          />
         </th>
         {parties.map((p) => {
           const v = cells.get(p) ?? "";
@@ -284,10 +301,12 @@ function RaciRow({
 }
 
 function AddDeliverableDialog({
+  ext,
   parties,
   onDone,
   onClose,
 }: {
+  ext?: ExtensionEntry;
   parties: readonly string[];
   onDone: () => Promise<boolean>;
   onClose: () => void;
@@ -318,7 +337,9 @@ function AddDeliverableDialog({
       ]}
       submitLabel={t("raci.add.submit")}
       url={p4Paths.raciDeliverables(ws.tid)}
+      note={ext?.node}
       toBody={(v) => {
+        if (ext && !ext.check()) return { fieldErrors: { extensionFields: "validation.invalid" } };
         const exception = textOf(v["accountabilityException"]);
         return {
           labelEn: textOf(v["labelEn"]),
@@ -328,7 +349,10 @@ function AddDeliverableDialog({
         };
       }}
       namespaces={NS}
-      onDone={onDone}
+      onDone={async (result) => {
+        if (ext && result) await ext.afterCreate(result);
+        return onDone();
+      }}
       onClose={onClose}
     />
   );

@@ -33,6 +33,13 @@ import {
   TypeLabel,
   vocabOptions,
 } from "./ui.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import {
+  RecordExtensionTools,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 /** The per-type header of the Mitigation / action column (B0128: Action, Validate, Resolve, Mitigate). */
 export const MITIGATION_HEADER: Record<string, string> = {
@@ -82,6 +89,8 @@ function Register() {
   const { byId } = usePeople(ws.tid);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const canEdit = (e: RaidEntry) => ws.can(e.type === "dependency" ? "dependency.edit" : "raid.edit");
+  const ext = useExtensionCreate("T15");
+  const refreshEntries = useP4Refresh(ws.tid);
   const columns: RegisterColumn<RaidEntry>[] = [
     {
       id: "code",
@@ -161,6 +170,13 @@ function Register() {
       hideable: false,
       cell: (e) => (
         <span className="chip-row">
+          <RecordExtensionTools
+            recordType="T15"
+            record={e}
+            recordLabel={e.code}
+            canWrite={e.status !== "closed" && ws.can("raid.edit")}
+            refresh={refreshEntries}
+          />
           <button
             type="button"
             className="button button--secondary button--small"
@@ -209,6 +225,7 @@ function Register() {
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T15" />
       <div className="filters" role="group" aria-label={t("raidP4.register.filters")}>
         <div className="filters__select">
           <label htmlFor="raid-filter-type">{t("raidP4.col.type")}</label>
@@ -247,7 +264,8 @@ function Register() {
           />
         )}
       </QueryState>
-      {dialog?.kind === "create" ? <CreateEntryDialog onClose={() => setDialog(null)} /> : null}
+      {ext.outcome}
+      {dialog?.kind === "create" ? <CreateEntryDialog ext={ext} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "edit" ? <EditEntryDialog entry={dialog.entry} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "close" ? <CloseEntryDialog entry={dialog.entry} onClose={() => setDialog(null)} /> : null}
       {dialog?.kind === "actions" ? <EntryActionsDialog entry={dialog.entry} onClose={() => setDialog(null)} /> : null}
@@ -284,7 +302,7 @@ function useEntryFieldOptions(tid: string) {
   };
 }
 
-function CreateEntryDialog({ onClose }: { onClose: () => void }) {
+function CreateEntryDialog({ ext, onClose }: { ext?: ExtensionEntry; onClose: () => void }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
@@ -352,19 +370,27 @@ function CreateEntryDialog({ onClose }: { onClose: () => void }) {
       submitLabel={t("raidP4.register.createSubmit")}
       url={raidPaths.entries(ws.tid)}
       namespaces={NS}
-      toBody={(v) => ({
-        type: v["type"],
-        description: v["description"],
-        impact: v["impact"],
-        ...(v["type"] === "risk" ? { probability: v["probability"] } : {}),
-        ownerUserId: v["ownerUserId"],
-        ...(dateOrNull(v["dueDate"]) ? { dueDate: v["dueDate"] } : {}),
-        ...(textOf(v["mitigation"]) ? { mitigation: v["mitigation"] } : {}),
-        ...(!isDep(v) && v["initiativeId"] ? { initiativeId: v["initiativeId"] } : {}),
-        ...(isDep(v) && v["fromInitiativeId"] ? { fromInitiativeId: v["fromInitiativeId"] } : {}),
-        ...(isDep(v) ? { toInitiativeId: v["toInitiativeId"] } : {}),
-      })}
-      onDone={refresh}
+      note={ext?.node}
+      toBody={(v) =>
+        ext && !ext.check()
+          ? { fieldErrors: { extensionFields: "validation.invalid" } }
+          : {
+              type: v["type"],
+              description: v["description"],
+              impact: v["impact"],
+              ...(v["type"] === "risk" ? { probability: v["probability"] } : {}),
+              ownerUserId: v["ownerUserId"],
+              ...(dateOrNull(v["dueDate"]) ? { dueDate: v["dueDate"] } : {}),
+              ...(textOf(v["mitigation"]) ? { mitigation: v["mitigation"] } : {}),
+              ...(!isDep(v) && v["initiativeId"] ? { initiativeId: v["initiativeId"] } : {}),
+              ...(isDep(v) && v["fromInitiativeId"] ? { fromInitiativeId: v["fromInitiativeId"] } : {}),
+              ...(isDep(v) ? { toInitiativeId: v["toInitiativeId"] } : {}),
+            }
+      }
+      onDone={async (result) => {
+        if (ext && result) await ext.afterCreate(result);
+        return refresh();
+      }}
       onClose={onClose}
     />
   );

@@ -38,6 +38,9 @@ import { formulaUrl, useBenefitFormula, useCalculations, useFormulaVersions, ver
 import { ConfidenceChip, FORMULA_WRITE_PERMISSIONS, IllustrativeMarker } from "./BenefitFormulasPage.tsx";
 import { FormulaBuilder, MarkedExpression } from "./FormulaBuilder.tsx";
 import { entryUnit, FormulaValue, toEntry, toStored, typeLabel } from "./values.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { RecordExtensionTools } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function BenefitFormulaPage() {
   const { t } = useTranslation();
@@ -225,6 +228,14 @@ function RowSection({ formula, canEdit }: { formula: BenefitFormula; canEdit: bo
         <RecordStatus status={formula.status} />
         {formula.isIllustrative ? <IllustrativeMarker /> : null}
       </p>
+      <TemplateProvenance templateCode="T09" />
+      <RecordExtensionTools
+        recordType="T09"
+        record={formula}
+        recordLabel={formula.code}
+        canWrite={canEdit}
+        refresh={refresh}
+      />
       {save.conflict ? (
         <ConflictPanel
           yourVersion={save.base.version}

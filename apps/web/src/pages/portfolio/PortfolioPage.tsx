@@ -35,6 +35,8 @@ import {
   WarningList,
   waveName,
 } from "./common.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { useExtensionCreate } from "../../components/form-framework/index.ts";
 
 export const PORTFOLIO_WRITE = ["initiative.edit", "initiative.launch", "portfolio.select"] as const;
 
@@ -79,6 +81,7 @@ function InitiativeList() {
   const navigate = useSessionNavigate();
   const [creating, setCreating] = useState(false);
   const canEdit = ws.can("initiative.edit");
+  const ext = useExtensionCreate("T05");
   const waveById = new Map((waves.data ?? []).map((w) => [w.id, w]));
   const base = `/transformations/${ws.tid}`;
 
@@ -248,6 +251,7 @@ function InitiativeList() {
           />
         )}
       </QueryState>
+      {ext.outcome}
       {creating ? (
         <RecordDialog<Initiative>
           title={t("portfolio.create.title")}
@@ -256,18 +260,21 @@ function InitiativeList() {
           fields={createFields}
           record={null}
           extra={{ transformationId: ws.tid }}
-          createSchema={initiativeCreate}
+          createSchema={ext.guard(initiativeCreate)}
           createUrl="/api/v1/initiatives"
           people={people}
           submitLabel={t("portfolio.create.submit")}
           onSaved={async (saved) => {
+            await ext.afterCreate(saved);
             if (!(await refresh())) return;
             setCreating(false);
             const id = (saved as { id?: string } | null)?.id;
             if (id) navigate(`${base}/initiatives/${id}`);
           }}
           onCancel={() => setCreating(false)}
-        />
+        >
+          {ext.node}
+        </RecordDialog>
       ) : null}
     </Section>
   );

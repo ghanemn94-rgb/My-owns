@@ -38,6 +38,13 @@ import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { BusinessApprovalNote, DueDate, P4FormDialog, textOf, type P4Values } from "../my-work/p4ui.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import {
+  extensionToolsColumn,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 const NS = ["decisionRights"] as const;
 export const SLA_TYPES = ["working_days", "next_steerco_or_urgent", "release_plan"] as const;
@@ -200,6 +207,7 @@ function DecisionRightsBody() {
   const canConfigure = ws.can("decision_right.configure");
   const frozen = matrix?.status === "in_approval";
   const [dialog, setDialog] = useState<"add" | "submit" | "request" | DecisionRight | null>(null);
+  const ext = useExtensionCreate("T11");
   const [preview, setPreview] = useState<DecisionRight | null>(null);
 
   const columns: RegisterColumn<DecisionRight>[] = [
@@ -282,6 +290,11 @@ function DecisionRightsBody() {
       cell: (r) => t(`decisionRights.status.${r.status}`),
       sortValue: (r) => r.status,
     },
+    extensionToolsColumn<DecisionRight>(t("forms.extensions.columnHeader"), "T11", {
+      label: (r) => (locale === "ar" ? r.decisionAr : r.decisionEn),
+      canWrite: () => canConfigure && !frozen,
+      refresh,
+    }),
     {
       id: "actions",
       header: t("common.field.actions"),
@@ -344,6 +357,7 @@ function DecisionRightsBody() {
           {(list) => (
             <>
               <DecisionRightsArNotice />
+              <TemplateProvenance templateCode="T11" />
               <RegisterTable
                 id="p4-decision-rights"
                 caption={t("decisionRights.listTitle")}
@@ -356,10 +370,12 @@ function DecisionRightsBody() {
             </>
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
       {preview ? <DueDatePreview row={preview} onClose={() => setPreview(null)} /> : null}
       {dialog === "add" || (dialog && typeof dialog === "object") ? (
         <RowDialog
+          ext={ext}
           row={dialog === "add" ? null : (dialog as DecisionRight)}
           parties={parties.data ?? []}
           onDone={refresh}
@@ -417,11 +433,13 @@ export function SubmitMatrixDialog({
 }
 
 function RowDialog({
+  ext,
   row,
   parties,
   onDone,
   onClose,
 }: {
+  ext?: ExtensionEntry;
   row: DecisionRight | null;
   parties: readonly GovernanceParty[];
   onDone: () => Promise<boolean>;
@@ -550,7 +568,9 @@ function RowDialog({
       method={row ? "PATCH" : "POST"}
       url={row ? p4Paths.decisionRight(ws.tid, row.id) : p4Paths.decisionRights(ws.tid)}
       {...(row ? { version: row.version } : {})}
+      note={row ? null : ext?.node}
       toBody={(v) => {
+        if (!row && ext && !ext.check()) return { fieldErrors: { extensionFields: "validation.invalid" } };
         const errors: Record<string, string> = {};
         const lists: Record<string, string[]> = {};
         for (const name of ["recommendParties", "consultParties", "informParties", "escalationChain"]) {
@@ -596,7 +616,10 @@ function RowDialog({
         return body;
       }}
       namespaces={NS}
-      onDone={onDone}
+      onDone={async (result) => {
+        if (!row && ext && result) await ext.afterCreate(result);
+        return onDone();
+      }}
       onClose={onClose}
     />
   );

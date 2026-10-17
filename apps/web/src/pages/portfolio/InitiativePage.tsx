@@ -60,6 +60,9 @@ import { FundingSection } from "./funding.tsx";
 import { DeliverablesSection, MilestonesSection } from "./roadmapParts.tsx";
 // T-DG4-FE-D2 (p4-work-split §E.5): the slice E slot (budget lines, execution, schedule network).
 import { InitiativeExecutionSlot } from "../actions/ExecutionPanel.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { RecordExtensionTools } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 const READ_ONLY_STATUSES: ReadonlySet<string> = new Set(["cancelled", "completed"]);
 
@@ -429,6 +432,7 @@ function T05Card({ initiative: i, readOnly }: { initiative: Initiative; readOnly
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T05" />
       <dl className="t05-fields">
         {rows.map((r) => (
           <div key={r.key} data-t05={r.n} className="t05-field">
@@ -461,6 +465,13 @@ function T05Card({ initiative: i, readOnly }: { initiative: Initiative; readOnly
           <dd>{formatBusinessDate(i.plannedEnd, locale) ?? <span className="muted">{t("common.value.none")}</span>}</dd>
         </div>
       </dl>
+      <RecordExtensionTools
+        recordType="T05"
+        record={i}
+        recordLabel={`${i.code} ${i.name}`}
+        canWrite={canEdit}
+        refresh={refresh}
+      />
       {editing ? (
         <RecordDialog<Initiative>
           title={t("portfolio.card.editTitle", { code: i.code })}

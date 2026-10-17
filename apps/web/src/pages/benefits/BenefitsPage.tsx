@@ -46,6 +46,9 @@ import {
   StepChip,
   UnknownChip,
 } from "./ui.tsx";
+// T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
+import { useExtensionCreate, type ExtensionEntry } from "../../components/form-framework/index.ts";
+import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export const BENEFIT_WRITE_PERMISSIONS = [
   "benefit.edit",
@@ -150,6 +153,7 @@ function Register() {
   const register = useBenefitRegister(ws.tid, query);
   const { byId } = usePeople(ws.tid);
   const [creating, setCreating] = useState(false);
+  const ext = useExtensionCreate("T14");
   const canCreate = ws.can("benefit.edit");
   const columns: RegisterColumn<BenefitRegisterRow>[] = [
     {
@@ -285,7 +289,9 @@ function Register() {
         ) : null
       }
     >
+      <TemplateProvenance templateCode="T14" />
       {!canCreate && ws.canAny(...BENEFIT_WRITE_PERMISSIONS) ? <ReadOnlyNote /> : null}
+      {ext.outcome}
       <div className="filters" role="group" aria-label={t("benefitsP4.register.filters")}>
         <div className="filters__select">
           <label htmlFor="benefit-filter-status">{t("benefitsP4.register.filterStatus")}</label>
@@ -326,6 +332,7 @@ function Register() {
       </QueryState>
       {creating ? (
         <CreateBenefitDialog
+          ext={ext}
           onClose={() => setCreating(false)}
           onCreated={(id) => navigate(`/transformations/${ws.tid}/benefits/${id}`)}
         />
@@ -352,7 +359,15 @@ export function useProfileOptions(tid: string) {
   };
 }
 
-function CreateBenefitDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (id: string) => void }) {
+function CreateBenefitDialog({
+  ext,
+  onClose,
+  onCreated,
+}: {
+  ext?: ExtensionEntry;
+  onClose: () => void;
+  onCreated: (id: string) => void;
+}) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const refresh = useP4Refresh(ws.tid);
@@ -370,13 +385,18 @@ function CreateBenefitDialog({ onClose, onCreated }: { onClose: () => void; onCr
       url={benefitPaths.benefits(ws.tid)}
       namespaces={NS}
       onValuesChange={setValues}
+      note={ext?.node}
       toBody={(v) =>
-        profileBody(
-          v,
-          fields.filter((f) => !f.when || f.when(v)).map((f) => f.name),
-        )
+        ext && !ext.check()
+          ? { fieldErrors: { extensionFields: "validation.invalid" } }
+          : profileBody(
+              v,
+              fields.filter((f) => !f.when || f.when(v)).map((f) => f.name),
+            )
       }
       onDone={async (result) => {
+        // A refusal of the extension values is shown on the register (the benefit was created); no navigation then.
+        if (ext && result && !(await ext.afterCreate(result))) return refresh();
         const ok = await refresh();
         if (ok && result && typeof result === "object" && "id" in result) onCreated((result as { id: string }).id);
         return ok;
