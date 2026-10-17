@@ -475,15 +475,57 @@ export interface ExpiryScanResult {
   readonly notified: number;
 }
 
+/**
+ * T-DG5-BE-C3 (F-DG5-QA-A-1; ADR-0039 §3): the EFFECTIVE approver of one gate instance, the SQL twin of the API's
+ * `routedApproverOf` (workflows/gates.ts; the worker imports no API code). The gate's default approver in the
+ * transformation's pinned methodology version is the version's `gate` row value when it is a string inside the DG2
+ * allowed set, else the catalogue default (workflows/criteria.ts `resolveGateDefinitions`); with no pin, version 1 of
+ * `playbook` (ConfigResolver `pinnedVersion`). A gate whose approver was never configured (no named user, the catalogue
+ * default role) follows that default; a configured approver, and every v1-pinned transformation, keep the stored one.
+ */
+export async function effectiveGateApproverOf(
+  tx: Tx,
+  gateInstanceId: string,
+): Promise<{ transformationId: string; roleCode: string; userId: string | null }> {
+  const r = await sql<{
+    transformation_id: string;
+    approver_role_code: string;
+    approver_user_id: string | null;
+    catalogue_default: string;
+    allowed: string[];
+    pinned_default: string | null;
+  }>`
+    SELECT i.transformation_id, i.approver_role_code, i.approver_user_id,
+           g.default_approver_role_code AS catalogue_default, g.allowed_approver_role_codes AS allowed,
+           (SELECT CASE WHEN jsonb_typeof(e.attributes -> 'defaultApproverRoleCode') = 'string'
+                        THEN e.attributes ->> 'defaultApproverRoleCode' END
+              FROM methodology_element e
+             WHERE e.element_type = 'gate' AND e.stable_key = i.gate_code AND e.origin = 'source'
+               AND e.methodology_version_id = COALESCE(
+                 (SELECT p.methodology_version_id FROM transformation_config_pin p
+                   WHERE p.transformation_id = i.transformation_id AND p.kind = 'methodology'),
+                 (SELECT v.id FROM methodology_version v
+                   WHERE v.config_kind = 'methodology' AND v.key = 'playbook' AND v.version_no = 1))) AS pinned_default
+    FROM gate_instance i
+    JOIN gate_definition g ON g.code = i.gate_code
+    WHERE i.id = ${gateInstanceId}::uuid`.execute(tx);
+  const i = r.rows[0];
+  if (i === undefined) throw new Error(`gate instance ${gateInstanceId} not found`);
+  const resolved =
+    i.pinned_default !== null && i.allowed.includes(i.pinned_default) ? i.pinned_default : i.catalogue_default;
+  const follows = i.approver_user_id === null && i.approver_role_code === i.catalogue_default;
+  return {
+    transformationId: i.transformation_id,
+    roleCode: follows ? resolved : i.approver_role_code,
+    userId: i.approver_user_id,
+  };
+}
+
 /** The gate approvers of one gate instance: the configured user, else the approver-role holders (API isGateApprover). */
 async function gateApprovers(tx: Tx, gateInstanceId: string): Promise<string[]> {
-  const i = await tx
-    .selectFrom("gate_instance")
-    .select(["transformation_id", "approver_role_code", "approver_user_id"])
-    .where("id", "=", gateInstanceId)
-    .executeTakeFirstOrThrow();
-  if (i.approver_user_id !== null) return [i.approver_user_id];
-  return approverRoleHolders(tx, i.transformation_id, i.approver_role_code);
+  const i = await effectiveGateApproverOf(tx, gateInstanceId);
+  if (i.userId !== null) return [i.userId];
+  return approverRoleHolders(tx, i.transformationId, i.roleCode);
 }
 
 export async function runGateExceptionExpiryScan(

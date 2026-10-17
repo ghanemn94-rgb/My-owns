@@ -25291,12 +25291,35 @@ components:
         note: { type: string, minLength: 3, maxLength: 2000 }
     AutomationDryRunRequest:
       type: object
-      description: "A sample event: its triggerCode and a payload with the trigger's fields (synthetic data)."
+      description: >-
+        A sample event (synthetic data): its triggerCode, one of the version's triggers, and its payload, validated
+        against the trigger's payload schema (ADR-0043 §4). For an event trigger whose outbox event has a payload schema
+        (for example gate.submitted, gate.decided), the payload is the COMPLETE event payload of schema version 1,
+        exactly as the outbox carries it: every member that event's schema requires and no other member, not only the
+        trigger's conditionFields. gate.submitted v1 has 10 members: gateInstanceId, transformationId, gateCode,
+        submissionId, submissionNo, snapshotSha256 (64 lowercase hex characters), approverRoleCode, approverUserId (or
+        null), submittedBy, supersededSubmissionId (or null). For a schedule trigger, or an event without a payload
+        schema, the payload holds only the trigger's conditionFields, its initiating-user field and transformationId,
+        each a string, number, boolean or null. At most 16384 bytes of JSON. Any other sample is refused with 422
+        automation.dry_run_sample_invalid.
       required: [triggerCode, payload]
       additionalProperties: false
       properties:
         triggerCode: { type: string }
         payload: { type: object }
+      examples:
+        - triggerCode: gate.submitted
+          payload:
+            gateInstanceId: "01920000-0000-7000-8000-000000000001"
+            transformationId: "01920000-0000-7000-8000-000000000002"
+            gateCode: G3
+            submissionId: "01920000-0000-7000-8000-000000000003"
+            submissionNo: 1
+            snapshotSha256: "0000000000000000000000000000000000000000000000000000000000000000"
+            approverRoleCode: BO
+            approverUserId: null
+            submittedBy: "01920000-0000-7000-8000-000000000004"
+            supersededSubmissionId: null
     AutomationPlannedAction:
       type: object
       required: [ordinal, actionType, outcome, target, idempotencyKey, messageKey]

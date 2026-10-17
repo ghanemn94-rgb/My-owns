@@ -151,17 +151,23 @@ export function inheritedApprovalOf(
   };
 }
 
+/**
+ * T-DG5-BE-C3 (F-DG5-QA-A-1; REQ-S06-004, ADR-0039 §3, ADR-0015 §2): `approver` is the EFFECTIVE approver, the one
+ * `routedApproverOf` resolves for a new submission. Without it (or for a v1-pinned transformation, or a configured
+ * approver) it is the stored one, so those responses stay byte-identical (p5-plan R2).
+ */
 export const toGateInstance = (
   r: GateInstanceRow,
   inheritedApproval: GateInheritedApproval | null = null,
+  approver: { readonly roleCode: string; readonly userId: string | null } | null = null,
 ): GateInstance => ({
   id: r.id,
   organizationId: r.organization_id,
   transformationId: r.transformation_id,
   gateCode: r.gate_code,
   status: r.status as GateInstance["status"],
-  approverRoleCode: r.approver_role_code,
-  approverUserId: r.approver_user_id,
+  approverRoleCode: approver?.roleCode ?? r.approver_role_code,
+  approverUserId: approver === null ? r.approver_user_id : approver.userId,
   currentSubmissionId: r.current_submission_id,
   latestSubmissionNo: r.latest_submission_no,
   approvedAt: isoOrNull(r.approved_at),
@@ -275,6 +281,53 @@ function routedApproverOf(
   return approverOf(instance, resolved);
 }
 
+/** The approver one gate's NEW submissions route to, with the instance it belongs to (T-DG5-BE-C3). */
+export interface EffectiveGateApprover {
+  readonly gateInstanceId: string;
+  readonly gateCode: string;
+  readonly roleCode: string;
+  readonly userId: string | null;
+  readonly basis: Approver["basis"];
+}
+
+/**
+ * T-DG5-BE-C3 (F-DG5-QA-A-1; REQ-S06-004, REQ-S20-006; ADR-0039 §3, ADR-0015 §2): the EFFECTIVE approver of every gate
+ * of a transformation, keyed by gate code: exactly `routedApproverOf` (the rule `submitGate` routes a new submission
+ * by), so every read that names a gate's approver (the gate views, the exception routing, the G5 disposition party)
+ * names the approver who can actually decide. Runtime resolution: nothing stored is rewritten. For a v1-pinned
+ * transformation, and for a configured approver (named user or configured role), this is the stored approver.
+ */
+export async function effectiveGateApprovers(
+  db: DbOrTx,
+  transformationId: string,
+): Promise<Map<string, EffectiveGateApprover>> {
+  const catalogue = await loadGateDefinitions(db);
+  const defs = await resolveGateDefinitions(db, transformationId, catalogue);
+  const instances = await db
+    .selectFrom("gate_instance")
+    .select(["id", "gate_code", "approver_role_code", "approver_user_id"])
+    .where("transformation_id", "=", transformationId)
+    .execute();
+  const out = new Map<string, EffectiveGateApprover>();
+  for (const i of instances) {
+    const base = catalogue.find((d) => d.code === i.gate_code);
+    const def = defs.find((d) => d.code === i.gate_code);
+    // Every instance names a catalogue gate (0017 FK gate_code -> gate_definition.code), so nothing is skipped.
+    if (base === undefined || def === undefined) continue;
+    out.set(i.gate_code, { gateInstanceId: i.id, gateCode: i.gate_code, ...routedApproverOf(i, base, def) });
+  }
+  return out;
+}
+
+/** The effective approver of one gate of a transformation (see `effectiveGateApprovers`); undefined when unknown. */
+export async function effectiveGateApprover(
+  db: DbOrTx,
+  transformationId: string,
+  gateCode: string,
+): Promise<EffectiveGateApprover | undefined> {
+  return (await effectiveGateApprovers(db, transformationId)).get(gateCode);
+}
+
 /** Does `userGrants` hold the approver role WITH gate.decide on the transformation? (no title ever implies it) */
 function holdsApproverRole(
   grants: readonly Parameters<typeof grantApplies>[0][],
@@ -361,6 +414,7 @@ async function gateView(
   facts: GateFacts,
   defs: readonly GateDefinition[],
   inherited: readonly InheritedApprovalFact[],
+  catalogue: readonly GateDefinition[],
 ) {
   const criteria: GateCriterionEvaluation[] = evaluateGate(def, facts);
   const current = instance.current_submission_id
@@ -393,7 +447,12 @@ async function gateView(
     pending.submitted_by !== principal.userId &&
     (await isApprover(db, principal, approverOf(pending, def), target, undefined));
   return {
-    gate: toGateInstance(instance, inheritedApprovalOf(inherited, instance.gate_code)),
+    // T-DG5-BE-C3 (F-DG5-QA-A-1): the gate names the approver its new submissions are routed to.
+    gate: toGateInstance(
+      instance,
+      inheritedApprovalOf(inherited, instance.gate_code),
+      routedApproverOf(instance, definitionOf(catalogue, instance.gate_code), def),
+    ),
     definition: def,
     criteria,
     currentSubmission: current ? toGateSubmission(current) : null,
@@ -560,7 +619,8 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const { transformationId } = parse(tParams, request.params, "params");
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const defs = await resolveGateDefinitions(db, transformationId);
+    const catalogue = await loadGateDefinitions(db);
+    const defs = await resolveGateDefinitions(db, transformationId, catalogue);
     const instances = await db
       .selectFrom("gate_instance")
       .selectAll()
@@ -572,7 +632,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     for (const def of defs) {
       const instance = instances.find((i) => i.gate_code === def.code);
       if (!instance) throw problems.notFound();
-      items.push(await gateView(db, principal, target, instance, def, facts, defs, inherited));
+      items.push(await gateView(db, principal, target, instance, def, facts, defs, inherited, catalogue));
     }
     return { items };
   });
@@ -581,7 +641,8 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const { transformationId, gateCode } = parse(gParams, request.params, "params");
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const defs = await resolveGateDefinitions(db, transformationId);
+    const catalogue = await loadGateDefinitions(db);
+    const defs = await resolveGateDefinitions(db, transformationId, catalogue);
     const def = definitionOf(defs, gateCode);
     const instance = await instanceOf(db, transformationId, gateCode);
     const view = await gateView(
@@ -593,6 +654,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       await loadGateFacts(db, transformationId, gateFacts),
       defs,
       await gateFacts.inheritedApprovals(db, transformationId),
+      catalogue,
     );
     reply.header("ETag", `"${instance.version}"`);
     return view;
@@ -603,7 +665,8 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     const instance = await db.transaction().execute(async (tx) => {
       const ctx = await writeAtCommit(tx, request, transformationId, [{ permission: "gate.configure" }]);
       const body = parseBody(gateApproverConfig, request.body);
-      const def = definitionOf(await loadGateDefinitions(tx), gateCode);
+      // T-DG5-BE-C3: the allowed set of the RESOLVED definition (the transformation's pinned methodology version).
+      const def = definitionOf(await resolveGateDefinitions(tx, transformationId), gateCode);
       const expected = requireIfMatch(request);
       const current = await instanceOf(tx, transformationId, gateCode, true);
       if (current.version !== expected) throw problems.versionConflict(current.version);
@@ -659,7 +722,8 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     });
     const principal = principalOf(request);
     const target = await requireTransformationRead(db, principal, transformationId);
-    const defs = await resolveGateDefinitions(db, transformationId);
+    const catalogue = await loadGateDefinitions(db);
+    const defs = await resolveGateDefinitions(db, transformationId, catalogue);
     const def = definitionOf(defs, gateCode);
     reply.header("ETag", `"${instance.version}"`);
     return gateView(
@@ -671,6 +735,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       await loadGateFacts(db, transformationId, gateFacts),
       defs,
       await gateFacts.inheritedApprovals(db, transformationId),
+      catalogue,
     );
   });
 
