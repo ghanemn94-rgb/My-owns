@@ -33,6 +33,7 @@ import {
 } from "../../test/fixtures.tsx";
 import { toBody, toDraft } from "../procedure-builder/DefinitionPage.tsx";
 import { toContentBody, toContentDraft } from "./ContentEditor.tsx";
+import { SAMPLE_TRANSFORMATION_PLACEHOLDER, dryRunTemplate } from "./RulePage.tsx";
 
 beforeEach(() => localStorage.clear());
 afterEach(() => {
@@ -332,6 +333,79 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
       messageKey: "automation.message.follow_up",
       dueInWorkingDays: 5,
     });
+  });
+});
+
+describe("D-164 d: the dry-run sample comes from the trigger's samplePayload", () => {
+  const SAMPLE = {
+    transformationId: SAMPLE_TRANSFORMATION_PLACEHOLDER,
+    gateInstanceId: "00000000-0000-7000-8000-000000000001",
+    gateCode: "G1",
+    submittedBy: "00000000-0000-7000-8000-000000000002",
+  };
+  const submittedCatalogue = {
+    ...catalogue,
+    triggers: [
+      {
+        ...catalogue.triggers[0]!,
+        code: "gate.submitted",
+        labelEn: "A gate is submitted",
+        labelAr: "تقديم بوابة",
+        conditionFields: ["gateCode"],
+        samplePayload: SAMPLE,
+      },
+    ],
+  };
+  const submittedContent = { ...content, triggerCodes: ["gate.submitted"] };
+
+  for (const locale of ["en", "ar"] as const) {
+    it(`${locale}: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is`, async () => {
+      const { requests } = mockApi(
+        meRoute(ADM_METHOD, locale),
+        route("POST", /\/dry-runs$/, () => ({
+          status: 201,
+          body: {
+            id: "01920000-0000-7000-b100-000000000202",
+            versionId: "01920000-0000-7000-b100-000000000101",
+            contentSha256: "c".repeat(64),
+            outcome: "pass",
+            conditionsMet: true,
+            plannedActions: [],
+            findings: [],
+            runBy: USER_ID,
+            createdAt: "2026-10-16T09:00:00Z",
+          },
+        })),
+        route("GET", /\/admin\/automation-catalogue$/, ok(submittedCatalogue)),
+        ...ruleRoutes(rule(), ruleVersion({ content: submittedContent })),
+      );
+      renderApp(`/admin/automation/rules/${RULE_ID}`, { i18n: createI18n(locale) });
+      const c = locale === "en" ? en : ar;
+      const area = (await screen.findByLabelText(c.dryRun.payload)) as HTMLTextAreaElement;
+      await waitFor(() => expect(area.value).toContain("gateInstanceId"));
+      expect(JSON.parse(area.value)).toEqual({ ...SAMPLE, transformationId: TR_ID });
+      expect(area.value).not.toContain(SAMPLE_TRANSFORMATION_PLACEHOLDER);
+      expect(screen.getByText(c.dryRun.payloadHint)).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: c.dryRun.run }));
+      expect(await screen.findByText(c.dryRun.noSideEffects)).toBeTruthy();
+      const post = requests.find((r) => r.method === "POST" && r.url.endsWith("/dry-runs"))!;
+      expect(post.body).toEqual({ triggerCode: "gate.submitted", payload: { ...SAMPLE, transformationId: TR_ID } });
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    });
+  }
+
+  it("an organization rule keeps the placeholder; without samplePayload the condition-field template is kept", () => {
+    const trigger = submittedCatalogue.triggers[0]!;
+    expect(JSON.parse(dryRunTemplate(trigger, null))).toEqual(SAMPLE);
+    expect(JSON.parse(dryRunTemplate({ conditionFields: ["gateCode", "outcome"] }, TR_ID))).toEqual({
+      transformationId: TR_ID,
+      gateCode: "",
+      outcome: "",
+    });
+    expect(JSON.parse(dryRunTemplate({ conditionFields: ["x"], samplePayload: { kpiId: "k" } }, TR_ID))).toEqual({
+      kpiId: "k",
+    });
+    expect(JSON.parse(dryRunTemplate(undefined, null))).toEqual({});
   });
 });
 
