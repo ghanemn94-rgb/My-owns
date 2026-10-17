@@ -207,7 +207,7 @@ describe("gateReadiness comes through WorkflowsReadPort (production wiring, D-10
   it("a port that answers null makes it Unknown (never ready)", async () => {
     const wired = workflowsReadPort();
     try {
-      setWorkflowsReadPort({ gateReadiness: async () => null });
+      setWorkflowsReadPort({ ...wired, gateReadiness: async () => null });
       const h = await get(`${empty.base}/summary`, empty.s.tl);
       expect(h.body.gateReadiness).toEqual({
         state: "unknown",

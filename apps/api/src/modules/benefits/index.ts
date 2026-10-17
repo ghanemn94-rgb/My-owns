@@ -26,3 +26,6 @@ export function registerBenefitsModule(app: FastifyInstance, deps: ModuleDeps): 
 export { loadBenefitDashboardFacts, loadBenefitLineEvidence, type BenefitDashboardFacts } from "./dashboard-facts.ts";
 // T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T14 PATCH core, passed to the forms bulk edit by the composition root.
 export { updateBenefitRecord } from "./register.ts";
+// T-DG5-KBE-D4 (D-164 h; KBE-D3 handback §6): the totals engine (ADR-0030 §7), read by reference by reporting's
+// registers assembler (the benefits-register totals block), so the report never restates the counting rules.
+export { computeTotals, totalsOf, type TotalsBenefit, type TotalsResult, type TotalsValueLine } from "./totals.ts";

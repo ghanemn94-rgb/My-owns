@@ -9,9 +9,19 @@ import type { WorkspaceGateReadiness } from "@mth/shared/schemas";
 export interface WorkflowsReadPort {
   /** The gate of the transformation's current phase with its live readiness, or null when it cannot be read. */
   gateReadiness(db: DbOrTx, transformationId: string): Promise<WorkspaceGateReadiness | null>;
+  /**
+   * T-DG5-KBE-D4 (D-164 c; ADR-0039 §3): the EFFECTIVE approver of one product gate of the transformation (workflows'
+   * `effectiveGateApprover`, the rule a new submission routes by), or null when it cannot be read. The gate pack of a
+   * gate without a submission names this approver, not the stored one, which a pinned methodology may override.
+   */
+  gateApprover(
+    db: DbOrTx,
+    transformationId: string,
+    gateCode: string,
+  ): Promise<{ readonly roleCode: string; readonly userId: string | null } | null>;
 }
 
-const UNWIRED: WorkflowsReadPort = Object.freeze({ gateReadiness: async () => null });
+const UNWIRED: WorkflowsReadPort = Object.freeze({ gateReadiness: async () => null, gateApprover: async () => null });
 
 let port: WorkflowsReadPort = UNWIRED;
 

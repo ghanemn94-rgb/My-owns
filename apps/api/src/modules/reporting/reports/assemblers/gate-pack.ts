@@ -18,8 +18,12 @@
 //    SHA-256, cited as the pack's evidence.
 // A gate that was never submitted has no evaluator output on record. The live evaluation (workflows' `evaluateGate`
 // with the GateFactsProvider) is out of `reporting`'s reach (modules.ts: reporting may not import workflows; the
-// WorkflowsReadPort carries only the readiness summary), so such a pack lists every criterion of the gate with its state
-// Unknown (not computable), never "complete", and no evidence; see the T-DG5-KBE-C2 handback for the port request.
+// WorkflowsReadPort carries the readiness summary and, since T-DG5-KBE-D4, the effective approver), so such a pack
+// lists every criterion of the gate with its state Unknown (not computable), never "complete", and no evidence; see
+// the T-DG5-KBE-C2 handback for the port request.
+//
+// Approver (T-DG5-KBE-D4, D-164 c): the submission's recorded approver; without a submission, the effective approver
+// through the WorkflowsReadPort (a pinned methodology's default role), and the stored value only when it cannot be read.
 //
 // Approval state (ADR-0045 §3): the gate decision's state through `gateApprovalState` (approved, rejected,
 // changes_requested, pending for a submitted gate, not_submitted). A recorded fact, never an approval.
@@ -41,6 +45,7 @@ import {
 } from "../assembler.ts";
 import { reportRefusals } from "../definitions.ts";
 import { NOT_APPLICABLE, UNKNOWN_NOT_COMPUTABLE } from "../provisional.ts";
+import { workflowsReadPort } from "../../ports.ts";
 
 const S = { gate: "gate", criteria: "criteria", evidence: "evidence" } as const;
 const L = (k: string) => `report.gate_pack.${k}`;
@@ -170,6 +175,14 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
   const latestReview = new Map<string, { recommendation: string; finding: string }>();
   for (const r of reviews) if (!latestReview.has(r.criterion_key)) latestReview.set(r.criterion_key, r);
   const catalogue = new Map((def?.criteria ?? []).map((c) => [c.key, c] as const));
+  // T-DG5-KBE-D4 (D-164 c; ADR-0039 §3): the approver the pack names. A submission's recorded approver first (the one
+  // it was routed to); without one, the EFFECTIVE approver through the WorkflowsReadPort (workflows' routing rule, so a
+  // pinned methodology's default role is named, not the stored catalogue default); the stored value only when the port
+  // is unwired or cannot read it.
+  const approverRoleCode =
+    submission?.approver_role_code ??
+    (await workflowsReadPort().gateApprover(db, tId, instance.gate_code))?.roleCode ??
+    instance.approver_role_code;
   const names = await userNames(db, [submission?.submitted_by ?? null, decision?.decided_by ?? null]);
   const userText = (id: string | null | undefined, applies: boolean) =>
     !applies
@@ -222,7 +235,7 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     {
       key: "approver_role",
       labelKey: L("approver_role"),
-      value: codeValue(submission?.approver_role_code ?? instance.approver_role_code, "report.role"),
+      value: codeValue(approverRoleCode, "report.role"),
     },
     {
       key: "submission_no",
