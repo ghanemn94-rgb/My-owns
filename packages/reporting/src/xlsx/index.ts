@@ -2,7 +2,8 @@
 // worksheet per part) zipped with jszip. No spreadsheet library: formula handling stays in our code (sheet.ts).
 //
 // Sheets: "About" (the header block, then every non-table section in content order), one sheet per table section (its
-// column header, data rows in document order and its totals row), and "Legend" (the validation labels). Arabic sheets
+// column header, data rows in document order and its totals row), and "Legend" (the validation labels). D-163: a demo
+// snapshot's illustrative label is the first row of every sheet, and the B0004 provenance statement the last. Arabic sheets
 // are right-to-left (`<sheetView rightToLeft="1">`); the named font is IBM Plex Sans Arabic (Arabic) or IBM Plex Sans
 // (English). Spreadsheets do not embed fonts.
 //
@@ -16,7 +17,9 @@ import {
   RenderError,
   emptyTableText,
   frameRows,
+  illustrativeLabel,
   legendRows,
+  provenanceText,
   sectionRows,
   tableColumns,
   tableRowCells,
@@ -64,7 +67,15 @@ export async function renderXlsx(input: ReportDocument, o: RenderOptions): Promi
   const doc = parsed.data;
   const labels = createLabels(o.language, o.labels);
   const taken = new Set<string>();
-  const about: Sheet = { name: sheetName(labels.text("export.sheet.about"), taken), rows: [], width: 3 };
+  // D-163 (ADR-0050 §2 (d)): a demo snapshot's illustrative label is the first row of every sheet. It is added when
+  // the sheet is created, before any data row, so the SUM ranges below count it.
+  const illustrative = illustrativeLabel(doc, labels);
+  const newSheet = (name: string, width: number): Sheet => ({
+    name: sheetName(name, taken),
+    rows: illustrative === null ? [] : [{ cells: texts(illustrative), bold: true }],
+    width,
+  });
+  const about = newSheet(labels.text("export.sheet.about"), 3);
   for (const [label, value] of frameRows(doc, o, labels)) about.rows.push({ cells: texts(label, value) });
   const sheets: Sheet[] = [about];
   const total = doc.sections.length;
@@ -73,7 +84,7 @@ export async function renderXlsx(input: ReportDocument, o: RenderOptions): Promi
     const title = labels.text(s.titleKey);
     if (s.kind === "table") {
       const cols = tableColumns(s, labels);
-      const sheet: Sheet = { name: sheetName(title, taken), rows: [], width: cols.length };
+      const sheet = newSheet(title, cols.length);
       sheet.rows.push({ cells: texts(title), bold: true });
       sheet.rows.push({ cells: texts(...cols.map((c) => c.label)), bold: true });
       const first = sheet.rows.length + 1;
@@ -91,10 +102,14 @@ export async function renderXlsx(input: ReportDocument, o: RenderOptions): Promi
     done += 1;
     await o.onSection?.(done, total);
   }
-  const legend: Sheet = { name: sheetName(labels.text("export.sheet.legend"), taken), rows: [], width: 2 };
+  const legend = newSheet(labels.text("export.sheet.legend"), 2);
   legend.rows.push({ cells: texts(labels.text("export.legend.title")), bold: true });
   for (const [label, text] of legendRows(labels)) legend.rows.push({ cells: texts(label, text) });
   sheets.push(legend);
+  // D-163 (ADR-0046 §2; REQ-PB-001): the B0004 provenance statement on every sheet, after its content, as a plain
+  // inline string (textCell: never a formula; quote-prefixed if it ever started like one). None given, none printed.
+  const provenance = provenanceText(o);
+  if (provenance !== null) for (const sheet of sheets) sheet.rows.push({ cells: [] }, { cells: texts(provenance) });
 
   const rtl = o.language === "ar";
   const zip = new JSZip();

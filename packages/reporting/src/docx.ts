@@ -22,6 +22,7 @@ import {
   BorderStyle,
   Document,
   Footer,
+  Header,
   Packer,
   PageNumber,
   Paragraph,
@@ -175,6 +176,9 @@ export async function renderDocx(input: ReportDocument, o: RenderOptions): Promi
   const paged = pagedDocument(content, o, labels);
   const b = new DocxBuilder(o.language);
   b.heading(paged.productName, 30);
+  // D-163 (ADR-0050 §2 (d)): a demo snapshot's illustrative label in the header block, and in every page's header.
+  if (paged.illustrative !== null)
+    b.add(...b.paragraphs(paged.illustrative, { bold: true, size: 20, color: "7A4B00" }));
   if (paged.reportHeader !== null) b.add(...b.paragraphs(paged.reportHeader, { size: 18, color: "5A6275" })); // T-DG5-BE-R
   b.heading(paged.title, 26);
   b.block(paged.frame);
@@ -223,6 +227,15 @@ export async function renderDocx(input: ReportDocument, o: RenderOptions): Promi
         properties: {
           page: { size: { width: 11906, height: 16838 }, margin: { top: 1000, bottom: 1000, left: 900, right: 900 } },
         },
+        ...(paged.illustrative === null
+          ? {}
+          : {
+              headers: {
+                default: new Header({
+                  children: b.paragraphs(paged.illustrative, { bold: true, size: 16, color: "7A4B00" }, 0),
+                }),
+              },
+            }),
         footers: { default: new Footer({ children: footerParagraphs }) },
         children: b.children,
       },

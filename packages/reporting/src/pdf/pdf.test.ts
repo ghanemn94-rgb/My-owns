@@ -15,6 +15,9 @@ import { RenderError, type RenderOptions } from "../model.ts";
 import { renderPdf } from "./index.ts";
 import { drawsArabic, lines, plain, readPdf, rev } from "./read.ts";
 
+/** Shaping Arabic PDFs is slow under a loaded run (F-DG4-143 to F-DG4-148): a generous, deterministic bound. */
+const PDF_TEST_TIMEOUT_MS = 60_000;
+
 // ------------------------------------------------------------------------------------------------ fixtures
 
 const DESCRIPTION_AR = "مخاطرة RAID-014 بقيمة 1,250.50";
@@ -74,7 +77,7 @@ const fontkit = createRequire(requireHere.resolve("pdfkit"))("fontkit") as {
 
 // ------------------------------------------------------------------------------------------------ tests
 
-describe("renderPdf: Arabic (REQ-S13-009)", () => {
+describe("renderPdf: Arabic (REQ-S13-009)", { timeout: PDF_TEST_TIMEOUT_MS }, () => {
   it("has a right-to-left base direction: /Lang (ar-SA), /Direction /R2L, right-aligned text, mirrored tables", async () => {
     const pdf = await pdfOf("ar");
     const catalog = [...pdf.objects.values()].find((o) => /\/Type \/Catalog/.test(o.dict))!.dict;
@@ -160,7 +163,7 @@ describe("renderPdf: Arabic (REQ-S13-009)", () => {
   });
 });
 
-describe("renderPdf: English (REQ-S13-009, REQ-S13-008)", () => {
+describe("renderPdf: English (REQ-S13-009, REQ-S13-008)", { timeout: PDF_TEST_TIMEOUT_MS }, () => {
   it("is left to right: /Lang (en-GB), no R2L preference, left-aligned text, IBM Plex Sans embedded", async () => {
     const pdf = await pdfOf("en");
     expect(pdf.raw).toContain("/Lang (en-GB)");
@@ -196,7 +199,7 @@ describe("renderPdf: English (REQ-S13-009, REQ-S13-008)", () => {
   });
 });
 
-describe("renderPdf: content and pagination (REQ-S13-005)", () => {
+describe("renderPdf: content and pagination (REQ-S13-005)", { timeout: PDF_TEST_TIMEOUT_MS }, () => {
   it("prints every row of a long register once, repeats the table header on each page, and numbers the pages", async () => {
     const rows = Array.from({ length: 140 }, (_, i) => ({
       code: `RAID-${String(i + 1).padStart(3, "0")}`,

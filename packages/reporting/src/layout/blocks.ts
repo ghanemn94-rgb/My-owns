@@ -4,7 +4,7 @@
 // Nothing is typed into a report here: every string is a document value or a translated label.
 import type { ReportDocument, ReportSection } from "@mth/shared/schemas";
 import type { Labels } from "../labels.ts";
-import { frameRows, legendRows, type RenderOptions } from "../model.ts";
+import { frameRows, illustrativeLabel, legendRows, type RenderOptions } from "../model.ts";
 import { cellText } from "./values.ts";
 
 export interface TableBlock {
@@ -37,6 +37,11 @@ export interface PagedDocument {
   readonly reportHeader: string | null;
   /** T-DG5-BE-R: the footer lines above the issue line: the configured report footer, then the provenance (B0004). */
   readonly footerLines: readonly string[];
+  /**
+   * D-163 (ADR-0050 §2 (d); REQ-PB-089): "Illustrative example — synthetic" in the export language when the snapshot
+   * records `synthetic: true` (a demo database), else null; printed in the header and on every page or slide.
+   */
+  readonly illustrative: string | null;
   readonly title: string;
   /** The header block every file carries (product, output, transformation, ..., issue or Draft line). */
   readonly frame: TableBlock;
@@ -117,6 +122,7 @@ export function pagedDocument(doc: ReportDocument, o: RenderOptions, labels: Lab
     footerLines: [o.branding.reportFooter, o.branding.provenance].filter(
       (t): t is string => typeof t === "string" && t !== "",
     ),
+    illustrative: illustrativeLabel(doc, labels),
     title: o.title,
     frame: keyValue(frameRows(doc, o, labels)),
     sections: doc.sections.map((s) => ({

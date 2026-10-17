@@ -124,6 +124,24 @@ export function frameRows(doc: ReportDocument, o: RenderOptions, labels: Labels)
   ];
 }
 
+/**
+ * D-163 (ADR-0050 §2 (d); REQ-PB-089): the illustrative label ("Illustrative example — synthetic" / "مثال توضيحي —
+ * اصطناعي") of a document assembled in a demo database, or null. Decided from the snapshot's recorded `synthetic`
+ * member only (never from the rendering process's environment), so a file always matches its snapshot.
+ */
+export function illustrativeLabel(doc: ReportDocument, labels: Labels): string | null {
+  return doc.synthetic === true ? labels.text("export.illustrative") : null;
+}
+
+/**
+ * D-163 (ADR-0046 §2; REQ-PB-001): the B0004 provenance statement in the export language exactly as the caller read
+ * it (`branding.provenance`), or null when there is none: nothing is printed in its place, and it is never invented.
+ */
+export function provenanceText(o: RenderOptions): string | null {
+  const p = o.branding.provenance;
+  return typeof p === "string" && p !== "" ? p : null;
+}
+
 export const VALIDATION_ORDER = ["validated", "provisional", "unknown", "stale", "not_applicable"] as const;
 
 /** The legend rows: each validation label with its explanation, then the formula note. */

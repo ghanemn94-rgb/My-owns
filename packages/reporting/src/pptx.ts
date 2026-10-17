@@ -159,6 +159,19 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
 
   specs.forEach((spec, index) => {
     const slide = pptx.addSlide();
+    // D-163 (ADR-0050 §2 (d); REQ-PB-089): a demo snapshot's illustrative label at the top of every slide, the title
+    // slide's header included.
+    if (paged.illustrative !== null)
+      slide.addText(paged.illustrative, {
+        ...textProps,
+        x: X,
+        y: 0,
+        w: W,
+        h: 0.16,
+        fontSize: 7,
+        bold: true,
+        color: "7A4B00",
+      });
     if (index === 0)
       slide.addText(paged.productName, { ...textProps, x: X, y: 0.15, w: W, h: 0.35, fontSize: 12, bold: true });
     slide.addText(spec.title, {
