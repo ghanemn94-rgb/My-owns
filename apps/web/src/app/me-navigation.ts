@@ -1,7 +1,8 @@
-// GET /me/navigation in the shell (T-DG5-FE-G; REQ-S03-007; ADR-0049 §9; p5-work-split §I.5 item 4). The server decides
-// which of the fourteen areas the caller may see and omits the others; the authenticated shell shows exactly the areas
-// it returns, in nav.ts order. `NAV_AREAS` stays the static fallback (before the answer, or if the read fails), with
-// its client-side permission hint, so the shell never shows an empty navigation.
+// GET /me/navigation in the shell (T-DG5-FE-G, T-DG5-FE-G2; REQ-S03-007; ADR-0049 §9; p5-work-split §I.5 item 4; D-163
+// option (a)). The server decides which of the fourteen areas the caller may see and omits the others; the
+// authenticated shell shows exactly the areas it returns, in nav.ts order. There is no client-side fallback: while the
+// read is pending the shell shows no area list, and a failed read (or a body that is not the contract's shape) is an
+// error state, never "all areas" and never a guess from the client's permission hints.
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client.ts";
 import { SHELL_READ } from "./shell-read.ts";
@@ -33,13 +34,17 @@ export function useMyNavigation() {
   return useQuery({
     queryKey: meNavigationKey,
     ...SHELL_READ,
-    queryFn: () => api.get<MeNavigation>(meNavigationPath),
+    queryFn: async () => {
+      const body = await api.get<MeNavigation>(meNavigationPath);
+      // A body that is not the contract's shape is an error, never an empty or a full navigation.
+      if (!body || !Array.isArray(body.areas)) throw new Error("navigation.invalid_body");
+      return body;
+    },
     retry: shouldRetry,
   });
 }
 
-/** The web area ids the server returned, or null while there is no answer (the shell then uses its fallback). */
+/** The web area ids the server returned, or null while there is no answer (pending or failed: no area list). */
 export function visibleAreaIds(nav: MeNavigation | undefined): ReadonlySet<string> | null {
-  // A body that is not the contract's shape is treated like no answer: the fallback, never an empty navigation.
   return nav && Array.isArray(nav.areas) ? new Set(nav.areas.map((a) => a.webId)) : null;
 }

@@ -203,9 +203,12 @@ test("shell: navigation, language persistence and My Work (Transformation Office
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.office");
   const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
-  // The Transformation Office holds no administration permission: 13 areas, no Administration.
-  await expect(nav.locator("a[data-area]")).toHaveCount(13);
-  await expect(navLink(nav, lang, "admin")).toHaveCount(0);
+  // D-163 (REQ-S03-007, ADR-0049 §9): the shell shows the areas GET /me/navigation returns. The Transformation Office
+  // reviews Playbook Studio versions (methodology.review), so the server gives it Administration (the Studio review)
+  // with the thirteen business areas: 14 areas. This pin said "13, no Administration" at DG1, before the server rule.
+  await expect(nav).toHaveAttribute("data-nav-state", "ready");
+  await expect(nav.locator("a[data-area]")).toHaveCount(14);
+  await expect(navLink(nav, lang, "admin")).toHaveCount(1);
   await expect(navLink(nav, lang, "myWork")).toHaveAttribute("aria-current", "page");
   await shot(page, lang, "02-my-work");
   await expectAccessible(page, lang, "my-work");
@@ -412,7 +415,16 @@ test("administration screens (access + technical administrator)", async ({ page 
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.admin");
   const nav = page.getByRole("navigation", { name: tr(lang, "nav.primary"), exact: true });
-  await expect(nav.locator("a[data-area]")).toHaveCount(14);
+  // D-163 (REQ-S03-007, ADR-0049 §9): the technical administrator (ADM_ACCESS + ADM_TECH) holds no
+  // transformation.read, so the server hides every business area: My Work, Playbook and Administration. This pin said
+  // 14 at DG1, before the server rule; the administration screens below are still reached from Administration.
+  await expect(nav).toHaveAttribute("data-nav-state", "ready");
+  await expect(nav.locator("a[data-area]")).toHaveCount(3);
+  expect(await nav.locator("a[data-area]").evaluateAll((a) => a.map((x) => x.getAttribute("data-area")))).toEqual([
+    "myWork",
+    "playbook",
+    "admin",
+  ]);
   await navLink(nav, lang, "admin").click();
   await expect(
     page.getByRole("heading", { level: 1, name: tr(lang, "nav.areas.admin.label"), exact: true }),

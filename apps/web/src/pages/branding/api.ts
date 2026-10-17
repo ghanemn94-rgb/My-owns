@@ -76,8 +76,17 @@ export function useBrandingVersions(cursor: string | null, enabled = true) {
   });
 }
 
-/** The colour tokens the shell re-themes at render time: the two branding colours and the shades derived from them. */
-export const THEMED_TOKENS = ["brand.primary", "brand.deep", "action.primary", "action.primary-hover"] as const;
+/**
+ * The colour tokens the shell re-themes at render time: the two branding colours and the shades derived from them,
+ * including the navigation background derived from brand.primary (T-DG5-FE-G2; D-163, REQ-S15-004).
+ */
+export const THEMED_TOKENS = [
+  "brand.primary",
+  "brand.deep",
+  "action.primary",
+  "action.primary-hover",
+  "nav.background",
+] as const;
 
 /**
  * Applies the current token set (GET /branding/tokens, which merges the current branding version's colours and

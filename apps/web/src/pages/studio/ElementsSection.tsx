@@ -15,8 +15,14 @@ import { p5Paths, useConfigElements } from "../../api/p5.ts";
 import { useLocale } from "../../app/locale.ts";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { Section, TextCell } from "../../components/Section.tsx";
-import { type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
-import { StudioFormDialog } from "./StudioFormDialog.tsx";
+import { type P4Values } from "../my-work/p4ui.tsx";
+import {
+  ROLE_LIST_MAX,
+  StudioFormDialog,
+  roleListRows,
+  roleListValue,
+  type StudioFieldSpec,
+} from "./StudioFormDialog.tsx";
 import {
   BODY_ATTRIBUTES,
   ROLE_CODE_PATTERN,
@@ -28,14 +34,23 @@ import {
   type ConfigVersion,
 } from "./api.ts";
 import { type ActionRunner } from "./ui.tsx";
+import { ProvenanceBadge } from "../../components/provenance-badge/ProvenanceBadge.tsx";
+import { useMethodologyElements } from "../playbook/api.ts";
 
 /** Per element type, the extra (non-text) attributes the dialog edits (ADR-0039 §2 attribute schemas). */
-const EXTRA: Partial<Record<ConfigElementType, readonly { name: string; kind: "role" | "days" | "flag" }[]>> = {
+type ExtraKind = "role" | "days" | "flag" | "mode" | "roles";
+const EXTRA: Partial<Record<ConfigElementType, readonly { name: string; kind: ExtraKind }[]>> = {
   gate: [
     { name: "defaultApproverRoleCode", kind: "role" },
     { name: "submissionEnabled", kind: "flag" },
   ],
-  approver_route: [{ name: "approverRoleCode", kind: "role" }],
+  // T-DG5-FE-G2 (F-DG5-QA-A-3; ADR-0039 §2, ADR-0044 §4): a route is either one approver role, or an ORDERED list of
+  // roles with a mode (sequential: one step after another, in this order; parallel: all steps at once; any: one of them).
+  approver_route: [
+    { name: "mode", kind: "mode" },
+    { name: "approverRoleCodes", kind: "roles" },
+    { name: "approverRoleCode", kind: "role" },
+  ],
   reminder: [
     { name: "offsetWorkingDays", kind: "days" },
     { name: "recipientRoleCode", kind: "role" },
@@ -48,6 +63,12 @@ const EXTRA: Partial<Record<ConfigElementType, readonly { name: string; kind: "r
   mandatory_artifact: [{ name: "mandatory", kind: "flag" }],
   checklist_item: [{ name: "mandatory", kind: "flag" }],
 };
+
+/** The route modes of an approver route (the element schema's `mode`). */
+export const ROUTE_MODES = ["sequential", "parallel", "any"] as const;
+/** The number of roles a sequential or parallel route runs with (ADR-0044 §4: 2-6 business roles). */
+export const ROUTE_ROLES_MIN = 2;
+export const ROUTE_ROLES_MAX = 6;
 
 /** The element types an administrator may add as new admin-origin elements (D-142 Q4: never a 7th gate, an 11th dimension). */
 const ADDABLE: readonly ConfigElementType[] = [
@@ -81,6 +102,23 @@ export function elementPutAttributes(
   }
   for (const extra of EXTRA[type as ConfigElementType] ?? []) {
     const v = values[extra.name];
+    if (extra.kind === "mode") {
+      // "" keeps no own mode (the shipped one, or a single-step approval); otherwise one of the schema's modes.
+      if (typeof v === "string" && (ROUTE_MODES as readonly string[]).includes(v)) attributes[extra.name] = v;
+      else delete attributes[extra.name];
+      continue;
+    }
+    if (extra.kind === "roles") {
+      // The ordered list, empty rows dropped; each a role code; at most 10 (the schema), order kept.
+      const codes = roleListRows(typeof v === "string" ? v : "")
+        .map((c) => c.trim())
+        .filter((c) => c !== "");
+      if (codes.length === 0) delete attributes[extra.name];
+      else if (codes.some((c) => !ROLE_CODE_PATTERN.test(c))) errors[extra.name] = "validation.code";
+      else if (codes.length > ROLE_LIST_MAX) errors[extra.name] = "validation.too_big";
+      else attributes[extra.name] = codes;
+      continue;
+    }
     if (extra.kind === "flag") {
       // "" keeps the shipped default (no own value); "true"/"false" set it explicitly.
       if (v === "true" || v === "false") attributes[extra.name] = v === "true";
@@ -100,15 +138,40 @@ export function elementPutAttributes(
       else attributes[extra.name] = Number(s);
     }
   }
-  if (type === "approver_route" && attributes["approverRoleCode"] === undefined) {
-    const codes = attributes["approverRoleCodes"] ?? element.catalogueAttributes["approverRoleCodes"];
+  if (type === "approver_route") routeRules(element, values, attributes, errors);
+  return Object.keys(errors).length > 0 ? { fieldErrors: errors } : { attributes };
+}
+
+/**
+ * The approver-route rules (T-DG5-FE-G2; ADR-0039 §2: exactly one of `approverRoleCode` and `approverRoleCodes`):
+ * both entered is refused on the single role; neither entered keeps the catalogue's form; a sequential or parallel mode
+ * needs an ordered list of 2-6 roles (ADR-0044 §4), otherwise the route would silently be a single-step approval.
+ */
+function routeRules(
+  element: Pick<ConfigElement, "catalogueAttributes">,
+  values: P4Values,
+  attributes: Record<string, unknown>,
+  errors: Record<string, string>,
+): void {
+  const entered = (name: string) => typeof values[name] === "string" && String(values[name]).trim() !== "";
+  if (entered("approverRoleCode") && attributes["approverRoleCodes"] !== undefined) {
+    errors["approverRoleCode"] = "studio_route.one_approver_form";
+    return;
+  }
+  if (attributes["approverRoleCodes"] !== undefined) delete attributes["approverRoleCode"];
+  else if (attributes["approverRoleCode"] === undefined) {
+    const codes = element.catalogueAttributes["approverRoleCodes"];
     const code = element.catalogueAttributes["approverRoleCode"];
     if (Array.isArray(codes)) attributes["approverRoleCodes"] = codes;
     else if (typeof code === "string") attributes["approverRoleCode"] = code;
-    else errors["approverRoleCode"] = "validation.required";
+    else errors["approverRoleCodes"] = "validation.required";
   }
-  if (type === "approver_route" && attributes["approverRoleCode"] !== undefined) delete attributes["approverRoleCodes"];
-  return Object.keys(errors).length > 0 ? { fieldErrors: errors } : { attributes };
+  const mode = attributes["mode"];
+  const list = attributes["approverRoleCodes"];
+  if ((mode === "sequential" || mode === "parallel") && errors["approverRoleCodes"] === undefined) {
+    const n = Array.isArray(list) ? list.length : 0;
+    if (n < ROUTE_ROLES_MIN || n > ROUTE_ROLES_MAX) errors["approverRoleCodes"] = "studio_route.size";
+  }
 }
 
 export function ElementsSection({
@@ -131,6 +194,12 @@ export function ElementsSection({
     ...(type ? { elementType: type } : {}),
     ...(includeRemoved ? { includeRemoved: "true" } : {}),
   });
+  // T-DG5-FE-G2 (REQ-PB-002; ADR-0049 §2): the provenance of the seeded elements (custom extension of the playbook v1.0,
+  // B0158-B0162, or foundation-inspired, B0156), as the published methodology resolves it. A failed read shows no badge,
+  // never a wrong one; no element is ever labelled a PMI standard.
+  const profiles = useMethodologyElements({}, version.configKind === "methodology");
+  const profileOf = (e: ConfigElement) =>
+    profiles.data?.items.find((p) => p.elementRef === `${e.elementType}.${e.stableKey}`);
   const [editing, setEditing] = useState<ConfigElement | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -141,7 +210,7 @@ export function ElementsSection({
       </Section>
     );
 
-  const fieldsFor = (elementType: string, withKey: boolean): P4FieldSpec[] => [
+  const fieldsFor = (elementType: string, withKey: boolean): StudioFieldSpec[] => [
     ...(withKey
       ? [
           {
@@ -186,19 +255,26 @@ export function ElementsSection({
             max: 20000,
             when: (v: P4Values) => hasBody(withKey ? String(v["elementType"] ?? "") : elementType),
           },
-        ] as P4FieldSpec[])
+        ] as StudioFieldSpec[])
       : []),
     ...[...new Set(Object.values(EXTRA).flatMap((list) => list.map((x) => `${x.name}:${x.kind}`)))]
-      .map((s) => s.split(":") as [string, "role" | "days" | "flag"])
+      .map((s) => s.split(":") as [string, ExtraKind])
       .filter(([name]) =>
         withKey ? true : (EXTRA[elementType as ConfigElementType] ?? []).some((x) => x.name === name),
       )
       .map(
-        ([name, kind]): P4FieldSpec => ({
+        ([name, kind]): StudioFieldSpec => ({
           name,
           label: t(`studio.elements.attr.${name}`),
           ...(kind === "role" ? { hint: t("studio.elements.roleHint") } : {}),
-          kind: kind === "flag" ? "select" : "text",
+          ...(kind === "roles" ? { hint: t("studio.elements.route.rolesHint") } : {}),
+          kind: kind === "flag" || kind === "mode" ? "select" : kind === "roles" ? "roleList" : "text",
+          ...(kind === "mode"
+            ? {
+                options: ROUTE_MODES.map((m) => ({ value: m, label: t(`studio.elements.route.mode.${m}`) })),
+                hint: t("studio.elements.route.modeHint"),
+              }
+            : {}),
           ...(kind === "flag"
             ? {
                 options: [
@@ -226,6 +302,14 @@ export function ElementsSection({
       const own = e.attributes[extra.name];
       const raw = own ?? e.catalogueAttributes[extra.name];
       if (extra.kind === "flag") v[extra.name] = typeof own === "boolean" ? String(own) : "";
+      else if (extra.kind === "roles")
+        // The version's own single role replaces the catalogue's list (exactly one form is in force).
+        v[extra.name] =
+          Array.isArray(raw) && typeof e.attributes["approverRoleCode"] !== "string"
+            ? roleListValue(raw.map(String))
+            : "";
+      else if (extra.name === "approverRoleCode" && Array.isArray(e.attributes["approverRoleCodes"]))
+        v[extra.name] = ""; // the version's own list replaces the catalogue's single role
       else v[extra.name] = raw === undefined || raw === null ? "" : String(raw);
     }
     return v;
@@ -293,7 +377,18 @@ export function ElementsSection({
                           </span>
                         ) : null}
                       </th>
-                      <td>{label}</td>
+                      <td>
+                        {label}
+                        {(() => {
+                          const profile = profileOf(e);
+                          return profile ? (
+                            <span className="block" data-element-provenance={profile.elementRef}>
+                              <ProvenanceBadge provenance={profile.provenance} overridden={profile.overridden} />
+                            </span>
+                          ) : null;
+                        })()}
+                        {e.elementType === "approver_route" ? <RouteSummary element={e} /> : null}
+                      </td>
                       <td>
                         <TextCell value={attrText(e, locale === "ar" ? "helpAr" : "helpEn")} />
                       </td>
@@ -377,6 +472,46 @@ export function ElementsSection({
   );
 }
 
+/** The route an approver-route element puts in force: its mode and its ordered roles, or its single approver. */
+export function RouteSummary({ element }: { element: Pick<ConfigElement, "attributes" | "catalogueAttributes"> }) {
+  const { t } = useTranslation();
+  const own = element.attributes;
+  const pick = (name: string) => (name in own ? own[name] : element.catalogueAttributes[name]);
+  // Exactly one form is in force: the version's own form wins over the catalogue's.
+  const ownList = Array.isArray(own["approverRoleCodes"]);
+  const ownSingle = typeof own["approverRoleCode"] === "string";
+  const list = ownSingle ? undefined : pick("approverRoleCodes");
+  const single = ownList ? undefined : pick("approverRoleCode");
+  const mode = typeof pick("mode") === "string" ? String(pick("mode")) : null;
+  if (Array.isArray(list) && list.length > 0) {
+    const modeLabel = (ROUTE_MODES as readonly string[]).includes(mode ?? "")
+      ? t(`studio.elements.route.modeShort.${mode}`)
+      : t("studio.elements.route.modeShort.none");
+    return (
+      <span className="block small" data-route-summary={mode ?? "none"}>
+        {t("studio.elements.route.summary", { mode: modeLabel })}{" "}
+        <ol className="route-steps">
+          {list.map((code, i) => (
+            <li key={i} data-route-step={i + 1}>
+              <bdi dir="ltr" className="code">
+                {String(code)}
+              </bdi>
+            </li>
+          ))}
+        </ol>
+      </span>
+    );
+  }
+  return typeof single === "string" ? (
+    <span className="block small" data-route-summary="single">
+      {t("studio.elements.route.summarySingle")}{" "}
+      <bdi dir="ltr" className="code">
+        {single}
+      </bdi>
+    </span>
+  ) : null;
+}
+
 /** Adds an admin-origin element (D-142 Q4: "create" is a draft version containing the element). */
 function AddElementDialog({
   version,
@@ -385,7 +520,7 @@ function AddElementDialog({
   onClose,
 }: {
   version: ConfigVersion;
-  fields: P4FieldSpec[];
+  fields: StudioFieldSpec[];
   refresh: () => Promise<boolean>;
   onClose: () => void;
 }) {

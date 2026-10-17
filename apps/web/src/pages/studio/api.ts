@@ -150,6 +150,9 @@ export function displayValue(value: unknown): string | null {
   if (value === undefined || value === null) return null;
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
+  // T-DG5-FE-G2: a list of codes (an approver route's ordered roles, a layout's sections) reads in order, "BO · SP".
+  if (Array.isArray(value) && value.every((x) => typeof x === "string" || typeof x === "number"))
+    return value.length === 0 ? null : value.map(String).join(" · ");
   return JSON.stringify(value);
 }
 

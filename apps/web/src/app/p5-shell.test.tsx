@@ -7,7 +7,7 @@
 //  - The slice A–C request paths equal the contract's (docs/api/openapi.yaml), and the P5 query keys are scoped.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { cleanup, screen, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import type { RouteObject } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
@@ -246,6 +246,8 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
     renderApp("/admin/studio", { i18n: createI18n("en") });
     expect(await screen.findByRole("heading", { level: 1, name: "Playbook Studio" })).toBeTruthy();
     const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    // T-DG5-FE-G2: the areas come from GET /me/navigation; wait for its answer.
+    await waitFor(() => expect(nav.dataset["navState"]).toBe("ready"));
     const admin = within(nav).getByRole("list", { name: "Administration" });
     for (const name of ["Playbook Studio", "Methodology migrations", "Source coverage", "Form builder", "Branding"])
       expect(within(admin).getByRole("link", { name }), name).toBeTruthy();
@@ -255,15 +257,19 @@ describe("P5 navigation entries and route placeholders (D-144 item 1)", () => {
     mockApi(meRoute(makeMe(orgGrants(["organization.read", "organization.manage"]), { preferredLocale: "en" })));
     renderApp("/my-work", { i18n: createI18n("en") });
     const nav2 = await screen.findByRole("navigation", { name: "Primary navigation" });
+    await waitFor(() => expect(nav2.dataset["navState"]).toBe("ready"));
     const admin2 = within(nav2).getByRole("list", { name: "Administration" });
     expect(within(admin2).queryByRole("link", { name: "Playbook Studio" })).toBeNull();
     expect(within(admin2).getByRole("link", { name: "Branding" })).toBeTruthy();
   });
 
-  it("the Transformation Office still sees 13 areas, with the P5 entries of its areas", async () => {
+  // T-DG5-FE-G2: these synthetic OFFICE_GRANTS hold no Studio permission, so the server rule (ADR-0049 §9) gives 13
+  // areas. The seeded Transformation Office (dev.office) also reviews the Studio and sees 14 (D-163; journeys.spec.ts).
+  it("the Transformation Office fixture (no Studio permission) sees 13 areas, with the P5 entries of its areas", async () => {
     mockApi(meRoute(makeMe(OFFICE_GRANTS, { preferredLocale: "ar" })));
     renderApp("/my-work", { i18n: createI18n("ar") });
     const nav = await screen.findByRole("navigation", { name: catalogues.ar.nav.primary });
+    await waitFor(() => expect(nav.dataset["navState"]).toBe("ready"));
     expect(
       within(nav)
         .getAllByRole("link")
