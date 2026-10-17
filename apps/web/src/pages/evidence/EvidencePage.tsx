@@ -25,6 +25,8 @@ import { diagnosticDimensionLabel, pick, tomDimensionLabel } from "../../lib/met
 import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
 
 /** Upload limit of one revision (apps/api evidence store: 25 MiB); checked before sending, re-checked by the server. */
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -60,6 +62,7 @@ function EvidenceRegister() {
   const [linking, setLinking] = useState<Evidence | null>(null);
   const canCreate = ws.can("evidence.create");
   const canReview = ws.can("evidence.review");
+  const ext = useExtensionCreate("evidence");
   const base = `/api/v1/transformations/${ws.tid}/evidence`;
 
   const fieldsFor = (kind: Kind): FieldSpec[] => [
@@ -176,6 +179,11 @@ function EvidenceRegister() {
       cell: (e) => <bdi dir="ltr">{linkCount(e.id)}</bdi>,
       sortValue: (e) => linkCount(e.id),
     },
+    extensionToolsColumn<Evidence>(t("forms.extensions.columnHeader"), "evidence", {
+      label: (e) => e.title,
+      canWrite: () => canCreate,
+      refresh,
+    }),
     {
       id: "actions",
       header: t("common.field.actions"),
@@ -273,6 +281,7 @@ function EvidenceRegister() {
             />
           )}
         </QueryState>
+        {ext.outcome}
       </Section>
       <LinksSection evidence={evidence.data ?? []} links={links.data ?? []} />
 
@@ -290,18 +299,21 @@ function EvidenceRegister() {
           record={null}
           defaults={{ ownerUserId: ws.meId, evidenceType: "document" }}
           extra={{ kind: creating }}
-          createSchema={evidenceCreate}
+          createSchema={ext.guard(evidenceCreate)}
           createUrl={base}
           people={people}
           submitLabel={t("common.action.create")}
           onSaved={async (saved) => {
+            await ext.afterCreate(saved);
             if (!(await refresh())) return;
             const kind = creating;
             setCreating(null);
             if (kind === "file") setUploading(saved as Evidence);
           }}
           onCancel={() => setCreating(null)}
-        />
+        >
+          {ext.node}
+        </RecordDialog>
       ) : null}
       {editing ? (
         <RecordDialog<Evidence>

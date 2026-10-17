@@ -15,6 +15,8 @@ import { Icon } from "../../components/Icon.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
 import { p4ProblemMessage, P4FormDialog, textOf, type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
 import { changePaths } from "./api.ts";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import type { ExtensionEntry } from "../../components/form-framework/index.ts";
 import { ImpactItemsTable, MaterialityText } from "./Impact.tsx";
 import {
   editableFields,
@@ -95,10 +97,13 @@ export function CreateChangeRequestDialog({
   onClose,
   onDone,
   initial,
+  ext,
 }: {
   onClose: () => void;
   onDone: (created: unknown) => Promise<boolean>;
   initial?: P4Values;
+  /** The extension fields of the change-request create form (ADR-0041 §1, `change_request`). */
+  ext?: ExtensionEntry;
 }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
@@ -220,6 +225,7 @@ export function CreateChangeRequestDialog({
         </p>
       ) : null}
       <PreviewPanel build={() => buildChangeRequestBody(values, subject, kpiDiff, ws.tr.currency)} />
+      {ext?.node}
     </>
   );
 
@@ -234,7 +240,11 @@ export function CreateChangeRequestDialog({
       namespaces={CR_NS}
       note={note}
       onValuesChange={setValues}
-      toBody={(v) => buildChangeRequestBody(v, subject, kpiDiff, ws.tr.currency)}
+      toBody={(v) =>
+        ext && !ext.check()
+          ? { fieldErrors: { extensionFields: "validation.invalid" } }
+          : buildChangeRequestBody(v, subject, kpiDiff, ws.tr.currency)
+      }
       onDone={onDone}
       onClose={onClose}
     />

@@ -58,6 +58,8 @@ import {
 } from "./ui.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 
 const FROZEN = new Set(["minutes_published", "cancelled"]);
 
@@ -186,6 +188,13 @@ function MeetingHeader({ meeting: m, forum }: { meeting: Meeting; forum: Forum |
       }
     >
       <ExtensionNote recordType="meeting_record" />
+      <RecordExtensionTools
+        recordType="meeting_record"
+        record={m}
+        recordLabel={formatBusinessDate(m.scheduledDate, locale) ?? m.id}
+        canWrite={prepare}
+        refresh={refresh}
+      />
       {runner.alert}
       <dl className="details details--compact" data-meeting-detail={m.id}>
         <div>

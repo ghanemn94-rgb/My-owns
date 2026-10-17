@@ -40,6 +40,8 @@ import {
 import { CapacityRowsSection, DemandDialog, RolesSection } from "./editing.tsx";
 // T-DG5-FE-C (REQ-S05-006): the 'extension' badge of the M0149 record types, in en and ar.
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import { RecordExtensionTools, useExtensionCreate } from "../../components/form-framework/index.ts";
 
 export function CapacityPage() {
   const { t } = useTranslation();
@@ -203,6 +205,7 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
   const canCommit = can("capacity.commit");
   const canEdit = can("capacity.edit");
   const showActions = canCommit || canEdit;
+  const ext = useExtensionCreate("resource_plan");
   const ini = new Map((roadmap.data?.initiatives ?? []).map((i) => [i.id, i]));
 
   const commit = async (d: ResourceDemand) => {
@@ -259,6 +262,7 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
                   <th scope="col">{t("capacity.demands.month")}</th>
                   <th scope="col">{t("capacity.demands.fte")}</th>
                   <th scope="col">{t("capacity.demands.status")}</th>
+                  <th scope="col">{t("forms.extensions.columnHeader")}</th>
                   {showActions ? <th scope="col">{t("capacity.demands.actions")}</th> : null}
                 </tr>
               </thead>
@@ -287,6 +291,15 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
                           <bdi>{fmt(d.demandFte, 0, 2)}</bdi>
                         </td>
                         <td>{t(`capacity.demands.state.${d.status}`)}</td>
+                        <td>
+                          <RecordExtensionTools
+                            recordType="resource_plan"
+                            record={d}
+                            recordLabel={`${i ? `${i.code} ` : ""}${month(d.periodMonth)}`}
+                            canWrite={canEdit && d.status !== "archived"}
+                            refresh={refresh}
+                          />
+                        </td>
                         {showActions ? (
                           <td>
                             <div className="toolbar">
@@ -333,11 +346,13 @@ function DemandsSection({ roles, onConflict }: { roles: readonly ResourceRole[];
         )}
       </QueryState>
       <p className="muted">{t("capacity.demands.notApproval")}</p>
+      {ext.outcome}
       {editing ? (
         <DemandDialog
           demand={editing.demand}
           initiatives={roadmap.data?.initiatives ?? []}
           onClose={() => setEditing(null)}
+          ext={ext}
         />
       ) : null}
       {releasing ? (

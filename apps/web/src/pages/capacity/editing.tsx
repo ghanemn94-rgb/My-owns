@@ -27,6 +27,8 @@ import { useWorkspace } from "../../components/Workspace.tsx";
 import { intlLocale } from "../../lib/format.ts";
 import { FormAlert, TableRegion, isVersionConflict, p3ErrorMessage, useDecimal } from "../prioritization/p3ui.tsx";
 import type { ResourceDemand, ResourceRole } from "./api.ts";
+// T-DG5-FE-C3 (D-164; REQ-S06-004): the create-form extension entry of the resource plan.
+import type { ExtensionEntry } from "../../components/form-framework/index.ts";
 
 /** Problem codes of these forms are translated from the `capacity` namespace first. */
 export const CAPACITY_NS: readonly string[] = ["capacity"];
@@ -485,10 +487,13 @@ export function DemandDialog({
   demand,
   initiatives,
   onClose,
+  ext,
 }: {
   demand: ResourceDemand | null;
   initiatives: readonly DemandInitiative[];
   onClose: () => void;
+  /** T-DG5-FE-C3: the extension fields of the resource-plan create form (ADR-0041 §1, `resource_plan`). */
+  ext?: ExtensionEntry;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -538,12 +543,18 @@ export function DemandDialog({
       fields={fields}
       record={null}
       createUrl="/api/v1/resource-demands"
+      {...(ext ? { createSchema: ext.guard() } : {})}
       people={people}
       namespaces={CAPACITY_NS}
       submitLabel={t("capacity.demands.add")}
-      onSaved={done}
+      onSaved={async (saved) => {
+        if (ext) await ext.afterCreate(saved);
+        await done();
+      }}
       onCancel={onClose}
-    />
+    >
+      {ext?.node}
+    </RecordDialog>
   ) : (
     <RecordDialog<ResourceDemand>
       title={t("capacity.demands.editTitle")}

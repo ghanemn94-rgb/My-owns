@@ -21,6 +21,12 @@ import { formatDateTime } from "../../lib/format.ts";
 import { CASES_URL, useBusinessCases, useInitiativeOptions } from "./api.ts";
 import { FinanceStateChip } from "./finance.tsx";
 import { caseFieldMessage, FormAlert, splitProblem } from "./formKit.tsx";
+// T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
+import {
+  extensionToolsColumn,
+  useExtensionCreate,
+  type ExtensionEntry,
+} from "../../components/form-framework/index.ts";
 
 /** Permissions that make the business-case screens editable (the server re-checks each request). */
 export const CASE_WRITE_PERMISSIONS = ["business_case.edit", "finance.validate"] as const;
@@ -62,6 +68,8 @@ function CaseRegister() {
   const initiatives = useInitiativeOptions(ws.tid);
   const [creating, setCreating] = useState(false);
   const canEdit = ws.can("business_case.edit");
+  const ext = useExtensionCreate("business_case");
+  const refreshCases = useP3Refresh(ws.tid);
   const initiativeName = (id: string | null) => {
     const ini = initiatives.data?.find((i) => i.id === id);
     return ini ? `${ini.code} ${ini.name}` : null;
@@ -147,6 +155,11 @@ function CaseRegister() {
       cell: (c) => formatDateTime(c.updatedAt, locale, ws.tr.timezone),
       sortValue: (c) => c.updatedAt,
     },
+    extensionToolsColumn<BusinessCase>(t("forms.extensions.columnHeader"), "business_case", {
+      label: (c) => `${c.code} ${c.title}`,
+      canWrite: (c) => canEdit && c.status !== "archived",
+      refresh: refreshCases,
+    }),
   ];
 
   return (
@@ -192,8 +205,10 @@ function CaseRegister() {
           />
         )}
       </QueryState>
+      {ext.outcome}
       {creating ? (
         <CreateCaseDialog
+          ext={ext}
           cases={cases.data ?? []}
           initiatives={(initiatives.data ?? []).map((i) => ({ id: i.id, label: `${i.code} ${i.name}` }))}
           onClose={() => setCreating(false)}
@@ -211,10 +226,13 @@ const CREATE_FIELDS: Record<string, string> = {
 };
 
 function CreateCaseDialog({
+  ext,
   cases,
   initiatives,
   onClose,
 }: {
+  /** The extension fields of the business-case create form (ADR-0041 §1, `business_case`). */
+  ext?: ExtensionEntry;
   cases: readonly BusinessCase[];
   initiatives: readonly { id: string; label: string }[];
   onClose: () => void;
@@ -257,7 +275,8 @@ function CreateCaseDialog({
       }
     setCodes(next);
     setFormCodes(other);
-    if (Object.keys(next).length > 0 || other.length > 0) {
+    const extOk = ext ? ext.check() : true;
+    if (Object.keys(next).length > 0 || other.length > 0 || !extOk) {
       focusInvalid();
       return;
     }
@@ -270,6 +289,11 @@ function CreateCaseDialog({
         idempotencyKey: idempotencyKey.current,
       });
       if (action.stale()) return;
+      // A refusal of the extension values is shown on the register (the case is created), so no navigation.
+      if (ext && !(await ext.afterCreate(created))) {
+        if (await refresh()) onClose();
+        return;
+      }
       if (!(await refresh())) return;
       action.navigate(`/transformations/${ws.tid}/business-cases/${created.id}`);
     } catch (e) {
@@ -378,6 +402,7 @@ function CreateCaseDialog({
             />
           )}
         </Field>
+        {ext?.node}
       </form>
     </Dialog>
   );

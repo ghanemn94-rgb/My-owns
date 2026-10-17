@@ -32,6 +32,9 @@ import { JourneysSection } from "./JourneysSection.tsx";
 import { WorkshopsSection } from "./WorkshopsSection.tsx";
 // T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
 import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
+// T-DG5-FE-C3 (D-164; REQ-S06-004): the TOM canvas cell's extension values (`tom_canvas`). The ten cells exist from
+// the transformation's creation (no create form), so values are entered with Form tools on the cell.
+import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 
 export function DesignPage() {
@@ -206,6 +209,7 @@ function DimensionView({ view, onClose }: { view: TomCanvasCellView; onClose: ()
   const locale = useLocale();
   const ws = useWorkspace();
   const { byId } = usePeople(ws.tid);
+  const refreshCanvas = useP2Refresh(ws.tid);
   const label = pick(locale, view.dimension.labelEn, view.dimension.labelAr);
   return (
     <section
@@ -222,6 +226,13 @@ function DimensionView({ view, onClose }: { view: TomCanvasCellView; onClose: ()
         </button>
       </div>
       <p className="muted">{pick(locale, view.dimension.sourceDesignQuestionEn, view.dimension.designQuestionAr)}</p>
+      <RecordExtensionTools
+        recordType="tom_canvas"
+        record={view.cell}
+        recordLabel={label}
+        canWrite={ws.can("tom.edit")}
+        refresh={refreshCanvas}
+      />
       <dl className="details">
         <div>
           <dt>{t("design.canvas.current")}</dt>
