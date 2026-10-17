@@ -864,36 +864,37 @@ describe("REQ-S06-003 / REQ-S06-002: the ten seeded procedures", () => {
     expect(inst.status).toBe("active");
     expect(inst.currentStepKeys).toEqual(["record_baseline"]);
     const current = (inst.steps as Body[]).find((s) => s.stepKey === "record_baseline");
-    expect([current.status, current.assigneeRoleCode]).toEqual(["active", "BO"]);
+    // procedures v2 (migration 0095, REQ-PB-027): the baseline is recorded by the Transformation Lead, who holds
+    // baseline.edit (D-166; QA-E O-2 repaired).
+    expect([current.status, current.assigneeRoleCode]).toEqual(["active", "TL"]);
     expect(inst.nextAction.stepKey).toBe("record_baseline");
     const I = `/api/v1/procedure-instances/${inst.id}`;
     // Completing without the required evidence is refused (negative).
     const early = await send("POST", `${I}/steps/record_baseline/complete`, {
-      session: l.bo.session,
+      session: l.tl.session,
       headers: ifm(inst.version),
       body: { note: "Synthetic" },
     });
     expect([early.status, early.body.code]).toEqual([422, "procedure_step.evidence_required"]);
     const ev = ok(
       await send("POST", `${l.base}/evidence`, {
-        session: l.bo.session,
-        body: { kind: "note", title: "Synthetic QA baseline extract", noteBody: "Synthetic", ownerUserId: l.bo.id },
+        session: l.tl.session,
+        body: { kind: "note", title: "Synthetic QA baseline extract", noteBody: "Synthetic", ownerUserId: l.tl.id },
       }),
       201,
       "createEvidence",
     );
     const linked = await send("POST", `${I}/steps/record_baseline/evidence`, {
-      session: l.bo.session,
+      session: l.tl.session,
       headers: ifm(inst.version),
       body: { evidenceId: ev.id },
     });
     expect([200, 201], JSON.stringify(linked.body)).toContain(linked.status);
-    const v1 = ok(await send("GET", I, { session: l.bo.session }), 200, "instance").version;
-    // "create" output: the step's record is produced by the native DG2 workflow by a holder of baseline.edit (the
-    // Lead; the seeded step's BO assignee does not hold it, observation O-2 of the handback), then named by the
-    // assignee on completion; without it the completion is refused (ADR-0042 §10).
+    const v1 = ok(await send("GET", I, { session: l.tl.session }), 200, "instance").version;
+    // "create" output: the step's record is produced by the native DG2 workflow by its assignee (the Lead), then named
+    // on completion; without it the completion is refused (ADR-0042 §10).
     const noRecord = await send("POST", `${I}/steps/record_baseline/complete`, {
-      session: l.bo.session,
+      session: l.tl.session,
       headers: ifm(v1),
       body: { note: "Synthetic" },
     });
@@ -913,9 +914,20 @@ describe("REQ-S06-003 / REQ-S06-002: the ten seeded procedures", () => {
       201,
       "createBaseline (TL)",
     );
+    // The Business Owner is not the step's assignee and holds no TL here: refused (contract: 403
+    // procedure_step.not_assignee), and nothing advances.
+    const byBo = await send("POST", `${I}/steps/record_baseline/complete`, {
+      session: l.bo.session,
+      headers: ifm(v1),
+      body: { note: "Synthetic: not mine", outputRecordId: created.id },
+    });
+    expect([byBo.status, byBo.body.code], JSON.stringify(byBo.body)).toEqual([403, "procedure_step.not_assignee"]);
+    expect(ok(await send("GET", I, { session: l.tl.session }), 200, "instance").currentStepKeys).toEqual([
+      "record_baseline",
+    ]);
     const s1 = ok(
       await send("POST", `${I}/steps/record_baseline/complete`, {
-        session: l.bo.session,
+        session: l.tl.session,
         headers: ifm(v1),
         body: { note: "Synthetic: recorded", outputRecordId: created.id },
       }),
@@ -1091,8 +1103,17 @@ describe("REQ-S06-003: each of the ten procedures can be launched and completed 
       subject: tlOrgUser.subject,
       session: await signIn(api.app, tlOrgUser.subject),
     };
-    const actorOf = (code: string, role: string): Actor =>
-      code === "new_transformation_intake" && role === "TL" ? tlOrg : (byRole[role] ?? l.tl);
+    // Rule A (D-166): once capture_intake names the transformation T it produced, the intake's later steps adopt T, and
+    // their approvals are requested on T and routed by T's role mappings. So T is staffed natively: the access
+    // administrator assigns a Sponsor on T and T's Lead (its creator) maps that Sponsor; the Sponsor then decides.
+    const intake: { t: string | null; sp: Actor | null } = { t: null, sp: null };
+    const actorOf = (code: string, role: string, stepKey: string): Actor => {
+      if (code !== "new_transformation_intake") return byRole[role] ?? l.tl;
+      if (stepKey === "capture_intake") return role === "TL" ? tlOrg : (byRole[role] ?? l.tl);
+      // Adopted steps (on T): T's Lead is its creator l.tl (DG1 creator carry-over); T's Sponsor is intake.sp.
+      if (role === "SP" && intake.sp) return intake.sp;
+      return role === "TL" ? l.tl : (byRole[role] ?? l.tl);
+    };
     const { g, k, bw, sw } = l.ctx;
     const boKpi = await createKpi(api, k, { ownerUserId: l.bo.id } as Body);
     const bv = await postVersion(api, k, boKpi.id, DIRECT_FLOW);
@@ -1143,15 +1164,29 @@ describe("REQ-S06-003: each of the ten procedures can be launched and completed 
         );
         return (c.charter ?? c).id;
       },
-      "new_transformation_intake/capture_intake": async () =>
-        ok(
+      "new_transformation_intake/capture_intake": async () => {
+        const t = ok(
           await send("POST", "/api/v1/transformations", {
             session: l.tl.session,
             body: { businessUnitId: w.a1, name: "Synthetic QA intake transformation", mode: "end_to_end" },
           }),
           201,
           "intake transformation",
-        ).id,
+        ).id as string;
+        // Staff T natively before its Sponsor approval is requested (Rule A routes it by T's role mappings).
+        const sp = await grantedActor(api, l.admin, w.orgA.id, t, "SP");
+        ok(
+          await send("POST", `/api/v1/transformations/${t}/role-mappings`, {
+            session: l.tl.session,
+            body: { partyCode: "SP", targetKind: "user", userId: sp.id },
+          }),
+          201,
+          "intake transformation: map the Sponsor",
+        );
+        intake.t = t;
+        intake.sp = sp;
+        return t;
+      },
       "baseline_validation/record_baseline": async () => {
         const b = ok(
           await send("POST", `${l.base}/baselines`, {
@@ -1382,7 +1417,7 @@ describe("REQ-S06-003: each of the ten procedures can be launched and completed 
         }
         const step = (inst.steps as Body[]).find((s) => s.stepKey === key);
         const def = (d.steps as Body[]).find((s) => s.stepKey === key);
-        const actor = actorOf(d.code, step.assigneeRoleCode);
+        const actor = actorOf(d.code, step.assigneeRoleCode, key);
         if (step.stepKind === "approval") {
           if (!step.approvalId) {
             outcome = `${key}: approval step without an approval (step ${JSON.stringify(step)}; nextAction ${JSON.stringify(inst.nextAction)}; transformationId ${inst.transformationId}; subject ${inst.subjectRecordType}/${inst.subjectRecordId})`;
@@ -1393,7 +1428,22 @@ describe("REQ-S06-003: each of the ten procedures can be launched and completed 
             200,
             "approval",
           );
-          const approver = byRole[def.approvalRoleCode] ?? l.sp;
+          const approver =
+            d.code === "new_transformation_intake" && def.approvalRoleCode === "SP" && intake.sp
+              ? intake.sp
+              : (byRole[def.approvalRoleCode] ?? l.sp);
+          if (d.code === "new_transformation_intake") {
+            // Rule A: the adopted approval is on T (the transformation capture_intake produced), not on the launch scope.
+            const ap = ok(
+              await send("GET", `/api/v1/approvals/${step.approvalId}`, { session: approver.session }),
+              200,
+              "intake approval (Sponsor)",
+            );
+            expect(ap.transformationId, "the intake's approval is requested on the adopted transformation").toBe(
+              intake.t,
+            );
+            expect(inst.transformationId, "the instance keeps its organization launch scope").toBeNull();
+          }
           const hook = beforeApproval[`${d.code}/${key}`];
           if (hook) await hook(inst);
           const dec = await send("POST", `/api/v1/approvals/${step.approvalId}/decisions`, {

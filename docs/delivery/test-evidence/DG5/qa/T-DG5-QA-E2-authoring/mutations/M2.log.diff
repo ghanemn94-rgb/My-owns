@@ -1,0 +1,11 @@
+--- apps/api/src/modules/procedures/steps.ts.pristine	2026-10-17 15:19:08.744305044 +0000
++++ apps/api/src/modules/procedures/steps.ts	2026-10-17 15:19:08.758748342 +0000
+@@ -408,7 +408,7 @@
+     step.assignee_user_id !== null
+       ? step.assignee_user_id === a.userId
+       : holdsRoleIn(a.principal.grants, step.assignee_role_code, "procedure.act", a.target);
+-  if (!mine) throw refusal("procedure_step.not_assignee").withDenial(denialOf("procedure.act", a.target));
++  if (!mine && false) throw refusal("procedure_step.not_assignee").withDenial(denialOf("procedure.act", a.target));
+ }
+ 
+ // ------------------------------------------------------------------------------------------------ writes (rows)
