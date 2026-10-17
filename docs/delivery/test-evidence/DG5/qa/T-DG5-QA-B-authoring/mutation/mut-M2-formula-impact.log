@@ -1,0 +1,88 @@
+mutant M2-formula-impact: apps/api/src/modules/methodology/revision-impact.ts
+433c433
+<       affectedBenefits: benefits.map((b) => ({ benefitId: b.id, code: b.code })),
+---
+>       affectedBenefits: [],
+port-policy: PostgreSQL listening on port 23600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.fTVM0t/claude-0/mut
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc0x2bp_8c482fc4 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a07-historical-integrity.test.ts (12 tests | 4 failed) 10839ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: an issued snapshot retains as-of, period, source revisions, methodology and calculation versions and approval state 34ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: the issued Q1 dashboard retains the calculation version and source revision of the KPI value it shows 12ms
+     → the Q1 dashboard's versions: [{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}]: expected [] to include '01a14893-e666-730b-86b1-238ef93e073e'
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact  457ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact 81ms
+     → expected [] to include '01a14893-e79d-7259-ae90-46ebce8c0df0'
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact  723ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing 296ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2  451ms
+   × A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > the Q1 report issued earlier (the Q1 dashboard showing the KPI) is offered for reissue after the approved restatement 6ms
+     → offers: [{"snapshotId":"01a14893-ed3d-775c-a305-07a656c9c97d","seriesId":"01a14893-ed3d-775c-a305-07a656c9c97d","definitionCode":"registers","issueVersion":1,"periodLabel":null,"snapshotStatus":"issued","createdAt":"2026-10-17T06:37:00.447Z"}]: expected undefined to be defined
+   ✓ REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback  528ms
+   ✓ REQ-PB-093: changed scoring defaults apply to new transformations; an existing one keeps its weight set and rubric > defaults totalling 95% are refused at publish; 30/20/20/15/15 with a new Feasibility rubric reach only new transformations  502ms
+   ✓ REQ-S14-003: an N/A scheme without its own bands is refused; existing assessments keep their scheme version and band > adding N/A while keeping the four source bands fails the preview (own bands required) and cannot be published  342ms
+   × contract (found while authoring A07): reading the extension values of a record that has none > GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows 80ms
+     → contract: header ETag="0" violates {"type":"string","pattern":"^\"[1-9][0-9]{0,9}\"$"}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S13-007: the issued Q1 dashboard retains the calculation version and source revision of the KPI value it shows
+AssertionError: the Q1 dashboard's versions: [{"versionKind":"methodology_version","referenceId":"01920002-0000-7000-8000-000000000001","referenceKey":"playbook","versionLabel":"v1"}]: expected [] to include '01a14893-e666-730b-86b1-238ef93e073e'
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:428:7
+    426|       dash.versions.filter((x) => x.versionKind === "kpi_version").map…
+    427|       `the Q1 dashboard's versions: ${JSON.stringify(dash.versions)}`,
+    428|     ).toContain(kpi.v1.id);
+       |       ^
+    429|     const sourceTypes = (dash.sources.items as Body[]).map((x) => `${x…
+    430|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact
+AssertionError: expected [] to include '01a14893-e79d-7259-ae90-46ebce8c0df0'
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:554:75
+    552|       "pass",
+    553|     ]);
+    554|     expect((p.impact.affectedBenefits as Body[]).map((x) => x.benefitI…
+       |                                                                           ^
+    555|     expect(p.reviewTaskCount).toBeGreaterThanOrEqual(1);
+    556|     // The review task is in the configured reviewer's (FIN's) own My …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > the Q1 report issued earlier (the Q1 dashboard showing the KPI) is offered for reissue after the approved restatement
+AssertionError: offers: [{"snapshotId":"01a14893-ed3d-775c-a305-07a656c9c97d","seriesId":"01a14893-ed3d-775c-a305-07a656c9c97d","definitionCode":"registers","issueVersion":1,"periodLabel":null,"snapshotStatus":"issued","createdAt":"2026-10-17T06:37:00.447Z"}]: expected undefined to be defined
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:793:58
+    791|       ).items as Body[];
+    792|       const offer = offers.find((o) => o.snapshotId === dash.id);
+    793|       expect(offer, `offers: ${JSON.stringify(offers)}`).toBeDefined();
+       |                                                          ^
+    794|       expect([offer.issueVersion, offer.periodLabel]).toEqual([1, "208…
+    795|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a07-historical-integrity.test.ts > contract (found while authoring A07): reading the extension values of a record that has none > GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows
+Error: contract: header ETag="0" violates {"type":"string","pattern":"^\"[1-9][0-9]{0,9}\"$"}
+ ❯ assertContract apps/api/test/support/contract.ts:140:28
+    138|       const v = validatorFor(`${op.operationId}:${res.statusCode}:head…
+    139|       const typed = schema["type"] === "integer" ? Number(value) : Str…
+    140|       if (!v(typed)) throw new Error(`contract: header ${name}=${Strin…
+       |                            ^
+    141|     }
+    142|   }
+ ❯ call apps/api/test/support/harness.ts:166:5
+ ❯ tests/qa/integration/a07-historical-integrity.test.ts:1183:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 8 passed (12)
+   Start at  06:36:39
+   Duration  23.76s (transform 4.67s, setup 0ms, collect 8.97s, tests 10.84s, environment 0ms, prepare 66ms)
+
+exit=1
