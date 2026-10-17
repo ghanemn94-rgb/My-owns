@@ -260,3 +260,47 @@ The §2 (d) sentence is corrected in place (marked "Corrected 2026-10-17"). As b
 Requirement rows: REQ-PB-089 and REQ-S18-001.
 
 Every approval in the demo is synthetic and approves nothing real. Product gates G1–G6 are business approvals inside the product. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R3; D-167, D-168): §4 and §5, the B0147 chain names and the seeded pending approval
+
+Sources: D-167 (QA-E2 O-1), D-168 (W22 integrated, with the analysts' gap REQ-PB-090 decided), and the handbacks of T-DG5-BE-T6 (§1, §2, §7) and T-DG5-BE-T5 (§2.3, continued as T-DG5-BE-T5B). Nothing above is removed or corrected. §4's chain lines and §5's "a pending approval" already state the intent, and this amendment records how the merged dataset meets them at `b463552`. No migration: these are dataset rows (`packages/db/src/demo/**`).
+
+### D5. §4: the roaming chains read exactly as B0147 writes them (T-DG5-BE-T6; D-168; REQ-PB-090)
+
+- **The gap (D-168, analysts' gap 1).** The demo chain had six nodes, and its KPI and benefit names were not B0147's, so the traceability view did not show the acceptance line literally.
+- **What D-168 decided.** The three chain KPIs and benefits take B0147's names, and each contribution names its outcome KPI. As a result chain 1 reads exactly:
+
+  'Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift' (REQ-PB-090; B0146–B0147, `docs/source/playbook.md:696`).
+
+- **As merged** (`packages/db/src/demo/data/**`, all synthetic):
+  - **The KPI names** are "Attach rate / activation", "Complaint rate" and "Cost/MB, margin" (`kpis.ts:311`, `:356`, `:394`). Their descriptions keep the roaming wording.
+  - **The benefit titles** are "Revenue uplift", "CX + care cost" and "Margin improvement" (`benefits.ts:109`, `:188`, `:224`). `business-cases.ts` uses the same names, and no number changed.
+  - **Each contribution names its outcome KPI** (`roaming-chains.ts:56`, `outcome_kpi_id`). So the `initiative_kpi` edge ends at the outcome KPI, and each line has exactly five nodes: diagnostic item → TOM gap → initiative → KPI → benefit (ADR-0038 §1).
+  - **The seed fails loudly** if a chain KPI's name or a chain benefit's title is not B0147's column (`roaming-chains.ts:34–37`).
+- **The test that asserts the literal line.** `apps/api/test/integration/environment/demo-traceability-chains.test.ts`:
+  - It seeds the real demo dataset into a scratch database, runs the real API (`MTH_ENV=demo`), and reads `getTraceability` as the demo TL: the whole graph, and each chain downstream from its diagnosed issue.
+  - The expected lines are written out from the B0147 table (`:67–69`; chain 1 at `:67`), never derived from the dataset.
+  - Each chain test (`:136–166`) asserts the five record types, the five labels, and `path.map((n) => n.label).join(" -> ")` equal to the literal line (`:155`). It also asserts that no `initiative_kpi` edge from the initiative ends at an outcome.
+  - Negative cases: a demo user without a read right gets no chain text (`:169`), and an anonymous request gets 401 (`:176`).
+  - Also: `packages/db/test/integration/demo-roaming.test.ts`, the `REQ-PB-090` block. BE-T6's control with `outcome_kpi_id` set back to `null` failed all three chain cases (T-DG5-BE-T6 handback §2). D-168 records 74/74 for BE-T6's tests.
+- **Determinism.** Seed-twice and reset-twice still give identical counts and checksums (`demo-roaming.test.ts` and `demo.test.ts` passed; T-DG5-BE-T6 handback §2).
+- **A demo wording point, not a defect (D-168).** Each chain's outcome statement still carries the B0147 KPI text (`packages/db/src/demo/data/roaming.ts:669`, `statement: c.kpi`), and the comment above it (`:665`) is no longer accurate. So in the whole graph an outcome and its outcome KPI share one label. The outcome is not on the line, so the acceptance is met. D-168 records this for the review. This amendment changes nothing about it.
+
+### D6. §5: the seeded pending approval reaches a demo role user (T-DG5-BE-T5; D-167 QA-E2 O-1; REQ-S18-002)
+
+- **The gap.** Before W22, §5's "a pending approval" was met only by a submitted gate or a queued Finance validation (`packages/db/src/demo/coverage.ts:235–239` counts any of the three). No `GET /approvals` inbox lists those, so no demo role user had a pending approval to act on.
+- **As merged** (`packages/db/src/demo/data/roaming-states.ts`, all synthetic):
+  - `DEMO_PENDING_APPROVAL` (`:259–269`) describes the request. The Transformation Lead asks for the T04 design decision D-01 to be decided through the T11 row "Target-state design", whose Approve party is BO.
+  - `seedPendingApproval` (`:280–345`) runs in module `roaming.states` (`:348`, called at `:355`). Every row goes through `ctx.insert`:
+    - a role mapping of party BO to `roaming.user.bo` on the roaming transformation (`:283–290`);
+    - the `approval` row (`:292–312`): `decision_request`, pending, round 1, assignee `roaming.user.bo`, `sod_policy` `requester_excluded`. Its SLA is `working_days` with `due_date` null and `due_unknown_reason` `calendar_not_configured` (`:308–310`), because the demo organization has no business calendar. The due date therefore shows Unknown, never a guessed date;
+    - the `approval_decision` work item for that user (`:317–331`) and its inbox notification (`:332–344`).
+  - The new ids are fixed (`roaming-ids.ts:59–61`: `roleMapping` 0x057, `workItem` 0x058, `inboxNotification` 0x059), so seed and reset stay deterministic.
+- **Tests.** `apps/api/test/integration/environment/demo-pending-approval.test.ts` (`describe` at `:54`):
+  - `:55`: the rules name BO;
+  - `:82`: `roaming.user.bo` lists it in `GET /approvals?role=assignee&status=pending`, reads it, and has its task and notification;
+  - `:110`: no other demo role user lists it as assignee, and the TL lists it as requester;
+  - `:118`: the TL as requester is refused (SoD), a stale version is refused, and the BO decides it in a scratch copy.
+- **It approves nothing real.** The approval is a synthetic demo request that nobody has decided. Deciding it approves nothing real (M0412).
+
+Every approval in the demo is synthetic and approves nothing real. Product gates G1–G6 are business approvals inside the product. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7. The playbook is a practical synthesis inspired by PMI, Brightline and BRM, not an official PMI standard.

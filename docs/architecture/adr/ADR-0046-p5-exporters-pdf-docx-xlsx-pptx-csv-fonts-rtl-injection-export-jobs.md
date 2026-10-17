@@ -196,3 +196,22 @@ Requirement rows: REQ-PB-001 and REQ-S20-015 (A15). Test: `tests/qa/integration/
 - Requirement rows: REQ-S13-004 and REQ-S13-005. Tests: `apps/api/src/modules/reporting/reports/assemblers/kbe-d4.test.ts` and `apps/api/test/integration/reporting/kpi-target-text.test.ts` (the CSV renderer in en and ar prints `100` and `25 %`, never `100.000000` or `0.250000`).
 
 Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7. Demo files are synthetic illustrative examples, not Mobily performance.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R3; D-167, D-168): §5, no orphan file after a killed attempt
+
+Sources: D-167 (QA-F2 D-QA-F2-3, Low), D-168 (W22 integrated), and the T-DG5-BE-T5 handback §2.2 (continued as T-DG5-BE-T5B). Nothing above is removed or corrected. This amendment adds one storage rule to §5 as merged at `b463552`. No migration, no API or contract change, and no change to the export-file store (`packages/reporting/src/store*`).
+
+### E4. The worker removes earlier attempts' files (T-DG5-BE-T5; D-QA-F2-3)
+
+- **The gap.** Each attempt writes its own file, `exports/<org>/<job>-a<attempt>.<ext>`, so a stale attempt can never overwrite the recorded file (§5, "Storage"). An attempt killed after `store.put` and before its success commit left a file that no job row records.
+- **As merged** (`apps/worker/src/reports/export-runner.ts`):
+  - `attemptStorageKey(job, attempt)` builds one attempt's key from the job's own id (`:334–336`).
+  - `discardEarlierAttempts(store, job)` removes the keys of attempts 1 to `attempt_count − 1` through the store port's existing `discard` (`:346–351`). A missing object is a no-op, and a store error is swallowed, so the file stays for the next attempt and the export does not fail.
+  - `runExport` calls it when an attempt starts (`:367`) and again after a successful commit (`:455`). The current attempt's key is never in the range, and no other job's key is ever built.
+  - The rest of §5 is unchanged: a failed or cancelled attempt still removes its own file (`:454`).
+- **Tests.**
+  - Unit: `apps/worker/src/reports/export-runner.test.ts` (`describe` at `:24`): the exact keys, idempotence, swallowed store errors, and the current key untouched.
+  - Integration: `apps/api/test/integration/reporting/exports-orphan.test.ts` (`describe` at `:88`). At `:89`, attempt 1 is killed after `put`, attempt 2 removes its file when it starts, only `a2` remains, and another job's files are untouched. At `:142`, an earlier file written while the succeeding attempt renders is removed when that attempt succeeds.
+  - Black-box: `tests/qa/integration/a13-jobs-rerun.test.ts` passed unchanged, including its orphan assertion (T-DG5-BE-T5 handback §2.2; D-168: D-QA-F2-3 closed).
+
+Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

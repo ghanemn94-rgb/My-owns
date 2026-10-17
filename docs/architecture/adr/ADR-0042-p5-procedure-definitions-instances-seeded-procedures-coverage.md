@@ -275,7 +275,19 @@ _Brought to the built state 2026-10-17 (T-DG5-ARCH-R2; D-167): V2 now describes 
 - the instance's other steps and its organization-level reads keep organization scope, and organization-scope actors who could act before keep their rights;
 - the instance itself does not move to T: Rule A and `0096` are unchanged.
 
-This is **decided by D-167, implemented by T-DG5-BE-T5 (W22)**. It is not in this tree (`f78afff`) and is not described here as built.
+This was **decided by D-167, implemented by T-DG5-BE-T5 (W22), continued as T-DG5-BE-T5B, and merged (D-168)**. _Brought to the built state 2026-10-17 (T-DG5-ARCH-R3; D-168): this paragraph said the clarification was not in the tree at `f78afff`. The `steps.ts:1142–1144` reference above is the W21 state._ As merged (`b463552`), in `apps/api/src/modules/procedures/steps.ts` unless named otherwise:
+
+- **Which step is adopted.** `adoptedTransformationOf` (`:409–414`) returns T when the instance's `transformation_id` is NULL and the step's is not, else null. Nothing else counts as adopted.
+- **The scopes of a step.** `stepTargets` (`:417–429`) returns the instance's own scope first, then T for an adopted step. `stepRoleTarget` (`:432–439`) is the last of them: T for an adopted step, else the instance's scope.
+- **Reading.** `requireReadInAny` (`:444–458`) grants `procedure.read` in the first scope that allows it, else the first refusal (404). `openStep` uses it on the step's scopes before it locks the instance (`:1276–1285`). The single-instance read and the inputs update use `requireInstanceOrAdoptedRead` (`:464–493`; `instances.ts:464`, `:592`): the instance's scope, else T of one of its adopted steps. The instance list is unchanged and keeps organization scope.
+- **Acting.** `authorizeStepWrite` (`:501–536`) keeps `authorizeInstanceWrite` for a step that was not adopted (`:509–513`). For an adopted step it tries each scope, the organization first and then T, with the read gate, the permission and the step-actor rule (`:514–534`). The first scope where all of them hold is the acting scope. When none does, a 403 from a scope the caller can read wins over a 404 (`:532`, `:535`). `openStep` calls it for complete and skip (`:1293`).
+- **Assign.** The assignee must hold the step's role in `stepRoleTarget`, so on T for an adopted step (`:1400`).
+- **Link evidence.** The evidence of an adopted step must belong to T (`:1421–1431`; 422 `procedure_step.output_record_invalid` otherwise).
+- **Inputs.** An inputs update reaches T only through an open adopted task step, for the inputs that step requires (`authorizeInputsWrite`, `instances.ts:416–456`; the adopted-step branch at `:441–455`).
+- **Unchanged.** Rule A, `0096`, the instance's organization scope, cancel and the instance list.
+- **Tests.**
+  - `apps/api/test/integration/procedures/adopted-step-authorization.test.ts`: `describe` at `:110`; tests at `:111` (T's Lead completes `draft_charter`; a user without TL on T gets 403 or 404; T's Lead cannot cancel and does not list the instance) and `:212` (the organization-scope Lead keeps its rights).
+  - Black-box: `tests/qa/integration/a02-a21-complete-lifecycle.test.ts`, unchanged, now completes all ten procedures (T-DG5-BE-T5 handback §2.4; D-168).
 
 ### V3. `ProcedureStepComplete`: the adapters verify and link only (T-DG5-BE-C4; D-165 QA-E O-1, D-166)
 
