@@ -1,4 +1,4 @@
-// A13 "Durable automation" (qa-verifier, T-DG5-QA-F): the user-visible path of "failed jobs remain recoverable" and
+// A13 "Durable automation" (qa-verifier, T-DG5-QA-F; shared-stack waits by T-DG5-QA-F2): the user-visible path of "failed jobs remain recoverable" and
 // REQ-S12-002 "a failed execution appears in the queue and succeeds on retry without duplicating actions".
 //
 // Black-box on the REAL stack (apps/web/e2e/support/with-stack.sh) plus the BUILT production worker
@@ -22,6 +22,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import {
   apiSession,
+  backlog,
+  eventJobs,
   poll,
   psql,
   send,
@@ -47,6 +49,19 @@ async function accessible(page: Page) {
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
 const ok = (r: { status: number; body: Body }, status: number) => expect(r.status, JSON.stringify(r.body)).toBe(status);
+/**
+ * T-DG5-QA-F2 (D-165): in the shared root stack this file's worker starts after the earlier specs, so it first relays and
+ * works off their backlog (every earlier event fans out to the domain queues and automation.evaluate). Each wait below
+ * that depends on the worker is therefore on THIS spec's own event or failure entry, never on a drained queue, with a
+ * bound that allows that backlog. The time each wait took is logged (stdout) for the evidence.
+ */
+const BACKLOG_MS = 240_000;
+const timed = async <T>(label: string, run: () => Promise<T>): Promise<T> => {
+  const t = Date.now();
+  const v = await run();
+  console.log(`[a13] ${label}: ${((Date.now() - t) / 1000).toFixed(1)} s`);
+  return v;
+};
 
 let worker: ProductionWorker | null = null;
 let queueBefore: string | null = null;
@@ -140,7 +155,8 @@ test("A13 / REQ-S12-002: a failed execution appears in the failure queue and suc
   playwright,
   baseURL,
 }, info) => {
-  test.setTimeout(150_000);
+  // Three backlog-bounded waits (own event relayed and evaluated, failure entry, retry resolved) plus the screens.
+  test.setTimeout(3 * BACKLOG_MS + 120_000);
   const lang = langOf(info.project.name);
   const admin = await apiSession(playwright, baseURL!, "dev.admin");
   const office = await apiSession(playwright, baseURL!, "dev.office");
@@ -186,21 +202,49 @@ test("A13 / REQ-S12-002: a failed execution appears in the failure queue and suc
     let faultOn = true;
     try {
       const t1 = await newTransformation("failing");
-      const [key] = psql(
-        `SELECT idempotency_key FROM outbox_event WHERE aggregate_id = ${q(t1)} AND event_type = 'transformation.created'`,
+      const [eventId, key] = psql(
+        `SELECT id || chr(10) || idempotency_key FROM outbox_event WHERE aggregate_id = ${q(t1)} AND event_type = 'transformation.created'`,
       );
-      const exec = await poll(async () => {
-        const r = await send(admin, "GET", `/api/v1/admin/automation-executions?ruleId=${ruleId}&limit=100`);
-        return (r.body?.items as Body[] | undefined)?.find((e) => e.triggerKey === key && e.status === "failed");
-      }, `the failed execution (worker: ${worker?.output()})`);
-      const failure = await poll(async () => {
-        const r = await send(
-          admin,
-          "GET",
-          "/api/v1/admin/automation-failures?source=rule_execution&status=open&limit=100",
-        );
-        return (r.body?.items as Body[] | undefined)?.find((f) => f.executionId === exec.id);
-      }, "the failure-queue entry");
+      const ownState = () => `${JSON.stringify(eventJobs(eventId!))}; ${backlog()}`;
+      // Own event: relayed, and its automation.evaluate job finished (with retry limit 0, one attempt).
+      await timed("own event relayed and evaluated", () =>
+        poll(
+          async () => {
+            const s = eventJobs(eventId!);
+            const evaluate = s.jobs.find((j) => j.name === "automation.evaluate");
+            return s.published && evaluate !== undefined && ["completed", "failed"].includes(evaluate.state);
+          },
+          "this spec's transformation.created event to be relayed and evaluated",
+          BACKLOG_MS,
+          ownState,
+        ),
+      );
+      const exec = await timed("own failed execution listed", () =>
+        poll(
+          async () => {
+            const r = await send(admin, "GET", `/api/v1/admin/automation-executions?ruleId=${ruleId}&limit=100`);
+            return (r.body?.items as Body[] | undefined)?.find((e) => e.triggerKey === key && e.status === "failed");
+          },
+          "the failed execution",
+          60_000,
+          () => `${ownState()}; worker: ${worker?.output().slice(-4000)}`,
+        ),
+      );
+      const failure = await timed("own failure-queue entry listed", () =>
+        poll(
+          async () => {
+            const r = await send(
+              admin,
+              "GET",
+              "/api/v1/admin/automation-failures?source=rule_execution&status=open&limit=100",
+            );
+            return (r.body?.items as Body[] | undefined)?.find((f) => f.executionId === exec.id);
+          },
+          "the failure-queue entry",
+          60_000,
+          ownState,
+        ),
+      );
       const counts = () => ({
         tasks: Number(
           psql(`SELECT count(*) FROM work_item WHERE dedupe_key LIKE ${q(`automation:${code}:${key}:1:%`)}`)[0],
@@ -230,10 +274,17 @@ test("A13 / REQ-S12-002: a failed execution appears in the failure queue and suc
       psql(`DELETE FROM public.qa_a13_fault WHERE pattern = ${q(`automation:${code}:%:2:%`)}`);
       faultOn = false;
       await row.locator("[data-action='retry-failure']").click();
-      await poll(async () => {
-        const r = await send(admin, "GET", `/api/v1/admin/automation-failures/${failure.id}`);
-        return r.body?.status === "resolved";
-      }, "the retried entry resolved");
+      await timed("own retried entry resolved", () =>
+        poll(
+          async () => {
+            const r = await send(admin, "GET", `/api/v1/admin/automation-failures/${failure.id}`);
+            return r.body?.status === "resolved";
+          },
+          "the retried entry resolved",
+          BACKLOG_MS,
+          backlog,
+        ),
+      );
       await page.reload();
       // The queue lists open entries by default; show every status.
       await page.getByRole("combobox", { name: tr(lang, "workflowsP5.field.status"), exact: true }).selectOption("");

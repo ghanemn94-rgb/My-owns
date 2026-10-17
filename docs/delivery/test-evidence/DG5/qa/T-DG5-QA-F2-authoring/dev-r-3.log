@@ -1,0 +1,49 @@
+port-policy: PostgreSQL listening on port 23650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-f2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvci66v3_a47155e0 (server_encoding UTF8); applied 87 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-starters-run.test.ts (10 tests | 1 failed) 16395ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > the catalogue holds exactly sixteen starters, each enabled with a published effective version 9ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter 1 (transformation created): one execution; one phase checklist and role tasks  967ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.reporting_period_open: each of its scheduled triggers (kpi.reporting_period_open) runs it once, succeeded  823ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.decision_sla: each of its scheduled triggers (governance.decision_sla_scan, approval.escalation_scan) runs it once, succeeded  1892ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.blocker_red: each of its scheduled triggers (governance.blocker_escalation_scan) runs it once, succeeded  1101ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.meeting_cutoff: each of its scheduled triggers (governance.meeting_cutoff_scan) runs it once, succeeded  924ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.bau_handover_accepted: each of its scheduled triggers (sustainment.review_scan, sustainment.control_check_scan) runs it once, succeeded  2030ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter 16 (a job fails): a job that exhausts its retries creates ONE visible operational exception and the starter runs once  1985ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starters 5, 6, 7 (gate evidence check, valid submission routing, gate approved): a native G1 submission and approval run each once  2181ms
+   × REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > the starters this file does not trigger are named with where they are driven (no silent gap) 9ms
+     → expected 9 to be 6 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-starters-run.test.ts > REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > the starters this file does not trigger are named with where they are driven (no silent gap)
+AssertionError: expected 9 to be 6 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 6[39m
+[31m+ 9[39m
+
+ ❯ tests/qa/integration/a13-starters-run.test.ts:256:52
+    254| 
+    255|   it("the starters this file does not trigger are named with where the…
+    256|     expect(Object.keys(STARTERS_ELSEWHERE).length).toBe(6);
+       |                                                    ^
+    257|   });
+    258| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  14:39:38
+   Duration  38.57s (transform 7.92s, setup 0ms, collect 15.31s, tests 16.40s, environment 0ms, prepare 106ms)
+

@@ -1,0 +1,44 @@
+port-policy: PostgreSQL listening on port 23650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-f2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvci241o_410d3401 (server_encoding UTF8); applied 87 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests | 1 failed) 36047ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the same Idempotency-Key returns the existing job (200) and queues nothing more 243ms
+   × A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file 25025ms
+     → files the job left in the store (after the kill: ["/var/tmp/mth-run.md9tJQ/claude-0/mth-evidence-it-RrgttL/exports/01a14a4b-4600-715e-bbbd-95293cdc0a04/01a14a4b-4760-7242-b5fd-a690e301df8e-a1.pdf"]): expected [ …(2) ] to have a length of 1 but got 2
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1399ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  3629ms
+   ✓ A13 health check (no job exists, ADR-0048 §8): the retried submit leaves one submitted assessment, one score, three actions > the same submit replayed, and two concurrent submits, change nothing after the first  1058ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-jobs-rerun.test.ts > A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file
+AssertionError: files the job left in the store (after the kill: ["/var/tmp/mth-run.md9tJQ/claude-0/mth-evidence-it-RrgttL/exports/01a14a4b-4600-715e-bbbd-95293cdc0a04/01a14a4b-4760-7242-b5fd-a690e301df8e-a1.pdf"]): expected [ …(2) ] to have a length of 1 but got 2
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+ ❯ tests/qa/integration/a13-jobs-rerun.test.ts:210:11
+    208|           added,
+    209|           `files the job left in the store (after the kill: ${JSON.str…
+    210|         ).toHaveLength(1);
+       |           ^
+    211|       } finally {
+    212|         await holder.query("SELECT pg_advisory_unlock_all()").catch(()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  14:36:28
+   Duration  54.52s (transform 6.89s, setup 0ms, collect 13.67s, tests 36.05s, environment 0ms, prepare 80ms)
+

@@ -108,12 +108,39 @@ export async function poll<T>(
   probe: () => Promise<T | null | undefined | false>,
   what: string,
   ms = 60_000,
+  diagnose?: () => string,
 ): Promise<T> {
   const until = Date.now() + ms;
   for (;;) {
     const v = await probe();
     if (v) return v;
-    if (Date.now() > until) throw new Error(`timed out after ${ms} ms waiting for ${what}`);
+    if (Date.now() > until)
+      throw new Error(`timed out after ${ms} ms waiting for ${what}${diagnose ? `; state: ${diagnose()}` : ""}`);
     await new Promise((r) => setTimeout(r, 300));
   }
+}
+
+/**
+ * T-DG5-QA-F2 (D-165): the worker state of ONE outbox event in a shared stack, for waits that must not depend on the
+ * rest of the stack's backlog: whether the relay published it, and the state of each job that carries it.
+ */
+export function eventJobs(outboxEventId: string): { published: boolean; jobs: { name: string; state: string }[] } {
+  const id = `'${outboxEventId.replace(/'/g, "''")}'`;
+  const [published] = psql(`SELECT (published_at IS NOT NULL)::text FROM outbox_event WHERE id = ${id}`);
+  const jobs = psql(
+    `SELECT name || '\t' || state FROM pgboss.job WHERE data->>'outboxEventId' = ${id} ORDER BY name`,
+  ).map((l) => {
+    const [name, state] = l.split("\t");
+    return { name: name!, state: state! };
+  });
+  return { published: published === "true", jobs };
+}
+
+/** The shared stack's outstanding work: unpublished outbox rows and unfinished jobs per queue (diagnostics only). */
+export function backlog(): string {
+  const outbox = psql("SELECT count(*) FROM outbox_event WHERE published_at IS NULL")[0];
+  const jobs = psql(
+    "SELECT name || '=' || count(*) FROM pgboss.job WHERE state IN ('created','retry','active') GROUP BY name ORDER BY count(*) DESC LIMIT 12",
+  );
+  return `unpublished outbox ${outbox}; unfinished jobs ${jobs.join(", ") || "none"}`;
 }
