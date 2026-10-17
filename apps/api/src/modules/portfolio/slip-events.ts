@@ -14,15 +14,18 @@
 //  - one `dependency_slip` row per (dependency, slip key `<predecessor initiative id>:<milestone id>.<milestone
 //    version>`: the schedule version the write produced; 0075 dependency_slip_once_key), with `affected` = every
 //    initiative reachable from the dependency's successor through the dependency graph, with its owner (executive
-//    owner, else workstream lead; null = Unknown) and its forecast finish before and after by the same DG4 function
-//    (null = Unknown); its audit event; and the outbox event `dependency.slipped` (consumer portfolio.dependency_slip,
-//    starter 9, which notifies each distinct affected owner once).
-// Forecasts stay computed on read (DG4): nothing here stores or overwrites a forecast. No remote I/O.
+//    owner, else workstream lead; null = Unknown) and its forecast finish before and after by the D-166 Rule B forward
+//    pass (`forwardFinishes` in schedule.ts, over the before and the after milestone sets, which differ only in this
+//    milestone: a dependent with enough slack does not move, one with none moves by the slip; null = Unknown); its
+//    audit event; and the outbox event `dependency.slipped` (consumer portfolio.dependency_slip, starter 9, which
+//    notifies each distinct affected owner once).
+// Nothing here stores or overwrites a forecast: only the slip's own `affected` evidence is written (ADR-0044 §7).
+// No remote I/O.
 import { sql, type Tx } from "@mth/db";
 import { v7 as uuidv7 } from "uuid";
 import { record, type AuditContext } from "../audit/index.ts";
 import { dependencySlippedV1 } from "@mth/shared/schemas";
-import { predecessorFinish, type ScheduleMilestone } from "./schedule.ts";
+import { forwardFinishes, predecessorFinish, type ForwardFacts, type ScheduleMilestone } from "./schedule.ts";
 import { loadScheduleNetwork } from "./schedule-network.ts";
 
 export const DEPENDENCY_SLIPPED_EVENT = "dependency.slipped";
@@ -90,6 +93,7 @@ export async function recordDependencySlips(
       "code",
       "from_initiative_id",
       "to_initiative_id",
+      "status",
       sql<string | null>`needed_by::text`.as("neededBy"),
     ])
     .where("transformation_id", "=", scope.transformationId)
@@ -136,11 +140,20 @@ export async function recordDependencySlips(
       "code",
       "executive_owner_user_id",
       "workstream_lead_user_id",
+      sql<string | null>`planned_start::text`.as("plannedStart"),
       sql<string | null>`planned_end::text`.as("plannedEnd"),
     ])
     .where("transformation_id", "=", scope.transformationId)
     .execute();
   const byId = new Map(initiatives.map((i) => [i.id, i]));
+  // D-166 Rule B: the forward pass over the scheduled initiative-to-initiative dependencies (the `deps` above).
+  const links: ForwardFacts["dependencies"] = deps.map((d) => ({
+    fromInitiativeId: d.from_initiative_id,
+    toInitiativeId: d.to_initiative_id,
+    status: d.status,
+  }));
+  const forwardBefore = forwardFinishes({ initiatives, milestones: beforeSet, dependencies: links });
+  const forwardAfter = forwardFinishes({ initiatives, milestones: afterSet, dependencies: links });
   const predecessor = byId.get(after.initiative_id);
   if (predecessor === undefined) return [];
   const finishBefore = predecessorFinish(predecessor, beforeSet);
@@ -180,8 +193,8 @@ export async function recordDependencySlips(
               initiativeId: i.id,
               initiativeCode: i.code,
               ownerUserId: i.executive_owner_user_id ?? i.workstream_lead_user_id ?? null,
-              forecastFinishBefore: predecessorFinish(i, beforeSet),
-              forecastFinishAfter: predecessorFinish(i, afterSet),
+              forecastFinishBefore: forwardBefore(i.id),
+              forecastFinishAfter: forwardAfter(i.id),
             },
           ];
     });

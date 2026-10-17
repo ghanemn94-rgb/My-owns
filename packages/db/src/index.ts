@@ -57,6 +57,7 @@ export {
   DEMO_RESET_LOCK_CLASS,
   DEMO_RESET_LOCK_KEY,
   DEMO_SYNTHETIC_CLOCK,
+  demoDevIssuerBindingAllowed,
   DemoRefused,
   readDeploymentEnvironment,
   RESET_DEMO_REFUSALS,
