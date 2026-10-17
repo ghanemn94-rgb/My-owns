@@ -123,6 +123,7 @@ export function ApprovalRoutePage() {
   return (
     <div className="page" data-p5-screen="approval-route">
       <PageHeader
+        demoBadge
         title={t("workflowsP5.routes.oneTitle")}
         crumbs={[
           { label: t("nav.sub.approvals"), to: "/my-work/approvals" },

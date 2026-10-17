@@ -78,6 +78,7 @@ export function RagPolicyPage() {
   return (
     <div className="page" data-page="rag-policy">
       <PageHeader
+        demoBadge
         crumbs={[{ label: t("dashboards.hub.title"), to: "/dashboards" }, { label: t("dashboards.ragPolicy.title") }]}
         title={t("dashboards.ragPolicy.title")}
         subtitle={t("dashboards.ragPolicy.intro")}

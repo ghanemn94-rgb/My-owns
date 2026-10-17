@@ -26,6 +26,7 @@ export function CutoffPackPage() {
   return (
     <div className="page" data-p5-screen="cutoff-pack">
       <PageHeader
+        demoBadge
         title={t("workflowsP5.cutoff.title")}
         subtitle={t("workflowsP5.cutoff.intro")}
         crumbs={[

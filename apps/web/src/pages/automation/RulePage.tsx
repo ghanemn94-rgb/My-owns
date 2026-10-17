@@ -100,6 +100,7 @@ function RuleView({ rule: r }: { rule: AutomationRule }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={pick(locale, r.nameEn, r.nameAr)}
         subtitle={<bdi dir="ltr">{r.code}</bdi>}
         crumbs={[{ label: t("nav.p5.automation.title"), to: "/admin/automation" }, { label: r.code }]}

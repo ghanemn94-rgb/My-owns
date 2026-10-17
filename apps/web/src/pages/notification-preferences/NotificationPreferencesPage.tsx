@@ -54,6 +54,7 @@ export function NotificationPreferencesPage() {
   return (
     <div className="page" data-p5-screen="notification-preferences">
       <PageHeader
+        demoBadge
         title={t("nav.p5.notificationPreferences.title")}
         subtitle={t("nav.p5.notificationPreferences.summary")}
         crumbs={[

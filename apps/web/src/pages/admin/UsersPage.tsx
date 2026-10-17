@@ -422,6 +422,7 @@ function UserEdit({ user }: { user: User }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={vs.base.displayName}
         subtitle={<ActiveChip status={vs.base.status} />}
         crumbs={[

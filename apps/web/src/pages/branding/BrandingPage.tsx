@@ -134,6 +134,7 @@ export function BrandingPage() {
   return (
     <div className="page" data-p5-screen="branding">
       <PageHeader
+        demoBadge
         title={t("playbookP5.branding.title")}
         subtitle={t("playbookP5.branding.intro")}
         crumbs={[{ label: t("nav.areas.admin.label"), to: "/admin" }, { label: t("playbookP5.branding.title") }]}

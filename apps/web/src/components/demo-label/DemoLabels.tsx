@@ -66,7 +66,7 @@ export function DemoRecordBadge() {
 /**
  * (b) in a FORM header (T-DG5-FE-D5, D-QA-E2-1; ADR-0050 §2 b: "every record view and form header shows the badge"):
  * the badge of the shared dialog header (`Dialog`, so every create or edit dialog: `RecordDialog`, `P4FormDialog`,
- * `StudioFormDialog` and the page-specific ones) and of a form page's `PageHeader form`. The shared dialog is also
+ * `StudioFormDialog` and the page-specific ones) and of a form page's `PageHeader demoBadge`. The shared dialog is also
  * rendered outside the app's query provider (isolated component tests): there the environment is unknown, and an
  * unknown environment is never labelled synthetic (ADR-0050 §1), so nothing renders.
  */

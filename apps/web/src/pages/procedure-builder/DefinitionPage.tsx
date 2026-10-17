@@ -344,6 +344,7 @@ export function DefinitionPage() {
   return (
     <div className="page" data-p5-screen="procedure-definition">
       <PageHeader
+        demoBadge
         title={t("nav.p5.procedureDefinition.title")}
         subtitle={<bdi dir="ltr">{procedureCode}</bdi>}
         crumbs={[

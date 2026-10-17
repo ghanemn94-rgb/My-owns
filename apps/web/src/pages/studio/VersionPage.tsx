@@ -74,6 +74,7 @@ function VersionView({ version }: { version: ConfigVersion }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={title}
         subtitle={
           <>

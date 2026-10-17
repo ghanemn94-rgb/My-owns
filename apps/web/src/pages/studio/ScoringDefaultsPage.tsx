@@ -77,6 +77,7 @@ export function ScoringDefaultsPage() {
   return (
     <div className="page" data-p5-screen="scoring-defaults">
       <PageHeader
+        demoBadge
         title={t("studio.defaults.title")}
         subtitle={t("studio.defaults.summary")}
         crumbs={[{ label: t("nav.p5.studio.title"), to: "/admin/studio" }, { label: t("studio.defaults.title") }]}
