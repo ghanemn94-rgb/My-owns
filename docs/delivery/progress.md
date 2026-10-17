@@ -35,11 +35,10 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Frozen for review round 1:** candidate `sha256:8e7d23a3…` (2172 files, source `601d7d2`; code identical to `8c68a47` and `3edc1b2`). The manifest is `docs/delivery/candidates/DG5/8e7d23a3ec021871.manifest.json`.
   - **Pre-freeze verification (D-169):** green on every check. One e2e timeout under the orchestrator's own concurrent load is disclosed; its spec passes when re-run alone.
 - **Next action:**
-  1. The three round-1 reviews run on the same candidate in the main checkout, with no worktree or install activity while they run (D-082):
-     - `T-DG5-REV-DOM-R1` (domain-reviewer);
-     - `T-DG5-REV-SEC-R1` (code-security-reviewer);
-     - `T-DG5-REV-QA-R1` (qa-verifier).
-     The assignments are in `docs/delivery/assignments/DG5/round-1/`.
+  1. The three round-1 reviews run on the same candidate in the main checkout, with no worktree or install activity while they run (D-082). The first three runs (launched 21:56Z) were stopped by a container restart about five minutes in, before any record was written. Their material is in `test-evidence/DG5/{domain,code-security,qa}-r1-orphaned/` for provenance only. They are re-run from `round-1/{role}-rerun.md` (the D-084 precedent):
+     - `T-DG5-REV-DOM-R1B` (domain-reviewer);
+     - `T-DG5-REV-SEC-R1B` (code-security-reviewer);
+     - `T-DG5-REV-QA-R1B` (qa-verifier).
   2. Then import the findings (`tools/gates/import-findings.mjs`) and repair them if needed.
   3. Before the release-auditor runs, propose the D-140 auditor-sidecar ordering fix to the user.
 ## DG2 scope (P2 — diagnose, define and design)
