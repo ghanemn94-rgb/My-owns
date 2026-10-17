@@ -4,7 +4,9 @@
 // disposable cluster. Literal tests of §J.2:
 //   - REQ-PB-088: the demo transformation's North Star equals "Make international roaming effortless, trusted and
 //     economically accretive.";
-//   - REQ-PB-090: the traceability view (traceability_edge, ADR-0038 §1) carries the three B0147 chains;
+//   - REQ-PB-090: the traceability view (traceability_edge, ADR-0038 §1) carries the three B0147 chains, each as one
+//     line of exactly five nodes that reads as B0147 writes it (D-168; the API read is in
+//     apps/api/test/integration/environment/demo-traceability-chains.test.ts);
 //   - REQ-S18-002: the seed-coverage check finds at least one record for each listed condition.
 // Everything is SYNTHETIC; a demo approval approves nothing real.
 import pg from "pg";
@@ -168,9 +170,9 @@ describe("REQ-PB-090: the three B0147 chains in the traceability view", () => {
     return (await rows<{ l: string }>(q[type]!, [id]))[0]!.l;
   }
 
-  /** The chain from a finding, following one edge of each kind in the ADR-0038 §1 order. */
+  /** The chain from a finding, following one edge of each kind in the ADR-0038 §1 order (D-168: five steps). */
   async function walk(findingId: string): Promise<{ type: string; label: string; id: string }[]> {
-    const order = ["issue_gap", "gap_initiative", "initiative_kpi", "outcome_kpi_of", "kpi_benefit_measure"];
+    const order = ["issue_gap", "gap_initiative", "initiative_kpi", "kpi_benefit_measure"];
     const path = [{ type: "diagnostic_finding", id: findingId, label: await label("diagnostic_finding", findingId) }];
     for (const kind of order) {
       const last = path[path.length - 1]!;
@@ -185,8 +187,15 @@ describe("REQ-PB-090: the three B0147 chains in the traceability view", () => {
     return path;
   }
 
+  /** The literal lines of B0147 (the playbook's table, written out; not derived from the dataset under test). */
+  const LINES = [
+    "Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift",
+    "High complaints -> Journey + service assurance -> Proactive comms + QoS monitoring -> Complaint rate -> CX + care cost",
+    "Partner cost pressure -> Partner model + analytics -> Partner optimization -> Cost/MB, margin -> Margin improvement",
+  ] as const;
+
   for (const [i, c] of B0147_CHAINS.entries()) {
-    it(`shows "${c.problem} -> ${c.tomGap} -> ${c.initiative} -> ${c.kpi} -> ${c.benefit}" as one line`, async () => {
+    it(`shows "${LINES[i]}" as one line of exactly five nodes`, async () => {
       const [f] = await rows<{ id: string }>(
         "SELECT id::text FROM diagnostic_finding WHERE transformation_id = $1 AND statement = $2",
         [T, c.problem],
@@ -196,18 +205,37 @@ describe("REQ-PB-090: the three B0147 chains in the traceability view", () => {
         "diagnostic_finding",
         "tom_gap",
         "initiative",
-        "outcome",
         "outcome_kpi",
         "benefit",
       ]);
-      // The B0147 Problem, TOM gap, Initiative and KPI columns verbatim.
-      expect(path.slice(0, 4).map((p) => p.label)).toEqual([c.problem, c.tomGap, c.initiative, c.kpi]);
-      // The KPI movement is the chain's KPI (KBE-H) and the end of the line is the chain's benefit (KBE-H, M0346).
-      expect(path[4]!.label).toBe(DEMO_KPIS[i]!.name);
-      expect(path[5]!.id).toBe(DEMO_BENEFITS[i]!.id);
-      expect(path[5]!.label).toBe(DEMO_BENEFITS[i]!.title);
+      expect(path.map((p) => p.label).join(" -> ")).toBe(LINES[i]);
+      // The KPI step is the chain's KPI (KBE-H's definition) and the end of the line is the chain's benefit (M0346).
+      expect(path[3]!.label).toBe(DEMO_KPIS[i]!.name);
+      expect(path[4]!.id).toBe(DEMO_BENEFITS[i]!.id);
+      expect(path[4]!.label).toBe(DEMO_BENEFITS[i]!.title);
+      // The contribution names its outcome KPI, so the initiative's edge ends at the KPI, never at the outcome.
+      const viaOutcome = await rows(
+        `SELECT 1 FROM traceability_edge WHERE transformation_id = $1 AND edge_kind = 'initiative_kpi'
+            AND from_id = $2 AND to_type = 'outcome'`,
+        [T, path[2]!.id],
+      );
+      expect(viaOutcome).toEqual([]);
     });
   }
+
+  it("no record of the dataset still carries the pre-D-168 names (KPI, benefit, formula, case line, sources)", async () => {
+    const old = ["Roaming attach rate", "Roaming complaint rate", "Partner wholesale cost per MB"];
+    const oldBenefits = ["Roaming revenue uplift", "Avoided roaming care cost", "Roaming wholesale margin improvement"];
+    const hits = await rows<{ src: string }>(
+      `SELECT 'kpi_definition' AS src FROM kpi_definition WHERE name = ANY($1::text[])
+       UNION ALL SELECT 'benefit' FROM benefit WHERE title = ANY($2::text[])
+       UNION ALL SELECT 'benefit_formula' FROM benefit_formula WHERE benefit_name = ANY($2::text[])
+       UNION ALL SELECT 'business_case_line' FROM business_case_line
+                  WHERE title LIKE ANY (SELECT x || '%' FROM unnest($2::text[]) x)`,
+      [old, oldBenefits],
+    );
+    expect(hits).toEqual([]);
+  });
 });
 
 describe("REQ-S18-002: the seed-coverage check on the roaming dataset", () => {

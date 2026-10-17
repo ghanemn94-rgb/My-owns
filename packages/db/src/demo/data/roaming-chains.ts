@@ -1,13 +1,17 @@
 // The three B0147 chains' links that need KBE-H's KPIs and benefits (ADR-0050 §4; ADR-0038 §1; p5-work-split §J.2;
-// T-DG5-BE-T). Each chain runs, in the DG4 traceability model (view `traceability_edge`):
+// T-DG5-BE-T; T-DG5-BE-T6, D-168). Each chain runs, in the DG4 traceability model (view `traceability_edge`), in
+// exactly the five B0147 steps:
 //   diagnostic finding "<Problem>"  -issue_gap->  TOM gap "<TOM gap>"  -gap_initiative->  initiative "<Initiative>"
-//   -initiative_kpi->  outcome "<KPI>"  -outcome_kpi_of->  outcome KPI (KBE-H's KPI definition)
-//   -kpi_benefit_measure->  benefit (KBE-H's chain benefit, measured by that KPI definition).
-// The B0147 texts are verbatim (roaming.ts B0147_CHAINS). Runs after KBE-H's modules (order 500 > 440), and last the
-// record code counters, so the product's next codes (INI-04, DEC-02 …) never collide with the seeded ones.
+//   -initiative_kpi->  outcome KPI "<KPI>" (the contribution names the outcome KPI, so the edge ends at it)
+//   -kpi_benefit_measure->  benefit "<Benefit>" (KBE-H's chain benefit, measured by that KPI definition).
+// The B0147 texts are verbatim (roaming.ts B0147_CHAINS); KBE-H's KPI names and benefit titles are B0147's KPI and
+// Benefit columns (D-168). The outcome KPI still belongs to its outcome (outcome_kpi_of), which is not on the line.
+// Runs after KBE-H's modules (order 500 > 440), and last the record code counters, so the product's next codes
+// (INI-04, DEC-02 …) never collide with the seeded ones.
 // SYNTHETIC: an illustrative example, not Mobily actual performance; approves nothing real.
 import { sql } from "kysely";
 import type { DemoDatasetModule } from "../seed.ts";
+import { DEMO_BENEFITS } from "./benefits.ts";
 import { DEMO_ANCHORS, DEMO_KPIS } from "./kpis.ts";
 import { B0147_CHAINS } from "./roaming.ts";
 import { RT_BLOCK, rtId } from "./roaming-ids.ts";
@@ -26,6 +30,11 @@ export const ROAMING_CHAINS_MODULE: DemoDatasetModule = {
       n += 1;
       const kpi = DEMO_KPIS[n - 1];
       if (kpi === undefined || kpi.chain !== n) throw new Error(`demo seed: chain ${n} has no KPI`);
+      const benefit = DEMO_BENEFITS[n - 1];
+      // D-168: the line reads exactly as B0147 writes it, so the seeded names must be the B0147 columns.
+      if (kpi.name !== c.kpi) throw new Error(`demo seed: chain ${n} KPI "${kpi.name}" is not B0147's "${c.kpi}"`);
+      if (benefit === undefined || benefit.title !== c.benefit)
+        throw new Error(`demo seed: chain ${n} benefit "${benefit?.title}" is not B0147's "${c.benefit}"`);
       await ctx.insert("outcome_kpi", `roaming.outcome_kpi.${c.key}`, {
         id: rtId(RT_BLOCK.outcomeKpi, n),
         ...scope,
@@ -44,7 +53,7 @@ export const ROAMING_CHAINS_MODULE: DemoDatasetModule = {
         ...scope,
         initiative_id: c.initiativeId,
         outcome_id: rtId(RT_BLOCK.outcome, n),
-        outcome_kpi_id: null,
+        outcome_kpi_id: rtId(RT_BLOCK.outcomeKpi, n),
         contribution_statement: `${c.initiative} -> ${c.kpi} -> ${c.benefit} (B0147, synthetic illustrative example).`,
         status: "active",
         ...st,

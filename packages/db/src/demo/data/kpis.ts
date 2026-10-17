@@ -297,7 +297,10 @@ export interface DemoKpi {
   };
 }
 
-/** The three chain KPIs (B0147: "Attach rate / activation", "Complaint rate", "Cost/MB, margin"). All synthetic. */
+/**
+ * The three chain KPIs, named exactly as B0147 writes them ("Attach rate / activation", "Complaint rate", "Cost/MB,
+ * margin"; D-168), so each chain reads verbatim in the traceability view. All synthetic.
+ */
 export const DEMO_KPIS: readonly DemoKpi[] = [
   {
     key: "attach_rate",
@@ -305,8 +308,9 @@ export const DEMO_KPIS: readonly DemoKpi[] = [
     definitionId: kbeId(ID_BLOCK.kpiDefinition, 1),
     versionId: kbeId(ID_BLOCK.kpiVersion, 1),
     chain: 1,
-    name: "Roaming attach rate",
-    description: "Share of travelling customers with an active roaming pass in the month. " + SYNTHETIC_NOTE,
+    name: "Attach rate / activation",
+    description:
+      "Roaming attach rate: share of travelling customers with an active roaming pass in the month. " + SYNTHETIC_NOTE,
     businessPurpose:
       "Measures activation of the redesigned roaming passes (chain 1: low activation -> revenue uplift).",
     unitKind: "percentage",
@@ -349,8 +353,8 @@ export const DEMO_KPIS: readonly DemoKpi[] = [
     definitionId: kbeId(ID_BLOCK.kpiDefinition, 2),
     versionId: kbeId(ID_BLOCK.kpiVersion, 2),
     chain: 2,
-    name: "Roaming complaint rate",
-    description: "Roaming complaints per travelling customer in the month. " + SYNTHETIC_NOTE,
+    name: "Complaint rate",
+    description: "Roaming complaint rate: roaming complaints per travelling customer in the month. " + SYNTHETIC_NOTE,
     businessPurpose:
       "Measures the effect of proactive communications and QoS monitoring (chain 2: high complaints -> CX + care cost).",
     unitKind: "percentage",
@@ -387,8 +391,9 @@ export const DEMO_KPIS: readonly DemoKpi[] = [
     definitionId: kbeId(ID_BLOCK.kpiDefinition, 3),
     versionId: kbeId(ID_BLOCK.kpiVersion, 3),
     chain: 3,
-    name: "Partner wholesale cost per MB",
-    description: "Partner wholesale roaming cost per MB of roaming data in the month. " + SYNTHETIC_NOTE,
+    name: "Cost/MB, margin",
+    description:
+      "Partner wholesale roaming cost per MB of roaming data in the month (the margin driver). " + SYNTHETIC_NOTE,
     businessPurpose:
       "Measures partner optimization and analytics (chain 3: partner cost pressure -> margin improvement).",
     unitKind: "currency",

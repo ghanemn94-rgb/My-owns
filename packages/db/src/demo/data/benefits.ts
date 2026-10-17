@@ -106,7 +106,7 @@ export const DEMO_BENEFITS: readonly DemoBenefit[] = [
     no: 1,
     id: kbeId(ID_BLOCK.benefit, 1),
     code: "B01",
-    title: "Roaming revenue uplift",
+    title: "Revenue uplift",
     description:
       "Additional roaming pass revenue from a higher attach rate after the pass redesign and digital activation " +
       "(chain 1: low activation -> revenue uplift). " +
@@ -185,10 +185,11 @@ export const DEMO_BENEFITS: readonly DemoBenefit[] = [
     no: 2,
     id: kbeId(ID_BLOCK.benefit, 2),
     code: "B02",
-    title: "Avoided roaming care cost",
+    title: "CX + care cost",
     description:
-      "Care cost avoided by fewer roaming complaints after proactive communications and QoS monitoring (chain 2: " +
-      "high complaints -> CX + care cost). Avoided cost, not a cash saving. " +
+      "Better roaming customer experience and the care cost avoided by fewer roaming complaints after proactive " +
+      "communications and QoS monitoring (chain 2: high complaints -> CX + care cost). The value counted is the " +
+      "avoided care cost, not a cash saving. " +
       SYNTHETIC_NOTE,
     benefitType: "cost",
     valueClass: "avoided_cost",
@@ -220,7 +221,7 @@ export const DEMO_BENEFITS: readonly DemoBenefit[] = [
     no: 3,
     id: kbeId(ID_BLOCK.benefit, 3),
     code: "B03",
-    title: "Roaming wholesale margin improvement",
+    title: "Margin improvement",
     description:
       "Wholesale margin from a lower partner cost per MB after partner optimization and analytics (chain 3: partner " +
       "cost pressure -> margin improvement). Margin uplift, kept apart from revenue uplift. " +
