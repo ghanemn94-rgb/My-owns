@@ -241,22 +241,41 @@ describe("dry run (REQ-S12-002: a dry-run creates no tasks)", () => {
   });
 
   it("a numeric condition with no usable value is not met and recorded as automation.condition_unknown_value (never 0)", async () => {
-    const rule = await newRule(
-      content({ triggerCodes: ["dependency.slipped"], conditions: [{ field: "slipDays", op: "gt", value: "3" }] }),
+    // T-DG5-BE-T5 (D-167): dependency.slipped v1 is registered, so every sample is the COMPLETE v1 payload (ADR-0043,
+    // the BE-C3 reading); a sample with a missing or non-integer slipDays is refused by the schema before conditions.
+    const slipped = (extra: Record<string, unknown> = {}) => ({
+      triggerCode: "dependency.slipped",
+      payload: {
+        slipId: crypto.randomUUID(),
+        dependencyId: crypto.randomUUID(),
+        transformationId: txA,
+        slipDays: 5,
+        ...extra,
+      },
+    });
+    // A numeric operator on a member that is not a decimal (a uuid): Unknown, not met, never compared as 0.
+    const unknownRule = await newRule(
+      content({ triggerCodes: ["dependency.slipped"], conditions: [{ field: "dependencyId", op: "gt", value: "3" }] }),
     );
-    const sample = (payload: Record<string, unknown>) => ({ triggerCode: "dependency.slipped", payload });
-    const missing = await dryRun(rule.v1, sample({ transformationId: txA }));
-    expect(missing.body).toMatchObject({
+    const unknown = await dryRun(unknownRule.v1, slipped());
+    expect(unknown.body).toMatchObject({
       outcome: "fail",
       conditionsMet: null,
       findings: [{ code: "automation.condition_unknown_value", pointer: "/conditions/0" }],
     });
-    const float = await dryRun(rule.v1, sample({ transformationId: txA, slipDays: 5.5 }));
-    expect(float.body).toMatchObject({ outcome: "fail", findings: [{ code: "automation.condition_unknown_value" }] });
-    const zero = await dryRun(rule.v1, sample({ transformationId: txA, slipDays: "0" }));
-    expect(zero.body).toMatchObject({ outcome: "pass", conditionsMet: false });
-    const met = await dryRun(rule.v1, sample({ transformationId: txA, slipDays: "3.5" }));
+    const rule = await newRule(
+      content({ triggerCodes: ["dependency.slipped"], conditions: [{ field: "slipDays", op: "gt", value: "3" }] }),
+    );
+    const notMet = await dryRun(rule.v1, slipped({ slipDays: 3 }));
+    expect(notMet.body).toMatchObject({ outcome: "pass", conditionsMet: false });
+    const met = await dryRun(rule.v1, slipped({ slipDays: 4 }));
     expect(met.body).toMatchObject({ outcome: "pass", conditionsMet: true });
+    const missing = slipped();
+    delete (missing.payload as Record<string, unknown>)["slipDays"];
+    for (const body of [missing, slipped({ slipDays: 5.5 }), slipped({ slipDays: "3.5" })]) {
+      const res = await dryRun(rule.v1, body);
+      expect([res.status, res.body.code]).toEqual([422, "automation.dry_run_sample_invalid"]);
+    }
   });
 
   it("refuses a sample that does not match the trigger (422 automation.dry_run_sample_invalid); nothing written", async () => {

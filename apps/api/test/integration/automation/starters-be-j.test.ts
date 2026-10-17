@@ -410,7 +410,8 @@ describe("REQ-S12-012: a slip below the configured minimumSlipDays raises nothin
       session: author.session,
       body: {
         triggerCode: "dependency.slipped",
-        payload: { dependencyId: randomUUID(), transformationId: randomUUID(), slipDays: 7 },
+        // T-DG5-BE-T5 (D-167): the complete dependency.slipped v1 payload (the schema is registered now).
+        payload: { slipId: randomUUID(), dependencyId: randomUUID(), transformationId: randomUUID(), slipDays: 7 },
       },
     });
     expect([run.status, run.body.outcome], JSON.stringify(run.body)).toEqual([201, "pass"]);

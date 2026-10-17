@@ -7,18 +7,14 @@ export const P5_PENDING_BE_O: readonly string[] = [];
 
 /**
  * Acceptance tests of BE-O that stay PENDING until another task merges (p5-work-split §F.7, the BE-J precedent): not
- * operations, so never part of the contract test's pending-operation sets. Each names what unblocks it. The test file
- * runs them as soon as a `meeting_pack` assembler is registered (`it.runIf`), so they need no edit to start running.
+ * operations, so never part of the contract test's pending-operation sets. Each names what unblocks it.
+ * T-DG5-BE-T5 (D-162 e; D-167): empty. The REQ-S10-013 test ("changing a linked decision before cut-off changes the live
+ * presentation; the issued meeting-pack snapshot still returns the old decision") runs and passes in
+ * apps/api/test/integration/governance/presentation.test.ts: the meeting_pack assembler (KBE-D2) and the
+ * composition-root line setMeetingPackAssembler(...) are in place since D-159.
  */
 export const P5_PENDING_TESTS_BE_O: readonly {
   readonly requirement: string;
   readonly test: string;
   readonly unblockedBy: string;
-}[] = [
-  {
-    requirement: "REQ-S10-013",
-    test: "changing a linked decision before cut-off changes the live presentation; the issued meeting-pack snapshot still returns the old decision",
-    unblockedBy:
-      "T-DG5-KBE-D2 (the meeting_pack assembler in reporting/reports/assembler.ts) and the composition-root line setMeetingPackAssembler(...) in apps/api/src/server.ts (BE-O handback, orchestrator)",
-  },
-];
+}[] = [];

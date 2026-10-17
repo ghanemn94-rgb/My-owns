@@ -46,7 +46,13 @@ describe("automation samples (D-164 d)", () => {
     }
     expect(samplePayloadOf("gate.submitted", "schedule")).toBeUndefined();
     expect(samplePayloadOf("automation.tick_daily", "schedule")).toBeUndefined();
-    expect(samplePayloadOf("dependency.slipped", "event")).toBeUndefined();
+    // T-DG5-BE-T5 (D-167): dependency.slipped v1 is registered and has a complete sample now.
+    expect(samplePayloadOf("dependency.slipped", "event")).toEqual({
+      slipId: "01920000-0000-7000-8000-00000000003c",
+      dependencyId: "01920000-0000-7000-8000-00000000003d",
+      transformationId: SAMPLE_TRANSFORMATION_ID,
+      slipDays: 5,
+    });
   });
 
   it("returns a fresh copy (a caller's change never leaks into the next response)", () => {

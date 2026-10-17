@@ -64,20 +64,24 @@ import {
 } from "../platform/index.ts";
 import { loadDefinitions, loadProcedureVersion, newestPublishedProcedures, PROCEDURE_KIND } from "./definitions.ts";
 import {
+  adoptedTransformationOf,
   advance,
   authorizeInstanceWrite,
+  authorizeStepWrite,
   bumpInstance,
   businessToday,
   findInstance,
   holdsRoleIn,
   inputsOf,
   instanceTarget,
+  isNotFound,
   loadBundle,
   lockAndLoad,
   OPEN,
   presentInstance,
   refusal,
   reload,
+  requireInstanceOrAdoptedRead,
   requireInstanceRead,
   updateStep,
   validateInputs,
@@ -403,27 +407,64 @@ async function launch(tx: Tx, request: FastifyRequest): Promise<InstanceBundle> 
 
 // ------------------------------------------------------------------------------------------------ inputs, cancel
 
+/**
+ * Who may change an instance's inputs: in the instance's scope, the launcher or the assignee (or a role holder) of an
+ * open step, as before. D-167 (Rule A clarified): failing that, in an organization-scope instance, the actor on T of an
+ * open adopted task step (`authorizeStepWrite`), for the inputs that step requires only ("inputs where they apply to
+ * it"). Otherwise the instance-scope refusal stands (a 403 of a step the caller can read wins over a 404).
+ */
+async function authorizeInputsWrite(
+  tx: Tx,
+  request: FastifyRequest,
+  i: ProcedureInstanceRow,
+  b: InstanceBundle,
+  keys: readonly string[],
+) {
+  let refused: unknown;
+  try {
+    const acting = await authorizeInstanceWrite(tx, request, i, "procedure.act");
+    acting.principal.tracker.decisions += 1;
+    const allowed =
+      i.launched_by === acting.userId ||
+      b.steps.some(
+        (s) =>
+          OPEN.has(s.status) &&
+          (s.assignee_user_id !== null
+            ? s.assignee_user_id === acting.userId
+            : holdsRoleIn(acting.principal.grants, s.assignee_role_code, "procedure.act", acting.target)),
+      );
+    if (allowed) return acting;
+    throw refusal("procedure_step.not_assignee").withDenial(denialOf("procedure.act", acting.target));
+  } catch (err) {
+    refused = err;
+  }
+  if (i.transformation_id !== null) throw refused;
+  for (const s of b.steps) {
+    const sd = b.stepDefinitions.get(s.step_definition_id);
+    if (!OPEN.has(s.status) || adoptedTransformationOf(i, s) === null || sd === undefined) continue;
+    if (sd.step_kind === "approval" || !keys.every((k) => sd.required_input_keys.includes(k))) continue;
+    try {
+      return await authorizeStepWrite(tx, request, i, s, "procedure.act", s);
+    } catch (err) {
+      if (isNotFound(refused) && !isNotFound(err)) refused = err;
+    }
+  }
+  // The caller passed the read gate (the instance's scope or T of an adopted step), so a remaining 404 of the instance's
+  // scope is a reader who may not change these inputs: 403, as for any step they cannot act on.
+  if (isNotFound(refused))
+    throw refusal("procedure_step.not_assignee").withDenial(denialOf("procedure.act", await instanceTarget(tx, i)));
+  throw refused;
+}
+
 async function updateInputs(tx: Tx, request: FastifyRequest): Promise<InstanceBundle> {
   const { instanceId } = parse(idParams, request.params, "params");
   const body = parseBody(procedureInputsUpdate, request.body);
   const seen = await findInstance(tx, instanceId);
   if (seen === undefined) throw problems.notFound();
-  await requireInstanceRead(tx, principalOf(request), seen);
+  await requireInstanceOrAdoptedRead(tx, principalOf(request), seen);
   const i = await lockAndLoad(tx, instanceId);
-  const acting = await authorizeInstanceWrite(tx, request, i, "procedure.act");
   const b = await loadBundle(tx, i);
-  // The launcher, or the assignee (or a role holder) of an open step.
-  acting.principal.tracker.decisions += 1;
-  const allowed =
-    i.launched_by === acting.userId ||
-    b.steps.some(
-      (s) =>
-        OPEN.has(s.status) &&
-        (s.assignee_user_id !== null
-          ? s.assignee_user_id === acting.userId
-          : holdsRoleIn(acting.principal.grants, s.assignee_role_code, "procedure.act", acting.target)),
-    );
-  if (!allowed) throw refusal("procedure_step.not_assignee").withDenial(denialOf("procedure.act", acting.target));
+  const acting = await authorizeInputsWrite(tx, request, i, b, Object.keys(body.inputValues));
   const expected = requireIfMatch(request);
   if (expected !== i.version) throw problems.versionConflict(i.version);
   if (i.status !== "active") throw refusal("procedure.not_active");
@@ -547,7 +588,8 @@ export function registerProcedureInstanceRoutes(app: FastifyInstance, { db }: Mo
     const { instanceId } = parse(idParams, request.params, "params");
     const i = await findInstance(db, instanceId);
     if (i === undefined) throw problems.notFound();
-    await requireInstanceRead(db, principalOf(request), i);
+    // D-167: also readable in T by whoever reads T, when one of its steps adopted T (to act on that step).
+    await requireInstanceOrAdoptedRead(db, principalOf(request), i);
     return sendVersioned(reply, 200, await presentInstance(db, await loadBundle(db, i)));
   });
 

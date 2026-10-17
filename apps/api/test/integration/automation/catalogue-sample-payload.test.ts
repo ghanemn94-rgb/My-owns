@@ -87,9 +87,10 @@ describe("D-164 (d): AutomationTrigger.samplePayload", () => {
     }
     // gate.submitted, gate.decided and the KPI, benefit, check, blocker, procedure and job events of 0074/0075.
     expect(served).toBeGreaterThanOrEqual(15);
-    for (const code of ["gate.submitted", "gate.decided", "procedure_step.activated"])
+    // T-DG5-BE-T5 (D-167): dependency.slipped v1 is registered, so its trigger has a sample too.
+    for (const code of ["gate.submitted", "gate.decided", "procedure_step.activated", "dependency.slipped"])
       expect(triggers.find((t) => t.code === code)?.samplePayload, code).toBeDefined();
-    for (const code of ["automation.tick_daily", "gate.submission_requested", "dependency.slipped"])
+    for (const code of ["automation.tick_daily", "gate.submission_requested"])
       expect(triggers.find((t) => t.code === code)?.samplePayload, code).toBeUndefined();
   });
 

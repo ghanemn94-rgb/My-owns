@@ -42,9 +42,10 @@ export type TransformationCreatedV2 = z.infer<typeof transformationCreatedV2>;
 /**
  * T-DG5-BE-J (ADR-0044 §7, §8; REQ-S12-012): a critical dependency slipped (one per dependency_slip row); consumer
  * portfolio.dependency_slip (starter 9) notifies each affected owner once. The producer (apps/api portfolio/
- * slip-events.ts) and the consumer parse it with this schema. It is deliberately NOT in OUTBOX_EVENT_SCHEMAS yet: the
- * automation dry run validates a sample strictly against a registered schema, and the slice D dry-run tests sample
- * `dependency.slipped` by its condition fields only (handback T-DG5-BE-J §5, for the architect).
+ * slip-events.ts) and the consumer parse it with this schema. Registered in OUTBOX_EVENT_SCHEMAS (T-DG5-BE-T5,
+ * D-167, D-QA-F2-1): the relay refuses an outbox row whose (event_type, schema_version) has no schema, so without the
+ * registration starter 9 never ran. The automation dry run therefore validates a `dependency.slipped` sample strictly
+ * against this complete v1 payload (ADR-0043, the BE-C3 reading), and the builder catalogue serves its samplePayload.
  */
 export const dependencySlippedV1 = z.strictObject({
   slipId: uuid,
@@ -212,6 +213,9 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "kpi_restatement.approved": { 1: kpiRestatementApprovedV1 },
   // T-DG5-BE-R (ADR-0049 §8, §12): a branding version was published; consumer platform.branding_published (worker).
   "branding.published": { 1: brandingPublishedV1 },
+  // T-DG5-BE-J (ADR-0044 §7, §8), registered by T-DG5-BE-T5 (D-167): a critical dependency slipped; consumers
+  // portfolio.dependency_slip (starter 9, REQ-S12-012) and automation.evaluate (apps/worker queues/portfolio.ts, automation.ts).
+  "dependency.slipped": { 1: dependencySlippedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

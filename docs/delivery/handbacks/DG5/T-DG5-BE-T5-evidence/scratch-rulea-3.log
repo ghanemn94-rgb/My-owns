@@ -1,0 +1,31 @@
+port-policy: PostgreSQL listening on port 23800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-t5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvco0mkp_f9dbbade (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/procedures/adopted-step-authorization.test.ts (2 tests | 1 failed) 1410ms
+   × D-167: an adopted step is read and acted on with T's authorization and its assignee role > T's Lead completes draft_charter; a user without TL on T gets 403 or 404; other operations keep organization scope 590ms
+     → expected 288 to be less than or equal to 287
+   ✓ D-167: an adopted step is read and acted on with T's authorization and its assignee role > the organization-scope Lead keeps its rights: lists and reads the instance, and completes an adopted step 266ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/adopted-step-authorization.test.ts > D-167: an adopted step is read and acted on with T's authorization and its assignee role > T's Lead completes draft_charter; a user without TL on T gets 403 or 404; other operations keep organization scope
+AssertionError: expected 288 to be less than or equal to 287
+ ❯ apps/api/test/integration/procedures/adopted-step-authorization.test.ts:146:32
+    144|       ["confirm_sponsor", "pending"],
+    145|     ]);
+    146|     expect(await auditCount()).toBeLessThanOrEqual(before + 1);
+       |                                ^
+    147| 
+    148|     // The instance's other operations keep organization scope: cancel…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  17:23:16
+   Duration  16.79s (transform 5.54s, setup 0ms, collect 10.42s, tests 1.41s, environment 0ms, prepare 113ms)
+
