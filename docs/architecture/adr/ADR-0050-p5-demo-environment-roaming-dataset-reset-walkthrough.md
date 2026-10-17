@@ -35,7 +35,7 @@
   - (a) the web shell shows a persistent banner on **every screen** while `synthetic`: "Illustrative example — synthetic. Not Mobily actual performance." / "مثال توضيحي — بيانات اصطناعية. ليست أداء موبايلي الفعلي.";
   - (b) every record view and form header shows the badge "Illustrative example — synthetic" / "مثال توضيحي — اصطناعي" (`components/demo-label/**`, FE-G);
   - (c) every **product-gate decision, approval and Finance validation** shown in a demo database carries "Synthetic demonstration - approves nothing real" / "عرض توضيحي اصطناعي - لا يعتمد أي شيء حقيقي" (REQ-S21-001, M0412);
-  - (d) every **report and export** generated in a demo database carries the illustrative label in its header and on every page or sheet: the layout reads `GET /environment`'s source through an `EnvironmentReadPort` at generation time, and the report snapshot records `synthetic: true` in its content (REQ-PB-089 "every demo record and exported demo report shows the illustrative label in en and ar").
+  - (d) every **report and export** generated in a demo database carries the illustrative label in its header and on every page, slide or sheet (a CSV: its first row). Report generation reads `GET /environment`'s source at generation time through reporting's `ReportEnvironmentPort`, the `synthetic` slice of `EnvironmentReadPort`. The report snapshot records `synthetic: true` in its content, and the renderers print the label from that recorded member (REQ-PB-089 "every demo record and exported demo report shows the illustrative label in en and ar"). _Corrected 2026-10-17 (T-DG5-ARCH-R1, amendment D4): this sentence named `EnvironmentReadPort` as the reader and "every page or sheet" as the placement._
 - The B0144 sentence "Illustrative example only. Replace assumptions with validated company data." is shown verbatim on the roaming transformation's overview.
 
 ### 3. Production refusal and the empty production initialization (REQ-S18-003, REQ-PB-088)
@@ -194,3 +194,65 @@ AUD gets 403 on the reset (it does not hold `demo.reset`). `demo.reset` is a `co
 - BE-S tests: the CLI refusals (§3, exit 3 and no change); seed then reset twice on a disposable cluster gives identical counts and checksums; the production path then the REQ-S18-003 query gives 0 and 0; the API reset in a production database gives 409 `environment.not_demo`; AUD gets 403; `If-Match` gives 428/409.
 - BE-T and KBE-H tests: the North Star equals B0145 verbatim; the three chains render in the traceability view; `coverage.test.ts` passes every condition.
 - FE-G: the banner, badges and approval labels in en and ar; QA-E: A02 with the twelve steps.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-165, D-166): §2–§3 and §7, the demo access administrator, the business-unit grants, the dev-mode binding and the export labels
+
+Sources: D-163 (F-DG5-qa-c-2), D-165 (QA-E D-QA-E-1, and the dev-mode demo sign-in), D-166 (the accepted demo access administrator), and the handbacks of T-DG5-BE-T3 (§3.1, §3.2) and T-DG5-BE-N2 (§1, §6.1). Nothing above is removed, except the one §2 (d) sentence corrected in place. Where this amendment and §2, §3 or §7 differ, this amendment wins. No migration: these are dataset rows (`packages/db/src/demo/**`).
+
+### D1. The demo access administrator `roaming.user.adm_access` (T-DG5-BE-T3; D-165 D-QA-E-1, D-166)
+
+- **Why it exists.** ADR-0020 §5 lets only `access.assign` grant the approver roles SP, BO and FIN on a transformation (D-166). The demo database has no other access administrator, because `mth-db bootstrap` refuses a demo database (§3).
+- **What it is.** The dataset seeds one more user, `roaming.user.adm_access` (`packages/db/src/demo/data/roaming.ts:110`, `DEMO_ACCESS_ADMIN`). It has an `app_user` row, a demo IdP identity and fixed ids, and holds **ADM_ACCESS at the demo business unit**.
+  - ADM_ACCESS is a `technical_admin` role. It holds no business-record permission and no approval permission. Its self-grant is refused (422 `access.self_grant`).
+- **Lists.** It is **not** in `DEMO_USERS`, which stays the eight role users. It is in `DEMO_SIGN_IN_USERS` (`roaming.ts:118`), the nine users who can sign in.
+- **Determinism.** Every new row has a fixed id and the synthetic clock, so the reset-twice and seed-twice checks of §4 still compare equal, run against run. The dataset's checksum and counts changed once with this addition. The "after" values measured by BE-T3 (handback §3.1) are 417 seeded records in any non-dev mode, and 426 with the dev binding (D3).
+
+### D2. The business-unit grants: TL, TO and ADM_ACCESS only (T-DG5-BE-T3; D-165 D-QA-E-1)
+
+`DEMO_BUSINESS_UNIT_GRANTS` (`roaming.ts:132`) are the least-privilege set that acts on a **new** transformation of the demo business unit. A business-unit grant reaches a new transformation only as `access/rules.ts` `grantApplies` allows:
+
+| Grant at the demo business unit | What it gives on a new transformation |
+|---|---|
+| TL | `transformation.create`; the creator then holds TL on the new transformation (the DG1 creator carry-over, F-DG1-106) |
+| TO | `transformation.create`; TO inherits downward, so it holds TO on every transformation of the unit |
+| ADM_ACCESS (`roaming.user.adm_access`) | `access.assign` is structural, so it assigns SP, BO and FIN natively (`POST /role-assignments`) |
+
+**Why the other roles get none.**
+- SP, BO, FIN, KDS, WL and CM do not inherit downward. A business-unit grant of one of them applies only to business-unit-level targets, never to a transformation of the unit, so it would reach nothing.
+- On a new transformation, the TL team-assigns WL, KDS and CM (`team.assign`). The access administrator assigns SP, BO and FIN. The team view refuses an approver role.
+- The eight transformation-scope grants on the seeded roaming transformation are unchanged, and there is no organization-scope grant.
+
+Requirement row: REQ-S18-004 (A02: "all twelve walkthrough steps with the demo role users"). Tests: `apps/api/test/integration/environment/demo-users-new-transformation.test.ts` and `packages/db/test/integration/demo-roaming.test.ts`.
+
+### D3. §3: the dev-mode binding to the dev issuer (D-165; T-DG5-BE-T3)
+
+§3 binds the demo users to the demo IdP, which only a demo deployment has. No browser could therefore sign them in on the `AUTH_MODE=dev` e2e stack.
+
+- **What the binding adds.** `mth-db seed-demo` and `mth-db reset-demo` add one `user_identity (DEV_ISSUER, roaming.user.<role>)` per `DEMO_SIGN_IN_USERS` entry: nine rows, registered and audited, with fixed ids and deterministic. `POST /auth/dev-login` can then choose these users.
+- **When it applies.** Only when the rule `demoDevIssuerBindingAllowed` holds (`packages/db/src/demo/guard.ts:125`): `AUTH_MODE === "dev"` **and** `NODE_ENV !== "production"`. The CLI (`packages/db/src/cli.ts:53`) applies the same rule as `seed-dev`, and passes the result to the seed and the reset as `devIssuerBinding`.
+- **Refused elsewhere.** In production mode (`NODE_ENV=production`, even with `AUTH_MODE=dev`), and in every other auth mode (for example `AUTH_MODE=oidc`), no dev identity is created.
+- **What does not change.** There is no secret and no password. The nine demo IdP identities are unchanged. The production initialization path (§3, REQ-S18-003) is untouched.
+- **Test.** `packages/db/test/integration/demo-dev-binding.test.ts` runs the real CLI in three modes, plus the pure rule.
+- **In-app reset.** At this commit the worker's in-app reset (`apps/worker/src/handlers/demo.ts`) does not pass `devIssuerBinding`, so a reset from the Environment screen in a dev-mode stack re-seeds without the dev identities. D-166 assigns keeping the binding there to T-DG5-BE-T4 (W21). It is not described here as built.
+
+**§7 reading.** The walkthrough's steps are performed by the demo role users and, for the approver roles on the new transformation, after `roaming.user.adm_access` assigns them. The guide still writes nothing.
+
+Requirement rows: REQ-S18-004 (the browser path) and REQ-S18-003.
+
+### D4. §2 (d): the export labels as implemented (D-163; T-DG5-BE-N2)
+
+The §2 (d) sentence is corrected in place (marked "Corrected 2026-10-17"). As built:
+
+- **Reader.** Report generation reads the environment through reporting's **`ReportEnvironmentPort`** (ADR-0045 amendment O2). It wraps the same `readDeploymentEnvironment` source with the same rule as `EnvironmentReadPort`, because ADR-0002 keeps `reporting` from importing `admin`.
+- **Recording.** A snapshot assembled in a demo database records `synthetic: true` in its hashed content (ADR-0045 amendment O1).
+- **Rendering.** The renderers print "Illustrative example — synthetic" / "مثال توضيحي — اصطناعي" from that recorded member only (ADR-0046 amendment E2):
+  - PDF and DOCX: in the header and on every page;
+  - PPTX: on every slide;
+  - XLSX: as the first row of every sheet;
+  - CSV: as the first row.
+- **Production.** A production snapshot has no member and no label.
+- **Unchanged.** §2 (a)–(c), the banner, the record badge and the synthetic approval label (`apps/web/src/components/demo-label/**`), are unchanged.
+
+Requirement rows: REQ-PB-089 and REQ-S18-001.
+
+Every approval in the demo is synthetic and approves nothing real. Product gates G1–G6 are business approvals inside the product. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.

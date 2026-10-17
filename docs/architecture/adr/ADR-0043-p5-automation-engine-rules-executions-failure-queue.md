@@ -205,3 +205,34 @@ D-146 confirms these points from BE-H's handback (`docs/delivery/handbacks/DG5/T
    - 400 `validation.service_permissions_need_service`: a version with `runAs: initiating_user` that lists service permissions. This is a request-validation error that mirrors the CHECK `automation_rule_version_service_permissions`.
 3. **Enable and disable are idempotent** (§4). Enabling a rule that is already enabled, or disabling one that is already disabled, returns 200 and writes nothing: no version step and no audit event.
 4. **Not changed:** `launch_procedure` stays catalogued but reports `adminSelectable: false` until BE-J registers its descriptor; a rule that uses it before then gets 422 `automation_rule.action_unknown`. A version-level `parameters` value other than `{}` on an admin rule gets 422 `automation_rule.action_parameters_invalid`.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-164 (d), D-166): §4, the dry-run sample and `AutomationTrigger.samplePayload`
+
+Sources: D-163 (QA-A O-1), D-164 (d) (the contract addition approved), D-166 (W20 integrated), the T-DG5-BE-C3 handback §3, the T-DG5-BE-C4 handback §2.2 and the T-DG5-FE-D3 handback. Nothing above is removed. This amendment states what §4's "a sample event (validated against the trigger's payload schema)" means as built.
+
+### S1. The dry-run sample is the trigger's complete payload of schema version 1 (T-DG5-BE-C3)
+
+- **Event trigger with an outbox payload schema** (`outboxPayloadSchema(code, 1)` is not null; for example `gate.submitted`, `gate.decided`). The sample's `payload` is the **complete** event payload of schema version 1, exactly as the outbox carries it: every member the schema requires and no other member. It is not only the trigger's `conditionFields`. For example, `gate.submitted` v1 has 10 members.
+- **Schedule trigger, or an event without a payload schema.** The payload holds only the trigger's `conditionFields`, its initiating-user field and `transformationId`, each a string, number, boolean or null.
+- **Limits and refusal.** At most 16384 bytes of JSON. Any other sample is refused with 422 `automation.dry_run_sample_invalid` (§9 text unchanged), and no `automation_dry_run` row is written.
+- **Code and contract.** The server already behaved this way (`apps/api/src/modules/automation/dry-run.ts` `validateSample`). BE-C3 corrected the contract text: `AutomationDryRunRequest.description`, plus an `examples:` entry with a complete synthetic `gate.submitted` v1 payload. The schema is unchanged.
+- **Test.** `apps/api/test/integration/automation/dry-run-sample-shape.test.ts`. A condition-fields-only sample of `gate.submitted` gets 422 and writes no row. The documented example, with its `transformationId` pointed at a transformation of the rule's organization, gets 201 with `conditionsMet: true` and writes exactly one row.
+
+### S2. `AutomationTrigger.samplePayload` (D-164 (d); T-DG5-BE-C4 serves it, T-DG5-FE-D3 pre-fills from it)
+
+- **Contract** (`docs/api/openapi.yaml`, the `AutomationTrigger` schema; zod mirror `packages/shared/src/schemas/automation.ts`, `samplePayload: z.record(z.string(), z.unknown()).optional()`).
+  - An optional object, present only for an event trigger whose outbox event has a payload schema, and absent for every other trigger.
+  - It is an example payload of schema version 1, valid against that schema (the complete payload of S1), and every id in it is synthetic.
+  - No operation, request or response media type changes.
+- **Served by** `GET /api/v1/admin/automation-catalogue` (`apps/api/src/modules/automation/catalogue.ts` `samplePayloadField`, through `samples.ts` `samplePayloadOf`).
+  - There is one sample per event trigger with a schema: the 16 events of `0074`/`0075`.
+  - Schedules, requests and `dependency.slipped` (no registered payload schema) have none.
+  - Each sample is parsed with its schema before it is served, and a sample that fails to parse is omitted. Every response gets a fresh copy.
+- **The placeholder `transformationId`.** When the event has a `transformationId`, the sample holds the fixed placeholder `00000000-0000-7000-8000-000000000000` (`samples.ts` `SAMPLE_TRANSFORMATION_ID`).
+  - The builder (`apps/web/src/pages/automation/RulePage.tsx:456` `dryRunTemplate`) copies the sample as served. For a transformation-scope rule it replaces the top-level `transformationId` with the rule's transformation.
+  - An organization-scope rule keeps the placeholder in the editable sample.
+  - Without `samplePayload`, the builder keeps the earlier template: `transformationId` plus every condition field set to `""`.
+- **Example data only.** A sample is not a record, a decision or an approval. The dry run stays rolled back and writes only its own row (§4).
+- **Tests.** `apps/api/test/integration/automation/catalogue-sample-payload.test.ts` (every served sample parses with its schema, and the `gate.submitted` sample gives a 201 dry run) and `apps/api/src/modules/automation/samples.test.ts`. On the web side: `apps/web/src/pages/automation/fed.test.tsx` › "D-164 d".
+
+Requirement row: REQ-S12-002 ("dry-run preview"; A06, A13: "a dry-run creates no tasks"). Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

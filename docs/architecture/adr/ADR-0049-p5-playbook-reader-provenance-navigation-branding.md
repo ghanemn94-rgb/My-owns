@@ -263,3 +263,41 @@ None of these texts names DG0–DG7 or claims official status: the §7 scans cov
 - Probe (`probe-output.txt`): S01–S08, T01–T04, PB01–PB11, PL01–PL04, MP01–MP06, MR01–MR13, BR01–BR22 and AO01 (the slice I part of 96/96).
 - BE-Q tests: every block's `text_en` equals `docs/source/playbook.md` at its anchor (165/165); "value pools" returns the Diagnose blocks; B0031 ↔ T01 in both directions; every B0158–B0162 element returns `provenance=custom_extension` from `listMethodologyElements?provenance=custom_extension`; every template returns exactly one question tag; the four questions render verbatim in en, with ar.
 - BE-R tests: the two text scans (§7) and the SQL/TypeScript agreement; a branding PUT changes `GET /branding/tokens` `brand.primary` and the next generated PDF's header colour (with BE-N's port); a fresh database returns "Mobily Transformation Hub"; `/me/navigation` gives the ADM user 14 areas and hides Administration from WL; AUD gets 403 on `PUT /admin/branding`; `If-Match` gives 428/409; one audit event per row.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-164 (i), D-166): §9 the shell renders only `GET /me/navigation`, and §8 the navigation background follows `brand.primary`
+
+Sources: D-163 (FE-G handback §6.1, decided as option (a); the REQ-S15-004 acceptance text closed), D-164 (i) (accepted), and the T-DG5-FE-G2 handback §1 and §2. Nothing above is removed. §8 and §9 are read with this amendment.
+
+### N1. §9: the shell renders exactly the server's answer (D-163 (a); T-DG5-FE-G2)
+
+- **The shell.** `apps/web/src/app/Shell.tsx:42` shows exactly the areas `GET /me/navigation` returns, in the `nav.ts` order (`visibleAreaIds`, `apps/web/src/app/me-navigation.ts:48`). There is **no client-side fallback list**: a body that is not the contract's shape is a query error.
+  - While the call is pending, the shell shows no area list (`aria-busy`, "Loading navigation…").
+  - On a failure, it shows the error state with a retry.
+  - `data-nav-state` is `loading`, `ready` or `error`.
+- **Why.** REQ-S03-007 says "areas and items the user cannot access are hidden server-side", and §9 implements exactly that. The shell no longer decides visibility itself.
+- **The two DG1 journey pins changed, not this ADR** (D-163). `apps/web/e2e/journeys.spec.ts` pinned what the DG1 shell showed before the server rule existed. REQ-S03-007 spans P1–P5 and closes at DG5.
+  - `:207–210`: the Transformation Office sees **14** areas, including Administration. TO holds `methodology.review` for the Studio review, so the §9 Administration row applies. The DG1 pin said 13, with no Administration.
+  - `:416–420`: the technical administrator `dev.admin` (ADM_ACCESS + ADM_TECH, no `transformation.read`) sees **My Work, Playbook and Administration**. The DG1 pin said 14. The administration journey still reaches its screens through Administration.
+  - The DG1 gate record is not touched.
+- **Acceptance.** "An ADM sees 14 areas in en and ar; a Workstream Lead does not see Administration" is proven in `apps/web/e2e/p5-navigation.spec.ts`, as §9's last paragraph says:
+  - a synthetic user holding the union of the role defaults (every role of `GET /roles`, at organization scope) sees all 14 areas;
+  - a synthetic Workstream Lead sees no Administration, and `/admin` gives the no-permission state.
+
+Requirement row: REQ-S03-007.
+
+### N2. §8: the navigation background is derived from `brand.primary` (D-163, D-164 (i); T-DG5-FE-G2)
+
+- **The token** (`packages/design-tokens/src/tokens.json`). `nav.background` is no longer a reference to `brand.deep`. It is a **derived** token from `brand.primary`, by the function `deriveNavigationBackground(primary)` (`packages/design-tokens/src/contrast.ts:84`).
+  - It is `primary` itself when white navigation text (`nav.text`, `#FFFFFF`) reaches at least 4.5:1 on it (WCAG 2.1 relative luminance).
+  - Otherwise it is the **lightest** darker shade that does. The colour is darkened deterministically in HSV value steps of 0.1 %: the RGB channels are scaled towards black, so hue and saturation are kept.
+  - Examples: the provisional `#0078FF` gives **`#0071F1`** (4.53:1 with white), `#FFD700` gives `#8B7500`, and `#003B73` stays itself.
+- **`nav.text-muted` = `nav.text`** (a reference, white). A background guaranteed 4.5:1 only against white cannot guarantee 4.5:1 for any other text colour. Secondary navigation items differ by size, never by colour alone.
+- **At render time.** `GET /branding/tokens` re-derives every `derived` token from the current branding version (§8, unchanged), and the web themes `nav.background` from it (`apps/web/src/pages/branding/api.ts` `THEMED_TOKENS`). Publishing a new primary colour therefore recolours the navigation without a code change or a redeploy.
+  - So §8's "the navigation colour is `nav.background`" stays true. `nav.background` now follows `brand.primary`, not `brand.deep`.
+  - The header gradient still starts at `brand.deep`.
+  - The Branding Settings contrast preview checks the navigation against the derived colour, and the header against the secondary colour.
+- **Contrast check.** `pnpm --filter @mth/design-tokens run check:contrast` passes 50 pairs (D-164 (i)).
+- **Provisional.** Every token stays `provisional: true`. `#0078FF` and `#0071F1` are provisional brand tokens, **not** verified Mobily colours.
+- **Limitation (D-164 (i)).** The Studio badge reflects the published methodology's profiles, so a draft's own override shows only after publication.
+
+Requirement row: REQ-S15-004 ("changing brand.primary in Branding Settings changes the navigation colour …"; the navigation part). Test: `p5-navigation.spec.ts` (publishing `#C8102E` gives the computed background `rgb(200, 16, 46)`, `#FFD700` gives `rgb(139, 117, 0)`, and the default is restored afterwards).

@@ -149,3 +149,50 @@ Numbers are printed from their canonical decimal strings with the shared display
 
 - **Database (probe):** EJ01–EJ20 and the AO/AD grant probes in `docs/delivery/handbacks/DG5/T-DG5-ARCH-04-evidence/probe-output.txt`; font tables in `font-tables.txt` of the same folder.
 - **Implementer tests (literal, p5-work-split §F):** an XLSX export of the RAID register with a filter contains exactly the filtered rows (REQ-S13-005); a PPTX gate pack lists each criterion of the gate (REQ-S13-005); a RAID description `=HYPERLINK(...)` is an inline string with `quotePrefix` in XLSX and `'=HYPERLINK(...)` in CSV, and the system total is `<f>SUM(…)</f>` (REQ-S13-006); an Arabic PDF has base direction RTL, embeds IBM Plex Sans Arabic, and its RAID identifiers and numbers keep their order (REQ-S13-009; text extraction plus the glyph-run check of BE-N, and QA-C's visual inspection); a pending benefit value prints "مؤقت"/"Provisional" in the PDF pack (REQ-S13-008); the export of the same request with the same key creates one job; a killed worker mid-export completes once; AUD gets 403 on `POST /exports`; another user's download is 404; a requester who lost `transformation.read` gets 404 on download.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-164 (g), D-166): B0004 and the illustrative label in every format, and the KPI target text
+
+Sources: D-163 (F-DG5-qa-c-1, F-DG5-qa-c-2, QA-C O3), D-164 (g), D-166 (W20 integrated), and the handbacks of T-DG5-BE-N2 (§1–§3) and T-DG5-KBE-D4 (§2, Added scope 2). Nothing above is removed. This amendment states how §2's "slice I's provenance footer (B0004)" and "slice J's synthetic label" are placed in each format, and how §9 applies to a KPI target.
+
+### E1. The B0004 provenance statement in XLSX and CSV (T-DG5-BE-N2; D-163 F-DG5-qa-c-1)
+
+The statement is the text the worker passes as `branding.provenance`, read from the catalogue (`provenanceFooter`). `packages/reporting/src/model.ts:140` `provenanceText` returns that text, or null. With null, nothing is printed in its place, and the text is never invented.
+
+- **XLSX** (`packages/reporting/src/xlsx/index.ts`). It is the **last row of every sheet**: About, each table sheet and Legend. It is a plain inline-string cell, never a formula, and it gets `quotePrefix` only if it ever started like a formula (§4).
+- **CSV** (`packages/reporting/src/csv.ts:66–68`). It is **one row right after the header rows**, written through `csvCell`, so `neutralizeSpreadsheetText` applies.
+- **PDF, DOCX and PPTX** keep the footer of §2, unchanged.
+
+Requirement rows: REQ-PB-001 and REQ-S20-015 (A15). Test: `tests/qa/integration/a15-outputs-every-definition.test.ts` › "every file, in every format, prints the B0004 provenance statement in its language", which passes unchanged.
+
+### E2. The illustrative label in a demo snapshot's files (T-DG5-BE-N2; D-163 F-DG5-qa-c-2)
+
+- **Source of the decision.** The label is printed exactly when the snapshot's content records `synthetic: true` (ADR-0045 amendment O1), decided by `model.ts:132` `illustrativeLabel`. The worker's own environment plays no part, so a file always matches the snapshot it renders.
+- **Text** (label key `export.illustrative`, `packages/reporting/src/labels.ts`). It is in the file's language: "Illustrative example — synthetic" / "مثال توضيحي — اصطناعي" (ADR-0050 §2 (b), verbatim).
+- **Placement:**
+
+| Format | Where |
+|---|---|
+| PDF | under the product name in the header block, and in the top margin of **every** page (`pageHeaders()`; ink `#7A4B00`, 7.4:1 on white), start-aligned for the direction |
+| DOCX | in the body's header block, and in a default page `Header` part (every page); a production file has no header part |
+| PPTX | at the top of **every** slide, the title slide included |
+| XLSX | the **first row of every sheet**, added when the sheet is created, so the §4 `SUM` ranges stay exact |
+| CSV | the **first row** |
+
+- **Production.** A production snapshot prints no label in any format.
+- Requirement rows: REQ-PB-089 and REQ-S18-001. Tests: `packages/reporting/src/provenance-illustrative.test.ts` (24) and `apps/api/test/integration/reporting/report-synthetic.test.ts`.
+
+### E3. The KPI target as display text in its own unit (T-DG5-KBE-D4; D-164 (g), QA-C O3)
+
+- **Before.** The `registers` assembler (`{register: "kpis"}`) emitted the stored target string as a system `text` cell, so files printed for example `100.000000`.
+- **Now.** `kpiTargetText(value, unitKind, currency)` (`apps/api/src/modules/reporting/reports/assemblers/registers.ts:519`) formats the target with the shared display formatter `formatDecimal` (§9: half-up **display** rounding, trailing zeros dropped, Latin digits; the stored value is never rounded), in the KPI's own unit kind, as the KPI screen does:
+  - **money:** 2 fraction digits with the ISO 4217 code;
+  - **percentage:** the stored fraction × 100, at 2 digits, followed by ` %`;
+  - **any other unit:** up to 4 digits;
+  - **no target:** null, so the cell shows n/a, never 0.
+- **As built vs. D-164 (g).** D-164 (g) named "a `decimal` with each KPI's own unit kind". As built, and as D-166 records it, the target is **display text**.
+  - **Why text.** One `decimal` column must never mix unit kinds (ADR-0045 §3), and the KPIs of one register have different units.
+  - **What it means.** The column stays a system `text` column. The figure is not a spreadsheet number and carries no companion status column.
+  - **Language.** The text is the same in en and ar (Latin digits, the same separators). A currency target reads `SAR 1,500,000` in both, because the content model has no per-language text cell.
+- Requirement rows: REQ-S13-004 and REQ-S13-005. Tests: `apps/api/src/modules/reporting/reports/assemblers/kbe-d4.test.ts` and `apps/api/test/integration/reporting/kpi-target-text.test.ts` (the CSV renderer in en and ar prints `100` and `25 %`, never `100.000000` or `0.250000`).
+
+Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7. Demo files are synthetic illustrative examples, not Mobily performance.

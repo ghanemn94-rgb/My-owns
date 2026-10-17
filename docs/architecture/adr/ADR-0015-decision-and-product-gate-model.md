@@ -173,3 +173,14 @@ A `rejected` or `changes_requested` gate can be resubmitted. That creates submis
 ## Correction note (2026-10-09, T-DG4-ARCH-07; D-089 R1)
 
 Two sentences of §2 were not true of the DG2/DG3 code: "Write all the audit events and an outbox event `gate.submitted`" (Submission, step 3) and "writes the audit events and an outbox event `gate.decided`" (Decision). As built through DG3, `workflows/gates.ts` writes the audit events and **no** outbox event; no migration or other module writes a gate event, so no backlog exists. The events are specified in ADR-0035 §7 (payloads, idempotency keys, consumers) and exist only once the slice H implementer (BE-K) merges them. Nothing else in this ADR changes. This note is wording only; whether it needs a DG2 record is the orchestrator's decision (D-089 R1).
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-164 (a) (b), D-166): §2, the approver a gate names and routes to
+
+Sources: D-163 (F-DG5-QA-A-1), D-164 (a) and (b), D-166, and the T-DG5-BE-C3 and T-DG5-BE-C4 handbacks. The full rule is in the ADR-0039 amendment of the same date (C1, C2). Nothing above is removed. Where this amendment and §2 differ, this amendment wins.
+
+- **§2 Submission, step 1, corrected.** The text "otherwise `approver_role_code`, which defaults to `gate_definition.default_approver_role_code` (SP)" is still true for a transformation pinned to `playbook` v1. It is **not true** for a transformation pinned to a later methodology version whose gate sets another default approver role. There, an instance that was never configured, names no user and holds the catalogue default role routes to the **pinned version's** default role. The approver is `routedApproverOf` (`apps/api/src/modules/workflows/gates.ts:276`; ADR-0039 amendment C1).
+- **Every read that names the approver** (the gate list, the single gate, the configuration response, exception routing, the G5 disposition party, the worker's exception-expiry notices and the gate pack) reports that same routed approver. Nothing stored is rewritten.
+- **§2 table, `gate_instance`.** The row also holds `approver_configured` (`0094`), which is true once the configuration (`PATCH /gates/{gateCode}`, `gate.configure`) has run on the instance. A configured approver is then kept even when it equals the catalogue default role (ADR-0039 amendment C2).
+- **Decision, check 2, unchanged.** A pending submission is decided by the approver recorded on it (`gate_submission`'s resolved approver), so a later configuration or methodology change never moves a submission that is already pending.
+
+Requirement rows: REQ-S06-004 and REQ-S20-006. Product gates G1–G6 are business approvals inside the product. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.

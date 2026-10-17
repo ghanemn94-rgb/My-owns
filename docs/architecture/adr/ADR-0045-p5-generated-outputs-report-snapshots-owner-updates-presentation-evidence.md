@@ -218,3 +218,93 @@ Every number in the content is a canonical decimal string produced by the source
 - **Database (probe, 93/93 PASS on PostgreSQL 16.13):** G00–G04 (migrations, fresh and over P4 data), S01–S04 (seeds), RS01–RS30, RC01–RC08, OU01–OU17, AO and AD (grants) in `docs/delivery/handbacks/DG5/T-DG5-ARCH-04-evidence/probe-output.txt`; EJ01–EJ20 are ADR-0046's.
 - **Catalogue and seed pins:** `packages/db/test/integration/catalogue.test.ts` (tables, the slice F triggers, grants, mutable `version` tables), `packages/db/src/seed.test.ts` (`0082` equals `P5_REPORTING_PERMISSIONS`/`_ROLE_PERMISSIONS`; no approval code; AUD and technical admins none; issue = TL, TO, SEC), `apps/api/src/modules/platform/advisory-locks.test.ts` (distinct classes).
 - **Implementer tests (literal, p5-work-split §F):** each of the ten outputs generates from a seeded transformation and contains its ID and records (REQ-S13-004); after a later KPI change the issued snapshot still shows the old values and versions, and a reissue is v2 (REQ-S13-007); a pending benefit value is labelled provisional (REQ-S13-008, with ADR-0046 for the PDF); the executive pack's workstream section contains the submitted update text and current metrics (REQ-S09-011); a changed linked decision changes the presentation and not the issued pack (REQ-S10-013); a second upload is version 2 with its SHA-256 in the versions list and the register (REQ-S13-010); AUD 403 on every write; `If-Match` 428/409; one audit event per mutation.
+
+## Amendment (2026-10-17, T-DG5-ARCH-R1; D-163, D-164 (c) (e) (g) (h), D-165, D-166): `synthetic`, `ReportEnvironmentPort`, declared totals, the dashboard's KPI lineage, `WorkflowsReadPort.gateApprover` and the benefit totals by reference
+
+Sources:
+- D-163 (F-DG5-qa-c-2, F-DG5-qa-c-3);
+- D-164 (c), (e), (g), (h);
+- D-165 (QA-B P-1);
+- D-166 (W20 integrated);
+- the handbacks of T-DG5-BE-N2 (§1, §6.1), T-DG5-KBE-D3 (§1–§3) and T-DG5-KBE-D4 (§2).
+
+Nothing above is removed. Where this amendment and §1, §3 or §12 differ, this amendment wins. No migration was needed. `content_schema_version` stays 1.
+
+### O1. The optional `synthetic` member of the document (D-163; T-DG5-BE-N2)
+
+- **§3, content members.** `ReportDocument` has one more optional member: `synthetic`, which is `true` or absent (`packages/shared/src/schemas/report.ts:308`, `z.literal(true).optional()`; `docs/api/openapi.yaml`, `ReportDocument.synthetic`, `enum: [true]`).
+- **Where it is set.** `assembleReport` (`apps/api/src/modules/reporting/reports/snapshots.ts:298`, `:326`) reads the environment in its `REPEATABLE READ` transaction. In a demo database it adds `synthetic: true` **before** validation and hashing, so `content_sha256` covers it. In a production database, or one with no marker (fail-safe), the member is absent. Production content and its hash are then exactly the content-schema-v1 document of §3 (p5-plan R2).
+- **Who sets it.** It applies to every generated snapshot, reissue and live report.
+- **Effect.** The renderers decide on the illustrative label from the snapshot's own recorded member, never from the worker's environment (ADR-0046 amendment). Requirement rows: REQ-PB-089 and REQ-S18-001.
+
+### O2. `ReportEnvironmentPort` (D-164 (e))
+
+- **Contract.** `snapshots.ts:70` exports `ReportEnvironmentPort { read(db): Promise<{ synthetic: boolean }> }`. It is the `synthetic` slice of admin's `EnvironmentReadPort` (ADR-0050 §2), which satisfies it as it is.
+- **Why not `EnvironmentReadPort` itself.** ADR-0002 keeps `reporting` from importing `admin` (`modules.ts`; the architecture test). So the default `reportEnvironmentPort` (`snapshots.ts:74`) wraps the same `@mth/db` `readDeploymentEnvironment` that `EnvironmentReadPort` wraps, with the same rule.
+- **Test.** `apps/api/test/integration/reporting/report-synthetic.test.ts` proves the two ports agree on a demo database and on a production database, also inside a transaction. A compile-time assignment proves that the admin port satisfies the reporting port.
+
+### O3. Declared table totals, "only where the source screen shows one", as built (T-DG5-KBE-D3; D-163 F-DG5-qa-c-3)
+
+**The rule** (`apps/api/src/modules/reporting/reports/assemblers/table-totals.ts`, `columnTotal` / `columnTotals`, pure and unit-tested). A table section declares `totals[]` (`{columnKey, formula: "sum", value}`, §3) only for a column whose source screen shows a total. The helper refuses where a total would be wrong:
+
+- **Column type.** Only a `decimal` column is totalled, and a table with no rows has no total.
+- **Mixed cells.** A column whose cells mix unit kinds, value bases or currencies gets **no** total. Currencies are never converted (D-117, D-119, D-122).
+- **Unknown or stale cells.** Either makes the total **Unknown** (`value: null`, reason `not_computable`). A partial sum is never shown as complete.
+- **Not-applicable cells.** A `not_applicable` cell with no number, for example an unmonetised benefit or a value held back by an open overlap, is left out.
+- **The value.** It is the screen's own figure, read by reference from the owning module's engine, when the assembler passes one. Otherwise it is the decimal.js sum of the cells, never a JavaScript number.
+- **The label.** `provisional` when any summed cell is provisional; `validated` only when every labelled cell is validated; otherwise `not_applicable` (§5).
+
+**The tables that declare totals:**
+
+| Assembler | Table (section key) | Column(s) totalled | The screen figure it equals |
+|---|---|---|---|
+| `diagnostic` | `value_pools` | `upside_amount`, `downside_amount`, only when every pool is in one currency | the T01 Diagnose screen's per-currency value-pool total (`totalValuePools`) |
+| `business_cases` | `group_<case#>_<value basis>_<ccy>` (new) | `amount` | `grossBenefitsByValueBasis[basis][ccy]` of the DG3 case totals (`loadCaseTotals`), the screen's "By value basis" |
+| `business_cases` | `group_<case#>_cost_cash_<ccy>`, `group_<case#>_cost_non_cash_<ccy>` (new) | `amount` | `implementationCostCash` / `implementationCostNonCash` |
+| `registers` with `{register: "benefits"}` | `totals_<ccy>_<value class>` (new) | `realized_validated`, `realized_sustained`, `pending` | `GET /benefit-totals`, one line per class × state × currency (O6) |
+
+Every other table declares no total, with the reason recorded in the KBE-D3 handback §3. Examples:
+- the business-case `lines` table mixes bases and currencies;
+- the business-case `totals` table lists different measures, and gross and net stay figures, never SUM tables (D-117, F-DG4-121);
+- the registers' own tables mix units;
+- the executive dashboard's rows are different KPIs.
+
+**§12 is read with this.** "A total is shown only where the source screen shows one" holds exactly for the four tables above.
+
+**XLSX.** ADR-0046 §4 turns a declared total into `SUM(<col>first:<col>last)` with the decimal.js value cached. That happens only when every data cell of the column is a number whose decimal sum equals the total. Otherwise (an Unknown row, a number written as text) the value is written without a formula, and an Unknown total is an empty cell with its status (`packages/reporting/src/model.ts:264` `totalRowCells`).
+
+**Regression.** A stored snapshot's content is fixed at INSERT. Only snapshots generated after W18 contain the new tables.
+
+Requirement rows: REQ-S13-006 ("a system SUM total remains a formula"), REQ-S13-008 and REQ-S13-004.
+
+### O4. The executive dashboard records its KPI versions and sources (T-DG5-KBE-D4; D-165 QA-B P-1)
+
+- **Before.** `executive-dashboard.ts` recorded `versions: []`.
+- **Now.** For every dashboard item that shows a KPI value (an outcome KPI or an adoption indicator), `kpiLineage` (`apps/api/src/modules/reporting/reports/assemblers/executive-dashboard.ts:229`) reads that KPI status's `kpi_evaluation` and records the following.
+  - **Versions** (`report_snapshot_version`, §3):
+    - `kpi_version`: reference id = the evaluation's `kpi_version_id`, key `kpi_definition:<id>`, label `v<n>`, as the KPI register records it;
+    - `calculation_engine`: the evaluation's `calculation_run` `kpi_rules_version` and `formula_engine_version`.
+  - **Sources:**
+    - each `kpi_definition` shown;
+    - the period's `kpi_actual` for the evaluation's scope, labelled `validated` once accepted, else `provisional`.
+  - **Uniqueness.** Sources are deduplicated against the item sources (`report_snapshot_source_record_key`), and versions have unique keys (`uniqueVersions`, `:207`; `report_snapshot_version_key`).
+- **Effect (§4, ADR-0047).** The worker's restatement run (`apps/worker/src/handlers/kpi.ts`) matches a snapshot on a `kpi_version` row or a `kpi_definition` source. So an approved KPI restatement now offers the issued dashboard for reissue.
+- Requirement rows: REQ-S13-007 and REQ-S07-016. Test: `tests/qa/integration/a07-historical-integrity.test.ts`, the two REQ-S13-007 dashboard tests, which pass unchanged.
+
+### O5. `WorkflowsReadPort.gateApprover` (T-DG5-KBE-D4; D-164 (c))
+
+- **Port.** `apps/api/src/modules/reporting/ports.ts:17` adds `gateApprover(db, transformationId, gateCode) → {roleCode, userId} | null` to the existing `WorkflowsReadPort`. The unwired port answers null.
+- **Wiring.** The composition root wires it to workflows' `effectiveGateApprover` (`apps/api/src/server.ts:386`), which is the routed approver of the ADR-0039 amendment C1. `reporting` still imports no `workflows` code.
+- **Use in the gate pack** (`assemblers/gate-pack.ts:182–185`). The approver it names is the submission's recorded approver first. With no submission, it is `gateApprover`'s answer. It is the stored `gate_instance.approver_role_code` only when the port is unwired or answers null. A new transformation pinned to a version whose G3 default is BO therefore prints BO, as `GET …/gates/G3` does.
+- Requirement row: REQ-S13-004. Test: `apps/api/test/integration/reporting/gate-pack-approver.test.ts`.
+
+### O6. The benefit totals are taken by reference (T-DG5-KBE-D4; D-164 (h))
+
+- **Barrel.** `apps/api/src/modules/benefits/index.ts:31` exports `computeTotals`, `totalsOf` and their types from the module-private `totals.ts`.
+- **Totals block** (`registers.ts` `benefitTotalSections`, `:368` and `:374`). It no longer restates the counting rules.
+  - Each row's cells are `computeTotals` of that one benefit: the engine decides whether it is counted and monetised, and an unmonetised benefit is in no table, never 0.
+  - Each declared total is `totalsOf(db, [t], null)`'s line for that currency × class × state, the figure `GET /benefit-totals` returns. It is passed to `columnTotals` as the screen's value.
+- **Boundary.** `reporting` already imported `benefits` (`dashboards/engine.ts`), so the module boundary is unchanged.
+- Requirement rows: REQ-S13-006 and REQ-S13-008. Tests: `registers-report.test.ts` and `table-totals-demo.test.ts`, which pass unchanged.
+
+Nothing here approves anything. Product gates G1–G6 are business approvals inside the product, and nothing here touches the engineering gates DG0–DG7. Demo content is synthetic and illustrative, not Mobily performance.
