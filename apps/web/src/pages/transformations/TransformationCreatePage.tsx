@@ -237,6 +237,7 @@ export function TransformationCreatePage() {
   return (
     <div className="page">
       <PageHeader
+        demoBadge
         title={t("transformations.createTitle")}
         crumbs={[
           { label: t("transformations.listTitle"), to: "/transformations" },

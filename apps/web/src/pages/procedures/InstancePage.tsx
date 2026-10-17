@@ -57,6 +57,7 @@ function InstanceView({ instance: i }: { instance: ProcedureInstance }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={pick(locale, i.nameEn, i.nameAr)}
         subtitle={t("workflowsP5.procedures.instanceSummary")}
         crumbs={[

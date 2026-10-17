@@ -7,7 +7,8 @@
 //      approval and Finance validation.
 // Fail-safe (ADR-0050 §1): an unknown environment (not loaded, failed, or no marker) is never labelled synthetic, so a
 // label never appears on data that might be real; the server's own `synthetic` flag is the only source.
-import { useQuery } from "@tanstack/react-query";
+import { QueryClientContext, useQuery } from "@tanstack/react-query";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/client.ts";
 import { shouldRetry } from "../../api/queries.ts";
@@ -60,6 +61,18 @@ export function DemoRecordBadge() {
       {t("playbookP5.demo.recordBadge")}
     </span>
   );
+}
+
+/**
+ * (b) in a FORM header (T-DG5-FE-D5, D-QA-E2-1; ADR-0050 §2 b: "every record view and form header shows the badge"):
+ * the badge of the shared dialog header (`Dialog`, so every create or edit dialog: `RecordDialog`, `P4FormDialog`,
+ * `StudioFormDialog` and the page-specific ones) and of a form page's `PageHeader form`. The shared dialog is also
+ * rendered outside the app's query provider (isolated component tests): there the environment is unknown, and an
+ * unknown environment is never labelled synthetic (ADR-0050 §1), so nothing renders.
+ */
+export function DemoFormBadge() {
+  const client = useContext(QueryClientContext);
+  return client ? <DemoRecordBadge /> : null;
 }
 
 /** (c) The label of a product-gate decision, an approval or a Finance validation in a demo database. */

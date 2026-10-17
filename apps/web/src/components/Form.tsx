@@ -16,6 +16,7 @@ import {
 import type { FieldValues, Resolver } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import type { z } from "zod";
+import { DemoFormBadge } from "./demo-label/DemoLabels.tsx";
 import { Icon } from "./Icon.tsx";
 
 export interface FieldControlProps {
@@ -202,9 +203,13 @@ export function Dialog({
         aria-labelledby={titleId}
         onKeyDown={onKeyDown}
       >
-        <h2 id={titleId} className="dialog__title">
-          {title}
-        </h2>
+        <div className="dialog__header chip-row">
+          <h2 id={titleId} className="dialog__title">
+            {title}
+          </h2>
+          {/* T-DG5-FE-D5 (REQ-S18-001, ADR-0050 §2 b): the record badge in every dialog header of a demo database. */}
+          <DemoFormBadge />
+        </div>
         <div className="dialog__body">{children}</div>
         {footer ? <div className="dialog__footer">{footer}</div> : null}
       </div>

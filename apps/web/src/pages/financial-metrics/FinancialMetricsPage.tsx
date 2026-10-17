@@ -64,6 +64,7 @@ export function FinancialMetricsPage() {
   return (
     <div className="page" data-p5-screen="financial-metrics">
       <PageHeader
+        demoBadge
         title={t("launchHealthP5.finance.title")}
         subtitle={t("launchHealthP5.finance.intro")}
         crumbs={[

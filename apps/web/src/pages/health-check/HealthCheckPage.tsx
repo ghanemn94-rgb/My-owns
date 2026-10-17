@@ -119,6 +119,7 @@ export function HealthCheckPage() {
   return (
     <div className="page" data-p5-screen="health-check">
       <PageHeader
+        demoBadge
         title={t("launchHealthP5.health.title")}
         subtitle={t("launchHealthP5.health.intro")}
         crumbs={[

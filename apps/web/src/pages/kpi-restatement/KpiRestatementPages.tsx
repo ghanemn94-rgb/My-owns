@@ -81,6 +81,7 @@ export function KpiRestatementsPage() {
   return (
     <div className="page" data-p5-screen="kpi-restatements">
       <PageHeader
+        demoBadge
         title={t("launchHealthP5.restatement.title")}
         subtitle={kpiName}
         crumbs={[
@@ -272,6 +273,7 @@ export function KpiRestatementPage() {
   return (
     <div className="page" data-p5-screen="kpi-restatement">
       <PageHeader
+        demoBadge
         title={t("launchHealthP5.restatement.title")}
         crumbs={[
           { label: transformation.data?.name ?? t("launchHealthP5.transformation"), to: `/transformations/${id}` },

@@ -84,6 +84,7 @@ export function OwnerUpdatesPage() {
   return (
     <div className="page" data-p5-screen="owner-updates">
       <PageHeader
+        demoBadge
         title={t("reportsP5.updates.title")}
         subtitle={t("reportsP5.updates.intro")}
         crumbs={[
