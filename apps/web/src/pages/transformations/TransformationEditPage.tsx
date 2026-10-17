@@ -208,6 +208,7 @@ function EditForm({ loaded }: { loaded: Transformation }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={t("transformations.editTitle")}
         subtitle={
           <>

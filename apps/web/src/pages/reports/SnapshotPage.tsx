@@ -48,6 +48,7 @@ export function SnapshotPage() {
   return (
     <div className="page" data-p5-screen="report-snapshot">
       <PageHeader
+        demoBadge
         title={t("reportsP5.snapshot.title")}
         subtitle={t("reportsP5.snapshot.intro")}
         crumbs={[

@@ -283,6 +283,7 @@ function OrganizationEdit({ org }: { org: Organization }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={
           <>
             <bdi dir="ltr" className="code page-header__code">
@@ -605,6 +606,7 @@ function BusinessUnitEdit({ unit }: { unit: BusinessUnit }) {
   return (
     <>
       <PageHeader
+        demoBadge
         title={
           <>
             <bdi dir="ltr" className="code page-header__code">

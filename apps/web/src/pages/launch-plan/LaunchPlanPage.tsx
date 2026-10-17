@@ -64,6 +64,7 @@ export function LaunchPlanPage() {
   return (
     <div className="page" data-p5-screen="launch-plan">
       <PageHeader
+        demoBadge
         title={t("launchHealthP5.launch.title")}
         subtitle={t("launchHealthP5.launch.intro")}
         crumbs={[

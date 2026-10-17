@@ -103,6 +103,7 @@ export function GateConditionsPage() {
   return (
     <div className="page" data-p5-screen="gate-conditions">
       <PageHeader
+        demoBadge
         title={t("workflowsP5.conditions.title")}
         subtitle={t("workflowsP5.conditions.intro")}
         crumbs={[

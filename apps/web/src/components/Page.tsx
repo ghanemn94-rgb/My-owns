@@ -2,6 +2,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { DemoFormBadge } from "./demo-label/DemoLabels.tsx";
 
 export function usePageTitle(title: string): void {
   const { t } = useTranslation();
@@ -21,11 +22,18 @@ export function PageHeader({
   subtitle,
   crumbs,
   actions,
+  demoBadge = false,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
   crumbs?: readonly Crumb[];
   actions?: ReactNode;
+  /**
+   * The header of a form page (create or edit) or of a record view outside `Workspace`: it carries the demo record
+   * badge in a demo database (T-DG5-FE-D5; ADR-0050 §2 b, "every record view and form header"). `Workspace` and the
+   * transformation overview render the badge in their own subtitle. List, hub and picker pages do not set it.
+   */
+  demoBadge?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -44,6 +52,7 @@ export function PageHeader({
       <div className="page-header__row">
         <div>
           <h1 className="page-header__title">{title}</h1>
+          {demoBadge ? <DemoFormBadge /> : null}
           {subtitle ? <p className="page-header__subtitle">{subtitle}</p> : null}
         </div>
         {actions ? <div className="page-header__actions">{actions}</div> : null}
