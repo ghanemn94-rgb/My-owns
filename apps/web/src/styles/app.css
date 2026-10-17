@@ -1656,10 +1656,11 @@ input[type="radio"] {
   align-items: center;
   gap: var(--mth-space-2);
 }
-/* A link inside an error or warning banner takes the banner's own text colour (contrast checked for the banner text)
-   and stays underlined, so it is never told apart by colour alone. */
-.banner--error .link,
-.banner--warning .link {
+/* A link inside any banner takes the banner's own text colour (contrast checked for the banner text: the
+   feedback.<kind>.fg / feedback.<kind>.bg pairs, or text.primary on the banner background inside a paragraph) and stays
+   underlined, so it is never told apart by colour alone. action.primary is checked only against surface.card and
+   surface.page: on feedback.info.bg it gives 4.22:1 (QA-B P-2, D-165), below AA. */
+.banner .link {
   color: inherit;
   text-decoration: underline;
 }
@@ -1707,4 +1708,14 @@ input[type="radio"] {
 }
 .ff-pre {
   white-space: pre-wrap;
+}
+
+/* T-DG5-FE-D3 (QA-F P-4, D-165): the automation failure queue fits a 1280 px window, so Status and Actions are seen
+   without horizontal scrolling. Idempotency keys and technical error messages are long unbroken strings: they wrap
+   anywhere (their min-content width shrinks) instead of widening the table. Queue and schedule codes are short and keep
+   their normal wrapping. The table still scrolls on narrower windows. */
+[data-register="p5-automation-failures"] .table .code,
+[data-register="p5-automation-failures"] .table [data-error-code] bdi {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }

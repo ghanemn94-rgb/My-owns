@@ -65,6 +65,8 @@ test("Launch plan: generate from a start date, re-date by +7 days, the predecess
   await expect(page.locator("[data-start-date='2026-10-01']")).toBeVisible();
   // REQ-PB-086: the Days 31-60 tasks fall between 2026-11-01 and 2026-11-30.
   const window2 = page.locator("#window-days_31_60 [data-table='launch-tasks'] tbody tr");
+  // The plan's start date renders before its task rows: wait for the first row before counting (D-165).
+  await expect(window2.first()).toBeVisible();
   expect(await window2.count()).toBeGreaterThan(0);
   for (const due of await page
     .locator("#window-days_31_60 td[data-due]")
@@ -78,10 +80,13 @@ test("Launch plan: generate from a start date, re-date by +7 days, the predecess
   await page.getByLabel(tr(lang, "launchHealthP5.launch.changeStart")).fill("2026-10-08");
   await page.getByRole("button", { name: tr(lang, "launchHealthP5.launch.redate"), exact: true }).click();
   await expect(page.locator("[data-last-shift='7']")).toBeVisible();
-  const moved = await page.locator("#window-days_0_30 td[data-due]").first().getAttribute("data-due");
   const plus7 = new Date(`${firstDue}T00:00:00Z`);
   plus7.setUTCDate(plus7.getUTCDate() + 7);
-  expect(moved).toBe(plus7.toISOString().slice(0, 10));
+  // The shift marker can render before the re-dated rows: the due date is awaited, not read once (D-165).
+  await expect(page.locator("#window-days_0_30 td[data-due]").first()).toHaveAttribute(
+    "data-due",
+    plus7.toISOString().slice(0, 10),
+  );
 
   // Predecessors: #2 after #1, then #1 after #2 is a loop (422); #2 is "Blocked by" #1 while #1 is incomplete.
   const editOf = (n: number) =>

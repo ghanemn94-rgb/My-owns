@@ -444,6 +444,31 @@ function EditContent({
   );
 }
 
+/** The trigger's placeholder transformation id in its served `samplePayload` (BE-C4; D-164 d). */
+export const SAMPLE_TRANSFORMATION_PLACEHOLDER = "00000000-0000-7000-8000-000000000000";
+
+/**
+ * The pre-filled dry-run sample (D-164 d). The trigger's served `samplePayload` is an example valid against the
+ * trigger's event schema, with synthetic ids; its `transformationId` is replaced with the rule's transformation when the
+ * rule has one. Without a `samplePayload` (an older catalogue) the sample is the rule's transformation plus the
+ * trigger's condition fields, empty.
+ */
+export function dryRunTemplate(
+  trigger: { conditionFields: readonly string[]; samplePayload?: Record<string, unknown> | undefined } | undefined,
+  transformationId: string | null | undefined,
+): string {
+  const sample = trigger?.samplePayload;
+  if (sample && typeof sample === "object" && !Array.isArray(sample)) {
+    const o: Record<string, unknown> = { ...sample };
+    if (transformationId && "transformationId" in o) o["transformationId"] = transformationId;
+    return JSON.stringify(o, null, 2);
+  }
+  const o: Record<string, unknown> = {};
+  if (transformationId) o["transformationId"] = transformationId;
+  for (const f of trigger?.conditionFields ?? []) o[f] = "";
+  return JSON.stringify(o, null, 2);
+}
+
 /** The dry run of a draft against a sample event (rolled back; it writes only its own dry-run row). */
 function DryRunPanel({ rule: r, version: v }: { rule: AutomationRule; version: AutomationRuleVersion }) {
   const { t } = useTranslation();
@@ -453,16 +478,11 @@ function DryRunPanel({ rule: r, version: v }: { rule: AutomationRule; version: A
   const history = useDryRuns(r.id, v.versionNo);
   const triggerCodes = (v.content as unknown as { triggerCodes: string[] }).triggerCodes;
   const [triggerCode, setTriggerCode] = useState(triggerCodes[0] ?? "");
-  const fields = useMemo(
-    () => catalogue.data?.triggers.find((x) => x.code === triggerCode)?.conditionFields ?? [],
+  const trigger = useMemo(
+    () => catalogue.data?.triggers.find((x) => x.code === triggerCode),
     [catalogue.data, triggerCode],
   );
-  const template = useMemo(() => {
-    const o: Record<string, unknown> = {};
-    if (r.transformationId) o["transformationId"] = r.transformationId;
-    for (const f of fields) o[f] = "";
-    return JSON.stringify(o, null, 2);
-  }, [fields, r.transformationId]);
+  const template = useMemo(() => dryRunTemplate(trigger, r.transformationId), [trigger, r.transformationId]);
   const [payload, setPayload] = useState<string | null>(null);
   const [jsonError, setJsonError] = useState(false);
   const [result, setResult] = useState<AutomationDryRun | null>(null);
@@ -501,7 +521,15 @@ function DryRunPanel({ rule: r, version: v }: { rule: AutomationRule; version: A
           <label className="field__label" htmlFor="dry-run-trigger">
             {t("workflowsP5.dryRun.trigger")}
           </label>
-          <select id="dry-run-trigger" value={triggerCode} onChange={(e) => setTriggerCode(e.target.value)}>
+          <select
+            id="dry-run-trigger"
+            value={triggerCode}
+            onChange={(e) => {
+              // A new trigger has its own sample: drop an edit made for the previous one.
+              setTriggerCode(e.target.value);
+              setPayload(null);
+            }}
+          >
             {triggerCodes.map((c) => (
               <option key={c} value={c}>
                 {c}
