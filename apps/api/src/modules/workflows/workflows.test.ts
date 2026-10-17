@@ -40,6 +40,8 @@ describe("workflows module (P2)", () => {
       "CLOSURE_GATE",
       "EVALUATORS",
       "PRODUCT_GATES",
+      // T-DG5-KBE-D4 (D-164 c): the effective gate approver, behind reporting's WorkflowsReadPort (the gate pack).
+      "effectiveGateApprover",
       "evaluateGate",
       // P3 (T-DG3-BE-A): a waiver is granted by the waived gate's configured approver (portfolio dispensations).
       "isGateApprover",

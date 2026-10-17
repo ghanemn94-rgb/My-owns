@@ -18,6 +18,7 @@
 // `benefitTotalSections`). KPI definitions record their active `kpi_version` as a calculation version.
 import type { DbOrTx, Tx } from "@mth/db";
 import {
+  formatDecimal,
   MONEY_COLUMN,
   registersReportParameters,
   REPORT_MAX_TABLE_ROWS,
@@ -29,6 +30,7 @@ import {
   type ReportSection,
   type ReportValue,
 } from "@mth/shared/schemas";
+import { Decimal } from "decimal.js";
 import { sql } from "kysely";
 import {
   citedEvidence,
@@ -46,6 +48,7 @@ import {
   type SourceRecord,
   type VersionRef,
 } from "../assembler.ts";
+import { computeTotals, totalsOf, type TotalsBenefit, type TotalsValueLine } from "../../../benefits/index.ts";
 import { reportRefusals } from "../definitions.ts";
 import { columnTotals } from "./table-totals.ts";
 import {
@@ -300,13 +303,18 @@ async function benefitRows(
  * The benefit totals the T14 screen shows beside the register (GET /transformations/{id}/benefit-totals, benefits/
  * totals.ts; the BenefitsPage "Totals" block, ADR-0030 §7), as tables with system SUM totals (D-163): one table per
  * currency × value class (never converted, never added across classes: D-117, F-DG4-121), its rows the COUNTED,
- * monetised benefits of that class (benefit_counting.counted; a non-financial benefit without an approved valuation
- * method is n/a and in no line), its columns the three Finance states, each a total of ONE state (validated, sustained,
- * pending = submitted; REQ-S08-016). An open overlap holds a benefit's validated and sustained values out of the class
- * line (REQ-S08-014): those cells are n/a with no number, never in the sum. A line with no amount makes its cell and
- * the column's total Unknown, never 0. The rules are restated from the module-private totals service (as the register
- * predicates above are); registers-report.test.ts compares every total with the route, figure by figure. The totals
- * cover the whole transformation, as the screen's block does, whatever filters the register table has.
+ * monetised benefits of that class, its columns the three Finance states, each a total of ONE state (validated,
+ * sustained, pending = submitted; REQ-S08-016). It covers the whole transformation, as the screen's block does,
+ * whatever filters the register table has.
+ *
+ * T-DG5-KBE-D4 (D-164 h; KBE-D3 handback §6): the figures come from the benefits module's totals engine BY REFERENCE
+ * (`computeTotals`/`totalsOf`, exported by benefits/index.ts), never restated here:
+ *  - each row's cells are `computeTotals` of that one benefit: the engine decides whether it is counted and monetised
+ *    (a non-financial benefit without an approved valuation method is in no line: n/a, never 0; REQ-PB-076), and a
+ *    line with no amount makes its cell Unknown, never 0. An open overlap holds the validated and sustained values
+ *    out of the class line (engine rule 4, REQ-S08-014): those cells are n/a with no number, never in the sum;
+ *  - each declared total is `totalsOf`'s line of that currency × class × state, the figure GET /benefit-totals returns
+ *    (an Unknown cell makes the total Unknown, `columnTotal`).
  */
 async function benefitTotalSections(
   db: Tx,
@@ -325,6 +333,7 @@ async function benefitTotalSections(
         "b.updated_at",
         "b.value_class",
         "b.currency",
+        "c.counted",
         "c.overlap_open",
         "m.status as method_status",
       ])
@@ -335,11 +344,35 @@ async function benefitTotalSections(
       .limit(REPORT_MAX_TABLE_ROWS + 1)
       .execute(),
   );
-  const monetised = rows.filter((r) => !(r.value_class === "non_financial" && r.method_status !== "approved"));
-  const lines = await valueLines(
-    db,
-    monetised.map((r) => r.id),
+  // The engine's input, as benefits/totals.ts loads it (the same columns and the same unmonetised test).
+  const inputOf = (r: (typeof rows)[number]): TotalsBenefit => ({
+    id: r.id,
+    code: r.code,
+    valueClass: r.value_class,
+    currency: r.currency.trim(),
+    counted: r.counted === true,
+    exclusionReason: null,
+    overlapOpen: r.overlap_open === true,
+    unmonetised: r.value_class === "non_financial" && r.method_status !== "approved",
+  });
+  const lines: TotalsValueLine[] = (
+    await valueLines(
+      db,
+      rows.map((r) => r.id),
+    )
+  ).map((l) => ({ benefitId: l.benefit_id!, state: l.value_state!, amount: l.amount }));
+  // Per benefit: its own engine result (one currency block, or none when the engine sums nothing of it).
+  const own = new Map(
+    rows.map((r) => {
+      const b = inputOf(r);
+      const result = computeTotals({ benefits: [b], lines: lines.filter((l) => l.benefitId === b.id), costLines: [] });
+      return [r.id, result.currencies[0]] as const;
+    }),
   );
+  const monetised = rows.filter((r) => own.get(r.id) !== undefined);
+  // The screen's figures (GET /benefit-totals), by reference.
+  const screen = await totalsOf(db, [t], null);
+  const totalClassOf = (valueClass: string) => (valueClass === "non_financial" ? "non_financial_valued" : valueClass);
   const B = "benefits";
   const columns = [
     col(B, "code", "text"),
@@ -348,6 +381,11 @@ async function benefitTotalSections(
     col(B, "realized_sustained", "decimal", "currency"),
     col(B, "pending", "decimal", "currency"),
   ];
+  const STATE_COLUMNS = [
+    ["validated", "realized_validated"],
+    ["sustained", "realized_sustained"],
+    ["submitted", "pending"],
+  ] as const;
   const sections: ReportSection[] = [];
   const sources: SourceRecord[] = [];
   const currencies = [...new Set(monetised.map((r) => r.currency.trim()))].sort();
@@ -359,16 +397,17 @@ async function benefitTotalSections(
       const cell = (r: (typeof members)[number], state: "validated" | "sustained" | "submitted") => {
         if (r.overlap_open === true && state !== "submitted")
           return decimalValue(null, { unitKind: "currency", currency, valueBasis: state, state: NOT_APPLICABLE });
-        const amounts = lines.filter((l) => l.benefit_id === r.id && l.value_state === state).map((l) => l.amount);
-        if (amounts.some((a) => a === null))
+        const line = own.get(r.id)?.lines.find((l) => l.state === state && l.valueClass === totalClassOf(valueClass));
+        if (line === undefined || line.total.status !== "known" || line.total.amount === null)
           return decimalValue(null, {
             unitKind: "currency",
             currency,
             valueBasis: state,
             state: benefitAmountState("unknown", state),
           });
-        const st: ValueState = amounts.length === 0 ? NOT_APPLICABLE : benefitAmountState("known", state);
-        return decimalValue(toColumnString(sumDecimals(amounts as string[]), MONEY_COLUMN), {
+        // No line in this state: nothing is pending or realized (a known 0 with no validation of its own).
+        const st: ValueState = line.count === 0 ? NOT_APPLICABLE : benefitAmountState("known", state);
+        return decimalValue(toColumnString(line.total.amount, MONEY_COLUMN), {
           unitKind: "currency",
           currency,
           valueBasis: state,
@@ -387,6 +426,18 @@ async function benefitTotalSections(
           cell(r, "submitted"),
         ],
       }));
+      const screenLines = screen.currencies.find((c) => c.currency === currency)?.lines ?? [];
+      const screenValues = Object.fromEntries(
+        STATE_COLUMNS.map(([state, columnKey]) => {
+          const line = screenLines.find((l) => l.state === state && l.valueClass === totalClassOf(valueClass));
+          // The engine's figure at the report's canonical scale (the screen prints it at the money scale).
+          const amount =
+            line === undefined || line.total.status !== "known" || line.total.amount === null
+              ? null
+              : sumDecimals([line.total.amount]);
+          return [columnKey, amount] as const;
+        }),
+      );
       sections.push({
         key,
         titleKey: `report.benefit_value_class.${valueClass}`,
@@ -398,7 +449,11 @@ async function benefitTotalSections(
         })),
         columns,
         rows: tableRows,
-        totals: columnTotals({ columns, rows: tableRows }, ["realized_validated", "realized_sustained", "pending"]),
+        totals: columnTotals(
+          { columns, rows: tableRows },
+          ["realized_validated", "realized_sustained", "pending"],
+          screenValues,
+        ),
         emptyKey: "report.empty.no_records",
       });
       for (const r of members) sources.push({ ...source("benefit", r.id, r.version, r.updated_at), sectionKey: key });
@@ -453,6 +508,25 @@ async function benefitEvidence(db: Tx, t: string, ids: readonly string[]): Promi
  * asked, newest change first (updated_at DESC, id DESC). The active version's number and target are shown, and each
  * active version is recorded as a `kpi_version` calculation version (ADR-0045 §3).
  */
+/**
+ * T-DG5-KBE-D4 (D-164 g; QA-C O3; ADR-0046 §9): the display text of a KPI target in its own unit kind, through the
+ * shared display formatter `formatDecimal` (half-up DISPLAY rounding, trailing zeros dropped, Latin digits, the stored
+ * value never rounded), as the KPI screen shows it (apps/web `formatKpiValue`): money at 2 fraction digits with its
+ * ISO 4217 code; a percentage (stored as a fraction, 0.25 = 25 %) × 100 at 2 digits with its `%`; any other unit at 4
+ * digits. `100.000000` → "100". The text is the same in both languages (Latin digits and the same separators in en and
+ * ar), so the English order is used for the currency code. Null for no target (the cell then says n/a, never 0).
+ */
+export function kpiTargetText(value: string | null, unitKind: string, currency: string | null): string | null {
+  if (value === null) return null;
+  if (unitKind === "percentage") {
+    const points = formatDecimal(new Decimal(value).times(100).toFixed(), { locale: "en", maxFractionDigits: 2 });
+    return points === null ? null : `${points} %`;
+  }
+  if (unitKind === "currency")
+    return formatDecimal(value, { locale: "en", currency: currency?.trim() || null, maxFractionDigits: 2 });
+  return formatDecimal(value, { locale: "en", maxFractionDigits: 4 });
+}
+
 async function kpiRows(db: Tx, t: string, f: Extract<RegistersReportParameters, { register: "kpis" }>["filters"]) {
   let q = db.selectFrom("kpi_definition").selectAll().where("transformation_id", "=", t);
   if (!(f.includeArchived ?? false)) q = q.where("status", "<>", "archived");
@@ -491,8 +565,9 @@ async function kpiRows(db: Tx, t: string, f: Extract<RegistersReportParameters, 
     ],
     rows: rows.map((r) => {
       const v = active.find((a) => a.kpi_definition_id === r.id);
-      // Targets of different KPIs have different units, so the target is shown as the decimal text of its own KPI
-      // (one column never mixes units as numbers); its unit kind is the column next to it.
+      // Targets of different KPIs have different units, so the target is shown as the text of its own KPI's value (one
+      // column never mixes unit kinds as numbers, ADR-0045); its unit kind is the column next to it. The text is the
+      // shared display formatter's (`kpiTargetText`); the stored value is never rounded.
       return {
         recordType: "kpi_definition",
         recordId: r.id,
@@ -505,7 +580,11 @@ async function kpiRows(db: Tx, t: string, f: Extract<RegistersReportParameters, 
           owner(names, r.owner_user_id),
           codeValue(r.status, "report.kpi_status"),
           countValue(v?.version_no ?? null),
-          textValue(v?.target_value ?? null, "system", v === undefined ? undefined : NOT_APPLICABLE),
+          textValue(
+            v === undefined ? null : kpiTargetText(v.target_value, v.unit_kind, v.currency),
+            "system",
+            v === undefined ? undefined : NOT_APPLICABLE,
+          ),
         ],
       };
     }),

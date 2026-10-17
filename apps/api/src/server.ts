@@ -95,6 +95,7 @@ import { registerTransformationInitializer, registerTransformationRoutes } from 
 // T-DG4-KBE-C / T-DG4-BE-R1: the approval service for the kpi and sustainment ports, through workflows' public
 // interface (workflows/index.ts exports it since BE-C).
 import {
+  effectiveGateApprover,
   registerApprovalSubject,
   registerWorkflowsModule,
   requestApprovalInTx,
@@ -379,7 +380,14 @@ export async function buildServer(options: ServerOptions): Promise<{
   // in as a port (sustainment cannot import workflows).
   wireTransitionDecisionApprovals({ requestApproval: requestApprovalInTx, registerSubject: registerApprovalSubject });
   // T-DG4-KBE-G2 (ADR-0037 §1 item 3, §9): the workspace header's live gate readiness, through reporting's port.
-  setWorkflowsReadPort({ gateReadiness: gateReadinessReader(gateFacts) });
+  // T-DG5-KBE-D4 (D-164 c): the gate pack names the effective approver (workflows' routing rule) when not submitted.
+  setWorkflowsReadPort({
+    gateReadiness: gateReadinessReader(gateFacts),
+    gateApprover: async (db, tId, code) => {
+      const a = await effectiveGateApprover(db, tId, code);
+      return a === undefined ? null : { roleCode: a.roleCode, userId: a.userId };
+    },
+  });
   // T-DG5-BE-B2 (ADR-0039 §8 case 2): benefitFormulaVersionCreated also records the S12-018 revision proposal.
   setReviewTaskWriter(createWorkItemOnce);
   setMaterialChangePort(withRevisionProposals(materialChangePortImpl));

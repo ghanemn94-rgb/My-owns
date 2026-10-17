@@ -16,6 +16,8 @@
 // benefit's validated value is Finance-validated (rule 1); an initiative's planned value is a plan figure (n/a); a
 // headline follows executive-pack.ts `headlineState`. Unknown and Stale - a RAG, a headline or an item value - carry
 // no number and no colour code: never 0 and never green (shared rule 5). No table carries a report total.
+// Lineage (T-DG5-KBE-D4, D-165): the snapshot records the `kpi_version` and calculation versions of every KPI value it
+// shows and cites the KPI definitions and actuals as sources (`kpiLineage`), so a KPI restatement offers its reissue.
 // Snapshot approval state: not_applicable (ADR-0045 §3). Nothing here approves anything; product gates G1-G6 are
 // business approvals inside the product, and nothing here touches the engineering gates DG0-DG7.
 import {
@@ -30,7 +32,14 @@ import {
   type ReportValue,
   type ReportValueBasis,
 } from "@mth/shared/schemas";
-import { computeAreas, loadAreaDefinitions, loadDashboardContext, presentAreas } from "../../dashboards/engine.ts";
+import type { KpiStatusFact } from "../../dashboards/areas.ts";
+import {
+  computeAreas,
+  loadAreaDefinitions,
+  loadDashboardContext,
+  presentAreas,
+  type DashboardFacts,
+} from "../../dashboards/engine.ts";
 import { resolveFilters } from "../../dashboards/filters.ts";
 import {
   codeValue,
@@ -42,6 +51,7 @@ import {
   type AssembledOutput,
   type AssemblyContext,
   type SourceRecord,
+  type VersionRef,
 } from "../assembler.ts";
 import { reportRefusals } from "../definitions.ts";
 import {
@@ -181,6 +191,145 @@ async function itemRecords(
   return out;
 }
 
+/**
+ * T-DG5-KBE-D4 (D-165; QA-B P-1; REQ-S13-007 "source record revisions … calculation versions", REQ-S07-016 "offer
+ * report reissue"): the KPI status behind a dashboard item that shows a KPI (an outcome KPI or an adoption indicator),
+ * by `<recordType>:<recordId>`; other items show no KPI.
+ */
+export function kpiStatusesByItem(facts: Pick<DashboardFacts, "outcomes" | "indicators">): Map<string, KpiStatusFact> {
+  const out = new Map<string, KpiStatusFact>();
+  for (const o of facts.outcomes) for (const k of o.kpis) out.set(`outcome_kpi:${k.outcomeKpiId}`, k.status);
+  for (const i of facts.indicators) out.set(`adoption_metric_link:${i.metricLinkId}`, i.status);
+  return out;
+}
+
+/** Pure: a version row per distinct reference, keyed uniquely (report_snapshot_version_key): `key`, then `key:label`. */
+export function uniqueVersions(refs: readonly VersionRef[]): VersionRef[] {
+  const out: VersionRef[] = [];
+  const keys = new Set<string>();
+  const seen = new Set<string>();
+  for (const r of refs) {
+    const id = `${r.versionKind}|${r.referenceId ?? ""}|${r.referenceKey}|${r.versionLabel}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const key = keys.has(`${r.versionKind}|${r.referenceKey}`) ? `${r.referenceKey}:${r.versionLabel}` : r.referenceKey;
+    keys.add(`${r.versionKind}|${key}`);
+    out.push({ ...r, referenceKey: key });
+  }
+  return out;
+}
+
+/**
+ * The KPI lineage of the values the dashboard shows (D-165): for each KPI status with an evaluation, the evaluation's
+ * `kpi_version` (the calculation version its value, target and RAG were computed with, as the KPI register records it)
+ * and its calculation run's rule and engine versions (`calculation_engine`); and as sources, the KPI definition and
+ * the period's actual (validated once accepted, ADR-0045 §5 rule 4). A KPI without an evaluation (Unknown) still cites
+ * its definition. Read only.
+ */
+async function kpiLineage(
+  db: AssemblyContext["db"],
+  shown: readonly { readonly sectionKey: string; readonly status: KpiStatusFact }[],
+): Promise<{ versions: VersionRef[]; sources: SourceRecord[] }> {
+  const evaluationIds = [
+    ...new Set(shown.flatMap((x) => (x.status.evaluationId === null ? [] : [x.status.evaluationId]))),
+  ];
+  const evaluations =
+    evaluationIds.length === 0
+      ? []
+      : await db
+          .selectFrom("kpi_evaluation as e")
+          .innerJoin("kpi_version as v", "v.id", "e.kpi_version_id")
+          .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
+          .select([
+            "e.id",
+            "e.kpi_definition_id",
+            "e.kpi_version_id",
+            "e.scope_kind",
+            "e.scope_id",
+            "e.reporting_period_id",
+            "v.version_no",
+            "r.kpi_rules_version",
+            "r.formula_engine_version",
+          ])
+          .where("e.id", "in", evaluationIds)
+          .orderBy("e.id")
+          .execute();
+  const definitionIds = [...new Set(shown.map((x) => x.status.kpiDefinitionId))];
+  const definitions =
+    definitionIds.length === 0
+      ? []
+      : await db
+          .selectFrom("kpi_definition")
+          .select(["id", "version", "updated_at"])
+          .where("id", "in", definitionIds)
+          .execute();
+  const actuals = [];
+  for (const e of evaluations) {
+    const a = await db
+      .selectFrom("kpi_actual")
+      .select(["id", "version", "updated_at", "accepted_value_no"])
+      .where("kpi_definition_id", "=", e.kpi_definition_id)
+      .where("scope_kind", "=", e.scope_kind)
+      .where("scope_id", "=", e.scope_id)
+      .where("reporting_period_id", "=", e.reporting_period_id)
+      .executeTakeFirst();
+    if (a !== undefined) actuals.push({ ...a, evaluationId: e.id });
+  }
+
+  const versions: VersionRef[] = [];
+  for (const e of [...evaluations].sort((a, b) => a.kpi_definition_id.localeCompare(b.kpi_definition_id)))
+    versions.push({
+      versionKind: "kpi_version",
+      referenceId: e.kpi_version_id,
+      referenceKey: `kpi_definition:${e.kpi_definition_id}`,
+      versionLabel: `v${e.version_no}`,
+    });
+  for (const e of evaluations) {
+    versions.push({
+      versionKind: "calculation_engine",
+      referenceId: null,
+      referenceKey: "kpi_rules",
+      versionLabel: e.kpi_rules_version,
+    });
+    versions.push({
+      versionKind: "calculation_engine",
+      referenceId: null,
+      referenceKey: "formula_engine",
+      versionLabel: e.formula_engine_version,
+    });
+  }
+
+  const sources: SourceRecord[] = [];
+  const sectionOf = new Map<string, string>();
+  for (const x of shown)
+    if (!sectionOf.has(x.status.kpiDefinitionId)) sectionOf.set(x.status.kpiDefinitionId, x.sectionKey);
+  const sectionOfEvaluation = new Map<string, string>();
+  for (const x of shown)
+    if (x.status.evaluationId !== null && !sectionOfEvaluation.has(x.status.evaluationId))
+      sectionOfEvaluation.set(x.status.evaluationId, x.sectionKey);
+  for (const d of definitions)
+    sources.push({
+      sectionKey: sectionOf.get(d.id)!,
+      recordType: "kpi_definition",
+      recordId: d.id,
+      recordVersion: d.version,
+      recordUpdatedAt: d.updated_at,
+      approvalState: null,
+      validationState: "not_applicable",
+    });
+  for (const a of actuals)
+    sources.push({
+      sectionKey: sectionOfEvaluation.get(a.evaluationId)!,
+      recordType: "kpi_actual",
+      recordId: a.id,
+      recordVersion: a.version,
+      recordUpdatedAt: a.updated_at,
+      approvalState: null,
+      validationState: a.accepted_value_no === null ? "provisional" : "validated",
+    });
+  return { versions: uniqueVersions(versions), sources };
+}
+
 const ITEM_COLUMNS: ReportColumn[] = ["record_type", "code", "label", "rag", "due_date", "owner"].map((key) => ({
   key,
   labelKey: L(key),
@@ -302,12 +451,28 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     });
   }
 
+  // D-165: the KPI definitions, actuals and calculation versions behind the KPI values shown (one source row per record).
+  const statusOf = kpiStatusesByItem(dctx.facts);
+  const shown = areas.flatMap((a) =>
+    a.items.flatMap((i) => {
+      const status = statusOf.get(`${i.recordType}:${i.recordId}`);
+      return status === undefined ? [] : [{ sectionKey: `items_${a.code}`, status }];
+    }),
+  );
+  const lineage = await kpiLineage(db, shown);
+  for (const src of lineage.sources) {
+    const k = `${src.recordType}:${src.recordId}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    sources.push(src);
+  }
+
   return {
     subject: { code: ctx.transformation.code, label: ctx.transformation.name },
     approvalState: "not_applicable",
     sections,
     sources,
-    versions: [],
+    versions: lineage.versions,
     evidence: [],
   };
 }

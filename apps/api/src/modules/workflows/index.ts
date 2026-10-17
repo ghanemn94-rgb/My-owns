@@ -33,6 +33,8 @@ import { registerConditionalApprovalRoutes } from "./conditional-approval.ts";
 
 export { EVALUATORS, evaluateGate, loadGateFacts, type GateFacts } from "./criteria.ts";
 export { isGateApprover } from "./gates.ts";
+// T-DG5-KBE-D4 (D-164 c): the effective approver of a gate, for reporting's WorkflowsReadPort (wired in server.ts).
+export { effectiveGateApprover } from "./gates.ts";
 // T-DG5-BE-E3 (ADR-0041 §5; D-159 a): the T04 PATCH core, passed to the forms bulk edit by the composition root.
 export { updateDesignDecision } from "./decisions.ts";
 // P3 (ADR-0021 §1, T-DG3-BE-A): the interface through which the G4 evaluators read portfolio and kpi facts.

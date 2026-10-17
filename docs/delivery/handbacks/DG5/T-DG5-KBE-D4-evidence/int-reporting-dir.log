@@ -1,0 +1,93 @@
+port-policy: PostgreSQL listening on port 23900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-kbe-d4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc7x33v_c3d75cb9 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/reporting/headline-basis.test.ts (8 tests) 8031ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > profit-and-cash planned 90, revenue uplift 300, avoided cost 45, gap 1 and Red, on all four surfaces; 435 nowhere  1500ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > the header's headlines are the T10 planned and validated headlines of the three bases, hrefs included  430ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant A: only revenue uplift and avoided cost -> profit-and-cash n/a (never 0 or green), 300 and 45 still shown  885ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant B: a margin benefit whose only line is outside the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned  649ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant C: a revenue line without an amount makes only the top-line headline unknown  809ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > drill invariant per currency (SAR and USD), in every state, on all four surfaces  1944ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > F-DG4-105 (probe GC): USD with no profit-and-cash benefit beside SAR with one: every figure drills to its own currency only  1090ms
+ ✓ |integration| apps/api/test/integration/reporting/exports.test.ts (16 tests) 2775ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  471ms
+ ✓ |integration| apps/api/test/integration/reporting/kbe-c2-assemblers.test.ts (8 tests) 2508ms
+   ✓ gate_pack: every criterion of the gate with its state and evidence (REQ-S13-004; REQ-S13-005 content) > a submitted G1: the criteria recorded with the submission, each with its state, and the submission's evidence  386ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests) 3951ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  637ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1144ms
+ ✓ |integration| apps/api/test/integration/reporting/modular.test.ts (14 tests) 3787ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied  603ms
+   ✓ REQ-S03-005: labelled inherited records > inherited evidence and baseline are listed with provenance and the inherited label, beside the prior approval  344ms
+   ✓ REQ-S03-005: labelled inherited records > End-to-End → 422 inherited_record.not_modular; prior_approval → 422 use_dispensation; nothing written  396ms
+   ✓ REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate  351ms
+ ✓ |integration| apps/api/test/integration/reporting/owner-updates.test.ts (7 tests) 1592ms
+ ✓ |integration| apps/api/test/integration/reporting/report-snapshots.test.ts (11 tests) 1791ms
+   ✓ REQ-S13-007: issue, immutability after a later KPI change, reissue as version 2 > the issued snapshot keeps the old values and kpi_version; the issued reissue is v2 and v1 is superseded unchanged  381ms
+ ✓ |integration| apps/api/test/integration/reporting/kbe-d2-assemblers.test.ts (6 tests) 2786ms
+   ✓ handover (REQ-S13-004; ADR-0045 §3) > contains the handover, its area's controls, its evidence and the M0217 items; the four approval states  408ms
+ ✓ |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts (9 tests) 2201ms
+   ✓ D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F4: the value gap (planned 70, nothing validated) is the computed ratio 1 with kpiUnit null; money and counts are null  469ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-adoption.test.ts (9 tests) 3928ms
+   ✓ Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7) > class lines and headlines drill to their records with an equal decimal sum; a gross line always drills to the profit-and-cash basis; the queue count drills to its records  378ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure on the Finance and adoption dashboards > no tile, total or drill-down holds a Y record or figure  543ms
+ ✓ |integration| apps/api/test/integration/reporting/registers-report.test.ts (5 tests) 6154ms
+   ✓ size limit (ADR-0045 §1) > 5,001 rows -> 422 report.too_large and nothing written; the live report is refused the same way  4930ms
+ ✓ |integration| apps/api/test/integration/reporting/allocation.test.ts (8 tests) 1994ms
+   ✓ REQ-S03-006: the 100 % rule > two concurrent writes into one target cannot both commit above 100 %  353ms
+ ✓ |integration| apps/api/test/integration/reporting/traceability.test.ts (9 tests) 1778ms
+ ✓ |integration| apps/api/test/integration/reporting/my-work.test.ts (9 tests) 1112ms
+ ✓ |integration| apps/api/test/integration/reporting/dashboards.test.ts (8 tests) 2075ms
+   ✓ REQ-PB-062: the six T10 areas from persisted data, with drill-down > each headline's drilldownHref answers 200 with the same metric and its contributing records  352ms
+   ✓ the workstream dashboard (REQ-S13-001 workstream; ADR-0037 §2) > covers its initiatives; Decisions and People & adoption are not_applicable; archived is 422; foreign 404  310ms
+ ✓ |integration| apps/api/test/integration/reporting/value-basis-n4.test.ts (5 tests) 2568ms
+   ✓ F-DG4-126 (R3-6): the Value RAG is the worst of the per-basis gaps, never a false Green > margin 70 validated 70 beside revenue_uplift 300 unvalidated: Red on T10, workstream, Overview and Finance  983ms
+   ✓ F-DG4-126 (R3-6): the Value RAG is the worst of the per-basis gaps, never a false Green > margin 70 validated 70 beside avoided_cost 300 unvalidated: Red on T10, workstream, Overview and Finance  449ms
+   ✓ F-DG4-127 (R3-8): the Portfolio initiative value on the profit-and-cash basis > DOM-GROSS allocated 100 % to one completed initiative: 90 labelled profit_and_cash, never 435  318ms
+   ✓ F-DG4-127 (R3-8): the Portfolio initiative value on the profit-and-cash basis > the ranking world: INI-B (margin 70) first, then INI-A (revenue only, n/a) and INI-C (nothing, unknown) by code  311ms
+ ✓ |integration| apps/api/test/integration/reporting/workspace-header.test.ts (7 tests) 2067ms
+ ✓ |integration| apps/api/test/integration/reporting/report-synthetic.test.ts (6 tests) 4127ms
+   ✓ the worker prints what the snapshot records (D-163) > demo: CSV and XLSX in en and ar carry the illustrative label and the B0004 statement  310ms
+ ✓ |integration| apps/api/test/integration/reporting/bu-scope.test.ts (4 tests) 1468ms
+   ✓ REQ-S03-001: two transformations in different business units are listed separately > the slice J/K reads: the other business unit's transformation is 404 everywhere and never appears  808ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-paged.test.ts (4 tests) 6083ms
+   ✓ PDF register exports (REQ-S13-009, REQ-S13-005) > Arabic: RTL base direction, IBM Plex Sans Arabic embedded, identifiers and numbers left to right; only the filtered rows  1979ms
+   ✓ PDF register exports (REQ-S13-009, REQ-S13-005) > English: left to right with IBM Plex Sans; 'Draft — not an issued report'  685ms
+   ✓ REQ-S13-008: a pending benefit value is labelled provisional in the PDF > prints Provisional (en) and مؤقت (ar) for the pending value  1534ms
+   ✓ REQ-S13-005: a PPTX gate pack contains each criterion of the gate > every criterion of G2 (key, English and Arabic label) is in the PPTX, in both languages; DOCX Arabic is bidi  672ms
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)
+KBE-D3 demo business_cases SUM cells: [["group_1_avoided_cost_sar","SUM(D4:D4)","1584000"],["group_1_margin_uplift_sar","SUM(D4:D4)","1920000"],["group_1_revenue_uplift_sar","SUM(D4:D4)","7128000"],["group_1_cost_cash_sar","SUM(D4:D6)","3660000"],["group_1_cost_non_cash_sar","SUM(D4:D4)","1170000"]]
+
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency)
+KBE-D3 demo benefits register SUM cells: [["totals_sar_revenue_uplift","SUM(C4:C4)","222750"],["totals_sar_revenue_uplift","SUM(E4:E4)","0"],["totals_sar_revenue_uplift","SUM(G4:G4)","99000"],["totals_sar_margin_uplift","SUM(C4:C4)","80000"],["totals_sar_margin_uplift","SUM(E4:E4)","0"],["totals_sar_margin_uplift","SUM(G4:G4)","0"],["totals_sar_avoided_cost","SUM(C4:C4)","0"],["totals_sar_avoided_cost","SUM(E4:E4)","0"],["totals_sar_avoided_cost","SUM(G4:G4)","0"]]
+
+ ✓ |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts (2 tests) 5119ms
+ ✓ |integration| apps/api/test/integration/reporting/drilldown.test.ts (4 tests) 2420ms
+ ✓ |integration| apps/api/test/integration/reporting/filters.test.ts (3 tests) 2672ms
+ ✓ |integration| apps/api/test/integration/reporting/rag-policy.test.ts (5 tests) 1160ms
+ ✓ |integration| apps/api/test/integration/reporting/impact.test.ts (3 tests) 971ms
+ ✓ |integration| apps/api/test/integration/reporting/scope.test.ts (3 tests) 2930ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure > every drill-down metric and every headline href holds X only  481ms
+ ✓ |integration| apps/api/test/integration/reporting/kpi-target-text.test.ts (2 tests) 797ms
+ ✓ |integration| apps/api/test/integration/reporting/export-labels.test.ts (2 tests) 30640ms
+   ✓ the export content label table (D-157 a; REQ-S13-009) > covers all twelve definitions: every format, en and ar, reports no missingLabels  27447ms
+ ✓ |integration| apps/api/test/integration/reporting/gate-pack-approver.test.ts (4 tests) 2814ms
+   ✓ D-164 c: the gate pack names the effective approver > a new transformation pinned to the BO version: its G3 pack prints BO without a submission (stored row is SP)  499ms
+   ✓ D-164 c: the gate pack names the effective approver > a v1-pinned transformation's G3 pack is unchanged: SP  339ms
+   ✓ D-164 c: the gate pack names the effective approver > with a submission the pack prints the submission's recorded approver, ahead of the port  1358ms
+   ✓ D-164 c: the gate pack names the effective approver > an unwired port (null) falls back to the stored approver  323ms
+ ✓ |integration| apps/api/test/integration/reporting/one-source-of-truth.test.ts (2 tests) 752ms
+ ✓ |integration| apps/api/test/integration/reporting/orphans.test.ts (3 tests) 991ms
+
+ Test Files  31 passed (31)
+      Tests  199 passed (199)
+   Start at  09:52:37
+   Duration  215.44s (transform 6.77s, setup 0ms, collect 95.65s, tests 114.04s, environment 0ms, prepare 80ms)
+
+exit=0
