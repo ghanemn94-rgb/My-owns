@@ -1,0 +1,131 @@
+// A22 "Operational readiness" (qa-verifier, T-DG5-QA-F): the user-visible path of REQ-S12-022 "the jobs screen shows
+// last success and next run for each scheduled job; a non-admin gets 403", and of the production side of the
+// production/demo separation (REQ-S18-001/S18-003: a database that is not a demo database shows no synthetic banner;
+// GET /environment says production).
+//
+// Black-box on the REAL stack (apps/web/e2e/support/with-stack.sh) plus the BUILT production worker
+// (`node apps/worker/dist/main.js`) as its own process, so a run-now is really executed and recorded. Asserted in the
+// browser (chromium-en: English LTR, chromium-ar: Arabic RTL):
+//  - <html lang/dir> of the language; the screen title from the shipped catalogue;
+//  - EVERY scheduled job of GET /api/v1/admin/jobs has its row, with last success ("Never run" chip, or the recorded
+//    time) and next run (the API's instant, or the "Disabled" chip) - none empty;
+//  - after "Run now" on one job and the worker's run, that row shows a recorded last success and the "Succeeded"
+//    outcome, and the job's page lists the run;
+//  - the auditor and the Transformation Lead get the no-permission state (and the API 403);
+//  - no synthetic-demonstration banner on this production database; axe: 0 serious or critical issues.
+// Screenshots go to QA_EVIDENCE_DIR (default test-results/qa-a22). All data is SYNTHETIC.
+/// <reference lib="dom" />
+import { mkdirSync } from "node:fs";
+import path from "node:path";
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
+import { apiSession, send, startProductionWorker, type Body, type ProductionWorker } from "./support/a13-a22-stack.ts";
+import { signIn, tr, type Lang } from "../apps/web/e2e/support/ui.ts";
+
+const EVIDENCE_DIR = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa-a22");
+const langOf = (name: string): Lang => (name.endsWith("-ar") ? "ar" : "en");
+
+async function shot(page: Page, lang: Lang, name: string) {
+  mkdirSync(path.join(EVIDENCE_DIR, lang), { recursive: true });
+  await page.screenshot({ path: path.join(EVIDENCE_DIR, lang, `${name}.png`), fullPage: true });
+}
+
+async function accessible(page: Page) {
+  const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  const serious = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+}
+
+let worker: ProductionWorker | null = null;
+test.beforeAll(async () => {
+  worker = await startProductionWorker();
+});
+test.afterAll(async () => {
+  await worker?.stop();
+});
+
+test("A22 / REQ-S12-022: the jobs screen shows last success and next run for every scheduled job; run now is recorded; non-admins get 403", async ({
+  page,
+  browser,
+  playwright,
+  baseURL,
+}, info) => {
+  test.setTimeout(150_000);
+  const lang = langOf(info.project.name);
+  const admin = await apiSession(playwright, baseURL!, "dev.admin");
+  const env = await send(admin, "GET", "/api/v1/environment");
+  expect(env.status).toBe(200);
+  expect(env.body).toMatchObject({ kind: "production", synthetic: false });
+  const jobs = await send(admin, "GET", "/api/v1/admin/jobs");
+  expect(jobs.status).toBe(200);
+  const items = jobs.body.items as Body[];
+  expect(items.length).toBeGreaterThan(0);
+
+  await signIn(page, lang, "dev.admin");
+  await page.goto("/admin/jobs/operations");
+  await expect(page.locator("html")).toHaveAttribute("lang", lang);
+  await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+  await expect(page.locator("main#main h1")).toHaveText(tr(lang, "workflowsP5.jobs.title"));
+  // Production database: no synthetic-demonstration banner anywhere on the screen.
+  await expect(page.locator("[data-state='demo-synthetic']")).toHaveCount(0);
+  await expect(page.getByText(tr(lang, "playbookP5.demo.banner"))).toHaveCount(0);
+
+  // The register pages by 10; show every row on one page.
+  await page.getByRole("combobox", { name: tr(lang, "common.table.pageSize") }).selectOption("100");
+  for (const job of items) {
+    const row = page.locator("tbody tr", { hasText: job.code });
+    await expect(row, `row of ${job.code}`).toHaveCount(1);
+    if (job.lastSuccessAt === null)
+      await expect(row.locator("[data-status='never_run']").first(), `${job.code}: Never run`).toHaveText(
+        tr(lang, "workflowsP5.jobs.neverRun"),
+      );
+    else await expect(row.locator(`[data-last-success='${job.lastSuccessAt}']`)).toHaveCount(1);
+    if (job.nextRunAt !== null)
+      await expect(row.locator(`[data-next-run='${job.nextRunAt}']`), `${job.code}: next run`).toHaveCount(1);
+    else await expect(row.locator(`[data-status='${job.nextRunUnknownReason}']`)).toHaveCount(1);
+  }
+  await accessible(page);
+  await shot(page, lang, "a22-jobs-operations");
+
+  // Run now, executed by the production worker: the row then shows a recorded last success and "Succeeded".
+  const code = "reports.owner_update_tasks";
+  const row = page.locator("tbody tr", { hasText: code });
+  await row.locator("[data-action='run-now']").click();
+  const ran = await (async () => {
+    const until = Date.now() + 90_000;
+    for (;;) {
+      const r = await send(admin, "GET", `/api/v1/admin/jobs/${code}`);
+      if (r.body?.job?.lastSuccessAt) return r.body;
+      if (Date.now() > until) throw new Error(`the run of ${code} was not recorded; worker: ${worker?.output()}`);
+      await new Promise((res) => setTimeout(res, 500));
+    }
+  })();
+  await page.reload();
+  await page.getByRole("combobox", { name: tr(lang, "common.table.pageSize") }).selectOption("100");
+  const after = page.locator("tbody tr", { hasText: code });
+  await expect(after.locator(`[data-last-success='${ran.job.lastSuccessAt}']`)).toHaveCount(1);
+  await expect(after.locator("[data-status='succeeded']")).toHaveText(tr(lang, "workflowsP5.jobs.succeeded"));
+  await shot(page, lang, "a22-jobs-after-run");
+  await page.goto(`/admin/jobs/operations/${code}`);
+  await expect(page.locator(`[data-job='${code}']`)).toBeVisible();
+  await expect(page.getByText(tr(lang, "workflowsP5.jobs.noRuns"), { exact: true })).toHaveCount(0);
+  await accessible(page);
+
+  // Non-admins: the server's 403 is the no-permission state.
+  for (const user of ["dev.auditor", "dev.lead"]) {
+    const api = await apiSession(playwright, baseURL!, user);
+    expect((await send(api, "GET", "/api/v1/admin/jobs")).status, `${user}: API`).toBe(403);
+    const ctx = await browser.newContext({ locale: lang === "ar" ? "ar-SA" : "en-US", timezoneId: "Asia/Riyadh" });
+    try {
+      const p = await ctx.newPage();
+      await signIn(p, lang, user);
+      await p.goto("/admin/jobs/operations");
+      await expect(p.getByText(tr(lang, "common.state.noPermissionTitle"), { exact: true })).toBeVisible();
+      await expect(p.locator("[data-action='run-now']")).toHaveCount(0);
+      await expect(p.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+      await shot(p, lang, `a22-jobs-403-${user}`);
+    } finally {
+      await ctx.close();
+    }
+  }
+});

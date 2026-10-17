@@ -1,0 +1,50 @@
+== mutation m2 applied:
+/var/tmp/mth-run.3vTTLV/claude-0/mut/m2/apps/worker/src/automation/actions/items.ts:60:      dedupeKey: `${planned.idempotencyKey}:${userId}:${Date.now()}`, // MUTATION M2b
+/var/tmp/mth-run.3vTTLV/claude-0/mut/m2/apps/worker/src/automation/engine.ts:380:    void done; // MUTATION M2a
+== test: tests/qa/integration/a13-durable-automation.test.ts -t "an admin retries it"
+port-policy: PostgreSQL listening on port 23720 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.3vTTLV/claude-0/mut/m2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc22s7k_0e49d56b (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests | 1 failed | 11 skipped) 66152ms
+   ↓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once
+   ↓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action
+   ↓ REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event
+   ↓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: after 1 + retryLimit attempts ONE rule-execution entry is in the queue; the task is not doubled
+   × REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused 62306ms
+     → timed out after 60000 ms waiting for the retried failure is resolved
+   ↓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > both queue entries of one failed execution (the job entry and the rule-execution entry) are retried: one task, one reminder
+   ↓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried
+   ↓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder
+   ↓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task
+   ↓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > every human-only action type is refused with 422 automation_rule.human_only_action and nothing is saved
+   ↓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run
+   ↓ A13 harness self-check > automation.evaluate is a worker queue and the bounded QA policy is in force
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-durable-automation.test.ts > REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused
+Error: timed out after 60000 ms waiting for the retried failure is resolved
+ ❯ waitFor tests/qa/support/a13-durable.ts:66:35
+     64|     const v = await probe();
+     65|     if (v) return v;
+     66|     if (Date.now() > until) throw new Error(`timed out after ${ms} ms …
+       |                                   ^
+     67|     await new Promise((r) => setTimeout(r, 150));
+     68|   }
+ ❯ tests/qa/integration/a13-durable-automation.test.ts:452:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  07:09:05
+   Duration  81.56s (transform 5.70s, setup 0ms, collect 10.88s, tests 66.15s, environment 0ms, prepare 98ms)
+
+m2 exit=1

@@ -1,0 +1,50 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-f
+
+ ❯ |unit-node| tests/qa/unit/a22-s21-001-text-scan.test.ts (7 tests | 1 failed) 181ms
+   ✓ REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > the scanner itself finds the references it must find (and none in look-alikes) 4ms
+   × REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > UI strings: no web catalogue string (en, ar) names an engineering gate 57ms
+     → expected [ { …(3) } ] to deeply equal []
+   ✓ REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > UI strings: no string or JSX text of the web source names an engineering gate 47ms
+   ✓ REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > export templates: the report/export layer and the worker's export runner name no engineering gate 2ms
+   ✓ REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > texts the API returns name no engineering gate, except the disclosed gate-snapshot disclaimer 43ms
+   ✓ REQ-S21-001: demo G-approvals display 'Synthetic demonstration - approves nothing real' (en and ar catalogues) > the English label is shipped verbatim, and its Arabic text (ADR-0050 §2 (c)) too 26ms
+   ✓ REQ-S21-001: demo G-approvals display 'Synthetic demonstration - approves nothing real' (en and ar catalogues) > exports carry the illustrative label in en and ar (packages/reporting labels) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| tests/qa/unit/a22-s21-001-text-scan.test.ts > REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > UI strings: no web catalogue string (en, ar) names an engineering gate
+AssertionError: expected [ { …(3) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "file": "../../../../var/tmp/mth-run.3vTTLV/claude-0/mut/m6-catalogue/qa-mutation.json",[39m
+[31m+     "text": "Release DG7 passed",[39m
+[31m+     "where": "$.release.status",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ tests/qa/unit/a22-s21-001-text-scan.test.ts:106:18
+    104|     expect(files, "catalogue files scanned").toBeGreaterThan(20);
+    105|     expect(strings, "catalogue strings scanned").toBeGreaterThan(1000);
+    106|     expect(hits).toEqual([]);
+       |                  ^
+    107|   });
+    108| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  07:14:22
+   Duration  737ms (transform 70ms, setup 0ms, collect 50ms, tests 181ms, environment 0ms, prepare 120ms)
+
+m6 exit=1

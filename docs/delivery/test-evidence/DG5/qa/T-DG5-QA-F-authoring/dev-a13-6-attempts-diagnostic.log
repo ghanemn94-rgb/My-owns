@@ -1,0 +1,60 @@
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-qa-f
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc0imiq_b1f436f8 (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-durable-automation.test.ts (11 tests | 2 failed) 50530ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  3116ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action  917ms
+   × REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event 30008ms
+     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   × REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: the last of 1 + retryLimit attempts puts ONE open entry in the queue; the task is not doubled 1800ms
+     → attempts = 1 + the retry limit; {"jobs":[{"id":"db75271a-69eb-8e20-9286-6e18bcbd6805","state":"failed","retry_count":2,"retry_limit":2}],"failure":{"attempts":1,"errorCode":"automation.retries_exhausted","status":"open"},"execution":{"status":"failed","error_code":"automation.retries_exhausted","attempt_no":1}}: expected 1 to be 3 // Object.is equality
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused  3388ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried  1515ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder  2561ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task  2974ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > every human-only action type is refused with 422 automation_rule.human_only_action and nothing is saved 141ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run  458ms
+   ✓ A13 harness self-check > automation.evaluate is a worker queue and the bounded QA policy is in force 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-durable-automation.test.ts > REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/qa/integration/a13-durable-automation.test.ts:233:3
+    231| 
+    232| describe("REQ-S12-002: a dry-run creates no tasks", () => {
+    233|   it("evaluates the draft against a sample event and writes no task, n…
+       |   ^
+    234|     const w = await orgWorld(env.api);
+    235|     const t0 = await newTransformation(env.api, w, "dry-run-sample");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a13-durable-automation.test.ts > REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: the last of 1 + retryLimit attempts puts ONE open entry in the queue; the task is not doubled
+AssertionError: attempts = 1 + the retry limit; {"jobs":[{"id":"db75271a-69eb-8e20-9286-6e18bcbd6805","state":"failed","retry_count":2,"retry_limit":2}],"failure":{"attempts":1,"errorCode":"automation.retries_exhausted","status":"open"},"execution":{"status":"failed","error_code":"automation.retries_exhausted","attempt_no":1}}: expected 1 to be 3 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 3[39m
+[31m+ 1[39m
+
+ ❯ tests/qa/integration/a13-durable-automation.test.ts:339:75
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  06:25:25
+   Duration  66.13s (transform 6.19s, setup 0ms, collect 11.93s, tests 50.53s, environment 0ms, prepare 65ms)
+

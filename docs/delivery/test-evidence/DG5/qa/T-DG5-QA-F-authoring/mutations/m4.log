@@ -1,0 +1,45 @@
+== mutation m4 applied:
+/var/tmp/mth-run.3vTTLV/claude-0/mut/m4/apps/api/src/modules/jobs/operations.ts:161:    lastSuccessAt: null, // MUTATION M4
+== test: tests/qa/integration/a22-operational-readiness.test.ts -t "after a run"
+port-policy: PostgreSQL listening on port 23720 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.3vTTLV/claude-0/mut/m4
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvc2697o_610ab94e (server_encoding UTF8); applied 85 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests | 1 failed | 7 skipped) 63930ms
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > lists every job_schedule row: never-run shows lastSuccessAt null; nextRunAt is the cron's next instant in its time zone
+   × REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history 60143ms
+     → timed out after 60000 ms waiting for the run is recorded
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > a disabled schedule shows next run null 'disabled' and refuses run-now with 422 job.schedule_disabled
+   ↓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > every non-admin role gets 403 on the view, a job's detail and run-now
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched
+   ↓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a22-operational-readiness.test.ts > REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history
+Error: timed out after 60000 ms waiting for the run is recorded
+ ❯ waitFor tests/qa/support/a13-durable.ts:66:35
+     64|     const v = await probe();
+     65|     if (v) return v;
+     66|     if (Date.now() > until) throw new Error(`timed out after ${ms} ms …
+       |                                   ^
+     67|     await new Promise((r) => setTimeout(r, 150));
+     68|   }
+ ❯ tests/qa/integration/a22-operational-readiness.test.ts:123:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  07:11:47
+   Duration  78.76s (transform 5.56s, setup 0ms, collect 10.55s, tests 63.93s, environment 0ms, prepare 70ms)
+
+m4 exit=1
