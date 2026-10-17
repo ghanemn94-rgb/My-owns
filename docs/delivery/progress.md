@@ -33,9 +33,9 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
 - **DG5 (P5 "Configuration automation and outputs") is BUILDING** (78 DG5-final requirements; D-141).
 - **Next action:**
-  1. W1–W19 are integrated and verified (D-143 to D-165). The open product defects from the W19 QA suites (A07, A02) are allocated to W20.
-  2. W20 runs `T-DG5-BE-C4`, `T-DG5-BE-T3`, `T-DG5-KBE-D4` and `T-DG5-FE-D3`.
-  3. Then W21 (QA-E2), W22 (AN-P5A/AN-P5B), the freeze, the three reviews and the audit. Before the audit, propose the D-140 auditor-sidecar ordering fix to the user.
+  1. W1–W20 are integrated and verified (D-143 to D-166). D-166 decides Rule A (the intake adopts the transformation it produced) and Rule B (the slip's forward-pass forecast impact).
+  2. W21 runs `T-DG5-ARCH-R1` (ADR amendments), `T-DG5-BE-T4` (Rules A and B), `T-DG5-FE-D4` (the step output in the UI), `T-DG5-QA-E2` and `T-DG5-QA-F2`.
+  3. Then W22 (AN-P5A/AN-P5B), the freeze, the three reviews and the audit. Before the audit, propose the D-140 auditor-sidecar ordering fix to the user.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
