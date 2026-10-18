@@ -35,10 +35,13 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Frozen for review round 1:** candidate `sha256:8e7d23a3…` (2172 files, source `601d7d2`; code identical to `8c68a47` and `3edc1b2`). The manifest is `docs/delivery/candidates/DG5/8e7d23a3ec021871.manifest.json`.
   - **Pre-freeze verification (D-169):** green on every check. One e2e timeout under the orchestrator's own concurrent load is disclosed; its spec passes when re-run alone.
 - **Next action:**
-  1. The three round-1 reviews run on the same candidate in the main checkout, with no worktree or install activity while they run (D-082). The first three runs (launched 21:56Z) were stopped by a container restart about five minutes in, before any record was written. Their material is in `test-evidence/DG5/{domain,code-security,qa}-r1-orphaned/` for provenance only. They are re-run from `round-1/{role}-rerun.md` (the D-084 precedent):
-     - `T-DG5-REV-DOM-R1B` (domain-reviewer);
-     - `T-DG5-REV-SEC-R1B` (code-security-reviewer);
-     - `T-DG5-REV-QA-R1B` (qa-verifier).
+  1. The round-1 reviews run on candidate `8e7d23a3` in the main checkout, with no worktree or install activity while they run (D-082).
+     - **Domain: done.** `T-DG5-REV-DOM-R1B` passed with two findings: F-DG5-120 (Medium, REQ-S18-002, the demo transformation's gate history) and F-DG5-121 (Low, the headroom of the p2-journeys 'Define -> G2' journey). Commit `42920d9`.
+     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R1C` and `T-DG5-REV-QA-R1C`,** from `round-1/{role}-rerun2.md`. Two container restarts stopped them before they wrote a record:
+       - 22:01Z, the first runs, about 5 minutes in;
+       - 01:05Z, the R1B runs, about 2 hours in.
+       The material of both stops is kept for provenance in `test-evidence/DG5/{code-security,qa}-r1{,b}-orphaned/` (and `domain-r1-orphaned/`).
+     - **Cause observed:** both restarts came within minutes of the orchestrator session going idle with no harness-tracked task. While a detached review runs, the orchestrator therefore keeps a harness-tracked monitor armed. This will be recorded as a decision at the next re-freeze, because `decisions.md` is not edited between a freeze and the gate decision.
   2. Then import the findings (`tools/gates/import-findings.mjs`) and repair them if needed.
   3. Before the release-auditor runs, propose the D-140 auditor-sidecar ordering fix to the user.
 ## DG2 scope (P2 — diagnose, define and design)

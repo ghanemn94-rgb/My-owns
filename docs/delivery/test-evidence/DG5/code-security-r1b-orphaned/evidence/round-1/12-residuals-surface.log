@@ -1,0 +1,26 @@
+# Environmental residuals: offline/config surface (commit 579ba219a2f3646eb41cf35f9b508601341cbd00)
+## AI / external notification adapters in product source (expect: none; 'slack' below is schedule slack)
+apps/api/src/modules/portfolio/schedule.ts:177: * Dates are calendar dates `YYYY-MM-DD`; a dependent with enough slack does not move, one with none moves by the slip.
+apps/api/src/modules/portfolio/slip-events.ts:19://    milestone: a dependent with enough slack does not move, one with none moves by the slip; null = Unknown); its
+## adapter packages in manifests (expect none)
+(end)
+## dev-issuer binding rule (D-165)
+125:export function demoDevIssuerBindingAllowed(env: {
+126-  readonly NODE_ENV?: string | undefined;
+127-  readonly AUTH_MODE?: string | undefined;
+128-}): boolean {
+129-  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+## MTH_ENV default
+    z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
+  );
+  const mthEnvSet = field("MTH_ENV", z.enum(MTH_ENVS));
+  const demoAdminDatabaseUrl = field(
+    "MTH_DEMO_ADMIN_DATABASE_URL",
+    z.string().refine(postgresUrl, "must be a postgres:// URL"),
+  );
+  // ADR-0050 §1: MTH_ENV defaults from NODE_ENV, so a production NODE_ENV never defaults into demo mode. An explicit
+  // MTH_ENV=demo with NODE_ENV=production is a demo deployment running the production build, and is allowed.
+  const mthEnv = mthEnvSet ?? (nodeEnv === "production" ? "production" : nodeEnv);
+  const trustProxy = (raw.TRUST_PROXY ?? "")
+    .split(",")
+    .map((s) => s.trim())

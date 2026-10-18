@@ -1,0 +1,59 @@
+# command: tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts
+# probe copied from /home/user/My-owns/docs/delivery/test-evidence/DG5/code-security/round-1/probes/sec-automation-coeditor-review.probe.test.ts ; commit 89d30a476305913c391dc1a211020915c5673e7d; node v22.22.2; started 2026-10-17T23:28:35Z
+port-policy: PostgreSQL listening on port 26520 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.Y1yVtw/claude-0/review-r1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvd12gyb_561da874 (server_encoding UTF8); applied 88 migrations to a fresh database
+stdout | apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts > SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it
+B PATCH [33m200[39m  authoredBy 01a14c32-9b36-7008-8924-96d91d06cbeb creator 01a14c32-9b36-7008-8924-96d91d06cbeb
+
+stdout | apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts > SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it
+B dry run [33m201[39m pass
+
+stdout | apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts > SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it
+B submit [33m200[39m  in_review
+
+stdout | apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts > SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it
+B review [33m200[39m  approved reviewedBy 01a14c32-9bd9-76e9-845f-8e4125d0e175 B 01a14c32-9bd9-76e9-845f-8e4125d0e175
+
+stdout | apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts > SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it
+B publish [33m409[39m version_conflict [33m409[39m
+
+ ❯ |integration| apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts (1 test | 1 failed) 1798ms
+   × SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it 519ms
+     → expected [ 200, undefined ] to deeply equal [ 403, …(1) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts > SEC probe: automation rule version co-editor review > B rewrites A's draft, then B submits, reviews and publishes it
+AssertionError: expected [ 200, undefined ] to deeply equal [ 403, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "automation_rule_version.self_review",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/automation/zz-sec-automation-coeditor.test.ts:113:42
+    111|       console.log("B publish", pub.status, pub.body?.code ?? "", pub.b…
+    112|     }
+    113|     expect([rev.status, rev.body?.code]).toEqual([403, "automation_rul…
+       |                                          ^
+    114|   });
+    115| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  23:28:37
+   Duration  30.68s (transform 10.23s, setup 0ms, collect 22.69s, tests 1.80s, environment 0ms, prepare 160ms)
+
+# exit_status: 1 finished 2026-10-17T23:29:09Z

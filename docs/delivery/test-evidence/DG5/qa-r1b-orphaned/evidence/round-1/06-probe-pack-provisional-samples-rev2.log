@@ -1,0 +1,45 @@
+$ QA_DG5R1_SAMPLES=$TMPDIR/qa-dg5r1-samples QA_PG_PORT=26615 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-qa-dg5r1-pack-provisional-samples.test.ts (rev2; 2026-10-17T23:34:52Z) load 8.05 8.87 7.20
+port-policy: PostgreSQL listening on port 26615 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-dg5r1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvd1akcu_7410600c (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/zz-qa-dg5r1-pack-provisional-samples.test.ts (3 tests | 3 skipped) 6427ms
+   ↓ REQ-S13-008 probe: a pending benefit value in a generated PDF PACK > executive_pack: provisional benefit values in the content, and the label in the PDF (en, ar)
+   ↓ REQ-S13-008 probe: a pending benefit value in a generated PDF PACK > executive_dashboard: provisional benefit values in the content, and the label in the PDF (en, ar)
+   ↓ REQ-DLV-037 probe: export samples in both languages for inspection > writes PDF, DOCX, XLSX and PPTX samples (en, ar) of the gate pack and the benefits register
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-qa-dg5r1-pack-provisional-samples.test.ts [ tests/qa/integration/zz-qa-dg5r1-pack-provisional-samples.test.ts ]
+AssertionError: period: {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"A monthly reporting period 2026-08 already exists.","code":"reporting_period.label_taken","requestId":"01a14c38-5da0-7182-b31c-6447e81bc2ef"}: expected 409 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 409[39m
+
+ ❯ ok tests/qa/support/a15.ts:30:76
+     28| 
+     29| export const ok = (res: { status: number; body: unknown }, status: num…
+     30|   expect(res.status, `${what}: ${JSON.stringify(res.body).slice(0, 800…
+       |                                                                            ^
+     31|   return res.body as Body;
+     32| };
+ ❯ tests/qa/integration/zz-qa-dg5r1-pack-provisional-samples.test.ts:51:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 skipped (3)
+   Start at  23:34:55
+   Duration  29.75s (transform 8.71s, setup 0ms, collect 17.16s, tests 6.43s, environment 0ms, prepare 109ms)
+
+EXIT 1
+2026-10-17T23:35:25Z

@@ -1,0 +1,83 @@
+# command: tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/methodology/zz-sec-coeditor-review.test.ts apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts
+# probes copied from /home/user/My-owns/docs/delivery/test-evidence/DG5/code-security/round-1/probes/ ; commit 89d30a476305913c391dc1a211020915c5673e7d; node v22.22.2; started 2026-10-17T23:26:00Z
+port-policy: PostgreSQL listening on port 26510 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.Y1yVtw/claude-0/review-r1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvd0za41_37ae6a02 (server_encoding UTF8); applied 88 migrations to a fresh database
+stdout | apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts > SEC probe: dry-run disclosure to an ADM_METHOD-only caller > discloses existence and role holders of a transformation the caller cannot read
+ADM_METHOD GET transformation txA -> [33m404[39m
+
+stdout | apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts > SEC probe: dry-run disclosure to an ADM_METHOD-only caller > discloses existence and role holders of a transformation the caller cannot read
+dry run txA (orgA, unreadable) -> [33m201[39m {"roleCode":"SP","organizationId":"01a14c30-7229-73e7-a7fa-2cd78a145476","recipientUserIds":["01a14c30-74d0-72e5-b979-fe72b227050c"],"transformationId":"01a14c30-74b6-7666-9108-645481c3e0e4"}
+dry run txB (orgB) -> [33m201[39m {"reason":"outside_rule_scope","transformationId":"01a14c30-74cd-741a-a1b0-0ba4330b9d38"}
+dry run random id -> [33m201[39m {"reason":"target_not_found","transformationId":"01a14c30-77bb-7429-bdec-d896eeffb035"}
+
+stdout | apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts > SEC probe: dry-run disclosure to an ADM_METHOD-only caller > discloses existence and role holders of a transformation the caller cannot read
+ADM_TECH GET dry-runs -> [33m200[39m contains sponsor id: [33mtrue[39m
+
+ ❯ |integration| apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts (1 test | 1 failed) 2784ms
+   × SEC probe: dry-run disclosure to an ADM_METHOD-only caller > discloses existence and role holders of a transformation the caller cannot read 792ms
+     → recipientUserIds of txA disclosed to ADM_METHOD: expected true to be false // Object.is equality
+stdout | apps/api/test/integration/methodology/zz-sec-coeditor-review.test.ts > SEC probe: co-editor deciding the configuration review > a user who edited the draft (not its creator, not the requester) decides its review
+co-editor PATCH [33m200[39m  updatedBy 01a14c30-8ca0-719f-b82c-c716b88d629f
+
+stdout | apps/api/test/integration/methodology/zz-sec-coeditor-review.test.ts > SEC probe: co-editor deciding the configuration review > a user who edited the draft (not its creator, not the requester) decides its review
+co-editor DECISION [33m200[39m  decidedBy 01a14c30-8ca0-719f-b82c-c716b88d629f coEditor 01a14c30-8ca0-719f-b82c-c716b88d629f
+
+ ❯ |integration| apps/api/test/integration/methodology/zz-sec-coeditor-review.test.ts (1 test | 1 failed) 1418ms
+   × SEC probe: co-editor deciding the configuration review > a user who edited the draft (not its creator, not the requester) decides its review 801ms
+     → expected [ 200, undefined ] to deeply equal [ 403, 'config_review.self_review' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts > SEC probe: dry-run disclosure to an ADM_METHOD-only caller > discloses existence and role holders of a transformation the caller cannot read
+AssertionError: recipientUserIds of txA disclosed to ADM_METHOD: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/automation/zz-sec-dryrun-disclosure.test.ts:98:109
+     96|     // What the reviewer expects for an ADM-only caller: no role holde…
+     97|     expect(read.status).toBe(404);
+     98|     expect(JSON.stringify(own.body).includes(sponsorId), "recipientUse…
+       |                                                                                                             ^
+     99|   });
+    100| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/zz-sec-coeditor-review.test.ts > SEC probe: co-editor deciding the configuration review > a user who edited the draft (not its creator, not the requester) decides its review
+AssertionError: expected [ 200, undefined ] to deeply equal [ 403, 'config_review.self_review' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "config_review.self_review",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/methodology/zz-sec-coeditor-review.test.ts:68:38
+     66|     console.log("co-editor DECISION", d.status, d.body?.code ?? "", "d…
+     67|     // Separation of duties as the reviewer reads ADR-0039 §5: the per…
+     68|     expect([d.status, d.body?.code]).toEqual([403, "config_review.self…
+       |                                      ^
+     69|   });
+     70| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed (2)
+   Start at  23:26:08
+   Duration  45.15s (transform 9.95s, setup 0ms, collect 30.48s, tests 4.20s, environment 0ms, prepare 633ms)
+
+# exit_status: 1 finished 2026-10-17T23:26:58Z

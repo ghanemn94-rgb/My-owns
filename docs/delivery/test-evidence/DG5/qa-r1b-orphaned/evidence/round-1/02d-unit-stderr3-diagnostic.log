@@ -1,0 +1,23 @@
+$ (diagnostic, disposable clone only) QA-DIAG console.error added to RecordForm.tsx select case; npx vitest run --project unit-web src/components/form-framework/extension-hosts-twelve.test.tsx -t charter; then git checkout -- apps/web/src/components/RecordForm.tsx (2026-10-17T23:57:11Z)
+diff --git a/apps/web/src/components/RecordForm.tsx b/apps/web/src/components/RecordForm.tsx
+index f668c58..c189451 100644
+--- a/apps/web/src/components/RecordForm.tsx
++++ b/apps/web/src/components/RecordForm.tsx
+@@ -536,6 +536,7 @@ function FieldControl({
+                       t("common.people.outsideTeam"),
+                     )
+                   : (spec.options ?? []);
++            { const vs = options.map((o) => o.value); if (new Set(vs).size !== vs.length || vs.some((v) => v === undefined || v === null)) console.error(`QA-DIAG select ${spec.name} kind=${spec.kind} values=${JSON.stringify(vs)}`); }
+             return (
+               <select {...common} value={str} onChange={(e) => form.set(spec.name, e.target.value)}>
+                 <option value="">
+QA-DIAG select northStarId kind=select values=[null]
+Each child in a list should have a unique "key" prop.
+Check the render method of `select`. It was passed a child from Field. See https://react.dev/link/warning-keys for more information.
+QA-DIAG select northStarId kind=select values=[null]
+ ✓ |unit-web| src/components/form-framework/extension-hosts-twelve.test.tsx (24 tests | 22 skipped) 11786ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > charter: the input renders in the create form and the record view; Form tools saves with If-Match  2362ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > charter: the input renders in the create form and the record view; Form tools saves with If-Match  1087ms
+      Tests  2 passed | 22 skipped (24)
+EXIT 0
+restored; git status: 0 changed files
