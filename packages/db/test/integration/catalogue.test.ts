@@ -482,6 +482,7 @@ describe("schema.ts matches the migrated database", () => {
        WHERE NOT t.tgisinternal AND c.relname IN ('methodology_version', 'methodology_element', 'config_review_policy',
          'config_check_run', 'revision_proposal', 'config_review_request', 'methodology_migration',
          'methodology_migration_item', 'transformation_config_pin_history', 'gate_reapproval', 'transformation_config_pin')
+         AND t.tgname NOT LIKE '%contributor%' -- 0097's triggers: checked by the 0097 test below
        ORDER BY 1, 2`,
     );
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
@@ -537,6 +538,7 @@ describe("schema.ts matches the migrated database", () => {
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
        FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
        WHERE NOT t.tgisinternal AND c.relname IN ('form_custom_value', 'form_draft', 'form_record_attachment', 'form_record_comment', 'methodology_coverage_link', 'procedure_definition', 'procedure_instance', 'procedure_instance_link', 'procedure_step_definition', 'procedure_step_instance', 'form_record_type', 'form_source_field')
+         AND t.tgname NOT LIKE '%contributor%' -- 0097's triggers: checked by the 0097 test below
        ORDER BY 1, 2`,
     );
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
@@ -639,6 +641,7 @@ describe("schema.ts matches the migrated database", () => {
          'automation_execution', 'automation_action_result', 'job_run', 'operational_failure', 'approval_route_step',
          'gate_condition_closure', 'gate_condition_escalation', 'notification_policy', 'notification_preference',
          'notification_digest', 'meeting_cutoff_pack', 'dependency_slip')
+         AND t.tgname NOT LIKE '%contributor%' -- 0097's triggers: checked by the 0097 test below
        ORDER BY 1, 2`,
     );
     type Row = [string, string, boolean, boolean];
@@ -842,6 +845,45 @@ describe("schema.ts matches the migrated database", () => {
       ["walkthrough_step", "walkthrough_step_append_only_truncate", false, false],
     ];
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (t.tgname LIKE '%contributor%' OR c.relname LIKE '%_contributor')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["automation_rule_version", "automation_rule_version_contributor_audit_insert", true, true],
+      ["automation_rule_version", "automation_rule_version_contributor_audit_update", true, true],
+      ["automation_rule_version", "automation_rule_version_contributor_insert", false, false],
+      ["automation_rule_version", "automation_rule_version_contributor_update", false, false],
+      ["automation_rule_version", "automation_rule_version_sod_contributor", false, false],
+      ["automation_rule_version_contributor", "automation_rule_version_contributor_append_only", false, false],
+      ["automation_rule_version_contributor", "automation_rule_version_contributor_append_only_truncate", false, false],
+      ["config_review_request", "config_review_request_sod_contributor", false, false],
+      ["methodology_element", "methodology_element_contributor", false, false],
+      ["methodology_element", "methodology_element_contributor_audit", true, true],
+      ["methodology_version", "methodology_version_contributor_audit_insert", true, true],
+      ["methodology_version", "methodology_version_contributor_audit_update", true, true],
+      ["methodology_version", "methodology_version_contributor_insert", false, false],
+      ["methodology_version", "methodology_version_contributor_update", false, false],
+      ["methodology_version_contributor", "methodology_version_contributor_append_only", false, false],
+      ["methodology_version_contributor", "methodology_version_contributor_append_only_truncate", false, false],
+      ["procedure_definition", "procedure_definition_contributor", false, false],
+      ["procedure_definition", "procedure_definition_contributor_audit", true, true],
+      ["procedure_step_definition", "procedure_step_definition_contributor", false, false],
+      ["procedure_step_definition", "procedure_step_definition_contributor_audit", true, true],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+    // The backfill wrote one migration audit event per backfilled draft, and none for a draft without contributors.
+    const orphan = await q<{ n: string }>(
+      `SELECT count(*)::text AS n FROM audit_event e WHERE e.action = 'methodology_version.contributors_backfill'
+         AND NOT EXISTS (SELECT 1 FROM methodology_version_contributor c WHERE c.methodology_version_id = e.record_id)`,
+    );
+    expect(orphan).toEqual([{ n: "0" }]);
   });
 
   it("marks exactly the views as views", async () => {
@@ -1356,6 +1398,9 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       automation_action_type: "SELECT",
       automation_rule: SIU,
       automation_rule_version: SIU,
+      // 0097 (D-170): the contributor records are append-only (written by triggers in the writer's transaction).
+      automation_rule_version_contributor: "INSERT,SELECT",
+      methodology_version_contributor: "INSERT,SELECT",
       automation_dry_run: "INSERT,SELECT",
       automation_execution: SIU,
       automation_action_result: "INSERT,SELECT",

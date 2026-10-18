@@ -6246,6 +6246,28 @@ export type DemoSeedRecordRow = Selectable<DemoSeedRecordTable>;
 export type DemoDatasetRunRow = Selectable<DemoDatasetRunTable>;
 export type WalkthroughStepRow = Selectable<WalkthroughStepTable>;
 
+// ---- P5 repair (migration 0097; T-DG5-BE-V1; D-170; F-DG5-100): the contributors of a configuration draft, recorded
+// append-only by database triggers in the writer's transaction. A contributor never decides the draft's review.
+export interface MethodologyVersionContributorTable {
+  methodology_version_id: string;
+  user_id: string;
+  first_written_at: TimestampDefault;
+}
+
+export interface AutomationRuleVersionContributorTable {
+  automation_rule_version_id: string;
+  user_id: string;
+  first_written_at: TimestampDefault;
+}
+
+export interface Database {
+  methodology_version_contributor: MethodologyVersionContributorTable;
+  automation_rule_version_contributor: AutomationRuleVersionContributorTable;
+}
+
+export type MethodologyVersionContributorRow = Selectable<MethodologyVersionContributorTable>;
+export type AutomationRuleVersionContributorRow = Selectable<AutomationRuleVersionContributorTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -11499,6 +11521,8 @@ export const SCHEMA_COLUMNS = {
     "completed_at",
   ],
   walkthrough_step: ["code", "ordinal", "title_en", "title_ar", "area_code", "completion_rule", "source_ref"],
+  methodology_version_contributor: ["methodology_version_id", "user_id", "first_written_at"],
+  automation_rule_version_contributor: ["automation_rule_version_id", "user_id", "first_written_at"],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

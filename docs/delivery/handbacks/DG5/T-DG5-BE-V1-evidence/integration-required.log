@@ -1,0 +1,122 @@
+port-policy: PostgreSQL listening on port 23001 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvdepzsh_fa77becb (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (29 tests) 299ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-review-publish.test.ts (14 tests) 6606ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > submit records the request, the proposal and one task per TO holder (never the requester); approve; tasks close  505ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > the author or the requester deciding the review -> 403 config_review.self_review; ADM_METHOD, AUD, BO -> 403  536ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > request changes needs a note, returns the draft to editing; resubmitting the same content tasks the reviewers once more  347ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > withdraw returns the draft to editing and cancels the tasks; only a pending review is withdrawn  342ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > publish without the required review -> 422 config_version.review_required; after approval it publishes, immutable  624ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > scoring defaults that total 95 % -> 422 config_version.weights_total (REQ-PB-093); 100 % publishes  700ms
+   ✓ rollbackConfigVersion (ADR-0039 §7; REQ-S06-009) > restores an earlier version as a new version; later records stay retrievable; the audit trail shows the rollback  689ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > re-checks authorization at commit time: a grant revoked mid-request gives 403 and writes nothing  530ms
+ ✓ |integration| apps/api/test/integration/methodology/methodology-migrations.test.ts (9 tests) 7982ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > v2 published: the transformation still renders v1; the plan lists the G2 re-approval; execution moves only the pin  2931ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > the preview lists the new required field (forms provider) and needs an input before submit  1339ms
+   ✓ decisions, refusals and authorization > requester deciding -> 403 self_approval; decideApproval on the type -> 422 decide_through_record; request changes and resubmit  556ms
+   ✓ decisions, refusals and authorization > a moved pin -> 409 pin_moved; not approved -> 422 not_approved; target invalid; open exists; withdraw  477ms
+   ✓ decisions, refusals and authorization > an approved migration whose pin moved is not executed (409 pin_moved, nothing written)  470ms
+   ✓ decisions, refusals and authorization > withdrawing a submitted migration withdraws its approval too  567ms
+   ✓ decisions, refusals and authorization > AUD and TL get 403 on every write, outsiders 404; If-Match 428/409; reads by methodology.read and transformation.read  875ms
+ ✓ |integration| apps/api/test/integration/methodology/scoring-defaults.test.ts (14 tests) 4744ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > the admin changes the Feasibility rubric text and the weights to 30/20/20/15/15 in a draft and publishes it  338ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > publishing defaults that total 95% (or 105%) is refused 422 config_version.weights_total; the draft stays a draft  520ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-checks.test.ts (17 tests) 2237ms
+ ✓ |integration| apps/api/test/integration/automation/automation-rules.test.ts (13 tests) 1462ms
+ ✓ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests) 1615ms
+ ✓ |integration| apps/api/test/integration/automation/automation-engine.test.ts (9 tests) 2543ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > an enabled admin rule on gate.decided records one execution and creates its task; conditions not met -> skipped  490ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > never runs a disabled rule, another organization's event, or a transformation rule on another transformation  336ms
+   ✓ REQ-S12-021: the same event x3 -> one execution, one action, one task > sequential and concurrent replays create exactly one of each  536ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-drafts.test.ts (18 tests) 2036ms
+ ✓ |integration| apps/api/test/integration/automation/automation-lifecycle.test.ts (12 tests) 1967ms
+ ✓ |integration| apps/api/test/integration/automation/automation-failures.test.ts (9 tests) 1940ms
+   ✓ REQ-S12-003: an out-of-scope action fails with automation.action_forbidden and appears in the failure queue > a rule on transformation A configured to create a task in transformation B fails at once, never retried  348ms
+ ✓ |integration| apps/api/test/integration/automation/starters-be-j.test.ts (9 tests) 3039ms
+   ✓ REQ-S12-001: the gate starters (5 request, 6 and 7 events) > a committed submission records one execution of starter 5; starters 6 and 7 record one each, replay x3 none  600ms
+   ✓ REQ-S12-012: a slip below the configured minimumSlipDays raises nothing (starter 9 version 2) > v2 with minimumSlipDays 7 (reviewed and published): a 5-day slip raises nothing, an 8-day slip raises one  731ms
+ ✓ |integration| packages/db/test/integration/demo-numbers.test.ts (10 tests) 6523ms
+   ✓ §J.3: recomputed values equal the seeded values (from the stored rows, with the engines) > is deterministic: a second seed into a fresh database gives the same counts and checksum  2902ms
+stdout | apps/api/test/integration/methodology/studio-coauthor-review.test.ts > F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author review decision [33m403[39m config_review.self_review publish [33m422[39m config_version.review_required
+
+ ✓ |integration| apps/api/test/integration/methodology/studio-coauthor-review.test.ts (9 tests) 5190ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review  603ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > the creator and the requester are still refused; a TO who wrote nothing approves and publishes  365ms
+   ✓ F-DG5-100: every content table of a draft records its writer (0097 triggers) > a procedure definition written by a second admin makes them an author of the procedure draft  333ms
+ ✓ |integration| apps/api/test/integration/methodology/playbook-blocks.test.ts (8 tests) 1077ms
+ ✓ |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts (6 tests) 3749ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 1: a help-text-only v2; a new transformation pinned to v2 gets the same catalogue as v1 by code/key and count  367ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 2: a v3 label override is returned for its element, and only for it  341ms
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 76920ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  4677ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  9691ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  3892ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  9908ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  1850ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  7575ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  17026ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  11828ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  2478ms
+ ✓ |integration| packages/db/test/integration/demo-numbers-spec.test.ts (51 tests) 40ms
+ ✓ |integration| packages/db/test/integration/demo-roaming.test.ts (68 tests) 7643ms
+   ✓ REQ-S18-001 (with BE-S): the roaming dataset is deterministic > a second seed into a fresh database gives identical record counts and checksum  3571ms
+ ✓ |integration| apps/api/test/integration/methodology/revision-proposals.test.ts (5 tests) 1695ms
+ ✓ |integration| apps/api/test/integration/methodology/approver-configured.test.ts (4 tests) 2881ms
+   ✓ D-164 (b): an explicit role-only configuration of the catalogue default is remembered > SP configured role-only on a BO-default G3: reported SP, the next submission routes to SP, the worker agrees  1275ms
+   ✓ D-164 (b): an explicit role-only configuration of the catalogue default is remembered > a never-configured G3 on the same pinned version follows BO (today's rule), for the submission too  597ms
+   ✓ 0094: the backfill marks every instance with a gate_instance.configure audit event > re-applied to the pre-0094 table (in a rolled-back transaction): configured → true, others false, nothing else changes  418ms
+ ✓ |integration| apps/api/test/integration/methodology/source-coverage.test.ts (8 tests) 946ms
+ ✓ |integration| apps/api/test/integration/methodology/effective-approver.test.ts (8 tests) 2983ms
+   ✓ F-DG5-QA-A-1: a gate names the approver its submissions are routed to > a configured approver is kept: a named user on the new transformation, a configured role on the old one  355ms
+   ✓ F-DG5-QA-A-1: the gate exception of the new transformation's G3 is routed to and decided by its effective approver > the to-decide work items go to the BO holders, never the Sponsor; the Sponsor gets 403, the BO decides  370ms
+ ✓ |integration| apps/api/test/integration/automation/rule-coauthor-review.test.ts (4 tests) 874ms
+ ✓ |integration| apps/api/test/integration/automation/automation-notify-delivery.test.ts (2 tests) 695ms
+   ✓ D-153 (a): the notify action is delivered under the recipient's policy and preferences > exactly one policy-governed notification per recipient; x3 replays create nothing; the execution log records the outcome  349ms
+ ✓ |integration| apps/api/test/integration/methodology/entity-group.test.ts (3 tests) 1974ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > Transformation, Charter, GateInstance and GateDecision: created and read; AUD 403 on writes; 404 outside scope  1140ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > MethodologyVersion, Phase and GateDefinition: a draft with version-scoped rows; AUD 403; outsiders 403/404  387ms
+ ✓ |integration| apps/api/test/integration/automation/dependency-slip-relay.test.ts (1 test) 3416ms
+   ✓ dependency.slipped through the real relay (D-QA-F2-1) > the outbox row is published on its first attempt and starter 9's execution succeeds once  404ms
+ ✓ |integration| apps/api/test/integration/methodology/v1-readers.test.ts (4 tests) 1635ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > the gate list and gate views carry exactly the DG2 catalogue definitions (GET /methodology)  476ms
+   ✓ v1-pinned readers are byte-identical (p5-plan R2) > a v1 submission routes to the catalogue default approver (SP, default_role); the decision and the DG2 refusal are unchanged  660ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 115ms
+ ✓ |integration| packages/db/test/integration/pool-bounds.test.ts (7 tests) 2843ms
+   ✓ bounded checkout (connectionTimeoutMillis) > a checkout from an exhausted pool fails after the timeout (never hangs) and is recognised  305ms
+   ✓ bounded checkout (connectionTimeoutMillis) > through Kysely the same error reaches the caller  306ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > PostgreSQL ends a transaction left idle past the limit, releasing its row lock; the pool recovers  1211ms
+   ✓ bounded idle-in-transaction time (idle_in_transaction_session_timeout) > a transaction that keeps running statements is not affected  1013ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 10239ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table  1283ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written  1422ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written  1380ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used)  1267ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  4687ms
+ ✓ |integration| apps/api/test/integration/automation/catalogue-sample-payload.test.ts (3 tests) 307ms
+ ✓ |integration| packages/db/test/integration/demo-dev-binding.test.ts (4 tests) 15393ms
+   ✓ D-165: mth-db seed-demo and the dev issuer (the real CLI) > AUTH_MODE=dev binds every demo user to the dev issuer too; the demo IdP identities are unchanged  5595ms
+   ✓ D-165: mth-db seed-demo and the dev issuer (the real CLI) > NODE_ENV=production (even with AUTH_MODE=dev) creates no dev-issuer identity  4375ms
+   ✓ D-165: mth-db seed-demo and the dev issuer (the real CLI) > a non-dev auth mode (AUTH_MODE=oidc) creates no dev-issuer identity; the demo IdP identities are unchanged  5262ms
+ ✓ |integration| packages/db/test/integration/bootstrap.test.ts (5 tests) 9595ms
+   ✓ mth-db bootstrap > creates the first organization and a technical/access admin with no business permission, fully audited  2698ms
+   ✓ mth-db bootstrap > refuses to run twice  2458ms
+   ✓ mth-db bootstrap > validates its input and refuses the dev-login issuer  2120ms
+   ✓ mth-db seed-dev (synthetic, development only) > seeds synthetic users bound to urn:mth:dev-local once, idempotently  2108ms
+ ✓ |integration| apps/api/test/integration/automation/dry-run-sample-shape.test.ts (2 tests) 743ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (7 tests) 3311ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2567ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 9681ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  9108ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  571ms
+
+ Test Files  37 passed (37)
+      Tests  424 passed (424)
+   Start at  05:50:50
+   Duration  310.89s (transform 8.72s, setup 0ms, collect 98.68s, tests 206.94s, environment 0ms, prepare 137ms)
+
+exit=0

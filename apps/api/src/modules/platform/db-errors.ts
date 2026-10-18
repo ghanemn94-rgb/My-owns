@@ -2548,7 +2548,8 @@ export function mapP4PhaseStepError(error: PgErrorLike): HttpProblem | null {
  *   methodology_version_weights_total                       -> 422 config_version.weights_total
  *   methodology_element_weight_decimal                      -> 400 validation.weight_percent (field /weightPercent)
  *   methodology_version_rollback_complete                   -> 422 config_version.rollback_target_invalid
- *   config_review_request_reviewer_not_requester, config_review_request_reviewer_not_author -> 403 config_review.self_review
+ *   config_review_request_reviewer_not_requester, config_review_request_reviewer_not_author,
+ *   config_review_request_reviewer_not_contributor (0097; D-170)  -> 403 config_review.self_review
  *   config_review_policy_reviewer_not_auditor, config_review_policy_reviewer_not_admin -> 422 config_review.reviewer_not_allowed
  *   methodology_migration_one_open_key                      -> 409 methodology_migration.open_exists (duplicate)
  *   methodology_migration_target_published, methodology_migration_versions_differ -> 422 methodology_migration.target_invalid
@@ -2624,6 +2625,7 @@ export function mapP5StudioError(error: PgErrorLike): HttpProblem | null {
       );
     case "config_review_request_reviewer_not_requester":
     case "config_review_request_reviewer_not_author":
+    case "config_review_request_reviewer_not_contributor":
       return new HttpProblem({
         status: 403,
         type: PROBLEM_TYPES.forbidden,
@@ -2691,6 +2693,7 @@ export function mapP5StudioError(error: PgErrorLike): HttpProblem | null {
  *   automation_rule_code_key                -> 409 automation_rule.code_taken
  *   automation_rule_version_one_open_key    -> 409 automation_rule_version.draft_exists
  *   automation_rule_version_content_frozen  -> 409 automation_rule_version.not_editable
+ *   automation_rule_version_reviewer_not_contributor (0097; D-170) -> 403 automation_rule_version.self_review
  */
 export function mapP5AutomationError(error: PgErrorLike): HttpProblem | null {
   switch (error.constraint ?? "") {
@@ -2705,6 +2708,14 @@ export function mapP5AutomationError(error: PgErrorLike): HttpProblem | null {
         code: "automation_rule_version.not_editable",
         title: "Not editable",
         detail: "Only a draft version can be changed; published versions never change.",
+      });
+    case "automation_rule_version_reviewer_not_contributor":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "automation_rule_version.self_review",
+        title: "Forbidden",
+        detail: "You cannot review a version you authored.",
       });
     default:
       return null;

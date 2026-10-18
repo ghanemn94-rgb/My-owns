@@ -1,0 +1,52 @@
+Sun Oct 18 05:28:29 UTC 2026
+tree: HEAD e0cfdaf with the fix set aside (no 0097, no API change); only apps/api/test/integration/methodology/studio-coauthor-review.test.ts added
+port-policy: PostgreSQL listening on port 23001 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvddxb49_9eec46f9 (server_encoding UTF8); applied 88 migrations to a fresh database
+stdout | apps/api/test/integration/methodology/studio-coauthor-review.test.ts > F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author review decision [33m200[39m approved publish [33m200[39m [90mundefined[39m
+
+ ❯ |integration| apps/api/test/integration/methodology/studio-coauthor-review.test.ts (6 tests | 1 failed | 5 skipped) 1507ms
+   × F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review 521ms
+     → expected [ 200, undefined ] to deeply equal [ 403, 'config_review.self_review' ]
+   ↓ F-DG5-100: a co-author never decides the configured review of the content they wrote > an element PUT alone (no PATCH) makes its writer an author; the record is written with the write
+   ↓ F-DG5-100: a co-author never decides the configured review of the content they wrote > the creator and the requester are still refused; a TO who wrote nothing approves and publishes
+   ↓ F-DG5-100: a co-author never decides the configured review of the content they wrote > deciding a round does not make the reviewer an author: the same TO decides the next round
+   ↓ F-DG5-100 at the database (0097): the runtime role cannot record a contributor's decision > refuses a direct UPDATE that records a co-author's decision, and allows an independent one
+   ↓ F-DG5-100 at the database (0097): the runtime role cannot record a contributor's decision > the contributor record is append-only for the runtime role
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/studio-coauthor-review.test.ts > F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+AssertionError: expected [ 200, undefined ] to deeply equal [ 403, 'config_review.self_review' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   403,[39m
+[32m-   "config_review.self_review",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/methodology/studio-coauthor-review.test.ts:170:38
+    168|     console.log("co-author review decision", d.status, d.body?.code ??…
+    169|     // The SoD rule ("never the author") expects 403 config_review.sel…
+    170|     expect([d.status, d.body?.code]).toEqual([403, "config_review.self…
+       |                                      ^
+    171|     expect(d.body.detail).toBe("You cannot review a configuration chan…
+    172|     // Publish is impossible by construction: the review was refused, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  05:28:31
+   Duration  19.60s (transform 6.98s, setup 0ms, collect 13.96s, tests 1.51s, environment 0ms, prepare 122ms)
+
+exit=1

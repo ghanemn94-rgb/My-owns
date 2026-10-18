@@ -12,14 +12,15 @@
 // submit (stage preview -> review): records the review request for exactly the draft's current content hash, the
 // S12-018 revision proposal (revision-impact.ts `proposeConfigRevision`: validation, impact, routing) and one
 // `config_review` work item per active holder of the policy's reviewer role in the organization, never the requester
-// nor the draft's author (createWorkItemOnce through the revision-impact port; dedupe "config_review:<proposalId>:<userId>").
+// nor an author of the draft (its creator or a recorded contributor, D-170) (createWorkItemOnce through the revision-impact port; dedupe "config_review:<proposalId>:<userId>").
 // The proposal is keyed on the content hash, so a second review request of the same content (after a withdrawal or a
 // "request changes" with no content change) finds the proposal already recorded; its tasks then use the round-suffixed
 // key "config_review:<proposalId>#<round>:<userId>" (the `#n` precedent of tasks/service.ts), so each pending request
 // has its reviewers' tasks exactly once.
 // decide (methodology.review, and the caller holds the request's reviewer role): approve (stage review -> approved)
-// or request changes (note required; stage review -> editing). Never the draft's author nor the requester
-// (403 config_review.self_review; the 0062 CHECK and trigger refuse the same). The decider's task is done, the other
+// or request changes (note required; stage review -> editing). Never an author of the draft (its creator or any person
+// who wrote part of its content, D-170) nor the requester (403 config_review.self_review; the 0062 CHECK and trigger and
+// the 0097 trigger config_review_request_reviewer_not_contributor refuse the same). The decider's task is done, the other
 // reviewers' tasks are cancelled.
 // withdraw: the pending request is withdrawn, the stage returns to editing and the open tasks are cancelled.
 //
@@ -64,6 +65,7 @@ import {
   VERSIONS,
   type MethodologyVersionRow,
 } from "./drafts.ts";
+import { configAuthors } from "./contributors.ts";
 import {
   CONFIG_REVIEW_KIND,
   createConfigReviewTasks,
@@ -286,7 +288,10 @@ async function submitReview(tx: Tx, request: FastifyRequest, versionId: string):
   let reviewers: readonly string[] = proposed.reviewerUserIds;
   if (!proposed.created && (await reviewRequiredFor(tx, current.config_kind))) {
     const target = await targetFor(tx, "organization", { organizationId: actor.organizationId });
-    reviewers = await reviewerHolders(tx, row.reviewer_role_code, target, [actor.userId, current.created_by]);
+    reviewers = await reviewerHolders(tx, row.reviewer_role_code, target, [
+      actor.userId,
+      ...(await configAuthors(tx, current)),
+    ]);
   }
   const taskKeyRef =
     roundNo <= 1 ? proposed.proposal : { ...proposed.proposal, id: `${proposed.proposal.id}#${roundNo}` };
@@ -329,8 +334,10 @@ async function decideReview(tx: Tx, request: FastifyRequest, versionId: string, 
   const current = await lockVersion(tx, versionId);
   const review = await lockedReview(tx, versionId, reviewId, expected);
   if (review.status !== "pending") throw notPending();
-  // Separation of duties (ADR-0039 §5): never the draft's author nor the requester.
-  if (actor.userId === review.requested_by || actor.userId === current.created_by) throw studioRefusals.selfReview();
+  // Separation of duties (ADR-0039 §5; D-170): never the requester nor an author of the draft (its creator or any
+  // person who wrote part of its content, recorded by the 0097 triggers; the 0097 trigger refuses the same).
+  if (actor.userId === review.requested_by || (await configAuthors(tx, current)).includes(actor.userId))
+    throw studioRefusals.selfReview();
   // The configured reviewer: the caller holds the request's reviewer role in the organization.
   const holdsRole = principal.grants.some(
     (g) => g.roleCode === review.reviewer_role_code && g.organizationId === actor.organizationId,
