@@ -158,6 +158,8 @@ G4 reuses the ADR-0015 engine unchanged: `gate_instance`, versioned `gate_submis
 
 **G4 scope.** The initiatives in G4 scope are those with status `selected`, `funded` or `launched` (the approved portfolio selection) in the transformation. Draft, submitted, ranked and cancelled initiatives are out of scope. An empty scope makes `g4.initiative_cards` incomplete (`g4.portfolio_empty`).
 
+_Amended 2026-10-18 (T-DG5-ARCH-R5; D-172, F-DG5-122): an empty scope also makes the seven criteria below that read "every in-scope initiative" (`g4.business_cases`, `g4.finance_validation`, `g4.prioritization`, `g4.roadmap`, `g4.owners`, `g4.funding`, `g4.capacity`) incomplete, each with the missing item `g4.no_approved_initiative` → 'No initiative in the approved portfolio' (pointer `/initiatives`). See the amendment at the end of this ADR and ADR-0035 amendment E1–E5._
+
 **Criteria** (seeded by `0024` in `gate_criterion_definition`; all mandatory; `requires_verified_evidence = false`). Missing items use the existing `Warning` shape: `code` (i18n key), `message` (English label with the initiative's code and name filled in) and `pointer` (`/initiatives/{id}`, `/business-cases/{id}`, `/benefit-formulas/{id}` …). The labels below are the exact English texts the acceptance tests look for:
 
 | Key | Ordinal | Complete when … | `missing[]` item (code → English label) |
@@ -351,3 +353,27 @@ Description text only; no schema, status or operation changes (every changed lin
 2. The gate side, ADR-0038 amendment B1.
 3. **Byte identity:** the BE-M2 A/B method (record the responses with the base commit's `dispensations.ts` and `gates.ts` and with the new ones, normalize only ids, instants and hashes, then `cmp`), over: every End-to-End dispensation create, decide, revoke and list response of the existing DG3 tests; the Modular refusals for G1, G2 and G3-with-initiative; and the 21 End-to-End G1–G4 gate responses of BE-M2.
 4. **New tests:** a Modular-links waiver is created (201, pending), accepted by G3's approver (200), and a G3 submission with criteria met and links missing is then 201, with `modularLinks` in the snapshot; the same submission with the waiver pending, rejected, revoked, or expired by the injected exception clock is 422 `gate.modular_links_missing`; the recorder cannot accept it (403); a non-approver cannot accept it (403 `gate.not_approver`); a Modular G3 waiver with an initiative is 422 `dispensation.waiver_requires_end_to_end`; the approval-time refusals of ADR-0038 B1; the missing-link report still lists both items after a waived submission.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R5; D-172, F-DG5-122): §7, the G4 criteria over an empty approved portfolio
+
+Source: D-172 and the T-DG5-BE-X1 handback §6, checked against the merged tree (`c184328`). Nothing above is removed. Where this amendment and §7 differ, this amendment wins. The full rule, its live and frozen effect and the exception rule are in ADR-0035 amendment E1–E5. This section records the change to the §7 table.
+
+- **"Every in-scope initiative" now also requires at least one in-scope initiative.** For each of these rows of the §7 table, the "Complete when …" column gains "and the G4 scope is not empty", and the "`missing[]` item" column gains `g4.no_approved_initiative` → 'No initiative in the approved portfolio' (pointer `/initiatives`):
+
+  | Key | Ordinal | Added condition | Evidence (`apps/api/src/modules/workflows/g4.ts`) |
+  |---|---|---|---|
+  | `g4.business_cases` | 2 | complete only if the transformation-level part **and** a non-empty per-initiative part hold | `:294–301` |
+  | `g4.finance_validation` | 3 | complete only if the transformation-level part **and** a non-empty per-initiative part hold | `:326–343` |
+  | `g4.prioritization` | 4 | with no current ranking under the active weight set, both `g4.prioritization_missing` and `g4.no_approved_initiative` are listed | `:353–366` |
+  | `g4.roadmap` | 5 | schedule conflicts and unknowns are still listed beside it | `:378–387` |
+  | `g4.owners` | 6 | — | `:396–402` |
+  | `g4.funding` | 7 | — | `:411–417` |
+  | `g4.capacity` | 8 | capacity conflicts, including Unknown capacity, are still listed beside it | `:428–439` |
+
+- **`g4.initiative_cards` (ordinal 1) is unchanged.** Its condition "≥ 1 initiative in scope" already existed, and its item stays `g4.portfolio_empty` → 'Initiative cards' (`g4.ts:267–268`).
+- **Facts not loaded** keep the NOT_LOADED item of each criterion and never add `g4.no_approved_initiative` (ADR-0035 E2).
+- **The refusal shape is unchanged.** A G4 submission on an empty portfolio with no covering exceptions is the existing 422 `gate_criteria_incomplete`, with one `errors[]` entry for each of the eight criteria. Each of the seven carries the label 'No initiative in the approved portfolio' in its joined `message`.
+- **Labels:** `apps/web/src/i18n/en/gates.json:121` and `apps/web/src/i18n/ar/gates.json:121` (`missingItems.g4__no_approved_initiative`).
+- **Tests:** `apps/api/src/modules/workflows/g4.test.ts:189`ff. (unit) and `apps/api/test/integration/workflows/g4-empty-portfolio.test.ts:169`, `:196` (live and frozen). The DG3 G4 suite `apps/api/test/integration/gates/g4.test.ts` is unchanged: its empty-portfolio case (`:423`) asserts only the `g4.initiative_cards` item.
+
+No migration, contract or schema change. G4 is a business approval inside the product and never implies an engineering gate DG0–DG7.

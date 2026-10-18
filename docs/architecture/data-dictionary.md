@@ -12378,4 +12378,30 @@ No column, constraint, trigger or migration was added for this.
 
 ## Demo dataset gate history (T-DG5-BE-V3; D-170, F-DG5-120)
 
-No table changes. The demo `international_roaming` dataset now creates its transformation in `diagnose` and seeds G1–G4 as submitted and approved (rows in `gate_submission`, `gate_submission_criterion`, `decision`, `gate_decision`, `gate_decision_agreement` and two accepted `gate_exception` rows on G4), with four `transformation.phase_advance` updates to `transform`. G5 and G6 have no submission. ADR-0050 amendment D7 has the details.
+No table changes. The demo `international_roaming` dataset now creates its transformation in `diagnose` and seeds G1–G4 as submitted and approved (rows in `gate_submission`, `gate_submission_criterion`, `decision`, `gate_decision` and `gate_decision_agreement`), with four `transformation.phase_advance` updates to `transform`. G5 and G6 have no submission. ADR-0050 amendment D7 has the details. _Corrected 2026-10-18 (T-DG5-ARCH-R5; D-172, F-DG5-120): the words "and two accepted `gate_exception` rows on G4" are removed, because the demo writes no `gate_exception` row; see the next section._
+
+## Demo dataset: the approved portfolio behind G4 (T-DG5-BE-X2; D-172, F-DG5-120) and the G4 empty-portfolio item (T-DG5-BE-X1; F-DG5-122)
+
+_Amendment 2026-10-18, T-DG5-ARCH-R5._ No table, column, constraint, trigger or migration changes.
+
+**The demo writes no `gate_exception` row.** G4 is complete on a real approved portfolio of INI-01..INI-03, and every G4 `gate_submission_criterion` row has `gate_exception_id` NULL (`packages/db/src/demo/data/roaming-gates.ts:516–533`). The earlier statement "two accepted `gate_exception` rows on G4" (the paragraph above, at T-DG5-BE-V3) is corrected there.
+
+**New rows the demo writes, in existing tables** (`packages/db/src/demo/data/roaming-portfolio.ts`, `seedApprovedPortfolio` `:221` and `launchApprovedPortfolio` `:467`; `business-cases.ts`). They are all synthetic, with fixed ids and synthetic-clock dates (ADR-0050 amendment D11):
+
+| Table | Rows | Notes |
+|---|---|---|
+| `initiative_score_result` | 3 | one per initiative, under weight set v1 |
+| `ranking_snapshot` | 1 | ranking snapshot 1, status `current` |
+| `ranking_entry` | 3 | INI-03 rank 1, INI-01 rank 2, INI-02 rank 3 |
+| `portfolio_selection` | 3 | action `selected`, by the demo Sponsor, from snapshot 1 (audit action `portfolio_selection.create`, where the API writes `portfolio_selection.select`; ADR-0050 D14) |
+| `decision` | 3 | DEC-02..DEC-04, kind `executive`, decided by the demo Finance user: the canonical record of each funding decision |
+| `funding_decision` | 3 | outcome approved, approver role FIN, amount = the initiative case's existing cash investment line |
+| `business_case` | 3 | BC-02..BC-04, level `initiative`, parent BC-01, author TL, baseline validated by FIN (`business-cases.ts:559–560`) |
+| `resource_role` | 3 | one per initiative |
+| `capacity` | 18 | three roles × July–December 2026 |
+| `resource_demand` | 18 | planned by WL, then committed by BO |
+| `milestone` | 6 | two per initiative, dates approved by TL |
+
+**Updated rows** (P2 version step and one audit event each, with the product's verb): `initiative` status `draft → submitted → ranked → selected → funded`, and `→ launched` after G4 (`initiative.submit`, `.rank`, `.select`, `.fund`, `.launch`); `business_case` `validate_baseline` for BC-02..BC-04; `resource_demand` `commit`; `milestone` `approve_date`. Each initiative card now also has `scope_in` (`roaming.ts:734`). Each chain's benefit line and cash investment line is written with `business_case_id` = that chain's initiative case (`business-cases.ts:590`, `caseIdOfLine`); the amounts are unchanged. The seed writes no outbox row for any of these (ADR-0050 D14).
+
+**G4 missing-item codes.** This dictionary does not list the G4 missing-item codes. They are defined in ADR-0021 §7, and the new code `g4.no_approved_initiative` ('No initiative in the approved portfolio', pointer `/initiatives`) is defined in ADR-0035 amendment E2 and in the ADR-0021 amendment of 2026-10-18. It is a value of the existing `Warning.code` (free text), stored in the `detail` JSON of `gate_submission_criterion` and in the submission snapshot. No column changes.
