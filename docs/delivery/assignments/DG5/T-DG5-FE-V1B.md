@@ -1,12 +1,29 @@
-# Assignment T-DG5-FE-V1B: DG5 round-1 repair, continuation of T-DG5-FE-V1 (frontend-ux-engineer)
+# Assignment T-DG5-FE-V1B: DG5 round-1 repair, continuation of T-DG5-FE-V1 plus the gate-readiness line (frontend-ux-engineer)
+
+## Continuation of T-DG5-FE-V1 (read first; D-147/D-151 salvage). This comes before the gate-readiness scope below.
+
+- **What happened:** T-DG5-FE-V1 (run `DG5-T-DG5-FE-V1-frontend-ux-engineer-20261018T051623Z-9df298b7`) was stopped by a container restart at about 06:27Z, during its e2e runs and before it wrote its handback. Its run folder is kept for provenance only in `docs/delivery/test-evidence/DG5/FE-V1-orphaned/`.
+- **What it left:** its working tree is committed, unverified, as WIP `c89f9a0` on branch `dg5/fe-v1`, your `HEAD`. It holds:
+  - the reflow and focusable-region changes;
+  - `apps/web/e2e/p5-reflow-axe.spec.ts`;
+  - `apps/web/src/components/table-regions.test.tsx`;
+  - the `p2-journeys.spec.ts` change;
+  - its logs in `docs/delivery/handbacks/DG5/T-DG5-FE-V1-evidence/`, which include before-fix runs, static checks, unit-web in both locales and a partial e2e log.
+- **What you do first:**
+  1. Read `docs/delivery/assignments/DG5/T-DG5-FE-V1.md`, its scope for F-DG5-140, F-DG5-141 and F-DG5-121. It is binding for you.
+  2. Read the WIP diff (`git show c89f9a0`) and check it against that scope. Complete anything missing.
+  3. Run FE-V1's acceptance on the final tree. The WIP's logs are not a substitute; record new logs under `docs/delivery/handbacks/DG5/T-DG5-FE-V1B-evidence/`.
+  4. Your handback covers both scopes: FE-V1's three findings, each with the failing-before evidence FE-V1 recorded and your passing-after evidence, and the gate-readiness line below.
+- **Then** do the gate-readiness scope below, and run its checks on the final tree. One combined set of static checks and one combined e2e run (FE-V1's specs plus the gates spec) is enough.
+- **Time:** about 1 h 45 min in total.
 
 ## Stage and working tree
 
 - **Stage:** P5 "Configuration automation and outputs", gate DG5, **FIXING** after review round 1 (D-170).
-- **Working tree:** `/home/user/wt/dg5-fe-v1`, branch `dg5/fe-v1`, at T-DG5-FE-V1's committed work. `node_modules` is installed and the packages are built. Work only in this tree. Never run `git worktree add`.
-- **Concurrency (D-004):** T-DG5-BE-V2B may still be running in its own worktree. T-DG5-BE-V1 and T-DG5-BE-V3 are merged into the integration branch, but not into yours. Stay strictly inside your file ownership.
+- **Working tree:** `/home/user/wt/dg5-fe-v1`, branch `dg5/fe-v1`, at WIP `c89f9a0` (T-DG5-FE-V1's salvaged tree). `node_modules` is installed and the packages are built. Work only in this tree. Never run `git worktree add`.
+- **Concurrency (D-004):** T-DG5-BE-V2C runs at the same time in its own worktree. T-DG5-BE-V1 and T-DG5-BE-V3 are merged into the integration branch, but not into yours. Stay strictly inside your file ownership.
 - **Preceding gate:** run `node tools/gates/validate.mjs --historical --stage DG4` first, and report the result. It must exit 0.
-- **Time:** about 1 hour. Run `date -u` at the start and at the end.
+- **Time:** about 1 h 45 min in total (see the continuation section). Run `date -u` at the start and at the end.
 
 ## Scope (decided by the orchestrator on T-DG5-BE-V3's web need, F-DG5-120)
 
