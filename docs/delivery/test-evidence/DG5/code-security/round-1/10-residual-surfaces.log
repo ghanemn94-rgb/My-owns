@@ -1,0 +1,39 @@
+=== pnpm deps:verify (04:21:04)
+    'Node.js v24.21.0\n'
+}
+
+Node.js v24.21.0
+ ELIFECYCLE  Command failed with exit code 1.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
+exit=1
+=== CI workflow files
+ls: cannot access '.github/workflows': No such file or directory
+=== AI/external adapters in config (ENV_VARS keys matching AI|LLM|OPENAI|SMTP|WEBHOOK|NOTIF)
+grep: packages/config/src/index.ts: No such file or directory
+(none)
+=== demo dev-binding + D-165 tests in integration run 2
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 58864ms
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current m
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current m
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published 
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least on
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > d
+ ✓ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (13 tests) 13052ms
+ ✓ |integration| packages/db/test/integration/demo-dev-binding.test.ts (4 tests) 14904ms
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached valu
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached valu
+ ✓ |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts (2 tests) 3880ms
+=== status
+fatal: Unable to read current working directory: No such file or directory
+0
+
+# NOTE (code-security-reviewer, appended 2026-10-18 after the run ended): `pnpm deps:verify` produced no output for
+# more than 12 minutes. It needs `npm view` against the live registry, and the sandbox has no network. It returned
+# only AFTER the disposable clone $TMPDIR/rv had been deleted (cleanup at about 04:45Z). Therefore every line after
+# "=== pnpm deps:verify" ran in a deleted directory and says nothing about the candidate:
+#   - the 'node_modules missing' / ELIFECYCLE exit=1;
+#   - "ls: cannot access '.github/workflows'";
+#   - "grep: packages/config/src/index.ts: No such file";
+#   - "fatal: Unable to read current working directory".
+# The integration excerpt in this file was copied from 07-integration-c-utf8.log. The valid surface checks are in
+# 11-residual-surfaces-offline.log, run on the intact clone at 04:33Z.
