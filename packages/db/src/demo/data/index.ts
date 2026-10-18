@@ -7,6 +7,7 @@ import type { DemoDatasetModule } from "../seed.ts";
 import { KBE_H_DATASET_MODULES } from "./finance.ts";
 import { ROAMING_ELEMENTS_MODULE, ROAMING_FOUNDATION_MODULE } from "./roaming.ts";
 import { ROAMING_CHAINS_MODULE, ROAMING_CODE_COUNTERS_MODULE } from "./roaming-chains.ts";
+import { ROAMING_GATES_MODULE } from "./roaming-gates.ts";
 import { ROAMING_STATES_MODULE } from "./roaming-states.ts";
 
 export const DEMO_DATASET_MODULES: readonly DemoDatasetModule[] = [
@@ -14,6 +15,7 @@ export const DEMO_DATASET_MODULES: readonly DemoDatasetModule[] = [
   ROAMING_ELEMENTS_MODULE,
   ...KBE_H_DATASET_MODULES,
   ROAMING_CHAINS_MODULE,
+  ROAMING_GATES_MODULE,
   ROAMING_STATES_MODULE,
   ROAMING_CODE_COUNTERS_MODULE,
 ];
