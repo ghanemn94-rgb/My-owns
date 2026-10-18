@@ -19,6 +19,7 @@ import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { EmptyState, NoPermissionState, QueryState } from "../../components/States.tsx";
 import { useVersionedSave } from "../../components/useVersionedSave.ts";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { errorMessage, fieldErrorMessage, pointerToField } from "../../lib/problem.ts";
 import { AdminConflict, LocaleSelect, diffForm } from "./common.tsx";
 
@@ -81,7 +82,7 @@ export function OrganizationsPage() {
         empty={<EmptyState title={t("admin.organizations.empty")} />}
       >
         {(orgs) => (
-          <div className="table-wrap">
+          <TableScrollRegion caption={t("admin.organizations.title")}>
             <table className="table">
               <caption className="visually-hidden">{t("admin.organizations.title")}</caption>
               <thead>
@@ -119,7 +120,7 @@ export function OrganizationsPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScrollRegion>
         )}
       </QueryState>
     </div>
@@ -394,7 +395,7 @@ function BusinessUnitsSection({ org }: { org: Organization }) {
         {(units) => {
           const byId = new Map(units.map((u) => [u.id, u]));
           return (
-            <div className="table-wrap">
+            <TableScrollRegion caption={t("admin.businessUnits.title")}>
               <table className="table">
                 <caption className="visually-hidden">{t("admin.businessUnits.title")}</caption>
                 <thead>
@@ -430,7 +431,7 @@ function BusinessUnitsSection({ org }: { org: Organization }) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollRegion>
           );
         }}
       </QueryState>

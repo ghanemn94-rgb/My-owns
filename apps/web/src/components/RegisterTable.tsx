@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { ColumnPicker, usePersistentVisibility } from "./DataTable.tsx";
 import { Icon } from "./Icon.tsx";
 import { EmptyState } from "./States.tsx";
+import { TableScrollRegion } from "./TableScrollRegion.tsx";
 
 export interface RegisterColumn<T> {
   readonly id: string;
@@ -122,12 +123,7 @@ export function RegisterTable<T>({
         <EmptyState title={emptyTitle} {...(emptyBody ? { body: emptyBody } : {})} />
       ) : (
         <>
-          <div
-            className="table-wrap"
-            tabIndex={0}
-            role="region"
-            aria-label={t("common.table.scrollRegion", { caption: caption })}
-          >
+          <TableScrollRegion caption={caption}>
             <table className="table">
               <caption className="visually-hidden">{caption}</caption>
               <thead>
@@ -195,7 +191,7 @@ export function RegisterTable<T>({
                 )}
               </tbody>
             </table>
-          </div>
+          </TableScrollRegion>
           <ClientPager
             page={current}
             pageCount={pageCount}

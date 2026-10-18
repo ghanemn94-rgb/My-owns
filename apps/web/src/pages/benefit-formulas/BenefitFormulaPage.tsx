@@ -41,6 +41,7 @@ import { entryUnit, FormulaValue, toEntry, toStored, typeLabel } from "./values.
 // T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
 import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 
 export function BenefitFormulaPage() {
   const { t } = useTranslation();
@@ -424,7 +425,7 @@ function Versions({ formula }: { formula: BenefitFormula }) {
         empty={<p className="muted">{t("benefitFormulas.versions.empty")}</p>}
       >
         {(list) => (
-          <div className="table-wrap">
+          <TableScrollRegion caption={t("benefitFormulas.versions.title")}>
             <table className="table">
               <caption className="visually-hidden">{t("benefitFormulas.versions.title")}</caption>
               <thead>
@@ -516,7 +517,7 @@ function Versions({ formula }: { formula: BenefitFormula }) {
                 })}
               </tbody>
             </table>
-          </div>
+          </TableScrollRegion>
         )}
       </QueryState>
       {validating ? (
@@ -578,7 +579,7 @@ function Calculations({ formula, canEdit }: { formula: BenefitFormula; canEdit: 
             empty={<p className="muted">{t("benefitFormulas.calc.empty")}</p>}
           >
             {(list) => (
-              <div className="table-wrap">
+              <TableScrollRegion caption={t("benefitFormulas.calc.lineage", { n: versionNo })}>
                 <table className="table">
                   <caption>{t("benefitFormulas.calc.lineage", { n: versionNo })}</caption>
                   <thead>
@@ -655,7 +656,7 @@ function Calculations({ formula, canEdit }: { formula: BenefitFormula; canEdit: 
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollRegion>
             )}
           </QueryState>
         </>

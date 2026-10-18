@@ -11,6 +11,7 @@ import {
 import { useCallback, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Icon } from "./Icon.tsx";
+import { TableScrollRegion } from "./TableScrollRegion.tsx";
 
 export interface DataTableProps<T> {
   readonly caption: string;
@@ -59,13 +60,7 @@ export function DataTable<T>({
 
   return (
     // T-DG5-FE-V1 (F-DG5-141): a horizontally scrolled table is reachable by keyboard and named by its caption.
-    <div
-      className="table-wrap"
-      tabIndex={0}
-      role="region"
-      aria-label={t("common.table.scrollRegion", { caption: caption })}
-      aria-busy={busy ? "true" : "false"}
-    >
+    <TableScrollRegion caption={caption} aria-busy={busy ? "true" : "false"}>
       <table className="table">
         <caption className="visually-hidden">{caption}</caption>
         <thead>
@@ -119,7 +114,7 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScrollRegion>
   );
 }
 
