@@ -63,6 +63,7 @@ import { InitiativeExecutionSlot } from "../actions/ExecutionPanel.tsx";
 // T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
 import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 
 const READ_ONLY_STATUSES: ReadonlySet<string> = new Set(["cancelled", "completed"]);
 
@@ -870,7 +871,7 @@ function Contributions({ initiative: i, readOnly }: { initiative: Initiative; re
               {t("portfolio.contribution.empty")}
             </p>
           ) : (
-            <div className="table-wrap">
+            <TableScrollRegion caption={t("portfolio.contribution.title")}>
               <table className="table">
                 <caption className="visually-hidden">{t("portfolio.contribution.title")}</caption>
                 <thead>
@@ -915,7 +916,7 @@ function Contributions({ initiative: i, readOnly }: { initiative: Initiative; re
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollRegion>
           )
         }
       </QueryState>

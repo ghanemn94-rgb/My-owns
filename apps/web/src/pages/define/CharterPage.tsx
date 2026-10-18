@@ -26,6 +26,7 @@ import { InlineRecordForm, type FieldSpec } from "../../components/RecordForm.ts
 import { Section, SectionNav, TextCell } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { pick } from "../../lib/methodology.ts";
 // T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
@@ -426,7 +427,7 @@ function CharterContent({ view }: { view: CharterView }) {
           </Section>
 
           <Section id="charter-scope" title={t("define.charter.scope.title")} intro={t("define.charter.scope.intro")}>
-            <div className="table-wrap">
+            <TableScrollRegion caption={t("define.charter.scope.title")}>
               <table className="table">
                 <caption className="visually-hidden">{t("define.charter.scope.title")}</caption>
                 <thead>
@@ -476,7 +477,7 @@ function CharterContent({ view }: { view: CharterView }) {
                   })}
                 </tbody>
               </table>
-            </div>
+            </TableScrollRegion>
             <p className="muted small">{t("define.charter.scope.precheckNote")}</p>
           </Section>
         </>
@@ -679,7 +680,7 @@ function VersionHistory({ current }: { current: Charter }) {
           const previous = selected ? sorted.find((v) => v.versionNo === selected.versionNo - 1) : undefined;
           return (
             <>
-              <div className="table-wrap">
+              <TableScrollRegion caption={t("define.charter.versions.title")}>
                 <table className="table table--compact">
                   <caption className="visually-hidden">{t("define.charter.versions.title")}</caption>
                   <thead>
@@ -726,7 +727,7 @@ function VersionHistory({ current }: { current: Charter }) {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableScrollRegion>
               {selected ? <VersionDiff a={previous ?? null} b={selected} /> : null}
             </>
           );
@@ -767,7 +768,9 @@ function VersionDiff({ a, b }: { a: CharterVersion | null; b: CharterVersion }) 
       {rows.length === 0 ? (
         <p className="muted">{t("define.charter.versions.noFieldChange")}</p>
       ) : (
-        <div className="table-wrap">
+        <TableScrollRegion
+          caption={t("define.charter.versions.diffTitle", { previous: a.versionNo, version: b.versionNo })}
+        >
           <table className="table table--compact">
             <caption className="visually-hidden">
               {t("define.charter.versions.diffTitle", { previous: a.versionNo, version: b.versionNo })}
@@ -793,7 +796,7 @@ function VersionDiff({ a, b }: { a: CharterVersion | null; b: CharterVersion }) 
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScrollRegion>
       )}
     </section>
   );

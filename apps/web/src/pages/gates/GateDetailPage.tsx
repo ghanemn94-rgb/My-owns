@@ -39,6 +39,7 @@ import { RecordDialog, type FieldSpec } from "../../components/RecordForm.tsx";
 import { Section } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, gateLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
@@ -1035,7 +1036,7 @@ function SubmissionHistory({ view }: { view: GateView }) {
       <QueryState query={subs} isEmpty={(l) => l.length === 0} empty={<EmptyState title={t("gates.history.empty")} />}>
         {(list) => (
           <>
-            <div className="table-wrap">
+            <TableScrollRegion caption={t("gates.history.title")}>
               <table className="table table--compact">
                 <caption className="visually-hidden">{t("gates.history.title")}</caption>
                 <thead>
@@ -1086,7 +1087,7 @@ function SubmissionHistory({ view }: { view: GateView }) {
                     ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollRegion>
             {selected !== null ? <SubmissionDetail view={view} code={code} no={selected} /> : null}
           </>
         )}
