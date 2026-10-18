@@ -1173,6 +1173,21 @@ describe("REQ-S06-003: each of the ten procedures can be launched and completed 
           201,
           "intake transformation",
         ).id as string;
+        // F-DG5-101 (D-170): a step's output must be a record the acting person may read. The organization Lead who
+        // completes capture_intake (TL does not inherit downward) is staffed on T, so it can read the T it names.
+        ok(
+          await send("POST", "/api/v1/role-assignments", {
+            session: l.admin,
+            body: {
+              userId: tlOrg.id,
+              roleCode: "TL",
+              scope: { type: "transformation", id: t },
+              reason: "Synthetic QA: the intake's organization Lead reads the transformation it captures",
+            },
+          }),
+          201,
+          "intake transformation: the organization Lead reads T",
+        );
         // Staff T natively before its Sponsor approval is requested (Rule A routes it by T's role mappings).
         const sp = await grantedActor(api, l.admin, w.orgA.id, t, "SP");
         ok(
