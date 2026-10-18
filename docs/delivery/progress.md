@@ -31,19 +31,17 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
-- **DG5 (P5 "Configuration automation and outputs") is FIXING after review round 2** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-172).
-  - **Round 2** (candidate `c4f70a80…`, source `d3528fc`):
-    - domain FAIL;
-    - code-security PASS;
-    - qa PASS.
+- **DG5 (P5 "Configuration automation and outputs") is REVIEWING round 3** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-173).
   - **Closed and verified:** F-DG5-100, 101, 121, 140 and 141.
-  - **Open:** F-DG5-120 (the demo's G4), F-DG5-122 (G4 readiness on an empty portfolio), F-DG5-142 (non-P5 table regions; DG6 row) and F-DG5-143 (an order-dependent e2e).
+  - **Repaired in wave X, to be verified in round 3:** F-DG5-120, 122, 142 and 143 (D-172, D-173).
+  - **Re-frozen for round 3:** candidate `sha256:fc93b239…` (2187 files, source `bbd6294`). The manifest is `docs/delivery/candidates/DG5/fc93b239904677e5.manifest.json`.
 - **Next action:**
-  1. Repair wave X (D-172), with a monitor armed:
-     - `T-DG5-BE-X1`: F-DG5-122;
-     - `T-DG5-BE-X2`: F-DG5-120, a real G4 portfolio in the demo;
-     - `T-DG5-FE-X1`: F-DG5-142 and 143.
-  2. Then T-DG5-ARCH-R5 (ADR-0035, ADR-0050), the merged-tree verification, the next decision, re-freeze and round 3.
+  1. The three round-3 reviews run in the main checkout, with a monitor armed and no worktree or install activity (D-082):
+     - `T-DG5-REV-DOM-R3`;
+     - `T-DG5-REV-SEC-R3`;
+     - `T-DG5-REV-QA-R3`.
+     The assignments are in `docs/delivery/assignments/DG5/round-3/`.
+  2. Import the findings and verifications (`--round 3`).
   3. Before the release-auditor runs, get the user's decision on the D-140 auditor-sidecar ordering fix (options 1–3; 1 is recommended).
 ## DG2 scope (P2 — diagnose, define and design)
 
