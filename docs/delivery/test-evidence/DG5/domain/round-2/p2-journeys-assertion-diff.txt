@@ -1,0 +1,39 @@
+diff --git a/apps/web/e2e/p2-journeys.spec.ts b/apps/web/e2e/p2-journeys.spec.ts
+index 2e2e128..7c369f6 100644
+--- a/apps/web/e2e/p2-journeys.spec.ts
++++ b/apps/web/e2e/p2-journeys.spec.ts
+@@ -700,6 +700,9 @@ test("Define → G2: activate a KPI, pass the good outcome test, add a guardrail
+   browser,
+   playwright,
+ }, info) => {
++  // F-DG5-121 (D-170): measured 25.4-27.9 s unloaded and 37.2 s under review load (load 9-12), against the 30 s
++  // default; 90 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing asserted changes.
++  test.setTimeout(90_000);
+   const lang = langOf(info);
+   const foreign = trackRequests(page);
+   const lead = await apiSession(playwright, "dev.lead");
+@@ -1000,6 +1003,9 @@ test("Team: the six governance roles with their B0018 accountability; the lead a
+ test("read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered", async ({
+   page,
+ }, info) => {
++  // F-DG5-121 (D-170): measured 16.9-18.1 s unloaded (under half the 30 s default as headroom) and 26.7 s under review
++  // load; 60 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing asserted changes.
++  test.setTimeout(60_000);
+   const lang = langOf(info);
+   const foreign = trackRequests(page);
+   await signIn(page, lang, "dev.auditor");
+diff --git a/apps/web/e2e/p4-gates-closure.spec.ts b/apps/web/e2e/p4-gates-closure.spec.ts
+index 878a0ea..a408e07 100644
+--- a/apps/web/e2e/p4-gates-closure.spec.ts
++++ b/apps/web/e2e/p4-gates-closure.spec.ts
+@@ -231,6 +231,10 @@ test("1. G5: missing items listed; the Lead requests an exception; the Sponsor a
+   await expect(decide).toBeHidden();
+   await expect(spRow.locator("[data-state='covering']")).toBeVisible();
+   await expect(spRow).toContainText("Synthetic: weekly manual KPI check by the Lead.");
++  // T-DG5-FE-V1B (D-170): the readiness line says, in the same line, that an accepted exception covers an output.
++  const line = spUi.page.locator("#readiness [data-readiness]");
++  await expect(line).toHaveAttribute("data-readiness-covered", "1");
++  await expect(line).toContainText(lang === "en" ? "covered by accepted exceptions" : "استثناءات مقبولة");
+   await shot(spUi.page, lang, "p4-gates-03-exception-accepted");
+   await expectAccessible(spUi.page, lang, "p4-gates-03-exception-accepted");
+   await spUi.close();
