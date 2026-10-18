@@ -1,0 +1,70 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvddnw4f_c0dfc232 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/procedures/output-read-authorization.test.ts (3 tests | 2 failed) 1352ms
+   × F-DG5-101: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid) 340ms
+     → expected [ 200, undefined ] to deeply equal [ 422, …(1) ]
+   ✓ F-DG5-101: an intake claims a transformation its actor cannot read > positive: TL1 names a transformation it can read; it is linked and the later steps adopt it 141ms
+   × F-DG5-101: every output adapter requires read on the named record (charter) > draft_charter naming a charter the actor can no longer read is refused at commit time; nothing is linked 226ms
+     → expected [ 200, undefined, undefined ] to deeply equal [ 422, …(2) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/output-read-authorization.test.ts > F-DG5-101: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+AssertionError: expected [ 200, undefined ] to deeply equal [ 422, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   422,[39m
+[32m-   "procedure_step.output_record_invalid",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/procedures/output-read-authorization.test.ts:116:40
+    114| 
+    115|     // The reviewer's final assertion (kept).
+    116|     expect([c1.status, c1.body?.code]).toEqual([422, "procedure_step.o…
+       |                                        ^
+    117| 
+    118|     // Refused exactly like an unknown record: the same body text, not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/output-read-authorization.test.ts > F-DG5-101: every output adapter requires read on the named record (charter) > draft_charter naming a charter the actor can no longer read is refused at commit time; nothing is linked
+AssertionError: expected [ 200, undefined, undefined ] to deeply equal [ 422, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   422,[39m
+[32m-   "procedure_step.output_record_invalid",[39m
+[32m-   "The linked record is not of the expected type or not in this scope.",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/procedures/output-read-authorization.test.ts:195:55
+    193| 
+    194|     const c2 = await complete(tl1.session, id, "draft_charter", c1.bod…
+    195|     expect([c2.status, c2.body.code, c2.body.detail]).toEqual([422, IN…
+       |                                                       ^
+    196|     expect(JSON.stringify(c2.body)).not.toContain(charter.id);
+    197|     expect(await outputLinks(id)).toEqual([{ record_type: "transformat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  05:21:12
+   Duration  13.90s (transform 4.78s, setup 0ms, collect 9.02s, tests 1.35s, environment 0ms, prepare 116ms)
+
+exit=1

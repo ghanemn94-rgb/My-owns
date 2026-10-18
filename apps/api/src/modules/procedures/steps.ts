@@ -89,6 +89,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { inputFieldAttributes, inputSchemaOf } from "./definitions.ts";
+import { requireNamedRecordRead } from "./outputs/kit.ts";
 
 // ------------------------------------------------------------------------------------------------ refusals (§10)
 
@@ -1339,6 +1340,8 @@ async function completeStep(tx: Tx, request: FastifyRequest): Promise<InstanceBu
       ).recordId;
     } else if (sd.output_mode === "link" && (body.outputRecordId ?? null) !== null) {
       recordId = body.outputRecordId!;
+      // F-DG5-101 (D-170): the kit's read rule also holds when no adapter verifies the record.
+      await requireNamedRecordRead(tx, acting.principal, sd.output_record_type, recordId);
     } else {
       throw refusal("procedure_step.output_required");
     }
