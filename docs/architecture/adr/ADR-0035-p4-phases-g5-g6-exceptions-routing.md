@@ -304,3 +304,62 @@ Source: FE-F handback §5 item 1. Nothing above is removed. Where this amendment
 **What it reveals.** A transformation reader learns the codes and names of the organization's active business units. That is the set a G5 scope of that transformation may name. Nothing else about a unit is returned, and no record or figure of another unit's transformations is reachable through it.
 
 No schema, migration, audit or code change. The operation is pending in `apps/api/test/support/p4-pending-arch-r3.ts` until a backend task routes it in `apps/api/src/modules/workflows/scale.ts`.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R5; D-172, F-DG5-122): G4 readiness over an empty approved portfolio
+
+Sources: D-172 (F-DG5-122, decided) and the T-DG5-BE-X1 handback §2 and §6, checked against the merged tree (`c184328`, which holds BE-X1 and BE-X2). Nothing above is removed. Where this amendment and ADR-0021 §7 (the G4 criteria) or §4 above differ, this amendment wins. No migration, contract, schema or permission change: `Warning.code` is a free string in the contract. Every `file:line` below is in the merged tree.
+
+### E1. The gap (F-DG5-122)
+
+ADR-0021 §7 defines seven G4 criteria, in whole or in part, "for every in-scope initiative". The in-scope set is the **approved portfolio**: the initiatives of the transformation with status `selected`, `funded` or `launched` (`G4_SCOPE_STATUSES`, `apps/api/src/modules/portfolio/gate-facts.ts:28`, read at `:67`). Over an empty set each of those loops listed no missing item, so the criterion read **Complete vacuously**. Only `g4.initiative_cards` refused an empty portfolio (`g4.portfolio_empty`). One accepted exception on Initiative cards (§4: one criterion) therefore turned Roadmap, Owners, Funding, Capacity, Prioritization and the per-initiative parts of Business cases and Finance validation green with no evidence. That held both live and in the frozen submission.
+
+### E2. The rule: a criterion over the approved portfolio fails closed when the portfolio is empty
+
+- **Which criteria.** Every G4 criterion whose subject set is the approved portfolio: `g4.business_cases`, `g4.finance_validation`, `g4.prioritization`, `g4.roadmap`, `g4.owners`, `g4.funding` and `g4.capacity`.
+- **Empty means loaded and empty.** The portfolio facts were read, and no initiative of the transformation is `selected`, `funded` or `launched`. The criterion is then `incomplete`, with exactly one added missing item that names the cause:
+
+  | Code | English label (exact) | Arabic label | Pointer |
+  |---|---|---|---|
+  | `g4.no_approved_initiative` | No initiative in the approved portfolio | لا توجد مبادرة في المحفظة المعتمدة | `/initiatives` |
+
+  Evidence: `apps/api/src/modules/workflows/g4.ts:255–259` (`NO_APPROVED_INITIATIVE`, `emptyPortfolio`); the labels at `apps/web/src/i18n/en/gates.json:121` and `apps/web/src/i18n/ar/gates.json:121`, rendered by the gate page through the existing `missingItems.<code>` lookup. The Arabic label, like the rest of the catalogue's Arabic, is provisional.
+- **One shared code**, not one per criterion. The criterion key already says which criterion it is (`/criteria/<key>` in the 422, and the criterion's row on the gate page). The code names the cause.
+- **Per criterion** (where the item goes, and what else is still listed):
+
+  | Criterion | Transformation-level part (unchanged) | Per-initiative part on an empty portfolio | Evidence |
+  |---|---|---|---|
+  | `g4.business_cases` | `g4.business_case_missing`, or each `g4.business_case_section_missing` of the transformation case | `g4.no_approved_initiative`, listed after the transformation-level items | `g4.ts:294–301` |
+  | `g4.finance_validation` | `g4.finance_validation_missing` for the transformation case's baseline and for each of its benefit lines' formula versions | `g4.no_approved_initiative`, listed after them. An initiative case of an initiative outside the portfolio never counts (`g4.ts:327`, `:332`) | `g4.ts:326–343` |
+  | `g4.prioritization` | none | No current ranking under the active weight set: `g4.prioritization_missing` **and** `g4.no_approved_initiative`. A current ranking over no in-scope initiative: `g4.no_approved_initiative` | `g4.ts:353–366` |
+  | `g4.roadmap` | `g4.schedule_conflict` and `g4.schedule_unknown` are still listed | `g4.no_approved_initiative` first | `g4.ts:378–387` |
+  | `g4.owners` | none | `g4.no_approved_initiative` | `g4.ts:396–402` |
+  | `g4.funding` | none | `g4.no_approved_initiative` | `g4.ts:411–417` |
+  | `g4.capacity` | `g4.capacity_conflict` (including Unknown capacity) is still listed | `g4.no_approved_initiative` first | `g4.ts:428–439` |
+
+- **Complete needs both parts.** `g4.business_cases` and `g4.finance_validation` are complete only if the transformation-level part **and** the per-initiative part hold, and the per-initiative part holds only over a **non-empty** portfolio. A complete, Finance-validated transformation case is not enough on its own (unit test `g4.test.ts:189`ff.; integration test `g4-empty-portfolio.test.ts:169`).
+- **What does not change:**
+  - **Not loaded stays NOT_LOADED.** Facts that were not read (`undefined`) keep each criterion's existing NOT_LOADED item, and never add `g4.no_approved_initiative` (`g4.ts:292–293`, `:319–325`, `:351–352`, `:376–377`, `:395`, `:410`, `:426–427`).
+  - **`g4.initiative_cards`** keeps its own item `g4.portfolio_empty` ('Initiative cards') for an empty or unloaded portfolio (`g4.ts:267–268`). It does not also carry `g4.no_approved_initiative`.
+  - **A non-empty portfolio** gives exactly the ADR-0021 §7 items: `emptyPortfolio` returns `[]` (`g4.ts:258–259`).
+
+### E3. The same rule live and frozen
+
+The live gate view and the submission run the same evaluators, registered once (`apps/api/src/modules/workflows/criteria.ts:258–260`, `EVALUATORS` from `G4_EVALUATORS`):
+
+- **Live** (`GET /transformations/{id}/gates/G4`): `evaluateGate` at `apps/api/src/modules/workflows/gates.ts:426`. The readiness counts and `canSubmit` follow from it (`:435–451`).
+- **Frozen** (`submitGate`): the criteria are re-evaluated inside the submission transaction (`gates.ts:913–915`). A submission with an incomplete mandatory criterion that no exception covers is refused with the unchanged 422 `gate_criteria_incomplete`, one `errors[]` entry per criterion at `/criteria/<key>` (`gates.ts:916–940`), so `g4.no_approved_initiative` appears literally in the joined message of each affected criterion. When every incomplete criterion is covered, each is frozen `incomplete` with its own `gate_exception_id` (`gates.ts:1076`), and the snapshot's `criteria[].missing` keeps `g4.no_approved_initiative`. The snapshot's `g4.initiatives`, `fundingDecisionIds` and `committedDemandIds` are then `[]` (`g4.ts:453`ff.).
+
+Evidence: `apps/api/test/integration/workflows/g4-empty-portfolio.test.ts:168`ff. Test 1 (`:169`) checks the live view: with an accepted exception on Initiative cards only, the seven criteria read `incomplete` and the submission is 422 at exactly those seven pointers. Test 2 (`:196`) checks the frozen submission: with one accepted exception per incomplete criterion, the snapshot, the `gate_submission_criterion` rows and the criteria read all freeze the seven as `incomplete`, each with its own exception. Both tests failed on the unfixed `g4.ts` (BE-X1 handback §2, `repro-failing-before.log`).
+
+### E4. An exception still covers one criterion only
+
+The §4 rules are unchanged (`apps/api/src/modules/workflows/gate-exceptions.ts`, untouched by BE-X1):
+
+- an exception names one `criterion_key`, and coverage is looked up per key (`gate-exceptions.ts:207–223`, `byKey`);
+- an accepted exception on `g4.initiative_cards` covers Initiative cards only. On an empty portfolio it no longer turns any other criterion green, because each of the seven now carries its own missing item;
+- a G4 submission on an empty portfolio therefore needs one accepted, unexpired exception **per** incomplete criterion: eight in all (Initiative cards plus the seven), as for any incomplete mandatory criterion (integration test 2, `g4-empty-portfolio.test.ts:196`);
+- expiry, revoke, the decision-time checks (§4, A1) and the authority to decide an exception are unchanged.
+
+### E5. Not changed
+
+No migration, no contract change (no enumeration of G4 missing-item codes exists in `docs/api/openapi.yaml` or the zod mirrors; BE-X1 handback §5), no new audit action, no permission change. The demo's G4 does not rely on this rule: it rests on a real approved portfolio with no exception (ADR-0050 amendment D11–D13). G4 is a business approval inside the product. Nothing here grants or implies a business, Finance or IT approval, and it never implies an engineering gate DG0–DG7. Requirement rows: REQ-PB-019 (and REQ-S04-012/013 for the exception rule).
