@@ -1,0 +1,487 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 2,
+  "candidate_id": "sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e",
+  "source_commit": "d3528fcf0dbf1df5f91456c82f5ce188fdee7c75",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-SEC-R2-code-security-reviewer-20261018T111224Z-d5856a6f",
+    "session_id": "d5856a6f-83f2-43ac-958b-e1900d303408"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session d5856a6f (task T-DG5-REV-SEC-R2). I authored no implementation in the DG5 scope.\n\nAuthorship of the round-2 repair delta:\n- BE-V1, BE-V2, BE-V2B, BE-V2C and BE-V3: backend-workflow-engineer;\n- FE-V1 and FE-V1B: frontend-ux-engineer;\n- ARCH-R4: solution-architect;\n- the a02 fixture hunk 6c7f54b (in a qa-authored test), D-170, D-171 and the freeze: delivery-orchestrator.\n\nIn round 1 I only reported F-DG5-100 and F-DG5-101; I did not write their repairs.\n\nMy only writes are:\n- evidence under docs/delivery/test-evidence/DG5/code-security/round-2/;\n- this record and its verifications sidecar.\nI also removed two empty .claude/.cc-writes directories that the harness had created in my evidence directories.\n\nEvery build, static check and test run used a disposable, complete clone ($TMPDIR/rv: git clone --shared, non-shallow, 1472 commits, at freeze commit b147dda), a private copy of the pnpm store and disposable PostgreSQL clusters. My reproduction files were copied into the clone, run and deleted. The clone's git status was clean afterwards, and the clone and the store copy were deleted. The validators and candidate.mjs ran read-only in the repository tree.\n\nI formed my verdict before reading any other reviewer's round-2 record, and I have not read one. HEAD stayed at b147dda for my whole run."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-2/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-093",
+    "REQ-S01-002",
+    "REQ-S03-007",
+    "REQ-S04-011",
+    "REQ-S05-001",
+    "REQ-S05-002",
+    "REQ-S05-006",
+    "REQ-S06-001",
+    "REQ-S06-002",
+    "REQ-S06-004",
+    "REQ-S06-005",
+    "REQ-S06-006",
+    "REQ-S06-007",
+    "REQ-S06-008",
+    "REQ-S06-009",
+    "REQ-S06-010",
+    "REQ-S07-016",
+    "REQ-S08-005",
+    "REQ-S10-013",
+    "REQ-S10-015",
+    "REQ-S12-001",
+    "REQ-S12-002",
+    "REQ-S12-003",
+    "REQ-S12-004",
+    "REQ-S12-012",
+    "REQ-S12-015",
+    "REQ-S12-020",
+    "REQ-S12-021",
+    "REQ-S12-022",
+    "REQ-S12-025",
+    "REQ-S12-026",
+    "REQ-S13-005",
+    "REQ-S13-006",
+    "REQ-S13-007",
+    "REQ-S13-010",
+    "REQ-S15-004",
+    "REQ-S16-010",
+    "REQ-S16-012",
+    "REQ-S16-015",
+    "REQ-S16-021",
+    "REQ-S18-001",
+    "REQ-S18-003"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R2-00-candidate-identity",
+      "procedure": "Confirm HEAD. Recompute the candidate ID in the repository tree and in a complete (non-shallow) disposable clone at the freeze commit: the working tree, the committed tree of source d3528fc (--ref), and --diff against the frozen manifest. Confirm that the freeze commit differs from d3528fc only in docs/delivery.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG5; git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv && git checkout b147dda && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG5 [--ref d3528fc | --diff]; git diff --name-only d3528fc HEAD",
+      "environment": "Node 24.21.0; repository HEAD b147ddaa2783c7ffcb318b8e25a004c03470bf0f; clone $TMPDIR/rv at b147dda",
+      "expected": "Every computation gives sha256:c4f70a80…f06e over 2183 files. The clone is not shallow. HEAD differs from d3528fc only in docs/delivery records.",
+      "actual": "Every computation gives sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e over 2183 files, exit 0:\n- the repository tree;\n- the clone's working tree;\n- --ref d3528fc;\n- --diff, with no added, removed or changed entry.\nThe clone: shallow=false, 1472 commits, status clean, and it is a full checkout this round (no sparse exclusions; the disk had 20 GB free).\nHEAD b147dda differs from d3528fc in six docs/delivery files only: the three round-2 assignments, the manifest, progress.md and stages.json.\nUnlike round 1, there was no error in this check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/00-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-01-offline-install",
+      "procedure": "Install the workspace offline from the frozen lockfile using a private copy of the local pnpm store. Re-run the install after the build (in 02) so the mth-db bin links are created.",
+      "command": "cp -a /root/.local/share/pnpm/store/v10 $TMPDIR/pstore/v10; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Clone $TMPDIR/rv; Node 24.21.0; pnpm 10.33.0; no network",
+      "expected": "Exit 0 with the lockfile unchanged.",
+      "actual": "Exit 0 ('Done in 2.2s').\n- The two WARN lines 'Failed to create bin … mth-db … dist/cli.js ENOENT' (apps/api and apps/worker) come from the first install, because the packages were not built yet. This is the same as round 1.\n- The re-install after `pnpm -r build` exited 0 with no warning (02-static-node24.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/01-install.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-02a-build-typecheck",
+      "procedure": "Build every package, then run the workspace typecheck.",
+      "command": "pnpm -r build; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10; pnpm -r typecheck",
+      "environment": "Clone $TMPDIR/rv at b147dda; Node 24.21.0; load average 3-7",
+      "expected": "Exit 0 for each.",
+      "actual": "build exit 0, re-install exit 0, typecheck exit 0.\nThe only advisory is Vite's '(!) Some chunks are larger than 500 kB after minification' in the apps/web build. It is a size notice, not an error, and it is unchanged in kind from earlier rounds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-02b-lint",
+      "procedure": "Run the workspace ESLint with zero warnings allowed.",
+      "command": "pnpm lint",
+      "environment": "Clone at b147dda; Node 24.21.0",
+      "expected": "Exit 0.",
+      "actual": "Exit 0 ('eslint . --max-warnings=0', no output).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-02c-openapi-lint-and-size",
+      "procedure": "Lint the OpenAPI contract and count its operations.",
+      "command": "pnpm openapi:lint; node -e '<count operationId lines in docs/api/openapi.yaml>'",
+      "environment": "Clone at b147dda; Node 24.21.0",
+      "expected": "PASS with 846 operations. The ARCH-R4 diff is description text only.",
+      "actual": "'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations', exit 0. The independent count is 846 (08-scans.log). The 601d7d2..d3528fc diff of openapi.yaml changes 7 lines, all description and summary text (decideConfigReview and the step-completion schema). No operation, code or shape changed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-02d-no-cdn",
+      "procedure": "Run the portability scan for public CDNs.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Clone at b147dda; Node 24.21.0",
+      "expected": "Exit 0.",
+      "actual": "'PASS no-cdn: scanned apps, packages', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-02e-format",
+      "procedure": "Run the Prettier check. The clone holds no untracked unreadable file, unlike the main tree's CLAUDE.local.md that BE-V2C disclosed.",
+      "command": "pnpm format:check",
+      "environment": "Clone at b147dda; Node 24.21.0",
+      "expected": "Exit 0.",
+      "actual": "'All matched files use Prettier code style!', exit 0. The clone's git status was clean after every static check (status_lines=0).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-03-unit-node24",
+      "procedure": "Run the full unit suite (unit-node, unit-web, unit-formula-nocodegen) with LANG, LC_ALL and LC_CTYPE unset.",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE pnpm test",
+      "environment": "Clone $TMPDIR/rv; Node 24.21.0; load average about 7-11 (three concurrent reviews)",
+      "expected": "Exit 0 with no failed test.",
+      "actual": "Exit 0.\n- unit-node: 144 files, 2335 passed.\n- unit-web: 90 files, 1708 passed. Round 1 had 88 files and 1689 tests; the difference is FE-V1's new table-regions, readiness-covered and styles tests.\n- unit-formula-nocodegen: 3 files, 259 passed and 2 skipped. The skips are fuzz.test.ts's it.skipIf(NOCODEGEN) cases (lines 600 and 833), by design.\nThere are 18 stderr blocks, the same set D-169 and D-171 disclose and round 1 accepted, and I accept them again:\n- 12 are the duplicate-key warnings in kpiUnit.test.tsx (2) and percentKpi.test.tsx (10), a fixture that reuses one id;\n- 4 are 'raci.deliverables is not iterable' and \"reading 'length'\" in extension-fields.test.tsx, where stubs return no deliverables, so the body falls to the router error boundary and the test asserts the header only;\n- 1 is the missing-key warning in extension-hosts-twelve.test.tsx: the charter host does not stub the North Star read (traced in round 1);\n- 1 is in branding.test.ts: 8 Ajv 'unknown format ignored' lines (the contract mirror compiles without ajv-formats) and one FastifyWarning FSTDEP022 deprecation notice.\nNo test failed, was flaky or hit a hook timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/03-unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-04-unit-node22",
+      "procedure": "Run the same full unit suite on Node 22, with the locale unset.",
+      "command": "PATH=/opt/node22/bin:$PATH env -u LANG -u LC_ALL -u LC_CTYPE pnpm test",
+      "environment": "Clone $TMPDIR/rv; Node 22.22.2; load average about 11",
+      "expected": "Exit 0 with no failed test.",
+      "actual": "Exit 0. The counts are identical to Node 24: unit-node 2335/2335 (144 files), unit-web 1708/1708 (90 files), and unit-formula-nocodegen 259 passed + 2 skipped (the same NOCODEGEN skips). The same 18 stderr blocks appear, with the same files and counts and one FSTDEP022, all explained in SEC-R2-03. No failed, flaky or timed-out test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/04-unit-node22.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-05-integration-locale-unset",
+      "procedure": "Run the whole integration project on a disposable PostgreSQL with LANG, LC_ALL and LC_CTYPE unset. It includes contract/contract.test.ts, migrations 0001→0097 on a fresh database, and the V1 regression files.",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE QA_PG_PORT=26510 MTH_PORT_POOL=26511-26549 bash tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "Clone $TMPDIR/rv at b147dda (status clean at start); Node 24.21.0; PostgreSQL 16.13 (UTF8, lc_collate C) on port 26510 (attempt 1); 12:00:21-12:55:17Z; load average about 5-12",
+      "expected": "Exit 0. Every file passes. The only skip is the D-159/D-169 presentation runIf case.",
+      "actual": "Exit 0. 'Test Files 317 passed (317)', 'Tests 3053 passed | 1 skipped (3054)', in 3289.7 s. This equals the D-171 merged-tree count.\n- contract/contract.test.ts passed (83 tests).\n- 89 migration files (0001-0097) were applied to a fresh database.\n- The V1 files passed: studio-coauthor-review (9), rule-coauthor-review (4), output-read-authorization (3), evidence-link-read-authorization (4), demo-gate-history (2), and catalogue (29, including the 0097 trigger list). a02-a21-complete-lifecycle passed 13/13, and intake-adoption 12/12.\n- The skip is governance/presentation.test.ts (9 tests | 1 skipped), the runIf(!hasMeetingPackAssembler) case.\n- Every error-like line in the log is a designed negative-path probe of a passing test, the same set as round 1: request-io R6a-R6e (stalled or aborted bodies, 408), connection-hygiene (abort mid-upload, stall, shutdown), the BE17 'db-econnreset' probe (status 500 with ECONNRESET is that test's injected database reset), and the BE18 Q7 IdP-unavailable login (302 to /login?error=idp_unavailable).\nNo failed, flaky or timed-out test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-06-integration-c-utf8",
+      "procedure": "Run the whole integration project again with LANG=C.UTF-8 and LC_ALL=C.UTF-8. The first attempt was stopped by the harness, so it is kept, labelled and re-run alone.",
+      "command": "LANG=C.UTF-8 LC_ALL=C.UTF-8 QA_PG_PORT=26560 MTH_PORT_POOL=26561-26599 bash tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "Clone $TMPDIR/rv at b147dda (status clean at start); Node 24.21.0; PostgreSQL 16.13 (UTF8, C) on port 26560 (attempt 1); the re-run took 13:45-14:41:04Z with load average about 4-8",
+      "expected": "Exit 0, with the same counts as the locale-unset run.",
+      "actual": "RE-RUN (06-integration-c-utf8.log): exit 0. 'Test Files 317 passed (317)', 'Tests 3053 passed | 1 skipped (3054)', in 3358.5 s.\n- contract.test.ts passed (83 tests).\n- 89 migration files (0001-0097) were applied to a fresh database.\n- The skip is the same presentation runIf case.\n- The only error-like lines are the same designed probes as in SEC-R2-05.\n\nDISCLOSED FIRST ATTEMPT (06a-integration-c-utf8-killed.log, kept with a dated note):\n- it ran inside one background shell chain with both unit runs and integration run 1, started at 11:35Z;\n- the agent harness stopped that chain at its 2-hour background-task limit, at about 205 of 317 files;\n- up to that point it had zero failed tests ('×' count 0);\n- its PostgreSQL process was gone, and I deleted its leftover scratch directory before the re-run.\nIt is not a result, neither pass nor fail. It is superseded by the complete re-run of the same command.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/06-integration-c-utf8.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/06a-integration-c-utf8-killed.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-07-validators",
+      "procedure": "Run the gate validators read-only in the repository tree.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4; --historical --stage DG3; --historical --stage DG2; --historical --stage DG1; --register DG5",
+      "environment": "Repository tree at b147dda; Node 24.21.0",
+      "expected": "PASS for each, exit 0.",
+      "actual": "Every command exited 0:\n- PASS gate DG4 (historical);\n- PASS gate DG3 (historical);\n- PASS gate DG2 (historical);\n- PASS gate DG1 (historical);\n- PASS register rules at DG5.\nrequirements.csv is byte-identical between 601d7d2 and d3528fc.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/07-validators.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-08-F-DG5-100-repro-unchanged",
+      "procedure": "Re-run my round-1 reproduction studio-coauthor-review.test.ts UNCHANGED (its sha256 is recorded next to the copy), copied into the clone as apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts and then deleted.",
+      "command": "QA_PG_PORT=26500 MTH_PORT_POOL=26501-26549 bash tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts",
+      "environment": "Clone $TMPDIR/rv; Node 24.21.0; disposable PostgreSQL 16.13 on port 26500; 89 migrations on a fresh database",
+      "expected": "The test's final assertion holds: the co-author's decision is 403 config_review.self_review.",
+      "actual": "1/1 passed, exit 0.\n- The co-author's PUT/PUT/PATCH give 200/200/200, with updatedBy = co-author.\n- The co-author's review decision gives 403 config_review.self_review.\n- The co-author's publish gives 422 config_version.review_required.\nIn round 1 the same file gave 200 approved and 200 published.\nThe 3 'npm warn Unknown project config' lines in the log come from npx reading the repository's pnpm-only .npmrc keys. They are environmental and harmless.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-007"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-coauthor-review.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/copies.sha256",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-09-F-DG5-100-every-write-path-and-db-backstop",
+      "procedure": "Probe adversarially beyond the product's tests (repro/studio-contributor-paths.test.ts):\n- (a)+(b) an element REMOVE by a co-author, later fully undone by the creator;\n- (c) a change-summary-only PATCH;\n- (d) the scoring-defaults kind writer, PUT /scoring-defaults;\n- (e) a procedure definition REMOVE;\n- the runtime role trying to switch off or circumvent the backstop: DISABLE TRIGGER, session_replication_role, DELETE of a contributor row, and a direct UPDATE decision;\n- a non-contributor TO approving and publishing.\nAlso review the writers of every draft-content table, migration 0097, and the decide and route code.",
+      "command": "cp repro/studio-contributor-paths.test.ts apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts; QA_PG_PORT=26500 … with-pg.sh npx vitest run --configLoader runner --project integration <file>; rm <file>; grep -rnE '(insertInto|updateTable|deleteFrom)\\(\"(methodology_*|procedure_*definition|config_review_policy)\"' apps/api/src",
+      "environment": "Clone $TMPDIR/rv; Node 24.21.0; disposable PostgreSQL 16.13 on port 26500 (current_user mth_app confirmed by the test)",
+      "expected": "Every writer is recorded as a contributor, and every contributor's decision is 403 config_review.self_review. The runtime role cannot disable or circumvent the guard. A non-contributor TO still approves, and the draft publishes.",
+      "actual": "5/5 passed, exit 0.\n- (a)+(b) The co-author's element remove gives 200, and the co-author is recorded. After the creator restores the element, the element's and the version's updated_by both name the creator, but the remover is still refused (403). A non-contributor TO then approves (200) and the creator publishes (200 published).\n- (c) The summary-only PATCH writer is refused (403 on request_changes).\n- (d) PUT /scoring-defaults by the co-author gives 200, the co-author is recorded, and their decision is 403.\n- (e) A procedure remove by the co-author gives 200, and the co-author is recorded.\n- The database probe:\n  - DISABLE TRIGGER gives 'must be owner of table config_review_request';\n  - SET LOCAL session_replication_role gives 'permission denied to set parameter';\n  - DELETE of a contributor row gives 'permission denied for table methodology_version_contributor';\n  - a direct decision gives config_review_request_reviewer_not_contributor;\n  - the review stays pending with decided_by NULL.\n\nSource review:\n- The only writers of methodology_version, methodology_element, procedure_definition and procedure_step_definition are drafts.ts, elements.ts, scoring-defaults.ts, checks.ts, reviews.ts, publish.ts and procedures/definitions.ts. Every one stamps updated_by with the actor.\n- No DELETE path exists on these tables (removal sets removed=true). The form-schema and health-scheme kinds are methodology_element rows.\n- 0097 adds an immediate trigger (row actor) and a deferred one (the write's audit event) on all four tables and on automation_rule_version. It introduces no SECURITY DEFINER, DISABLE TRIGGER or replication setting (08-scans.log).\n- On rule versions, submit clears reviewed_by (lifecycle.ts:230), so the 0097 rule guard cannot misfire on a withdraw or resubmit.\n- Review tasks skip every author: revision-impact.ts:310, reviews.ts:291, lifecycle.ts:258.\n\nThe 3 'npm warn' lines are the same environmental npx notice as in SEC-R2-08.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-007",
+        "REQ-S06-010",
+        "REQ-PB-093"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/studio-contributor-paths.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-contributor-paths.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log",
+        "packages/db/migrations/0097_p5_config_review_contributors.sql"
+      ]
+    },
+    {
+      "id": "SEC-R2-10-F-DG5-101-repro-unchanged-and-every-adapter",
+      "procedure": "Re-run my round-1 reproduction intake-foreign-transformation.test.ts UNCHANGED. Then review every output adapter, the generic link, the null-principal path, the evidence link and the launch-task output link, against kit.ts, steps.ts, outputs/index.ts and the 0069 link guard.",
+      "command": "cp round-1/repro/intake-foreign-transformation.test.ts apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts; QA_PG_PORT=26500 … with-pg.sh npx vitest run --configLoader runner --project integration <file>; rm <file>; grep -n 'outputAdapter(\\|produce' apps/api/src/modules/procedures/outputs/*.ts",
+      "environment": "Clone $TMPDIR/rv; Node 24.21.0; disposable PostgreSQL 16.13 on port 26500",
+      "expected": "422 procedure_step.output_record_invalid with nothing linked or adopted, and every adapter path enforcing the read rule.",
+      "actual": "Reproduction 1/1 passed, exit 0.\n- TL1 GET X gives 404, and TL1's capture_intake naming X gives 422 procedure_step.output_record_invalid.\n- The steps are unchanged: capture_intake active, draft_charter and confirm_sponsor pending, every transformation_id null. There are no links.\n- TL2 GET of TL1's intake gives 404.\nIn round 1 the same file gave 200, with X adopted.\n\nEvery adapter:\n- All 12 (transformation, charter, baseline, kpi_actual, tom_canvas_cell, ranking_snapshot, gate_submission, change_request, finance_validation, decision, bau_handover, evidence) are outputAdapter(...) instances of kit.ts:243, and no other `produce:` exists in src.\n- produce calls requireOutputRead (kit.ts:249) in every mode, before producedHere or any link. It checks transformation.read on the record's own transformation, on the principal reloaded in the completing transaction.\n- The generic link (`approval`, whose transformation_id is NOT NULL, 0031:38) calls requireNamedRecordRead (steps.ts:1344). Its sql.table name comes from the CHECK-constrained output_record_type (0069:101).\n- principal null exists only in onApprovalOutcome, which names no record.\n- The evidence link (steps.ts:1428-1439) applies the read rule to every instance. The 0069 guard still pins records to the instance's transformation.\n- The launch-task output (launch/tasks.ts:366-371) accepts only a record of the writer's own transformation.\n- The commit-time revocation case (charter) and the evidence paths are product tests, and they passed in both integration runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-002",
+        "REQ-S16-015"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-intake-foreign.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/copies.sha256",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.test.ts",
+        "apps/api/src/modules/procedures/outputs/kit.ts",
+        "apps/api/src/modules/procedures/steps.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-11-observations-a-to-g",
+      "procedure": "Judge D-171's observations (a) to (g). For each one in my focus, accept it with a reason or raise a finding.",
+      "command": "Source review: kpi/formula-versions.ts, kpi/benefit-formulas.ts, 0023; methodology/migrations.ts, 0064, ADR-0040 §4; procedures/instances.ts, steps.ts, grep subject_record_id; web gates i18n and readiness; packages/db/src/demo/data/roaming-gates.ts",
+      "environment": "Repository tree at b147dda",
+      "expected": "A reasoned judgement of each observation.",
+      "actual": "All are accepted; none is a defect in my focus.\n(a) The benefit_formula review path: ACCEPTED. A formula version is immutable once inserted (0023 benefit_formula_version_freeze: only the validation columns, version and updated_* move). Its variables are append-only and inserted only in the single-author creation (benefit-formulas.ts:339-362). The validator is never created_by (CHECK benefit_formula_version_validator_not_author; formula-versions.ts:152). So no co-editor path exists.\n(b) methodology_migration approval: ACCEPTED as designed. It is a business approval (methodology_migration.approve, SP only, 0064:24; plan is ADM_METHOD only, 0064:33), and its SoD is the uniform canonical requester_excluded plus the submitter (migrations.ts:687; ADR-0040 §4; ADR-0026 §4). The residual: a person holding ADM_METHOD who is also the mapped Sponsor can re-plan inputs and then approve as Sponsor. That is the accountable Sponsor deciding on content the plan shows, not a configuration self-review. It is for the business access policy, not a code defect.\n(c) The launch subjectRecordId: ACCEPTED. It is stored opaquely (instances.ts:318) and echoed only to instance readers (steps.ts:1186). It is never resolved by the API, the adapters or the worker. It discloses and grants nothing.\n(d) and (e), FE-V1B wording ('the other 1 are covered'; the blocked banner not naming coverage): cosmetic English text with no security or integrity effect. The strings are interpolated by i18next and React, which escape them. I leave their wording to the domain and qa reviewers.\n(f) The bare DG2-DG4 .table-wrap: an accessibility matter for qa, with no security effect.\n(g) BE-V3's demo G4 rests on two accepted exceptions, and no gate.* outbox events are written: ACCEPTED. The seed writes through the product's own tables and guards with audit events, and every decision is labelled 'Synthetic demonstration - approves nothing real'. Seeding remains refused in production (demo guard.ts unchanged, 08-scans §6). Skipping the outbox avoids real-clock tasks, so no automation can act on a demo approval. The phase-step enablement is seeded consistently (roaming-states.ts). The demo-gate-history test passed in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-007",
+        "REQ-S06-008",
+        "REQ-S06-002",
+        "REQ-S18-001",
+        "REQ-S18-003"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG5/round-2/code-security-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log",
+        "packages/db/src/demo/data/roaming-gates.ts",
+        "apps/api/src/modules/methodology/migrations.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-12-a02-fixture-hunk-6c7f54b",
+      "procedure": "Judge the orchestrator's a02 fixture hunk. Does it mask a defect?",
+      "command": "git show 6c7f54b; read tests/qa/integration/a02-a21-complete-lifecycle.test.ts:1101-1195",
+      "environment": "Repository tree at b147dda; both integration runs",
+      "expected": "The hunk makes the fixture's actor legitimately able to read T, and the negative case stays tested.",
+      "actual": "ACCEPTED. It does not mask a defect.\n- In a02, T is created by the BU-scope Lead (l.tl), while capture_intake is completed by the organization-scope Lead tlOrg (a02:1112), and TL does not inherit downward.\n- Under the F-DG5-101 fix, refusing that actor is the intended behaviour.\n- The hunk adds 15 lines, which staff tlOrg as TL on T through the product's own POST /role-assignments (201), so the actor naming T can read T. Nothing else in the test changed.\n- The negative case is asserted by output-read-authorization.test.ts and by my unchanged reproduction.\n- a02 passed 13/13 in both integration runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-002"
+      ],
+      "evidence": [
+        "tests/qa/integration/a02-a21-complete-lifecycle.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-13-repair-diff-regression-inspection",
+      "procedure": "Read the whole repair diff git diff 601d7d2..d3528fc (50 product, test and contract files) for regressions:\n- BE-V1 (0097, contributors.ts, reviews.ts, revision-impact.ts, lifecycle.ts, db-errors.ts, schema.ts, catalogue.test.ts);\n- BE-V2, V2B and V2C (kit.ts, steps.ts);\n- BE-V3 (demo data);\n- FE-V1 and V1B (DataTable, RegisterTable, gates pages, p4api, i18n, app.css, 14 table wrappers);\n- ARCH-R4 (OpenAPI text);\n- 6c7f54b.",
+      "command": "git diff 601d7d2..d3528fc -- apps packages docs/api tests e2e",
+      "environment": "Repository tree at b147dda",
+      "expected": "No repair weakens another behaviour, and each keeps the five-part mutation rule.",
+      "actual": "No regression found.\n- BE-V1 changes no route, adds no I/O inside a transaction, and only ADDS refusals. Contributors are read inside the decision transaction after lockVersion and lockedReview (FOR UPDATE), so the check is commit-time. If-Match and the audit are unchanged. db-errors maps the two new constraints to the existing 403 codes. mth_app has only INSERT and SELECT on the new append-only tables.\n- BE-V2 only adds refusals before any write. The refusal reuses the unknown-record 422 body, and the denial rides on the problem for the failed-mutation audit.\n- BE-V3 touches only demo data modules: no guard, seed runner or CLI change.\n- FE-V1/V1B add tabIndex=0, role=region and an aria-label to table wrappers, a fieldset min-inline-size rule, and readiness text that counts nothing as covered while exceptions are loading or have failed (no false green). There is no new endpoint, no raw HTML (dangerouslySetInnerHTML count 0 outside tests) and no CDN.\n- ARCH-R4 changes OpenAPI description text only.\n- The repair diff has no new parseFloat or Number( on values, and no new outbox enqueue (08-scans §5, §8).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-14-aud-and-adm-only-sweep",
+      "procedure": "Re-run my round-1 contract-generated sweep unchanged:\n(1) AUD calls all 90 P5 mutating operations (any 2xx fails, and the business audit must not grow);\n(2) an ADM-only caller (ADM_ACCESS and ADM_TECH) calls all 40 transformation-scoped P5 reads;\n(3) the ADM-only navigation.",
+      "command": "cp round-1/repro/p5-aud-adm-sweep.test.ts apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts; QA_PG_PORT=26500 … with-pg.sh npx vitest run --configLoader runner --project integration <file>; rm <file>",
+      "environment": "Clone $TMPDIR/rv; Node 24.21.0; disposable PostgreSQL 16.13 on port 26500",
+      "expected": "0 × 2xx for AUD and for ADM-only, the business audit unchanged, and no transformation-scoped navigation for ADM-only.",
+      "actual": "3/3 passed, exit 0.\n(1) Out of 90 AUD calls: 73 × 403, 11 × 400 and 6 × 404, with 0 × 2xx. The business audit was 101 before and 101 after. The only new events are 67 authorization.denied events by AUD. The 400s are empty-body validation before authorization, and the 404s are synthetic ids. This is identical to round 1, and the per-slice suites assert AUD 403 with valid bodies.\n(2) Out of 40 ADM-only reads: 37 × 404, 3 × 403, 0 × 2xx.\n(3) The ADM-only navigation is my_work, playbook_procedures and administration only.\nThe 3 'npm warn' lines are environmental, as in SEC-R2-08.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S03-007",
+        "REQ-S06-010",
+        "REQ-S12-022"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-p5-sweep.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/p5-aud-adm-sweep.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-15-contract-pending-graph-migrations",
+      "procedure": "Mechanical scans on the clone:\n- the product files changed since round 1;\n- every p5-pending-*.ts list is empty, including P5_PENDING_TESTS_BE_O;\n- the module graph: reporting must not import workflows or admin, and the worker must not import API code;\n- the operation count;\n- 0097's privileges.\nThen re-judge migrations 0062-0097: forward-only, the numbering, 0094 and 0096.",
+      "command": "see 08-scans.log (git diff --name-only 601d7d2 d3528fc; grep over apps/api/test/support/p5-pending*.ts; grep imports in modules/reporting and apps/worker/src; operationId count; grep 0097)",
+      "environment": "Clone $TMPDIR/rv at b147dda",
+      "expected": "Empty lists, an acyclic graph, 846 operations, and migrations that apply cleanly and only forward.",
+      "actual": "PASS.\n- The changed product files are exactly the repair set (50 files). No file under apps/worker, modules/reporting, workflows, access, the demo guard, seed, reset or CLI, or packages/config changed.\n- All 44 p5-pending files have zero entries; P5_PENDING_TESTS_BE_O is `= []`.\n- The graph: worker→apps/api 0. The single reporting hit is reporting.test.ts:89, the architecture test that plants a forbidden import on purpose, so no real import exists.\n- 846 operations.\n- 0097 is additive and forward-only: new tables, functions, triggers and a backfill inside the migrator's one transaction. It has no SECURITY DEFINER and no trigger disable, and it grants INSERT and SELECT only.\n- 89 files apply to a fresh database in both runs.\n- The numbering keeps the documented, never-taken reservations (0066-0067, 0073, 0077-0079, 0083-0084), as observed in round 1.\n- 0094 (the one-off guard disable around one UPDATE, in the migration's own transaction, ADR-0039 C2) and 0096 (Rule A) are unchanged since round 1, and I keep my round-1 acceptance. Their tests passed in both runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-012",
+        "REQ-S16-015",
+        "REQ-S16-021"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-16-unchanged-surfaces-reverified",
+      "procedure": "Re-verify the round-1 surfaces whose code is byte-identical since 601d7d2 (SEC-R2-15 lists the changed files):\n- automation run-as identity, the human-only refusals, the dry-run rollback and samplePayload;\n- exports: the requester-only download, store keys and traversal, per-attempt files, the size limit, formula injection and decimals;\n- the outbox relay and the unregistered-type rule, the advisory locks and the unique backstops;\n- demo isolation (D-165);\n- approval routes, conditional approval and routedApproverOf;\n- forms, evidence and branding.\nThe evidence is this round's passing suites plus my round-1 source review, carried for byte-identical code.",
+      "command": "git diff --name-only 601d7d2 d3528fc (08-scans.log); grep '^ ✓' in 05/06 for a13-, a15-, a08, a22, demo.test, demo-dev-binding, approval-routes, automation-failures, evidence-register, branding, notification-delivery",
+      "environment": "Repository tree and both integration runs at b147dda",
+      "expected": "No code change, and their suites pass in both locales.",
+      "actual": "PASS. None of these modules changed between 601d7d2 and d3528fc. The exception is automation/lifecycle.ts, the review SoD only, which SEC-R2-09 covers.\nTheir suites passed in BOTH integration runs:\n- a13-* (6 files: durable automation, starters, dependency slip, replay ×3);\n- a15-* (4: selected records and injection, '=HYPERLINK' as text with SUM kept, snapshots and packs);\n- a08 (2);\n- a22;\n- demo.test (2) and demo-dev-binding;\n- approval-routes, automation-failures (REQ-S12-003), evidence-register, branding, notification-delivery, day-ninety (2);\n- the unit outbox-registry test (in unit-node, both Node versions).\nMy round-1 source findings therefore stand unchanged for this code:\n- the export download is requester-only (404 otherwise);\n- injection triggers = + - @ TAB CR are neutralized, and an <f> is emitted only from the fixed SUM template;\n- money values are Decimal end to end;\n- a relay row of an unregistered type is marked and skipped, never stalling later events beyond about 10 s;\n- demo seeding is refused in production, the dev binding needs AUTH_MODE=dev outside production, and DEMO_ACCESS_ADMIN is a technical_admin role (no approval permission possible);\n- a technical_admin or AUD approver role is refused (0075:131).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S12-001",
+        "REQ-S12-002",
+        "REQ-S12-003",
+        "REQ-S12-020",
+        "REQ-S12-021",
+        "REQ-S12-026",
+        "REQ-S13-005",
+        "REQ-S13-006",
+        "REQ-S10-015",
+        "REQ-S04-011",
+        "REQ-S18-001",
+        "REQ-S18-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/06-integration-c-utf8.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log",
+        "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json"
+      ]
+    },
+    {
+      "id": "SEC-R2-17-requirement-acceptance-trace",
+      "procedure": "For each of the 42 assigned requirements, test the requirements.csv acceptance text literally against the suites that ran this round, and judge each partial-coverage disclosure in its notes. The register is byte-identical to round 1.",
+      "command": "python3 csv read of requirements.csv (42 rows); grep '^ ✓' of the named suites in 05/06 and 03/04",
+      "environment": "Repository tree at b147dda; this round's unit and integration logs",
+      "expected": "Each acceptance clause is backed by a suite that passed this round, or the disclosure for it is acceptable.",
+      "actual": "PASS for all 42. Every row is IMPLEMENTED with final_gate DG5, and validate --register DG5 passes.\n\nThe Studio, forms and procedures rows: REQ-PB-093, S05-001, S05-002, S05-006, S06-001, S06-002, S06-004, S06-005, S06-006, S06-007, S06-008, S06-009, S06-010 and S16-010.\n- a06-configuration-change, a07-historical-integrity, studio-review-publish, methodology-migrations, procedure-definitions, procedure-instances, form-schemas, a01, a14 and a05 all passed in both runs.\n- For S06-007 I additionally verified the co-author SoD (SEC-R2-08 and SEC-R2-09), and for S06-002 the output read rule (SEC-R2-10).\n\nAutomation: REQ-S12-001, 002, 003, 004, 012, 015, 020, 021, 022, 025 and 026.\n- a13-*, automation-failures, a16 (3), a22, a09 and notification-delivery passed.\n- The S12-026 disclosure is acceptable: starters 4, 13 and 15, and starter 14's request trigger, run through the real engine in the implementers' integration and worker tests, which ran this round.\n\nReporting and exports: REQ-S10-013, S13-005, S13-006, S13-007, S07-016 and S08-005.\n- a15-*, presentation (its one runIf skip is the disclosed D-159 case, while the S10-013 test itself runs), a07 and a05 (formula preview) passed.\n\nApprovals: REQ-S10-015 and S04-011, through approval-routes and a08.\n\nNavigation and branding: REQ-S03-007, S01-002 and S15-004.\n- The navigation and branding integration and unit suites passed, and the ADM-only navigation is in SEC-R2-14.\n- Their UI clauses (the shell header in en and ar, the navigation colour, the PDF header colour; A20) are e2e specs that I did NOT run this round. They are backed by the orchestrator's merged-tree product e2e (D-171, 442/442 in both locales), which is the qa reviewer's surface.\n\nEvidence and entities: REQ-S13-010, S16-012, S16-015 and S16-021, through evidence-register, entity-group (8) and s16-021 (2).\n\nDemo: REQ-S18-001 and S18-003, through demo.test (2), demo-dev-binding and demo-gate-history.\n\nNo disclosure in the notes hides a security or integrity gap.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/06-integration-c-utf8.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/03-unit-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/07-validators.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-18-environmental-residuals",
+      "procedure": "Check the offline and configuration surface of each environmental residual:\n- the live registry (REQ-DLV-042 AC-1, D-057);\n- live CI (REQ-DLV-025 A24, D-058);\n- Keycloak and a real demo IdP (D-049, ADR-0050 §1), with the D-165 dev binding as the test path;\n- AI and external notification adapters (D-142 Q11, D-165).",
+      "command": "pnpm install --offline --frozen-lockfile; ls .github/workflows; grep AUTH_MODE guard.ts and load.ts; grep for AI/LLM/SMTP/WEBHOOK/SLACK/TEAMS variables in packages/config/src",
+      "environment": "Clone $TMPDIR/rv; no network",
+      "expected": "PASS on the offline surface, with each residual noted.",
+      "actual": "PASS on the offline/config surface.\n- Registry: the offline frozen-lockfile install succeeded (lockfile v9.0). The live registry is the D-057 residual.\n- CI: ci.yml and delivery-gates.yml are present. Live CI is the D-058 residual.\n- IdP: demoDevIssuerBindingAllowed requires NODE_ENV !== production && AUTH_MODE === dev (guard.ts:129), the config refuses AUTH_MODE=dev with NODE_ENV=production (load.ts:197), and demo-dev-binding passed in both runs. Keycloak and a real demo IdP are the D-049 residual.\n- No AI or external notification adapter variable exists in packages/config, which matches D-142 Q11, so A21 'disabled' is the shipped configuration.\nI did not attempt `pnpm deps:verify`, because it needs the live registry.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/09-residual-surfaces.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/01-install.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-19-evidence-honesty-log-scan",
+      "procedure": "Scan every round-2 log I cite for non-zero exits, failures, skips, timeouts, warnings and error lines, and explain each one.",
+      "command": "grep -iE 'exit=|error|warn|fail|skip|timeout|×' docs/delivery/test-evidence/DG5/code-security/round-2/*.log docs/delivery/test-evidence/DG5/code-security/round-2/repro/*.log",
+      "environment": "Repository tree",
+      "expected": "Every item is disclosed and explained.",
+      "actual": "Every cited log ends 'exit=0' or has exit 0 recorded. The full inventory:\n- 01: two mth-db bin WARNs before the build (SEC-R2-01).\n- 02: Vite's >500 kB chunk advisory; 'eslint --max-warnings=0' is the command line, not a warning.\n- 03 and 04: 2 NOCODEGEN skips and 18 explained stderr blocks with one FSTDEP022 (SEC-R2-03).\n- 05 and 06: 1 skip (the presentation runIf case) and the designed negative-path probe lines (SEC-R2-05).\n- 06a: the harness-stopped first C.UTF-8 attempt, with 0 failures, superseded (SEC-R2-06).\n- repro/*.log: 3 environmental 'npm warn Unknown project config' lines each.\nNo test failed, was flaky or timed out in any run I cite.\nOther disclosures:\n- The harness created empty .claude/.cc-writes directories in round-2/repro and round-1/repro while my shell's working directory was there, and I removed them. An older empty round-1/.claude (02:17Z) predates this run, so I left it. Git tracks none of them.\n- The integration suites leave mth-evidence-it-* and mth-evidence-shutdown-* temporary directories in TMPDIR. They are in my private run scratch, which the runner deletes. This is test hygiene, not product behaviour.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/01-install.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/03-unit-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/04-unit-node22.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/06-integration-c-utf8.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/06a-integration-c-utf8-killed.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/code-security/round-2/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/01-install.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/02-static-node24.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/03-unit-node24.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/04-unit-node22.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/05-integration-locale-unset.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/06-integration-c-utf8.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/06a-integration-c-utf8-killed.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/07-validators.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/08-scans.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/09-residual-surfaces.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/copies.sha256",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/studio-contributor-paths.test.ts",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-coauthor-review.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-intake-foreign.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-p5-sweep.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-contributor-paths.log",
+    "docs/delivery/reviews/DG5/round-2/code-security-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-10-18T14:45:00Z",
+  "summary": "PASS, with no new finding. Both of my round-1 findings verify CLOSED on candidate c4f70a80 (verifications sidecar).\n- F-DG5-100: my unchanged reproduction now gets 403 config_review.self_review and publish 422. My new probe proves that an element remove, a remove later fully overwritten, a summary-only PATCH, the scoring-defaults writer and a procedure remove all record their writer, and that the runtime role cannot disable, circumvent or delete the 0097 backstop. A non-contributor TO still approves and publishes.\n- F-DG5-101: my unchanged reproduction now gets 422 output_record_invalid with nothing linked or adopted. All 12 adapters share the kit's one read-checked produce.\nObservations (a) to (g) and the a02 hunk are judged and accepted with reasons.\nChecks: static checks all exit 0 (846 operations); unit passes on Node 24 and Node 22 (2335/1708/259+2 skipped); integration passes twice, with the locale unset and with C.UTF-8 (317 files, 3053 + 1 skipped). A first C.UTF-8 attempt stopped by the harness's 2-hour limit is disclosed and was re-run in full. The historical validators for DG4 to DG1 and the DG5 register pass."
+}
