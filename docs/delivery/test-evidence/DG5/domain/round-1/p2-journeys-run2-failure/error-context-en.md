@@ -1,0 +1,710 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Office
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - generic [ref=e20]:
+    - navigation "Primary navigation" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "My Work" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: My Work
+          - list "My Work" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Tasks and inbox" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "Approvals" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "Delegations" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "Notification preferences" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "Executive Overview" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: Executive Overview
+          - list "Executive Overview" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Dashboards" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "RAG policy" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "Transformations" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: Transformations
+        - listitem [ref=e46]:
+          - link "Playbook and Procedures" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "Phase steps and review queue" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "Playbook reader" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "My procedures" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "90-day launch plan" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "Health check" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "Strategy and KPIs" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "KPIs" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "Target Operating Model" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: Target Operating Model
+        - listitem [ref=e69]:
+          - link "Initiatives and Roadmaps" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "Portfolios" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "Owner updates" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "Governance" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: Governance
+          - list "Governance" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "Groups" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "Forums" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "Meetings" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "Executive decisions (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "Change requests" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "Risks and Actions" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: Risks and Actions
+          - list "Risks and Actions" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "RAID (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "Action register" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "Corrective actions" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "Benefits and Finance" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "Benefits register (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "Change and Adoption" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: Change and Adoption
+          - list "Change and Adoption" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Adoption plan (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "Evidence and Reports" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "Reports and snapshots" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "Exports" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "Presentation mode" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "Evidence register" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "BAU and Improvement" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "Performance areas" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "Improvement backlog" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "Lessons" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "Lesson search" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+        - listitem [ref=e137]:
+          - link "Administration" [ref=e138] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e139]: Administration
+          - list "Administration" [ref=e140]:
+            - listitem [ref=e141]:
+              - link "Calendar" [ref=e142] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e143]:
+              - link "Playbook Studio" [ref=e144] [cursor=pointer]:
+                - /url: /admin/studio
+            - listitem [ref=e145]:
+              - link "Methodology migrations" [ref=e146] [cursor=pointer]:
+                - /url: /admin/methodology-migrations
+            - listitem [ref=e147]:
+              - link "Source coverage" [ref=e148] [cursor=pointer]:
+                - /url: /admin/source-coverage
+            - listitem [ref=e149]:
+              - link "Form builder" [ref=e150] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e151]:
+              - link "Procedure builder" [ref=e152] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e153]:
+              - link "Automation" [ref=e154] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e155]:
+              - link "Approval routes" [ref=e156] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e157]:
+              - link "Branding" [ref=e158] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e159]:
+              - link "Demo environment" [ref=e160] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e161]:
+              - link "Health check scoring" [ref=e162] [cursor=pointer]:
+                - /url: /admin/health-schemes
+      - paragraph [ref=e163]:
+        - link "About this product" [ref=e164] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - navigation "Breadcrumbs" [ref=e168]:
+            - list [ref=e169]:
+              - listitem [ref=e170]:
+                - link "Transformations" [ref=e171] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e172]:
+                - text: /
+                - link "TR-0001" [ref=e173] [cursor=pointer]:
+                  - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a
+              - listitem [ref=e174]: /Define
+          - generic [ref=e176]:
+            - heading "Define" [level=1] [ref=e177]
+            - paragraph [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: TR-0001
+                - generic [ref=e181]: Synthetic P2 EN journey
+                - generic [ref=e182]:
+                  - img [ref=e183]
+                  - text: Draft – not submitted
+                - generic [ref=e185]: "Phase: Define"
+        - navigation "Transformation workspace" [ref=e186]:
+          - list [ref=e187]:
+            - listitem [ref=e188]:
+              - link "Overview" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a
+            - listitem [ref=e190]:
+              - link "Diagnose" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/diagnose
+            - listitem [ref=e192]:
+              - link "Charter" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/charter
+            - listitem [ref=e194]:
+              - link "Define" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/define
+            - listitem [ref=e196]:
+              - link "Design" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/design
+            - listitem [ref=e198]:
+              - link "Portfolio" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/portfolio
+            - listitem [ref=e200]:
+              - link "Prioritization" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/prioritization
+            - listitem [ref=e202]:
+              - link "Roadmap" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/roadmap
+            - listitem [ref=e204]:
+              - link "Dependencies" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/dependencies
+            - listitem [ref=e206]:
+              - link "Capacity" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/capacity
+            - listitem [ref=e208]:
+              - link "Business cases" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/business-cases
+            - listitem [ref=e210]:
+              - link "Benefit formulas" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/benefit-formulas
+            - listitem [ref=e212]:
+              - link "Decisions" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/decisions
+            - listitem [ref=e214]:
+              - link "Gates" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/gates
+            - listitem [ref=e216]:
+              - link "Readiness" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/readiness
+            - listitem [ref=e218]:
+              - link "Dispensations" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/dispensations
+            - listitem [ref=e220]:
+              - link "Evidence" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/evidence
+            - listitem [ref=e222]:
+              - link "Team" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/team
+            - listitem [ref=e224]:
+              - link "Role mapping" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/role-mappings
+            - listitem [ref=e226]:
+              - link "Decision rights" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/decision-rights
+            - listitem [ref=e228]:
+              - link "RACI" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/raci
+            - listitem [ref=e230]:
+              - link "Transform readiness" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/transform-readiness
+            - listitem [ref=e232]:
+              - link "Approval records" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/approval-decisions
+            - listitem [ref=e234]:
+              - link "KPIs" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/kpis
+            - listitem [ref=e236]:
+              - link "Benefits register (T14)" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/benefits
+            - listitem [ref=e238]:
+              - link "RAID (T15)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/raid
+            - listitem [ref=e240]:
+              - link "Actions" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/actions
+            - listitem [ref=e242]:
+              - link "Corrective actions" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/corrective-actions
+            - listitem [ref=e244]:
+              - link "Forums" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/forums
+            - listitem [ref=e246]:
+              - link "Meetings" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/meetings
+            - listitem [ref=e248]:
+              - link "Executive decisions (T16)" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/executive-decisions
+            - listitem [ref=e250]:
+              - link "Adoption" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/adoption
+            - listitem [ref=e252]:
+              - link "BAU and performance areas" [ref=e253] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/bau
+            - listitem [ref=e254]:
+              - link "Improvement backlog" [ref=e255] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/improvement
+            - listitem [ref=e256]:
+              - link "Lessons" [ref=e257] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/lessons
+            - listitem [ref=e258]:
+              - link "Dashboard (T10)" [ref=e259] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/dashboard
+            - listitem [ref=e260]:
+              - link "Closure" [ref=e261] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/closure
+            - listitem [ref=e262]:
+              - link "Phases" [ref=e263] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/phases
+            - listitem [ref=e264]:
+              - link "Change requests" [ref=e265] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/change-requests
+            - listitem [ref=e266]:
+              - link "Traceability" [ref=e267] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/traceability
+            - listitem [ref=e268]:
+              - link "Modular entry" [ref=e269] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/modular-entry
+            - listitem [ref=e270]:
+              - link "Workstreams" [ref=e271] [cursor=pointer]:
+                - /url: /transformations/01a14c51-c3d7-76ce-b1eb-c0450f78410a/workstreams
+        - paragraph [ref=e272]: "Phase 2: set the direction — the North Star, the strategic outcomes and their KPIs with dated targets, and the guardrails."
+        - navigation "On this page" [ref=e273]:
+          - list [ref=e274]:
+            - listitem [ref=e275]:
+              - link "North Star" [ref=e276] [cursor=pointer]:
+                - /url: "#north-star"
+            - listitem [ref=e277]:
+              - link "Strategic outcomes" [ref=e278] [cursor=pointer]:
+                - /url: "#outcomes"
+            - listitem [ref=e279]:
+              - link "Outcome & KPI Tree (T02)" [ref=e280] [cursor=pointer]:
+                - /url: "#t02"
+            - listitem [ref=e281]:
+              - link "KPI definitions" [ref=e282] [cursor=pointer]:
+                - /url: "#kpi-definitions"
+            - listitem [ref=e283]:
+              - link "Strategic guardrails" [ref=e284] [cursor=pointer]:
+                - /url: "#guardrails"
+        - region "North Star" [ref=e285]:
+          - heading "North Star" [level=2] [ref=e287]
+          - generic [ref=e288]: One sentence that states the end state this transformation exists to reach.
+          - figure "Current since 18 Oct 2026, 03:05" [ref=e289]:
+            - blockquote [ref=e290]: Every synthetic retail bill is right the first time, every month
+            - generic [ref=e291]: Current since 18 Oct 2026, 03:05
+          - group [ref=e292]:
+            - generic "Earlier statements" [ref=e293] [cursor=pointer]
+        - region "Strategic outcomes" [ref=e294]:
+          - heading "Strategic outcomes" [level=2] [ref=e296]
+          - generic [ref=e297]: The outcome tree. Mark 3 to 5 top outcomes. Each outcome is checked against the good outcome test.
+          - status [ref=e298]:
+            - img [ref=e299]
+            - text: "1 top outcomes: the charter should name 3 to 5 top outcomes."
+          - list "Outcome tree" [ref=e301]:
+            - listitem [ref=e302]:
+              - article "Synthetic retail bills are right the first time" [ref=e303]:
+                - generic [ref=e304]:
+                  - heading "Synthetic retail bills are right the first time" [level=3] [ref=e305]
+                  - generic [ref=e306]:
+                    - generic [ref=e307]:
+                      - img [ref=e308]
+                      - text: Top outcome
+                    - generic [ref=e310]:
+                      - img [ref=e311]
+                      - text: Draft – not submitted
+                - generic [ref=e313]:
+                  - generic [ref=e314]:
+                    - term [ref=e315]: Owner (business leader)
+                    - definition [ref=e316]: Team member (Transformation Lead, ref. 0203)
+                  - generic [ref=e317]:
+                    - term [ref=e318]: KPIs in T02
+                    - definition [ref=e319]: "1"
+                - generic [ref=e320]:
+                  - paragraph [ref=e321]:
+                    - strong [ref=e322]: "Good outcome test:"
+                    - generic [ref=e323]:
+                      - img [ref=e324]
+                      - text: Passes
+                  - table "Good outcome test of “Synthetic retail bills are right the first time”" [ref=e326]:
+                    - caption [ref=e327]: Good outcome test of “Synthetic retail bills are right the first time”
+                    - rowgroup [ref=e328]:
+                      - row "Criterion Result Why" [ref=e329]:
+                        - columnheader "Criterion" [ref=e330]
+                        - columnheader "Result" [ref=e331]
+                        - columnheader "Why" [ref=e332]
+                    - rowgroup [ref=e333]:
+                      - row "Specific Pass Confirmed as specific, and the statement names a result." [ref=e334]:
+                        - rowheader "Specific" [ref=e335]
+                        - cell "Pass" [ref=e336]:
+                          - generic [ref=e337]:
+                            - img [ref=e338]
+                            - text: Pass
+                        - cell "Confirmed as specific, and the statement names a result." [ref=e340]
+                      - row "Measurable Pass At least one KPI is linked in the Outcome & KPI Tree." [ref=e341]:
+                        - rowheader "Measurable" [ref=e342]
+                        - cell "Pass" [ref=e343]:
+                          - generic [ref=e344]:
+                            - img [ref=e345]
+                            - text: Pass
+                        - cell "At least one KPI is linked in the Outcome & KPI Tree." [ref=e347]
+                      - row "Strategically relevant Pass Confirmed as strategically relevant." [ref=e348]:
+                        - rowheader "Strategically relevant" [ref=e349]
+                        - cell "Pass" [ref=e350]:
+                          - generic [ref=e351]:
+                            - img [ref=e352]
+                            - text: Pass
+                        - cell "Confirmed as strategically relevant." [ref=e354]
+                      - row "Owned by a business leader Pass An owner is set." [ref=e355]:
+                        - rowheader "Owned by a business leader" [ref=e356]
+                        - cell "Pass" [ref=e357]:
+                          - generic [ref=e358]:
+                            - img [ref=e359]
+                            - text: Pass
+                        - cell "An owner is set." [ref=e361]
+                      - row "Achievable through a defined causal chain Pass A causal chain is recorded." [ref=e362]:
+                        - rowheader "Achievable through a defined causal chain" [ref=e363]
+                        - cell "Pass" [ref=e364]:
+                          - generic [ref=e365]:
+                            - img [ref=e366]
+                            - text: Pass
+                        - cell "A causal chain is recorded." [ref=e368]
+                - 'button "Form tools : Synthetic retail bills are right the first time" [ref=e370] [cursor=pointer]':
+                  - img [ref=e371]
+                  - text: Form tools
+                  - generic [ref=e373]: ": Synthetic retail bills are right the first time"
+        - region "Outcome & KPI Tree (T02)" [ref=e374]:
+          - heading "Outcome & KPI Tree (T02)" [level=2] [ref=e376]
+          - generic [ref=e377]: Each row links an outcome to a KPI with baseline, target and a required target date, plus the target trajectory. Targets are time-bound.
+          - paragraph [ref=e378]:
+            - generic [ref=e379]:
+              - img [ref=e380]
+              - text: Custom extension (playbook v1.0)
+            - generic [ref=e382]:
+              - img [ref=e383]
+              - generic [ref=e385]: "Guiding question:"
+              - text: What must become different?
+            - generic [ref=e386]:
+              - text: "Source:"
+              - link "B0049" [ref=e388] [cursor=pointer]:
+                - /url: /playbook/reader/B0049
+              - generic [ref=e389]:
+                - text: ","
+                - link "B0050" [ref=e390] [cursor=pointer]:
+                  - /url: /playbook/reader/B0050
+          - generic [ref=e391]:
+            - generic [ref=e392]:
+              - generic [ref=e393]:
+                - generic [ref=e394]: Search
+                - searchbox "Search" [ref=e395]
+              - button "Columns" [ref=e397] [cursor=pointer]:
+                - img [ref=e398]
+                - text: Columns
+            - table "Outcome & KPI Tree (T02)" [ref=e401]:
+              - caption [ref=e402]: Outcome & KPI Tree (T02)
+              - rowgroup [ref=e403]:
+                - row "Outcome not sorted KPI not sorted Baseline value Target value Target date not sorted Leading indicator Trajectory not sorted Owner Actions" [ref=e404]:
+                  - columnheader "Outcome not sorted" [ref=e405]:
+                    - button "Outcome not sorted" [ref=e406] [cursor=pointer]:
+                      - text: Outcome
+                      - img [ref=e407]
+                      - generic [ref=e409]: not sorted
+                  - columnheader "KPI not sorted" [ref=e410]:
+                    - button "KPI not sorted" [ref=e411] [cursor=pointer]:
+                      - text: KPI
+                      - img [ref=e412]
+                      - generic [ref=e414]: not sorted
+                  - columnheader "Baseline value" [ref=e415]
+                  - columnheader "Target value" [ref=e416]
+                  - columnheader "Target date not sorted" [ref=e417]:
+                    - button "Target date not sorted" [ref=e418] [cursor=pointer]:
+                      - text: Target date
+                      - img [ref=e419]
+                      - generic [ref=e421]: not sorted
+                  - columnheader "Leading indicator" [ref=e422]
+                  - columnheader "Trajectory not sorted" [ref=e423]:
+                    - button "Trajectory not sorted" [ref=e424] [cursor=pointer]:
+                      - text: Trajectory
+                      - img [ref=e425]
+                      - generic [ref=e427]: not sorted
+                  - columnheader "Owner" [ref=e428]
+                  - columnheader "Actions" [ref=e429]
+              - rowgroup [ref=e430]:
+                - row "Synthetic retail bills are right the first time Synthetic billing error rate Unknown 1.5 30 Jun 2027 None Approved 0 trajectory points Not assigned" [ref=e431]:
+                  - rowheader "Synthetic retail bills are right the first time" [ref=e432]
+                  - cell "Synthetic billing error rate" [ref=e433]
+                  - cell "Unknown" [ref=e434]:
+                    - generic [ref=e435]:
+                      - img [ref=e436]
+                      - text: Unknown
+                  - cell "1.5" [ref=e438]
+                  - cell "30 Jun 2027" [ref=e439]
+                  - cell "None" [ref=e440]
+                  - cell "Approved 0 trajectory points" [ref=e441]:
+                    - generic [ref=e442]:
+                      - generic [ref=e443]:
+                        - img [ref=e444]
+                        - text: Approved
+                      - generic [ref=e446]: 0 trajectory points
+                  - cell "Not assigned" [ref=e447]
+                  - cell [ref=e448]
+            - navigation "Pagination" [ref=e449]:
+              - generic [ref=e450]: Page 1 of 1 · 1 of 1 rows
+              - generic [ref=e451]:
+                - generic [ref=e452]: Rows per page
+                - combobox "Rows per page" [ref=e453]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e454]
+              - button "Next" [disabled] [ref=e455]
+        - region "KPI definitions" [ref=e456]:
+          - heading "KPI definitions" [level=2] [ref=e458]
+          - generic [ref=e459]: "The KPI dictionary of this transformation: unit, polarity, frequency, owner and steward."
+          - generic [ref=e460]:
+            - generic [ref=e461]:
+              - generic [ref=e462]:
+                - generic [ref=e463]: Search
+                - searchbox "Search" [ref=e464]
+              - button "Columns" [ref=e466] [cursor=pointer]:
+                - img [ref=e467]
+                - text: Columns
+            - table "KPI definitions" [ref=e470]:
+              - caption [ref=e471]: KPI definitions
+              - rowgroup [ref=e472]:
+                - row "Name not sorted Unit not sorted Polarity not sorted Frequency not sorted Indicator type not sorted Owner Status not sorted Actions" [ref=e473]:
+                  - columnheader "Name not sorted" [ref=e474]:
+                    - button "Name not sorted" [ref=e475] [cursor=pointer]:
+                      - text: Name
+                      - img [ref=e476]
+                      - generic [ref=e478]: not sorted
+                  - columnheader "Unit not sorted" [ref=e479]:
+                    - button "Unit not sorted" [ref=e480] [cursor=pointer]:
+                      - text: Unit
+                      - img [ref=e481]
+                      - generic [ref=e483]: not sorted
+                  - columnheader "Polarity not sorted" [ref=e484]:
+                    - button "Polarity not sorted" [ref=e485] [cursor=pointer]:
+                      - text: Polarity
+                      - img [ref=e486]
+                      - generic [ref=e488]: not sorted
+                  - columnheader "Frequency not sorted" [ref=e489]:
+                    - button "Frequency not sorted" [ref=e490] [cursor=pointer]:
+                      - text: Frequency
+                      - img [ref=e491]
+                      - generic [ref=e493]: not sorted
+                  - columnheader "Indicator type not sorted" [ref=e494]:
+                    - button "Indicator type not sorted" [ref=e495] [cursor=pointer]:
+                      - text: Indicator type
+                      - img [ref=e496]
+                      - generic [ref=e498]: not sorted
+                  - columnheader "Owner" [ref=e499]
+                  - columnheader "Status not sorted" [ref=e500]:
+                    - button "Status not sorted" [ref=e501] [cursor=pointer]:
+                      - text: Status
+                      - img [ref=e502]
+                      - generic [ref=e504]: not sorted
+                  - columnheader "Actions" [ref=e505]
+              - rowgroup [ref=e506]:
+                - row "Synthetic billing error rate Percentage (%) Lower is better Monthly Lagging Team member (Transformation Lead, ref. 0203) Active Read-only" [ref=e507]:
+                  - rowheader "Synthetic billing error rate" [ref=e508]
+                  - cell "Percentage (%)" [ref=e509]
+                  - cell "Lower is better" [ref=e510]
+                  - cell "Monthly" [ref=e511]
+                  - cell "Lagging" [ref=e512]
+                  - cell "Team member (Transformation Lead, ref. 0203)" [ref=e513]
+                  - cell "Active" [ref=e514]:
+                    - generic [ref=e515]:
+                      - img [ref=e516]
+                      - text: Active
+                  - cell "Read-only" [ref=e518]
+                - row "Synthetic unlabelled KPI Other Higher is better Monthly Lagging Team member (Transformation Lead, ref. 0203) Draft – not submitted Read-only" [ref=e519]:
+                  - rowheader "Synthetic unlabelled KPI" [ref=e520]
+                  - cell "Other" [ref=e521]
+                  - cell "Higher is better" [ref=e522]
+                  - cell "Monthly" [ref=e523]
+                  - cell "Lagging" [ref=e524]
+                  - cell "Team member (Transformation Lead, ref. 0203)" [ref=e525]
+                  - cell "Draft – not submitted" [ref=e526]:
+                    - generic [ref=e527]:
+                      - img [ref=e528]
+                      - text: Draft – not submitted
+                  - cell "Read-only" [ref=e530]
+            - navigation "Pagination" [ref=e531]:
+              - generic [ref=e532]: Page 1 of 1 · 2 of 2 rows
+              - generic [ref=e533]:
+                - generic [ref=e534]: Rows per page
+                - combobox "Rows per page" [ref=e535]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e536]
+              - button "Next" [disabled] [ref=e537]
+        - region "Strategic guardrails" [ref=e538]:
+          - generic [ref=e539]:
+            - heading "Strategic guardrails" [level=2] [ref=e540]
+            - button "Add guardrail" [ref=e542] [cursor=pointer]:
+              - img [ref=e543]
+              - text: Add guardrail
+          - generic [ref=e545]: Boundaries the transformation must respect (regulatory, customer experience, capital, risk, brand).
+          - generic [ref=e546]:
+            - generic [ref=e547]:
+              - generic [ref=e548]:
+                - generic [ref=e549]: Search
+                - searchbox "Search" [ref=e550]
+              - button "Columns" [ref=e552] [cursor=pointer]:
+                - img [ref=e553]
+                - text: Columns
+            - table "Strategic guardrails" [ref=e556]:
+              - caption [ref=e557]: Strategic guardrails
+              - rowgroup [ref=e558]:
+                - row "Guardrail not sorted Category not sorted Statement not sorted Owner Actions" [ref=e559]:
+                  - columnheader "Guardrail not sorted" [ref=e560]:
+                    - button "Guardrail not sorted" [ref=e561] [cursor=pointer]:
+                      - text: Guardrail
+                      - img [ref=e562]
+                      - generic [ref=e564]: not sorted
+                  - columnheader "Category not sorted" [ref=e565]:
+                    - button "Category not sorted" [ref=e566] [cursor=pointer]:
+                      - text: Category
+                      - img [ref=e567]
+                      - generic [ref=e569]: not sorted
+                  - columnheader "Statement not sorted" [ref=e570]:
+                    - button "Statement not sorted" [ref=e571] [cursor=pointer]:
+                      - text: Statement
+                      - img [ref=e572]
+                      - generic [ref=e574]: not sorted
+                  - columnheader "Owner" [ref=e575]
+                  - columnheader "Actions" [ref=e576]
+              - rowgroup [ref=e577]:
+                - 'row "Synthetic: no customer price rise Regulatory Synthetic: the billing change must not raise any retail tariff. Not assigned Edit : Synthetic: no customer price rise Archive : Synthetic: no customer price rise" [ref=e578]':
+                  - 'rowheader "Synthetic: no customer price rise" [ref=e579]'
+                  - cell "Regulatory" [ref=e580]
+                  - 'cell "Synthetic: the billing change must not raise any retail tariff." [ref=e581]'
+                  - cell "Not assigned" [ref=e582]
+                  - 'cell "Edit : Synthetic: no customer price rise Archive : Synthetic: no customer price rise" [ref=e583]':
+                    - generic [ref=e584]:
+                      - 'button "Edit : Synthetic: no customer price rise" [ref=e585] [cursor=pointer]':
+                        - img [ref=e586]
+                        - text: Edit
+                        - generic [ref=e588]: ": Synthetic: no customer price rise"
+                      - 'button "Archive : Synthetic: no customer price rise" [ref=e589] [cursor=pointer]':
+                        - img [ref=e590]
+                        - text: Archive
+                        - generic [ref=e592]: ": Synthetic: no customer price rise"
+            - navigation "Pagination" [ref=e593]:
+              - generic [ref=e594]: Page 1 of 1 · 1 of 1 rows
+              - generic [ref=e595]:
+                - generic [ref=e596]: Rows per page
+                - combobox "Rows per page" [ref=e597]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e598]
+              - button "Next" [disabled] [ref=e599]
+```
