@@ -59,4 +59,15 @@ export const RT_BLOCK = {
   roleMapping: 0x057,
   workItem: 0x058,
   inboxNotification: 0x059,
+  /** T-DG5-BE-V3 (F-DG5-120, D-170): the G1-G4 gate history and the evidence its criteria read (roaming-gates.ts). */
+  baseline: 0x060,
+  valuePool: 0x061,
+  guardrail: 0x062,
+  capability: 0x063,
+  journey: 0x064,
+  evidenceLink: 0x065,
+  gateSubmissionCriterion: 0x066,
+  gateDecision: 0x067,
+  gateDecisionAgreement: 0x068,
+  gateException: 0x069,
 } as const;

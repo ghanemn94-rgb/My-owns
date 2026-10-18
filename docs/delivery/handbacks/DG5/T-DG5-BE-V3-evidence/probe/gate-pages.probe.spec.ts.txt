@@ -1,0 +1,32 @@
+// T-DG5-BE-V3 evidence probe (not a product test): renders the seeded roaming transformation's workspace and its G1,
+// G4 and G5 gate pages on a demo stack, in en and ar, as the demo Sponsor, and saves full-page screenshots and the
+// visible text. Run through a temporary Playwright config whose testDir is this folder.
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { test } from "@playwright/test";
+import { demoPage } from "../../../../../../e2e/support/a02-demo.ts";
+
+const ROAMING = "01995000-0000-7000-8000-000000000001";
+const OUT = process.env["BEV3_PROBE_OUT"]!;
+
+test("render the roaming workspace and gate pages", async ({ browser }, info) => {
+  test.setTimeout(240_000);
+  const lang = info.project.name.endsWith("-ar") ? "ar" : "en";
+  const dir = path.join(OUT, lang);
+  mkdirSync(dir, { recursive: true });
+  const page = await demoPage(browser, lang, "sp");
+  for (const [name, url] of [
+    ["workspace", `/transformations/${ROAMING}`],
+    ["gate-G1", `/transformations/${ROAMING}/gates/G1`],
+    ["gate-G4", `/transformations/${ROAMING}/gates/G4`],
+    ["gate-G5", `/transformations/${ROAMING}/gates/G5`],
+  ] as const) {
+    await page.goto(url);
+    await page.waitForLoadState("networkidle");
+    await page.locator("main h1").first().waitFor();
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: path.join(dir, `${name}.png`), fullPage: true });
+    writeFileSync(path.join(dir, `${name}.txt`), await page.locator("main").innerText());
+  }
+  await page.context().close();
+});

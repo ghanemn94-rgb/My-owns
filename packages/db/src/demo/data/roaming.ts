@@ -226,7 +226,8 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
     mode: "end_to_end",
     entry_phase: null,
     status: "active",
-    current_phase: "transform",
+    // F-DG5-120 (D-170): created in Diagnose; the approved G1-G4 decisions advance it to Transform (roaming-gates.ts).
+    current_phase: "diagnose",
     sponsor_user_id: U.sp,
     lead_user_id: U.tl,
     timezone: "Asia/Riyadh",
@@ -643,6 +644,12 @@ async function seedElementsAndChains(ctx: DemoSeedContext): Promise<void> {
     governance_forum: B0145.governance,
     decision_rights: "Per the T11 decision rights matrix of this transformation (synthetic).",
     success_definition: `Benefits: ${B0145.benefits}`,
+    // The B0037 thesis (G2 outcome tree), from the B0145 elements (synthetic illustrative example).
+    thesis_change: "the roaming pass architecture, the digital activation journey and the partner model",
+    thesis_outcomes: "roaming attach and activation, complaint rate and partner economics",
+    thesis_benefits: "incremental roaming revenue, avoided care cost and margin improvement",
+    thesis_because:
+      "low activation, high complaints and partner cost pressure are the diagnosed causes of roaming value leakage (synthetic).",
   };
   await ctx.insert("charter", "roaming.charter", { id: charterId, ...scope, ...charterContent, ...st(at, U.tl) });
   await ctx.insert("charter_version", "roaming.charter.v1", {
@@ -671,6 +678,10 @@ async function seedElementsAndChains(ctx: DemoSeedContext): Promise<void> {
       owner_user_id: U.bo,
       is_top_outcome: true,
       top_rank: n,
+      // The good outcome test inputs (B0051; G2): attested specific and strategically relevant, with its causal chain.
+      specific_confirmed: true,
+      strategically_relevant_confirmed: true,
+      causal_chain: `${c.initiative} -> ${c.kpi} -> ${c.benefit} (B0147, synthetic illustrative example).`,
       status: "active",
       ...st(at, U.tl),
     });
