@@ -184,4 +184,103 @@ describe("G4 evaluators", () => {
       },
     ]);
   });
+
+  // F-DG5-122 (D-172): a criterion over the approved portfolio fails closed when the loaded portfolio is EMPTY.
+  describe("an empty approved portfolio (F-DG5-122, D-172)", () => {
+    const NONE = {
+      code: "g4.no_approved_initiative",
+      message: "No initiative in the approved portfolio",
+      pointer: "/initiatives",
+    };
+    const empty = (over: { portfolio?: Partial<PortfolioGateFacts>; kpi?: object } = {}) =>
+      evaluate(
+        complete({ portfolio: { initiatives: [], ...over.portfolio }, kpi: { initiativeCases: [], ...over.kpi } }),
+      );
+
+    it("roadmap, owners, funding and capacity each carry exactly the one missing item naming the cause", () => {
+      const out = empty();
+      expect([out["g4.roadmap"], out["g4.owners"], out["g4.funding"], out["g4.capacity"]]).toEqual([
+        [NONE],
+        [NONE],
+        [NONE],
+        [NONE],
+      ]);
+    });
+
+    it("prioritization: a current ranking over no initiative is incomplete; a missing ranking names both causes", () => {
+      expect(
+        empty({ portfolio: { ranking: { snapshotId: "s", weightSetId: "ws", entries: [] } } })["g4.prioritization"],
+      ).toEqual([NONE]);
+      expect(empty({ portfolio: { ranking: null } })["g4.prioritization"]).toEqual([
+        { code: "g4.prioritization_missing", message: "Prioritization", pointer: "/prioritization" },
+        NONE,
+      ]);
+    });
+
+    it("business cases and Finance validation: a complete, validated transformation-level part never completes them alone", () => {
+      const out = empty();
+      expect(out["g4.business_cases"]).toEqual([NONE]);
+      expect(out["g4.finance_validation"]).toEqual([NONE]);
+      // The transformation-level parts keep their own checks beside the empty portfolio.
+      const noCase = empty({ kpi: { transformationCase: null } });
+      expect(noCase["g4.business_cases"]).toEqual([
+        { code: "g4.business_case_missing", message: "Business cases", pointer: "/business-cases" },
+        NONE,
+      ]);
+      expect(noCase["g4.finance_validation"]).toEqual([
+        { code: "g4.finance_validation_missing", message: "Finance validation", pointer: "/business-cases" },
+        NONE,
+      ]);
+      // An initiative case of an initiative outside the approved portfolio never stands in for the portfolio.
+      const outside = empty({
+        kpi: {
+          initiativeCases: [
+            { ...CASE, id: "c9", code: "BC-09", level: "initiative", initiativeId: "x", pointer: "/business-cases/c9" },
+          ],
+        },
+      });
+      expect(outside["g4.business_cases"]).toEqual([NONE]);
+      expect(outside["g4.finance_validation"]).toEqual([NONE]);
+    });
+
+    it("Initiative cards keeps g4.portfolio_empty; other conflicts are still listed beside the cause", () => {
+      expect(empty()["g4.initiative_cards"]).toEqual([
+        { code: "g4.portfolio_empty", message: "Initiative cards", pointer: "/initiatives" },
+      ]);
+      const conflict = {
+        resourceRoleId: "r",
+        roleLabel: "Data engineer",
+        periodMonth: "2027-02-01",
+        committedFte: "1.00",
+        availableFte: null,
+      };
+      expect(empty({ portfolio: { capacityConflicts: [conflict] } })["g4.capacity"]).toEqual([
+        NONE,
+        {
+          code: "g4.capacity_conflict",
+          message: "Capacity conflict: Data engineer 2027-02",
+          pointer: "/resource-roles/r",
+        },
+      ]);
+      expect(empty({ portfolio: { scheduleUnknowns: [{ dependencyId: "u", code: "DEP-04" }] } })["g4.roadmap"]).toEqual(
+        [NONE, { code: "g4.schedule_unknown", message: "Schedule unknown: DEP-04", pointer: "/dependencies/u" }],
+      );
+    });
+
+    it("every criterion over the portfolio is incomplete; not loaded keeps the NOT_LOADED item, never the empty one", () => {
+      const out = empty();
+      expect(Object.entries(out).filter(([, m]) => m.length === 0)).toEqual([]);
+      const { initiatives: _absent, ...withoutInitiatives } = complete().portfolio;
+      const notLoaded = evaluate({ ...complete(), portfolio: withoutInitiatives });
+      expect(notLoaded["g4.owners"]).toEqual([{ code: "g4.owner_missing", message: "Owners" }]);
+      expect(notLoaded["g4.funding"]).toEqual([{ code: "g4.funding_missing", message: "Funding" }]);
+      expect(notLoaded["g4.capacity"]).toEqual([{ code: "g4.capacity_commitment_missing", message: "Capacity" }]);
+      expect(notLoaded["g4.roadmap"]).toEqual([{ code: "g4.roadmap_missing", message: "Roadmap" }]);
+      expect(
+        Object.values(notLoaded)
+          .flat()
+          .some((m) => m.code === NONE.code),
+      ).toBe(false);
+    });
+  });
 });
