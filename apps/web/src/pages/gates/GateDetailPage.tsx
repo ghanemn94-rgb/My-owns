@@ -42,7 +42,13 @@ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { diagnosticDimensionLabel, gateLabel, pick, tomDimensionLabel } from "../../lib/methodology.ts";
 import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/problem.ts";
-import { BusinessApprovalNote, InheritedApprovalBadge, inheritedApprovalSource, readiness } from "./GatesPage.tsx";
+import {
+  BusinessApprovalNote,
+  InheritedApprovalBadge,
+  inheritedApprovalSource,
+  readiness,
+  readinessText,
+} from "./GatesPage.tsx";
 import {
   CriteriaReviewTable,
   EMPTY_SCOPE,
@@ -57,6 +63,7 @@ import {
   type ScaleScopeDraft,
   useGateP4Refresh,
 } from "./GateP4.tsx";
+import { useGateExceptions } from "./p4api.ts";
 import { G5ScaleAndRisk } from "./ScaleRisk.tsx";
 
 export function GateDetailPage() {
@@ -91,7 +98,10 @@ function GateContent({ view }: { view: GateView }) {
   const [deciding, setDeciding] = useState(false);
   const [configuring, setConfiguring] = useState(false);
   const def = view.definition;
-  const r = readiness(view);
+  // T-DG5-FE-V1B (D-170): the gate's exceptions (the same query as the exceptions section below); their server-computed
+  // `covering` says which incomplete mandatory outputs are covered today. Loading or failed: nothing counts as covered.
+  const exceptions = useGateExceptions(ws.tid, def.code);
+  const r = readiness(view, exceptions.data);
   const current = view.currentSubmission;
   const canConfigure = ws.can("gate.configure") && !(current && current.status === "pending");
 
@@ -226,11 +236,12 @@ function GateContent({ view }: { view: GateView }) {
 
       <Section id="readiness" title={t("gates.readinessTitle")} intro={t("gates.readinessIntro")}>
         <p
-          className={`banner ${r.ready ? "banner--success" : "banner--warning"}`}
+          className={`banner ${r.satisfied ? "banner--success" : "banner--warning"}`}
           role="status"
           data-readiness={`${r.complete}/${r.total}`}
+          data-readiness-covered={r.covered}
         >
-          <Icon name={r.ready ? "check" : "alert"} /> {t("gates.readiness", { complete: r.complete, total: r.total })}
+          <Icon name={r.satisfied ? "check" : "alert"} /> {readinessText(r, t)}
           {r.unverified > 0 ? <> · {t("gates.unverifiedCount", { n: r.unverified })}</> : null}
         </p>
         <CriteriaTable criteria={view.criteria} />
