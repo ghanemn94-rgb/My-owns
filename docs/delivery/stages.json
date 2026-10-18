@@ -1730,7 +1730,7 @@
       "id": "DG5",
       "stage": "P5",
       "name": "Configuration automation and outputs",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG4"
       ],
@@ -1748,10 +1748,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b",
-        "source_commit": "601d7d282b4bf3293b0ca6213f29600f336a4df0",
-        "frozen_at": "2026-10-17T21:55:25Z",
-        "manifest_path": "docs/delivery/candidates/DG5/8e7d23a3ec021871.manifest.json"
+        "candidate_id": "sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e",
+        "source_commit": "d3528fcf0dbf1df5f91456c82f5ce188fdee7c75",
+        "frozen_at": "2026-10-18T11:09:41Z",
+        "manifest_path": "docs/delivery/candidates/DG5/c4f70a80196e79c7.manifest.json"
       },
       "review_rounds": [
         {
@@ -1765,6 +1765,18 @@
             "qa-verifier": "docs/delivery/reviews/DG5/round-1/qa-verifier.json"
           },
           "note": "DG5 gate review round 1 on candidate 8e7d23a3 (2172 files, source 601d7d2; code identical to 8c68a47 and 3edc1b2). P5 built in waves W1-W23 with continuation runs after restarts (D-141 to D-169); 846 contract operations, migrations 0062-0096, every p5-pending list empty; the 78 DG5-final requirements IMPLEMENTED (validate --register DG5 PASS). Orchestrator pre-freeze verification, no agent running: on 8c68a47 install/typecheck/build/lint/format/openapi/contrast/no-cdn and --historical --stage DG4 exit 0; unit 2335/1689/259+2 skipped with the locale unset and with C.UTF-8; integration 3030 passed + 1 skipped (migrations 0001-0096); product e2e 440/440 with the locale unset; root acceptance e2e 30/30 and demo e2e 12/12; product e2e with C.UTF-8 439 passed + 1 timeout (AUD, chromium-en, during the orchestrator's concurrent validator run; disclosed in D-169), the spec re-run alone 24/24. On 3edc1b2 (docs changed): unit in both locales and the doc-reading integration files 53/53; validate --pipeline, --register DG2-DG5 and --historical --stage DG4 exit 0."
+        },
+        {
+          "round": 2,
+          "candidate_id": "sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e",
+          "frozen_at": "2026-10-18T11:09:41Z",
+          "source_commit": "d3528fcf0dbf1df5f91456c82f5ce188fdee7c75",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG5/round-2/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG5/round-2/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG5/round-2/qa-verifier.json"
+          },
+          "note": "DG5 gate review round 2 on candidate c4f70a80 (2183 files, source d3528fc; code identical to 9c96ee3 and 83e15d3). The product diff from round 1's 601d7d2 is repair wave V1 (T-DG5-BE-V1 with migration 0097, BE-V2/V2B/V2C, BE-V3, FE-V1/V1B), the orchestrator's a02 fixture hunk 6c7f54b and T-DG5-ARCH-R4 (docs and OpenAPI descriptions); D-170, D-171. Merged-tree verification: static checks, unit 2335/1708/259+2 in both locales, integration 3053+1 skipped (migrations 0001-0097), doc-readers 136/136, no-cdn, root 30/30, demo 12/12, the orchestrator G4 probe, product e2e 442/442 in both locales, validators exit 0."
         }
       ],
       "gate_record": "docs/delivery/gates/DG5.json",
@@ -1788,6 +1800,11 @@
           "state": "FIXING",
           "at": "2026-10-18T05:20:00Z",
           "note": "Round-1 results on 8e7d23a3: domain PASS (F-DG5-120 Medium, F-DG5-121 Low), code-security FAIL (F-DG5-100, F-DG5-101: Medium, mandatory), qa FAIL (F-DG5-140, F-DG5-141: Medium). Six findings imported and all routed to repair wave V1 (T-DG5-BE-V1, BE-V2, BE-V3, FE-V1), then ARCH-R4 (D-170). Code-security and qa ran as R1C after two container restarts stopped earlier runs (salvaged, D-084 precedent)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-10-18T11:09:41Z",
+          "note": "DG5 re-frozen for review round 2: candidate c4f70a80 (2183 files, source d3528fc) after repair wave V1 and ARCH-R4 (D-170, D-171). Each reviewer verifies its own round-1 findings and runs a full review; then the release-auditor."
         }
       ]
     },
