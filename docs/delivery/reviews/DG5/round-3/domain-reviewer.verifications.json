@@ -1,0 +1,51 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate fc93b239 (clone of b7883ba, source bbd6294). (1) My round-2 reproduction re-run through the real API and UI on the production-initialized stack (probe dom-empty-g4.spec.ts, en and ar, each on its own new transformation): G1-G3 approved by a synthetic Sponsor, one initiative left a draft (approved portfolio empty), an accepted exception on 'Initiative cards' only. Live G4: every criterion incomplete; Business cases, Finance validation, Prioritization, Roadmap, Owners, Funding and Capacity each carry g4.no_approved_initiative ('No initiative in the approved portfolio' / 'لا توجد مبادرة في المحفظة المعتمدة', shown on the G4 page in each language, no English on the Arabic page); Initiative cards keeps g4.portfolio_empty; banner '0 of 8 ... 1 covered by accepted exceptions'; the submission is refused 422 gate_criteria_incomplete at exactly the seven /criteria/<key> pointers. (2) Frozen: g4-empty-portfolio.test.ts test 2 (run in my integration batch, 2/2) covers all eight with exceptions and asserts the snapshot, gate_submission_criterion rows and criteria read freeze the seven incomplete with g4.no_approved_initiative and their own exception; I confirmed in gates.ts:1063-1078 that the frozen rows come from the same evaluated criteria as the live view. (3) Non-empty portfolios evaluate as before: emptyPortfolio() returns [] when the scope is non-empty (g4.ts:258-259); gates/g4.test.ts 5/5; the root A08/A09 gate journeys 30/30 batch; the demo's real portfolio reads 8 of 8 complete. NOT_LOADED and the exception rules are untouched (diff limited to g4.ts and two i18n keys). ADR-0035 amendment E1-E5 matches the observed behaviour.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-3/probe/dom-empty-g4.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-3/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-3/prod/api/empty-g4-en.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/prod/api/empty-g4-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/prod/shots/en/e01-empty-portfolio-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/prod/shots/ar/e01-empty-portfolio-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/prod/text/en/e01-empty-portfolio-G4.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-3/prod/text/ar/e01-empty-portfolio-G4.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-3/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-3/03-root-prod.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on a demo-initialized stack (dev-mode, roaming.user.tl/sp/fin) in en and ar. G1-G3 6/6, 5/5, 5/5 approved (unchanged from round 2 apart from clock-default createdAt values); G4 approved and its live readiness reads '8 of 8 mandatory outputs complete' with no exception (GET gate-exceptions: 0 items; 'No exception has been requested for this gate'); the frozen submission 1 holds the eight criteria complete with no exception id and a g4 snapshot naming INI-01..03 (funded at submission), ranking snapshot 1, BC-01..BC-04 validated, three validated formula versions, three funding decisions and 18 committed demands. The records exist: three initiatives launched, ranked 2/3/1 under weight set v1 25/25/20/15/15 = B0076 (weighted 3.95/3.95/4.10, recomputed by hand), selected by the demo Sponsor, funded by DEC-02..04 (2,400,000 / 360,000 / 900,000 SAR, equal to each initiative case's cash investment), six approved milestones, three roles with 18 capacity rows, demand within capacity ('No over-allocated cell'). All dated between G3 (2026-06-02) and the G4 submission (2026-06-08); launch on 2026-07-03, after GD-04 (2026-06-10), which respects B0009 (no launch before North Star, outcomes and target state) and B0023 (G4 evidence: initiative cards, business cases, roadmap, owners, capacity). GD-04's rationale is true to these records. Totals: BC-01 rolls up its own and the three initiative cases' lines by reference, each line once: gross 10,632,000 = 7,128,000 + 1,584,000 + 1,920,000; cost 4,830,000 = 3,660,000 cash + 1,170,000 non-cash; demo-numbers 10/10 and demo-numbers-spec 51/51 pins unchanged; no double counting. Walkthrough dump identical to round 2; the B0147 chain lines unchanged (demo-traceability-chains 6/6); two independent seeds give the same checksum 873221741d53...c339 and demo.test.ts seed/reset/reset identical (9/9). D-173 observations: (h) no outbox events for seeded rows - accepted, as D-171 (g): seeded history must not trigger real-clock consumers; (i) audit action portfolio_selection.create instead of .select - accepted: the audit row truthfully records who inserted the selection and when, synthetic seed history only, no product path affected; (j) INI-01 'Sequenced before its predecessor' - accepted: DEP-01's needed-by date (2026-10-01) is met by INI-03's milestone of 2026-09-28, the flag is a roadmap hint not a conflict, and showing it is honest; (k) is a qa accessibility point (axe clean), no domain effect. Residual raised separately as F-DG5-123 (Low): the launched initiatives carry no key deliverables, so the T05 '3 to 7' warning and three new orphan-report entries appear; it does not reopen this finding, because every G4 criterion now rests on real records and the product's G4 contract (ADR-0021 §7) does not read deliverables.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-3/probe/dom-demo.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-3/probe-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-gate-G4.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-gate-G4-submission-1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-gate-exceptions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-funding-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-capacity-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-case-BC-01-totals.json",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d22-roadmap.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d22-roadmap.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d23-capacity.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d23-capacity.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d24-business-cases.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d24-business-cases.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d20-prioritization.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d20-prioritization.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/04-root-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-3/07-integration.log"
+      ]
+    }
+  ]
+}

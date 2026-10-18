@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-123",
+      "stage_id": "DG5",
+      "requirement": "REQ-S18-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The demo's approved and launched portfolio INI-01..03 has no key deliverables: the portfolio screen keeps the T05 warning whose copy says it blocks at G4, and the orphan report now lists all three initiatives (undisclosed side effect of T-DG5-BE-X2)",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, candidate fc93b239, clone of b7883ba), as roaming.user.tl, in en and ar: (1) open /transformations/01995000-0000-7000-8000-000000000001/portfolio: INI-01, INI-02 and INI-03 read Launched, Selected, Funded, each with the warning 'Key deliverables: the card should list 3 to 7.' (ar: 'المخرجات الرئيسية: يُستحسن أن تذكر البطاقة من 3 إلى 7.'), on a page whose introduction says 'Warnings are readiness hints, not blocks; they block only at G4.', while G4 is approved; (2) open /transformations/.../traceability: the Orphan report now lists 'INI-01 Pass redesign + digital activation', 'INI-02 ...' and 'INI-03 ...' as 'Downstream link missing', expected step 'Initiative → Deliverable'. In round 2 (candidate c4f70a80) the three initiatives were drafts and were not listed (drafts are exempt); the round-2 and round-3 traceability API dumps differ only in these three nodes (status draft -> launched, orphan.downstream false -> true). Cause: roaming-portfolio.ts takes INI-01..03 to funded and launched but seeds no deliverable row; the B0072 T05 card field 'Key deliverables [3-7 deliverables]' stays empty. G4's Initiative-cards criterion does not read deliverables (ADR-0021 §7, a DG3 contract), so G4 still reads 8 of 8.",
+      "expected": "A demo approved portfolio that is coherent with B0072/B0023 'Initiative cards' as the product's own screens judge them: each launched initiative carries 3-7 key deliverables (as the T05 card and the roadmap's Deliverables tab expect), so the portfolio shows no 'block at G4' warning and the orphan report does not list the illustrative initiatives; or, at least, the side effect is disclosed (BE-X2 handback §8 and D-173 observations (h)-(k) do not mention it).",
+      "actual": "INI-01..03 are launched with zero deliverables. The portfolio screen shows the 3-7 deliverables warning on each (en and ar), contradicting its own 'they block only at G4' copy next to an approved G4; the orphan report grows from 2 to 5 entries, the three new ones being the flagship B0147 initiatives. The B0147 chains themselves, the G4 readiness (8 of 8), the totals and the walkthrough are unchanged. Not disclosed by BE-X2 or D-173.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/text/en/d19-portfolio.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/text/ar/d19-portfolio.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d19-portfolio.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d19-portfolio.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/text/en/d04-traceability.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/en/d04-traceability.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/shots/ar/d04-traceability.png",
+        "docs/delivery/test-evidence/DG5/domain/round-3/demo/api/demo-traceability.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-traceability.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/en/d04-traceability.txt"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T21:55:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 3 by domain-reviewer (T-DG5-REV-DOM-R3) as a Low, non-blocking residual of the F-DG5-120 repair; F-DG5-120 itself verifies closed."
+        }
+      ]
+    }
+  ]
+}
