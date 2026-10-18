@@ -1,0 +1,13 @@
+$ grep -rniE "official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily" apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo apps/api/src/modules/workflows/g4.ts
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:130:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+grep-exit=0
+$ grep -rnE "\bDG[0-7]\b" apps/web/src/i18n/{en,ar}/*.json
+grep-exit=1
+$ grep -n "DG0-DG7\|approves nothing real" packages/db/src/demo/data/roaming-portfolio.ts packages/db/src/demo/data/roaming-gates.ts | head
+packages/db/src/demo/data/roaming-portfolio.ts:40:// demonstration - approves nothing real" (REQ-S21-001; M0412). No real business, Finance or IT approval is granted, and
+packages/db/src/demo/data/roaming-portfolio.ts:41:// product gate G4 never implies an engineering gate DG0-DG7. Determinism (ADR-0050 §4): fixed 01995000-… ids, every
+packages/db/src/demo/data/roaming-gates.ts:29:// database, labelled "Synthetic demonstration - approves nothing real" (REQ-S21-001; M0412). No real business, Finance
+packages/db/src/demo/data/roaming-gates.ts:493:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",

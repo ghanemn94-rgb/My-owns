@@ -1,0 +1,45 @@
+== 07b demo.test.ts alone start 2026-10-18T21:40:56Z load 20.00 22.08 19.55
+$ env QA_PG_PORT=26481 MTH_PORT_POOL=26482-26499 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration packages/db/test/integration/demo.test.ts
+port-policy: PostgreSQL listening on port 26481 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.dSIor6/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvecny31_88f42c92 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/demo.test.ts (9 tests) 177681ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  9078ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  19994ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  8814ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  19096ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  3774ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  16630ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  33923ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  30138ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  6212ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/demo.test.ts [ packages/db/test/integration/demo.test.ts ]
+Error: Hook timed out in 30000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ packages/db/test/integration/demo.test.ts:28:1
+     26| const cli = fileURLToPath(new URL("../../src/cli.ts", import.meta.url)…
+     27| const dropAtEnd: string[] = [];
+     28| afterAll(async () => {
+       | ^
+     29|   for (const name of dropAtEnd.reverse()) await dropScratchDatabase(ad…
+     30| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 passed (9)
+   Start at  21:41:01
+   Duration  192.00s (transform 2.19s, setup 0ms, collect 4.75s, tests 177.68s, environment 0ms, prepare 202ms)
+
+exit=1
+== end 2026-10-18T21:44:23Z load 20.31 20.32 19.28

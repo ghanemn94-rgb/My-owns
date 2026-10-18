@@ -1,0 +1,83 @@
+== 07d DIAGNOSTIC (clone-only edit: afterAll budget 300 s + drop timings; the candidate's file is unchanged) start 2026-10-18T21:48:53Z load 19.61 20.47 19.65
+diff --git a/packages/db/test/integration/demo.test.ts b/packages/db/test/integration/demo.test.ts
+index 15fb968..82e66a9 100644
+--- a/packages/db/test/integration/demo.test.ts
++++ b/packages/db/test/integration/demo.test.ts
+@@ -26,8 +26,14 @@ const { adminUrl } = testDatabase();
+ const cli = fileURLToPath(new URL("../../src/cli.ts", import.meta.url));
+ const dropAtEnd: string[] = [];
+ afterAll(async () => {
+-  for (const name of dropAtEnd.reverse()) await dropScratchDatabase(adminUrl, name);
+-});
++  const t0 = Date.now();
++  for (const name of dropAtEnd.reverse()) {
++    const t = Date.now();
++    await dropScratchDatabase(adminUrl, name);
++    console.log(`[domain-r3 diag] dropped ${name} in ${Date.now() - t} ms`);
++  }
++  console.log(`[domain-r3 diag] teardown ${dropAtEnd.length} drops in ${Date.now() - t0} ms`);
++}, 300_000);
+ 
+ async function scratch(prefix: string, migrated = true): Promise<{ name: string; ownerUrl: string }> {
+   const name = await createScratchDatabase(adminUrl, prefix);
+port-policy: PostgreSQL listening on port 26481 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.dSIor6/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvecy5xy_dfbbf9e3 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_sum_mved1h07_08c974f4 in 509 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_runm_mved1ct5_714f2322 in 124 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_rprod_mved0zq8_641a2ad8 in 72 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_cli_mved067y_7c35005b in 3908 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_reset_mveczsi5_e5443148 in 3674 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_lib_mveczocr_fb64b784 in 4110 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_twice_mveczak5_45ee4039 in 4139 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_nonempty_mvecz2oz_9831b7cd in 3988 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_envprod_m_mvecyqex_db720db9 in 3836 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_envprod_mvecyknc_c46f495a in 4178 ms
+
+stdout | packages/db/test/integration/demo.test.ts
+[domain-r3 diag] dropped mth_demo_prod_mvecye96_ed4e1085 in 4886 ms
+[domain-r3 diag] teardown 11 drops in 33426 ms
+
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 181698ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  8286ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  23386ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  10186ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  17881ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  5378ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  17777ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  38242ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  22388ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  4736ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  21:48:58
+   Duration  192.62s (transform 1.87s, setup 0ms, collect 3.47s, tests 181.70s, environment 0ms, prepare 100ms)
+
+exit=0
+== end 2026-10-18T21:52:18Z load 17.40 19.22 19.34

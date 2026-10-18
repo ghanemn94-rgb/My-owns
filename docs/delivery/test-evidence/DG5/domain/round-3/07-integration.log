@@ -1,0 +1,324 @@
+== 07-integration start 2026-10-18T21:13:06Z load 7.83 6.37 4.28
+$ env QA_PG_PORT=26481 MTH_PORT_POOL=26482-26499 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/a02-a21-complete-lifecycle.test.ts tests/qa/integration/a06-configuration-change.test.ts tests/qa/integration/a07-historical-integrity.test.ts tests/qa/integration/a13-dependency-slip-rule-b.test.ts tests/qa/integration/a13-starters-run.test.ts tests/qa/integration/a13-starter-jobs.test.ts tests/qa/integration/a15-demo-transformation-outputs.test.ts tests/qa/integration/a15-outputs-every-definition.test.ts tests/qa/integration/a15-selected-records-and-injection.test.ts tests/qa/integration/a15-snapshots-and-packs.test.ts tests/qa/integration/a16-health-check.test.ts tests/qa/integration/a16-launch-plan.test.ts tests/qa/integration/a22-operational-readiness.test.ts apps/api/test/integration/methodology/reader-search-provenance.test.ts apps/api/test/integration/methodology/scoring-defaults.test.ts apps/api/test/integration/methodology/studio-review-publish.test.ts apps/api/test/integration/methodology/studio-checks.test.ts apps/api/test/integration/methodology/methodology-migrations.test.ts apps/api/test/integration/workflows/gate-conditions.test.ts apps/api/test/integration/workflows/approval-routes.test.ts apps/api/test/integration/tasks/notification-delivery.test.ts apps/api/test/integration/automation/automation-failures.test.ts apps/api/test/integration/benefits/financial-metrics.test.ts apps/api/test/integration/kpi/formula-preview.test.ts apps/api/test/integration/procedures/adopted-step-authorization.test.ts apps/api/test/integration/environment/demo-traceability-chains.test.ts packages/db/test/integration/demo-roaming.test.ts apps/api/test/integration/automation/rule-coauthor-review.test.ts apps/api/test/integration/environment/demo-gate-history.test.ts apps/api/test/integration/methodology/studio-coauthor-review.test.ts apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts apps/api/test/integration/procedures/output-read-authorization.test.ts packages/db/test/integration/catalogue.test.ts apps/api/test/integration/workflows/g4-empty-portfolio.test.ts apps/api/test/integration/gates/g4.test.ts apps/api/test/integration/environment/walkthrough.test.ts apps/api/test/integration/environment/demo-pending-approval.test.ts packages/db/test/integration/demo-numbers-spec.test.ts packages/db/test/integration/demo-numbers.test.ts packages/db/test/integration/demo.test.ts 
+port-policy: PostgreSQL listening on port 26481 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.dSIor6/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvebo4z9_3b57ce35 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (29 tests) 233ms
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 executive pack sections: [["update_transformation",643],["metrics_transformation",5328],["update_ws_01",2808],["metrics_ws_01",2726]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 pack values [{"key":"value_planned_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_forecast_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_submitted_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_validated_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_gap_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_planned_top_line_sar","value":"0","currency":"SAR"},{"key":"value_forecast_top_line_sar","value":"0","currency":"SAR"},{"key":"value_submitted_top_line_sar","value":"0","currency":"SAR"},{"key":"value_validated_top_line_sar","value":"0","currency":"SAR"},{"key":"value_gap_top_line","value":null,"currency":null}] canonical [["value_planned_profit_and_cash_sar",null],["value_forecast_profit_and_cash_sar",null],["value_submitted_profit_and_cash_sar",null],["value_validated_profit_and_cash_sar",null],["value_planned_top_line_sar","0"],["value_forecast_top_line_sar","0"],["value_submitted_top_line_sar","0"],["value_validated_top_line_sar","0"]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization
+A02 procedures: [{"c":"new_transformation_intake","n":"New transformation intake","scope":{"level":"organization","descriptionEn":"One organization; the transformation does not exist yet.","descriptionAr":"منظمة واحدة؛ التحول غير موجود بعد."},"launch":["SP","TL","TO"],"inputs":[["transformationName",null,true],["caseForChange",null,true]],"steps":[["capture_intake","task","TL",null,{"recordType":"transformation","mode":"create"},["transformationName","caseForChange"],false,null],["draft_charter","task","TL",null,{"recordType":"charter","mode":"link"},[],false,null],["confirm_sponsor","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"baseline_validation","n":"Baseline validation","scope":{"level":"transformation","descriptionEn":"One baseline of one transformation.","descriptionAr":"خط أساس واحد لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["metric",null,true],["value",null,true],["unit",null,true],["baselineDate",null,true],["source",null,true]],"steps":[["record_baseline","task","TL",null,{"recordType":"baseline","mode":"create"},["metric","value","unit","baselineDate","source"],true,null],["validate_baseline","task","FIN",null,{"recordType":"baseline","mode":"advance"},[],false,null]]},{"c":"kpi_submission","n":"KPI submission","scope":{"level":"transformation","descriptionEn":"One KPI and one reporting period.","descriptionAr":"مؤشر واحد وفترة تقرير واحدة."},"launch":["BO","KDS","TO"],"inputs":[["period",null,true]],"steps":[["submit_actual","task","BO",null,{"recordType":"kpi_actual","mode":"create"},["period"],false,null],["accept_actual","task","KDS",null,{"recordType":"kpi_actual","mode":"advance"},[],false,null]]},{"c":"tom_approval","n":"TOM approval","scope":{"level":"transformation","descriptionEn":"The TOM canvas of one transformation.","descriptionAr":"لوحة نموذج التشغيل لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["complete_canvas","task","TL",null,{"recordType":"tom_canvas_cell","mode":"link"},[],false,null],["business_review","task","BO",null,null,[],false,null],["technology_review","task","TD",null,null,[],false,null],["sponsor_approval","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"initiative_prioritization","n":"Initiative prioritization","scope":{"level":"transformation","descriptionEn":"The candidate initiatives of one transformation.","descriptionAr":"المبادرات المرشحة لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["score_initiatives","task","TL",null,null,[],false,null],["record_ranking","task","TO",null,{"recordType":"ranking_snapshot","mode":"create"},[],false,null],["approve_ranking","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"gate_review","n":"Gate review","scope":{"level":"transformation","descriptionEn":"One gate of one transformation.","descriptionAr":"بوابة واحدة لتحول واحد."},"launch":["TL","TO"],"inputs":[["gateCode",null,true],["financeReviewRequired",null,true]],"steps":[["prepare_submission","task","TL",null,{"recordType":"gate_submission","mode":"create"},["gateCode"],true,null],["criteria_review","task","TO",null,null,[],false,null],["finance_review","task","FIN",null,null,[],false,{"inputKey":"financeReviewRequired","operator":"eq","value":"yes"}],["gate_decision","approval","TL","SP",{"recordType":"gate_submission","mode":"advance"},[],false,null]]},{"c":"scope_target_change","n":"Scope/target change","scope":{"level":"transformation","descriptionEn":"One approved record of one transformation.","descriptionAr":"سجل معتمد واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[["reason",null,true]],"steps":[["raise_change","task","TL",null,{"recordType":"change_request","mode":"create"},["reason"],false,null],["assess_impact","task","TO",null,null,[],false,null],["decide_change","approval","TL","SP",{"recordType":"change_request","mode":"advance"},[],false,null]]},{"c":"benefit_validation","n":"Benefit validation","scope":{"level":"transformation","descriptionEn":"One benefit of one transformation.","descriptionAr":"منفعة واحدة لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["belowTarget",null,true]],"steps":[["measure_benefit","task","BO",null,null,[],false,null],["attach_evidence","task","BO",null,{"recordType":"evidence","mode":"link"},[],true,null],["finance_validation","task","FIN",null,{"recordType":"finance_validation","mode":"create"},[],false,null],["recovery_plan","task","TL",null,null,["belowTarget"],false,{"inputKey":"belowTarget","operator":"eq","value":"yes"}]]},{"c":"executive_escalation","n":"Executive escalation","scope":{"level":"transformation","descriptionEn":"One escalated decision of one transformation.","descriptionAr":"قرار مصعّد واحد لتحول واحد."},"launch":["TL","TO"],"inputs":[["whyNow",null,true]],"steps":[["raise_escalation","task","TL",null,{"recordType":"decision","mode":"create"},["whyNow"],false,null],["executive_decision","approval","TL","SP",{"recordType":"decision","mode":"advance"},[],false,null],["communicate_decision","task","TL",null,null,[],false,null]]},{"c":"bau_handover","n":"BAU handover","scope":{"level":"transformation","descriptionEn":"One performance area of one transformation.","descriptionAr":"مجال أداء واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[],"steps":[["prepare_handover","task","TL",null,{"recordType":"bau_handover","mode":"create"},[],true,null],["accept_handover","approval","TL","BO",{"recordType":"bau_handover","mode":"advance"},[],false,null],["schedule_reviews","task","TO",null,null,[],false,null]]}]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree
+A02 seed coverage: {"gate.g1":1,"gate.g2":1,"gate.g3":1,"gate.g4":1,"gate.g5":1,"gate.g6":1,"phase.1":5,"phase.2":3,"phase.3":4,"phase.4":5,"phase.5":4,"phase.6":4,"kpi.stale":1,"adoption.gap":1,"bau.handover":1,"template.t01":6,"template.t02":3,"template.t03":3,"template.t04":1,"template.t05":3,"template.t06":15,"template.t07":4,"template.t08":1,"template.t09":3,"template.t10":6,"template.t11":4,"template.t12":6,"template.t13":1,"template.t14":3,"template.t15":1,"template.t16":4,"benefit.shared":1,"approval.pending":2,"dashboard.area_1":3,"dashboard.area_2":3,"dashboard.area_3":3,"dashboard.area_4":1,"dashboard.area_5":1,"dashboard.area_6":2,"decision.overdue":1,"evidence.missing":18,"tom.dimension_01":1,"tom.dimension_02":1,"tom.dimension_03":1,"tom.dimension_04":1,"tom.dimension_05":1,"tom.dimension_06":1,"tom.dimension_07":1,"tom.dimension_08":1,"tom.dimension_09":1,"tom.dimension_10":1,"health_assessment.submitted":1} complete=true
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed
+A02 procedures driven: {
+ "new_transformation_intake": "completed",
+ "baseline_validation": "completed",
+ "kpi_submission": "completed",
+ "tom_approval": "completed",
+ "initiative_prioritization": "completed",
+ "gate_review": "completed",
+ "scope_target_change": "completed",
+ "benefit_validation": "completed",
+ "executive_escalation": "completed",
+ "bau_handover": "completed"
+}
+
+ ✓ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (13 tests) 31359ms
+   ✓ REQ-S18-004: the demo role users of the demo database > every seeded demo role user signs in through the demo IdP path and is a synthetic user of the demo organization  1174ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records  11104ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it  466ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake)  542ms
+   ✓ REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed  9400ms
+ ✓ |integration| tests/qa/integration/a07-historical-integrity.test.ts (12 tests) 28810ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact  1088ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact  405ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact  1272ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing  652ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2  655ms
+   ✓ REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback  1504ms
+   ✓ REQ-PB-093: changed scoring defaults apply to new transformations; an existing one keeps its weight set and rubric > defaults totalling 95% are refused at publish; 30/20/20/15/15 with a new Feasibility rubric reach only new transformations  1409ms
+   ✓ REQ-S14-003: an N/A scheme without its own bands is refused; existing assessments keep their scheme version and band > adding N/A while keeping the four source bands fails the preview (own bands required) and cannot be published  894ms
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 25360ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  698ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected  615ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S20-006: a NEW T13 record stores the added fields (no deployment between publish and use)  323ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  1010ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S02-001: deleting a template in a draft methodology fails the check and blocks publish  470ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-006: relabelling G3 succeeds; changing its stable ID, deleting a TOM dimension or an ADM approver is rejected  401ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  1845ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  550ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  2897ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  810ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the existing transformation still renders v1 forms; the forms migration preview lists the new required field  428ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the methodology migration lists a required G2 re-approval; executed after approval, history is unchanged  316ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > publishing defaults that total 95% is rejected  468ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > 30/20/20/15/15 and a new Feasibility rubric: a new transformation starts with them, an existing one keeps 25/25  594ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001: a definition missing a trigger or a completion condition is rejected  662ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  981ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-review-publish.test.ts (14 tests) 9748ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > submit records the request, the proposal and one task per TO holder (never the requester); approve; tasks close  614ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > the author or the requester deciding the review -> 403 config_review.self_review; ADM_METHOD, AUD, BO -> 403  481ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > request changes needs a note, returns the draft to editing; resubmitting the same content tasks the reviewers once more  309ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > withdraw returns the draft to editing and cancels the tasks; only a pending review is withdrawn  367ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > publish without the required review -> 422 config_version.review_required; after approval it publishes, immutable  948ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > deleting T13 in a draft: the coverage run fails and publish -> 422 config_version.source_incomplete  643ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > the latest compatibility run failed -> 422 config_version.compatibility_failed  419ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > scoring defaults that total 95 % -> 422 config_version.weights_total (REQ-PB-093); 100 % publishes  856ms
+   ✓ a kind whose review is switched off (REQ-S06-007 'review where configured') > TO switches review off (ADM_METHOD 403); publish from preview in one call: two version steps, two audit events  435ms
+   ✓ rollbackConfigVersion (ADR-0039 §7; REQ-S06-009) > restores an earlier version as a new version; later records stay retrievable; the audit trail shows the rollback  1278ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > the methodology admin who publishes a change gets 403 approving a funding reallocation  588ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > BO (a KPI owner) gets 403 on every Studio write of this file  702ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > re-checks authorization at commit time: a grant revoked mid-request gives 403 and writes nothing  1133ms
+ ✓ |integration| apps/api/test/integration/methodology/methodology-migrations.test.ts (9 tests) 13476ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > v2 published: the transformation still renders v1; the plan lists the G2 re-approval; execution moves only the pin  6326ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > the preview lists the new required field (forms provider) and needs an input before submit  1184ms
+   ✓ decisions, refusals and authorization > requester deciding -> 403 self_approval; decideApproval on the type -> 422 decide_through_record; request changes and resubmit  1320ms
+   ✓ decisions, refusals and authorization > a moved pin -> 409 pin_moved; not approved -> 422 not_approved; target invalid; open exists; withdraw  769ms
+   ✓ decisions, refusals and authorization > an approved migration whose pin moved is not executed (409 pin_moved, nothing written)  486ms
+   ✓ decisions, refusals and authorization > withdrawing a submitted migration withdraws its approval too  545ms
+   ✓ decisions, refusals and authorization > AUD and TL get 403 on every write, outsiders 404; If-Match 428/409; reads by methodology.read and transformation.read  1121ms
+   ✓ decisions, refusals and authorization > authorization is re-checked at commit time: a grant revoked while the request waits -> 403, nothing written  422ms
+   ✓ decisions, refusals and authorization > lock class 730252 serialises concurrent creates: exactly one migration, the other 409 open_exists  667ms
+ ✓ |integration| apps/api/test/integration/methodology/scoring-defaults.test.ts (14 tests) 12093ms
+   ✓ D-142 Q12: p3_instantiate_transformation() with the source defaults is byte-identical to DG3 > writes exactly the DG3 waves, weight set, weights and audit events, plus only the scoring_defaults pin  481ms
+   ✓ D-142 Q12: p3_instantiate_transformation() with the source defaults is byte-identical to DG3 > a transformation created through the API starts with the DG3 source defaults and is pinned to v1  421ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > the admin changes the Feasibility rubric text and the weights to 30/20/20/15/15 in a draft and publishes it  1003ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > a transformation created afterwards starts with 30/20/20/15/15 (studio_default, naming v2) and the new rubric  462ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > publishing defaults that total 95% (or 105%) is refused 422 config_version.weights_total; the draft stays a draft  1114ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > a later version equal to the source defaults again gives the DG3 output (source_default, DG3 rationale)  511ms
+   ✓ putScoringDefaultsDraft: authorization, validation, If-Match, audit > refuses a weight that is not a two-decimal percent in (0, 100] with 400 validation.weight_percent  404ms
+   ✓ putScoringDefaultsDraft: authorization, validation, If-Match, audit > the T06 sample preview reports Incomplete for a missing score and fails a draft that does not total 100%  372ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-checks.test.ts (17 tests) 6885ms
+   ✓ putConfigElement and the REQ-S06-006 invariants (ADR-0039 §2, §13) > renaming G3's label succeeds: one element row, the hash recomputed, one audit event per row written  555ms
+   ✓ putConfigElement and the REQ-S06-006 invariants (ADR-0039 §2, §13) > changing G3's stable key, origin or position is refused with 422 config_version.stable_id_change  659ms
+   ✓ every element mutation: authorization, If-Match, editability > AUD, TO and BO get 403 on every write; nothing is written  409ms
+   ✓ getConfigVersionDiff (ADR-0039 §5) > lists added, removed and changed elements with field-level from/to, against the base by default  399ms
+   ✓ getConfigAffectedRecords (ADR-0039 §5, §12) > counts the records each pinned transformation of the lineage has for the changed elements; Unknown is never 0  624ms
+   ✓ runConfigCompatibilityCheck (ADR-0039 §5) > label-only changes pass; a changed approver warns and lists the pinned transformations; an unknown role fails  1228ms
+   ✓ runConfigPreview: the sandbox writes nothing but its run (ADR-0039 §5) > a passing preview records one run and moves the stage editing -> preview; samples route through the draft  445ms
+   ✓ runConfigPreview: the sandbox writes nothing but its run (ADR-0039 §5) > listConfigCheckRuns lists the runs newest first, filtered by kind, with a cursor  346ms
+ ✓ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests) 3114ms
+   ✓ listMethodologyElements and listGuidingQuestions (REQ-PB-002, REQ-PB-011; ADR-0049 §2) > every B0158-B0162 element returns provenance=custom_extension (50 rows); none is labelled a PMI standard  399ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > a note claiming certification gives 422 methodology_reader.prohibited_text (and a DG0-DG7 name too)  500ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > valid reader edits are accepted with one audit event each; If-Match is required (428) and current (409)  608ms
+ ✓ |integration| apps/api/test/integration/gates/g4.test.ts (5 tests) 15233ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > 422 gate_criteria_incomplete names 'Owners', 'Finance validation', the initiative without a gap link, the missing funding and capacity commitment; nothing written  2194ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > an empty portfolio is 'Initiative cards' (g4.portfolio_empty); a capacity over-allocation and Unknown are conflicts  2507ms
+   ✓ G4 treats an Unknown schedule as a missing item (D-079; ADR-0021 §7, §11 item 3) > 'Schedule unknown: DEP-nn' refuses the submission; a mitigation or the missing date clears it  2992ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > TL submits; FIN validates and funds; the capacity owner commits; 403/403/409 hold; SP approves -> phase transform  4679ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > the submitter cannot decide G4, even holding the approver role (403 gate.submitter_cannot_decide)  1944ms
+ ✓ |integration| apps/api/test/integration/environment/walkthrough.test.ts (16 tests) 44153ms
+   ✓ production gives 409 environment.not_demo (ADR-0050 §9) > with and without a transformation, for every signed-in user; nothing is written  987ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > a fresh demo database: a transformation created through the API completes step 1 only; 2-12 incomplete  908ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > 404 outside the caller's scope and for an unknown id (never disclosed); 400; 401  994ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 2 diagnose and agree baseline: FIN validates the baseline; a later edit makes it stale again  1175ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 3 define outcomes/KPIs: an outcome, a KPI definition and their T02 link  999ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 4 design TOM: a target-state canvas cell and a TOM gap (either alone is not enough)  1011ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  943ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 6 update delivery/adoption: a submitted owner update, then a completed training record  1691ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 7 submit KPI actual: the KPI owner submits the period's actual  776ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  1830ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  1695ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 10 generate report: a generated snapshot completes it; a discarded one does not  999ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  2037ms
+   ✓ each rule reads only the given transformation > after every workflow above ran in this database, a new transformation still has step 1 only  703ms
+ ✓ |integration| apps/api/test/integration/automation/automation-failures.test.ts (9 tests) 7621ms
+   ✓ REQ-S12-003: an out-of-scope action fails with automation.action_forbidden and appears in the failure queue > a rule on transformation A configured to create a task in transformation B fails at once, never retried  1132ms
+   ✓ REQ-S12-002: a failed execution appears in the queue and succeeds on retry without duplicating actions > retry resumes the execution; the done action is not repeated; the entry resolves  636ms
+   ✓ dismiss, refusals, access (ADR-0043 §8, §9) > dismiss: 400, 428, 409, AUD 403, 200 with its audit reason; then not_open for retry and dismiss  659ms
+   ✓ dismiss, refusals, access (ADR-0043 §8, §9) > the 21st retry -> 422 automation_failure.retry_limit (each failed retry reopens the entry)  1223ms
+   ✓ dismiss, refusals, access (ADR-0043 §8, §9) > a reader of another organization sees none of org A's entries or executions; a no-grant user gets 403  1079ms
+   ✓ dismiss, refusals, access (ADR-0043 §8, §9) > commit-time re-authorization: a repair right revoked mid-request -> 403, nothing written  899ms
+   ✓ dismiss, refusals, access (ADR-0043 §8, §9) > lists executions newest first with filters and a stable cursor  977ms
+ ✓ |integration| tests/qa/integration/a16-health-check.test.ts (13 tests) 14467ms
+   ✓ REQ-PB-091: all 25 questions render verbatim (B0150) > a new assessment lists 25 unanswered questions and its answers carry response, evidence, owner and action  1173ms
+   ✓ REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > 24 answers: completion 24/25, complete false, score null and band null (API band=null)  1086ms
+   ✓ REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted  1237ms
+   ✓ REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim  3845ms
+   ✓ REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > concurrency: an answer without If-Match is 428, with a stale version 409; each accepted write is audited  1314ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > a draft that adds N/A and keeps the four source bands is refused at preview (422 health_scheme.own_bands_required) and publishing it is rejected  994ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > with its own bands (the source bands removed) it publishes; v1 and every existing assessment keep their scheme, score and band  1918ms
+ ✓ |integration| apps/api/test/integration/benefits/financial-metrics.test.ts (12 tests) 9408ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > walks every status of ADR-0047 §5 on one case, and every response names its assumptions and extension: true  1225ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > enabled without assumptions is assumptions_missing; with assumptions and no cash flows, cash_flows_missing  628ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > 422 financial_metrics.discount_rate_invalid for a rate outside [0, 1] (400 beyond 6 decimals); nothing written  719ms
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > a replacement steps the revision; the earlier rows stay as history; one audit event per PUT  429ms
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > 422 financial_cash_flows.periods_invalid for a gap or a duplicate index; 400 for a negative or over-scale amount  536ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > ADM_METHOD switches the extension but gets 403 on the assumptions; FIN gets 403 on the switch; AUD 403 on every write  551ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > If-Match: 428 when missing; "0" creates version 1 and is 409 once a row exists; a stale version is 409  1003ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > commit-time: a grant revoked while the PUT waited is 403; nothing written (settings and cash flows)  1199ms
+   ✓ db-error mapping of the 0085 financial guards (ADR-0047 §8) > the deferred row-count guard refuses a set without its rows at COMMIT (database's last line)  1069ms
+   ✓ a user of another organization reads that organization's own settings (version 0), never another's  857ms
+ ✓ |integration| apps/api/test/integration/tasks/notification-delivery.test.ts (11 tests) 3269ms
+   ✓ preferences: GET/PUT /me/notification-preferences (ADR-0044 §5, §9) > version 0 with the defaults when none stored; If-Match "0" creates; then 409 stale; one audit event per write  596ms
+   ✓ delivery and digests (REQ-S12-025) > a non-urgent reminder in quiet hours is delivered in the next digest; the job twice in the window creates one digest; My Work shows the task at once  480ms
+ ✓ |integration| packages/db/test/integration/demo-numbers.test.ts (10 tests) 22103ms
+   ✓ §J.3: recomputed values equal the seeded values (from the stored rows, with the engines) > is deterministic: a second seed into a fresh database gives the same counts and checksum  11422ms
+ ✓ |integration| tests/qa/integration/a16-launch-plan.test.ts (11 tests) 4802ms
+   ✓ REQ-PB-086: the 90-day launch plan generated from the chosen start date > start 2026-10-01: Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; every B0134 action and output appears; Day-90 test on day 90  322ms
+   ✓ REQ-PB-087: the Day-90 leadership test > five answers: incomplete (5/6) and completion is refused; AUD cannot answer  627ms
+   ✓ REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > owners are assigned; a task whose predecessor is incomplete shows 'blocked by' the predecessor  550ms
+   ✓ REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > +7 days moves every unstarted task by 7 days and leaves completed (and started) tasks unchanged; the open Day-90 test moves too  559ms
+   ✓ REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > starter 1 generates the plan from launchPlan.startDate once; replaying the event duplicates nothing  603ms
+   ✓ REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > without the flag no plan is generated  306ms
+ ✓ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests) 109024ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  1294ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  5622ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  16901ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  55509ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  464ms
+ ✓ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (3 tests) 16401ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted  325ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception  505ms
+stdout | apps/api/test/integration/methodology/studio-coauthor-review.test.ts > F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author review decision [33m403[39m config_review.self_review publish [33m422[39m config_version.review_required
+
+ ✓ |integration| apps/api/test/integration/methodology/studio-coauthor-review.test.ts (9 tests) 16231ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review  903ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > an element PUT alone (no PATCH) makes its writer an author; the record is written with the write  454ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > the creator and the requester are still refused; a TO who wrote nothing approves and publishes  490ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > deciding a round does not make the reviewer an author: the same TO decides the next round  405ms
+   ✓ F-DG5-100: every content table of a draft records its writer (0097 triggers) > a procedure definition written by a second admin makes them an author of the procedure draft  663ms
+   ✓ F-DG5-100 at the database (0097): the runtime role cannot record a contributor's decision > refuses a direct UPDATE that records a co-author's decision, and allows an independent one  322ms
+   ✓ 0097: the backfill records the contributors of the drafts open at migration time > re-applied to the pre-0097 schema (rolled back): creator, updated_by and every audited writer; one audit event  400ms
+ ✓ |integration| tests/qa/integration/a15-snapshots-and-packs.test.ts (15 tests) 30192ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (en) of the issued snapshot exported after the change shows the old target and the issue  3634ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (ar) of the issued snapshot exported after the change shows the old target and the issue  3492ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (en) prints the submitted update text and the workstream  1113ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (ar) prints the submitted update text and the workstream  3638ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > docx (en) prints the submitted update text and the workstream  403ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (en) prints the submitted update text and the workstream  434ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > changing the linked decision before the cut-off changes the live presentation  378ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the issued meeting pack remains the snapshot after a later change; the live view follows the change  7294ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the cut-off creates ONE draft agenda with the current open asks; its items are not published before review  1153ms
+ ✓ |integration| tests/qa/integration/a13-starter-jobs.test.ts (4 tests) 17204ms
+   ✓ REQ-S12-004: one transformation -> one set of phase checklists and role tasks; a retry creates no duplicates; the 90-day tasks are dated from the start date > create with launchPlan.startDate, let the worker run, replay the event x3: nothing is added  2708ms
+   ✓ REQ-S12-004: one transformation -> one set of phase checklists and role tasks; a retry creates no duplicates; the 90-day tasks are dated from the start date > without the plan flag, no plan and no launch task are created  911ms
+   ✓ REQ-S12-015: cut-off creates one draft agenda (pack); it is not published without review > the cut-off job creates ONE draft pack per meeting, again-runs add none; publishing waits for the chair's review  3316ms
+ ❯ |integration| packages/db/test/integration/demo.test.ts (9 tests) 199641ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  12914ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  26189ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  9945ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  24833ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  4858ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  21010ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  39646ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  24430ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  5804ms
+ ✓ |integration| packages/db/test/integration/demo-numbers-spec.test.ts (51 tests) 41ms
+ ✓ |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts (8 tests) 17565ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > the 5-day slip of a predecessor whose needed-by date is breached records ONE critical slip of 5 days  1257ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > each distinct affected owner is notified ONCE (one dependency_slip work item and one reminder); the predecessor's owner is not  1854ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > the slip list is readable with transformation.read (AUD) and refused without it (another org's TL: 404/403)  329ms
+ ✓ |integration| packages/db/test/integration/demo-roaming.test.ts (68 tests) 25529ms
+   ✓ REQ-S18-001 (with BE-S): the roaming dataset is deterministic > a second seed into a fresh database gives identical record counts and checksum  11640ms
+ ✓ |integration| apps/api/test/integration/workflows/approval-routes.test.ts (9 tests) 13351ms
+   ✓ sequential route (REQ-S10-015) > step 2 has no work item or notification until step 1 approves; the last step decides the approval  3059ms
+   ✓ sequential route (REQ-S10-015) > the requester never decides a step (403 approval_route.self_decision) and gets no step task  1305ms
+   ✓ sequential route (REQ-S10-015) > commit-time re-authorization: a BO whose grant is revoked after sign-in is refused, nothing written  913ms
+   ✓ parallel route (REQ-S10-015) > every step is notified at once; one person decides at most one step; request changes -> next round  1383ms
+   ✓ parallel route (REQ-S10-015) > a reject on one step cancels the other open step and rejects the approval  954ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (shipped v1): no steps, the DG4 decision route decides it  1176ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (any): no steps, the DG4 decision route decides it  1554ms
+   ✓ withdrawal and the admin route list > withdrawing a routed approval cancels its open steps  1067ms
+   ✓ withdrawal and the admin route list > listApprovalRoutes: the version's routes (TL, AUD read); BO without methodology.read 403; unknown 400  1142ms
+ ✓ |integration| tests/qa/integration/a13-starters-run.test.ts (11 tests) 23055ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter 1 (transformation created): one execution; one phase checklist and role tasks  996ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.reporting_period_open: each of its scheduled triggers (kpi.reporting_period_open) runs it once, succeeded  817ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.decision_sla: each of its scheduled triggers (governance.decision_sla_scan, approval.escalation_scan) runs it once, succeeded  2048ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.blocker_red: each of its scheduled triggers (governance.blocker_escalation_scan) runs it once, succeeded  986ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.meeting_cutoff: each of its scheduled triggers (governance.meeting_cutoff_scan) runs it once, succeeded  952ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.bau_handover_accepted: each of its scheduled triggers (sustainment.review_scan, sustainment.control_check_scan) runs it once, succeeded  2020ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter 16 (a job fails): a job that exhausts its retries creates ONE visible operational exception and the starter runs once  1999ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starters 5, 6, 7 (gate evidence check, valid submission routing, gate approved): a native G1 submission and approval run each once  3144ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starters 3 and 11 (accepted KPI actual, benefit evidence submitted): each runs once on its event, with its effect rows  3641ms
+ ✓ |integration| apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts (4 tests) 4949ms
+   ✓ F-DG5-101 rule on the evidence link: a person never links evidence they cannot read > an organization-scope actor who cannot read T links T's evidence: refused like an unknown record, nothing linked  1405ms
+   ✓ F-DG5-101 rule on the evidence link: a person never links evidence they cannot read > positive: an organization-scope actor who can read T links T's evidence to the adopted step  771ms
+   ✓ F-DG5-101 rule on the evidence link: a transformation-scope instance > evidence of a transformation the actor cannot read: refused like an unknown record, nothing linked  912ms
+   ✓ F-DG5-101 rule on the evidence link: a transformation-scope instance > positive: the actor links evidence of its own transformation; readable evidence of another stays refused by the guard  1105ms
+ ✓ |integration| tests/qa/integration/a15-outputs-every-definition.test.ts (5 tests) 75472ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout  67564ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > an export is the requester's own: another user of the organization gets 404 on the job and the file  1394ms
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each of the ten outputs generates from the demo transformation
+A15 demo: not generated: {}
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic
+A15 demo: snapshot content keys: ["asOf","period","subject","sections","synthetic","methodology","approvalState","schemaVersion","definitionCode","transformation"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label
+A15 demo: files with any illustrative wording: ["charter/pdf/en","charter/pdf/ar","charter/docx/en","charter/docx/ar","diagnostic/pdf/en","diagnostic/pdf/ar","diagnostic/docx/en","diagnostic/docx/ar","diagnostic/xlsx/en","diagnostic/xlsx/ar","tom/pdf/en","tom/pdf/ar","tom/docx/en","tom/docx/ar","tom/xlsx/en","tom/xlsx/ar","business_cases/pdf/en","business_cases/pdf/ar","business_cases/docx/en","business_cases/docx/ar","business_cases/xlsx/en","business_cases/xlsx/ar","roadmap/pdf/en","roadmap/pdf/ar","roadmap/pptx/en","roadmap/pptx/ar","roadmap/xlsx/en","roadmap/xlsx/ar","registers/xlsx/en","registers/xlsx/ar","registers/csv/en","registers/csv/ar","registers/pdf/en","registers/pdf/ar","executive_dashboard/pdf/en","executive_dashboard/pdf/ar","executive_dashboard/pptx/en","executive_dashboard/pptx/ar","executive_dashboard/xlsx/en","executive_dashboard/xlsx/ar","gate_pack/pdf/en","gate_pack/pdf/ar","gate_pack/pptx/en","gate_pack/pptx/ar","gate_pack/docx/en","gate_pack/docx/ar","handover/pdf/en","handover/pdf/ar","handover/docx/en","handover/docx/ar","meeting_minutes/pdf/en","meeting_minutes/pdf/ar","meeting_minutes/docx/en","meeting_minutes/docx/ar"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register
+A15 demo XLSX formulas: {"business_cases":["SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D6)","SUM(D4:D4)"],"registers":["SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)"]}
+
+ ✓ |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts (7 tests) 154932ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each output's PDF (en and ar) contains the demo transformation's ID  55226ms
+   ✓ REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label  72670ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register  336ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a benefit value that is not validated is labelled provisional in the PDF (en and ar)  11991ms
+ ✓ |integration| apps/api/test/integration/procedures/output-read-authorization.test.ts (3 tests) 4568ms
+   ✓ F-DG5-101: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)  1005ms
+   ✓ F-DG5-101: an intake claims a transformation its actor cannot read > positive: TL1 names a transformation it can read; it is linked and the later steps adopt it  1211ms
+   ✓ F-DG5-101: every output adapter requires read on the named record (charter) > draft_charter naming a charter the actor can no longer read is refused at commit time; nothing is linked  1159ms
+ ✓ |integration| apps/api/test/integration/automation/rule-coauthor-review.test.ts (4 tests) 3565ms
+   ✓ F-DG5-100 on rule versions: a co-author never decides the review of the content they wrote > the co-author's approval is 403 automation_rule_version.self_review; publish stays refused; a non-author approves  1005ms
+   ✓ F-DG5-100 on rule versions: a co-author never decides the review of the content they wrote > deciding a round does not make the reviewer an author: the same reviewer decides the next round  849ms
+ ✓ |integration| apps/api/test/integration/procedures/adopted-step-authorization.test.ts (2 tests) 5527ms
+   ✓ D-167: an adopted step is read and acted on with T's authorization and its assignee role > T's Lead completes draft_charter; a user without TL on T gets 403 or 404; other operations keep organization scope  2438ms
+   ✓ D-167: an adopted step is read and acted on with T's authorization and its assignee role > the organization-scope Lead keeps its rights: lists and reads the instance, and completes an adopted step  1002ms
+ ✓ |integration| apps/api/test/integration/workflows/g4-empty-portfolio.test.ts (2 tests) 7656ms
+   ✓ F-DG5-122: G4 over an empty approved portfolio fails closed (D-172) > with an accepted exception on Initiative cards only, the live G4 reads every portfolio criterion incomplete, naming the cause  3330ms
+   ✓ F-DG5-122: G4 over an empty approved portfolio fails closed (D-172) > a submission on an empty portfolio needs one accepted exception per incomplete criterion and freezes them incomplete  3310ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-conditions.test.ts (5 tests) 7377ms
+   ✓ v1: conditional G5 within its scope (REQ-S04-011 A08; DG4 behaviour re-run) > a conditional G5 limited to one BU blocks a scale transition for another BU; no scope -> 422  2074ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > catalogue default: on for G5 only  895ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched off in a published v2: conditions -> 422 gate.conditional_approval_disabled, nothing written  1259ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched on explicitly in a v2: conditions are accepted  1194ms
+   ✓ tracked to closure (listGateConditions, closeGateCondition) > open / overdue / closed; only the owner closes, once; AUD reads but cannot close  1177ms
+ ✓ |integration| apps/api/test/integration/kpi/formula-preview.test.ts (8 tests) 1227ms
+stdout | tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > the dangerous texts and the plain risk were accepted by the API (the refusals, if any, are listed)
+A15 RAID texts: [["\"=HYPERLINK(\\\"http://exa",201,null],["\"+SUM(1,2) QA-A15 plus-p",201,null],["\"-2+3 QA-A15 minus-prefi",201,null],["\"@SUM(1,2) QA-A15 at-pre",201,null],["\"\\tQA-A15 tab-prefixed r",201,null],["\"\\rQA-A15 CR-prefixed ri",201,null],["\"QA-A15 synthetic risk, ",201,null],["\"QA-A15 synthetic issue:",201,null]]
+
+ ✓ |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts (7 tests) 5256ms
+   ✓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (en) lists every criterion of G1 by its en label  419ms
+ ✓ |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts (6 tests) 11778ms
+ ✓ |integration| apps/api/test/integration/environment/demo-pending-approval.test.ts (4 tests) 18080ms
+   ✓ QA-E2 O-1: the seeded pending approval is in the demo Business Owner's inbox > the product acts on it: TL (the requester) is refused, a stale version is refused, the BO decides it  405ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/demo.test.ts [ packages/db/test/integration/demo.test.ts ]
+Error: Hook timed out in 30000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ packages/db/test/integration/demo.test.ts:28:1
+     26| const cli = fileURLToPath(new URL("../../src/cli.ts", import.meta.url)…
+     27| const dropAtEnd: string[] = [];
+     28| afterAll(async () => {
+       | ^
+     29|   for (const name of dropAtEnd.reverse()) await dropScratchDatabase(ad…
+     30| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 39 passed (40)
+      Tests  489 passed (489)
+   Start at  21:13:10
+   Duration  1347.42s (transform 14.39s, setup 0ms, collect 317.34s, tests 1020.76s, environment 0ms, prepare 184ms)
+
+exit=1
+== end 2026-10-18T21:35:50Z load 23.97 23.34 18.77
