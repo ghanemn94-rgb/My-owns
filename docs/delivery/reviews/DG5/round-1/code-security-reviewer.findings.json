@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-100",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Studio configuration review: a co-author who rewrote another admin's draft can review (approve) and publish the content they wrote; the separation-of-duties check knows only the draft's creator and the requester",
+      "reproduction": "Disposable clone at 9e4a314 (candidate sha256:8e7d23a3…f8f67b, source 601d7d2), disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 26500), Node 24.21.0. Test docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.test.ts copied to apps/api/test/integration/methodology/ and run with `npx vitest run --project integration <file>`.\nSetup: admin A holds ADM_METHOD at organization scope (the studio-fixtures methodologyAdmin). User C holds ADM_METHOD and TO at organization scope; nothing forbids holding both.\n1. A creates a scoring_defaults draft from a published 25/25/20/15/15 base (POST /api/v1/admin/methodology-versions, 201).\n2. C rewrites its content: PUT …/elements/scoring_weight/feasibility {weightPercent 30}, PUT …/elements/scoring_weight/strategic_fit {weightPercent 15} and PATCH the draft (title and change summary). All three return 200, and updatedBy = C.\n3. A previews (201 pass), runs the compatibility check (201 warn) and submits the review (201). A never edits the content.\n4. C decides the review: POST …/reviews/{id}/decision {outcome: approve} returns 200 `approved`.\n5. C publishes: POST …/publish returns 200 `published`.\nLog: docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.log (the test's final assertion expects 403 config_review.self_review at step 4 and fails with [200, undefined]).\nCause:\n- apps/api/src/modules/methodology/reviews.ts:333 refuses only `actor.userId === review.requested_by || actor.userId === current.created_by`.\n- The database backstop is the same: packages/db/migrations/0062_p5_config_versions.sql:441-444 compares decided_by with methodology_version.created_by, plus the requester CHECK.\n- Meanwhile any methodology.configure holder may change another admin's draft: drafts.ts:432-458 updateDraft (requireStudioWrite only) and elements.ts:238 PUT element.",
+      "expected": "ADR-0039 §5 and §9 (decide review: 'TO; never the author or requester'), with the refusal text 'You cannot review a configuration change you authored or requested.' (403 config_review.self_review), and REQ-S06-007 'Review where configured'. A person who wrote any part of the content under review is an author of that content. They must not be able to approve its review, at the API and in the database. For example, refuse any decider who appears as the actor of a methodology_version.* or methodology_element.* write on the draft since it was created, or who is its updated_by, or record co-authors and check them. The review-policy rule that the reviewer is never an administrator role (RP01/RP02, review-policies.ts:65 'an administrator role would review its own configuration') shows the intended separation.",
+      "actual": "The decision checks only the draft's creator and the requester. A second methodology admin who also holds the configured reviewer role (TO) can author the content (here the default T06 weights that every new transformation starts with, REQ-PB-093), approve the review of their own content and publish it. A configured review is then performed by its author, so 'review where configured' gives no independent check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.log",
+        "apps/api/src/modules/methodology/reviews.ts",
+        "apps/api/src/modules/methodology/drafts.ts",
+        "apps/api/src/modules/methodology/elements.ts",
+        "packages/db/migrations/0062_p5_config_versions.sql"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T02:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-REV-SEC-R1C); reproduced end to end through the API on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-101",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-002",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Procedure outputs: an organization-scope intake's capture_intake step accepts, and its steps then adopt, a transformation the acting person cannot read (write on an unreadable record; D-166 Rule A amplifies it)",
+      "reproduction": "Disposable clone at 9e4a314 (candidate sha256:8e7d23a3…f8f67b), disposable PostgreSQL 16 (with-pg.sh, port 26510), Node 24.21.0. Test docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.test.ts copied to apps/api/test/integration/procedures/.\nSetup: TL1 holds TL at organization scope and at BU a1. This is exactly the actor setup of the product's own intake-adoption.test.ts. TL2 holds TL at BU a2 only. TL does not inherit downward (0005).\n1. TL1 launches an organization-scope new_transformation_intake instance (201).\n2. After the launch, TL2 creates transformation X in BU a2 (201).\n3. TL1 cannot read X: GET /api/v1/transformations/{X} returns 404.\n4. TL1 completes capture_intake with {outputRecordId: X} (If-Match 1) and gets 200.\n5. The output link (output, transformation, X) is written, and D-166 Rule A (0096) moves the instance's remaining steps into X: draft_charter active with transformation_id X, confirm_sponsor pending with transformation_id X.\n6. Through the adopted steps (D-167), X's own lead TL2 now reads TL1's intake: GET /api/v1/procedure-instances/{id} returns 200.\nLog: docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.log (the final assertion expects 422 procedure_step.output_record_invalid at step 4 and fails with [200, undefined]).\nCause:\n- apps/api/src/modules/procedures/outputs/kit.ts:87-99 (inScope) checks only the organization for an organization-scope instance with no earlier output.\n- kit.ts:104-118 (producedHere) checks only the creation time and that no other instance took the record.\n- Neither checks that the acting person can read the record. transformations.ts:8 (transformationOutput) adds nothing, and steps.ts:1327 calls the adapter after authorizing the actor on the INSTANCE's organization scope only.",
+      "expected": "A step's output must be a record the acting person may see in the scope they act in: 'server-side scoped RBAC on records' and REQ-S06-002 'outputs are real linked records', with authorization enforced (REQ-S16-015). Naming a transformation the actor cannot read must be refused like an unknown record: 422 procedure_step.output_record_invalid, or 404 without disclosing existence. Then nothing is linked and nothing is adopted. For example, require transformation.read (or procedure.read) on the named record's transformation for the acting principal, in the adapter kit, before linking.",
+      "actual": "Any person acting at organization scope on an intake can claim, by its id, any transformation of the organization created after the launch and not yet claimed. This includes transformations of other business units that they cannot read. The claim links it as the intake's output and moves the intake's pending steps into it, including confirm_sponsor, whose business approval D-166 Rule A requests on X and routes to X's mapped Sponsor; that last part follows from the design and was not exercised here. X's readers then see a foreign intake. X can no longer be any other intake's output: producedHere refuses a record another instance took.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.log",
+        "apps/api/src/modules/procedures/outputs/kit.ts",
+        "apps/api/src/modules/procedures/outputs/transformations.ts",
+        "apps/api/src/modules/procedures/steps.ts",
+        "packages/db/migrations/0096_p5_intake_adopts_transformation.sql"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T02:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-REV-SEC-R1C); reproduced through the API on a disposable PostgreSQL."
+        }
+      ]
+    }
+  ]
+}
