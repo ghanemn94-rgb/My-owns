@@ -17576,7 +17576,7 @@ paths:
     post:
       tags: [studio]
       operationId: decideConfigReview
-      summary: "Approve the reviewed content or request changes with a note; never the author or the requester (methodology.review; TO). 403 config_review.self_review. If-Match is the review request's version."
+      summary: "Approve the reviewed content or request changes with a note; never an author (the draft's creator or any person recorded as having written part of its content) or the requester (methodology.review; TO). 403 config_review.self_review. If-Match is the review request's version."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -26232,7 +26232,10 @@ components:
         produced since the instance was launched and not another instance's output (422
         procedure_step.output_required when none is named). For a link output, outputRecordId names the existing
         record. For an advance output, outputRecordId is omitted (or names the same record): the record an earlier step
-        of this instance linked must have reached the state this step records.
+        of this instance linked must have reached the state this step records. In every mode, the acting person must
+        be able to read the output record in that record's own scope (transformation.read on its transformation),
+        re-checked on grants reloaded in the completing transaction; otherwise the completion is refused with 422
+        procedure_step.output_record_invalid, exactly as for an unknown record, and nothing is linked or adopted.
       additionalProperties: false
       properties:
         note: { type: [string, "null"], minLength: 1, maxLength: 4000 }

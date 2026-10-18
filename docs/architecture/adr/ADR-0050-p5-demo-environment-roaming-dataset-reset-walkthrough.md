@@ -78,6 +78,8 @@ REQ-S18-003's query: after production initialization, `SELECT count(*) FROM demo
 - nothing seeded reads `now()`, `random()` or `gen_random_uuid()`;
 - rows are inserted in a fixed order, with one audit event each (fixed ids, `source = 'cli'`).
 
+_Amended 2026-10-18 (T-DG5-ARCH-R4, amendment D7): the transformation is created in Diagnose and advanced to Transform by the synthetic G1–G4 approvals; G5 and G6 are not submitted._
+
 **Record counts:** `{<table>: count(*)}` for every base table of schema `public` except `demo_dataset_run`, ordered by name.
 
 **Checksum:** SHA-256 over the lines `<table>\t<record_id>\t<row>`, one per registered `demo_seed_record` row, sorted by `(record_type, record_id)`, and then a line per `demo_seed_record` row. `<row>` is `to_jsonb(row)` minus every column whose default is `now()`, `CURRENT_TIMESTAMP`, `CURRENT_DATE` or `transaction_timestamp()` (read from `information_schema.columns` at run time), serialized by PostgreSQL's `jsonb` text output, which is deterministic for equal values.
@@ -284,17 +286,17 @@ Sources: D-167 (QA-E2 O-1), D-168 (W22 integrated, with the analysts' gap REQ-PB
   - Negative cases: a demo user without a read right gets no chain text (`:169`), and an anonymous request gets 401 (`:176`).
   - Also: `packages/db/test/integration/demo-roaming.test.ts`, the `REQ-PB-090` block. BE-T6's control with `outcome_kpi_id` set back to `null` failed all three chain cases (T-DG5-BE-T6 handback §2). D-168 records 74/74 for BE-T6's tests.
 - **Determinism.** Seed-twice and reset-twice still give identical counts and checksums (`demo-roaming.test.ts` and `demo.test.ts` passed; T-DG5-BE-T6 handback §2).
-- **A demo wording point, not a defect (D-168).** Each chain's outcome statement still carries the B0147 KPI text (`packages/db/src/demo/data/roaming.ts:669`, `statement: c.kpi`), and the comment above it (`:665`) is no longer accurate. So in the whole graph an outcome and its outcome KPI share one label. The outcome is not on the line, so the acceptance is met. D-168 records this for the review. This amendment changes nothing about it.
+- **A demo wording point, not a defect (D-168).** Each chain's outcome statement still carries the B0147 KPI text (`packages/db/src/demo/data/roaming.ts:676`, `statement: c.kpi`), and the comment above it (`:672`) is no longer accurate (_corrected 2026-10-18, D10_). So in the whole graph an outcome and its outcome KPI share one label. The outcome is not on the line, so the acceptance is met. D-168 records this for the review. This amendment changes nothing about it.
 
 ### D6. §5: the seeded pending approval reaches a demo role user (T-DG5-BE-T5; D-167 QA-E2 O-1; REQ-S18-002)
 
 - **The gap.** Before W22, §5's "a pending approval" was met only by a submitted gate or a queued Finance validation (`packages/db/src/demo/coverage.ts:235–239` counts any of the three). No `GET /approvals` inbox lists those, so no demo role user had a pending approval to act on.
 - **As merged** (`packages/db/src/demo/data/roaming-states.ts`, all synthetic):
-  - `DEMO_PENDING_APPROVAL` (`:259–269`) describes the request. The Transformation Lead asks for the T04 design decision D-01 to be decided through the T11 row "Target-state design", whose Approve party is BO.
-  - `seedPendingApproval` (`:280–345`) runs in module `roaming.states` (`:348`, called at `:355`). Every row goes through `ctx.insert`:
-    - a role mapping of party BO to `roaming.user.bo` on the roaming transformation (`:283–290`);
-    - the `approval` row (`:292–312`): `decision_request`, pending, round 1, assignee `roaming.user.bo`, `sod_policy` `requester_excluded`. Its SLA is `working_days` with `due_date` null and `due_unknown_reason` `calendar_not_configured` (`:308–310`), because the demo organization has no business calendar. The due date therefore shows Unknown, never a guessed date;
-    - the `approval_decision` work item for that user (`:317–331`) and its inbox notification (`:332–344`).
+  - `DEMO_PENDING_APPROVAL` (`:264–274` (_corrected 2026-10-18, D10_)) describes the request. The Transformation Lead asks for the T04 design decision D-01 to be decided through the T11 row "Target-state design", whose Approve party is BO.
+  - `seedPendingApproval` (`:285–350`) runs in module `roaming.states` (`:353`, called at `:360`) (_corrected 2026-10-18, D10_). Every row goes through `ctx.insert`:
+    - a role mapping of party BO to `roaming.user.bo` on the roaming transformation (`:288–295` (_corrected 2026-10-18, D10_));
+    - the `approval` row (`:297–317` (_corrected 2026-10-18, D10_)): `decision_request`, pending, round 1, assignee `roaming.user.bo`, `sod_policy` `requester_excluded`. Its SLA is `working_days` with `due_date` null and `due_unknown_reason` `calendar_not_configured` (`:313–315` (_corrected 2026-10-18, D10_)), because the demo organization has no business calendar. The due date therefore shows Unknown, never a guessed date;
+    - the `approval_decision` work item for that user (`:322–336`) and its inbox notification (`:337–349`) (_corrected 2026-10-18, D10_).
   - The new ids are fixed (`roaming-ids.ts:59–61`: `roleMapping` 0x057, `workItem` 0x058, `inboxNotification` 0x059), so seed and reset stay deterministic.
 - **Tests.** `apps/api/test/integration/environment/demo-pending-approval.test.ts` (`describe` at `:54`):
   - `:55`: the rules name BO;
@@ -304,3 +306,56 @@ Sources: D-167 (QA-E2 O-1), D-168 (W22 integrated, with the analysts' gap REQ-PB
 - **It approves nothing real.** The approval is a synthetic demo request that nobody has decided. Deciding it approves nothing real (M0412).
 
 Every approval in the demo is synthetic and approves nothing real. Product gates G1–G6 are business approvals inside the product. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7. The playbook is a practical synthesis inspired by PMI, Brightline and BRM, not an official PMI standard.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R4; D-170, F-DG5-120): §4 and §5, the demo transformation's gate history, and corrected line references
+
+Sources: D-170 (F-DG5-120, decided), the T-DG5-BE-V3 handback (§2, §6 and §8) and the T-DG5-FE-V1B handback §2, checked against the merged tree (`9c96ee3`). Nothing above is removed. Where this amendment and §4 or §5 differ, this amendment wins. No migration, contract or schema change: these are dataset rows (`packages/db/src/demo/data/**`, all synthetic). File references are in that directory unless named otherwise.
+
+### D7. §4: the transformation is created in Diagnose and advanced to Transform by the synthetic G1–G4 approvals (T-DG5-BE-V3)
+
+- **The gap (F-DG5-120).** The transformation was inserted directly in `transform`, with the six gate instances `draft` and never submitted, so the demo showed Transform-phase progress with G1–G6 never submitted (M0348).
+- **The phase.** The transformation is created in **Diagnose** (`roaming.ts:230`, `current_phase: "diagnose"`). The new module `roaming.gates` (`roaming-gates.ts:761–769`, order 550: after the chains and the KBE-H case and formulas, before `roaming.states` at 600; registered in `index.ts:10`, `:18`) records the gate history as the product records it (the tables, guards and action names of `apps/api/src/modules/workflows/gates.ts` `submitGate`/`decideGate` and `transformations/phase.ts`). Each approved gate advances the phase by exactly one step (`transformation.phase_advance`, `roaming-gates.ts:709`), so the transformation ends in **Transform** after four advances. The seed throws if a gate is not an unconfigured draft routed to SP or the transformation is not in that gate's phase (`roaming-gates.ts:489–515`).
+- **G1–G3: complete on seeded evidence** (`seedGateEvidence`, `roaming-gates.ts:231`ff., every row dated before its gate). G1: a measured baseline, one verified evidence note (created by TL, reviewed by KDS), the six T01 rows completed, a confirmed `root_cause` finding and a quantified value pool. G2: the B0037 thesis and the B0051 good-outcome inputs (`roaming.ts`), the three T02 trajectories approved by SP, one active strategic guardrail. G3: a capability gap and an active future-state journey.
+- **G4: complete except two accepted exceptions** (`DEMO_GATE_EXCEPTIONS`, `roaming-gates.ts:136–167`; `seedGateExceptions`, `:442`ff.). The business case's baseline section is validated by the demo Finance user (`validate_baseline`, `roaming-gates.ts:423–434`). The criteria `g4.initiative_cards` (portfolio empty) and `g4.prioritization` (no ranking snapshot) are each covered by a gate exception requested by TL (`pending`), then accepted by SP, the gate's approver and never the requester (the DB CHECK). Each carries a reason, a scope, a compensating action owned by TL, and an expiry of the synthetic clock + 730 days (`EXCEPTION_EXPIRES_DAYS`, `:169`; `expires_on`, `:457`), which is **2028-08-31**. After that date the live G4 page reads those two criteria as missing again, as the product does for any expired exception (BE-V3 handback §8 item 1).
+- **Submission and decision, per gate** (`seedGateApproval`, `roaming-gates.ts:489`ff.; dates `DEMO_GATE_HISTORY`, `:67`): a `gate_submission` by `roaming.user.tl`, routed to role SP with no named user, with its frozen snapshot and criterion rows (`:592–634`); the canonical `decision` row `GD-01`…`GD-04` (`:649–658`) and the `gate_decision` (approved, by `roaming.user.sp`, never the submitter; `:664–674`); G1's three B0032 agreements; then the submission decided, the gate approved and the phase advanced (`:695–709`). G1 is decided on 22 May, G2 on 30 May, G3 on 2 June and G4 on 10 June 2026, before the Transform-phase records that depend on G4.
+- **G5 and G6 are not submitted.** They stay `draft` with no submission; their readiness is computed by the product.
+- **The synthetic label on each decision.** Every rationale starts with "Synthetic demonstration - approves nothing real / عرض توضيحي اصطناعي - لا يعتمد أي شيء حقيقي." (`finance.ts:30`, `roaming-gates.ts:48–50`, `:642`). The exception reasons carry the same label (`roaming-gates.ts:150`, `:161`). `SyntheticApprovalLabel` also shows the label on every gate page in a demo database (§2, unchanged).
+- **The phase steps.** Each Define…Transform phase step names the approved gate decision that enabled its phase (`enabled_by_gate_decision_id`, `roaming-states.ts:48`), as the `gates.decided` consumer does. Diagnose and Realize steps name none.
+- **What the seed does not emit** (stated so it is not claimed):
+  - **no outbox events.** `gate.submitted` and `gate.decided` are not written, because their consumers would create approver tasks and phase-step rows from the real clock (`roaming-gates.ts:23–25`). Their effect on the phase steps is seeded directly;
+  - **no automation request execution.** The `REQUEST_STARTERS.gateEvidenceMissing` request execution that `submitGate` records is not seeded (BE-V3 handback §8 item 4);
+  - **audit attribution.** As for every demo-seeded row, the audit events carry the seed's actor (system, source `cli`); the acting demo user is on the rows (`submitted_by`, `decided_by`, `requested_by`).
+- **§4 "rows are inserted in a fixed order, with one audit event each"** now also covers updates: the seed's updates (for example the gate moves and the phase advances) take the P2 version step and write one audit event each with the product's action name (`change`, `roaming-gates.ts:180–213`).
+- **Determinism.** The new rows have fixed ids (`roaming-ids.ts:63–72`, blocks `0x060`–`0x069`) and synthetic-clock dates. The record counts and the checksum differ from those of round 1, and stay identical across seed, reset and reset (BE-V3 handback §3). The dataset version stays `1.0.0` (`packages/db/src/demo/guard.ts:17`).
+- **Not an approval.** Every seeded G-decision and exception is a synthetic demonstration decision by a demo role user on demo data, and approves nothing real (M0412). Seeding stays refused in production (`demo/guard.ts`, §3).
+- **Test.** `apps/api/test/integration/environment/demo-gate-history.test.ts` runs the real seed and the real API (`MTH_ENV=demo`): G1–G4 approved by SP and submitted by TL, each rationale carries the label in English and Arabic, only `g4.initiative_cards` and `g4.prioritization` are excepted, G5 and G6 have no submission (`:60`; the gate statuses at `:164`), and four `transformation.phase_advance` events lead from Diagnose to Transform (`:167`).
+
+### D8. §5: G1–G6
+
+"G1–G6: a gate instance each" stays true. G1–G4 now also carry approved decisions, and G5–G6 none (D7).
+
+### D9. The gate readiness line on the demo's approved G4 (T-DG5-FE-V1B)
+
+No ADR or data-dictionary statement says what the gate readiness line shows, so none is made untrue. For the demo: the line on the gate page and the gates list now names the mandatory outputs covered by an accepted exception, using the server's `covering` value only (`apps/web/src/pages/gates/GatesPage.tsx:97–125`; `GateDetailPage.tsx:102`, `:242`; keys `gates.readinessCovered` and `gates.readinessCoveredPartly`, `apps/web/src/i18n/en/gates.json:40–41` and `ar/gates.json:40–41`). With both G4 gaps covered, it reads "6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions". FE-V1B did not render it on the demo stack (its tree did not hold BE-V3's seed), so that reading is the code's expected output, still to be checked on the merged tree (FE-V1B handback §5).
+
+### D10. Line references corrected (the shifts BE-V3 reported, and the ones it did not list)
+
+The new lines in `roaming.ts` and `roaming-states.ts` moved the references of D5 and D6. They are corrected in place above. Each corrected reference is marked "corrected 2026-10-18".
+
+| Reference (at `b463552`) | As merged (`9c96ee3`) | Listed by BE-V3 |
+|---|---|---|
+| `roaming.ts:669` (`statement: c.kpi`) | `roaming.ts:676` | yes |
+| `roaming.ts:665` (the comment above it) | `roaming.ts:672` | yes |
+| `roaming-states.ts:259–269` (`DEMO_PENDING_APPROVAL`) | `:264–274` | no |
+| `roaming-states.ts:280–345` (`seedPendingApproval`) | `:285–350` | yes |
+| `roaming-states.ts:283–290` (the role mapping) | `:288–295` | no |
+| `roaming-states.ts:292–312` (the `approval` row) | `:297–317` | no |
+| `roaming-states.ts:308–310` (the SLA and Unknown due date) | `:313–315` | no |
+| `roaming-states.ts:317–331` (the work item) | `:322–336` | no |
+| `roaming-states.ts:332–344` (the notification) | `:337–349` | no |
+| `roaming-states.ts:348` (module `roaming.states`) | `:353` | yes |
+| `roaming-states.ts:355` (the call) | `:360` | yes |
+
+`roaming.ts:110`, `:118`, `:132` (D1, D2) and `roaming-ids.ts:59–61` (D6) are unchanged.
+
+Requirement rows: REQ-S18-002 and M0348 (and REQ-S21-001 for the labels). Product gates G1–G6 are business approvals inside the product; the demo's G1–G4 decisions are synthetic and approve nothing real. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.
