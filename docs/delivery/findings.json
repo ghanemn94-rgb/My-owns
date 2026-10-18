@@ -13642,8 +13642,45 @@
           "at": "2026-10-17T23:50:00Z",
           "status": "OPEN",
           "note": "Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Medium, not a mandatory violation: the acceptance text of REQ-S18-002 passes literally, and the data is synthetic, but the seeded demo contradicts the gate-controlled phase logic (B0009, B0023, M0348) that the product enforces for native records."
+        },
+        {
+          "at": "2026-10-18T12:45:00Z",
+          "status": "OPEN",
+          "note": "verified by domain-reviewer round 2: FAIL"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-DOM-R2-domain-reviewer-20261018T111224Z-42df6164",
+          "session_id": "42df6164-3522-44ae-9502-ba68d1002cd1"
+        },
+        "at": "2026-10-18T12:45:00Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gates.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G1-submission-1.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G4-submission-1.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-decisions.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-phases.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-phase-steps.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-environment.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/run1-env/demo-environment.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/gate-G4-live.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/funding-decisions.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-1-G1.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-1-G1.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-4-G4.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-4-G4.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-6-G6.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-6-G6.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo.log",
+          "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+          "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.log"
+        ],
+        "note": "Partly repaired, not closed. What holds, verified on a demo stack (two independent seeds, identical checksum 3b39dfc2..., 3715 records; demo-gate-history 2/2, demo-roaming 68/68, demo-traceability-chains 6/6, A02 demo e2e 12/12): G1-G4 are approved in phase order (2026-05-22, 05-30, 06-02, 06-10), each submitted by roaming.user.tl and decided by the routed approver roaming.user.sp (never the submitter), with canonical decisions GD-01..GD-04, the B0032 agreements on G1, frozen snapshots, audit events, and the phase advanced once per approved gate to Transform; G5 and G6 are draft and not submitted; 'Synthetic demonstration - approves nothing real' (and its Arabic) is on every gate page G1-G6 in en and ar and in every seeded rationale; G1-G3 are complete on seeded evidence; the B0147 chains and the 12-step walkthrough are unchanged. What fails: the G4 approval is not coherent with B0023's G4 evidence. Its live and frozen readiness show Roadmap, Owners, Funding and Capacity 'Complete' (banner green: '6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions') while the database holds no approved portfolio, no funding decision, no resource demand, no capacity and no milestone, and the initiatives are draft: these criteria are complete only because they iterate over an empty portfolio. The two exceptions are product-supported and honestly worded, but the state they produce, and GD-04's rationale 'The portfolio is executable and value-backed', are not true to the records. Reproduction and root cause: F-DG5-122. Residual noted, not a finding: the phase steps of the passed phases (Diagnose..Mobilize) read 'not started' (25 of 25 steps), which the product allows because steps never gate an approval (the Phases page says so)."
+      }
     },
     {
       "id": "F-DG5-121",
@@ -13667,14 +13704,37 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-18T00:25:00Z",
           "status": "OPEN",
           "note": "Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Low, not mandatory: the timeouts happen only under the concurrent-review load (above the 8 load envelope of environment.md), and the product renders correctly; the finding records the thin headroom so that the AUD journey D-169 relies on is not hidden."
+        },
+        {
+          "at": "2026-10-18T12:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-DOM-R2-domain-reviewer-20261018T111224Z-42df6164",
+          "session_id": "42df6164-3522-44ae-9502-ba68d1002cd1"
+        },
+        "at": "2026-10-18T12:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-2/p2-journeys-assertion-diff.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.log",
+          "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.load.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.log",
+          "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.load.txt"
+        ],
+        "note": "git diff 601d7d2..d3528fc -- apps/web/e2e/p2-journeys.spec.ts adds only test.setTimeout(90_000) to 'Define -> G2' and test.setTimeout(60_000) to the AUD journey, each with a comment; no assertion changed. Re-run on the candidate under the concurrent review load (1-minute load sampled every 30 s: 7.0-11.1 for the locale-unset run, 7.6-9.7 for the C.UTF-8 run): locale unset 24/24 passed (G2 journey 37.6 s en, 35.9 s ar; AUD 28.2 s, 25.1 s), LANG=C.UTF-8 24/24 passed (G2 39.0 s, 39.3 s; AUD 27.2 s, 26.9 s); exit 0 both, no retry, flaky or skipped test. The worst G2 run uses 44 % of its budget, so the headroom is above 2x."
+      }
     },
     {
       "id": "F-DG5-100",
@@ -13697,14 +13757,41 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-18T02:40:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-REV-SEC-R1C); reproduced end to end through the API on a disposable PostgreSQL."
+        },
+        {
+          "at": "2026-10-18T14:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-SEC-R2-code-security-reviewer-20261018T111224Z-d5856a6f",
+          "session_id": "d5856a6f-83f2-43ac-958b-e1900d303408"
+        },
+        "at": "2026-10-18T14:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-coauthor-review.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/studio-contributor-paths.test.ts",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-contributor-paths.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/copies.sha256",
+          "docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.test.ts",
+          "packages/db/migrations/0097_p5_config_review_contributors.sql",
+          "apps/api/src/modules/methodology/reviews.ts",
+          "apps/api/src/modules/methodology/contributors.ts",
+          "apps/api/src/modules/automation/lifecycle.ts"
+        ],
+        "note": "Verified on candidate sha256:c4f70a80…f06e (source d3528fc, complete --shared clone at freeze commit b147dda), disposable PostgreSQL 16.13, Node 24.21.0, 89 migration files 0001-0097 applied to a fresh database.\n\n1. My round-1 reproduction, UNCHANGED (sha256 recorded in repro/copies.sha256): the co-author's PUT/PUT/PATCH give 200/200/200, the creator submits, and the co-author's decision is now 403 config_review.self_review, and their publish 422 config_version.review_required. 1/1 passed, exit 0.\n\n2. Every write path, adversarially (my new probe studio-contributor-paths.test.ts, 5/5, exit 0):\n- (a)+(b) an element REMOVE by the co-author, then fully undone by the creator, so that no row's updated_by names the co-author any more: the co-author is still recorded and refused (403). A non-contributor TO then approves (200), and the creator publishes (200 published).\n- (c) a change-summary-only PATCH records its writer: 403 on request_changes.\n- (d) the scoring-defaults kind writer (PUT /scoring-defaults) records its writer: 403.\n- (e) a procedure definition REMOVE by a second admin records them.\n- The product tests cover version PATCH, element PUT, procedure definition PUT, an unstamped updated_by recorded at COMMIT from the audit event, the rule-version PATCH, and the backfill.\n- Source review: the only writers of methodology_version, methodology_element, procedure_definition and procedure_step_definition are drafts.ts, elements.ts, scoring-defaults.ts, checks.ts, reviews.ts, publish.ts and procedures/definitions.ts. Each stamps updated_by with the actor. There is no DELETE on these tables (removal is an UPDATE removed=true), and the form-schema and health-scheme kinds are methodology_element rows. The 0097 triggers cover all four tables plus automation_rule_version.\n\n3. Database, under the runtime role (current_user = mth_app):\n- a direct UPDATE of config_review_request recording the contributor's decision is refused under config_review_request_reviewer_not_contributor;\n- ALTER TABLE … DISABLE TRIGGER is refused ('must be owner'), SET session_replication_role is refused ('permission denied'), and DELETE from methodology_version_contributor is refused ('permission denied');\n- the review stays pending with decided_by NULL.\n\n4. The rule-version guard cannot misfire on withdraw or resubmit: submit clears reviewed_by (lifecycle.ts:230), so an in_review row has reviewed_by NULL.\n\n5. The backfill (0097:250-305) errs only towards refusing a reviewer, as disclosed. It is tested by the product, and I accept it.\n\n6. BE-V1's observations, judged:\n- (a) benefit_formula: ACCEPTED, no co-editor path. A formula version's content is immutable once created (0023 benefit_formula_version_freeze: only the validation columns move). Its variables are append-only (p2_attach_append_only), and the only insert is in the single-author creation. CHECK benefit_formula_version_validator_not_author and formula-versions.ts:152 refuse the author.\n- (b) methodology_migration approval: ACCEPTED as designed. It is a business approval (methodology_migration.approve, SP only), not a configured review. ADR-0040 §4 and ADR-0026 §4 fix its SoD as requester_excluded (plus the submitter), uniformly with every other canonical approval. A re-planner who holds ADM_METHOD and is also the transformation's mapped Sponsor can approve a plan whose input values they supplied. That is the accountable Sponsor deciding on content shown in the plan, not a self-review of configuration. I record it as a residual for the business access policy, not as a defect.\n\nResidual: none that I consider a defect."
+      }
     },
     {
       "id": "F-DG5-101",
@@ -13727,14 +13814,39 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-18T02:40:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-REV-SEC-R1C); reproduced through the API on a disposable PostgreSQL."
+        },
+        {
+          "at": "2026-10-18T14:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-SEC-R2-code-security-reviewer-20261018T111224Z-d5856a6f",
+          "session_id": "d5856a6f-83f2-43ac-958b-e1900d303408"
+        },
+        "at": "2026-10-18T14:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r1-intake-foreign.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/copies.sha256",
+          "docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.test.ts",
+          "apps/api/src/modules/procedures/outputs/kit.ts",
+          "apps/api/src/modules/procedures/outputs/index.ts",
+          "apps/api/src/modules/procedures/steps.ts",
+          "tests/qa/integration/a02-a21-complete-lifecycle.test.ts"
+        ],
+        "note": "Verified on candidate sha256:c4f70a80…f06e (source d3528fc), with the same clone, database and Node as F-DG5-100.\n\n1. My round-1 reproduction, UNCHANGED (sha256 in repro/copies.sha256):\n- TL1 GET X gives 404, and TL1's capture_intake naming X now gives 422 procedure_step.output_record_invalid;\n- the steps are unchanged (capture_intake active, draft_charter and confirm_sponsor pending, every transformation_id NULL), so nothing is adopted;\n- there are no links;\n- X's lead TL2 gets 404 on TL1's intake.\n1/1 passed, exit 0.\n\n2. Every output adapter. All 12 registered adapters (procedures/outputs/index.ts: transformation, charter, baseline, kpi_actual, tom_canvas_cell, ranking_snapshot, gate_submission, change_request, finance_validation, decision, bau_handover, evidence) are built by the one `outputAdapter` factory (kit.ts:243). There is no other `produce:` implementation in src. Its produce calls requireOutputRead (kit.ts:249) in EVERY mode (create, link, advance), after readOutputRecord and before producedHere or any link. It uses transformation.read on the record's own transformation, with the principal reloaded in the completing transaction (steps.ts:529 `fresh`).\n- The adapter-less generic link (only `approval` remains; approval.transformation_id is NOT NULL, 0031:38) calls requireNamedRecordRead (steps.ts:1344). Its dynamic table name comes from output_record_type, a fixed CHECK list (0069:101).\n- The null principal is used only by onApprovalOutcome (steps.ts:1473). It passes outputRecordId null, so create and link name nothing, and advance acts only on a record an earlier step linked after the check.\n- Denial gives the same 422 body as an unknown record, plus an authorization.denied audit (product tests output-read-authorization and evidence-link-read-authorization, which passed in my integration runs).\n- The commit-time re-check (a charter whose read was revoked before completion) is a product test.\n\n3. The evidence link (steps.ts:1428-1439) applies the same read rule to every instance, and the 0069 link guard still requires the evidence to be in the instance's transformation. The launch-task output (launch/tasks.ts:366-371) only accepts a record of the writer's own transformation, which they write.\n\n4. BE-V2C's observation (c), the launch subjectRecordId: ACCEPTED, not a defect. It is stored opaquely (instances.ts:318). It is never resolved, joined or used by any adapter or worker (a grep of subject_record_id in apps/api/src, apps/worker/src and packages/db/src finds only the store and the verbatim echo at steps.ts:1186). It is shown only to instance readers. It discloses nothing and grants nothing. The residual is that it can hold an id the launcher cannot read. That is cosmetic, because the API presents only the id the caller supplied.\n\n5. The orchestrator's a02 fixture hunk 6c7f54b: ACCEPTED, it does not mask a defect. In a02, T is created by a BU-scope TL (l.tl), while capture_intake is completed by the organization-scope TL (tlOrg), which does not inherit downward. Under the fix, the refusal is exactly the behaviour F-DG5-101 required. The hunk gives tlOrg TL on T through the product's own POST /role-assignments, so the actor naming T can read T. The negative case is asserted separately by the product's output-read-authorization.test.ts and by my unchanged reproduction.\n\nResidual: none that I consider a defect."
+      }
     },
     {
       "id": "F-DG5-140",
@@ -13759,14 +13871,41 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-18T04:58:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG5 review round 1 (T-DG5-REV-QA-R1C) on candidate sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b from the assignment's required '390 px and 200 % text on the P5 screens' check; reproduced in both locale settings. No product P5 spec checks this screen at 390 px or 200 % text."
+        },
+        {
+          "at": "2026-10-18T15:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-QA-R2-qa-verifier-20261018T111224Z-45c0ab01",
+          "session_id": "45c0ab01-9b61-4c14-8969-a470a978ae1e"
+        },
+        "at": "2026-10-18T15:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r1reflow-run2-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r1reflow-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r1reflow-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/en/reflow-results.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/ar/reflow-results.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-cutf8/en/reflow-results.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/ar/r1c-390-_admin_studio_scoring_defaults.png",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/p2-kbd-_admin_studio_scoring_defaults.json",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts"
+        ],
+        "note": "Verified on candidate sha256:c4f70a80... (source d3528fc) in a complete disposable clone. My round-1 probe zz-qa-dg5r1c-demo-probes.spec.ts, re-run UNCHANGED on the demo stack over the 31 P5 screens: /admin/studio/scoring-defaults has 0 px page-level overflow at 390 px and with 200 % text, in en and ar, in all three runs (locale unset twice, C.UTF-8 once); round 1 measured 49 px (en 390), 130 px (en 200 %), 16 px (ar 200 %). The other 30 screens are also 0 px. The 390 px screenshot (ar) shows the six rubric tables inside their fieldsets, each scrolling in its own region. My round-2 probe confirms the rubric region is focusable (tabIndex 0, role=region, name 'Strategic fit (scrollable table)' / 'الملاءمة الاستراتيجية (جدول قابل للتمرير)'), that real Tab presses reach it (15 presses) and that the arrow keys scroll it (scrollLeft 0 -> 80 en, 0 -> -26 ar), with no page overflow. The fix is the shared fieldset { min-inline-size: 0 } rule (app.css), asserted by styles.test.ts, plus the candidate's p5-reflow-axe.spec.ts (31 screens, 0 problems in en and ar, both product e2e runs). Disclosed: the first unchanged unset run exited 1 on the probe's demo-banner check for one other screen per language (en day-90-test, ar /admin/procedures): a non-waiting count() raced the render; the screenshots taken right after show the banner, and the C.UTF-8 run and a second unset run passed 6/6 (banner 31/31). The first attempt of all (attempt1 logs) did not load the probe at all: in my complete clone, Playwright's path filter also matched the copy under docs/delivery/test-evidence/.../tests/round-1/; fixed by passing the absolute path. Neither affects the result. No residual."
+      }
     },
     {
       "id": "F-DG5-141",
@@ -13791,12 +13930,140 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-18T04:58:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG5 review round 1 (T-DG5-REV-QA-R1C) on candidate sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b from the axe-at-390-px part of the P5 reflow probe; reproduced in both languages and both locale settings."
+        },
+        {
+          "at": "2026-10-18T15:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-QA-R2-qa-verifier-20261018T111224Z-45c0ab01",
+          "session_id": "45c0ab01-9b61-4c14-8969-a470a978ae1e"
+        },
+        "at": "2026-10-18T15:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/p2-axe-regions.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/p2-kbd-_admin_source_coverage.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/p2-kbd-_admin_source_coverage.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/en/reflow-results.json",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts"
+        ],
+        "note": "Verified on candidate sha256:c4f70a80... in a complete disposable clone. (1) My round-1 probe, unchanged: /admin/source-coverage at 390 px reports no serious or critical axe violation in en and ar, in every run (round 1: 'scrollable-region-focusable: .table-wrap', serious). (2) My round-2 probe P2-AXE runs the same axe rule set on all 31 P5 screens of the populated demo data at 1366 x 900 and at 1280 x 900 with 200 % text: 0 serious/critical in en and ar, both locale settings; and audits every horizontally scrolling element at 390 px (24 regions) and at 200 % text (24-25): each has tabIndex 0, role=region and a non-empty localized name. (3) Keyboard: real Tab presses from the page start reach the coverage region in 9 presses ('Source element sets (scrollable table)' / 'مجموعات عناصر المصدر (جدول قابل للتمرير)'); six arrow presses scroll it (scrollLeft 0 -> 240 en, 0 -> -240 ar, RTL), focus stays on it, and the page does not scroll. (4) The candidate's apps/web/e2e/p5-reflow-axe.spec.ts asserts what it claims: on the production stack, for each of the same 31 screens and both projects, it fails on a no-permission/error state, page overflow > 1 px at 390 px or with 200 % text, and any serious/critical axe violation at 390 px, 1366 px and 200 % text, collecting all problems before one assertion; it passed in both product e2e runs (31 screens, 0 problems, en and ar). Its weaker point is the near-empty transformation it creates, so transformation tables rarely overflow there; my demo-data probe covers the populated case. table-regions.test.tsx asserts the DataTable and RegisterTable region (role, tabIndex 0, localized name) in en and ar. Residual outside this finding's P5 scope: bare wrappers on DG2-DG3 screens still fail on demo data (raised as F-DG5-142)."
+      }
+    },
+    {
+      "id": "F-DG5-122",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "G4 readiness reports Roadmap, Owners, Funding, Capacity (and Prioritization, Business cases) as Complete over an empty approved portfolio once 'Initiative cards' is covered by an exception; the demo G4 approval rests on this",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, candidate c4f70a80, clone of b147dda), as roaming.user.tl: GET /api/v1/transformations/01995000-0000-7000-8000-000000000001/gates/G4 (live readiness) returns g4.roadmap, g4.owners, g4.funding and g4.capacity = complete, g4.business_cases and g4.finance_validation = complete, and only g4.initiative_cards and g4.prioritization incomplete (each covered by an accepted exception). In the same database, GET /api/v1/funding-decisions?transformationId=... returns 0 items, GET /api/v1/resource-demands 0 items, GET /api/v1/transformations/.../capacity-plan no role and no cell, GET /api/v1/initiatives/{id}/milestones 0 milestones for each of INI-01..03, GET /api/v1/organizations/.../portfolios 0 portfolios, and the three initiatives are status 'draft' with no portfolio or selection status. The frozen G4 submission snapshot records g4.initiatives [], fundingDecisionIds [], committedDemandIds [], rankingSnapshotId null, yet freezes those four criteria as 'complete'. The G4 page (en and ar) shows a green banner '6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions' and lists Roadmap, Owners, Funding and Capacity as 'Complete'; the seeded decision GD-04 says 'The portfolio is executable and value-backed'. Cause (product, DG3/DG4 code): apps/api/src/modules/workflows/g4.ts evaluates g4.roadmap, g4.owners, g4.funding, g4.capacity, g4.prioritization (per-initiative part) and the per-initiative part of g4.business_cases/g4.finance_validation as 'for every initiative in the approved portfolio', so an empty portfolio makes them complete vacuously. Without an exception g4.initiative_cards blocks the gate, but an accepted exception on g4.initiative_cards (which the product allows, ADR-0035 section 4, and whose scope reads 'Initiative cards only') silently turns four or more further mandatory criteria Complete with no evidence. Any production G4 is exposed the same way.",
+      "expected": "B0023 G4 asks 'Is the portfolio executable and value-backed?' with the evidence 'Initiative cards, business cases, roadmap, owners, capacity'; an exception covers one criterion (the product's own text: 'An exception lets one mandatory criterion be submitted incomplete'). A criterion whose subject set is empty must not read Complete: it should read incomplete or 'not evaluable - no initiative in the approved portfolio' (fail closed, as the G1-G3 evaluators do for missing facts), so an exception on Initiative cards cannot stand in for missing funding, capacity, approved milestones or owners, and the frozen snapshot does not record them as complete. The demonstration G4 (F-DG5-120's repair) should then either be backed by a seeded portfolio (selection, ranking, funding decision, approved milestone, committed demand) or carry an exception per criterion it genuinely lacks, so its readiness line and its decision rationale are true to the records.",
+      "actual": "Live and frozen G4 readiness: Roadmap, Owners, Funding, Capacity, Business cases and Finance validation Complete; Initiative cards and Prioritization covered by accepted exceptions; banner green. The records hold no portfolio, no funding decision, no resource demand, no capacity and no milestone; the initiatives are draft. The demo's approved G4 therefore asserts an executable, funded and resourced portfolio that the data does not contain. BE-V3's handback section 8 and D-171 observation (g) disclose the empty portfolio but not that four further criteria read Complete because of it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/gate-G4-live.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/funding-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/resource-demands.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/capacity-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/initiatives.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/milestones-01995000-0000-7000-8000-000000000021.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/portfolios.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G4-submission-1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/en/d06-gate-4-G4.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/dom-demo-g4.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-g4.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 review round 2 while verifying F-DG5-120 on candidate c4f70a80 (source d3528fc). Medium, not mandatory: the approver accepts the exceptions knowingly and no acceptance text is broken literally, but the readiness and the frozen snapshot misstate four G4 criteria."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-142",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-171 observation (f) does not hold on the DG5 demo dataset: four DG2-DG3 screens (transformation overview, charter, readiness, benefit formula) keep bare, non-focusable .table-wrap scroll containers, and axe reports the serious violation 'scrollable-region-focusable' at 390 px in en and ar",
+      "reproduction": "Disposable complete clone of the frozen candidate (b147dda = source d3528fc + delivery records; sha256:c4f70a80...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26636 E2E_API_PORT=26637 e2e/support/with-demo-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers), locale unset and LANG=LC_ALL=C.UTF-8. Test P2-DG24 signs in as roaming.user.tl (and roaming.user.adm_access for /admin/organizations), opens each DG2-DG4 screen that still holds a bare .table-wrap at 390x844 on the seeded synthetic International Roaming transformation 01995000-0000-7000-8000-000000000001, and runs the same axe rule set as apps/web/e2e/support/ui.ts expectAccessible (wcag2a/2aa/21a/21aa). It records every element with overflow-x auto/scroll whose scrollWidth exceeds clientWidth, and whether it has tabIndex >= 0, role=region and an accessible name.",
+      "expected": "No serious or critical axe violation on any screen the demo environment and its guided walkthrough present (REQ-S15-012: 'an automated axe scan reports no serious or critical violations on key screens; the guided walkthrough can be completed by keyboard alone'); every horizontally scrolled table can be reached and scrolled by keyboard, as T-DG5-FE-V1 made every shared and P5 table wrapper (tabIndex=0, role=region, localized name).",
+      "actual": "Identical in all four runs (en, ar; locale unset, C.UTF-8). axe serious 'scrollable-region-focusable' on: /transformations/<roaming> (TransformationDetailPage, '.table-wrap'), /transformations/<roaming>/charter (CharterPage, '#charter-scope > .table-wrap' and '#charter-versions > .table-wrap'), /transformations/<roaming>/readiness (ReadinessPage, '#diagnostic > .table-wrap') and /transformations/<roaming>/benefit-formulas/<id> (BenefitFormulaPage, '#versions > .table-wrap' and '#calculations > .table-wrap'). Each wrapper scrolls (e.g. en overview 268 px excess, charter 186/171 px) with tabIndex -1, no role and no name, and holds no focusable element, so a keyboard user cannot scroll the hidden columns into view (the charter screenshot shows the scope-check and version tables cut off). Five more bare wrappers scroll but contain focusable links, so axe does not flag them (gates G1/G4 criteria table, transformation dashboard, executive overview, admin organizations, initiative page). D-171 (f) and the FE-V1B handback state that 'axe flags them only when they overflow, and the DG4 specs report none': that is true of the DG4 specs' small fixtures, not of the DG5 demo data, where these tables overflow at 390 px. Not a regression of the repair diff (these files are unchanged since DG2-DG4) and outside every DG5-final acceptance text; the binding requirement REQ-S15-012 has final gate DG6. I therefore raise it as Medium and do not consider it blocking for DG5; it must be repaired before DG6 (the same one-line wrapper fix FE-V1 applied: tabIndex=0, role=region, common.table.scrollRegion name).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-cutf8/en/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-cutf8/ar/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/r2-dg24-390_transformations_T_charter.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/r2-dg24-390_transformations_T_readiness.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-cutf8.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 2 (T-DG5-REV-QA-R2) as the judgement of D-171 observation (f). Medium, non-mandatory, not blocking DG5 (REQ-S15-012 is DG6); repair before DG6."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-143",
+      "stage_id": "DG5",
+      "requirement": "REQ-S05-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The product e2e 'T01: form tools on a diagnostic record' (apps/web/e2e/p5-forms.spec.ts:211) is order-dependent: its fixture fills the API's first diagnostic item (ordered by id, a UUIDv7 that is not monotonic within one millisecond) but the test opens the form tools of the screen's first row (ordered by dimension ordinal); it failed in 2 of 4 executions on this candidate",
+      "reproduction": "Run the product journeys on the production-initialized stack (apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1, chromium-en and chromium-ar) in the disposable clone. p5-forms.spec.ts beforeAll (lines 96-107) PATCHes items.items[0] of GET .../diagnostic-items (the API orders by id) with rootCause 'Synthetic root cause'; the test (line 222-229) clicks '#t01 [data-form-tools]'.first(), i.e. the first row of the T01 grid, which DiagnosePage sorts by dimension ordinal (pages/diagnose, sort by ordinal), and expects that value. The five items are created by p2_instantiate_transformation() (0018) in one loop with mth_uuid_v7() (0010), whose 74 low bits are random, so ids created in the same millisecond are not in creation order. Independent check: tests/qa/support/with-pg.sh bash <evidence>/scripts/uuid-order-probe.sh (the 0010 function, five ids per trial in a loop, 500 trials): the first id by ORDER BY id was NOT the first created in 382 of 500 trials; 485 trials shared one millisecond.",
+      "expected": "The test fills the record it later opens (e.g. pick the item whose dimension is the first by ordinal, or open the form tools of the row that holds the filled item), so it passes deterministically.",
+      "actual": "Locale unset: [chromium-ar] failed ('toHaveValue' 'Synthetic root cause', the textarea is empty: the dialog is for 'مالي' (Financial) while the filled item is the third row, confidence M). C.UTF-8: [chromium-en] failed the same way (dialog 'Form tools: Financial' empty; the filled item is the second row, 'Medium (M)'). The other two executions passed, and p5-forms.spec.ts re-run alone passed 6/6 in each locale setting. The product behaves correctly (each row's dialog shows its own record); only the test's fixture assumption is unsound. D-171's two 442/442 runs passed by chance. Test reliability only; the T01 clause of REQ-S05-001 is asserted whenever the order happens to match, and on the re-runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-rerun-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-rerun-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failure-context/product-unset/apps-web-e2e-p5-forms-T01--bc774-port-the-auditor-reads-only-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failure-context/product2-cutf8/apps-web-e2e-p5-forms-T01--bc774-port-the-auditor-reads-only-chromium-en-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-uuid-order-probe.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/scripts/uuid-order-probe.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 2 (T-DG5-REV-QA-R2). Low, test reliability only (precedent F-DG5-121), not blocking."
         }
       ]
     }
