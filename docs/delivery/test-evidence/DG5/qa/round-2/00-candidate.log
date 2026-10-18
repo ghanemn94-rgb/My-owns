@@ -1,0 +1,35 @@
+$ git clone /home/user/My-owns $TMPDIR/rev; git checkout b147dda   (complete clone; done before this script)
+HEAD b147ddaa2783c7ffcb318b8e25a004c03470bf0f  shallow=false  sparse=unset
+$ node tools/gates/candidate.mjs --stage DG5   (clone, 2026-10-18T11:26:06Z)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+EXIT 0
+$ (main repo HEAD b147ddaa2783c7ffcb318b8e25a004c03470bf0f) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+EXIT 0
+$ git diff --name-only d3528fc b147dda   (only META_EXCLUDES paths)
+docs/delivery/assignments/DG5/round-2/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-2/domain-reviewer.md
+docs/delivery/assignments/DG5/round-2/qa-verifier.md
+docs/delivery/candidates/DG5/c4f70a80196e79c7.manifest.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+$ git merge-base --is-ancestor 601d7d2 d3528fc
+EXIT 0
+
+---- end of review (2026-10-18T15:01:25Z)
+$ git -C $TMPDIR/rev status --short --untracked-files=no; HEAD
+b147ddaa2783c7ffcb318b8e25a004c03470bf0f
+$ node tools/gates/candidate.mjs --stage DG5 (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+EXIT 0
+$ (main repo HEAD 0beb4f778a9b0412de95da0b8209853221f1051c) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+EXIT 0
+$ git log --oneline b147dda..HEAD; git diff --name-only b147dda HEAD | cut -d/ -f1-4 | sort | uniq -c
+0beb4f7 DG5 round 2: code-security review T-DG5-REV-SEC-R2 (PASS; F-DG5-100 and F-DG5-101 CLOSED_VERIFIED; no new finding), run evidence
+2d4aacc run: DG5-T-DG5-REV-SEC-R2-code-security-reviewer-20261018T111224Z-d5856a6f (review evidence, auto-committed by run-agent.sh)
+e79dc89 DG5 round 2: domain review T-DG5-REV-DOM-R2 (FAIL; F-DG5-121 CLOSED_VERIFIED, F-DG5-120 not closed, new F-DG5-122 Medium), run evidence
+3c3c6d6 run: DG5-T-DG5-REV-DOM-R2-domain-reviewer-20261018T111224Z-42df6164 (review evidence, auto-committed by run-agent.sh)
+      5 docs/delivery/reviews/DG5
+     12 docs/delivery/runs/DG5
+    286 docs/delivery/test-evidence/DG5
