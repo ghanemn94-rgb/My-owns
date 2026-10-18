@@ -13612,6 +13612,193 @@
         ],
         "note": "Verified by its reporter, the release-auditor (round-9 run 7b5f734c raised it; this is round-10 run 82e59b30). Candidate sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 (1475 files, source e70ac02f63cd1f42487cfa4dae73f68e933da015), recomputed in a complete clone. The owner is frontend-ux-engineer (T-DG4-FE-R11); I authored none of the repair.\n\nFix ancestry. fix_revision 30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66 is a commit (full 40-hex), merged by 5c18961. It is an ancestor of e70ac02 and of this run's starting HEAD e5587b8 (03-findings.log).\n\nMy round-9 reproduction no longer reproduces (13-f-dg4-160-reproduction-and-sweep.log):\n- en/ar transformations.json:88 form.statusHint now reads 'A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.' / '… يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.'\n- The stale sentence is found nowhere in apps/, packages/, tests/ or e2e/ (grep exit 1).\n- It still renders at TransformationEditPage.tsx:274.\n- What it points to exists: route transformations/:id/closure (router.tsx:402) and the workspace tab closureP4.tab 'Closure' / «الإغلاق».\n- The first sentence (the allowed transitions, no 'closed' option) is unchanged and still true.\n\nThe pins are not vacuous (09-fe-r11-mutants.log), checked in a scratch clone and restored clean:\n- Restoring the round-9 transformations.json fails 3 tests: the literal EN/AR pin and the en/ar rendered edit page.\n- Restoring the round-9 nav.json fails 11 tests: the planned-area pins in en and ar.\n- On the candidate, the two files pass 49/49 with the locale unset and with C.UTF-8 (08-fe-r11-unit-*.log).\n\nThe sweep (FE-R11 handback §3) is sound. I checked each kept string myself:\n- gates.notEnabled / notEnabledBody and problems.gate_not_enabled are unreachable. Migrations 0026 and 0059 enable G4-G6 (0059 aborts unless both G5 and G6 are enabled), catalogue.test.ts pins G1-G6 all true, and no API code writes gate_definition.\n- transformations.workspace.laterStage has 0 render sites.\n- nav.p4.beingBuilt* is unreachable: P4_PLANNED_ROUTES has 0 entries.\n- admin.plannedSections is true: every section it names is final gate DG5 or DG6 and SPECIFIED.\n- problems.access__scope_type_reserved is true (REQ-S10-002, DG6).\n\nThe three corrected sweep strings are true for DG4:\n- nav.plannedBody: each of the four planned areas (playbook, risks, change, bau) has delivered sub-screens without a permission requirement in NAV_SUBPAGES.\n- nav.entry.portfolioPlanned: the cross-portfolio view is REQ-S03-007 (DG5, SPECIFIED), and the dashboards are REQ-S13-001 (DG4, IMPLEMENTED).\n- nav.willContain now reads 'What this area covers'.\n\nAll three round-10 specialists checked the repair independently and agree, all PASS on the same candidate:\n- domain: DOM-R10-02 to -04, a real-stack EN/AR probe at 60/60;\n- code-security: SEC-R10-02, no key added or removed and no interpolation surface;\n- qa: QA-R10-03, -07 to -09, with a stale-text mutant failing 14/49, e2e 24/24 in both settings and axe 0.\n\nThe repair is text and tests only: the product diff from f2ae717 is exactly 9 files, with no API, worker, package or migration change."
       }
+    },
+    {
+      "id": "F-DG5-120",
+      "stage_id": "DG5",
+      "requirement": "REQ-S18-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The seeded roaming demo transformation sits in the Transform phase with all six product gates G1-G6 never submitted or approved, contradicting the stage-gate logic the product itself enforces",
+      "reproduction": "On a demo-initialized stack (e2e/support/with-demo-stack.sh, candidate 8e7d23a3, source 601d7d2) sign in as roaming.user.tl and GET /api/v1/transformations/01995000-0000-7000-8000-000000000001 and /api/v1/transformations/01995000-0000-7000-8000-000000000001/gates (dumps api-demo/demo-transformation.json and api-demo/demo-gates.json). Open /transformations/01995000-0000-7000-8000-000000000001 and /gates/G1 in en and ar (shots-demo/{en,ar}/d01-workspace.png, d05-gates.png, d06-gate-G1.png). Seed source: packages/db/src/demo/data/roaming.ts line ~229 (current_phase: \"transform\") and lines ~361-374 (gate_instance rows inserted with no status, submission or decision).",
+      "expected": "M0348 asks for coherent linked records that exercise every phase and gate, and the playbook runs End-to-End phases sequentially through gates that are decisions on evidence (B0009 'Run Phases 1-6 sequentially'; B0023 gate decision questions and evidence). The product enforces this itself: apps/api/src/modules/transformations/phase.ts says an approved product gate is 'the ONLY path that moves a transformation's current phase', and gates.ts refuses G(n) until G(n-1) is approved. An end_to_end demo transformation in Transform should therefore carry approved (synthetic, 'approves nothing real') G1-G4 decisions with their evidence snapshots, or be seeded in the phase its gate history supports.",
+      "actual": "The demo transformation is mode end_to_end, currentPhase 'transform', and every gate G1-G6 is status draft with latestSubmissionNo 0, approvedAt null and inheritedApproval null. The workspace shows 'Phase 5 Transform (current phase)' and 'Gate readiness: G5 Not submitted', with validated benefit value (SAR 80,000 profit and cash; SAR 222,750 revenue uplift), while the G1 page shows 'not submitted' with 2 of 6 mandatory outputs complete. G5 cannot be submitted (gate.out_of_sequence: G4 must be approved first), and approving G1 now would not move the phase (advancePhaseOnGateApproval returns null when the transformation is past the gate). The demo therefore illustrates phase progress and validated value without any gate approval, which is the opposite of the operating logic it is meant to teach. ADR-0050 §5's coverage condition 'G1-G6: a gate instance each' is met literally, so REQ-S18-002's acceptance text passes; the defect is the demo's coherence (M0348), not the count. Synthetic data only; no real approval is involved.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/api-demo/demo-transformation.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/api-demo/demo-gates.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/en/d01-workspace.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/ar/d01-workspace.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/en/d06-gate-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/ar/d06-gate-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/text-demo/en/d01-workspace.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/probe-demo.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-17T23:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Medium, not a mandatory violation: the acceptance text of REQ-S18-002 passes literally, and the data is synthetic, but the seeded demo contradicts the gate-controlled phase logic (B0009, B0023, M0348) that the product enforces for native records."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-121",
+      "stage_id": "DG5",
+      "requirement": "REQ-DLV-037",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The serial p2-journeys 'Define -> G2' journey needs 25-37 s against its 30 s limit, so it times out under review load and hides the AUD journey after it",
+      "reproduction": "In a disposable clone of the candidate, LANG=C.UTF-8, run apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p2-journeys.spec.ts --workers=1 while the other DG5 reviews run (1-minute load 10-17, sampled every 30 s). Runs 1-3 use the configured 30 s limit; run 4 adds --timeout=60000 only to measure the real durations.",
+      "expected": "A regression journey that the gate evidence relies on keeps enough headroom under its limit to pass under the review machine's normal concurrent load, or carries an explicit test.setTimeout like the P5 journeys do, so that a load spike does not hide the following serial journeys (the AUD journey that D-169 discusses).",
+      "actual": "Runs 1-3: 16 passed, 2 failed, 6 not run, exit 1 each. 'Define -> G2 ... G2 is decided' exceeded the 30 s test timeout in en and ar every time (31.5-32.8 s), inside page navigation or a wait of submitAndApproveGate; the page snapshot is a normally rendered shell. Serial mode then skipped the later journeys, including 'read-only auditor (AUD)'. Run 4 with a 60 s limit: 24/24 passed, exit 0; the G2 journey took 37.2 s in en and in ar, and AUD 26.7 s (en) and 24.5 s (ar), at load 9.4-12.3. The orchestrator's unloaded D-169 runs show the G2 journey at 25.4-27.9 s. So the product behaves correctly and the journeys are functionally green; the journey simply has 2-5 s of headroom unloaded and none under review load. This is a test-reliability weakness, not a product defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8-run2.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8-run3.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8-run4-timeout60s.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-run4-load.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/p2-journeys-run2-failure/error-context-en.md",
+        "docs/delivery/test-evidence/DG5/orchestrator-D-169/verify-final-8c68a47/e2e-cutf8-rerun-p2-journeys.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T00:25:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Low, not mandatory: the timeouts happen only under the concurrent-review load (above the 8 load envelope of environment.md), and the product renders correctly; the finding records the thin headroom so that the AUD journey D-169 relies on is not hidden."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-100",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-007",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Studio configuration review: a co-author who rewrote another admin's draft can review (approve) and publish the content they wrote; the separation-of-duties check knows only the draft's creator and the requester",
+      "reproduction": "Disposable clone at 9e4a314 (candidate sha256:8e7d23a3…f8f67b, source 601d7d2), disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 26500), Node 24.21.0. Test docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.test.ts copied to apps/api/test/integration/methodology/ and run with `npx vitest run --project integration <file>`.\nSetup: admin A holds ADM_METHOD at organization scope (the studio-fixtures methodologyAdmin). User C holds ADM_METHOD and TO at organization scope; nothing forbids holding both.\n1. A creates a scoring_defaults draft from a published 25/25/20/15/15 base (POST /api/v1/admin/methodology-versions, 201).\n2. C rewrites its content: PUT …/elements/scoring_weight/feasibility {weightPercent 30}, PUT …/elements/scoring_weight/strategic_fit {weightPercent 15} and PATCH the draft (title and change summary). All three return 200, and updatedBy = C.\n3. A previews (201 pass), runs the compatibility check (201 warn) and submits the review (201). A never edits the content.\n4. C decides the review: POST …/reviews/{id}/decision {outcome: approve} returns 200 `approved`.\n5. C publishes: POST …/publish returns 200 `published`.\nLog: docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.log (the test's final assertion expects 403 config_review.self_review at step 4 and fails with [200, undefined]).\nCause:\n- apps/api/src/modules/methodology/reviews.ts:333 refuses only `actor.userId === review.requested_by || actor.userId === current.created_by`.\n- The database backstop is the same: packages/db/migrations/0062_p5_config_versions.sql:441-444 compares decided_by with methodology_version.created_by, plus the requester CHECK.\n- Meanwhile any methodology.configure holder may change another admin's draft: drafts.ts:432-458 updateDraft (requireStudioWrite only) and elements.ts:238 PUT element.",
+      "expected": "ADR-0039 §5 and §9 (decide review: 'TO; never the author or requester'), with the refusal text 'You cannot review a configuration change you authored or requested.' (403 config_review.self_review), and REQ-S06-007 'Review where configured'. A person who wrote any part of the content under review is an author of that content. They must not be able to approve its review, at the API and in the database. For example, refuse any decider who appears as the actor of a methodology_version.* or methodology_element.* write on the draft since it was created, or who is its updated_by, or record co-authors and check them. The review-policy rule that the reviewer is never an administrator role (RP01/RP02, review-policies.ts:65 'an administrator role would review its own configuration') shows the intended separation.",
+      "actual": "The decision checks only the draft's creator and the requester. A second methodology admin who also holds the configured reviewer role (TO) can author the content (here the default T06 weights that every new transformation starts with, REQ-PB-093), approve the review of their own content and publish it. A configured review is then performed by its author, so 'review where configured' gives no independent check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/studio-coauthor-review.log",
+        "apps/api/src/modules/methodology/reviews.ts",
+        "apps/api/src/modules/methodology/drafts.ts",
+        "apps/api/src/modules/methodology/elements.ts",
+        "packages/db/migrations/0062_p5_config_versions.sql"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T02:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-REV-SEC-R1C); reproduced end to end through the API on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-101",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-002",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "Procedure outputs: an organization-scope intake's capture_intake step accepts, and its steps then adopt, a transformation the acting person cannot read (write on an unreadable record; D-166 Rule A amplifies it)",
+      "reproduction": "Disposable clone at 9e4a314 (candidate sha256:8e7d23a3…f8f67b), disposable PostgreSQL 16 (with-pg.sh, port 26510), Node 24.21.0. Test docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.test.ts copied to apps/api/test/integration/procedures/.\nSetup: TL1 holds TL at organization scope and at BU a1. This is exactly the actor setup of the product's own intake-adoption.test.ts. TL2 holds TL at BU a2 only. TL does not inherit downward (0005).\n1. TL1 launches an organization-scope new_transformation_intake instance (201).\n2. After the launch, TL2 creates transformation X in BU a2 (201).\n3. TL1 cannot read X: GET /api/v1/transformations/{X} returns 404.\n4. TL1 completes capture_intake with {outputRecordId: X} (If-Match 1) and gets 200.\n5. The output link (output, transformation, X) is written, and D-166 Rule A (0096) moves the instance's remaining steps into X: draft_charter active with transformation_id X, confirm_sponsor pending with transformation_id X.\n6. Through the adopted steps (D-167), X's own lead TL2 now reads TL1's intake: GET /api/v1/procedure-instances/{id} returns 200.\nLog: docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.log (the final assertion expects 422 procedure_step.output_record_invalid at step 4 and fails with [200, undefined]).\nCause:\n- apps/api/src/modules/procedures/outputs/kit.ts:87-99 (inScope) checks only the organization for an organization-scope instance with no earlier output.\n- kit.ts:104-118 (producedHere) checks only the creation time and that no other instance took the record.\n- Neither checks that the acting person can read the record. transformations.ts:8 (transformationOutput) adds nothing, and steps.ts:1327 calls the adapter after authorizing the actor on the INSTANCE's organization scope only.",
+      "expected": "A step's output must be a record the acting person may see in the scope they act in: 'server-side scoped RBAC on records' and REQ-S06-002 'outputs are real linked records', with authorization enforced (REQ-S16-015). Naming a transformation the actor cannot read must be refused like an unknown record: 422 procedure_step.output_record_invalid, or 404 without disclosing existence. Then nothing is linked and nothing is adopted. For example, require transformation.read (or procedure.read) on the named record's transformation for the acting principal, in the adapter kit, before linking.",
+      "actual": "Any person acting at organization scope on an intake can claim, by its id, any transformation of the organization created after the launch and not yet claimed. This includes transformations of other business units that they cannot read. The claim links it as the intake's output and moves the intake's pending steps into it, including confirm_sponsor, whose business approval D-166 Rule A requests on X and routes to X's mapped Sponsor; that last part follows from the design and was not exercised here. X's readers then see a foreign intake. X can no longer be any other intake's output: producedHere refuses a record another instance took.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/intake-foreign-transformation.log",
+        "apps/api/src/modules/procedures/outputs/kit.ts",
+        "apps/api/src/modules/procedures/outputs/transformations.ts",
+        "apps/api/src/modules/procedures/steps.ts",
+        "packages/db/migrations/0096_p5_intake_adopts_transformation.sql"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T02:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-REV-SEC-R1C); reproduced through the API on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-140",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-093",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Studio 'T06 scoring defaults' screen (/admin/studio/scoring-defaults) does not reflow: page-level horizontal scroll at 390 px (en, 49 px) and with 200 % text (en 130 px, ar 16 px), because the rubric <fieldset>s keep the browser default min-inline-size: min-content",
+      "reproduction": "Disposable clone of the frozen candidate (601d7d2, sha256:8e7d23a3...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26620 E2E_API_PORT=26621 e2e/support/with-demo-stack.sh npx playwright test e2e/zz-qa-dg5r1c-demo-probes.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers). The P-REFLOW test signs in as roaming.user.to, opens /admin/studio/scoring-defaults at a 390x844 viewport and measures document.documentElement.scrollWidth - window.innerWidth, then at 1280x900 with document.documentElement.style.fontSize = '200%' (the method of the DG4 specs p4-traceability/p4-dashboards). Result in both locale settings (locale unset and LANG=C.UTF-8): en overflow390 = 49, overflow200pct = 130; ar overflow200pct = 16. The innermost elements outside the viewport are the rubric tables' 'Descriptor (Arabic)' th/td cells (en: left 269, right 424 at 390 px) and, in ar at 200 %, the six fieldset.fieldset[data-rubric=...] (left -16, width 701). The full-page screenshot at 390 px is 439 px wide. Cause in source: ScoringDefaultsPage.tsx:272-275 wraps each rubric's .table-wrap (overflow-x: auto) in a <fieldset className=\"fieldset\">, and apps/web/src/styles/app.css has no .fieldset rule, so the fieldset keeps the UA default min-inline-size: min-content and grows to the table's width instead of letting .table-wrap scroll. The other 30 P5 screens of the same probe have 0 px overflow.",
+      "expected": "Like every other P5 screen probed (30 of 31) and the DG4 screens (p4-* specs '390 px wide and 200 % text: no page-level horizontal scroll'), the scoring-defaults screen reflows at 390 px and with 200 % text: no page-level horizontal scroll; wide rubric tables scroll inside their own .table-wrap (for example with min-width: 0 / min-inline-size: 0 on the fieldset).",
+      "actual": "Page-level horizontal scroll of 49 px at 390 px (en) and of 130 px (en) / 16 px (ar) with 200 % text, reproduced in both locale settings; the Studio screen where an administrator edits REQ-PB-093's default weights and rubric is not usable without horizontal page scrolling on a phone-width viewport (WCAG 2.1 1.4.10 Reflow; master prompt A20 'mobile review work').",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/r1c-390-_admin_studio_scoring_defaults.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T04:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 review round 1 (T-DG5-REV-QA-R1C) on candidate sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b from the assignment's required '390 px and 200 % text on the P5 screens' check; reproduced in both locale settings. No product P5 spec checks this screen at 390 px or 200 % text."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-141",
+      "stage_id": "DG5",
+      "requirement": "REQ-S02-001",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Source coverage screen (/admin/source-coverage) has a serious axe violation at 390 px in en and ar: 'scrollable-region-focusable' on the coverage table's .table-wrap, which is not keyboard-focusable (no tabIndex/role/label, unlike 51 other table wraps)",
+      "reproduction": "Same probe and stack as F-DG5-140 (docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts, P-REFLOW, e2e/support/with-demo-stack.sh). As roaming.user.to at a 390x844 viewport, open /admin/source-coverage and run the product's own expectAccessible (apps/web/e2e/support/ui.ts: AxeBuilder with wcag2a/2aa/21a/21aa; serious or critical violations fail). Result in chromium-en and chromium-ar, in both locale settings: [\"scrollable-region-focusable: .table-wrap\"] (impact serious). Page-level overflow is 0 px: the coverage table scrolls inside its wrapper, but a keyboard user cannot reach the wrapper to scroll it. Cause in source: apps/web/src/pages/source-coverage/SourceCoveragePage.tsx:127 renders <div className=\"table-wrap\"> with no tabIndex, role or accessible name, while 51 of the 90 .table-wrap elements in apps/web/src/pages use the pattern tabIndex={0} role=\"region\" aria-label=... (e.g. ChangeRequestPage.tsx:276, ClosurePage.tsx:274). The product spec p5-studio.spec.ts axe-checks this screen only at the desktop viewport, where the table fits, so the violation is not caught there.",
+      "expected": "axe reports no serious or critical violation on the P5 screens at every supported width (assignment: 'axe must report no serious or critical issues'; master prompt §15 'Support keyboard navigation'): the scrollable coverage table region is keyboard-focusable and named, as on the DG4 screens.",
+      "actual": "Serious axe violation scrollable-region-focusable on .table-wrap at 390 px, en and ar, reproduced in both locale settings; at narrow widths the coverage table columns beyond the viewport cannot be scrolled into view with the keyboard.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/r1c-390-_admin_source_coverage.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T04:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 review round 1 (T-DG5-REV-QA-R1C) on candidate sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b from the axe-at-390-px part of the P5 reflow probe; reproduced in both languages and both locale settings."
+        }
+      ]
     }
   ]
 }

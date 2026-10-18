@@ -31,19 +31,22 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
-- **DG5 (P5 "Configuration automation and outputs") is REVIEWING** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-169).
-  - **Frozen for review round 1:** candidate `sha256:8e7d23a3…` (2172 files, source `601d7d2`; code identical to `8c68a47` and `3edc1b2`). The manifest is `docs/delivery/candidates/DG5/8e7d23a3ec021871.manifest.json`.
-  - **Pre-freeze verification (D-169):** green on every check. One e2e timeout under the orchestrator's own concurrent load is disclosed; its spec passes when re-run alone.
+- **DG5 (P5 "Configuration automation and outputs") is FIXING after review round 1** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-170).
+  - **Round 1** ran on candidate `sha256:8e7d23a3…` (2172 files, source `601d7d2`):
+    - domain PASS: F-DG5-120 (Medium), F-DG5-121 (Low);
+    - code-security FAIL: F-DG5-100 and F-DG5-101 (both Medium, mandatory);
+    - qa FAIL: F-DG5-140 and F-DG5-141 (both Medium).
+  - **Container restarts:** two of them stopped five review runs before they wrote a record. The runs were salvaged and re-run, and the keep-alive rule now applies (D-170).
 - **Next action:**
-  1. The round-1 reviews run on candidate `8e7d23a3` in the main checkout, with no worktree or install activity while they run (D-082).
-     - **Domain: done.** `T-DG5-REV-DOM-R1B` passed with two findings: F-DG5-120 (Medium, REQ-S18-002, the demo transformation's gate history) and F-DG5-121 (Low, the headroom of the p2-journeys 'Define -> G2' journey). Commit `42920d9`.
-     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R1C` and `T-DG5-REV-QA-R1C`,** from `round-1/{role}-rerun2.md`. Two container restarts stopped them before they wrote a record:
-       - 22:01Z, the first runs, about 5 minutes in;
-       - 01:05Z, the R1B runs, about 2 hours in.
-       The material of both stops is kept for provenance in `test-evidence/DG5/{code-security,qa}-r1{,b}-orphaned/` (and `domain-r1-orphaned/`).
-     - **Cause observed:** both restarts came within minutes of the orchestrator session going idle with no harness-tracked task. While a detached review runs, the orchestrator therefore keeps a harness-tracked monitor armed. This will be recorded as a decision at the next re-freeze, because `decisions.md` is not edited between a freeze and the gate decision.
-  2. Then import the findings (`tools/gates/import-findings.mjs`) and repair them if needed.
-  3. Before the release-auditor runs, propose the D-140 auditor-sidecar ordering fix to the user.
+  1. Repair wave V1, in four worktrees:
+     - `T-DG5-BE-V1`: F-DG5-100 and migration `0097`;
+     - `T-DG5-BE-V2`: F-DG5-101;
+     - `T-DG5-BE-V3`: F-DG5-120, the demo gate history;
+     - `T-DG5-FE-V1`: F-DG5-140, 141 and 121.
+     Keep a harness-tracked monitor armed while they run.
+  2. Merge the wave. Then T-DG5-ARCH-R4 amends the ADRs.
+  3. Verify the merged tree (D-164), record the next decision, re-freeze, and run round 2.
+  4. Before the release-auditor runs, get the user's decision on the D-140 auditor-sidecar ordering fix (options 1–3 were put to the user; 1 is recommended).
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
