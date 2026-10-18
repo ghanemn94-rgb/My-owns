@@ -1,0 +1,50 @@
+$ QA_PG_PORT=26500 MTH_PORT_POOL=26501-26549 bash tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts  (2026-10-18T11:35:25Z, node v24.21.0)
+port-policy: PostgreSQL listening on port 26500 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.VIYsHU/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvdr16w9_f022e117 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (1) AUD: no P5 mutation succeeds, nothing is written
+audit events since the sweep start: [["authorization.denied","AUD",67]]
+AUD P5 mutations: 90; statuses {"400":11,"403":73,"404":6}
+AUD non-403 answers (17):
+  400 validation createFormDraft
+  404 not_found updateFormDraft
+  404 not_found closeFormDraft
+  400 validation updateProcedureInstanceInputs
+  404 not_found completeProcedureStep
+  400 validation skipProcedureStep
+  400 validation assignProcedureStep
+  400 validation linkProcedureStepEvidence
+  400 validation cancelProcedureInstance
+  404 not_found decideAutomationRuleReview
+  400 validation decideApprovalRouteStep
+  400 validation closeGateCondition
+  404 not_found reviewMeetingCutoffPack
+  400 validation decideKpiRestatement
+  400 validation previewFormula
+  404 not_found putBusinessCaseCashFlows
+  400 validation putDayNinetyResponse
+business audit events before 101, after 101
+
+stdout | apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (2) ADM-only: no transformation-scoped P5 read answers 200
+ADM-only transformation-scoped P5 reads: 40; statuses {"403":3,"404":37}
+ADM-only 2xx (0):
+  
+
+stdout | apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (3) ADM-only navigation (printed)
+ADM-only navigation [33m200[39m [["my_work",["assignedActions","drafts","reviews","approvals","missingUpdates","upcomingDeadlines"]],["playbook_procedures",["source","guidance","procedures"]],["administration",["automation","organization","access","branding","environment"]]]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts (3 tests) 1582ms
+   ✓ SEC-R1 P5 sweep > (1) AUD: no P5 mutation succeeds, nothing is written  697ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  11:35:27
+   Duration  18.67s (transform 6.17s, setup 0ms, collect 12.98s, tests 1.58s, environment 0ms, prepare 63ms)
+
+exit=0

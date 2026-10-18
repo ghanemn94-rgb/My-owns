@@ -1,0 +1,70 @@
+### 1. product files changed 601d7d2..d3528fc outside the repair set (expect none in worker/reporting/workflows/access/demo guard)
+apps/api/src/modules/automation/lifecycle.ts
+apps/api/src/modules/methodology/contributors.ts
+apps/api/src/modules/methodology/reviews.ts
+apps/api/src/modules/methodology/revision-impact.ts
+apps/api/src/modules/platform/db-errors.ts
+apps/api/src/modules/procedures/outputs/kit.ts
+apps/api/src/modules/procedures/steps.ts
+apps/api/test/integration/automation/rule-coauthor-review.test.ts
+apps/api/test/integration/environment/demo-gate-history.test.ts
+apps/api/test/integration/methodology/studio-coauthor-review.test.ts
+apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts
+apps/api/test/integration/procedures/output-read-authorization.test.ts
+apps/web/e2e/p2-journeys.spec.ts
+apps/web/e2e/p4-gates-closure.spec.ts
+apps/web/e2e/p5-reflow-axe.spec.ts
+apps/web/src/components/DataTable.tsx
+apps/web/src/components/RegisterTable.tsx
+apps/web/src/components/table-regions.test.tsx
+apps/web/src/i18n/ar/common.json
+apps/web/src/i18n/ar/gates.json
+apps/web/src/i18n/en/common.json
+apps/web/src/i18n/en/gates.json
+apps/web/src/pages/gates/GateDetailPage.tsx
+apps/web/src/pages/gates/GatesPage.tsx
+apps/web/src/pages/gates/p4api.ts
+apps/web/src/pages/gates/readiness-covered.test.tsx
+apps/web/src/pages/methodology-migrations/ConfigPinsPage.tsx
+apps/web/src/pages/methodology-migrations/MigrationPage.tsx
+apps/web/src/pages/methodology-migrations/MigrationsPage.tsx
+apps/web/src/pages/source-coverage/SourceCoveragePage.tsx
+apps/web/src/pages/studio/ElementsSection.tsx
+apps/web/src/pages/studio/ReviewPoliciesPage.tsx
+apps/web/src/pages/studio/RevisionProposalsPage.tsx
+apps/web/src/pages/studio/ScoringDefaultsPage.tsx
+apps/web/src/pages/studio/VersionPage.tsx
+apps/web/src/pages/traceability/ModularPage.tsx
+apps/web/src/pages/traceability/TracePanels.tsx
+apps/web/src/pages/traceability/TraceabilityPage.tsx
+apps/web/src/styles/app.css
+apps/web/src/styles/styles.test.ts
+docs/api/openapi.yaml
+packages/db/migrations/0097_p5_config_review_contributors.sql
+packages/db/src/demo/data/index.ts
+packages/db/src/demo/data/roaming-gates.ts
+packages/db/src/demo/data/roaming-ids.ts
+packages/db/src/demo/data/roaming-states.ts
+packages/db/src/demo/data/roaming.ts
+packages/db/src/schema.ts
+packages/db/test/integration/catalogue.test.ts
+tests/qa/integration/a02-a21-complete-lifecycle.test.ts
+### 2. p5-pending lists: non-empty array literals
+all 44 files: 0 string entries
+16:export const P5_PENDING_TESTS_BE_O: readonly {
+### 3. module graph
+reporting imports workflows/admin: 1
+worker imports apps/api: 0
+methodology/contributors.ts imports: 9:import type { DbOrTx } from "@mth/db"; 10:import type { MethodologyVersionRow } from "./drafts.ts"; 
+procedures/outputs/kit.ts imports: 34:import { sql, type DbOrTx } from "@mth/db"; 35:import type { Permission } from "@mth/shared"; 36:import { requireRead, type Principal } from "../../access/index.ts"; 37:import { HttpProblem, problems } from "../../platform/index.ts"; 38:import type { ProcedureOutputAdapter, ProcedureOutputContext } from "../steps.ts"; 
+### 4. openapi operations
+operationId count 846
+### 5. outbox: enqueue sites in the repair diff
+3254:+// The outbox events (gate.submitted, gate.decided) are not written: their consumers would create approver tasks and
+(end)
+### 6. demo seed: guard/production refusal untouched
+(end)
+### 7. 0097 grants: no SECURITY DEFINER, no DISABLE TRIGGER
+none
+### 8. float on money in repair diff
+(end)

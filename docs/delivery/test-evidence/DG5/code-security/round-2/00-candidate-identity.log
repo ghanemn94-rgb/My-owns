@@ -1,0 +1,33 @@
+Sun Oct 18 11:25:35 UTC 2026
+$ git -C /home/user/My-owns rev-parse HEAD
+b147ddaa2783c7ffcb318b8e25a004c03470bf0f
+$ (repo) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+exit=0
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv && git checkout b147dda
+HEAD=b147ddaa2783c7ffcb318b8e25a004c03470bf0f shallow=false commits=1472 status_lines=0
+$ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --ref d3528fc
+{"stage":"DG5","source":"d3528fc","candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","files":2183}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --diff
+{
+  "frozen": "sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e",
+  "working_tree": "sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ git diff --name-only d3528fc HEAD
+docs/delivery/assignments/DG5/round-2/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-2/domain-reviewer.md
+docs/delivery/assignments/DG5/round-2/qa-verifier.md
+docs/delivery/candidates/DG5/c4f70a80196e79c7.manifest.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+$ git rev-parse d3528fc
+d3528fcf0dbf1df5f91456c82f5ce188fdee7c75

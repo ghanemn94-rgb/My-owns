@@ -1,0 +1,15 @@
+$ ls .github/workflows
+ci.yml
+delivery-gates.yml
+$ grep AI/LLM/SMTP/WEBHOOK/OPENAI in config env vars
+(matches above; none = no adapter variable)
+$ dev binding guard
+122: * `AUTH_MODE=dev` stack can choose them. Only with AUTH_MODE=dev, and never with NODE_ENV=production (the same rule as
+127:  readonly AUTH_MODE?: string | undefined;
+129:  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+packages/config/src/load.test.ts:70:  it("refuses AUTH_MODE=dev with NODE_ENV=production (ADR-0005)", () => {
+packages/config/src/load.test.ts:72:    expect(problems).toContain("AUTH_MODE=dev is refused when NODE_ENV=production");
+packages/config/src/load.ts:7://  - Missing required values, malformed values and the forbidden combination AUTH_MODE=dev + NODE_ENV=production
+packages/config/src/load.ts:197:    problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+$ lockfile
+lockfileVersion: '9.0'
