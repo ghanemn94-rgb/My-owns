@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-142",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-171 observation (f) does not hold on the DG5 demo dataset: four DG2-DG3 screens (transformation overview, charter, readiness, benefit formula) keep bare, non-focusable .table-wrap scroll containers, and axe reports the serious violation 'scrollable-region-focusable' at 390 px in en and ar",
+      "reproduction": "Disposable complete clone of the frozen candidate (b147dda = source d3528fc + delivery records; sha256:c4f70a80...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26636 E2E_API_PORT=26637 e2e/support/with-demo-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers), locale unset and LANG=LC_ALL=C.UTF-8. Test P2-DG24 signs in as roaming.user.tl (and roaming.user.adm_access for /admin/organizations), opens each DG2-DG4 screen that still holds a bare .table-wrap at 390x844 on the seeded synthetic International Roaming transformation 01995000-0000-7000-8000-000000000001, and runs the same axe rule set as apps/web/e2e/support/ui.ts expectAccessible (wcag2a/2aa/21a/21aa). It records every element with overflow-x auto/scroll whose scrollWidth exceeds clientWidth, and whether it has tabIndex >= 0, role=region and an accessible name.",
+      "expected": "No serious or critical axe violation on any screen the demo environment and its guided walkthrough present (REQ-S15-012: 'an automated axe scan reports no serious or critical violations on key screens; the guided walkthrough can be completed by keyboard alone'); every horizontally scrolled table can be reached and scrolled by keyboard, as T-DG5-FE-V1 made every shared and P5 table wrapper (tabIndex=0, role=region, localized name).",
+      "actual": "Identical in all four runs (en, ar; locale unset, C.UTF-8). axe serious 'scrollable-region-focusable' on: /transformations/<roaming> (TransformationDetailPage, '.table-wrap'), /transformations/<roaming>/charter (CharterPage, '#charter-scope > .table-wrap' and '#charter-versions > .table-wrap'), /transformations/<roaming>/readiness (ReadinessPage, '#diagnostic > .table-wrap') and /transformations/<roaming>/benefit-formulas/<id> (BenefitFormulaPage, '#versions > .table-wrap' and '#calculations > .table-wrap'). Each wrapper scrolls (e.g. en overview 268 px excess, charter 186/171 px) with tabIndex -1, no role and no name, and holds no focusable element, so a keyboard user cannot scroll the hidden columns into view (the charter screenshot shows the scope-check and version tables cut off). Five more bare wrappers scroll but contain focusable links, so axe does not flag them (gates G1/G4 criteria table, transformation dashboard, executive overview, admin organizations, initiative page). D-171 (f) and the FE-V1B handback state that 'axe flags them only when they overflow, and the DG4 specs report none': that is true of the DG4 specs' small fixtures, not of the DG5 demo data, where these tables overflow at 390 px. Not a regression of the repair diff (these files are unchanged since DG2-DG4) and outside every DG5-final acceptance text; the binding requirement REQ-S15-012 has final gate DG6. I therefore raise it as Medium and do not consider it blocking for DG5; it must be repaired before DG6 (the same one-line wrapper fix FE-V1 applied: tabIndex=0, role=region, common.table.scrollRegion name).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-cutf8/en/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-cutf8/ar/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/r2-dg24-390_transformations_T_charter.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/r2-dg24-390_transformations_T_readiness.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-cutf8.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 2 (T-DG5-REV-QA-R2) as the judgement of D-171 observation (f). Medium, non-mandatory, not blocking DG5 (REQ-S15-012 is DG6); repair before DG6."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-143",
+      "stage_id": "DG5",
+      "requirement": "REQ-S05-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The product e2e 'T01: form tools on a diagnostic record' (apps/web/e2e/p5-forms.spec.ts:211) is order-dependent: its fixture fills the API's first diagnostic item (ordered by id, a UUIDv7 that is not monotonic within one millisecond) but the test opens the form tools of the screen's first row (ordered by dimension ordinal); it failed in 2 of 4 executions on this candidate",
+      "reproduction": "Run the product journeys on the production-initialized stack (apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1, chromium-en and chromium-ar) in the disposable clone. p5-forms.spec.ts beforeAll (lines 96-107) PATCHes items.items[0] of GET .../diagnostic-items (the API orders by id) with rootCause 'Synthetic root cause'; the test (line 222-229) clicks '#t01 [data-form-tools]'.first(), i.e. the first row of the T01 grid, which DiagnosePage sorts by dimension ordinal (pages/diagnose, sort by ordinal), and expects that value. The five items are created by p2_instantiate_transformation() (0018) in one loop with mth_uuid_v7() (0010), whose 74 low bits are random, so ids created in the same millisecond are not in creation order. Independent check: tests/qa/support/with-pg.sh bash <evidence>/scripts/uuid-order-probe.sh (the 0010 function, five ids per trial in a loop, 500 trials): the first id by ORDER BY id was NOT the first created in 382 of 500 trials; 485 trials shared one millisecond.",
+      "expected": "The test fills the record it later opens (e.g. pick the item whose dimension is the first by ordinal, or open the form tools of the row that holds the filled item), so it passes deterministically.",
+      "actual": "Locale unset: [chromium-ar] failed ('toHaveValue' 'Synthetic root cause', the textarea is empty: the dialog is for 'مالي' (Financial) while the filled item is the third row, confidence M). C.UTF-8: [chromium-en] failed the same way (dialog 'Form tools: Financial' empty; the filled item is the second row, 'Medium (M)'). The other two executions passed, and p5-forms.spec.ts re-run alone passed 6/6 in each locale setting. The product behaves correctly (each row's dialog shows its own record); only the test's fixture assumption is unsound. D-171's two 442/442 runs passed by chance. Test reliability only; the T01 clause of REQ-S05-001 is asserted whenever the order happens to match, and on the re-runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-rerun-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-rerun-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failure-context/product-unset/apps-web-e2e-p5-forms-T01--bc774-port-the-auditor-reads-only-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failure-context/product2-cutf8/apps-web-e2e-p5-forms-T01--bc774-port-the-auditor-reads-only-chromium-en-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-uuid-order-probe.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/scripts/uuid-order-probe.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 2 (T-DG5-REV-QA-R2). Low, test reliability only (precedent F-DG5-121), not blocking."
+        }
+      ]
+    }
+  ]
+}

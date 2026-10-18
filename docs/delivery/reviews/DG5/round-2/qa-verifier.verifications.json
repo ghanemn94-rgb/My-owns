@@ -1,0 +1,37 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:c4f70a80... (source d3528fc) in a complete disposable clone. My round-1 probe zz-qa-dg5r1c-demo-probes.spec.ts, re-run UNCHANGED on the demo stack over the 31 P5 screens: /admin/studio/scoring-defaults has 0 px page-level overflow at 390 px and with 200 % text, in en and ar, in all three runs (locale unset twice, C.UTF-8 once); round 1 measured 49 px (en 390), 130 px (en 200 %), 16 px (ar 200 %). The other 30 screens are also 0 px. The 390 px screenshot (ar) shows the six rubric tables inside their fieldsets, each scrolling in its own region. My round-2 probe confirms the rubric region is focusable (tabIndex 0, role=region, name 'Strategic fit (scrollable table)' / 'الملاءمة الاستراتيجية (جدول قابل للتمرير)'), that real Tab presses reach it (15 presses) and that the arrow keys scroll it (scrollLeft 0 -> 80 en, 0 -> -26 ar), with no page overflow. The fix is the shared fieldset { min-inline-size: 0 } rule (app.css), asserted by styles.test.ts, plus the candidate's p5-reflow-axe.spec.ts (31 screens, 0 problems in en and ar, both product e2e runs). Disclosed: the first unchanged unset run exited 1 on the probe's demo-banner check for one other screen per language (en day-90-test, ar /admin/procedures): a non-waiting count() raced the render; the screenshots taken right after show the banner, and the C.UTF-8 run and a second unset run passed 6/6 (banner 31/31). The first attempt of all (attempt1 logs) did not load the probe at all: in my complete clone, Playwright's path filter also matched the copy under docs/delivery/test-evidence/.../tests/round-1/; fixed by passing the absolute path. Neither affects the result. No residual.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r1reflow-run2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r1reflow-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r1reflow-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-cutf8/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/ar/r1c-390-_admin_studio_scoring_defaults.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/p2-kbd-_admin_studio_scoring_defaults.json",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:c4f70a80... in a complete disposable clone. (1) My round-1 probe, unchanged: /admin/source-coverage at 390 px reports no serious or critical axe violation in en and ar, in every run (round 1: 'scrollable-region-focusable: .table-wrap', serious). (2) My round-2 probe P2-AXE runs the same axe rule set on all 31 P5 screens of the populated demo data at 1366 x 900 and at 1280 x 900 with 200 % text: 0 serious/critical in en and ar, both locale settings; and audits every horizontally scrolling element at 390 px (24 regions) and at 200 % text (24-25): each has tabIndex 0, role=region and a non-empty localized name. (3) Keyboard: real Tab presses from the page start reach the coverage region in 9 presses ('Source element sets (scrollable table)' / 'مجموعات عناصر المصدر (جدول قابل للتمرير)'); six arrow presses scroll it (scrollLeft 0 -> 240 en, 0 -> -240 ar, RTL), focus stays on it, and the page does not scroll. (4) The candidate's apps/web/e2e/p5-reflow-axe.spec.ts asserts what it claims: on the production stack, for each of the same 31 screens and both projects, it fails on a no-permission/error state, page overflow > 1 px at 390 px or with 200 % text, and any serious/critical axe violation at 390 px, 1366 px and 200 % text, collecting all problems before one assertion; it passed in both product e2e runs (31 screens, 0 problems, en and ar). Its weaker point is the near-empty transformation it creates, so transformation tables rarely overflow there; my demo-data probe covers the populated case. table-regions.test.tsx asserts the DataTable and RegisterTable region (role, tabIndex 0, localized name) in en and ar. Residual outside this finding's P5 scope: bare wrappers on DG2-DG3 screens still fail on demo data (raised as F-DG5-142).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-r2regions-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/p2-axe-regions.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/en/p2-kbd-_admin_source_coverage.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r2regions-unset/ar/p2-kbd-_admin_source_coverage.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/shots/probe-r1reflow-run2-unset/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts"
+      ]
+    }
+  ]
+}
