@@ -1,0 +1,89 @@
+$ env LANG=C.UTF-8 LC_ALL=C.UTF-8  npx vitest run --project unit-node apps/api/src/architecture.test.ts  (node v22.22.2, 2026-10-18T22:34:33Z) load 10.39 11.52 12.76
+
+ RUN  v3.2.4 $TMPDIR/rev
+
+ ✓ |unit-node| apps/api/src/architecture.test.ts (139 tests) 25257ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  16607ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  556ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  1507ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  5410ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  418ms
+
+ Test Files  1 passed (1)
+      Tests  139 passed (139)
+   Start at  22:34:34
+   Duration  27.82s (transform 469ms, setup 0ms, collect 1.48s, tests 25.26s, environment 0ms, prepare 153ms)
+
+EXIT 0
+$ env LANG=C.UTF-8 LC_ALL=C.UTF-8  npx vitest run --project unit-web apps/web/src/pages/p2-blank-forms.test.tsx apps/web/src/pages/gates/g1-agreements.test.tsx  (2026-10-18T22:35:03Z) load 10.10 11.34 12.66
+
+ RUN  v3.2.4 $TMPDIR/rev
+
+ ✓ |unit-web| src/pages/gates/g1-agreements.test.tsx (10 tests) 21421ms
+   ✓ G1 agreements step (en) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  2708ms
+   ✓ G1 agreements step (en) > a non-approve outcome on G1 sends no agreements (even after ticking them)  1456ms
+   ✓ G1 agreements step (en) > approving another gate (G2) shows no confirmations and sends no agreements  1028ms
+   ✓ G1 agreements step (en) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  1258ms
+   ✓ G1 agreements step (en) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  723ms
+   ✓ G1 agreements step (ar) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  1143ms
+   ✓ G1 agreements step (ar) > a non-approve outcome on G1 sends no agreements (even after ticking them)  1308ms
+   ✓ G1 agreements step (ar) > approving another gate (G2) shows no confirmations and sends no agreements  895ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  1029ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  773ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 48378ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  1838ms
+   ✓ gate submission note (en) > a invisible-only note is refused inline and nothing is sent  1109ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  1849ms
+   ✓ gate submission note (ar) > a whitespace-only note is refused inline and nothing is sent  769ms
+   ✓ gate submission note (ar) > a invisible-only note is refused inline and nothing is sent  804ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  2376ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  1308ms
+   ✓ gate decision rationale and comments (en) > a invisible-only rationale is refused inline and nothing is sent  726ms
+   ✓ gate decision rationale and comments (en) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  1303ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  747ms
+   ✓ gate decision rationale and comments (en) > a invisible-only comment is refused inline (focus on it) and nothing is sent  917ms
+   ✓ gate decision rationale and comments (en) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  704ms
+   ✓ gate decision rationale and comments (en) > a server 400 validation.blank on /rationale lands on the field  369ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only rationale is refused inline and nothing is sent  449ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only rationale is refused inline and nothing is sent  618ms
+   ✓ gate decision rationale and comments (ar) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  320ms
+   ✓ gate decision rationale and comments (ar) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  418ms
+   ✓ gate decision rationale and comments (ar) > a invisible-only comment is refused inline (focus on it) and nothing is sent  527ms
+   ✓ gate decision rationale and comments (ar) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  580ms
+   ✓ gate decision rationale and comments (ar) > a server 400 validation.blank on /rationale lands on the field  516ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  1222ms
+   ✓ journey step editor (en) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  674ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  856ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  954ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  554ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  622ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  701ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  783ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  910ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  577ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  648ms
+   ✓ Finance validation note and archive reason (en) > reason: a whitespace-only reason is refused inline and nothing is archived  642ms
+   ✓ Finance validation note and archive reason (en) > reason: a invisible-only reason is refused inline and nothing is archived  703ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  649ms
+   ✓ Finance validation note and archive reason (en) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  847ms
+   ✓ Finance validation note and archive reason (en) > reason: a server 400 validation.invalid_character on /reason is the localized field message  1492ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  786ms
+   ✓ Finance validation note and archive reason (ar) > note: a whitespace-only note is refused inline and nothing is sent  611ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  474ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  690ms
+   ✓ Finance validation note and archive reason (ar) > reason: a whitespace-only reason is refused inline and nothing is archived  520ms
+   ✓ Finance validation note and archive reason (ar) > reason: a invisible-only reason is refused inline and nothing is archived  642ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  704ms
+   ✓ Finance validation note and archive reason (ar) > reason: a reason with U+0000 is refused inline with the localized message and nothing is archived  649ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message  366ms
+   ✓ Finance validation note and archive reason (ar) > reason: empty keeps 'too short'; visible text is sent verbatim  604ms
+   ✓ North Star statement (en) > a whitespace-only statement is refused inline and nothing is sent  588ms
+   ✓ North Star statement (ar) > a whitespace-only statement is refused inline and nothing is sent  373ms
+   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  428ms
+
+ Test Files  2 passed (2)
+      Tests  62 passed (62)
+   Start at  22:35:04
+   Duration  58.42s (transform 890.28s, setup 939ms, collect 13.54s, tests 69.80s, environment 2.58s, prepare 1.33s)
+
+EXIT 0

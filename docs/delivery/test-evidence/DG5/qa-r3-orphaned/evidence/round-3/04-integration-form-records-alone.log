@@ -1,0 +1,24 @@
+$ QA_PG_PORT=26688 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh pnpm test:integration apps/api/test/integration/forms/form-records.test.ts  (node v24.21.0, 2026-10-18T23:26:48Z)
+ 23:26:48 up 12:21,  0 user,  load average: 12.16, 12.04, 9.76
+port-policy: PostgreSQL listening on port 26688 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration $TMPDIR/rev
+> vitest run --project integration apps/api/test/integration/forms/form-records.test.ts
+
+
+ RUN  v3.2.4 $TMPDIR/rev
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvegg1ns_c2286715 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/forms/form-records.test.ts (18 tests) 6104ms
+   ✓ export (REQ-S05-001) > T01: JSON and CSV rows in en and ar; decimals as strings; Unknown and Not computable marked, never 0  358ms
+   ✓ export (REQ-S05-001) > at most 5000 rows: 5000 export, 5001 is 422 form_export.too_large  3187ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  23:26:51
+   Duration  27.15s (transform 7.08s, setup 0ms, collect 14.32s, tests 6.10s, environment 0ms, prepare 101ms)
+
+EXIT 0
+2026-10-18T23:27:19Z
+ 23:27:19 up 12:22,  0 user,  load average: 12.52, 12.17, 9.89

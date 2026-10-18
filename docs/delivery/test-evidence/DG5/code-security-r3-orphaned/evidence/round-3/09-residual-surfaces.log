@@ -1,0 +1,30 @@
+### CI workflows (offline config surface; REQ-DLV-025, D-058)
+ci.yml
+delivery-gates.yml
+### dependency pins (offline surface; REQ-DLV-042, D-057): pnpm deps:verify needs the live registry (npm view); with no network it hung (> 300 s, no output) and was stopped. Offline instead: the frozen-lockfile install (01-install.log, exit 0) and no range pin in any manifest:
+manifests 9 range pins 0
+### dev-issuer binding guard (D-165)
+7:// With AUTH_MODE=dev (never NODE_ENV=production) both also bind each demo user to the dev issuer (D-165).
+19:  readonly devIssuerBinding?: boolean;
+54:            devIssuerBinding: config.devIssuerBinding === true,
+62:            devIssuerBinding: config.devIssuerBinding === true,
+### AI / external notification adapters (D-142 Q11): files naming one
+apps/api/src/modules/portfolio/schedule.ts
+apps/api/src/modules/portfolio/slip-events.ts
+(end)
+### public CDN URLs in built web assets
+(end)
+### repair diff: secret-like literals
+(end)
+### repair diff: parseFloat/Number(/toFixed in product code
+(end)
+### repair diff: outbox / transaction / remote I/O additions in product code
+(end)
+### demoDevIssuerBindingAllowed
+packages/db/src/demo/guard.ts:125:export function demoDevIssuerBindingAllowed(env: {
+packages/db/src/demo/guard.ts-126-  readonly NODE_ENV?: string | undefined;
+packages/db/src/demo/guard.ts-127-  readonly AUTH_MODE?: string | undefined;
+packages/db/src/demo/guard.ts-128-}): boolean {
+packages/db/src/demo/guard.ts-129-  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+packages/db/src/demo/guard.ts-130-}
+### note: the two adapter-pattern hits are the word 'slack' (schedule slack) in comments: schedule.ts:177 and slip-events.ts:19; no AI or external notification adapter ships.

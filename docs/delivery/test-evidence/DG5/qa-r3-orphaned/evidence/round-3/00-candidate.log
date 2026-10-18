@@ -1,0 +1,17 @@
+$ git clone /home/user/My-owns $TMPDIR/rev; git checkout b7883ba   (complete clone; done before this script)
+HEAD b7883baf12bcd303468be6e1488c46165d91ca20  shallow=false  sparse=unset
+$ node tools/gates/candidate.mjs --stage DG5   (clone, 2026-10-18T21:02:00Z)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:fc93b239904677e598a3155695747f4c4b71c9ec7a9471a2d6748c41c0e757fd","files":2187}
+EXIT 0
+$ (main repo HEAD b7883baf12bcd303468be6e1488c46165d91ca20) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:fc93b239904677e598a3155695747f4c4b71c9ec7a9471a2d6748c41c0e757fd","files":2187}
+EXIT 0
+$ git diff --name-only bbd6294 b7883ba   (only META_EXCLUDES paths)
+docs/delivery/assignments/DG5/round-3/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-3/domain-reviewer.md
+docs/delivery/assignments/DG5/round-3/qa-verifier.md
+docs/delivery/candidates/DG5/fc93b239904677e5.manifest.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+$ git merge-base --is-ancestor d3528fc bbd6294
+EXIT 0

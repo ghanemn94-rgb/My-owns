@@ -36,11 +36,9 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Repaired in wave X, to be verified in round 3:** F-DG5-120, 122, 142 and 143 (D-172, D-173).
   - **Re-frozen for round 3:** candidate `sha256:fc93b239…` (2187 files, source `bbd6294`). The manifest is `docs/delivery/candidates/DG5/fc93b239904677e5.manifest.json`.
 - **Next action:**
-  1. The three round-3 reviews run in the main checkout, with a monitor armed and no worktree or install activity (D-082):
-     - `T-DG5-REV-DOM-R3`;
-     - `T-DG5-REV-SEC-R3`;
-     - `T-DG5-REV-QA-R3`.
-     The assignments are in `docs/delivery/assignments/DG5/round-3/`.
+  1. The round-3 reviews run on candidate `fc93b239` in the main checkout, with a monitor armed and no worktree or install activity (D-082). The assignments are in `docs/delivery/assignments/DG5/round-3/`.
+     - **Domain: done.** `T-DG5-REV-DOM-R3` passed. F-DG5-120 and F-DG5-122 are verified closed, and it raised F-DG5-123 (Low, REQ-S18-002: the demo's launched INI-01..03 carry no key deliverables). Commits `5957c1c` and `493d71b`.
+     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R3B` and `T-DG5-REV-QA-R3B`,** from `round-3/{role}-rerun.md`. A container restart at about 23:31Z stopped the first runs about two and a half hours in, before they wrote a record. Their material is kept for provenance only in `test-evidence/DG5/{code-security,qa}-r3-orphaned/`, without the QA run's full-suite screenshots (D-162).
   2. Import the findings and verifications (`--round 3`).
   3. Before the release-auditor runs, get the user's decision on the D-140 auditor-sidecar ordering fix (options 1–3; 1 is recommended).
 ## DG2 scope (P2 — diagnose, define and design)
