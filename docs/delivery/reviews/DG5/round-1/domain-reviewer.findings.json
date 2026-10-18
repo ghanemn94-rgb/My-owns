@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-120",
+      "stage_id": "DG5",
+      "requirement": "REQ-S18-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The seeded roaming demo transformation sits in the Transform phase with all six product gates G1-G6 never submitted or approved, contradicting the stage-gate logic the product itself enforces",
+      "reproduction": "On a demo-initialized stack (e2e/support/with-demo-stack.sh, candidate 8e7d23a3, source 601d7d2) sign in as roaming.user.tl and GET /api/v1/transformations/01995000-0000-7000-8000-000000000001 and /api/v1/transformations/01995000-0000-7000-8000-000000000001/gates (dumps api-demo/demo-transformation.json and api-demo/demo-gates.json). Open /transformations/01995000-0000-7000-8000-000000000001 and /gates/G1 in en and ar (shots-demo/{en,ar}/d01-workspace.png, d05-gates.png, d06-gate-G1.png). Seed source: packages/db/src/demo/data/roaming.ts line ~229 (current_phase: \"transform\") and lines ~361-374 (gate_instance rows inserted with no status, submission or decision).",
+      "expected": "M0348 asks for coherent linked records that exercise every phase and gate, and the playbook runs End-to-End phases sequentially through gates that are decisions on evidence (B0009 'Run Phases 1-6 sequentially'; B0023 gate decision questions and evidence). The product enforces this itself: apps/api/src/modules/transformations/phase.ts says an approved product gate is 'the ONLY path that moves a transformation's current phase', and gates.ts refuses G(n) until G(n-1) is approved. An end_to_end demo transformation in Transform should therefore carry approved (synthetic, 'approves nothing real') G1-G4 decisions with their evidence snapshots, or be seeded in the phase its gate history supports.",
+      "actual": "The demo transformation is mode end_to_end, currentPhase 'transform', and every gate G1-G6 is status draft with latestSubmissionNo 0, approvedAt null and inheritedApproval null. The workspace shows 'Phase 5 Transform (current phase)' and 'Gate readiness: G5 Not submitted', with validated benefit value (SAR 80,000 profit and cash; SAR 222,750 revenue uplift), while the G1 page shows 'not submitted' with 2 of 6 mandatory outputs complete. G5 cannot be submitted (gate.out_of_sequence: G4 must be approved first), and approving G1 now would not move the phase (advancePhaseOnGateApproval returns null when the transformation is past the gate). The demo therefore illustrates phase progress and validated value without any gate approval, which is the opposite of the operating logic it is meant to teach. ADR-0050 §5's coverage condition 'G1-G6: a gate instance each' is met literally, so REQ-S18-002's acceptance text passes; the defect is the demo's coherence (M0348), not the count. Synthetic data only; no real approval is involved.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/api-demo/demo-transformation.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/api-demo/demo-gates.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/en/d01-workspace.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/ar/d01-workspace.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/en/d06-gate-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/shots-demo/ar/d06-gate-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/text-demo/en/d01-workspace.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/probe-demo.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-17T23:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Medium, not a mandatory violation: the acceptance text of REQ-S18-002 passes literally, and the data is synthetic, but the seeded demo contradicts the gate-controlled phase logic (B0009, B0023, M0348) that the product enforces for native records."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-121",
+      "stage_id": "DG5",
+      "requirement": "REQ-DLV-037",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The serial p2-journeys 'Define -> G2' journey needs 25-37 s against its 30 s limit, so it times out under review load and hides the AUD journey after it",
+      "reproduction": "In a disposable clone of the candidate, LANG=C.UTF-8, run apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p2-journeys.spec.ts --workers=1 while the other DG5 reviews run (1-minute load 10-17, sampled every 30 s). Runs 1-3 use the configured 30 s limit; run 4 adds --timeout=60000 only to measure the real durations.",
+      "expected": "A regression journey that the gate evidence relies on keeps enough headroom under its limit to pass under the review machine's normal concurrent load, or carries an explicit test.setTimeout like the P5 journeys do, so that a load spike does not hide the following serial journeys (the AUD journey that D-169 discusses).",
+      "actual": "Runs 1-3: 16 passed, 2 failed, 6 not run, exit 1 each. 'Define -> G2 ... G2 is decided' exceeded the 30 s test timeout in en and ar every time (31.5-32.8 s), inside page navigation or a wait of submitAndApproveGate; the page snapshot is a normally rendered shell. Serial mode then skipped the later journeys, including 'read-only auditor (AUD)'. Run 4 with a 60 s limit: 24/24 passed, exit 0; the G2 journey took 37.2 s in en and in ar, and AUD 26.7 s (en) and 24.5 s (ar), at load 9.4-12.3. The orchestrator's unloaded D-169 runs show the G2 journey at 25.4-27.9 s. So the product behaves correctly and the journeys are functionally green; the journey simply has 2-5 s of headroom unloaded and none under review load. This is a test-reliability weakness, not a product defect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8-run2.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8-run3.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-cutf8-run4-timeout60s.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/e2e-p2-journeys-run4-load.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/p2-journeys-run2-failure/error-context-en.md",
+        "docs/delivery/test-evidence/DG5/orchestrator-D-169/verify-final-8c68a47/e2e-cutf8-rerun-p2-journeys.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T00:25:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Low, not mandatory: the timeouts happen only under the concurrent-review load (above the 8 load envelope of environment.md), and the product renders correctly; the finding records the thin headroom so that the AUD journey D-169 relies on is not hidden."
+        }
+      ]
+    }
+  ]
+}
