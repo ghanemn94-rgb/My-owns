@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-140",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-093",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Studio 'T06 scoring defaults' screen (/admin/studio/scoring-defaults) does not reflow: page-level horizontal scroll at 390 px (en, 49 px) and with 200 % text (en 130 px, ar 16 px), because the rubric <fieldset>s keep the browser default min-inline-size: min-content",
+      "reproduction": "Disposable clone of the frozen candidate (601d7d2, sha256:8e7d23a3...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26620 E2E_API_PORT=26621 e2e/support/with-demo-stack.sh npx playwright test e2e/zz-qa-dg5r1c-demo-probes.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers). The P-REFLOW test signs in as roaming.user.to, opens /admin/studio/scoring-defaults at a 390x844 viewport and measures document.documentElement.scrollWidth - window.innerWidth, then at 1280x900 with document.documentElement.style.fontSize = '200%' (the method of the DG4 specs p4-traceability/p4-dashboards). Result in both locale settings (locale unset and LANG=C.UTF-8): en overflow390 = 49, overflow200pct = 130; ar overflow200pct = 16. The innermost elements outside the viewport are the rubric tables' 'Descriptor (Arabic)' th/td cells (en: left 269, right 424 at 390 px) and, in ar at 200 %, the six fieldset.fieldset[data-rubric=...] (left -16, width 701). The full-page screenshot at 390 px is 439 px wide. Cause in source: ScoringDefaultsPage.tsx:272-275 wraps each rubric's .table-wrap (overflow-x: auto) in a <fieldset className=\"fieldset\">, and apps/web/src/styles/app.css has no .fieldset rule, so the fieldset keeps the UA default min-inline-size: min-content and grows to the table's width instead of letting .table-wrap scroll. The other 30 P5 screens of the same probe have 0 px overflow.",
+      "expected": "Like every other P5 screen probed (30 of 31) and the DG4 screens (p4-* specs '390 px wide and 200 % text: no page-level horizontal scroll'), the scoring-defaults screen reflows at 390 px and with 200 % text: no page-level horizontal scroll; wide rubric tables scroll inside their own .table-wrap (for example with min-width: 0 / min-inline-size: 0 on the fieldset).",
+      "actual": "Page-level horizontal scroll of 49 px at 390 px (en) and of 130 px (en) / 16 px (ar) with 200 % text, reproduced in both locale settings; the Studio screen where an administrator edits REQ-PB-093's default weights and rubric is not usable without horizontal page scrolling on a phone-width viewport (WCAG 2.1 1.4.10 Reflow; master prompt A20 'mobile review work').",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/r1c-390-_admin_studio_scoring_defaults.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T04:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 review round 1 (T-DG5-REV-QA-R1C) on candidate sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b from the assignment's required '390 px and 200 % text on the P5 screens' check; reproduced in both locale settings. No product P5 spec checks this screen at 390 px or 200 % text."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-141",
+      "stage_id": "DG5",
+      "requirement": "REQ-S02-001",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Source coverage screen (/admin/source-coverage) has a serious axe violation at 390 px in en and ar: 'scrollable-region-focusable' on the coverage table's .table-wrap, which is not keyboard-focusable (no tabIndex/role/label, unlike 51 other table wraps)",
+      "reproduction": "Same probe and stack as F-DG5-140 (docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts, P-REFLOW, e2e/support/with-demo-stack.sh). As roaming.user.to at a 390x844 viewport, open /admin/source-coverage and run the product's own expectAccessible (apps/web/e2e/support/ui.ts: AxeBuilder with wcag2a/2aa/21a/21aa; serious or critical violations fail). Result in chromium-en and chromium-ar, in both locale settings: [\"scrollable-region-focusable: .table-wrap\"] (impact serious). Page-level overflow is 0 px: the coverage table scrolls inside its wrapper, but a keyboard user cannot reach the wrapper to scroll it. Cause in source: apps/web/src/pages/source-coverage/SourceCoveragePage.tsx:127 renders <div className=\"table-wrap\"> with no tabIndex, role or accessible name, while 51 of the 90 .table-wrap elements in apps/web/src/pages use the pattern tabIndex={0} role=\"region\" aria-label=... (e.g. ChangeRequestPage.tsx:276, ClosurePage.tsx:274). The product spec p5-studio.spec.ts axe-checks this screen only at the desktop viewport, where the table fits, so the violation is not caught there.",
+      "expected": "axe reports no serious or critical violation on the P5 screens at every supported width (assignment: 'axe must report no serious or critical issues'; master prompt §15 'Support keyboard navigation'): the scrollable coverage table region is keyboard-focusable and named, as on the DG4 screens.",
+      "actual": "Serious axe violation scrollable-region-focusable on .table-wrap at 390 px, en and ar, reproduced in both locale settings; at narrow widths the coverage table columns beyond the viewport cannot be scrolled into view with the keyboard.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/en/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-cutf8/ar/reflow-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-demo-unset/en/r1c-390-_admin_source_coverage.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5r1c-demo-probes.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T04:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 review round 1 (T-DG5-REV-QA-R1C) on candidate sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b from the axe-at-390-px part of the P5 reflow probe; reproduced in both languages and both locale settings."
+        }
+      ]
+    }
+  ]
+}
