@@ -11,10 +11,11 @@
 //      its author), a confirmed root-cause finding and a material value pool; G2 the B0037 thesis, the good outcome
 //      test inputs (roaming.ts), the T02 trajectories approved by the Sponsor, a strategic guardrail; G3 a capability
 //      gap and a future-state journey; G4 the Finance validation of the business case's baseline (demo Finance user);
-//   2. where the dataset does not carry the record a G4 criterion needs (the illustrative initiatives were not taken
-//      through portfolio ranking and selection), a gate EXCEPTION exactly as the product allows one (ADR-0035 §4):
-//      requested by the Transformation Lead, accepted by the gate's approver, with reason, scope, compensating action,
-//      its owner and an expiry, so the gate page reads the criterion as covered and the snapshot records the exception;
+//   2. G4's approved portfolio (T-DG5-BE-X2, D-172; F-DG5-120, F-DG5-122): after G3 is approved and before G4 is
+//      submitted, roaming-portfolio.ts takes INI-01..INI-03 through submission, ranking snapshot, selection, Finance
+//      validation of their initiative cases, funding, approved milestones and committed demand within capacity, as the
+//      product records them. Every G4 criterion is complete on those records; NO gate exception is seeded (the two
+//      exceptions of T-DG5-BE-V3 are removed). After G4 is approved, the funded initiatives are launched;
 //   3. per gate: the submission (pending, by the Transformation Lead, the demo user who holds gate.submit; routed to the
 //      gate's approver, the catalogue default role SP with no named user) with its frozen snapshot and criterion rows,
 //      the gate instance moved draft -> submitted; then the decision by the routed approver, the demo Sponsor (never
@@ -39,6 +40,7 @@ import { DEMO_CASE_ID } from "./business-cases.ts";
 import { SYNTHETIC_APPROVAL_NOTE } from "./finance.ts";
 import { DEMO_ANCHORS, DEMO_KPIS, scoped, seedUpdate, stamps, when } from "./kpis.ts";
 import { RT_BLOCK, rtId } from "./roaming-ids.ts";
+import { launchApprovedPortfolio, seedApprovedPortfolio } from "./roaming-portfolio.ts";
 
 const T = DEMO_ANCHORS.transformationId;
 const U = DEMO_ANCHORS.users;
@@ -108,15 +110,17 @@ export const DEMO_GATE_HISTORY: readonly DemoGateHistory[] = [
     nextPhase: "transform",
     submittedAt: "2026-06-08T07:00:00Z",
     decidedAt: "2026-06-10T07:00:00Z",
-    submissionNote: "Mobilization: business case, Finance validation, roadmap, owners (synthetic demonstration).",
+    submissionNote:
+      "Mobilization: initiative cards, ranking and selection, business cases, Finance validation, funding, roadmap, " +
+      "owners, capacity (synthetic demonstration).",
     rationale:
-      "The portfolio is executable and value-backed: Finance validated the business case baseline and the three " +
-      "formulas; initiative selection and ranking are covered by the accepted exceptions and their compensating " +
-      "action. Proceed to Transform.",
+      "The portfolio is executable and value-backed: INI-01, INI-02 and INI-03 are ranked, selected and funded, each " +
+      "with a Finance-validated initiative business case, owners, approved milestones and committed capacity within " +
+      "the plan; Finance validated the transformation case baseline and the three formulas. Proceed to Transform.",
   },
 ];
 
-/** Evidence and exception ids (exported for the dataset tests). */
+/** Evidence and gate-history ids (exported for the dataset tests). */
 export const DEMO_GATE_IDS = {
   baseline: rtId(RT_BLOCK.baseline, 1),
   evidence: rtId(RT_BLOCK.evidence, 1),
@@ -131,45 +135,6 @@ export const DEMO_GATE_IDS = {
   /** The canonical decision row (kind gate, GD-nn) behind each gate decision; after D-01 and DEC-01. */
   decision: (no: number) => rtId(RT_BLOCK.decision, 2 + no),
 } as const;
-
-/** The G4 criteria the dataset covers by an accepted exception (ADR-0035 §4), with the missing item the gate reads. */
-export const DEMO_GATE_EXCEPTIONS: readonly {
-  readonly no: number;
-  readonly gateCode: "G4";
-  readonly criterionKey: string;
-  readonly missing: { readonly code: string; readonly message: string; readonly pointer: string };
-  readonly reason: string;
-  readonly scope: string;
-}[] = [
-  {
-    no: 1,
-    gateCode: "G4",
-    criterionKey: "g4.initiative_cards",
-    missing: { code: "g4.portfolio_empty", message: "Initiative cards", pointer: "/initiatives" },
-    reason:
-      `${LABEL} The three illustrative initiative cards INI-01 to INI-03 (B0147) carry their gap links, KPI ` +
-      "contributions, owners, wave and dates, but this demonstration dataset does not take them through portfolio " +
-      "submission and selection, so the approved portfolio the criterion reads is empty.",
-    scope: "G4 criterion 'Initiative cards' only, for the illustrative initiatives INI-01, INI-02 and INI-03.",
-  },
-  {
-    no: 2,
-    gateCode: "G4",
-    criterionKey: "g4.prioritization",
-    missing: { code: "g4.prioritization_missing", message: "Prioritization", pointer: "/prioritization" },
-    reason:
-      `${LABEL} The three illustrative initiatives are scored on all five criteria of the active source-default ` +
-      "weight set (B0076), but no proposed ranking snapshot is recorded in this demonstration dataset.",
-    scope: "G4 criterion 'Prioritization' only, for the illustrative initiatives INI-01, INI-02 and INI-03.",
-  },
-];
-const EXCEPTION_REQUESTED_AT = "2026-06-05T10:00:00Z";
-const EXCEPTION_DECIDED_AT = "2026-06-06T07:00:00Z";
-/** Two years after the synthetic clock: the exceptions cover their criterion until then (a date comparison). */
-const EXCEPTION_EXPIRES_DAYS = 730;
-const COMPENSATING_ACTION =
-  "The Transformation Lead takes INI-01 to INI-03 through portfolio submission, ranking and selection in the " +
-  "product before any of them is proposed for scale at G5 (synthetic demonstration).";
 
 // ------------------------------------------------------------------------------------------------ helpers
 
@@ -438,46 +403,6 @@ async function seedGateEvidence(ctx: DemoSeedContext): Promise<void> {
   );
 }
 
-/** The G4 exceptions (step 2): requested by the TL, accepted by the gate's approver (the demo Sponsor). */
-async function seedGateExceptions(ctx: DemoSeedContext): Promise<void> {
-  const requested = when(ctx, EXCEPTION_REQUESTED_AT);
-  const decided = when(ctx, EXCEPTION_DECIDED_AT);
-  for (const e of DEMO_GATE_EXCEPTIONS) {
-    const id = rtId(RT_BLOCK.gateException, e.no);
-    await ctx.insert("gate_exception", `roaming.gate_exception.${e.criterionKey}`, {
-      id,
-      ...scoped(),
-      gate_instance_id: DEMO_GATE_IDS.gateInstance(4),
-      gate_code: e.gateCode,
-      criterion_key: e.criterionKey,
-      reason: e.reason,
-      scope: e.scope,
-      compensating_action: COMPENSATING_ACTION,
-      compensating_owner_user_id: U.tl,
-      expires_on: ctx.date(EXCEPTION_EXPIRES_DAYS),
-      status: "pending",
-      requested_by: U.tl,
-      requested_at: requested,
-      ...stamps(requested, U.tl),
-    });
-    await change(
-      ctx,
-      "gate_exception",
-      id,
-      "gate_exception.decide",
-      {
-        status: "accepted",
-        decided_by: U.sp,
-        decided_at: decided,
-        decision_note: `${LABEL} Accepted for the demonstration with the compensating action.`,
-      },
-      decided,
-      U.sp,
-      { changes: { status: { from: "pending", to: "accepted" } }, reason: LABEL },
-    );
-  }
-}
-
 // ------------------------------------------------------------------------------------------------ submit and decide
 
 interface CriterionDef {
@@ -528,9 +453,6 @@ async function seedGateApproval(ctx: DemoSeedContext, g: DemoGateHistory): Promi
         JOIN gate_definition d ON d.id = c.gate_definition_id
        WHERE d.code = ${g.gateCode} ORDER BY c.ordinal`.execute(ctx.tx)
   ).rows;
-  const excepted = new Map(
-    DEMO_GATE_EXCEPTIONS.filter((e) => e.gateCode === g.gateCode).map((e) => [e.criterionKey, e]),
-  );
   const approver = { roleCode: "SP", userId: null, basis: "default_role" } as const;
   // The verified evidence the G1 criteria read (gates.ts loads it for every gate: T01 rows and baselines).
   const evidence = (
@@ -542,8 +464,9 @@ async function seedGateApproval(ctx: DemoSeedContext, g: DemoGateHistory): Promi
     record: `${l.record_type}:${l.record_id}`,
     verified: true,
   }));
-  // G4 only (g4.ts buildG4Snapshot): the in-scope initiatives (none were selected), the ranking (none), the active
-  // weight set, the cases with their baseline validation, the formula versions with their validation.
+  // G4 only (g4.ts buildG4Snapshot): the in-scope initiatives (the approved portfolio INI-01..03), the current ranking
+  // snapshot, the active weight set, the cases with their baseline validation, the formula versions with their
+  // validation, the funding decisions and the committed demand.
   const g4 = g.gateCode === "G4" ? await g4SnapshotOf(ctx) : null;
   const snapshot = {
     schema: "mth.gate-submission/1",
@@ -559,29 +482,12 @@ async function seedGateApproval(ctx: DemoSeedContext, g: DemoGateHistory): Promi
     charter: { id: charter.id, versionNo: charter.version_no },
     northStar: { id: northStar.id, version: northStar.version },
     approver,
-    criteria: criteria.map((c) => {
-      const e = excepted.get(c.key);
-      return {
-        key: c.key,
-        completeness: e === undefined ? "complete" : "incomplete",
-        missing: e === undefined ? [] : [e.missing],
-        unverifiedEvidenceIds: [],
-        ...(e === undefined
-          ? {}
-          : {
-              exception: {
-                id: rtId(RT_BLOCK.gateException, e.no),
-                reason: e.reason,
-                scope: e.scope,
-                compensatingAction: COMPENSATING_ACTION,
-                compensatingOwnerUserId: U.tl,
-                expiresOn: ctx.date(EXCEPTION_EXPIRES_DAYS),
-                decidedBy: U.sp,
-                decidedAt: when(ctx, EXCEPTION_DECIDED_AT).toISOString(),
-              },
-            }),
-      };
-    }),
+    criteria: criteria.map((c) => ({
+      key: c.key,
+      completeness: "complete",
+      missing: [],
+      unverifiedEvidenceIds: [],
+    })),
     evidence,
     ...(g4 !== null ? { g4 } : {}),
     note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
@@ -609,7 +515,6 @@ async function seedGateApproval(ctx: DemoSeedContext, g: DemoGateHistory): Promi
     ...stamps(submitted, tl),
   });
   for (const c of criteria) {
-    const e = excepted.get(c.key);
     await ctx.insert(
       "gate_submission_criterion",
       `roaming.gate_submission.${g.gateCode.toLowerCase()}.${c.key.slice(3)}`,
@@ -620,10 +525,10 @@ async function seedGateApproval(ctx: DemoSeedContext, g: DemoGateHistory): Promi
         criterion_key: c.key,
         ordinal: c.ordinal,
         mandatory: c.mandatory,
-        completeness: e === undefined ? "complete" : "incomplete",
-        detail: JSON.stringify({ missing: e === undefined ? [] : [e.missing], unverifiedEvidenceIds: [] }),
+        completeness: "complete",
+        detail: JSON.stringify({ missing: [], unverifiedEvidenceIds: [] }),
         evaluated_at: submitted,
-        gate_exception_id: e === undefined ? null : rtId(RT_BLOCK.gateException, e.no),
+        gate_exception_id: null,
       },
     );
   }
@@ -712,20 +617,43 @@ async function seedGateApproval(ctx: DemoSeedContext, g: DemoGateHistory): Promi
   });
 }
 
-/** The G4 member of the snapshot, as g4.ts buildG4Snapshot builds it from the portfolio and kpi facts. */
+/**
+ * The G4 member of the snapshot, as g4.ts buildG4Snapshot builds it from the portfolio and kpi facts (gate-facts.ts,
+ * p3-gate-facts.ts): the in-scope initiatives (status selected, funded or launched; code order), the current ranking
+ * snapshot, the active weight set, the transformation case then the in-scope initiative cases (code order), the current
+ * formula version of every active financial benefit line of those cases (line id order), the counted funding decision
+ * of each initiative and its committed demand (id order). Read from the seeded records, never written by hand.
+ */
 async function g4SnapshotOf(ctx: DemoSeedContext): Promise<Record<string, unknown>> {
+  const initiatives = (
+    await sql<{ id: string; code: string; version: number; status: string; waveId: string | null }>`
+      SELECT id::text AS id, code, version, status, wave_id::text AS "waveId" FROM initiative
+       WHERE transformation_id = ${T}::uuid AND status IN ('selected', 'funded', 'launched') ORDER BY code`.execute(
+      ctx.tx,
+    )
+  ).rows;
+  const ranking = (
+    await sql<{ id: string }>`
+      SELECT id::text AS id FROM ranking_snapshot WHERE transformation_id = ${T}::uuid AND status = 'current'`.execute(
+      ctx.tx,
+    )
+  ).rows[0];
   const weightSet = (
     await sql<{ id: string; versionNo: number }>`
       SELECT id::text AS id, version_no AS "versionNo" FROM scoring_weight_set
        WHERE transformation_id = ${T}::uuid AND status = 'active'`.execute(ctx.tx)
   ).rows[0];
+  const ids = initiatives.map((i) => i.id);
   const cases = (
-    await sql<{ id: string; code: string; version: number }>`
-      SELECT id::text AS id, code, version FROM business_case
-       WHERE transformation_id = ${T}::uuid AND level = 'transformation' AND status <> 'archived' ORDER BY id`.execute(
-      ctx.tx,
-    )
-  ).rows;
+    await sql<{ id: string; code: string; version: number; level: string; initiative_id: string | null }>`
+      SELECT id::text AS id, code, version, level, initiative_id::text AS initiative_id FROM business_case
+       WHERE transformation_id = ${T}::uuid AND status <> 'archived' ORDER BY code`.execute(ctx.tx)
+  ).rows.filter((c) => c.level === "transformation" || (c.initiative_id !== null && ids.includes(c.initiative_id)));
+  const ordered = [
+    ...cases.filter((c) => c.level === "transformation"),
+    ...cases.filter((c) => c.level !== "transformation"),
+  ];
+  const caseIds = ordered.map((c) => c.id);
   const formulaVersions = (
     await sql<{ lineId: string; formulaId: string; versionId: string; versionNo: number; validation: string }>`
       SELECT l.id::text AS "lineId", f.id::text AS "formulaId", v.id::text AS "versionId", v.version_no AS "versionNo",
@@ -733,16 +661,50 @@ async function g4SnapshotOf(ctx: DemoSeedContext): Promise<Record<string, unknow
         FROM business_case_line l
         JOIN benefit_formula f ON f.id = l.benefit_formula_id
         JOIN benefit_formula_version v ON v.formula_id = f.id AND v.version_no = f.current_version_no
-       WHERE l.business_case_id = ${DEMO_CASE_ID}::uuid AND l.status = 'active' ORDER BY l.id`.execute(ctx.tx)
+       WHERE l.business_case_id = ANY(${caseIds}::uuid[]) AND l.status = 'active' AND l.line_kind = 'benefit'
+         AND l.benefit_class <> 'strategic_non_financial'
+       ORDER BY l.id`.execute(ctx.tx)
   ).rows;
+  const funding: string[] = [];
+  const demand: string[] = [];
+  for (const i of initiatives) {
+    const f = (
+      await sql<{ id: string }>`
+        SELECT id::text AS id FROM funding_decision WHERE initiative_id = ${i.id}::uuid
+           AND decided_at > COALESCE((SELECT max(s.decided_at) FROM portfolio_selection s
+                                       WHERE s.initiative_id = ${i.id}::uuid AND s.action = 'selected'), '-infinity')
+         ORDER BY decided_at DESC, id DESC LIMIT 1`.execute(ctx.tx)
+    ).rows[0];
+    if (f !== undefined) funding.push(f.id);
+    demand.push(
+      ...(
+        await sql<{ id: string }>`
+          SELECT id::text AS id FROM resource_demand WHERE initiative_id = ${i.id}::uuid AND status = 'committed'
+           ORDER BY id`.execute(ctx.tx)
+      ).rows.map((d) => d.id),
+    );
+  }
+  if (initiatives.length !== 3 || ranking === undefined || funding.length !== 3)
+    throw new Error("demo seed: G4 must be submitted on the approved portfolio INI-01..INI-03");
   return {
-    initiatives: [],
-    rankingSnapshotId: null,
+    initiatives: initiatives.map((i) => ({
+      id: i.id,
+      code: i.code,
+      version: i.version,
+      status: i.status,
+      waveId: i.waveId,
+    })),
+    rankingSnapshotId: ranking.id,
     weightSet: weightSet ?? null,
-    businessCases: cases.map((c) => ({ ...c, baselineValidation: "validated" })),
+    businessCases: ordered.map((c) => ({
+      id: c.id,
+      code: c.code,
+      version: c.version,
+      baselineValidation: "validated",
+    })),
     formulaVersions,
-    fundingDecisionIds: [],
-    committedDemandIds: [],
+    fundingDecisionIds: funding,
+    committedDemandIds: demand,
   };
 }
 
@@ -764,7 +726,11 @@ export const ROAMING_GATES_MODULE: DemoDatasetModule = {
   order: 550,
   async seed(ctx) {
     await seedGateEvidence(ctx);
-    await seedGateExceptions(ctx);
-    for (const g of DEMO_GATE_HISTORY) await seedGateApproval(ctx, g);
+    for (const g of DEMO_GATE_HISTORY) {
+      // G4 closes Mobilize: the approved portfolio is recorded before it is submitted, and launched after it is approved.
+      if (g.gateCode === "G4") await seedApprovedPortfolio(ctx);
+      await seedGateApproval(ctx, g);
+    }
+    await launchApprovedPortfolio(ctx);
   },
 };

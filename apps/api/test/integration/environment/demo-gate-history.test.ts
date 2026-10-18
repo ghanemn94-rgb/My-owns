@@ -8,7 +8,8 @@
 //   - G1-G4 are approved, each with one decided submission by the demo user who submits gates (TL) and an approved
 //     decision by the gate's routed approver (the demo Sponsor, SP), never the submitter; G1 carries its three B0032
 //     agreements; each decision is dated, in phase order, before the Transform-phase records that depend on it;
-//   - every mandatory criterion of G1-G4 is complete today, or covered today by an accepted gate exception;
+//   - every mandatory criterion of G1-G4 is complete today on its own records, with no gate exception (T-DG5-BE-X2,
+//     D-172: G4 rests on a real approved portfolio of INI-01..03, F-DG5-122);
 //   - every seeded G-decision carries the label 'Synthetic demonstration - approves nothing real' (en and ar);
 //   - G5 and G6 stay not submitted.
 // Everything is SYNTHETIC demo data in a demo-initialized database: a seeded decision approves nothing real (M0412),
@@ -18,6 +19,8 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { DEMO_ANCHORS } from "../../../../../packages/db/src/demo/data/kpis.ts";
 import { DEMO_USERS } from "../../../../../packages/db/src/demo/data/roaming.ts";
 import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
+import { weightedScore } from "@mth/shared/calc";
+import { loadActiveWeightSet, loadScoreMaps } from "../../../src/modules/portfolio/scores.ts";
 import { call, signIn, startApi, type Session, type TestApi } from "../../support/harness.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,15 +90,14 @@ describe("F-DG5-120: the seeded roaming transformation carries the gate history 
           c.completeness === "complete" || covered.has(c.key),
           `${code} ${c.key}: ${c.completeness} ${JSON.stringify(c.missing)}`,
         ).toBe(true);
-      // Only the two G4 criteria the dataset cannot evidence (no portfolio selection, no ranking snapshot) are excepted;
-      // every G1-G3 criterion and every other G4 criterion is complete on its own evidence.
+      // T-DG5-BE-X2 (D-172; F-DG5-122): no criterion of G1-G4 is incomplete and none rests on an exception: G4 is
+      // complete on the seeded approved portfolio (INI-01..03), not on accepted exceptions.
       expect(
         (v.criteria as Body[]).filter((c) => c.completeness !== "complete").map((c) => c.key),
         `${code} incomplete criteria`,
-      ).toEqual(code === "G4" ? ["g4.initiative_cards", "g4.prioritization"] : []);
-      expect([...covered].sort(), `${code} covering exceptions`).toEqual(
-        code === "G4" ? ["g4.initiative_cards", "g4.prioritization"] : [],
-      );
+      ).toEqual([]);
+      expect([...covered].sort(), `${code} covering exceptions`).toEqual([]);
+      expect(exceptions, `${code} has no gate exception at all`).toEqual([]);
       for (const e of exceptions.filter((x) => x.status === "accepted")) {
         expect(e.decidedBy, `${code} exception ${e.criterionKey} decided by the gate's approver`).toBe(sp.id);
         expect(e.requestedBy).toBe(tl.id);
@@ -162,6 +164,189 @@ describe("F-DG5-120: the seeded roaming transformation carries the gate history 
       ]);
     // The reviewer's final assertion, reversed by the fix: not every gate is a never-submitted draft any more.
     expect(gates.map((v) => v.gate.status)).toEqual(["approved", "approved", "approved", "approved", "draft", "draft"]);
+  });
+
+  // T-DG5-BE-X2 (D-172; F-DG5-120 remaining part, F-DG5-122): the domain reviewer's round-2 reproduction, as a product
+  // test. Signed in as demo role users, through the product's own read operations: the approved G4 rests on a REAL
+  // approved portfolio of INI-01..03, with every per-initiative fact the G4 evaluator reads present in the records, and
+  // no exception. The test does not depend on the evaluator's empty-portfolio rule (T-DG5-BE-X1): it asserts the
+  // portfolio and its facts directly.
+  it("G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception", async () => {
+    const tl = user("TL");
+    const sp = user("SP");
+    const fin = user("FIN");
+    const bo = user("BO");
+    const all = (await get("TL", `/api/v1/initiatives?transformationId=${T}&limit=100`)).items as Body[];
+    const byCode = new Map(all.map((i) => [i.code as string, i]));
+    const codes = ["INI-01", "INI-02", "INI-03"];
+    const ini = codes.map((c) => byCode.get(c)!);
+
+    // The live G4 view: approved, 8 of 8 mandatory criteria complete, nothing missing, no exception.
+    const g4 = await get("TL", `/api/v1/transformations/${T}/gates/G4`);
+    expect(g4.gate.status).toBe("approved");
+    const mandatory = (g4.criteria as Body[]).filter((c) => c.mandatory);
+    expect(mandatory.map((c) => c.key).sort()).toEqual([
+      "g4.business_cases",
+      "g4.capacity",
+      "g4.finance_validation",
+      "g4.funding",
+      "g4.initiative_cards",
+      "g4.owners",
+      "g4.prioritization",
+      "g4.roadmap",
+    ]);
+    for (const c of mandatory) expect([c.key, c.completeness, c.missing], c.key).toEqual([c.key, "complete", []]);
+    const exceptions = (await get("TL", `/api/v1/transformations/${T}/gate-exceptions?limit=100`)).items as Body[];
+    expect(exceptions, "no gate exception anywhere in the demo").toEqual([]);
+
+    // The frozen G4 submission: every criterion complete, no exception, and the snapshot names the approved portfolio.
+    const one = await get("SP", `/api/v1/transformations/${T}/gates/G4/submissions/1`);
+    for (const c of one.criteria as Body[])
+      expect([c.criterionKey, c.completeness, c.gateExceptionId ?? null], c.criterionKey).toEqual([
+        c.criterionKey,
+        "complete",
+        null,
+      ]);
+    const snap = one.submission.snapshot.g4;
+    const decidedAt = one.decision.decidedAt as string;
+    const submittedAt = one.submission.submittedAt as string;
+    // The reviewer's final assertion, reversed by the fix: the frozen approved portfolio is not empty.
+    expect(snap.initiatives.map((i: Body) => i.code)).toEqual(codes);
+    expect(snap.rankingSnapshotId).not.toBeNull();
+    expect(snap.fundingDecisionIds).toHaveLength(3);
+    expect(snap.committedDemandIds.length).toBeGreaterThanOrEqual(3);
+    expect(snap.businessCases).toHaveLength(4);
+    for (const c of snap.businessCases as Body[]) expect(c.baselineValidation, c.code).toBe("validated");
+    for (const f of snap.formulaVersions as Body[]) expect(f.validation, f.lineId).toBe("validated");
+
+    // The approved portfolio: INI-01..03 selected by the demo Sponsor from the current ranking, then funded.
+    const rankings = (await get("TL", `/api/v1/transformations/${T}/prioritization/rankings`)).items as Body[];
+    const current = rankings.filter((r) => r.status === "current");
+    expect(current).toHaveLength(1);
+    const ranking = await get("TL", `/api/v1/transformations/${T}/prioritization/rankings/${current[0].snapshotNo}`);
+    expect(ranking.id ?? ranking.snapshot?.id).toBe(snap.rankingSnapshotId);
+    const entries = (ranking.entries ?? ranking.snapshot?.entries) as Body[];
+    const active = await loadActiveWeightSet(api.db, T);
+    const maps = await loadScoreMaps(
+      api.db,
+      ini.map((i) => i.id),
+    );
+    for (const i of ini) {
+      const e = entries.find((x) => x.initiativeId === i.id);
+      expect([i.code, e?.completeness, e?.rank === null]).toEqual([i.code, "complete", false]);
+      // The stored weighted score is the scoring engine's result of the initiative's T06 scores under the active set.
+      const stored = await api.db
+        .selectFrom("ranking_entry")
+        .select("weighted_score")
+        .where("snapshot_id", "=", snap.rankingSnapshotId)
+        .where("initiative_id", "=", i.id)
+        .executeTakeFirstOrThrow();
+      expect(String(stored.weighted_score), i.code).toBe(weightedScore(maps.get(i.id)!, active!.weights).weightedScore);
+    }
+    const funding = (await get("FIN", `/api/v1/funding-decisions?transformationId=${T}&limit=100`)).items as Body[];
+    for (const i of ini) {
+      // Funded when G4 was submitted (the frozen snapshot), launched on its planned start after G4 was approved.
+      expect([i.code, i.status, i.fundingState]).toEqual([i.code, "launched", "funded"]);
+      expect(snap.initiatives.find((x: Body) => x.id === i.id).status, i.code).toBe("funded");
+      expect(decidedAt < i.launchedAt && i.launchedBy === tl.id, `${i.code} launched after G4`).toBe(true);
+      // Card, owners and roadmap facts the G4 evaluator reads.
+      expect(i.objective, i.code).toBeTruthy();
+      expect(i.scopeIn, i.code).toBeTruthy();
+      expect([i.executiveOwnerUserId, i.workstreamLeadUserId], i.code).not.toContain(null);
+      expect([i.waveId, i.plannedStart, i.plannedEnd], i.code).not.toContain(null);
+      const sel = (await get("TL", `/api/v1/initiatives/${i.id}/selections`)).items as Body[];
+      expect(sel[0], i.code).toMatchObject({ action: "selected", decidedBy: sp.id });
+      expect(sel[0].rankingSnapshotId, i.code).toBe(snap.rankingSnapshotId);
+      expect(sel[0].decidedAt < submittedAt, `${i.code} selected before G4`).toBe(true);
+      // A funding decision, recorded by the demo Finance user after the selection and before the G4 submission.
+      const f = funding.filter((x) => x.initiativeId === i.id);
+      expect(f, i.code).toHaveLength(1);
+      expect(f[0], i.code).toMatchObject({ outcome: "approved", decidedBy: fin.id, approverRoleCode: "FIN" });
+      expect(snap.fundingDecisionIds).toContain(f[0].id);
+      expect(sel[0].decidedAt < f[0].decidedAt && f[0].decidedAt < submittedAt, `${i.code} funded in order`).toBe(true);
+      // Approved roadmap milestones, inside the initiative's planned window, approved before the G4 submission.
+      const ms = (await get("TL", `/api/v1/initiatives/${i.id}/milestones`)).items as Body[];
+      const approved = ms.filter((m) => m.approvedDate !== null && m.status !== "cancelled");
+      expect(approved.length, `${i.code} approved milestones`).toBeGreaterThanOrEqual(1);
+      for (const m of approved) {
+        expect(m.approvedBy, m.title).toBe(tl.id);
+        expect(m.approvedAt < submittedAt, m.title).toBe(true);
+        expect(m.approvedDate >= i.plannedStart && m.approvedDate <= i.plannedEnd, m.title).toBe(true);
+      }
+      // No schedule conflict G4 would list on this initiative.
+      expect(
+        (i.flags as Body[]).filter((x) => x.code === "schedule.needed_by_conflict" || x.code === "schedule.unknown"),
+        `${i.code} schedule`,
+      ).toEqual([]);
+    }
+
+    // Committed resource demand for each initiative, by the capacity owner, within the active capacity: no conflict.
+    const demands = (await get("TL", `/api/v1/resource-demands?transformationId=${T}&limit=100`)).items as Body[];
+    for (const i of ini) {
+      const mine = demands.filter((d) => d.initiativeId === i.id && d.status === "committed");
+      expect(mine.length, `${i.code} committed demand`).toBeGreaterThanOrEqual(1);
+      for (const d of mine) {
+        expect(d.committedBy, i.code).toBe(bo.id);
+        expect(d.committedAt < submittedAt, i.code).toBe(true);
+        expect(snap.committedDemandIds).toContain(d.id);
+      }
+    }
+    const plan = await get("TL", `/api/v1/transformations/${T}/capacity-plan?from=2026-07-01&to=2026-12-31`);
+    expect((plan.roles as Body[]).length).toBeGreaterThanOrEqual(1);
+    const committedCells = (plan.cells as Body[]).filter(
+      (c) => c.committedDemandFte !== "0" && c.committedDemandFte !== "0.00",
+    );
+    expect(committedCells.length).toBeGreaterThanOrEqual(3);
+    for (const c of plan.cells as Body[])
+      expect([c.periodMonth, c.flag], c.resourceRoleId).toEqual([c.periodMonth, null]);
+
+    // An initiative business case per initiative, complete, its baseline validated by the demo Finance user (never its
+    // author), under the transformation case.
+    const cases = (await get("TL", `/api/v1/business-cases?transformationId=${T}&limit=100`)).items as Body[];
+    const top = cases.filter((c) => c.level === "transformation");
+    expect(top).toHaveLength(1);
+    for (const i of ini) {
+      const c = cases.filter((x) => x.level === "initiative" && x.initiativeId === i.id);
+      expect(c, i.code).toHaveLength(1);
+      expect(c[0], i.code).toMatchObject({
+        parentCaseId: top[0].id,
+        missingSections: [],
+        baselineValidation: "validated",
+        baselineValidatedBy: fin.id,
+      });
+      expect(c[0].createdBy, i.code).not.toBe(fin.id);
+      expect(c[0].baselineValidatedAt < submittedAt, i.code).toBe(true);
+    }
+
+    // Keep the totals (D-172): the lines are split across the initiative cases, and the transformation case's totals
+    // read them by reference, so every figure BC-01 showed when all seven lines were its own is unchanged.
+    const totals = await get("TL", `/api/v1/business-cases/${top[0].id}/totals`);
+    const sar = (list: Body[]) => {
+      const x = list.find((m) => m.currency === "SAR");
+      return [x?.amount === null || x === undefined ? null : Number(x.amount).toFixed(4), x?.lineCount ?? 0];
+    };
+    expect([...totals.includedCaseIds].sort()).toEqual(
+      [top[0].id, ...cases.filter((c) => c.level === "initiative").map((c) => c.id)].sort(),
+    );
+    expect({
+      revenue: sar(totals.grossBenefitsByValueBasis.revenue_uplift),
+      avoided: sar(totals.grossBenefitsByValueBasis.avoided_cost),
+      margin: sar(totals.grossBenefitsByValueBasis.margin_uplift),
+      cash: sar(totals.implementationCostCash),
+      nonCash: sar(totals.implementationCostNonCash),
+    }).toEqual({
+      revenue: ["7128000.0000", 1],
+      avoided: ["1584000.0000", 1],
+      margin: ["1920000.0000", 1],
+      cash: ["3660000.0000", 3],
+      nonCash: ["1170000.0000", 1],
+    });
+
+    // GD-04 is true to the records: the rationale names the selected, funded and resourced portfolio, labelled.
+    expect(one.decision.rationale).toContain("The portfolio is executable and value-backed");
+    expect(one.decision.rationale).not.toContain("exception");
+    expect(one.decision.rationale).toContain(LABEL_EN);
+    expect(submittedAt < decidedAt).toBe(true);
   });
 
   it("the phase history: four phase advances, one per approved gate, ending in Transform", async () => {

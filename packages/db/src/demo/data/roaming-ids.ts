@@ -69,5 +69,19 @@ export const RT_BLOCK = {
   gateSubmissionCriterion: 0x066,
   gateDecision: 0x067,
   gateDecisionAgreement: 0x068,
+  /** Unused since T-DG5-BE-X2 (D-172: the demo G4 has no exception); kept so no block number is reused. */
   gateException: 0x069,
+  /**
+   * T-DG5-BE-X2 (F-DG5-120, F-DG5-122, D-172): the approved portfolio behind G4 (roaming-portfolio.ts). The canonical
+   * decisions of the funding decisions use the `decision` block (numbers 7-9, after GD-01..GD-04).
+   */
+  scoreResult: 0x070,
+  rankingSnapshot: 0x071,
+  rankingEntry: 0x072,
+  portfolioSelection: 0x073,
+  fundingDecision: 0x074,
+  milestone: 0x075,
+  resourceRole: 0x076,
+  capacity: 0x077,
+  resourceDemand: 0x078,
 } as const;

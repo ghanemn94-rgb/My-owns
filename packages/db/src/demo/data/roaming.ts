@@ -730,6 +730,8 @@ async function seedElementsAndChains(ctx: DemoSeedContext): Promise<void> {
       workstream_lead_user_id: U.wl,
       problem_statement: c.problem,
       objective: `${c.kpi} -> ${c.benefit} (B0147, synthetic illustrative example).`,
+      // The complete T05 card G4 reads (name, objective, scope in; T-DG5-BE-X2, D-172).
+      scope_in: `${c.tomGap} for international roaming customers (B0147, synthetic illustrative example).`,
       wave_id: rtId(RT_BLOCK.roadmapWave, 2),
       planned_start: ctx.date(-60),
       planned_end: ctx.date(120),
