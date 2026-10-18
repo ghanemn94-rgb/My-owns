@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-122",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "G4 readiness reports Roadmap, Owners, Funding, Capacity (and Prioritization, Business cases) as Complete over an empty approved portfolio once 'Initiative cards' is covered by an exception; the demo G4 approval rests on this",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, candidate c4f70a80, clone of b147dda), as roaming.user.tl: GET /api/v1/transformations/01995000-0000-7000-8000-000000000001/gates/G4 (live readiness) returns g4.roadmap, g4.owners, g4.funding and g4.capacity = complete, g4.business_cases and g4.finance_validation = complete, and only g4.initiative_cards and g4.prioritization incomplete (each covered by an accepted exception). In the same database, GET /api/v1/funding-decisions?transformationId=... returns 0 items, GET /api/v1/resource-demands 0 items, GET /api/v1/transformations/.../capacity-plan no role and no cell, GET /api/v1/initiatives/{id}/milestones 0 milestones for each of INI-01..03, GET /api/v1/organizations/.../portfolios 0 portfolios, and the three initiatives are status 'draft' with no portfolio or selection status. The frozen G4 submission snapshot records g4.initiatives [], fundingDecisionIds [], committedDemandIds [], rankingSnapshotId null, yet freezes those four criteria as 'complete'. The G4 page (en and ar) shows a green banner '6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions' and lists Roadmap, Owners, Funding and Capacity as 'Complete'; the seeded decision GD-04 says 'The portfolio is executable and value-backed'. Cause (product, DG3/DG4 code): apps/api/src/modules/workflows/g4.ts evaluates g4.roadmap, g4.owners, g4.funding, g4.capacity, g4.prioritization (per-initiative part) and the per-initiative part of g4.business_cases/g4.finance_validation as 'for every initiative in the approved portfolio', so an empty portfolio makes them complete vacuously. Without an exception g4.initiative_cards blocks the gate, but an accepted exception on g4.initiative_cards (which the product allows, ADR-0035 section 4, and whose scope reads 'Initiative cards only') silently turns four or more further mandatory criteria Complete with no evidence. Any production G4 is exposed the same way.",
+      "expected": "B0023 G4 asks 'Is the portfolio executable and value-backed?' with the evidence 'Initiative cards, business cases, roadmap, owners, capacity'; an exception covers one criterion (the product's own text: 'An exception lets one mandatory criterion be submitted incomplete'). A criterion whose subject set is empty must not read Complete: it should read incomplete or 'not evaluable - no initiative in the approved portfolio' (fail closed, as the G1-G3 evaluators do for missing facts), so an exception on Initiative cards cannot stand in for missing funding, capacity, approved milestones or owners, and the frozen snapshot does not record them as complete. The demonstration G4 (F-DG5-120's repair) should then either be backed by a seeded portfolio (selection, ranking, funding decision, approved milestone, committed demand) or carry an exception per criterion it genuinely lacks, so its readiness line and its decision rationale are true to the records.",
+      "actual": "Live and frozen G4 readiness: Roadmap, Owners, Funding, Capacity, Business cases and Finance validation Complete; Initiative cards and Prioritization covered by accepted exceptions; banner green. The records hold no portfolio, no funding decision, no resource demand, no capacity and no milestone; the initiatives are draft. The demo's approved G4 therefore asserts an executable, funded and resourced portfolio that the data does not contain. BE-V3's handback section 8 and D-171 observation (g) disclose the empty portfolio but not that four further criteria read Complete because of it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/gate-G4-live.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/funding-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/resource-demands.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/capacity-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/initiatives.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/milestones-01995000-0000-7000-8000-000000000021.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/portfolios.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G4-submission-1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/en/d06-gate-4-G4.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/dom-demo-g4.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-g4.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-18T12:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 review round 2 while verifying F-DG5-120 on candidate c4f70a80 (source d3528fc). Medium, not mandatory: the approver accepts the exceptions knowingly and no acceptance text is broken literally, but the readiness and the frozen snapshot misstate four G4 criteria."
+        }
+      ]
+    }
+  ]
+}

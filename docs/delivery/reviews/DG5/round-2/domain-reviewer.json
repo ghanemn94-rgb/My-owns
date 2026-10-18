@@ -1,0 +1,398 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 2,
+  "candidate_id": "sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e",
+  "source_commit": "d3528fcf0dbf1df5f91456c82f5ce188fdee7c75",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-DOM-R2-domain-reviewer-20261018T111224Z-42df6164",
+    "session_id": "42df6164-3522-44ae-9502-ba68d1002cd1"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG5 implementation, test, register row, ADR, repair (T-DG5-BE-V1, BE-V2, BE-V2B, BE-V2C, BE-V3, FE-V1, FE-V1B, ARCH-R4), the a02 fixture hunk 6c7f54b, or delivery decision in the reviewed candidate. I formed this verdict from my own runs in this session (T-DG5-REV-DOM-R2) and did not open any other reviewer's round-2 record or evidence; I read the round-1 domain record (my role's own) for its probes and procedures. Every command that built or ran code used a complete, non-shallow disposable clone under $TMPDIR (git clone --shared, 1472 commits, checkout b147dda = freeze of source d3528fc), with a private copy of the pnpm store; the clone is removed at the end. All product data cited is SYNTHETIC. No in-product Finance validation or G1-G6 decision cited here approves anything real, and none relates to DG0-DG7; product G6 never implies DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-2/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089",
+    "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-037", "REQ-S01-002", "REQ-S01-003", "REQ-S01-004",
+    "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002",
+    "REQ-S05-006", "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006",
+    "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010", "REQ-S07-016", "REQ-S08-005", "REQ-S08-019",
+    "REQ-S09-011", "REQ-S10-013", "REQ-S10-015", "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004",
+    "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-022", "REQ-S12-025",
+    "REQ-S12-026", "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009",
+    "REQ-S13-010", "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004", "REQ-S16-010",
+    "REQ-S16-012", "REQ-S16-015", "REQ-S16-021", "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R2-00-candidate",
+      "procedure": "Verify the frozen candidate in the repository and in the disposable clone; confirm that the commits after the source touch only docs/delivery/; install offline and build.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG5 (repo and clone); git diff --name-only d3528fc HEAD | grep -v '^docs/delivery/'; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pnpm-store/v10; pnpm -r build",
+      "environment": "Repository /home/user/My-owns at HEAD b147dda; clone $TMPDIR/rv (git clone --shared, not shallow, 1472 commits) at b147dda; Node 24.21.0; pnpm 10.33.0.",
+      "expected": "candidate_id sha256:c4f70a80...1f06e with 2183 files in both; d3528fc..HEAD changes only docs/delivery/; install and build exit 0.",
+      "actual": "Both print candidate_id sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e, files 2183, exit 0. HEAD is b147dda (the freeze commit), not the source d3528fc: it adds only docs/delivery/ files (three assignments, the manifest, progress.md, stages.json); the grep for other paths is empty. The candidate id excludes docs/delivery, so the frozen code is the source's. Install, disclosed: the first attempt without --store-dir exited 226 (EROFS: pnpm could not register the project in the read-only shared store /root/.local/share/pnpm/store); the cited install used a private copy of that store, exit 0, with the 2 expected 'Failed to create bin ... mth-db ... dist/cli.js' WARN lines (the bin exists after the build). pnpm -r build exit 0, no error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/candidate-clone.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/install.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-01-validators",
+      "procedure": "Run the historical validators of the four approved gates and the DG5 register rules, capturing each validator's own exit status.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4|DG3|DG2|DG1; node tools/gates/validate.mjs --register DG5",
+      "environment": "Repository working tree at b147dda; Node 24.21.0; run once at the start.",
+      "expected": "Every command exits 0.",
+      "actual": "PASS gate DG4, DG3, DG2, DG1 (historical), exit 0 each; PASS register rules at DG5, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-02-source-fidelity-production",
+      "procedure": "Production-initialized stack (with-stack.sh). Through the real API as dev.office, dump every methodology block, the provenance, the guiding questions, the elements, the health questions and schemes, the launch-plan template, branding, search 'value pools', the B0031 links and the T01 source links; compare offline with docs/source/playbook.blocks.json and playbook.md.",
+      "command": "with-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1 (probe/dom-prod.spec.ts); python3 -I probe/compare.py <clone> <dump>",
+      "environment": "Clone $TMPDIR/rv; disposable PostgreSQL 16 plus the built API serving the built SPA, AUTH_MODE=dev, no environment marker; ports 26451-26479; Chromium from /opt/pw-browsers; 1-minute load about 8-12.",
+      "expected": "165 blocks verbatim and in order, with Arabic; provenance = B0004; Realize note = B0124 without a standard claim; B0157-B0162 custom extensions; four B0016 questions; 16 templates, each with one question tag; 25 B0150 questions; three B0134 windows; the REQ-S02-001 element counts; default branding provisional.",
+      "actual": "compare.py: 20 PASS, 0 FAIL (exit 0). The 165 blocks are verbatim substrings of playbook.md and come in source order; paragraphs equal playbook.blocks.json; every block has Arabic. The provenance statement equals B0004 and realizeNote is B0124. There are 56 elements: 16 templates, 10 TOM dimensions, 6 phases, 6 gates, 6 benefit-lifecycle steps, 5 forums, 3 launch windows, 1 scoring model, 1 health check, 1 roaming example and 1 traceability chain; 50 are custom_extension and 6 foundation_inspired, and each template has exactly one question tag. Search 'value pools' returns 200 with B0023 first. B0031 links to T01, and T01 has its source links. Health scheme v1 is labelled 'Yes = 1, No = 0; out of 25', implementationAssumption true. The probe run passed 3 and skipped 1 by design (the API test runs only in the en project).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-S02-001", "REQ-S02-004", "REQ-S03-010", "REQ-PB-091", "REQ-PB-086"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/source-compare-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/dom-prod.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/compare.py",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/blocks.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/provenance.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/elements.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/guiding-questions.json"
+      ]
+    },
+    {
+      "id": "DOM-R2-03-reader-about-studio-ui",
+      "procedure": "Production stack, signed in as dev.office in chromium-en and chromium-ar: open the reader, B0124, B0031, About, the 90-day plan, the health check and the Studio; assert B0004 verbatim and the four guiding questions; capture each screen.",
+      "command": "probe/dom-prod.spec.ts 'UI: reader, About, ...' (both projects)",
+      "environment": "As DOM-R2-02.",
+      "expected": "B0004 verbatim on the reader and About in both languages; no official or certified claim; the Realize note without a standard claim; the Studio badged, and read-only for TO.",
+      "actual": "Passed in en and ar. The reader shows B0004 verbatim and the four questions. About carries 'not an official PMI standard ... not certified by PMI or any other body', the Arabic equivalent, B0004 with a 'provisional translation' chip next to the English verbatim text, and the Asia/Riyadh and SAR defaults (inspected in the Arabic screenshot, which is RTL). B0124 shows the BRM-alignment text. The Studio lists the published versions with 'Publishing a version is not a business approval'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-077", "REQ-S14-004", "REQ-S20-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/01-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/01-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/02-reader-B0124-realize.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/02-reader-B0124-realize.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/04-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/04-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/05-playbook-launch-plan.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/05-playbook-launch-plan.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/06-playbook-health-check.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/06-playbook-health-check.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/07-studio-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/07-studio-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/about-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/about-ar.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-04-no-official-claims-scan",
+      "procedure": "Scan the web catalogues, reporting, the worker and the demo dataset for official PMI or Mobily claims, and the catalogues for DG0-DG7.",
+      "command": "grep -rniE 'official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily' apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo; grep -rnE '\\bDG[0-7]\\b' apps/web/src/i18n/{en,ar}/*.json; grep DG0-DG7 roaming-gates.ts",
+      "environment": "Clone at b147dda.",
+      "expected": "Every hit is a negation; no catalogue string names DG0-DG7.",
+      "actual": "Four hits, each a negation or a disclaimer: playbookP5.intro 'It is not an official PMI standard.', common provisionalNotice and brandBody ('not official Mobily brand assets', 'No official Mobily logo or verified brand colours'), common methodBody ('not an official PMI standard'). There is no DG0-DG7 in any catalogue; the log's 'exit=0' after that grep is the exit of the trailing cut in the pipe, and the empty output means no match. The new seed roaming-gates.ts carries DG0-DG7 only in a code comment and in the gate-snapshot note 'unrelated to the engineering delivery gates DG0-DG7' (the D-165 QA-F P-3 pattern, API data, which is itself a disclaimer).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-S21-001", "REQ-S15-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/static-text-scan.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-05-navigation-branding",
+      "procedure": "Production stack: navigation for dev.admin, dev.office, dev.lead, dev.auditor and dev.nobody through the API and the UI (en and ar); the branding page, wordmark and navigation background.",
+      "command": "probe/dom-prod.spec.ts (navigation-*.json, nav-*.json, nav-bg-*.txt, wordmark-*.txt)",
+      "environment": "As DOM-R2-02.",
+      "expected": "Fourteen areas, hidden server-side by permission (D-163 a); default name 'Mobily Transformation Hub' with a provisional wordmark; navigation colour a contrast-checked shade of brand.primary #0078FF.",
+      "actual": "The API and the UI agree: dev.office 14 areas, including Administration for the Studio review; dev.admin 3 (my_work, playbook_procedures, administration); dev.lead 13; dev.auditor 14; dev.nobody 2. The navigation background is rgb(0,113,241) = #0071F1 in en and ar. The wordmark reads 'Mobily Transformation Hub' + 'Provisional' + 'no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.' D-163 (a) accepted: REQ-S03-007 hides areas a user cannot access, server-side. A technical administrator without transformation.read must not see business areas (least privilege), so it sees three areas; the reading is sound.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S03-007", "REQ-S01-002", "REQ-S15-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/navigation-dev.admin.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/navigation-dev.office.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/navigation-dev.nobody.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/nav-bg-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/wordmark-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/wordmark-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/08-branding-admin.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/08-branding-admin.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/en/09-admin-shell-nav.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/shots/ar/09-admin-shell-nav.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-06-root-acceptance-e2e-production",
+      "procedure": "Run the ten root acceptance specs on one production-initialized stack, in both projects.",
+      "command": "E2E_SCREENSHOT_DIR=$TMPDIR/shots-root apps/web/e2e/support/with-stack.sh npx playwright test e2e/a03-modular-entry e2e/a04-kpi-update e2e/a06-configuration-change e2e/a07-historical-integrity e2e/a08-a09-gates-decisions e2e/a13-automation-recovery e2e/a15-reporting e2e/a16-health-launch e2e/a20-bilingual-shell e2e/a22-operations-jobs --workers=1",
+      "environment": "Clone $TMPDIR/rv; ports 26401-26449; E2E_SCREENSHOT_DIR pointed into $TMPDIR, as the assignment requires for the A06/A07 specs; 1-minute load 10.5-13.6 (sampled every 30 s), with the other two reviews running.",
+      "expected": "Every spec passes in en and ar.",
+      "actual": "30 passed (8.8 min), exit 0, with no retry, flaky or skipped test. A06 covers the Studio approver change, a form field and rule, the changed rule refusing 80, the existing transformation staying on the old form and the T13 field. A07 shows the issued register keeping target 100 and reissue v2 with 120. A08 covers the gate page listing missing items and the exception path. A15 covers the RAID register in the page language. A16 covers the 25 questions verbatim, 'Incomplete' without a band, and the 90-day plan from 2026-10-01. A20 covers RTL/LTR and the design tokens. A13 took 1.2 min (en) and 1.7 min (ar) within its own limit. The two 'NOTICE: trigger qa_a13_fault_in ... does not exist, skipping' lines come from the A13 spec's DROP TRIGGER IF EXISTS before it installs its fault trigger; they are not errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037", "REQ-S06-008", "REQ-S06-004", "REQ-S07-016", "REQ-S20-006", "REQ-S20-007", "REQ-S12-002", "REQ-S13-004", "REQ-PB-086", "REQ-PB-091", "REQ-S14-001", "REQ-S14-002", "REQ-S12-022", "REQ-S20-015", "REQ-S20-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/03-root-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/03-root-prod.load.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/shots-root-a06-a07/en/a06-studio-gate-approver-changed.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/shots-root-a06-a07/ar/a06-studio-gate-approver-changed.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/shots-root-a06-a07/en/a06-existing-transformation-old-form.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/shots-root-a06-a07/ar/a06-existing-transformation-old-form.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/shots-root-a06-a07/en/a07-issued-v1-target-100.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/shots-root-a06-a07/ar/a07-issued-v1-target-100.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-07-integration-batch",
+      "procedure": "Run the round-1 integration batch (27 files covering scoring defaults, Studio pipeline, migrations, procedures, automation, outputs, health and launch, demo) plus the six repair test files (rule and studio co-author review, demo gate history, the two output/evidence-link read-authorization files, catalogue).",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat probe/int-files.txt)",
+      "environment": "Clone $TMPDIR/rv; QA_PG_PORT 26481, pool 26482-26499; Node 24.21.0. The clone's node_modules is writable (private install), so --configLoader runner was not required; it was used anyway, as the assignment asks. 1-minute load 6.8-8.9.",
+      "expected": "All files pass.",
+      "actual": "Test Files 33 passed (33); Tests 391 passed (391); exit 0; no skipped test, no failure, no retry. The only warnings are the three npm 'Unknown project config' lines at start-up (pnpm's npmrc keys, harmless). The batch covers REQ-PB-093 (95 % refused 422 and only new transformations get the new defaults), REQ-S06-007/009 (publish without review refused, published version immutable, rollback by a new audited version), REQ-S06-010 (separation of duties), REQ-S06-005 ('12%' -> '0.12', decimal SAR), REQ-S04-011 (conditional scope), REQ-S10-015 (routes), REQ-S12-025 (quiet hours, digest, escalation), REQ-S12-026 (approve gate refused as a rule action), REQ-S08-019 (NPV off by default; -21.04 at 10 %), REQ-S08-005, REQ-S13-004..010 (the ten outputs, B0004 footers, Arabic RTL, injection neutralised, provisional labels, snapshots), REQ-S06-001/002/003 (the ten procedures completed by the source roles; Rule A), REQ-S12-012 (Rule B 8/8), REQ-S14-003, REQ-PB-087/092, REQ-S18-001/003 (A22I), the demo dataset (68), the gate history (2/2) and the B0147 chains (6/6), and the repairs: co-author review refusals for Studio and rules (9 and 4) and output read authorization (3 and 4).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-093", "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010", "REQ-S04-011", "REQ-S10-015", "REQ-S12-001", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-025", "REQ-S12-026", "REQ-S08-005", "REQ-S08-019", "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009", "REQ-S13-010", "REQ-S14-003", "REQ-PB-087", "REQ-PB-092", "REQ-S09-011", "REQ-S10-013", "REQ-S18-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.load.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/int-files.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-08-demo-root-e2e",
+      "procedure": "Run the four demo-stack root specs: the guided walkthrough, the walkthrough performed by the demo users, the demo labels and A21 (no AI operation).",
+      "command": "E2E_SCREENSHOT_DIR=$TMPDIR/shots-demo QA_EVIDENCE_DIR=$TMPDIR/qa-ev e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-demo-labels.spec.ts e2e/a21-no-ai-operation.spec.ts --workers=1",
+      "environment": "Clone $TMPDIR/rv; MTH_ENV=demo, AUTH_MODE=dev; ports 26401-26449; 1-minute load 11.9-13.8.",
+      "expected": "All pass in en and ar.",
+      "actual": "12 passed (4.6 min), exit 0, with no retry, skipped or flaky test. The demo role users perform the twelve walkthrough steps natively in the UI (REQ-S18-004, REQ-S20-002). The labels and 'Synthetic demonstration - approves nothing real' render on all six gate pages and the Finance queue in en and ar (REQ-S18-001, REQ-PB-089, REQ-S21-001). A21 generates a report with no AI or external channel (REQ-S01-004). The specs saved no screenshot to that directory (the folder stayed empty); the UI evidence for the demo is in DOM-R2-09.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-004", "REQ-S20-002", "REQ-S18-001", "REQ-PB-089", "REQ-S21-001", "REQ-S01-004", "REQ-S01-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.load.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-09-demo-probe-gates-labels",
+      "procedure": "Demo stack. Dump the transformation, traceability, North Star, walkthrough, gates, each gate G1-G6 with its submissions, phases and phase steps, gate exceptions, decision log, audit trail and environment through the API. Then, signed in as roaming.user.tl, roaming.user.sp and roaming.user.fin, capture 25 screens per language: the workspace, charter, Define, traceability, gates, G1-G6, reports, walkthrough, RAID, health check, launch plan, decisions, procedures, Diagnose, phases, portfolio, prioritization, benefits, the SP's G4 and approvals, and the Finance queue.",
+      "command": "with-demo-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1 (probe/dom-demo.spec.ts)",
+      "environment": "Clone $TMPDIR/rv; ports 26451-26479; 1-minute load 7-12.",
+      "expected": "Every demo screen shows the illustrative banner; every gate page shows the synthetic approval label; G1-G4 approved in phase order and coherent; G5-G6 not submitted; North Star and chains as B0144-B0147 write them; 12 walkthrough steps.",
+      "actual": "Run 2 (cited): 3 passed, 1 skipped by design (the API test runs only in en), exit 0. Run 1 is disclosed, not cited for UI claims: it used 2 workers, so the en and ar projects signed in the same demo user at the same time. The user's server-side language preference flipped, and the 'ar' TL captures rendered in English; the SP's en G4 was also captured while its exceptions section still read 'Loading…', showing a bare '6 of 8'. That was a probe artefact. Run 2 used 1 worker and waited for loading to finish, and all its screens render in the right language. Results: 'Illustrative example — synthetic' (ar 'مثال توضيحي — بيانات اصطناعية') is on all 25 screens in each language. The synthetic approval label is on G1-G6 in en and ar. G1 reads 6 of 6, G2 and G3 5 of 5, G4 'Approved' with '6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions' (ar 'أما الـ 2 الأخرى فتغطيها استثناءات مقبولة'), G5 1 of 4 and G6 0 of 4, not submitted. The API confirms the history: submissions by roaming.user.tl and decisions by roaming.user.sp (GD-01..04, G1's three B0032 agreements, rationales labelled), each phase advanced once, phase Transform; D-01 and DEC-01 still open (the overdue decision). North Star 'Make international roaming effortless, trusted and economically accretive.'. The traceability chains start 'Low activation -> Proposition + journey ...' (6/6 in demo-traceability-chains). The walkthrough has 12 steps. Residuals noted, not findings: (1) the phase steps of the passed phases read 'not started'; steps never gate an approval in the product, and the page says so; (2) on the SP's G4 page the submitter shows as 'Unknown: Not visible to you', the people-directory visibility rule of an earlier gate, not P5; (3) the seeded exception reasons and rationales are English user data with the Arabic label inside, the same as every seeded record. G4's coherence is judged in DOM-R2-10.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-002", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-S21-001", "REQ-S18-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-run1-two-workers.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/dom-demo.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gates.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-walkthrough.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-traceability.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d01-workspace.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d01-workspace.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d05-gates.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d05-gates.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-1-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-1-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-2-G2.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-2-G2.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-3-G3.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-3-G3.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-5-G5.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-5-G5.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-6-G6.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-6-G6.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d04-traceability.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d04-traceability.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d08-walkthrough.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d08-walkthrough.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d18-phases.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d18-phases.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/en/d06-gate-4-G4.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/ar/d06-gate-4-G4.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-10-demo-g4-coherence",
+      "procedure": "Judge F-DG5-120's G4 and observation (g) of D-171: read the G4 evaluators (apps/api/src/modules/workflows/g4.ts) and dump, on the demo stack as roaming.user.tl, what the approved G4 rests on: the initiatives, their milestones, the funding decisions, the resource demands, the capacity plan, the prioritization, the portfolios and the live G4 readiness. Compare with B0023 G4.",
+      "command": "with-demo-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1 (probe/dom-demo-g4.spec.ts, GET requests only)",
+      "environment": "Clone $TMPDIR/rv; demo stack, ports 26451-26479.",
+      "expected": "The approved G4 is coherent with B0023 ('Is the portfolio executable and value-backed?'; initiative cards, business cases, roadmap, owners, capacity). Each criterion shown as Complete rests on records; only the two disclosed criteria are covered by exceptions.",
+      "actual": "Probe exit 0 (1 passed, 1 skipped by design). Live G4: initiative_cards and prioritization are incomplete, each covered by an accepted exception (TL requested, SP decided, expiry 2028-08-31, compensating action owned by TL; the product's own rules: requester never decides, approver decides). business_cases, finance_validation, roadmap, owners, funding and capacity are Complete. The database holds 0 funding decisions, 0 resource demands, an empty capacity plan, 0 milestones on INI-01..03, and 0 portfolios; the three initiatives are 'draft' with no portfolio or selection status. The frozen snapshot records initiatives [], fundingDecisionIds [], committedDemandIds [] and rankingSnapshotId null. g4.ts evaluates roadmap, owners, funding, capacity, the per-initiative part of business_cases and finance_validation, and prioritization 'for every initiative in the approved portfolio', so with an empty portfolio they are complete vacuously. The page's banner is green (success). GD-04's rationale says 'The portfolio is executable and value-backed'. Judgement: the exceptions are product-supported and honestly worded, but the gate state is not honest. Four criteria read Complete with no record behind them, the exception's declared scope ('Initiative cards only') is in effect wider, and BE-V3's handback §8 and D-171 (g) do not disclose it. This is raised as F-DG5-122 (Medium, product root cause; REQ-PB-019), and F-DG5-120's verification fails (verifications sidecar). The other half of observation (g), that the seed writes no gate.submitted/gate.decided outbox events or request execution, is accepted: their consumers would create approver tasks and steps on the real clock for gates already decided, and the phase steps carry enabled_by_gate_decision_id directly.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S18-002", "REQ-S21-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-g4.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/dom-demo-g4.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/gate-G4-live.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/funding-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/resource-demands.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/capacity-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/initiatives.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/portfolios.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G4-submission-1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d15-sp-gate-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d15-sp-gate-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d19-portfolio.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d19-portfolio.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-11-production-isolation-and-determinism",
+      "procedure": "On a production-initialized database: count demo rows and users, try seed-demo with MTH_ENV=production and on a non-empty database, read /admin/environment and /demo/walkthrough. Then compare the demo checksum of two independent demo seeds (probe runs 1 and 2) and run the determinism test.",
+      "command": "with-stack.sh bash probe/prod-isolation.sh; probe dumps environment-admin.json, walkthrough-office.json, demo-environment.json (two seeds); demo-roaming.test.ts (DOM-R2-07)",
+      "environment": "Clone $TMPDIR/rv; ports 26451-26479.",
+      "expected": "Production holds no demo record or user, and demo seeding is refused there; the demo seed is deterministic.",
+      "actual": "deployment_environment 0, demo_seed_record 0, demo_dataset_run 0, roaming users 0, ROAMING 0. seed-demo was refused: 'refused: MTH_ENV is production' (exit 3) and 'refused: this database is not empty' (exit 3); demo_seed_record still 0. These exit-3 lines are the refusals under test; the script itself exits 0. /admin/environment returns {kind: production, latestRun: null}; /demo/walkthrough returns 409 environment.not_demo. Two independent demo seeds give the same checksum 3b39dfc2626ad7817f91b5a8f8994cc13f0771363084bdd7c77fbfaae838e452 and 3715 records, dataset international_roaming 1.0.0, synthetic clock 2026-09-01. demo-roaming 'a second seed into a fresh database gives identical record counts and checksum' passes. D-165 accepted: the demo users sign in through the dev issuer only in a dev-mode demo database.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod-isolation.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe/prod-isolation.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/environment-admin.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/walkthrough-office.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-environment.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/run1-env/demo-environment.json"
+      ]
+    },
+    {
+      "id": "DOM-R2-12-f121-p2-journeys",
+      "procedure": "Verify F-DG5-121: check that the p2-journeys assertions are unchanged, then re-run the spec under the review load with the locale unset and with LANG=C.UTF-8.",
+      "command": "git diff 601d7d2..d3528fc -- apps/web/e2e/p2-journeys.spec.ts; [env -u LANG -u LC_ALL | LANG=C.UTF-8] apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p2-journeys.spec.ts --workers=1",
+      "environment": "Clone $TMPDIR/rv; ports 26401-26449; 1-minute load 7.0-11.1 (unset) and 7.6-9.7 (C.UTF-8), sampled every 30 s, with the other reviews running.",
+      "expected": "Only timeout budgets are added; all journeys pass in both locale settings.",
+      "actual": "The diff adds only test.setTimeout(90_000) (G2) and test.setTimeout(60_000) (AUD), each with a comment. Locale unset: 24 passed (5.6 min), exit 0; G2 37.6 s (en) and 35.9 s (ar); AUD 28.2 s and 25.1 s. C.UTF-8: 24 passed (5.8 min), exit 0; G2 39.0 s and 39.3 s; AUD 27.2 s and 26.9 s. There was no retry, flaky or skipped test. F-DG5-121 is CLOSED_VERIFIED. The p4-gates-closure hunk in the same diff adds assertions for the new covered-readiness line; it weakens nothing.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/p2-journeys-assertion-diff.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.load.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.load.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-13-repair-diff-and-observations",
+      "procedure": "Read the repair diff 601d7d2..d3528fc for domain regressions: BE-V1 (contributors, 0097, Studio and rule review), BE-V2/V2B/V2C (output read authorization), BE-V3 (roaming-gates.ts and its roaming/roaming-states edits), FE-V1/V1B (readiness line, table regions, strings), ARCH-R4 and the a02 hunk 6c7f54b. Judge observations (a)-(f) of D-171; (g) is judged in DOM-R2-10.",
+      "command": "git diff 601d7d2..d3528fc (product paths); reading migrations.ts:670-700, 0064 grants, gate-exceptions.ts, i18n gates.json",
+      "environment": "Clone at b147dda.",
+      "expected": "No repair weakens another behaviour; each observation is accepted with a reason or raised.",
+      "actual": "No regression found. BE-V1 widens SoD: a Studio draft's or rule version's creator and every recorded contributor are refused as reviewers and get no review task. Methodology admins still cannot approve business decisions (studio-coauthor-review 9/9, rule-coauthor-review 4/4, DOM-R2-07). BE-V2 requires read on an output record (3/4 tests green); Rule A still adopts T (A02 13/13 inside the batch). FE-V1B only adds the covered wording and the green state when the complete and covered outputs together equal the total. Walkthrough code unchanged. Observations: (a) accepted: benefit_formula validation is the DG3 Finance validation, a business attestation by Finance with its own validator-not-author rule, not a configured review. (b) accepted: methodology_migration.plan is held by ADM_METHOD and .approve by SP only (0064), so the planner and approver are separate roles by default, and the canonical approval refuses the requester and the submitter. A re-planner who also held SP is a residual for code-security, not a domain defect. (c) accepted: subjectRecordId is only an opaque reference that is never resolved or shown beyond the id, so nothing is disclosed and nothing is adopted. (d) accepted as cosmetic: 'the other 1 are covered' follows the existing coveredNote with no plural forms; the Arabic is grammatical. (e) accepted: gates.submit.blocked shows only when the server cannot submit, and the exceptions section explains the exception path on the same page. (f) accepted: accessibility of untouched DG2-DG4 wraps is qa's remit, and the DG4 specs report no overflow. The a02 hunk 6c7f54b is accepted on domain grounds: an organization-scope Lead is staffed on the transformation it captures before naming it, which the read rule requires.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S06-007", "REQ-S06-010", "REQ-S06-002", "REQ-S06-008"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/en/d06-gate-4-G4.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/text/ar/d06-gate-4-G4.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-14-decisions-d163-d168",
+      "procedure": "Judge D-163 (a), D-164 (a)-(k), D-165's accepted observations, D-166 Rules A and B, D-167's clarification and D-168's roaming wording point against the playbook and the master prompt.",
+      "command": "Reading docs/delivery/decisions.md D-163..D-168; runs DOM-R2-05/07/08/09/11",
+      "environment": "Repository at b147dda.",
+      "expected": "Each accepted, or raised.",
+      "actual": "D-163 (a): accepted (DOM-R2-05). D-164: (a) one run-time approver rule; (b) the approver_configured flag (A06 approver change green); (c) the gate pack names the effective approver; (d) samplePayload for dry runs, which write nothing; (e) the report environment port (demo exports labelled, A15 demo outputs green); (f) the one-line test edit; (g) KPI target as a decimal with its unit; (h) benefit totals by reference, so no double counting; (i) #0071F1 derived from the provisional #0078FF (measured); (j) T06 through form tools; (k) the out-of-range message from served settings. All accepted. D-165: QA-F P-1 (two failure-queue entries, retry duplicates nothing), P-2 (attempts = executions), P-3 (the DG0-DG7 snapshot note is a disclaimer in API data), QA-E O-3 (no AI or notification adapter ships), QA-B O-1 (closed-period panel: RAG from the stored evaluation, final target current) and O-2 (rollback hash differs with equal content). All accepted; none affects RAG, value states or approvals. D-166 Rule A is accepted: one NULL -> T transition for unstarted steps of the intake's instance, after which approvals route by T. Rule B is accepted for M0232 as a defined finish-to-start forward pass over planned starts, Unknown and never 0 when an input is missing, recorded as the slip's impact without silently overwriting approved plans (Rule B 8/8). D-167: accepted. D-168: accepted; the chain-1 outcome statement repeats its KPI's text, a wording point only, and B0147's row is met exactly.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S03-007", "REQ-S12-012", "REQ-S06-002", "REQ-PB-090", "REQ-S01-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/prod/api/navigation-dev.admin.json"
+      ]
+    },
+    {
+      "id": "DOM-R2-15-requirement-acceptances",
+      "procedure": "Test each of the 78 DG5 acceptance texts literally against the runs above, and judge the partial-coverage disclosures in their notes.",
+      "command": "Reading docs/delivery/requirements.csv (final_gate DG5) against DOM-R2-02..14",
+      "environment": "Repository at b147dda.",
+      "expected": "Each acceptance is met with evidence; each disclosure is acceptable.",
+      "actual": "My runs meet each acceptance text literally: provenance and questions (PB-001/002/011/077); launch plan and Day-90 (PB-086/087, S14-004, S12-004); roaming, labels and chains (PB-088/089/090, S18-001/004, S21-001); health check (PB-091/092, S14-001/002/003, S20-016); scoring defaults (PB-093); the root acceptance suites (DLV-037); name and colour (S01-002, S15-004); coverage (S01-003/004, S20-002); elements (S02-001, the draft-deletion refusal in studio-checks); B0031 and T01 (S02-004); navigation (S03-007); search (S03-010); conditional approvals (S04-011); forms and procedures (S05-001/002/006, S06-001..005, S16-010); the Studio (S06-006..010, S20-006); restatement (S07-016, S20-007); formulas (S08-005/019); owner updates, presentation and routes (S09-011, S10-013/015); automation (S12-*); outputs (S13-004..010, S20-015); production isolation (S18-003). S16-012/015/021 (entity groups) rely on the implementer suites their notes name; I did not re-run those three files. REQ-S18-002's literal acceptance (a seed-coverage test finds a record for each element) is met: demo-roaming 68/68, coverage complete. My F-DG5-122 concerns the coherence of the G4 those records produce, not the coverage count. The notes' partial-coverage disclosures (for example S13-008's pending-value proof on the benefits register PDF, S21-001's inbox label not asserted by an e2e) are acceptable, because each is disclosed and covered by another asserted path.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/validators.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/03-root-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-16-environmental-residuals",
+      "procedure": "Record the environmental residuals the assignment names, on the offline and configuration surface.",
+      "command": "n/a (configuration reading; DOM-R2-00 offline install; DOM-R2-08 A21 on the dev-mode demo stack)",
+      "environment": "Sandboxed review host with no network.",
+      "expected": "PASS on the offline and configuration surface, with each residual noted.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058) cannot be reached from this sandbox; the offline install from the pinned lockfile and the build succeeded (DOM-R2-00). These residuals stay with DG6/DG7. Keycloak and a real demo IdP (D-049; ADR-0050 §1) are a devops item; the D-165 dev-mode binding was the test path and works (DOM-R2-08/09). No AI or external notification adapter ships in P5 (D-142 Q11); A21 passes with the shipped 'disabled' configuration.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/install.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG5-122"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG5/round-2/domain-reviewer.findings.json",
+    "docs/delivery/reviews/DG5/round-2/domain-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG5/domain/round-2/candidate-clone.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/validators.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/source-compare-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/03-root-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-g4.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/prod-isolation.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/gate-G4-live.json"
+  ],
+  "reviewed_at": "2026-10-18T12:45:00Z",
+  "summary": "FAIL on candidate c4f70a80 (source d3528fc). Everything else I checked passes, in EN and AR, on both the production-initialized and the demo-initialized stacks: source fidelity (20/20), reader, About, navigation and branding, root acceptance e2e 30/30, demo e2e 12/12, integration 391/391 (33 files), production isolation and seed determinism, and the D-163..D-168 decisions. F-DG5-121 is CLOSED_VERIFIED: the p2 journeys pass 24/24 in both locale settings under load with only timeout budgets added. F-DG5-120 does not verify: G1-G4 are now approved in order by the demo Sponsor with labels and snapshots, but the approved G4 shows Roadmap, Owners, Funding and Capacity as Complete over an empty portfolio (no funding decision, capacity, milestone or selection exists), because the G4 evaluators iterate over the approved portfolio and the 'Initiative cards' exception empties it. New finding F-DG5-122 (Medium, not mandatory, REQ-PB-019; product root cause in g4.ts). Observations (a)-(f) are accepted. Of (g), the missing outbox events are accepted, and the empty-portfolio G4 is raised as F-DG5-122."
+}

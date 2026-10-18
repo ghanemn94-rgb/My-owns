@@ -1,0 +1,44 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-120",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Partly repaired, not closed. What holds, verified on a demo stack (two independent seeds, identical checksum 3b39dfc2..., 3715 records; demo-gate-history 2/2, demo-roaming 68/68, demo-traceability-chains 6/6, A02 demo e2e 12/12): G1-G4 are approved in phase order (2026-05-22, 05-30, 06-02, 06-10), each submitted by roaming.user.tl and decided by the routed approver roaming.user.sp (never the submitter), with canonical decisions GD-01..GD-04, the B0032 agreements on G1, frozen snapshots, audit events, and the phase advanced once per approved gate to Transform; G5 and G6 are draft and not submitted; 'Synthetic demonstration - approves nothing real' (and its Arabic) is on every gate page G1-G6 in en and ar and in every seeded rationale; G1-G3 are complete on seeded evidence; the B0147 chains and the 12-step walkthrough are unchanged. What fails: the G4 approval is not coherent with B0023's G4 evidence. Its live and frozen readiness show Roadmap, Owners, Funding and Capacity 'Complete' (banner green: '6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions') while the database holds no approved portfolio, no funding decision, no resource demand, no capacity and no milestone, and the initiatives are draft: these criteria are complete only because they iterate over an empty portfolio. The two exceptions are product-supported and honestly worded, but the state they produce, and GD-04's rationale 'The portfolio is executable and value-backed', are not true to the records. Reproduction and root cause: F-DG5-122. Residual noted, not a finding: the phase steps of the passed phases (Diagnose..Mobilize) read 'not started' (25 of 25 steps), which the product allows because steps never gate an approval (the Phases page says so).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gates.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G1-submission-1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-gate-G4-submission-1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-phases.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-phase-steps.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api/demo-environment.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/run1-env/demo-environment.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/gate-G4-live.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/api-g4/funding-decisions.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-1-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-1-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/en/d06-gate-6-G6.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/demo/shots/ar/d06-gate-6-G6.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/04-root-demo.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "git diff 601d7d2..d3528fc -- apps/web/e2e/p2-journeys.spec.ts adds only test.setTimeout(90_000) to 'Define -> G2' and test.setTimeout(60_000) to the AUD journey, each with a comment; no assertion changed. Re-run on the candidate under the concurrent review load (1-minute load sampled every 30 s: 7.0-11.1 for the locale-unset run, 7.6-9.7 for the C.UTF-8 run): locale unset 24/24 passed (G2 journey 37.6 s en, 35.9 s ar; AUD 28.2 s, 25.1 s), LANG=C.UTF-8 24/24 passed (G2 39.0 s, 39.3 s; AUD 27.2 s, 26.9 s); exit 0 both, no retry, flaky or skipped test. The worst G2 run uses 44 % of its budget, so the headroom is above 2x.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/p2-journeys-assertion-diff.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/05-p2-unset.load.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/06-p2-cutf8.load.txt"
+      ]
+    }
+  ]
+}
