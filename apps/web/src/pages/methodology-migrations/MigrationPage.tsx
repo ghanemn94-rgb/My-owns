@@ -221,7 +221,12 @@ function MigrationView({ tid, migration: m }: { tid: string; migration: Methodol
               <h3>
                 {t(`studio.migration.itemKind.${g.kind}`)} ({g.items.length})
               </h3>
-              <div className="table-wrap">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label={t("common.table.scrollRegion", { caption: t(`studio.migration.itemKind.${g.kind}`) })}
+              >
                 <table className="table table--compact">
                   <caption className="visually-hidden">{t(`studio.migration.itemKind.${g.kind}`)}</caption>
                   <thead>

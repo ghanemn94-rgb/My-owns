@@ -315,7 +315,12 @@ function PipelineSection({
       </p>
       <QueryState query={runs}>
         {(rows) => (
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: t("studio.check.caption") })}
+          >
             <table className="table" data-table="checks">
               <caption>{t("studio.check.caption")}</caption>
               <thead>
@@ -461,7 +466,12 @@ function DiffSection({ version }: { version: ConfigVersion }) {
         empty={<EmptyState title={t("studio.diff.empty")} />}
       >
         {(d) => (
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: t("studio.diff.caption") })}
+          >
             <table className="table" data-table="diff">
               <caption>{t("studio.diff.caption")}</caption>
               <thead>
@@ -517,7 +527,12 @@ function AffectedSection({ version }: { version: ConfigVersion }) {
         empty={<EmptyState title={t("studio.affected.empty")} />}
       >
         {(a) => (
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: t("studio.affected.title") })}
+          >
             <table className="table" data-table="affected">
               <caption className="visually-hidden">{t("studio.affected.title")}</caption>
               <thead>
@@ -572,7 +587,12 @@ function ReviewsSection({ version, runner }: { version: ConfigVersion; runner: R
         empty={<EmptyState title={t("studio.reviews.empty")} />}
       >
         {(rows) => (
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: t("studio.reviews.title") })}
+          >
             <table className="table" data-table="reviews">
               <caption className="visually-hidden">{t("studio.reviews.title")}</caption>
               <thead>

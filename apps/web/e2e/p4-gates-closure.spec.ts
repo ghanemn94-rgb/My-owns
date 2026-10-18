@@ -231,6 +231,10 @@ test("1. G5: missing items listed; the Lead requests an exception; the Sponsor a
   await expect(decide).toBeHidden();
   await expect(spRow.locator("[data-state='covering']")).toBeVisible();
   await expect(spRow).toContainText("Synthetic: weekly manual KPI check by the Lead.");
+  // T-DG5-FE-V1B (D-170): the readiness line says, in the same line, that an accepted exception covers an output.
+  const line = spUi.page.locator("#readiness [data-readiness]");
+  await expect(line).toHaveAttribute("data-readiness-covered", "1");
+  await expect(line).toContainText(lang === "en" ? "covered by accepted exceptions" : "استثناءات مقبولة");
   await shot(spUi.page, lang, "p4-gates-03-exception-accepted");
   await expectAccessible(spUi.page, lang, "p4-gates-03-exception-accepted");
   await spUi.close();

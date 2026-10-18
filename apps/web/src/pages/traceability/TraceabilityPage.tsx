@@ -311,7 +311,12 @@ function OrphanReport() {
             <EmptyState title={t("traceability.orphans.empty")} body={t("traceability.orphans.emptyBody")} />
           ) : (
             <>
-              <div className="table-wrap">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label={t("common.table.scrollRegion", { caption: t("traceability.orphans.title") })}
+              >
                 <table className="table table--compact" data-orphan-report>
                   <caption className="visually-hidden">{t("traceability.orphans.title")}</caption>
                   <thead>

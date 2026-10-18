@@ -123,7 +123,12 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
         title={t("traceability.modular.gatesTitle")}
         intro={t("traceability.modular.gatesIntro")}
       >
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label={t("common.table.scrollRegion", { caption: t("traceability.modular.gatesTitle") })}
+        >
           <table className="table table--compact" data-gate-labels>
             <caption className="visually-hidden">{t("traceability.modular.gatesTitle")}</caption>
             <thead>

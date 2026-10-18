@@ -148,7 +148,12 @@ export function ImpactPanel({ graph }: { graph: TraceabilityGraph | null }) {
                   {t("traceability.impact.noRecords")}
                 </p>
               ) : (
-                <div className="table-wrap">
+                <div
+                  className="table-wrap"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={t("common.table.scrollRegion", { caption: t("traceability.impact.records") })}
+                >
                   <table className="table table--compact" data-impact-records={r.records.length}>
                     <caption className="visually-hidden">{t("traceability.impact.records")}</caption>
                     <thead>
@@ -342,7 +347,12 @@ export function AllocationPanel({ graph }: { graph: TraceabilityGraph | null }) 
                   {t("traceability.allocation.none")}
                 </p>
               ) : (
-                <div className="table-wrap">
+                <div
+                  className="table-wrap"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={t("common.table.scrollRegion", { caption: t("traceability.allocation.members") })}
+                >
                   <table className="table table--compact">
                     <caption className="visually-hidden">{t("traceability.allocation.members")}</caption>
                     <thead>
