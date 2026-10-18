@@ -63,6 +63,13 @@ describe("stylesheets", () => {
     );
   });
 
+  it("lets every fieldset shrink to its container (F-DG5-140, WCAG 1.4.10 Reflow)", () => {
+    // Without it the UA default `min-inline-size: min-content` widens a fieldset to its widest table, and the page
+    // scrolls horizontally at 390 px (the Studio scoring-defaults rubrics) instead of the table's own .table-wrap.
+    const css = readFileSync(join(WEB, "src", "styles", "app.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(css).toMatch(/(^|\})\s*fieldset\s*\{[^}]*min-inline-size:\s*0\s*;/);
+  });
+
   it("contains no logo image (the wordmark is text; REQ-S15-006)", () => {
     const images = files(WEB, /\.(png|jpe?g|gif|svg|webp|ico)$/i).filter(
       (f) => !f.includes(`${join("e2e", "screenshots")}`),

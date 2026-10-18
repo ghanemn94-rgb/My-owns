@@ -122,7 +122,12 @@ export function RegisterTable<T>({
         <EmptyState title={emptyTitle} {...(emptyBody ? { body: emptyBody } : {})} />
       ) : (
         <>
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: caption })}
+          >
             <table className="table">
               <caption className="visually-hidden">{caption}</caption>
               <thead>

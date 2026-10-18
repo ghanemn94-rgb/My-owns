@@ -58,7 +58,14 @@ export function DataTable<T>({
   });
 
   return (
-    <div className="table-wrap" aria-busy={busy ? "true" : "false"}>
+    // T-DG5-FE-V1 (F-DG5-141): a horizontally scrolled table is reachable by keyboard and named by its caption.
+    <div
+      className="table-wrap"
+      tabIndex={0}
+      role="region"
+      aria-label={t("common.table.scrollRegion", { caption: caption })}
+      aria-busy={busy ? "true" : "false"}
+    >
       <table className="table">
         <caption className="visually-hidden">{caption}</caption>
         <thead>
