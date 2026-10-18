@@ -1,0 +1,232 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Auditor ar
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+        - listitem [ref=e137]:
+          - link "الإدارة" [ref=e138] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e139]: الإدارة
+          - list "الإدارة" [ref=e140]:
+            - listitem [ref=e141]:
+              - link "التقويم" [ref=e142] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e143]:
+              - link "استوديو الدليل" [ref=e144] [cursor=pointer]:
+                - /url: /admin/studio
+            - listitem [ref=e145]:
+              - link "ترحيل المنهجية" [ref=e146] [cursor=pointer]:
+                - /url: /admin/methodology-migrations
+            - listitem [ref=e147]:
+              - link "تغطية المصدر" [ref=e148] [cursor=pointer]:
+                - /url: /admin/source-coverage
+            - listitem [ref=e149]:
+              - link "منشئ النماذج" [ref=e150] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e151]:
+              - link "منشئ الإجراءات" [ref=e152] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e153]:
+              - link "الأتمتة" [ref=e154] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e155]:
+              - link "مسارات الاعتماد" [ref=e156] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e157]:
+              - link "الهوية البصرية" [ref=e158] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e159]:
+              - link "بيئة العرض التوضيحي" [ref=e160] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e161]:
+              - link "تسجيل فحص سلامة التحوّل" [ref=e162] [cursor=pointer]:
+                - /url: /admin/health-schemes
+      - paragraph [ref=e163]:
+        - link "حول هذا المنتج" [ref=e164] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e165]:
+      - alert [ref=e167]:
+        - img [ref=e168]
+        - generic [ref=e170]:
+          - paragraph [ref=e171]: حدث خطأ
+          - paragraph [ref=e172]: تعذّر تحميل هذه الصفحة. تحقّق من الاتصال، ثم أعد تحميل الصفحة.
+          - button "إعادة المحاولة" [ref=e173] [cursor=pointer]:
+            - img [ref=e174]
+            - text: إعادة المحاولة
+```

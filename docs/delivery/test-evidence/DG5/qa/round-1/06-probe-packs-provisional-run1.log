@@ -1,0 +1,49 @@
+$ QA_SAMPLES_DIR=<evidence>/samples QA_PG_PORT=26640 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-qa-dg5r1c-packs-provisional-samples.test.ts  (node v24.21.0, 2026-10-18T03:11:43Z)
+ 03:11:43 up  1:11,  0 user,  load average: 5.41, 5.59, 5.43
+port-policy: PostgreSQL listening on port 26640 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-dg5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvd91ete_cded47b5 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/zz-qa-dg5r1c-packs-provisional-samples.test.ts (6 tests | 6 skipped) 4180ms
+   ↓ P-S13-008: a pending benefit value is labelled provisional in the PDF pack > the executive pack's snapshot holds provisional benefit values (submitted value, pending Finance)
+   ↓ P-S13-008: a pending benefit value is labelled provisional in the PDF pack > executive_pack: every PDF (en, ar) prints the provisional label on the lines of its provisional values
+   ↓ P-S13-008: a pending benefit value is labelled provisional in the PDF pack > gate_pack_G1: every PDF (en, ar) prints the provisional label on the lines of its provisional values
+   ↓ P-S13-008: a pending benefit value is labelled provisional in the PDF pack > gate_pack_G3: every PDF (en, ar) prints the provisional label on the lines of its provisional values
+   ↓ P-S13-008: a pending benefit value is labelled provisional in the PDF pack > gate_pack_G5: every PDF (en, ar) prints the provisional label on the lines of its provisional values
+   ↓ P-DLV-037: PDF/DOCX/XLSX/PPTX samples in en and ar for manual inspection > writes the samples and checks each is non-empty, RTL in ar and LTR in en
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-qa-dg5r1c-packs-provisional-samples.test.ts [ tests/qa/integration/zz-qa-dg5r1c-packs-provisional-samples.test.ts ]
+AssertionError: period: {"type":"urn:mth:problem:duplicate","title":"Duplicate","status":409,"detail":"A monthly reporting period 2026-09 already exists.","code":"reporting_period.label_taken","requestId":"01a14cfe-b845-77d4-a02a-5c7f06e9f424"}: expected 409 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 409[39m
+
+ ❯ ok tests/qa/support/a15.ts:30:76
+     28| 
+     29| export const ok = (res: { status: number; body: unknown }, status: num…
+     30|   expect(res.status, `${what}: ${JSON.stringify(res.body).slice(0, 800…
+       |                                                                            ^
+     31|   return res.body as Body;
+     32| };
+ ❯ tests/qa/integration/zz-qa-dg5r1c-packs-provisional-samples.test.ts:59:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 skipped (6)
+   Start at  03:11:45
+   Duration  19.21s (transform 5.90s, setup 0ms, collect 11.37s, tests 4.18s, environment 0ms, prepare 175ms)
+
+EXIT 1
+2026-10-18T03:12:04Z

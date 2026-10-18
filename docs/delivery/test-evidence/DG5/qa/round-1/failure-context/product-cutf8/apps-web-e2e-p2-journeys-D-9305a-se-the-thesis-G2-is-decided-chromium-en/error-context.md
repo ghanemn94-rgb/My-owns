@@ -1,0 +1,478 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Lead
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - generic [ref=e20]:
+    - navigation "Primary navigation" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "My Work" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: My Work
+          - list "My Work" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Tasks and inbox" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "Approvals" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "Delegations" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "Notification preferences" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "Executive Overview" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: Executive Overview
+          - list "Executive Overview" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Dashboards" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "RAG policy" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "Transformations" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: Transformations
+        - listitem [ref=e46]:
+          - link "Playbook and Procedures" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "Phase steps and review queue" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "Playbook reader" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "My procedures" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "90-day launch plan" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "Health check" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "Strategy and KPIs" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "KPIs" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "Target Operating Model" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: Target Operating Model
+        - listitem [ref=e69]:
+          - link "Initiatives and Roadmaps" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "Portfolios" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "Owner updates" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "Governance" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: Governance
+          - list "Governance" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "Groups" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "Forums" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "Meetings" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "Executive decisions (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "Change requests" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "Risks and Actions" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: Risks and Actions
+          - list "Risks and Actions" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "RAID (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "Action register" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "Corrective actions" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "Benefits and Finance" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "Benefits register (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "Change and Adoption" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: Change and Adoption
+          - list "Change and Adoption" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Adoption plan (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "Evidence and Reports" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "Reports and snapshots" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "Exports" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "Presentation mode" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "Evidence register" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "BAU and Improvement" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "Performance areas" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "Improvement backlog" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "Lessons" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "Lesson search" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "About this product" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "Breadcrumbs" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "Transformations" [ref=e145] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e146]:
+                - text: /
+                - link "TR-0008" [ref=e147] [cursor=pointer]:
+                  - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32
+              - listitem [ref=e148]: /Gate G2
+          - generic [ref=e150]:
+            - heading "Gate G2" [level=1] [ref=e151]
+            - paragraph [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: TR-0008
+                - generic [ref=e155]: Synthetic P2 EN journey
+                - generic [ref=e156]:
+                  - img [ref=e157]
+                  - text: Draft – not submitted
+                - generic [ref=e159]: "Phase: Define"
+        - navigation "Transformation workspace" [ref=e160]:
+          - list [ref=e161]:
+            - listitem [ref=e162]:
+              - link "Overview" [ref=e163] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32
+            - listitem [ref=e164]:
+              - link "Diagnose" [ref=e165] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/diagnose
+            - listitem [ref=e166]:
+              - link "Charter" [ref=e167] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/charter
+            - listitem [ref=e168]:
+              - link "Define" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/define
+            - listitem [ref=e170]:
+              - link "Design" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/design
+            - listitem [ref=e172]:
+              - link "Portfolio" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/portfolio
+            - listitem [ref=e174]:
+              - link "Prioritization" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/prioritization
+            - listitem [ref=e176]:
+              - link "Roadmap" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/roadmap
+            - listitem [ref=e178]:
+              - link "Dependencies" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/dependencies
+            - listitem [ref=e180]:
+              - link "Capacity" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/capacity
+            - listitem [ref=e182]:
+              - link "Business cases" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/business-cases
+            - listitem [ref=e184]:
+              - link "Benefit formulas" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/benefit-formulas
+            - listitem [ref=e186]:
+              - link "Decisions" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/decisions
+            - listitem [ref=e188]:
+              - link "Gates" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/gates
+            - listitem [ref=e190]:
+              - link "Readiness" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/readiness
+            - listitem [ref=e192]:
+              - link "Dispensations" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/dispensations
+            - listitem [ref=e194]:
+              - link "Evidence" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/evidence
+            - listitem [ref=e196]:
+              - link "Team" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/team
+            - listitem [ref=e198]:
+              - link "Role mapping" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/role-mappings
+            - listitem [ref=e200]:
+              - link "Decision rights" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/decision-rights
+            - listitem [ref=e202]:
+              - link "RACI" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/raci
+            - listitem [ref=e204]:
+              - link "Transform readiness" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/transform-readiness
+            - listitem [ref=e206]:
+              - link "Approval records" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/approval-decisions
+            - listitem [ref=e208]:
+              - link "KPIs" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/kpis
+            - listitem [ref=e210]:
+              - link "Benefits register (T14)" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/benefits
+            - listitem [ref=e212]:
+              - link "RAID (T15)" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/raid
+            - listitem [ref=e214]:
+              - link "Actions" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/actions
+            - listitem [ref=e216]:
+              - link "Corrective actions" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/corrective-actions
+            - listitem [ref=e218]:
+              - link "Forums" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/forums
+            - listitem [ref=e220]:
+              - link "Meetings" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/meetings
+            - listitem [ref=e222]:
+              - link "Executive decisions (T16)" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/executive-decisions
+            - listitem [ref=e224]:
+              - link "Adoption" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/adoption
+            - listitem [ref=e226]:
+              - link "BAU and performance areas" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/bau
+            - listitem [ref=e228]:
+              - link "Improvement backlog" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/improvement
+            - listitem [ref=e230]:
+              - link "Lessons" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/lessons
+            - listitem [ref=e232]:
+              - link "Dashboard (T10)" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/dashboard
+            - listitem [ref=e234]:
+              - link "Closure" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/closure
+            - listitem [ref=e236]:
+              - link "Phases" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/phases
+            - listitem [ref=e238]:
+              - link "Change requests" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/change-requests
+            - listitem [ref=e240]:
+              - link "Traceability" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/traceability
+            - listitem [ref=e242]:
+              - link "Modular entry" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/modular-entry
+            - listitem [ref=e244]:
+              - link "Workstreams" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/workstreams
+        - note [ref=e246]:
+          - generic [ref=e247]:
+            - img [ref=e248]
+            - text: Business approval
+          - text: A stage gate is a business approval decided by the configured approver, a person. This software checks readiness and records the decision; it never approves anything itself.
+        - region "G2 - Direction" [ref=e250]:
+          - generic [ref=e251]:
+            - heading "G2 - Direction" [level=2] [ref=e252]
+            - button "Submit for decision" [active] [ref=e255] [cursor=pointer]:
+              - img [ref=e256]
+              - text: Submit for decision
+          - generic [ref=e258]:
+            - generic [ref=e259]:
+              - term [ref=e260]: Decision question
+              - definition [ref=e261]: Are outcomes specific enough to steer decisions?
+            - generic [ref=e262]:
+              - term [ref=e263]: Evidence required
+              - definition [ref=e264]: North Star, outcome tree, KPI definitions, guardrails.
+            - generic [ref=e265]:
+              - term [ref=e266]: Status
+              - definition [ref=e267]:
+                - generic [ref=e268]:
+                  - img [ref=e269]
+                  - text: Submitted
+            - generic [ref=e271]:
+              - term [ref=e272]: Approver
+              - definition [ref=e273]:
+                - text: Executive Sponsor
+                - generic [ref=e274]: Any holder of this role on the transformation
+            - generic [ref=e275]:
+              - term [ref=e276]: Closes phase
+              - definition [ref=e277]:
+                - text: Define
+                - generic [ref=e278]: "Approval opens: Design"
+            - generic [ref=e279]:
+              - term [ref=e280]: Current submission
+              - definition [ref=e281]:
+                - text: "Submission #1 · Awaiting decision"
+                - generic [ref=e282]: 18 Oct 2026, 06:28 · Synthetic Transformation Lead (Transformation Lead) · you
+        - region "Readiness (live)" [ref=e283]:
+          - heading "Readiness (live)" [level=2] [ref=e285]
+          - generic [ref=e286]: Evaluated now from the recorded data. Unverified evidence never completes an output that needs verified evidence.
+          - status [ref=e287]:
+            - img [ref=e288]
+            - text: 5 of 5 mandatory outputs complete
+          - region "Table of required outputs (scrollable)" [ref=e290]:
+            - table "Readiness (live)" [ref=e291]:
+              - caption [ref=e292]: Readiness (live)
+              - rowgroup [ref=e293]:
+                - row "Required output Completeness What is missing Evidence" [ref=e294]:
+                  - columnheader "Required output" [ref=e295]
+                  - columnheader "Completeness" [ref=e296]
+                  - columnheader "What is missing" [ref=e297]
+                  - columnheader "Evidence" [ref=e298]
+              - rowgroup [ref=e299]:
+                - row "North Star Mandatory Complete None Not required" [ref=e300]:
+                  - rowheader "North Star Mandatory" [ref=e301]:
+                    - text: North Star
+                    - generic [ref=e302]: Mandatory
+                  - cell "Complete" [ref=e303]:
+                    - generic [ref=e304]:
+                      - img [ref=e305]
+                      - text: Complete
+                  - cell "None" [ref=e307]
+                  - cell "Not required" [ref=e308]
+                - row "Outcome tree Mandatory Complete None Not required" [ref=e309]:
+                  - rowheader "Outcome tree Mandatory" [ref=e310]:
+                    - text: Outcome tree
+                    - generic [ref=e311]: Mandatory
+                  - cell "Complete" [ref=e312]:
+                    - generic [ref=e313]:
+                      - img [ref=e314]
+                      - text: Complete
+                  - cell "None" [ref=e316]
+                  - cell "Not required" [ref=e317]
+                - row "KPI definitions Mandatory Complete None Not required" [ref=e318]:
+                  - rowheader "KPI definitions Mandatory" [ref=e319]:
+                    - text: KPI definitions
+                    - generic [ref=e320]: Mandatory
+                  - cell "Complete" [ref=e321]:
+                    - generic [ref=e322]:
+                      - img [ref=e323]
+                      - text: Complete
+                  - cell "None" [ref=e325]
+                  - cell "Not required" [ref=e326]
+                - row "Target trajectory Mandatory Complete None Not required" [ref=e327]:
+                  - rowheader "Target trajectory Mandatory" [ref=e328]:
+                    - text: Target trajectory
+                    - generic [ref=e329]: Mandatory
+                  - cell "Complete" [ref=e330]:
+                    - generic [ref=e331]:
+                      - img [ref=e332]
+                      - text: Complete
+                  - cell "None" [ref=e334]
+                  - cell "Not required" [ref=e335]
+                - row "Guardrails Mandatory Complete None Not required" [ref=e336]:
+                  - rowheader "Guardrails Mandatory" [ref=e337]:
+                    - text: Guardrails
+                    - generic [ref=e338]: Mandatory
+                  - cell "Complete" [ref=e339]:
+                    - generic [ref=e340]:
+                      - img [ref=e341]
+                      - text: Complete
+                  - cell "None" [ref=e343]
+                  - cell "Not required" [ref=e344]
+        - region "Gate exceptions" [ref=e345]:
+          - generic [ref=e346]:
+            - heading "Gate exceptions" [level=2] [ref=e347]
+            - button "Request an exception" [ref=e349] [cursor=pointer]:
+              - img [ref=e350]
+              - text: Request an exception
+          - generic [ref=e352]: An exception lets one mandatory criterion be submitted incomplete. It needs a reason, a scope, a compensating action with an owner and an expiry date, and it is decided by the gate's configured approver. It covers the criterion only while today is on or before its expiry date; after that the criterion is missing again.
+          - generic [ref=e353]:
+            - img [ref=e354]
+            - paragraph [ref=e357]: No exception has been requested for this gate.
+        - region "Submission history" [ref=e358]:
+          - heading "Submission history" [level=2] [ref=e360]
+          - generic [ref=e361]: Every submission keeps its frozen snapshot and, once decided, the decision with its rationale.
+          - table "Submission history" [ref=e363]:
+            - caption [ref=e364]: Submission history
+            - rowgroup [ref=e365]:
+              - row "No. Status Submitted Approver Decision due by Actions" [ref=e366]:
+                - columnheader "No." [ref=e367]
+                - columnheader "Status" [ref=e368]
+                - columnheader "Submitted" [ref=e369]
+                - columnheader "Approver" [ref=e370]
+                - columnheader "Decision due by" [ref=e371]
+                - columnheader "Actions" [ref=e372]
+            - rowgroup [ref=e373]:
+              - 'row "#1 Awaiting decision 18 Oct 2026, 06:28 Synthetic Transformation Lead (Transformation Lead) · you Executive Sponsor None View #1" [ref=e374]':
+                - rowheader "#1" [ref=e375]:
+                  - generic [ref=e376]: "#1"
+                - cell "Awaiting decision" [ref=e377]
+                - cell "18 Oct 2026, 06:28 Synthetic Transformation Lead (Transformation Lead) · you" [ref=e378]:
+                  - text: 18 Oct 2026, 06:28
+                  - generic [ref=e379]: Synthetic Transformation Lead (Transformation Lead) · you
+                - cell "Executive Sponsor" [ref=e380]
+                - cell "None" [ref=e381]
+                - 'cell "View #1" [ref=e382]':
+                  - 'button "View #1" [ref=e383] [cursor=pointer]':
+                    - text: View
+                    - generic [ref=e384]: "#1"
+```

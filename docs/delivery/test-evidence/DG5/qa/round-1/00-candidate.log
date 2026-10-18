@@ -1,0 +1,33 @@
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/review-dg5; sparse-checkout excluding docs/delivery/{test-evidence,runs,handbacks,reviews,assignments}/ and trading_agent/; git checkout 601d7d2
+601d7d282b4bf3293b0ca6213f29600f336a4df0
+/*
+!/docs/delivery/test-evidence/
+!/docs/delivery/runs/
+!/docs/delivery/handbacks/
+!/docs/delivery/reviews/
+!/docs/delivery/assignments/
+!/trading_agent/
+$ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b","files":2172}
+EXIT 0
+$ (main repo HEAD 9e4a314f81abfbb40573faa4960dcadd84a7c05a) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b","files":2172}
+EXIT 0
+$ git -C /home/user/My-owns diff --name-only 601d7d2 HEAD | cut -d/ -f1-3 | sort | uniq -c   (only META_EXCLUDES paths)
+      8 docs/delivery/assignments
+      1 docs/delivery/candidates
+      1 docs/delivery/progress.md
+      2 docs/delivery/reviews
+      6 docs/delivery/runs
+      1 docs/delivery/stages.json
+    444 docs/delivery/test-evidence
+== end-of-review re-check 2026-10-18T04:52:45Z
+$ git -C <clone> rev-parse HEAD; git status --short
+601d7d282b4bf3293b0ca6213f29600f336a4df0
+(status lines: 0)
+$ node tools/gates/candidate.mjs --stage DG5 (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b","files":2172}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 (working tree, HEAD 4ae189c)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b","files":2172}
+EXIT 0

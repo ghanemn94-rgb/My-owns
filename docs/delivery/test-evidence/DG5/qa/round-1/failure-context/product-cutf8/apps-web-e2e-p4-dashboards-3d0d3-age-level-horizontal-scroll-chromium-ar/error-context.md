@@ -1,0 +1,4996 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Office
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+        - listitem [ref=e137]:
+          - link "الإدارة" [ref=e138] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e139]: الإدارة
+          - list "الإدارة" [ref=e140]:
+            - listitem [ref=e141]:
+              - link "التقويم" [ref=e142] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e143]:
+              - link "استوديو الدليل" [ref=e144] [cursor=pointer]:
+                - /url: /admin/studio
+            - listitem [ref=e145]:
+              - link "ترحيل المنهجية" [ref=e146] [cursor=pointer]:
+                - /url: /admin/methodology-migrations
+            - listitem [ref=e147]:
+              - link "تغطية المصدر" [ref=e148] [cursor=pointer]:
+                - /url: /admin/source-coverage
+            - listitem [ref=e149]:
+              - link "منشئ النماذج" [ref=e150] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e151]:
+              - link "منشئ الإجراءات" [ref=e152] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e153]:
+              - link "الأتمتة" [ref=e154] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e155]:
+              - link "مسارات الاعتماد" [ref=e156] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e157]:
+              - link "الهوية البصرية" [ref=e158] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e159]:
+              - link "بيئة العرض التوضيحي" [ref=e160] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e161]:
+              - link "تسجيل فحص سلامة التحوّل" [ref=e162] [cursor=pointer]:
+                - /url: /admin/health-schemes
+      - paragraph [ref=e163]:
+        - link "حول هذا المنتج" [ref=e164] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e168]:
+          - generic [ref=e169]:
+            - heading "النظرة التنفيذية" [level=1] [ref=e170]
+            - paragraph [ref=e171]: النتائج والقيمة والمبادرات الحرجة والتبنّي والعوائق والقرارات للتحوّلات التي يمكنك قراءتها.
+          - link "جميع لوحات المؤشرات" [ref=e173] [cursor=pointer]:
+            - /url: /dashboards
+        - generic [ref=e174]:
+          - search "مرشحات لوحة المؤشرات" [ref=e175]:
+            - generic [ref=e176]:
+              - generic [ref=e177]: الفترة
+              - combobox "الفترة" [ref=e178]:
+                - option "كل الفترات (حتى تاريخه)" [selected]
+                - option "2090-Q2 (ربع سنوي)"
+                - option "2090-Q1 (ربع سنوي)"
+                - option "2041-01 (شهري)"
+                - option "2031-01 (شهري)"
+                - option "2027-01 (شهري)"
+                - option "2026-10 (شهري)"
+            - generic [ref=e179]:
+              - generic [ref=e180]: التحوّل
+              - combobox "التحوّل" [ref=e181]:
+                - option "إضافة تحوّل…" [selected]
+                - option "TR-0001 · Synthetic FE-C3 EN mvd9i5v9"
+                - option "TR-0002 · Synthetic FE-D3 EN dry-run sample"
+                - option "TR-0003 · Synthetic FE-D5 EN form headers 1792293907407"
+                - option "TR-0005 · Synthetic EN lead-created record"
+                - option "TR-0006 · Synthetic blank-text EN check"
+                - option "TR-0007 · Synthetic form-level problem EN check"
+                - option "TR-0008 · Synthetic P2 EN journey"
+                - option "TR-0009 · Synthetic P3 business cases EN check"
+                - option "TR-0010 · Synthetic G4 refusal EN"
+                - option "TR-0011 · Synthetic inherited approval layout EN"
+                - option "TR-0012 · Synthetic P3 journey EN"
+                - option "TR-0013 · Synthetic P3 portfolio EN check"
+                - option "TR-0014 · Synthetic P3 prioritization EN check"
+                - option "TR-0015 · Synthetic P3 seams EN check"
+                - option "TR-0016 · Synthetic P3 UI completion EN check"
+                - option "TR-0017 · Synthetic P4 adoption and BAU EN mvd9xp9s"
+                - option "TR-0018 · Synthetic P4 other transformation EN mvd9xp9s"
+                - option "TR-0019 · Synthetic P4 benefits EN mvd9zkpu"
+                - option "TR-0020 · Synthetic P4 change control and phases EN mvda1lm0"
+                - option "TR-0021 · Synthetic P4 dashboards A EN mvda2xh7"
+                - option "TR-0022 · Synthetic P4 dashboards B EN mvda2xh7"
+                - option "TR-0023 · Synthetic P4 dashboards unit EN mvda2xh7"
+                - option "TR-0024 · Synthetic P4 execution EN mvda4ao3"
+                - option "TR-0025 · Synthetic P4 G5 G6 and closure EN mvda5ewz"
+                - option "TR-0026 · Synthetic P4 Modular G3 waiver EN mvda5ewz"
+                - option "TR-0027 · Synthetic P4 governance EN mvda7hoi"
+                - option "TR-0028 · Synthetic P4 KPI unit EN mvda8wcy"
+                - option "TR-0029 · Synthetic P4 KPI EN mvda9cqg"
+                - option "TR-0030 · Synthetic P4 percentage KPI EN mvdaajx0"
+                - option "TR-0031 · Synthetic P4 RAID and governance EN mvdab2cz"
+                - option "TR-0032 · Synthetic P4 traceability EN mvdacixw"
+                - option "TR-0033 · Synthetic P4 value headlines EN mvdadw4j"
+                - option "TR-0034 · Synthetic P4 value RAG lines EN mvdaedsk"
+                - option "TR-0035 · Synthetic BU limit en mvdaedsk 0"
+                - option "TR-0036 · Synthetic BU limit en mvdaedsk 1"
+                - option "TR-0037 · Synthetic BU limit en mvdaedsk 2"
+                - option "TR-0038 · Synthetic BU limit en mvdaedsk 3"
+                - option "TR-0039 · Synthetic BU limit en mvdaedsk 4"
+                - option "TR-0040 · Synthetic BU limit en mvdaedsk 5"
+                - option "TR-0041 · Synthetic BU limit en mvdaedsk 6"
+                - option "TR-0042 · Synthetic BU limit en mvdaedsk 7"
+                - option "TR-0043 · Synthetic BU limit en mvdaedsk 8"
+                - option "TR-0044 · Synthetic BU limit en mvdaedsk 9"
+                - option "TR-0045 · Synthetic BU limit en mvdaedsk 10"
+                - option "TR-0046 · Synthetic BU limit en mvdaedsk 11"
+                - option "TR-0047 · Synthetic BU limit en mvdaedsk 12"
+                - option "TR-0048 · Synthetic BU limit en mvdaedsk 13"
+                - option "TR-0049 · Synthetic BU limit en mvdaedsk 14"
+                - option "TR-0050 · Synthetic BU limit en mvdaedsk 15"
+                - option "TR-0051 · Synthetic BU limit en mvdaedsk 16"
+                - option "TR-0052 · Synthetic BU limit en mvdaedsk 17"
+                - option "TR-0053 · Synthetic BU limit en mvdaedsk 18"
+                - option "TR-0054 · Synthetic BU limit en mvdaedsk 19"
+                - option "TR-0055 · Synthetic BU limit en mvdaedsk 20"
+                - option "TR-0056 · Synthetic BU limit en mvdaedsk 21"
+                - option "TR-0057 · Synthetic BU limit en mvdaedsk 22"
+                - option "TR-0058 · Synthetic BU limit en mvdaedsk 23"
+                - option "TR-0059 · Synthetic BU limit en mvdaedsk 24"
+                - option "TR-0060 · Synthetic BU limit en mvdaedsk 25"
+                - option "TR-0061 · Synthetic BU limit en mvdaedsk 26"
+                - option "TR-0062 · Synthetic BU limit en mvdaedsk 27"
+                - option "TR-0063 · Synthetic BU limit en mvdaedsk 28"
+                - option "TR-0064 · Synthetic BU limit en mvdaedsk 29"
+                - option "TR-0065 · Synthetic BU limit en mvdaedsk 30"
+                - option "TR-0066 · Synthetic BU limit en mvdaedsk 31"
+                - option "TR-0067 · Synthetic BU limit en mvdaedsk 32"
+                - option "TR-0068 · Synthetic BU limit en mvdaedsk 33"
+                - option "TR-0069 · Synthetic BU limit en mvdaedsk 34"
+                - option "TR-0070 · Synthetic BU limit en mvdaedsk 35"
+                - option "TR-0071 · Synthetic BU limit en mvdaedsk 36"
+                - option "TR-0072 · Synthetic BU limit en mvdaedsk 37"
+                - option "TR-0073 · Synthetic BU limit en mvdaedsk 38"
+                - option "TR-0074 · Synthetic BU limit en mvdaedsk 39"
+                - option "TR-0075 · Synthetic BU limit en mvdaedsk 40"
+                - option "TR-0076 · Synthetic BU limit en mvdaedsk 41"
+                - option "TR-0077 · Synthetic BU limit en mvdaedsk 42"
+                - option "TR-0078 · Synthetic BU limit en mvdaedsk 43"
+                - option "TR-0079 · Synthetic BU limit en mvdaedsk 44"
+                - option "TR-0080 · Synthetic BU limit en mvdaedsk 45"
+                - option "TR-0081 · Synthetic BU limit en mvdaedsk 46"
+                - option "TR-0082 · Synthetic BU limit en mvdaedsk 47"
+                - option "TR-0083 · Synthetic BU limit en mvdaedsk 48"
+                - option "TR-0084 · Synthetic BU limit en mvdaedsk 49"
+                - option "TR-0085 · Synthetic BU limit en mvdaedsk 50"
+                - option "TR-0086 · Synthetic FE-C2 T13 EN mvdaerva"
+                - option "TR-0087 · Synthetic P5 forms EN mvdaf130"
+                - option "TR-0088 · Synthetic FE-F EN launch"
+                - option "TR-0089 · Synthetic FE-F EN health"
+                - option "TR-0090 · Synthetic FE-F EN value"
+                - option "TR-0091 · Synthetic FE-D4 EN procedure outputs"
+                - option "TR-0092 · Synthetic FE-D EN automation"
+                - option "TR-0093 · Synthetic FE-D EN procedures"
+                - option "TR-0094 · Synthetic FE-D EN governance"
+                - option "TR-0095 · Synthetic FE-G reader EN"
+                - option "TR-0096 · Synthetic FE-E EN reports"
+                - option "TR-0097 · Synthetic FE-E EN exports"
+                - option "TR-0098 · Synthetic FE-E EN updates"
+                - option "TR-0099 · Synthetic FE-E EN presentation"
+                - option "TR-0100 · Synthetic FE-E EN evidence"
+                - option "TR-0101 · Synthetic FE-G2 EN snapshot page"
+                - option "TR-0102 · Synthetic session-end EN check"
+                - option "TR-0103 · Synthetic A-only FE13 EN mvdalix0"
+                - option "TR-0104 · Synthetic FE-C3 AR mvdalp4r"
+                - option "TR-0105 · Synthetic FE-D3 AR dry-run sample"
+                - option "TR-0106 · Synthetic FE-D5 AR form headers 1792295752403"
+                - option "TR-0108 · Synthetic AR lead-created record"
+                - option "TR-0109 · Synthetic blank-text AR check"
+                - option "TR-0110 · Synthetic form-level problem AR check"
+                - option "TR-0111 · Synthetic P2 AR journey"
+                - option "TR-0112 · Synthetic P3 business cases AR check"
+                - option "TR-0113 · Synthetic G4 refusal AR"
+                - option "TR-0114 · Synthetic inherited approval layout AR"
+                - option "TR-0115 · Synthetic P3 journey AR"
+                - option "TR-0116 · Synthetic P3 portfolio AR check"
+                - option "TR-0117 · Synthetic P3 prioritization AR check"
+                - option "TR-0118 · Synthetic P3 seams AR check"
+                - option "TR-0119 · Synthetic P3 UI completion AR check"
+                - option "TR-0120 · Synthetic P4 adoption and BAU AR mvday0z7"
+                - option "TR-0121 · Synthetic P4 other transformation AR mvday0z7"
+                - option "TR-0122 · Synthetic P4 benefits AR mvdazdrv"
+                - option "TR-0123 · Synthetic P4 change control and phases AR mvdb0wfq"
+                - option "TR-0124 · Synthetic P4 dashboards A AR mvdb205f"
+                - option "TR-0125 · Synthetic P4 dashboards B AR mvdb205f"
+                - option "TR-0126 · Synthetic P4 dashboards unit AR mvdb205f"
+              - generic [ref=e182]: "قابل للتكرار: اخترت 0 من 50 كحد أقصى. لا تُعرض إلا التحوّلات التي يحق لك قراءتها."
+            - generic [ref=e183]:
+              - generic [ref=e184]: وحدة العمل
+              - combobox "وحدة العمل" [ref=e185]:
+                - option "الكل" [selected]
+                - option "وحدة لوحات اصطناعية ar mvdb205f (SYN-DASH-AR-MVDB205F)"
+                - option "وحدة لوحات اصطناعية en mvda2xh7 (SYN-DASH-EN-MVDA2XH7)"
+                - option "المالية (اصطناعي) (SYN-FIN)"
+                - option "العمليات (اصطناعي) (SYN-OPS)"
+                - option "التجزئة (اصطناعي) (SYN-RETAIL)"
+                - option "وحدة اصطناعية en mvdaedsk (SYN-RL-EN-MVDAEDSK)"
+            - generic [ref=e186]:
+              - generic [ref=e187]: المالك
+              - combobox "المالك" [ref=e188]:
+                - option "الكل" [selected]
+                - option "Synthetic Transformation Office · أنت"
+            - generic [ref=e189]:
+              - generic [ref=e190]: المرحلة
+              - combobox "المرحلة" [ref=e191]:
+                - option "الكل" [selected]
+                - option "التشخيص"
+                - option "التحديد (تحديد التوجّه)"
+                - option "التصميم"
+                - option "التعبئة (حشد الموارد والتهيئة للتنفيذ)"
+                - option "التحويل والتنفيذ"
+                - option "تحقيق القيمة"
+            - generic [ref=e192]:
+              - generic [ref=e193]: الحالة
+              - combobox "الحالة" [ref=e194]:
+                - option "الكل" [selected]
+                - option "مسودة – لم تُقدَّم"
+                - option "نشط"
+                - option "معلّق"
+                - option "مغلق"
+          - paragraph [ref=e195]:
+            - img [ref=e196]
+            - text: "النطاق: المؤسسة مؤسسة تطوير تجريبية (بيانات اصطناعية)، مقصوراً على التحوّلات التي يحق لك قراءتها."
+          - note [ref=e198]:
+            - img [ref=e199]
+            - text: "النطاق: حتى تاريخه · حتى تاريخ 18‏/10‏/2026"
+        - paragraph [ref=e201]:
+          - text: محسوبة من السجلات في 18‏/10‏/2026 07:09؛ لا يُخزَّن أي رقم.
+          - button "تحديث" [ref=e202] [cursor=pointer]:
+            - img [ref=e203]
+            - text: تحديث
+        - paragraph [ref=e205]:
+          - strong [ref=e206]: "التحوّلات ضمن النطاق: 124"
+        - generic [ref=e207]:
+          - region "النتائج" [ref=e208]:
+            - generic [ref=e209]:
+              - heading "النتائج" [level=2] [ref=e210]
+              - generic [ref=e211]:
+                - img [ref=e212]
+                - text: غير معروف
+            - paragraph [ref=e214]:
+              - text: الفعلي مقابل خط الأساس مقابل المستهدف؛ الاتجاه
+              - generic [ref=e215]: "منطق الحالة: حالة RAG وفق مسار المستهدف، لا وفق إنجاز الأنشطة"
+            - paragraph [ref=e216]:
+              - img [ref=e217]
+              - text: "التسميات العربية مؤقتة. المصدر: Outcomes"
+            - paragraph [ref=e219]:
+              - text: "النتائج: أسوأ حالة لمؤشر أداء النتيجة مقابل مساره المستهدف."
+              - generic [ref=e220]: حدود افتراضية
+            - generic [ref=e222]:
+              - term [ref=e223]: مؤشرات أداء النتائج
+              - definition [ref=e224]:
+                - strong [ref=e226]: "13"
+                - 'button "التفاصيل : مؤشرات أداء النتائج" [ref=e227] [cursor=pointer]':
+                  - text: التفاصيل
+                  - generic [ref=e228]: ": مؤشرات أداء النتائج"
+            - table "السجلات في هذا المجال" [ref=e230]:
+              - caption [ref=e231]: السجلات في هذا المجال
+              - rowgroup [ref=e232]:
+                - row "السجل الحالة القيمة الاستحقاق" [ref=e233]:
+                  - columnheader "السجل" [ref=e234]
+                  - columnheader "الحالة" [ref=e235]
+                  - columnheader "القيمة" [ref=e236]
+                  - columnheader "الاستحقاق" [ref=e237]
+              - rowgroup [ref=e238]:
+                - row "Synthetic retail bills are right the first time غير معروف — —" [ref=e239]:
+                  - rowheader "Synthetic retail bills are right the first time" [ref=e240]:
+                    - link "Synthetic retail bills are right the first time" [ref=e241] [cursor=pointer]:
+                      - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/define
+                  - cell "غير معروف" [ref=e242]:
+                    - generic [ref=e243]:
+                      - img [ref=e244]
+                      - text: غير معروف
+                  - cell "—" [ref=e246]
+                  - cell "—" [ref=e247]
+                - 'row "2041-01 Synthetic billing error rate المحسوب: غير معروف غير معروف غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط. —" [ref=e248]':
+                  - 'rowheader "2041-01 Synthetic billing error rate المحسوب: غير معروف" [ref=e249]':
+                    - link "2041-01 Synthetic billing error rate" [ref=e250] [cursor=pointer]:
+                      - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/kpis/01a14d0c-b290-7694-82c4-d1e05591bee0
+                    - generic [ref=e252]: "المحسوب: غير معروف"
+                  - cell "غير معروف" [ref=e253]:
+                    - generic [ref=e254]:
+                      - img [ref=e255]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط." [ref=e257]':
+                    - generic [ref=e258]:
+                      - generic [ref=e259]:
+                        - img [ref=e260]
+                        - generic [ref=e262]: غير معروف
+                      - generic [ref=e263]: "غير معروف: ليس لمؤشر الأداء إصدار نشط."
+                  - cell "—" [ref=e264]
+                - row "Synthetic retail bills are right the first time غير معروف — —" [ref=e265]:
+                  - rowheader "Synthetic retail bills are right the first time" [ref=e266]:
+                    - link "Synthetic retail bills are right the first time" [ref=e267] [cursor=pointer]:
+                      - /url: /transformations/01a14d0e-d3ca-742f-934c-549974379ee1/define
+                  - cell "غير معروف" [ref=e268]:
+                    - generic [ref=e269]:
+                      - img [ref=e270]
+                      - text: غير معروف
+                  - cell "—" [ref=e272]
+                  - cell "—" [ref=e273]
+                - 'row "2041-01 Synthetic billing error rate KPI المحسوب: غير معروف غير معروف غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط. —" [ref=e274]':
+                  - 'rowheader "2041-01 Synthetic billing error rate KPI المحسوب: غير معروف" [ref=e275]':
+                    - link "2041-01 Synthetic billing error rate KPI" [ref=e276] [cursor=pointer]:
+                      - /url: /transformations/01a14d0e-d3ca-742f-934c-549974379ee1/kpis/01a14d0e-d623-7681-856e-34f3c85c698c
+                    - generic [ref=e278]: "المحسوب: غير معروف"
+                  - cell "غير معروف" [ref=e279]:
+                    - generic [ref=e280]:
+                      - img [ref=e281]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط." [ref=e283]':
+                    - generic [ref=e284]:
+                      - generic [ref=e285]:
+                        - img [ref=e286]
+                        - generic [ref=e288]: غير معروف
+                      - generic [ref=e289]: "غير معروف: ليس لمؤشر الأداء إصدار نشط."
+                  - cell "—" [ref=e290]
+                - row "Synthetic retail bills are right the first time غير معروف — —" [ref=e291]:
+                  - rowheader "Synthetic retail bills are right the first time" [ref=e292]:
+                    - link "Synthetic retail bills are right the first time" [ref=e293] [cursor=pointer]:
+                      - /url: /transformations/01a14d0f-6ca8-756f-ac35-f9c3fffbda02/define
+                  - cell "غير معروف" [ref=e294]:
+                    - generic [ref=e295]:
+                      - img [ref=e296]
+                      - text: غير معروف
+                  - cell "—" [ref=e298]
+                  - cell "—" [ref=e299]
+                - 'row "2041-01 Synthetic billing error rate KPI المحسوب: غير معروف غير معروف غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط. —" [ref=e300]':
+                  - 'rowheader "2041-01 Synthetic billing error rate KPI المحسوب: غير معروف" [ref=e301]':
+                    - link "2041-01 Synthetic billing error rate KPI" [ref=e302] [cursor=pointer]:
+                      - /url: /transformations/01a14d0f-6ca8-756f-ac35-f9c3fffbda02/kpis/01a14d0f-b484-763b-b7e1-4b9f7b4d0555
+                    - generic [ref=e304]: "المحسوب: غير معروف"
+                  - cell "غير معروف" [ref=e305]:
+                    - generic [ref=e306]:
+                      - img [ref=e307]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط." [ref=e309]':
+                    - generic [ref=e310]:
+                      - generic [ref=e311]:
+                        - img [ref=e312]
+                        - generic [ref=e314]: غير معروف
+                      - generic [ref=e315]: "غير معروف: ليس لمؤشر الأداء إصدار نشط."
+                  - cell "—" [ref=e316]
+                - 'row "Synthetic: raise digital adoption لا يوجد مؤشر أداء (غير معروف) غير معروف — —" [ref=e317]':
+                  - 'rowheader "Synthetic: raise digital adoption لا يوجد مؤشر أداء (غير معروف)" [ref=e318]':
+                    - 'link "Synthetic: raise digital adoption" [ref=e319] [cursor=pointer]':
+                      - /url: /transformations/01a14d12-aeaf-75ee-8497-a69e3ec31907/define
+                    - generic [ref=e321]: لا يوجد مؤشر أداء (غير معروف)
+                  - cell "غير معروف" [ref=e322]:
+                    - generic [ref=e323]:
+                      - img [ref=e324]
+                      - text: غير معروف
+                  - cell "—" [ref=e326]
+                  - cell "—" [ref=e327]
+                - 'row "Synthetic: billing errors fall. غير معروف — —" [ref=e328]':
+                  - 'rowheader "Synthetic: billing errors fall." [ref=e329]':
+                    - 'link "Synthetic: billing errors fall." [ref=e330] [cursor=pointer]':
+                      - /url: /transformations/01a14d13-553a-727e-a3f7-89ce9f95e648/define
+                  - cell "غير معروف" [ref=e331]:
+                    - generic [ref=e332]:
+                      - img [ref=e333]
+                      - text: غير معروف
+                  - cell "—" [ref=e335]
+                  - cell "—" [ref=e336]
+                - 'row "2041-01 Synthetic billing error rate KPI المحسوب: غير معروف غير معروف غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط. —" [ref=e337]':
+                  - 'rowheader "2041-01 Synthetic billing error rate KPI المحسوب: غير معروف" [ref=e338]':
+                    - link "2041-01 Synthetic billing error rate KPI" [ref=e339] [cursor=pointer]:
+                      - /url: /transformations/01a14d13-553a-727e-a3f7-89ce9f95e648/kpis/01a14d13-56fa-752c-bd2e-07f78eb96cff
+                    - generic [ref=e341]: "المحسوب: غير معروف"
+                  - cell "غير معروف" [ref=e342]:
+                    - generic [ref=e343]:
+                      - img [ref=e344]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: ليس لمؤشر الأداء إصدار نشط." [ref=e346]':
+                    - generic [ref=e347]:
+                      - generic [ref=e348]:
+                        - img [ref=e349]
+                        - generic [ref=e351]: غير معروف
+                      - generic [ref=e352]: "غير معروف: ليس لمؤشر الأداء إصدار نشط."
+                  - cell "—" [ref=e353]
+                - 'row "Synthetic: billing errors fall. غير معروف — —" [ref=e354]':
+                  - 'rowheader "Synthetic: billing errors fall." [ref=e355]':
+                    - 'link "Synthetic: billing errors fall." [ref=e356] [cursor=pointer]':
+                      - /url: /transformations/01a14d14-8b20-70de-ae34-648c306b2f00/define
+                  - cell "غير معروف" [ref=e357]:
+                    - generic [ref=e358]:
+                      - img [ref=e359]
+                      - text: غير معروف
+                  - cell "—" [ref=e361]
+                  - cell "—" [ref=e362]
+            - button "عرض جميع السجلات (27)" [ref=e363] [cursor=pointer]
+          - region "القيمة" [ref=e364]:
+            - generic [ref=e365]:
+              - heading "القيمة" [level=2] [ref=e366]
+              - generic [ref=e367]:
+                - img [ref=e368]
+                - text: أحمر
+            - paragraph [ref=e370]:
+              - text: المنفعة المحققة / المتوقعة؛ الاستثمار
+              - generic [ref=e371]: "منطق الحالة: حالة RAG وفق فجوة المنفعة المعتمدة"
+            - paragraph [ref=e372]:
+              - img [ref=e373]
+              - text: "التسميات العربية مؤقتة. المصدر: Value"
+            - paragraph [ref=e375]:
+              - text: "القيمة: أسوأ حالات فجوة القيمة المعتمدة لكل أساس وعملة (الربح والنقد، الخط الأعلى، غير نقدية)، وكلٌّ منها القيمة المعتمدة مقابل القيمة المخططة حتى تاريخه على ذلك الأساس؛ ولا تُجمع الفجوات عبر الأسس."
+              - generic [ref=e376]: حدود افتراضية
+            - generic [ref=e377]:
+              - heading "فجوة القيمة حسب الأساس والعملة" [level=3] [ref=e378]
+              - paragraph [ref=e379]:
+                - img [ref=e380]
+                - text: حالة القيمة هي أسوأ هذه الفجوات. كل فجوة على أساسها وعملتها؛ ولا تُجمع الفجوات عبر الأسس أبدًا.
+              - list "فجوة القيمة حسب الأساس والعملة" [ref=e382]:
+                - listitem [ref=e383]:
+                  - generic [ref=e384]: الربح والنقد
+                  - text: SAR ·
+                  - generic [ref=e385]: "فجوة القيمة:"
+                  - generic [ref=e387]: 100 %
+                  - generic [ref=e388]:
+                    - img [ref=e389]
+                    - text: أحمر
+                - listitem [ref=e391]:
+                  - generic [ref=e392]: الخط الأعلى
+                  - text: SAR ·
+                  - generic [ref=e393]: "فجوة القيمة:"
+                  - generic [ref=e395]: 100 %
+                  - generic [ref=e396]:
+                    - img [ref=e397]
+                    - text: أحمر
+                - listitem [ref=e399]:
+                  - generic [ref=e400]: غير نقدية
+                  - text: SAR ·
+                  - generic [ref=e401]: "فجوة القيمة:"
+                  - generic [ref=e403]: 100 %
+                  - generic [ref=e404]:
+                    - img [ref=e405]
+                    - text: أحمر
+                - listitem [ref=e407]:
+                  - generic [ref=e408]: الخط الأعلى
+                  - text: USD ·
+                  - generic [ref=e409]: "فجوة القيمة:"
+                  - generic [ref=e411]: 100 %
+                  - generic [ref=e412]:
+                    - img [ref=e413]
+                    - text: أحمر
+            - generic [ref=e415]:
+              - generic [ref=e416]:
+                - term [ref=e417]:
+                  - text: القيمة المخططة (الربح والنقد)
+                  - generic [ref=e418]: الربح والنقد
+                - definition [ref=e419]:
+                  - strong [ref=e421]: ‏160.00 ر.س.‏
+                  - 'button "التفاصيل : القيمة المخططة (الربح والنقد)" [ref=e422] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e423]: ": القيمة المخططة (الربح والنقد)"
+              - generic [ref=e424]:
+                - term [ref=e425]:
+                  - text: القيمة المتوقعة (الربح والنقد)
+                  - generic [ref=e426]: الربح والنقد
+                - definition [ref=e427]:
+                  - generic [ref=e428]:
+                    - strong [ref=e429]: ‏0.00 ر.س.‏
+                    - generic [ref=e430]: صفر معروف
+                  - 'button "التفاصيل : القيمة المتوقعة (الربح والنقد)" [ref=e431] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e432]: ": القيمة المتوقعة (الربح والنقد)"
+              - generic [ref=e433]:
+                - term [ref=e434]:
+                  - text: القيمة المقدَّمة (الربح والنقد)
+                  - generic [ref=e435]: الربح والنقد
+                - definition [ref=e436]:
+                  - generic [ref=e437]:
+                    - strong [ref=e438]: ‏0.00 ر.س.‏
+                    - generic [ref=e439]: صفر معروف
+                  - 'button "التفاصيل : القيمة المقدَّمة (الربح والنقد)" [ref=e440] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e441]: ": القيمة المقدَّمة (الربح والنقد)"
+              - generic [ref=e442]:
+                - term [ref=e443]:
+                  - text: القيمة المعتمدة (الربح والنقد)
+                  - generic [ref=e444]: الربح والنقد
+                - definition [ref=e445]:
+                  - generic [ref=e446]:
+                    - strong [ref=e447]: ‏0.00 ر.س.‏
+                    - generic [ref=e448]: صفر معروف
+                  - 'button "التفاصيل : القيمة المعتمدة (الربح والنقد)" [ref=e449] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e450]: ": القيمة المعتمدة (الربح والنقد)"
+              - generic [ref=e451]:
+                - term [ref=e452]:
+                  - text: فجوة القيمة (الربح والنقد)
+                  - generic [ref=e453]: الربح والنقد
+                - definition [ref=e454]:
+                  - strong [ref=e456]: 100 %
+                  - 'button "التفاصيل : فجوة القيمة (الربح والنقد)" [ref=e457] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e458]: ": فجوة القيمة (الربح والنقد)"
+              - generic [ref=e459]:
+                - term [ref=e460]:
+                  - text: القيمة المخططة (الربح والنقد)
+                  - generic [ref=e461]: الربح والنقد
+                - definition [ref=e462]:
+                  - generic [ref=e463]:
+                    - generic [ref=e464]:
+                      - img [ref=e465]
+                      - generic [ref=e467]: لا ينطبق
+                    - generic [ref=e468]: "لا ينطبق: لا يوجد شيء مخطط على هذا الأساس (لا توجد منفعة زيادة هامش أو وفر نقدي أو تحرير رأس مال عامل)."
+                  - 'button "التفاصيل : القيمة المخططة (الربح والنقد)" [ref=e469] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e470]: ": القيمة المخططة (الربح والنقد)"
+              - generic [ref=e471]:
+                - term [ref=e472]:
+                  - text: القيمة المتوقعة (الربح والنقد)
+                  - generic [ref=e473]: الربح والنقد
+                - definition [ref=e474]:
+                  - generic [ref=e475]:
+                    - generic [ref=e476]:
+                      - img [ref=e477]
+                      - generic [ref=e479]: لا ينطبق
+                    - generic [ref=e480]: "لا ينطبق: لا يوجد شيء مخطط على هذا الأساس (لا توجد منفعة زيادة هامش أو وفر نقدي أو تحرير رأس مال عامل)."
+                  - 'button "التفاصيل : القيمة المتوقعة (الربح والنقد)" [ref=e481] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e482]: ": القيمة المتوقعة (الربح والنقد)"
+              - generic [ref=e483]:
+                - term [ref=e484]:
+                  - text: القيمة المقدَّمة (الربح والنقد)
+                  - generic [ref=e485]: الربح والنقد
+                - definition [ref=e486]:
+                  - generic [ref=e487]:
+                    - generic [ref=e488]:
+                      - img [ref=e489]
+                      - generic [ref=e491]: لا ينطبق
+                    - generic [ref=e492]: "لا ينطبق: لا يوجد شيء مخطط على هذا الأساس (لا توجد منفعة زيادة هامش أو وفر نقدي أو تحرير رأس مال عامل)."
+                  - 'button "التفاصيل : القيمة المقدَّمة (الربح والنقد)" [ref=e493] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e494]: ": القيمة المقدَّمة (الربح والنقد)"
+              - generic [ref=e495]:
+                - term [ref=e496]:
+                  - text: القيمة المعتمدة (الربح والنقد)
+                  - generic [ref=e497]: الربح والنقد
+                - definition [ref=e498]:
+                  - generic [ref=e499]:
+                    - generic [ref=e500]:
+                      - img [ref=e501]
+                      - generic [ref=e503]: لا ينطبق
+                    - generic [ref=e504]: "لا ينطبق: لا يوجد شيء مخطط على هذا الأساس (لا توجد منفعة زيادة هامش أو وفر نقدي أو تحرير رأس مال عامل)."
+                  - 'button "التفاصيل : القيمة المعتمدة (الربح والنقد)" [ref=e505] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e506]: ": القيمة المعتمدة (الربح والنقد)"
+              - generic [ref=e507]:
+                - term [ref=e508]:
+                  - text: فجوة القيمة (الربح والنقد)
+                  - generic [ref=e509]: الربح والنقد
+                - definition [ref=e510]:
+                  - generic [ref=e511]:
+                    - generic [ref=e512]:
+                      - img [ref=e513]
+                      - generic [ref=e515]: لا ينطبق
+                    - generic [ref=e516]: "لا ينطبق: لا يوجد شيء مخطط على هذا الأساس (لا توجد منفعة زيادة هامش أو وفر نقدي أو تحرير رأس مال عامل)."
+                  - 'button "التفاصيل : فجوة القيمة (الربح والنقد)" [ref=e517] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e518]: ": فجوة القيمة (الربح والنقد)"
+              - generic [ref=e519]:
+                - term [ref=e520]: الاستثمار
+                - definition [ref=e521]:
+                  - strong [ref=e523]: ‏5,190,000.50 ر.س.‏
+                  - 'button "التفاصيل : الاستثمار" [ref=e524] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e525]: ": الاستثمار"
+            - paragraph [ref=e526]:
+              - img [ref=e527]
+              - text: "تُعرض بجانب قيمة الربح والنقد ولا تُضاف إليها أبدًا: زيادة الإيرادات (الخط الأعلى؛ هامشها يدخل في زيادة الهامش) والتكلفة المتجنَّبة (غير نقدية)."
+            - generic [ref=e529]:
+              - generic [ref=e530]:
+                - term [ref=e531]:
+                  - text: زيادة الإيرادات المخططة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e532]: الخط الأعلى
+                - definition [ref=e533]:
+                  - strong [ref=e535]: ‏600.00 ر.س.‏
+                  - 'button "التفاصيل : زيادة الإيرادات المخططة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e536] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e537]: ": زيادة الإيرادات المخططة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e538]:
+                - term [ref=e539]:
+                  - text: زيادة الإيرادات المتوقعة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e540]: الخط الأعلى
+                - definition [ref=e541]:
+                  - generic [ref=e542]:
+                    - strong [ref=e543]: ‏0.00 ر.س.‏
+                    - generic [ref=e544]: صفر معروف
+                  - 'button "التفاصيل : زيادة الإيرادات المتوقعة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e545] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e546]: ": زيادة الإيرادات المتوقعة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e547]:
+                - term [ref=e548]:
+                  - text: زيادة الإيرادات المقدَّمة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e549]: الخط الأعلى
+                - definition [ref=e550]:
+                  - generic [ref=e551]:
+                    - strong [ref=e552]: ‏0.00 ر.س.‏
+                    - generic [ref=e553]: صفر معروف
+                  - 'button "التفاصيل : زيادة الإيرادات المقدَّمة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e554] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e555]: ": زيادة الإيرادات المقدَّمة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e556]:
+                - term [ref=e557]:
+                  - text: زيادة الإيرادات المعتمدة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e558]: الخط الأعلى
+                - definition [ref=e559]:
+                  - generic [ref=e560]:
+                    - strong [ref=e561]: ‏0.00 ر.س.‏
+                    - generic [ref=e562]: صفر معروف
+                  - 'button "التفاصيل : زيادة الإيرادات المعتمدة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e563] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e564]: ": زيادة الإيرادات المعتمدة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e565]:
+                - term [ref=e566]:
+                  - text: فجوة القيمة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e567]: الخط الأعلى
+                - definition [ref=e568]:
+                  - strong [ref=e570]: 100 %
+                  - 'button "التفاصيل : فجوة القيمة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e571] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e572]: ": فجوة القيمة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e573]:
+                - term [ref=e574]:
+                  - text: التكلفة المتجنَّبة المخططة (غير نقدية؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e575]: غير نقدية
+                - definition [ref=e576]:
+                  - strong [ref=e578]: ‏45.00 ر.س.‏
+                  - 'button "التفاصيل : التكلفة المتجنَّبة المخططة (غير نقدية؛ لا تدخل في الربح والنقد)" [ref=e579] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e580]: ": التكلفة المتجنَّبة المخططة (غير نقدية؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e581]:
+                - term [ref=e582]:
+                  - text: التكلفة المتجنَّبة المتوقعة (غير نقدية؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e583]: غير نقدية
+                - definition [ref=e584]:
+                  - generic [ref=e585]:
+                    - strong [ref=e586]: ‏0.00 ر.س.‏
+                    - generic [ref=e587]: صفر معروف
+                  - 'button "التفاصيل : التكلفة المتجنَّبة المتوقعة (غير نقدية؛ لا تدخل في الربح والنقد)" [ref=e588] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e589]: ": التكلفة المتجنَّبة المتوقعة (غير نقدية؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e590]:
+                - term [ref=e591]:
+                  - text: التكلفة المتجنَّبة المقدَّمة (غير نقدية؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e592]: غير نقدية
+                - definition [ref=e593]:
+                  - generic [ref=e594]:
+                    - strong [ref=e595]: ‏0.00 ر.س.‏
+                    - generic [ref=e596]: صفر معروف
+                  - 'button "التفاصيل : التكلفة المتجنَّبة المقدَّمة (غير نقدية؛ لا تدخل في الربح والنقد)" [ref=e597] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e598]: ": التكلفة المتجنَّبة المقدَّمة (غير نقدية؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e599]:
+                - term [ref=e600]:
+                  - text: التكلفة المتجنَّبة المعتمدة (غير نقدية؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e601]: غير نقدية
+                - definition [ref=e602]:
+                  - generic [ref=e603]:
+                    - strong [ref=e604]: ‏0.00 ر.س.‏
+                    - generic [ref=e605]: صفر معروف
+                  - 'button "التفاصيل : التكلفة المتجنَّبة المعتمدة (غير نقدية؛ لا تدخل في الربح والنقد)" [ref=e606] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e607]: ": التكلفة المتجنَّبة المعتمدة (غير نقدية؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e608]:
+                - term [ref=e609]:
+                  - text: فجوة القيمة (غير نقدية؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e610]: غير نقدية
+                - definition [ref=e611]:
+                  - strong [ref=e613]: 100 %
+                  - 'button "التفاصيل : فجوة القيمة (غير نقدية؛ لا تدخل في الربح والنقد)" [ref=e614] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e615]: ": فجوة القيمة (غير نقدية؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e616]:
+                - term [ref=e617]:
+                  - text: زيادة الإيرادات المخططة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e618]: الخط الأعلى
+                - definition [ref=e619]:
+                  - strong [ref=e621]: ‏11.00 US$
+                  - 'button "التفاصيل : زيادة الإيرادات المخططة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e622] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e623]: ": زيادة الإيرادات المخططة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e624]:
+                - term [ref=e625]:
+                  - text: زيادة الإيرادات المتوقعة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e626]: الخط الأعلى
+                - definition [ref=e627]:
+                  - generic [ref=e628]:
+                    - strong [ref=e629]: ‏0.00 US$
+                    - generic [ref=e630]: صفر معروف
+                  - 'button "التفاصيل : زيادة الإيرادات المتوقعة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e631] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e632]: ": زيادة الإيرادات المتوقعة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e633]:
+                - term [ref=e634]:
+                  - text: زيادة الإيرادات المقدَّمة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e635]: الخط الأعلى
+                - definition [ref=e636]:
+                  - generic [ref=e637]:
+                    - strong [ref=e638]: ‏0.00 US$
+                    - generic [ref=e639]: صفر معروف
+                  - 'button "التفاصيل : زيادة الإيرادات المقدَّمة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e640] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e641]: ": زيادة الإيرادات المقدَّمة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e642]:
+                - term [ref=e643]:
+                  - text: زيادة الإيرادات المعتمدة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e644]: الخط الأعلى
+                - definition [ref=e645]:
+                  - generic [ref=e646]:
+                    - strong [ref=e647]: ‏0.00 US$
+                    - generic [ref=e648]: صفر معروف
+                  - 'button "التفاصيل : زيادة الإيرادات المعتمدة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e649] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e650]: ": زيادة الإيرادات المعتمدة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+              - generic [ref=e651]:
+                - term [ref=e652]:
+                  - text: فجوة القيمة (الخط الأعلى؛ لا تدخل في الربح والنقد)
+                  - generic [ref=e653]: الخط الأعلى
+                - definition [ref=e654]:
+                  - strong [ref=e656]: 100 %
+                  - 'button "التفاصيل : فجوة القيمة (الخط الأعلى؛ لا تدخل في الربح والنقد)" [ref=e657] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e658]: ": فجوة القيمة (الخط الأعلى؛ لا تدخل في الربح والنقد)"
+            - paragraph [ref=e659]:
+              - img [ref=e660]
+              - text: تسميات الأساس العربية مؤقتة إلى أن يؤكدها مراجع لغوي عربي.
+            - table "السجلات في هذا المجال" [ref=e663]:
+              - caption [ref=e664]: السجلات في هذا المجال
+              - rowgroup [ref=e665]:
+                - row "السجل الحالة القيمة الاستحقاق" [ref=e666]:
+                  - columnheader "السجل" [ref=e667]
+                  - columnheader "الحالة" [ref=e668]
+                  - columnheader "القيمة" [ref=e669]
+                  - columnheader "الاستحقاق" [ref=e670]
+              - rowgroup [ref=e671]:
+                - 'row "B01 Synthetic NPS uplift EN mvd9zkpu غير مالية (لا ينطبق) — لا ينطبق لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية. —" [ref=e672]':
+                  - rowheader "B01 Synthetic NPS uplift EN mvd9zkpu غير مالية (لا ينطبق)" [ref=e673]:
+                    - link "B01 Synthetic NPS uplift EN mvd9zkpu" [ref=e674] [cursor=pointer]:
+                      - /url: /transformations/01a14d16-c0d9-76af-b4ed-16d23da2a4db/benefits/01a14d16-c211-76cf-95d3-4328bca52373
+                    - generic [ref=e676]: غير مالية (لا ينطبق)
+                  - cell "—" [ref=e677]
+                  - 'cell "لا ينطبق لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية." [ref=e678]':
+                    - generic [ref=e679]:
+                      - generic [ref=e680]:
+                        - img [ref=e681]
+                        - generic [ref=e683]: لا ينطبق
+                      - generic [ref=e684]: "لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية."
+                  - cell "—" [ref=e685]
+                - row "B01 Synthetic residual churn benefit en mvda5ewz — ‏0.00 ر.س.‏ صفر معروف الخط الأعلى —" [ref=e686]:
+                  - rowheader "B01 Synthetic residual churn benefit en mvda5ewz" [ref=e687]:
+                    - link "B01 Synthetic residual churn benefit en mvda5ewz" [ref=e688] [cursor=pointer]:
+                      - /url: /transformations/01a14d1a-e91f-7128-b3a0-156b4bea0d6d/benefits/01a14d1b-e08e-7729-ae21-3b0ea373dc17
+                  - cell "—" [ref=e689]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الخط الأعلى" [ref=e690]:
+                    - generic [ref=e691]:
+                      - generic [ref=e692]: ‏0.00 ر.س.‏
+                      - generic [ref=e693]: صفر معروف
+                    - generic [ref=e694]: الخط الأعلى
+                  - cell "—" [ref=e695]
+                - row "B01 Synthetic revenue_uplift en mvdadw4j — ‏0.00 ر.س.‏ صفر معروف الخط الأعلى —" [ref=e696]:
+                  - rowheader "B01 Synthetic revenue_uplift en mvdadw4j" [ref=e697]:
+                    - link "B01 Synthetic revenue_uplift en mvdadw4j" [ref=e698] [cursor=pointer]:
+                      - /url: /transformations/01a14d20-f241-773d-9a15-e843ea0a6001/benefits/01a14d20-f2dd-7078-a4dd-07d52eb6f34d
+                  - cell "—" [ref=e699]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الخط الأعلى" [ref=e700]:
+                    - generic [ref=e701]:
+                      - generic [ref=e702]: ‏0.00 ر.س.‏
+                      - generic [ref=e703]: صفر معروف
+                    - generic [ref=e704]: الخط الأعلى
+                  - cell "—" [ref=e705]
+                - row "B01 Synthetic RAG lines margin en mvdaedsk — ‏0.00 ر.س.‏ صفر معروف الربح والنقد —" [ref=e706]:
+                  - rowheader "B01 Synthetic RAG lines margin en mvdaedsk" [ref=e707]:
+                    - link "B01 Synthetic RAG lines margin en mvdaedsk" [ref=e708] [cursor=pointer]:
+                      - /url: /transformations/01a14d21-4b94-7359-b586-32ad786c97c0/benefits/01a14d21-4c27-7639-8f08-8defd11c2e03
+                  - cell "—" [ref=e709]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الربح والنقد" [ref=e710]:
+                    - generic [ref=e711]:
+                      - generic [ref=e712]: ‏0.00 ر.س.‏
+                      - generic [ref=e713]: صفر معروف
+                    - generic [ref=e714]: الربح والنقد
+                  - cell "—" [ref=e715]
+                - 'row "B01 Synthetic churn reduction en v3 غير مالية (لا ينطبق) — لا ينطبق لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية. —" [ref=e716]':
+                  - rowheader "B01 Synthetic churn reduction en v3 غير مالية (لا ينطبق)" [ref=e717]:
+                    - link "B01 Synthetic churn reduction en v3" [ref=e718] [cursor=pointer]:
+                      - /url: /transformations/01a14d21-c18c-76f9-a65d-61364048d62a/benefits/01a14d21-c2ad-77b9-954d-12e65087d70d
+                    - generic [ref=e720]: غير مالية (لا ينطبق)
+                  - cell "—" [ref=e721]
+                  - 'cell "لا ينطبق لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية." [ref=e722]':
+                    - generic [ref=e723]:
+                      - generic [ref=e724]:
+                        - img [ref=e725]
+                        - generic [ref=e727]: لا ينطبق
+                      - generic [ref=e728]: "لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية."
+                  - cell "—" [ref=e729]
+                - 'row "B01 Synthetic NPS uplift AR mvdazdrv غير مالية (لا ينطبق) — لا ينطبق لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية. —" [ref=e730]':
+                  - rowheader "B01 Synthetic NPS uplift AR mvdazdrv غير مالية (لا ينطبق)" [ref=e731]:
+                    - link "B01 Synthetic NPS uplift AR mvdazdrv" [ref=e732] [cursor=pointer]:
+                      - /url: /transformations/01a14d30-3ec0-751f-b8da-de2de514d29b/benefits/01a14d30-40b8-72c2-bbd2-b2c62e5387b4
+                    - generic [ref=e734]: غير مالية (لا ينطبق)
+                  - cell "—" [ref=e735]
+                  - 'cell "لا ينطبق لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية." [ref=e736]':
+                    - generic [ref=e737]:
+                      - generic [ref=e738]:
+                        - img [ref=e739]
+                        - generic [ref=e741]: لا ينطبق
+                      - generic [ref=e742]: "لا ينطبق: المنفعة غير المالية ليس لها قيمة نقدية."
+                  - cell "—" [ref=e743]
+                - row "B02 Synthetic churn reduction EN mvd9zkpu — ‏0.00 ر.س.‏ صفر معروف الخط الأعلى —" [ref=e744]:
+                  - rowheader "B02 Synthetic churn reduction EN mvd9zkpu" [ref=e745]:
+                    - link "B02 Synthetic churn reduction EN mvd9zkpu" [ref=e746] [cursor=pointer]:
+                      - /url: /transformations/01a14d16-c0d9-76af-b4ed-16d23da2a4db/benefits/01a14d16-d58b-7369-86e9-00c536622a06
+                  - cell "—" [ref=e747]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الخط الأعلى" [ref=e748]:
+                    - generic [ref=e749]:
+                      - generic [ref=e750]: ‏0.00 ر.س.‏
+                      - generic [ref=e751]: صفر معروف
+                    - generic [ref=e752]: الخط الأعلى
+                  - cell "—" [ref=e753]
+                - row "B02 Synthetic margin_uplift en mvdadw4j — ‏0.00 ر.س.‏ صفر معروف الربح والنقد —" [ref=e754]:
+                  - rowheader "B02 Synthetic margin_uplift en mvdadw4j" [ref=e755]:
+                    - link "B02 Synthetic margin_uplift en mvdadw4j" [ref=e756] [cursor=pointer]:
+                      - /url: /transformations/01a14d20-f241-773d-9a15-e843ea0a6001/benefits/01a14d20-f305-76da-bdd3-5b78003ec727
+                  - cell "—" [ref=e757]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الربح والنقد" [ref=e758]:
+                    - generic [ref=e759]:
+                      - generic [ref=e760]: ‏0.00 ر.س.‏
+                      - generic [ref=e761]: صفر معروف
+                    - generic [ref=e762]: الربح والنقد
+                  - cell "—" [ref=e763]
+                - row "B02 Synthetic RAG lines revenue en mvdaedsk — ‏0.00 ر.س.‏ صفر معروف الخط الأعلى —" [ref=e764]:
+                  - rowheader "B02 Synthetic RAG lines revenue en mvdaedsk" [ref=e765]:
+                    - link "B02 Synthetic RAG lines revenue en mvdaedsk" [ref=e766] [cursor=pointer]:
+                      - /url: /transformations/01a14d21-4b94-7359-b586-32ad786c97c0/benefits/01a14d21-4c46-752b-a61e-56d18bfd213e
+                  - cell "—" [ref=e767]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الخط الأعلى" [ref=e768]:
+                    - generic [ref=e769]:
+                      - generic [ref=e770]: ‏0.00 ر.س.‏
+                      - generic [ref=e771]: صفر معروف
+                    - generic [ref=e772]: الخط الأعلى
+                  - cell "—" [ref=e773]
+                - row "B02 Synthetic churn reduction AR mvdazdrv — ‏0.00 ر.س.‏ صفر معروف الخط الأعلى —" [ref=e774]:
+                  - rowheader "B02 Synthetic churn reduction AR mvdazdrv" [ref=e775]:
+                    - link "B02 Synthetic churn reduction AR mvdazdrv" [ref=e776] [cursor=pointer]:
+                      - /url: /transformations/01a14d30-3ec0-751f-b8da-de2de514d29b/benefits/01a14d30-4f80-774b-96a1-9f6e7ee104cc
+                  - cell "—" [ref=e777]
+                  - cell "‏0.00 ر.س.‏ صفر معروف الخط الأعلى" [ref=e778]:
+                    - generic [ref=e779]:
+                      - generic [ref=e780]: ‏0.00 ر.س.‏
+                      - generic [ref=e781]: صفر معروف
+                    - generic [ref=e782]: الخط الأعلى
+                  - cell "—" [ref=e783]
+            - button "عرض جميع السجلات (14)" [ref=e784] [cursor=pointer]
+            - paragraph [ref=e785]:
+              - img [ref=e786]
+              - text: تسميات الأساس العربية مؤقتة إلى أن يؤكدها مراجع لغوي عربي.
+          - region "المحفظة" [ref=e788]:
+            - generic [ref=e789]:
+              - heading "المحفظة" [level=2] [ref=e790]
+              - generic [ref=e791]:
+                - img [ref=e792]
+                - text: غير معروف
+            - paragraph [ref=e794]:
+              - text: أهم المبادرات حسب القيمة/الأهمية الحرجة
+              - generic [ref=e795]: "منطق الحالة: حالة RAG وفق المعالم الرئيسية + مخاطر النتائج"
+            - paragraph [ref=e796]:
+              - img [ref=e797]
+              - text: "التسميات العربية مؤقتة. المصدر: Portfolio"
+            - paragraph [ref=e799]:
+              - text: "المحفظة: أسوأ انزلاق في المعالم الرئيسية لأهم المبادرات."
+              - generic [ref=e800]: حدود افتراضية
+            - generic [ref=e802]:
+              - term [ref=e803]: أهم المبادرات
+              - definition [ref=e804]:
+                - strong [ref=e806]: "8"
+                - 'button "التفاصيل : أهم المبادرات" [ref=e807] [cursor=pointer]':
+                  - text: التفاصيل
+                  - generic [ref=e808]: ": أهم المبادرات"
+            - table "السجلات في هذا المجال" [ref=e810]:
+              - caption [ref=e811]: السجلات في هذا المجال
+              - rowgroup [ref=e812]:
+                - row "السجل الحالة القيمة المخططة المخصَّصة (الربح والنقد) الاستحقاق" [ref=e813]:
+                  - columnheader "السجل" [ref=e814]
+                  - columnheader "الحالة" [ref=e815]
+                  - columnheader "القيمة المخططة المخصَّصة (الربح والنقد)" [ref=e816]
+                  - columnheader "الاستحقاق" [ref=e817]
+              - rowgroup [ref=e818]:
+                - 'row "INI-01 Synthetic roaming bundle relaunch المعلم: أخضر النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e819]':
+                  - 'rowheader "INI-01 Synthetic roaming bundle relaunch المعلم: أخضر النتيجة: غير معروف" [ref=e820]':
+                    - button "INI-01 Synthetic roaming bundle relaunch" [ref=e821] [cursor=pointer]:
+                      - generic [ref=e822]: INI-01
+                      - text: Synthetic roaming bundle relaunch
+                    - generic [ref=e823]:
+                      - generic [ref=e824]: "المعلم: أخضر"
+                      - generic [ref=e825]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e826]:
+                    - generic [ref=e827]:
+                      - img [ref=e828]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e830]':
+                    - generic [ref=e831]:
+                      - generic [ref=e832]:
+                        - img [ref=e833]
+                        - generic [ref=e835]: غير معروف
+                      - generic [ref=e836]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e837]: الربح والنقد
+                  - cell "—" [ref=e838]
+                - 'row "INI-01 Synthetic completion initiative 1 المعلم: غير معروف النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e839]':
+                  - 'rowheader "INI-01 Synthetic completion initiative 1 المعلم: غير معروف النتيجة: غير معروف" [ref=e840]':
+                    - button "INI-01 Synthetic completion initiative 1" [ref=e841] [cursor=pointer]:
+                      - generic [ref=e842]: INI-01
+                      - text: Synthetic completion initiative 1
+                    - generic [ref=e843]:
+                      - generic [ref=e844]: "المعلم: غير معروف"
+                      - generic [ref=e845]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e846]:
+                    - generic [ref=e847]:
+                      - img [ref=e848]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e850]':
+                    - generic [ref=e851]:
+                      - generic [ref=e852]:
+                        - img [ref=e853]
+                        - generic [ref=e855]: غير معروف
+                      - generic [ref=e856]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e857]: الربح والنقد
+                  - cell "—" [ref=e858]
+                - 'row "INI-01 Synthetic roaming bundle relaunch المعلم: أخضر النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e859]':
+                  - 'rowheader "INI-01 Synthetic roaming bundle relaunch المعلم: أخضر النتيجة: غير معروف" [ref=e860]':
+                    - button "INI-01 Synthetic roaming bundle relaunch" [ref=e861] [cursor=pointer]:
+                      - generic [ref=e862]: INI-01
+                      - text: Synthetic roaming bundle relaunch
+                    - generic [ref=e863]:
+                      - generic [ref=e864]: "المعلم: أخضر"
+                      - generic [ref=e865]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e866]:
+                    - generic [ref=e867]:
+                      - img [ref=e868]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e870]':
+                    - generic [ref=e871]:
+                      - generic [ref=e872]:
+                        - img [ref=e873]
+                        - generic [ref=e875]: غير معروف
+                      - generic [ref=e876]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e877]: الربح والنقد
+                  - cell "—" [ref=e878]
+                - 'row "INI-01 Synthetic completion initiative 1 المعلم: غير معروف النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e879]':
+                  - 'rowheader "INI-01 Synthetic completion initiative 1 المعلم: غير معروف النتيجة: غير معروف" [ref=e880]':
+                    - button "INI-01 Synthetic completion initiative 1" [ref=e881] [cursor=pointer]:
+                      - generic [ref=e882]: INI-01
+                      - text: Synthetic completion initiative 1
+                    - generic [ref=e883]:
+                      - generic [ref=e884]: "المعلم: غير معروف"
+                      - generic [ref=e885]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e886]:
+                    - generic [ref=e887]:
+                      - img [ref=e888]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e890]':
+                    - generic [ref=e891]:
+                      - generic [ref=e892]:
+                        - img [ref=e893]
+                        - generic [ref=e895]: غير معروف
+                      - generic [ref=e896]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e897]: الربح والنقد
+                  - cell "—" [ref=e898]
+                - 'row "INI-02 Synthetic prepaid top-up redesign المعلم: أخضر النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e899]':
+                  - 'rowheader "INI-02 Synthetic prepaid top-up redesign المعلم: أخضر النتيجة: غير معروف" [ref=e900]':
+                    - button "INI-02 Synthetic prepaid top-up redesign" [ref=e901] [cursor=pointer]:
+                      - generic [ref=e902]: INI-02
+                      - text: Synthetic prepaid top-up redesign
+                    - generic [ref=e903]:
+                      - generic [ref=e904]: "المعلم: أخضر"
+                      - generic [ref=e905]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e906]:
+                    - generic [ref=e907]:
+                      - img [ref=e908]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e910]':
+                    - generic [ref=e911]:
+                      - generic [ref=e912]:
+                        - img [ref=e913]
+                        - generic [ref=e915]: غير معروف
+                      - generic [ref=e916]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e917]: الربح والنقد
+                  - cell "—" [ref=e918]
+                - 'row "INI-02 Synthetic prepaid top-up redesign المعلم: أخضر النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e919]':
+                  - 'rowheader "INI-02 Synthetic prepaid top-up redesign المعلم: أخضر النتيجة: غير معروف" [ref=e920]':
+                    - button "INI-02 Synthetic prepaid top-up redesign" [ref=e921] [cursor=pointer]:
+                      - generic [ref=e922]: INI-02
+                      - text: Synthetic prepaid top-up redesign
+                    - generic [ref=e923]:
+                      - generic [ref=e924]: "المعلم: أخضر"
+                      - generic [ref=e925]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e926]:
+                    - generic [ref=e927]:
+                      - img [ref=e928]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e930]':
+                    - generic [ref=e931]:
+                      - generic [ref=e932]:
+                        - img [ref=e933]
+                        - generic [ref=e935]: غير معروف
+                      - generic [ref=e936]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e937]: الربح والنقد
+                  - cell "—" [ref=e938]
+                - 'row "INI-03 Synthetic order validation at entry المعلم: غير معروف النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e939]':
+                  - 'rowheader "INI-03 Synthetic order validation at entry المعلم: غير معروف النتيجة: غير معروف" [ref=e940]':
+                    - button "INI-03 Synthetic order validation at entry" [ref=e941] [cursor=pointer]:
+                      - generic [ref=e942]: INI-03
+                      - text: Synthetic order validation at entry
+                    - generic [ref=e943]:
+                      - generic [ref=e944]: "المعلم: غير معروف"
+                      - generic [ref=e945]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e946]:
+                    - generic [ref=e947]:
+                      - img [ref=e948]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e950]':
+                    - generic [ref=e951]:
+                      - generic [ref=e952]:
+                        - img [ref=e953]
+                        - generic [ref=e955]: غير معروف
+                      - generic [ref=e956]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e957]: الربح والنقد
+                  - cell "—" [ref=e958]
+                - 'row "INI-03 Synthetic order validation at entry المعلم: غير معروف النتيجة: غير معروف غير معروف غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد —" [ref=e959]':
+                  - 'rowheader "INI-03 Synthetic order validation at entry المعلم: غير معروف النتيجة: غير معروف" [ref=e960]':
+                    - button "INI-03 Synthetic order validation at entry" [ref=e961] [cursor=pointer]:
+                      - generic [ref=e962]: INI-03
+                      - text: Synthetic order validation at entry
+                    - generic [ref=e963]:
+                      - generic [ref=e964]: "المعلم: غير معروف"
+                      - generic [ref=e965]: "النتيجة: غير معروف"
+                  - cell "غير معروف" [ref=e966]:
+                    - generic [ref=e967]:
+                      - img [ref=e968]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة. الربح والنقد" [ref=e970]':
+                    - generic [ref=e971]:
+                      - generic [ref=e972]:
+                        - img [ref=e973]
+                        - generic [ref=e975]: غير معروف
+                      - generic [ref=e976]: "غير معروف: لا توجد قيمة منفعة مخصصة لهذه المبادرة."
+                    - generic [ref=e977]: الربح والنقد
+                  - cell "—" [ref=e978]
+            - paragraph [ref=e979]:
+              - img [ref=e980]
+              - text: تسميات الأساس العربية مؤقتة إلى أن يؤكدها مراجع لغوي عربي.
+          - region "الاعتماديات" [ref=e982]:
+            - generic [ref=e983]:
+              - heading "الاعتماديات" [level=2] [ref=e984]
+              - generic [ref=e985]:
+                - img [ref=e986]
+                - text: كهرماني
+            - paragraph [ref=e988]:
+              - text: أهم العوائق متعددة الوظائف
+              - generic [ref=e989]: "منطق الحالة: حالة RAG وفق تاريخ القرار / المسار الحرج"
+            - paragraph [ref=e990]:
+              - img [ref=e991]
+              - text: "التسميات العربية مؤقتة. المصدر: Dependencies"
+            - paragraph [ref=e993]:
+              - text: "الاعتماديات: اعتماديات مفتوحة مطلوبة قريبًا أو على المسار الحرج."
+              - generic [ref=e994]: حدود افتراضية
+            - generic [ref=e996]:
+              - term [ref=e997]: الاعتماديات المفتوحة
+              - definition [ref=e998]:
+                - strong [ref=e1000]: "13"
+                - 'button "التفاصيل : الاعتماديات المفتوحة" [ref=e1001] [cursor=pointer]':
+                  - text: التفاصيل
+                  - generic [ref=e1002]: ": الاعتماديات المفتوحة"
+            - table "السجلات في هذا المجال" [ref=e1004]:
+              - caption [ref=e1005]: السجلات في هذا المجال
+              - rowgroup [ref=e1006]:
+                - row "السجل الحالة القيمة الاستحقاق" [ref=e1007]:
+                  - columnheader "السجل" [ref=e1008]
+                  - columnheader "الحالة" [ref=e1009]
+                  - columnheader "القيمة" [ref=e1010]
+                  - columnheader "الاستحقاق" [ref=e1011]
+              - rowgroup [ref=e1012]:
+                - 'row "DEP-01 Synthetic: billing data feed المسار الحرج غير قابل للحساب غير معروف — 01‏/11‏/2026" [ref=e1013]':
+                  - 'rowheader "DEP-01 Synthetic: billing data feed المسار الحرج غير قابل للحساب" [ref=e1014]':
+                    - 'link "DEP-01 Synthetic: billing data feed" [ref=e1015] [cursor=pointer]':
+                      - /url: /transformations/01a14d13-553a-727e-a3f7-89ce9f95e648/dependencies
+                    - generic [ref=e1017]: المسار الحرج غير قابل للحساب
+                  - cell "غير معروف" [ref=e1018]:
+                    - generic [ref=e1019]:
+                      - img [ref=e1020]
+                      - text: غير معروف
+                  - cell "—" [ref=e1022]
+                  - cell "01‏/11‏/2026" [ref=e1023]
+                - 'row "DEP-01 Synthetic: billing data feed المسار الحرج غير قابل للحساب غير معروف — 01‏/11‏/2026" [ref=e1024]':
+                  - 'rowheader "DEP-01 Synthetic: billing data feed المسار الحرج غير قابل للحساب" [ref=e1025]':
+                    - 'link "DEP-01 Synthetic: billing data feed" [ref=e1026] [cursor=pointer]':
+                      - /url: /transformations/01a14d2d-b18f-760e-bf82-41d5f5d2fb84/dependencies
+                    - generic [ref=e1028]: المسار الحرج غير قابل للحساب
+                  - cell "غير معروف" [ref=e1029]:
+                    - generic [ref=e1030]:
+                      - img [ref=e1031]
+                      - text: غير معروف
+                  - cell "—" [ref=e1033]
+                  - cell "01‏/11‏/2026" [ref=e1034]
+                - 'row "DEP-01 Synthetic: validated order data for billing المسار الحرج غير قابل للحساب معرّض للخطر كهرماني — 15‏/11‏/2026" [ref=e1035]':
+                  - 'rowheader "DEP-01 Synthetic: validated order data for billing المسار الحرج غير قابل للحساب معرّض للخطر" [ref=e1036]':
+                    - 'link "DEP-01 Synthetic: validated order data for billing" [ref=e1037] [cursor=pointer]':
+                      - /url: /transformations/01a14d0f-6ca8-756f-ac35-f9c3fffbda02/dependencies
+                    - generic [ref=e1038]:
+                      - generic [ref=e1039]: المسار الحرج غير قابل للحساب
+                      - generic [ref=e1040]: معرّض للخطر
+                  - cell "كهرماني" [ref=e1041]:
+                    - generic [ref=e1042]:
+                      - img [ref=e1043]
+                      - text: كهرماني
+                  - cell "—" [ref=e1045]
+                  - cell "15‏/11‏/2026" [ref=e1046]
+                - 'row "DEP-01 Synthetic: validated order data for billing المسار الحرج غير قابل للحساب معرّض للخطر كهرماني — 15‏/11‏/2026" [ref=e1047]':
+                  - 'rowheader "DEP-01 Synthetic: validated order data for billing المسار الحرج غير قابل للحساب معرّض للخطر" [ref=e1048]':
+                    - 'link "DEP-01 Synthetic: validated order data for billing" [ref=e1049] [cursor=pointer]':
+                      - /url: /transformations/01a14d2a-b56b-7133-b50e-b6cad141ce03/dependencies
+                    - generic [ref=e1050]:
+                      - generic [ref=e1051]: المسار الحرج غير قابل للحساب
+                      - generic [ref=e1052]: معرّض للخطر
+                  - cell "كهرماني" [ref=e1053]:
+                    - generic [ref=e1054]:
+                      - img [ref=e1055]
+                      - text: كهرماني
+                  - cell "—" [ref=e1057]
+                  - cell "15‏/11‏/2026" [ref=e1058]
+                - 'row "DEP-02 Synthetic: billing feed for the rating engine المسار الحرج غير قابل للحساب غير معروف — 31‏/05‏/2027" [ref=e1059]':
+                  - 'rowheader "DEP-02 Synthetic: billing feed for the rating engine المسار الحرج غير قابل للحساب" [ref=e1060]':
+                    - 'link "DEP-02 Synthetic: billing feed for the rating engine" [ref=e1061] [cursor=pointer]':
+                      - /url: /transformations/01a14d0f-6ca8-756f-ac35-f9c3fffbda02/dependencies
+                    - generic [ref=e1063]: المسار الحرج غير قابل للحساب
+                  - cell "غير معروف" [ref=e1064]:
+                    - generic [ref=e1065]:
+                      - img [ref=e1066]
+                      - text: غير معروف
+                  - cell "—" [ref=e1068]
+                  - cell "31‏/05‏/2027" [ref=e1069]
+                - 'row "DEP-02 Synthetic: billing feed for the rating engine المسار الحرج غير قابل للحساب غير معروف — 31‏/05‏/2027" [ref=e1070]':
+                  - 'rowheader "DEP-02 Synthetic: billing feed for the rating engine المسار الحرج غير قابل للحساب" [ref=e1071]':
+                    - 'link "DEP-02 Synthetic: billing feed for the rating engine" [ref=e1072] [cursor=pointer]':
+                      - /url: /transformations/01a14d2a-b56b-7133-b50e-b6cad141ce03/dependencies
+                    - generic [ref=e1074]: المسار الحرج غير قابل للحساب
+                  - cell "غير معروف" [ref=e1075]:
+                    - generic [ref=e1076]:
+                      - img [ref=e1077]
+                      - text: غير معروف
+                  - cell "—" [ref=e1079]
+                  - cell "31‏/05‏/2027" [ref=e1080]
+                - 'row "DEP-02 Synthetic: rating engine change المسار الحرج غير قابل للحساب غير معروف — —" [ref=e1081]':
+                  - 'rowheader "DEP-02 Synthetic: rating engine change المسار الحرج غير قابل للحساب" [ref=e1082]':
+                    - 'link "DEP-02 Synthetic: rating engine change" [ref=e1083] [cursor=pointer]':
+                      - /url: /transformations/01a14d13-553a-727e-a3f7-89ce9f95e648/dependencies
+                    - generic [ref=e1085]: المسار الحرج غير قابل للحساب
+                  - cell "غير معروف" [ref=e1086]:
+                    - generic [ref=e1087]:
+                      - img [ref=e1088]
+                      - text: غير معروف
+                  - cell "—" [ref=e1090]
+                  - cell "—" [ref=e1091]
+                - 'row "DEP-01 Synthetic: A delivers before B على المسار الحرج غير معروف — —" [ref=e1092]':
+                  - 'rowheader "DEP-01 Synthetic: A delivers before B على المسار الحرج" [ref=e1093]':
+                    - 'link "DEP-01 Synthetic: A delivers before B" [ref=e1094] [cursor=pointer]':
+                      - /url: /transformations/01a14d1a-1d69-733a-b5d9-54b86c0798c3/dependencies
+                    - generic [ref=e1096]: على المسار الحرج
+                  - cell "غير معروف" [ref=e1097]:
+                    - generic [ref=e1098]:
+                      - img [ref=e1099]
+                      - text: غير معروف
+                  - cell "—" [ref=e1101]
+                  - cell "—" [ref=e1102]
+                - 'row "DEP-02 Synthetic: B delivers before D على المسار الحرج غير معروف — —" [ref=e1103]':
+                  - 'rowheader "DEP-02 Synthetic: B delivers before D على المسار الحرج" [ref=e1104]':
+                    - 'link "DEP-02 Synthetic: B delivers before D" [ref=e1105] [cursor=pointer]':
+                      - /url: /transformations/01a14d1a-1d69-733a-b5d9-54b86c0798c3/dependencies
+                    - generic [ref=e1107]: على المسار الحرج
+                  - cell "غير معروف" [ref=e1108]:
+                    - generic [ref=e1109]:
+                      - img [ref=e1110]
+                      - text: غير معروف
+                  - cell "—" [ref=e1112]
+                  - cell "—" [ref=e1113]
+                - 'row "DEP-03 Synthetic: A delivers before C غير معروف — —" [ref=e1114]':
+                  - 'rowheader "DEP-03 Synthetic: A delivers before C" [ref=e1115]':
+                    - 'link "DEP-03 Synthetic: A delivers before C" [ref=e1116] [cursor=pointer]':
+                      - /url: /transformations/01a14d1a-1d69-733a-b5d9-54b86c0798c3/dependencies
+                  - cell "غير معروف" [ref=e1117]:
+                    - generic [ref=e1118]:
+                      - img [ref=e1119]
+                      - text: غير معروف
+                  - cell "—" [ref=e1121]
+                  - cell "—" [ref=e1122]
+            - button "عرض جميع السجلات (13)" [ref=e1123] [cursor=pointer]
+          - region "القرارات" [ref=e1124]:
+            - generic [ref=e1125]:
+              - heading "القرارات" [level=2] [ref=e1126]
+              - generic [ref=e1127]:
+                - img [ref=e1128]
+                - text: غير معروف
+            - paragraph [ref=e1130]:
+              - text: القرار المطلوب، المالك، تاريخ الاستحقاق، أثر التأخير
+              - generic [ref=e1131]: "منطق الحالة: أحمر إذا تأخر قرار تنفيذي"
+            - paragraph [ref=e1132]:
+              - img [ref=e1133]
+              - text: "التسميات العربية مؤقتة. المصدر: Decisions"
+            - paragraph [ref=e1135]:
+              - text: "القرارات: قرارات مفتوحة مستحقة قريبًا."
+              - generic [ref=e1136]: حدود افتراضية
+            - generic [ref=e1137]:
+              - generic [ref=e1138]:
+                - term [ref=e1139]: القرارات المفتوحة
+                - definition [ref=e1140]:
+                  - strong [ref=e1142]: "1"
+                  - 'button "التفاصيل : القرارات المفتوحة" [ref=e1143] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e1144]: ": القرارات المفتوحة"
+              - generic [ref=e1145]:
+                - term [ref=e1146]: القرارات المتأخرة
+                - definition [ref=e1147]:
+                  - generic [ref=e1148]:
+                    - strong [ref=e1149]: "0"
+                    - generic [ref=e1150]: صفر معروف
+                  - 'button "التفاصيل : القرارات المتأخرة" [ref=e1151] [cursor=pointer]':
+                    - text: التفاصيل
+                    - generic [ref=e1152]: ": القرارات المتأخرة"
+            - table "السجلات في هذا المجال" [ref=e1154]:
+              - caption [ref=e1155]: السجلات في هذا المجال
+              - rowgroup [ref=e1156]:
+                - row "السجل الحالة القيمة الاستحقاق" [ref=e1157]:
+                  - columnheader "السجل" [ref=e1158]
+                  - columnheader "الحالة" [ref=e1159]
+                  - columnheader "القيمة" [ref=e1160]
+                  - columnheader "الاستحقاق" [ref=e1161]
+              - rowgroup [ref=e1162]:
+                - row "DEC-02 Synthetic fund the second wave? en لم يُعدّ تقويم أعمال غير معروف — 17‏/11‏/2026" [ref=e1163]:
+                  - rowheader "DEC-02 Synthetic fund the second wave? en لم يُعدّ تقويم أعمال" [ref=e1164]:
+                    - link "DEC-02 Synthetic fund the second wave? en" [ref=e1165] [cursor=pointer]:
+                      - /url: /transformations/01a14d1e-eefa-729f-95a8-e466aa5dfa12/executive-decisions/01a14d1f-9920-7581-8738-c250edc9a99c
+                    - generic [ref=e1167]: لم يُعدّ تقويم أعمال
+                  - cell "غير معروف" [ref=e1168]:
+                    - generic [ref=e1169]:
+                      - img [ref=e1170]
+                      - text: غير معروف
+                  - cell "—" [ref=e1172]
+                  - cell "17‏/11‏/2026" [ref=e1173]
+          - region "الأفراد والتبني" [ref=e1174]:
+            - generic [ref=e1175]:
+              - heading "الأفراد والتبني" [level=2] [ref=e1176]
+              - generic [ref=e1177]:
+                - img [ref=e1178]
+                - text: غير معروف
+            - paragraph [ref=e1180]:
+              - text: مؤشرات الاستخدام/التبني/القدرات
+              - generic [ref=e1181]: "منطق الحالة: حالة RAG مقابل منحنى التبني"
+            - paragraph [ref=e1182]:
+              - img [ref=e1183]
+              - text: "التسميات العربية مؤقتة. المصدر: People & adoption"
+            - paragraph [ref=e1185]:
+              - text: "الأفراد والتبنّي: أسوأ مؤشر تبنٍّ مقابل منحناه."
+              - generic [ref=e1186]: حدود افتراضية
+            - generic [ref=e1188]:
+              - term [ref=e1189]: مؤشرات التبنّي
+              - definition [ref=e1190]:
+                - strong [ref=e1192]: "3"
+                - 'button "التفاصيل : مؤشرات التبنّي" [ref=e1193] [cursor=pointer]':
+                  - text: التفاصيل
+                  - generic [ref=e1194]: ": مؤشرات التبنّي"
+            - table "السجلات في هذا المجال" [ref=e1196]:
+              - caption [ref=e1197]: السجلات في هذا المجال
+              - rowgroup [ref=e1198]:
+                - row "السجل الحالة القيمة الاستحقاق" [ref=e1199]:
+                  - columnheader "السجل" [ref=e1200]
+                  - columnheader "الحالة" [ref=e1201]
+                  - columnheader "القيمة" [ref=e1202]
+                  - columnheader "الاستحقاق" [ref=e1203]
+              - rowgroup [ref=e1204]:
+                - 'row "usage_activation_rate Synthetic percentage KPI f2 en mvda8wcy الهدف: التحوّل غير معروف غير معروف غير معروف: لا توجد قيمة فعلية مقبولة لهذه الفترة. —" [ref=e1205]':
+                  - 'rowheader "usage_activation_rate Synthetic percentage KPI f2 en mvda8wcy الهدف: التحوّل" [ref=e1206]':
+                    - link "usage_activation_rate Synthetic percentage KPI f2 en mvda8wcy" [ref=e1207] [cursor=pointer]:
+                      - /url: /transformations/01a14d1d-6420-75dd-b598-5ff66459d75f/kpis/01a14d1d-6503-724b-a84a-d157cd2919c3
+                    - generic [ref=e1209]: "الهدف: التحوّل"
+                  - cell "غير معروف" [ref=e1210]:
+                    - generic [ref=e1211]:
+                      - img [ref=e1212]
+                      - text: غير معروف
+                  - 'cell "غير معروف غير معروف: لا توجد قيمة فعلية مقبولة لهذه الفترة." [ref=e1214]':
+                    - generic [ref=e1215]:
+                      - generic [ref=e1216]:
+                        - img [ref=e1217]
+                        - generic [ref=e1219]: غير معروف
+                      - generic [ref=e1220]: "غير معروف: لا توجد قيمة فعلية مقبولة لهذه الفترة."
+                  - cell "—" [ref=e1221]
+                - 'row "new_journey_share Synthetic adoption rate % en mvdaajx0 الهدف: التحوّل غير معروف 12 % —" [ref=e1222]':
+                  - 'rowheader "new_journey_share Synthetic adoption rate % en mvdaajx0 الهدف: التحوّل" [ref=e1223]':
+                    - link "new_journey_share Synthetic adoption rate % en mvdaajx0" [ref=e1224] [cursor=pointer]:
+                      - /url: /transformations/01a14d1e-919f-741b-bc35-2e0482fe5d77/kpis/01a14d1e-92cb-727a-ae46-4f30e5f49956
+                    - generic [ref=e1226]: "الهدف: التحوّل"
+                  - cell "غير معروف" [ref=e1227]:
+                    - generic [ref=e1228]:
+                      - img [ref=e1229]
+                      - text: غير معروف
+                  - cell "12 %" [ref=e1231]:
+                    - generic [ref=e1234]: 12 %
+                  - cell "—" [ref=e1235]
+                - 'row "usage_activation_rate Synthetic adoption rate percentage en mvdaajx0 الهدف: التحوّل غير معروف 12 % —" [ref=e1236]':
+                  - 'rowheader "usage_activation_rate Synthetic adoption rate percentage en mvdaajx0 الهدف: التحوّل" [ref=e1237]':
+                    - link "usage_activation_rate Synthetic adoption rate percentage en mvdaajx0" [ref=e1238] [cursor=pointer]:
+                      - /url: /transformations/01a14d1e-919f-741b-bc35-2e0482fe5d77/kpis/01a14d1e-9248-77ea-a202-7c6a20cc83b2
+                    - generic [ref=e1240]: "الهدف: التحوّل"
+                  - cell "غير معروف" [ref=e1241]:
+                    - generic [ref=e1242]:
+                      - img [ref=e1243]
+                      - text: غير معروف
+                  - cell "12 %" [ref=e1245]:
+                    - generic [ref=e1247]: 12 %
+                  - cell "—" [ref=e1248]
+        - region "حسب التحوّل" [ref=e1249]:
+          - heading "حسب التحوّل" [level=2] [ref=e1251]
+          - generic [ref=e1252]: كل تحوّل ضمن النطاق مع حالات مجالاته الستة.
+          - generic [ref=e1253]:
+            - generic [ref=e1254]: الترتيب حسب
+            - combobox "الترتيب حسب" [ref=e1255]:
+              - option "الرمز" [selected]
+              - option "الاسم"
+          - table "حالة المجال لكل تحوّل" [ref=e1257]:
+            - caption [ref=e1258]: حالة المجال لكل تحوّل
+            - rowgroup [ref=e1259]:
+              - row "التحوّل النتائج القيمة المحفظة الاعتماديات القرارات الأفراد والتبني" [ref=e1260]:
+                - columnheader "التحوّل" [ref=e1261]
+                - columnheader "النتائج" [ref=e1262]
+                - columnheader "القيمة" [ref=e1263]
+                - columnheader "المحفظة" [ref=e1264]
+                - columnheader "الاعتماديات" [ref=e1265]
+                - columnheader "القرارات" [ref=e1266]
+                - columnheader "الأفراد والتبني" [ref=e1267]
+            - rowgroup [ref=e1268]:
+              - row "TR-0001 Synthetic FE-C3 EN mvd9i5v9 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1269]:
+                - rowheader "TR-0001 Synthetic FE-C3 EN mvd9i5v9" [ref=e1270]:
+                  - link "TR-0001 Synthetic FE-C3 EN mvd9i5v9" [ref=e1271] [cursor=pointer]:
+                    - /url: /transformations/01a14d0a-5e87-704f-8ee4-1bc344bb42db/dashboard
+                - cell "غير معروف" [ref=e1272]:
+                  - generic [ref=e1273]:
+                    - img [ref=e1274]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1276]:
+                  - generic [ref=e1277]:
+                    - img [ref=e1278]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1280]:
+                  - generic [ref=e1281]:
+                    - img [ref=e1282]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1284]:
+                  - generic [ref=e1285]:
+                    - img [ref=e1286]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1288]:
+                  - generic [ref=e1289]:
+                    - img [ref=e1290]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1292]:
+                  - generic [ref=e1293]:
+                    - img [ref=e1294]
+                    - text: غير معروف
+              - row "TR-0002 Synthetic FE-D3 EN dry-run sample غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1296]:
+                - rowheader "TR-0002 Synthetic FE-D3 EN dry-run sample" [ref=e1297]:
+                  - link "TR-0002 Synthetic FE-D3 EN dry-run sample" [ref=e1298] [cursor=pointer]:
+                    - /url: /transformations/01a14d0a-8446-77b7-bd31-15f0272ce497/dashboard
+                - cell "غير معروف" [ref=e1299]:
+                  - generic [ref=e1300]:
+                    - img [ref=e1301]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1303]:
+                  - generic [ref=e1304]:
+                    - img [ref=e1305]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1307]:
+                  - generic [ref=e1308]:
+                    - img [ref=e1309]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1311]:
+                  - generic [ref=e1312]:
+                    - img [ref=e1313]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1315]:
+                  - generic [ref=e1316]:
+                    - img [ref=e1317]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1319]:
+                  - generic [ref=e1320]:
+                    - img [ref=e1321]
+                    - text: غير معروف
+              - row "TR-0003 Synthetic FE-D5 EN form headers 1792293907407 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1323]:
+                - rowheader "TR-0003 Synthetic FE-D5 EN form headers 1792293907407" [ref=e1324]:
+                  - link "TR-0003 Synthetic FE-D5 EN form headers 1792293907407" [ref=e1325] [cursor=pointer]:
+                    - /url: /transformations/01a14d0a-abd6-760b-9f07-77e2a9f15673/dashboard
+                - cell "غير معروف" [ref=e1326]:
+                  - generic [ref=e1327]:
+                    - img [ref=e1328]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1330]:
+                  - generic [ref=e1331]:
+                    - img [ref=e1332]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1334]:
+                  - generic [ref=e1335]:
+                    - img [ref=e1336]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1338]:
+                  - generic [ref=e1339]:
+                    - img [ref=e1340]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1342]:
+                  - generic [ref=e1343]:
+                    - img [ref=e1344]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1346]:
+                  - generic [ref=e1347]:
+                    - img [ref=e1348]
+                    - text: غير معروف
+              - row "TR-0005 Synthetic EN lead-created record غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1350]:
+                - rowheader "TR-0005 Synthetic EN lead-created record" [ref=e1351]:
+                  - link "TR-0005 Synthetic EN lead-created record" [ref=e1352] [cursor=pointer]:
+                    - /url: /transformations/01a14d0b-88d0-7239-b28d-70e31a3104f7/dashboard
+                - cell "غير معروف" [ref=e1353]:
+                  - generic [ref=e1354]:
+                    - img [ref=e1355]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1357]:
+                  - generic [ref=e1358]:
+                    - img [ref=e1359]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1361]:
+                  - generic [ref=e1362]:
+                    - img [ref=e1363]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1365]:
+                  - generic [ref=e1366]:
+                    - img [ref=e1367]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1369]:
+                  - generic [ref=e1370]:
+                    - img [ref=e1371]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1373]:
+                  - generic [ref=e1374]:
+                    - img [ref=e1375]
+                    - text: غير معروف
+              - row "TR-0006 Synthetic blank-text EN check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1377]:
+                - rowheader "TR-0006 Synthetic blank-text EN check" [ref=e1378]:
+                  - link "TR-0006 Synthetic blank-text EN check" [ref=e1379] [cursor=pointer]:
+                    - /url: /transformations/01a14d0b-98e9-7083-9ec6-d625f1c9fad7/dashboard
+                - cell "غير معروف" [ref=e1380]:
+                  - generic [ref=e1381]:
+                    - img [ref=e1382]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1384]:
+                  - generic [ref=e1385]:
+                    - img [ref=e1386]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1388]:
+                  - generic [ref=e1389]:
+                    - img [ref=e1390]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1392]:
+                  - generic [ref=e1393]:
+                    - img [ref=e1394]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1396]:
+                  - generic [ref=e1397]:
+                    - img [ref=e1398]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1400]:
+                  - generic [ref=e1401]:
+                    - img [ref=e1402]
+                    - text: غير معروف
+              - row "TR-0007 Synthetic form-level problem EN check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1404]:
+                - rowheader "TR-0007 Synthetic form-level problem EN check" [ref=e1405]:
+                  - link "TR-0007 Synthetic form-level problem EN check" [ref=e1406] [cursor=pointer]:
+                    - /url: /transformations/01a14d0c-30fc-747b-a5f9-857ba0fe03a0/dashboard
+                - cell "غير معروف" [ref=e1407]:
+                  - generic [ref=e1408]:
+                    - img [ref=e1409]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1411]:
+                  - generic [ref=e1412]:
+                    - img [ref=e1413]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1415]:
+                  - generic [ref=e1416]:
+                    - img [ref=e1417]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1419]:
+                  - generic [ref=e1420]:
+                    - img [ref=e1421]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1423]:
+                  - generic [ref=e1424]:
+                    - img [ref=e1425]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1427]:
+                  - generic [ref=e1428]:
+                    - img [ref=e1429]
+                    - text: غير معروف
+              - row "TR-0008 Synthetic P2 EN journey غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1431]:
+                - rowheader "TR-0008 Synthetic P2 EN journey" [ref=e1432]:
+                  - link "TR-0008 Synthetic P2 EN journey" [ref=e1433] [cursor=pointer]:
+                    - /url: /transformations/01a14d0c-46c2-73dd-951e-439200fa0d32/dashboard
+                - cell "غير معروف" [ref=e1434]:
+                  - generic [ref=e1435]:
+                    - img [ref=e1436]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1438]:
+                  - generic [ref=e1439]:
+                    - img [ref=e1440]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1442]:
+                  - generic [ref=e1443]:
+                    - img [ref=e1444]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1446]:
+                  - generic [ref=e1447]:
+                    - img [ref=e1448]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1450]:
+                  - generic [ref=e1451]:
+                    - img [ref=e1452]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1454]:
+                  - generic [ref=e1455]:
+                    - img [ref=e1456]
+                    - text: غير معروف
+              - row "TR-0009 Synthetic P3 business cases EN check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1458]:
+                - rowheader "TR-0009 Synthetic P3 business cases EN check" [ref=e1459]:
+                  - link "TR-0009 Synthetic P3 business cases EN check" [ref=e1460] [cursor=pointer]:
+                    - /url: /transformations/01a14d0d-e602-771e-bfe9-0649e54dbfd2/dashboard
+                - cell "غير معروف" [ref=e1461]:
+                  - generic [ref=e1462]:
+                    - img [ref=e1463]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1465]:
+                  - generic [ref=e1466]:
+                    - img [ref=e1467]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1469]:
+                  - generic [ref=e1470]:
+                    - img [ref=e1471]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1473]:
+                  - generic [ref=e1474]:
+                    - img [ref=e1475]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1477]:
+                  - generic [ref=e1478]:
+                    - img [ref=e1479]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1481]:
+                  - generic [ref=e1482]:
+                    - img [ref=e1483]
+                    - text: غير معروف
+              - row "TR-0010 Synthetic G4 refusal EN غير معروف لا ينطبق غير معروف أخضر أخضر غير معروف" [ref=e1485]:
+                - rowheader "TR-0010 Synthetic G4 refusal EN" [ref=e1486]:
+                  - link "TR-0010 Synthetic G4 refusal EN" [ref=e1487] [cursor=pointer]:
+                    - /url: /transformations/01a14d0e-d3ca-742f-934c-549974379ee1/dashboard
+                - cell "غير معروف" [ref=e1488]:
+                  - generic [ref=e1489]:
+                    - img [ref=e1490]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1492]:
+                  - generic [ref=e1493]:
+                    - img [ref=e1494]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e1496]:
+                  - generic [ref=e1497]:
+                    - img [ref=e1498]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e1500]:
+                  - generic [ref=e1501]:
+                    - img [ref=e1502]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1504]:
+                  - generic [ref=e1505]:
+                    - img [ref=e1506]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1508]:
+                  - generic [ref=e1509]:
+                    - img [ref=e1510]
+                    - text: غير معروف
+              - row "TR-0011 Synthetic inherited approval layout EN غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1512]:
+                - rowheader "TR-0011 Synthetic inherited approval layout EN" [ref=e1513]:
+                  - link "TR-0011 Synthetic inherited approval layout EN" [ref=e1514] [cursor=pointer]:
+                    - /url: /transformations/01a14d0e-f01d-74e5-9625-b80088815757/dashboard
+                - cell "غير معروف" [ref=e1515]:
+                  - generic [ref=e1516]:
+                    - img [ref=e1517]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1519]:
+                  - generic [ref=e1520]:
+                    - img [ref=e1521]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1523]:
+                  - generic [ref=e1524]:
+                    - img [ref=e1525]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1527]:
+                  - generic [ref=e1528]:
+                    - img [ref=e1529]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1531]:
+                  - generic [ref=e1532]:
+                    - img [ref=e1533]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1535]:
+                  - generic [ref=e1536]:
+                    - img [ref=e1537]
+                    - text: غير معروف
+              - row "TR-0012 Synthetic P3 journey EN غير معروف لا ينطبق غير معروف كهرماني أخضر غير معروف" [ref=e1539]:
+                - rowheader "TR-0012 Synthetic P3 journey EN" [ref=e1540]:
+                  - link "TR-0012 Synthetic P3 journey EN" [ref=e1541] [cursor=pointer]:
+                    - /url: /transformations/01a14d0f-6ca8-756f-ac35-f9c3fffbda02/dashboard
+                - cell "غير معروف" [ref=e1542]:
+                  - generic [ref=e1543]:
+                    - img [ref=e1544]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1546]:
+                  - generic [ref=e1547]:
+                    - img [ref=e1548]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e1550]:
+                  - generic [ref=e1551]:
+                    - img [ref=e1552]
+                    - text: غير معروف
+                - cell "كهرماني" [ref=e1554]:
+                  - generic [ref=e1555]:
+                    - img [ref=e1556]
+                    - text: كهرماني
+                - cell "أخضر" [ref=e1558]:
+                  - generic [ref=e1559]:
+                    - img [ref=e1560]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1562]:
+                  - generic [ref=e1563]:
+                    - img [ref=e1564]
+                    - text: غير معروف
+              - row "TR-0013 Synthetic P3 portfolio EN check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1566]:
+                - rowheader "TR-0013 Synthetic P3 portfolio EN check" [ref=e1567]:
+                  - link "TR-0013 Synthetic P3 portfolio EN check" [ref=e1568] [cursor=pointer]:
+                    - /url: /transformations/01a14d12-aeaf-75ee-8497-a69e3ec31907/dashboard
+                - cell "غير معروف" [ref=e1569]:
+                  - generic [ref=e1570]:
+                    - img [ref=e1571]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1573]:
+                  - generic [ref=e1574]:
+                    - img [ref=e1575]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1577]:
+                  - generic [ref=e1578]:
+                    - img [ref=e1579]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1581]:
+                  - generic [ref=e1582]:
+                    - img [ref=e1583]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1585]:
+                  - generic [ref=e1586]:
+                    - img [ref=e1587]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1589]:
+                  - generic [ref=e1590]:
+                    - img [ref=e1591]
+                    - text: غير معروف
+              - row "TR-0014 Synthetic P3 prioritization EN check غير معروف لا ينطبق لا ينطبق غير معروف أخضر غير معروف" [ref=e1593]:
+                - rowheader "TR-0014 Synthetic P3 prioritization EN check" [ref=e1594]:
+                  - link "TR-0014 Synthetic P3 prioritization EN check" [ref=e1595] [cursor=pointer]:
+                    - /url: /transformations/01a14d13-553a-727e-a3f7-89ce9f95e648/dashboard
+                - cell "غير معروف" [ref=e1596]:
+                  - generic [ref=e1597]:
+                    - img [ref=e1598]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1600]:
+                  - generic [ref=e1601]:
+                    - img [ref=e1602]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1604]:
+                  - generic [ref=e1605]:
+                    - img [ref=e1606]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e1608]:
+                  - generic [ref=e1609]:
+                    - img [ref=e1610]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e1612]:
+                  - generic [ref=e1613]:
+                    - img [ref=e1614]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1616]:
+                  - generic [ref=e1617]:
+                    - img [ref=e1618]
+                    - text: غير معروف
+              - row "TR-0015 Synthetic P3 seams EN check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1620]:
+                - rowheader "TR-0015 Synthetic P3 seams EN check" [ref=e1621]:
+                  - link "TR-0015 Synthetic P3 seams EN check" [ref=e1622] [cursor=pointer]:
+                    - /url: /transformations/01a14d14-1b7d-7022-9134-3a2c3d1ada46/dashboard
+                - cell "غير معروف" [ref=e1623]:
+                  - generic [ref=e1624]:
+                    - img [ref=e1625]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1627]:
+                  - generic [ref=e1628]:
+                    - img [ref=e1629]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1631]:
+                  - generic [ref=e1632]:
+                    - img [ref=e1633]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1635]:
+                  - generic [ref=e1636]:
+                    - img [ref=e1637]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1639]:
+                  - generic [ref=e1640]:
+                    - img [ref=e1641]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1643]:
+                  - generic [ref=e1644]:
+                    - img [ref=e1645]
+                    - text: غير معروف
+              - row "TR-0016 Synthetic P3 UI completion EN check غير معروف لا ينطبق غير معروف أخضر أخضر غير معروف" [ref=e1647]:
+                - rowheader "TR-0016 Synthetic P3 UI completion EN check" [ref=e1648]:
+                  - link "TR-0016 Synthetic P3 UI completion EN check" [ref=e1649] [cursor=pointer]:
+                    - /url: /transformations/01a14d14-8b20-70de-ae34-648c306b2f00/dashboard
+                - cell "غير معروف" [ref=e1650]:
+                  - generic [ref=e1651]:
+                    - img [ref=e1652]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1654]:
+                  - generic [ref=e1655]:
+                    - img [ref=e1656]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e1658]:
+                  - generic [ref=e1659]:
+                    - img [ref=e1660]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e1662]:
+                  - generic [ref=e1663]:
+                    - img [ref=e1664]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1666]:
+                  - generic [ref=e1667]:
+                    - img [ref=e1668]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1670]:
+                  - generic [ref=e1671]:
+                    - img [ref=e1672]
+                    - text: غير معروف
+              - row "TR-0017 Synthetic P4 adoption and BAU EN mvd9xp9s غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1674]:
+                - rowheader "TR-0017 Synthetic P4 adoption and BAU EN mvd9xp9s" [ref=e1675]:
+                  - link "TR-0017 Synthetic P4 adoption and BAU EN mvd9xp9s" [ref=e1676] [cursor=pointer]:
+                    - /url: /transformations/01a14d15-6b74-750d-b644-15b479ccbbe8/dashboard
+                - cell "غير معروف" [ref=e1677]:
+                  - generic [ref=e1678]:
+                    - img [ref=e1679]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1681]:
+                  - generic [ref=e1682]:
+                    - img [ref=e1683]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1685]:
+                  - generic [ref=e1686]:
+                    - img [ref=e1687]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1689]:
+                  - generic [ref=e1690]:
+                    - img [ref=e1691]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1693]:
+                  - generic [ref=e1694]:
+                    - img [ref=e1695]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1697]:
+                  - generic [ref=e1698]:
+                    - img [ref=e1699]
+                    - text: غير معروف
+              - row "TR-0018 Synthetic P4 other transformation EN mvd9xp9s غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1701]:
+                - rowheader "TR-0018 Synthetic P4 other transformation EN mvd9xp9s" [ref=e1702]:
+                  - link "TR-0018 Synthetic P4 other transformation EN mvd9xp9s" [ref=e1703] [cursor=pointer]:
+                    - /url: /transformations/01a14d15-6bc1-714c-8f60-a51f227d9530/dashboard
+                - cell "غير معروف" [ref=e1704]:
+                  - generic [ref=e1705]:
+                    - img [ref=e1706]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1708]:
+                  - generic [ref=e1709]:
+                    - img [ref=e1710]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1712]:
+                  - generic [ref=e1713]:
+                    - img [ref=e1714]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1716]:
+                  - generic [ref=e1717]:
+                    - img [ref=e1718]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1720]:
+                  - generic [ref=e1721]:
+                    - img [ref=e1722]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1724]:
+                  - generic [ref=e1725]:
+                    - img [ref=e1726]
+                    - text: غير معروف
+              - row "TR-0019 Synthetic P4 benefits EN mvd9zkpu غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1728]:
+                - rowheader "TR-0019 Synthetic P4 benefits EN mvd9zkpu" [ref=e1729]:
+                  - link "TR-0019 Synthetic P4 benefits EN mvd9zkpu" [ref=e1730] [cursor=pointer]:
+                    - /url: /transformations/01a14d16-c0d9-76af-b4ed-16d23da2a4db/dashboard
+                - cell "غير معروف" [ref=e1731]:
+                  - generic [ref=e1732]:
+                    - img [ref=e1733]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1735]:
+                  - generic [ref=e1736]:
+                    - img [ref=e1737]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1739]:
+                  - generic [ref=e1740]:
+                    - img [ref=e1741]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1743]:
+                  - generic [ref=e1744]:
+                    - img [ref=e1745]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1747]:
+                  - generic [ref=e1748]:
+                    - img [ref=e1749]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1751]:
+                  - generic [ref=e1752]:
+                    - img [ref=e1753]
+                    - text: غير معروف
+              - row "TR-0020 Synthetic P4 change control and phases EN mvda1lm0 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1755]:
+                - rowheader "TR-0020 Synthetic P4 change control and phases EN mvda1lm0" [ref=e1756]:
+                  - link "TR-0020 Synthetic P4 change control and phases EN mvda1lm0" [ref=e1757] [cursor=pointer]:
+                    - /url: /transformations/01a14d18-31f5-73ec-b824-82a1804c4b7b/dashboard
+                - cell "غير معروف" [ref=e1758]:
+                  - generic [ref=e1759]:
+                    - img [ref=e1760]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1762]:
+                  - generic [ref=e1763]:
+                    - img [ref=e1764]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1766]:
+                  - generic [ref=e1767]:
+                    - img [ref=e1768]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1770]:
+                  - generic [ref=e1771]:
+                    - img [ref=e1772]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1774]:
+                  - generic [ref=e1775]:
+                    - img [ref=e1776]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1778]:
+                  - generic [ref=e1779]:
+                    - img [ref=e1780]
+                    - text: غير معروف
+              - row "TR-0021 Synthetic P4 dashboards A EN mvda2xh7 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1782]:
+                - rowheader "TR-0021 Synthetic P4 dashboards A EN mvda2xh7" [ref=e1783]:
+                  - link "TR-0021 Synthetic P4 dashboards A EN mvda2xh7" [ref=e1784] [cursor=pointer]:
+                    - /url: /transformations/01a14d19-2491-714f-8f48-45e299ad309d/dashboard
+                - cell "غير معروف" [ref=e1785]:
+                  - generic [ref=e1786]:
+                    - img [ref=e1787]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1789]:
+                  - generic [ref=e1790]:
+                    - img [ref=e1791]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1793]:
+                  - generic [ref=e1794]:
+                    - img [ref=e1795]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1797]:
+                  - generic [ref=e1798]:
+                    - img [ref=e1799]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1801]:
+                  - generic [ref=e1802]:
+                    - img [ref=e1803]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1805]:
+                  - generic [ref=e1806]:
+                    - img [ref=e1807]
+                    - text: غير معروف
+              - row "TR-0022 Synthetic P4 dashboards B EN mvda2xh7 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1809]:
+                - rowheader "TR-0022 Synthetic P4 dashboards B EN mvda2xh7" [ref=e1810]:
+                  - link "TR-0022 Synthetic P4 dashboards B EN mvda2xh7" [ref=e1811] [cursor=pointer]:
+                    - /url: /transformations/01a14d19-24f7-7436-bb4c-8824861defa3/dashboard
+                - cell "غير معروف" [ref=e1812]:
+                  - generic [ref=e1813]:
+                    - img [ref=e1814]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1816]:
+                  - generic [ref=e1817]:
+                    - img [ref=e1818]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1820]:
+                  - generic [ref=e1821]:
+                    - img [ref=e1822]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1824]:
+                  - generic [ref=e1825]:
+                    - img [ref=e1826]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1828]:
+                  - generic [ref=e1829]:
+                    - img [ref=e1830]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1832]:
+                  - generic [ref=e1833]:
+                    - img [ref=e1834]
+                    - text: غير معروف
+              - row "TR-0023 Synthetic P4 dashboards unit EN mvda2xh7 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1836]:
+                - rowheader "TR-0023 Synthetic P4 dashboards unit EN mvda2xh7" [ref=e1837]:
+                  - link "TR-0023 Synthetic P4 dashboards unit EN mvda2xh7" [ref=e1838] [cursor=pointer]:
+                    - /url: /transformations/01a14d19-5da4-75dd-9226-53f93f9e6de0/dashboard
+                - cell "غير معروف" [ref=e1839]:
+                  - generic [ref=e1840]:
+                    - img [ref=e1841]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1843]:
+                  - generic [ref=e1844]:
+                    - img [ref=e1845]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1847]:
+                  - generic [ref=e1848]:
+                    - img [ref=e1849]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1851]:
+                  - generic [ref=e1852]:
+                    - img [ref=e1853]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1855]:
+                  - generic [ref=e1856]:
+                    - img [ref=e1857]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1859]:
+                  - generic [ref=e1860]:
+                    - img [ref=e1861]
+                    - text: غير معروف
+              - row "TR-0024 Synthetic P4 execution EN mvda4ao3 غير معروف لا ينطبق لا ينطبق غير معروف أخضر غير معروف" [ref=e1863]:
+                - rowheader "TR-0024 Synthetic P4 execution EN mvda4ao3" [ref=e1864]:
+                  - link "TR-0024 Synthetic P4 execution EN mvda4ao3" [ref=e1865] [cursor=pointer]:
+                    - /url: /transformations/01a14d1a-1d69-733a-b5d9-54b86c0798c3/dashboard
+                - cell "غير معروف" [ref=e1866]:
+                  - generic [ref=e1867]:
+                    - img [ref=e1868]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1870]:
+                  - generic [ref=e1871]:
+                    - img [ref=e1872]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1874]:
+                  - generic [ref=e1875]:
+                    - img [ref=e1876]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e1878]:
+                  - generic [ref=e1879]:
+                    - img [ref=e1880]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e1882]:
+                  - generic [ref=e1883]:
+                    - img [ref=e1884]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1886]:
+                  - generic [ref=e1887]:
+                    - img [ref=e1888]
+                    - text: غير معروف
+              - row "TR-0025 Synthetic P4 G5 G6 and closure EN mvda5ewz غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1890]:
+                - rowheader "TR-0025 Synthetic P4 G5 G6 and closure EN mvda5ewz" [ref=e1891]:
+                  - link "TR-0025 Synthetic P4 G5 G6 and closure EN mvda5ewz" [ref=e1892] [cursor=pointer]:
+                    - /url: /transformations/01a14d1a-e91f-7128-b3a0-156b4bea0d6d/dashboard
+                - cell "غير معروف" [ref=e1893]:
+                  - generic [ref=e1894]:
+                    - img [ref=e1895]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1897]:
+                  - generic [ref=e1898]:
+                    - img [ref=e1899]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1901]:
+                  - generic [ref=e1902]:
+                    - img [ref=e1903]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1905]:
+                  - generic [ref=e1906]:
+                    - img [ref=e1907]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1909]:
+                  - generic [ref=e1910]:
+                    - img [ref=e1911]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1913]:
+                  - generic [ref=e1914]:
+                    - img [ref=e1915]
+                    - text: غير معروف
+              - row "TR-0026 Synthetic P4 Modular G3 waiver EN mvda5ewz غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1917]:
+                - rowheader "TR-0026 Synthetic P4 Modular G3 waiver EN mvda5ewz" [ref=e1918]:
+                  - link "TR-0026 Synthetic P4 Modular G3 waiver EN mvda5ewz" [ref=e1919] [cursor=pointer]:
+                    - /url: /transformations/01a14d1a-e998-7227-a66c-b2dd2bcb1c9f/dashboard
+                - cell "غير معروف" [ref=e1920]:
+                  - generic [ref=e1921]:
+                    - img [ref=e1922]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1924]:
+                  - generic [ref=e1925]:
+                    - img [ref=e1926]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1928]:
+                  - generic [ref=e1929]:
+                    - img [ref=e1930]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1932]:
+                  - generic [ref=e1933]:
+                    - img [ref=e1934]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1936]:
+                  - generic [ref=e1937]:
+                    - img [ref=e1938]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1940]:
+                  - generic [ref=e1941]:
+                    - img [ref=e1942]
+                    - text: غير معروف
+              - row "TR-0027 Synthetic P4 governance EN mvda7hoi غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1944]:
+                - rowheader "TR-0027 Synthetic P4 governance EN mvda7hoi" [ref=e1945]:
+                  - link "TR-0027 Synthetic P4 governance EN mvda7hoi" [ref=e1946] [cursor=pointer]:
+                    - /url: /transformations/01a14d1c-637d-759a-b979-76c8a65a7dcc/dashboard
+                - cell "غير معروف" [ref=e1947]:
+                  - generic [ref=e1948]:
+                    - img [ref=e1949]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1951]:
+                  - generic [ref=e1952]:
+                    - img [ref=e1953]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1955]:
+                  - generic [ref=e1956]:
+                    - img [ref=e1957]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1959]:
+                  - generic [ref=e1960]:
+                    - img [ref=e1961]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1963]:
+                  - generic [ref=e1964]:
+                    - img [ref=e1965]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1967]:
+                  - generic [ref=e1968]:
+                    - img [ref=e1969]
+                    - text: غير معروف
+              - row "TR-0028 Synthetic P4 KPI unit EN mvda8wcy غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1971]:
+                - rowheader "TR-0028 Synthetic P4 KPI unit EN mvda8wcy" [ref=e1972]:
+                  - link "TR-0028 Synthetic P4 KPI unit EN mvda8wcy" [ref=e1973] [cursor=pointer]:
+                    - /url: /transformations/01a14d1d-6420-75dd-b598-5ff66459d75f/dashboard
+                - cell "غير معروف" [ref=e1974]:
+                  - generic [ref=e1975]:
+                    - img [ref=e1976]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e1978]:
+                  - generic [ref=e1979]:
+                    - img [ref=e1980]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e1982]:
+                  - generic [ref=e1983]:
+                    - img [ref=e1984]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e1986]:
+                  - generic [ref=e1987]:
+                    - img [ref=e1988]
+                    - text: أخضر
+                - cell "أخضر" [ref=e1990]:
+                  - generic [ref=e1991]:
+                    - img [ref=e1992]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e1994]:
+                  - generic [ref=e1995]:
+                    - img [ref=e1996]
+                    - text: غير معروف
+              - row "TR-0029 Synthetic P4 KPI EN mvda9cqg غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e1998]:
+                - rowheader "TR-0029 Synthetic P4 KPI EN mvda9cqg" [ref=e1999]:
+                  - link "TR-0029 Synthetic P4 KPI EN mvda9cqg" [ref=e2000] [cursor=pointer]:
+                    - /url: /transformations/01a14d1d-b709-73ee-930a-66703286431f/dashboard
+                - cell "غير معروف" [ref=e2001]:
+                  - generic [ref=e2002]:
+                    - img [ref=e2003]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2005]:
+                  - generic [ref=e2006]:
+                    - img [ref=e2007]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2009]:
+                  - generic [ref=e2010]:
+                    - img [ref=e2011]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2013]:
+                  - generic [ref=e2014]:
+                    - img [ref=e2015]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2017]:
+                  - generic [ref=e2018]:
+                    - img [ref=e2019]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2021]:
+                  - generic [ref=e2022]:
+                    - img [ref=e2023]
+                    - text: غير معروف
+              - row "TR-0030 Synthetic P4 percentage KPI EN mvdaajx0 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2025]:
+                - rowheader "TR-0030 Synthetic P4 percentage KPI EN mvdaajx0" [ref=e2026]:
+                  - link "TR-0030 Synthetic P4 percentage KPI EN mvdaajx0" [ref=e2027] [cursor=pointer]:
+                    - /url: /transformations/01a14d1e-919f-741b-bc35-2e0482fe5d77/dashboard
+                - cell "غير معروف" [ref=e2028]:
+                  - generic [ref=e2029]:
+                    - img [ref=e2030]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2032]:
+                  - generic [ref=e2033]:
+                    - img [ref=e2034]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2036]:
+                  - generic [ref=e2037]:
+                    - img [ref=e2038]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2040]:
+                  - generic [ref=e2041]:
+                    - img [ref=e2042]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2044]:
+                  - generic [ref=e2045]:
+                    - img [ref=e2046]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2048]:
+                  - generic [ref=e2049]:
+                    - img [ref=e2050]
+                    - text: غير معروف
+              - row "TR-0031 Synthetic P4 RAID and governance EN mvdab2cz غير معروف لا ينطبق لا ينطبق غير معروف غير معروف غير معروف" [ref=e2052]:
+                - rowheader "TR-0031 Synthetic P4 RAID and governance EN mvdab2cz" [ref=e2053]:
+                  - link "TR-0031 Synthetic P4 RAID and governance EN mvdab2cz" [ref=e2054] [cursor=pointer]:
+                    - /url: /transformations/01a14d1e-eefa-729f-95a8-e466aa5dfa12/dashboard
+                - cell "غير معروف" [ref=e2055]:
+                  - generic [ref=e2056]:
+                    - img [ref=e2057]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2059]:
+                  - generic [ref=e2060]:
+                    - img [ref=e2061]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2063]:
+                  - generic [ref=e2064]:
+                    - img [ref=e2065]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e2067]:
+                  - generic [ref=e2068]:
+                    - img [ref=e2069]
+                    - text: غير معروف
+                - cell "غير معروف" [ref=e2071]:
+                  - generic [ref=e2072]:
+                    - img [ref=e2073]
+                    - text: غير معروف
+                - cell "غير معروف" [ref=e2075]:
+                  - generic [ref=e2076]:
+                    - img [ref=e2077]
+                    - text: غير معروف
+              - row "TR-0032 Synthetic P4 traceability EN mvdacixw غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2079]:
+                - rowheader "TR-0032 Synthetic P4 traceability EN mvdacixw" [ref=e2080]:
+                  - link "TR-0032 Synthetic P4 traceability EN mvdacixw" [ref=e2081] [cursor=pointer]:
+                    - /url: /transformations/01a14d1f-f90e-7644-b9cb-0dfabac4ea01/dashboard
+                - cell "غير معروف" [ref=e2082]:
+                  - generic [ref=e2083]:
+                    - img [ref=e2084]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2086]:
+                  - generic [ref=e2087]:
+                    - img [ref=e2088]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2090]:
+                  - generic [ref=e2091]:
+                    - img [ref=e2092]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2094]:
+                  - generic [ref=e2095]:
+                    - img [ref=e2096]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2098]:
+                  - generic [ref=e2099]:
+                    - img [ref=e2100]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2102]:
+                  - generic [ref=e2103]:
+                    - img [ref=e2104]
+                    - text: غير معروف
+              - row "TR-0033 Synthetic P4 value headlines EN mvdadw4j غير معروف أحمر لا ينطبق أخضر أخضر غير معروف" [ref=e2106]:
+                - rowheader "TR-0033 Synthetic P4 value headlines EN mvdadw4j" [ref=e2107]:
+                  - link "TR-0033 Synthetic P4 value headlines EN mvdadw4j" [ref=e2108] [cursor=pointer]:
+                    - /url: /transformations/01a14d20-f241-773d-9a15-e843ea0a6001/dashboard
+                - cell "غير معروف" [ref=e2109]:
+                  - generic [ref=e2110]:
+                    - img [ref=e2111]
+                    - text: غير معروف
+                - cell "أحمر" [ref=e2113]:
+                  - generic [ref=e2114]:
+                    - img [ref=e2115]
+                    - text: أحمر
+                - cell "لا ينطبق" [ref=e2117]:
+                  - generic [ref=e2118]:
+                    - img [ref=e2119]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2121]:
+                  - generic [ref=e2122]:
+                    - img [ref=e2123]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2125]:
+                  - generic [ref=e2126]:
+                    - img [ref=e2127]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2129]:
+                  - generic [ref=e2130]:
+                    - img [ref=e2131]
+                    - text: غير معروف
+              - row "TR-0034 Synthetic P4 value RAG lines EN mvdaedsk غير معروف أحمر لا ينطبق أخضر أخضر غير معروف" [ref=e2133]:
+                - rowheader "TR-0034 Synthetic P4 value RAG lines EN mvdaedsk" [ref=e2134]:
+                  - link "TR-0034 Synthetic P4 value RAG lines EN mvdaedsk" [ref=e2135] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-4b94-7359-b586-32ad786c97c0/dashboard
+                - cell "غير معروف" [ref=e2136]:
+                  - generic [ref=e2137]:
+                    - img [ref=e2138]
+                    - text: غير معروف
+                - cell "أحمر" [ref=e2140]:
+                  - generic [ref=e2141]:
+                    - img [ref=e2142]
+                    - text: أحمر
+                - cell "لا ينطبق" [ref=e2144]:
+                  - generic [ref=e2145]:
+                    - img [ref=e2146]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2148]:
+                  - generic [ref=e2149]:
+                    - img [ref=e2150]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2152]:
+                  - generic [ref=e2153]:
+                    - img [ref=e2154]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2156]:
+                  - generic [ref=e2157]:
+                    - img [ref=e2158]
+                    - text: غير معروف
+              - row "TR-0035 Synthetic BU limit en mvdaedsk 0 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2160]:
+                - rowheader "TR-0035 Synthetic BU limit en mvdaedsk 0" [ref=e2161]:
+                  - link "TR-0035 Synthetic BU limit en mvdaedsk 0" [ref=e2162] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-679e-724c-a255-dfe02d0df195/dashboard
+                - cell "غير معروف" [ref=e2163]:
+                  - generic [ref=e2164]:
+                    - img [ref=e2165]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2167]:
+                  - generic [ref=e2168]:
+                    - img [ref=e2169]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2171]:
+                  - generic [ref=e2172]:
+                    - img [ref=e2173]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2175]:
+                  - generic [ref=e2176]:
+                    - img [ref=e2177]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2179]:
+                  - generic [ref=e2180]:
+                    - img [ref=e2181]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2183]:
+                  - generic [ref=e2184]:
+                    - img [ref=e2185]
+                    - text: غير معروف
+              - row "TR-0036 Synthetic BU limit en mvdaedsk 1 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2187]:
+                - rowheader "TR-0036 Synthetic BU limit en mvdaedsk 1" [ref=e2188]:
+                  - link "TR-0036 Synthetic BU limit en mvdaedsk 1" [ref=e2189] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-67f8-723a-92ec-3d6e742726bb/dashboard
+                - cell "غير معروف" [ref=e2190]:
+                  - generic [ref=e2191]:
+                    - img [ref=e2192]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2194]:
+                  - generic [ref=e2195]:
+                    - img [ref=e2196]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2198]:
+                  - generic [ref=e2199]:
+                    - img [ref=e2200]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2202]:
+                  - generic [ref=e2203]:
+                    - img [ref=e2204]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2206]:
+                  - generic [ref=e2207]:
+                    - img [ref=e2208]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2210]:
+                  - generic [ref=e2211]:
+                    - img [ref=e2212]
+                    - text: غير معروف
+              - row "TR-0037 Synthetic BU limit en mvdaedsk 2 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2214]:
+                - rowheader "TR-0037 Synthetic BU limit en mvdaedsk 2" [ref=e2215]:
+                  - link "TR-0037 Synthetic BU limit en mvdaedsk 2" [ref=e2216] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6826-70b3-b91e-d7a59c6f4ce2/dashboard
+                - cell "غير معروف" [ref=e2217]:
+                  - generic [ref=e2218]:
+                    - img [ref=e2219]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2221]:
+                  - generic [ref=e2222]:
+                    - img [ref=e2223]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2225]:
+                  - generic [ref=e2226]:
+                    - img [ref=e2227]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2229]:
+                  - generic [ref=e2230]:
+                    - img [ref=e2231]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2233]:
+                  - generic [ref=e2234]:
+                    - img [ref=e2235]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2237]:
+                  - generic [ref=e2238]:
+                    - img [ref=e2239]
+                    - text: غير معروف
+              - row "TR-0038 Synthetic BU limit en mvdaedsk 3 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2241]:
+                - rowheader "TR-0038 Synthetic BU limit en mvdaedsk 3" [ref=e2242]:
+                  - link "TR-0038 Synthetic BU limit en mvdaedsk 3" [ref=e2243] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6854-70d4-9696-d79dde6b77f0/dashboard
+                - cell "غير معروف" [ref=e2244]:
+                  - generic [ref=e2245]:
+                    - img [ref=e2246]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2248]:
+                  - generic [ref=e2249]:
+                    - img [ref=e2250]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2252]:
+                  - generic [ref=e2253]:
+                    - img [ref=e2254]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2256]:
+                  - generic [ref=e2257]:
+                    - img [ref=e2258]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2260]:
+                  - generic [ref=e2261]:
+                    - img [ref=e2262]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2264]:
+                  - generic [ref=e2265]:
+                    - img [ref=e2266]
+                    - text: غير معروف
+              - row "TR-0039 Synthetic BU limit en mvdaedsk 4 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2268]:
+                - rowheader "TR-0039 Synthetic BU limit en mvdaedsk 4" [ref=e2269]:
+                  - link "TR-0039 Synthetic BU limit en mvdaedsk 4" [ref=e2270] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6881-7218-81ab-9a6646e8a387/dashboard
+                - cell "غير معروف" [ref=e2271]:
+                  - generic [ref=e2272]:
+                    - img [ref=e2273]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2275]:
+                  - generic [ref=e2276]:
+                    - img [ref=e2277]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2279]:
+                  - generic [ref=e2280]:
+                    - img [ref=e2281]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2283]:
+                  - generic [ref=e2284]:
+                    - img [ref=e2285]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2287]:
+                  - generic [ref=e2288]:
+                    - img [ref=e2289]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2291]:
+                  - generic [ref=e2292]:
+                    - img [ref=e2293]
+                    - text: غير معروف
+              - row "TR-0040 Synthetic BU limit en mvdaedsk 5 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2295]:
+                - rowheader "TR-0040 Synthetic BU limit en mvdaedsk 5" [ref=e2296]:
+                  - link "TR-0040 Synthetic BU limit en mvdaedsk 5" [ref=e2297] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-68b2-75a9-8a32-b9cd9d087b21/dashboard
+                - cell "غير معروف" [ref=e2298]:
+                  - generic [ref=e2299]:
+                    - img [ref=e2300]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2302]:
+                  - generic [ref=e2303]:
+                    - img [ref=e2304]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2306]:
+                  - generic [ref=e2307]:
+                    - img [ref=e2308]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2310]:
+                  - generic [ref=e2311]:
+                    - img [ref=e2312]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2314]:
+                  - generic [ref=e2315]:
+                    - img [ref=e2316]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2318]:
+                  - generic [ref=e2319]:
+                    - img [ref=e2320]
+                    - text: غير معروف
+              - row "TR-0041 Synthetic BU limit en mvdaedsk 6 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2322]:
+                - rowheader "TR-0041 Synthetic BU limit en mvdaedsk 6" [ref=e2323]:
+                  - link "TR-0041 Synthetic BU limit en mvdaedsk 6" [ref=e2324] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-68e2-708c-b793-6ac5df51cad3/dashboard
+                - cell "غير معروف" [ref=e2325]:
+                  - generic [ref=e2326]:
+                    - img [ref=e2327]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2329]:
+                  - generic [ref=e2330]:
+                    - img [ref=e2331]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2333]:
+                  - generic [ref=e2334]:
+                    - img [ref=e2335]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2337]:
+                  - generic [ref=e2338]:
+                    - img [ref=e2339]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2341]:
+                  - generic [ref=e2342]:
+                    - img [ref=e2343]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2345]:
+                  - generic [ref=e2346]:
+                    - img [ref=e2347]
+                    - text: غير معروف
+              - row "TR-0042 Synthetic BU limit en mvdaedsk 7 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2349]:
+                - rowheader "TR-0042 Synthetic BU limit en mvdaedsk 7" [ref=e2350]:
+                  - link "TR-0042 Synthetic BU limit en mvdaedsk 7" [ref=e2351] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-691e-7467-b5b5-4e5f51618a50/dashboard
+                - cell "غير معروف" [ref=e2352]:
+                  - generic [ref=e2353]:
+                    - img [ref=e2354]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2356]:
+                  - generic [ref=e2357]:
+                    - img [ref=e2358]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2360]:
+                  - generic [ref=e2361]:
+                    - img [ref=e2362]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2364]:
+                  - generic [ref=e2365]:
+                    - img [ref=e2366]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2368]:
+                  - generic [ref=e2369]:
+                    - img [ref=e2370]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2372]:
+                  - generic [ref=e2373]:
+                    - img [ref=e2374]
+                    - text: غير معروف
+              - row "TR-0043 Synthetic BU limit en mvdaedsk 8 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2376]:
+                - rowheader "TR-0043 Synthetic BU limit en mvdaedsk 8" [ref=e2377]:
+                  - link "TR-0043 Synthetic BU limit en mvdaedsk 8" [ref=e2378] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6949-7009-ab39-bf23b79b17c8/dashboard
+                - cell "غير معروف" [ref=e2379]:
+                  - generic [ref=e2380]:
+                    - img [ref=e2381]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2383]:
+                  - generic [ref=e2384]:
+                    - img [ref=e2385]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2387]:
+                  - generic [ref=e2388]:
+                    - img [ref=e2389]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2391]:
+                  - generic [ref=e2392]:
+                    - img [ref=e2393]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2395]:
+                  - generic [ref=e2396]:
+                    - img [ref=e2397]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2399]:
+                  - generic [ref=e2400]:
+                    - img [ref=e2401]
+                    - text: غير معروف
+              - row "TR-0044 Synthetic BU limit en mvdaedsk 9 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2403]:
+                - rowheader "TR-0044 Synthetic BU limit en mvdaedsk 9" [ref=e2404]:
+                  - link "TR-0044 Synthetic BU limit en mvdaedsk 9" [ref=e2405] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-697e-740a-ba0c-750115d657fb/dashboard
+                - cell "غير معروف" [ref=e2406]:
+                  - generic [ref=e2407]:
+                    - img [ref=e2408]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2410]:
+                  - generic [ref=e2411]:
+                    - img [ref=e2412]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2414]:
+                  - generic [ref=e2415]:
+                    - img [ref=e2416]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2418]:
+                  - generic [ref=e2419]:
+                    - img [ref=e2420]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2422]:
+                  - generic [ref=e2423]:
+                    - img [ref=e2424]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2426]:
+                  - generic [ref=e2427]:
+                    - img [ref=e2428]
+                    - text: غير معروف
+              - row "TR-0045 Synthetic BU limit en mvdaedsk 10 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2430]:
+                - rowheader "TR-0045 Synthetic BU limit en mvdaedsk 10" [ref=e2431]:
+                  - link "TR-0045 Synthetic BU limit en mvdaedsk 10" [ref=e2432] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-69ba-76ba-b651-69f38e4433ef/dashboard
+                - cell "غير معروف" [ref=e2433]:
+                  - generic [ref=e2434]:
+                    - img [ref=e2435]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2437]:
+                  - generic [ref=e2438]:
+                    - img [ref=e2439]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2441]:
+                  - generic [ref=e2442]:
+                    - img [ref=e2443]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2445]:
+                  - generic [ref=e2446]:
+                    - img [ref=e2447]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2449]:
+                  - generic [ref=e2450]:
+                    - img [ref=e2451]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2453]:
+                  - generic [ref=e2454]:
+                    - img [ref=e2455]
+                    - text: غير معروف
+              - row "TR-0046 Synthetic BU limit en mvdaedsk 11 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2457]:
+                - rowheader "TR-0046 Synthetic BU limit en mvdaedsk 11" [ref=e2458]:
+                  - link "TR-0046 Synthetic BU limit en mvdaedsk 11" [ref=e2459] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-69f1-718d-ade4-0c34d95f2528/dashboard
+                - cell "غير معروف" [ref=e2460]:
+                  - generic [ref=e2461]:
+                    - img [ref=e2462]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2464]:
+                  - generic [ref=e2465]:
+                    - img [ref=e2466]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2468]:
+                  - generic [ref=e2469]:
+                    - img [ref=e2470]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2472]:
+                  - generic [ref=e2473]:
+                    - img [ref=e2474]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2476]:
+                  - generic [ref=e2477]:
+                    - img [ref=e2478]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2480]:
+                  - generic [ref=e2481]:
+                    - img [ref=e2482]
+                    - text: غير معروف
+              - row "TR-0047 Synthetic BU limit en mvdaedsk 12 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2484]:
+                - rowheader "TR-0047 Synthetic BU limit en mvdaedsk 12" [ref=e2485]:
+                  - link "TR-0047 Synthetic BU limit en mvdaedsk 12" [ref=e2486] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6a1f-707f-8738-6a85ca2ceea0/dashboard
+                - cell "غير معروف" [ref=e2487]:
+                  - generic [ref=e2488]:
+                    - img [ref=e2489]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2491]:
+                  - generic [ref=e2492]:
+                    - img [ref=e2493]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2495]:
+                  - generic [ref=e2496]:
+                    - img [ref=e2497]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2499]:
+                  - generic [ref=e2500]:
+                    - img [ref=e2501]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2503]:
+                  - generic [ref=e2504]:
+                    - img [ref=e2505]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2507]:
+                  - generic [ref=e2508]:
+                    - img [ref=e2509]
+                    - text: غير معروف
+              - row "TR-0048 Synthetic BU limit en mvdaedsk 13 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2511]:
+                - rowheader "TR-0048 Synthetic BU limit en mvdaedsk 13" [ref=e2512]:
+                  - link "TR-0048 Synthetic BU limit en mvdaedsk 13" [ref=e2513] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6a47-70fc-9528-313291918fd5/dashboard
+                - cell "غير معروف" [ref=e2514]:
+                  - generic [ref=e2515]:
+                    - img [ref=e2516]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2518]:
+                  - generic [ref=e2519]:
+                    - img [ref=e2520]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2522]:
+                  - generic [ref=e2523]:
+                    - img [ref=e2524]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2526]:
+                  - generic [ref=e2527]:
+                    - img [ref=e2528]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2530]:
+                  - generic [ref=e2531]:
+                    - img [ref=e2532]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2534]:
+                  - generic [ref=e2535]:
+                    - img [ref=e2536]
+                    - text: غير معروف
+              - row "TR-0049 Synthetic BU limit en mvdaedsk 14 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2538]:
+                - rowheader "TR-0049 Synthetic BU limit en mvdaedsk 14" [ref=e2539]:
+                  - link "TR-0049 Synthetic BU limit en mvdaedsk 14" [ref=e2540] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6a6f-7316-ab45-a4828712a6bb/dashboard
+                - cell "غير معروف" [ref=e2541]:
+                  - generic [ref=e2542]:
+                    - img [ref=e2543]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2545]:
+                  - generic [ref=e2546]:
+                    - img [ref=e2547]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2549]:
+                  - generic [ref=e2550]:
+                    - img [ref=e2551]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2553]:
+                  - generic [ref=e2554]:
+                    - img [ref=e2555]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2557]:
+                  - generic [ref=e2558]:
+                    - img [ref=e2559]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2561]:
+                  - generic [ref=e2562]:
+                    - img [ref=e2563]
+                    - text: غير معروف
+              - row "TR-0050 Synthetic BU limit en mvdaedsk 15 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2565]:
+                - rowheader "TR-0050 Synthetic BU limit en mvdaedsk 15" [ref=e2566]:
+                  - link "TR-0050 Synthetic BU limit en mvdaedsk 15" [ref=e2567] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6a99-73df-8be4-b50962cdea41/dashboard
+                - cell "غير معروف" [ref=e2568]:
+                  - generic [ref=e2569]:
+                    - img [ref=e2570]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2572]:
+                  - generic [ref=e2573]:
+                    - img [ref=e2574]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2576]:
+                  - generic [ref=e2577]:
+                    - img [ref=e2578]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2580]:
+                  - generic [ref=e2581]:
+                    - img [ref=e2582]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2584]:
+                  - generic [ref=e2585]:
+                    - img [ref=e2586]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2588]:
+                  - generic [ref=e2589]:
+                    - img [ref=e2590]
+                    - text: غير معروف
+              - row "TR-0051 Synthetic BU limit en mvdaedsk 16 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2592]:
+                - rowheader "TR-0051 Synthetic BU limit en mvdaedsk 16" [ref=e2593]:
+                  - link "TR-0051 Synthetic BU limit en mvdaedsk 16" [ref=e2594] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6ac0-715e-8a68-5d4322c6e069/dashboard
+                - cell "غير معروف" [ref=e2595]:
+                  - generic [ref=e2596]:
+                    - img [ref=e2597]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2599]:
+                  - generic [ref=e2600]:
+                    - img [ref=e2601]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2603]:
+                  - generic [ref=e2604]:
+                    - img [ref=e2605]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2607]:
+                  - generic [ref=e2608]:
+                    - img [ref=e2609]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2611]:
+                  - generic [ref=e2612]:
+                    - img [ref=e2613]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2615]:
+                  - generic [ref=e2616]:
+                    - img [ref=e2617]
+                    - text: غير معروف
+              - row "TR-0052 Synthetic BU limit en mvdaedsk 17 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2619]:
+                - rowheader "TR-0052 Synthetic BU limit en mvdaedsk 17" [ref=e2620]:
+                  - link "TR-0052 Synthetic BU limit en mvdaedsk 17" [ref=e2621] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6ae7-72cb-95c2-01f13be5f43a/dashboard
+                - cell "غير معروف" [ref=e2622]:
+                  - generic [ref=e2623]:
+                    - img [ref=e2624]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2626]:
+                  - generic [ref=e2627]:
+                    - img [ref=e2628]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2630]:
+                  - generic [ref=e2631]:
+                    - img [ref=e2632]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2634]:
+                  - generic [ref=e2635]:
+                    - img [ref=e2636]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2638]:
+                  - generic [ref=e2639]:
+                    - img [ref=e2640]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2642]:
+                  - generic [ref=e2643]:
+                    - img [ref=e2644]
+                    - text: غير معروف
+              - row "TR-0053 Synthetic BU limit en mvdaedsk 18 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2646]:
+                - rowheader "TR-0053 Synthetic BU limit en mvdaedsk 18" [ref=e2647]:
+                  - link "TR-0053 Synthetic BU limit en mvdaedsk 18" [ref=e2648] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6b12-7141-ae23-7db15054c778/dashboard
+                - cell "غير معروف" [ref=e2649]:
+                  - generic [ref=e2650]:
+                    - img [ref=e2651]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2653]:
+                  - generic [ref=e2654]:
+                    - img [ref=e2655]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2657]:
+                  - generic [ref=e2658]:
+                    - img [ref=e2659]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2661]:
+                  - generic [ref=e2662]:
+                    - img [ref=e2663]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2665]:
+                  - generic [ref=e2666]:
+                    - img [ref=e2667]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2669]:
+                  - generic [ref=e2670]:
+                    - img [ref=e2671]
+                    - text: غير معروف
+              - row "TR-0054 Synthetic BU limit en mvdaedsk 19 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2673]:
+                - rowheader "TR-0054 Synthetic BU limit en mvdaedsk 19" [ref=e2674]:
+                  - link "TR-0054 Synthetic BU limit en mvdaedsk 19" [ref=e2675] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6b3b-70db-95fe-2b4b5e0ad532/dashboard
+                - cell "غير معروف" [ref=e2676]:
+                  - generic [ref=e2677]:
+                    - img [ref=e2678]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2680]:
+                  - generic [ref=e2681]:
+                    - img [ref=e2682]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2684]:
+                  - generic [ref=e2685]:
+                    - img [ref=e2686]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2688]:
+                  - generic [ref=e2689]:
+                    - img [ref=e2690]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2692]:
+                  - generic [ref=e2693]:
+                    - img [ref=e2694]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2696]:
+                  - generic [ref=e2697]:
+                    - img [ref=e2698]
+                    - text: غير معروف
+              - row "TR-0055 Synthetic BU limit en mvdaedsk 20 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2700]:
+                - rowheader "TR-0055 Synthetic BU limit en mvdaedsk 20" [ref=e2701]:
+                  - link "TR-0055 Synthetic BU limit en mvdaedsk 20" [ref=e2702] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6b65-76ac-bf22-0ea65c84732c/dashboard
+                - cell "غير معروف" [ref=e2703]:
+                  - generic [ref=e2704]:
+                    - img [ref=e2705]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2707]:
+                  - generic [ref=e2708]:
+                    - img [ref=e2709]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2711]:
+                  - generic [ref=e2712]:
+                    - img [ref=e2713]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2715]:
+                  - generic [ref=e2716]:
+                    - img [ref=e2717]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2719]:
+                  - generic [ref=e2720]:
+                    - img [ref=e2721]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2723]:
+                  - generic [ref=e2724]:
+                    - img [ref=e2725]
+                    - text: غير معروف
+              - row "TR-0056 Synthetic BU limit en mvdaedsk 21 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2727]:
+                - rowheader "TR-0056 Synthetic BU limit en mvdaedsk 21" [ref=e2728]:
+                  - link "TR-0056 Synthetic BU limit en mvdaedsk 21" [ref=e2729] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6b8f-7066-ad03-70c7cee66d34/dashboard
+                - cell "غير معروف" [ref=e2730]:
+                  - generic [ref=e2731]:
+                    - img [ref=e2732]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2734]:
+                  - generic [ref=e2735]:
+                    - img [ref=e2736]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2738]:
+                  - generic [ref=e2739]:
+                    - img [ref=e2740]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2742]:
+                  - generic [ref=e2743]:
+                    - img [ref=e2744]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2746]:
+                  - generic [ref=e2747]:
+                    - img [ref=e2748]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2750]:
+                  - generic [ref=e2751]:
+                    - img [ref=e2752]
+                    - text: غير معروف
+              - row "TR-0057 Synthetic BU limit en mvdaedsk 22 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2754]:
+                - rowheader "TR-0057 Synthetic BU limit en mvdaedsk 22" [ref=e2755]:
+                  - link "TR-0057 Synthetic BU limit en mvdaedsk 22" [ref=e2756] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6bba-7286-8d2a-3567f39f13cc/dashboard
+                - cell "غير معروف" [ref=e2757]:
+                  - generic [ref=e2758]:
+                    - img [ref=e2759]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2761]:
+                  - generic [ref=e2762]:
+                    - img [ref=e2763]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2765]:
+                  - generic [ref=e2766]:
+                    - img [ref=e2767]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2769]:
+                  - generic [ref=e2770]:
+                    - img [ref=e2771]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2773]:
+                  - generic [ref=e2774]:
+                    - img [ref=e2775]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2777]:
+                  - generic [ref=e2778]:
+                    - img [ref=e2779]
+                    - text: غير معروف
+              - row "TR-0058 Synthetic BU limit en mvdaedsk 23 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2781]:
+                - rowheader "TR-0058 Synthetic BU limit en mvdaedsk 23" [ref=e2782]:
+                  - link "TR-0058 Synthetic BU limit en mvdaedsk 23" [ref=e2783] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6beb-7474-9ae7-ff3ca4acb85e/dashboard
+                - cell "غير معروف" [ref=e2784]:
+                  - generic [ref=e2785]:
+                    - img [ref=e2786]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2788]:
+                  - generic [ref=e2789]:
+                    - img [ref=e2790]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2792]:
+                  - generic [ref=e2793]:
+                    - img [ref=e2794]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2796]:
+                  - generic [ref=e2797]:
+                    - img [ref=e2798]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2800]:
+                  - generic [ref=e2801]:
+                    - img [ref=e2802]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2804]:
+                  - generic [ref=e2805]:
+                    - img [ref=e2806]
+                    - text: غير معروف
+              - row "TR-0059 Synthetic BU limit en mvdaedsk 24 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2808]:
+                - rowheader "TR-0059 Synthetic BU limit en mvdaedsk 24" [ref=e2809]:
+                  - link "TR-0059 Synthetic BU limit en mvdaedsk 24" [ref=e2810] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6c1a-744a-9392-440a72a8865c/dashboard
+                - cell "غير معروف" [ref=e2811]:
+                  - generic [ref=e2812]:
+                    - img [ref=e2813]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2815]:
+                  - generic [ref=e2816]:
+                    - img [ref=e2817]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2819]:
+                  - generic [ref=e2820]:
+                    - img [ref=e2821]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2823]:
+                  - generic [ref=e2824]:
+                    - img [ref=e2825]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2827]:
+                  - generic [ref=e2828]:
+                    - img [ref=e2829]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2831]:
+                  - generic [ref=e2832]:
+                    - img [ref=e2833]
+                    - text: غير معروف
+              - row "TR-0060 Synthetic BU limit en mvdaedsk 25 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2835]:
+                - rowheader "TR-0060 Synthetic BU limit en mvdaedsk 25" [ref=e2836]:
+                  - link "TR-0060 Synthetic BU limit en mvdaedsk 25" [ref=e2837] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6c74-7402-a212-baa14f746609/dashboard
+                - cell "غير معروف" [ref=e2838]:
+                  - generic [ref=e2839]:
+                    - img [ref=e2840]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2842]:
+                  - generic [ref=e2843]:
+                    - img [ref=e2844]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2846]:
+                  - generic [ref=e2847]:
+                    - img [ref=e2848]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2850]:
+                  - generic [ref=e2851]:
+                    - img [ref=e2852]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2854]:
+                  - generic [ref=e2855]:
+                    - img [ref=e2856]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2858]:
+                  - generic [ref=e2859]:
+                    - img [ref=e2860]
+                    - text: غير معروف
+              - row "TR-0061 Synthetic BU limit en mvdaedsk 26 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2862]:
+                - rowheader "TR-0061 Synthetic BU limit en mvdaedsk 26" [ref=e2863]:
+                  - link "TR-0061 Synthetic BU limit en mvdaedsk 26" [ref=e2864] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6ce1-741e-aecc-018b08cdad69/dashboard
+                - cell "غير معروف" [ref=e2865]:
+                  - generic [ref=e2866]:
+                    - img [ref=e2867]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2869]:
+                  - generic [ref=e2870]:
+                    - img [ref=e2871]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2873]:
+                  - generic [ref=e2874]:
+                    - img [ref=e2875]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2877]:
+                  - generic [ref=e2878]:
+                    - img [ref=e2879]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2881]:
+                  - generic [ref=e2882]:
+                    - img [ref=e2883]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2885]:
+                  - generic [ref=e2886]:
+                    - img [ref=e2887]
+                    - text: غير معروف
+              - row "TR-0062 Synthetic BU limit en mvdaedsk 27 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2889]:
+                - rowheader "TR-0062 Synthetic BU limit en mvdaedsk 27" [ref=e2890]:
+                  - link "TR-0062 Synthetic BU limit en mvdaedsk 27" [ref=e2891] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6d4c-7159-acf5-e88101fe1993/dashboard
+                - cell "غير معروف" [ref=e2892]:
+                  - generic [ref=e2893]:
+                    - img [ref=e2894]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2896]:
+                  - generic [ref=e2897]:
+                    - img [ref=e2898]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2900]:
+                  - generic [ref=e2901]:
+                    - img [ref=e2902]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2904]:
+                  - generic [ref=e2905]:
+                    - img [ref=e2906]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2908]:
+                  - generic [ref=e2909]:
+                    - img [ref=e2910]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2912]:
+                  - generic [ref=e2913]:
+                    - img [ref=e2914]
+                    - text: غير معروف
+              - row "TR-0063 Synthetic BU limit en mvdaedsk 28 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2916]:
+                - rowheader "TR-0063 Synthetic BU limit en mvdaedsk 28" [ref=e2917]:
+                  - link "TR-0063 Synthetic BU limit en mvdaedsk 28" [ref=e2918] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6dbf-7617-b4ea-4cc1dfc6b308/dashboard
+                - cell "غير معروف" [ref=e2919]:
+                  - generic [ref=e2920]:
+                    - img [ref=e2921]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2923]:
+                  - generic [ref=e2924]:
+                    - img [ref=e2925]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2927]:
+                  - generic [ref=e2928]:
+                    - img [ref=e2929]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2931]:
+                  - generic [ref=e2932]:
+                    - img [ref=e2933]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2935]:
+                  - generic [ref=e2936]:
+                    - img [ref=e2937]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2939]:
+                  - generic [ref=e2940]:
+                    - img [ref=e2941]
+                    - text: غير معروف
+              - row "TR-0064 Synthetic BU limit en mvdaedsk 29 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2943]:
+                - rowheader "TR-0064 Synthetic BU limit en mvdaedsk 29" [ref=e2944]:
+                  - link "TR-0064 Synthetic BU limit en mvdaedsk 29" [ref=e2945] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6e1f-774f-99da-c0875f9f061f/dashboard
+                - cell "غير معروف" [ref=e2946]:
+                  - generic [ref=e2947]:
+                    - img [ref=e2948]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2950]:
+                  - generic [ref=e2951]:
+                    - img [ref=e2952]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2954]:
+                  - generic [ref=e2955]:
+                    - img [ref=e2956]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2958]:
+                  - generic [ref=e2959]:
+                    - img [ref=e2960]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2962]:
+                  - generic [ref=e2963]:
+                    - img [ref=e2964]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2966]:
+                  - generic [ref=e2967]:
+                    - img [ref=e2968]
+                    - text: غير معروف
+              - row "TR-0065 Synthetic BU limit en mvdaedsk 30 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2970]:
+                - rowheader "TR-0065 Synthetic BU limit en mvdaedsk 30" [ref=e2971]:
+                  - link "TR-0065 Synthetic BU limit en mvdaedsk 30" [ref=e2972] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6e86-73ec-843f-e0224e23ec5d/dashboard
+                - cell "غير معروف" [ref=e2973]:
+                  - generic [ref=e2974]:
+                    - img [ref=e2975]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e2977]:
+                  - generic [ref=e2978]:
+                    - img [ref=e2979]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e2981]:
+                  - generic [ref=e2982]:
+                    - img [ref=e2983]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e2985]:
+                  - generic [ref=e2986]:
+                    - img [ref=e2987]
+                    - text: أخضر
+                - cell "أخضر" [ref=e2989]:
+                  - generic [ref=e2990]:
+                    - img [ref=e2991]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e2993]:
+                  - generic [ref=e2994]:
+                    - img [ref=e2995]
+                    - text: غير معروف
+              - row "TR-0066 Synthetic BU limit en mvdaedsk 31 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e2997]:
+                - rowheader "TR-0066 Synthetic BU limit en mvdaedsk 31" [ref=e2998]:
+                  - link "TR-0066 Synthetic BU limit en mvdaedsk 31" [ref=e2999] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6ef5-76c1-a253-0c13bc52f66f/dashboard
+                - cell "غير معروف" [ref=e3000]:
+                  - generic [ref=e3001]:
+                    - img [ref=e3002]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3004]:
+                  - generic [ref=e3005]:
+                    - img [ref=e3006]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3008]:
+                  - generic [ref=e3009]:
+                    - img [ref=e3010]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3012]:
+                  - generic [ref=e3013]:
+                    - img [ref=e3014]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3016]:
+                  - generic [ref=e3017]:
+                    - img [ref=e3018]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3020]:
+                  - generic [ref=e3021]:
+                    - img [ref=e3022]
+                    - text: غير معروف
+              - row "TR-0067 Synthetic BU limit en mvdaedsk 32 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3024]:
+                - rowheader "TR-0067 Synthetic BU limit en mvdaedsk 32" [ref=e3025]:
+                  - link "TR-0067 Synthetic BU limit en mvdaedsk 32" [ref=e3026] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6f69-7083-b069-2f841dc6ae3e/dashboard
+                - cell "غير معروف" [ref=e3027]:
+                  - generic [ref=e3028]:
+                    - img [ref=e3029]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3031]:
+                  - generic [ref=e3032]:
+                    - img [ref=e3033]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3035]:
+                  - generic [ref=e3036]:
+                    - img [ref=e3037]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3039]:
+                  - generic [ref=e3040]:
+                    - img [ref=e3041]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3043]:
+                  - generic [ref=e3044]:
+                    - img [ref=e3045]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3047]:
+                  - generic [ref=e3048]:
+                    - img [ref=e3049]
+                    - text: غير معروف
+              - row "TR-0068 Synthetic BU limit en mvdaedsk 33 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3051]:
+                - rowheader "TR-0068 Synthetic BU limit en mvdaedsk 33" [ref=e3052]:
+                  - link "TR-0068 Synthetic BU limit en mvdaedsk 33" [ref=e3053] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-6fde-74bf-a420-5e26b012c98c/dashboard
+                - cell "غير معروف" [ref=e3054]:
+                  - generic [ref=e3055]:
+                    - img [ref=e3056]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3058]:
+                  - generic [ref=e3059]:
+                    - img [ref=e3060]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3062]:
+                  - generic [ref=e3063]:
+                    - img [ref=e3064]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3066]:
+                  - generic [ref=e3067]:
+                    - img [ref=e3068]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3070]:
+                  - generic [ref=e3071]:
+                    - img [ref=e3072]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3074]:
+                  - generic [ref=e3075]:
+                    - img [ref=e3076]
+                    - text: غير معروف
+              - row "TR-0069 Synthetic BU limit en mvdaedsk 34 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3078]:
+                - rowheader "TR-0069 Synthetic BU limit en mvdaedsk 34" [ref=e3079]:
+                  - link "TR-0069 Synthetic BU limit en mvdaedsk 34" [ref=e3080] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-705b-761e-ad42-af902908595c/dashboard
+                - cell "غير معروف" [ref=e3081]:
+                  - generic [ref=e3082]:
+                    - img [ref=e3083]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3085]:
+                  - generic [ref=e3086]:
+                    - img [ref=e3087]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3089]:
+                  - generic [ref=e3090]:
+                    - img [ref=e3091]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3093]:
+                  - generic [ref=e3094]:
+                    - img [ref=e3095]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3097]:
+                  - generic [ref=e3098]:
+                    - img [ref=e3099]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3101]:
+                  - generic [ref=e3102]:
+                    - img [ref=e3103]
+                    - text: غير معروف
+              - row "TR-0070 Synthetic BU limit en mvdaedsk 35 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3105]:
+                - rowheader "TR-0070 Synthetic BU limit en mvdaedsk 35" [ref=e3106]:
+                  - link "TR-0070 Synthetic BU limit en mvdaedsk 35" [ref=e3107] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-70d0-75cb-8273-c7e4cd219ce9/dashboard
+                - cell "غير معروف" [ref=e3108]:
+                  - generic [ref=e3109]:
+                    - img [ref=e3110]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3112]:
+                  - generic [ref=e3113]:
+                    - img [ref=e3114]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3116]:
+                  - generic [ref=e3117]:
+                    - img [ref=e3118]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3120]:
+                  - generic [ref=e3121]:
+                    - img [ref=e3122]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3124]:
+                  - generic [ref=e3125]:
+                    - img [ref=e3126]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3128]:
+                  - generic [ref=e3129]:
+                    - img [ref=e3130]
+                    - text: غير معروف
+              - row "TR-0071 Synthetic BU limit en mvdaedsk 36 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3132]:
+                - rowheader "TR-0071 Synthetic BU limit en mvdaedsk 36" [ref=e3133]:
+                  - link "TR-0071 Synthetic BU limit en mvdaedsk 36" [ref=e3134] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-7152-702f-83f6-446e5287e5f8/dashboard
+                - cell "غير معروف" [ref=e3135]:
+                  - generic [ref=e3136]:
+                    - img [ref=e3137]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3139]:
+                  - generic [ref=e3140]:
+                    - img [ref=e3141]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3143]:
+                  - generic [ref=e3144]:
+                    - img [ref=e3145]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3147]:
+                  - generic [ref=e3148]:
+                    - img [ref=e3149]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3151]:
+                  - generic [ref=e3152]:
+                    - img [ref=e3153]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3155]:
+                  - generic [ref=e3156]:
+                    - img [ref=e3157]
+                    - text: غير معروف
+              - row "TR-0072 Synthetic BU limit en mvdaedsk 37 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3159]:
+                - rowheader "TR-0072 Synthetic BU limit en mvdaedsk 37" [ref=e3160]:
+                  - link "TR-0072 Synthetic BU limit en mvdaedsk 37" [ref=e3161] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-71d8-7575-947d-67b74e5ba181/dashboard
+                - cell "غير معروف" [ref=e3162]:
+                  - generic [ref=e3163]:
+                    - img [ref=e3164]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3166]:
+                  - generic [ref=e3167]:
+                    - img [ref=e3168]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3170]:
+                  - generic [ref=e3171]:
+                    - img [ref=e3172]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3174]:
+                  - generic [ref=e3175]:
+                    - img [ref=e3176]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3178]:
+                  - generic [ref=e3179]:
+                    - img [ref=e3180]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3182]:
+                  - generic [ref=e3183]:
+                    - img [ref=e3184]
+                    - text: غير معروف
+              - row "TR-0073 Synthetic BU limit en mvdaedsk 38 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3186]:
+                - rowheader "TR-0073 Synthetic BU limit en mvdaedsk 38" [ref=e3187]:
+                  - link "TR-0073 Synthetic BU limit en mvdaedsk 38" [ref=e3188] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-725f-732e-af51-d9b5d817ee7c/dashboard
+                - cell "غير معروف" [ref=e3189]:
+                  - generic [ref=e3190]:
+                    - img [ref=e3191]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3193]:
+                  - generic [ref=e3194]:
+                    - img [ref=e3195]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3197]:
+                  - generic [ref=e3198]:
+                    - img [ref=e3199]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3201]:
+                  - generic [ref=e3202]:
+                    - img [ref=e3203]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3205]:
+                  - generic [ref=e3206]:
+                    - img [ref=e3207]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3209]:
+                  - generic [ref=e3210]:
+                    - img [ref=e3211]
+                    - text: غير معروف
+              - row "TR-0074 Synthetic BU limit en mvdaedsk 39 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3213]:
+                - rowheader "TR-0074 Synthetic BU limit en mvdaedsk 39" [ref=e3214]:
+                  - link "TR-0074 Synthetic BU limit en mvdaedsk 39" [ref=e3215] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-72de-768d-8b9f-cae93bb65683/dashboard
+                - cell "غير معروف" [ref=e3216]:
+                  - generic [ref=e3217]:
+                    - img [ref=e3218]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3220]:
+                  - generic [ref=e3221]:
+                    - img [ref=e3222]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3224]:
+                  - generic [ref=e3225]:
+                    - img [ref=e3226]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3228]:
+                  - generic [ref=e3229]:
+                    - img [ref=e3230]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3232]:
+                  - generic [ref=e3233]:
+                    - img [ref=e3234]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3236]:
+                  - generic [ref=e3237]:
+                    - img [ref=e3238]
+                    - text: غير معروف
+              - row "TR-0075 Synthetic BU limit en mvdaedsk 40 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3240]:
+                - rowheader "TR-0075 Synthetic BU limit en mvdaedsk 40" [ref=e3241]:
+                  - link "TR-0075 Synthetic BU limit en mvdaedsk 40" [ref=e3242] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-735c-72d5-b60c-8341165490fe/dashboard
+                - cell "غير معروف" [ref=e3243]:
+                  - generic [ref=e3244]:
+                    - img [ref=e3245]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3247]:
+                  - generic [ref=e3248]:
+                    - img [ref=e3249]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3251]:
+                  - generic [ref=e3252]:
+                    - img [ref=e3253]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3255]:
+                  - generic [ref=e3256]:
+                    - img [ref=e3257]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3259]:
+                  - generic [ref=e3260]:
+                    - img [ref=e3261]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3263]:
+                  - generic [ref=e3264]:
+                    - img [ref=e3265]
+                    - text: غير معروف
+              - row "TR-0076 Synthetic BU limit en mvdaedsk 41 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3267]:
+                - rowheader "TR-0076 Synthetic BU limit en mvdaedsk 41" [ref=e3268]:
+                  - link "TR-0076 Synthetic BU limit en mvdaedsk 41" [ref=e3269] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-73de-70b3-bc8c-1c11f9fa137b/dashboard
+                - cell "غير معروف" [ref=e3270]:
+                  - generic [ref=e3271]:
+                    - img [ref=e3272]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3274]:
+                  - generic [ref=e3275]:
+                    - img [ref=e3276]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3278]:
+                  - generic [ref=e3279]:
+                    - img [ref=e3280]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3282]:
+                  - generic [ref=e3283]:
+                    - img [ref=e3284]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3286]:
+                  - generic [ref=e3287]:
+                    - img [ref=e3288]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3290]:
+                  - generic [ref=e3291]:
+                    - img [ref=e3292]
+                    - text: غير معروف
+              - row "TR-0077 Synthetic BU limit en mvdaedsk 42 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3294]:
+                - rowheader "TR-0077 Synthetic BU limit en mvdaedsk 42" [ref=e3295]:
+                  - link "TR-0077 Synthetic BU limit en mvdaedsk 42" [ref=e3296] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-7460-73fb-9d48-22517f871a23/dashboard
+                - cell "غير معروف" [ref=e3297]:
+                  - generic [ref=e3298]:
+                    - img [ref=e3299]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3301]:
+                  - generic [ref=e3302]:
+                    - img [ref=e3303]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3305]:
+                  - generic [ref=e3306]:
+                    - img [ref=e3307]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3309]:
+                  - generic [ref=e3310]:
+                    - img [ref=e3311]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3313]:
+                  - generic [ref=e3314]:
+                    - img [ref=e3315]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3317]:
+                  - generic [ref=e3318]:
+                    - img [ref=e3319]
+                    - text: غير معروف
+              - row "TR-0078 Synthetic BU limit en mvdaedsk 43 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3321]:
+                - rowheader "TR-0078 Synthetic BU limit en mvdaedsk 43" [ref=e3322]:
+                  - link "TR-0078 Synthetic BU limit en mvdaedsk 43" [ref=e3323] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-74dd-7531-9c94-63df845c51ea/dashboard
+                - cell "غير معروف" [ref=e3324]:
+                  - generic [ref=e3325]:
+                    - img [ref=e3326]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3328]:
+                  - generic [ref=e3329]:
+                    - img [ref=e3330]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3332]:
+                  - generic [ref=e3333]:
+                    - img [ref=e3334]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3336]:
+                  - generic [ref=e3337]:
+                    - img [ref=e3338]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3340]:
+                  - generic [ref=e3341]:
+                    - img [ref=e3342]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3344]:
+                  - generic [ref=e3345]:
+                    - img [ref=e3346]
+                    - text: غير معروف
+              - row "TR-0079 Synthetic BU limit en mvdaedsk 44 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3348]:
+                - rowheader "TR-0079 Synthetic BU limit en mvdaedsk 44" [ref=e3349]:
+                  - link "TR-0079 Synthetic BU limit en mvdaedsk 44" [ref=e3350] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-756c-77c9-b40b-8b2e1f085d29/dashboard
+                - cell "غير معروف" [ref=e3351]:
+                  - generic [ref=e3352]:
+                    - img [ref=e3353]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3355]:
+                  - generic [ref=e3356]:
+                    - img [ref=e3357]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3359]:
+                  - generic [ref=e3360]:
+                    - img [ref=e3361]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3363]:
+                  - generic [ref=e3364]:
+                    - img [ref=e3365]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3367]:
+                  - generic [ref=e3368]:
+                    - img [ref=e3369]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3371]:
+                  - generic [ref=e3372]:
+                    - img [ref=e3373]
+                    - text: غير معروف
+              - row "TR-0080 Synthetic BU limit en mvdaedsk 45 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3375]:
+                - rowheader "TR-0080 Synthetic BU limit en mvdaedsk 45" [ref=e3376]:
+                  - link "TR-0080 Synthetic BU limit en mvdaedsk 45" [ref=e3377] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-7603-746d-80bc-d3b90e7ef9eb/dashboard
+                - cell "غير معروف" [ref=e3378]:
+                  - generic [ref=e3379]:
+                    - img [ref=e3380]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3382]:
+                  - generic [ref=e3383]:
+                    - img [ref=e3384]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3386]:
+                  - generic [ref=e3387]:
+                    - img [ref=e3388]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3390]:
+                  - generic [ref=e3391]:
+                    - img [ref=e3392]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3394]:
+                  - generic [ref=e3395]:
+                    - img [ref=e3396]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3398]:
+                  - generic [ref=e3399]:
+                    - img [ref=e3400]
+                    - text: غير معروف
+              - row "TR-0081 Synthetic BU limit en mvdaedsk 46 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3402]:
+                - rowheader "TR-0081 Synthetic BU limit en mvdaedsk 46" [ref=e3403]:
+                  - link "TR-0081 Synthetic BU limit en mvdaedsk 46" [ref=e3404] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-769c-70f9-b71c-392cc6b3cb99/dashboard
+                - cell "غير معروف" [ref=e3405]:
+                  - generic [ref=e3406]:
+                    - img [ref=e3407]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3409]:
+                  - generic [ref=e3410]:
+                    - img [ref=e3411]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3413]:
+                  - generic [ref=e3414]:
+                    - img [ref=e3415]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3417]:
+                  - generic [ref=e3418]:
+                    - img [ref=e3419]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3421]:
+                  - generic [ref=e3422]:
+                    - img [ref=e3423]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3425]:
+                  - generic [ref=e3426]:
+                    - img [ref=e3427]
+                    - text: غير معروف
+              - row "TR-0082 Synthetic BU limit en mvdaedsk 47 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3429]:
+                - rowheader "TR-0082 Synthetic BU limit en mvdaedsk 47" [ref=e3430]:
+                  - link "TR-0082 Synthetic BU limit en mvdaedsk 47" [ref=e3431] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-772a-76f6-965d-e185adedb8e3/dashboard
+                - cell "غير معروف" [ref=e3432]:
+                  - generic [ref=e3433]:
+                    - img [ref=e3434]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3436]:
+                  - generic [ref=e3437]:
+                    - img [ref=e3438]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3440]:
+                  - generic [ref=e3441]:
+                    - img [ref=e3442]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3444]:
+                  - generic [ref=e3445]:
+                    - img [ref=e3446]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3448]:
+                  - generic [ref=e3449]:
+                    - img [ref=e3450]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3452]:
+                  - generic [ref=e3453]:
+                    - img [ref=e3454]
+                    - text: غير معروف
+              - row "TR-0083 Synthetic BU limit en mvdaedsk 48 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3456]:
+                - rowheader "TR-0083 Synthetic BU limit en mvdaedsk 48" [ref=e3457]:
+                  - link "TR-0083 Synthetic BU limit en mvdaedsk 48" [ref=e3458] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-77b3-747f-a4a6-5f54517a432a/dashboard
+                - cell "غير معروف" [ref=e3459]:
+                  - generic [ref=e3460]:
+                    - img [ref=e3461]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3463]:
+                  - generic [ref=e3464]:
+                    - img [ref=e3465]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3467]:
+                  - generic [ref=e3468]:
+                    - img [ref=e3469]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3471]:
+                  - generic [ref=e3472]:
+                    - img [ref=e3473]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3475]:
+                  - generic [ref=e3476]:
+                    - img [ref=e3477]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3479]:
+                  - generic [ref=e3480]:
+                    - img [ref=e3481]
+                    - text: غير معروف
+              - row "TR-0084 Synthetic BU limit en mvdaedsk 49 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3483]:
+                - rowheader "TR-0084 Synthetic BU limit en mvdaedsk 49" [ref=e3484]:
+                  - link "TR-0084 Synthetic BU limit en mvdaedsk 49" [ref=e3485] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-7849-76e8-9abf-dff8813657e9/dashboard
+                - cell "غير معروف" [ref=e3486]:
+                  - generic [ref=e3487]:
+                    - img [ref=e3488]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3490]:
+                  - generic [ref=e3491]:
+                    - img [ref=e3492]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3494]:
+                  - generic [ref=e3495]:
+                    - img [ref=e3496]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3498]:
+                  - generic [ref=e3499]:
+                    - img [ref=e3500]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3502]:
+                  - generic [ref=e3503]:
+                    - img [ref=e3504]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3506]:
+                  - generic [ref=e3507]:
+                    - img [ref=e3508]
+                    - text: غير معروف
+              - row "TR-0085 Synthetic BU limit en mvdaedsk 50 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3510]:
+                - rowheader "TR-0085 Synthetic BU limit en mvdaedsk 50" [ref=e3511]:
+                  - link "TR-0085 Synthetic BU limit en mvdaedsk 50" [ref=e3512] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-78d8-76c1-8c96-36d1576aa39e/dashboard
+                - cell "غير معروف" [ref=e3513]:
+                  - generic [ref=e3514]:
+                    - img [ref=e3515]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3517]:
+                  - generic [ref=e3518]:
+                    - img [ref=e3519]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3521]:
+                  - generic [ref=e3522]:
+                    - img [ref=e3523]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3525]:
+                  - generic [ref=e3526]:
+                    - img [ref=e3527]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3529]:
+                  - generic [ref=e3530]:
+                    - img [ref=e3531]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3533]:
+                  - generic [ref=e3534]:
+                    - img [ref=e3535]
+                    - text: غير معروف
+              - row "TR-0086 Synthetic FE-C2 T13 EN mvdaerva غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3537]:
+                - rowheader "TR-0086 Synthetic FE-C2 T13 EN mvdaerva" [ref=e3538]:
+                  - link "TR-0086 Synthetic FE-C2 T13 EN mvdaerva" [ref=e3539] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-a280-76c9-b758-53777ee6a056/dashboard
+                - cell "غير معروف" [ref=e3540]:
+                  - generic [ref=e3541]:
+                    - img [ref=e3542]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3544]:
+                  - generic [ref=e3545]:
+                    - img [ref=e3546]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3548]:
+                  - generic [ref=e3549]:
+                    - img [ref=e3550]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3552]:
+                  - generic [ref=e3553]:
+                    - img [ref=e3554]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3556]:
+                  - generic [ref=e3557]:
+                    - img [ref=e3558]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3560]:
+                  - generic [ref=e3561]:
+                    - img [ref=e3562]
+                    - text: غير معروف
+              - row "TR-0087 Synthetic P5 forms EN mvdaf130 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3564]:
+                - rowheader "TR-0087 Synthetic P5 forms EN mvdaf130" [ref=e3565]:
+                  - link "TR-0087 Synthetic P5 forms EN mvdaf130" [ref=e3566] [cursor=pointer]:
+                    - /url: /transformations/01a14d21-c18c-76f9-a65d-61364048d62a/dashboard
+                - cell "غير معروف" [ref=e3567]:
+                  - generic [ref=e3568]:
+                    - img [ref=e3569]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3571]:
+                  - generic [ref=e3572]:
+                    - img [ref=e3573]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3575]:
+                  - generic [ref=e3576]:
+                    - img [ref=e3577]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3579]:
+                  - generic [ref=e3580]:
+                    - img [ref=e3581]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3583]:
+                  - generic [ref=e3584]:
+                    - img [ref=e3585]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3587]:
+                  - generic [ref=e3588]:
+                    - img [ref=e3589]
+                    - text: غير معروف
+              - row "TR-0088 Synthetic FE-F EN launch غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3591]:
+                - rowheader "TR-0088 Synthetic FE-F EN launch" [ref=e3592]:
+                  - link "TR-0088 Synthetic FE-F EN launch" [ref=e3593] [cursor=pointer]:
+                    - /url: /transformations/01a14d22-4733-72cd-809c-242363c74d2c/dashboard
+                - cell "غير معروف" [ref=e3594]:
+                  - generic [ref=e3595]:
+                    - img [ref=e3596]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3598]:
+                  - generic [ref=e3599]:
+                    - img [ref=e3600]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3602]:
+                  - generic [ref=e3603]:
+                    - img [ref=e3604]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3606]:
+                  - generic [ref=e3607]:
+                    - img [ref=e3608]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3610]:
+                  - generic [ref=e3611]:
+                    - img [ref=e3612]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3614]:
+                  - generic [ref=e3615]:
+                    - img [ref=e3616]
+                    - text: غير معروف
+              - row "TR-0089 Synthetic FE-F EN health غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3618]:
+                - rowheader "TR-0089 Synthetic FE-F EN health" [ref=e3619]:
+                  - link "TR-0089 Synthetic FE-F EN health" [ref=e3620] [cursor=pointer]:
+                    - /url: /transformations/01a14d22-789a-70e7-94a7-0cc3d597df35/dashboard
+                - cell "غير معروف" [ref=e3621]:
+                  - generic [ref=e3622]:
+                    - img [ref=e3623]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3625]:
+                  - generic [ref=e3626]:
+                    - img [ref=e3627]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3629]:
+                  - generic [ref=e3630]:
+                    - img [ref=e3631]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3633]:
+                  - generic [ref=e3634]:
+                    - img [ref=e3635]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3637]:
+                  - generic [ref=e3638]:
+                    - img [ref=e3639]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3641]:
+                  - generic [ref=e3642]:
+                    - img [ref=e3643]
+                    - text: غير معروف
+              - row "TR-0090 Synthetic FE-F EN value غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3645]:
+                - rowheader "TR-0090 Synthetic FE-F EN value" [ref=e3646]:
+                  - link "TR-0090 Synthetic FE-F EN value" [ref=e3647] [cursor=pointer]:
+                    - /url: /transformations/01a14d22-a664-738d-ad63-661a70acae27/dashboard
+                - cell "غير معروف" [ref=e3648]:
+                  - generic [ref=e3649]:
+                    - img [ref=e3650]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3652]:
+                  - generic [ref=e3653]:
+                    - img [ref=e3654]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3656]:
+                  - generic [ref=e3657]:
+                    - img [ref=e3658]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3660]:
+                  - generic [ref=e3661]:
+                    - img [ref=e3662]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3664]:
+                  - generic [ref=e3665]:
+                    - img [ref=e3666]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3668]:
+                  - generic [ref=e3669]:
+                    - img [ref=e3670]
+                    - text: غير معروف
+              - row "TR-0091 Synthetic FE-D4 EN procedure outputs غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3672]:
+                - rowheader "TR-0091 Synthetic FE-D4 EN procedure outputs" [ref=e3673]:
+                  - link "TR-0091 Synthetic FE-D4 EN procedure outputs" [ref=e3674] [cursor=pointer]:
+                    - /url: /transformations/01a14d22-ef25-72d1-a224-8c1a2c54cfb5/dashboard
+                - cell "غير معروف" [ref=e3675]:
+                  - generic [ref=e3676]:
+                    - img [ref=e3677]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3679]:
+                  - generic [ref=e3680]:
+                    - img [ref=e3681]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3683]:
+                  - generic [ref=e3684]:
+                    - img [ref=e3685]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3687]:
+                  - generic [ref=e3688]:
+                    - img [ref=e3689]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3691]:
+                  - generic [ref=e3692]:
+                    - img [ref=e3693]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3695]:
+                  - generic [ref=e3696]:
+                    - img [ref=e3697]
+                    - text: غير معروف
+              - row "TR-0092 Synthetic FE-D EN automation غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3699]:
+                - rowheader "TR-0092 Synthetic FE-D EN automation" [ref=e3700]:
+                  - link "TR-0092 Synthetic FE-D EN automation" [ref=e3701] [cursor=pointer]:
+                    - /url: /transformations/01a14d23-3189-72a8-a0eb-500067de96ef/dashboard
+                - cell "غير معروف" [ref=e3702]:
+                  - generic [ref=e3703]:
+                    - img [ref=e3704]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3706]:
+                  - generic [ref=e3707]:
+                    - img [ref=e3708]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3710]:
+                  - generic [ref=e3711]:
+                    - img [ref=e3712]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3714]:
+                  - generic [ref=e3715]:
+                    - img [ref=e3716]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3718]:
+                  - generic [ref=e3719]:
+                    - img [ref=e3720]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3722]:
+                  - generic [ref=e3723]:
+                    - img [ref=e3724]
+                    - text: غير معروف
+              - row "TR-0093 Synthetic FE-D EN procedures غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3726]:
+                - rowheader "TR-0093 Synthetic FE-D EN procedures" [ref=e3727]:
+                  - link "TR-0093 Synthetic FE-D EN procedures" [ref=e3728] [cursor=pointer]:
+                    - /url: /transformations/01a14d23-5f27-767e-b3cc-74571c6a541b/dashboard
+                - cell "غير معروف" [ref=e3729]:
+                  - generic [ref=e3730]:
+                    - img [ref=e3731]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3733]:
+                  - generic [ref=e3734]:
+                    - img [ref=e3735]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3737]:
+                  - generic [ref=e3738]:
+                    - img [ref=e3739]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3741]:
+                  - generic [ref=e3742]:
+                    - img [ref=e3743]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3745]:
+                  - generic [ref=e3746]:
+                    - img [ref=e3747]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3749]:
+                  - generic [ref=e3750]:
+                    - img [ref=e3751]
+                    - text: غير معروف
+              - row "TR-0094 Synthetic FE-D EN governance غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3753]:
+                - rowheader "TR-0094 Synthetic FE-D EN governance" [ref=e3754]:
+                  - link "TR-0094 Synthetic FE-D EN governance" [ref=e3755] [cursor=pointer]:
+                    - /url: /transformations/01a14d23-a5ae-724a-8357-19c77cd76069/dashboard
+                - cell "غير معروف" [ref=e3756]:
+                  - generic [ref=e3757]:
+                    - img [ref=e3758]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3760]:
+                  - generic [ref=e3761]:
+                    - img [ref=e3762]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3764]:
+                  - generic [ref=e3765]:
+                    - img [ref=e3766]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3768]:
+                  - generic [ref=e3769]:
+                    - img [ref=e3770]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3772]:
+                  - generic [ref=e3773]:
+                    - img [ref=e3774]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3776]:
+                  - generic [ref=e3777]:
+                    - img [ref=e3778]
+                    - text: غير معروف
+              - row "TR-0095 Synthetic FE-G reader EN غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3780]:
+                - rowheader "TR-0095 Synthetic FE-G reader EN" [ref=e3781]:
+                  - link "TR-0095 Synthetic FE-G reader EN" [ref=e3782] [cursor=pointer]:
+                    - /url: /transformations/01a14d23-e30d-710d-9f56-d77909651560/dashboard
+                - cell "غير معروف" [ref=e3783]:
+                  - generic [ref=e3784]:
+                    - img [ref=e3785]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3787]:
+                  - generic [ref=e3788]:
+                    - img [ref=e3789]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3791]:
+                  - generic [ref=e3792]:
+                    - img [ref=e3793]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3795]:
+                  - generic [ref=e3796]:
+                    - img [ref=e3797]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3799]:
+                  - generic [ref=e3800]:
+                    - img [ref=e3801]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3803]:
+                  - generic [ref=e3804]:
+                    - img [ref=e3805]
+                    - text: غير معروف
+              - row "TR-0096 Synthetic FE-E EN reports غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3807]:
+                - rowheader "TR-0096 Synthetic FE-E EN reports" [ref=e3808]:
+                  - link "TR-0096 Synthetic FE-E EN reports" [ref=e3809] [cursor=pointer]:
+                    - /url: /transformations/01a14d24-2508-77b6-83e2-effa75b25478/dashboard
+                - cell "غير معروف" [ref=e3810]:
+                  - generic [ref=e3811]:
+                    - img [ref=e3812]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3814]:
+                  - generic [ref=e3815]:
+                    - img [ref=e3816]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3818]:
+                  - generic [ref=e3819]:
+                    - img [ref=e3820]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3822]:
+                  - generic [ref=e3823]:
+                    - img [ref=e3824]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3826]:
+                  - generic [ref=e3827]:
+                    - img [ref=e3828]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3830]:
+                  - generic [ref=e3831]:
+                    - img [ref=e3832]
+                    - text: غير معروف
+              - row "TR-0097 Synthetic FE-E EN exports غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3834]:
+                - rowheader "TR-0097 Synthetic FE-E EN exports" [ref=e3835]:
+                  - link "TR-0097 Synthetic FE-E EN exports" [ref=e3836] [cursor=pointer]:
+                    - /url: /transformations/01a14d24-42dc-730e-9aac-989932cf1d0d/dashboard
+                - cell "غير معروف" [ref=e3837]:
+                  - generic [ref=e3838]:
+                    - img [ref=e3839]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3841]:
+                  - generic [ref=e3842]:
+                    - img [ref=e3843]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3845]:
+                  - generic [ref=e3846]:
+                    - img [ref=e3847]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3849]:
+                  - generic [ref=e3850]:
+                    - img [ref=e3851]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3853]:
+                  - generic [ref=e3854]:
+                    - img [ref=e3855]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3857]:
+                  - generic [ref=e3858]:
+                    - img [ref=e3859]
+                    - text: غير معروف
+              - row "TR-0098 Synthetic FE-E EN updates غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3861]:
+                - rowheader "TR-0098 Synthetic FE-E EN updates" [ref=e3862]:
+                  - link "TR-0098 Synthetic FE-E EN updates" [ref=e3863] [cursor=pointer]:
+                    - /url: /transformations/01a14d24-5b95-7379-b38d-f5c2d10d3703/dashboard
+                - cell "غير معروف" [ref=e3864]:
+                  - generic [ref=e3865]:
+                    - img [ref=e3866]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3868]:
+                  - generic [ref=e3869]:
+                    - img [ref=e3870]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3872]:
+                  - generic [ref=e3873]:
+                    - img [ref=e3874]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3876]:
+                  - generic [ref=e3877]:
+                    - img [ref=e3878]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3880]:
+                  - generic [ref=e3881]:
+                    - img [ref=e3882]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3884]:
+                  - generic [ref=e3885]:
+                    - img [ref=e3886]
+                    - text: غير معروف
+              - row "TR-0099 Synthetic FE-E EN presentation غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3888]:
+                - rowheader "TR-0099 Synthetic FE-E EN presentation" [ref=e3889]:
+                  - link "TR-0099 Synthetic FE-E EN presentation" [ref=e3890] [cursor=pointer]:
+                    - /url: /transformations/01a14d24-70bb-72cc-98ec-191bbe538679/dashboard
+                - cell "غير معروف" [ref=e3891]:
+                  - generic [ref=e3892]:
+                    - img [ref=e3893]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3895]:
+                  - generic [ref=e3896]:
+                    - img [ref=e3897]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3899]:
+                  - generic [ref=e3900]:
+                    - img [ref=e3901]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3903]:
+                  - generic [ref=e3904]:
+                    - img [ref=e3905]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3907]:
+                  - generic [ref=e3908]:
+                    - img [ref=e3909]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3911]:
+                  - generic [ref=e3912]:
+                    - img [ref=e3913]
+                    - text: غير معروف
+              - row "TR-0100 Synthetic FE-E EN evidence غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3915]:
+                - rowheader "TR-0100 Synthetic FE-E EN evidence" [ref=e3916]:
+                  - link "TR-0100 Synthetic FE-E EN evidence" [ref=e3917] [cursor=pointer]:
+                    - /url: /transformations/01a14d24-8810-76ed-9961-3ae7d5fe32e3/dashboard
+                - cell "غير معروف" [ref=e3918]:
+                  - generic [ref=e3919]:
+                    - img [ref=e3920]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3922]:
+                  - generic [ref=e3923]:
+                    - img [ref=e3924]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3926]:
+                  - generic [ref=e3927]:
+                    - img [ref=e3928]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3930]:
+                  - generic [ref=e3931]:
+                    - img [ref=e3932]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3934]:
+                  - generic [ref=e3935]:
+                    - img [ref=e3936]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3938]:
+                  - generic [ref=e3939]:
+                    - img [ref=e3940]
+                    - text: غير معروف
+              - row "TR-0101 Synthetic FE-G2 EN snapshot page غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3942]:
+                - rowheader "TR-0101 Synthetic FE-G2 EN snapshot page" [ref=e3943]:
+                  - link "TR-0101 Synthetic FE-G2 EN snapshot page" [ref=e3944] [cursor=pointer]:
+                    - /url: /transformations/01a14d25-56d1-74ae-b840-40d5030798b3/dashboard
+                - cell "غير معروف" [ref=e3945]:
+                  - generic [ref=e3946]:
+                    - img [ref=e3947]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3949]:
+                  - generic [ref=e3950]:
+                    - img [ref=e3951]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3953]:
+                  - generic [ref=e3954]:
+                    - img [ref=e3955]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3957]:
+                  - generic [ref=e3958]:
+                    - img [ref=e3959]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3961]:
+                  - generic [ref=e3962]:
+                    - img [ref=e3963]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3965]:
+                  - generic [ref=e3966]:
+                    - img [ref=e3967]
+                    - text: غير معروف
+              - row "TR-0102 Synthetic session-end EN check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3969]:
+                - rowheader "TR-0102 Synthetic session-end EN check" [ref=e3970]:
+                  - link "TR-0102 Synthetic session-end EN check" [ref=e3971] [cursor=pointer]:
+                    - /url: /transformations/01a14d26-0e66-7659-83a5-fbc17bbc9fd9/dashboard
+                - cell "غير معروف" [ref=e3972]:
+                  - generic [ref=e3973]:
+                    - img [ref=e3974]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e3976]:
+                  - generic [ref=e3977]:
+                    - img [ref=e3978]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e3980]:
+                  - generic [ref=e3981]:
+                    - img [ref=e3982]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e3984]:
+                  - generic [ref=e3985]:
+                    - img [ref=e3986]
+                    - text: أخضر
+                - cell "أخضر" [ref=e3988]:
+                  - generic [ref=e3989]:
+                    - img [ref=e3990]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e3992]:
+                  - generic [ref=e3993]:
+                    - img [ref=e3994]
+                    - text: غير معروف
+              - row "TR-0103 Synthetic A-only FE13 EN mvdalix0 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e3996]:
+                - rowheader "TR-0103 Synthetic A-only FE13 EN mvdalix0" [ref=e3997]:
+                  - link "TR-0103 Synthetic A-only FE13 EN mvdalix0" [ref=e3998] [cursor=pointer]:
+                    - /url: /transformations/01a14d26-611d-757a-9bcf-304a03f04a79/dashboard
+                - cell "غير معروف" [ref=e3999]:
+                  - generic [ref=e4000]:
+                    - img [ref=e4001]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4003]:
+                  - generic [ref=e4004]:
+                    - img [ref=e4005]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4007]:
+                  - generic [ref=e4008]:
+                    - img [ref=e4009]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4011]:
+                  - generic [ref=e4012]:
+                    - img [ref=e4013]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4015]:
+                  - generic [ref=e4016]:
+                    - img [ref=e4017]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4019]:
+                  - generic [ref=e4020]:
+                    - img [ref=e4021]
+                    - text: غير معروف
+              - row "TR-0104 Synthetic FE-C3 AR mvdalp4r غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4023]:
+                - rowheader "TR-0104 Synthetic FE-C3 AR mvdalp4r" [ref=e4024]:
+                  - link "TR-0104 Synthetic FE-C3 AR mvdalp4r" [ref=e4025] [cursor=pointer]:
+                    - /url: /transformations/01a14d26-8353-752d-be97-e108c1c6ad7f/dashboard
+                - cell "غير معروف" [ref=e4026]:
+                  - generic [ref=e4027]:
+                    - img [ref=e4028]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4030]:
+                  - generic [ref=e4031]:
+                    - img [ref=e4032]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4034]:
+                  - generic [ref=e4035]:
+                    - img [ref=e4036]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4038]:
+                  - generic [ref=e4039]:
+                    - img [ref=e4040]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4042]:
+                  - generic [ref=e4043]:
+                    - img [ref=e4044]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4046]:
+                  - generic [ref=e4047]:
+                    - img [ref=e4048]
+                    - text: غير معروف
+              - row "TR-0105 Synthetic FE-D3 AR dry-run sample غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4050]:
+                - rowheader "TR-0105 Synthetic FE-D3 AR dry-run sample" [ref=e4051]:
+                  - link "TR-0105 Synthetic FE-D3 AR dry-run sample" [ref=e4052] [cursor=pointer]:
+                    - /url: /transformations/01a14d26-acaf-7383-87c6-94a91ab92d5c/dashboard
+                - cell "غير معروف" [ref=e4053]:
+                  - generic [ref=e4054]:
+                    - img [ref=e4055]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4057]:
+                  - generic [ref=e4058]:
+                    - img [ref=e4059]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4061]:
+                  - generic [ref=e4062]:
+                    - img [ref=e4063]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4065]:
+                  - generic [ref=e4066]:
+                    - img [ref=e4067]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4069]:
+                  - generic [ref=e4070]:
+                    - img [ref=e4071]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4073]:
+                  - generic [ref=e4074]:
+                    - img [ref=e4075]
+                    - text: غير معروف
+              - row "TR-0106 Synthetic FE-D5 AR form headers 1792295752403 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4077]:
+                - rowheader "TR-0106 Synthetic FE-D5 AR form headers 1792295752403" [ref=e4078]:
+                  - link "TR-0106 Synthetic FE-D5 AR form headers 1792295752403" [ref=e4079] [cursor=pointer]:
+                    - /url: /transformations/01a14d26-d2e0-772f-9d25-8d3600459398/dashboard
+                - cell "غير معروف" [ref=e4080]:
+                  - generic [ref=e4081]:
+                    - img [ref=e4082]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4084]:
+                  - generic [ref=e4085]:
+                    - img [ref=e4086]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4088]:
+                  - generic [ref=e4089]:
+                    - img [ref=e4090]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4092]:
+                  - generic [ref=e4093]:
+                    - img [ref=e4094]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4096]:
+                  - generic [ref=e4097]:
+                    - img [ref=e4098]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4100]:
+                  - generic [ref=e4101]:
+                    - img [ref=e4102]
+                    - text: غير معروف
+              - row "TR-0108 Synthetic AR lead-created record غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4104]:
+                - rowheader "TR-0108 Synthetic AR lead-created record" [ref=e4105]:
+                  - link "TR-0108 Synthetic AR lead-created record" [ref=e4106] [cursor=pointer]:
+                    - /url: /transformations/01a14d27-90a9-7343-80f1-79c2e3c5a260/dashboard
+                - cell "غير معروف" [ref=e4107]:
+                  - generic [ref=e4108]:
+                    - img [ref=e4109]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4111]:
+                  - generic [ref=e4112]:
+                    - img [ref=e4113]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4115]:
+                  - generic [ref=e4116]:
+                    - img [ref=e4117]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4119]:
+                  - generic [ref=e4120]:
+                    - img [ref=e4121]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4123]:
+                  - generic [ref=e4124]:
+                    - img [ref=e4125]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4127]:
+                  - generic [ref=e4128]:
+                    - img [ref=e4129]
+                    - text: غير معروف
+              - row "TR-0109 Synthetic blank-text AR check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4131]:
+                - rowheader "TR-0109 Synthetic blank-text AR check" [ref=e4132]:
+                  - link "TR-0109 Synthetic blank-text AR check" [ref=e4133] [cursor=pointer]:
+                    - /url: /transformations/01a14d27-9d96-75ad-81a1-c4dee39d60c2/dashboard
+                - cell "غير معروف" [ref=e4134]:
+                  - generic [ref=e4135]:
+                    - img [ref=e4136]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4138]:
+                  - generic [ref=e4139]:
+                    - img [ref=e4140]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4142]:
+                  - generic [ref=e4143]:
+                    - img [ref=e4144]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4146]:
+                  - generic [ref=e4147]:
+                    - img [ref=e4148]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4150]:
+                  - generic [ref=e4151]:
+                    - img [ref=e4152]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4154]:
+                  - generic [ref=e4155]:
+                    - img [ref=e4156]
+                    - text: غير معروف
+              - row "TR-0110 Synthetic form-level problem AR check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4158]:
+                - rowheader "TR-0110 Synthetic form-level problem AR check" [ref=e4159]:
+                  - link "TR-0110 Synthetic form-level problem AR check" [ref=e4160] [cursor=pointer]:
+                    - /url: /transformations/01a14d28-2065-748f-9588-a3e5cf884147/dashboard
+                - cell "غير معروف" [ref=e4161]:
+                  - generic [ref=e4162]:
+                    - img [ref=e4163]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4165]:
+                  - generic [ref=e4166]:
+                    - img [ref=e4167]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4169]:
+                  - generic [ref=e4170]:
+                    - img [ref=e4171]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4173]:
+                  - generic [ref=e4174]:
+                    - img [ref=e4175]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4177]:
+                  - generic [ref=e4178]:
+                    - img [ref=e4179]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4181]:
+                  - generic [ref=e4182]:
+                    - img [ref=e4183]
+                    - text: غير معروف
+              - row "TR-0111 Synthetic P2 AR journey غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4185]:
+                - rowheader "TR-0111 Synthetic P2 AR journey" [ref=e4186]:
+                  - link "TR-0111 Synthetic P2 AR journey" [ref=e4187] [cursor=pointer]:
+                    - /url: /transformations/01a14d28-3148-731a-9a5a-524faa3725d8/dashboard
+                - cell "غير معروف" [ref=e4188]:
+                  - generic [ref=e4189]:
+                    - img [ref=e4190]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4192]:
+                  - generic [ref=e4193]:
+                    - img [ref=e4194]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4196]:
+                  - generic [ref=e4197]:
+                    - img [ref=e4198]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4200]:
+                  - generic [ref=e4201]:
+                    - img [ref=e4202]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4204]:
+                  - generic [ref=e4205]:
+                    - img [ref=e4206]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4208]:
+                  - generic [ref=e4209]:
+                    - img [ref=e4210]
+                    - text: غير معروف
+              - row "TR-0112 Synthetic P3 business cases AR check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4212]:
+                - rowheader "TR-0112 Synthetic P3 business cases AR check" [ref=e4213]:
+                  - link "TR-0112 Synthetic P3 business cases AR check" [ref=e4214] [cursor=pointer]:
+                    - /url: /transformations/01a14d2a-10de-7770-939d-53090c79e165/dashboard
+                - cell "غير معروف" [ref=e4215]:
+                  - generic [ref=e4216]:
+                    - img [ref=e4217]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4219]:
+                  - generic [ref=e4220]:
+                    - img [ref=e4221]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4223]:
+                  - generic [ref=e4224]:
+                    - img [ref=e4225]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4227]:
+                  - generic [ref=e4228]:
+                    - img [ref=e4229]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4231]:
+                  - generic [ref=e4232]:
+                    - img [ref=e4233]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4235]:
+                  - generic [ref=e4236]:
+                    - img [ref=e4237]
+                    - text: غير معروف
+              - row "TR-0113 Synthetic G4 refusal AR غير معروف لا ينطبق غير معروف أخضر أخضر غير معروف" [ref=e4239]:
+                - rowheader "TR-0113 Synthetic G4 refusal AR" [ref=e4240]:
+                  - link "TR-0113 Synthetic G4 refusal AR" [ref=e4241] [cursor=pointer]:
+                    - /url: /transformations/01a14d2a-337f-706c-8e91-236ef84bfa3a/dashboard
+                - cell "غير معروف" [ref=e4242]:
+                  - generic [ref=e4243]:
+                    - img [ref=e4244]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4246]:
+                  - generic [ref=e4247]:
+                    - img [ref=e4248]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e4250]:
+                  - generic [ref=e4251]:
+                    - img [ref=e4252]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e4254]:
+                  - generic [ref=e4255]:
+                    - img [ref=e4256]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4258]:
+                  - generic [ref=e4259]:
+                    - img [ref=e4260]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4262]:
+                  - generic [ref=e4263]:
+                    - img [ref=e4264]
+                    - text: غير معروف
+              - row "TR-0114 Synthetic inherited approval layout AR غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4266]:
+                - rowheader "TR-0114 Synthetic inherited approval layout AR" [ref=e4267]:
+                  - link "TR-0114 Synthetic inherited approval layout AR" [ref=e4268] [cursor=pointer]:
+                    - /url: /transformations/01a14d2a-5764-764f-a6f8-d71095ca1b3a/dashboard
+                - cell "غير معروف" [ref=e4269]:
+                  - generic [ref=e4270]:
+                    - img [ref=e4271]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4273]:
+                  - generic [ref=e4274]:
+                    - img [ref=e4275]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4277]:
+                  - generic [ref=e4278]:
+                    - img [ref=e4279]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4281]:
+                  - generic [ref=e4282]:
+                    - img [ref=e4283]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4285]:
+                  - generic [ref=e4286]:
+                    - img [ref=e4287]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4289]:
+                  - generic [ref=e4290]:
+                    - img [ref=e4291]
+                    - text: غير معروف
+              - row "TR-0115 Synthetic P3 journey AR غير معروف لا ينطبق غير معروف كهرماني أخضر غير معروف" [ref=e4293]:
+                - rowheader "TR-0115 Synthetic P3 journey AR" [ref=e4294]:
+                  - link "TR-0115 Synthetic P3 journey AR" [ref=e4295] [cursor=pointer]:
+                    - /url: /transformations/01a14d2a-b56b-7133-b50e-b6cad141ce03/dashboard
+                - cell "غير معروف" [ref=e4296]:
+                  - generic [ref=e4297]:
+                    - img [ref=e4298]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4300]:
+                  - generic [ref=e4301]:
+                    - img [ref=e4302]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e4304]:
+                  - generic [ref=e4305]:
+                    - img [ref=e4306]
+                    - text: غير معروف
+                - cell "كهرماني" [ref=e4308]:
+                  - generic [ref=e4309]:
+                    - img [ref=e4310]
+                    - text: كهرماني
+                - cell "أخضر" [ref=e4312]:
+                  - generic [ref=e4313]:
+                    - img [ref=e4314]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4316]:
+                  - generic [ref=e4317]:
+                    - img [ref=e4318]
+                    - text: غير معروف
+              - row "TR-0116 Synthetic P3 portfolio AR check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4320]:
+                - rowheader "TR-0116 Synthetic P3 portfolio AR check" [ref=e4321]:
+                  - link "TR-0116 Synthetic P3 portfolio AR check" [ref=e4322] [cursor=pointer]:
+                    - /url: /transformations/01a14d2d-37de-75cd-9310-70aadfdc0e03/dashboard
+                - cell "غير معروف" [ref=e4323]:
+                  - generic [ref=e4324]:
+                    - img [ref=e4325]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4327]:
+                  - generic [ref=e4328]:
+                    - img [ref=e4329]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4331]:
+                  - generic [ref=e4332]:
+                    - img [ref=e4333]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4335]:
+                  - generic [ref=e4336]:
+                    - img [ref=e4337]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4339]:
+                  - generic [ref=e4340]:
+                    - img [ref=e4341]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4343]:
+                  - generic [ref=e4344]:
+                    - img [ref=e4345]
+                    - text: غير معروف
+              - row "TR-0117 Synthetic P3 prioritization AR check غير معروف لا ينطبق لا ينطبق غير معروف أخضر غير معروف" [ref=e4347]:
+                - rowheader "TR-0117 Synthetic P3 prioritization AR check" [ref=e4348]:
+                  - link "TR-0117 Synthetic P3 prioritization AR check" [ref=e4349] [cursor=pointer]:
+                    - /url: /transformations/01a14d2d-b18f-760e-bf82-41d5f5d2fb84/dashboard
+                - cell "غير معروف" [ref=e4350]:
+                  - generic [ref=e4351]:
+                    - img [ref=e4352]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4354]:
+                  - generic [ref=e4355]:
+                    - img [ref=e4356]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4358]:
+                  - generic [ref=e4359]:
+                    - img [ref=e4360]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e4362]:
+                  - generic [ref=e4363]:
+                    - img [ref=e4364]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e4366]:
+                  - generic [ref=e4367]:
+                    - img [ref=e4368]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4370]:
+                  - generic [ref=e4371]:
+                    - img [ref=e4372]
+                    - text: غير معروف
+              - row "TR-0118 Synthetic P3 seams AR check غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4374]:
+                - rowheader "TR-0118 Synthetic P3 seams AR check" [ref=e4375]:
+                  - link "TR-0118 Synthetic P3 seams AR check" [ref=e4376] [cursor=pointer]:
+                    - /url: /transformations/01a14d2e-48e9-76d9-b24e-5e52dea9cf3c/dashboard
+                - cell "غير معروف" [ref=e4377]:
+                  - generic [ref=e4378]:
+                    - img [ref=e4379]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4381]:
+                  - generic [ref=e4382]:
+                    - img [ref=e4383]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4385]:
+                  - generic [ref=e4386]:
+                    - img [ref=e4387]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4389]:
+                  - generic [ref=e4390]:
+                    - img [ref=e4391]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4393]:
+                  - generic [ref=e4394]:
+                    - img [ref=e4395]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4397]:
+                  - generic [ref=e4398]:
+                    - img [ref=e4399]
+                    - text: غير معروف
+              - row "TR-0119 Synthetic P3 UI completion AR check غير معروف لا ينطبق غير معروف أخضر أخضر غير معروف" [ref=e4401]:
+                - rowheader "TR-0119 Synthetic P3 UI completion AR check" [ref=e4402]:
+                  - link "TR-0119 Synthetic P3 UI completion AR check" [ref=e4403] [cursor=pointer]:
+                    - /url: /transformations/01a14d2e-a054-76a7-9fb1-65ce0f815632/dashboard
+                - cell "غير معروف" [ref=e4404]:
+                  - generic [ref=e4405]:
+                    - img [ref=e4406]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4408]:
+                  - generic [ref=e4409]:
+                    - img [ref=e4410]
+                    - text: لا ينطبق
+                - cell "غير معروف" [ref=e4412]:
+                  - generic [ref=e4413]:
+                    - img [ref=e4414]
+                    - text: غير معروف
+                - cell "أخضر" [ref=e4416]:
+                  - generic [ref=e4417]:
+                    - img [ref=e4418]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4420]:
+                  - generic [ref=e4421]:
+                    - img [ref=e4422]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4424]:
+                  - generic [ref=e4425]:
+                    - img [ref=e4426]
+                    - text: غير معروف
+              - row "TR-0120 Synthetic P4 adoption and BAU AR mvday0z7 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4428]:
+                - rowheader "TR-0120 Synthetic P4 adoption and BAU AR mvday0z7" [ref=e4429]:
+                  - link "TR-0120 Synthetic P4 adoption and BAU AR mvday0z7" [ref=e4430] [cursor=pointer]:
+                    - /url: /transformations/01a14d2f-47c2-72ed-871c-e00cf7ff8ee1/dashboard
+                - cell "غير معروف" [ref=e4431]:
+                  - generic [ref=e4432]:
+                    - img [ref=e4433]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4435]:
+                  - generic [ref=e4436]:
+                    - img [ref=e4437]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4439]:
+                  - generic [ref=e4440]:
+                    - img [ref=e4441]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4443]:
+                  - generic [ref=e4444]:
+                    - img [ref=e4445]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4447]:
+                  - generic [ref=e4448]:
+                    - img [ref=e4449]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4451]:
+                  - generic [ref=e4452]:
+                    - img [ref=e4453]
+                    - text: غير معروف
+              - row "TR-0121 Synthetic P4 other transformation AR mvday0z7 غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4455]:
+                - rowheader "TR-0121 Synthetic P4 other transformation AR mvday0z7" [ref=e4456]:
+                  - link "TR-0121 Synthetic P4 other transformation AR mvday0z7" [ref=e4457] [cursor=pointer]:
+                    - /url: /transformations/01a14d2f-4890-77b0-b898-22996df3b5e0/dashboard
+                - cell "غير معروف" [ref=e4458]:
+                  - generic [ref=e4459]:
+                    - img [ref=e4460]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4462]:
+                  - generic [ref=e4463]:
+                    - img [ref=e4464]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4466]:
+                  - generic [ref=e4467]:
+                    - img [ref=e4468]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4470]:
+                  - generic [ref=e4471]:
+                    - img [ref=e4472]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4474]:
+                  - generic [ref=e4475]:
+                    - img [ref=e4476]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4478]:
+                  - generic [ref=e4479]:
+                    - img [ref=e4480]
+                    - text: غير معروف
+              - row "TR-0122 Synthetic P4 benefits AR mvdazdrv غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4482]:
+                - rowheader "TR-0122 Synthetic P4 benefits AR mvdazdrv" [ref=e4483]:
+                  - link "TR-0122 Synthetic P4 benefits AR mvdazdrv" [ref=e4484] [cursor=pointer]:
+                    - /url: /transformations/01a14d30-3ec0-751f-b8da-de2de514d29b/dashboard
+                - cell "غير معروف" [ref=e4485]:
+                  - generic [ref=e4486]:
+                    - img [ref=e4487]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4489]:
+                  - generic [ref=e4490]:
+                    - img [ref=e4491]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4493]:
+                  - generic [ref=e4494]:
+                    - img [ref=e4495]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4497]:
+                  - generic [ref=e4498]:
+                    - img [ref=e4499]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4501]:
+                  - generic [ref=e4502]:
+                    - img [ref=e4503]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4505]:
+                  - generic [ref=e4506]:
+                    - img [ref=e4507]
+                    - text: غير معروف
+              - row "TR-0123 Synthetic P4 change control and phases AR mvdb0wfq غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4509]:
+                - rowheader "TR-0123 Synthetic P4 change control and phases AR mvdb0wfq" [ref=e4510]:
+                  - link "TR-0123 Synthetic P4 change control and phases AR mvdb0wfq" [ref=e4511] [cursor=pointer]:
+                    - /url: /transformations/01a14d31-5384-757f-ac2b-621cb2625e01/dashboard
+                - cell "غير معروف" [ref=e4512]:
+                  - generic [ref=e4513]:
+                    - img [ref=e4514]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4516]:
+                  - generic [ref=e4517]:
+                    - img [ref=e4518]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4520]:
+                  - generic [ref=e4521]:
+                    - img [ref=e4522]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4524]:
+                  - generic [ref=e4525]:
+                    - img [ref=e4526]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4528]:
+                  - generic [ref=e4529]:
+                    - img [ref=e4530]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4532]:
+                  - generic [ref=e4533]:
+                    - img [ref=e4534]
+                    - text: غير معروف
+              - row "TR-0124 Synthetic P4 dashboards A AR mvdb205f غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4536]:
+                - rowheader "TR-0124 Synthetic P4 dashboards A AR mvdb205f" [ref=e4537]:
+                  - link "TR-0124 Synthetic P4 dashboards A AR mvdb205f" [ref=e4538] [cursor=pointer]:
+                    - /url: /transformations/01a14d32-1c96-724d-ad7e-f1040ea0e419/dashboard
+                - cell "غير معروف" [ref=e4539]:
+                  - generic [ref=e4540]:
+                    - img [ref=e4541]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4543]:
+                  - generic [ref=e4544]:
+                    - img [ref=e4545]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4547]:
+                  - generic [ref=e4548]:
+                    - img [ref=e4549]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4551]:
+                  - generic [ref=e4552]:
+                    - img [ref=e4553]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4555]:
+                  - generic [ref=e4556]:
+                    - img [ref=e4557]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4559]:
+                  - generic [ref=e4560]:
+                    - img [ref=e4561]
+                    - text: غير معروف
+              - row "TR-0125 Synthetic P4 dashboards B AR mvdb205f غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4563]:
+                - rowheader "TR-0125 Synthetic P4 dashboards B AR mvdb205f" [ref=e4564]:
+                  - link "TR-0125 Synthetic P4 dashboards B AR mvdb205f" [ref=e4565] [cursor=pointer]:
+                    - /url: /transformations/01a14d32-1da8-701e-8e12-11ad0f971512/dashboard
+                - cell "غير معروف" [ref=e4566]:
+                  - generic [ref=e4567]:
+                    - img [ref=e4568]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4570]:
+                  - generic [ref=e4571]:
+                    - img [ref=e4572]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4574]:
+                  - generic [ref=e4575]:
+                    - img [ref=e4576]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4578]:
+                  - generic [ref=e4579]:
+                    - img [ref=e4580]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4582]:
+                  - generic [ref=e4583]:
+                    - img [ref=e4584]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4586]:
+                  - generic [ref=e4587]:
+                    - img [ref=e4588]
+                    - text: غير معروف
+              - row "TR-0126 Synthetic P4 dashboards unit AR mvdb205f غير معروف لا ينطبق لا ينطبق أخضر أخضر غير معروف" [ref=e4590]:
+                - rowheader "TR-0126 Synthetic P4 dashboards unit AR mvdb205f" [ref=e4591]:
+                  - link "TR-0126 Synthetic P4 dashboards unit AR mvdb205f" [ref=e4592] [cursor=pointer]:
+                    - /url: /transformations/01a14d32-472e-75ab-abff-d8fef8e09aa4/dashboard
+                - cell "غير معروف" [ref=e4593]:
+                  - generic [ref=e4594]:
+                    - img [ref=e4595]
+                    - text: غير معروف
+                - cell "لا ينطبق" [ref=e4597]:
+                  - generic [ref=e4598]:
+                    - img [ref=e4599]
+                    - text: لا ينطبق
+                - cell "لا ينطبق" [ref=e4601]:
+                  - generic [ref=e4602]:
+                    - img [ref=e4603]
+                    - text: لا ينطبق
+                - cell "أخضر" [ref=e4605]:
+                  - generic [ref=e4606]:
+                    - img [ref=e4607]
+                    - text: أخضر
+                - cell "أخضر" [ref=e4609]:
+                  - generic [ref=e4610]:
+                    - img [ref=e4611]
+                    - text: أخضر
+                - cell "غير معروف" [ref=e4613]:
+                  - generic [ref=e4614]:
+                    - img [ref=e4615]
+                    - text: غير معروف
+```
