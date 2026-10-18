@@ -161,3 +161,90 @@ describe("F-DG5-101 rule on the evidence link: a person never links evidence the
     expect(rows.map((r) => r.action)).not.toContain("authorization.denied");
   });
 });
+
+/**
+ * The sibling branch (T-DG5-BE-V2C): a transformation-scope instance. The 0069 link guard already refuses evidence of
+ * another transformation; the read check now answers first for evidence the actor cannot read, with the same refusal,
+ * audited as `authorization.denied` on that record's transformation (the same audit as the adopted-step refusal).
+ */
+describe("F-DG5-101 rule on the evidence link: a transformation-scope instance", () => {
+  /** TL on T1 only; T2 (same BU) and its evidence exist, but the actor can no longer read T2. */
+  async function transformationLead() {
+    const p = await orgLead();
+    const mk = async (name: string) => {
+      const t = await call<Body>(api.app, "POST", "/api/v1/transformations", {
+        session: p.session,
+        body: { businessUnitId: w.a1, name, mode: "end_to_end" },
+      });
+      expect(t.status, JSON.stringify(t.body)).toBe(201);
+      return t.body.id as string;
+    };
+    const ev = async (t: string) => {
+      const e = await call<Body>(api.app, "POST", `/api/v1/transformations/${t}/evidence`, {
+        session: p.session,
+        body: { kind: "note", title: "Synthetic gate evidence", noteBody: "Synthetic", ownerUserId: p.id },
+      });
+      expect(e.status, JSON.stringify(e.body)).toBe(201);
+      return e.body.id as string;
+    };
+    const T1 = await mk("Synthetic T1");
+    const T2 = await mk("Synthetic T2");
+    const own = await ev(T1);
+    const other = await ev(T2);
+    await api.db
+      .updateTable("scoped_assignment")
+      .set({ revoked_at: new Date(), revoked_by: w.grantor.id, revoke_reason: "Synthetic revocation" })
+      .where("user_id", "=", p.id)
+      .where("revoked_at", "is", null)
+      .execute();
+    await grant(api.db, w.grantor.id, p.id, "TL", { type: "transformation", id: T1 }, w.orgA.id);
+    expect([(await readT(p, T1)).status, (await readT(p, T2)).status]).toEqual([200, 404]);
+    const launched = await call<Body>(api.app, "POST", I, {
+      session: p.session,
+      body: { procedureCode: "gate_review", transformationId: T1 },
+    });
+    expect(launched.status, JSON.stringify(launched.body)).toBe(201);
+    expect(launched.body.currentStepKeys).toEqual(["prepare_submission"]);
+    return { p, T1, T2, own, other, id: launched.body.id as string, version: launched.body.version as number };
+  }
+
+  it("evidence of a transformation the actor cannot read: refused like an unknown record, nothing linked", async () => {
+    const { p, T2, other, id, version } = await transformationLead();
+    const refused = await linkEvidence(p, id, "prepare_submission", version, other);
+    expect([refused.status, refused.body?.code, refused.body?.detail]).toEqual([422, INVALID, INVALID_DETAIL]);
+    expect(JSON.stringify(refused.body)).not.toContain(other);
+    expect(JSON.stringify(refused.body)).not.toContain(T2);
+    const unknown = await linkEvidence(p, id, "prepare_submission", version, UNKNOWN_EVIDENCE);
+    expect([unknown.status, unknown.body.code, unknown.body.detail]).toEqual([422, INVALID, INVALID_DETAIL]);
+    expect(Object.keys(refused.body).sort()).toEqual(Object.keys(unknown.body).sort());
+    expect(await evidenceLinks(id)).toEqual([]);
+    const rows = await auditOfRequest(api.db, refused.body.requestId as string);
+    expect(rows.map((r) => [r.action, r.record_type, r.record_id, r.transformation_id])).toEqual([
+      ["authorization.denied", "transformation", T2, T2],
+    ]);
+  });
+
+  it("positive: the actor links evidence of its own transformation; readable evidence of another stays refused by the guard", async () => {
+    const { p, T1, own, id, version } = await transformationLead();
+    // Read restored on T2's BU: the actor can read the other evidence, but it is not evidence of T1 (the 0069 guard).
+    await grant(api.db, w.grantor.id, p.id, "TL", { type: "business_unit", id: w.a1 }, w.orgA.id);
+    const otherT = await call<Body>(api.app, "POST", "/api/v1/transformations", {
+      session: p.session,
+      body: { businessUnitId: w.a1, name: "Synthetic T3", mode: "end_to_end" },
+    });
+    const e3 = await call<Body>(api.app, "POST", `/api/v1/transformations/${otherT.body.id}/evidence`, {
+      session: p.session,
+      body: { kind: "note", title: "Synthetic other evidence", noteBody: "Synthetic", ownerUserId: p.id },
+    });
+    expect(e3.status, JSON.stringify(e3.body)).toBe(201);
+    const mismatched = await linkEvidence(p, id, "prepare_submission", version, e3.body.id as string);
+    expect([mismatched.status, mismatched.body?.code]).toEqual([422, INVALID]);
+    expect(await evidenceLinks(id)).toEqual([]);
+
+    const linked = await linkEvidence(p, id, "prepare_submission", version, own);
+    expect(linked.status, JSON.stringify(linked.body)).toBe(200);
+    expect(linked.body.version).toBe(version + 1);
+    expect(linked.body.transformationId).toBe(T1);
+    expect(await evidenceLinks(id)).toEqual([{ record_type: "evidence", record_id: own }]);
+  });
+});

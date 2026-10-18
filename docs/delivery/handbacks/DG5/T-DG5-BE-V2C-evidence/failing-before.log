@@ -1,0 +1,77 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvdgr8xx_ff18dde9 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts (4 tests | 2 failed) 1870ms
+   × F-DG5-101 rule on the evidence link: a person never links evidence they cannot read > an organization-scope actor who cannot read T links T's evidence: refused like an unknown record, nothing linked 611ms
+     → expected [ 200, undefined, undefined ] to deeply equal [ 422, …(2) ]
+   ✓ F-DG5-101 rule on the evidence link: a person never links evidence they cannot read > positive: an organization-scope actor who can read T links T's evidence to the adopted step 222ms
+   × F-DG5-101 rule on the evidence link: a transformation-scope instance > evidence of a transformation the actor cannot read: refused like an unknown record, nothing linked 296ms
+     → expected [] to deeply equal [ [ 'authorization.denied', …(3) ] ]
+   ✓ F-DG5-101 rule on the evidence link: a transformation-scope instance > positive: the actor links evidence of its own transformation; readable evidence of another stays refused by the guard  304ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts > F-DG5-101 rule on the evidence link: a person never links evidence they cannot read > an organization-scope actor who cannot read T links T's evidence: refused like an unknown record, nothing linked
+AssertionError: expected [ 200, undefined, undefined ] to deeply equal [ 422, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   422,[39m
+[32m-   "procedure_step.output_record_invalid",[39m
+[32m-   "The linked record is not of the expected type or not in this scope.",[39m
+[31m+   200,[39m
+[31m+   undefined,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts:122:72
+    120| 
+    121|     const refused = await linkEvidence(lead, id, "draft_charter", vers…
+    122|     expect([refused.status, refused.body?.code, refused.body?.detail])…
+       |                                                                        ^
+    123|     expect(JSON.stringify(refused.body)).not.toContain(evidenceId);
+    124|     expect(JSON.stringify(refused.body)).not.toContain(T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts > F-DG5-101 rule on the evidence link: a transformation-scope instance > evidence of a transformation the actor cannot read: refused like an unknown record, nothing linked
+AssertionError: expected [] to deeply equal [ [ 'authorization.denied', …(3) ] ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   [[39m
+[32m-     "authorization.denied",[39m
+[32m-     "transformation",[39m
+[32m-     "01a14dc4-70a9-761a-a62f-3487f6861e7e",[39m
+[32m-     "01a14dc4-70a9-761a-a62f-3487f6861e7e",[39m
+[32m-   ],[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/procedures/evidence-link-read-authorization.test.ts:222:90
+    220|     expect(await evidenceLinks(id)).toEqual([]);
+    221|     const rows = await auditOfRequest(api.db, refused.body.requestId a…
+    222|     expect(rows.map((r) => [r.action, r.record_type, r.record_id, r.tr…
+       |                                                                                          ^
+    223|       ["authorization.denied", "transformation", T2, T2],
+    224|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  06:47:47
+   Duration  14.57s (transform 4.37s, setup 0ms, collect 9.22s, tests 1.87s, environment 0ms, prepare 66ms)
+
+exit=1
