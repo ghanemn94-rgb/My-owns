@@ -1,0 +1,24 @@
+Scope: 8 of 9 workspace projects
+packages/design-tokens typecheck$ tsc -p tsconfig.json
+packages/shared typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck: Done
+packages/shared typecheck: Done
+apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+packages/config typecheck$ tsc -p tsconfig.json
+packages/reporting typecheck$ tsc -p tsconfig.json
+packages/config typecheck: Done
+packages/reporting typecheck: Done
+apps/web typecheck: Done
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: src/modules/workflows/g4.test.ts(273,51): error TS2375: Type '{ initiatives: undefined; transformationId: string; ranking?: { readonly snapshotId: string; readonly weightSetId: string; readonly entries: ReadonlyArray<{ readonly initiativeId: string; readonly completeness: string; }>; } | null; activeWeightSet?: { readonly id: string; readonly versionNo: number; } | null; sched...' is not assignable to type 'PortfolioGateFacts' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+apps/api typecheck:   Types of property 'initiatives' are incompatible.
+apps/api typecheck:     Type 'undefined' is not assignable to type 'readonly G4InitiativeFact[]'.
+apps/api typecheck: Failed
+/home/user/wt/dg5-be-x1/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/api@0.1.0 typecheck: `tsc -p tsconfig.json`
+Exit status 2
+pnpm -r typecheck exit=2

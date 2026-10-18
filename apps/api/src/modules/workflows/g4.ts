@@ -5,7 +5,8 @@
 // through the GateFactsProvider interface defined HERE, which server.ts wires at start-up with portfolio's
 // (portfolio/gate-facts.ts) and kpi's (kpi/p3-gate-facts.ts) loaders - dependency injection, no import.
 //
-// Fail closed everywhere: facts that were not loaded (an unwired provider) make every criterion incomplete; Unknown
+// Fail closed everywhere: facts that were not loaded (an unwired provider) make every criterion incomplete; an EMPTY
+// approved portfolio makes every criterion over it incomplete (g4.no_approved_initiative; F-DG5-122, D-172); Unknown
 // capacity and an Unknown schedule are conflicts, never "no conflict"; a stale, rejected or missing Finance validation never counts.
 // Missing items use the exact English labels of ADR-0021 §7, with the initiative's code and name filled in, so
 // 'Owners', 'Finance validation' and the initiative names appear literally in a refused submission (422).
@@ -243,6 +244,20 @@ const NOT_LOADED = (label: string, code: string): G4Outcome => ({
 /** The in-scope initiatives, or undefined when the portfolio facts were not loaded. */
 const scopeOf = (f: G4Facts | undefined) => f?.portfolio.initiatives;
 
+/**
+ * F-DG5-122 (D-172; ADR-0035 amendment by T-DG5-ARCH-R5): a criterion whose subject set is the approved portfolio
+ * fails closed when that set is EMPTY (loaded, but no initiative is selected, funded or launched). "For every
+ * initiative in the approved portfolio" over no initiative is never Complete: the criterion carries exactly one missing
+ * item naming the cause, so an exception on 'Initiative cards' (one criterion) cannot turn Roadmap, Owners, Funding,
+ * Capacity, Prioritization or the per-initiative parts of Business cases and Finance validation green with no
+ * evidence. Not loaded (undefined) stays NOT_LOADED, and 'Initiative cards' keeps its own g4.portfolio_empty item.
+ */
+const NO_APPROVED_INITIATIVE = (): Warning =>
+  item("g4.no_approved_initiative", "No initiative in the approved portfolio", "/initiatives");
+/** [] for a non-empty portfolio, else the one missing item of an empty one. */
+const emptyPortfolio = (scope: readonly G4InitiativeFact[]): Warning[] =>
+  scope.length === 0 ? [NO_APPROVED_INITIATIVE()] : [];
+
 /** Evaluators keyed by the seeded criterion key (0024), registered in criteria.ts EVALUATORS. */
 export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
   [
@@ -282,6 +297,8 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       else
         for (const s of top.missingSections)
           missing.push(item("g4.business_case_section_missing", `Business case section missing: ${s}`, top.pointer));
+      // The per-initiative part over an empty portfolio fails closed; the transformation-level part keeps its checks.
+      missing.push(...emptyPortfolio(scope));
       for (const i of scope) {
         const kase = kpi.initiativeCases.find((c) => c.initiativeId === i.id);
         if (kase === undefined) {
@@ -321,6 +338,8 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       for (const l of kpi.benefitLines)
         if (caseIds.has(l.businessCaseId) && l.formulaValidation !== "validated")
           missing.push(item("g4.finance_validation_missing", "Finance validation", l.pointer));
+      // The per-initiative part over an empty portfolio fails closed (after the transformation-level checks).
+      missing.push(...emptyPortfolio(scope));
       return { missing };
     },
   ],
@@ -332,14 +351,19 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       if (scope === undefined || p?.ranking === undefined || p.activeWeightSet === undefined)
         return NOT_LOADED("Prioritization", "g4.prioritization_missing");
       if (p.ranking === null || p.activeWeightSet === null || p.ranking.weightSetId !== p.activeWeightSet.id)
-        return { missing: [item("g4.prioritization_missing", "Prioritization", "/prioritization")] };
+        return {
+          missing: [item("g4.prioritization_missing", "Prioritization", "/prioritization"), ...emptyPortfolio(scope)],
+        };
       const complete = new Set(
         p.ranking.entries.filter((e) => e.completeness === "complete").map((e) => e.initiativeId),
       );
       return {
-        missing: scope
-          .filter((i) => !complete.has(i.id))
-          .map((i) => item("g4.score_incomplete", `Score incomplete: ${named(i)}`, at(i))),
+        missing: [
+          ...emptyPortfolio(scope),
+          ...scope
+            .filter((i) => !complete.has(i.id))
+            .map((i) => item("g4.score_incomplete", `Score incomplete: ${named(i)}`, at(i))),
+        ],
       };
     },
   ],
@@ -351,7 +375,7 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       const unknowns = f?.portfolio.scheduleUnknowns;
       if (scope === undefined || conflicts === undefined || unknowns === undefined)
         return NOT_LOADED("Roadmap", "g4.roadmap_missing");
-      const missing: Warning[] = [];
+      const missing: Warning[] = emptyPortfolio(scope);
       for (const i of scope)
         if (i.waveId === null || i.plannedStart === null || i.plannedEnd === null || i.approvedMilestones === 0)
           missing.push(item("g4.roadmap_missing", `Roadmap: ${named(i)}`, at(i)));
@@ -370,9 +394,12 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       const scope = scopeOf(f);
       if (scope === undefined) return NOT_LOADED("Owners", "g4.owner_missing");
       return {
-        missing: scope
-          .filter((i) => i.executiveOwnerUserId === null || i.workstreamLeadUserId === null)
-          .map((i) => item("g4.owner_missing", `Owners: ${named(i)}`, at(i))),
+        missing: [
+          ...emptyPortfolio(scope),
+          ...scope
+            .filter((i) => i.executiveOwnerUserId === null || i.workstreamLeadUserId === null)
+            .map((i) => item("g4.owner_missing", `Owners: ${named(i)}`, at(i))),
+        ],
       };
     },
   ],
@@ -382,9 +409,12 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       const scope = scopeOf(f);
       if (scope === undefined) return NOT_LOADED("Funding", "g4.funding_missing");
       return {
-        missing: scope
-          .filter((i) => i.fundingState !== "funded")
-          .map((i) => item("g4.funding_missing", `Funding decision missing: ${named(i)}`, at(i))),
+        missing: [
+          ...emptyPortfolio(scope),
+          ...scope
+            .filter((i) => i.fundingState !== "funded")
+            .map((i) => item("g4.funding_missing", `Funding decision missing: ${named(i)}`, at(i))),
+        ],
       };
     },
   ],
@@ -395,7 +425,7 @@ export const G4_EVALUATORS: ReadonlyArray<readonly [string, G4Evaluator]> = [
       const conflicts = f?.portfolio.capacityConflicts;
       if (scope === undefined || conflicts === undefined)
         return NOT_LOADED("Capacity", "g4.capacity_commitment_missing");
-      const missing: Warning[] = [];
+      const missing: Warning[] = emptyPortfolio(scope);
       for (const i of scope)
         if (i.committedDemandIds.length === 0)
           missing.push(item("g4.capacity_commitment_missing", `Capacity commitment missing: ${named(i)}`, at(i)));
