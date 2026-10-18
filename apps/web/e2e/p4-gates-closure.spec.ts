@@ -665,6 +665,10 @@ test("8. transition decision: submitted, returned, round 2 after an edit; a non-
 test("9. the auditor sees read-only views; 390 px wide and 200 % text without page-level horizontal scroll", async ({
   browser,
 }, info) => {
+  // D-173 (T-DG5-BE-X1's disclosure): 16-18 s unloaded (D-171) but 29.5-30.2 s under review load, so the 30 s default
+  // left no headroom; 60 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing
+  // asserted changes.
+  test.setTimeout(60_000);
   const lang = langOf(info);
   const audUi = await asUser(browser, lang, auditor.username);
   const page = audUi.page;
