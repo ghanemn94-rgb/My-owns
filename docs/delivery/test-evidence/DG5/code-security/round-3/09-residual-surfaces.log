@@ -1,0 +1,32 @@
+## 2026-10-19T00:20:38Z residual surfaces on clone e661a6c
+$ ls .github/workflows
+ci.yml
+delivery-gates.yml
+$ grep -n 'pnpm install\|frozen-lockfile\|validate.mjs' .github/workflows/*.yml
+.github/workflows/ci.yml:38:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:40:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:42:        run: node tools/gates/validate.mjs --reconcile
+$ grep -rnE '(OPENAI|ANTHROPIC|LLM|SMTP|WEBHOOK|TWILIO|SLACK)[A-Z_]*' packages/config/src/*.ts (adapter env variables)
+(end; no match = no AI or external notification adapter variable)
+$ grep notification channel adapters in apps/worker/src
+(end)
+$ dev binding guard (packages/db/src/demo)
+packages/db/src/demo/guard.ts:129:  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+$ config refusal
+197:    problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+$ keycloak / oidc config surface
+201:  const issuer = raw.OIDC_ISSUER_URL;
+202:  const clientId = raw.OIDC_CLIENT_ID;
+203:  const clientSecret = raw.OIDC_CLIENT_SECRET;
+207:    const missing = (["OIDC_ISSUER_URL", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET"] as const).filter(
+221:        problems.push("OIDC_ISSUER_URL is invalid (must be an absolute http(s) URL)");
+$ lockfile
+lockfileVersion: '9.0'
+465
+$ registry config
+# ADR-0001: exact pins, engine enforcement, no lifecycle scripts except the allow-list in package.json.
+save-exact=true
+engine-strict=true
+strict-peer-dependencies=false
+auto-install-peers=false
+link-workspace-packages=true

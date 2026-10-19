@@ -1,0 +1,120 @@
+port-policy: PostgreSQL listening on port 26540 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.rmJggI/claude-0/review-r3b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvei7eag_b4429851 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (a)+(b) an element REMOVE, later fully undone by the creator, still makes the remover an author
+co-author element remove [33m200[39m 
+
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (a)+(b) an element REMOVE, later fully undone by the creator, still makes the remover an author
+after restore: element updated_by=creator [33mtrue[39m removed [33mfalse[39m version updated_by=creator [33mtrue[39m
+
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (a)+(b) an element REMOVE, later fully undone by the creator, still makes the remover an author
+remover decision [33m403[39m config_review.self_review
+
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (a)+(b) an element REMOVE, later fully undone by the creator, still makes the remover an author
+independent approve [33m200[39m publish [33m200[39m published
+
+ ✓ |integration| apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (a)+(b) an element REMOVE, later fully undone by the creator, still makes the remover an author 1422ms
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (c) a change-summary-only PATCH makes its writer an author
+summary-only PATCH writer decision [33m403[39m config_review.self_review
+
+ ✓ |integration| apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (c) a change-summary-only PATCH makes its writer an author 434ms
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (d) the scoring-defaults kind writer (PUT /scoring-defaults) records its writer
+co-author PUT scoring-defaults [33m200[39m 
+
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (d) the scoring-defaults kind writer (PUT /scoring-defaults) records its writer
+scoring-defaults writer decision [33m403[39m config_review.self_review
+
+ ✓ |integration| apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (d) the scoring-defaults kind writer (PUT /scoring-defaults) records its writer 431ms
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (e) a procedure definition REMOVE by a second admin records them
+co-author procedure remove [33m200[39m 
+
+ ✓ |integration| apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: every write path records its writer; a contributor never decides > (e) a procedure definition REMOVE by a second admin records them 894ms
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: the database backstop cannot be bypassed by the runtime role > runs as mth_app; DISABLE TRIGGER and session_replication_role are refused; a contributor decision is refused
+runtime role mth_app
+
+stdout | apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: the database backstop cannot be bypassed by the runtime role > runs as mth_app; DISABLE TRIGGER and session_replication_role are refused; a contributor decision is refused
+DISABLE TRIGGER: must be owner of table config_review_request
+session_replication_role: permission denied to set parameter "session_replication_role"
+DELETE contributor: permission denied for table methodology_version_contributor
+direct decision by contributor: config_review_request_reviewer_not_contributor
+
+ ✓ |integration| apps/api/test/integration/methodology/zz-sec-r2-contributor-paths.test.ts > SEC-R2 probe: the database backstop cannot be bypassed by the runtime role > runs as mth_app; DISABLE TRIGGER and session_replication_role are refused; a contributor decision is refused 726ms
+stdout | apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (1) AUD: no P5 mutation succeeds, nothing is written
+audit events since the sweep start: [["authorization.denied","AUD",67]]
+AUD P5 mutations: 90; statuses {"400":11,"403":73,"404":6}
+AUD non-403 answers (17):
+  400 validation createFormDraft
+  404 not_found updateFormDraft
+  404 not_found closeFormDraft
+  400 validation updateProcedureInstanceInputs
+  404 not_found completeProcedureStep
+  400 validation skipProcedureStep
+  400 validation assignProcedureStep
+  400 validation linkProcedureStepEvidence
+  400 validation cancelProcedureInstance
+  404 not_found decideAutomationRuleReview
+  400 validation decideApprovalRouteStep
+  400 validation closeGateCondition
+  404 not_found reviewMeetingCutoffPack
+  400 validation decideKpiRestatement
+  400 validation previewFormula
+  404 not_found putBusinessCaseCashFlows
+  400 validation putDayNinetyResponse
+business audit events before 316, after 316
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (1) AUD: no P5 mutation succeeds, nothing is written 2125ms
+stdout | apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (2) ADM-only: no transformation-scoped P5 read answers 200
+ADM-only transformation-scoped P5 reads: 40; statuses {"403":3,"404":37}
+ADM-only 2xx (0):
+  
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (2) ADM-only: no transformation-scoped P5 read answers 200 561ms
+stdout | apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (3) ADM-only navigation (printed)
+ADM-only navigation [33m200[39m [["my_work",["assignedActions","drafts","reviews","approvals","missingUpdates","upcomingDeadlines"]],["playbook_procedures",["source","guidance","procedures"]],["administration",["automation","organization","access","branding","environment"]]]
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1-p5-sweep.test.ts > SEC-R1 P5 sweep > (3) ADM-only navigation (printed) 21ms
+stdout | apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts > SEC-R1 repro: a co-author reviews and publishes the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+draft createdBy is creator: [33mtrue[39m
+
+stdout | apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts > SEC-R1 repro: a co-author reviews and publishes the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author PUT/PUT/PATCH [33m200[39m [33m200[39m [33m200[39m updatedBy=co-author: [33mtrue[39m
+
+stdout | apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts > SEC-R1 repro: a co-author reviews and publishes the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+creator preview/compat/submit [33m201[39m pass [33m201[39m warn [33m201[39m
+
+stdout | apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts > SEC-R1 repro: a co-author reviews and publishes the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author review decision [33m403[39m config_review.self_review
+
+stdout | apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts > SEC-R1 repro: a co-author reviews and publishes the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author publish [33m422[39m config_version.review_required
+
+ ✓ |integration| apps/api/test/integration/methodology/zz-sec-r1-coauthor-review.test.ts > SEC-R1 repro: a co-author reviews and publishes the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review 579ms
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+TL1 GET X -> [33m404[39m
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+TL1 capture_intake with X -> [33m422[39m procedure_step.output_record_invalid
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+steps after: [["capture_intake","active",null],["draft_charter","pending",null],["confirm_sponsor","pending",null]]
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+links: []
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+TL2 GET TL1's intake -> [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid) 725ms
+
+ Test Files  4 passed (4)
+      Tests  10 passed (10)
+   Start at  00:16:07
+   Duration  56.15s (transform 8.75s, setup 0ms, collect 37.25s, tests 10.96s, environment 0ms, prepare 83ms)
+
+exit=0

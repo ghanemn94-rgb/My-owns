@@ -1,0 +1,82 @@
+## 2026-10-19T00:13:23Z probe apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts (copy of repro/demo-portfolio-guards.test.ts, sha256 e2298110c00e017c790eabd5e249099e1149ca1ab334614c588e4922e4761c04); load 17.15 15.24 9.60 18/580 8
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /var/tmp/mth-run.rmJggI/claude-0/review-r3b
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvei40in_cff28308 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts (12 tests | 2 failed) 19168ms
+   ✓ (A) BE-X1: the G4 evaluators fail closed and never with less evidence > an empty approved portfolio with every other fact complete: all eight criteria incomplete 36ms
+   ✓ (A) BE-X1: the G4 evaluators fail closed and never with less evidence > facts not loaded (undefined, or the portfolio's initiatives absent): all eight incomplete 1ms
+   ✓ (A) BE-X1: the G4 evaluators fail closed and never with less evidence > a complete non-empty portfolio stays complete (no regression) 1ms
+   ✓ (A) BE-X1: the G4 evaluators fail closed and never with less evidence > removing any one per-initiative fact makes its criterion incomplete 1ms
+   ✓ (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > ranking: the score results and the snapshot are by a holder of prioritization.edit 72ms
+   × (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > selection: by a holder of portfolio.select, from the current ranking, not by the ranking's proposer 25ms
+     → column "version" does not exist
+   ✓ (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > Finance validation: by a holder of finance.validate who is never the author (cases and formula versions) 30ms
+   × (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > funding: by a holder of funding.approve, recorded with the role approverRoleOf gives that user 11ms
+     → column "version" does not exist
+   ✓ (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > capacity, demand and milestones: each write by a holder of its permission; one audit event per write  678ms
+   ✓ (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > initiative steps: one audit event per version step, by holders of the step's permission 40ms
+   ✓ (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > no gate exception is seeded, and the demo access administrator holds no approval permission 41ms
+   ✓ (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > seedDemo stays refused in production: MTH_ENV=production, and a production-initialized database  8754ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts > (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > selection: by a holder of portfolio.select, from the current ranking, not by the ranking's proposer
+error: column "version" does not exist
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:90:49
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ expectAuditPerWrite apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:193:13
+    191| /** One audit event per write: a create plus one per version step (ver…
+    192| async function expectAuditPerWrite(table: string, id: string) {
+    193|   const v = await sql<{ version: number }>`SELECT version FROM ${sql.t…
+       |             ^
+    194|   const a = await auditCount(table, id);
+    195|   const expected = v.rows[0]?.version ?? 1;
+ ❯ apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:234:7
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:102:41
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ expectAuditPerWrite apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:193:13
+ ❯ apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:234:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts > (B) BE-X2: the demo's approved-portfolio rows respect the guards, SoD and audit rules > funding: by a holder of funding.approve, recorded with the role approverRoleOf gives that user
+error: column "version" does not exist
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:90:49
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ expectAuditPerWrite apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:193:13
+    191| /** One audit event per write: a create plus one per version step (ver…
+    192| async function expectAuditPerWrite(table: string, id: string) {
+    193|   const v = await sql<{ version: number }>`SELECT version FROM ${sql.t…
+       |             ^
+    194|   const a = await auditCount(table, id);
+    195|   const expected = v.rows[0]?.version ?? 1;
+ ❯ apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:285:7
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:102:41
+ ❯ node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.7/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ expectAuditPerWrite apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:193:13
+ ❯ apps/api/test/integration/environment/zz-sec-r3-demo-portfolio-guards.test.ts:285:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 10 passed (12)
+   Start at  00:13:29
+   Duration  48.53s (transform 8.68s, setup 0ms, collect 21.64s, tests 19.17s, environment 0ms, prepare 82ms)
+
+exit=1
