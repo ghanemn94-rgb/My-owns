@@ -1,0 +1,281 @@
+$ QA_PG_PORT=26660 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh pnpm test:integration tests/qa  (node v24.21.0, 2026-10-19T01:27:24Z)
+ 01:27:24 up  1:54,  0 user,  load average: 20.76, 19.70, 17.53
+port-policy: PostgreSQL listening on port 26660 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration $TMPDIR/rev
+> vitest run --project integration tests/qa
+
+
+ RUN  v3.2.4 $TMPDIR/rev
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvekr72h_47beca48 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 executive pack sections: [["update_transformation",643],["metrics_transformation",5328],["update_ws_01",2808],["metrics_ws_01",2726]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 pack values [{"key":"value_planned_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_forecast_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_submitted_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_validated_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_gap_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_planned_top_line_sar","value":"0","currency":"SAR"},{"key":"value_forecast_top_line_sar","value":"0","currency":"SAR"},{"key":"value_submitted_top_line_sar","value":"0","currency":"SAR"},{"key":"value_validated_top_line_sar","value":"0","currency":"SAR"},{"key":"value_gap_top_line","value":null,"currency":null}] canonical [["value_planned_profit_and_cash_sar",null],["value_forecast_profit_and_cash_sar",null],["value_submitted_profit_and_cash_sar",null],["value_validated_profit_and_cash_sar",null],["value_planned_top_line_sar","0"],["value_forecast_top_line_sar","0"],["value_submitted_top_line_sar","0"],["value_validated_top_line_sar","0"]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization
+A02 procedures: [{"c":"new_transformation_intake","n":"New transformation intake","scope":{"level":"organization","descriptionEn":"One organization; the transformation does not exist yet.","descriptionAr":"منظمة واحدة؛ التحول غير موجود بعد."},"launch":["SP","TL","TO"],"inputs":[["transformationName",null,true],["caseForChange",null,true]],"steps":[["capture_intake","task","TL",null,{"recordType":"transformation","mode":"create"},["transformationName","caseForChange"],false,null],["draft_charter","task","TL",null,{"recordType":"charter","mode":"link"},[],false,null],["confirm_sponsor","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"baseline_validation","n":"Baseline validation","scope":{"level":"transformation","descriptionEn":"One baseline of one transformation.","descriptionAr":"خط أساس واحد لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["metric",null,true],["value",null,true],["unit",null,true],["baselineDate",null,true],["source",null,true]],"steps":[["record_baseline","task","TL",null,{"recordType":"baseline","mode":"create"},["metric","value","unit","baselineDate","source"],true,null],["validate_baseline","task","FIN",null,{"recordType":"baseline","mode":"advance"},[],false,null]]},{"c":"kpi_submission","n":"KPI submission","scope":{"level":"transformation","descriptionEn":"One KPI and one reporting period.","descriptionAr":"مؤشر واحد وفترة تقرير واحدة."},"launch":["BO","KDS","TO"],"inputs":[["period",null,true]],"steps":[["submit_actual","task","BO",null,{"recordType":"kpi_actual","mode":"create"},["period"],false,null],["accept_actual","task","KDS",null,{"recordType":"kpi_actual","mode":"advance"},[],false,null]]},{"c":"tom_approval","n":"TOM approval","scope":{"level":"transformation","descriptionEn":"The TOM canvas of one transformation.","descriptionAr":"لوحة نموذج التشغيل لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["complete_canvas","task","TL",null,{"recordType":"tom_canvas_cell","mode":"link"},[],false,null],["business_review","task","BO",null,null,[],false,null],["technology_review","task","TD",null,null,[],false,null],["sponsor_approval","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"initiative_prioritization","n":"Initiative prioritization","scope":{"level":"transformation","descriptionEn":"The candidate initiatives of one transformation.","descriptionAr":"المبادرات المرشحة لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["score_initiatives","task","TL",null,null,[],false,null],["record_ranking","task","TO",null,{"recordType":"ranking_snapshot","mode":"create"},[],false,null],["approve_ranking","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"gate_review","n":"Gate review","scope":{"level":"transformation","descriptionEn":"One gate of one transformation.","descriptionAr":"بوابة واحدة لتحول واحد."},"launch":["TL","TO"],"inputs":[["gateCode",null,true],["financeReviewRequired",null,true]],"steps":[["prepare_submission","task","TL",null,{"recordType":"gate_submission","mode":"create"},["gateCode"],true,null],["criteria_review","task","TO",null,null,[],false,null],["finance_review","task","FIN",null,null,[],false,{"inputKey":"financeReviewRequired","operator":"eq","value":"yes"}],["gate_decision","approval","TL","SP",{"recordType":"gate_submission","mode":"advance"},[],false,null]]},{"c":"scope_target_change","n":"Scope/target change","scope":{"level":"transformation","descriptionEn":"One approved record of one transformation.","descriptionAr":"سجل معتمد واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[["reason",null,true]],"steps":[["raise_change","task","TL",null,{"recordType":"change_request","mode":"create"},["reason"],false,null],["assess_impact","task","TO",null,null,[],false,null],["decide_change","approval","TL","SP",{"recordType":"change_request","mode":"advance"},[],false,null]]},{"c":"benefit_validation","n":"Benefit validation","scope":{"level":"transformation","descriptionEn":"One benefit of one transformation.","descriptionAr":"منفعة واحدة لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["belowTarget",null,true]],"steps":[["measure_benefit","task","BO",null,null,[],false,null],["attach_evidence","task","BO",null,{"recordType":"evidence","mode":"link"},[],true,null],["finance_validation","task","FIN",null,{"recordType":"finance_validation","mode":"create"},[],false,null],["recovery_plan","task","TL",null,null,["belowTarget"],false,{"inputKey":"belowTarget","operator":"eq","value":"yes"}]]},{"c":"executive_escalation","n":"Executive escalation","scope":{"level":"transformation","descriptionEn":"One escalated decision of one transformation.","descriptionAr":"قرار مصعّد واحد لتحول واحد."},"launch":["TL","TO"],"inputs":[["whyNow",null,true]],"steps":[["raise_escalation","task","TL",null,{"recordType":"decision","mode":"create"},["whyNow"],false,null],["executive_decision","approval","TL","SP",{"recordType":"decision","mode":"advance"},[],false,null],["communicate_decision","task","TL",null,null,[],false,null]]},{"c":"bau_handover","n":"BAU handover","scope":{"level":"transformation","descriptionEn":"One performance area of one transformation.","descriptionAr":"مجال أداء واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[],"steps":[["prepare_handover","task","TL",null,{"recordType":"bau_handover","mode":"create"},[],true,null],["accept_handover","approval","TL","BO",{"recordType":"bau_handover","mode":"advance"},[],false,null],["schedule_reviews","task","TO",null,null,[],false,null]]}]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree
+A02 seed coverage: {"gate.g1":1,"gate.g2":1,"gate.g3":1,"gate.g4":1,"gate.g5":1,"gate.g6":1,"phase.1":5,"phase.2":3,"phase.3":4,"phase.4":5,"phase.5":4,"phase.6":4,"kpi.stale":1,"adoption.gap":1,"bau.handover":1,"template.t01":6,"template.t02":3,"template.t03":3,"template.t04":1,"template.t05":3,"template.t06":15,"template.t07":4,"template.t08":1,"template.t09":3,"template.t10":6,"template.t11":4,"template.t12":6,"template.t13":1,"template.t14":3,"template.t15":1,"template.t16":4,"benefit.shared":1,"approval.pending":2,"dashboard.area_1":3,"dashboard.area_2":3,"dashboard.area_3":3,"dashboard.area_4":1,"dashboard.area_5":1,"dashboard.area_6":2,"decision.overdue":1,"evidence.missing":18,"tom.dimension_01":1,"tom.dimension_02":1,"tom.dimension_03":1,"tom.dimension_04":1,"tom.dimension_05":1,"tom.dimension_06":1,"tom.dimension_07":1,"tom.dimension_08":1,"tom.dimension_09":1,"tom.dimension_10":1,"health_assessment.submitted":1} complete=true
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed
+A02 procedures driven: {
+ "new_transformation_intake": "completed",
+ "baseline_validation": "completed",
+ "kpi_submission": "completed",
+ "tom_approval": "completed",
+ "initiative_prioritization": "completed",
+ "gate_review": "completed",
+ "scope_target_change": "completed",
+ "benefit_validation": "completed",
+ "executive_escalation": "completed",
+ "bau_handover": "completed"
+}
+
+ ✓ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (13 tests) 42942ms
+   ✓ REQ-S18-004: the demo role users of the demo database > every seeded demo role user signs in through the demo IdP path and is a synthetic user of the demo organization  1526ms
+   ✓ REQ-S18-004: the demo role users of the demo database > step 1 'create transformation' is performed by the demo Transformation Lead in the demo business unit  580ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records  14506ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it  612ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake)  525ms
+   ✓ REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed  9793ms
+ ✓ |integration| tests/qa/integration/a07-historical-integrity.test.ts (12 tests) 44625ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact  1826ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S12-018: proposing a formula change lists the affected benefit and creates a review task; history intact  1032ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact  2112ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing  932ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2  1201ms
+   ✓ REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback  2067ms
+   ✓ REQ-PB-093: changed scoring defaults apply to new transformations; an existing one keeps its weight set and rubric > defaults totalling 95% are refused at publish; 30/20/20/15/15 with a new Feasibility rubric reach only new transformations  2087ms
+   ✓ REQ-S14-003: an N/A scheme without its own bands is refused; existing assessments keep their scheme version and band > adding N/A while keeping the four source bands fails the preview (own bands required) and cannot be published  1559ms
+   ✓ contract (found while authoring A07): reading the extension values of a record that has none > GET …/form-records/T13/{id}/custom-fields returns version 0 with an ETag the contract allows  503ms
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 34735ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  962ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected  800ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S20-006: a NEW T13 record stores the added fields (no deployment between publish and use)  429ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-008: the existing transformation stays pinned to forms v1 (no new field, value refused)  318ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  904ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S02-001: deleting a template in a draft methodology fails the check and blocks publish  755ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-006: relabelling G3 succeeds; changing its stable ID, deleting a TOM dimension or an ADM approver is rejected  729ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  1553ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  1372ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  3877ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  1473ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the existing transformation still renders v1 forms; the forms migration preview lists the new required field  1045ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the methodology migration lists a required G2 re-approval; executed after approval, history is unchanged  569ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > publishing defaults that total 95% is rejected  828ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > 30/20/20/15/15 and a new Feasibility rubric: a new transformation starts with them, an existing one keeps 25/25  550ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001: a definition missing a trigger or a completion condition is rejected  562ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  1253ms
+ ✓ |integration| tests/qa/integration/a08-gate-controls.test.ts (31 tests) 31708ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  1991ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception  673ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-009: a criterion review persists all nine fields; the first review moves the gate to Under Review  483ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  1806ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  1322ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  942ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  1785ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  2023ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  2263ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  1286ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007: an approved disposition resolves the risk and G5 can be submitted  967ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-PB-015: with G5 configured to BO an SP approval is 403; a stale submission number is 409; a BO approval succeeds and records the scale scope  378ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  1098ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/  712ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-014: a decision without rationale is refused (missing 400, blank 422 approval.rationale_required); the stored record includes the request version  308ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-016: the requester approving their own scope change is 403 under the default policy; it stays pending  328ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-017: approving version 3 after the record moved to version 4 is 409; no decision is stored  500ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-018: 'request changes' returns the item to the requester without closing it  446ms
+ ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests) 12478ms
+   ✓ A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-PB-066: a Business scope change approval gets a due date 5 working days after it is raised on the default calendar (weekend and configured holiday skipped)  1623ms
+   ✓ A09 approval timers escalate but never approve (REQ-S10-019) > after the due date plus retries the approval is escalated exactly once and remains undecided  723ms
+   ✓ A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none  1675ms
+   ✓ A09 Executive Decision Log and the Decisions area (REQ-PB-081, REQ-PB-064, REQ-S10-012, REQ-PB-068) > REQ-PB-064, REQ-PB-081: an open T16 decision due yesterday (Asia/Riyadh) makes the Decisions area Red and is listed; once its Outcome is recorded it is closed and no longer counts  548ms
+   ✓ A09 committee workflow: quorum, immutable minutes, actions in My Work (REQ-S10-011) > no decision below quorum; published minutes are immutable; actions appear in the owners' My Work  2257ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: a KPI actual for period 2026-10 keeps observation period 2026-10, the Asia/Riyadh business date of its entry and a UTC event timestamp  827ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: changing the organization's default currency affects only new records (an existing transformation keeps SAR)  426ms
+ ✓ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests) 62534ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  8442ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action  1437ms
+   ✓ REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event  20525ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: after 1 + retryLimit attempts ONE rule-execution entry is in the queue; the task is not doubled  1664ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused  4041ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > both queue entries of one failed execution (the job entry and the rule-execution entry) are retried: one task, one reminder  3332ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried  1643ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder  2956ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task  5398ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > every human-only action type is refused with 422 automation_rule.human_only_action and nothing is saved  694ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run  1076ms
+ ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests) 10828ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a benefit with two owners is rejected  470ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the totals  687ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: two initiative records of one shared benefit in a shared-benefit group count once  313ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated  551ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted  567ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  1024ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-001: a forecast amount never appears in the validated total; a rejected measurement is kept and shown rejected  542ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-018: upside scenario values never appear in the realized (measured) or validated totals  478ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-010: a SAR value on a CX benefit without an approved valuation method is rejected  429ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-011: a 1 million SAR initiative cost reduces transformation net value by exactly 1 million  568ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves  1804ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-015, REQ-PB-013: a validation lacking a measurement period is rejected; non-Finance 403; the audit records the validator  872ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  712ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S12-014: submitting benefit evidence creates exactly one Finance queue item; replaying the event creates none  827ms
+ ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests) 11839ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG  970ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: lower-is-better 80 against 90 is favourable (green); higher-is-better 80 against 90 is adverse (not green)  982ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a KPI with no actual for the period renders Unknown (labelled), never 0 or green  385ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-006: a roll-up with a scope that reported before but is missing now is Unknown, not a sum with 0  724ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-005: a zero denominator is 'Not computable' (no division error, not 0)  318ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: a percentage KPI moving 0.10 -> 0.12 is labelled in percentage points (pp), rates stored as fractions  517ms
+   ✓ A05: stale/missing values, zero denominator, percentage points and periods > REQ-S07-004: the cumulative (YTD) value of a flow KPI equals the sum of its period flows  522ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages  985ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  1383ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference  1081ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-007: budget/actual/forecast use decimal SAR; forecast slip vs approved date is shown in working days  469ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-009: the fixture network's critical path is the expected chain; with a missing duration no path is claimed  887ms
+ ✓ |integration| tests/qa/integration/a11-bau-sustain.test.ts (17 tests) 13879ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-020: G1-G5 were passed natively; the transformation is in Realize and G6 is still Draft  945ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: a performance area with a linked KPI and an ownerless control, created through the API  584ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-005: a handover missing data access is refused (422 naming data access); nothing changes  640ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  340ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-005: acceptance by anyone other than the receiving owner is 403; nothing is accepted  302ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-083: the receiving owner's acceptance creates the BAU review task for the BAU owner exactly once  324ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084: G6 lists the continuous-improvement backlog; an item makes the criterion complete  483ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: benefits evidence through an approved transition decision (BO proposes, the Sponsor decides)  656ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084, REQ-S04-008: the G6 submission snapshot lists the backlog item; G6 is approved; no DG record is named  444ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-008, REQ-S12-016: a failed control check creates exactly one owned recovery action with a follow-up date  336ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-008: a lesson published here is searchable by a user of another transformation  302ms
+ ✓ |integration| tests/qa/integration/a11-adoption.test.ts (12 tests) 5297ms
+   ✓ A11 REQ-PB-071: the seven leading adoption indicators are available by name > REQ-PB-071: GET /adoption-indicator-templates lists exactly the seven playbook indicators by name, in order  729ms
+   ✓ A11 REQ-PB-073, REQ-S11-001, REQ-S16-020: champions, stakeholder groups, interventions in My Work > REQ-S16-020: every entity of the people and adoption group is created and read through the API with authorization  406ms
+ ✓ |integration| tests/qa/integration/a16-health-check.test.ts (13 tests) 11438ms
+   ✓ REQ-PB-091: all 25 questions render verbatim (B0150) > a new assessment lists 25 unanswered questions and its answers carry response, evidence, owner and action  1479ms
+   ✓ REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > 24 answers: completion 24/25, complete false, score null and band null (API band=null)  1017ms
+   ✓ REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted  1260ms
+   ✓ REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim  3538ms
+   ✓ REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > concurrency: an answer without If-Match is 428, with a stale version 409; each accepted write is audited  742ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > a draft that adds N/A and keeps the four source bands is refused at preview (422 health_scheme.own_bands_required) and publishing it is rejected  539ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > with its own bands (the source bands removed) it publishes; v1 and every existing assessment keep their scheme, score and band  625ms
+ ✓ |integration| tests/qa/integration/a11-value-closure.test.ts (11 tests) 9239ms
+   ✓ A11 REQ-S03-003, REQ-PB-009: delivery Complete changes neither adoption, validated value nor closure > REQ-S03-003: with an approved transition decision for the pending benefit the closure is accepted  625ms
+   ✓ A11 REQ-S11-006: all initiatives complete with value pending: 'Delivery complete - value validation pending' > REQ-S11-006: the transformation shows delivery complete and value pending as separate states, never successful  597ms
+   ✓ A11 REQ-S08-002: completing the enabling deliverable marks the benefit 'enabled - not yet measured' > REQ-S08-002: realization state enabled_not_yet_measured; validated value stays zero (nothing validated)  1407ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: at Measure, Sustain without a BAU owner and control cadence is 422; with both it succeeds  910ms
+   ✓ A11 REQ-S11-007: after the transition decision the forecast stays forecast; monitoring goes to the residual owner > REQ-S11-007: forecast unchanged and not sustained/validated; the residual owner gets the monitoring task  1063ms
+   ✓ A11 REQ-PB-085: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it > REQ-PB-085: two below-plan validated values and a redelivery leave exactly one open case for the benefit  906ms
+   ✓ A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated  1504ms
+ ✓ |integration| tests/qa/integration/a04-kpi-propagation.test.ts (8 tests) 34967ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-013, REQ-S12-006: the worker makes exactly one calculation run and one pending benefit value with one queue item  6982ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S03-009, REQ-S13-003: the overview's Outcomes area shows the new actual once and its drill-down lists the source record  383ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-012: with review configured, a submitted actual is not used until accepted; after acceptance one run  3557ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-001: a user scoped to transformation X sees nothing of Y on any of the six dashboards  593ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values  9648ms
+ ✓ |integration| tests/qa/integration/a16-launch-plan.test.ts (11 tests) 4006ms
+   ✓ REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > +7 days moves every unstarted task by 7 days and leaves completed (and started) tasks unchanged; the open Day-90 test moves too  311ms
+   ✓ REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > starter 1 generates the plan from launchPlan.startDate once; replaying the event duplicates nothing  459ms
+ ✓ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests) 99942ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  1126ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  3100ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  17716ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  50066ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  1681ms
+ ✓ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests) 47658ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the same Idempotency-Key returns the existing job (200) and queues nothing more  345ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  27291ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1418ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  4360ms
+   ✓ A13 health check (no job exists, ADR-0048 §8): the retried submit leaves one submitted assessment, one score, three actions > the same submit replayed, and two concurrent submits, change nothing after the first  2222ms
+ ✓ |integration| tests/qa/integration/a15-snapshots-and-packs.test.ts (15 tests) 27977ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (en) of the issued snapshot exported after the change shows the old target and the issue  1498ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (ar) of the issued snapshot exported after the change shows the old target and the issue  3172ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (en) prints the submitted update text and the workstream  2062ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (ar) prints the submitted update text and the workstream  3191ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > docx (en) prints the submitted update text and the workstream  795ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > docx (ar) prints the submitted update text and the workstream  486ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (en) prints the submitted update text and the workstream  447ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (ar) prints the submitted update text and the workstream  387ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the issued meeting pack remains the snapshot after a later change; the live view follows the change  6594ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the cut-off creates ONE draft agenda with the current open asks; its items are not published before review  473ms
+ ✓ |integration| tests/qa/integration/a13-starter-jobs.test.ts (4 tests) 20760ms
+   ✓ REQ-S12-004: one transformation -> one set of phase checklists and role tasks; a retry creates no duplicates; the 90-day tasks are dated from the start date > create with launchPlan.startDate, let the worker run, replay the event x3: nothing is added  2932ms
+   ✓ REQ-S12-004: one transformation -> one set of phase checklists and role tasks; a retry creates no duplicates; the 90-day tasks are dated from the start date > without the plan flag, no plan and no launch task are created  1305ms
+   ✓ REQ-S12-015: cut-off creates one draft agenda (pack); it is not published without review > the cut-off job creates ONE draft pack per meeting, again-runs add none; publishing waits for the chair's review  3479ms
+ ✓ |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts (8 tests) 13936ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > the 5-day slip of a predecessor whose needed-by date is breached records ONE critical slip of 5 days  2174ms
+   ✓ REQ-S12-012: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic (Rule B) > each distinct affected owner is notified ONCE (one dependency_slip work item and one reminder); the predecessor's owner is not  2383ms
+ ✓ |integration| tests/qa/integration/a13-starters-run.test.ts (11 tests) 31467ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter 1 (transformation created): one execution; one phase checklist and role tasks  678ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.reporting_period_open: each of its scheduled triggers (kpi.reporting_period_open) runs it once, succeeded  861ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.decision_sla: each of its scheduled triggers (governance.decision_sla_scan, approval.escalation_scan) runs it once, succeeded  1939ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.blocker_red: each of its scheduled triggers (governance.blocker_escalation_scan) runs it once, succeeded  952ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.meeting_cutoff: each of its scheduled triggers (governance.meeting_cutoff_scan) runs it once, succeeded  1117ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter.bau_handover_accepted: each of its scheduled triggers (sustainment.review_scan, sustainment.control_check_scan) runs it once, succeeded  1940ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starter 16 (a job fails): a job that exhausts its retries creates ONE visible operational exception and the starter runs once  2079ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starters 5, 6, 7 (gate evidence check, valid submission routing, gate approved): a native G1 submission and approval run each once  4070ms
+   ✓ REQ-S12-026: all automatic preparation and reminder rules run (each starter on its trigger) > starters 3 and 11 (accepted KPI actual, benefit evidence submitted): each runs once on its event, with its effect rows  4577ms
+ ✓ |integration| tests/qa/integration/a03-modular-entry.test.ts (12 tests) 13195ms
+   ✓ A03 REQ-PB-005, REQ-S03-005, REQ-S20-003: missing baseline and outcome links are flagged and block G3 > REQ-PB-005: with only the baseline supplied the refusal lists the outcome link alone  315ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a pending waiver does not count; an accepted one lets G3 through while both links stay flagged  1510ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver revoked after submission refuses the G3 approval (422 gate.modular_waiver_revoked); nothing is written  1505ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > a waiver expired by approval time refuses the G3 approval (422 gate.modular_waiver_expired); in force it is approved  1143ms
+   ✓ A03 D-110 / ADR-0021 W1-W7: an authorized waiver lets G3 through; a revoked or expired one refuses approval > an expired waiver at submission time does not let G3 through  959ms
+   ✓ A03: an End-to-End G3 is unaffected by the Modular precondition > End-to-End, G1-G2 approved, G3 criteria covered, no baseline and no outcome link: G3 submission is 201  3055ms
+ ✓ |integration| tests/qa/integration/a04-a05-a10-partials.test.ts (4 tests) 7119ms
+   ✓ QA-A partial: REQ-S07-007 'with all tasks complete' > REQ-S07-007: with every Diagnose phase task and every action complete, an actual below the red threshold is Red  2646ms
+   ✓ QA-A partial: REQ-S13-003 'the validated benefit total drills to its benefit records' > REQ-S13-003: the Value area's validated headline drills to exactly the validated benefit records, whose decimal sum equals the headline  2213ms
+   ✓ QA-A partial: REQ-S08-015 exact refusal codes > REQ-S08-015: a Finance decision without the measurement-period item is 422 finance_validation.content_incomplete; with the item not accepted it is 422 finance_validation.items_not_accepted; nothing is validated  652ms
+   ✓ QA-A partial: REQ-PB-075 'T14 persists all 10 columns' > REQ-PB-075: the T14 register row carries ID, Benefit, Type, Baseline, Target, Value (SAR), Realized, Owner, Evidence and Status  1216ms
+ ✓ |integration| tests/qa/integration/a15-outputs-every-definition.test.ts (5 tests) 107584ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout  99116ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > an export is the requester's own: another user of the organization gets 404 on the job and the file  1110ms
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each of the ten outputs generates from the demo transformation
+A15 demo: not generated: {}
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic
+A15 demo: snapshot content keys: ["asOf","period","subject","sections","synthetic","methodology","approvalState","schemaVersion","definitionCode","transformation"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label
+A15 demo: files with any illustrative wording: ["charter/pdf/en","charter/pdf/ar","charter/docx/en","charter/docx/ar","diagnostic/pdf/en","diagnostic/pdf/ar","diagnostic/docx/en","diagnostic/docx/ar","diagnostic/xlsx/en","diagnostic/xlsx/ar","tom/pdf/en","tom/pdf/ar","tom/docx/en","tom/docx/ar","tom/xlsx/en","tom/xlsx/ar","business_cases/pdf/en","business_cases/pdf/ar","business_cases/docx/en","business_cases/docx/ar","business_cases/xlsx/en","business_cases/xlsx/ar","roadmap/pdf/en","roadmap/pdf/ar","roadmap/pptx/en","roadmap/pptx/ar","roadmap/xlsx/en","roadmap/xlsx/ar","registers/xlsx/en","registers/xlsx/ar","registers/csv/en","registers/csv/ar","registers/pdf/en","registers/pdf/ar","executive_dashboard/pdf/en","executive_dashboard/pdf/ar","executive_dashboard/pptx/en","executive_dashboard/pptx/ar","executive_dashboard/xlsx/en","executive_dashboard/xlsx/ar","gate_pack/pdf/en","gate_pack/pdf/ar","gate_pack/pptx/en","gate_pack/pptx/ar","gate_pack/docx/en","gate_pack/docx/ar","handover/pdf/en","handover/pdf/ar","handover/docx/en","handover/docx/ar","meeting_minutes/pdf/en","meeting_minutes/pdf/ar","meeting_minutes/docx/en","meeting_minutes/docx/ar"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register
+A15 demo XLSX formulas: {"business_cases":["SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D6)","SUM(D4:D4)"],"registers":["SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)"]}
+
+ ✓ |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts (7 tests) 175424ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each output's PDF (en and ar) contains the demo transformation's ID  59259ms
+   ✓ REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label  82600ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register  639ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a benefit value that is not validated is labelled provisional in the PDF (en and ar)  11916ms
+ ✓ |integration| tests/qa/integration/a12-cross-scope.test.ts (14 tests) 5696ms
+ ✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 15604ms
+   ✓ A13 transformation.created handler: processed twice = one ledger effect > first run is 'done', the duplicate is 'duplicate'; one ledger row and one audit event  402ms
+   ✓ A13 transformation.created handler: processed twice = one ledger effect > concurrent deliveries of the same message produce exactly one effect  490ms
+   ✓ A13 running worker: a duplicate delivery is a no-op > consumes the event once; an extra job with the same message completes as 'duplicate'  2946ms
+ ✓ |integration| tests/qa/integration/a02-a08-drafts-before-g2-scale-after-g5.test.ts (1 test) 10103ms
+   ✓ REQ-S03-004 (A02, A08): a Design-phase draft saves before G2; scaling is refused before G5 and allowed after > G2 not approved -> Design drafts saved (201/200); G2-G4 passed; scale before G5 is 422 naming G5; G5 approved -> scale 201  9607ms
+stdout | tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > the dangerous texts and the plain risk were accepted by the API (the refusals, if any, are listed)
+A15 RAID texts: [["\"=HYPERLINK(\\\"http://exa",201,null],["\"+SUM(1,2) QA-A15 plus-p",201,null],["\"-2+3 QA-A15 minus-prefi",201,null],["\"@SUM(1,2) QA-A15 at-pre",201,null],["\"\\tQA-A15 tab-prefixed r",201,null],["\"\\rQA-A15 CR-prefixed ri",201,null],["\"QA-A15 synthetic risk, ",201,null],["\"QA-A15 synthetic issue:",201,null]]
+
+ ✓ |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts (7 tests) 5510ms
+   ✓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (en) lists every criterion of G1 by its en label  533ms
+   ✓ REQ-S13-005: a PPTX gate pack contains the gate's criteria > PPTX (ar) lists every criterion of G1 by its ar label  419ms
+ ✓ |integration| tests/qa/integration/a14-concurrency.test.ts (5 tests) 2447ms
+   ✓ A14 transformation PATCH > fresh If-Match succeeds and bumps version; stale If-Match is 409 with currentVersion; missing is 428  373ms
+   ✓ A14 transformation PATCH > two writers racing on the same version: exactly one 200, the rest 409, version bumped once  363ms
+ ✓ |integration| tests/qa/integration/a16-s16-021-entities.test.ts (6 tests) 3279ms
+ ✓ |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts (2 tests) 2064ms
+   ✓ REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > before the rename, the scorecard and the traceability view show the original name (the baseline)  369ms
+   ✓ REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row  621ms
+
+ Test Files  31 passed (31)
+      Tests  336 passed (336)
+   Start at  01:27:30
+   Duration  1195.50s (transform 12.91s, setup 0ms, collect 261.93s, tests 920.28s, environment 0ms, prepare 241ms)
+
+EXIT 0
+2026-10-19T01:47:34Z
+ 01:47:34 up  2:14,  0 user,  load average: 23.41, 23.51, 21.87

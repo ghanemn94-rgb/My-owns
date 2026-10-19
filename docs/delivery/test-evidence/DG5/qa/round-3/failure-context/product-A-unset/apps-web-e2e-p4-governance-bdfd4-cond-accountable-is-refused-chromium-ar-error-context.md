@@ -1,0 +1,669 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Lead
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "حول هذا المنتج" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "مسار التنقل" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "التحوّلات" [ref=e145] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e146]:
+                - text: /
+                - link "TR-0055" [ref=e147] [cursor=pointer]:
+                  - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049
+              - listitem [ref=e148]: /مصفوفة صلاحيات القرار (T11)
+          - generic [ref=e150]:
+            - heading "مصفوفة صلاحيات القرار (T11)" [level=1] [ref=e151]
+            - paragraph [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: TR-0055
+                - generic [ref=e155]: Synthetic P4 governance AR mveldoz9
+                - generic [ref=e156]:
+                  - img [ref=e157]
+                  - text: مسودة – لم تُقدَّم
+                - generic [ref=e159]: "المرحلة: التشخيص"
+        - navigation "مساحة عمل التحوّل" [ref=e160]:
+          - list [ref=e161]:
+            - listitem [ref=e162]:
+              - link "نظرة عامة" [ref=e163] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049
+            - listitem [ref=e164]:
+              - link "التشخيص" [ref=e165] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/diagnose
+            - listitem [ref=e166]:
+              - link "الميثاق" [ref=e167] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/charter
+            - listitem [ref=e168]:
+              - link "التحديد" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/define
+            - listitem [ref=e170]:
+              - link "التصميم" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/design
+            - listitem [ref=e172]:
+              - link "المحفظة" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/portfolio
+            - listitem [ref=e174]:
+              - link "ترتيب الأولويات" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/prioritization
+            - listitem [ref=e176]:
+              - link "خارطة الطريق" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/roadmap
+            - listitem [ref=e178]:
+              - link "الاعتماديات" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/dependencies
+            - listitem [ref=e180]:
+              - link "السعة" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/capacity
+            - listitem [ref=e182]:
+              - link "دراسات الجدوى" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/business-cases
+            - listitem [ref=e184]:
+              - link "معادلات المنفعة" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/benefit-formulas
+            - listitem [ref=e186]:
+              - link "القرارات" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/decisions
+            - listitem [ref=e188]:
+              - link "البوابات" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/gates
+            - listitem [ref=e190]:
+              - link "الجاهزية" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/readiness
+            - listitem [ref=e192]:
+              - link "الإعفاءات" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/dispensations
+            - listitem [ref=e194]:
+              - link "الأدلة" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/evidence
+            - listitem [ref=e196]:
+              - link "الفريق" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/team
+            - listitem [ref=e198]:
+              - link "إسناد الأدوار" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/role-mappings
+            - listitem [ref=e200]:
+              - link "صلاحيات القرار" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/decision-rights
+            - listitem [ref=e202]:
+              - link "مصفوفة المسؤوليات" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/raci
+            - listitem [ref=e204]:
+              - link "جاهزية التحويل والتنفيذ" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/transform-readiness
+            - listitem [ref=e206]:
+              - link "سجل الموافقات" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/approval-decisions
+            - listitem [ref=e208]:
+              - link "مؤشرات الأداء" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/kpis
+            - listitem [ref=e210]:
+              - link "سجل المنافع (T14)" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/benefits
+            - listitem [ref=e212]:
+              - link "سجل المخاطر (T15)" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/raid
+            - listitem [ref=e214]:
+              - link "الإجراءات" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/actions
+            - listitem [ref=e216]:
+              - link "الإجراءات التصحيحية" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/corrective-actions
+            - listitem [ref=e218]:
+              - link "المنتديات" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/forums
+            - listitem [ref=e220]:
+              - link "الاجتماعات" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/meetings
+            - listitem [ref=e222]:
+              - link "القرارات التنفيذية (T16)" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/executive-decisions
+            - listitem [ref=e224]:
+              - link "التبنّي" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/adoption
+            - listitem [ref=e226]:
+              - link "العمليات الاعتيادية ومجالات الأداء" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/bau
+            - listitem [ref=e228]:
+              - link "قائمة التحسين المستمر" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/improvement
+            - listitem [ref=e230]:
+              - link "الدروس المستفادة" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/lessons
+            - listitem [ref=e232]:
+              - link "لوحة المؤشرات (T10)" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/dashboard
+            - listitem [ref=e234]:
+              - link "الإغلاق" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/closure
+            - listitem [ref=e236]:
+              - link "المراحل" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/phases
+            - listitem [ref=e238]:
+              - link "طلبات التغيير" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/change-requests
+            - listitem [ref=e240]:
+              - link "التتبّع" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/traceability
+            - listitem [ref=e242]:
+              - link "الدخول الجزئي المرن" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/modular-entry
+            - listitem [ref=e244]:
+              - link "مسارات العمل" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a151d5-5df8-7693-9442-0cf5a7eb1049/workstreams
+        - paragraph [ref=e246]: من يوصي ويعتمد ويُستشار ويُبلَّغ في كل قرار، ومستوى الخدمة المتفق عليه.
+        - region "موافقة الأعمال على المصفوفة مسودة" [ref=e247]:
+          - heading "موافقة الأعمال على المصفوفة مسودة" [level=2] [ref=e248]:
+            - text: موافقة الأعمال على المصفوفة
+            - generic [ref=e249]:
+              - img [ref=e250]
+              - text: مسودة
+          - paragraph [ref=e252]: لم تُعتمد بعد.
+          - button "إرسال لموافقة الأعمال" [ref=e254] [cursor=pointer]:
+            - img [ref=e255]
+            - text: إرسال لموافقة الأعمال
+        - region "صلاحيات القرار" [ref=e257]:
+          - generic [ref=e258]:
+            - heading "صلاحيات القرار" [level=2] [ref=e259]
+            - generic [ref=e261]:
+              - button "طلب موافقة أعمال" [ref=e262] [cursor=pointer]:
+                - img [ref=e263]
+                - text: طلب موافقة أعمال
+              - button "إضافة صلاحية قرار" [ref=e265] [cursor=pointer]:
+                - img [ref=e266]
+                - text: إضافة صلاحية قرار
+          - generic [ref=e268]: الصفوف الأربعة الأولى من دليل التحوّل (B0099). تعديلها يغيّر هذا التحوّل فقط، لا القالب ولا أي تحوّل آخر.
+          - paragraph [ref=e269]:
+            - img [ref=e270]
+            - text: تُعرض تسميات الأعمدة يوصي، يعتمد، يُستشار، يُبلَّغ، مستوى الخدمة المتفق عليه للقرار (SLA) بنصّها الإنجليزي المصدر كما وردت في دليل التحوّل (B0099)؛ الترجمة العربية لهذه التسميات مؤقتة ولم تتوفر بعد.
+          - paragraph [ref=e272]:
+            - generic [ref=e273]:
+              - img [ref=e274]
+              - text: امتداد مخصص (الدليل، الإصدار 1.0)
+            - generic [ref=e276]:
+              - img [ref=e277]
+              - generic [ref=e279]: "السؤال الإرشادي:"
+              - text: كيف سننفذ؟
+            - generic [ref=e280]:
+              - text: "المصدر:"
+              - link "B0098" [ref=e282] [cursor=pointer]:
+                - /url: /playbook/reader/B0098
+              - generic [ref=e283]:
+                - text: ","
+                - link "B0099" [ref=e284] [cursor=pointer]:
+                  - /url: /playbook/reader/B0099
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - generic [ref=e288]: بحث
+                - searchbox "بحث" [ref=e289]
+              - button "الأعمدة" [ref=e291] [cursor=pointer]:
+                - img [ref=e292]
+                - text: الأعمدة
+            - region "صلاحيات القرار (جدول قابل للتمرير)" [ref=e294]:
+              - table "صلاحيات القرار" [ref=e295]:
+                - caption [ref=e296]: صلاحيات القرار
+                - rowgroup [ref=e297]:
+                  - row "القرار مرتّب تصاعديًا يوصي يعتمد يُستشار يُبلَّغ مستوى الخدمة المتفق عليه للقرار (SLA) سلسلة التصعيد الحالة غير مرتّب أدوات النموذج وحقول الامتداد الإجراءات" [ref=e298]:
+                    - columnheader "القرار مرتّب تصاعديًا" [ref=e299]:
+                      - button "القرار مرتّب تصاعديًا" [ref=e300] [cursor=pointer]:
+                        - text: القرار
+                        - img [ref=e301]
+                        - generic [ref=e303]: مرتّب تصاعديًا
+                    - columnheader "يوصي" [ref=e304]
+                    - columnheader "يعتمد" [ref=e305]
+                    - columnheader "يُستشار" [ref=e306]
+                    - columnheader "يُبلَّغ" [ref=e307]
+                    - columnheader "مستوى الخدمة المتفق عليه للقرار (SLA)" [ref=e308]
+                    - columnheader "سلسلة التصعيد" [ref=e309]
+                    - columnheader "الحالة غير مرتّب" [ref=e310]:
+                      - button "الحالة غير مرتّب" [ref=e311] [cursor=pointer]:
+                        - text: الحالة
+                        - img [ref=e312]
+                        - generic [ref=e314]: غير مرتّب
+                    - columnheader "أدوات النموذج وحقول الامتداد" [ref=e315]
+                    - columnheader "الإجراءات" [ref=e316]
+                - rowgroup [ref=e317]:
+                  - 'row "تغيير نطاق الأعمال من قالب الدليل Transformation Lead قائد التحول TL Sponsor الراعي SP Business owners / Finance ملاك الأعمال BUSINESS_OWNERS المالية FIN Workstreams مسارات العمل WORKSTREAMS 5 working days أيام عمل · أيام العمل: 5 الراعي SP نشطة أدوات النموذج : تغيير نطاق الأعمال تاريخ الاستحقاق : تغيير نطاق الأعمال تعديل : تغيير نطاق الأعمال" [ref=e318]':
+                    - rowheader "تغيير نطاق الأعمال من قالب الدليل" [ref=e319]:
+                      - generic [ref=e320]:
+                        - text: تغيير نطاق الأعمال
+                        - generic [ref=e321]: من قالب الدليل
+                    - cell "Transformation Lead قائد التحول TL" [ref=e322]:
+                      - generic [ref=e323]:
+                        - generic [ref=e324]: Transformation Lead
+                        - generic [ref=e326]:
+                          - text: قائد التحول
+                          - generic [ref=e327]: TL
+                    - cell "Sponsor الراعي SP" [ref=e328]:
+                      - generic [ref=e329]:
+                        - generic [ref=e330]: Sponsor
+                        - generic [ref=e332]:
+                          - text: الراعي
+                          - generic [ref=e333]: SP
+                    - cell "Business owners / Finance ملاك الأعمال BUSINESS_OWNERS المالية FIN" [ref=e334]:
+                      - generic [ref=e335]:
+                        - generic [ref=e336]: Business owners / Finance
+                        - generic [ref=e337]:
+                          - generic [ref=e338]:
+                            - text: ملاك الأعمال
+                            - generic [ref=e339]: BUSINESS_OWNERS
+                          - generic [ref=e340]:
+                            - text: المالية
+                            - generic [ref=e341]: FIN
+                    - cell "Workstreams مسارات العمل WORKSTREAMS" [ref=e342]:
+                      - generic [ref=e343]:
+                        - generic [ref=e344]: Workstreams
+                        - generic [ref=e346]:
+                          - text: مسارات العمل
+                          - generic [ref=e347]: WORKSTREAMS
+                    - 'cell "5 working days أيام عمل · أيام العمل: 5" [ref=e348]':
+                      - generic [ref=e349]:
+                        - generic [ref=e350]: 5 working days
+                        - generic [ref=e351]: "أيام عمل · أيام العمل: 5"
+                    - cell "الراعي SP" [ref=e352]:
+                      - generic [ref=e354]:
+                        - text: الراعي
+                        - generic [ref=e355]: SP
+                    - cell "نشطة" [ref=e356]
+                    - 'cell "أدوات النموذج : تغيير نطاق الأعمال" [ref=e357]':
+                      - 'button "أدوات النموذج : تغيير نطاق الأعمال" [ref=e359] [cursor=pointer]':
+                        - img [ref=e360]
+                        - text: أدوات النموذج
+                        - generic [ref=e362]: ": تغيير نطاق الأعمال"
+                    - 'cell "تاريخ الاستحقاق : تغيير نطاق الأعمال تعديل : تغيير نطاق الأعمال" [ref=e363]':
+                      - generic [ref=e364]:
+                        - 'button "تاريخ الاستحقاق : تغيير نطاق الأعمال" [ref=e365] [cursor=pointer]':
+                          - img [ref=e366]
+                          - text: تاريخ الاستحقاق
+                          - generic [ref=e368]: ": تغيير نطاق الأعمال"
+                        - 'button "تعديل : تغيير نطاق الأعمال" [ref=e369] [cursor=pointer]':
+                          - img [ref=e370]
+                          - text: تعديل
+                          - generic [ref=e372]: ": تغيير نطاق الأعمال"
+                  - 'row "إعادة تخصيص التمويل من قالب الدليل Transformation Lead + Finance قائد التحول TL المالية FIN SteerCo اللجنة التوجيهية STEERCO Initiative owners مالكو المبادرات INITIATIVE_OWNERS PMO مكتب إدارة المشاريع PMO Next SteerCo / urgent route اجتماع لجنة التوجيه التالي أو المسار العاجل اللجنة التوجيهية STEERCO الراعي SP نشطة أدوات النموذج : إعادة تخصيص التمويل تاريخ الاستحقاق : إعادة تخصيص التمويل تعديل : إعادة تخصيص التمويل" [ref=e373]':
+                    - rowheader "إعادة تخصيص التمويل من قالب الدليل" [ref=e374]:
+                      - generic [ref=e375]:
+                        - text: إعادة تخصيص التمويل
+                        - generic [ref=e376]: من قالب الدليل
+                    - cell "Transformation Lead + Finance قائد التحول TL المالية FIN" [ref=e377]:
+                      - generic [ref=e378]:
+                        - generic [ref=e379]: Transformation Lead + Finance
+                        - generic [ref=e380]:
+                          - generic [ref=e381]:
+                            - text: قائد التحول
+                            - generic [ref=e382]: TL
+                          - generic [ref=e383]:
+                            - text: المالية
+                            - generic [ref=e384]: FIN
+                    - cell "SteerCo اللجنة التوجيهية STEERCO" [ref=e385]:
+                      - generic [ref=e386]:
+                        - generic [ref=e387]: SteerCo
+                        - generic [ref=e389]:
+                          - text: اللجنة التوجيهية
+                          - generic [ref=e390]: STEERCO
+                    - cell "Initiative owners مالكو المبادرات INITIATIVE_OWNERS" [ref=e391]:
+                      - generic [ref=e392]:
+                        - generic [ref=e393]: Initiative owners
+                        - generic [ref=e395]:
+                          - text: مالكو المبادرات
+                          - generic [ref=e396]: INITIATIVE_OWNERS
+                    - cell "PMO مكتب إدارة المشاريع PMO" [ref=e397]:
+                      - generic [ref=e398]:
+                        - generic [ref=e399]: PMO
+                        - generic [ref=e401]:
+                          - text: مكتب إدارة المشاريع
+                          - generic [ref=e402]: PMO
+                    - cell "Next SteerCo / urgent route اجتماع لجنة التوجيه التالي أو المسار العاجل" [ref=e403]:
+                      - generic [ref=e404]:
+                        - generic [ref=e405]: Next SteerCo / urgent route
+                        - generic [ref=e406]: اجتماع لجنة التوجيه التالي أو المسار العاجل
+                    - cell "اللجنة التوجيهية STEERCO الراعي SP" [ref=e407]:
+                      - generic [ref=e408]:
+                        - generic [ref=e409]:
+                          - text: اللجنة التوجيهية
+                          - generic [ref=e410]: STEERCO
+                        - generic [ref=e411]:
+                          - text: الراعي
+                          - generic [ref=e412]: SP
+                    - cell "نشطة" [ref=e413]
+                    - 'cell "أدوات النموذج : إعادة تخصيص التمويل" [ref=e414]':
+                      - 'button "أدوات النموذج : إعادة تخصيص التمويل" [ref=e416] [cursor=pointer]':
+                        - img [ref=e417]
+                        - text: أدوات النموذج
+                        - generic [ref=e419]: ": إعادة تخصيص التمويل"
+                    - 'cell "تاريخ الاستحقاق : إعادة تخصيص التمويل تعديل : إعادة تخصيص التمويل" [ref=e420]':
+                      - generic [ref=e421]:
+                        - 'button "تاريخ الاستحقاق : إعادة تخصيص التمويل" [ref=e422] [cursor=pointer]':
+                          - img [ref=e423]
+                          - text: تاريخ الاستحقاق
+                          - generic [ref=e425]: ": إعادة تخصيص التمويل"
+                        - 'button "تعديل : إعادة تخصيص التمويل" [ref=e426] [cursor=pointer]':
+                          - img [ref=e427]
+                          - text: تعديل
+                          - generic [ref=e429]: ": إعادة تخصيص التمويل"
+                  - 'row "تصميم الحالة المستهدفة من قالب الدليل Design owner مالك التصميم DESIGN_OWNER Business owner مالك الأعمال BO Tech / Ops / CX / Finance التقنية TECH العمليات OPS تجربة العملاء CX المالية FIN Transformation Office مكتب التحول TO 10 working days أيام عمل · أيام العمل: 10 مالك الأعمال BO الراعي SP نشطة أدوات النموذج : تصميم الحالة المستهدفة تاريخ الاستحقاق : تصميم الحالة المستهدفة تعديل : تصميم الحالة المستهدفة" [ref=e430]':
+                    - rowheader "تصميم الحالة المستهدفة من قالب الدليل" [ref=e431]:
+                      - generic [ref=e432]:
+                        - text: تصميم الحالة المستهدفة
+                        - generic [ref=e433]: من قالب الدليل
+                    - cell "Design owner مالك التصميم DESIGN_OWNER" [ref=e434]:
+                      - generic [ref=e435]:
+                        - generic [ref=e436]: Design owner
+                        - generic [ref=e438]:
+                          - text: مالك التصميم
+                          - generic [ref=e439]: DESIGN_OWNER
+                    - cell "Business owner مالك الأعمال BO" [ref=e440]:
+                      - generic [ref=e441]:
+                        - generic [ref=e442]: Business owner
+                        - generic [ref=e444]:
+                          - text: مالك الأعمال
+                          - generic [ref=e445]: BO
+                    - cell "Tech / Ops / CX / Finance التقنية TECH العمليات OPS تجربة العملاء CX المالية FIN" [ref=e446]:
+                      - generic [ref=e447]:
+                        - generic [ref=e448]: Tech / Ops / CX / Finance
+                        - generic [ref=e449]:
+                          - generic [ref=e450]:
+                            - text: التقنية
+                            - generic [ref=e451]: TECH
+                          - generic [ref=e452]:
+                            - text: العمليات
+                            - generic [ref=e453]: OPS
+                          - generic [ref=e454]:
+                            - text: تجربة العملاء
+                            - generic [ref=e455]: CX
+                          - generic [ref=e456]:
+                            - text: المالية
+                            - generic [ref=e457]: FIN
+                    - cell "Transformation Office مكتب التحول TO" [ref=e458]:
+                      - generic [ref=e459]:
+                        - generic [ref=e460]: Transformation Office
+                        - generic [ref=e462]:
+                          - text: مكتب التحول
+                          - generic [ref=e463]: TO
+                    - 'cell "10 working days أيام عمل · أيام العمل: 10" [ref=e464]':
+                      - generic [ref=e465]:
+                        - generic [ref=e466]: 10 working days
+                        - generic [ref=e467]: "أيام عمل · أيام العمل: 10"
+                    - cell "مالك الأعمال BO الراعي SP" [ref=e468]:
+                      - generic [ref=e469]:
+                        - generic [ref=e470]:
+                          - text: مالك الأعمال
+                          - generic [ref=e471]: BO
+                        - generic [ref=e472]:
+                          - text: الراعي
+                          - generic [ref=e473]: SP
+                    - cell "نشطة" [ref=e474]
+                    - 'cell "أدوات النموذج : تصميم الحالة المستهدفة" [ref=e475]':
+                      - 'button "أدوات النموذج : تصميم الحالة المستهدفة" [ref=e477] [cursor=pointer]':
+                        - img [ref=e478]
+                        - text: أدوات النموذج
+                        - generic [ref=e480]: ": تصميم الحالة المستهدفة"
+                    - 'cell "تاريخ الاستحقاق : تصميم الحالة المستهدفة تعديل : تصميم الحالة المستهدفة" [ref=e481]':
+                      - generic [ref=e482]:
+                        - 'button "تاريخ الاستحقاق : تصميم الحالة المستهدفة" [ref=e483] [cursor=pointer]':
+                          - img [ref=e484]
+                          - text: تاريخ الاستحقاق
+                          - generic [ref=e486]: ": تصميم الحالة المستهدفة"
+                        - 'button "تعديل : تصميم الحالة المستهدفة" [ref=e487] [cursor=pointer]':
+                          - img [ref=e488]
+                          - text: تعديل
+                          - generic [ref=e490]: ": تصميم الحالة المستهدفة"
+                  - 'row "الإطلاق / التوسّع من قالب الدليل Initiative owner مالك المبادرة INITIATIVE_OWNER Business owner مالك الأعمال BO Risk / Tech / CX المخاطر RISK التقنية TECH تجربة العملاء CX SteerCo اللجنة التوجيهية STEERCO Per release plan وفق خطة الإصدار مالك الأعمال BO الراعي SP نشطة أدوات النموذج : الإطلاق / التوسّع تاريخ الاستحقاق : الإطلاق / التوسّع تعديل : الإطلاق / التوسّع" [ref=e491]':
+                    - rowheader "الإطلاق / التوسّع من قالب الدليل" [ref=e492]:
+                      - generic [ref=e493]:
+                        - text: الإطلاق / التوسّع
+                        - generic [ref=e494]: من قالب الدليل
+                    - cell "Initiative owner مالك المبادرة INITIATIVE_OWNER" [ref=e495]:
+                      - generic [ref=e496]:
+                        - generic [ref=e497]: Initiative owner
+                        - generic [ref=e499]:
+                          - text: مالك المبادرة
+                          - generic [ref=e500]: INITIATIVE_OWNER
+                    - cell "Business owner مالك الأعمال BO" [ref=e501]:
+                      - generic [ref=e502]:
+                        - generic [ref=e503]: Business owner
+                        - generic [ref=e505]:
+                          - text: مالك الأعمال
+                          - generic [ref=e506]: BO
+                    - cell "Risk / Tech / CX المخاطر RISK التقنية TECH تجربة العملاء CX" [ref=e507]:
+                      - generic [ref=e508]:
+                        - generic [ref=e509]: Risk / Tech / CX
+                        - generic [ref=e510]:
+                          - generic [ref=e511]:
+                            - text: المخاطر
+                            - generic [ref=e512]: RISK
+                          - generic [ref=e513]:
+                            - text: التقنية
+                            - generic [ref=e514]: TECH
+                          - generic [ref=e515]:
+                            - text: تجربة العملاء
+                            - generic [ref=e516]: CX
+                    - cell "SteerCo اللجنة التوجيهية STEERCO" [ref=e517]:
+                      - generic [ref=e518]:
+                        - generic [ref=e519]: SteerCo
+                        - generic [ref=e521]:
+                          - text: اللجنة التوجيهية
+                          - generic [ref=e522]: STEERCO
+                    - cell "Per release plan وفق خطة الإصدار" [ref=e523]:
+                      - generic [ref=e524]:
+                        - generic [ref=e525]: Per release plan
+                        - generic [ref=e526]: وفق خطة الإصدار
+                    - cell "مالك الأعمال BO الراعي SP" [ref=e527]:
+                      - generic [ref=e528]:
+                        - generic [ref=e529]:
+                          - text: مالك الأعمال
+                          - generic [ref=e530]: BO
+                        - generic [ref=e531]:
+                          - text: الراعي
+                          - generic [ref=e532]: SP
+                    - cell "نشطة" [ref=e533]
+                    - 'cell "أدوات النموذج : الإطلاق / التوسّع" [ref=e534]':
+                      - 'button "أدوات النموذج : الإطلاق / التوسّع" [ref=e536] [cursor=pointer]':
+                        - img [ref=e537]
+                        - text: أدوات النموذج
+                        - generic [ref=e539]: ": الإطلاق / التوسّع"
+                    - 'cell "تاريخ الاستحقاق : الإطلاق / التوسّع تعديل : الإطلاق / التوسّع" [ref=e540]':
+                      - generic [ref=e541]:
+                        - 'button "تاريخ الاستحقاق : الإطلاق / التوسّع" [ref=e542] [cursor=pointer]':
+                          - img [ref=e543]
+                          - text: تاريخ الاستحقاق
+                          - generic [ref=e545]: ": الإطلاق / التوسّع"
+                        - 'button "تعديل : الإطلاق / التوسّع" [ref=e546] [cursor=pointer]':
+                          - img [ref=e547]
+                          - text: تعديل
+                          - generic [ref=e549]: ": الإطلاق / التوسّع"
+            - navigation "التنقل بين الصفحات" [ref=e550]:
+              - generic [ref=e551]: الصفحة 1 من 1 · 4 من 4 صفوف
+              - generic [ref=e552]:
+                - generic [ref=e553]: عدد الصفوف في الصفحة
+                - combobox "عدد الصفوف في الصفحة" [ref=e554]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "السابق" [disabled] [ref=e555]
+              - button "التالي" [disabled] [ref=e556]
+```

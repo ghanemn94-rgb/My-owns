@@ -1,0 +1,483 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Lead
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "حول هذا المنتج" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "مسار التنقل" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "التحوّلات" [ref=e145] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e146]:
+                - text: /
+                - link "TR-0043" [ref=e147] [cursor=pointer]:
+                  - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87
+              - listitem [ref=e148]: /معادلات المنفعة (T09)
+          - generic [ref=e150]:
+            - heading "معادلات المنفعة (T09)" [level=1] [ref=e151]
+            - paragraph [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: TR-0043
+                - generic [ref=e155]: Synthetic P3 seams AR check
+                - generic [ref=e156]:
+                  - img [ref=e157]
+                  - text: مسودة – لم تُقدَّم
+                - generic [ref=e159]: "المرحلة: التشخيص"
+        - navigation "مساحة عمل التحوّل" [ref=e160]:
+          - list [ref=e161]:
+            - listitem [ref=e162]:
+              - link "نظرة عامة" [ref=e163] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87
+            - listitem [ref=e164]:
+              - link "التشخيص" [ref=e165] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/diagnose
+            - listitem [ref=e166]:
+              - link "الميثاق" [ref=e167] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/charter
+            - listitem [ref=e168]:
+              - link "التحديد" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/define
+            - listitem [ref=e170]:
+              - link "التصميم" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/design
+            - listitem [ref=e172]:
+              - link "المحفظة" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/portfolio
+            - listitem [ref=e174]:
+              - link "ترتيب الأولويات" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/prioritization
+            - listitem [ref=e176]:
+              - link "خارطة الطريق" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/roadmap
+            - listitem [ref=e178]:
+              - link "الاعتماديات" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/dependencies
+            - listitem [ref=e180]:
+              - link "السعة" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/capacity
+            - listitem [ref=e182]:
+              - link "دراسات الجدوى" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/business-cases
+            - listitem [ref=e184]:
+              - link "معادلات المنفعة" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/benefit-formulas
+            - listitem [ref=e186]:
+              - link "القرارات" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/decisions
+            - listitem [ref=e188]:
+              - link "البوابات" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/gates
+            - listitem [ref=e190]:
+              - link "الجاهزية" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/readiness
+            - listitem [ref=e192]:
+              - link "الإعفاءات" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/dispensations
+            - listitem [ref=e194]:
+              - link "الأدلة" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/evidence
+            - listitem [ref=e196]:
+              - link "الفريق" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/team
+            - listitem [ref=e198]:
+              - link "إسناد الأدوار" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/role-mappings
+            - listitem [ref=e200]:
+              - link "صلاحيات القرار" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/decision-rights
+            - listitem [ref=e202]:
+              - link "مصفوفة المسؤوليات" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/raci
+            - listitem [ref=e204]:
+              - link "جاهزية التحويل والتنفيذ" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/transform-readiness
+            - listitem [ref=e206]:
+              - link "سجل الموافقات" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/approval-decisions
+            - listitem [ref=e208]:
+              - link "مؤشرات الأداء" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/kpis
+            - listitem [ref=e210]:
+              - link "سجل المنافع (T14)" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/benefits
+            - listitem [ref=e212]:
+              - link "سجل المخاطر (T15)" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/raid
+            - listitem [ref=e214]:
+              - link "الإجراءات" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/actions
+            - listitem [ref=e216]:
+              - link "الإجراءات التصحيحية" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/corrective-actions
+            - listitem [ref=e218]:
+              - link "المنتديات" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/forums
+            - listitem [ref=e220]:
+              - link "الاجتماعات" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/meetings
+            - listitem [ref=e222]:
+              - link "القرارات التنفيذية (T16)" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/executive-decisions
+            - listitem [ref=e224]:
+              - link "التبنّي" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/adoption
+            - listitem [ref=e226]:
+              - link "العمليات الاعتيادية ومجالات الأداء" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/bau
+            - listitem [ref=e228]:
+              - link "قائمة التحسين المستمر" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/improvement
+            - listitem [ref=e230]:
+              - link "الدروس المستفادة" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/lessons
+            - listitem [ref=e232]:
+              - link "لوحة المؤشرات (T10)" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/dashboard
+            - listitem [ref=e234]:
+              - link "الإغلاق" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/closure
+            - listitem [ref=e236]:
+              - link "المراحل" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/phases
+            - listitem [ref=e238]:
+              - link "طلبات التغيير" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/change-requests
+            - listitem [ref=e240]:
+              - link "التتبّع" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/traceability
+            - listitem [ref=e242]:
+              - link "الدخول الجزئي المرن" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/modular-entry
+            - listitem [ref=e244]:
+              - link "مسارات العمل" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a151c8-e553-73c3-ab77-b1c635394b87/workstreams
+        - paragraph [ref=e246]: "سجل T09: المنفعة، ومحرّك خط الأساس، وافتراض التغيير، والمعادلة، ومنحنى تصاعد المنفعة، ومستوى الثقة. تستخدم المعادلات لغة تعبير صغيرة وآمنة؛ كل قيمة عدد عشري دقيق، وتُحفظ النسبة ككسر (12٪ تساوي 0.12)."
+        - region "سجل معادلات المنفعة T09" [ref=e247]:
+          - generic [ref=e248]:
+            - heading "سجل معادلات المنفعة T09" [level=2] [ref=e249]
+            - button "معادلة منفعة جديدة" [ref=e251] [cursor=pointer]:
+              - img [ref=e252]
+              - text: معادلة منفعة جديدة
+          - generic [ref=e254]: يحتفظ كل صف بمعادلته في إصدارات غير قابلة للتعديل. تتحقق الإدارة المالية من كل إصدار؛ ويبدأ الإصدار الجديد غير متحقق منه.
+          - paragraph [ref=e255]:
+            - generic [ref=e256]:
+              - img [ref=e257]
+              - text: امتداد مخصص (الدليل، الإصدار 1.0)
+            - generic [ref=e259]:
+              - img [ref=e260]
+              - generic [ref=e262]: "السؤال الإرشادي:"
+              - text: كيف سنثبت القيمة؟
+            - generic [ref=e263]:
+              - text: "المصدر:"
+              - link "B0086" [ref=e265] [cursor=pointer]:
+                - /url: /playbook/reader/B0086
+              - generic [ref=e266]:
+                - text: ","
+                - link "B0087" [ref=e267] [cursor=pointer]:
+                  - /url: /playbook/reader/B0087
+          - generic [ref=e268]:
+            - generic [ref=e269]:
+              - generic [ref=e270]:
+                - generic [ref=e271]: بحث
+                - searchbox "بحث" [ref=e272]
+              - button "الأعمدة" [ref=e274] [cursor=pointer]:
+                - img [ref=e275]
+                - text: الأعمدة
+              - generic [ref=e277]:
+                - checkbox "عرض المعادلات المؤرشفة" [ref=e278]
+                - text: عرض المعادلات المؤرشفة
+            - generic [ref=e279]:
+              - img [ref=e280]
+              - generic [ref=e282]:
+                - paragraph [ref=e283]: لا توجد معادلة منفعة بعد
+                - paragraph [ref=e284]: أضف معادلة، أو ابدأ بأحد المثالين التوضيحيين من المصدر أدناه.
+        - region "أمثلة المصدر (B0087)" [ref=e285]:
+          - heading "أمثلة المصدر (B0087)" [level=2] [ref=e287]
+          - generic [ref=e288]: المثالان المحسوبان في الدليل، بقيم اصطناعية. هما للتوضيح وليسا أرقامًا لموبايلي.
+          - generic [ref=e289]:
+            - article "زيادة الإيرادات حساب توضيحي بقيم اصطناعية" [ref=e290]:
+              - heading "زيادة الإيرادات حساب توضيحي بقيم اصطناعية" [level=3] [ref=e291]:
+                - text: زيادة الإيرادات
+                - generic [ref=e292]:
+                  - img [ref=e293]
+                  - text: حساب توضيحي بقيم اصطناعية
+              - generic [ref=e295]:
+                - generic [ref=e296]:
+                  - term [ref=e297]: المنفعة
+                  - definition [ref=e298]: زيادة الإيرادات
+                - generic [ref=e299]:
+                  - term [ref=e300]: محرّك خط الأساس
+                  - definition [ref=e301]: العملاء × معدل الارتباط × متوسط الإيراد لكل مستخدم
+                - generic [ref=e302]:
+                  - term [ref=e303]: افتراض التغيير
+                  - definition [ref=e304]: الارتباط +X نقطة مئوية
+                - generic [ref=e305]:
+                  - term [ref=e306]: المعادلة
+                  - definition [ref=e307]: Δ الارتباط × العملاء × متوسط الإيراد لكل مستخدم
+                - generic [ref=e308]:
+                  - term [ref=e309]: منحنى تصاعد المنفعة
+                  - definition [ref=e310]: Q1-Q4
+                - generic [ref=e311]:
+                  - term [ref=e312]: مستوى الثقة
+                  - definition [ref=e313]:
+                    - generic [ref=e314]:
+                      - img [ref=e315]
+                      - text: متوسط (M)
+              - paragraph [ref=e317]:
+                - text: "المعادلة:"
+                - code [ref=e318]: (target_attach_rate - baseline_attach_rate) * eligible_customers * arpu
+              - heading "المتغيرات (قيم اصطناعية)" [level=4] [ref=e319]
+              - list [ref=e320]:
+                - listitem [ref=e321]:
+                  - code [ref=e322]: baseline_attach_rate
+                  - text: "(نسبة (مئوية) · بلا فترة): 10٪"
+                - listitem [ref=e323]:
+                  - code [ref=e324]: target_attach_rate
+                  - text: "(نسبة (مئوية) · بلا فترة): 12٪"
+                - listitem [ref=e325]:
+                  - code [ref=e326]: eligible_customers
+                  - text: "(عدد · customers · سنويًا): 100,000 customers لكل سنة"
+                - listitem [ref=e327]:
+                  - code [ref=e328]: arpu
+                  - text: "(مبلغ نقدي (SAR) · سنويًا): 50.00 SAR لكل سنة"
+              - paragraph [ref=e329]:
+                - strong [ref=e330]: "المعاينة:"
+                - text: 100,000.00 SAR لكل سنة
+              - paragraph [ref=e331]: "المصدر: B0087"
+              - 'button "استخدام هذا المثال في السجل : زيادة الإيرادات" [ref=e332] [cursor=pointer]':
+                - img [ref=e333]
+                - text: استخدام هذا المثال في السجل
+                - generic [ref=e335]: ": زيادة الإيرادات"
+            - article "خفض التكاليف حساب توضيحي بقيم اصطناعية" [ref=e336]:
+              - heading "خفض التكاليف حساب توضيحي بقيم اصطناعية" [level=3] [ref=e337]:
+                - text: خفض التكاليف
+                - generic [ref=e338]:
+                  - img [ref=e339]
+                  - text: حساب توضيحي بقيم اصطناعية
+              - generic [ref=e341]:
+                - generic [ref=e342]:
+                  - term [ref=e343]: المنفعة
+                  - definition [ref=e344]: خفض التكاليف
+                - generic [ref=e345]:
+                  - term [ref=e346]: محرّك خط الأساس
+                  - definition [ref=e347]: الحجم × تكلفة الوحدة
+                - generic [ref=e348]:
+                  - term [ref=e349]: افتراض التغيير
+                  - definition [ref=e350]: تكلفة الوحدة -X%
+                - generic [ref=e351]:
+                  - term [ref=e352]: المعادلة
+                  - definition [ref=e353]: الحجم × Δ تكلفة الوحدة
+                - generic [ref=e354]:
+                  - term [ref=e355]: منحنى تصاعد المنفعة
+                  - definition [ref=e356]: Q2-Q3
+                - generic [ref=e357]:
+                  - term [ref=e358]: مستوى الثقة
+                  - definition [ref=e359]:
+                    - generic [ref=e360]:
+                      - img [ref=e361]
+                      - text: مرتفع (H)
+              - paragraph [ref=e363]:
+                - text: "المعادلة:"
+                - code [ref=e364]: eligible_volume * (baseline_unit_cost - target_unit_cost)
+              - heading "المتغيرات (قيم اصطناعية)" [level=4] [ref=e365]
+              - list [ref=e366]:
+                - listitem [ref=e367]:
+                  - code [ref=e368]: eligible_volume
+                  - text: "(عدد · transactions · سنويًا): 200,000 transactions لكل سنة"
+                - listitem [ref=e369]:
+                  - code [ref=e370]: baseline_unit_cost
+                  - text: "(مبلغ نقدي (SAR) · بلا فترة): 12.50 SAR"
+                - listitem [ref=e371]:
+                  - code [ref=e372]: target_unit_cost
+                  - text: "(مبلغ نقدي (SAR) · بلا فترة): 10.00 SAR"
+              - paragraph [ref=e373]:
+                - strong [ref=e374]: "المعاينة:"
+                - text: 500,000.00 SAR لكل سنة
+              - paragraph [ref=e375]: "المصدر: B0087"
+              - 'button "استخدام هذا المثال في السجل : خفض التكاليف" [ref=e376] [cursor=pointer]':
+                - img [ref=e377]
+                - text: استخدام هذا المثال في السجل
+                - generic [ref=e379]: ": خفض التكاليف"
+```

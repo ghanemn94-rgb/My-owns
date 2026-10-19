@@ -1,0 +1,1122 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Finance partner ar
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "حول هذا المنتج" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "مسار التنقل" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "التحوّلات" [ref=e145] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e146]:
+                - text: /
+                - link "TR-0052" [ref=e147] [cursor=pointer]:
+                  - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19
+              - listitem [ref=e148]: /بطاقة المبادرة (T05)
+          - generic [ref=e150]:
+            - heading "بطاقة المبادرة (T05)" [level=1] [ref=e151]
+            - paragraph [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: TR-0052
+                - generic [ref=e155]: Synthetic P4 execution AR mvel8twa
+                - generic [ref=e156]:
+                  - img [ref=e157]
+                  - text: مسودة – لم تُقدَّم
+                - generic [ref=e159]: "المرحلة: التشخيص"
+        - navigation "مساحة عمل التحوّل" [ref=e160]:
+          - list [ref=e161]:
+            - listitem [ref=e162]:
+              - link "نظرة عامة" [ref=e163] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19
+            - listitem [ref=e164]:
+              - link "التشخيص" [ref=e165] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/diagnose
+            - listitem [ref=e166]:
+              - link "الميثاق" [ref=e167] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/charter
+            - listitem [ref=e168]:
+              - link "التحديد" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/define
+            - listitem [ref=e170]:
+              - link "التصميم" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/design
+            - listitem [ref=e172]:
+              - link "المحفظة" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/portfolio
+            - listitem [ref=e174]:
+              - link "ترتيب الأولويات" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/prioritization
+            - listitem [ref=e176]:
+              - link "خارطة الطريق" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/roadmap
+            - listitem [ref=e178]:
+              - link "الاعتماديات" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/dependencies
+            - listitem [ref=e180]:
+              - link "السعة" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/capacity
+            - listitem [ref=e182]:
+              - link "دراسات الجدوى" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/business-cases
+            - listitem [ref=e184]:
+              - link "معادلات المنفعة" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/benefit-formulas
+            - listitem [ref=e186]:
+              - link "القرارات" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/decisions
+            - listitem [ref=e188]:
+              - link "البوابات" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/gates
+            - listitem [ref=e190]:
+              - link "الجاهزية" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/readiness
+            - listitem [ref=e192]:
+              - link "الإعفاءات" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/dispensations
+            - listitem [ref=e194]:
+              - link "الأدلة" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/evidence
+            - listitem [ref=e196]:
+              - link "الفريق" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/team
+            - listitem [ref=e198]:
+              - link "إسناد الأدوار" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/role-mappings
+            - listitem [ref=e200]:
+              - link "صلاحيات القرار" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/decision-rights
+            - listitem [ref=e202]:
+              - link "مصفوفة المسؤوليات" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/raci
+            - listitem [ref=e204]:
+              - link "جاهزية التحويل والتنفيذ" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/transform-readiness
+            - listitem [ref=e206]:
+              - link "سجل الموافقات" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/approval-decisions
+            - listitem [ref=e208]:
+              - link "مؤشرات الأداء" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/kpis
+            - listitem [ref=e210]:
+              - link "سجل المنافع (T14)" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/benefits
+            - listitem [ref=e212]:
+              - link "سجل المخاطر (T15)" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/raid
+            - listitem [ref=e214]:
+              - link "الإجراءات" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/actions
+            - listitem [ref=e216]:
+              - link "الإجراءات التصحيحية" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/corrective-actions
+            - listitem [ref=e218]:
+              - link "المنتديات" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/forums
+            - listitem [ref=e220]:
+              - link "الاجتماعات" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/meetings
+            - listitem [ref=e222]:
+              - link "القرارات التنفيذية (T16)" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/executive-decisions
+            - listitem [ref=e224]:
+              - link "التبنّي" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/adoption
+            - listitem [ref=e226]:
+              - link "العمليات الاعتيادية ومجالات الأداء" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/bau
+            - listitem [ref=e228]:
+              - link "قائمة التحسين المستمر" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/improvement
+            - listitem [ref=e230]:
+              - link "الدروس المستفادة" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/lessons
+            - listitem [ref=e232]:
+              - link "لوحة المؤشرات (T10)" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/dashboard
+            - listitem [ref=e234]:
+              - link "الإغلاق" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/closure
+            - listitem [ref=e236]:
+              - link "المراحل" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/phases
+            - listitem [ref=e238]:
+              - link "طلبات التغيير" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/change-requests
+            - listitem [ref=e240]:
+              - link "التتبّع" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/traceability
+            - listitem [ref=e242]:
+              - link "الدخول الجزئي المرن" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/modular-entry
+            - listitem [ref=e244]:
+              - link "مسارات العمل" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/workstreams
+        - note [ref=e246]:
+          - img [ref=e247]
+          - text: "عرض للاطلاع فقط: إسناداتك لا تسمح بإجراء تغييرات هنا. ويتحقق الخادم من كل تغيير."
+        - generic [ref=e249]:
+          - region "INI-02 Synthetic execution B ar" [ref=e250]:
+            - generic [ref=e251]:
+              - heading "INI-02 Synthetic execution B ar" [level=2] [ref=e252]
+              - link "العودة إلى المحفظة" [ref=e253] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/portfolio
+            - generic [ref=e254]:
+              - generic [ref=e255]:
+                - term [ref=e256]: الحالة
+                - definition [ref=e257]:
+                  - generic [ref=e258]:
+                    - img [ref=e259]
+                    - text: مسودة - لم تُقدَّم
+              - generic [ref=e261]:
+                - term [ref=e262]: الاختيار
+                - definition [ref=e263]: غير مختارة
+              - generic [ref=e264]:
+                - term [ref=e265]: التمويل
+                - definition [ref=e266]: —
+            - note [ref=e267]:
+              - img [ref=e268]
+              - text: مسودة - لم تُقدَّم. لا تدخل المحفظة إلا بعد تقديمها للترتيب حسب الأولوية.
+            - note [ref=e270]:
+              - paragraph [ref=e271]:
+                - strong [ref=e272]: تنبيهات الجاهزية.
+                - text: لا تمنع الحفظ؛ ولا تمنع إلا عند G4.
+              - list [ref=e273]:
+                - listitem [ref=e274]:
+                  - img [ref=e275]
+                  - text: "المخرجات الرئيسية: يُستحسن أن تذكر البطاقة من 3 إلى 7."
+                - listitem [ref=e277]:
+                  - img [ref=e278]
+                  - text: "لا يوجد ربط بفجوة: اربط فجوة من T03 أو نتيجة تشخيص."
+                - listitem [ref=e280]:
+                  - img [ref=e281]
+                  - text: لا يوجد مالك تنفيذي.
+          - navigation "في هذه الصفحة" [ref=e283]:
+            - list [ref=e284]:
+              - listitem [ref=e285]:
+                - 'link "بطاقة المبادرة (T05): الحقول الأربعة عشر" [ref=e286] [cursor=pointer]':
+                  - /url: "#t05"
+              - listitem [ref=e287]:
+                - 'link "المشكلة / الفجوة المعالَجة: الفجوات والنتائج المرتبطة" [ref=e288] [cursor=pointer]':
+                  - /url: "#gap-links"
+              - listitem [ref=e289]:
+                - link "الإسهام في النتائج/مؤشرات الأداء" [ref=e290] [cursor=pointer]:
+                  - /url: "#contributions"
+              - listitem [ref=e291]:
+                - link "القرارات المطلوبة" [ref=e292] [cursor=pointer]:
+                  - /url: "#decision-links"
+              - listitem [ref=e293]:
+                - link "قرارات التمويل" [ref=e294] [cursor=pointer]:
+                  - /url: "#funding"
+              - listitem [ref=e295]:
+                - link "المخرجات الرئيسية" [ref=e296] [cursor=pointer]:
+                  - /url: "#deliverables"
+              - listitem [ref=e297]:
+                - link "المعالم" [ref=e298] [cursor=pointer]:
+                  - /url: "#milestones"
+              - listitem [ref=e299]:
+                - link "سجل الاختيار" [ref=e300] [cursor=pointer]:
+                  - /url: "#selections"
+              - listitem [ref=e301]:
+                - link "بنود الميزانية" [ref=e302] [cursor=pointer]:
+                  - /url: "#budget-lines"
+              - listitem [ref=e303]:
+                - link "التنفيذ" [ref=e304] [cursor=pointer]:
+                  - /url: "#execution"
+              - listitem [ref=e305]:
+                - link "شبكة الجدول الزمني والمسار الحرج" [ref=e306] [cursor=pointer]:
+                  - /url: "#schedule-network"
+          - 'region "بطاقة المبادرة (T05): الحقول الأربعة عشر" [ref=e307]':
+            - 'heading "بطاقة المبادرة (T05): الحقول الأربعة عشر" [level=2] [ref=e309]'
+            - generic [ref=e310]: حقول النموذج المصدر بترتيبه. الحقول 4 و7 و8 و11 و13 و14 سجلات مرتبطة.
+            - paragraph [ref=e311]:
+              - generic [ref=e312]:
+                - img [ref=e313]
+                - text: امتداد مخصص (الدليل، الإصدار 1.0)
+              - generic [ref=e315]:
+                - img [ref=e316]
+                - generic [ref=e318]: "السؤال الإرشادي:"
+                - text: كيف سننفذ؟
+              - generic [ref=e319]:
+                - text: "المصدر:"
+                - link "B0071" [ref=e321] [cursor=pointer]:
+                  - /url: /playbook/reader/B0071
+                - generic [ref=e322]:
+                  - text: ","
+                  - link "B0072" [ref=e323] [cursor=pointer]:
+                    - /url: /playbook/reader/B0072
+            - generic [ref=e324]:
+              - generic [ref=e325]:
+                - term [ref=e326]:
+                  - generic [ref=e327]: "1."
+                  - text: اسم المبادرة
+                - definition [ref=e328]: Synthetic execution B ar
+              - generic [ref=e329]:
+                - term [ref=e330]:
+                  - generic [ref=e331]: "2."
+                  - text: المالك التنفيذي
+                - definition [ref=e332]: غير محدد
+              - generic [ref=e333]:
+                - term [ref=e334]:
+                  - generic [ref=e335]: "3."
+                  - text: قائد مسار العمل
+                - definition [ref=e336]: غير محدد
+              - generic [ref=e337]:
+                - term [ref=e338]:
+                  - generic [ref=e339]: "4."
+                  - text: المشكلة / الفجوة المعالَجة
+                - definition [ref=e340]:
+                  - text: لا يوجد
+                  - link "الفجوات والنتائج المرتبطة" [ref=e341] [cursor=pointer]:
+                    - /url: "#gap-links"
+              - generic [ref=e342]:
+                - term [ref=e343]:
+                  - generic [ref=e344]: "5."
+                  - text: الهدف
+                - definition [ref=e345]: لا يوجد
+              - generic [ref=e346]:
+                - term [ref=e347]:
+                  - generic [ref=e348]: "6."
+                  - text: النطاق (ضمنه/خارجه)
+                - definition [ref=e349]:
+                  - generic [ref=e350]:
+                    - strong [ref=e351]: "ضمن النطاق:"
+                    - text: لا يوجد
+                  - generic [ref=e352]:
+                    - strong [ref=e353]: "خارج النطاق:"
+                    - text: لا يوجد
+              - generic [ref=e354]:
+                - term [ref=e355]:
+                  - generic [ref=e356]: "7."
+                  - text: المخرجات الرئيسية
+                - definition [ref=e357]:
+                  - link "عرض المخرجات الرئيسية" [ref=e358] [cursor=pointer]:
+                    - /url: "#deliverables"
+              - generic [ref=e359]:
+                - term [ref=e360]:
+                  - generic [ref=e361]: "8."
+                  - text: الإسهام في النتائج/مؤشرات الأداء
+                - definition [ref=e362]:
+                  - link "عرض الإسهامات في النتائج ومؤشرات الأداء" [ref=e363] [cursor=pointer]:
+                    - /url: "#contributions"
+              - generic [ref=e364]:
+                - term [ref=e365]:
+                  - generic [ref=e366]: "9."
+                  - text: المنفعة المالية
+                - definition [ref=e367]: لا يوجد
+              - generic [ref=e368]:
+                - term [ref=e369]:
+                  - generic [ref=e370]: "10."
+                  - text: منفعة العملاء
+                - definition [ref=e371]: لا يوجد
+              - generic [ref=e372]:
+                - term [ref=e373]:
+                  - generic [ref=e374]: "11."
+                  - text: الاعتماديات
+                - definition [ref=e375]:
+                  - link "فتح خريطة الاعتماديات (T08)" [ref=e376] [cursor=pointer]:
+                    - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/dependencies
+              - generic [ref=e377]:
+                - term [ref=e378]:
+                  - generic [ref=e379]: "12."
+                  - text: المخاطر
+                - definition [ref=e380]: لا يوجد
+              - generic [ref=e381]:
+                - term [ref=e382]:
+                  - generic [ref=e383]: "13."
+                  - text: المعالم
+                - definition [ref=e384]:
+                  - link "عرض المعالم" [ref=e385] [cursor=pointer]:
+                    - /url: "#milestones"
+              - generic [ref=e386]:
+                - term [ref=e387]:
+                  - generic [ref=e388]: "14."
+                  - text: القرارات المطلوبة
+                - definition [ref=e389]:
+                  - link "عرض القرارات المطلوبة" [ref=e390] [cursor=pointer]:
+                    - /url: "#decision-links"
+            - generic [ref=e391]:
+              - generic [ref=e392]:
+                - term [ref=e393]: الموجة
+                - definition [ref=e394]: بلا موجة
+              - generic [ref=e395]:
+                - term [ref=e396]: البدء المخطط
+                - definition [ref=e397]: لا يوجد
+              - generic [ref=e398]:
+                - term [ref=e399]: الانتهاء المخطط
+                - definition [ref=e400]: لا يوجد
+            - 'button "أدوات النموذج : INI-02 Synthetic execution B ar" [ref=e402] [cursor=pointer]':
+              - img [ref=e403]
+              - text: أدوات النموذج
+              - generic [ref=e405]: ": INI-02 Synthetic execution B ar"
+          - 'region "المشكلة / الفجوة المعالَجة: الفجوات والنتائج المرتبطة" [ref=e406]':
+            - 'heading "المشكلة / الفجوة المعالَجة: الفجوات والنتائج المرتبطة" [level=2] [ref=e408]'
+            - generic [ref=e409]: "المبادرة وسيلة مرتبطة بفجوات T03 أو بنتائج التشخيص. وهي ليست دليلاً على نموذج التشغيل أبداً: محفظة المشاريع ليست نموذج التشغيل المستهدف."
+            - paragraph [ref=e410]: لا توجد فجوة أو نتيجة مرتبطة بعد.
+          - region "الإسهام في النتائج/مؤشرات الأداء" [ref=e411]:
+            - heading "الإسهام في النتائج/مؤشرات الأداء" [level=2] [ref=e413]
+            - generic [ref=e414]: يحدد كل إسهام نتيجة (مطلوبة) ومؤشر أداء لتلك النتيجة (اختياري). يتطلب التقديم للترتيب حسب الأولوية إسهاماً واحداً على الأقل مع مؤشر أداء.
+            - paragraph [ref=e415]: لا يوجد إسهام في النتائج بعد.
+          - region "القرارات المطلوبة" [ref=e416]:
+            - heading "القرارات المطلوبة" [level=2] [ref=e418]
+            - generic [ref=e419]: "تأتي القرارات من سجل القرارات الموحَّد: مالكها وتاريخ استحقاقها هما الخاصان بالقرار."
+            - paragraph [ref=e420]: لا يوجد قرار مرتبط بعد.
+          - region "قرارات التمويل" [ref=e421]:
+            - generic [ref=e422]:
+              - heading "قرارات التمويل" [level=2] [ref=e423]
+              - generic [ref=e425]:
+                - img [ref=e426]
+                - text: موافقة أعمال
+            - generic [ref=e428]: يُسجّل كل قرار تمويل شخصٌ يملك صلاحية التمويل. الاختيار والترتيب والتمويل سجلات منفصلة.
+            - paragraph [ref=e429]:
+              - generic "لا يقدّم الدليل نموذجًا لهذا السجل؛ فهو امتداد في المنصة (M0149)." [ref=e430]:
+                - img [ref=e431]
+                - text: امتداد
+              - text: لا يقدّم الدليل نموذجًا لهذا السجل؛ فهو امتداد في المنصة (M0149).
+            - paragraph [ref=e433]: لم يُسجَّل أي قرار تمويل بعد.
+          - region "المخرجات الرئيسية" [ref=e434]:
+            - generic [ref=e435]:
+              - heading "المخرجات الرئيسية" [level=2] [ref=e436]
+              - link "فتح خارطة الطريق" [ref=e438] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/roadmap
+            - generic [ref=e439]: يُستحسن أن تذكر البطاقة من 3 إلى 7 مخرجات رئيسية. يُبتّ في القبول على خارطة الطريق.
+            - paragraph [ref=e440]: "المخرجات النشطة: 0"
+            - note [ref=e441]:
+              - img [ref=e442]
+              - text: "المخرجات الرئيسية: يُستحسن أن تذكر البطاقة من 3 إلى 7. هذا تنبيه وليس مانعاً."
+          - region "المعالم" [ref=e444]:
+            - generic [ref=e445]:
+              - heading "المعالم" [level=2] [ref=e446]
+              - link "فتح خارطة الطريق" [ref=e448] [cursor=pointer]:
+                - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/roadmap
+            - generic [ref=e449]: تُعرض التواريخ المعتمدة (الأساسية) والتوقعات بشكل منفصل. يُعتمد التاريخ الأساسي على خارطة الطريق.
+            - list [ref=e450]:
+              - listitem [ref=e451]:
+                - text: Synthetic design sign-off ar
+                - generic [ref=e452]: "التاريخ المعتمد: 08‏/10‏/2026 · المتوقع: 15‏/10‏/2026"
+              - listitem [ref=e453]:
+                - text: Synthetic data migration ar
+                - generic [ref=e454]: "التاريخ المعتمد: 02‏/11‏/2026 · المتوقع: لا يوجد"
+          - region "سجل الاختيار" [ref=e455]:
+            - generic [ref=e456]:
+              - heading "سجل الاختيار" [level=2] [ref=e457]
+              - generic [ref=e459]:
+                - img [ref=e460]
+                - text: موافقة أعمال
+            - paragraph [ref=e462]: لا يوجد قرار اختيار بعد.
+          - generic [ref=e463]:
+            - region "بنود الميزانية" [ref=e464]:
+              - generic [ref=e465]:
+                - heading "بنود الميزانية" [level=2] [ref=e466]
+                - button "إضافة بند ميزانية" [active] [ref=e468] [cursor=pointer]:
+                  - img [ref=e469]
+                  - text: إضافة بند ميزانية
+              - generic [ref=e471]: الميزانية والفعلي والمتوقع لكل بند، بمبالغ عشرية بعملة البند نفسه. المبلغ الفارغ غير معروف، وليس 0 أبدًا. المجاميع لكل عملة ولا تُحوَّل بين العملات أبدًا.
+              - generic [ref=e472]:
+                - heading "المجاميع لكل عملة" [level=3] [ref=e473]
+                - region "المجاميع بعملة SAR" [ref=e474]:
+                  - table "المجاميع بعملة SAR" [ref=e475]:
+                    - caption [ref=e476]: المجاميع بعملة SAR
+                    - rowgroup [ref=e477]:
+                      - row "البند المجموع" [ref=e478]:
+                        - columnheader "البند" [ref=e479]
+                        - columnheader "المجموع" [ref=e480]
+                    - rowgroup [ref=e481]:
+                      - row "الميزانية 0.3 SAR" [ref=e482]:
+                        - rowheader "الميزانية" [ref=e483]
+                        - cell "0.3 SAR" [ref=e484]
+                      - 'row "الفعلي غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e485]':
+                        - rowheader "الفعلي" [ref=e486]
+                        - 'cell "غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e487]':
+                          - generic [ref=e488]:
+                            - generic [ref=e489]:
+                              - img [ref=e490]
+                              - text: غير معروف
+                            - generic [ref=e492]: "بنود بلا هذا المبلغ: 2"
+                            - generic [ref=e493]: لا يوجد بند بهذا المبلغ بعد
+                      - 'row "المتوقع غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e494]':
+                        - rowheader "المتوقع" [ref=e495]
+                        - 'cell "غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e496]':
+                          - generic [ref=e497]:
+                            - generic [ref=e498]:
+                              - img [ref=e499]
+                              - text: غير معروف
+                            - generic [ref=e501]: "بنود بلا هذا المبلغ: 2"
+                            - generic [ref=e502]: لا يوجد بند بهذا المبلغ بعد
+                      - 'row "المتوقع − الميزانية غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e503]':
+                        - rowheader "المتوقع − الميزانية" [ref=e504]
+                        - 'cell "غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e505]':
+                          - generic [ref=e506]:
+                            - generic [ref=e507]:
+                              - img [ref=e508]
+                              - text: غير معروف
+                            - generic [ref=e510]: "بنود بلا هذا المبلغ: 2"
+                            - generic [ref=e511]: لا يوجد بند بهذا المبلغ بعد
+                      - 'row "الفعلي − الميزانية غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e512]':
+                        - rowheader "الفعلي − الميزانية" [ref=e513]
+                        - 'cell "غير معروف بنود بلا هذا المبلغ: 2 لا يوجد بند بهذا المبلغ بعد" [ref=e514]':
+                          - generic [ref=e515]:
+                            - generic [ref=e516]:
+                              - img [ref=e517]
+                              - text: غير معروف
+                            - generic [ref=e519]: "بنود بلا هذا المبلغ: 2"
+                            - generic [ref=e520]: لا يوجد بند بهذا المبلغ بعد
+              - group "البنود المعروضة" [ref=e521]:
+                - generic [ref=e522]:
+                  - generic [ref=e523]: البنود المعروضة
+                  - combobox "البنود المعروضة" [ref=e524]:
+                    - option "البنود النشطة" [selected]
+                    - option "البنود المؤرشفة"
+              - generic [ref=e525]:
+                - generic [ref=e526]:
+                  - generic [ref=e527]:
+                    - generic [ref=e528]: بحث
+                    - searchbox "بحث" [ref=e529]
+                  - button "الأعمدة" [ref=e531] [cursor=pointer]:
+                    - img [ref=e532]
+                    - text: الأعمدة
+                - region "بنود ميزانية هذه المبادرة (جدول قابل للتمرير)" [ref=e534]:
+                  - table "بنود ميزانية هذه المبادرة" [ref=e535]:
+                    - caption [ref=e536]: بنود ميزانية هذه المبادرة
+                    - rowgroup [ref=e537]:
+                      - row "البند مرتّب تصاعديًا الشهر غير مرتّب العملة غير مرتّب الميزانية غير مرتّب الفعلي غير مرتّب المتوقع غير مرتّب المالك غير مرتّب الحالة غير مرتّب الإجراءات" [ref=e538]:
+                        - columnheader "البند مرتّب تصاعديًا" [ref=e539]:
+                          - button "البند مرتّب تصاعديًا" [ref=e540] [cursor=pointer]:
+                            - text: البند
+                            - img [ref=e541]
+                            - generic [ref=e543]: مرتّب تصاعديًا
+                        - columnheader "الشهر غير مرتّب" [ref=e544]:
+                          - button "الشهر غير مرتّب" [ref=e545] [cursor=pointer]:
+                            - text: الشهر
+                            - img [ref=e546]
+                            - generic [ref=e548]: غير مرتّب
+                        - columnheader "العملة غير مرتّب" [ref=e549]:
+                          - button "العملة غير مرتّب" [ref=e550] [cursor=pointer]:
+                            - text: العملة
+                            - img [ref=e551]
+                            - generic [ref=e553]: غير مرتّب
+                        - columnheader "الميزانية غير مرتّب" [ref=e554]:
+                          - button "الميزانية غير مرتّب" [ref=e555] [cursor=pointer]:
+                            - text: الميزانية
+                            - img [ref=e556]
+                            - generic [ref=e558]: غير مرتّب
+                        - columnheader "الفعلي غير مرتّب" [ref=e559]:
+                          - button "الفعلي غير مرتّب" [ref=e560] [cursor=pointer]:
+                            - text: الفعلي
+                            - img [ref=e561]
+                            - generic [ref=e563]: غير مرتّب
+                        - columnheader "المتوقع غير مرتّب" [ref=e564]:
+                          - button "المتوقع غير مرتّب" [ref=e565] [cursor=pointer]:
+                            - text: المتوقع
+                            - img [ref=e566]
+                            - generic [ref=e568]: غير مرتّب
+                        - columnheader "المالك غير مرتّب" [ref=e569]:
+                          - button "المالك غير مرتّب" [ref=e570] [cursor=pointer]:
+                            - text: المالك
+                            - img [ref=e571]
+                            - generic [ref=e573]: غير مرتّب
+                        - columnheader "الحالة غير مرتّب" [ref=e574]:
+                          - button "الحالة غير مرتّب" [ref=e575] [cursor=pointer]:
+                            - text: الحالة
+                            - img [ref=e576]
+                            - generic [ref=e578]: غير مرتّب
+                        - columnheader "الإجراءات" [ref=e579]
+                    - rowgroup [ref=e580]:
+                      - row "Synthetic cloud credits ar 2026-11 SAR 0.2 SAR غير معروف غير معروف Synthetic Finance partner ar (الإدارة المالية / مكتب القيمة) · أنت نشط إجراءات Synthetic cloud credits ar" [ref=e581]:
+                        - rowheader "Synthetic cloud credits ar" [ref=e582]
+                        - cell "2026-11" [ref=e583]
+                        - cell "SAR" [ref=e584]
+                        - cell "0.2 SAR" [ref=e585]:
+                          - generic [ref=e586]: 0.2 SAR
+                        - cell "غير معروف" [ref=e587]:
+                          - generic [ref=e589]:
+                            - img [ref=e590]
+                            - text: غير معروف
+                        - cell "غير معروف" [ref=e592]:
+                          - generic [ref=e594]:
+                            - img [ref=e595]
+                            - text: غير معروف
+                        - cell "Synthetic Finance partner ar (الإدارة المالية / مكتب القيمة) · أنت" [ref=e597]
+                        - cell "نشط" [ref=e598]:
+                          - generic [ref=e599]:
+                            - img [ref=e600]
+                            - text: نشط
+                        - cell "إجراءات Synthetic cloud credits ar" [ref=e602]:
+                          - group "إجراءات Synthetic cloud credits ar" [ref=e603]:
+                            - button "تعديل Synthetic cloud credits ar" [ref=e604] [cursor=pointer]:
+                              - text: تعديل
+                              - generic [ref=e605]: Synthetic cloud credits ar
+                            - button "أرشفة Synthetic cloud credits ar" [ref=e606] [cursor=pointer]:
+                              - text: أرشفة
+                              - generic [ref=e607]: Synthetic cloud credits ar
+                      - row "Synthetic licences ar المبادرة كاملة SAR 0.1 SAR غير معروف غير معروف Synthetic Finance partner ar (الإدارة المالية / مكتب القيمة) · أنت نشط إجراءات Synthetic licences ar" [ref=e608]:
+                        - rowheader "Synthetic licences ar" [ref=e609]
+                        - cell "المبادرة كاملة" [ref=e610]
+                        - cell "SAR" [ref=e611]
+                        - cell "0.1 SAR" [ref=e612]:
+                          - generic [ref=e613]: 0.1 SAR
+                        - cell "غير معروف" [ref=e614]:
+                          - generic [ref=e616]:
+                            - img [ref=e617]
+                            - text: غير معروف
+                        - cell "غير معروف" [ref=e619]:
+                          - generic [ref=e621]:
+                            - img [ref=e622]
+                            - text: غير معروف
+                        - cell "Synthetic Finance partner ar (الإدارة المالية / مكتب القيمة) · أنت" [ref=e624]
+                        - cell "نشط" [ref=e625]:
+                          - generic [ref=e626]:
+                            - img [ref=e627]
+                            - text: نشط
+                        - cell "إجراءات Synthetic licences ar" [ref=e629]:
+                          - group "إجراءات Synthetic licences ar" [ref=e630]:
+                            - button "تعديل Synthetic licences ar" [ref=e631] [cursor=pointer]:
+                              - text: تعديل
+                              - generic [ref=e632]: Synthetic licences ar
+                            - button "أرشفة Synthetic licences ar" [ref=e633] [cursor=pointer]:
+                              - text: أرشفة
+                              - generic [ref=e634]: Synthetic licences ar
+                - navigation "التنقل بين الصفحات" [ref=e635]:
+                  - generic [ref=e636]: الصفحة 1 من 1 · 2 من 2 صفوف
+                  - generic [ref=e637]:
+                    - generic [ref=e638]: عدد الصفوف في الصفحة
+                    - combobox "عدد الصفوف في الصفحة" [ref=e639]:
+                      - option "10" [selected]
+                      - option "25"
+                      - option "50"
+                      - option "100"
+                  - button "السابق" [disabled] [ref=e640]
+                  - button "التالي" [disabled] [ref=e641]
+            - region "التنفيذ" [ref=e642]:
+              - heading "التنفيذ" [level=2] [ref=e644]
+              - generic [ref=e645]: تواريخ المعالم المعتمدة والمتوقعة مع الانزلاق بأيام العمل وفق تقويم العمل للمؤسسة، وقبول المخرجات، والطاقة والطلب بالمكافئ الوظيفي، والاعتماديات والقرارات، مقروءة من سجلاتها.
+              - generic [ref=e646]:
+                - paragraph [ref=e647]:
+                  - strong [ref=e648]: "المسار الحرج:"
+                  - generic "لا يمكن حساب المسار الحرج بعد (راجع شبكة الجدول الزمني)." [ref=e649]:
+                    - img [ref=e650]
+                    - text: غير معروف
+                    - generic [ref=e652]: ": لا يمكن حساب المسار الحرج بعد (راجع شبكة الجدول الزمني)."
+                - heading "المعالم" [level=3] [ref=e653]
+                - generic [ref=e654]:
+                  - generic [ref=e655]:
+                    - generic [ref=e656]:
+                      - generic [ref=e657]: بحث
+                      - searchbox "بحث" [ref=e658]
+                    - button "الأعمدة" [ref=e660] [cursor=pointer]:
+                      - img [ref=e661]
+                      - text: الأعمدة
+                  - region "المعالم (جدول قابل للتمرير)" [ref=e663]:
+                    - table "المعالم" [ref=e664]:
+                      - caption [ref=e665]: المعالم
+                      - rowgroup [ref=e666]:
+                        - row "المَعلم غير مرتّب التاريخ المعتمد مرتّب تصاعديًا التاريخ المتوقع غير مرتّب الانزلاق (أيام عمل) غير مرتّب أيام تقويمية غير مرتّب الحالة غير مرتّب" [ref=e667]:
+                          - columnheader "المَعلم غير مرتّب" [ref=e668]:
+                            - button "المَعلم غير مرتّب" [ref=e669] [cursor=pointer]:
+                              - text: المَعلم
+                              - img [ref=e670]
+                              - generic [ref=e672]: غير مرتّب
+                          - columnheader "التاريخ المعتمد مرتّب تصاعديًا" [ref=e673]:
+                            - button "التاريخ المعتمد مرتّب تصاعديًا" [ref=e674] [cursor=pointer]:
+                              - text: التاريخ المعتمد
+                              - img [ref=e675]
+                              - generic [ref=e677]: مرتّب تصاعديًا
+                          - columnheader "التاريخ المتوقع غير مرتّب" [ref=e678]:
+                            - button "التاريخ المتوقع غير مرتّب" [ref=e679] [cursor=pointer]:
+                              - text: التاريخ المتوقع
+                              - img [ref=e680]
+                              - generic [ref=e682]: غير مرتّب
+                          - columnheader "الانزلاق (أيام عمل) غير مرتّب" [ref=e683]:
+                            - button "الانزلاق (أيام عمل) غير مرتّب" [ref=e684] [cursor=pointer]:
+                              - text: الانزلاق (أيام عمل)
+                              - img [ref=e685]
+                              - generic [ref=e687]: غير مرتّب
+                          - columnheader "أيام تقويمية غير مرتّب" [ref=e688]:
+                            - button "أيام تقويمية غير مرتّب" [ref=e689] [cursor=pointer]:
+                              - text: أيام تقويمية
+                              - img [ref=e690]
+                              - generic [ref=e692]: غير مرتّب
+                          - columnheader "الحالة غير مرتّب" [ref=e693]:
+                            - button "الحالة غير مرتّب" [ref=e694] [cursor=pointer]:
+                              - text: الحالة
+                              - img [ref=e695]
+                              - generic [ref=e697]: غير مرتّب
+                      - rowgroup [ref=e698]:
+                        - 'row "Synthetic design sign-off ar 08‏/10‏/2026 15‏/10‏/2026 غير معروف السبب: لم يُضبط تقويم عمل للمؤسسة أيام تقويمية: 7 مخطط" [ref=e699]':
+                          - rowheader "Synthetic design sign-off ar" [ref=e700]
+                          - cell "08‏/10‏/2026" [ref=e701]
+                          - cell "15‏/10‏/2026" [ref=e702]
+                          - 'cell "غير معروف السبب: لم يُضبط تقويم عمل للمؤسسة" [ref=e703]':
+                            - generic [ref=e704]:
+                              - generic [ref=e705]:
+                                - img [ref=e706]
+                                - text: غير معروف
+                              - generic [ref=e708]: "السبب: لم يُضبط تقويم عمل للمؤسسة"
+                          - 'cell "أيام تقويمية: 7" [ref=e709]'
+                          - cell "مخطط" [ref=e710]
+                        - 'row "Synthetic data migration ar 02‏/11‏/2026 غير معروف : لا يوجد تاريخ غير معروف السبب: لا يوجد تاريخ متوقع غير معروف مخطط" [ref=e711]':
+                          - rowheader "Synthetic data migration ar" [ref=e712]
+                          - cell "02‏/11‏/2026" [ref=e713]
+                          - 'cell "غير معروف : لا يوجد تاريخ" [ref=e714]':
+                            - generic "لا يوجد تاريخ" [ref=e715]:
+                              - img [ref=e716]
+                              - text: غير معروف
+                              - generic [ref=e718]: ": لا يوجد تاريخ"
+                          - 'cell "غير معروف السبب: لا يوجد تاريخ متوقع" [ref=e719]':
+                            - generic [ref=e720]:
+                              - generic [ref=e721]:
+                                - img [ref=e722]
+                                - text: غير معروف
+                              - generic [ref=e724]: "السبب: لا يوجد تاريخ متوقع"
+                          - cell "غير معروف" [ref=e725]:
+                            - generic [ref=e726]:
+                              - img [ref=e727]
+                              - text: غير معروف
+                          - cell "مخطط" [ref=e729]
+                  - navigation "التنقل بين الصفحات" [ref=e730]:
+                    - generic [ref=e731]: الصفحة 1 من 1 · 2 من 2 صفوف
+                    - generic [ref=e732]:
+                      - generic [ref=e733]: عدد الصفوف في الصفحة
+                      - combobox "عدد الصفوف في الصفحة" [ref=e734]:
+                        - option "10" [selected]
+                        - option "25"
+                        - option "50"
+                        - option "100"
+                    - button "السابق" [disabled] [ref=e735]
+                    - button "التالي" [disabled] [ref=e736]
+                - heading "المخرجات" [level=3] [ref=e737]
+                - generic [ref=e738]:
+                  - generic [ref=e739]:
+                    - generic [ref=e740]:
+                      - generic [ref=e741]: بحث
+                      - searchbox "بحث" [ref=e742]
+                    - button "الأعمدة" [ref=e744] [cursor=pointer]:
+                      - img [ref=e745]
+                      - text: الأعمدة
+                  - generic [ref=e747]:
+                    - img [ref=e748]
+                    - paragraph [ref=e751]: لا توجد مخرجات
+                - heading "الطاقة والطلب بالمكافئ الوظيفي" [level=3] [ref=e752]
+                - generic [ref=e753]:
+                  - generic [ref=e754]:
+                    - generic [ref=e755]:
+                      - generic [ref=e756]: بحث
+                      - searchbox "بحث" [ref=e757]
+                    - button "الأعمدة" [ref=e759] [cursor=pointer]:
+                      - img [ref=e760]
+                      - text: الأعمدة
+                  - generic [ref=e762]:
+                    - img [ref=e763]
+                    - paragraph [ref=e766]: لا يوجد طلب على الموارد
+                - heading "الاعتماديات" [level=3] [ref=e767]
+                - generic [ref=e768]:
+                  - generic [ref=e769]:
+                    - generic [ref=e770]:
+                      - generic [ref=e771]: بحث
+                      - searchbox "بحث" [ref=e772]
+                    - button "الأعمدة" [ref=e774] [cursor=pointer]:
+                      - img [ref=e775]
+                      - text: الأعمدة
+                  - region "الاعتماديات (جدول قابل للتمرير)" [ref=e777]:
+                    - table "الاعتماديات" [ref=e778]:
+                      - caption [ref=e779]: الاعتماديات
+                      - rowgroup [ref=e780]:
+                        - row "الاعتمادية غير مرتّب الاتجاه غير مرتّب الحالة غير مرتّب مطلوبة بحلول غير مرتّب الأثر غير مرتّب" [ref=e781]:
+                          - columnheader "الاعتمادية غير مرتّب" [ref=e782]:
+                            - button "الاعتمادية غير مرتّب" [ref=e783] [cursor=pointer]:
+                              - text: الاعتمادية
+                              - img [ref=e784]
+                              - generic [ref=e786]: غير مرتّب
+                          - columnheader "الاتجاه غير مرتّب" [ref=e787]:
+                            - button "الاتجاه غير مرتّب" [ref=e788] [cursor=pointer]:
+                              - text: الاتجاه
+                              - img [ref=e789]
+                              - generic [ref=e791]: غير مرتّب
+                          - columnheader "الحالة غير مرتّب" [ref=e792]:
+                            - button "الحالة غير مرتّب" [ref=e793] [cursor=pointer]:
+                              - text: الحالة
+                              - img [ref=e794]
+                              - generic [ref=e796]: غير مرتّب
+                          - columnheader "مطلوبة بحلول غير مرتّب" [ref=e797]:
+                            - button "مطلوبة بحلول غير مرتّب" [ref=e798] [cursor=pointer]:
+                              - text: مطلوبة بحلول
+                              - img [ref=e799]
+                              - generic [ref=e801]: غير مرتّب
+                          - columnheader "الأثر غير مرتّب" [ref=e802]:
+                            - button "الأثر غير مرتّب" [ref=e803] [cursor=pointer]:
+                              - text: الأثر
+                              - img [ref=e804]
+                              - generic [ref=e806]: غير مرتّب
+                      - rowgroup [ref=e807]:
+                        - 'row "DEP-01 تعتمد هذه المبادرة عليها مفتوح غير معروف : لا يوجد تاريخ غير معروف" [ref=e808]':
+                          - rowheader "DEP-01" [ref=e809]
+                          - cell "تعتمد هذه المبادرة عليها" [ref=e810]
+                          - cell "مفتوح" [ref=e811]
+                          - 'cell "غير معروف : لا يوجد تاريخ" [ref=e812]':
+                            - generic "لا يوجد تاريخ" [ref=e813]:
+                              - img [ref=e814]
+                              - text: غير معروف
+                              - generic [ref=e816]: ": لا يوجد تاريخ"
+                          - cell "غير معروف" [ref=e817]:
+                            - generic [ref=e818]:
+                              - img [ref=e819]
+                              - text: غير معروف
+                        - 'row "DEP-02 تعتمد مبادرة أخرى على هذه المبادرة مفتوح غير معروف : لا يوجد تاريخ غير معروف" [ref=e821]':
+                          - rowheader "DEP-02" [ref=e822]
+                          - cell "تعتمد مبادرة أخرى على هذه المبادرة" [ref=e823]
+                          - cell "مفتوح" [ref=e824]
+                          - 'cell "غير معروف : لا يوجد تاريخ" [ref=e825]':
+                            - generic "لا يوجد تاريخ" [ref=e826]:
+                              - img [ref=e827]
+                              - text: غير معروف
+                              - generic [ref=e829]: ": لا يوجد تاريخ"
+                          - cell "غير معروف" [ref=e830]:
+                            - generic [ref=e831]:
+                              - img [ref=e832]
+                              - text: غير معروف
+                  - navigation "التنقل بين الصفحات" [ref=e834]:
+                    - generic [ref=e835]: الصفحة 1 من 1 · 2 من 2 صفوف
+                    - generic [ref=e836]:
+                      - generic [ref=e837]: عدد الصفوف في الصفحة
+                      - combobox "عدد الصفوف في الصفحة" [ref=e838]:
+                        - option "10" [selected]
+                        - option "25"
+                        - option "50"
+                        - option "100"
+                    - button "السابق" [disabled] [ref=e839]
+                    - button "التالي" [disabled] [ref=e840]
+                - paragraph [ref=e841]:
+                  - link "فتح سجل الاعتماديات" [ref=e842] [cursor=pointer]:
+                    - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/dependencies
+                - heading "القرارات" [level=3] [ref=e843]
+                - generic [ref=e844]:
+                  - generic [ref=e845]:
+                    - generic [ref=e846]:
+                      - generic [ref=e847]: بحث
+                      - searchbox "بحث" [ref=e848]
+                    - button "الأعمدة" [ref=e850] [cursor=pointer]:
+                      - img [ref=e851]
+                      - text: الأعمدة
+                  - generic [ref=e853]:
+                    - img [ref=e854]
+                    - paragraph [ref=e857]: لا توجد قرارات مرتبطة
+            - region "شبكة الجدول الزمني والمسار الحرج" [ref=e858]:
+              - heading "شبكة الجدول الزمني والمسار الحرج" [level=2] [ref=e860]
+              - generic [ref=e861]: المبادرات غير الملغاة في هذا التحوّل مرتبطة باعتمادياتها على أساس الإنهاء قبل البدء، مع المدد المخططة بأيام العمل. يُحسب المسار الحرج بطريقة المسار الحرج (فائض كلي صفري)، ولا يُعلن إلا عندما يكون لكل مبادرة مدة.
+              - generic [ref=e862]:
+                - generic [ref=e863]:
+                  - heading "المدة المخططة لهذه المبادرة" [level=3] [ref=e864]
+                  - paragraph [ref=e865]: "المدة المخططة: 10 يوم عمل"
+                  - note [ref=e866]:
+                    - img [ref=e867]
+                    - text: يمكنك قراءة هذا القسم. يتطلب تغييره صلاحية لا تملكها هنا.
+                - note [ref=e869]:
+                  - paragraph [ref=e870]:
+                    - img [ref=e871]
+                    - strong [ref=e873]: لا يُعلن أي مسار حرج
+                  - paragraph [ref=e874]: بعض المبادرات بلا مدة مخططة. سجّل مدة لكل مبادرة مدرجة أدناه؛ وحتى ذلك الحين لا تُعلَّم أي مبادرة أو اعتمادية بأنها حرجة.
+                - heading "مبادرات بلا مدة مخططة" [level=3] [ref=e875]
+                - list [ref=e876]:
+                  - listitem [ref=e877]:
+                    - link "INI-03 Synthetic execution C ar" [ref=e878] [cursor=pointer]:
+                      - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/initiatives/01a151d1-ed2c-7454-913f-d03ab374a0d8
+                - heading "المبادرات في الشبكة" [level=3] [ref=e879]
+                - generic [ref=e880]:
+                  - generic [ref=e881]:
+                    - generic [ref=e882]:
+                      - generic [ref=e883]: بحث
+                      - searchbox "بحث" [ref=e884]
+                    - button "الأعمدة" [ref=e886] [cursor=pointer]:
+                      - img [ref=e887]
+                      - text: الأعمدة
+                  - region "المبادرات في الشبكة (جدول قابل للتمرير)" [ref=e889]:
+                    - table "المبادرات في الشبكة" [ref=e890]:
+                      - caption [ref=e891]: المبادرات في الشبكة
+                      - rowgroup [ref=e892]:
+                        - row "المبادرة مرتّب تصاعديًا المدة (أيام عمل) غير مرتّب" [ref=e893]:
+                          - columnheader "المبادرة مرتّب تصاعديًا" [ref=e894]:
+                            - button "المبادرة مرتّب تصاعديًا" [ref=e895] [cursor=pointer]:
+                              - text: المبادرة
+                              - img [ref=e896]
+                              - generic [ref=e898]: مرتّب تصاعديًا
+                          - columnheader "المدة (أيام عمل) غير مرتّب" [ref=e899]:
+                            - button "المدة (أيام عمل) غير مرتّب" [ref=e900] [cursor=pointer]:
+                              - text: المدة (أيام عمل)
+                              - img [ref=e901]
+                              - generic [ref=e903]: غير مرتّب
+                      - rowgroup [ref=e904]:
+                        - row "INI-01 Synthetic execution A ar 5" [ref=e905]:
+                          - rowheader "INI-01 Synthetic execution A ar" [ref=e906]:
+                            - link "INI-01 Synthetic execution A ar" [ref=e907] [cursor=pointer]:
+                              - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/initiatives/01a151d1-ebbc-75ff-aa03-36ca3efc9494
+                          - cell "5" [ref=e908]
+                        - row "INI-02 Synthetic execution B ar (هذه المبادرة) 10" [ref=e909]:
+                          - rowheader "INI-02 Synthetic execution B ar (هذه المبادرة)" [ref=e910]:
+                            - link "INI-02 Synthetic execution B ar" [ref=e911] [cursor=pointer]:
+                              - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/initiatives/01a151d1-ecc4-7474-bb8b-9d280742b34a
+                            - generic [ref=e912]: (هذه المبادرة)
+                          - cell "10" [ref=e913]
+                        - 'row "INI-03 Synthetic execution C ar غير معروف : لا توجد مدة" [ref=e914]':
+                          - rowheader "INI-03 Synthetic execution C ar" [ref=e915]:
+                            - link "INI-03 Synthetic execution C ar" [ref=e916] [cursor=pointer]:
+                              - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/initiatives/01a151d1-ed2c-7454-913f-d03ab374a0d8
+                          - 'cell "غير معروف : لا توجد مدة" [ref=e917]':
+                            - generic "لا توجد مدة" [ref=e919]:
+                              - img [ref=e920]
+                              - text: غير معروف
+                              - generic [ref=e922]: ": لا توجد مدة"
+                        - row "INI-04 Synthetic execution D ar 3" [ref=e923]:
+                          - rowheader "INI-04 Synthetic execution D ar" [ref=e924]:
+                            - link "INI-04 Synthetic execution D ar" [ref=e925] [cursor=pointer]:
+                              - /url: /transformations/01a151d1-e917-72ba-9ed5-25ff8bef7f19/initiatives/01a151d1-ed8d-709e-89ef-6ed2cc2770ac
+                          - cell "3" [ref=e926]
+                  - navigation "التنقل بين الصفحات" [ref=e927]:
+                    - generic [ref=e928]: الصفحة 1 من 1 · 4 من 4 صفوف
+                    - generic [ref=e929]:
+                      - generic [ref=e930]: عدد الصفوف في الصفحة
+                      - combobox "عدد الصفوف في الصفحة" [ref=e931]:
+                        - option "10" [selected]
+                        - option "25"
+                        - option "50"
+                        - option "100"
+                    - button "السابق" [disabled] [ref=e932]
+                    - button "التالي" [disabled] [ref=e933]
+                - heading "الاعتماديات في الشبكة" [level=3] [ref=e934]
+                - generic [ref=e935]:
+                  - generic [ref=e936]:
+                    - generic [ref=e937]:
+                      - generic [ref=e938]: بحث
+                      - searchbox "بحث" [ref=e939]
+                    - button "الأعمدة" [ref=e941] [cursor=pointer]:
+                      - img [ref=e942]
+                      - text: الأعمدة
+                  - region "الاعتماديات في الشبكة (جدول قابل للتمرير)" [ref=e944]:
+                    - table "الاعتماديات في الشبكة" [ref=e945]:
+                      - caption [ref=e946]: الاعتماديات في الشبكة
+                      - rowgroup [ref=e947]:
+                        - row "الاعتمادية مرتّب تصاعديًا من (تُسلِّم أولًا) غير مرتّب إلى غير مرتّب" [ref=e948]:
+                          - columnheader "الاعتمادية مرتّب تصاعديًا" [ref=e949]:
+                            - button "الاعتمادية مرتّب تصاعديًا" [ref=e950] [cursor=pointer]:
+                              - text: الاعتمادية
+                              - img [ref=e951]
+                              - generic [ref=e953]: مرتّب تصاعديًا
+                          - columnheader "من (تُسلِّم أولًا) غير مرتّب" [ref=e954]:
+                            - button "من (تُسلِّم أولًا) غير مرتّب" [ref=e955] [cursor=pointer]:
+                              - text: من (تُسلِّم أولًا)
+                              - img [ref=e956]
+                              - generic [ref=e958]: غير مرتّب
+                          - columnheader "إلى غير مرتّب" [ref=e959]:
+                            - button "إلى غير مرتّب" [ref=e960] [cursor=pointer]:
+                              - text: إلى
+                              - img [ref=e961]
+                              - generic [ref=e963]: غير مرتّب
+                      - rowgroup [ref=e964]:
+                        - row "DEP-01 INI-01 INI-02" [ref=e965]:
+                          - rowheader "DEP-01" [ref=e966]
+                          - cell "INI-01" [ref=e967]
+                          - cell "INI-02" [ref=e968]
+                        - row "DEP-02 INI-02 INI-04" [ref=e969]:
+                          - rowheader "DEP-02" [ref=e970]
+                          - cell "INI-02" [ref=e971]
+                          - cell "INI-04" [ref=e972]
+                        - row "DEP-03 INI-01 INI-03" [ref=e973]:
+                          - rowheader "DEP-03" [ref=e974]
+                          - cell "INI-01" [ref=e975]
+                          - cell "INI-03" [ref=e976]
+                        - row "DEP-04 INI-03 INI-04" [ref=e977]:
+                          - rowheader "DEP-04" [ref=e978]
+                          - cell "INI-03" [ref=e979]
+                          - cell "INI-04" [ref=e980]
+                  - navigation "التنقل بين الصفحات" [ref=e981]:
+                    - generic [ref=e982]: الصفحة 1 من 1 · 4 من 4 صفوف
+                    - generic [ref=e983]:
+                      - generic [ref=e984]: عدد الصفوف في الصفحة
+                      - combobox "عدد الصفوف في الصفحة" [ref=e985]:
+                        - option "10" [selected]
+                        - option "25"
+                        - option "50"
+                        - option "100"
+                    - button "السابق" [disabled] [ref=e986]
+                    - button "التالي" [disabled] [ref=e987]
+```

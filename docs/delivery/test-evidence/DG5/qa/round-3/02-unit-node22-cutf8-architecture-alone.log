@@ -1,0 +1,18 @@
+$ env LANG=C.UTF-8 LC_ALL=C.UTF-8 npx vitest run --project unit-node apps/api/src/architecture.test.ts  (node v22.22.2, 2026-10-19T02:29:46Z) load: 8.34 8.65 10.09
+
+ RUN  v3.2.4 $TMPDIR/rev
+
+ ✓ |unit-node| apps/api/src/architecture.test.ts (139 tests) 18780ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  12785ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  515ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  939ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  3380ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  310ms
+
+ Test Files  1 passed (1)
+      Tests  139 passed (139)
+   Start at  02:29:47
+   Duration  20.69s (transform 227ms, setup 0ms, collect 1.23s, tests 18.78s, environment 0ms, prepare 133ms)
+
+EXIT 0
+load after: 8.19 8.59 10.04
