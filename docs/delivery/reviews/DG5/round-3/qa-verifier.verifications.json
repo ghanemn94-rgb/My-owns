@@ -1,0 +1,44 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-142",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:fc93b239... (source bbd6294) in a complete disposable clone (e661a6c, 2187 files, candidate id recomputed there and on the main checkout). (1) My round-2 reproduction, re-run UNCHANGED on the demo stack in en and ar, with the locale unset and with C.UTF-8 (10/10 passed in each locale setting): P2-DG24 now reports, on all 12 DG2-DG4 screens it lists (transformation overview, charter, readiness, gates G1 and G4, transformation dashboard, dashboards hub, executive overview, admin organizations, a business case, an initiative, a benefit formula) at 390 px, NO serious/critical axe violation and NO scrolling region that is not focusable and named (21-27 scrolling regions per run); in round 2 the overview, charter, readiness and benefit-formula screens failed 'scrollable-region-focusable'. Its P2-AXE (31 P5 screens at 1366 px and 200 % text) and P2-KBD (coverage and rubric regions: Tab reaches them in 9 presses, arrows scroll 0 -> 240 en, 0 -> -240 ar) also pass. (2) A new, wider probe (zz-qa-dg5r3-regions-verify.spec.ts; revision 3 run in both locale settings, revisions 1-2 kept as disclosed attempts): 38 DG2-DG4 screens on populated synthetic demo data (the 12 above plus gates list, G2, G3, G5, G6, approval decisions, diagnose, prioritization, roadmap, closure, BAU, KPIs, portfolio, capacity, business cases, benefits, Finance validations, RAID, dispensations, change requests, decisions, phases, admin users, two cases, two initiatives, two formulas) at 390 x 844, 1366 x 900 and 1280 x 900 with 200 % text: 0 serious/critical axe violations and 0 scrolling regions without tabIndex 0, role=region and a localized name, in all 8 language-runs (65-70 scrolling regions at 390 px, 68-74 at 200 % per run). (3) Keyboard: R3-TAB uses REAL Tab presses from the page start on the four screens of the finding at 390 px and reaches EVERY scrolling region (overview 1, charter 2, readiness 2, benefit formula 2; 1-85 presses), and the arrow key of the reading direction scrolls each (e.g. charter scope 0 -> 186 en, 0 -> -112 ar; RTL scrolls negative): 7/7 in every revision-3 run (three runs), en and ar, both locale settings. The probe's second path (el.focus() then six arrow presses on every scrolling region of all 38 screens) scrolled 829 of 840 checks over the six revision-3 language-runs (1391/1409 over all revisions, the rest being the two probe artefacts fixed in revisions 2 and 3); the 11 revision-3 misses were on a different region each time and only under heavy load (1 per language at load 14, 3 and 6 at load 23, where two screens also failed to load in time), the region kept focus, and the same regions scrolled in the other runs and at 200 % in the same run; a further revision-3 run at load 1.5 scrolled 144/144 (en) and 142/142 (ar) with 0 misses. The region is a plain div (TableScrollRegion) with no key handler and no global arrow-key handler exists in apps/web/src, so scrolling is native browser behaviour; I judge the misses a harness timing artefact under load, not a defect (05-r3-keyboard-aggregate.txt). (4) The fix itself: TableScrollRegion (tabIndex 0, role=region, aria-label common.table.scrollRegion with the caption, en and ar) replaces every bare wrapper; 'grep table-wrap apps/web/src' leaves only regions that are already focusable and named; the unit guard table-regions.test.tsx ('no bare table wrapper in the web source') passes in all unit runs; the candidate's p5-table-regions-axe.spec.ts passes on the production stack (product half B, both locale settings) and on the demo stack (2/2 in each locale setting, 12 screens, 0 problems). Its weaker point: it counts wrappers without waiting for every section to load (once 1 instead of 2 on the charter in ar), which my probe covers. (5) D-173 observation (k) accepted: on /transformations/<id>/dashboard and /executive-overview the five 'Records in this area (scrollable table)' / 'السجلات في هذا المجال (جدول قابل للتمرير)' regions share one name, as their captions do; axe's WCAG rule set reports nothing (landmark-unique is a best-practice rule, not WCAG A/AA), each region sits under its own area heading, so it is polish, not a defect. Residual outside this finding: the Diagnose screen overflows at page level at 390 px and 200 % text (its workstream cards, not a table region): raised separately as F-DG5-144.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-regions-keyboard.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r2regions-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r2regions-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r2regions-unset/en/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r2regions-unset/ar/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r2regions-cutf8/en/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r2regions-cutf8/ar/p2-dg24.json",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-3/e2e/zz-qa-dg5r3-regions-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r3regions-v3-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r3regions-v3-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3regions-v3-unset/en/r3-reg.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3regions-v3-unset/ar/r3-tab.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3regions-v3-unset/en/r3-tab_transformations_T_charter.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-r3-keyboard-aggregate.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r3regions-v3-run2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-x1demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-x1demo-cutf8.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:fc93b239.... (1) The diff d3528fc..bbd6294 of apps/web/e2e/p5-forms.spec.ts changes only the fixture's target: beforeAll keeps the id of the diagnostic item it PATCHes (t01ItemId) and the test opens '#t01 [data-form-tools=<that id>]' instead of '#t01 [data-form-tools]'.first(), for the lead and for the auditor. Every assertion (the dialog's T01 framework, the saved root cause, comment, attachment, history, export, the auditor's read-only view) is unchanged. FormToolsButton renders data-form-tools={recordId}, so the locator names exactly the filled record, and toBeVisible() fails if it is absent, so the test cannot pass vacuously. (2) My round-2 reproduction of the premise, re-run unchanged on a disposable PostgreSQL (the 0010 mth_uuid_v7(), five ids per trial, 500 trials): the first id by ORDER BY id is still not the first created in 400 of 500 trials (489 trials within one millisecond), so 'the API's first item' is still random and only an id-targeted fixture is deterministic, which this one is. (3) --repeat-each=10 under review load (both projects): locale unset 60/60 (T01 20/20, 18.0 min, load ~19); C.UTF-8 run 1 59/60 with T01 20/20, the one failure being 'Target crashed' in the T14 test's axe call (a Chromium renderer crash under memory pressure with 16 GB and no swap shared by three reviews, not an assertion, not T01); C.UTF-8 run 2 at lower load 60/60 (T01 20/20). The full product runs also pass p5-forms (product half B, both locale settings). Before the fix, T01 failed in 2 of 4 runs in round 2. No residual.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-forms-repeat10-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-forms-repeat10-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-forms-repeat10-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failure-context/forms-repeat10-cutf8/apps-web-e2e-p5-forms-T14--8f2ae-e-is-a-recoverable-conflict-chromium-ar-repeat5-test-failed-2.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-uuid-order-probe.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/scripts/uuid-order-probe.sh",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-B-unset.log"
+      ]
+    }
+  ]
+}

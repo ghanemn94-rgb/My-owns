@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-144",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Diagnose screen (/transformations/<id>/diagnose) scrolls horizontally at page level at 390 px (433 px en, 394 px ar) and with 200 % text (830 px en, 731 px ar): the six workstream cards of the .workstreams grid share one auto track that grows to the widest card's min-content (794 px at 390 px), so every card runs off the viewport",
+      "reproduction": "Disposable complete clone of the frozen candidate (e661a6c = source bbd6294 + delivery records; sha256:fc93b239...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-3/e2e/zz-qa-dg5r3-diagnose-reflow.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26640 E2E_API_PORT=26641 e2e/support/with-demo-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r3-diagnose-reflow.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers). As roaming.user.tl it opens /transformations/01995000-0000-7000-8000-000000000001/diagnose at 390 x 900 and at 1280 x 900 with the root font at 200 %, and records document.documentElement.scrollWidth - innerWidth, the .workstreams grid width and its computed grid-template-columns, each article.workstream's width, and the deepest elements as wide as the card. It then injects '.workstreams > * { min-inline-size: 0 }' in the browser only and measures again. The round-3 verification probe zz-qa-dg5r3-regions-verify.spec.ts (R3-REG) finds the same overflow on this screen, and on no other of its 38 screens, in all four runs (en, ar; locale unset and C.UTF-8).",
+      "expected": "No page-level horizontal scroll at 390 px and with 200 % text, in en and ar, as on the other 37 DG2-DG4 screens and the 31 P5 screens probed: a wide register scrolls inside its own focusable region, and the cards fit the column (REQ-S15-009: responsive layouts and mobile-friendly review; WCAG 2.1 SC 1.4.10 Reflow, part of REQ-S15-012). The stylesheet already intends this: '/* Grid items default to min-width:auto; a wide register must scroll inside its card, not widen the page. */ .page > *, .section > *, .workstream > * { min-inline-size: 0; }' (apps/web/src/styles/app.css).",
+      "actual": "At 390 px: overflow 433 px (en) / 394 px (ar); the .workstreams grid is 332 px wide but its single column resolves to 794 px (en) / 755 px (ar), and all six article.workstream cards are that wide (en: [29..823] px; ar: [-394..361] px), with each card's header, key-question list and register toolbar stretched to the card. With 200 % text: 830 px (en) / 731 px (ar), track 1517 px / 1418 px. The cards' own children have min-inline-size 0, but the grid item (the card) does not and the track is 'auto', so the widest card's min-content (the Customer workstream's findings register) sizes every card; making the grid items shrinkable in the browser does not remove it (overflow unchanged), so the track sizing itself (e.g. grid-template-columns: minmax(0, 1fr)) needs the fix. axe reports no serious/critical violation there (it does not test reflow), every scrolling table region on the screen is focusable and named, and nothing else is broken; a 390 px user must scroll the whole page sideways to read the workstreams. The .workstreams/.workstream rules are unchanged since DG2 (ea72d86), the T01/baseline/value-pool sections DG5 changed on this page do not overflow, and no product spec measures this screen's page width, so it is not a regression of the repair diff and is outside every DG5-final acceptance text; the binding requirements (REQ-S15-009, REQ-S15-012) have final gate DG6. Medium, not mandatory, not blocking DG5; repair before DG6.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-3/e2e/zz-qa-dg5r3-diagnose-reflow.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r3diag-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3diag-cutf8/en/r3-diag-diagnose.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3diag-cutf8/ar/r3-diag-diagnose.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3diag-cutf8/en/r3-diag-diagnose-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3diag-cutf8/ar/r3-diag-diagnose-390.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-3/e2e/zz-qa-dg5r3-regions-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r3regions-v3-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-probe-r3regions-v3-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3regions-v3-unset/en/r3-reg.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/shots/probe-r3regions-v3-unset/ar/r3-reg.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-19T03:30:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 3 (T-DG5-REV-QA-R3B) from the extended F-DG5-142 verification probe. Medium, non-mandatory, not blocking DG5 (REQ-S15-009/REQ-S15-012 are DG6); repair before DG6."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-145",
+      "stage_id": "DG5",
+      "requirement": "REQ-S16-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The unit check 'API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages' (apps/api/src/architecture.test.ts) has outgrown its 30 s budget under review load: it timed out in 4 of 6 full Node 22 'pnpm test' runs on this candidate (30.2 s to 67.0 s), so the required unit check fails for load alone",
+      "reproduction": "In the disposable clone, 'pnpm test' with Node 22.22.2 (/opt/node22/bin) while the three round-3 reviews run (load average 14-29 on 4 CPUs): runs 02-unit-node22-unset (31.9 s), 02-unit-node22-cutf8 (30.2 s), 02-unit-node22-unset-rerun (36.0 s) and 02-unit-node22-cutf8-rerun (67.0 s) each fail exactly this test with 'Test timed out in 30000ms' (the last also three unit-web tests at their 20 s budget). The same test passes alone on Node 22 in 12.7 s (load ~8), at 23.5 s and 17.4 s in the two later full Node 22 runs, and at about 25 s in both Node 24 runs. F-DG2-143 gave it this explicit budget when it took 1-1.5 s alone; it now takes about 12.7 s alone as the module tree has grown through P5.",
+      "expected": "A required unit check that passes on a correct tree whenever the review machine is merely loaded (the precedent of F-DG2-143, F-DG5-121 and D-173's budget for p4-gates-closure test 9): a budget with at least 2x headroom over the loaded worst case, or a cheaper walk.",
+      "actual": "4 of 6 full Node 22 runs failed on this timeout alone; no boundary violation is reported in any run (the test's assertion never fails, it never finishes). Test reliability only; the product is not affected and the unit check passes in a clean run of every Node/locale combination on this candidate. Low, non-mandatory, not blocking.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node22-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node22-unset-rerun.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node22-cutf8-rerun.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node22-unset-architecture-alone.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node22-unset-rerun2.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/02-unit-node24-unset.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-19T03:30:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 3 (T-DG5-REV-QA-R3B). Low, test reliability only (precedents F-DG2-143, F-DG5-121), not blocking."
+        }
+      ]
+    }
+  ]
+}
