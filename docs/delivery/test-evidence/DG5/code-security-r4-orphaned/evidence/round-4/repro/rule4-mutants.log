@@ -1,0 +1,33 @@
+## 2026-10-19T11:24:03Z bash repro/rule4-mutants.sh $TMPDIR/review-r4 (Node v24.21.0); load: 15.81 16.15 16.08 15/531 5
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+### mutant M1: reportDiagnostics: false (rule 4 reports nothing)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed') 11ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 47ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 138 passed (140)
+exit=1 (KILLED)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+### mutant M2: fileName fixed to module.ts (script kind no longer follows the extension)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: JSX in a .tsx/.jsx module file is parsed as JSX, so its imports are still seen and not mis-parsed 47ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 72ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 138 passed (140)
+exit=1 (KILLED)
+ 1 file changed, 1 insertion(+)
+### mutant M3: only the first syntax error is reported (.slice(0, 1))
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 173ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 139 passed (140)
+exit=1 (KILLED)
+ 1 file changed, 1 insertion(+), 6 deletions(-)
+### mutant M4: parser-only diagnostics (createSourceFile parseDiagnostics, the 'cheaper' path that skips the program's additional JS diagnostics)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 154ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 139 passed (140)
+exit=1 (KILLED)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+### mutant M5: target ES2015 added to the same call (the handback's disclosed equivalent survivor; expected to SURVIVE)
+      Tests  140 passed (140)
+exit=0 (SURVIVED)
+(clone source restored; git status above lists nothing under apps/api/src)
+script exit=0

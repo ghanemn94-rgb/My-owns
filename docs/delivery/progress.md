@@ -36,11 +36,13 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Repaired in wave Y, to be verified in round 4:** F-DG5-102, 123, 144 and 145 (D-174, D-175).
   - **Re-frozen for round 4:** candidate `sha256:26d4ad92…` (2188 files, source `fb9c221`). The manifest is `docs/delivery/candidates/DG5/26d4ad92320eeaa2.manifest.json`.
 - **Next action:**
-  1. The three round-4 reviews run in the main checkout, with a monitor armed and no worktree or install activity (D-082):
-     - `T-DG5-REV-DOM-R4`;
-     - `T-DG5-REV-SEC-R4`;
-     - `T-DG5-REV-QA-R4`.
-     The assignments are in `docs/delivery/assignments/DG5/round-4/`.
+  1. The round-4 reviews run on candidate `26d4ad92` in the main checkout, with a monitor armed and no worktree or install activity (D-082). The assignments are in `docs/delivery/assignments/DG5/round-4/`.
+     - **Domain: done.** `T-DG5-REV-DOM-R4` passed, F-DG5-123 is verified closed, and there is no new finding. Commits `796eb38` and `c179744`.
+     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R4B` and `T-DG5-REV-QA-R4B`,** from `round-4/{role}-rerun.md`.
+       - A container restart at about 12:31Z stopped the first runs about two and a half hours in, before they wrote a record (exit 143).
+       - This time their runners survived and committed the run folders as they stood (`c3c964e`, `bc450c1`). Those folders stay in `runs/DG5/` (write-once).
+       - The partial material those commits and the working tree held (the code-security verifications sidecar, test sources and evidence) is moved, for provenance only, to `test-evidence/DG5/{code-security,qa}-r4-orphaned/`, without the screenshots.
+       - This is recorded in the next decision.
   2. Import the findings and verifications (`--round 4`).
   3. Before the release-auditor runs, get the user's decision on the D-140 auditor-sidecar ordering fix (options 1–3; 1 is recommended).
 ## DG2 scope (P2 — diagnose, define and design)

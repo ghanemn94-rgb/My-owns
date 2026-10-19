@@ -1,0 +1,55 @@
+## 2026-10-19T11:28:10Z residual surfaces on clone 96aaeb2
+$ ls .github/workflows
+ci.yml
+delivery-gates.yml
+$ grep -n "pnpm install\|frozen-lockfile\|validate.mjs" .github/workflows/*.yml
+.github/workflows/ci.yml:38:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:40:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:42:        run: node tools/gates/validate.mjs --reconcile
+$ grep -rnE "(OPENAI|ANTHROPIC|LLM|SMTP|WEBHOOK|TWILIO|SLACK)[A-Z_]*" packages/config/src/*.ts
+(end)
+$ grep -rnE "nodemailer|smtp|fetch\(|undici|axios|https?\.request" apps/worker/src apps/api/src (non-test)
+(end)
+$ dev binding guard
+packages/db/src/demo/guard.ts:122: * `AUTH_MODE=dev` stack can choose them. Only with AUTH_MODE=dev, and never with NODE_ENV=production (the same rule as
+packages/db/src/demo/guard.ts:126:  readonly NODE_ENV?: string | undefined;
+packages/db/src/demo/guard.ts:127:  readonly AUTH_MODE?: string | undefined;
+packages/db/src/demo/guard.ts:129:  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+packages/db/src/demo/cli.ts:7:// With AUTH_MODE=dev (never NODE_ENV=production) both also bind each demo user to the dev issuer (D-165).
+packages/db/src/demo/cli.ts:19:  readonly devIssuerBinding?: boolean;
+packages/db/src/demo/cli.ts:54:            devIssuerBinding: config.devIssuerBinding === true,
+packages/db/src/demo/cli.ts:62:            devIssuerBinding: config.devIssuerBinding === true,
+$ config refusal of AUTH_MODE=dev in production
+packages/config/src/index.ts:40:  AUTH_MODE: {
+packages/config/src/index.ts:175:/** Allowed AUTH_MODE values; `dev` must be rejected at startup when NODE_ENV=production (ADR-0005). */
+packages/config/src/index.ts:176:export const AUTH_MODES = ["oidc", "dev"] as const;
+packages/config/src/index.ts:181:export type AuthMode = (typeof AUTH_MODES)[number];
+packages/config/src/load.ts:7://  - Missing required values, malformed values and the forbidden combination AUTH_MODE=dev + NODE_ENV=production
+packages/config/src/load.ts:12:import { AUTH_MODES, ENV_VARS, MTH_ENVS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+packages/config/src/load.ts:35:  readonly authMode: (typeof AUTH_MODES)[number];
+packages/config/src/load.ts:137:  const authMode = field("AUTH_MODE", z.enum(AUTH_MODES));
+packages/config/src/load.ts:197:    problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+packages/config/src/load.ts:200:  // OIDC is all-or-nothing. With AUTH_MODE=oidc the API needs it (there is no other way to sign in).
+$ oidc config surface
+packages/config/src/index.ts:47:  OIDC_ISSUER_URL: {
+packages/config/src/index.ts:53:  OIDC_CLIENT_ID: { description: "OIDC client id", required: false, secret: false, usedBy: ["api"] },
+packages/config/src/index.ts:54:  OIDC_CLIENT_SECRET: {
+packages/config/src/index.ts:60:  OIDC_SCOPES: {
+packages/config/src/load.ts:201:  const issuer = raw.OIDC_ISSUER_URL;
+packages/config/src/load.ts:202:  const clientId = raw.OIDC_CLIENT_ID;
+packages/config/src/load.ts:203:  const clientSecret = raw.OIDC_CLIENT_SECRET;
+packages/config/src/load.ts:207:    const missing = (["OIDC_ISSUER_URL", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET"] as const).filter(
+packages/config/src/load.ts:221:        problems.push("OIDC_ISSUER_URL is invalid (must be an absolute http(s) URL)");
+packages/config/src/load.ts:224:        problems.push("OIDC_ISSUER_URL must use https when NODE_ENV=production");
+$ lockfile
+lockfileVersion: '9.0'
+465
+$ registry config (.npmrc)
+# ADR-0001: exact pins, engine enforcement, no lifecycle scripts except the allow-list in package.json.
+save-exact=true
+engine-strict=true
+strict-peer-dependencies=false
+auto-install-peers=false
+link-workspace-packages=true
+$ git diff --name-only bbd6294 fb9c221 -- .github packages/config pnpm-lock.yaml .npmrc package.json "*/package.json" (changes since round 3)
+(end)
