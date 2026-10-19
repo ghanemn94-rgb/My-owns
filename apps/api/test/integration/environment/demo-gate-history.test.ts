@@ -349,6 +349,84 @@ describe("F-DG5-120: the seeded roaming transformation carries the gate history 
     expect(submittedAt < decidedAt).toBe(true);
   });
 
+  // F-DG5-123 (T-DG5-BE-Y1, D-174; REQ-S18-002; B0072 T05 "Key deliverables [3-7 deliverables]"): the domain
+  // reviewer's reproduction as a product test. Through the product's own reads (listInitiatives, getInitiative,
+  // listDeliverables, getOrphanReport), signed in as the demo Transformation Lead: each launched initiative of the
+  // approved portfolio carries 3 to 7 active key deliverables, the portfolio reports no `initiative.deliverable_count`
+  // warning for it, and the orphan report lists none of them (nor any of their deliverables).
+  it("F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan", async () => {
+    const tl = user("TL");
+    const all = (await get("TL", `/api/v1/initiatives?transformationId=${T}&limit=100`)).items as Body[];
+    const ini = ["INI-01", "INI-02", "INI-03"].map((c) => all.find((i) => i.code === c)!);
+    const g4 = await get("TL", `/api/v1/transformations/${T}/gates/G4`);
+    const submittedAt = g4.currentSubmission.submittedAt as string;
+    const deliverableIds: string[] = [];
+    for (const i of ini) {
+      expect(i.status, i.code).toBe("launched");
+      const listed = (i.warnings as Body[]).map((w) => w.code);
+      const one = (await get("TL", `/api/v1/initiatives/${i.id}`)).warnings as Body[];
+      expect.soft(listed, `${i.code} on the portfolio list`).not.toContain("initiative.deliverable_count");
+      expect
+        .soft(
+          one.map((w) => w.code),
+          `${i.code} on the initiative`,
+        )
+        .not.toContain("initiative.deliverable_count");
+      const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverables`);
+      const active = (d.items as Body[]).filter((x) => x.status === "active");
+      expect.soft(active.length >= 3 && active.length <= 7, `${i.code}: ${active.length} key deliverables`).toBe(true);
+      expect.soft(d.countWarning, i.code).toBeNull();
+      // Ordinals in order; written by the demo TL (initiative.edit) on the card before the initiative was submitted;
+      // owned by the workstream lead; due inside the planned window, by the initiative's last approved milestone, and
+      // after the synthetic clock (2026-09-01), so none reads overdue; not accepted (acceptance is deliverable.accept).
+      expect(active.map((x) => x.ordinal)).toEqual(active.map((_, k) => k + 1));
+      const ms = (await get("TL", `/api/v1/initiatives/${i.id}/milestones`)).items as Body[];
+      const lastMilestone = ms.map((m) => m.approvedDate as string).sort()[ms.length - 1]!;
+      for (const x of active) {
+        expect([x.createdBy, x.ownerUserId, x.acceptanceStatus, x.submittedBy], x.title).toEqual([
+          tl.id,
+          i.workstreamLeadUserId,
+          "pending",
+          null,
+        ]);
+        expect(x.createdAt < submittedAt, x.title).toBe(true);
+        expect(x.dueDate >= i.plannedStart && x.dueDate <= lastMilestone && x.dueDate > "2026-09-01", x.title).toBe(
+          true,
+        );
+        // en and ar, marked synthetic like the rest of the dataset.
+        expect(x.title, x.title).toMatch(/\(synthetic\) \/ .*[؀-ۿ].*\(اصطناعي\)$/u);
+        deliverableIds.push(x.id as string);
+      }
+    }
+    // Exactly one audit event per seeded write: each deliverable has its one `deliverable.create`.
+    const events =
+      deliverableIds.length === 0
+        ? []
+        : await api.db
+            .selectFrom("audit_event")
+            .select(["record_id", "action"])
+            .where("record_type", "=", "deliverable")
+            .where("record_id", "in", deliverableIds)
+            .execute();
+    expect(events.map((e) => e.action).sort()).toEqual(deliverableIds.map(() => "deliverable.create"));
+    expect(new Set(events.map((e) => e.record_id)).size).toBe(deliverableIds.length);
+
+    // The orphan report (the traceability screen's getOrphanReport) lists none of the three, nor their deliverables.
+    const orphans = (await get("TL", `/api/v1/transformations/${T}/orphans?limit=100`)).items as Body[];
+    const listedIds = orphans.map((o) => o.recordId as string);
+    for (const id of deliverableIds) expect(listedIds, `deliverable ${id}`).not.toContain(id);
+    // Each deliverable reaches a capability change and each capability a chain KPI, so the only orphan left is the
+    // fourth diagnosed issue, which is no B0147 line and stays the report's illustrative entry.
+    expect(
+      orphans.filter((o) => o.recordType !== "diagnostic_finding").map((o) => [o.recordType, o.label]),
+      "no initiative, deliverable or capability is an orphan",
+    ).toEqual([]);
+    expect(
+      orphans.filter((o) => o.recordType === "initiative").map((o) => o.code),
+      "the orphan report lists no launched initiative",
+    ).toEqual([]);
+  });
+
   it("the phase history: four phase advances, one per approved gate, ending in Transform", async () => {
     const advances = await api.db
       .selectFrom("audit_event")

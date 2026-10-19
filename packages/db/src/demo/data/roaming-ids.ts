@@ -84,4 +84,12 @@ export const RT_BLOCK = {
   resourceRole: 0x076,
   capacity: 0x077,
   resourceDemand: 0x078,
+  /**
+   * T-DG5-BE-Y1 (F-DG5-123, D-174): the key deliverables of INI-01..03 (T05 "Key deliverables [3-7]"), the two
+   * capability changes they deliver beyond G3's (INI-02, INI-03), and the deliverable -> capability and capability ->
+   * outcome KPI trace links that keep them out of the orphan report (roaming-portfolio.ts seedKeyDeliverables).
+   */
+  deliverable: 0x079,
+  deliverableCapability: 0x07a,
+  deliverableTraceLink: 0x07b,
 } as const;
