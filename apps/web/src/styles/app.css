@@ -925,9 +925,23 @@ input[type="radio"] {
   font-size: 0.85rem;
 }
 
+/* One column whose track never grows to its items' min-content (D-174, the F-DG5-144 pattern): the compare table, with
+   no-wrap headers, otherwise sized the track and the page scrolled sideways at 390 px. Inside the banner its headers
+   wrap between words and its values anywhere (a long value without spaces too), so the table fits the banner and no
+   scroll region is needed. Headers and row labels never break inside a word (Arabic letters stay joined). */
 .conflict {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--mth-space-3);
+}
+.conflict > * {
+  min-inline-size: 0;
+}
+.conflict .table thead th {
+  white-space: normal;
+}
+.conflict .table td {
+  overflow-wrap: anywhere;
 }
 .conflict__title {
   color: var(--mth-feedback-warning-fg);
@@ -1302,9 +1316,17 @@ input[type="radio"] {
 }
 
 /* Diagnose */
+/* One column whose track never grows to its items' min-content (F-DG5-144, D-174): with an implicit `auto` track the
+   widest card's findings register (its table's min-content) sized the track and every card, so the page scrolled
+   sideways at 390 px and with 200 % text. The cards are shrinkable grid items, and a wide register scrolls inside its
+   own focusable, named region (TableScrollRegion). */
 .workstreams {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--mth-space-4);
+}
+.workstreams > .workstream {
+  min-inline-size: 0;
 }
 .workstream {
   border: 1px solid var(--mth-border-default);
