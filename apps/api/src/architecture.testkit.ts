@@ -526,14 +526,6 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
 }
 
 /**
- * Rule 4, fail closed: syntax errors in a module file. On a syntax error the parser's recovery can turn code into
- * something else (`(async () => {} as any)[k]` reads `[k]` as a binding pattern), so the rules would inspect a
- * different program from the one written. Syntactic diagnostics only (no type check, nothing executed).
- * F-DG1-137 / F-DG1-218: the declaration-file branch follows TypeScript's own classification
- * (`isDeclarationFileName`, i.e. `SourceFile.isDeclarationFile`; incl. `allowArbitraryExtensions` `*.d.<ext>.ts`),
- * so no declaration-file name ever reaches `ts.transpileModule`.
- */
-/**
  * F-DG5-102 / F-DG5-145 (D-174): rule 4 needs only the DIAGNOSTICS of `ts.transpileModule`, never its output text, but
  * the emit (TypeScript transforms plus printing the whole file) was about a third of the full module walk (448 files,
  * outside vitest on Node 24: ~1.2 s of a ~4 s warm walk; 2026-10-19, T-DG5-BE-Y2 handback). This `before`
@@ -551,7 +543,15 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
 const EMPTY_EMIT: ts.TransformerFactory<ts.SourceFile> = (context) => (sourceFile) =>
   context.factory.updateSourceFile(sourceFile, []);
 
-/** Rule 4 for one file (exported for the guard test only): its syntax errors as violation texts. */
+/**
+ * Rule 4, fail closed: syntax errors in a module file. On a syntax error the parser's recovery can turn code into
+ * something else (`(async () => {} as any)[k]` reads `[k]` as a binding pattern), so the rules would inspect a
+ * different program from the one written. Syntactic diagnostics only (no type check, nothing executed).
+ * F-DG1-137 / F-DG1-218: the declaration-file branch follows TypeScript's own classification
+ * (`isDeclarationFileName`, i.e. `SourceFile.isDeclarationFile`; incl. `allowArbitraryExtensions` `*.d.<ext>.ts`),
+ * so no declaration-file name ever reaches `ts.transpileModule`.
+ * Exported for the guard test only; returns the file's syntax errors as violation texts.
+ */
 export function syntaxErrors(fileName: string, source: string): string[] {
   const diagnostics = isDeclarationFileName(fileName)
     ? declarationSyntaxErrors(fileName, source)
