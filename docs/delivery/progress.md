@@ -31,21 +31,17 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
-- **DG5 (P5 "Configuration automation and outputs") is FIXING after review round 3** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-174).
-  - **Round 3** (candidate `sha256:fc93b239…`, 2187 files, source `bbd6294`): domain PASS, code-security PASS (`T-DG5-REV-SEC-R3B`), qa PASS (`T-DG5-REV-QA-R3B`). A container restart at about 23:31Z stopped the first code-security and qa runs, which were salvaged to `test-evidence/DG5/{code-security,qa}-r3-orphaned/` and re-run (D-174).
+- **DG5 (P5 "Configuration automation and outputs") is REVIEWING round 4** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-175).
   - **Closed and verified:** F-DG5-100, 101, 120, 121, 122, 140, 141, 142 and 143.
-  - **Open, repaired in wave Y (D-174):**
-    - F-DG5-144 (Medium, REQ-S15-009): Diagnose page-level reflow;
-    - F-DG5-102 and F-DG5-145 (Low, one defect): the ADR-0002 boundary test's budget;
-    - F-DG5-123 (Low, REQ-S18-002): the demo's launched initiatives have no key deliverables.
-  - Nothing is Critical, High or mandatory, but the validator needs every finding terminal, and a Medium cannot be accepted as an observation.
+  - **Repaired in wave Y, to be verified in round 4:** F-DG5-102, 123, 144 and 145 (D-174, D-175).
+  - **Re-frozen for round 4:** candidate `sha256:26d4ad92…` (2188 files, source `fb9c221`). The manifest is `docs/delivery/candidates/DG5/26d4ad92320eeaa2.manifest.json`.
 - **Next action:**
-  1. Repair wave Y, three tasks at the same time, each in its own worktree:
-     - `T-DG5-BE-Y1` (F-DG5-123, and the disclosed `demo.test.ts` teardown budget);
-     - `T-DG5-BE-Y2` (F-DG5-102, 145);
-     - `T-DG5-FE-Y1` (F-DG5-144).
-     Then `T-DG5-ARCH-R6` for the ADR and data-dictionary statements the handbacks name.
-  2. Merge, verify the merged tree (three parts, no agent running), record D-175, and re-freeze for round 4. In round 4: domain verifies F-DG5-123, code-security F-DG5-102, qa F-DG5-144 and 145.
+  1. The three round-4 reviews run in the main checkout, with a monitor armed and no worktree or install activity (D-082):
+     - `T-DG5-REV-DOM-R4`;
+     - `T-DG5-REV-SEC-R4`;
+     - `T-DG5-REV-QA-R4`.
+     The assignments are in `docs/delivery/assignments/DG5/round-4/`.
+  2. Import the findings and verifications (`--round 4`).
   3. Before the release-auditor runs, get the user's decision on the D-140 auditor-sidecar ordering fix (options 1–3; 1 is recommended).
 ## DG2 scope (P2 — diagnose, define and design)
 
