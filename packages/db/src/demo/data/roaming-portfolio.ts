@@ -8,6 +8,12 @@
 // capacity.ts, resource-demands.ts; kpi/business-cases.ts), through the same tables and database guards, one audit
 // event per write, by the demo role user who holds the product permission, in Mobilize, between G3 (approved
 // 2026-06-02) and the G4 submission (2026-06-08), on the synthetic clock:
+//   2026-06-03 06:00  TL completes each card's T05 "Key deliverables [3-7]" (initiative.edit; T-DG5-BE-Y1, F-DG5-123,
+//                     D-174): three pending deliverables per initiative, owned by WL, each due by the approved
+//                     milestone it feeds; TL records the two capability changes INI-02 and INI-03 deliver (tom.edit;
+//                     INI-01 delivers G3's "Digital roaming activation"), then links each deliverable to its capability
+//                     and each capability to its chain's outcome KPI (traceability.link), so no launched initiative,
+//                     deliverable or capability is an orphan (seedKeyDeliverables);
 //   2026-06-03 07:00  TL submits each initiative for prioritization (draft -> submitted; initiative.edit). Each has a
 //                     complete card (name, objective, scope in), a gap link and a KPI contribution (roaming.ts,
 //                     roaming-chains.ts), and G1 is approved (the submit preconditions);
@@ -54,6 +60,10 @@ const LABEL = `${SYNTHETIC_APPROVAL_NOTE} / عرض توضيحي اصطناعي -
 
 /** The synthetic times of the portfolio path (UTC), in order, between G3 (2026-06-02) and G4 (2026-06-08). */
 export const DEMO_PORTFOLIO_TIMES = {
+  /** T-DG5-BE-Y1 (F-DG5-123): the capability changes, the key deliverables, then their trace links. */
+  capabilitiesRecorded: "2026-06-03T06:00:00Z",
+  deliverablesRecorded: "2026-06-03T06:10:00Z",
+  deliverablesLinked: "2026-06-03T06:20:00Z",
   submitted: "2026-06-03T07:00:00Z",
   ranked: "2026-06-03T09:00:00Z",
   selected: "2026-06-04T07:00:00Z",
@@ -92,6 +102,28 @@ export interface DemoPortfolioInitiative {
   readonly role: { readonly code: string; readonly labelEn: string; readonly labelAr: string; readonly fte: string };
   /** Monthly committed FTE of the initiative's role (decimal string, numeric(6,2)). */
   readonly demandFte: string;
+  /**
+   * T05 "Key deliverables [3-7 deliverables]" (B0072; ADR-0021 §2), in ordinal order (T-DG5-BE-Y1, F-DG5-123): the
+   * title in English then Arabic, each marked synthetic; `due` is the approved milestone date it feeds.
+   */
+  readonly deliverables: readonly { readonly en: string; readonly ar: string; readonly due: string }[];
+  /**
+   * The capability change the deliverables deliver ("Deliverable -> Capability change", M0097): G3's existing one
+   * (`existing`), or a new heatmap entry on the initiative's TOM gap.
+   */
+  readonly capability:
+    | { readonly existing: true }
+    | {
+        readonly existing: false;
+        readonly name: string;
+        readonly description: string;
+        readonly dimensionCode: string;
+        readonly currentLevel: number;
+        readonly targetLevel: number;
+        readonly sourcingNeed: "build" | "buy" | "partner";
+      };
+  /** The initiative's B0147 line, for the deliverables' and the links' text. */
+  readonly chain: string;
 }
 
 export const DEMO_PORTFOLIO: readonly DemoPortfolioInitiative[] = [
@@ -114,6 +146,26 @@ export const DEMO_PORTFOLIO: readonly DemoPortfolioInitiative[] = [
       fte: "3.00",
     },
     demandFte: "2.50",
+    deliverables: [
+      {
+        en: "Redesigned roaming pass catalogue",
+        ar: "كتالوج باقات التجوال بعد إعادة التصميم",
+        due: "2026-09-30",
+      },
+      {
+        en: "One-tap pass activation journey in the app",
+        ar: "رحلة تفعيل الباقة بلمسة واحدة في التطبيق",
+        due: "2026-11-30",
+      },
+      {
+        en: "Attach-rate and activation tracking report",
+        ar: "تقرير متابعة نسبة الاشتراك والتفعيل",
+        due: "2026-11-30",
+      },
+    ],
+    capability: { existing: true },
+    chain:
+      "Low activation -> Proposition + journey -> Pass redesign + digital activation -> Attach rate / activation -> Revenue uplift",
   },
   {
     no: 2,
@@ -134,6 +186,35 @@ export const DEMO_PORTFOLIO: readonly DemoPortfolioInitiative[] = [
       fte: "2.00",
     },
     demandFte: "1.50",
+    deliverables: [
+      {
+        en: "Roaming QoS monitoring for the top destinations",
+        ar: "مراقبة جودة خدمة التجوال لأهم الوجهات",
+        due: "2026-10-15",
+      },
+      {
+        en: "Proactive travel and usage notifications",
+        ar: "إشعارات استباقية للسفر والاستخدام",
+        due: "2026-12-15",
+      },
+      {
+        en: "Care playbook for roaming complaints",
+        ar: "دليل الرعاية لمعالجة شكاوى التجوال",
+        due: "2026-12-15",
+      },
+    ],
+    capability: {
+      existing: false,
+      name: "Proactive roaming service assurance (synthetic)",
+      description:
+        "Monitor roaming quality per destination and tell travellers before they call (synthetic illustrative example).",
+      dimensionCode: "journeys_processes",
+      currentLevel: 2,
+      targetLevel: 4,
+      sourcingNeed: "build",
+    },
+    chain:
+      "High complaints -> Journey + service assurance -> Proactive comms + QoS monitoring -> Complaint rate -> CX + care cost",
   },
   {
     no: 3,
@@ -155,6 +236,35 @@ export const DEMO_PORTFOLIO: readonly DemoPortfolioInitiative[] = [
       fte: "2.00",
     },
     demandFte: "1.50",
+    deliverables: [
+      {
+        en: "Partner cost analytics baseline",
+        ar: "خط أساس تحليلات تكلفة الشركاء",
+        due: "2026-09-15",
+      },
+      {
+        en: "Partner usage feed for digital activation",
+        ar: "تغذية بيانات استخدام الشركاء للتفعيل الرقمي",
+        due: "2026-09-28",
+      },
+      {
+        en: "Partner steering and renegotiation shortlist",
+        ar: "قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض",
+        due: "2026-09-28",
+      },
+    ],
+    capability: {
+      existing: false,
+      name: "Partner cost and usage analytics (synthetic)",
+      description:
+        "Compare partner cost per MB and steer roaming traffic to the better-value partners (synthetic illustrative example).",
+      dimensionCode: "partners_sourcing",
+      currentLevel: 1,
+      targetLevel: 3,
+      sourcingNeed: "partner",
+    },
+    chain:
+      "Partner cost pressure -> Partner model + analytics -> Partner optimization -> Cost/MB, margin -> Margin improvement",
   },
 ];
 
@@ -181,6 +291,14 @@ export const DEMO_PORTFOLIO_IDS = {
   resourceRole: (no: number) => rtId(RT_BLOCK.resourceRole, no),
   capacity: (no: number, m: number) => rtId(RT_BLOCK.capacity, (no - 1) * DEMO_CAPACITY_MONTHS.length + m),
   resourceDemand: (no: number, m: number) => rtId(RT_BLOCK.resourceDemand, (no - 1) * DEMO_CAPACITY_MONTHS.length + m),
+  /** T-DG5-BE-Y1: deliverable k (1-based) of initiative `no`; at most 7 per initiative (T05 "3-7"). */
+  deliverable: (no: number, k: number) => rtId(RT_BLOCK.deliverable, (no - 1) * 7 + k),
+  /** G3's capability (roaming-gates.ts) for INI-01, a new one for INI-02 and INI-03. */
+  capability: (no: number) => (no === 1 ? rtId(RT_BLOCK.capability, 1) : rtId(RT_BLOCK.deliverableCapability, no - 1)),
+  /** The deliverable -> capability link of deliverable k of initiative `no`. */
+  deliverableCapabilityLink: (no: number, k: number) => rtId(RT_BLOCK.deliverableTraceLink, (no - 1) * 7 + k),
+  /** The capability -> outcome KPI link of initiative `no` (after the 21 deliverable numbers). */
+  capabilityKpiLink: (no: number) => rtId(RT_BLOCK.deliverableTraceLink, 21 + no),
 } as const;
 
 const WAVE_2 = rtId(RT_BLOCK.roadmapWave, 2);
@@ -215,6 +333,96 @@ async function step(
 }
 
 /**
+ * T05 "Key deliverables [3-7 deliverables]" of INI-01..03 (T-DG5-BE-Y1; F-DG5-123; D-174; B0072; ADR-0021 §2; ADR-0038
+ * §1, §5), written while each card is still a draft, before it is submitted for prioritization, as the product records
+ * them:
+ *   - the capability changes INI-02 and INI-03 deliver (capability heatmap register; tom.edit; TL), each on its
+ *     initiative's TOM gap; INI-01 delivers G3's "Digital roaming activation";
+ *   - three deliverables per initiative (deliverables.ts createDeliverable; initiative.edit; TL): ordinals 1-3, owner
+ *     WL, acceptance `pending` (acceptance is the owner's later business decision, deliverable.accept; none is
+ *     seeded), each due on the approved milestone it feeds, after the synthetic clock and inside the planned window;
+ *   - the trace links (traceability.ts createTraceLink; traceability.link; TL): each deliverable -> its capability
+ *     ("Deliverable -> Capability change"), and each capability -> its chain's outcome KPI ("Capability change -> KPI
+ *     movement"), with no allocation share (no value is attributed; the totals are unchanged).
+ * One audit event per write (ctx.insert). The B0147 lines themselves (finding -> gap -> initiative -> KPI -> benefit)
+ * are untouched: these records add the M0097 steps beside them.
+ */
+async function seedKeyDeliverables(ctx: DemoSeedContext): Promise<void> {
+  const { tl, wl } = U;
+  const t = (k: keyof typeof DEMO_PORTFOLIO_TIMES) => when(ctx, DEMO_PORTFOLIO_TIMES[k]);
+  for (const p of DEMO_PORTFOLIO) {
+    if (p.capability.existing) continue;
+    await ctx.insert("capability", `roaming.portfolio.capability.${p.code.toLowerCase()}`, {
+      id: DEMO_PORTFOLIO_IDS.capability(p.no),
+      ...scoped(),
+      name: p.capability.name,
+      description: p.capability.description,
+      dimension_code: p.capability.dimensionCode,
+      current_level: p.capability.currentLevel,
+      target_level: p.capability.targetLevel,
+      sourcing_need: p.capability.sourcingNeed,
+      owner_user_id: wl,
+      tom_gap_id: rtId(RT_BLOCK.tomGap, p.no),
+      status: "active",
+      ...stamps(t("capabilitiesRecorded"), tl),
+    });
+  }
+  for (const p of DEMO_PORTFOLIO) {
+    if (p.deliverables.length < 3 || p.deliverables.length > 7)
+      throw new Error(`demo seed: ${p.code} needs 3-7 key deliverables (T05), has ${p.deliverables.length}`);
+    const last = p.milestones.map((m) => m.date).sort()[p.milestones.length - 1]!;
+    let k = 0;
+    for (const d of p.deliverables) {
+      k += 1;
+      if (d.due > last || d.due <= ctx.date(0))
+        throw new Error(`demo seed: ${p.code} deliverable ${k} is due ${d.due}, outside the clock..milestone window`);
+      await ctx.insert("deliverable", `roaming.portfolio.deliverable.${p.code.toLowerCase()}.${k}`, {
+        id: DEMO_PORTFOLIO_IDS.deliverable(p.no, k),
+        ...scoped(),
+        initiative_id: p.id,
+        ordinal: k,
+        title: `${d.en} (synthetic) / ${d.ar} (اصطناعي)`,
+        description:
+          `Key deliverable ${k} of ${p.code} (B0147: ${p.chain}); synthetic illustrative example. / ` +
+          `المخرج الرئيسي ${k} للمبادرة ${p.code}؛ مثال توضيحي اصطناعي.`,
+        owner_user_id: wl,
+        due_date: d.due,
+        acceptance_status: "pending",
+        status: "active",
+        ...stamps(t("deliverablesRecorded"), tl),
+      });
+    }
+  }
+  for (const p of DEMO_PORTFOLIO) {
+    let k = 0;
+    for (const d of p.deliverables) {
+      k += 1;
+      await ctx.insert("trace_link", `roaming.portfolio.trace.deliverable_capability.${p.code.toLowerCase()}.${k}`, {
+        id: DEMO_PORTFOLIO_IDS.deliverableCapabilityLink(p.no, k),
+        ...scoped(),
+        link_kind: "deliverable_capability",
+        deliverable_id: DEMO_PORTFOLIO_IDS.deliverable(p.no, k),
+        capability_id: DEMO_PORTFOLIO_IDS.capability(p.no),
+        contribution_statement: `${d.en} builds the capability change of ${p.code} (synthetic illustrative example).`,
+        status: "active",
+        ...stamps(t("deliverablesLinked"), tl),
+      });
+    }
+  }
+  for (const p of DEMO_PORTFOLIO)
+    await ctx.insert("trace_link", `roaming.portfolio.trace.capability_kpi.${p.code.toLowerCase()}`, {
+      id: DEMO_PORTFOLIO_IDS.capabilityKpiLink(p.no),
+      ...scoped(),
+      link_kind: "capability_kpi",
+      capability_id: DEMO_PORTFOLIO_IDS.capability(p.no),
+      outcome_kpi_id: rtId(RT_BLOCK.outcomeKpi, p.no),
+      contribution_statement: `The capability change moves the KPI of ${p.code}'s line (B0147: ${p.chain}; synthetic illustrative example).`,
+      status: "active",
+      ...stamps(t("deliverablesLinked"), tl),
+    });
+}
+
+/**
  * The approved portfolio, up to (and not including) the G4 submission. roaming-gates.ts calls it after G3 is approved
  * and before G4 is submitted, so G4's frozen snapshot reads these records.
  */
@@ -222,6 +430,9 @@ export async function seedApprovedPortfolio(ctx: DemoSeedContext): Promise<void>
   const { tl, sp, fin, bo, wl } = U;
   const t = (k: keyof typeof DEMO_PORTFOLIO_TIMES) => when(ctx, DEMO_PORTFOLIO_TIMES[k]);
   const weightSet = rtId(RT_BLOCK.scoringWeightSet, 1);
+
+  // 0. The cards' key deliverables, their capability changes and trace links (T-DG5-BE-Y1; F-DG5-123).
+  await seedKeyDeliverables(ctx);
 
   // 1. Submit for prioritization (draft -> submitted; transitions.ts submit).
   for (const p of DEMO_PORTFOLIO) await step(ctx, p, "draft", "submitted", "submit", t("submitted"), tl);
