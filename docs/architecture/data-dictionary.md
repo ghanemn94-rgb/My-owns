@@ -12384,9 +12384,11 @@ No table changes. The demo `international_roaming` dataset now creates its trans
 
 _Amendment 2026-10-18, T-DG5-ARCH-R5._ No table, column, constraint, trigger or migration changes.
 
+_Amended 2026-10-19, T-DG5-ARCH-R6 (D-174, F-DG5-123; T-DG5-BE-Y1):_ the demo also writes the key deliverables of INI-01..INI-03, the two capability changes they deliver and their trace links (the last three table rows below; ADR-0050 amendment D16). The `roaming-portfolio.ts` line references are corrected to the merged tree (`c0f6208`). Each new row has one audit event `<table>.create` and one `demo_seed_record` row (+23 each), with fixed ids in the blocks `0x079`–`0x07b` (`roaming-ids.ts:87–94`). Still no table, column, constraint, trigger or migration change.
+
 **The demo writes no `gate_exception` row.** G4 is complete on a real approved portfolio of INI-01..INI-03, and every G4 `gate_submission_criterion` row has `gate_exception_id` NULL (`packages/db/src/demo/data/roaming-gates.ts:516–533`). The earlier statement "two accepted `gate_exception` rows on G4" (the paragraph above, at T-DG5-BE-V3) is corrected there.
 
-**New rows the demo writes, in existing tables** (`packages/db/src/demo/data/roaming-portfolio.ts`, `seedApprovedPortfolio` `:221` and `launchApprovedPortfolio` `:467`; `business-cases.ts`). They are all synthetic, with fixed ids and synthetic-clock dates (ADR-0050 amendment D11):
+**New rows the demo writes, in existing tables** (`packages/db/src/demo/data/roaming-portfolio.ts`, `seedApprovedPortfolio` `:429` and `launchApprovedPortfolio` `:678`, _corrected 2026-10-19 (T-DG5-ARCH-R6) from `:221` and `:467`_; `seedKeyDeliverables` `:350–423`; `business-cases.ts`). They are all synthetic, with fixed ids and synthetic-clock dates (ADR-0050 amendment D11):
 
 | Table | Rows | Notes |
 |---|---|---|
@@ -12401,6 +12403,9 @@ _Amendment 2026-10-18, T-DG5-ARCH-R5._ No table, column, constraint, trigger or 
 | `capacity` | 18 | three roles × July–December 2026 |
 | `resource_demand` | 18 | planned by WL, then committed by BO |
 | `milestone` | 6 | two per initiative, dates approved by TL |
+| `capability` | 2 | _added 2026-10-19 (T-DG5-ARCH-R6)._ Written 2026-06-03 06:00 by TL (`tom.edit`; `capability.create`): "Proactive roaming service assurance (synthetic)" for INI-02 (`journeys_processes`, level 2 → 4, `build`) and "Partner cost and usage analytics (synthetic)" for INI-03 (`partners_sourcing`, level 1 → 3, `partner`), each owned by WL, status `active`, on the initiative's chain TOM gap (`roaming-portfolio.ts:353–369`). INI-01 delivers G3's existing capability. The dataset now holds 3 capabilities. |
+| `deliverable` | 9 | _added 2026-10-19 (T-DG5-ARCH-R6)._ Written 2026-06-03 06:10 by TL (`initiative.edit`; `deliverable.create`): three per initiative (T05's 3–7), ordinals 1–3, owner WL, `acceptance_status` `pending`, status `active`, none submitted or accepted; title `<en> (synthetic) / <ar> (اصطناعي)`; each due on one of the initiative's approved milestone dates (`:370–395`). |
+| `trace_link` | 12 | _added 2026-10-19 (T-DG5-ARCH-R6)._ Written 2026-06-03 06:20 by TL (`traceability.link`; `trace_link.create`): 9 `deliverable_capability` (each deliverable → its initiative's capability) and 3 `capability_kpi` (each capability → its chain's outcome KPI), status `active`, a synthetic contribution statement, **no allocation share** (`:396–422`). |
 
 **Updated rows** (P2 version step and one audit event each, with the product's verb): `initiative` status `draft → submitted → ranked → selected → funded`, and `→ launched` after G4 (`initiative.submit`, `.rank`, `.select`, `.fund`, `.launch`); `business_case` `validate_baseline` for BC-02..BC-04; `resource_demand` `commit`; `milestone` `approve_date`. Each initiative card now also has `scope_in` (`roaming.ts:734`). Each chain's benefit line and cash investment line is written with `business_case_id` = that chain's initiative case (`business-cases.ts:590`, `caseIdOfLine`); the amounts are unchanged. The seed writes no outbox row for any of these (ADR-0050 D14).
 
