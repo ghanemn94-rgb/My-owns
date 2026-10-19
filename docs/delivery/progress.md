@@ -31,15 +31,21 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **Validators:** `validate.mjs --stage DG4`, `--historical --stage DG0` to `DG4`, `--pipeline` and `--reconcile` all exit 0.
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
-- **DG5 (P5 "Configuration automation and outputs") is REVIEWING round 3** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-173).
-  - **Closed and verified:** F-DG5-100, 101, 121, 140 and 141.
-  - **Repaired in wave X, to be verified in round 3:** F-DG5-120, 122, 142 and 143 (D-172, D-173).
-  - **Re-frozen for round 3:** candidate `sha256:fc93b239…` (2187 files, source `bbd6294`). The manifest is `docs/delivery/candidates/DG5/fc93b239904677e5.manifest.json`.
+- **DG5 (P5 "Configuration automation and outputs") is FIXING after review round 3** (78/78 DG5-final requirements IMPLEMENTED; D-141 to D-174).
+  - **Round 3** (candidate `sha256:fc93b239…`, 2187 files, source `bbd6294`): domain PASS, code-security PASS (`T-DG5-REV-SEC-R3B`), qa PASS (`T-DG5-REV-QA-R3B`). A container restart at about 23:31Z stopped the first code-security and qa runs, which were salvaged to `test-evidence/DG5/{code-security,qa}-r3-orphaned/` and re-run (D-174).
+  - **Closed and verified:** F-DG5-100, 101, 120, 121, 122, 140, 141, 142 and 143.
+  - **Open, repaired in wave Y (D-174):**
+    - F-DG5-144 (Medium, REQ-S15-009): Diagnose page-level reflow;
+    - F-DG5-102 and F-DG5-145 (Low, one defect): the ADR-0002 boundary test's budget;
+    - F-DG5-123 (Low, REQ-S18-002): the demo's launched initiatives have no key deliverables.
+  - Nothing is Critical, High or mandatory, but the validator needs every finding terminal, and a Medium cannot be accepted as an observation.
 - **Next action:**
-  1. The round-3 reviews run on candidate `fc93b239` in the main checkout, with a monitor armed and no worktree or install activity (D-082). The assignments are in `docs/delivery/assignments/DG5/round-3/`.
-     - **Domain: done.** `T-DG5-REV-DOM-R3` passed. F-DG5-120 and F-DG5-122 are verified closed, and it raised F-DG5-123 (Low, REQ-S18-002: the demo's launched INI-01..03 carry no key deliverables). Commits `5957c1c` and `493d71b`.
-     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R3B` and `T-DG5-REV-QA-R3B`,** from `round-3/{role}-rerun.md`. A container restart at about 23:31Z stopped the first runs about two and a half hours in, before they wrote a record. Their material is kept for provenance only in `test-evidence/DG5/{code-security,qa}-r3-orphaned/`, without the QA run's full-suite screenshots (D-162).
-  2. Import the findings and verifications (`--round 3`).
+  1. Repair wave Y, three tasks at the same time, each in its own worktree:
+     - `T-DG5-BE-Y1` (F-DG5-123, and the disclosed `demo.test.ts` teardown budget);
+     - `T-DG5-BE-Y2` (F-DG5-102, 145);
+     - `T-DG5-FE-Y1` (F-DG5-144).
+     Then `T-DG5-ARCH-R6` for the ADR and data-dictionary statements the handbacks name.
+  2. Merge, verify the merged tree (three parts, no agent running), record D-175, and re-freeze for round 4. In round 4: domain verifies F-DG5-123, code-security F-DG5-102, qa F-DG5-144 and 145.
   3. Before the release-auditor runs, get the user's decision on the D-140 auditor-sidecar ordering fix (options 1–3; 1 is recommended).
 ## DG2 scope (P2 — diagnose, define and design)
 
