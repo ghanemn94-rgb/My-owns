@@ -1,0 +1,347 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 4,
+  "candidate_id": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf",
+  "source_commit": "fb9c221",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-DOM-R4-domain-reviewer-20261019T095848Z-5435b9e8",
+    "session_id": "5435b9e8-46ce-4326-94c4-dc36b9f9f51f"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG5 implementation, test, register row, ADR, repair or delivery decision in the reviewed candidate, including repair wave Y (T-DG5-BE-Y1, T-DG5-BE-Y2, T-DG5-FE-Y1, T-DG5-ARCH-R6) and the orchestrator's comment-only edit 2d0f98c. I formed this verdict from my own runs in this session (T-DG5-REV-DOM-R4), on a disposable clone, before reading any other reviewer's round-4 record (none is visible to me). My own round-3 records were read only to re-run my reproductions."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-4/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-037",
+    "REQ-S01-002", "REQ-S01-003", "REQ-S01-004",
+    "REQ-S02-001", "REQ-S02-004",
+    "REQ-S03-007", "REQ-S03-010",
+    "REQ-S04-011",
+    "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010",
+    "REQ-S07-016",
+    "REQ-S08-005", "REQ-S08-019",
+    "REQ-S09-011",
+    "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026",
+    "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009", "REQ-S13-010",
+    "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004",
+    "REQ-S15-004",
+    "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021",
+    "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016",
+    "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R4-00-candidate",
+      "procedure": "Verify the frozen candidate on the repository and on a complete, non-shallow disposable clone at the freeze commit; confirm the commits after the source touch only docs/delivery/; install offline and build in the clone.",
+      "command": "git rev-parse HEAD; git diff --name-only fb9c221 HEAD | grep -v '^docs/delivery/'; node tools/gates/candidate.mjs --stage DG5 (repo and clone); git clone /home/user/My-owns $TMPDIR/rev && git checkout 96aaeb2; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pnpm-store/v10; pnpm -r build",
+      "environment": "Repository /home/user/My-owns at HEAD 96aaeb2 (the freeze commit); clone $TMPDIR/rev (full clone, 1521 commits, not shallow) at 96aaeb2; Node 24.21.0; pnpm 10.33.0.",
+      "expected": "HEAD descends from fb9c221 by delivery records only; candidate sha256:26d4ad92... with 2188 files in both trees; install and build exit 0.",
+      "actual": "HEAD 96aaeb2; fb9c221..HEAD changes only docs/delivery/ (assignments, manifest, progress, stages). Candidate sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf, 2188 files, in the repository and in the clone. A first install attempt with the default store failed with EROFS (exit 226): the HOME pnpm store is read-only in the sandbox. Re-run with a copy of the store under $TMPDIR: install exit 0. Its two 'Failed to create bin ... mth-db' warnings come from @mth/db/dist/cli.js, which doesn't exist until the build; the build then exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/candidate-clone.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/install.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-01-validators",
+      "procedure": "Run the historical validators of the four approved gates and the DG5 register check.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4|DG3|DG2|DG1; node tools/gates/validate.mjs --register DG5",
+      "environment": "Repository working tree at 96aaeb2; Node 24.21.0.",
+      "expected": "All five exit 0.",
+      "actual": "PASS gate DG4/DG3/DG2/DG1 (historical), each exit 0; PASS register rules at DG5, exit 0. (A first combined run gave the same PASS lines; the log is the re-run with each exit status captured separately.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-02-f123-verification-demo",
+      "procedure": "Re-run my F-DG5-123 reproduction on a demo-initialized stack as the demo TL, SP and FIN, in en and ar: dump gates, initiatives, deliverables, milestones, traceability graph, orphan report, capability heatmap, business cases and totals; render the portfolio, initiative pages, roadmap Deliverables, capability heatmap, traceability and orphan report, gates G1-G6 and the other demo screens; take element crops of the five F-DG5-123 sections; compare with the round-2 and round-3 dumps.",
+      "command": "env E2E_PG_PORT=26451 E2E_API_PORT=26452 MTH_PORT_POOL=26453-26479 PROBE_OUT=$TMPDIR/out-demo PROBE_MATCH=dom-demo.spec.ts e2e/support/with-demo-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1; the same with PROBE_MATCH=dom-f123-crops.spec.ts; python3 -I comparisons recorded in f123-analysis.txt",
+      "environment": "Clone $TMPDIR/rev; demo stack MTH_ENV=demo, AUTH_MODE=dev (D-165); Chromium from /opt/pw-browsers; ports 26451-26479; 1-minute load 8-12.",
+      "expected": "No deliverable-count warning on the portfolio or initiative pages; 3-7 key deliverables per launched initiative; the orphan report lists no initiative, deliverable or capability; G4 8 of 8 on existing records; totals and B0147 chains unchanged; deterministic seed.",
+      "actual": "Probe 5 passed + 1 skipped, exit 0. The skip is by design: the API-dump test runs in the en project only. Crops 2/2, exit 0. All expectations hold; details in the F-DG5-123 verification: 'No warnings' on INI-01..03 in en and ar; 3 deliverables each (pending, owned by the WL, due on approved milestone dates, en/ar synthetic titles); heatmap 3 capabilities; graph +11 nodes and +21 edges, nothing removed, B0147 edges identical; orphan report one entry (the fourth diagnosed issue); G1-G6 identical to round 3 apart from catalogue clock-default timestamps; G4 8/8, no exception, frozen criteria identical; BC-01..04 totals byte-identical; checksum 0a7fdc3f...37e4 in both probe seeds. One exploratory dump (demo-trace-links.json) is a 400: my query's limit=200 is above the API maximum, a probe error, so I used the graph dump instead. Documents are dir=rtl in ar and dir=ltr in en.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-002", "REQ-S18-001", "REQ-PB-090"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/f123-analysis.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-demo.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-f123-crops.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/playwright.probe.config.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-crops.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c1-portfolio-table.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c1-portfolio-table.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c2-orphan-report.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c2-orphan-report.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c3-roadmap-deliverables.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c3-roadmap-deliverables.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c4-capability-heatmap.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c4-capability-heatmap.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/dir.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-orphans.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-traceability.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-deliverables-23.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-trace-links.json"
+      ]
+    },
+    {
+      "id": "DOM-R4-03-demo-g1-g6-labels-screens",
+      "procedure": "On the same demo run, read the G1-G6 pages, walkthrough, business cases, decisions, initiative pages and form headers for the synthetic labels and the gate states, in en and ar.",
+      "command": "probe/dom-demo.spec.ts (as DOM-R4-02); reading demo/text/{en,ar}/*.txt",
+      "environment": "As DOM-R4-02.",
+      "expected": "Every demo screen shows 'Illustrative example — synthetic' / 'مثال توضيحي — اصطناعي'; every demo G-approval shows 'Synthetic demonstration - approves nothing real'; G1-G3 complete, G4 8 of 8, G5 1 of 4, G6 0 of 4 (D-173/D-175); walkthrough unchanged.",
+      "actual": "As expected on every captured page: the label banner is on each one, in both languages, and the funding decisions and gate decisions carry the synthetic approval note. G1 6/6, G2 5/5, G3 5/5, G4 8/8, G5 1/4, G6 0/4. The walkthrough dump is identical to round 3. The north-star dump is identical to round 3.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-003", "REQ-S18-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/shots/en/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/shots/ar/d06-gate-4-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/shots/en/d19-portfolio.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/shots/ar/d19-portfolio.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/shots/en/d08-walkthrough.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/shots/ar/d08-walkthrough.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/en/d25-initiative-INI-01.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/ar/d28-design-heatmap.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-walkthrough.json"
+      ]
+    },
+    {
+      "id": "DOM-R4-04-source-fidelity-production",
+      "procedure": "On a production-initialized stack, dump the methodology API and compare it offline with docs/source: blocks, provenance (B0004, B0124, B0157-B0162), the guiding questions (B0016), element counts, the health questions (B0150), the launch windows (B0134), branding, navigation and the environment refusals.",
+      "command": "env E2E_PG_PORT=26451 E2E_API_PORT=26452 MTH_PORT_POOL=26453-26479 PROBE_OUT=$TMPDIR/out-prod PROBE_MATCH='dom-{prod,empty-g4}.spec.ts' apps/web/e2e/support/with-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1; python3 -I probe/compare.py /home/user/My-owns $TMPDIR/out-prod",
+      "environment": "Clone $TMPDIR/rev; production-initialized stack (migrate + seed-dev, AUTH_MODE=dev, no environment marker); ports 26451-26479; 1-minute load about 20-23.",
+      "expected": "compare.py 0 FAIL; the same results as round 3.",
+      "actual": "Probe 5 passed + 1 skipped (by design: the en-only API dump), exit 0. compare.py: FAILS 0, exit 0. 165 blocks verbatim and in source order; provenance = B0004; realizeNote = B0124; custom extensions B0157-B0162; four B0016 questions; 16 templates, each custom_extension with one question tag; 10 TOM dimensions, 6 phases, 6 gates; 25 health questions verbatim; three B0134 windows; name 'Mobily Transformation Hub', #0078FF provisional, provisional wordmark. Navigation: office 14 areas, admin 3, lead 13, nobody 2. Environment production; walkthrough 409 environment.not_demo. Apart from the invocation line and the requestIds, identical to round 3.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-S01-002", "REQ-S01-003", "REQ-S01-004", "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S14-001", "REQ-S14-002", "REQ-S14-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/source-compare-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/compare.py",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-prod.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-prod.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-05-reader-about-studio-navigation-branding-ui",
+      "procedure": "Render the reader, B0124, B0031, About, launch plan, health check, Studio, branding and the navigation of the office, admin, lead and auditor users, in en and ar; read the navigation colour and the wordmark.",
+      "command": "probe/dom-prod.spec.ts 'UI: reader, About, ...' (both projects)",
+      "environment": "As DOM-R4-04.",
+      "expected": "B0004 verbatim on the reader and About; the Realize phase described as aligned with PMI BRM logic, with no claim of standard status; custom extensions badged; a provisional wordmark; navigation in a contrast-checked shade of brand.primary.",
+      "actual": "As expected in both languages. The Arabic About shows the provisional translation with the B0004 English verbatim beneath it ('B0004 فقرة الدليل'), 'not an official PMI standard ... not certified by PMI or any other body', the provisional wordmark 'مؤقت', and Asia/Riyadh and SAR. Navigation background rgb(0, 113, 241) = #0071F1, derived from the provisional #0078FF (D-163/D-164). The reader shows the B0124 text 'aligns with PMI Benefits Realization Management logic'. The Studio shows the 'Custom extension (playbook v1.0)' badges.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S01-002", "REQ-S01-003", "REQ-S03-007", "REQ-S03-010", "REQ-S20-015", "REQ-S20-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/en/01-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/ar/01-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/en/04-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/ar/04-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/en/07-studio-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/ar/07-studio-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/en/09-admin-shell-nav.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/ar/09-admin-shell-nav.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/nav-bg-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/wordmark-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/about-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/reader-B0124-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/nav-office-en.json"
+      ]
+    },
+    {
+      "id": "DOM-R4-06-f122-regression",
+      "procedure": "Re-run my closed F-DG5-122 reproduction, which shares g4 code paths with the demo portfolio: an empty approved portfolio plus an accepted exception on Initiative cards only; attempt the submission, in en and ar.",
+      "command": "probe/dom-empty-g4.spec.ts (as DOM-R4-04)",
+      "environment": "As DOM-R4-04.",
+      "expected": "The submission is refused for the seven uncovered criteria.",
+      "actual": "Passed in both projects. In each language the submission is refused with 422 'Mandatory required outputs are incomplete: g4.business_cases, g4.finance_validation, g4.prioritization, g4.roadmap, ...' (the seven criteria). There is no regression.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-empty-g4.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/api/empty-g4-en.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/api/empty-g4-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/en/e01-empty-portfolio-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/shots/ar/e01-empty-portfolio-G4.png"
+      ]
+    },
+    {
+      "id": "DOM-R4-07-no-official-claims-scan",
+      "procedure": "Scan the shipped texts, reporting, worker and demo dataset for official PMI/Mobily or certification claims, for DG0-DG7 leaking into the product catalogue, and the repair diff's added product lines.",
+      "command": "grep -rniE 'official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily' apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo apps/api/src/modules/workflows/g4.ts; grep -rnE '\\bDG[0-7]\\b' apps/web/src/i18n/{en,ar}/*.json; git diff bbd6294..fb9c221 -- packages/db/src/demo apps/web/src/styles | grep '^+' | grep -niE 'official|certif|PMI|Mobily'",
+      "environment": "Clone at 96aaeb2.",
+      "expected": "Only negations or disclaimers match; no DG token in the product strings; nothing in the repair diff.",
+      "actual": "The first grep exits 0 with four matches, all disclaimers: 'It is not an official PMI standard' (playbookP5 and common.json methodBody), 'not official Mobily brand assets', and 'No official Mobily logo or verified brand colours have been supplied'. The DG grep exits 1 (no match), and so does the repair-diff grep.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S01-002", "REQ-S20-015"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/static-text-scan.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-08-integration-batch",
+      "procedure": "Run the same 40 integration files as round 3, covering the Studio, scoring defaults, migrations, procedures (D-165/D-166/D-167), approval routes and conditions, automation and starters (Rule B), KPI restatement, formula preview and NPV/ROI, outputs, snapshots and injection, health check and launch plan, the demo dataset (roaming, numbers, gate history including the new F-DG5-123 test, chains, walkthrough, pending approval, reset determinism) and G4.",
+      "command": "env QA_PG_PORT=26481 MTH_PORT_POOL=26482-26499 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat probe/int-files.txt)",
+      "environment": "Clone $TMPDIR/rev; disposable PostgreSQL; Node 24.21.0; --configLoader runner, as the assignment asks; 1-minute load 19-23, with three reviews running at once.",
+      "expected": "All files and tests pass.",
+      "actual": "Test Files 40 passed (40); Tests 490 passed (490), one more than round 3's 489: the F-DG5-123 test in demo-gate-history (4/4). Exit 0; duration 1194 s. There is no failed, skipped or timed-out test and no hook timeout. packages/db/test/integration/demo.test.ts 9/9 took 185 s with its afterAll teardown inside the new 120 s budget, so round 3's disclosed 30 s hook timeout is gone (BE-Y1). Also green: g4 5/5, walkthrough 16/16, demo-roaming 68/68, demo-traceability-chains 6/6, demo-pending-approval 4/4, studio-review-publish 14/14 (95 % refused, rollback, the methodology admin 403 on a funding reallocation), and A07 restatement with authority and reissue.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/int-files.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-09-root-acceptance-e2e-production",
+      "procedure": "Run the ten root acceptance specs on the production-initialized stack, in en and ar.",
+      "command": "env E2E_PG_PORT=26401 E2E_API_PORT=26402 MTH_PORT_POOL=26403-26449 E2E_SCREENSHOT_DIR=$TMPDIR/shots-root apps/web/e2e/support/with-stack.sh npx playwright test e2e/a03-modular-entry e2e/a04-kpi-update e2e/a06-configuration-change e2e/a07-historical-integrity e2e/a08-a09-gates-decisions e2e/a13-automation-recovery e2e/a15-reporting e2e/a16-health-launch e2e/a20-bilingual-shell e2e/a22-operations-jobs --workers=1",
+      "environment": "Clone $TMPDIR/rev; E2E_SCREENSHOT_DIR pointed into $TMPDIR, as the assignment requires for A06/A07; 1-minute load 18-23.",
+      "expected": "30/30.",
+      "actual": "30 passed (11.2 m), exit 0, with no failed, flaky, skipped or timed-out test. The '[a13] own failed execution listed' lines are the A13 spec's own designed failing rule (the failure queue), not test failures. Covered: A06 (Studio publish, pins, G2 re-approval named, scoring defaults reaching only new transformations, 95 % refused), A07, A08/A09, A13 retry, A15 outputs, A16 health check and 90-day plan, and the A20 bilingual shell.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S06-001", "REQ-S06-006", "REQ-S06-008", "REQ-PB-093", "REQ-S07-016", "REQ-S12-002", "REQ-S13-004", "REQ-S14-003", "REQ-S21-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/03-root-prod.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-10-demo-root-e2e",
+      "procedure": "Run the four demo root specs on a demo-initialized stack: the guided walkthrough (twelve steps by the demo role users), the demo labels, and no AI.",
+      "command": "env E2E_PG_PORT=26401 E2E_API_PORT=26402 MTH_PORT_POOL=26403-26449 E2E_SCREENSHOT_DIR=$TMPDIR/shots-demo QA_EVIDENCE_DIR=$TMPDIR/qa-ev e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-demo-labels.spec.ts e2e/a21-no-ai-operation.spec.ts --workers=1",
+      "environment": "Clone $TMPDIR/rev; MTH_ENV=demo, AUTH_MODE=dev (D-165); 1-minute load about 18.",
+      "expected": "12/12.",
+      "actual": "12 passed (5.8 m), exit 0, with no failed, flaky or skipped test. The seed reports 'coverage complete' and checksum 0a7fdc3f...37e4, the same as both of my probe seeds.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-003", "REQ-S18-004", "REQ-S20-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-11-production-isolation-and-determinism",
+      "procedure": "On a production-path database, count the demo rows and users and try seed-demo; compare the checksums of the independent demo seeds of this round.",
+      "command": "env E2E_PG_PORT=26451 E2E_API_PORT=26452 MTH_PORT_POOL=26453-26479 apps/web/e2e/support/with-stack.sh bash probe/prod-isolation.sh; grep checksum probe-demo.log probe-crops.log 04-root-demo.log",
+      "environment": "Clone $TMPDIR/rev.",
+      "expected": "0 demo rows and users; seed-demo refused; identical checksums.",
+      "actual": "deployment_environment 0, demo_seed_record 0, demo_dataset_run 0, roaming users 0, ROAMING transformations 0. seed-demo is refused with MTH_ENV=production (exit 3) and on a non-empty database (exit 3), and demo_seed_record is still 0 after the refusals. The wrapper exits 0; the two exit-3 refusals are the designed outcome. The three seeds give the same checksum, 0a7fdc3fd946f7063b92a40082e3291c419d042e58962f9ce0bdbb7f5c2737e4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-003", "REQ-DLV-037"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod-isolation.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/prod-isolation.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-crops.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-12-repair-diff-and-observations",
+      "procedure": "Inspect the whole repair diff bbd6294..fb9c221 for regressions and judge D-175's observations (l) to (o).",
+      "command": "git diff bbd6294..fb9c221 (roaming-portfolio.ts, roaming-ids.ts, demo.test.ts, demo-gate-history.test.ts, architecture.test.ts, architecture.testkit.ts, app.css, p5-diagnose-reflow.spec.ts, ADR-0050, data-dictionary)",
+      "environment": "Repository at 96aaeb2.",
+      "expected": "No weakened behaviour; each observation accepted with a reason or raised.",
+      "actual": "BE-Y1 adds only seed rows in new id blocks 0x079-0x07b, written before the submit step, and the seed fails closed outside 3-7 deliverables or outside the clock-to-milestone window. Deliverables are pending, so no acceptance is fabricated, and the links carry no allocation share. The demo.test.ts change is a teardown budget only. The new product test asserts through product reads. BE-Y2 and 2d0f98c touch only the boundary test and its testkit (a comment and an EMPTY_EMIT transformer that changes no diagnostic, per its guard test), so no domain behaviour changes. FE-Y1 is CSS on .workstreams and .conflict, with no markup or logic. ARCH-R6 documents and matches what I observed (D16-D19). Observations: (l) accepted, see the F-DG5-123 verification: the one remaining orphan is the fourth B0145 issue, which B0147 gives no line. (m) accepted: the checksum change is by design and stays deterministic, with three equal seeds. (n) accepted as cosmetic and pre-existing, a qa layout point with no domain effect. (o) accepted: an equivalent mutant of an engineering test, with no product or domain effect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/f123-analysis.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-13-decisions-d163-d168",
+      "procedure": "Judge D-163 (a), D-164 (a)-(k), D-165's accepted observations, D-166 Rules A and B, D-167 and D-168 against this candidate's runs.",
+      "command": "Reading docs/delivery/decisions.md D-163..D-168 (unchanged since round 3: git diff bbd6294..HEAD adds only D-174 and D-175); runs DOM-R4-04/05/08/09/10/11",
+      "environment": "Repository at 96aaeb2; the repair diff touches none of these areas.",
+      "expected": "Each accepted with a reason, or raised.",
+      "actual": "D-163 (a) accepted. The Transformation Office sees Administration for the Studio review, and a technical admin without transformation.read sees 3 areas (my_work, playbook_procedures, administration). Hiding happens server-side, by grants, which is a sound reading of REQ-S03-007. D-164 (a)-(k) accepted as in round 3, re-confirmed by this round's batch and e2e: the #0071F1 navigation derives from the provisional #0078FF, and the BC-01 totals are by reference with no double counting. D-165 accepted: QA-F P-1/P-2/P-3, QA-E O-3 and QA-B O-1/O-2 affect neither RAG nor value states nor approvals. The dev-mode demo binding signs roaming.user.* in only on a dev-mode demo database (DOM-R4-10/11), and procedures v2 giving baseline_validation.record_baseline to TL fits REQ-PB-027. D-166 accepted: under Rule A the intake adopts its transformation and its adopted steps act in it; Rule B is a finish-to-start forward pass over planned starts in which Unknown is never 0 and approved plans are not overwritten, which meets M0232's 'defined scheduling logic'. Both are green in DOM-R4-08. D-167 accepted. D-168 accepted: the B0147 lines are exact (demo-traceability-chains 6/6, graph edges unchanged), and only the wording point of chain 1's outcome remains.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/prod/nav-office-en.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/source-compare-prod.log"
+      ]
+    },
+    {
+      "id": "DOM-R4-14-requirement-acceptances",
+      "procedure": "Test each of the 78 DG5 acceptance texts literally against this round's runs and judge each partial-coverage disclosure in the notes.",
+      "command": "Reading docs/delivery/requirements.csv (final_gate DG5; unchanged since round 3) against DOM-R4-02..13",
+      "environment": "Repository at 96aaeb2.",
+      "expected": "Each acceptance is met with evidence, and each disclosure is acceptable.",
+      "actual": "All 78 rows are IMPLEMENTED and the register check passes. The register and the areas these acceptances cover are unchanged since round 3 apart from the demo dataset rows, which this round re-verified (REQ-S18-001/002/003/004, REQ-PB-090). The other acceptances are re-exercised by this round's source comparison, UI probe, 40-file integration batch, 30 root and 12 demo e2e tests. The disclosures stay acceptable as judged in round 3. REQ-PB-090 asserts the literal line on the API the view renders, and my traceability screen text shows the three B0147 lines. REQ-S18-002's coverage test runs on the real seed (demo-roaming 68/68).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/03-root-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/validators.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/en/d04-traceability.txt"
+      ]
+    },
+    {
+      "id": "DOM-R4-15-environmental-residuals",
+      "procedure": "Record the environmental residuals on the offline and configuration surface.",
+      "command": "n/a (configuration reading; DOM-R4-00 offline install; DOM-R4-10 A21 on the dev-mode demo stack)",
+      "environment": "Sandboxed review host with no network.",
+      "expected": "PASS on the offline and configuration surface, with each residual noted.",
+      "actual": "The live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058) are unreachable here; the offline install from the pinned lockfile and the build succeed. Keycloak and a real demo IdP (D-049; ADR-0050 §1) are a devops item, and the D-165 dev-mode binding is the test path, which works. No AI or external notification adapter ships in P5 (D-142 Q11), and A21 passes with the shipped 'disabled' configuration.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/install.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG5/round-4/domain-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG5/domain/round-4/candidate-clone.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/validators.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/f123-analysis.txt",
+    "docs/delivery/test-evidence/DG5/domain/round-4/probe-demo.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/probe-crops.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/probe-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/source-compare-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/static-text-scan.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/03-root-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log",
+    "docs/delivery/test-evidence/DG5/domain/round-4/prod-isolation.log"
+  ],
+  "reviewed_at": "2026-10-19T10:55:00Z",
+  "summary": "PASS on candidate 26d4ad92 (source fb9c221). F-DG5-123 is CLOSED_VERIFIED on a demo stack in en and ar: INI-01..03 carry 3 key deliverables each and show no warning; the orphan report holds one entry (the fourth B0145 issue, accepted); G4 reads 8 of 8 on existing records; totals, gates and the B0147 lines are unchanged; the seed is deterministic. The full review is green: source comparison 0 FAIL, integration 490/490, root e2e 30/30, demo e2e 12/12, production isolation holds, and no official-claim text. D-175 (l)-(o) and D-163-D-168 are accepted. No new finding."
+}

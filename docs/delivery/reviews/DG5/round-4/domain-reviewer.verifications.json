@@ -1,0 +1,37 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-123",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate 26d4ad92 (clone of the freeze commit 96aaeb2, source fb9c221), on a demo-initialized stack (e2e/support/with-demo-stack.sh, MTH_ENV=demo, AUTH_MODE=dev, demo role users roaming.user.*), in en and ar, re-running my round-3 reproduction through the real API and UI. (1) Portfolio: INI-01..03 read Launched, Selected, Funded with 'No warnings' / 'لا توجد تنبيهات'; the round-3 -> round-4 text diff of d19-portfolio removes exactly the three 'Key deliverables: the card should list 3 to 7.' lines in each language. GET /initiatives (list) and GET /initiatives/{id} return warnings [] for all three; GET /initiatives/{id}/deliverables gives countWarning null. The initiative pages list 'Active deliverables: 3'; the remaining '3 to 7' sentence there is the section's static guidance, not a warning. (2) Deliverables: 3 per initiative, ordinals 1-3, active, acceptance pending (none submitted or accepted, so no business acceptance is fabricated), owned by the initiative's workstream lead, each due on one of that initiative's approved milestone dates (INI-01 09-30/11-30/11-30; INI-02 10-15/12-15/12-15; INI-03 09-15/09-28/09-28), titles en / ar with (synthetic) / (اصطناعي). The roadmap's Deliverables section lists all nine with 'Pending'. (3) Capability heatmap: 3 rows: G3's 'Digital roaming activation' (customer value proposition 2->4, build) plus 'Proactive roaming service assurance' (journeys & processes 2->4, build) and 'Partner cost and usage analytics' (partners & sourcing 1->3, partner), each marked synthetic, on the screen in en and ar. (4) Traceability graph (getTraceability): versus round 3 no edge is removed and no existing node changes apart from its orphan flags; added: 9 initiative_deliverable, 9 deliverable_capability, 3 capability_kpi edges (21) and 11 nodes, none truncated; the three five-node B0147 lines (issue_gap, gap_initiative, initiative_kpi, kpi_benefit_measure) are byte-identical. (5) Orphan report: API and screen (en and ar) list exactly one entry, the fourth diagnosed issue 'Fragmented roaming propositions and an inconsistent digital activation journey' (downstream missing: diagnosed issue -> target-state gap); round 2 had two (that issue plus G3's unlinked capability), round 3 five. I accept BE-Y1's disclosure (D-175 (l)): that issue comes from B0145's case for change ('fragmented propositions, inconsistent digital activation') but B0147 gives it no separate line, so leaving it unlinked is faithful to the source and keeps the M0098 orphan report demonstrable on the demo; it is not a launched initiative nor a deliverable. (6) G4 and the totals: G1-G6 live readiness, decisions and submissions are identical to round 3 apart from the clock-default createdAt/updatedAt of the gate catalogue rows and requestIds; G4 reads 8 of 8 mandatory complete, no gate exception exists, the frozen G4 submission criteria are identical to round 3; BC-01..BC-04 detail, totals and financial metrics are byte-identical to round 3 (no allocation share on the new links, so no value is attributed and nothing is double counted). (7) Determinism: three independent demo seeds in this round (my two probes and the demo root e2e) give the same checksum 0a7fdc3f...37e4 (changed from round 3's 87322174... by design, D-175 (m)); demo.test.ts seed/reset/reset identical 9/9 and demo-gate-history 4/4 (incl. the new F-DG5-123 test) pass in my integration batch. (8) Coherence: B0072 T05 'Key deliverables [3-7 deliverables]' holds; the new records implement the playbook's own chain stated just above B0071 and M0097 (initiative -> deliverable -> capability change -> KPI movement) beside the B0147 lines, not on them; each capability links to its own chain's outcome KPI; deliverables are written while the cards are drafts on 2026-06-03, after G3 and before the G4 submission, and the launch is unchanged. Residuals judged not worth a finding: the two new capability changes have English-only names (like G3's existing one; record content, not a UI string), and the deliverable titles hold en and ar in one string, which is how the dataset labels free-text records. My exploratory GET /trace-links?limit=200 returned 400 (limit above the API maximum, my query's error); I used the graph instead.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-4/f123-analysis.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-demo.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-f123-crops.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/probe-crops.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c1-portfolio-table.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c1-portfolio-table.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c2-orphan-report.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c2-orphan-report.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c3-roadmap-deliverables.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c3-roadmap-deliverables.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c4-capability-heatmap.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c4-capability-heatmap.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c5-initiative-INI-03-deliverables.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c5-initiative-INI-03-deliverables.png",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/en/d19-portfolio.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/ar/d19-portfolio.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/en/d04-traceability.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/ar/d04-traceability.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-orphans.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-traceability.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-gate-G4.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-case-BC-01-totals.json",
+        "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log"
+      ]
+    }
+  ]
+}
