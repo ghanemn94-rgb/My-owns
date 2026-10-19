@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-102",
+      "stage_id": "DG5",
+      "requirement": "REQ-S16-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Test reliability: the ADR-0002 module-boundary unit test exceeds its fixed 30 s budget in full Node 22 unit runs under review load (2 of 3 runs), so pnpm test exits 1 with no product defect",
+      "reproduction": "In a disposable clone of candidate fc93b239 (source bbd6294), install offline and build, then run the full unit suite on Node 22.22.2 with the locale unset (env -u LANG -u LC_ALL -u LC_CTYPE pnpm test) while the machine carries the load of the concurrent round-3 reviews. Run 1 (00:19-00:36Z, load average about 16-20): apps/api/src/architecture.test.ts:200 'API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages' fails with 'Test timed out in 30000ms' after 41687 ms, plus one vitest RPC error '[vitest-worker]: Timeout calling \"onTaskUpdate\"'; unit-node is 2339/2340 and pnpm test exits 1. Run 2 (01:15-01:42Z, load about 15-23): the same test times out after 36898 ms; unit-node 2339/2340, exit 1. Run 3 (02:47-02:56Z, load about 8-10): it passes in 20281 ms and pnpm test exits 0. Re-run alone on Node 22 (npx vitest run --project unit-node apps/api/src/architecture.test.ts): 139/139 pass, exit 0; the test alone takes 17358 ms. For comparison: 22575 ms in my Node 24 full run (pass), 24071-28193 ms in the round-2 code-security run under load, and 8873-9192 ms in the orchestrator's unloaded D-173 run.",
+      "expected": "A gate-relevant check is deterministic under the load the delivery process itself creates (three concurrent reviews; a loaded CI runner). The module-boundary test either fits its budget with headroom or carries a budget measured under load, as F-DG5-121 and the D-173 budget for p4-gates-closure test 9 did for e2e journeys. A full pnpm test then exits 0 whenever the module graph is clean.",
+      "actual": "The fixed 30 s budget (set for F-DG2-143) has no headroom left under review load on Node 22. The full unit suite failed on this one timeout in 2 of 3 runs, while every assertion of the test passes when it runs alone or at lower load. The module graph itself is clean: no boundary violation, and the reporting and worker scans in 08-scans.log agree. The failure is a spurious red that a reviewer or CI must re-run by hand. It never hides a violation, so it does not weaken the gate, only its reliability.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-3/04-unit-node22.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-3/04b-unit-node22-run2.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-3/04c-unit-node22-run3.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-3/04a-unit-node22-architecture-rerun.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-3/03-unit-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-3/08-scans.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-19T03:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 3 (T-DG5-REV-SEC-R3B) on candidate fc93b239. Low and non-mandatory: test reliability only, with no product or security defect. It does not block my verdict."
+        }
+      ]
+    }
+  ]
+}
