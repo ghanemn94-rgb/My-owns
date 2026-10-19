@@ -44,6 +44,7 @@ import {
   moduleViolations,
   scanSource,
   SRC,
+  syntaxErrors,
   walk,
 } from "./architecture.testkit.ts";
 import {
@@ -60,6 +61,8 @@ import {
 } from "./modules.ts";
 
 const REPO = resolve(SRC, "../../..");
+/** F-DG5-102 / F-DG5-145 (D-174): the full-tree walk's own budget, more than 2x its 67 s loaded worst case. */
+const FULL_MODULE_WALK_TIMEOUT_MS = 150_000;
 
 describe("API module boundaries (ADR-0002)", () => {
   const moduleDirs = readdirSync(MODULES_DIR).filter((d) => statSync(join(MODULES_DIR, d)).isDirectory());
@@ -197,12 +200,18 @@ describe("API module boundaries (ADR-0002)", () => {
 
   // F-DG2-143: this walks and lints every module file (~1-1.5 s alone, 4.3-5.8 s under parallel load), so it gets an
   // explicit timeout instead of vitest's 5 s default.
+  // F-DG5-102 / F-DG5-145 (D-174): the module tree grew through P5 (448 files, 5.8 MB), so the shared 30 s budget
+  // (AST_TEST_TIMEOUT_MS) no longer held under review load. Measured on candidate fc93b239: ~9 s unloaded (D-173),
+  // 12.7-17.4 s alone, and 30.2-67.0 s in full Node 22 `pnpm test` runs at load 14-29 on 4 CPUs, where it timed out in
+  // 6 of 9 runs with no assertion failing. D-174 first made the walk cheaper with no rule changed (the rule-4 syntax check
+  // no longer emits JavaScript, see EMPTY_EMIT in architecture.testkit.ts). Then it set this test's own budget to more
+  // than 2x the 67 s loaded worst case, whatever the speed-up. The assertion is unchanged.
   it(
     "every import respects dependsOn, public surfaces and allowed packages",
     () => {
       expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolations(m))).toEqual([]);
     },
-    AST_TEST_TIMEOUT_MS,
+    FULL_MODULE_WALK_TIMEOUT_MS,
   );
 
   it("the declared module graph is acyclic, and audit/access depend on no business module", () => {
@@ -1065,6 +1074,64 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
     expect(bareAllowed("node:some-future-builtin")).toBe(false);
     expect(bareAllowed("fs")).toBe(false);
   });
+
+  // F-DG5-102 / F-DG5-145 (D-174): syntaxErrors() no longer lets ts.transpileModule print the file (EMPTY_EMIT). This
+  // guard pins that rule 4 still reports EXACTLY what a full transpileModule reports, for every module-file extension,
+  // on valid and broken sources and on sources whose diagnostics depend on the extension's script kind, the target or
+  // module detection. It also covers every module's real index.ts.
+  it(
+    "rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)",
+    () => {
+      const fullTranspile = (fileName: string, source: string) =>
+        (
+          ts.transpileModule(source, {
+            fileName,
+            reportDiagnostics: true,
+            compilerOptions: { jsx: ts.JsxEmit.Preserve },
+          }).diagnostics ?? []
+        )
+          .filter((d) => d.category === ts.DiagnosticCategory.Error)
+          .map((d) => {
+            const line = d.file && d.start !== undefined ? d.file.getLineAndCharacterOfPosition(d.start).line + 1 : 0;
+            return `unparseable source: ${ts.flattenDiagnosticMessageText(d.messageText, " ")} (line ${line})`;
+          });
+      const sources = [
+        `import { x } from "./a.ts";\nexport const y: number = x;`,
+        `export const a = (1;`,
+        `const C = (async () => {} as any)[k];`,
+        `export const e = <div a='b'>{x}</div>;`,
+        `export function f(a: string): string { return a; }`,
+        `await Promise.resolve(1);`,
+        `export const r = /a/v;`,
+        "export const s = `abc",
+        `export const o = 010;`,
+        `export enum E { A }\nexport class K { constructor(private p: number) {} }`,
+      ];
+      const extensions = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
+      let withErrors = 0;
+      for (const source of sources)
+        for (const ext of extensions) {
+          const fileName = join(MODULES_DIR, "transformations", `zz-planted${ext}`);
+          const expected = fullTranspile(fileName, source);
+          if (expected.length > 0) withErrors++;
+          expect(syntaxErrors(fileName, source), `${ext}: ${source}`).toEqual(expected);
+        }
+      // Not vacuous: the corpus has syntax errors, and the script kind still follows the extension (a type annotation
+      // is a syntax error in a .js module file and none in a .ts one).
+      expect(withErrors).toBeGreaterThan(sources.length);
+      const typed = `export function f(a: string): string { return a; }`;
+      expect(syntaxErrors(join(MODULES_DIR, "transformations", "zz.ts"), typed)).toEqual([]);
+      expect(syntaxErrors(join(MODULES_DIR, "transformations", "zz.js"), typed).join("\n")).toMatch(
+        /unparseable source: Type annotations can only be used in TypeScript files/,
+      );
+      for (const m of Object.keys(API_MODULES)) {
+        const file = join(MODULES_DIR, m, "index.ts");
+        const source = readFileSync(file, "utf8");
+        expect(syntaxErrors(file, source), m).toEqual(fullTranspile(file, source));
+      }
+    },
+    AST_TEST_TIMEOUT_MS,
+  );
 });
 
 // F-DG2-143: each test here parses a whole source tree (apps/web alone takes ~0.5-0.8 s), so every test in the block

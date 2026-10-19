@@ -112,6 +112,9 @@ import { API_MODULES, type ApiModule } from "./modules.ts";
  * F-DG2-143: per-test timeout for every test that walks module sources through this lint (TypeScript parse plus
  * `transpileModule` per file). The full-tree check takes ~1-1.5 s alone and 4.3-5.8 s under a parallel suite run,
  * which crossed vitest's 5 s default. 30 s gives real headroom without raising the global unit-test default.
+ * F-DG5-102 / F-DG5-145 (D-174): the FULL-TREE walk in architecture.test.ts outgrew this budget and has its own
+ * (`FULL_MODULE_WALK_TIMEOUT_MS` there). The module-owned tests that use this one walk one module each: 0.3-1.9 s alone
+ * on Node 22 and Node 24 (2026-10-19, before the D-174 speed-up), under a third of 30 s, so it is unchanged.
  */
 export const AST_TEST_TIMEOUT_MS = 30_000;
 
@@ -530,13 +533,33 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
  * (`isDeclarationFileName`, i.e. `SourceFile.isDeclarationFile`; incl. `allowArbitraryExtensions` `*.d.<ext>.ts`),
  * so no declaration-file name ever reaches `ts.transpileModule`.
  */
-function syntaxErrors(fileName: string, source: string): string[] {
+/**
+ * F-DG5-102 / F-DG5-145 (D-174): rule 4 needs only the DIAGNOSTICS of `ts.transpileModule`, never its output text, but
+ * the emit (TypeScript transforms plus printing the whole file) was about a third of the full module walk (448 files,
+ * outside vitest on Node 24: ~1.2 s of a ~4 s warm walk; 2026-10-19, T-DG5-BE-Y2 handback). This `before`
+ * transformer hands the emitter an empty tree, so nothing is transformed or printed. It changes no diagnostic:
+ *  - `transpileModule` still builds its options, parses the file (extension-derived script kind, its own target and
+ *    module detection) and collects `getSyntacticDiagnostics` + `getOptionsDiagnostics` BEFORE the emit starts, on
+ *    the ORIGINAL source file; a custom `before` transformer runs only inside the emit, after that;
+ *  - a non-declaration emit adds no diagnostic of its own (TypeScript 6.0 `emitFiles`: only a failing `writeFile`,
+ *    impossible with transpile's in-memory host, a build-info file, never written without incremental/composite, or the
+ *    declaration emit, which transpileModule turns off); `noEmitOnError` stays unset, so no pre-emit diagnostic is
+ *    folded in either.
+ * The guard test 'rule 4 reports exactly the diagnostics of a full ts.transpileModule' (architecture.test.ts) compares
+ * the two over every extension, on valid and broken sources, so a TypeScript upgrade that changed this fails there.
+ */
+const EMPTY_EMIT: ts.TransformerFactory<ts.SourceFile> = (context) => (sourceFile) =>
+  context.factory.updateSourceFile(sourceFile, []);
+
+/** Rule 4 for one file (exported for the guard test only): its syntax errors as violation texts. */
+export function syntaxErrors(fileName: string, source: string): string[] {
   const diagnostics = isDeclarationFileName(fileName)
     ? declarationSyntaxErrors(fileName, source)
     : (ts.transpileModule(source, {
         fileName,
         reportDiagnostics: true,
         compilerOptions: { jsx: ts.JsxEmit.Preserve },
+        transformers: { before: [EMPTY_EMIT] },
       }).diagnostics ?? []);
   return diagnostics
     .filter((d) => d.category === ts.DiagnosticCategory.Error)
