@@ -23,6 +23,7 @@ import { Unknown } from "../Badges.tsx";
 import { Field } from "../Form.tsx";
 import { Icon } from "../Icon.tsx";
 import { ConflictPanel, ErrorState, QueryState, type ConflictRow } from "../States.tsx";
+import { TableScrollRegion } from "../TableScrollRegion.tsx";
 import {
   changedFieldLabels,
   checkExtensionValue,
@@ -756,36 +757,39 @@ function HistoryTab(props: FormFrameworkProps) {
         const parsed = parseBody("versions", raw);
         if (!parsed.ok) return <ErrorState error={parsed.error} />;
         const list = parsed.value;
+        // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
         return (
-          <table className="table table--compact" data-history-rows={list.length}>
-            <caption>{t("forms.history.caption")}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t("forms.history.version")}</th>
-                <th scope="col">{t("forms.history.action")}</th>
-                <th scope="col">{t("forms.history.actor")}</th>
-                <th scope="col">{t("forms.history.when")}</th>
-                <th scope="col">{t("forms.history.fields")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((v, i) => (
-                <tr key={`${v.occurredAt}-${i}`} data-version={v.version ?? ""}>
-                  <th scope="row">{v.version ?? <Unknown />}</th>
-                  <td>
-                    <code dir="ltr">{v.action}</code>
-                  </td>
-                  <td>{v.actorDisplayName ?? t("forms.history.unknownActor")}</td>
-                  <td>{formatDateTime(v.occurredAt, locale) ?? v.occurredAt}</td>
-                  <td>
-                    {v.changedFields.length === 0
-                      ? t("forms.history.noFields")
-                      : changedFieldLabels(v.changedFields, labelSchema, locale).join(", ")}
-                  </td>
+          <TableScrollRegion caption={t("forms.history.caption")}>
+            <table className="table table--compact" data-history-rows={list.length}>
+              <caption>{t("forms.history.caption")}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{t("forms.history.version")}</th>
+                  <th scope="col">{t("forms.history.action")}</th>
+                  <th scope="col">{t("forms.history.actor")}</th>
+                  <th scope="col">{t("forms.history.when")}</th>
+                  <th scope="col">{t("forms.history.fields")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {list.map((v, i) => (
+                  <tr key={`${v.occurredAt}-${i}`} data-version={v.version ?? ""}>
+                    <th scope="row">{v.version ?? <Unknown />}</th>
+                    <td>
+                      <code dir="ltr">{v.action}</code>
+                    </td>
+                    <td>{v.actorDisplayName ?? t("forms.history.unknownActor")}</td>
+                    <td>{formatDateTime(v.occurredAt, locale) ?? v.occurredAt}</td>
+                    <td>
+                      {v.changedFields.length === 0
+                        ? t("forms.history.noFields")
+                        : changedFieldLabels(v.changedFields, labelSchema, locale).join(", ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScrollRegion>
         );
       }}
     </QueryState>
@@ -997,62 +1001,65 @@ function AttachmentsTab(props: FormFrameworkProps) {
           const parsed = parseBody("attachments", raw);
           if (!parsed.ok) return <ErrorState error={parsed.error} />;
           const list = parsed.value;
+          // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
           return (
-            <table className="table table--compact" data-attachment-count={list.length}>
-              <caption>{t("forms.attachments.caption")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t("forms.attachments.evidence")}</th>
-                  <th scope="col">{t("forms.attachments.status")}</th>
-                  <th scope="col">{t("forms.attachments.attached")}</th>
-                  <th scope="col">{t("forms.attachments.store")}</th>
-                  <th scope="col">
-                    <span className="visually-hidden">{t("common.field.actions")}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((a) => (
-                  <tr key={a.id} data-attachment-id={a.id} data-status={a.status}>
-                    <th scope="row">{titleOf(a)}</th>
-                    <td>
-                      {a.status === "active" ? (
-                        <span className="lifecycle-chip lifecycle-chip--active">
-                          <Icon name="check" /> {t("forms.attachments.active")}
-                        </span>
-                      ) : (
-                        <span className="lifecycle-chip lifecycle-chip--archived">
-                          <Icon name="archive" />{" "}
-                          {t("forms.attachments.removedReason", { reason: a.removeReason ?? "" })}
-                        </span>
-                      )}
-                    </td>
-                    <td>{formatDateTime(a.createdAt, locale) ?? a.createdAt}</td>
-                    <td>
-                      {a.store === "evidence_link"
-                        ? t("forms.attachments.storeEvidenceLink")
-                        : t("forms.attachments.storeFormRecord")}
-                    </td>
-                    <td>
-                      {props.canWrite && a.status === "active" ? (
-                        <button
-                          type="button"
-                          className="button button--link button--small"
-                          onClick={() => {
-                            setRemoving(a);
-                            setReason("");
-                            writer.setError(null);
-                          }}
-                        >
-                          {t("forms.attachments.remove")}
-                          <span className="visually-hidden">: {titleOf(a)}</span>
-                        </button>
-                      ) : null}
-                    </td>
+            <TableScrollRegion caption={t("forms.attachments.caption")}>
+              <table className="table table--compact" data-attachment-count={list.length}>
+                <caption>{t("forms.attachments.caption")}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t("forms.attachments.evidence")}</th>
+                    <th scope="col">{t("forms.attachments.status")}</th>
+                    <th scope="col">{t("forms.attachments.attached")}</th>
+                    <th scope="col">{t("forms.attachments.store")}</th>
+                    <th scope="col">
+                      <span className="visually-hidden">{t("common.field.actions")}</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {list.map((a) => (
+                    <tr key={a.id} data-attachment-id={a.id} data-status={a.status}>
+                      <th scope="row">{titleOf(a)}</th>
+                      <td>
+                        {a.status === "active" ? (
+                          <span className="lifecycle-chip lifecycle-chip--active">
+                            <Icon name="check" /> {t("forms.attachments.active")}
+                          </span>
+                        ) : (
+                          <span className="lifecycle-chip lifecycle-chip--archived">
+                            <Icon name="archive" />{" "}
+                            {t("forms.attachments.removedReason", { reason: a.removeReason ?? "" })}
+                          </span>
+                        )}
+                      </td>
+                      <td>{formatDateTime(a.createdAt, locale) ?? a.createdAt}</td>
+                      <td>
+                        {a.store === "evidence_link"
+                          ? t("forms.attachments.storeEvidenceLink")
+                          : t("forms.attachments.storeFormRecord")}
+                      </td>
+                      <td>
+                        {props.canWrite && a.status === "active" ? (
+                          <button
+                            type="button"
+                            className="button button--link button--small"
+                            onClick={() => {
+                              setRemoving(a);
+                              setReason("");
+                              writer.setError(null);
+                            }}
+                          >
+                            {t("forms.attachments.remove")}
+                            <span className="visually-hidden">: {titleOf(a)}</span>
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableScrollRegion>
           );
         }}
       </QueryState>

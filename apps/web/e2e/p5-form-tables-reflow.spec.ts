@@ -1,9 +1,11 @@
-// The P5 form tables reflow at 390 px and with 200 % text (T-DG5-FE-Z1, D-176; F-DG5-146, REQ-S15-009, REQ-S15-012
-// WCAG 2.1 SC 1.4.10), against the REAL API (apps/web/e2e/support/with-stack.sh), in chromium-en and chromium-ar.
+// The P5 form tables reflow at 390 px and with 200 % text (T-DG5-FE-Z1 and its continuation T-DG5-FE-Z1B, D-176;
+// F-DG5-146, REQ-S15-009, REQ-S15-012 WCAG 2.1 SC 1.4.10), against the REAL API (apps/web/e2e/support/with-stack.sh),
+// in chromium-en and chromium-ar.
 // It is the qa-verifier's round-4 DB-free reproduction (docs/delivery/test-evidence/DG5/qa/round-4/scripts/
 // zz-qa-r4-p5-layout.mjs and layout-p5/; read, not imported) turned into a product test on the running stack:
 //  - the Form builder's field table (/admin/forms/T03): an open forms draft with an extension field, as the SYNTHETIC
-//    methodology administrator, and the auditor's read-only view of the published version;
+//    methodology administrator, and the auditor's read-only view of the newest published version (chosen
+//    explicitly: while a draft is open the builder opens the draft by default);
 //  - the form framework's Attachments tab on a T14 benefit with one attachment, and the T14 export preview dialog
 //    (the third table of the same class, ExportDialog.tsx).
 // Each screen is measured at 390 x 900, and at 1280 x 900 with the root font at 200 %, and the spec asserts the
@@ -16,7 +18,17 @@
 // touches the engineering delivery gates DG0-DG7.
 import { expect, test, type Page } from "@playwright/test";
 import { asUser, syntheticUser } from "./support/p3-journey-setup.ts";
-import { apiSession, fieldLabel, langOf, shot, signIn, SYN_RETAIL, tr, type ApiSession, type Lang } from "./support/ui.ts";
+import {
+  apiSession,
+  fieldLabel,
+  langOf,
+  shot,
+  signIn,
+  SYN_RETAIL,
+  tr,
+  type ApiSession,
+  type Lang,
+} from "./support/ui.ts";
 
 const ORG = "01920000-0000-7000-9000-000000000001";
 const NOBODY = "01920000-0000-7000-9000-000000000205";
@@ -72,7 +84,10 @@ const CASES = [
   ["200 % text", 1280, 200],
 ] as const;
 
-/** Opens the screen (`open`) at each case's size, measures `selector`, records failures; then screenshots. */
+/**
+ * Opens the screen (`open`) at each case's size, measures `selector`, records failures; then screenshots.
+ * `mustScroll`: the set-up check that, at 390 px, the table really is wider than its region (the finding's condition).
+ */
 async function sweep(
   page: Page,
   lang: Lang,
@@ -81,6 +96,7 @@ async function sweep(
   open: () => Promise<void>,
   failures: string[],
   report: string[],
+  mustScroll = true,
 ) {
   for (const [label, width, font] of CASES) {
     await page.setViewportSize({ width, height: 900 });
@@ -100,12 +116,16 @@ async function sweep(
       if (m.region.left < -1 || m.region.right > m.W + 1)
         failures.push(`${where} — the region runs off the viewport [${m.region.left}..${m.region.right}] of ${m.W} px`);
     }
-    if (width === 390 && m.region && !m.scrolls)
+    if (mustScroll && width === 390 && m.region && !m.scrolls)
       failures.push(`${where} — set-up: the table does not scroll inside its region (the finding's condition)`);
     report.push(
       `${where}: overflow ${m.pageOverflow} px, rows ${m.rows}, region ${m.region ? `"${m.region.name}" [${m.region.left}..${m.region.right}]` : "none"}, scrolls ${m.scrolls}`,
     );
-    await shot(page, lang, `z1-${screen.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${width === 390 ? "390" : "200pct"}`);
+    await shot(
+      page,
+      lang,
+      `z1-${screen.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${width === 390 ? "390" : "200pct"}`,
+    );
     if (font) await page.evaluate(() => (document.documentElement.style.fontSize = ""));
   }
 }
@@ -186,7 +206,9 @@ test("Form builder: the field table scrolls in its own region at 390 px and with
 
     await sweep(page, lang, "form builder draft", "table[data-field-count]", openDraft, failures, report);
 
-    // The auditor's read-only view (the newest published version, no actions column).
+    // The auditor's read-only view of the newest published version (no actions column). The builder opens the open
+    // draft by default while one exists (this test's), so the auditor chooses the published version explicitly.
+    const publishedId = base.id;
     const aud = await asUser(browser, lang, "dev.auditor");
     await sweep(
       aud.page,
@@ -195,9 +217,11 @@ test("Form builder: the field table scrolls in its own region at 390 px and with
       "table[data-field-count]",
       async () => {
         await aud.page.goto("/admin/forms/T03");
-        await expect(aud.page.locator("main#main h1")).toBeVisible();
+        await aud.page.getByLabel(fieldLabel(lang, "forms.schema.version")).selectOption(publishedId);
+        await expect(aud.page.locator("[data-state='read-only-version']")).toBeVisible();
         await expect(aud.page.locator("table[data-field-count] tbody tr").first()).toBeVisible();
         await expect(aud.page.locator("[data-state='editable-draft']")).toHaveCount(0);
+        await expect(aud.page.locator(`[data-field='${key}']`)).toHaveCount(0);
       },
       failures,
       report,
@@ -303,10 +327,11 @@ test("Form framework on T14: the Attachments table and the export preview scroll
         /^[1-9][0-9]*$/,
       );
     },
-    // The preview table's width depends on the T14 columns, so only the page-level and region checks bind here;
-    // whether it is wider than its region at 390 px is reported, not required.
     failures,
     report,
+    // The preview table's width depends on the T14 columns, so only the page-level and region checks bind here;
+    // whether it is wider than its region at 390 px is reported, not required.
+    false,
   );
   await user.close();
   console.info(`T14 form tables reflow ${lang}: ${report.join("; ")}`);

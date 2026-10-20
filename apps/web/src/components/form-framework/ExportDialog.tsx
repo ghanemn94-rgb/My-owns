@@ -12,6 +12,7 @@ import { FormAlert } from "../../pages/my-work/p4ui.tsx";
 import { Dialog, Field } from "../Form.tsx";
 import { Icon } from "../Icon.tsx";
 import { LoadingState } from "../States.tsx";
+import { TableScrollRegion } from "../TableScrollRegion.tsx";
 import { csvExportUrl, fetchExport, FORMS_NS, type FormRecordExport } from "./api.ts";
 
 const PREVIEW_ROWS = 10;
@@ -122,7 +123,8 @@ function ExportPreview({ data }: { data: FormRecordExport }) {
       {data.rows.length === 0 ? (
         <p className="muted">{t("forms.export.empty")}</p>
       ) : (
-        <div className="table-scroll">
+        // The preview scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+        <TableScrollRegion caption={t("forms.export.caption", { count: rows.length })}>
           <table className="table table--compact" dir={data.language === "ar" ? "rtl" : "ltr"} lang={data.language}>
             <caption>{t("forms.export.caption", { count: rows.length })}</caption>
             <thead>
@@ -157,7 +159,7 @@ function ExportPreview({ data }: { data: FormRecordExport }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScrollRegion>
       )}
     </div>
   );
