@@ -1,0 +1,22 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-102",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:26d4ad92…e1bf (source fb9c221), in the disposable clone $TMPDIR/review-r4c. The original defect was that the ADR-0002 full module walk ('every import respects dependsOn, public surfaces and allowed packages') overran its fixed 30 s budget in loaded Node 22 runs. Results: (1) Under load it now passes with wide headroom. Node 22 full pnpm test, run 1 at load 8-10: architecture.test.ts 140/140 in 28.8 s for the whole file. Node 22 unit-node run 2 at load 14-18, alongside a reviewer probe: the full walk took 18.1 s and the guard 1.6 s, against 150 s and 30 s. Node 24 full pnpm test at load 4-11: 140/140. Alone: 7.8/7.8 s on Node 22 and 7.0/7.0 s on Node 24. (2) Adversarial check that EMPTY_EMIT cannot miss a syntax error. In the TypeScript 6.0.2 source, transpileWorker collects getSyntacticDiagnostics and getOptionsDiagnostics before program.emit, so a 'before' transformer runs only inside the emit. In emitFiles, only the declaration transform's diagnostics are added (all 17 context.addDiagnostic calls are inside transformDeclarations), and transpileModule turns declarations off. My own differential compared the pre-repair full transpile (bbd6294 options and formatting) with the candidate's syntaxErrors on two inputs. First, a hostile corpus of 57 sources × 9 extensions: decorators, using/await using, import defer/source, import attributes and assertions, JSX namespaces and mismatched tags, generic arrows in tsx, conflict markers, a misplaced shebang, BOM and U+2028, numeric separators, octal escapes, invalid regexes, unterminated templates and comments, export= mixed with ESM, accessor, const type parameters, and more. Result: 513 cases, 218 with errors, 0 differences, on Node 24 and Node 22. Second, every one of the 448 real module files mutated 32 ways (character deleted, ( { < / inserted, slice duplicated, truncated) × 3 extensions. Result: 44,352 cases, 28,801 with errors, 0 differences, on Node 24 and Node 22. (3) My own mutation check of the guard. M1 (reportDiagnostics removed) is caught by P20 and the new guard. M2 (first diagnostic only) is caught by the new guard alone, so the guard adds detection the planted controls lacked. M3 (rule 4 disconnected) is caught by four planted controls. M4 (a TS-kind parse instead of transpile) is caught by the guard and the full walk. The testkit was restored byte for byte. (4) Controls: the repair diff removes only two lines, the full walk's timeout argument and the non-exported syntaxErrors signature; it:/expect( counts go 34/121 → 35/126. The five module-owned tests keep AST_TEST_TIMEOUT_MS = 30 s. 2d0f98c changes 0 non-comment lines. Residuals, not findings: (a) the old path also ran the printer, so a TypeScript emitter crash on syntactically valid source would have thrown before and no longer does; that is not a syntax diagnostic, and rule 4 never reported one. (b) The handback's surviving target-ES2015 mutant (D-175 observation o) is equivalent for rule 4: the target is fixed by transpileModule's own options on both sides, and my corpus of target-sensitive syntax shows no difference. Disclosed in the evidence: probe run 1 exited 1 on its own miscalibrated non-vacuity threshold (218 not > 228), plus a vitest RPC timeout caused by the probe's 739 s synchronous loop. The 0-difference assertions passed in that run. The corrected run 2 exits 0.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04-unit-node22.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04b-unit-node22-run2.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/03-unit-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04a-architecture-alone.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/06-empty-emit-source-analysis.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run1.node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run2.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04c-guard-mutation-check.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log"
+      ]
+    }
+  ]
+}

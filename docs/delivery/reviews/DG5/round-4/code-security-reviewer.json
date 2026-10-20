@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 4,
+  "candidate_id": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf",
+  "source_commit": "fb9c2216feb399efa9e1a062bdc24b2eef16db33",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-SEC-R4C-code-security-reviewer-20261020T074435Z-ed64647d",
+    "session_id": "ed64647d-a218-4393-bcbd-cfb920a605d4"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session ed64647d (task T-DG5-REV-SEC-R4C, the second re-run of round 4). I authored no implementation in the DG5 scope.\n\nAuthorship of the round-4 repair delta (bbd6294..fb9c221):\n- BE-Y1 and BE-Y2: backend-workflow-engineer;\n- FE-Y1: frontend-ux-engineer;\n- ARCH-R6: solution-architect;\n- the comment-only edit 2d0f98c, D-174, D-175 and the freeze: delivery-orchestrator.\n\nIn earlier rounds the code-security reviewer only reported F-DG5-100, 101 and 102. It did not write their repairs.\n\nWhat I did not read:\n- the orphaned round-4 runs' material (code-security-r4-orphaned/, code-security-r4b-orphaned/);\n- any other reviewer's round-4 record.\n\nThe only round-3 material I read was my own role's record (for its field set and its check list) and my role's round-1 to round-3 reproduction sources, which I copied unchanged.\n\nMy only writes are:\n- evidence under docs/delivery/test-evidence/DG5/code-security/round-4/;\n- this record and its verifications sidecar.\n\nI executed code only in the disposable clone $TMPDIR/review-r4c. My probe was copied into it, run and removed; the clone's git status was clean at the end."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-4/code-security-reviewer-rerun2.md",
+  "requirements_checked": [
+    "REQ-PB-093",
+    "REQ-S01-002",
+    "REQ-S03-007",
+    "REQ-S04-011",
+    "REQ-S05-001",
+    "REQ-S05-002",
+    "REQ-S05-006",
+    "REQ-S06-001",
+    "REQ-S06-002",
+    "REQ-S06-004",
+    "REQ-S06-005",
+    "REQ-S06-006",
+    "REQ-S06-007",
+    "REQ-S06-008",
+    "REQ-S06-009",
+    "REQ-S06-010",
+    "REQ-S07-016",
+    "REQ-S08-005",
+    "REQ-S10-013",
+    "REQ-S10-015",
+    "REQ-S12-001",
+    "REQ-S12-002",
+    "REQ-S12-003",
+    "REQ-S12-004",
+    "REQ-S12-012",
+    "REQ-S12-015",
+    "REQ-S12-020",
+    "REQ-S12-021",
+    "REQ-S12-022",
+    "REQ-S12-025",
+    "REQ-S12-026",
+    "REQ-S13-005",
+    "REQ-S13-006",
+    "REQ-S13-007",
+    "REQ-S13-010",
+    "REQ-S15-004",
+    "REQ-S16-010",
+    "REQ-S16-012",
+    "REQ-S16-015",
+    "REQ-S16-021",
+    "REQ-S18-001",
+    "REQ-S18-003"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R4-00-candidate-identity",
+      "procedure": "Recompute the candidate ID in the repository and in a complete (non-shallow) clone in $TMPDIR. Also compute it against the ref fb9c221. Confirm that HEAD descends from fb9c221 and differs from it only in docs/delivery records.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG5; git merge-base --is-ancestor fb9c221 HEAD; git diff --name-only fb9c221 HEAD | grep -v '^docs/delivery/'; git clone /home/user/My-owns $TMPDIR/review-r4c && git checkout f59cf68 && git rev-parse --is-shallow-repository && node tools/gates/candidate.mjs --stage DG5 [--ref fb9c221 | --diff]",
+      "environment": "Node 24.21.0; repository HEAD f59cf68; clone at f59cf68f5eeb0c0788ec6339b940ef192c8f30f7",
+      "expected": "sha256:26d4ad92…e1bf over 2188 files in both trees and at fb9c221; the clone is not shallow; HEAD adds only docs/delivery records over fb9c221",
+      "actual": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf, 2188 files, in the repository, in the clone and at --ref fb9c221. --diff reports matches: true, with nothing added, removed or changed. is-shallow false. 0 files outside docs/delivery/ differ between fb9c221 and HEAD, and the clone's git status is clean. The manifest line prints '0' as its file count because my one-liner read a key the manifest does not use. That is a reviewer one-liner defect; the candidate tool's count of 2188 is the evidence.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/00-candidate-identity.log"]
+    },
+    {
+      "id": "SEC-R4-01-offline-install",
+      "procedure": "Copy the pnpm store to $TMPDIR, then run an offline frozen install in the clone.",
+      "command": "cp -a /root/.local/share/pnpm/store/v10 $TMPDIR/pstore/v10; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 24.21.0, pnpm 10.33.0, clone $TMPDIR/review-r4c, no network",
+      "expected": "exit 0, lockfile unchanged",
+      "actual": "Exit 0: 414 packages reused and 0 downloaded. The four 'WARN Failed to create bin … mth-db … packages/db/dist/cli.js' lines are expected before the first build (dist does not exist yet). The post-build re-install in 02 exits 0 without them.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/01-install.log"]
+    },
+    {
+      "id": "SEC-R4-02-static-suite",
+      "procedure": "In the clone on Node 24, run build, re-install, typecheck, lint, openapi:lint (with an operationId count), check:no-cdn and format:check.",
+      "command": "pnpm -r build; pnpm install --offline --frozen-lockfile; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; grep -cE '^\\s+operationId:' docs/api/openapi.yaml; pnpm check:no-cdn; pnpm format:check",
+      "environment": "Node 24.21.0, clone at f59cf68 (code = fb9c221), load 2-5",
+      "expected": "every command exits 0; 846 operations",
+      "actual": "Every command exits 0: build, install, typecheck, lint (--max-warnings=0), openapi:lint, check:no-cdn and format:check. operationId count 846.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/02-static-node24.log"]
+    },
+    {
+      "id": "SEC-R4-03-unit-node24",
+      "procedure": "Run the full unit suite (unit-node, unit-web, unit-formula-nocodegen) on Node 24 with the locale unset, while other reviewers loaded the machine.",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE pnpm test",
+      "environment": "Node 24.21.0, clone, load 4.3 → 10.8 on 4 CPUs",
+      "expected": "exit 0; 2341 / 1711 / 259 + 2 skipped (the D-175 counts)",
+      "actual": "Exit 0. unit-node 144 files, 2341 passed; architecture.test.ts 140/140 in 16.5 s. unit-web 90 files, 1711 passed. unit-formula-nocodegen 259 passed + 2 skipped; those 2 are skipped by design, as in every earlier round. The stderr lines 'raci.deliverables is not iterable' and 'TotalsView … reading length' come from extension-fields.test.tsx: its header-only T12/T14 tests render pages whose body fixtures are partial, so React's error boundary logs them. The tests pass and assert only the header. The same 10 lines appear in round 3's log, and those files are untouched by the repair diff.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/03-unit-node24.log"]
+    },
+    {
+      "id": "SEC-R4-04-unit-node22",
+      "procedure": "Run the full Node 22 unit suite under review load (run 1), then a second full unit-node run on Node 22 under heavier load (run 2), concurrent with my differential probe.",
+      "command": "PATH=/opt/node22/bin:$PATH env -u LANG -u LC_ALL -u LC_CTYPE pnpm test; then env -u LANG -u LC_ALL -u LC_CTYPE npx vitest run --project unit-node --reporter=verbose",
+      "environment": "Node 22.22.2, clone; run 1 at load 8-10, run 2 at load 14-18 on 4 CPUs",
+      "expected": "every product test passes; no timeout of the ADR-0002 full walk",
+      "actual": "Run 1: exit 0, with unit-node 2341, unit-web 1711 and formula 259 + 2 skipped; architecture.test.ts 140/140 in 28.8 s for the whole file. It carries the same pre-existing extension-fields stderr as SEC-R4-03. Run 2: all 144 product files pass, 2341 product tests. The full walk took 18,143 ms against its 150 s budget, and the new guard 1,618 ms against 30 s. Run 2 exited 1 for a reason outside the product. My probe apps/api/src/zz-sec-r4-rule4-differential.test.ts was copied into the clone about 1 s after run 2 started, and the run collected it. Its hostile-corpus test failed on the probe's own miscalibrated non-vacuity threshold ('expected 218 to be greater than 228'); its 0-differences assertion passed before that line. Its module-mutant test passed with 0 differences. Both are disclosed in the log. No timeout and no product failure occurred in either run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04-unit-node22.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04b-unit-node22-run2.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-05-F-DG5-102-architecture-alone",
+      "procedure": "Run the boundary test file alone, twice per Node version, with verbose per-test durations.",
+      "command": "npx vitest run --project unit-node --reporter=verbose apps/api/src/architecture.test.ts (Node 22 ×2, Node 24 ×2)",
+      "environment": "clone; load 6-7",
+      "expected": "140/140 each; full walk well under 150 s; guard under 30 s",
+      "actual": "Each run is 140/140 and exits 0. Node 22: full walk 7,778 and 7,774 ms; guard 534 and 473 ms. Node 24: full walk 6,974 and 6,996 ms; guard 400 and 378 ms.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/04a-architecture-alone.log"]
+    },
+    {
+      "id": "SEC-R4-06-F-DG5-102-empty-emit-adversarial",
+      "procedure": "Judge adversarially whether EMPTY_EMIT can miss a syntax error the old path caught, in three steps. (a) Read TypeScript 6.0.2's transpileWorker and emitFiles. (b) Write my own differential probe that compares the pre-repair full transpile (the bbd6294 options and formatting) with the candidate's exported syntaxErrors, on a hostile corpus of 57 sources × 9 extensions and on all 448 real module files × 32 mutations × 3 extensions; run it on Node 24 and Node 22. (c) Mutate the testkit four ways, run architecture.test.ts against each, and restore the testkit byte for byte.",
+      "command": "see 06-empty-emit-source-analysis.log; cp repro/zz-sec-r4-rule4-differential.test.ts apps/api/src/ && npx vitest run --project unit-node --reporter=verbose <probe> [-t 'hostile corpus']; rm <probe>; mutants M1-M4 via python edit of architecture.testkit.ts, npx vitest run --project unit-node apps/api/src/architecture.test.ts, then cp back and git show HEAD:<file> | cmp",
+      "environment": "TypeScript 6.0.2; Node 24.21.0 and 22.22.2; clone",
+      "expected": "no diagnostic produced after the emit for a non-declaration transpile; 0 differences; every mutant caught; testkit restored",
+      "actual": "(a) transpileWorker adds getSyntacticDiagnostics and getOptionsDiagnostics before program.emit. All 17 context.addDiagnostic calls are inside transformDeclarations, and emitFiles adds only the declaration transform's diagnostics, so a JS emit contributes none. (b) Hostile corpus: 513 cases, 218 with errors, 0 differences, on both Nodes. The corpus covers decorators, using, import defer/source, attributes and assertions, JSX namespaces and mismatched tags, conflict markers, shebang placement, BOM and U+2028, numeric separators, octal escapes, invalid regexes, unterminated templates and comments, export= with ESM, accessor and const type parameters. Module mutants: 448 files, 44,352 cases, 28,801 with errors, 0 differences, on both Nodes. Probe run 1 exited 1 for two reasons, both in the probe and not the product. Its non-vacuity threshold was miscalibrated (218 is not > 228), and the 739 s synchronous loop starved vitest's RPC ('Timeout calling onTaskUpdate'). The 0-difference assertions passed in run 1. Run 2, with the threshold corrected to > 171 and the hostile part only, exits 0 on both Nodes. (c) Each mutant exits 1, by design: the run is expected to fail. M1 (reportDiagnostics removed): P20 and the guard fail. M2 (first diagnostic only): only the new guard fails, so the guard adds real detection. M3 (rule 4 disconnected): four planted controls fail (P20 and the F-DG1-137/217/218 declaration-file controls). M4 (TS-kind parse): the guard and the full walk fail. The testkit was restored and is identical to git HEAD. 06's first command block printed a bash 'syntax error in expression' because my grep for 'function emitFiles' matched three lines; the block was re-run with a fixed offset and appended. Residual, not a finding: a TypeScript printer crash on syntactically valid source used to throw and no longer does. That is not a syntax diagnostic, and rule 4 never reported one. D-175 observation (o), the surviving target-ES2015 mutant, is accepted as equivalent.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/06-empty-emit-source-analysis.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run1.node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run2.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04c-guard-mutation-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-07-F-DG5-102-controls-unchanged",
+      "procedure": "Inspect the removed lines of the repair diff to the boundary test and testkit, count it( and expect( before and after, list the AST_TEST_TIMEOUT_MS users, and check that 2d0f98c changes comments only.",
+      "command": "git diff bbd6294 fb9c221 -- apps/api/src/architecture.test.ts apps/api/src/architecture.testkit.ts | grep '^-[^-]'; git show <rev>:apps/api/src/architecture.test.ts | grep -c …; grep -rn AST_TEST_TIMEOUT_MS apps/api/src; git show 2d0f98c",
+      "environment": "repository checkout (code = fb9c221)",
+      "expected": "no control removed or weakened; module-owned tests keep 30 s; 2d0f98c comment-only",
+      "actual": "The diff removes only two lines: the full walk's timeout argument (now FULL_MODULE_WALK_TIMEOUT_MS = 150,000) and 'function syntaxErrors' (now exported, body unchanged). it( 34 → 35, expect( 121 → 126. The five module-owned tests (reporting, methodology, workflows, kpi, evidence) and the package-direction block still use AST_TEST_TIMEOUT_MS = 30,000. 2d0f98c has 0 non-comment changed lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log"]
+    },
+    {
+      "id": "SEC-R4-08-integration-locale-unset",
+      "procedure": "Run the full integration suite (contract.test.ts and migrations 0001→0097 included) on a disposable PostgreSQL, with LANG/LC_ALL/LC_CTYPE unset.",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE QA_PG_PORT=26510 MTH_PORT_POOL=26511-26539 bash tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "Node 24.21.0, clone, this run's OS sandbox",
+      "expected": "exit 0; 3057 passed + 1 skipped (the D-159 case)",
+      "actual": "BLOCKED: 'unshare: unshare failed: Operation not permitted', exit 1, before any test ran. In this run's sandbox the process is uid 0, only uid 0 is mapped (/proc/self/uid_map '0 0 1'), and /proc/sys/user/max_user_namespaces is 0. The harness's unshare --user (with-pg.sh line 33, pg-port.sh line 166) is refused, setpriv --reuid=1000 fails, and initdb and postgres refuse to run as root. No external database is supplied. I did not work around the sandbox; changing its configuration is the user's decision.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/05-integration-locale-unset.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04x-postgres-blocked.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-09-integration-c-utf8",
+      "procedure": "Run the full integration suite on a disposable PostgreSQL with LANG=C.UTF-8 LC_ALL=C.UTF-8.",
+      "command": "LANG=C.UTF-8 LC_ALL=C.UTF-8 QA_PG_PORT=… bash tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "this run's OS sandbox",
+      "expected": "exit 0; 3057 passed + 1 skipped",
+      "actual": "BLOCKED for the same reason as SEC-R4-08: no PostgreSQL can start in this sandbox (04x-postgres-blocked.log). I did not attempt it a second time, because the harness fails in its first step whatever the locale.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/04x-postgres-blocked.log"]
+    },
+    {
+      "id": "SEC-R4-10-validators",
+      "procedure": "Run the gate validator in historical mode for DG4, DG3, DG2 and DG1, plus --register DG5 and --pipeline.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4|DG3|DG2|DG1; --register DG5; --pipeline",
+      "environment": "Node 24.21.0, repository checkout (read-only)",
+      "expected": "each exits 0",
+      "actual": "PASS gate DG4, DG3, DG2 and DG1 (historical); PASS register rules at DG5; PASS pipeline (active stage DG5 REVIEWING). Each exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/07-validators.log"]
+    },
+    {
+      "id": "SEC-R4-11-BE-Y1-seed-guards",
+      "procedure": "(a) Static: read seedKeyDeliverables and the seed context's insert, then compare the imitated product routes' permissions with the TL role's defaults. Capability: registers.ts writeRules tom.edit. Deliverable: deliverables.ts EDIT_RULES initiative.edit. Trace link: traceability.ts TRACE_LINK_PERMISSION traceability.link. TL defaults: permissions.ts P2 tom.edit, P3 initiative.edit, P4 traceability.link. Also read the trace_link guards in 0055. (b) Dynamic: my probe repro/demo-key-deliverables-guards.test.ts on the real seedDemo checks the product policy holders, one audit event and one seed record per write, no allocation share, pending acceptance, the demo access admin's permissions, and production refusal.",
+      "command": "git diff bbd6294 fb9c221 -- packages/db/src/demo; sed packages/db/src/demo/seed.ts; grep packages/shared/src/permissions.ts; (b) cp repro/demo-key-deliverables-guards.test.ts apps/api/test/integration/environment/zz-sec-r4-demo-key-deliverables.test.ts && with-pg.sh npx vitest run --project integration <file>",
+      "environment": "repository checkout (static); the dynamic part needs PostgreSQL",
+      "expected": "TL holds tom.edit, initiative.edit and traceability.link; one audit event per write; seed refused in production",
+      "actual": "(a) Static, satisfied. Every new row goes through ctx.insert, which validates the fixed-UUID namespace, the table, column and fixture-key patterns, and parameterized values. It writes exactly one '<table>.create' audit event (version 1) and one demo_seed_record. created_by and updated_by are the demo TL (stamps(…, tl)). The TL role default holds tom.edit (P2), initiative.edit (P3) and traceability.link (P4). The links carry no allocation_share, and 0055's trace_link_kind_shape and the composite (transformation_id, id) foreign keys hold every link inside the demo transformation. Deliverables are pending and owned by WL, and the seed throws unless each initiative has 3-7 deliverables due after the clock and on or before the last milestone. The production refusal (assertSeedDemoAllowed) is unchanged; the repair diff does not touch guard.ts or seed.ts. (b) BLOCKED: no PostgreSQL in this sandbox, so the probe was written but not run.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/demo-key-deliverables-guards.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04x-postgres-blocked.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-12-FE-Y1-css-only",
+      "procedure": "Check that FE-Y1 changed only app.css under apps/web/src, removed no line, and added no url(), @import or remote host. Read the .conflict and .workstreams rules, including the 409 conflict banner's new rules.",
+      "command": "git diff --name-only bbd6294 fb9c221 -- apps/web/src; git diff bbd6294 fb9c221 -- apps/web/src/styles/app.css",
+      "environment": "repository checkout",
+      "expected": "CSS only, no markup change, no remote resource",
+      "actual": "Only apps/web/src/styles/app.css changed: 22 lines added, 0 removed, 0 url(), @import or http(s). The .conflict banner gets grid-template-columns: minmax(0, 1fr), shrinkable children, wrapping headers (white-space: normal) and overflow-wrap: anywhere on values. .workstreams gets the same single minmax(0, 1fr) track with min-inline-size: 0 cards. No selector hides content or changes interaction, so there is no security effect. D-175 observation (n), mid-word breaking of English words in .text-cell, is pre-existing presentation with no security or integrity effect, accepted. Its rendered check is the e2e item in SEC-R4-13.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/09-residual-surfaces.log"]
+    },
+    {
+      "id": "SEC-R4-13-e2e-stacks",
+      "procedure": "Run FE-Y1's p5-diagnose-reflow.spec.ts and the demo specs on the demo-initialized stack, and the spec on the production-initialized stack.",
+      "command": "E2E_SCREENSHOT_DIR=$TMPDIR/shots E2E_PG_PORT=26550 E2E_API_PORT=26551 MTH_PORT_POOL=26552-26559 e2e/support/with-demo-stack.sh npx playwright test apps/web/e2e/p5-diagnose-reflow.spec.ts --workers=1; the same with apps/web/e2e/support/with-stack.sh on 26560-26569",
+      "environment": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers; this run's OS sandbox",
+      "expected": "specs pass",
+      "actual": "BLOCKED: both stacks stop at 'unshare: unshare failed: Operation not permitted' (exit 1), because their PostgreSQL start uses the same unshare --user path.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/11-e2e-stack-attempt.log"]
+    },
+    {
+      "id": "SEC-R4-14-prior-repros-and-aud-adm-sweep",
+      "procedure": "Re-run my role's round-1 to round-3 reproductions and the P5 AUD/ADM sweep against this candidate: studio-coauthor-review, intake-foreign-transformation, p5-aud-adm-sweep, studio-contributor-paths and demo-portfolio-guards.",
+      "command": "cp round-4/repro/*.test.ts into the clone's integration tree; with-pg.sh npx vitest run --project integration <files>",
+      "environment": "needs PostgreSQL",
+      "expected": "all pass as in round 3",
+      "actual": "BLOCKED: no PostgreSQL can start in this sandbox (04x). The sources were copied unchanged; their sha256 values match the earlier rounds, see repro/copies.sha256. They were not run.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/copies.sha256",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/repro/p5-aud-adm-sweep.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04x-postgres-blocked.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-15-contract-pending-graph-migrations",
+      "procedure": "Static scans: the p5-pending lists (P5_PENDING_TESTS_BE_O included), the operationId count, the reporting → workflows/admin imports, the worker → API imports, the migration list from 0062 to 0097, migrations changed since e70ac02 and since bbd6294, 0094's trigger disable, 0096's rule-A guard, and OUTBOX_EVENT_SCHEMAS.",
+      "command": "see 08-scans.log",
+      "environment": "repository checkout (code = fb9c221)",
+      "expected": "every BE/KBE pending list empty; 846 operations; 0 forbidden imports; migrations forward-only; no migration changed in the repair diff",
+      "actual": "Every P5_PENDING_BE_*/KBE_* list is [], and P5_PENDING_TESTS_BE_O is []. The P5_PENDING_ARCH_01..06 lists hold the architects' operation lists, as in rounds 1-3; they are not pending tests. 846 operations. 0 non-test imports of workflows/ or admin/ from modules/reporting, and 0 imports of the API from apps/worker/src. Migrations are add-only since e70ac02 (0 modified or deleted), and none changed since bbd6294. The numbers 0066-0067, 0073, 0077-0079 and 0083-0084 are reserved and unused, which p5-work-split §B.5/§E.6 and D-145 accept ('numbers are never reordered'); 28 files run 0062..0097 in lexical order. 0094 disables gate_instance_row_guard and gate_instance_audit_required for its one-off backfill and re-enables both in the same migration; that is unchanged and was judged in rounds 1-3 (ADR-0039 C2). 0096 keeps the narrowed rule-A guard: one adoption transition, every other transformation_id change refused. The database-level proof of these (contract.test.ts, migrate suite) is BLOCKED with SEC-R4-08.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log"]
+    },
+    {
+      "id": "SEC-R4-16-repair-diff-regression-inspection",
+      "procedure": "Read the whole repair diff bbd6294..fb9c221 over apps, packages and docs/architecture for regressions.",
+      "command": "git diff bbd6294..fb9c221 -- apps packages docs/architecture docs/api",
+      "environment": "repository checkout",
+      "expected": "no other behaviour weakened",
+      "actual": "Ten files change. Product code: app.css (CSS only, additive) and the demo seed data (roaming-ids.ts, three new id blocks 0x079-0x07b; roaming-portfolio.ts, seedKeyDeliverables called before the submit step). Tests: architecture.test.ts and its testkit (see SEC-R4-05 to 07), demo-gate-history.test.ts (+1 test), demo.test.ts (afterAll budget 120 s, no assertion changed) and the new e2e spec. Docs: ADR-0050 and the data dictionary. No route, policy, migration, contract or worker file changed, and nothing outside the demo database is seeded. The new id blocks follow RT_BLOCK's ranges; deliverable(no, k) uses (no-1)*7+k with k ≤ 7, and capabilityKpiLink uses 21+no, so the 0x07b numbers cannot collide. D-175 observations (l) (one orphan left, the fourth diagnosed issue) and (m) (the demo checksum changes by design; DEMO_DATASET_VERSION is still 1.0.0, as through all of P5, for an unreleased disposable dataset) have no authorization, integrity or security effect, so both are accepted. (n) and (o) are judged in SEC-R4-12 and SEC-R4-06.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log"]
+    },
+    {
+      "id": "SEC-R4-17-requirement-acceptance-trace",
+      "procedure": "For each of the 42 requirements, find the passing suites its notes name, in this round's unit and integration logs.",
+      "command": "grep the suites named in docs/delivery/requirements.csv notes in 03/04 and in the integration logs",
+      "environment": "needs the integration logs of SEC-R4-08/09",
+      "expected": "each requirement's named suites pass on this candidate",
+      "actual": "BLOCKED. The acceptance evidence of these 42 requirements (authorization, If-Match, audit, exactly-once jobs, exports, migrations and the demo seed) is mostly integration and e2e, and none of that could run. The unit side passes on both Nodes (03, 04). The P5 product code outside the ten files of the repair diff is byte-identical to round 3's candidate, which my role passed, but that is not evidence on this candidate's run.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-4/03-unit-node24.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-4/04x-postgres-blocked.log"
+      ]
+    },
+    {
+      "id": "SEC-R4-18-environmental-residuals",
+      "procedure": "Check the offline/config surface for the four environmental residuals: the CI workflow steps, the lockfile hosts and .npmrc, the D-165 dev-binding guard, the AI and notification adapter variables, and the OIDC configuration.",
+      "command": "see 09-residual-surfaces.log",
+      "environment": "repository checkout",
+      "expected": "surfaces present; residuals as disclosed",
+      "actual": "ci.yml runs validate --pipeline, pnpm test, openapi:lint, check:no-cdn and test:integration, and delivery-gates.yml runs --pipeline and --reconcile. Live CI is a residual (REQ-DLV-025 A24, D-058). The lockfile's only URL is a deprecation notice text, and .npmrc pins exact versions; the live registry is a residual (REQ-DLV-042 AC-1, D-057). demoDevIssuerBindingAllowed returns NODE_ENV !== 'production' && AUTH_MODE === 'dev', and load.ts refuses AUTH_MODE=dev with NODE_ENV=production; Keycloak and a real demo IdP are residuals (D-049, ADR-0050 §1). packages/config has no AI or notification adapter variable, so 'disabled' is the shipped configuration (D-142 Q11, D-165). All four are PASS on the offline/config surface, with the residuals noted.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/09-residual-surfaces.log"]
+    },
+    {
+      "id": "SEC-R4-19-evidence-honesty-log-scan",
+      "procedure": "Grep every log of round-4/ for non-zero exits, FAIL, ×, timeouts, skips, warnings and errors, and explain each hit.",
+      "command": "grep -nE 'exit=[1-9]|FAIL|×|timed out|Timeout|skipped|WARN|warn |Error|error' over round-4/*.log and repro/*.log",
+      "environment": "repository evidence directory",
+      "expected": "every hit explained",
+      "actual": "Each hit is explained in its check. 01 install WARN: the bins before the build (SEC-R4-01). 'Lockfile … skipped': pnpm's own message. 03/04 extension-fields stderr: pre-existing, tests pass (SEC-R4-03). 04b exit 1: my probe, collected by the run (SEC-R4-04). 04c ×/FAIL/exit 1: the mutants, by design (SEC-R4-06). 04x and 05 exit 1 and the initdb error: the BLOCKED sandbox (SEC-R4-08). 06 bash 'syntax error in expression': my grep (SEC-R4-06). Probe run 1 'expected 218 to be greater than 228', 'Timeout calling onTaskUpdate' and the npm 'Unknown project config' warnings: the probe threshold, the RPC starvation of the synchronous loop, and npm reading pnpm's .npmrc keys (SEC-R4-06). 11 exit 1: BLOCKED (SEC-R4-13). The skips are the 2 formula skips by design and the -t deselection in probe run 2. No product test failed or timed out anywhere.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/code-security/round-4/10-evidence-scan.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "BLOCKED",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/code-security/round-4/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/01-install.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/02-static-node24.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/03-unit-node24.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/04-unit-node22.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/04a-architecture-alone.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/04b-unit-node22-run2.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/04c-guard-mutation-check.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/04x-postgres-blocked.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/05-integration-locale-unset.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/06-empty-emit-source-analysis.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/07-validators.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/09-residual-surfaces.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/10-evidence-scan.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/11-e2e-stack-attempt.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/repro/copies.sha256",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.test.ts",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run1.node24.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run2.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-4/repro/demo-key-deliverables-guards.test.ts"
+  ],
+  "reviewed_at": "2026-10-20T09:10:00Z",
+  "summary": "BLOCKED, environmental. This run's OS sandbox maps only uid 0 and disables user namespaces (max_user_namespaces=0). The harness's unshare --user is therefore refused, and PostgreSQL refuses to run as root, so no disposable database or stack could start. Blocked as a result: both integration runs (contract.test.ts and migrations 0001-0097 included), the e2e stacks, my BE-Y1 seed probe, my role's prior reproductions with the AUD/ADM sweep, and the requirement-acceptance trace. Everything else passes on candidate sha256:26d4ad92…e1bf (2188 files, complete clone): build, typecheck, lint, openapi:lint (846 operations), check:no-cdn, format; unit 2341/1711/259+2 on Node 24 and on Node 22, twice; and the validators. F-DG5-102 is CLOSED_VERIFIED: the full walk takes 7-8 s alone and 18.1 s at load 14-18, against 150 s. EMPTY_EMIT cannot hide a diagnostic, shown by the TypeScript 6.0.2 source and by 0 differences over 513 hostile and 44,352 mutated-module cases on both Nodes. My four guard mutants are all caught, and no control was removed. The repair diff (BE-Y1 seed data, BE-Y2 test kit, FE-Y1 CSS, ARCH-R6 docs, 2d0f98c comments) regresses nothing I could inspect statically. D-175 observations (l) to (o) are accepted. No new finding. The verdict becomes decidable when the review is re-run in a sandbox where the PostgreSQL harness can start."
+}
