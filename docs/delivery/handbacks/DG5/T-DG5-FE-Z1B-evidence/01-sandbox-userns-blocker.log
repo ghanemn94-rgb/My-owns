@@ -1,0 +1,13 @@
+Tue Oct 20 19:28:41 UTC 2026
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+$ cat /proc/sys/user/max_user_namespaces
+0
+$ cat /proc/self/uid_map
+         0          0          1
+$ unshare --user --map-user=1000 --map-group=1000 true
+unshare: unshare failed: Operation not permitted
+exit 1
+$ setpriv --reuid=1000 --regid=1000 --clear-groups id
+setpriv: setresuid failed: Invalid argument
+exit 127

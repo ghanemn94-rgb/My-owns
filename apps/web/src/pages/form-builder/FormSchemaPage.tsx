@@ -28,6 +28,7 @@ import { Field } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { QueryState } from "../../components/States.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { ReadOnlyNote, type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
 import { isEditableDraft, versionState } from "../studio/api.ts";
 import { StudioFormDialog } from "../studio/StudioFormDialog.tsx";
@@ -230,8 +231,9 @@ function FieldsTable({
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
+  // A wide field table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
   return (
-    <div className="table-scroll">
+    <TableScrollRegion caption={t("forms.schema.caption")}>
       <table className="table" data-field-count={schema.fields.length}>
         <caption>{t("forms.schema.caption")}</caption>
         <thead>
@@ -282,7 +284,7 @@ function FieldsTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScrollRegion>
   );
 }
 
