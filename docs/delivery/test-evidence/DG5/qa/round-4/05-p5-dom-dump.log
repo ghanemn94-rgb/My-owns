@@ -1,0 +1,140 @@
+$ (rev2 clone, hook imported first by apps/web/test/setup.ts) QA_DUMP_ALL=$TMPDIR/p5dumps npx vitest run --project unit-web --sequence.hooks=list apps/web/src/app/p5-shell.test.tsx apps/web/src/pages/automation/fed.test.tsx apps/web/src/pages/form-builder/form-builder.test.tsx apps/web/src/pages/health-check/fef.test.tsx apps/web/src/pages/methodology-migrations/migrations.test.tsx apps/web/src/pages/playbook/feg.test.tsx apps/web/src/pages/procedures/instance-output.test.tsx apps/web/src/pages/reports/fee.test.tsx apps/web/src/pages/reports/snapshot-labels.test.tsx apps/web/src/pages/studio/route-editor.test.tsx apps/web/src/pages/studio/studio.test.tsx apps/web/src/components/form-framework/form-framework.test.tsx apps/web/src/pages/gates/readiness-covered.test.tsx (node v24.21.0, 2026-10-20T08:50:49Z)
+
+ RUN  v3.2.4 $TMPDIR/rev2
+
+ ✓ |unit-web| src/pages/reports/fee.test.tsx (17 tests) 12597ms
+   ✓ REQ-S13-007 / S13-008: one snapshot > en: draft banner, Provisional label, Unknown and Stale without a number, shared content labels  868ms
+   ✓ REQ-S13-007 / S13-008: one snapshot > issue sends If-Match; the 409 series_changed is translated and stays visible after the reload  368ms
+   ✓ REQ-S13-007 / S13-008: one snapshot > an issued snapshot offers the reissue (a reason is required) and opens the new snapshot  666ms
+   ✓ REQ-S13-005: exports > an export of a snapshot discarded meanwhile: the translated 422 stays visible after the reload  515ms
+   ✓ REQ-S13-005: exports > en: the list shows progress, a failed job's translated error, and cancel with If-Match  675ms
+   ✓ REQ-S13-005: exports > ar: the list shows progress, a failed job's translated error, and cancel with If-Match  694ms
+   ✓ REQ-S09-011: owner updates > en: "No update submitted" without an update; writing creates then submits with If-Match  510ms
+   ✓ REQ-S10-013: presentation mode > is live by default; a snapshot of another meeting is the translated 422  585ms
+   ✓ REQ-S13-010: the evidence register > en: a file shows its SHA-256, v2 and both versions; a note shows no checksum and "Not stated"  491ms
+   ✓ REQ-S13-004: generate > posts the register output with its filters and opens the generated snapshot  725ms
+ ✓ |unit-web| src/pages/playbook/feg.test.tsx (19 tests) 10917ms
+   ✓ the playbook reader > en: About, questions, badges and the Realize note; B0004 stays verbatim in English  874ms
+   ✓ the playbook reader > refuses a 1-character search in the field, then marks the highlights of the results  345ms
+   ✓ a block and its links > en: B0031 shows its table, the T01 register link with badges, the requirement ID and Launch  973ms
+   ✓ a block and its links > ar: B0031 shows its table, the T01 register link with badges, the requirement ID and Launch  589ms
+   ✓ Branding Settings > en: publishes with If-Match "0", then a stale save shows the conflict; a 422 is shown by its code  1292ms
+   ✓ Branding Settings > ar: publishes with If-Match "0", then a stale save shows the conflict; a 422 is shown by its code  856ms
+   ✓ the shell: configured name, demo labels and server navigation > en: the header shows the configured name; a demo database shows the banner on every screen  816ms
+   ✓ the shell: configured name, demo labels and server navigation > ar: the header shows the configured name; a demo database shows the banner on every screen  799ms
+   ✓ the walkthrough and the environment screen > en: outside a demo database the walkthrough shows environment.not_demo; in one it lists 12 steps  532ms
+   ✓ the walkthrough and the environment screen > ar: outside a demo database the walkthrough shows environment.not_demo; in one it lists 12 steps  639ms
+   ✓ the walkthrough and the environment screen > the reset of a production database is refused with environment.not_demo, sent with If-Match  511ms
+ ✓ |unit-web| src/pages/automation/fed.test.tsx (20 tests) 11734ms
+   ✓ REQ-S12-022: the jobs operations view > en: never-run is "Never run", a disabled job is "Disabled", the next run is a time  686ms
+   ✓ REQ-S12-022: the jobs operations view > ar: never-run is "Never run", a disabled job is "Disabled", the next run is a time  460ms
+   ✓ REQ-S12-022: the jobs operations view > a non-admin gets the server's 403 as the no-permission state; run now posts the job  773ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a draft's dry run is Not run; submit without it is the translated 422; enable sends the rule's If-Match  1542ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a dry run shows what each action would do and that nothing was created  1076ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > en: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  828ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > ar: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  493ms
+   ✓ REQ-S12-002: the failure queue > retry sends If-Match; 422 automation_failure.not_open is one translated alert  648ms
+   ✓ REQ-S06-002: a procedure instance > en: current step, assignee role, Unknown due date, missing inputs; completing is refused translated  913ms
+   ✓ REQ-S06-001: the procedure builder > validation lists every finding, translated by its code  764ms
+   ✓ REQ-S12-025: notification preferences > the first save sends If-Match "0"; the quiet-hours refusal is translated  734ms
+   ✓ REQ-S12-015: the meeting cut-off pack > "No reviewer assigned"; the review sends If-Match; 403 not_reviewer is translated  572ms
+   ✓ REQ-S10-015: an approval route > in a sequential route step 2 is waiting and not notified until step 1 approves  381ms
+ ✓ |unit-web| src/app/p5-shell.test.tsx (29 tests) 13004ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: playbook lands on its §3 contents with where each one lives  2853ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: strategy lands on its §3 contents with where each one lives  681ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: tom lands on its §3 contents with where each one lives  304ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: initiatives lands on its §3 contents with where each one lives  576ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: governance lands on its §3 contents with where each one lives  725ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: risks lands on its §3 contents with where each one lives  440ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: benefits lands on its §3 contents with where each one lives  339ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: evidence lands on its §3 contents with where each one lives  523ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: bau lands on its §3 contents with where each one lives  441ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: tom lands on its §3 contents with where each one lives  330ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: initiatives lands on its §3 contents with where each one lives  340ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > ar: evidence lands on its §3 contents with where each one lives  618ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > Administration shows the Studio entries only with methodology.read, and is shown to the methodology admin  739ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > the Transformation Office fixture (no Studio permission) sees 13 areas, with the P5 entries of its areas  630ms
+ ✓ |unit-web| src/pages/studio/studio.test.tsx (21 tests) 13717ms
+   ✓ Studio home > ar: lists versions with their state; a draft is labelled not published; New draft for the admin  1520ms
+   ✓ Studio home > en: lists versions with their state; a draft is labelled not published; New draft for the admin  832ms
+   ✓ Studio home > New draft posts the chosen base version and opens the draft  434ms
+   ✓ Version page: pipeline, elements, diff, affected records > shows Not run / Stale / Pass per check of the current content, never passed by default  2126ms
+   ✓ Version page: pipeline, elements, diff, affected records > publish sends If-Match; 422 config_version.review_required is one translated alert  1330ms
+   ✓ Version page: pipeline, elements, diff, affected records > renaming G3's label sends PUT with If-Match; changing an approver to ADM_METHOD shows the translated refusal  2055ms
+   ✓ Version page: pipeline, elements, diff, affected records > the diff shows before and after side by side; an uncountable affected count is Unknown, never 0  310ms
+   ✓ Version page: pipeline, elements, diff, affected records > a published version is immutable and offers rollback with a required reason  458ms
+   ✓ Scoring defaults > edits weights to 30/20/20/15/15 (total 100.00) and a Feasibility descriptor; saves a draft with If-Match  872ms
+   ✓ Source coverage > ar: shows the ten sets in source order with their counts, and runs the check for the version  690ms
+   ✓ Source coverage > en: shows the ten sets in source order with their counts, and runs the check for the version  518ms
+ ✓ |unit-web| src/pages/health-check/fef.test.tsx (23 tests) 12861ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (en) > 24 answers: Incomplete (24/25), no score and no band; the scoring assumption is shown  856ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (en) > submitting without three actions shows the translated 422  2608ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (ar) > 24 answers: Incomplete (24/25), no score and no band; the scoring assumption is shown  1276ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (ar) > 25 answers with 17 Yes: 17 / 25 and the band 16-20 with its source text  334ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (ar) > submitting without three actions shows the translated 422  1200ms
+   ✓ REQ-PB-086, S14-004: the launch plan (en) > lists tasks with 'Blocked by' and the non-working-day warning; a new start date sends If-Match  599ms
+   ✓ REQ-PB-086, S14-004: the launch plan (ar) > lists tasks with 'Blocked by' and the non-working-day warning; a new start date sends If-Match  310ms
+   ✓ REQ-PB-087: the Day-90 leadership test (en) > five of six answered: Incomplete (5/6); completing is the translated 422  760ms
+   ✓ REQ-S08-005: the formula preview (en) > the revenue uplift is in SAR, never 'SAR per customer', and a missing ARPU is Not computable  420ms
+   ✓ REQ-S08-019: the optional financial metrics (en) > labelled an extension; with no discount rate NPV is not shown and is never 0  411ms
+   ✓ REQ-S07-016: KPI restatement (en) > a Stale side has no number; the decision refusal is translated and sends If-Match  462ms
+   ✓ REQ-S07-016: KPI restatement (ar) > a Stale side has no number; the decision refusal is translated and sends If-Match  723ms
+ ✓ |unit-web| src/pages/studio/route-editor.test.tsx (10 tests) 6710ms
+   ✓ the route editor in the element dialog > en: configures a two-step sequential route with the keyboard-operable list and sends it with If-Match  3086ms
+   ✓ the route editor in the element dialog > ar: configures a two-step sequential route with the keyboard-operable list and sends it with If-Match  1221ms
+   ✓ the element views: route summary and provenance badge (REQ-PB-002) > a failed provenance read shows no badge, never a wrong one  509ms
+ ✓ |unit-web| src/components/form-framework/form-framework.test.tsx (16 tests) 13833ms
+   ✓ form framework on T14 (en) > shows inline help and the extension fields; Save draft stores a draft labelled not submitted  2488ms
+   ✓ form framework on T14 (en) > a saved draft reopens with its values; a moved base shows the comparison and Update draft sends If-Match  693ms
+   ✓ form framework on T14 (en) > a conflicting concurrent save returns a recoverable conflict and re-applies on the current version  1204ms
+   ✓ form framework on T14 (en) > a 400 field code lands on its extension field, translated  958ms
+   ✓ form framework on T14 (en) > history lists versions with changed fields; comments post and reply; attachments need a reason to remove  656ms
+   ✓ form framework on T14 (ar) > shows inline help and the extension fields; Save draft stores a draft labelled not submitted  318ms
+   ✓ form framework on T14 (ar) > a saved draft reopens with its values; a moved base shows the comparison and Update draft sends If-Match  1658ms
+   ✓ form framework on T14 (ar) > a conflicting concurrent save returns a recoverable conflict and re-applies on the current version  1150ms
+   ✓ form framework on T14 (ar) > a 400 field code lands on its extension field, translated  1152ms
+   ✓ form framework on T14 (ar) > history lists versions with changed fields; comments post and reply; attachments need a reason to remove  1441ms
+ ✓ |unit-web| src/pages/procedures/instance-output.test.tsx (13 tests) 11174ms
+   ✓ create output (record_baseline): choose the baseline produced natively > en: lists only eligible baselines, links the native screen, sends outputRecordId with If-Match  1536ms
+   ✓ create output (record_baseline): choose the baseline produced natively > en: no eligible baseline yet: says so, offers the native screen; the server's 422 output_required is shown by code  571ms
+   ✓ create output (record_baseline): choose the baseline produced natively > ar: lists only eligible baselines, links the native screen, sends outputRecordId with If-Match  526ms
+   ✓ create output (record_baseline): choose the baseline produced natively > ar: no eligible baseline yet: says so, offers the native screen; the server's 422 output_required is shown by code  831ms
+   ✓ create output (record_baseline): choose the baseline produced natively > a list the user cannot read is shown with its translated reason, never as an empty choice  511ms
+   ✓ link output > en: complete_canvas offers only ready TOM canvas cells and sends the chosen one  489ms
+   ✓ link output > ar: complete_canvas offers only ready TOM canvas cells and sends the chosen one  887ms
+   ✓ link output > an organization-scope intake reads the charter in the transformation its first step produced  2474ms
+   ✓ advance output (validate_baseline): the note-only form > en: no selector; completing sends no outputRecordId  1154ms
+   ✓ advance output (validate_baseline): the note-only form > ar: no selector; completing sends no outputRecordId  834ms
+ ✓ |unit-web| src/pages/methodology-migrations/migrations.test.tsx (8 tests) 7186ms
+   ✓ Migration page > ar: lists the new required field and the required G2 re-approval; history stays unchanged  1375ms
+   ✓ Migration page > en: lists the new required field and the required G2 re-approval; history stays unchanged  463ms
+   ✓ Migration page > preview sends the inputs with If-Match; submit sends If-Match  508ms
+   ✓ Migration page > the requester deciding gets 403 methodology_migration.self_approval, translated, in the dialog  470ms
+   ✓ Migration page > execute on a moved pin shows 409 methodology_migration.pin_moved translated  330ms
+   ✓ Migrations of a transformation and its pins > plans a migration to a newer published version and lists the required re-approvals  903ms
+   ✓ Migrations of a transformation and its pins > the pins page shows the pinned version and an empty history  600ms
+ ✓ |unit-web| src/pages/gates/readiness-covered.test.tsx (14 tests) 8209ms
+   ✓ readiness line with accepted exceptions (en) > gate page: an approved gate whose missing output is covered says so in the readiness line; ready follows it  1954ms
+   ✓ readiness line with accepted exceptions (en) > gates list: the G1 chip says the rest is covered and is on track  471ms
+   ✓ readiness line with accepted exceptions (en) > G1: without exceptions the line is unchanged  477ms
+   ✓ readiness line with accepted exceptions (en) > G1: an expired exception (covering false) does not count  324ms
+   ✓ readiness line with accepted exceptions (en) > list: an expired exception (covering false) does not count  442ms
+   ✓ readiness line with accepted exceptions (ar) > gate page: an approved gate whose missing output is covered says so in the readiness line; ready follows it  378ms
+   ✓ readiness line with accepted exceptions (ar) > gates list: the G1 chip says the rest is covered and is on track  472ms
+   ✓ readiness line with accepted exceptions (ar) > G1: without exceptions the line is unchanged  368ms
+   ✓ readiness line with accepted exceptions (ar) > G1: an expired exception (covering false) does not count  429ms
+ ✓ |unit-web| src/pages/form-builder/form-builder.test.tsx (8 tests) 6039ms
+   ✓ form builder (en) > lists the native forms; the twelve extension record types carry the Extension badge  1207ms
+   ✓ form builder (en) > adds an extension field in an open draft with PUT, origin admin, its type and If-Match on the draft  1118ms
+   ✓ form builder (en) > deleting a protected source column shows the server's refusal, translated  529ms
+   ✓ form builder (ar) > lists the native forms; the twelve extension record types carry the Extension badge  503ms
+   ✓ form builder (ar) > adds an extension field in an open draft with PUT, origin admin, its type and If-Match on the draft  464ms
+   ✓ form builder (ar) > deleting a protected source column shows the server's refusal, translated  570ms
+ ✓ |unit-web| src/pages/reports/snapshot-labels.test.tsx (7 tests) 951ms
+
+ Test Files  13 passed (13)
+      Tests  205 passed (205)
+   Start at  08:50:50
+   Duration  75.61s (transform 428.48s, setup 5.41s, collect 59.77s, tests 128.93s, environment 15.04s, prepare 2.92s)
+
+EXIT 0

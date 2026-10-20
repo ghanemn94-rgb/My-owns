@@ -1,0 +1,34 @@
+# qa-verifier DG5 r4 (T-DG5-REV-QA-R4C): why no PostgreSQL can start in this run's shell sandbox (2026-10-20T08:25:18Z)
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+EXIT 0
+$ cat /proc/self/uid_map
+         0          0          1
+EXIT 0
+$ cat /proc/self/gid_map
+         0          0          1
+EXIT 0
+$ cat /proc/sys/user/max_user_namespaces
+0
+EXIT 0
+$ unshare --user --map-user=1000 --map-group=1000 id
+unshare: unshare failed: Operation not permitted
+EXIT 1
+$ setpriv --reuid=1000 --regid=1000 --clear-groups id
+setpriv: setresuid failed: Invalid argument
+EXIT 127
+$ runuser -u nobody -- id
+runuser: cannot set groups: Operation not permitted
+EXIT 1
+$ bwrap --unshare-user --ro-bind / / id
+bwrap: No permissions to create new namespace, likely because the kernel does not allow non-privileged user namespaces. See <https://deb.li/bubblewrap> or <file:///usr/share/doc/bubblewrap/README.Debian.gz>.
+EXIT 1
+$ grep -n unshare tests/qa/support/with-pg.sh apps/web/e2e/support/with-stack.sh e2e/support/with-demo-stack.sh
+tests/qa/support/with-pg.sh:33:as_pg() { if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi; }
+apps/web/e2e/support/with-stack.sh:40:  if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi
+e2e/support/with-demo-stack.sh:29:  if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi
+$ (as uid 0, directly) /usr/lib/postgresql/16/bin/postgres --version; initdb as root:
+postgres (PostgreSQL) 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+initdb: error: cannot be run as root
+initdb: hint: Please log in (using, e.g., "su") as the (unprivileged) user that will own the server process.
+EXIT 0

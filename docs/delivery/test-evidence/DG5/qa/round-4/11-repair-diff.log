@@ -1,0 +1,247 @@
+$ git diff --stat bbd6294..fb9c221 -- . ':!docs'   (2026-10-20T09:07:43Z)
+ apps/api/src/architecture.test.ts                  |  69 ++++++-
+ apps/api/src/architecture.testkit.ts               |  25 ++-
+ .../environment/demo-gate-history.test.ts          |  78 ++++++++
+ apps/web/e2e/p5-diagnose-reflow.spec.ts            | 203 ++++++++++++++++++++
+ apps/web/src/styles/app.css                        |  22 +++
+ packages/db/src/demo/data/roaming-ids.ts           |   8 +
+ packages/db/src/demo/data/roaming-portfolio.ts     | 211 +++++++++++++++++++++
+ packages/db/test/integration/demo.test.ts          |   3 +-
+ 8 files changed, 616 insertions(+), 3 deletions(-)
+
+$ git diff bbd6294..fb9c221 -- apps/api/src/architecture.test.ts apps/api/src/architecture.testkit.ts apps/web/src/styles/app.css packages/db/test/integration/demo.test.ts
+diff --git a/apps/api/src/architecture.test.ts b/apps/api/src/architecture.test.ts
+index fb972c4..97de033 100644
+--- a/apps/api/src/architecture.test.ts
++++ b/apps/api/src/architecture.test.ts
+@@ -44,6 +44,7 @@ import {
+   moduleViolations,
+   scanSource,
+   SRC,
++  syntaxErrors,
+   walk,
+ } from "./architecture.testkit.ts";
+ import {
+@@ -60,6 +61,8 @@ import {
+ } from "./modules.ts";
+ 
+ const REPO = resolve(SRC, "../../..");
++/** F-DG5-102 / F-DG5-145 (D-174): the full-tree walk's own budget, more than 2x its 67 s loaded worst case. */
++const FULL_MODULE_WALK_TIMEOUT_MS = 150_000;
+ 
+ describe("API module boundaries (ADR-0002)", () => {
+   const moduleDirs = readdirSync(MODULES_DIR).filter((d) => statSync(join(MODULES_DIR, d)).isDirectory());
+@@ -197,12 +200,18 @@ describe("API module boundaries (ADR-0002)", () => {
+ 
+   // F-DG2-143: this walks and lints every module file (~1-1.5 s alone, 4.3-5.8 s under parallel load), so it gets an
+   // explicit timeout instead of vitest's 5 s default.
++  // F-DG5-102 / F-DG5-145 (D-174): the module tree grew through P5 (448 files, 5.8 MB), so the shared 30 s budget
++  // (AST_TEST_TIMEOUT_MS) no longer held under review load. Measured on candidate fc93b239: ~9 s unloaded (D-173),
++  // 12.7-17.4 s alone, and 30.2-67.0 s in full Node 22 `pnpm test` runs at load 14-29 on 4 CPUs, where it timed out in
++  // 6 of 9 runs with no assertion failing. D-174 first made the walk cheaper with no rule changed (the rule-4 syntax check
++  // no longer emits JavaScript, see EMPTY_EMIT in architecture.testkit.ts). Then it set this test's own budget to more
++  // than 2x the 67 s loaded worst case, whatever the speed-up. The assertion is unchanged.
+   it(
+     "every import respects dependsOn, public surfaces and allowed packages",
+     () => {
+       expect((moduleDirs as ApiModule[]).flatMap((m) => moduleViolations(m))).toEqual([]);
+     },
+-    AST_TEST_TIMEOUT_MS,
++    FULL_MODULE_WALK_TIMEOUT_MS,
+   );
+ 
+   it("the declared module graph is acyclic, and audit/access depend on no business module", () => {
+@@ -1065,6 +1074,64 @@ describe("the checker itself catches planted violations (self-check, incl. F-DG1
+     expect(bareAllowed("node:some-future-builtin")).toBe(false);
+     expect(bareAllowed("fs")).toBe(false);
+   });
++
++  // F-DG5-102 / F-DG5-145 (D-174): syntaxErrors() no longer lets ts.transpileModule print the file (EMPTY_EMIT). This
++  // guard pins that rule 4 still reports EXACTLY what a full transpileModule reports, for every module-file extension,
++  // on valid and broken sources and on sources whose diagnostics depend on the extension's script kind, the target or
++  // module detection. It also covers every module's real index.ts.
++  it(
++    "rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)",
++    () => {
++      const fullTranspile = (fileName: string, source: string) =>
++        (
++          ts.transpileModule(source, {
++            fileName,
++            reportDiagnostics: true,
++            compilerOptions: { jsx: ts.JsxEmit.Preserve },
++          }).diagnostics ?? []
++        )
++          .filter((d) => d.category === ts.DiagnosticCategory.Error)
++          .map((d) => {
++            const line = d.file && d.start !== undefined ? d.file.getLineAndCharacterOfPosition(d.start).line + 1 : 0;
++            return `unparseable source: ${ts.flattenDiagnosticMessageText(d.messageText, " ")} (line ${line})`;
++          });
++      const sources = [
++        `import { x } from "./a.ts";\nexport const y: number = x;`,
++        `export const a = (1;`,
++        `const C = (async () => {} as any)[k];`,
++        `export const e = <div a='b'>{x}</div>;`,
++        `export function f(a: string): string { return a; }`,
++        `await Promise.resolve(1);`,
++        `export const r = /a/v;`,
++        "export const s = `abc",
++        `export const o = 010;`,
++        `export enum E { A }\nexport class K { constructor(private p: number) {} }`,
++      ];
++      const extensions = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"];
++      let withErrors = 0;
++      for (const source of sources)
++        for (const ext of extensions) {
++          const fileName = join(MODULES_DIR, "transformations", `zz-planted${ext}`);
++          const expected = fullTranspile(fileName, source);
++          if (expected.length > 0) withErrors++;
++          expect(syntaxErrors(fileName, source), `${ext}: ${source}`).toEqual(expected);
++        }
++      // Not vacuous: the corpus has syntax errors, and the script kind still follows the extension (a type annotation
++      // is a syntax error in a .js module file and none in a .ts one).
++      expect(withErrors).toBeGreaterThan(sources.length);
++      const typed = `export function f(a: string): string { return a; }`;
++      expect(syntaxErrors(join(MODULES_DIR, "transformations", "zz.ts"), typed)).toEqual([]);
++      expect(syntaxErrors(join(MODULES_DIR, "transformations", "zz.js"), typed).join("\n")).toMatch(
++        /unparseable source: Type annotations can only be used in TypeScript files/,
++      );
++      for (const m of Object.keys(API_MODULES)) {
++        const file = join(MODULES_DIR, m, "index.ts");
++        const source = readFileSync(file, "utf8");
++        expect(syntaxErrors(file, source), m).toEqual(fullTranspile(file, source));
++      }
++    },
++    AST_TEST_TIMEOUT_MS,
++  );
+ });
+ 
+ // F-DG2-143: each test here parses a whole source tree (apps/web alone takes ~0.5-0.8 s), so every test in the block
+diff --git a/apps/api/src/architecture.testkit.ts b/apps/api/src/architecture.testkit.ts
+index 6e8372c..ab05607 100644
+--- a/apps/api/src/architecture.testkit.ts
++++ b/apps/api/src/architecture.testkit.ts
+@@ -112,6 +112,9 @@ import { API_MODULES, type ApiModule } from "./modules.ts";
+  * F-DG2-143: per-test timeout for every test that walks module sources through this lint (TypeScript parse plus
+  * `transpileModule` per file). The full-tree check takes ~1-1.5 s alone and 4.3-5.8 s under a parallel suite run,
+  * which crossed vitest's 5 s default. 30 s gives real headroom without raising the global unit-test default.
++ * F-DG5-102 / F-DG5-145 (D-174): the FULL-TREE walk in architecture.test.ts outgrew this budget and has its own
++ * (`FULL_MODULE_WALK_TIMEOUT_MS` there). The module-owned tests that use this one walk one module each: 0.3-1.9 s alone
++ * on Node 22 and Node 24 (2026-10-19, before the D-174 speed-up), under a third of 30 s, so it is unchanged.
+  */
+ export const AST_TEST_TIMEOUT_MS = 30_000;
+ 
+@@ -522,6 +525,24 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
+   return ts.createProgram([fileName], options, host).getSyntacticDiagnostics(sf);
+ }
+ 
++/**
++ * F-DG5-102 / F-DG5-145 (D-174): rule 4 needs only the DIAGNOSTICS of `ts.transpileModule`, never its output text, but
++ * the emit (TypeScript transforms plus printing the whole file) was about a third of the full module walk (448 files,
++ * outside vitest on Node 24: ~1.2 s of a ~4 s warm walk; 2026-10-19, T-DG5-BE-Y2 handback). This `before`
++ * transformer hands the emitter an empty tree, so nothing is transformed or printed. It changes no diagnostic:
++ *  - `transpileModule` still builds its options, parses the file (extension-derived script kind, its own target and
++ *    module detection) and collects `getSyntacticDiagnostics` + `getOptionsDiagnostics` BEFORE the emit starts, on
++ *    the ORIGINAL source file; a custom `before` transformer runs only inside the emit, after that;
++ *  - a non-declaration emit adds no diagnostic of its own (TypeScript 6.0 `emitFiles`: only a failing `writeFile`,
++ *    impossible with transpile's in-memory host, a build-info file, never written without incremental/composite, or the
++ *    declaration emit, which transpileModule turns off); `noEmitOnError` stays unset, so no pre-emit diagnostic is
++ *    folded in either.
++ * The guard test 'rule 4 reports exactly the diagnostics of a full ts.transpileModule' (architecture.test.ts) compares
++ * the two over every extension, on valid and broken sources, so a TypeScript upgrade that changed this fails there.
++ */
++const EMPTY_EMIT: ts.TransformerFactory<ts.SourceFile> = (context) => (sourceFile) =>
++  context.factory.updateSourceFile(sourceFile, []);
++
+ /**
+  * Rule 4, fail closed: syntax errors in a module file. On a syntax error the parser's recovery can turn code into
+  * something else (`(async () => {} as any)[k]` reads `[k]` as a binding pattern), so the rules would inspect a
+@@ -529,14 +550,16 @@ function declarationSyntaxErrors(fileName: string, source: string): readonly ts.
+  * F-DG1-137 / F-DG1-218: the declaration-file branch follows TypeScript's own classification
+  * (`isDeclarationFileName`, i.e. `SourceFile.isDeclarationFile`; incl. `allowArbitraryExtensions` `*.d.<ext>.ts`),
+  * so no declaration-file name ever reaches `ts.transpileModule`.
++ * Exported for the guard test only; returns the file's syntax errors as violation texts.
+  */
+-function syntaxErrors(fileName: string, source: string): string[] {
++export function syntaxErrors(fileName: string, source: string): string[] {
+   const diagnostics = isDeclarationFileName(fileName)
+     ? declarationSyntaxErrors(fileName, source)
+     : (ts.transpileModule(source, {
+         fileName,
+         reportDiagnostics: true,
+         compilerOptions: { jsx: ts.JsxEmit.Preserve },
++        transformers: { before: [EMPTY_EMIT] },
+       }).diagnostics ?? []);
+   return diagnostics
+     .filter((d) => d.category === ts.DiagnosticCategory.Error)
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index e2c9f1b..5350472 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -925,10 +925,24 @@ input[type="radio"] {
+   font-size: 0.85rem;
+ }
+ 
++/* One column whose track never grows to its items' min-content (D-174, the F-DG5-144 pattern): the compare table, with
++   no-wrap headers, otherwise sized the track and the page scrolled sideways at 390 px. Inside the banner its headers
++   wrap between words and its values anywhere (a long value without spaces too), so the table fits the banner and no
++   scroll region is needed. Headers and row labels never break inside a word (Arabic letters stay joined). */
+ .conflict {
+   display: grid;
++  grid-template-columns: minmax(0, 1fr);
+   gap: var(--mth-space-3);
+ }
++.conflict > * {
++  min-inline-size: 0;
++}
++.conflict .table thead th {
++  white-space: normal;
++}
++.conflict .table td {
++  overflow-wrap: anywhere;
++}
+ .conflict__title {
+   color: var(--mth-feedback-warning-fg);
+   margin: 0;
+@@ -1302,10 +1316,18 @@ input[type="radio"] {
+ }
+ 
+ /* Diagnose */
++/* One column whose track never grows to its items' min-content (F-DG5-144, D-174): with an implicit `auto` track the
++   widest card's findings register (its table's min-content) sized the track and every card, so the page scrolled
++   sideways at 390 px and with 200 % text. The cards are shrinkable grid items, and a wide register scrolls inside its
++   own focusable, named region (TableScrollRegion). */
+ .workstreams {
+   display: grid;
++  grid-template-columns: minmax(0, 1fr);
+   gap: var(--mth-space-4);
+ }
++.workstreams > .workstream {
++  min-inline-size: 0;
++}
+ .workstream {
+   border: 1px solid var(--mth-border-default);
+   border-radius: var(--mth-radius);
+diff --git a/packages/db/test/integration/demo.test.ts b/packages/db/test/integration/demo.test.ts
+index 15fb968..bdc79e2 100644
+--- a/packages/db/test/integration/demo.test.ts
++++ b/packages/db/test/integration/demo.test.ts
+@@ -25,9 +25,10 @@ import { createScratchDatabase, dropScratchDatabase, pgError, roleUrl, testDatab
+ const { adminUrl } = testDatabase();
+ const cli = fileURLToPath(new URL("../../src/cli.ts", import.meta.url));
+ const dropAtEnd: string[] = [];
++// D-174: dropping 11 scratch databases took 33.4 s at load 20 (30 s project budget); 120 s is over 3x that measurement.
+ afterAll(async () => {
+   for (const name of dropAtEnd.reverse()) await dropScratchDatabase(adminUrl, name);
+-});
++}, 120_000);
+ 
+ async function scratch(prefix: string, migrated = true): Promise<{ name: string; ownerUrl: string }> {
+   const name = await createScratchDatabase(adminUrl, prefix);
+
+$ git show 2d0f98c (non-comment +/- lines; none expected)
+(end)
+
+$ git diff bbd6294..fb9c221 -- . ':!docs' | grep -E '^-' | grep -vE '^---' (every removed line)
+-    AST_TEST_TIMEOUT_MS,
+-function syntaxErrors(fileName: string, source: string): string[] {
+-});

@@ -1,0 +1,25 @@
+$ (the files) git ls-files | grep -E 'demo.*\.test\.ts$|demo-gate-history'  (2026-10-20T09:11:49Z)
+apps/api/src/modules/platform/db-errors-p5-demo.test.ts
+apps/api/test/integration/environment/demo-gate-history.test.ts
+apps/api/test/integration/environment/demo-pending-approval.test.ts
+apps/api/test/integration/environment/demo-traceability-chains.test.ts
+apps/api/test/integration/environment/demo-users-new-transformation.test.ts
+apps/api/test/integration/reporting/table-totals-demo.test.ts
+apps/worker/src/handlers/demo.test.ts
+apps/worker/test/integration/demo-reset-dev-binding.test.ts
+packages/db/src/demo/coverage.test.ts
+packages/db/src/demo/data/dataset-helpers.test.ts
+packages/db/src/demo/guard.test.ts
+packages/db/test/integration/demo-dev-binding.test.ts
+packages/db/test/integration/demo-numbers-spec.test.ts
+packages/db/test/integration/demo-numbers.test.ts
+packages/db/test/integration/demo-roaming.test.ts
+packages/db/test/integration/demo.test.ts
+tests/qa/integration/a15-demo-transformation-outputs.test.ts
+
+$ grep -nE '[0-9a-f]{64}' <those files>   (a pinned SHA-256 literal)
+(end; no line above = no 64-hex literal)
+$ grep -nE 'checksum' <those files> | grep -E 'toBe\("|toEqual\("'   (a checksum compared with a literal)
+(end)
+$ grep -nE '(deliverable|trace_link|capabilit).*(toBe|toHaveLength|toEqual)\([0-9]+\)' <those files>   (a literal count of the new record kinds)
+(end)
