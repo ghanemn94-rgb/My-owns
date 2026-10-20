@@ -1,0 +1,27 @@
+## 2026-10-19T12:34:02Z candidate identity (T-DG5-REV-SEC-R4B)
+$ git rev-parse HEAD (repository)
+b6c03d7d6bd2da7e6605d6ed07710284abc5dded
+$ node tools/gates/candidate.mjs --stage DG5 (repository working tree)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+exit=0
+$ git diff --name-only fb9c221 HEAD | grep -v ^docs/delivery/ | wc -l
+0
+--- clone $TMPDIR/review-r4b (git clone /home/user/My-owns; checkout b6c03d7)
+b6c03d7d6bd2da7e6605d6ed07710284abc5dded
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --ref fb9c221
+{"stage":"DG5","source":"fb9c221","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --diff
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ git status --short | wc -l
+0

@@ -38,7 +38,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 - **Next action:**
   1. The round-4 reviews run on candidate `26d4ad92` in the main checkout, with a monitor armed and no worktree or install activity (D-082). The assignments are in `docs/delivery/assignments/DG5/round-4/`.
      - **Domain: done.** `T-DG5-REV-DOM-R4` passed, F-DG5-123 is verified closed, and there is no new finding. Commits `796eb38` and `c179744`.
-     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R4B` and `T-DG5-REV-QA-R4B`,** from `round-4/{role}-rerun.md`.
+     - **Code-security and QA: re-running as `T-DG5-REV-SEC-R4C` and `T-DG5-REV-QA-R4C`** from `round-4/{role}-rerun2.md`, after the R4B re-runs stopped at about 14:08Z on the account usage limit (material in `*-r4b-orphaned/`). Earlier: from `round-4/{role}-rerun.md`.
        - A container restart at about 12:31Z stopped the first runs about two and a half hours in, before they wrote a record (exit 143).
        - This time their runners survived and committed the run folders as they stood (`c3c964e`, `bc450c1`). Those folders stay in `runs/DG5/` (write-once).
        - The partial material those commits and the working tree held (the code-security verifications sidecar, test sources and evidence) is moved, for provenance only, to `test-evidence/DG5/{code-security,qa}-r4-orphaned/`, without the screenshots.

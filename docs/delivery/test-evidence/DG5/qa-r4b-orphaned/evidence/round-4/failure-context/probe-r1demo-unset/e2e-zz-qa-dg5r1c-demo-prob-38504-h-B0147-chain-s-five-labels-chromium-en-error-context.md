@@ -1,0 +1,1327 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: roaming.user.tl (synthetic)
+      - generic [ref=e14]: Synthetic Demo Operator
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - note [ref=e20]:
+    - img [ref=e21]
+    - strong [ref=e23]: Illustrative example — synthetic. Not Mobily actual performance.
+  - generic [ref=e24]:
+    - navigation "Primary navigation" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "My Work" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: My Work
+          - list "My Work" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "Tasks and inbox" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "Approvals" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "Delegations" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "Notification preferences" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "Executive Overview" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: Executive Overview
+          - list "Executive Overview" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "Dashboards" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "RAG policy" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "Transformations" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: Transformations
+        - listitem [ref=e50]:
+          - link "Playbook and Procedures" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "Phase steps and review queue" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "Playbook reader" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "My procedures" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "90-day launch plan" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "Health check" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "Strategy and KPIs" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "KPIs" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "Target Operating Model" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: Target Operating Model
+        - listitem [ref=e73]:
+          - link "Initiatives and Roadmaps" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "Portfolios" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "Owner updates" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "Governance" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: Governance
+          - list "Governance" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "Groups" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "Forums" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "Meetings" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "Executive decisions (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "Change requests" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "Risks and Actions" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: Risks and Actions
+          - list "Risks and Actions" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "RAID (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "Action register" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "Corrective actions" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "Benefits and Finance" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "Benefits register (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "Change and Adoption" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: Change and Adoption
+          - list "Change and Adoption" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Adoption plan (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "Evidence and Reports" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "Reports and snapshots" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "Exports" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "Presentation mode" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "Evidence register" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "BAU and Improvement" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "Performance areas" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "Improvement backlog" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "Lessons" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "Lesson search" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "About this product" [ref=e142] [cursor=pointer]:
+          - /url: /about
+        - link "Guided walkthrough" [ref=e143] [cursor=pointer]:
+          - /url: /walkthrough
+    - main [ref=e144]:
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - navigation "Breadcrumbs" [ref=e147]:
+            - list [ref=e148]:
+              - listitem [ref=e149]:
+                - link "Transformations" [ref=e150] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e151]:
+                - text: /
+                - link "ROAMING" [ref=e152] [cursor=pointer]:
+                  - /url: /transformations/01995000-0000-7000-8000-000000000001
+              - listitem [ref=e153]: /Traceability
+          - generic [ref=e155]:
+            - heading "Traceability" [level=1] [ref=e156]
+            - paragraph [ref=e157]:
+              - generic [ref=e158]:
+                - generic [ref=e159]: ROAMING
+                - generic [ref=e160]: International Roaming Transformation
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: Active
+                - generic [ref=e164]: Illustrative example — synthetic
+                - generic [ref=e165]: "Phase: Transform"
+        - navigation "Transformation workspace" [ref=e166]:
+          - list [ref=e167]:
+            - listitem [ref=e168]:
+              - link "Overview" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001
+            - listitem [ref=e170]:
+              - link "Diagnose" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+            - listitem [ref=e172]:
+              - link "Charter" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/charter
+            - listitem [ref=e174]:
+              - link "Define" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+            - listitem [ref=e176]:
+              - link "Design" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+            - listitem [ref=e178]:
+              - link "Portfolio" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/portfolio
+            - listitem [ref=e180]:
+              - link "Prioritization" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/prioritization
+            - listitem [ref=e182]:
+              - link "Roadmap" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/roadmap
+            - listitem [ref=e184]:
+              - link "Dependencies" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dependencies
+            - listitem [ref=e186]:
+              - link "Capacity" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/capacity
+            - listitem [ref=e188]:
+              - link "Business cases" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/business-cases
+            - listitem [ref=e190]:
+              - link "Benefit formulas" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-formulas
+            - listitem [ref=e192]:
+              - link "Decisions" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/decisions
+            - listitem [ref=e194]:
+              - link "Gates" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/gates
+            - listitem [ref=e196]:
+              - link "Readiness" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/readiness
+            - listitem [ref=e198]:
+              - link "Dispensations" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dispensations
+            - listitem [ref=e200]:
+              - link "Evidence" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/evidence
+            - listitem [ref=e202]:
+              - link "Team" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/team
+            - listitem [ref=e204]:
+              - link "Role mapping" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/role-mappings
+            - listitem [ref=e206]:
+              - link "Decision rights" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/decision-rights
+            - listitem [ref=e208]:
+              - link "RACI" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/raci
+            - listitem [ref=e210]:
+              - link "Transform readiness" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/transform-readiness
+            - listitem [ref=e212]:
+              - link "Approval records" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/approval-decisions
+            - listitem [ref=e214]:
+              - link "KPIs" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/kpis
+            - listitem [ref=e216]:
+              - link "Benefits register (T14)" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits
+            - listitem [ref=e218]:
+              - link "RAID (T15)" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/raid
+            - listitem [ref=e220]:
+              - link "Actions" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/actions
+            - listitem [ref=e222]:
+              - link "Corrective actions" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/corrective-actions
+            - listitem [ref=e224]:
+              - link "Forums" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/forums
+            - listitem [ref=e226]:
+              - link "Meetings" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/meetings
+            - listitem [ref=e228]:
+              - link "Executive decisions (T16)" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/executive-decisions
+            - listitem [ref=e230]:
+              - link "Adoption" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/adoption
+            - listitem [ref=e232]:
+              - link "BAU and performance areas" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/bau
+            - listitem [ref=e234]:
+              - link "Improvement backlog" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/improvement
+            - listitem [ref=e236]:
+              - link "Lessons" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/lessons
+            - listitem [ref=e238]:
+              - link "Dashboard (T10)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dashboard
+            - listitem [ref=e240]:
+              - link "Closure" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/closure
+            - listitem [ref=e242]:
+              - link "Phases" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/phases
+            - listitem [ref=e244]:
+              - link "Change requests" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/change-requests
+            - listitem [ref=e246]:
+              - link "Traceability" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/traceability
+            - listitem [ref=e248]:
+              - link "Modular entry" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/modular-entry
+            - listitem [ref=e250]:
+              - link "Workstreams" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/workstreams
+        - paragraph [ref=e252]: "The chain from diagnosed issue to benefit, read live from the records: every node opens its record, records with a missing link are reported, and any record's downstream impact can be shown. Nothing here is stored."
+        - navigation "Traceability and structure" [ref=e253]:
+          - list [ref=e254]:
+            - listitem [ref=e255]:
+              - link "Traceability" [ref=e256] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/traceability
+            - listitem [ref=e257]:
+              - link "Modular entry" [ref=e258] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/modular-entry
+            - listitem [ref=e259]:
+              - link "Workstreams" [ref=e260] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/workstreams
+        - region "Traceability graph" [ref=e261]:
+          - heading "Traceability graph" [level=2] [ref=e263]
+          - generic [ref=e264]: One column per step of the chain. Select a record to open it; Focus shows only what is linked to it.
+          - group "Graph options" [ref=e265]:
+            - generic [ref=e266]:
+              - generic [ref=e267]: Direction
+              - combobox "Direction" [disabled] [ref=e268]:
+                - option "Upstream"
+                - option "Downstream"
+                - option "Both directions" [selected]
+            - generic [ref=e269]:
+              - generic [ref=e270]: Depth (steps)
+              - combobox "Depth (steps)" [disabled] [ref=e271]:
+                - option "1"
+                - option "2"
+                - option "3"
+                - option "4"
+                - option "5"
+                - option "6"
+                - option "7"
+                - option "8" [selected]
+          - paragraph [ref=e272]: 31 records, 38 links.
+          - generic [ref=e273]:
+            - region "Diagnosed issue (4)" [ref=e274]:
+              - heading "Diagnosed issue (4)" [level=3] [ref=e275]:
+                - text: Diagnosed issue
+                - generic [ref=e276]: (4)
+              - list [ref=e277]:
+                - listitem [ref=e278]:
+                  - link "Low activation" [ref=e279] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                  - generic [ref=e280]: · confirmed
+                  - group [ref=e281]:
+                    - generic "0 links in, 1 links out" [ref=e282]
+                  - generic [ref=e283]:
+                    - button "Focus Low activation" [ref=e284] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e285]: Low activation
+                    - link "Impact Low activation" [ref=e286] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e287]: Low activation
+                - listitem [ref=e288]:
+                  - link "High complaints" [ref=e289] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                  - generic [ref=e290]: · confirmed
+                  - group [ref=e291]:
+                    - generic "0 links in, 1 links out" [ref=e292]
+                  - generic [ref=e293]:
+                    - button "Focus High complaints" [ref=e294] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e295]: High complaints
+                    - link "Impact High complaints" [ref=e296] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e297]: High complaints
+                - listitem [ref=e298]:
+                  - link "Partner cost pressure" [ref=e299] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                  - generic [ref=e300]: · confirmed
+                  - group [ref=e301]:
+                    - generic "0 links in, 1 links out" [ref=e302]
+                  - generic [ref=e303]:
+                    - button "Focus Partner cost pressure" [ref=e304] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e305]: Partner cost pressure
+                    - link "Impact Partner cost pressure" [ref=e306] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e307]: Partner cost pressure
+                - listitem [ref=e308]:
+                  - link "Fragmented roaming propositions and an inconsistent digital activation journey" [ref=e309] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                  - generic [ref=e310]: · confirmed
+                  - generic [ref=e312]:
+                    - img [ref=e313]
+                    - generic [ref=e315]: No downstream link
+                  - generic [ref=e316]:
+                    - button "Focus Fragmented roaming propositions and an inconsistent digital activation journey" [ref=e317] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e318]: Fragmented roaming propositions and an inconsistent digital activation journey
+                    - link "Impact Fragmented roaming propositions and an inconsistent digital activation journey" [ref=e319] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e320]: Fragmented roaming propositions and an inconsistent digital activation journey
+            - region "Target-state gap (3)" [ref=e321]:
+              - heading "Target-state gap (3)" [level=3] [ref=e322]:
+                - text: Target-state gap
+                - generic [ref=e323]: (3)
+              - list [ref=e324]:
+                - listitem [ref=e325]:
+                  - link "customer_value_proposition Proposition + journey" [ref=e326] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                  - generic [ref=e327]: · open
+                  - group [ref=e328]:
+                    - generic "1 links in, 1 links out" [ref=e329]
+                  - generic [ref=e330]:
+                    - button "Focus customer_value_proposition" [ref=e331] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e332]: customer_value_proposition
+                    - link "Impact customer_value_proposition" [ref=e333] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e334]: customer_value_proposition
+                - listitem [ref=e335]:
+                  - link "journeys_processes Journey + service assurance" [ref=e336] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                  - generic [ref=e337]: · open
+                  - group [ref=e338]:
+                    - generic "1 links in, 1 links out" [ref=e339]
+                  - generic [ref=e340]:
+                    - button "Focus journeys_processes" [ref=e341] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e342]: journeys_processes
+                    - link "Impact journeys_processes" [ref=e343] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e344]: journeys_processes
+                - listitem [ref=e345]:
+                  - link "partners_sourcing Partner model + analytics" [ref=e346] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                  - generic [ref=e347]: · open
+                  - group [ref=e348]:
+                    - generic "1 links in, 1 links out" [ref=e349]
+                  - generic [ref=e350]:
+                    - button "Focus partners_sourcing" [ref=e351] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e352]: partners_sourcing
+                    - link "Impact partners_sourcing" [ref=e353] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e354]: partners_sourcing
+            - region "Initiative (3)" [ref=e355]:
+              - heading "Initiative (3)" [level=3] [ref=e356]:
+                - text: Initiative
+                - generic [ref=e357]: (3)
+              - list [ref=e358]:
+                - listitem [ref=e359]:
+                  - link "INI-01 Pass redesign + digital activation" [ref=e360] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                  - generic [ref=e361]: · launched
+                  - group [ref=e362]:
+                    - generic "1 links in, 5 links out" [ref=e363]
+                  - generic [ref=e364]:
+                    - button "Focus INI-01" [ref=e365] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e366]: INI-01
+                    - link "Impact INI-01" [ref=e367] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e368]: INI-01
+                - listitem [ref=e369]:
+                  - link "INI-02 Proactive comms + QoS monitoring" [ref=e370] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                  - generic [ref=e371]: · launched
+                  - group [ref=e372]:
+                    - generic "1 links in, 5 links out" [ref=e373]
+                  - generic [ref=e374]:
+                    - button "Focus INI-02" [ref=e375] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e376]: INI-02
+                    - link "Impact INI-02" [ref=e377] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e378]: INI-02
+                - listitem [ref=e379]:
+                  - link "INI-03 Partner optimization" [ref=e380] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000023
+                  - generic [ref=e381]: · launched
+                  - group [ref=e382]:
+                    - generic "1 links in, 4 links out" [ref=e383]
+                  - generic [ref=e384]:
+                    - button "Focus INI-03" [ref=e385] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e386]: INI-03
+                    - link "Impact INI-03" [ref=e387] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e388]: INI-03
+            - region "Deliverable (9)" [ref=e389]:
+              - heading "Deliverable (9)" [level=3] [ref=e390]:
+                - text: Deliverable
+                - generic [ref=e391]: (9)
+              - list [ref=e392]:
+                - listitem [ref=e393]:
+                  - link "Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)" [ref=e394] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                  - generic [ref=e395]: · active
+                  - group [ref=e396]:
+                    - generic "1 links in, 1 links out" [ref=e397]
+                  - generic [ref=e398]:
+                    - button "Focus Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)" [ref=e399] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e400]: Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)
+                    - link "Impact Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)" [ref=e401] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e402]: Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)
+                - listitem [ref=e403]:
+                  - link "One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)" [ref=e404] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                  - generic [ref=e405]: · active
+                  - group [ref=e406]:
+                    - generic "1 links in, 1 links out" [ref=e407]
+                  - generic [ref=e408]:
+                    - button "Focus One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)" [ref=e409] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e410]: One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)
+                    - link "Impact One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)" [ref=e411] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e412]: One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)
+                - listitem [ref=e413]:
+                  - link "Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)" [ref=e414] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                  - generic [ref=e415]: · active
+                  - group [ref=e416]:
+                    - generic "1 links in, 1 links out" [ref=e417]
+                  - generic [ref=e418]:
+                    - button "Focus Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)" [ref=e419] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e420]: Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)
+                    - link "Impact Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)" [ref=e421] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e422]: Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)
+                - listitem [ref=e423]:
+                  - link "Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)" [ref=e424] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                  - generic [ref=e425]: · active
+                  - group [ref=e426]:
+                    - generic "1 links in, 1 links out" [ref=e427]
+                  - generic [ref=e428]:
+                    - button "Focus Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)" [ref=e429] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e430]: Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)
+                    - link "Impact Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)" [ref=e431] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e432]: Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)
+                - listitem [ref=e433]:
+                  - link "Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)" [ref=e434] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                  - generic [ref=e435]: · active
+                  - group [ref=e436]:
+                    - generic "1 links in, 1 links out" [ref=e437]
+                  - generic [ref=e438]:
+                    - button "Focus Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)" [ref=e439] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e440]: Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)
+                    - link "Impact Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)" [ref=e441] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e442]: Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)
+                - listitem [ref=e443]:
+                  - link "Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)" [ref=e444] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                  - generic [ref=e445]: · active
+                  - group [ref=e446]:
+                    - generic "1 links in, 1 links out" [ref=e447]
+                  - generic [ref=e448]:
+                    - button "Focus Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)" [ref=e449] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e450]: Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)
+                    - link "Impact Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)" [ref=e451] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e452]: Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)
+                - listitem [ref=e453]:
+                  - link "Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)" [ref=e454] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000023
+                  - generic [ref=e455]: · active
+                  - group [ref=e456]:
+                    - generic "1 links in, 1 links out" [ref=e457]
+                  - generic [ref=e458]:
+                    - button "Focus Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)" [ref=e459] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e460]: Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)
+                    - link "Impact Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)" [ref=e461] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e462]: Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)
+                - listitem [ref=e463]:
+                  - link "Partner usage feed for digital activation (synthetic) / تغذية بيانات استخدام الشركاء للتفعيل الرقمي (اصطناعي)" [ref=e464] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000023
+                  - generic [ref=e465]: · active
+                  - group [ref=e466]:
+                    - generic "1 links in, 1 links out" [ref=e467]
+                  - generic [ref=e468]:
+                    - button "Focus Partner usage feed for digital activation (synthetic) / تغذية بيانات استخدام الشركاء للتفعيل الرقمي (اصطناعي)" [ref=e469] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e470]: Partner usage feed for digital activation (synthetic) / تغذية بيانات استخدام الشركاء للتفعيل الرقمي (اصطناعي)
+                    - link "Impact Partner usage feed for digital activation (synthetic) / تغذية بيانات استخدام الشركاء للتفعيل الرقمي (اصطناعي)" [ref=e471] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e472]: Partner usage feed for digital activation (synthetic) / تغذية بيانات استخدام الشركاء للتفعيل الرقمي (اصطناعي)
+                - listitem [ref=e473]:
+                  - link "Partner steering and renegotiation shortlist (synthetic) / قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض (اصطناعي)" [ref=e474] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000023
+                  - generic [ref=e475]: · active
+                  - group [ref=e476]:
+                    - generic "1 links in, 1 links out" [ref=e477]
+                  - generic [ref=e478]:
+                    - button "Focus Partner steering and renegotiation shortlist (synthetic) / قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض (اصطناعي)" [ref=e479] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e480]: Partner steering and renegotiation shortlist (synthetic) / قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض (اصطناعي)
+                    - link "Impact Partner steering and renegotiation shortlist (synthetic) / قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض (اصطناعي)" [ref=e481] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e482]: Partner steering and renegotiation shortlist (synthetic) / قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض (اصطناعي)
+            - region "Capability change (3)" [ref=e483]:
+              - heading "Capability change (3)" [level=3] [ref=e484]:
+                - text: Capability change
+                - generic [ref=e485]: (3)
+              - list [ref=e486]:
+                - listitem [ref=e487]:
+                  - link "Digital roaming activation (synthetic)" [ref=e488] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                  - generic [ref=e489]: · active
+                  - group [ref=e490]:
+                    - generic "3 links in, 1 links out" [ref=e491]
+                  - generic [ref=e492]:
+                    - button "Focus Digital roaming activation (synthetic)" [ref=e493] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e494]: Digital roaming activation (synthetic)
+                    - link "Impact Digital roaming activation (synthetic)" [ref=e495] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e496]: Digital roaming activation (synthetic)
+                - listitem [ref=e497]:
+                  - link "Proactive roaming service assurance (synthetic)" [ref=e498] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                  - generic [ref=e499]: · active
+                  - group [ref=e500]:
+                    - generic "3 links in, 1 links out" [ref=e501]
+                  - generic [ref=e502]:
+                    - button "Focus Proactive roaming service assurance (synthetic)" [ref=e503] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e504]: Proactive roaming service assurance (synthetic)
+                    - link "Impact Proactive roaming service assurance (synthetic)" [ref=e505] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e506]: Proactive roaming service assurance (synthetic)
+                - listitem [ref=e507]:
+                  - link "Partner cost and usage analytics (synthetic)" [ref=e508] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                  - generic [ref=e509]: · active
+                  - group [ref=e510]:
+                    - generic "3 links in, 1 links out" [ref=e511]
+                  - generic [ref=e512]:
+                    - button "Focus Partner cost and usage analytics (synthetic)" [ref=e513] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e514]: Partner cost and usage analytics (synthetic)
+                    - link "Impact Partner cost and usage analytics (synthetic)" [ref=e515] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e516]: Partner cost and usage analytics (synthetic)
+            - region "Outcome (3)" [ref=e517]:
+              - heading "Outcome (3)" [level=3] [ref=e518]:
+                - text: Outcome
+                - generic [ref=e519]: (3)
+              - list [ref=e520]:
+                - listitem [ref=e521]:
+                  - link "Attach rate / activation" [ref=e522] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+                  - generic [ref=e523]: · active
+                  - group [ref=e524]:
+                    - generic "0 links in, 1 links out" [ref=e525]
+                  - generic [ref=e526]:
+                    - button "Focus Attach rate / activation" [ref=e527] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e528]: Attach rate / activation
+                    - link "Impact Attach rate / activation" [ref=e529] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e530]: Attach rate / activation
+                - listitem [ref=e531]:
+                  - link "Complaint rate" [ref=e532] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+                  - generic [ref=e533]: · active
+                  - group [ref=e534]:
+                    - generic "0 links in, 1 links out" [ref=e535]
+                  - generic [ref=e536]:
+                    - button "Focus Complaint rate" [ref=e537] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e538]: Complaint rate
+                    - link "Impact Complaint rate" [ref=e539] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e540]: Complaint rate
+                - listitem [ref=e541]:
+                  - link "Cost/MB, margin" [ref=e542] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+                  - generic [ref=e543]: · active
+                  - group [ref=e544]:
+                    - generic "0 links in, 1 links out" [ref=e545]
+                  - generic [ref=e546]:
+                    - button "Focus Cost/MB, margin" [ref=e547] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e548]: Cost/MB, margin
+                    - link "Impact Cost/MB, margin" [ref=e549] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e550]: Cost/MB, margin
+            - region "KPI movement (3)" [ref=e551]:
+              - heading "KPI movement (3)" [level=3] [ref=e552]:
+                - text: KPI movement
+                - generic [ref=e553]: (3)
+              - list [ref=e554]:
+                - listitem [ref=e555]:
+                  - link "Attach rate / activation" [ref=e556] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+                  - generic [ref=e557]: · active
+                  - generic [ref=e559]:
+                    - text: Allocated
+                    - generic [ref=e560]: 0%
+                    - text: · Unallocated
+                    - generic [ref=e561]: 100%
+                  - group [ref=e562]:
+                    - generic "3 links in, 1 links out" [ref=e563]
+                  - generic [ref=e564]:
+                    - button "Focus Attach rate / activation" [ref=e565] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e566]: Attach rate / activation
+                    - link "Impact Attach rate / activation" [ref=e567] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e568]: Attach rate / activation
+                    - link "Allocation Attach rate / activation" [ref=e569] [cursor=pointer]:
+                      - /url: "#trace-allocation"
+                      - text: Allocation
+                      - generic [ref=e570]: Attach rate / activation
+                - listitem [ref=e571]:
+                  - link "Complaint rate" [ref=e572] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+                  - generic [ref=e573]: · active
+                  - generic [ref=e575]:
+                    - text: Allocated
+                    - generic [ref=e576]: 0%
+                    - text: · Unallocated
+                    - generic [ref=e577]: 100%
+                  - group [ref=e578]:
+                    - generic "3 links in, 1 links out" [ref=e579]
+                  - generic [ref=e580]:
+                    - button "Focus Complaint rate" [ref=e581] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e582]: Complaint rate
+                    - link "Impact Complaint rate" [ref=e583] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e584]: Complaint rate
+                    - link "Allocation Complaint rate" [ref=e585] [cursor=pointer]:
+                      - /url: "#trace-allocation"
+                      - text: Allocation
+                      - generic [ref=e586]: Complaint rate
+                - listitem [ref=e587]:
+                  - link "Cost/MB, margin" [ref=e588] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+                  - generic [ref=e589]: · active
+                  - generic [ref=e591]:
+                    - text: Allocated
+                    - generic [ref=e592]: 0%
+                    - text: · Unallocated
+                    - generic [ref=e593]: 100%
+                  - group [ref=e594]:
+                    - generic "3 links in, 1 links out" [ref=e595]
+                  - generic [ref=e596]:
+                    - button "Focus Cost/MB, margin" [ref=e597] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e598]: Cost/MB, margin
+                    - link "Impact Cost/MB, margin" [ref=e599] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e600]: Cost/MB, margin
+                    - link "Allocation Cost/MB, margin" [ref=e601] [cursor=pointer]:
+                      - /url: "#trace-allocation"
+                      - text: Allocation
+                      - generic [ref=e602]: Cost/MB, margin
+            - region "Benefit (3)" [ref=e603]:
+              - heading "Benefit (3)" [level=3] [ref=e604]:
+                - text: Benefit
+                - generic [ref=e605]: (3)
+              - list [ref=e606]:
+                - listitem [ref=e607]:
+                  - link "B01 Revenue uplift" [ref=e608] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000001
+                  - generic [ref=e609]: · active
+                  - generic [ref=e611]:
+                    - text: Allocated
+                    - generic [ref=e612]: 0%
+                    - text: · Unallocated
+                    - generic [ref=e613]: 100%
+                  - group [ref=e614]:
+                    - generic "3 links in, 0 links out" [ref=e615]
+                  - generic [ref=e616]:
+                    - button "Focus B01" [ref=e617] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e618]: B01
+                    - link "Impact B01" [ref=e619] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e620]: B01
+                    - link "Allocation B01" [ref=e621] [cursor=pointer]:
+                      - /url: "#trace-allocation"
+                      - text: Allocation
+                      - generic [ref=e622]: B01
+                - listitem [ref=e623]:
+                  - link "B02 CX + care cost" [ref=e624] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000002
+                  - generic [ref=e625]: · active
+                  - generic [ref=e627]:
+                    - text: Allocated
+                    - generic [ref=e628]: 0%
+                    - text: · Unallocated
+                    - generic [ref=e629]: 100%
+                  - group [ref=e630]:
+                    - generic "1 links in, 0 links out" [ref=e631]
+                  - generic [ref=e632]:
+                    - button "Focus B02" [ref=e633] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e634]: B02
+                    - link "Impact B02" [ref=e635] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e636]: B02
+                    - link "Allocation B02" [ref=e637] [cursor=pointer]:
+                      - /url: "#trace-allocation"
+                      - text: Allocation
+                      - generic [ref=e638]: B02
+                - listitem [ref=e639]:
+                  - link "B03 Margin improvement" [ref=e640] [cursor=pointer]:
+                    - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000003
+                  - generic [ref=e641]: · active
+                  - generic [ref=e643]:
+                    - text: Allocated
+                    - generic [ref=e644]: 0%
+                    - text: · Unallocated
+                    - generic [ref=e645]: 100%
+                  - group [ref=e646]:
+                    - generic "1 links in, 0 links out" [ref=e647]
+                  - generic [ref=e648]:
+                    - button "Focus B03" [ref=e649] [cursor=pointer]:
+                      - text: Focus
+                      - generic [ref=e650]: B03
+                    - link "Impact B03" [ref=e651] [cursor=pointer]:
+                      - /url: "#trace-impact"
+                      - text: Impact
+                      - generic [ref=e652]: B03
+                    - link "Allocation B03" [ref=e653] [cursor=pointer]:
+                      - /url: "#trace-allocation"
+                      - text: Allocation
+                      - generic [ref=e654]: B03
+        - region "Orphan report" [ref=e655]:
+          - heading "Orphan report" [level=2] [ref=e657]
+          - generic [ref=e658]: Active records with a missing link in the chain, and the step that is expected. Drafts are not listed.
+          - group "Orphan report filters" [ref=e659]:
+            - generic [ref=e660]:
+              - generic [ref=e661]: Record type
+              - combobox "Record type" [ref=e662]:
+                - option "All" [selected]
+                - option "Diagnosed issue"
+                - option "Target-state gap"
+                - option "Initiative"
+                - option "Deliverable"
+                - option "Capability change"
+                - option "Outcome"
+                - option "KPI movement"
+                - option "Benefit"
+            - generic [ref=e663]:
+              - generic [ref=e664]: Missing
+              - combobox "Missing" [ref=e665]:
+                - option "All" [selected]
+                - option "Upstream link missing"
+                - option "Downstream link missing"
+                - option "Both links missing"
+          - region "Orphan report (scrollable table)" [ref=e666]:
+            - table "Orphan report" [ref=e667]:
+              - caption [ref=e668]: Orphan report
+              - rowgroup [ref=e669]:
+                - row "Record Record type Missing Expected step" [ref=e670]:
+                  - columnheader "Record" [ref=e671]
+                  - columnheader "Record type" [ref=e672]
+                  - columnheader "Missing" [ref=e673]
+                  - columnheader "Expected step" [ref=e674]
+              - rowgroup [ref=e675]:
+                - row "Fragmented roaming propositions and an inconsistent digital activation journey Diagnosed issue Downstream link missing Diagnosed issue → Target-state gap" [ref=e676]:
+                  - rowheader "Fragmented roaming propositions and an inconsistent digital activation journey" [ref=e677]:
+                    - link "Fragmented roaming propositions and an inconsistent digital activation journey" [ref=e678] [cursor=pointer]:
+                      - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                  - cell "Diagnosed issue" [ref=e679]
+                  - cell "Downstream link missing" [ref=e680]:
+                    - generic [ref=e681]:
+                      - img [ref=e682]
+                      - generic [ref=e684]: Downstream link missing
+                  - cell "Diagnosed issue → Target-state gap" [ref=e685]:
+                    - generic [ref=e686]: Diagnosed issue → Target-state gap
+          - navigation "Orphan report pages" [ref=e687]:
+            - button "Previous page" [disabled] [ref=e688]
+            - button "Next page" [disabled] [ref=e689]
+        - region "Downstream impact" [ref=e690]:
+          - heading "Downstream impact" [level=2] [ref=e692]
+          - generic [ref=e693]: "Choose a record or a KPI definition to see what a change to it affects: the records downstream, the benefits whose value is affected, and the dashboard areas that read them. Computed now, not stored."
+          - generic [ref=e695]:
+            - generic [ref=e696]: Record
+            - combobox "Record" [ref=e697]:
+              - option "Choose…" [selected]
+              - option "Cost/MB, margin"
+              - option "Complaint rate"
+              - option "Attach rate / activation"
+              - option "Low activation"
+              - option "High complaints"
+              - option "Partner cost pressure"
+              - option "Fragmented roaming propositions and an inconsistent digital activation journey"
+              - option "customer_value_proposition Proposition + journey"
+              - option "journeys_processes Journey + service assurance"
+              - option "partners_sourcing Partner model + analytics"
+              - option "INI-01 Pass redesign + digital activation"
+              - option "INI-02 Proactive comms + QoS monitoring"
+              - option "INI-03 Partner optimization"
+              - option "Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)"
+              - option "One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)"
+              - option "Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)"
+              - option "Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)"
+              - option "Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)"
+              - option "Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)"
+              - option "Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)"
+              - option "Partner usage feed for digital activation (synthetic) / تغذية بيانات استخدام الشركاء للتفعيل الرقمي (اصطناعي)"
+              - option "Partner steering and renegotiation shortlist (synthetic) / قائمة مختصرة لتوجيه الشركاء وإعادة التفاوض (اصطناعي)"
+              - option "Digital roaming activation (synthetic)"
+              - option "Proactive roaming service assurance (synthetic)"
+              - option "Partner cost and usage analytics (synthetic)"
+              - option "Attach rate / activation"
+              - option "Complaint rate"
+              - option "Cost/MB, margin"
+              - option "Attach rate / activation"
+              - option "Complaint rate"
+              - option "Cost/MB, margin"
+              - option "B01 Revenue uplift"
+              - option "B02 CX + care cost"
+              - option "B03 Margin improvement"
+          - paragraph [ref=e698]: Choose a record to show its downstream impact.
+        - region "Allocation sets" [ref=e699]:
+          - heading "Allocation sets" [level=2] [ref=e701]
+          - generic [ref=e702]: The shares allocated into a KPI movement or a benefit. The total can never exceed 100%; what is not allocated is shown as unallocated, never as 0%.
+          - generic [ref=e704]:
+            - generic [ref=e705]: KPI movement or benefit
+            - combobox "KPI movement or benefit" [ref=e706]:
+              - option "Choose…" [selected]
+              - 'option "KPI movement: Attach rate / activation"'
+              - 'option "KPI movement: Complaint rate"'
+              - 'option "KPI movement: Cost/MB, margin"'
+              - 'option "Benefit: B01 Revenue uplift"'
+              - 'option "Benefit: B02 CX + care cost"'
+              - 'option "Benefit: B03 Margin improvement"'
+          - paragraph [ref=e707]: Choose a KPI movement or a benefit to see its allocation set.
+        - region "Trace links" [ref=e708]:
+          - generic [ref=e709]:
+            - heading "Trace links" [level=2] [ref=e710]
+            - button "Create trace link" [ref=e712] [cursor=pointer]:
+              - img [ref=e713]
+              - text: Create trace link
+          - generic [ref=e715]: "The chain steps that have no other record: issue → gap, deliverable → capability, capability → KPI and KPI → benefit. A removed link stays listed and is never deleted."
+          - generic [ref=e716]:
+            - checkbox "Show removed links" [ref=e717]
+            - text: Show removed links
+          - generic [ref=e718]:
+            - generic [ref=e719]:
+              - generic [ref=e720]:
+                - generic [ref=e721]: Search
+                - searchbox "Search" [ref=e722]
+              - button "Columns" [ref=e724] [cursor=pointer]:
+                - img [ref=e725]
+                - text: Columns
+            - region "Trace links (scrollable table)" [ref=e727]:
+              - table "Trace links" [ref=e728]:
+                - caption [ref=e729]: Trace links
+                - rowgroup [ref=e730]:
+                  - row "Link kind sorted ascending From To Contribution statement not sorted Share not sorted Status not sorted Actions" [ref=e731]:
+                    - columnheader "Link kind sorted ascending" [ref=e732]:
+                      - button "Link kind sorted ascending" [ref=e733] [cursor=pointer]:
+                        - text: Link kind
+                        - img [ref=e734]
+                        - generic [ref=e736]: sorted ascending
+                    - columnheader "From" [ref=e737]
+                    - columnheader "To" [ref=e738]
+                    - columnheader "Contribution statement not sorted" [ref=e739]:
+                      - button "Contribution statement not sorted" [ref=e740] [cursor=pointer]:
+                        - text: Contribution statement
+                        - img [ref=e741]
+                        - generic [ref=e743]: not sorted
+                    - columnheader "Share not sorted" [ref=e744]:
+                      - button "Share not sorted" [ref=e745] [cursor=pointer]:
+                        - text: Share
+                        - img [ref=e746]
+                        - generic [ref=e748]: not sorted
+                    - columnheader "Status not sorted" [ref=e749]:
+                      - button "Status not sorted" [ref=e750] [cursor=pointer]:
+                        - text: Status
+                        - img [ref=e751]
+                        - generic [ref=e753]: not sorted
+                    - columnheader "Actions" [ref=e754]
+                - rowgroup [ref=e755]:
+                  - 'row "Diagnosed issue → target-state gap Diagnosed issue: Low activation Target-state gap: customer_value_proposition Proposition + journey Low activation -> Proposition + journey (B0147, synthetic illustrative example). No share Active Edit Remove link" [ref=e756]':
+                    - rowheader "Diagnosed issue → target-state gap" [ref=e757]
+                    - 'cell "Diagnosed issue: Low activation" [ref=e758]':
+                      - generic [ref=e759]:
+                        - generic [ref=e760]: "Diagnosed issue:"
+                        - link "Low activation" [ref=e761] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                    - 'cell "Target-state gap: customer_value_proposition Proposition + journey" [ref=e762]':
+                      - generic [ref=e763]:
+                        - generic [ref=e764]: "Target-state gap:"
+                        - link "customer_value_proposition Proposition + journey" [ref=e765] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Low activation -> Proposition + journey (B0147, synthetic illustrative example)." [ref=e766]
+                    - cell "No share" [ref=e767]
+                    - cell "Active" [ref=e768]:
+                      - generic [ref=e769]:
+                        - img [ref=e770]
+                        - generic [ref=e772]: Active
+                    - cell "Edit Remove link" [ref=e773]:
+                      - generic [ref=e774]:
+                        - button "Edit" [ref=e775] [cursor=pointer]:
+                          - img [ref=e776]
+                          - text: Edit
+                        - button "Remove link" [ref=e778] [cursor=pointer]:
+                          - img [ref=e779]
+                          - text: Remove link
+                  - 'row "Diagnosed issue → target-state gap Diagnosed issue: High complaints Target-state gap: journeys_processes Journey + service assurance High complaints -> Journey + service assurance (B0147, synthetic illustrative example). No share Active Edit Remove link" [ref=e781]':
+                    - rowheader "Diagnosed issue → target-state gap" [ref=e782]
+                    - 'cell "Diagnosed issue: High complaints" [ref=e783]':
+                      - generic [ref=e784]:
+                        - generic [ref=e785]: "Diagnosed issue:"
+                        - link "High complaints" [ref=e786] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                    - 'cell "Target-state gap: journeys_processes Journey + service assurance" [ref=e787]':
+                      - generic [ref=e788]:
+                        - generic [ref=e789]: "Target-state gap:"
+                        - link "journeys_processes Journey + service assurance" [ref=e790] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "High complaints -> Journey + service assurance (B0147, synthetic illustrative example)." [ref=e791]
+                    - cell "No share" [ref=e792]
+                    - cell "Active" [ref=e793]:
+                      - generic [ref=e794]:
+                        - img [ref=e795]
+                        - generic [ref=e797]: Active
+                    - cell "Edit Remove link" [ref=e798]:
+                      - generic [ref=e799]:
+                        - button "Edit" [ref=e800] [cursor=pointer]:
+                          - img [ref=e801]
+                          - text: Edit
+                        - button "Remove link" [ref=e803] [cursor=pointer]:
+                          - img [ref=e804]
+                          - text: Remove link
+                  - 'row "Diagnosed issue → target-state gap Diagnosed issue: Partner cost pressure Target-state gap: partners_sourcing Partner model + analytics Partner cost pressure -> Partner model + analytics (B0147, synthetic illustrative example). No share Active Edit Remove link" [ref=e806]':
+                    - rowheader "Diagnosed issue → target-state gap" [ref=e807]
+                    - 'cell "Diagnosed issue: Partner cost pressure" [ref=e808]':
+                      - generic [ref=e809]:
+                        - generic [ref=e810]: "Diagnosed issue:"
+                        - link "Partner cost pressure" [ref=e811] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+                    - 'cell "Target-state gap: partners_sourcing Partner model + analytics" [ref=e812]':
+                      - generic [ref=e813]:
+                        - generic [ref=e814]: "Target-state gap:"
+                        - link "partners_sourcing Partner model + analytics" [ref=e815] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Partner cost pressure -> Partner model + analytics (B0147, synthetic illustrative example)." [ref=e816]
+                    - cell "No share" [ref=e817]
+                    - cell "Active" [ref=e818]:
+                      - generic [ref=e819]:
+                        - img [ref=e820]
+                        - generic [ref=e822]: Active
+                    - cell "Edit Remove link" [ref=e823]:
+                      - generic [ref=e824]:
+                        - button "Edit" [ref=e825] [cursor=pointer]:
+                          - img [ref=e826]
+                          - text: Edit
+                        - button "Remove link" [ref=e828] [cursor=pointer]:
+                          - img [ref=e829]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي) Capability change: Digital roaming activation (synthetic) Redesigned roaming pass catalogue builds the capability change of INI-01 (synthetic illustrative example). No share Active Edit Remove link" [ref=e831]':
+                    - rowheader "Deliverable → capability change" [ref=e832]
+                    - 'cell "Deliverable: Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)" [ref=e833]':
+                      - generic [ref=e834]:
+                        - generic [ref=e835]: "Deliverable:"
+                        - link "Redesigned roaming pass catalogue (synthetic) / كتالوج باقات التجوال بعد إعادة التصميم (اصطناعي)" [ref=e836] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                    - 'cell "Capability change: Digital roaming activation (synthetic)" [ref=e837]':
+                      - generic [ref=e838]:
+                        - generic [ref=e839]: "Capability change:"
+                        - link "Digital roaming activation (synthetic)" [ref=e840] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Redesigned roaming pass catalogue builds the capability change of INI-01 (synthetic illustrative example)." [ref=e841]
+                    - cell "No share" [ref=e842]
+                    - cell "Active" [ref=e843]:
+                      - generic [ref=e844]:
+                        - img [ref=e845]
+                        - generic [ref=e847]: Active
+                    - cell "Edit Remove link" [ref=e848]:
+                      - generic [ref=e849]:
+                        - button "Edit" [ref=e850] [cursor=pointer]:
+                          - img [ref=e851]
+                          - text: Edit
+                        - button "Remove link" [ref=e853] [cursor=pointer]:
+                          - img [ref=e854]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي) Capability change: Digital roaming activation (synthetic) One-tap pass activation journey in the app builds the capability change of INI-01 (synthetic illustrative example). No share Active Edit Remove link" [ref=e856]':
+                    - rowheader "Deliverable → capability change" [ref=e857]
+                    - 'cell "Deliverable: One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)" [ref=e858]':
+                      - generic [ref=e859]:
+                        - generic [ref=e860]: "Deliverable:"
+                        - link "One-tap pass activation journey in the app (synthetic) / رحلة تفعيل الباقة بلمسة واحدة في التطبيق (اصطناعي)" [ref=e861] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                    - 'cell "Capability change: Digital roaming activation (synthetic)" [ref=e862]':
+                      - generic [ref=e863]:
+                        - generic [ref=e864]: "Capability change:"
+                        - link "Digital roaming activation (synthetic)" [ref=e865] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "One-tap pass activation journey in the app builds the capability change of INI-01 (synthetic illustrative example)." [ref=e866]
+                    - cell "No share" [ref=e867]
+                    - cell "Active" [ref=e868]:
+                      - generic [ref=e869]:
+                        - img [ref=e870]
+                        - generic [ref=e872]: Active
+                    - cell "Edit Remove link" [ref=e873]:
+                      - generic [ref=e874]:
+                        - button "Edit" [ref=e875] [cursor=pointer]:
+                          - img [ref=e876]
+                          - text: Edit
+                        - button "Remove link" [ref=e878] [cursor=pointer]:
+                          - img [ref=e879]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي) Capability change: Digital roaming activation (synthetic) Attach-rate and activation tracking report builds the capability change of INI-01 (synthetic illustrative example). No share Active Edit Remove link" [ref=e881]':
+                    - rowheader "Deliverable → capability change" [ref=e882]
+                    - 'cell "Deliverable: Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)" [ref=e883]':
+                      - generic [ref=e884]:
+                        - generic [ref=e885]: "Deliverable:"
+                        - link "Attach-rate and activation tracking report (synthetic) / تقرير متابعة نسبة الاشتراك والتفعيل (اصطناعي)" [ref=e886] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000021
+                    - 'cell "Capability change: Digital roaming activation (synthetic)" [ref=e887]':
+                      - generic [ref=e888]:
+                        - generic [ref=e889]: "Capability change:"
+                        - link "Digital roaming activation (synthetic)" [ref=e890] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Attach-rate and activation tracking report builds the capability change of INI-01 (synthetic illustrative example)." [ref=e891]
+                    - cell "No share" [ref=e892]
+                    - cell "Active" [ref=e893]:
+                      - generic [ref=e894]:
+                        - img [ref=e895]
+                        - generic [ref=e897]: Active
+                    - cell "Edit Remove link" [ref=e898]:
+                      - generic [ref=e899]:
+                        - button "Edit" [ref=e900] [cursor=pointer]:
+                          - img [ref=e901]
+                          - text: Edit
+                        - button "Remove link" [ref=e903] [cursor=pointer]:
+                          - img [ref=e904]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي) Capability change: Proactive roaming service assurance (synthetic) Roaming QoS monitoring for the top destinations builds the capability change of INI-02 (synthetic illustrative example). No share Active Edit Remove link" [ref=e906]':
+                    - rowheader "Deliverable → capability change" [ref=e907]
+                    - 'cell "Deliverable: Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)" [ref=e908]':
+                      - generic [ref=e909]:
+                        - generic [ref=e910]: "Deliverable:"
+                        - link "Roaming QoS monitoring for the top destinations (synthetic) / مراقبة جودة خدمة التجوال لأهم الوجهات (اصطناعي)" [ref=e911] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                    - 'cell "Capability change: Proactive roaming service assurance (synthetic)" [ref=e912]':
+                      - generic [ref=e913]:
+                        - generic [ref=e914]: "Capability change:"
+                        - link "Proactive roaming service assurance (synthetic)" [ref=e915] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Roaming QoS monitoring for the top destinations builds the capability change of INI-02 (synthetic illustrative example)." [ref=e916]
+                    - cell "No share" [ref=e917]
+                    - cell "Active" [ref=e918]:
+                      - generic [ref=e919]:
+                        - img [ref=e920]
+                        - generic [ref=e922]: Active
+                    - cell "Edit Remove link" [ref=e923]:
+                      - generic [ref=e924]:
+                        - button "Edit" [ref=e925] [cursor=pointer]:
+                          - img [ref=e926]
+                          - text: Edit
+                        - button "Remove link" [ref=e928] [cursor=pointer]:
+                          - img [ref=e929]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي) Capability change: Proactive roaming service assurance (synthetic) Proactive travel and usage notifications builds the capability change of INI-02 (synthetic illustrative example). No share Active Edit Remove link" [ref=e931]':
+                    - rowheader "Deliverable → capability change" [ref=e932]
+                    - 'cell "Deliverable: Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)" [ref=e933]':
+                      - generic [ref=e934]:
+                        - generic [ref=e935]: "Deliverable:"
+                        - link "Proactive travel and usage notifications (synthetic) / إشعارات استباقية للسفر والاستخدام (اصطناعي)" [ref=e936] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                    - 'cell "Capability change: Proactive roaming service assurance (synthetic)" [ref=e937]':
+                      - generic [ref=e938]:
+                        - generic [ref=e939]: "Capability change:"
+                        - link "Proactive roaming service assurance (synthetic)" [ref=e940] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Proactive travel and usage notifications builds the capability change of INI-02 (synthetic illustrative example)." [ref=e941]
+                    - cell "No share" [ref=e942]
+                    - cell "Active" [ref=e943]:
+                      - generic [ref=e944]:
+                        - img [ref=e945]
+                        - generic [ref=e947]: Active
+                    - cell "Edit Remove link" [ref=e948]:
+                      - generic [ref=e949]:
+                        - button "Edit" [ref=e950] [cursor=pointer]:
+                          - img [ref=e951]
+                          - text: Edit
+                        - button "Remove link" [ref=e953] [cursor=pointer]:
+                          - img [ref=e954]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي) Capability change: Proactive roaming service assurance (synthetic) Care playbook for roaming complaints builds the capability change of INI-02 (synthetic illustrative example). No share Active Edit Remove link" [ref=e956]':
+                    - rowheader "Deliverable → capability change" [ref=e957]
+                    - 'cell "Deliverable: Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)" [ref=e958]':
+                      - generic [ref=e959]:
+                        - generic [ref=e960]: "Deliverable:"
+                        - link "Care playbook for roaming complaints (synthetic) / دليل الرعاية لمعالجة شكاوى التجوال (اصطناعي)" [ref=e961] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000022
+                    - 'cell "Capability change: Proactive roaming service assurance (synthetic)" [ref=e962]':
+                      - generic [ref=e963]:
+                        - generic [ref=e964]: "Capability change:"
+                        - link "Proactive roaming service assurance (synthetic)" [ref=e965] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Care playbook for roaming complaints builds the capability change of INI-02 (synthetic illustrative example)." [ref=e966]
+                    - cell "No share" [ref=e967]
+                    - cell "Active" [ref=e968]:
+                      - generic [ref=e969]:
+                        - img [ref=e970]
+                        - generic [ref=e972]: Active
+                    - cell "Edit Remove link" [ref=e973]:
+                      - generic [ref=e974]:
+                        - button "Edit" [ref=e975] [cursor=pointer]:
+                          - img [ref=e976]
+                          - text: Edit
+                        - button "Remove link" [ref=e978] [cursor=pointer]:
+                          - img [ref=e979]
+                          - text: Remove link
+                  - 'row "Deliverable → capability change Deliverable: Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي) Capability change: Partner cost and usage analytics (synthetic) Partner cost analytics baseline builds the capability change of INI-03 (synthetic illustrative example). No share Active Edit Remove link" [ref=e981]':
+                    - rowheader "Deliverable → capability change" [ref=e982]
+                    - 'cell "Deliverable: Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)" [ref=e983]':
+                      - generic [ref=e984]:
+                        - generic [ref=e985]: "Deliverable:"
+                        - link "Partner cost analytics baseline (synthetic) / خط أساس تحليلات تكلفة الشركاء (اصطناعي)" [ref=e986] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/initiatives/01995000-0000-7000-8000-000000000023
+                    - 'cell "Capability change: Partner cost and usage analytics (synthetic)" [ref=e987]':
+                      - generic [ref=e988]:
+                        - generic [ref=e989]: "Capability change:"
+                        - link "Partner cost and usage analytics (synthetic)" [ref=e990] [cursor=pointer]:
+                          - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+                    - cell "Partner cost analytics baseline builds the capability change of INI-03 (synthetic illustrative example)." [ref=e991]
+                    - cell "No share" [ref=e992]
+                    - cell "Active" [ref=e993]:
+                      - generic [ref=e994]:
+                        - img [ref=e995]
+                        - generic [ref=e997]: Active
+                    - cell "Edit Remove link" [ref=e998]:
+                      - generic [ref=e999]:
+                        - button "Edit" [ref=e1000] [cursor=pointer]:
+                          - img [ref=e1001]
+                          - text: Edit
+                        - button "Remove link" [ref=e1003] [cursor=pointer]:
+                          - img [ref=e1004]
+                          - text: Remove link
+            - navigation "Pagination" [ref=e1006]:
+              - generic [ref=e1007]: Page 1 of 2 · 10 of 15 rows
+              - generic [ref=e1008]:
+                - generic [ref=e1009]: Rows per page
+                - combobox "Rows per page" [ref=e1010]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e1011]
+              - button "Next" [ref=e1012] [cursor=pointer]
+```
