@@ -1,0 +1,46 @@
+## 2026-10-20T08:54:00Z residual surfaces (offline/config), repository checkout = fb9c221 code
+$ ls .github/workflows
+ci.yml
+delivery-gates.yml
+$ grep -n "validate.mjs\|pnpm test\|check:no-cdn\|openapi:lint" .github/workflows/*.yml | head -20
+.github/workflows/ci.yml:38:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/ci.yml:66:      - run: pnpm test
+.github/workflows/ci.yml:67:      - run: pnpm openapi:lint
+.github/workflows/ci.yml:68:      - run: pnpm check:no-cdn
+.github/workflows/ci.yml:101:      - run: pnpm test:integration
+.github/workflows/delivery-gates.yml:40:        run: node tools/gates/validate.mjs --pipeline
+.github/workflows/delivery-gates.yml:42:        run: node tools/gates/validate.mjs --reconcile
+$ registry pins: .npmrc and lockfile registry hosts
+# ADR-0001: exact pins, engine enforcement, no lifecycle scripts except the allow-list in package.json.
+save-exact=true
+engine-strict=true
+strict-peer-dependencies=false
+auto-install-peers=false
+link-workspace-packages=true
+      1 https://www.npmjs.com
+$ dev-issuer binding guard (D-165)
+125:export function demoDevIssuerBindingAllowed(env: {
+126-  readonly NODE_ENV?: string | undefined;
+127-  readonly AUTH_MODE?: string | undefined;
+128-}): boolean {
+129-  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+130-}
+$ AI / notification adapter configuration surface (none ships in P5, D-142 Q11)
+packages/config/src/index.ts:89:    description: "Private directory for the filesystem adapter (not web-served)",
+$ OIDC configuration surface
+packages/config/src/index.ts:40:  AUTH_MODE: {
+packages/config/src/index.ts:47:  OIDC_ISSUER_URL: {
+packages/config/src/index.ts:175:/** Allowed AUTH_MODE values; `dev` must be rejected at startup when NODE_ENV=production (ADR-0005). */
+packages/config/src/index.ts:176:export const AUTH_MODES = ["oidc", "dev"] as const;
+packages/config/src/index.ts:181:export type AuthMode = (typeof AUTH_MODES)[number];
+packages/config/src/load.ts:7://  - Missing required values, malformed values and the forbidden combination AUTH_MODE=dev + NODE_ENV=production
+packages/config/src/load.ts:12:import { AUTH_MODES, ENV_VARS, MTH_ENVS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+packages/config/src/load.ts:35:  readonly authMode: (typeof AUTH_MODES)[number];
+packages/config/src/load.ts:137:  const authMode = field("AUTH_MODE", z.enum(AUTH_MODES));
+packages/config/src/load.ts:197:    problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+$ FE-Y1 is CSS only: files changed under apps/web/src since bbd6294
+apps/web/src/styles/app.css
+$ url( / @import / http in the FE-Y1 CSS hunk
+(count: 0)
+$ removed lines in the FE-Y1 CSS hunk
+0

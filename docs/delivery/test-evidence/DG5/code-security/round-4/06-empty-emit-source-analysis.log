@@ -1,0 +1,30 @@
+## 2026-10-20T09:04:48Z EMPTY_EMIT source analysis, TypeScript     "version": "6.0.2",
+$ transpileWorker: diagnostics are collected before program.emit; emit adds only result.diagnostics
+2:  if (transpileOptions.reportDiagnostics) {
+7:      program.getSyntacticDiagnostics(sourceFile)
+13:      program.getOptionsDiagnostics()
+16:  const result = program.emit(
+25:    transpileOptions.transformers,
+33:    result.diagnostics
+35:  if (outputText === void 0) return Debug.fail("Output generation failed");
+$ every context.addDiagnostic in typescript.js (line numbers) vs transformDeclarations' span
+119135 119148 119166 119168 119188 119201 119206 119211 119217 119219 119225 119234 119243 119718 119775 119781 120493 
+119080:function transformDeclarations(context) {
+120792:function transformNodes(resolver, host, factory2, options, nodes, transformers, allowDtsFiles) {
+$ emitFiles: the only emitterDiagnostics.add is the DECLARATION transform's (JS transform diagnostics are never added)
+/bin/bash: line 1: 121356
+134345
+134401: syntax error in expression (error token is "134345
+134401")
+(+121356) 1:function emitFiles(resolver, host, targetSourceFile, { scriptTransformers, declarationTransformers }, emitOnly, onlyBuildInfo, forceDtsEmit, skipBuildInfo) {
+(+121356) 5:  var emitterDiagnostics = createDiagnosticCollection();
+(+121356) 22:    diagnostics: emitterDiagnostics.getDiagnostics(),
+(+121356) 47:      emitterDiagnostics,
+(+121356) 71:    const transform2 = transformNodes(
+(+121356) 125:    const declarationTransform = transformNodes(
+(+121356) 135:    if (length(declarationTransform.diagnostics)) {
+(+121356) 136:      for (const diagnostic of declarationTransform.diagnostics) {
+(+121356) 137:        emitterDiagnostics.add(diagnostic);
+(+121356) 140:    const declBlocked = !!declarationTransform.diagnostics && !!declarationTransform.diagnostics.length || !!host.isEmitBlocked(declarationFilePath) || !!compilerOptions.noEmit;
+(transformDeclarations spans 119080..120791, before transformNodes at 120792: all 17 addDiagnostic calls above are inside it)
+Conclusion: for a non-declaration transpile, the diagnostics that syntaxErrors reads are computed before the emit and do not depend on any transformer; the JS emit contributes none, so the EMPTY_EMIT 'before' transformer cannot hide a diagnostic. A residual: the old path also exercised the printer, so a TypeScript emitter crash on syntactically valid source would have thrown in the old path and no longer does; that is not a syntax diagnostic and rule 4 never reported it as one.

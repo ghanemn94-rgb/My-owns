@@ -1,0 +1,63 @@
+## 2026-10-20T08:43:42Z second full Node 22 unit-node run (verbose), concurrent with the reviewer's rule-4 differential probe; Node v22.22.2; LANG/LC_ALL/LC_CTYPE unset; load: 6.68 6.82 7.38 3/223 5
+$ env -u LANG -u LC_ALL -u LC_CTYPE npx vitest run --project unit-node --reporter=verbose
+exit=1
+ ✓ |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 18143ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 1618ms
+ ✓ |unit-node| packages/shared/src/kpi/property.test.ts > changes > pp = (x₁ − x₀) × 100 exactly, and relative × |x₀| = x₁ − x₀ (to precision 80) 389ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts > weight-set validation (ADR-0022 §1) > checks the total exactly (33.33 × 3 = 99.99 is refused; 33.33+33.33+33.34 accepted) 0ms
+ ✓ |unit-node| packages/shared/src/health/scoring.test.ts > percent_of_applicable and partial credit (worked fixtures) > 15 Yes, 5 partial (0.5), 3 No, 2 N/A: 100 × 17.5 / 23 = 76.09 out of 100, band 'solid' 5ms
+ ✓ |unit-node| packages/shared/src/health/scoring.test.ts > percent_of_applicable and partial credit (worked fixtures) > partial credit on points: 17 Yes and 3 × 0.25 give 17.75 out of 25 0ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > accepts "a × b" 0ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > grammar table (ADR-0024 §6 EBNF) > normalises × and ÷, keeps literal text exactly and records code-point offsets 1ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > monthly ARPU × annual population → formula.period_mismatch with the ADR message 1ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > to_period(arpu, year) is accepted and converts month → year ×12 1ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > type rules (ADR-0024 §6) > × rules: dimensionless takes the other kind; count × currency; count × count/quantity; currency × currency refused 1ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > revenue example: (0.12 − 0.10) × 100000 × 50 SAR → exactly 100000 SAR per year 74ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts > evaluation (ADR-0024 §6) > cost example: 200000 × (12.50 − 10.00) → exactly 500000.00 SAR per year 9ms
+ ✓ |unit-node| apps/api/src/modules/benefits/totals.test.ts > REQ-S16-025: decimal arithmetic (D01, D02) > D02: 100000 × 0.02 × 50 = 100000.00 (decimal) and the B0087 examples on the DG3 engine 16ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/table-totals.test.ts > columnTotal: a single-basis, single-currency money column (worked fixtures) > Δ attach × customers × ARPU lines: 1,250,000.0000 + 375,000.5000 + 0.2500 = 1,625,000.75 SAR, exactly 8ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts > computeChange > percentage KPI: point change ×100 labelled pp, relative change labelled percent 3ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts > display labels (en and ar) > relative changes: fraction ×100 with % 1ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > worked fixture: revenue uplift and avoided cost stay separate lines; states are never added together 4ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > planned, validated and the other states are 'to date': a line ending after the as-of date is left out 0ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > a period window keeps only the lines inside it 0ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > a missing amount makes the total Unknown with its reason, never 0 0ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > an open overlap holds back validated and sustained values (ADR-0030 §7 item 4), not planned ones 0ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > currencies are never converted or added: each is its own block 0ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts > financeClassLines (class × state × currency; each state on its own) > an unmonetised non-financial benefit produces no line at all (REQ-PB-076) 0ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts > validateKpiFormula > Δ attach × customers × ARPU types as SAR per month and matches a SAR KPI 3ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts > evaluateKpiFormula > playbook example: Δ attach 2 pp × 500 000 customers × SAR 45.50 ARPU = SAR 455 000 per month 9ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts > evaluateKpiFormula > playbook example: volume × Δ unit cost (120 000 tickets × SAR 3.75 saving) = SAR 450 000 1ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts > validateCalculatedField (definition time) > refuses "arpu * delta_unit_cost" (currency × currency) 0ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts > evaluateCalculatedField (read time) > playbook example 1: Δ attach × customers × ARPU 5ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts > evaluateCalculatedField (read time) > playbook example 2: volume × Δ unit cost 4ms
+ ✓ |unit-node| packages/shared/src/kpi/periods.test.ts > checkPeriod: the 0033 invariants > refuses a week-based period whose length is not weekCount × 7 0ms
+ ✓ |unit-node| apps/api/src/modules/kpi/totals.test.ts > playbook examples feed the lines exactly > Δ attach × customers × ARPU = 0.02 × 100000 × 50 = 100000; volume × Δ unit cost = 200000 × 2.50 = 500000 2ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/k1-value-class.test.ts > K1 item 6: without a value class the rule is the as-built rule of the four value metrics > equals valueLinesOf over every benefit fact × state × window (exhaustive grid) 10ms
+ ✓ |unit-node| packages/shared/src/schedule/critical-path.test.ts > computeCriticalPath: no claim without complete inputs > INI-03's duration removed -> not_computable, missingDurations [INI-03], nothing critical 1ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-c2.test.ts > business_cases: ADR-0045 §5 rule 2 (the DG3 G4 formula rule) > worked fixture: Δ attach × customers × ARPU line (unvalidated) is provisional; a missing amount is Unknown, never 0 1ms
+ × |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics 5434ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics
+ Test Files  1 failed | 144 passed (145)
+      Tests  1 failed | 2342 passed (2343)
+   Duration  1056.26s (transform 21.09s, setup 0ms, collect 336.95s, tests 1098.40s, environment 76ms, prepare 32.00s)
+## end 2026-10-20T09:01:21Z load: 14.92 14.90 12.53 10/355 3074
+
+## disclosure (reviewer): this run collected the reviewer's probe apps/api/src/zz-sec-r4-rule4-differential.test.ts, copied into the clone ~1 s after the run started. Its lines:
+1497:stdout | apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics
+1498:SEC-R4C hostile: 513 cases, 218 with errors, 0 differences
+1499-
+2494:stdout | apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > every real module file, mutated 32 ways x 3 extensions: identical diagnostics
+2495:SEC-R4C module mutants: 448 files, 44352 cases, 28801 with errors, 0 differences
+2496-
+2497: × |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics 5434ms
+2498-   → expected 218 to be greater than 228
+2499: ✓ |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > every real module file, mutated 32 ways x 3 extensions: identical diagnostics 926286ms
+2500-
+2503: FAIL  |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics
+2504-AssertionError: expected 218 to be greater than 228
+2505: ❯ apps/api/src/zz-sec-r4-rule4-differential.test.ts:115:24
+2506-    115|   }, 300_000);
+## product files: 144 passed of 144; product tests: 2341 passed (2343 - the probe's 2: 1 passed, 1 failed on the probe's own non-vacuity threshold 'expected 218 to be greater than 228')
+2342

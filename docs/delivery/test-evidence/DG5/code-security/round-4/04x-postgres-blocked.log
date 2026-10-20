@@ -1,0 +1,21 @@
+## 2026-10-20T08:22:03Z why no disposable PostgreSQL can start in this run's sandbox
+$ id
+uid=0(root) gid=0(root) groups=0(root)
+$ cat /proc/self/uid_map /proc/self/gid_map
+         0          0          1
+         0          0          1
+$ cat /proc/sys/user/max_user_namespaces
+0
+$ unshare --user --map-user=1000 --map-group=1000 id   (what tests/qa/support/with-pg.sh line 33 and pg-port.sh line 166 do as root)
+unshare: unshare failed: Operation not permitted
+exit=1
+$ setpriv --reuid=1000 --regid=1000 --clear-groups id
+setpriv: setresuid failed: Invalid argument
+exit=127
+$ /usr/lib/postgresql/16/bin/initdb -D $TMPDIR/pgt/d2
+initdb: error: cannot be run as root
+initdb: hint: Please log in (using, e.g., "su") as the (unprivileged) user that will own the server process.
+exit=1
+$ env | grep -ciE "TEST_DATABASE|PGHOST|DATABASE_URL"  (no external database supplied)
+0
+Conclusion: only uid 0 is mapped and user namespaces are disabled, so PostgreSQL (which refuses root) cannot start. Every check that needs a database is BLOCKED in this run: both integration runs, contract.test.ts and migrations 0001-0097 on a database, the reviewer DB probes, the prior-round reproductions and every e2e on a stack. The sandbox configuration is the user's decision; this reviewer did not work around it.

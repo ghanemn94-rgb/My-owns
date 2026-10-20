@@ -1,0 +1,66 @@
+## guard and planted-control mutation check (reviewer's own mutants; Node v24.21.0); the testkit is restored and compared byte for byte at the end
+
+## 2026-10-20T09:02:06Z mutant M1-no-reportDiagnostics; diff vs candidate:
+560d559
+<         reportDiagnostics: true,
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts
+      Tests  2 failed | 138 passed (140)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed') 13ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 30ms
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed')
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+exit=1
+
+## 2026-10-20T09:02:26Z mutant M2-first-diagnostic-only; diff vs candidate:
+563c563
+<       }).diagnostics ?? []);
+---
+>       }).diagnostics ?? []).slice(0, 1);
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts
+      Tests  1 failed | 139 passed (140)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 140ms
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+exit=1
+
+## 2026-10-20T09:02:47Z mutant M3-no-rule4-at-all; diff vs candidate:
+579c579
+<   for (const e of [...syntaxErrors(file, source), ...evasions])
+---
+>   for (const e of [...evasions])
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts
+      Tests  4 failed | 136 passed (140)
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end 2ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing 5ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked 3ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed') 10ms
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: a planted styles.d.css.ts in a module directory is walked and linted end to end
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-137/F-DG1-218: an arbitrary-extension declaration file (*.d.<ext>.ts) is linted without throwing
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-217: a module declaration file (.d.ts/.d.mts/.d.cts) is linted without throwing, imports still checked
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > P20 a syntax error fails closed (parser recovery hid P4's key) is a violation (round-4 lint: 'missed')
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+exit=1
+
+## 2026-10-20T09:03:03Z mutant M4-ts-scriptkind-parse; diff vs candidate:
+564c564,566
+<   return diagnostics
+---
+>   const parsed = (ts.createSourceFile(fileName.replace(/\.[mc]?[jt]sx?$/, ".tsx"), source, ts.ScriptTarget.Latest, true) as unknown as { parseDiagnostics: ts.Diagnostic[] }).parseDiagnostics;
+>   void diagnostics;
+>   return parsed
+$ npx vitest run --project unit-node apps/api/src/architecture.test.ts
+      Tests  2 failed | 138 passed (140)
+   × API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages 10972ms
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 67ms
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)
+ Test Files  1 failed (1)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+exit=1
+
+$ cmp candidate testkit (git show HEAD:...) vs restored
+restored: identical

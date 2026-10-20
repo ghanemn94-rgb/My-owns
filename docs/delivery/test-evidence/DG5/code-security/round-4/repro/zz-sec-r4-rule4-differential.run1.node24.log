@@ -1,0 +1,40 @@
+## 2026-10-20T08:43:43Z reviewer probe repro/zz-sec-r4-rule4-differential.test.ts copied to apps/api/src/ in the clone (sha256 467ddb30893ea998a101b732682fafb90f5ec1a43243b4832dd94779cedfe37c); Node v24.21.0; load: 6.68 6.82 7.38 6/239 9
+$ npx vitest run --project unit-node --reporter=verbose apps/api/src/zz-sec-r4-rule4-differential.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+ RUN  v3.2.4 /var/tmp/mth-run.tNH2Hv/claude-0/review-r4c
+stdout | apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics
+SEC-R4C hostile: 513 cases, 218 with errors, 0 differences
+stdout | apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > every real module file, mutated 32 ways x 3 extensions: identical diagnostics
+SEC-R4C module mutants: 448 files, 44352 cases, 28801 with errors, 0 differences
+ × |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics 2033ms
+   → expected 218 to be greater than 228
+ ✓ |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > every real module file, mutated 32 ways x 3 extensions: identical diagnostics 738900ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/zz-sec-r4-rule4-differential.test.ts > SEC-R4C F-DG5-102: rule 4 (EMPTY_EMIT) equals the pre-repair full transpile > hostile corpus x 9 extensions: identical diagnostics
+AssertionError: expected 218 to be greater than 228
+ ❯ apps/api/src/zz-sec-r4-rule4-differential.test.ts:115:24
+    115|   }, 300_000);
+    116| 
+    117|   it("every real module file, mutated 32 ways x 3 extensions: identica…
+       |        ^
+    118|     const files = walk(MODULES_DIR);
+    119|     let cases = 0;
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-worker]: Timeout calling "onTaskUpdate"
+ ❯ Object.onTimeoutError node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10
+ ❯ Timeout._onTimeout node_modules/.pnpm/vitest@3.2.4_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62
+ ❯ listOnTimeout node:internal/timers:685:17
+ ❯ processTimers node:internal/timers:618:7
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+     Errors  1 error
+   Start at  08:43:44
+   Duration  742.04s (transform 154ms, setup 0ms, collect 597ms, tests 740.93s, environment 0ms, prepare 88ms)
+exit=1

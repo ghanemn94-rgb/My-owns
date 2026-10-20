@@ -1,0 +1,31 @@
+## 2026-10-20T07:56:22Z candidate identity (T-DG5-REV-SEC-R4C)
+$ git rev-parse HEAD (repository)
+f59cf68f5eeb0c0788ec6339b940ef192c8f30f7
+$ node tools/gates/candidate.mjs --stage DG5 (repository working tree)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+exit=0
+$ git merge-base --is-ancestor fb9c221 HEAD
+exit=0
+$ git diff --name-only fb9c221 HEAD | grep -v "^docs/delivery/" | wc -l
+0
+--- clone /var/tmp/mth-run.tNH2Hv/claude-0/review-r4c (git clone /home/user/My-owns; checkout HEAD f59cf68)
+f59cf68f5eeb0c0788ec6339b940ef192c8f30f7
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --ref fb9c221
+{"stage":"DG5","source":"fb9c221","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --diff
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ manifest file
+sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf fb9c2216feb399efa9e1a062bdc24b2eef16db33 0
+$ git status --short | wc -l
+0
