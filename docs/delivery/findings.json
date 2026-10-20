@@ -14187,14 +14187,57 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-3/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-18T21:55:00Z",
           "status": "OPEN",
           "note": "Raised in DG5 round 3 by domain-reviewer (T-DG5-REV-DOM-R3) as a Low, non-blocking residual of the F-DG5-120 repair; F-DG5-120 itself verifies closed."
+        },
+        {
+          "at": "2026-10-19T10:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-DOM-R4-domain-reviewer-20261019T095848Z-5435b9e8",
+          "session_id": "5435b9e8-46ce-4326-94c4-dc36b9f9f51f"
+        },
+        "at": "2026-10-19T10:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-4/f123-analysis.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-demo.spec.ts",
+          "docs/delivery/test-evidence/DG5/domain/round-4/probe/dom-f123-crops.spec.ts",
+          "docs/delivery/test-evidence/DG5/domain/round-4/probe-demo.log",
+          "docs/delivery/test-evidence/DG5/domain/round-4/probe-crops.log",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c1-portfolio-table.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c1-portfolio-table.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c2-orphan-report.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c2-orphan-report.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c3-roadmap-deliverables.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c3-roadmap-deliverables.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c4-capability-heatmap.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c4-capability-heatmap.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/en/c5-initiative-INI-03-deliverables.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/crops/ar/c5-initiative-INI-03-deliverables.png",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/en/d19-portfolio.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/ar/d19-portfolio.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/en/d04-traceability.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/text/ar/d04-traceability.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-orphans.json",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-traceability.json",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-gate-G4.json",
+          "docs/delivery/test-evidence/DG5/domain/round-4/demo/api/demo-case-BC-01-totals.json",
+          "docs/delivery/test-evidence/DG5/domain/round-4/07-integration.log",
+          "docs/delivery/test-evidence/DG5/domain/round-4/04-root-demo.log"
+        ],
+        "note": "Verified adversarially on candidate 26d4ad92 (clone of the freeze commit 96aaeb2, source fb9c221), on a demo-initialized stack (e2e/support/with-demo-stack.sh, MTH_ENV=demo, AUTH_MODE=dev, demo role users roaming.user.*), in en and ar, re-running my round-3 reproduction through the real API and UI. (1) Portfolio: INI-01..03 read Launched, Selected, Funded with 'No warnings' / 'لا توجد تنبيهات'; the round-3 -> round-4 text diff of d19-portfolio removes exactly the three 'Key deliverables: the card should list 3 to 7.' lines in each language. GET /initiatives (list) and GET /initiatives/{id} return warnings [] for all three; GET /initiatives/{id}/deliverables gives countWarning null. The initiative pages list 'Active deliverables: 3'; the remaining '3 to 7' sentence there is the section's static guidance, not a warning. (2) Deliverables: 3 per initiative, ordinals 1-3, active, acceptance pending (none submitted or accepted, so no business acceptance is fabricated), owned by the initiative's workstream lead, each due on one of that initiative's approved milestone dates (INI-01 09-30/11-30/11-30; INI-02 10-15/12-15/12-15; INI-03 09-15/09-28/09-28), titles en / ar with (synthetic) / (اصطناعي). The roadmap's Deliverables section lists all nine with 'Pending'. (3) Capability heatmap: 3 rows: G3's 'Digital roaming activation' (customer value proposition 2->4, build) plus 'Proactive roaming service assurance' (journeys & processes 2->4, build) and 'Partner cost and usage analytics' (partners & sourcing 1->3, partner), each marked synthetic, on the screen in en and ar. (4) Traceability graph (getTraceability): versus round 3 no edge is removed and no existing node changes apart from its orphan flags; added: 9 initiative_deliverable, 9 deliverable_capability, 3 capability_kpi edges (21) and 11 nodes, none truncated; the three five-node B0147 lines (issue_gap, gap_initiative, initiative_kpi, kpi_benefit_measure) are byte-identical. (5) Orphan report: API and screen (en and ar) list exactly one entry, the fourth diagnosed issue 'Fragmented roaming propositions and an inconsistent digital activation journey' (downstream missing: diagnosed issue -> target-state gap); round 2 had two (that issue plus G3's unlinked capability), round 3 five. I accept BE-Y1's disclosure (D-175 (l)): that issue comes from B0145's case for change ('fragmented propositions, inconsistent digital activation') but B0147 gives it no separate line, so leaving it unlinked is faithful to the source and keeps the M0098 orphan report demonstrable on the demo; it is not a launched initiative nor a deliverable. (6) G4 and the totals: G1-G6 live readiness, decisions and submissions are identical to round 3 apart from the clock-default createdAt/updatedAt of the gate catalogue rows and requestIds; G4 reads 8 of 8 mandatory complete, no gate exception exists, the frozen G4 submission criteria are identical to round 3; BC-01..BC-04 detail, totals and financial metrics are byte-identical to round 3 (no allocation share on the new links, so no value is attributed and nothing is double counted). (7) Determinism: three independent demo seeds in this round (my two probes and the demo root e2e) give the same checksum 0a7fdc3f...37e4 (changed from round 3's 87322174... by design, D-175 (m)); demo.test.ts seed/reset/reset identical 9/9 and demo-gate-history 4/4 (incl. the new F-DG5-123 test) pass in my integration batch. (8) Coherence: B0072 T05 'Key deliverables [3-7 deliverables]' holds; the new records implement the playbook's own chain stated just above B0071 and M0097 (initiative -> deliverable -> capability change -> KPI movement) beside the B0147 lines, not on them; each capability links to its own chain's outcome KPI; deliverables are written while the cards are drafts on 2026-06-03, after G3 and before the G4 submission, and the launch is unchanged. Residuals judged not worth a finding: the two new capability changes have English-only names (like G3's existing one; record content, not a UI string), and the deliverable titles hold en and ar in one string, which is how the dataset labels free-text records. My exploratory GET /trace-links?limit=200 returned 400 (limit above the API maximum, my query's error); I used the graph instead."
+      }
     },
     {
       "id": "F-DG5-102",
@@ -14217,14 +14260,42 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-3/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-19T03:00:00Z",
           "status": "OPEN",
           "note": "Raised in DG5 round 3 (T-DG5-REV-SEC-R3B) on candidate fc93b239. Low and non-mandatory: test reliability only, with no product or security defect. It does not block my verdict."
+        },
+        {
+          "at": "2026-10-20T09:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-SEC-R4C-code-security-reviewer-20261020T074435Z-ed64647d",
+          "session_id": "ed64647d-a218-4393-bcbd-cfb920a605d4"
+        },
+        "at": "2026-10-20T09:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/code-security/round-4/04-unit-node22.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/04b-unit-node22-run2.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/03-unit-node24.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/04a-architecture-alone.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/06-empty-emit-source-analysis.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.test.ts",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run1.node24.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/repro/zz-sec-r4-rule4-differential.run2.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/04c-guard-mutation-check.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-4/08-scans.log"
+        ],
+        "note": "Verified on candidate sha256:26d4ad92…e1bf (source fb9c221), in the disposable clone $TMPDIR/review-r4c. The original defect was that the ADR-0002 full module walk ('every import respects dependsOn, public surfaces and allowed packages') overran its fixed 30 s budget in loaded Node 22 runs. Results: (1) Under load it now passes with wide headroom. Node 22 full pnpm test, run 1 at load 8-10: architecture.test.ts 140/140 in 28.8 s for the whole file. Node 22 unit-node run 2 at load 14-18, alongside a reviewer probe: the full walk took 18.1 s and the guard 1.6 s, against 150 s and 30 s. Node 24 full pnpm test at load 4-11: 140/140. Alone: 7.8/7.8 s on Node 22 and 7.0/7.0 s on Node 24. (2) Adversarial check that EMPTY_EMIT cannot miss a syntax error. In the TypeScript 6.0.2 source, transpileWorker collects getSyntacticDiagnostics and getOptionsDiagnostics before program.emit, so a 'before' transformer runs only inside the emit. In emitFiles, only the declaration transform's diagnostics are added (all 17 context.addDiagnostic calls are inside transformDeclarations), and transpileModule turns declarations off. My own differential compared the pre-repair full transpile (bbd6294 options and formatting) with the candidate's syntaxErrors on two inputs. First, a hostile corpus of 57 sources × 9 extensions: decorators, using/await using, import defer/source, import attributes and assertions, JSX namespaces and mismatched tags, generic arrows in tsx, conflict markers, a misplaced shebang, BOM and U+2028, numeric separators, octal escapes, invalid regexes, unterminated templates and comments, export= mixed with ESM, accessor, const type parameters, and more. Result: 513 cases, 218 with errors, 0 differences, on Node 24 and Node 22. Second, every one of the 448 real module files mutated 32 ways (character deleted, ( { < / inserted, slice duplicated, truncated) × 3 extensions. Result: 44,352 cases, 28,801 with errors, 0 differences, on Node 24 and Node 22. (3) My own mutation check of the guard. M1 (reportDiagnostics removed) is caught by P20 and the new guard. M2 (first diagnostic only) is caught by the new guard alone, so the guard adds detection the planted controls lacked. M3 (rule 4 disconnected) is caught by four planted controls. M4 (a TS-kind parse instead of transpile) is caught by the guard and the full walk. The testkit was restored byte for byte. (4) Controls: the repair diff removes only two lines, the full walk's timeout argument and the non-exported syntaxErrors signature; it:/expect( counts go 34/121 → 35/126. The five module-owned tests keep AST_TEST_TIMEOUT_MS = 30 s. 2d0f98c changes 0 non-comment lines. Residuals, not findings: (a) the old path also ran the printer, so a TypeScript emitter crash on syntactically valid source would have thrown before and no longer does; that is not a syntax diagnostic, and rule 4 never reported one. (b) The handback's surviving target-ES2015 mutant (D-175 observation o) is equivalent for rule 4: the target is fixed by transpileModule's own options on both sides, and my corpus of target-sensitive syntax shows no difference. Disclosed in the evidence: probe run 1 exited 1 on its own miscalibrated non-vacuity threshold (218 not > 228), plus a vitest RPC timeout caused by the probe's 739 s synchronous loop. The 0-difference assertions passed in that run. The corrected run 2 exits 0."
+      }
     },
     {
       "id": "F-DG5-144",
@@ -14283,12 +14354,78 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-19T03:30:00Z",
           "status": "OPEN",
           "note": "Raised in DG5 round 3 (T-DG5-REV-QA-R3B). Low, test reliability only (precedents F-DG2-143, F-DG5-121), not blocking."
+        },
+        {
+          "at": "2026-10-20T09:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-QA-R4C-qa-verifier-20261020T074435Z-b25e769d",
+          "session_id": "b25e769d-7523-4f81-af5a-b8b40068f81b"
+        },
+        "at": "2026-10-20T09:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-summary.txt",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset-parallel.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-cutf8-parallel.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset-parallel-samples.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node24-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node24-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/02-guard-mutation-check.log",
+          "docs/delivery/test-evidence/DG5/qa/round-4/11-repair-diff.log"
+        ],
+        "note": "Verified on candidate sha256:26d4ad92... (source fb9c221) with the full 'pnpm test' on Node 22.22.2 under review load, in a disposable complete clone. Four full Node 22 runs: locale unset and C.UTF-8 in sequence, then both again AT THE SAME TIME to load the machine harder. Each gives 2341/2341, 1711/1711 and 259 passed + 2 skipped (the by-design fuzz.test.ts skipIf(NOCODEGEN)), EXIT 0, with no failed or timed-out test. The full-tree boundary walk 'every import respects dependsOn, public surfaces and allowed packages' took 16447 ms and 16860 ms (peak load1 12.1 and 12.5) in the sequential runs, and 27289 ms and 26841 ms (peak load1 19.4) in the parallel runs. Against FULL_MODULE_WALK_TIMEOUT_MS = 150000 that leaves 122.7 s to 133.6 s of headroom (5.5x to 9.1x). On Node 24 it took 8398 ms and 9163 ms (16.4x to 17.9x). The new guard test 'rule 4 reports exactly the diagnostics of a full ts.transpileModule' took 1.4 to 1.7 s of its 30 s on Node 22. The repair diff only adds the EMPTY_EMIT before-transformer, exports syntaxErrors and raises this one test's budget; every removed line is the old budget argument, the old non-exported signature or the old closing of demo.test.ts's afterAll (11-repair-diff.log); no assertion is weakened. 2d0f98c changes comments only. A mutation check of the guard in a second disposable clone: M1 (syntaxErrors drops every diagnostic) is caught; M2 (jsx Preserve -> ReactJSX in syntaxErrors) survives as an equivalent mutant, the same class as D-175 observation (o), which I accept: rule 4 consumes only syntactic diagnostics, and emit options change none. Residual: at load 19.4 the walk took about 27 s, which would have been right at the OLD 30 s budget; the dedicated 150 s budget keeps more than 2x over round 3's 67 s worst case, so I raise no finding."
+      }
+    },
+    {
+      "id": "F-DG5-146",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Two P5 tables sit in no scroll container, so the page scrolls sideways at 390 px and with 200 % text, in en and ar (the F-DG5-144 defect class): the Form builder's field table (FormSchemaPage.tsx:234, wrapper div.table-scroll, a class with no CSS rule anywhere) and the form framework's Attachments table (FormFramework.tsx:1001, no wrapper; T01/T14 forms)",
+      "reproduction": "Found DB-free, because this run's sandbox cannot start PostgreSQL (docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log). In a disposable complete clone of the candidate (f59cf68 = source fb9c221 + delivery records; sha256:26d4ad92...), with an offline install: (1) copy docs/delivery/test-evidence/DG5/qa/tests/round-4/unit-web/zz-qa-dump-hook.ts to apps/web/test/zz-qa-dump.ts and import it first from apps/web/test/setup.ts; (2) QA_DUMP_ALL=<dir> npx vitest run --project unit-web --sequence.hooks=list apps/web/src/pages/form-builder/form-builder.test.tsx apps/web/src/components/form-framework/form-framework.test.tsx (the product's own unit tests and synthetic fixtures; this writes each rendered document after each test); (3) from the clone root, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-p5-layout.mjs <a built apps/web/dist> <dir> <out> 26691. This lays each snapshot out in the pre-installed Chromium with the candidate's BUILT stylesheet and fonts, at 390 x 844 and at 1280 x 900 with the root font at 200 %, and measures document.documentElement.scrollWidth - innerWidth. The three snapshots used are kept in docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/. The static cause can be seen without any run: grep -rn 'table-scroll' apps/web/src finds only the two JSX uses (FormSchemaPage.tsx:234 and ExportDialog.tsx:125) and no CSS rule.",
+      "expected": "No page-level horizontal scroll at 390 px and with 200 % text, in en and ar. A wide table scrolls inside its own focusable, named region (TableScrollRegion / .table-wrap), as on the Diagnose screen after the F-DG5-144 repair and as the product's own sweep claims for every route (REQ-S15-009, responsive layouts and mobile-friendly review; WCAG 2.1 SC 1.4.10 Reflow, REQ-S15-012).",
+      "actual": "Form builder (T03 schema, a draft with an extension field): the page overflows by 281 px (en) and 240 px (ar) at 390 px, and by 562 px (en) and 478 px (ar) at 200 % text. The read-only view (auditor, published version) overflows by 174 px (en) and 143 px (ar) at 390 px, and by 365 px and 300 px at 200 %. The culprit each time is table.table, which runs past its card and the viewport ([29..671] px en; [-240..361] px ar). The Origin/Required/Actions columns are cut off at the right edge in en and at the left in ar (screenshots form-builder-en-390-viewport.png and form-builder-ar-390-viewport.png). Form framework on T14, Attachments tab: the page overflows by 130 px (en) and 85 px (ar) at 390 px, and by 269 px and 183 px at 200 % (table.table--compact, no wrapper; the 'Stored in' column is cut off). Cause: FormSchemaPage.tsx:234 wraps the table in div.table-scroll, and no stylesheet defines .table-scroll, so it is not a scroll container. FormFramework.tsx:1001 renders the attachments table with no wrapper. ExportDialog.tsx:125 uses the same unstyled div.table-scroll for the export preview, so it is very likely affected too, though not laid out here (no snapshot holds that dialog open). The guard test 'no bare table wrapper in the web source' (table-regions.test.tsx) checks only elements with class table-wrap, so it cannot see these. Axe reports no serious or critical issue on these snapshots, apart from the snapshot-only document-title. LIMITATION: the layout comes from jsdom-rendered markup of the real components with the real CSS in real Chromium, not from the running stack. The real-stack confirmation (e2e at 390 px on /forms/... and on a T14 record's Attachments tab) is BLOCKED in this run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/p5-layout-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/form-builder-en-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/form-builder-ar-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/t14-attachments-en-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/form-builder.test.tsx--002--form_builder_en_adds_an_extension_field_in_an_open_draft_with_PUT_origin_admin_its_type_and_If-Match_on_the_draf.html",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/form-builder.test.tsx--006--form_builder_ar_adds_an_extension_field_in_an_open_draft_with_PUT_origin_admin_its_type_and_If-Match_on_the_draf.html",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/form-framework.test.tsx--005--form_framework_on_T14_en_history_lists_versions_with_changed_fields_comments_post_and_reply_attachments_need_a.html",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-dom-dump.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-unwrapped-table-scan.txt",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/unit-web/zz-qa-dump-hook.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-p5-layout.mjs",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-shot.mjs"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-20T09:15:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 4 (T-DG5-REV-QA-R4C) by the DB-free P5 layout sweep. Medium and non-mandatory, like F-DG5-144 (REQ-S15-009 and REQ-S15-012 are DG6 rows); not blocking DG5 on its own. Fix it in the same way as F-DG5-144 (TableScrollRegion, or a styled .table-scroll), and widen the 'no bare table wrapper' guard to tables in no scroll region."
         }
       ]
     }
