@@ -1,0 +1,66 @@
+# T-DG5-REV-SEC-R4D candidate identity check (2026-10-20T18:24:25Z); node v24.21.0
+$ git rev-parse HEAD
+dc4364c6068e71a80c69fc6864837a08efddc35e
+$ git rev-parse fb9c221
+fb9c2216feb399efa9e1a062bdc24b2eef16db33
+$ git merge-base --is-ancestor fb9c221 HEAD; echo $?
+0
+$ node tools/gates/candidate.mjs --stage DG5 --diff   (repository tree)
+{
+  "frozen": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf",
+  "working_tree": "sha256:9ac47c24480835525080f29268b346cdfacd96b07cb7ec2c08d77c0ed1673814",
+  "matches": false,
+  "added": [],
+  "removed": [],
+  "changed": [
+    "tools/agents/agent_settings.py"
+  ]
+}
+{"stage":"DG5","source":"HEAD","candidate_id":"sha256:9ac47c24480835525080f29268b346cdfacd96b07cb7ec2c08d77c0ed1673814","files":2188}
+{"stage":"DG5","source":"fb9c221","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+
+# (the two lines after the --diff JSON are: --ref HEAD, --ref fb9c221)
+$ git clone /home/user/My-owns $TMPDIR/review-head && cd review-head && git rev-parse HEAD && node tools/gates/candidate.mjs --stage DG5
+$ git clone /home/user/My-owns $TMPDIR/review-c && git checkout fb9c221 && node tools/gates/candidate.mjs --stage DG5 && git rev-parse --is-shallow-repository
+dc4364c6068e71a80c69fc6864837a08efddc35e
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:9ac47c24480835525080f29268b346cdfacd96b07cb7ec2c08d77c0ed1673814","files":2188}
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","files":2188}
+false
+
+$ git diff --name-only fb9c221 HEAD, minus META_EXCLUDES paths
+tools/agents/agent_settings.py
+$ git log --oneline fb9c221..HEAD -- tools/agents/agent_settings.py
+738831e DG5 round 4: agent Bash sandbox allows nested user namespaces again (Claude Code 2.1.304 added --disable-userns; user-approved, D-176)
+$ git diff fb9c221 HEAD -- tools/agents/agent_settings.py
+diff --git a/tools/agents/agent_settings.py b/tools/agents/agent_settings.py
+index 3c737bf..a81908c 100644
+--- a/tools/agents/agent_settings.py
++++ b/tools/agents/agent_settings.py
+@@ -137,6 +137,11 @@ def build(role, repo_root, cwd, stage=None):
+         "allowUnsandboxedCommands": False,
+         "autoAllowBashIfSandboxed": True,
+         "enableWeakerNestedSandbox": True,
++        # D-176 (user-approved 2026-10-20): Claude Code 2.1.304 started passing bwrap --disable-userns to the Bash
++        # sandbox, which stopped the reviewers' harnesses (unshare --user to run PostgreSQL as a non-root uid). This
++        # restores the pre-2.1.304 behaviour; write confinement rests on the process sandbox's read-only binds and
++        # Landlock (D-030), not on this.
++        "allowNestedUserNamespaces": True,
+         "filesystem": {"denyWrite": sorted(set(deny))},
+     }
+     return settings
+$ sed -n 985,999p tools/gates/lib/rules.mjs   (non-historical gate check recomputes from the working tree)
+  let recomputed;
+  try {
+    recomputed = mode === "historical"
+      ? manifestFromRef(repo, gate.source_commit, manifest.spec)
+      : manifestFromWorkingTree(repo, manifest.spec);
+  } catch (e) {
+    errors.push(`candidate: cannot recompute from ${mode === "historical" ? gate.source_commit : "working tree"} (${e.message.split("\n")[0]})`);
+    return;
+  }
+  const id = candidateId(recomputed);
+  if (id !== gate.candidate_id) {
+    const d = diffManifests(manifest.entries || [], recomputed);
+    const sample = [...d.changed.map((p) => `~${p}`), ...d.added.map((p) => `+${p}`), ...d.removed.map((p) => `-${p}`)].slice(0, 12);
+    errors.push(`candidate: ${mode} content hashes to ${id}, approval covers ${gate.candidate_id}; changed: ${sample.join(" ")}`);
+  }
