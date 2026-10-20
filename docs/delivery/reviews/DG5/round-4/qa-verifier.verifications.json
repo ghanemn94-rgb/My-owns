@@ -1,0 +1,22 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-145",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:26d4ad92... (source fb9c221) with the full 'pnpm test' on Node 22.22.2 under review load, in a disposable complete clone. Four full Node 22 runs: locale unset and C.UTF-8 in sequence, then both again AT THE SAME TIME to load the machine harder. Each gives 2341/2341, 1711/1711 and 259 passed + 2 skipped (the by-design fuzz.test.ts skipIf(NOCODEGEN)), EXIT 0, with no failed or timed-out test. The full-tree boundary walk 'every import respects dependsOn, public surfaces and allowed packages' took 16447 ms and 16860 ms (peak load1 12.1 and 12.5) in the sequential runs, and 27289 ms and 26841 ms (peak load1 19.4) in the parallel runs. Against FULL_MODULE_WALK_TIMEOUT_MS = 150000 that leaves 122.7 s to 133.6 s of headroom (5.5x to 9.1x). On Node 24 it took 8398 ms and 9163 ms (16.4x to 17.9x). The new guard test 'rule 4 reports exactly the diagnostics of a full ts.transpileModule' took 1.4 to 1.7 s of its 30 s on Node 22. The repair diff only adds the EMPTY_EMIT before-transformer, exports syntaxErrors and raises this one test's budget; every removed line is the old budget argument, the old non-exported signature or the old closing of demo.test.ts's afterAll (11-repair-diff.log); no assertion is weakened. 2d0f98c changes comments only. A mutation check of the guard in a second disposable clone: M1 (syntaxErrors drops every diagnostic) is caught; M2 (jsx Preserve -> ReactJSX in syntaxErrors) survives as an equivalent mutant, the same class as D-175 observation (o), which I accept: rule 4 consumes only syntactic diagnostics, and emit options change none. Residual: at load 19.4 the walk took about 27 s, which would have been right at the OLD 30 s budget; the dedicated 150 s budget keeps more than 2x over round 3's 67 s worst case, so I raise no finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset-parallel.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-cutf8-parallel.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset-parallel-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node24-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-guard-mutation-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/11-repair-diff.log"
+      ]
+    }
+  ]
+}

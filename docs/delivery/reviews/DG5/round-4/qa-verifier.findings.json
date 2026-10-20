@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-146",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Two P5 tables sit in no scroll container, so the page scrolls sideways at 390 px and with 200 % text, in en and ar (the F-DG5-144 defect class): the Form builder's field table (FormSchemaPage.tsx:234, wrapper div.table-scroll, a class with no CSS rule anywhere) and the form framework's Attachments table (FormFramework.tsx:1001, no wrapper; T01/T14 forms)",
+      "reproduction": "Found DB-free, because this run's sandbox cannot start PostgreSQL (docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log). In a disposable complete clone of the candidate (f59cf68 = source fb9c221 + delivery records; sha256:26d4ad92...), with an offline install: (1) copy docs/delivery/test-evidence/DG5/qa/tests/round-4/unit-web/zz-qa-dump-hook.ts to apps/web/test/zz-qa-dump.ts and import it first from apps/web/test/setup.ts; (2) QA_DUMP_ALL=<dir> npx vitest run --project unit-web --sequence.hooks=list apps/web/src/pages/form-builder/form-builder.test.tsx apps/web/src/components/form-framework/form-framework.test.tsx (the product's own unit tests and synthetic fixtures; this writes each rendered document after each test); (3) from the clone root, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-p5-layout.mjs <a built apps/web/dist> <dir> <out> 26691. This lays each snapshot out in the pre-installed Chromium with the candidate's BUILT stylesheet and fonts, at 390 x 844 and at 1280 x 900 with the root font at 200 %, and measures document.documentElement.scrollWidth - innerWidth. The three snapshots used are kept in docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/. The static cause can be seen without any run: grep -rn 'table-scroll' apps/web/src finds only the two JSX uses (FormSchemaPage.tsx:234 and ExportDialog.tsx:125) and no CSS rule.",
+      "expected": "No page-level horizontal scroll at 390 px and with 200 % text, in en and ar. A wide table scrolls inside its own focusable, named region (TableScrollRegion / .table-wrap), as on the Diagnose screen after the F-DG5-144 repair and as the product's own sweep claims for every route (REQ-S15-009, responsive layouts and mobile-friendly review; WCAG 2.1 SC 1.4.10 Reflow, REQ-S15-012).",
+      "actual": "Form builder (T03 schema, a draft with an extension field): the page overflows by 281 px (en) and 240 px (ar) at 390 px, and by 562 px (en) and 478 px (ar) at 200 % text. The read-only view (auditor, published version) overflows by 174 px (en) and 143 px (ar) at 390 px, and by 365 px and 300 px at 200 %. The culprit each time is table.table, which runs past its card and the viewport ([29..671] px en; [-240..361] px ar). The Origin/Required/Actions columns are cut off at the right edge in en and at the left in ar (screenshots form-builder-en-390-viewport.png and form-builder-ar-390-viewport.png). Form framework on T14, Attachments tab: the page overflows by 130 px (en) and 85 px (ar) at 390 px, and by 269 px and 183 px at 200 % (table.table--compact, no wrapper; the 'Stored in' column is cut off). Cause: FormSchemaPage.tsx:234 wraps the table in div.table-scroll, and no stylesheet defines .table-scroll, so it is not a scroll container. FormFramework.tsx:1001 renders the attachments table with no wrapper. ExportDialog.tsx:125 uses the same unstyled div.table-scroll for the export preview, so it is very likely affected too, though not laid out here (no snapshot holds that dialog open). The guard test 'no bare table wrapper in the web source' (table-regions.test.tsx) checks only elements with class table-wrap, so it cannot see these. Axe reports no serious or critical issue on these snapshots, apart from the snapshot-only document-title. LIMITATION: the layout comes from jsdom-rendered markup of the real components with the real CSS in real Chromium, not from the running stack. The real-stack confirmation (e2e at 390 px on /forms/... and on a T14 record's Attachments tab) is BLOCKED in this run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/p5-layout-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/form-builder-en-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/form-builder-ar-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/t14-attachments-en-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/form-builder.test.tsx--002--form_builder_en_adds_an_extension_field_in_an_open_draft_with_PUT_origin_admin_its_type_and_If-Match_on_the_draf.html",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/form-builder.test.tsx--006--form_builder_ar_adds_an_extension_field_in_an_open_draft_with_PUT_origin_admin_its_type_and_If-Match_on_the_draf.html",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/dumps/form-framework.test.tsx--005--form_framework_on_T14_en_history_lists_versions_with_changed_fields_comments_post_and_reply_attachments_need_a.html",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-dom-dump.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-unwrapped-table-scan.txt",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/unit-web/zz-qa-dump-hook.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-p5-layout.mjs",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-shot.mjs"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-20T09:15:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 4 (T-DG5-REV-QA-R4C) by the DB-free P5 layout sweep. Medium and non-mandatory, like F-DG5-144 (REQ-S15-009 and REQ-S15-012 are DG6 rows); not blocking DG5 on its own. Fix it in the same way as F-DG5-144 (TableScrollRegion, or a styled .table-scroll), and widen the 'no bare table wrapper' guard to tables in no scroll region."
+        }
+      ]
+    }
+  ]
+}

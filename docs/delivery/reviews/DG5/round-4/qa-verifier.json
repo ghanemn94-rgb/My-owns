@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 4,
+  "candidate_id": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf",
+  "source_commit": "fb9c2216feb399efa9e1a062bdc24b2eef16db33",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-QA-R4C-qa-verifier-20261020T074435Z-b25e769d",
+    "session_id": "b25e769d-7523-4f81-af5a-b8b40068f81b"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG5 scope or in repair wave Y (T-DG5-BE-Y1, BE-Y2, FE-Y1, ARCH-R6; the comment-only edit 2d0f98c is the orchestrator's). The QA authoring tasks T-DG5-QA-A..F2 wrote acceptance tests under tests/qa and e2e before the freeze. They are part of the candidate, and this run re-runs and reads them as tests. This run (T-DG5-REV-QA-R4C, the second re-run of round 4) wrote only evidence under docs/delivery/test-evidence/DG5/qa/round-4/, probe sources outside the candidate under docs/delivery/test-evidence/DG5/qa/tests/round-4/, and its own round-4 record and sidecars. It did not read or cite the orphaned R4/R4B material, and it read no other reviewer's round-4 record before forming this verdict. It executed code only in disposable complete clones under $TMPDIR."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-4/qa-verifier-rerun2.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089",
+    "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-037", "REQ-S01-002", "REQ-S01-003", "REQ-S01-004",
+    "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008",
+    "REQ-S06-009", "REQ-S06-010", "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020",
+    "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026", "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007",
+    "REQ-S13-008", "REQ-S13-009", "REQ-S13-010", "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004",
+    "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021", "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R4-00-candidate",
+      "procedure": "Confirm the frozen candidate on complete (not shallow) clones at HEAD f59cf68 and at the source commit fb9c221, and on the repository working tree, at the start and at the end of the review. Confirm that HEAD differs from the source only in delivery records.",
+      "command": "git clone /home/user/My-owns $TMPDIR/rev && git checkout f59cf68 && node tools/gates/candidate.mjs --stage DG5; git clone ... $TMPDIR/rev-src && git checkout fb9c221 && node tools/gates/candidate.mjs --stage DG5 && git rev-parse --is-shallow-repository; (working tree) node tools/gates/candidate.mjs --stage DG5; git diff --name-only fb9c221..f59cf68 | grep -v '^docs/delivery/'",
+      "environment": "Complete clones $TMPDIR/rev (f59cf68), $TMPDIR/rev-src (fb9c221, removed after the check) and $TMPDIR/rev2 (f59cf68); Node 24.21.0; repository working tree at HEAD f59cf68.",
+      "expected": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf, 2188 files, every time; the clones are not shallow; HEAD differs from fb9c221 only under docs/delivery/.",
+      "actual": "Every computation printed candidate_id sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf with 2188 files and EXIT 0: the clone at fb9c221, the clone at f59cf68 at 08:05Z, the working tree at the start and at the end (09:07Z), and rev2 after its install. is-shallow-repository is 'false'. git diff fb9c221..f59cf68 lists only docs/delivery/ paths (the round-4 freeze, the domain run and the salvage commits); merge-base --is-ancestor fb9c221 HEAD gives EXIT 0. HEAD (f59cf68) differs from source_commit (fb9c221) only in those records, which the candidate excludes, so the commit pointer differs and the candidate is identical. One disclosed hiccup: my first end-of-review computation in $TMPDIR/rev printed a59ed15d... with 2190 files because my two scratch scripts (zz-inspect.ts, zz-render.ts) were still in the clone root. Once I removed them, it printed 26d4ad92... with 2188 files and git status was clean (09-candidate-end.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-at-source.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/09-candidate-end.log"
+      ]
+    },
+    {
+      "id": "QA-R4-01-static",
+      "procedure": "Offline frozen-lockfile install in the disposable clone, then the seven static checks of the assignment.",
+      "command": "bash docs/delivery/test-evidence/DG5/qa/round-4/scripts/setup.sh; bash docs/delivery/test-evidence/DG5/qa/round-4/scripts/run-static.sh (pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast)",
+      "environment": "$TMPDIR/rev (f59cf68), Node 24.21.0, pnpm 10.33.0, an offline copy of the pnpm store; the clone's node_modules is writable, so --configLoader runner is not needed; load 3-6.",
+      "expected": "Every command exits 0.",
+      "actual": "install EXIT 0, with one pnpm WARN, 'Failed to create bin ... mth-db ... @mth/db/dist/cli.js' (the workspace bin points into dist, which does not exist before the build; it is expected and pre-existing, and the build creates it). pnpm -r build EXIT 0; pnpm -r typecheck EXIT 0; pnpm lint EXIT 0; pnpm openapi:lint EXIT 0; pnpm check:no-cdn EXIT 0; pnpm format:check EXIT 0; check:contrast EXIT 0 (08:01-08:13Z).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-install.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-check-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R4-02-unit",
+      "procedure": "pnpm test (unit-node, unit-web, unit-formula-nocodegen) on Node 22 and Node 24, each with the locale unset and with C.UTF-8, under the review load. Then two more Node 22 runs (unset and C.UTF-8) AT THE SAME TIME, for F-DG5-145. Each log is summarised: totals, the boundary walk's duration, the peak load, failure and timeout lines, and the stderr histogram.",
+      "command": "bash .../scripts/chain-unit.sh (run-unit.sh node22|node24 unset|cutf8); bash .../scripts/run-unit-parallel.sh node22 unset & bash .../scripts/run-unit-parallel.sh node22 cutf8; python3 -I .../scripts/summarize-unit.py <logs>",
+      "environment": "$TMPDIR/rev; Node 22.22.2 (/opt/node22/bin) and Node 24.21.0; env -u LANG -u LC_ALL -u LC_CTYPE, or LANG=LC_ALL=C.UTF-8; peak load1 7.6-12.5 in the sequential runs and 19.4 in the parallel runs (4 CPUs; the other reviews ran at the same time).",
+      "expected": "Every run EXIT 0 with no failed, timed-out or flaky test. Every stderr line is explained.",
+      "actual": "All six runs: unit-node 144 files 2341/2341, unit-web 90 files 1711/1711, unit-formula-nocodegen 3 files 259 passed + 2 skipped, EXIT 0. Both skips are fuzz.test.ts's it.skipIf(NOCODEGEN) cases, skipped by design in the nocodegen project. No failed or timed-out test and no retry. Boundary walk: Node 22 16.4 s (unset), 16.9 s (C.UTF-8), 27.3 s and 26.8 s (parallel); Node 24 8.4 s and 9.2 s; budget 150 s (QA-R4-11). stderr: in every run the same 18 blocks with the same per-file histogram as rounds 2-3 (branding.test.ts 1, extension-fields.test.tsx 4, extension-hosts-twelve.test.tsx 1, kpiUnit.test.tsx 2, percentKpi.test.tsx 10), plus one '[FSTDEP022] FastifyWarning' deprecation notice per run. None makes a test fail. The extension-fields blocks are React Router error-boundary messages ('raci.deliverables is not iterable', \"reading 'length'\") from the T12 (/raci) and T14 (/benefits) cases of 'REQ-PB-011 template header on the native forms'. Those cases mock only the endpoints the header needs, so the page body behind the header throws on its missing data while the asserted template-provenance strip renders. They are pre-existing (identical counts in round 3's logs) and a test-fixture limitation, not a product defect; REQ-PB-011's strip on the real pages is covered by the e2e journeys (blocked here, QA-R4-05). The new unit tests of the repair pass in every run: the guard test 'rule 4 reports exactly the diagnostics of a full ts.transpileModule' (0.6-1.7 s).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-4/chain-unit.out",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node24-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset-parallel.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-cutf8-parallel.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/chain-unit-parallel-unset.out",
+        "docs/delivery/test-evidence/DG5/qa/round-4/chain-unit-parallel-cutf8.out"
+      ]
+    },
+    {
+      "id": "QA-R4-03-integration-twice",
+      "procedure": "Run the integration project twice on a disposable PostgreSQL (migrations 0001-0097, contract/contract.test.ts with 846 operations, every p5-pending-*.ts list empty).",
+      "command": "QA_PG_PORT=26650 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "$TMPDIR/rev; Node 24.21.0; PostgreSQL 16.13 binaries in /usr/lib/postgresql/16/bin; this run's Bash sandbox (uid 0 only: uid_map '0 0 1', /proc/sys/user/max_user_namespaces = 0).",
+      "expected": "Two complete runs, each EXIT 0 (apart from the D-159 skip).",
+      "actual": "BLOCKED: no PostgreSQL can start in this run's shell sandbox. with-pg.sh runs as uid 0, so it starts initdb/postgres through 'unshare --user --map-user=1000 --map-group=1000' (PostgreSQL refuses to run as root). The sandbox forbids new user namespaces: max_user_namespaces is 0 and only uid 0 is mapped. The run printed 'unshare: unshare failed: Operation not permitted' and EXIT 1 at 08:13:39Z before any test started. Re-checked: unshare, setpriv --reuid=1000 ('setresuid failed: Invalid argument'), runuser ('cannot set groups') and bwrap --unshare-user all fail, and initdb as root says 'cannot be run as root' (03-sandbox-userns-blocker.log; the final 'EXIT 0' there is the status of the sed in the pipeline, not of initdb). The R4B run of this round could start PostgreSQL, so this is a change in the sandbox. Under the sandbox rules I did not work around it (for example by faking PostgreSQL's root check); changing the sandbox is the user's decision. The second run was not attempted. Remaining verification: both integration runs, contract.test.ts (846 operations) and the p5-pending lists, in a session whose sandbox allows the uid-1000 user namespace.",
+      "exit_status": 1,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/04-integration-run1.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/chain-integration-run1.out",
+        "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log"
+      ]
+    },
+    {
+      "id": "QA-R4-04-tests-qa-alone",
+      "procedure": "Run tests/qa (integration) on its own on a disposable PostgreSQL.",
+      "command": "QA_PG_PORT=26660 tests/qa/support/with-pg.sh pnpm test:integration tests/qa",
+      "environment": "As QA-R4-03.",
+      "expected": "EXIT 0.",
+      "actual": "BLOCKED for the same reason as QA-R4-03: with-pg.sh cannot start PostgreSQL in this sandbox. Not attempted again after the run-1 failure and the blocker probe. tests/qa/unit (a22-s21-001-text-scan.test.ts and the other unit files) did run inside the unit-node project in QA-R4-02 and passed.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log"
+      ]
+    },
+    {
+      "id": "QA-R4-05-e2e-product-root-demo",
+      "procedure": "Run the product journeys (apps/web/e2e), the root acceptance specs (a03, a04, a06, a07, a08-a09, a13, a15, a16, a20, a22 on with-stack.sh; a02-* and a21 on e2e/support/with-demo-stack.sh) on the real stack with --workers=1, in chromium-en and chromium-ar, in both locale settings.",
+      "command": "bash .../scripts/chain-product.sh and run-e2e.sh (prepared from round 3; not run)",
+      "environment": "$TMPDIR/rev; the pre-installed Chromium (/opt/pw-browsers); ports 26600-26699.",
+      "expected": "Every journey passes in both projects and both locale settings, axe clean.",
+      "actual": "BLOCKED: both stack harnesses start PostgreSQL the same way (apps/web/e2e/support/with-stack.sh:40 and e2e/support/with-demo-stack.sh:29, 'unshare --user --map-user=1000'), which this sandbox forbids (QA-R4-03). No product, root or demo e2e spec ran in this run, so this review reports no e2e count. The scripts chain-product.sh, run-e2e.sh and run-probe-e2e.sh in the evidence folder were prepared and never executed. DB-free substitutes for the layout and axe parts are QA-R4-07, QA-R4-10 and QA-R4-12. They do not replace the journeys.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log"
+      ]
+    },
+    {
+      "id": "QA-R4-06-aud-readonly-pass",
+      "procedure": "AUD read-only pass on the real stack (every P5 screen without write controls for AUD; writes 403).",
+      "environment": "As QA-R4-05.",
+      "expected": "AUD sees no write control and every write is refused.",
+      "actual": "BLOCKED (no stack, QA-R4-03). The unit-level read-only assertions for AUD in the web tests (for example p2.test.tsx 'read-only auditor', fed.test.tsx notification preferences 'the auditor reads the preferences but has no save action', form-builder.test.tsx 'an auditor ... read-only view') passed inside QA-R4-02. They do not replace the e2e pass.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log"
+      ]
+    },
+    {
+      "id": "QA-R4-07-p5-screens-390-200pct-axe-dbfree",
+      "procedure": "DB-free substitute for the 390 px / 200 % text and axe checks of the P5 screens. In a second disposable clone (rev2), a DOM-snapshot hook (tests/round-4/unit-web/zz-qa-dump-hook.ts, imported first by the clone's apps/web/test/setup.ts) writes each rendered document after every test of the 13 P5 web test files, run with --sequence.hooks=list. Each of the 156 snapshots is then laid out in the pre-installed Chromium with the candidate's BUILT stylesheet and fonts (apps/web/dist, served locally) at 390 x 844 and at 1280 x 900 with 200 % text. The check measures page overflow and its culprits, verifies that every scrolling element in <main> is a focusable named region, and runs axe (wcag2a/2aa/21a/21aa). The flagged cases are confirmed by screenshot and by reading the source.",
+      "command": "QA_DUMP_ALL=$TMPDIR/p5dumps npx vitest run --project unit-web --sequence.hooks=list <13 P5 test files>; node zz-qa-r4-p5-layout.mjs $TMPDIR/rev/apps/web/dist $TMPDIR/p5dumps <evidence>/layout-p5 26691; node zz-qa-r4-shot.mjs ...; static scan 05-unwrapped-table-scan.txt",
+      "environment": "$TMPDIR/rev2 (f59cf68, candidate verified), Node 24.21.0, Chromium from /opt/pw-browsers, @axe-core/playwright from the clone; snapshots hold the tests' SYNTHETIC fixtures; en 95 and ar 61 snapshots.",
+      "expected": "No page-level overflow, no bare scrolling region and no serious or critical axe issue on any P5 snapshot, in en and ar, at both sizes.",
+      "actual": "The 13 files passed 205/205 with the hook (EXIT 0). The layout script's first attempt failed on a harness error of mine (AxeBuilder needs an explicit browser context; log kept). The second attempt's EXIT 1 is explained case by case. (a) axe 'document-title' (serious) on all 156: an artefact, because the snapshot copies <body> only and not the app's <title>; it is excluded. Apart from it, 0 serious or critical axe issues. (b) 12 'bare region' flags on fee.test.tsx (report snapshot and export screens): a false positive of my probe. Those .table-wrap regions are named with aria-labelledby (id report-section-* exists), which is a valid accessible name, and my check accepted only aria-label. (c) 16 real page-overflow cases: the Form builder field table (div.table-scroll, which no stylesheet defines) overflows by 281/240 px (en/ar) at 390 px and 562/478 px at 200 %, its read-only view by 174/143 and 365/300; the form-framework Attachments table on T14 (no wrapper) overflows by 130/85 and 269/183. Confirmed by screenshots and source. Raised as F-DG5-146 (Medium, the F-DG5-144 class). The other P5 snapshots (automation, procedures, health check, launch plan, reports, exports, evidence, studio, route editor, migrations, playbook reader, shell) show 0 page overflow at both sizes in en and ar. Limitation: these are snapshots of the real components with the real CSS, not the running stack.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S05-001", "REQ-S05-002", "REQ-S06-004", "REQ-S20-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-dom-dump.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe-attempt1-harness-error.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/p5-layout-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/form-builder-en-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/form-builder-ar-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout-p5/shots/t14-attachments-en-390-viewport.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-unwrapped-table-scan.txt",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/unit-web/zz-qa-dump-hook.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-p5-layout.mjs"
+      ]
+    },
+    {
+      "id": "QA-R4-08-dlv037-suites",
+      "procedure": "REQ-DLV-037: the A06, A07, A15 and A16 executable tests pass on this frozen candidate, with counts per suite; inspect exported PDF, DOCX, XLSX and PPTX samples in both languages.",
+      "environment": "As QA-R4-03 and QA-R4-05.",
+      "expected": "The A06, A07, A15 and A16 integration suites and their root e2e specs pass, with counts recorded, and the integration-generated samples are inspected.",
+      "actual": "BLOCKED: the A06, A07, A15 and A16 suites are integration files (tests/qa/integration/a06-*, a07-*, a15-*, a16-*) and root e2e specs, and both need PostgreSQL (QA-R4-03). So no per-suite count can be given for this candidate, and the integration-generated export samples could not be produced. The renderer-only offline samples (QA-R4-09) are a partial substitute, which this review does not count as meeting REQ-DLV-037.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "requirements": ["REQ-DLV-037"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/10-acceptance-matrix.json"
+      ]
+    },
+    {
+      "id": "QA-R4-09-offline-export-samples",
+      "procedure": "DB-free: render samples with the package's own entry point render(document, options) and its synthetic unit fixture (with an Arabic and a provisional row, and a missing value) in every rendered format in en and ar. Inspect them with the round-3 reader, unchanged: PDF through the package's PDF reader; DOCX, PPTX and XLSX through an independent unzip/regex read; RTL markers.",
+      "command": "node render-offline-samples.ts <evidence>/samples-offline; node inspect-samples.ts <evidence>/samples-offline (clone root, Node 24)",
+      "environment": "$TMPDIR/rev, Node 24.21.0; SYNTHETIC fixture data.",
+      "expected": "Every format renders in en and ar; Arabic files carry their RTL markers; missing values show Unknown (never 0); provisional values are labelled.",
+      "actual": "10 files rendered, EXIT 0 (CSV, XLSX, PDF, DOCX, PPTX x en/ar). Arabic: DOCX w:bidi=true and w:rtl=true; PPTX rtl=\"1\" on 5/5 slides; XLSX rightToLeft on 3/3 sheets; PDF and CSV Arabic text readable in logical order. English: no bidi, PPTX rtl on 0/5 slides, XLSX rightToLeft on 0/3 sheets. The missing amount and the total read 'Unknown' / 'غير معروف' and never 0; the provisional row reads 'Provisional' / 'مؤقت'; no DG0-DG7 text appears. Fixture artefacts, not product defects: the fixture's column, section and code keys (report.registers.raid.*, risk, open) are not catalogue keys, so they fall back to key-derived English ('Code', 'Filters'); and the fixture names no source, so B0004 provenance is absent. The PDF reader's line grouping puts Arabic diacritics on separate lines, which is a reader artefact. This checks the renderers only, not the export job, its snapshot or A15 (QA-R4-08 BLOCKED).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S13-008", "REQ-S13-009"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/07-render-offline-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/07-sample-inspection-offline.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/render-offline-samples.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/inspect-samples.ts"
+      ]
+    },
+    {
+      "id": "QA-R4-10-verify-f144",
+      "procedure": "F-DG5-144 verification as the assignment prescribes: re-run my R3-DIAG and R3-REG probes unchanged on the demo stack, in en and ar and in both locale settings; check the 409 conflict banner at 390 px on the stack in en and ar, including Arabic headers not broken inside a word; judge D-175 observation (n). Plus my new round-4 probe zz-qa-dg5r4-reflow-verify.spec.ts (R4-CONF-FORM, R4-CONF-DIALOG, R4-DIAG-PROD).",
+      "command": "run-probe-e2e.sh {unset,cutf8} demo ... tests/round-3/e2e/zz-qa-dg5r3-diagnose-reflow.spec.ts | zz-qa-dg5r3-regions-verify.spec.ts; run-probe-e2e.sh ... prod ... tests/round-4/e2e/zz-qa-dg5r4-reflow-verify.spec.ts (not run)",
+      "environment": "As QA-R4-05.",
+      "expected": "On the real demo and production stacks: page overflow <= 1 px at 390 px and 200 % text, every register in a focusable named region, the conflict banner and its table inside the viewport, no Arabic header broken inside a word.",
+      "actual": "BLOCKED on the stack: R3-DIAG, R3-REG and the new R4 probe need with-demo-stack.sh or with-stack.sh (QA-R4-03), so none of them ran. The R4 probe source is kept, written and not executed. The DB-free layout check (QA-R4-12) found nothing against the fix: Diagnose and the conflict banner have 0 page overflow at 390 px, 320 px and 200 % in en and ar, and a control with the repair reverted reproduces the defect. Because the prescribed real-stack reproduction could not run, I do not close F-DG5-144. My verifications sidecar has no entry for it, so it stays OPEN, and it is not judged a failed repair. Observation (n), judged: in the Diagnose statement column (th scope=row, .text-cell with overflow-wrap: anywhere) a 120-character token breaks where it must, 'hand-off' breaks at its hyphen (a legitimate break opportunity), and with 200 % text in English ordinary words ('Synthetic') break mid-word, because overflow-wrap: anywhere lets the column shrink to near one character. No Arabic word broke and no column header broke. The same happens with the repair reverted, so it predates FE-Y1 and does not come from it. Content still reflows with nothing lost, which meets WCAG 1.4.10. I accept it as a readability observation (overflow-wrap: break-word would keep words whole), not a finding.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/e2e/zz-qa-dg5r4-reflow-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-layout-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout/layout-results.json"
+      ]
+    },
+    {
+      "id": "QA-R4-11-verify-f145",
+      "procedure": "F-DG5-145 verification: run the full Node 22 unit runs under the review load and report the boundary walk's duration and the budget's headroom in each. Read the BE-Y2 diff and the comment-only edit 2d0f98c. Mutation-check the new guard test.",
+      "command": "see QA-R4-02; git diff bbd6294..fb9c221 -- apps/api/src/architecture.test.ts apps/api/src/architecture.testkit.ts; git show 2d0f98c; in $TMPDIR/rev2: npx vitest run --project unit-node apps/api/src/architecture.test.ts -t 'rule 4 reports exactly|every import respects' (unmodified, M1, M2)",
+      "environment": "$TMPDIR/rev and $TMPDIR/rev2, Node 22.22.2; load as QA-R4-02.",
+      "expected": "Every full Node 22 run passes, and the walk stays well inside its 150 s budget (at least 2x over the loaded worst case). The repair changes no rule and weakens no assertion. The guard test detects a rule-4 change.",
+      "actual": "Four of four full Node 22 runs EXIT 0. Walk 16.4 s and 16.9 s (load 12), and 27.3 s and 26.8 s (two runs in parallel, load 19.4), against 150 s: headroom 122.7-133.6 s (5.5x-9.1x). Round 3's worst case was 67.0 s, so 150 s is 2.2x that. The diff adds EMPTY_EMIT, exports syntaxErrors and gives the walk its own budget. Every removed line is the old budget argument, the old signature or the old closing of demo.test.ts's afterAll, which now has a 120 s budget; no assertion changes. 2d0f98c has no non-comment change. Mutations: M1 (syntaxErrors drops every diagnostic) fails the guard ('.js: import { x } ...' expected vs received). M2 (jsx Preserve -> ReactJSX) survives as an equivalent mutant, which I accept together with observation (o). F-DG5-145: PASS, CLOSED_VERIFIED (verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-guard-mutation-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/11-repair-diff.log"
+      ]
+    },
+    {
+      "id": "QA-R4-12-diagnose-conflict-reflow-dbfree",
+      "procedure": "DB-free layout check of the F-DG5-144 repair and of the conflict-banner repair. A unit test (tests/round-4/unit-web/zz-qa-r4-dom-dump.test.tsx, copied into the clone for the run) renders the REAL Diagnose screen with a finding in every workstream (one a 120-character word, one long Arabic) and the REAL ConflictPanel with long values and the catalogue's field labels, in en and ar. Each DOM is laid out in Chromium with the BUILT stylesheet and fonts at 390, 320 and 1280 px with 200 % text. The check measures page overflow, cards, the banner and its table inside the viewport, scrolling registers as named focusable regions, and words broken across lines in headers and cells. Control: the same with the repair's declarations reverted in the browser.",
+      "command": "QA_DUMP_DIR=<evidence>/dom-dumps npx vitest run --project unit-web apps/web/src/zz-qa-r4-dom-dump.test.tsx; node zz-qa-r4-layout.mjs <evidence>/dom-dumps <evidence>/layout 26690",
+      "environment": "$TMPDIR/rev (built), Node 24.21.0, Chromium from /opt/pw-browsers; SYNTHETIC fixtures (p2fixtures METHODOLOGY).",
+      "expected": "With the repair: 0 page overflow, every card, banner and table inside the viewport, scrolling registers named and focusable, no Arabic word and no column header broken. With the repair reverted, the overflow comes back (the check is not vacuous).",
+      "actual": "The dump test passed 4/4, EXIT 0. With the repair, 0 page overflow at 390, 320 and 200 % in en and ar for Diagnose and the conflict banner. All 6 cards are inside the viewport, and the grid track resolves to 332, 262 and 606 px. All 7 registers scroll inside role=region, tabIndex 0 named regions. The banner and its table fit, no column or row header of the banner breaks inside a word, and Arabic labels stay joined (screenshot conflict-ar-390.png). Long values wrap anywhere inside their cells, as designed. CONTROL with the repair reverted: Diagnose overflows by 376/356 px (en/ar) at 390, 446/426 at 320 and 697/655 at 200 %, with every card off the viewport; the banner overflows by 1927/1891, 1997/1961 and 3308/3235 px. So the repair is what removes the overflow. The script exits 1 because its header-break detector also counts Diagnose ROW headers (th scope=row, the finding statement): the 120-character token (must break), 'hand-off' (a hyphen break, a false positive) and, at 200 % in English, 'Synthetic' mid-word (observation (n), QA-R4-10). Column headers and Arabic words never break. This is DB-free evidence only; the real-stack verification stays BLOCKED (QA-R4-10).",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-dom-dump.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-layout-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout/layout-results.json",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout/shots/conflict-ar-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout/shots/conflict-en-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout/shots/diagnose-ar-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-4/layout/shots/diagnose-en-390-CONTROL-reverted.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/unit-web/zz-qa-r4-dom-dump.test.tsx",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/zz-qa-r4-layout.mjs"
+      ]
+    },
+    {
+      "id": "QA-R4-13-repair-diff-and-d175-observations",
+      "procedure": "Re-inspect the whole repair diff bbd6294..fb9c221 (outside docs) for regressions, and judge the D-175 observations in my focus.",
+      "command": "git diff --stat bbd6294..fb9c221 -- . ':!docs'; git diff ... (every removed line listed); git show 2d0f98c",
+      "environment": "Repository working tree, read-only.",
+      "expected": "No repair weakens another behaviour; each observation is accepted with a reason or raised.",
+      "actual": "8 files, +616/-3: architecture.test.ts and architecture.testkit.ts (BE-Y2, QA-R4-11), app.css (+22 lines: .conflict and .workstreams minmax(0, 1fr) tracks with shrinkable items, conflict th white-space normal and td overflow-wrap anywhere; only adds declarations, behaviour checked in QA-R4-12), p5-diagnose-reflow.spec.ts (new e2e spec, read: it asserts overflow <= 1, cards in the viewport, focusable named regions, a set-up condition that a register scrolls, and a real 409 banner; not run here), roaming-ids.ts and roaming-portfolio.ts (BE-Y1: 2 capabilities, 9 deliverables and 12 trace links through ctx.insert, one audit event each, with the 3-7 and due-window guards fail-closed), demo-gate-history.test.ts (new integration test, not run here), demo.test.ts (teardown budget 120 s only). The only 3 removed lines are the ones listed in QA-R4-11. Observations: (l) and (m) are demo-data effects whose tests are integration tests, which I cannot run here; I raise no finding, because no QA criterion I could check depends on the old counts and no test pins a literal checksum or a literal count of the new record kinds (grep over the 17 demo test files, 11b-checksum-pin-grep.log), and their runtime check is part of QA-R4-03's BLOCKED scope. (n) is accepted as a readability observation (QA-R4-10). (o) is accepted: equivalent for rule 4, and my M2 mutant is the same class (QA-R4-11).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/11-repair-diff.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/11b-checksum-pin-grep.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/02-guard-mutation-check.log"
+      ]
+    },
+    {
+      "id": "QA-R4-14-validators",
+      "procedure": "Run the gate validators the assignment names on the repository working tree.",
+      "command": "node tools/gates/validate.mjs --register DG5; --pipeline; --historical --stage DG4; --historical --stage DG3; --historical --stage DG2; --historical --stage DG1",
+      "environment": "Repository working tree at HEAD f59cf68, Node 24.21.0.",
+      "expected": "Each PASS, EXIT 0.",
+      "actual": "'PASS register rules at DG5', 'PASS pipeline (active stage: DG5 REVIEWING)', and 'PASS gate DG4 (historical)', DG3, DG2 and DG1, each EXIT 0 (08:13-08:26Z).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate-register-DG5.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate-historical-stage-DG4.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate-historical-stage-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R4-15-acceptance-matrix",
+      "procedure": "For each of the 78 DG5-final rows, resolve the test files its notes and evidence name against the candidate's tracked files, classify each by where it runs (unit: run in this review; integration or e2e: need PostgreSQL), and mark unit files that the Node 22 unit log lists as passed. Read the unit tests of a sample of rows against the literal acceptance text.",
+      "command": "python3 -I .../scripts/acceptance-matrix.py $TMPDIR/rev .../02-unit-node22-unset.log > 10-acceptance-matrix.json",
+      "environment": "$TMPDIR/rev; Python 3; the unit log of QA-R4-02.",
+      "expected": "Every row's acceptance clause is asserted by a test that ran and passed on this candidate.",
+      "actual": "All 78 rows resolve to at least one test file. Every row names at least one integration or e2e test, and none of those could run (QA-R4-03, QA-R4-05). 53 rows also have unit tests, all run and passed in QA-R4-02. For 25 rows the named evidence is integration or e2e only, for example REQ-PB-086, PB-090, DLV-037, S01-004, S04-011, S06-003, S06-006, S06-009, S06-010, S12-001, S12-003, S12-004, S12-015, S12-018, S12-020, S12-021, S12-026, S13-007, S14-004, S16-012, S16-015, S16-021, S20-002, S20-006 and S20-007. Read against their clauses, these unit tests assert the literal text: scoring.test.ts (REQ-S14-001 17 Yes -> 17 and '16-20'; REQ-S14-002 24 answers -> band null; REQ-PB-092 21/16/10/9 -> four bands) and a22-s21-001-text-scan.test.ts (REQ-S21-001 the DG0-DG7 scan and the synthetic G-approval label). The unit layer cannot cover any row's full acceptance clause, because each row also needs the API, the database or the browser journey. So no requirement is verified complete in this run.",
+      "exit_status": 0,
+      "result": "BLOCKED",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/10-acceptance-matrix.json",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/acceptance-matrix.py"
+      ]
+    },
+    {
+      "id": "QA-R4-16-environmental-residuals",
+      "procedure": "Record the assignment's environmental residuals on their offline or configuration surface.",
+      "environment": "Repository and register, read-only.",
+      "expected": "PASS on the offline/config surface, with the residual noted.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057): offline frozen-lockfile install from a store copy, EXIT 0 (QA-R4-01); the live registry is a residual. Live CI (REQ-DLV-025 A24, D-058): not available; residual. Keycloak and a real demo IdP (D-049; ADR-0050 §1): the dev-mode binding of D-165 is the test path, and it could not be exercised here because the stack does not start (QA-R4-05). AI and external notification adapters: none ships in P5 (D-142 Q11), and A21's 'disabled' is the shipped configuration (D-165); check:no-cdn EXIT 0. These residuals are separate from the sandbox blocker of QA-R4-03, which is not a disclosed residual.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-install.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-check-no-cdn.log"
+      ]
+    }
+  ],
+  "findings": ["F-DG5-146"],
+  "verdict": "BLOCKED",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/qa/round-4/03-sandbox-userns-blocker.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/02-unit-summary.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-4/05-p5-layout-axe-summary.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-4/05-layout-check.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/10-acceptance-matrix.json",
+    "docs/delivery/test-evidence/DG5/qa/round-4/11-repair-diff.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/09-candidate-end.log",
+    "docs/delivery/reviews/DG5/round-4/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG5/round-4/qa-verifier.verifications.json"
+  ],
+  "reviewed_at": "2026-10-20T09:15:00Z",
+  "summary": "BLOCKED. This run's shell sandbox forbids new user namespaces (max_user_namespaces 0, only uid 0 mapped), so with-pg.sh, with-stack.sh and with-demo-stack.sh cannot start PostgreSQL as uid 1000. All integration, tests/qa, product, root and demo e2e runs, the AUD pass, the REQ-DLV-037 suite counts and the real-stack verification of F-DG5-144 are BLOCKED; I did not work around the sandbox. What ran passed: candidate 26d4ad92 (2188 files) on complete clones; the 7 static checks; pnpm test on Node 22 and 24 in both locale settings plus two parallel Node 22 runs, 6/6 green; validators register, pipeline and historical DG4/DG3/DG2/DG1. F-DG5-145 is verified CLOSED: the walk took 16-27 s of its 150 s budget at load up to 19.4, and the guard catches a real rule-4 mutant. F-DG5-144 is not closed. The DB-free layout check of the real components with the built CSS in Chromium shows the repair removes the overflow (the control reproduces it), but the prescribed demo-stack re-run could not run. New: F-DG5-146 (Medium), from the DB-free P5 sweep. The Form builder field table (an unstyled div.table-scroll) and the T14 Attachments table make the page scroll sideways at 390 px and 200 % text, in en and ar.",
+  "narrative": "docs/delivery/reviews/DG5/round-4/qa-verifier.md"
+}
