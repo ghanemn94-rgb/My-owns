@@ -1,0 +1,29 @@
+## 2026-10-21T19:49:47Z integration, mode=cutf8 (env LANG=C.UTF-8 LC_ALL=C.UTF-8); node v24.21.0; load: 11.17 10.49 9.59
+$ env LANG=C.UTF-8 LC_ALL=C.UTF-8 QA_PG_PORT=26570 MTH_PORT_POOL=26571-26599 bash tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration packages/db/test/integration/demo.test.ts
+port-policy: PostgreSQL listening on port 26570 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-r5
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvij0il0_67c3da28 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 88017ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  4879ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  11049ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  4657ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  10528ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  2655ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  9397ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  21002ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  14453ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  2733ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:49:50
+   Duration  96.18s (transform 1.66s, setup 0ms, collect 3.36s, tests 88.02s, environment 0ms, prepare 87ms)
+
+EXIT 0
+## end 2026-10-21T19:51:30Z load: 9.92 10.22 9.58

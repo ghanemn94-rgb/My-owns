@@ -1,0 +1,21 @@
+## 2026-10-21T19:11:11Z secrets / CDN / unsafe-eval scan over git diff e70ac02..0c88d5e (apps packages tools deploy e2e tests), added lines only
+$ git diff e70ac02..0c88d5e -- apps packages tools deploy e2e tests | grep '^+' | grep -iE '(BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}|xox[bap]-|password\s*[:=]\s*["'\''][^"'\'' ]{6,}|secret\s*[:=]\s*["'\''][^"'\'' ]{8,}|api[_-]?key\s*[:=]\s*["'\''][^"'\'' ]{8,})'
++    OIDC_CLIENT_SECRET: "synthetic-test-value",
++        OIDC_CLIENT_SECRET: "synthetic-not-a-secret",
+matches: 2
+
+$ added lines with new Function / eval( / dangerouslySetInnerHTML in product source (non-test)
++    ["eval(volume)", "not a function of the language"],
+(end)
+
+$ external http(s) hosts in added product lines
+     14 http://x
+     10 https://www.pmi.org
+      5 http://schemas.openxmlformats.org
+      4 https://idp.example.invalid
+      2 https://www.brightline.org
+      2 http://www.w3.org
+      2 http://scripts.sil.org
+      1 https://hub.example.invalid
+      1 https://demo-idp.mth.invalid
+      1 http://fsf.org

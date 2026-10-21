@@ -1,0 +1,22 @@
+## 2026-10-21T19:53:08Z environmental residual surfaces (offline/config), clone HEAD 2ec59c7
+$ ls .github/workflows deploy | head
+ci.yml
+delivery-gates.yml
+ci
+compose
+docker
+images.lock.json
+keycloak
+scripts
+
+$ grep -rniE 'openai|anthropic|azure.?openai|bedrock|smtp|twilio|sendgrid|slack\.com|webhook' apps/*/src packages/*/src --include=*.ts -l | grep -v test (runtime AI / external notification adapters)
+(end)
+
+$ grep -n 'AUTH_MODE=dev is refused' apps/api/src (dev mode refused with NODE_ENV=production)
+
+$ grep -rn 'channel' packages/db/migrations/0075*.sql | grep -i 'in_app\|email' | head
+
+$ grep -rn 'AUTH_MODE=dev is refused' apps packages --include=*.ts (non-test, non-dist)
+packages/config/src/load.ts:197:    problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+$ ls deploy/keycloak
+realm-mth-test.json
