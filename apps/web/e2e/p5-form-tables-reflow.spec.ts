@@ -11,8 +11,11 @@
 // Each screen is measured at 390 x 900, and at 1280 x 900 with the root font at 200 %, and the spec asserts the
 // finding's final condition, document.documentElement.scrollWidth - innerWidth <= 1, plus: the table sits in a
 // keyboard-focusable (tabIndex 0), named (role=region, non-empty localized aria-label) scroll region, and that region
-// fits the viewport. Set-up checks (so the test cannot pass trivially): the table is rendered with its rows, and at
-// 390 px the measured table really is wider than its region (it scrolls inside it, not the page).
+// fits the viewport. A table inside a dialog (the export preview) also needs the dialog box and every footer action
+// inside the viewport: the fixed dialog never widens the document, so the page-level check alone cannot see it
+// (T-DG5-FE-Z1C: the preview's region ran off the viewport at 390 px, en [40..484] and ar [-104..350]).
+// Set-up checks (so the test cannot pass trivially): the table is rendered with its rows, and at 390 px the measured
+// table really is wider than its region (it scrolls inside it, not the page).
 // It collects every measurement first and then asserts once, so a failure names each failing case. Everything is
 // SYNTHETIC demo data. A configuration draft approves nothing in the business sense (never G1-G6), and nothing here
 // touches the engineering delivery gates DG0-DG7.
@@ -50,6 +53,8 @@ interface Measure {
   rows: number;
   region: { tabIndex: number; role: string | null; name: string; left: number; right: number } | null;
   scrolls: boolean;
+  /** The bounds of the dialog the table sits in, if any (a fixed dialog never widens the document, T-DG5-FE-Z1C). */
+  dialog: { left: number; right: number; offscreenActions: string[] } | null;
 }
 
 /** Measures the page and the table matched by `selector` (and its nearest .table-wrap). */
@@ -59,6 +64,17 @@ async function measure(page: Page, selector: string): Promise<Measure> {
     const table = document.querySelector<HTMLTableElement>(sel);
     const wrap = table?.closest<HTMLElement>(".table-wrap") ?? null;
     const r = wrap?.getBoundingClientRect();
+    const dlg = table?.closest<HTMLElement>("[role='dialog']") ?? null;
+    const d = dlg?.getBoundingClientRect();
+    // A control of the dialog's footer that is cut off by the dialog or the viewport (T-DG5-FE-Z1C).
+    const offscreenActions = [
+      ...(dlg?.querySelectorAll<HTMLElement>(".dialog__footer a, .dialog__footer button") ?? []),
+    ]
+      .filter((el) => {
+        const b = el.getBoundingClientRect();
+        return b.left < Math.max(-1, (d?.left ?? 0) - 1) || b.right > Math.min(W, d?.right ?? W) + 1;
+      })
+      .map((el) => (el.textContent ?? "").trim());
     return {
       W,
       pageOverflow: document.documentElement.scrollWidth - W,
@@ -75,6 +91,7 @@ async function measure(page: Page, selector: string): Promise<Measure> {
             }
           : null,
       scrolls: wrap !== null && wrap.scrollWidth > wrap.clientWidth + 1,
+      dialog: d ? { left: Math.round(d.left), right: Math.round(d.right), offscreenActions } : null,
     };
   }, selector);
 }
@@ -116,6 +133,10 @@ async function sweep(
       if (m.region.left < -1 || m.region.right > m.W + 1)
         failures.push(`${where} — the region runs off the viewport [${m.region.left}..${m.region.right}] of ${m.W} px`);
     }
+    if (m.dialog && (m.dialog.left < -1 || m.dialog.right > m.W + 1))
+      failures.push(`${where} — the dialog runs off the viewport [${m.dialog.left}..${m.dialog.right}] of ${m.W} px`);
+    if (m.dialog && m.dialog.offscreenActions.length > 0)
+      failures.push(`${where} — dialog actions are cut off: ${JSON.stringify(m.dialog.offscreenActions)}`);
     if (mustScroll && width === 390 && m.region && !m.scrolls)
       failures.push(`${where} — set-up: the table does not scroll inside its region (the finding's condition)`);
     report.push(
