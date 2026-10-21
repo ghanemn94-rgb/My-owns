@@ -11,7 +11,7 @@
 //    change to a closed draft when the API is bypassed.
 // All data is synthetic; nothing here approves anything or touches the engineering gates DG0-DG7.
 import { createDb, insertAuditEvent } from "@mth/db";
-import { formRecordExport } from "@mth/shared/schemas";
+import { formRecordExport, type FormRecordExport } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { exportCsv } from "../../../src/modules/forms/export.ts";
@@ -451,10 +451,11 @@ describe("export (REQ-S05-001)", () => {
   }, 60_000);
 
   it("CSV cells: RFC 4180 quoting, formula-like text neutralized, decimals unprefixed, BOM and CRLF", () => {
-    const csv = exportCsv({
+    const body: FormRecordExport = {
       recordType: "T01",
       formSchemaVersionId: uuidv7(),
       language: "en",
+      illustrativeLabel: null,
       columns: [
         { key: "issue", label: "issue, quoted", fieldType: "text", extension: false },
         { key: "n", label: "N", fieldType: "number", extension: true },
@@ -473,11 +474,15 @@ describe("export (REQ-S05-001)", () => {
           statuses: { n: "unknown" },
         },
       ],
-    });
-    expect(csv).toBe(
+    };
+    const rows =
       '﻿Record ID,Version,"issue, quoted","issue, quoted (status)",N,N (status)\r\n' +
-        `01920000-0000-7000-8000-000000000001,2,"'=HYPERLINK(""x"")",,-5.25,\r\n` +
-        '01920000-0000-7000-8000-000000000002,1,"a\nb",,,Unknown\r\n',
+      `01920000-0000-7000-8000-000000000001,2,"'=HYPERLINK(""x"")",,-5.25,\r\n` +
+      '01920000-0000-7000-8000-000000000002,1,"a\nb",,,Unknown\r\n';
+    expect(exportCsv(body)).toBe(rows);
+    // F-DG5-124 (D-178): a demo export's label is the first row, after the BOM and before the header.
+    expect(exportCsv({ ...body, illustrativeLabel: "Illustrative example — synthetic" })).toBe(
+      `﻿Illustrative example — synthetic\r\n${rows.slice(1)}`,
     );
   });
 });
