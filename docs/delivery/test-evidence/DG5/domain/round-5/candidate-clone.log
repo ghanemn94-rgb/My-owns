@@ -1,0 +1,11 @@
+$ git rev-parse HEAD (repo)
+2ec59c7a84c3d92ee349667a782e9bd8a401ebde
+$ git diff --name-only 0c88d5e HEAD | grep -v ^docs/delivery/ (expect empty)
+(end)
+$ node tools/gates/candidate.mjs --stage DG5 (repo)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","files":2189}
+$ clone: git clone /home/user/My-owns $TMPDIR/rev; git checkout 2ec59c7
+2ec59c7a84c3d92ee349667a782e9bd8a401ebde
+rev-list count: 1547; shallow: false
+$ node tools/gates/candidate.mjs --stage DG5 (clone, before install)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","files":2189}

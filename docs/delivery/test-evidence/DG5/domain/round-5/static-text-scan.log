@@ -1,0 +1,20 @@
+$ grep -rniE 'official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily' apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo apps/api/src/modules/forms
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:130:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced th
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and th
+exit=0
+$ grep -rnE '\bDG[0-7]\b' apps/web/src/i18n/{en,ar}/*.json
+exit=1
+$ git diff fb9c221..0c88d5e -- apps/web/src | grep '^+' | grep -niE 'official|certif|PMI|Mobily|DG[0-7]\b'
+3:+        // The preview scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+8:+        // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+39:+          // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+97:+// T-DG5-FE-Z1B (F-DG5-146, D-176; REQ-S15-009, WCAG 2.1 SC 1.4.10): no element uses the unstyled class table-scroll,
+167:+  // Tables outside a region that predate P5 and lie outside T-DG5-FE-Z1B's file ownership (D-176), reported in its
+173:+  //  - UserEdit (DG1, the identities of a user) and GoodOutcomeTest (DG2, Define): no page-level reflow measurement.
+203:+  // A wide field table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+207:+/* T-DG5-FE-Z1C (F-DG5-146 follow-up, D-176; WCAG 1.4.10 Reflow): a grid track's default minimum is its content's
+exit=0
+$ git diff fb9c221..0c88d5e -- apps/web/src/i18n packages apps/api apps/worker docs/source --stat
+(end)

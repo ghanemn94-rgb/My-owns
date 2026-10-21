@@ -1,0 +1,960 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: roaming.user.tl (synthetic)
+      - generic [ref=e14]: مشغل عرض توضيحي اصطناعي
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - note [ref=e20]:
+    - img [ref=e21]
+    - strong [ref=e23]: مثال توضيحي — بيانات اصطناعية. ليست أداء موبايلي الفعلي.
+  - generic [ref=e24]:
+    - navigation "التنقل الرئيسي" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "عملي" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: عملي
+          - list "عملي" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "المهام وصندوق الوارد" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "الموافقات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "التفويضات" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "تفضيلات الإشعارات" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "النظرة التنفيذية" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "لوحات المؤشرات" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "سياسة ألوان الحالة" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "التحوّلات" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: التحوّلات
+        - listitem [ref=e50]:
+          - link "الدليل والإجراءات" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "قارئ الدليل" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "إجراءاتي" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "فحص سلامة التحوّل" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "مؤشرات الأداء" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "نموذج التشغيل المستهدف" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: نموذج التشغيل المستهدف
+        - listitem [ref=e73]:
+          - link "المبادرات وخرائط الطريق" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "المحافظ" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "تحديثات المسؤولين" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "الحوكمة" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: الحوكمة
+          - list "الحوكمة" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "المجموعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "المنتديات" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "الاجتماعات" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "القرارات التنفيذية (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "طلبات التغيير" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "المخاطر والإجراءات" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "سجل الإجراءات" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "الإجراءات التصحيحية" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "المنافع والمالية" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "سجل المنافع (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "التغيير والتبنّي" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "خطة التبنّي (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "الأدلة والتقارير" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "التقارير واللقطات" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "التصدير" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "وضع العرض التقديمي" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "سجل الأدلة" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "مجالات الأداء" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "قائمة التحسين المستمر" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "الدروس المستفادة" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "البحث في الدروس" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "حول هذا المنتج" [ref=e142] [cursor=pointer]:
+          - /url: /about
+        - link "الجولة الإرشادية" [ref=e143] [cursor=pointer]:
+          - /url: /walkthrough
+    - main [ref=e144]:
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - navigation "مسار التنقل" [ref=e147]:
+            - list [ref=e148]:
+              - listitem [ref=e149]:
+                - link "التحوّلات" [ref=e150] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e151]:
+                - text: /
+                - link "TR-0008" [ref=e152] [cursor=pointer]:
+                  - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e
+              - listitem [ref=e153]: /التشخيص
+          - generic [ref=e155]:
+            - heading "التشخيص" [level=1] [ref=e156]
+            - paragraph [ref=e157]:
+              - generic [ref=e158]:
+                - generic [ref=e159]: TR-0008
+                - generic [ref=e160]: Synthetic QA-E2 AR demo-user walkthrough
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: مسودة – لم تُقدَّم
+                - generic [ref=e164]: مثال توضيحي — اصطناعي
+                - generic [ref=e165]: "المرحلة: التشخيص"
+        - navigation "مساحة عمل التحوّل" [ref=e166]:
+          - list [ref=e167]:
+            - listitem [ref=e168]:
+              - link "نظرة عامة" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e
+            - listitem [ref=e170]:
+              - link "التشخيص" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/diagnose
+            - listitem [ref=e172]:
+              - link "الميثاق" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/charter
+            - listitem [ref=e174]:
+              - link "التحديد" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/define
+            - listitem [ref=e176]:
+              - link "التصميم" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/design
+            - listitem [ref=e178]:
+              - link "المحفظة" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/portfolio
+            - listitem [ref=e180]:
+              - link "ترتيب الأولويات" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/prioritization
+            - listitem [ref=e182]:
+              - link "خارطة الطريق" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/roadmap
+            - listitem [ref=e184]:
+              - link "الاعتماديات" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/dependencies
+            - listitem [ref=e186]:
+              - link "السعة" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/capacity
+            - listitem [ref=e188]:
+              - link "دراسات الجدوى" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/business-cases
+            - listitem [ref=e190]:
+              - link "معادلات المنفعة" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/benefit-formulas
+            - listitem [ref=e192]:
+              - link "القرارات" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/decisions
+            - listitem [ref=e194]:
+              - link "البوابات" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/gates
+            - listitem [ref=e196]:
+              - link "الجاهزية" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/readiness
+            - listitem [ref=e198]:
+              - link "الإعفاءات" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/dispensations
+            - listitem [ref=e200]:
+              - link "الأدلة" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/evidence
+            - listitem [ref=e202]:
+              - link "الفريق" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/team
+            - listitem [ref=e204]:
+              - link "إسناد الأدوار" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/role-mappings
+            - listitem [ref=e206]:
+              - link "صلاحيات القرار" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/decision-rights
+            - listitem [ref=e208]:
+              - link "مصفوفة المسؤوليات" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/raci
+            - listitem [ref=e210]:
+              - link "جاهزية التحويل والتنفيذ" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/transform-readiness
+            - listitem [ref=e212]:
+              - link "سجل الموافقات" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/approval-decisions
+            - listitem [ref=e214]:
+              - link "مؤشرات الأداء" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/kpis
+            - listitem [ref=e216]:
+              - link "سجل المنافع (T14)" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/benefits
+            - listitem [ref=e218]:
+              - link "سجل المخاطر (T15)" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/raid
+            - listitem [ref=e220]:
+              - link "الإجراءات" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/actions
+            - listitem [ref=e222]:
+              - link "الإجراءات التصحيحية" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/corrective-actions
+            - listitem [ref=e224]:
+              - link "المنتديات" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/forums
+            - listitem [ref=e226]:
+              - link "الاجتماعات" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/meetings
+            - listitem [ref=e228]:
+              - link "القرارات التنفيذية (T16)" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/executive-decisions
+            - listitem [ref=e230]:
+              - link "التبنّي" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/adoption
+            - listitem [ref=e232]:
+              - link "العمليات الاعتيادية ومجالات الأداء" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/bau
+            - listitem [ref=e234]:
+              - link "قائمة التحسين المستمر" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/improvement
+            - listitem [ref=e236]:
+              - link "الدروس المستفادة" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/lessons
+            - listitem [ref=e238]:
+              - link "لوحة المؤشرات (T10)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/dashboard
+            - listitem [ref=e240]:
+              - link "الإغلاق" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/closure
+            - listitem [ref=e242]:
+              - link "المراحل" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/phases
+            - listitem [ref=e244]:
+              - link "طلبات التغيير" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/change-requests
+            - listitem [ref=e246]:
+              - link "التتبّع" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/traceability
+            - listitem [ref=e248]:
+              - link "الدخول الجزئي المرن" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/modular-entry
+            - listitem [ref=e250]:
+              - link "مسارات العمل" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01a15fd3-3017-7634-985d-35ccaaee935e/workstreams
+        - paragraph [ref=e252]: "المرحلة 1: فهم الوضع الراهن بالأدلة، وتحديد الأسباب الجذرية، وتقدير القيمة الممكنة."
+        - navigation "في هذه الصفحة" [ref=e253]:
+          - list [ref=e254]:
+            - listitem [ref=e255]:
+              - link "تشخيص الوضع الراهن (T01)" [ref=e256] [cursor=pointer]:
+                - /url: "#t01"
+            - listitem [ref=e257]:
+              - link "مسارات عمل التشخيص" [ref=e258] [cursor=pointer]:
+                - /url: "#workstreams"
+            - listitem [ref=e259]:
+              - link "خطوط الأساس" [ref=e260] [cursor=pointer]:
+                - /url: "#baselines"
+            - listitem [ref=e261]:
+              - link "مجمّعات القيمة" [ref=e262] [cursor=pointer]:
+                - /url: "#value-pools"
+        - region "تشخيص الوضع الراهن (T01)" [ref=e263]:
+          - generic [ref=e264]:
+            - heading "تشخيص الوضع الراهن (T01)" [level=2] [ref=e265]
+            - 'button "تصدير : تشخيص الوضع الراهن (T01)" [ref=e267] [cursor=pointer]':
+              - img [ref=e268]
+              - text: تصدير
+              - generic [ref=e270]: ": تشخيص الوضع الراهن (T01)"
+          - generic [ref=e271]: "صف لكل بُعد من أبعاد التشخيص الستة: الوضع الراهن، والدليل أو خط الأساس، والسبب الجذري، والأثر (مالياً أو على مؤشر أداء)، ومستوى الثقة."
+          - paragraph [ref=e272]:
+            - generic [ref=e273]:
+              - img [ref=e274]
+              - text: امتداد مخصص (الدليل، الإصدار 1.0)
+            - generic [ref=e276]:
+              - img [ref=e277]
+              - generic [ref=e279]: "السؤال الإرشادي:"
+              - text: لماذا التغيير؟
+            - generic [ref=e280]:
+              - text: "المصدر:"
+              - link "B0030" [ref=e282] [cursor=pointer]:
+                - /url: /playbook/reader/B0030
+              - generic [ref=e283]:
+                - text: ","
+                - link "B0031" [ref=e284] [cursor=pointer]:
+                  - /url: /playbook/reader/B0031
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - generic [ref=e287]:
+                - generic [ref=e288]: بحث
+                - searchbox "بحث" [ref=e289]
+              - button "الأعمدة" [ref=e291] [cursor=pointer]:
+                - img [ref=e292]
+                - text: الأعمدة
+            - region "تشخيص الوضع الراهن (T01) (جدول قابل للتمرير)" [ref=e294]:
+              - table "تشخيص الوضع الراهن (T01)" [ref=e295]:
+                - caption [ref=e296]: تشخيص الوضع الراهن (T01)
+                - rowgroup [ref=e297]:
+                  - row "البُعد غير مرتّب الوضع الراهن غير مرتّب الدليل / خط الأساس السبب الجذري غير مرتّب الأثر (مالي أو على مؤشر أداء) مستوى الثقة غير مرتّب المالك غير مرتّب الإجراءات" [ref=e298]:
+                    - columnheader "البُعد غير مرتّب" [ref=e299]:
+                      - button "البُعد غير مرتّب" [ref=e300] [cursor=pointer]:
+                        - text: البُعد
+                        - img [ref=e301]
+                        - generic [ref=e303]: غير مرتّب
+                    - columnheader "الوضع الراهن غير مرتّب" [ref=e304]:
+                      - button "الوضع الراهن غير مرتّب" [ref=e305] [cursor=pointer]:
+                        - text: الوضع الراهن
+                        - img [ref=e306]
+                        - generic [ref=e308]: غير مرتّب
+                    - columnheader "الدليل / خط الأساس" [ref=e309]
+                    - columnheader "السبب الجذري غير مرتّب" [ref=e310]:
+                      - button "السبب الجذري غير مرتّب" [ref=e311] [cursor=pointer]:
+                        - text: السبب الجذري
+                        - img [ref=e312]
+                        - generic [ref=e314]: غير مرتّب
+                    - columnheader "الأثر (مالي أو على مؤشر أداء)" [ref=e315]
+                    - columnheader "مستوى الثقة غير مرتّب" [ref=e316]:
+                      - button "مستوى الثقة غير مرتّب" [ref=e317] [cursor=pointer]:
+                        - text: مستوى الثقة
+                        - img [ref=e318]
+                        - generic [ref=e320]: غير مرتّب
+                    - columnheader "المالك غير مرتّب" [ref=e321]:
+                      - button "المالك غير مرتّب" [ref=e322] [cursor=pointer]:
+                        - text: المالك
+                        - img [ref=e323]
+                        - generic [ref=e325]: غير مرتّب
+                    - columnheader "الإجراءات" [ref=e326]
+                - rowgroup [ref=e327]:
+                  - 'row "مالي غير معروف غير معروف غير معروف غير معروف : الأثر غير محدد غير معروف : مستوى الثقة غير محدد غير محدد تعديل : مالي أدوات النموذج : مالي" [ref=e328]':
+                    - rowheader "مالي" [ref=e329]
+                    - cell "غير معروف" [ref=e330]:
+                      - generic [ref=e331]:
+                        - img [ref=e332]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e334]:
+                      - generic [ref=e335]:
+                        - img [ref=e336]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e338]:
+                      - generic [ref=e339]:
+                        - img [ref=e340]
+                        - text: غير معروف
+                    - 'cell "غير معروف : الأثر غير محدد" [ref=e342]':
+                      - generic "الأثر غير محدد" [ref=e343]:
+                        - img [ref=e344]
+                        - text: غير معروف
+                        - generic [ref=e346]: ": الأثر غير محدد"
+                    - 'cell "غير معروف : مستوى الثقة غير محدد" [ref=e347]':
+                      - generic "مستوى الثقة غير محدد" [ref=e348]:
+                        - img [ref=e349]
+                        - text: غير معروف
+                        - generic [ref=e351]: ": مستوى الثقة غير محدد"
+                    - cell "غير محدد" [ref=e352]
+                    - 'cell "تعديل : مالي أدوات النموذج : مالي" [ref=e353]':
+                      - 'button "تعديل : مالي" [ref=e354] [cursor=pointer]':
+                        - img [ref=e355]
+                        - text: تعديل
+                        - generic [ref=e357]: ": مالي"
+                      - 'button "أدوات النموذج : مالي" [ref=e358] [cursor=pointer]':
+                        - img [ref=e359]
+                        - text: أدوات النموذج
+                        - generic [ref=e361]: ": مالي"
+                  - 'row "العملاء غير معروف غير معروف غير معروف غير معروف : الأثر غير محدد غير معروف : مستوى الثقة غير محدد غير محدد تعديل : العملاء أدوات النموذج : العملاء" [ref=e362]':
+                    - rowheader "العملاء" [ref=e363]
+                    - cell "غير معروف" [ref=e364]:
+                      - generic [ref=e365]:
+                        - img [ref=e366]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e368]:
+                      - generic [ref=e369]:
+                        - img [ref=e370]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e372]:
+                      - generic [ref=e373]:
+                        - img [ref=e374]
+                        - text: غير معروف
+                    - 'cell "غير معروف : الأثر غير محدد" [ref=e376]':
+                      - generic "الأثر غير محدد" [ref=e377]:
+                        - img [ref=e378]
+                        - text: غير معروف
+                        - generic [ref=e380]: ": الأثر غير محدد"
+                    - 'cell "غير معروف : مستوى الثقة غير محدد" [ref=e381]':
+                      - generic "مستوى الثقة غير محدد" [ref=e382]:
+                        - img [ref=e383]
+                        - text: غير معروف
+                        - generic [ref=e385]: ": مستوى الثقة غير محدد"
+                    - cell "غير محدد" [ref=e386]
+                    - 'cell "تعديل : العملاء أدوات النموذج : العملاء" [ref=e387]':
+                      - 'button "تعديل : العملاء" [ref=e388] [cursor=pointer]':
+                        - img [ref=e389]
+                        - text: تعديل
+                        - generic [ref=e391]: ": العملاء"
+                      - 'button "أدوات النموذج : العملاء" [ref=e392] [cursor=pointer]':
+                        - img [ref=e393]
+                        - text: أدوات النموذج
+                        - generic [ref=e395]: ": العملاء"
+                  - 'row "العمليات غير معروف غير معروف غير معروف غير معروف : الأثر غير محدد غير معروف : مستوى الثقة غير محدد غير محدد تعديل : العمليات أدوات النموذج : العمليات" [ref=e396]':
+                    - rowheader "العمليات" [ref=e397]
+                    - cell "غير معروف" [ref=e398]:
+                      - generic [ref=e399]:
+                        - img [ref=e400]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e402]:
+                      - generic [ref=e403]:
+                        - img [ref=e404]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e406]:
+                      - generic [ref=e407]:
+                        - img [ref=e408]
+                        - text: غير معروف
+                    - 'cell "غير معروف : الأثر غير محدد" [ref=e410]':
+                      - generic "الأثر غير محدد" [ref=e411]:
+                        - img [ref=e412]
+                        - text: غير معروف
+                        - generic [ref=e414]: ": الأثر غير محدد"
+                    - 'cell "غير معروف : مستوى الثقة غير محدد" [ref=e415]':
+                      - generic "مستوى الثقة غير محدد" [ref=e416]:
+                        - img [ref=e417]
+                        - text: غير معروف
+                        - generic [ref=e419]: ": مستوى الثقة غير محدد"
+                    - cell "غير محدد" [ref=e420]
+                    - 'cell "تعديل : العمليات أدوات النموذج : العمليات" [ref=e421]':
+                      - 'button "تعديل : العمليات" [ref=e422] [cursor=pointer]':
+                        - img [ref=e423]
+                        - text: تعديل
+                        - generic [ref=e425]: ": العمليات"
+                      - 'button "أدوات النموذج : العمليات" [ref=e426] [cursor=pointer]':
+                        - img [ref=e427]
+                        - text: أدوات النموذج
+                        - generic [ref=e429]: ": العمليات"
+                  - 'row "الأفراد / التنظيم غير معروف غير معروف غير معروف غير معروف : الأثر غير محدد غير معروف : مستوى الثقة غير محدد غير محدد تعديل : الأفراد / التنظيم أدوات النموذج : الأفراد / التنظيم" [ref=e430]':
+                    - rowheader "الأفراد / التنظيم" [ref=e431]
+                    - cell "غير معروف" [ref=e432]:
+                      - generic [ref=e433]:
+                        - img [ref=e434]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e436]:
+                      - generic [ref=e437]:
+                        - img [ref=e438]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e440]:
+                      - generic [ref=e441]:
+                        - img [ref=e442]
+                        - text: غير معروف
+                    - 'cell "غير معروف : الأثر غير محدد" [ref=e444]':
+                      - generic "الأثر غير محدد" [ref=e445]:
+                        - img [ref=e446]
+                        - text: غير معروف
+                        - generic [ref=e448]: ": الأثر غير محدد"
+                    - 'cell "غير معروف : مستوى الثقة غير محدد" [ref=e449]':
+                      - generic "مستوى الثقة غير محدد" [ref=e450]:
+                        - img [ref=e451]
+                        - text: غير معروف
+                        - generic [ref=e453]: ": مستوى الثقة غير محدد"
+                    - cell "غير محدد" [ref=e454]
+                    - 'cell "تعديل : الأفراد / التنظيم أدوات النموذج : الأفراد / التنظيم" [ref=e455]':
+                      - 'button "تعديل : الأفراد / التنظيم" [ref=e456] [cursor=pointer]':
+                        - img [ref=e457]
+                        - text: تعديل
+                        - generic [ref=e459]: ": الأفراد / التنظيم"
+                      - 'button "أدوات النموذج : الأفراد / التنظيم" [ref=e460] [cursor=pointer]':
+                        - img [ref=e461]
+                        - text: أدوات النموذج
+                        - generic [ref=e463]: ": الأفراد / التنظيم"
+                  - 'row "التقنية غير معروف غير معروف غير معروف غير معروف : الأثر غير محدد غير معروف : مستوى الثقة غير محدد غير محدد تعديل : التقنية أدوات النموذج : التقنية" [ref=e464]':
+                    - rowheader "التقنية" [ref=e465]
+                    - cell "غير معروف" [ref=e466]:
+                      - generic [ref=e467]:
+                        - img [ref=e468]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e470]:
+                      - generic [ref=e471]:
+                        - img [ref=e472]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e474]:
+                      - generic [ref=e475]:
+                        - img [ref=e476]
+                        - text: غير معروف
+                    - 'cell "غير معروف : الأثر غير محدد" [ref=e478]':
+                      - generic "الأثر غير محدد" [ref=e479]:
+                        - img [ref=e480]
+                        - text: غير معروف
+                        - generic [ref=e482]: ": الأثر غير محدد"
+                    - 'cell "غير معروف : مستوى الثقة غير محدد" [ref=e483]':
+                      - generic "مستوى الثقة غير محدد" [ref=e484]:
+                        - img [ref=e485]
+                        - text: غير معروف
+                        - generic [ref=e487]: ": مستوى الثقة غير محدد"
+                    - cell "غير محدد" [ref=e488]
+                    - 'cell "تعديل : التقنية أدوات النموذج : التقنية" [ref=e489]':
+                      - 'button "تعديل : التقنية" [ref=e490] [cursor=pointer]':
+                        - img [ref=e491]
+                        - text: تعديل
+                        - generic [ref=e493]: ": التقنية"
+                      - 'button "أدوات النموذج : التقنية" [ref=e494] [cursor=pointer]':
+                        - img [ref=e495]
+                        - text: أدوات النموذج
+                        - generic [ref=e497]: ": التقنية"
+                  - 'row "البيانات غير معروف غير معروف غير معروف غير معروف : الأثر غير محدد غير معروف : مستوى الثقة غير محدد غير محدد تعديل : البيانات أدوات النموذج : البيانات" [ref=e498]':
+                    - rowheader "البيانات" [ref=e499]
+                    - cell "غير معروف" [ref=e500]:
+                      - generic [ref=e501]:
+                        - img [ref=e502]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e504]:
+                      - generic [ref=e505]:
+                        - img [ref=e506]
+                        - text: غير معروف
+                    - cell "غير معروف" [ref=e508]:
+                      - generic [ref=e509]:
+                        - img [ref=e510]
+                        - text: غير معروف
+                    - 'cell "غير معروف : الأثر غير محدد" [ref=e512]':
+                      - generic "الأثر غير محدد" [ref=e513]:
+                        - img [ref=e514]
+                        - text: غير معروف
+                        - generic [ref=e516]: ": الأثر غير محدد"
+                    - 'cell "غير معروف : مستوى الثقة غير محدد" [ref=e517]':
+                      - generic "مستوى الثقة غير محدد" [ref=e518]:
+                        - img [ref=e519]
+                        - text: غير معروف
+                        - generic [ref=e521]: ": مستوى الثقة غير محدد"
+                    - cell "غير محدد" [ref=e522]
+                    - 'cell "تعديل : البيانات أدوات النموذج : البيانات" [ref=e523]':
+                      - 'button "تعديل : البيانات" [ref=e524] [cursor=pointer]':
+                        - img [ref=e525]
+                        - text: تعديل
+                        - generic [ref=e527]: ": البيانات"
+                      - 'button "أدوات النموذج : البيانات" [ref=e528] [cursor=pointer]':
+                        - img [ref=e529]
+                        - text: أدوات النموذج
+                        - generic [ref=e531]: ": البيانات"
+            - navigation "التنقل بين الصفحات" [ref=e532]:
+              - generic [ref=e533]: الصفحة 1 من 1 · 6 من 6 صفوف
+              - generic [ref=e534]:
+                - generic [ref=e535]: عدد الصفوف في الصفحة
+                - combobox "عدد الصفوف في الصفحة" [ref=e536]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "السابق" [disabled] [ref=e537]
+              - button "التالي" [disabled] [ref=e538]
+        - region "مسارات عمل التشخيص" [ref=e539]:
+          - heading "مسارات عمل التشخيص" [level=2] [ref=e541]
+          - generic [ref=e542]: مسارات العمل الستة وأسئلتها الرئيسية. سجّل النتائج (أعراض، أسباب جذرية، فرص، ملاحظات) ومخرجات كل مسار عمل.
+          - generic [ref=e543]:
+            - article "الأعمال والمالية" [ref=e544]:
+              - generic [ref=e545]:
+                - heading "الأعمال والمالية" [level=3] [ref=e546]
+                - generic [ref=e547]:
+                  - 'button "إضافة نتيجة تشخيص : الأعمال والمالية" [ref=e548] [cursor=pointer]':
+                    - img [ref=e549]
+                    - text: إضافة نتيجة تشخيص
+                    - generic [ref=e551]: ": الأعمال والمالية"
+                  - 'button "إضافة مُخرَج : الأعمال والمالية" [ref=e552] [cursor=pointer]':
+                    - img [ref=e553]
+                    - text: إضافة مُخرَج
+                    - generic [ref=e555]: ": الأعمال والمالية"
+              - generic [ref=e556]:
+                - generic [ref=e557]:
+                  - term [ref=e558]: الأسئلة الرئيسية
+                  - definition [ref=e559]: أين تُخلق القيمة أو تُفقد؟ الإيرادات، الهامش، التكلفة، معدل فقدان العملاء، الإنتاجية؟
+                - generic [ref=e560]:
+                  - term [ref=e561]: المخرجات المعتادة
+                  - definition [ref=e562]: جسر الأرباح والخسائر للخط الأساسي، مجمّعات القيمة، تحليل الاتجاهات.
+              - generic [ref=e563]:
+                - generic [ref=e564]:
+                  - generic [ref=e565]:
+                    - generic [ref=e566]: بحث
+                    - searchbox "بحث" [ref=e567]
+                  - button "الأعمدة" [ref=e569] [cursor=pointer]:
+                    - img [ref=e570]
+                    - text: الأعمدة
+                - generic [ref=e572]:
+                  - img [ref=e573]
+                  - paragraph [ref=e576]: لا توجد نتائج مسجلة لمسار العمل هذا.
+              - heading "مخرجات مسار العمل" [level=4] [ref=e577]
+              - paragraph [ref=e578]: لا توجد مخرجات مسجلة بعد.
+            - article "العملاء" [ref=e579]:
+              - generic [ref=e580]:
+                - heading "العملاء" [level=3] [ref=e581]
+                - generic [ref=e582]:
+                  - 'button "إضافة نتيجة تشخيص : العملاء" [ref=e583] [cursor=pointer]':
+                    - img [ref=e584]
+                    - text: إضافة نتيجة تشخيص
+                    - generic [ref=e586]: ": العملاء"
+                  - 'button "إضافة مُخرَج : العملاء" [ref=e587] [cursor=pointer]':
+                    - img [ref=e588]
+                    - text: إضافة مُخرَج
+                    - generic [ref=e590]: ": العملاء"
+              - generic [ref=e591]:
+                - generic [ref=e592]:
+                  - term [ref=e593]: الأسئلة الرئيسية
+                  - definition [ref=e594]: أين تنكسر تجربة العملاء؟
+                - generic [ref=e595]:
+                  - term [ref=e596]: المخرجات المعتادة
+                  - definition [ref=e597]: نقاط الألم في رحلة العميل، الشكاوى، محركات NPS/CSAT.
+              - generic [ref=e598]:
+                - generic [ref=e599]:
+                  - generic [ref=e600]:
+                    - generic [ref=e601]: بحث
+                    - searchbox "بحث" [ref=e602]
+                  - button "الأعمدة" [ref=e604] [cursor=pointer]:
+                    - img [ref=e605]
+                    - text: الأعمدة
+                - generic [ref=e607]:
+                  - img [ref=e608]
+                  - paragraph [ref=e611]: لا توجد نتائج مسجلة لمسار العمل هذا.
+              - heading "مخرجات مسار العمل" [level=4] [ref=e612]
+              - paragraph [ref=e613]: لا توجد مخرجات مسجلة بعد.
+            - article "العمليات والتشغيل" [ref=e614]:
+              - generic [ref=e615]:
+                - heading "العمليات والتشغيل" [level=3] [ref=e616]
+                - generic [ref=e617]:
+                  - 'button "إضافة نتيجة تشخيص : العمليات والتشغيل" [ref=e618] [cursor=pointer]':
+                    - img [ref=e619]
+                    - text: إضافة نتيجة تشخيص
+                    - generic [ref=e621]: ": العمليات والتشغيل"
+                  - 'button "إضافة مُخرَج : العمليات والتشغيل" [ref=e622] [cursor=pointer]':
+                    - img [ref=e623]
+                    - text: إضافة مُخرَج
+                    - generic [ref=e625]: ": العمليات والتشغيل"
+              - generic [ref=e626]:
+                - generic [ref=e627]:
+                  - term [ref=e628]: الأسئلة الرئيسية
+                  - definition [ref=e629]: أين توجد التأخيرات وإعادة العمل والاختناقات وعمليات التسليم؟
+                - generic [ref=e630]:
+                  - term [ref=e631]: المخرجات المعتادة
+                  - definition [ref=e632]: خريطة العمليات، زمن الدورة، الطلب الناتج عن الإخفاق.
+              - generic [ref=e633]:
+                - generic [ref=e634]:
+                  - generic [ref=e635]:
+                    - generic [ref=e636]: بحث
+                    - searchbox "بحث" [ref=e637]
+                  - button "الأعمدة" [ref=e639] [cursor=pointer]:
+                    - img [ref=e640]
+                    - text: الأعمدة
+                - generic [ref=e642]:
+                  - img [ref=e643]
+                  - paragraph [ref=e646]: لا توجد نتائج مسجلة لمسار العمل هذا.
+              - heading "مخرجات مسار العمل" [level=4] [ref=e647]
+              - paragraph [ref=e648]: لا توجد مخرجات مسجلة بعد.
+            - article "التنظيم والحوكمة" [ref=e649]:
+              - generic [ref=e650]:
+                - heading "التنظيم والحوكمة" [level=3] [ref=e651]
+                - generic [ref=e652]:
+                  - 'button "إضافة نتيجة تشخيص : التنظيم والحوكمة" [ref=e653] [cursor=pointer]':
+                    - img [ref=e654]
+                    - text: إضافة نتيجة تشخيص
+                    - generic [ref=e656]: ": التنظيم والحوكمة"
+                  - 'button "إضافة مُخرَج : التنظيم والحوكمة" [ref=e657] [cursor=pointer]':
+                    - img [ref=e658]
+                    - text: إضافة مُخرَج
+                    - generic [ref=e660]: ": التنظيم والحوكمة"
+              - generic [ref=e661]:
+                - generic [ref=e662]:
+                  - term [ref=e663]: الأسئلة الرئيسية
+                  - definition [ref=e664]: هل الأدوار وحقوق القرار والحوافز والمساءلة واضحة؟
+                - generic [ref=e665]:
+                  - term [ref=e666]: المخرجات المعتادة
+                  - definition [ref=e667]: فجوات مصفوفة RACI، بطء اتخاذ القرار، خريطة الحوكمة.
+              - generic [ref=e668]:
+                - generic [ref=e669]:
+                  - generic [ref=e670]:
+                    - generic [ref=e671]: بحث
+                    - searchbox "بحث" [ref=e672]
+                  - button "الأعمدة" [ref=e674] [cursor=pointer]:
+                    - img [ref=e675]
+                    - text: الأعمدة
+                - generic [ref=e677]:
+                  - img [ref=e678]
+                  - paragraph [ref=e681]: لا توجد نتائج مسجلة لمسار العمل هذا.
+              - heading "مخرجات مسار العمل" [level=4] [ref=e682]
+              - paragraph [ref=e683]: لا توجد مخرجات مسجلة بعد.
+            - article "التقنية والبيانات" [ref=e684]:
+              - generic [ref=e685]:
+                - heading "التقنية والبيانات" [level=3] [ref=e686]
+                - generic [ref=e687]:
+                  - 'button "إضافة نتيجة تشخيص : التقنية والبيانات" [ref=e688] [cursor=pointer]':
+                    - img [ref=e689]
+                    - text: إضافة نتيجة تشخيص
+                    - generic [ref=e691]: ": التقنية والبيانات"
+                  - 'button "إضافة مُخرَج : التقنية والبيانات" [ref=e692] [cursor=pointer]':
+                    - img [ref=e693]
+                    - text: إضافة مُخرَج
+                    - generic [ref=e695]: ": التقنية والبيانات"
+              - generic [ref=e696]:
+                - generic [ref=e697]:
+                  - term [ref=e698]: الأسئلة الرئيسية
+                  - definition [ref=e699]: ما الأنظمة/البيانات التي تقيّد الأداء؟
+                - generic [ref=e700]:
+                  - term [ref=e701]: المخرجات المعتادة
+                  - definition [ref=e702]: نقاط الألم في البنية، فجوات الأتمتة/البيانات.
+              - generic [ref=e703]:
+                - generic [ref=e704]:
+                  - generic [ref=e705]:
+                    - generic [ref=e706]: بحث
+                    - searchbox "بحث" [ref=e707]
+                  - button "الأعمدة" [ref=e709] [cursor=pointer]:
+                    - img [ref=e710]
+                    - text: الأعمدة
+                - generic [ref=e712]:
+                  - img [ref=e713]
+                  - paragraph [ref=e716]: لا توجد نتائج مسجلة لمسار العمل هذا.
+              - heading "مخرجات مسار العمل" [level=4] [ref=e717]
+              - paragraph [ref=e718]: لا توجد مخرجات مسجلة بعد.
+            - article "القدرات" [ref=e719]:
+              - generic [ref=e720]:
+                - heading "القدرات" [level=3] [ref=e721]
+                - generic [ref=e722]:
+                  - 'button "إضافة نتيجة تشخيص : القدرات" [ref=e723] [cursor=pointer]':
+                    - img [ref=e724]
+                    - text: إضافة نتيجة تشخيص
+                    - generic [ref=e726]: ": القدرات"
+                  - 'button "إضافة مُخرَج : القدرات" [ref=e727] [cursor=pointer]':
+                    - img [ref=e728]
+                    - text: إضافة مُخرَج
+                    - generic [ref=e730]: ": القدرات"
+              - generic [ref=e731]:
+                - generic [ref=e732]:
+                  - term [ref=e733]: الأسئلة الرئيسية
+                  - definition [ref=e734]: ما المهارات/القدرات المفقودة؟
+                - generic [ref=e735]:
+                  - term [ref=e736]: المخرجات المعتادة
+                  - definition [ref=e737]: خريطة حرارية للقدرات، احتياجات البناء/الشراء/الشراكة.
+              - generic [ref=e738]:
+                - generic [ref=e739]:
+                  - generic [ref=e740]:
+                    - generic [ref=e741]: بحث
+                    - searchbox "بحث" [ref=e742]
+                  - button "الأعمدة" [ref=e744] [cursor=pointer]:
+                    - img [ref=e745]
+                    - text: الأعمدة
+                - generic [ref=e747]:
+                  - img [ref=e748]
+                  - paragraph [ref=e751]: لا توجد نتائج مسجلة لمسار العمل هذا.
+              - heading "مخرجات مسار العمل" [level=4] [ref=e752]
+              - paragraph [ref=e753]: لا توجد مخرجات مسجلة بعد.
+        - region "خطوط الأساس" [ref=e754]:
+          - generic [ref=e755]:
+            - heading "خطوط الأساس" [level=2] [ref=e756]
+            - button "إضافة خط أساس" [active] [ref=e758] [cursor=pointer]:
+              - img [ref=e759]
+              - text: إضافة خط أساس
+          - generic [ref=e761]: نقاط البداية المقيسة. لا يُحتسب خط الأساس لبوابة G1 إلا بقيمة ومصدر وتاريخ، مع دليل تم التحقق منه.
+          - paragraph [ref=e762]:
+            - generic "لا يقدّم الدليل نموذجًا لهذا السجل؛ فهو امتداد في المنصة (M0149)." [ref=e763]:
+              - img [ref=e764]
+              - text: امتداد
+            - text: لا يقدّم الدليل نموذجًا لهذا السجل؛ فهو امتداد في المنصة (M0149).
+          - generic [ref=e766]:
+            - generic [ref=e767]:
+              - generic [ref=e768]:
+                - generic [ref=e769]: بحث
+                - searchbox "بحث" [ref=e770]
+              - button "الأعمدة" [ref=e772] [cursor=pointer]:
+                - img [ref=e773]
+                - text: الأعمدة
+            - region "خطوط الأساس (جدول قابل للتمرير)" [ref=e775]:
+              - table "خطوط الأساس" [ref=e776]:
+                - caption [ref=e777]: خطوط الأساس
+                - rowgroup [ref=e778]:
+                  - row "المقياس غير مرتّب القيمة المصدر غير مرتّب تاريخ خط الأساس غير مرتّب النطاق غير مرتّب اعتماد الإدارة المالية غير مرتّب المالك أدوات النموذج وحقول الامتداد الإجراءات" [ref=e779]:
+                    - columnheader "المقياس غير مرتّب" [ref=e780]:
+                      - button "المقياس غير مرتّب" [ref=e781] [cursor=pointer]:
+                        - text: المقياس
+                        - img [ref=e782]
+                        - generic [ref=e784]: غير مرتّب
+                    - columnheader "القيمة" [ref=e785]
+                    - columnheader "المصدر غير مرتّب" [ref=e786]:
+                      - button "المصدر غير مرتّب" [ref=e787] [cursor=pointer]:
+                        - text: المصدر
+                        - img [ref=e788]
+                        - generic [ref=e790]: غير مرتّب
+                    - columnheader "تاريخ خط الأساس غير مرتّب" [ref=e791]:
+                      - button "تاريخ خط الأساس غير مرتّب" [ref=e792] [cursor=pointer]:
+                        - text: تاريخ خط الأساس
+                        - img [ref=e793]
+                        - generic [ref=e795]: غير مرتّب
+                    - columnheader "النطاق غير مرتّب" [ref=e796]:
+                      - button "النطاق غير مرتّب" [ref=e797] [cursor=pointer]:
+                        - text: النطاق
+                        - img [ref=e798]
+                        - generic [ref=e800]: غير مرتّب
+                    - columnheader "اعتماد الإدارة المالية غير مرتّب" [ref=e801]:
+                      - button "اعتماد الإدارة المالية غير مرتّب" [ref=e802] [cursor=pointer]:
+                        - text: اعتماد الإدارة المالية
+                        - img [ref=e803]
+                        - generic [ref=e805]: غير مرتّب
+                    - columnheader "المالك" [ref=e806]
+                    - columnheader "أدوات النموذج وحقول الامتداد" [ref=e807]
+                    - columnheader "الإجراءات" [ref=e808]
+                - rowgroup [ref=e809]:
+                  - 'row "Synthetic QA-E2 AR roaming revenue per month 1,250,000 SAR SAR Synthetic finance extract 31‏/01‏/2026 الإيرادات غير معتمد roaming.user.tl (synthetic) (قائد التحوّل) · أنت أدوات النموذج : Synthetic QA-E2 AR roaming revenue per month تعديل : Synthetic QA-E2 AR roaming revenue per month أرشفة : Synthetic QA-E2 AR roaming revenue per month" [ref=e810]':
+                    - rowheader "Synthetic QA-E2 AR roaming revenue per month" [ref=e811]
+                    - cell "1,250,000 SAR SAR" [ref=e812]:
+                      - generic [ref=e813]: 1,250,000 SAR SAR
+                    - cell "Synthetic finance extract" [ref=e814]
+                    - cell "31‏/01‏/2026" [ref=e815]
+                    - cell "الإيرادات" [ref=e816]
+                    - cell "غير معتمد" [ref=e817]:
+                      - generic [ref=e818]:
+                        - img [ref=e819]
+                        - text: غير معتمد
+                    - cell "roaming.user.tl (synthetic) (قائد التحوّل) · أنت" [ref=e821]
+                    - 'cell "أدوات النموذج : Synthetic QA-E2 AR roaming revenue per month" [ref=e822]':
+                      - 'button "أدوات النموذج : Synthetic QA-E2 AR roaming revenue per month" [ref=e824] [cursor=pointer]':
+                        - img [ref=e825]
+                        - text: أدوات النموذج
+                        - generic [ref=e827]: ": Synthetic QA-E2 AR roaming revenue per month"
+                    - 'cell "تعديل : Synthetic QA-E2 AR roaming revenue per month أرشفة : Synthetic QA-E2 AR roaming revenue per month" [ref=e828]':
+                      - generic [ref=e829]:
+                        - 'button "تعديل : Synthetic QA-E2 AR roaming revenue per month" [ref=e830] [cursor=pointer]':
+                          - img [ref=e831]
+                          - text: تعديل
+                          - generic [ref=e833]: ": Synthetic QA-E2 AR roaming revenue per month"
+                        - 'button "أرشفة : Synthetic QA-E2 AR roaming revenue per month" [ref=e834] [cursor=pointer]':
+                          - img [ref=e835]
+                          - text: أرشفة
+                          - generic [ref=e837]: ": Synthetic QA-E2 AR roaming revenue per month"
+            - navigation "التنقل بين الصفحات" [ref=e838]:
+              - generic [ref=e839]: الصفحة 1 من 1 · 1 من 1 صفوف
+              - generic [ref=e840]:
+                - generic [ref=e841]: عدد الصفوف في الصفحة
+                - combobox "عدد الصفوف في الصفحة" [ref=e842]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "السابق" [disabled] [ref=e843]
+              - button "التالي" [disabled] [ref=e844]
+        - region "مجمّعات القيمة" [ref=e845]:
+          - generic [ref=e846]:
+            - heading "مجمّعات القيمة" [level=2] [ref=e847]
+            - button "إضافة مجمّع قيمة" [ref=e849] [cursor=pointer]:
+              - img [ref=e850]
+              - text: إضافة مجمّع قيمة
+          - generic [ref=e852]: مواضع خلق القيمة. يُوسَم المجمّع الذي لا مبالغ له بـ«غير مُقدَّر كمّياً»، ولا يُحتسب صفراً أبداً.
+          - paragraph [ref=e853]:
+            - generic "لا يقدّم الدليل نموذجًا لهذا السجل؛ فهو امتداد في المنصة (M0149)." [ref=e854]:
+              - img [ref=e855]
+              - text: امتداد
+            - text: لا يقدّم الدليل نموذجًا لهذا السجل؛ فهو امتداد في المنصة (M0149).
+          - generic [ref=e857]:
+            - paragraph [ref=e858]:
+              - text: "الإجمالي:"
+              - generic "لا يوجد مجمّع قيمة مسجل" [ref=e859]:
+                - img [ref=e860]
+                - text: غير معروف
+                - generic [ref=e862]: ": لا يوجد مجمّع قيمة مسجل"
+            - paragraph [ref=e863]: يجمع الإجمالي المجمّعات المُقدَّرة كمّياً من العملة نفسها فقط، بدقة ودون تقريب. لا تُجمع العملات المختلفة معاً أبداً.
+          - generic [ref=e864]:
+            - generic [ref=e865]:
+              - generic [ref=e866]:
+                - generic [ref=e867]: بحث
+                - searchbox "بحث" [ref=e868]
+              - button "الأعمدة" [ref=e870] [cursor=pointer]:
+                - img [ref=e871]
+                - text: الأعمدة
+            - generic [ref=e873]:
+              - img [ref=e874]
+              - generic [ref=e876]:
+                - paragraph [ref=e877]: لا توجد مجمّعات قيمة بعد.
+                - paragraph [ref=e878]: أضف مجمّعات القيمة التي كشفها التشخيص، سواء قُدّرت كمّياً أم لا.
+```
