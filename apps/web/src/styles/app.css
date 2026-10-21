@@ -377,6 +377,25 @@ a:hover {
   margin-inline-end: var(--mth-space-2);
   color: var(--mth-text-secondary);
 }
+/* T-DG5-FE-AA1 (F-DG5-147, D-178; REQ-S15-009, WCAG 2.1 SC 1.4.10 Reflow): a record title or transformation name is
+   user text and can hold an unbroken token wider than the column (an identifier-like word). The headings and title
+   containers that show it wrap it anywhere, the rule the product already uses for long values (.text-cell, the audit
+   changes, the automation failure queue): page headings and their subtitle, the breadcrumb items, card titles and
+   dialog titles ("Form tools: <title>" is a card title on the T14 page and a dialog title elsewhere). `anywhere` (not
+   `break-word`) also lowers their min-content width, so the flex and grid tracks around them (.page-header,
+   .page-header__row, .breadcrumbs ol, .card__header, .chip-row) can shrink to the viewport instead of widening the
+   page. Ordinary text still breaks at spaces first and stays on one line where it fits. Logical, so the same in RTL. */
+.page-header__title,
+.page-header__subtitle,
+.breadcrumbs li,
+.card__title,
+.dialog__title {
+  overflow-wrap: anywhere;
+}
+/* The title block of the header row is a flex item: it may shrink below its content's width (the actions wrap). */
+.page-header__row > * {
+  min-inline-size: 0;
+}
 
 .grid {
   display: grid;
@@ -1565,6 +1584,9 @@ input[type="radio"] {
 .entry-list > li {
   padding-block: var(--mth-space-2);
   border-block-end: 1px solid var(--mth-border-default);
+  /* T-DG5-FE-AA1 (F-DG5-147 class): an entry is a record name (e.g. a transformation in the P5 transformation picker
+     of /playbook/launch-plan and /playbook/health-check); an unbroken token in it wraps instead of widening the page. */
+  overflow-wrap: anywhere;
 }
 /* Grid items default to min-width:auto; a wide register must scroll inside its card, not widen the page. */
 .page > *,
