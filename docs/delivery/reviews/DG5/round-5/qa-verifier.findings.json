@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-147",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A record title or transformation name holding an unbroken token wider than the column (e.g. a 46-character identifier) widens the page at 390 px, 320 px and with 200 % text, in en and ar: page headings (h1 .page-header__row), the breadcrumbs and card headings (h2.card__title, including the P5 'Form tools: <title>' heading) have no overflow-wrap rule",
+      "reproduction": "Disposable complete clone of the frozen candidate (2ec59c7 = source 0c88d5e + delivery records; sha256:a18a9f05...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-5/e2e/zz-qa-dg5r5-form-tables-verify.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26620 E2E_API_PORT=26621 apps/web/e2e/support/with-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r5-form-tables-verify.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers). Its test R5-TITLE (reported, not asserted) creates, per language, three SYNTHETIC transformations whose name and benefit title hold (a) a 120-character word without spaces, (b) the 46-character token 'Synthetic_roaming_bill_shock_reduction_program', (c) ordinary text, then opens the T14 benefit page and the transformation overview at 390 x 900, 320 x 900 and 1280 x 900 with the root font at 200 %, and records document.documentElement.scrollWidth - innerWidth and the outermost elements outside the viewport that are not in a scroll container. Ran in both locale settings (05-e2e-probe-r5forms-rev2-unset.log, -cutf8.log).",
+      "expected": "No page-level horizontal scroll at 390 px or with 200 % text, in en and ar, whatever text a user enters in a title (REQ-S15-009, WCAG 2.1 SC 1.4.10 Reflow under REQ-S15-012). The product already wraps long unbroken values elsewhere: .text-cell, the 409 compare table, the audit changes and the automation failure queue use overflow-wrap: anywhere (apps/web/src/styles/app.css).",
+      "actual": "Ordinary text: 0 px overflow on both screens at every size, in en and ar. 46-character token: the benefit page overflows by 44 px at 390 px (en: h2.card__title [29..434], 'B01 · Synthetic_roaming_bill_shock_reduc...' and 'Form tools: ...'; ar: [-44..361]), 114 px at 320 px and 113 px at 200 % (div.page-header__row); the overview overflows by 183 px at 390 px, 253 px at 320 px and 415 px at 200 % (h1 page header and breadcrumbs). 120-character word: 877 / 947 / 1793 px on the benefit page and 1368 / 1438 / 2797 px on the overview. Same values in ar (mirrored, extending past the left edge) and in both locale settings. Screenshot r5-title-w46-overview-390.png shows the document 573 px wide at a 390 px viewport, because the h1 'TR-0004 QA Synthetic_roaming_bill_shock_reduction_program' cannot wrap; the rest of the page reflows. Cause: no overflow-wrap on .page-header headings, the breadcrumbs or .card__title. Not a regression of the repair diff (fb9c221..0c88d5e touches no heading rule), not the F-DG5-146 table class, and it needs an unusual title. The headings are DG2-DG4 components, apart from the P5 'Form tools' heading. REQ-S15-009 has final gate DG6, and no DG5-final acceptance text measures it. Low, not mandatory, not blocking DG5; fix before DG6 (for example overflow-wrap: anywhere on page and card headings and breadcrumb items, with an e2e case for an unbroken title).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-5/e2e/zz-qa-dg5r5-form-tables-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5forms-rev2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5forms-rev2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-title.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/ar/r5-title.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-title-w46-overview-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-title-w46-benefit-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/ar/r5-title-w46-overview-390.png"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-5/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-21T21:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 round 5 (T-DG5-REV-QA-R5) on candidate sha256:a18a9f05... from the real-stack probe R5-TITLE, in en and ar and in both locale settings. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
+        }
+      ]
+    }
+  ]
+}

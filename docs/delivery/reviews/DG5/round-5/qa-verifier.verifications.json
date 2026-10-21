@@ -1,0 +1,59 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-144",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:a18a9f05... (source 0c88d5e; repair T-DG5-FE-Y1) on the real stacks, in a disposable complete clone, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8. (1) My round-3 reproduction R3-DIAG, UNCHANGED, on the demo stack as roaming.user.tl: /transformations/<roaming>/diagnose has 0 px page overflow at 390 px and with 200 % text in all four runs. Before the repair it was 433 px (en) / 394 px (ar) and 830 / 731 px. The .workstreams grid now resolves to one 332 px track at 390 px and 606 px at 200 %, and all six cards are that wide. (2) My round-3 verification probe R3-REG/R3-TAB, UNCHANGED, on 38 DG2-DG4 demo screens at 390 px, 1366 px and 200 %: in all 8 runs (en and ar x 4 runs: two per locale setting) no screen has page-level overflow, Diagnose included (0/0 every time); no scrolling region is unfocusable or unnamed; axe reports no serious or critical issue; R3-TAB passes 8/8. The R3-REG test itself failed in 3 of its 4 runs per language on intermittent keyboard-scroll reads ('focused: true', scrollLeft unchanged after six arrow presses and a 5 s poll), on screens and sizes that change from run to run, and on 5 screens whose h1 did not show within the probe's 5 s. Every one of those screens passes in another run, and the fourth run (run 2, C.UTF-8) is 4/4 with 0 bad entries. A dedicated diagnostic (R5-KBD) repeated R3-REG's exact key sequence, with and without axe, plus real Tab presses, 5 times on 6 of the flagged screens: 180/180 trials scrolled in en and ar. So the misses are a timing artefact of the probe's long single-page session, not a product defect. None of them is on the Diagnose layout. (3) My round-4 real-stack probe R4, UNCHANGED, on the production stack: Diagnose with a finding in every workstream (a 120-character word, a long Arabic statement) has 0 overflow at 390, 320 and 200 %; all 6 cards fit and every scrolling register is a focusable, named region. The real 409 banner on the edit page and inside the Diagnose dialog has 0 overflow and no header broken inside a word. 6/6 in each locale setting. (4) The product's own p5-diagnose-reflow.spec.ts passes in en and ar in both full product runs (452/452 each).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r3diag-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r3diag-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r3diag-unset/en/r3-diag-diagnose.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r3diag-unset/ar/r3-diag-diagnose.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r3diag-unset/en/r3-diag-diagnose-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r3regions-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r3regions-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r3regions-run2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r3regions-run2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-r3reg-overflow-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5kbd-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5kbd-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-5/e2e/zz-qa-dg5r5-kbd-diagnostic.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r4reflow-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r4reflow-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r4reflow-unset/en/r4-diag-prod.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r4reflow-unset/ar/r4-diag-prod.json",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-3/e2e/zz-qa-dg5r3-diagnose-reflow.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-3/e2e/zz-qa-dg5r3-regions-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/e2e/zz-qa-dg5r4-reflow-verify.spec.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-146",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:a18a9f05... (source 0c88d5e; repairs T-DG5-FE-Z1B ff5f561 and FE-Z1C c71d166) on the production-initialized real stack, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8. (1) My independent round-5 probe (revision 2), written for this round without importing the product spec, passes 8/8 in each locale setting. At 390 x 900, 320 x 900 and 1280 x 900 with 200 % text, it measures: the Form builder field table (an editable T03 draft with an extension field whose labels are a 120-character word and a long Arabic phrase, and the auditor's read-only view of the published version); the T14 benefit page's Attachments table (evidence title = the long word plus Arabic), its History table, and the T14 export-preview dialog; and the T01 Diagnose item's Form-tools DIALOG, Attachments and History (not covered by the product spec). Everywhere: page overflow 0; no visible element outside the viewport outside a scroll container (this catches content clipped inside a fixed dialog); every table in a role=region .table-wrap with tabIndex 0 and a localized name ('... (scrollable table)' / '... (جدول قابل للتمرير)') that fits the viewport (the dialog regions [40..350] at 390 px and [40..280] at 320 px, inside dialogs [16..374] / [16..304]); the focused region scrolls 80 px with the arrow key of the reading direction (ArrowRight en, ArrowLeft ar); axe reports no violation at 390 px. Revision 1 failed by design of its own data, not of the product: its T14 benefit title held the 120-character word, which overflowed the card headings (not the tables; that is F-DG5-147), and its T01 fixture used a diagnostic finding instead of a T01 item. Both runs and its source are kept (probe-revisions/). (2) The product regression spec apps/web/e2e/p5-form-tables-reflow.spec.ts passes 4/4 alone in each locale setting, and inside both full product runs. (3) The unit guard table-regions.test.tsx catches each fix reverted (Form builder back to div.table-scroll, Attachments unwrapped, export preview unwrapped: EXIT 1 each, the clone restored after each). My source scan agrees with its exception list: only four pre-P5 tables are outside a region (the two 409 compare tables, measured fine in R4, and UsersPage identities and Define GoodOutcomeTest, which are disclosed in the Z1B handback and not measured; REQ-S15-009 is DG6). (4) The dialog-wide CSS change of Z1C (.dialog/.dialog__body minmax(0, 1fr), wrapping footer) causes no regression: 452/452 product journeys and 30/30 root and 12/12 demo specs in both locale settings, with 0 axe violations over 700 screen checks per language and locale setting.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-5/e2e/zz-qa-dg5r5-form-tables-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5forms-rev2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5forms-rev2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-fb.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-t14.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-t01.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/ar/r5-fb.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/ar/r5-t14.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/ar/r5-t01.json",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/en/r5-t14-export-preview-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-5/shots/probe-r5forms-rev2-unset/ar/r5-fb-draft-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5forms-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-probe-r5forms-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/probe-revisions/zz-qa-dg5r5-form-tables-verify.rev1.spec.ts.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-z1spec-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-e2e-z1spec-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/02-guard-mutation-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/11-repair-diff.log",
+        "docs/delivery/test-evidence/DG5/qa/round-5/05-axe-summaries.txt"
+      ]
+    }
+  ]
+}
