@@ -1,0 +1,458 @@
+$ git diff --stat fb9c221..0c88d5e -- . ':!docs/delivery'
+ apps/web/e2e/p5-form-tables-reflow.spec.ts         | 360 +++++++++++++++++++++
+ .../src/components/form-framework/ExportDialog.tsx |   6 +-
+ .../components/form-framework/FormFramework.tsx    | 171 +++++-----
+ apps/web/src/components/table-regions.test.tsx     | 104 ++++++
+ apps/web/src/pages/form-builder/FormSchemaPage.tsx |   6 +-
+ apps/web/src/styles/app.css                        |  12 +
+ tools/agents/agent_settings.py                     |   5 +
+ 7 files changed, 578 insertions(+), 86 deletions(-)
+
+$ git diff fb9c221..0c88d5e -- . ':!docs/delivery' ':!apps/web/e2e/p5-form-tables-reflow.spec.ts'
+diff --git a/apps/web/src/components/form-framework/ExportDialog.tsx b/apps/web/src/components/form-framework/ExportDialog.tsx
+index 6cd233e..76535fa 100644
+--- a/apps/web/src/components/form-framework/ExportDialog.tsx
++++ b/apps/web/src/components/form-framework/ExportDialog.tsx
+@@ -12,6 +12,7 @@ import { FormAlert } from "../../pages/my-work/p4ui.tsx";
+ import { Dialog, Field } from "../Form.tsx";
+ import { Icon } from "../Icon.tsx";
+ import { LoadingState } from "../States.tsx";
++import { TableScrollRegion } from "../TableScrollRegion.tsx";
+ import { csvExportUrl, fetchExport, FORMS_NS, type FormRecordExport } from "./api.ts";
+ 
+ const PREVIEW_ROWS = 10;
+@@ -122,7 +123,8 @@ function ExportPreview({ data }: { data: FormRecordExport }) {
+       {data.rows.length === 0 ? (
+         <p className="muted">{t("forms.export.empty")}</p>
+       ) : (
+-        <div className="table-scroll">
++        // The preview scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
++        <TableScrollRegion caption={t("forms.export.caption", { count: rows.length })}>
+           <table className="table table--compact" dir={data.language === "ar" ? "rtl" : "ltr"} lang={data.language}>
+             <caption>{t("forms.export.caption", { count: rows.length })}</caption>
+             <thead>
+@@ -157,7 +159,7 @@ function ExportPreview({ data }: { data: FormRecordExport }) {
+               ))}
+             </tbody>
+           </table>
+-        </div>
++        </TableScrollRegion>
+       )}
+     </div>
+   );
+diff --git a/apps/web/src/components/form-framework/FormFramework.tsx b/apps/web/src/components/form-framework/FormFramework.tsx
+index 4e62533..e1768ab 100644
+--- a/apps/web/src/components/form-framework/FormFramework.tsx
++++ b/apps/web/src/components/form-framework/FormFramework.tsx
+@@ -23,6 +23,7 @@ import { Unknown } from "../Badges.tsx";
+ import { Field } from "../Form.tsx";
+ import { Icon } from "../Icon.tsx";
+ import { ConflictPanel, ErrorState, QueryState, type ConflictRow } from "../States.tsx";
++import { TableScrollRegion } from "../TableScrollRegion.tsx";
+ import {
+   changedFieldLabels,
+   checkExtensionValue,
+@@ -756,36 +757,39 @@ function HistoryTab(props: FormFrameworkProps) {
+         const parsed = parseBody("versions", raw);
+         if (!parsed.ok) return <ErrorState error={parsed.error} />;
+         const list = parsed.value;
++        // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+         return (
+-          <table className="table table--compact" data-history-rows={list.length}>
+-            <caption>{t("forms.history.caption")}</caption>
+-            <thead>
+-              <tr>
+-                <th scope="col">{t("forms.history.version")}</th>
+-                <th scope="col">{t("forms.history.action")}</th>
+-                <th scope="col">{t("forms.history.actor")}</th>
+-                <th scope="col">{t("forms.history.when")}</th>
+-                <th scope="col">{t("forms.history.fields")}</th>
+-              </tr>
+-            </thead>
+-            <tbody>
+-              {list.map((v, i) => (
+-                <tr key={`${v.occurredAt}-${i}`} data-version={v.version ?? ""}>
+-                  <th scope="row">{v.version ?? <Unknown />}</th>
+-                  <td>
+-                    <code dir="ltr">{v.action}</code>
+-                  </td>
+-                  <td>{v.actorDisplayName ?? t("forms.history.unknownActor")}</td>
+-                  <td>{formatDateTime(v.occurredAt, locale) ?? v.occurredAt}</td>
+-                  <td>
+-                    {v.changedFields.length === 0
+-                      ? t("forms.history.noFields")
+-                      : changedFieldLabels(v.changedFields, labelSchema, locale).join(", ")}
+-                  </td>
++          <TableScrollRegion caption={t("forms.history.caption")}>
++            <table className="table table--compact" data-history-rows={list.length}>
++              <caption>{t("forms.history.caption")}</caption>
++              <thead>
++                <tr>
++                  <th scope="col">{t("forms.history.version")}</th>
++                  <th scope="col">{t("forms.history.action")}</th>
++                  <th scope="col">{t("forms.history.actor")}</th>
++                  <th scope="col">{t("forms.history.when")}</th>
++                  <th scope="col">{t("forms.history.fields")}</th>
+                 </tr>
+-              ))}
+-            </tbody>
+-          </table>
++              </thead>
++              <tbody>
++                {list.map((v, i) => (
++                  <tr key={`${v.occurredAt}-${i}`} data-version={v.version ?? ""}>
++                    <th scope="row">{v.version ?? <Unknown />}</th>
++                    <td>
++                      <code dir="ltr">{v.action}</code>
++                    </td>
++                    <td>{v.actorDisplayName ?? t("forms.history.unknownActor")}</td>
++                    <td>{formatDateTime(v.occurredAt, locale) ?? v.occurredAt}</td>
++                    <td>
++                      {v.changedFields.length === 0
++                        ? t("forms.history.noFields")
++                        : changedFieldLabels(v.changedFields, labelSchema, locale).join(", ")}
++                    </td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </TableScrollRegion>
+         );
+       }}
+     </QueryState>
+@@ -997,62 +1001,65 @@ function AttachmentsTab(props: FormFrameworkProps) {
+           const parsed = parseBody("attachments", raw);
+           if (!parsed.ok) return <ErrorState error={parsed.error} />;
+           const list = parsed.value;
++          // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+           return (
+-            <table className="table table--compact" data-attachment-count={list.length}>
+-              <caption>{t("forms.attachments.caption")}</caption>
+-              <thead>
+-                <tr>
+-                  <th scope="col">{t("forms.attachments.evidence")}</th>
+-                  <th scope="col">{t("forms.attachments.status")}</th>
+-                  <th scope="col">{t("forms.attachments.attached")}</th>
+-                  <th scope="col">{t("forms.attachments.store")}</th>
+-                  <th scope="col">
+-                    <span className="visually-hidden">{t("common.field.actions")}</span>
+-                  </th>
+-                </tr>
+-              </thead>
+-              <tbody>
+-                {list.map((a) => (
+-                  <tr key={a.id} data-attachment-id={a.id} data-status={a.status}>
+-                    <th scope="row">{titleOf(a)}</th>
+-                    <td>
+-                      {a.status === "active" ? (
+-                        <span className="lifecycle-chip lifecycle-chip--active">
+-                          <Icon name="check" /> {t("forms.attachments.active")}
+-                        </span>
+-                      ) : (
+-                        <span className="lifecycle-chip lifecycle-chip--archived">
+-                          <Icon name="archive" />{" "}
+-                          {t("forms.attachments.removedReason", { reason: a.removeReason ?? "" })}
+-                        </span>
+-                      )}
+-                    </td>
+-                    <td>{formatDateTime(a.createdAt, locale) ?? a.createdAt}</td>
+-                    <td>
+-                      {a.store === "evidence_link"
+-                        ? t("forms.attachments.storeEvidenceLink")
+-                        : t("forms.attachments.storeFormRecord")}
+-                    </td>
+-                    <td>
+-                      {props.canWrite && a.status === "active" ? (
+-                        <button
+-                          type="button"
+-                          className="button button--link button--small"
+-                          onClick={() => {
+-                            setRemoving(a);
+-                            setReason("");
+-                            writer.setError(null);
+-                          }}
+-                        >
+-                          {t("forms.attachments.remove")}
+-                          <span className="visually-hidden">: {titleOf(a)}</span>
+-                        </button>
+-                      ) : null}
+-                    </td>
++            <TableScrollRegion caption={t("forms.attachments.caption")}>
++              <table className="table table--compact" data-attachment-count={list.length}>
++                <caption>{t("forms.attachments.caption")}</caption>
++                <thead>
++                  <tr>
++                    <th scope="col">{t("forms.attachments.evidence")}</th>
++                    <th scope="col">{t("forms.attachments.status")}</th>
++                    <th scope="col">{t("forms.attachments.attached")}</th>
++                    <th scope="col">{t("forms.attachments.store")}</th>
++                    <th scope="col">
++                      <span className="visually-hidden">{t("common.field.actions")}</span>
++                    </th>
+                   </tr>
+-                ))}
+-              </tbody>
+-            </table>
++                </thead>
++                <tbody>
++                  {list.map((a) => (
++                    <tr key={a.id} data-attachment-id={a.id} data-status={a.status}>
++                      <th scope="row">{titleOf(a)}</th>
++                      <td>
++                        {a.status === "active" ? (
++                          <span className="lifecycle-chip lifecycle-chip--active">
++                            <Icon name="check" /> {t("forms.attachments.active")}
++                          </span>
++                        ) : (
++                          <span className="lifecycle-chip lifecycle-chip--archived">
++                            <Icon name="archive" />{" "}
++                            {t("forms.attachments.removedReason", { reason: a.removeReason ?? "" })}
++                          </span>
++                        )}
++                      </td>
++                      <td>{formatDateTime(a.createdAt, locale) ?? a.createdAt}</td>
++                      <td>
++                        {a.store === "evidence_link"
++                          ? t("forms.attachments.storeEvidenceLink")
++                          : t("forms.attachments.storeFormRecord")}
++                      </td>
++                      <td>
++                        {props.canWrite && a.status === "active" ? (
++                          <button
++                            type="button"
++                            className="button button--link button--small"
++                            onClick={() => {
++                              setRemoving(a);
++                              setReason("");
++                              writer.setError(null);
++                            }}
++                          >
++                            {t("forms.attachments.remove")}
++                            <span className="visually-hidden">: {titleOf(a)}</span>
++                          </button>
++                        ) : null}
++                      </td>
++                    </tr>
++                  ))}
++                </tbody>
++              </table>
++            </TableScrollRegion>
+           );
+         }}
+       </QueryState>
+diff --git a/apps/web/src/components/table-regions.test.tsx b/apps/web/src/components/table-regions.test.tsx
+index f6b08d8..cda41f0 100644
+--- a/apps/web/src/components/table-regions.test.tsx
++++ b/apps/web/src/components/table-regions.test.tsx
+@@ -3,12 +3,16 @@
+ // "(scrollable table)" (common.table.scrollRegion), in en and ar.
+ // T-DG5-FE-X1 (F-DG5-142, REQ-S15-012): the same region on every page-level table (TableScrollRegion), and no
+ // .table-wrap anywhere in the web source is left bare.
++// T-DG5-FE-Z1B (F-DG5-146, D-176; REQ-S15-009, WCAG 2.1 SC 1.4.10): no element uses the unstyled class table-scroll,
++// and every table.table / table--compact is rendered inside a scroll region, so a wide table scrolls in its own
++// region and never widens the page at 390 px or with 200 % text.
+ import { readdirSync, readFileSync, statSync } from "node:fs";
+ import { dirname, join, relative } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { cleanup, render, screen } from "@testing-library/react";
+ import type { ReactNode } from "react";
+ import { I18nextProvider } from "react-i18next";
++import ts from "typescript";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { createI18n } from "../i18n/index.ts";
+ import { DataTable } from "./DataTable.tsx";
+@@ -122,4 +126,104 @@ describe("no bare table wrapper in the web source", () => {
+     }
+     expect(bare).toEqual([]);
+   });
++
++  // The source files as TSX syntax trees (the TypeScript parser the build already uses), so the checks below see JSX
++  // elements and their nesting, not text.
++  const trees = files(SRC).map((file) => ({
++    file: relative(SRC, file),
++    sf: ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX),
++  }));
++  type Jsx = ts.JsxElement | ts.JsxSelfClosingElement;
++  const isJsx = (n: ts.Node): n is Jsx => ts.isJsxElement(n) || ts.isJsxSelfClosingElement(n);
++  const opening = (n: Jsx) => (ts.isJsxElement(n) ? n.openingElement : n);
++  const tagOf = (n: Jsx) => opening(n).tagName.getText();
++  /** The class names of a className attribute: a literal, or every string token of an expression. */
++  const classesOf = (n: Jsx): string[] => {
++    const attr = opening(n).attributes.properties.find(
++      (p): p is ts.JsxAttribute => ts.isJsxAttribute(p) && p.name.getText() === "className",
++    );
++    return attr?.initializer
++      ? attr.initializer
++          .getText()
++          .split(/[^\w-]+/)
++          .filter(Boolean)
++      : [];
++  };
++  const lineOf = (sf: ts.SourceFile, n: ts.Node) => sf.getLineAndCharacterOfPosition(n.getStart()).line + 1;
++  const walk = (n: ts.Node, visit: (n: ts.Node) => void) => {
++    visit(n);
++    n.forEachChild((c) => walk(c, visit));
++  };
++  /** A scroll region: TableScrollRegion, the P3 TableRegion helper, or a .table-wrap element (checked above). */
++  const isRegion = (n: Jsx) =>
++    tagOf(n) === "TableScrollRegion" || tagOf(n) === "TableRegion" || classesOf(n).includes("table-wrap");
++  /** The PascalCase function component a node is declared in, if any. */
++  const componentOf = (n: ts.Node): string | null => {
++    for (let p = n.parent; p; p = p.parent) {
++      if (ts.isFunctionDeclaration(p) && p.name) return p.name.text;
++      if ((ts.isArrowFunction(p) || ts.isFunctionExpression(p)) && ts.isVariableDeclaration(p.parent))
++        return p.parent.name.getText();
++    }
++    return null;
++  };
++  /**
++   * Whether `node` is rendered inside a scroll region: an enclosing JSX element is a region, or (when its own JSX has
++   * none) its component is rendered in this file, and every one of those call sites is inside a region (for example
++   * a nested table in a cell of a table that sits in a region, EvidenceRegisterPage's Versions).
++   */
++  const inRegion = (sf: ts.SourceFile, node: ts.Node, seen: Set<string>): boolean => {
++    for (let p = node.parent; p; p = p.parent) if (ts.isJsxElement(p) && isRegion(p)) return true;
++    const component = componentOf(node);
++    if (component === null || !/^[A-Z]/.test(component) || seen.has(component)) return false;
++    seen.add(component);
++    const sites: Jsx[] = [];
++    walk(sf, (n) => {
++      if (isJsx(n) && tagOf(n) === component) sites.push(n);
++    });
++    return sites.length > 0 && sites.every((s) => inRegion(sf, s, seen));
++  };
++
++  it("no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)", () => {
++    const uses: string[] = [];
++    for (const { file, sf } of trees)
++      walk(sf, (n) => {
++        if (isJsx(n) && classesOf(n).includes("table-scroll")) uses.push(`${file}:${lineOf(sf, n)}`);
++      });
++    expect(uses).toEqual([]);
++  });
++
++  // Tables outside a region that predate P5 and lie outside T-DG5-FE-Z1B's file ownership (D-176), reported in its
++  // handback for the orchestrator. This list may only shrink: a new bare table, or a listed one that is fixed or
++  // renamed, fails the test below until the list is updated.
++  //  - FormConflict and ConflictPanel: the optimistic-concurrency (409) compare table inside the .conflict banner.
++  //    The banner's single grid track no longer grows to the table (D-174), and p5-diagnose-reflow.spec.ts measures
++  //    a real 409 at 390 px with no page-level scroll.
++  //  - UserEdit (DG1, the identities of a user) and GoodOutcomeTest (DG2, Define): no page-level reflow measurement.
++  const OUTSIDE_P5_PENDING = [
++    "components/RecordForm.tsx > FormConflict",
++    "components/States.tsx > ConflictPanel",
++    "pages/admin/UsersPage.tsx > UserEdit",
++    "pages/define/DefinePage.tsx > GoodOutcomeTest",
++  ];
++
++  it("every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)", () => {
++    const outside: string[] = [];
++    const where: string[] = [];
++    let tables = 0;
++    for (const { file, sf } of trees)
++      walk(sf, (n) => {
++        if (!isJsx(n) || tagOf(n) !== "table") return;
++        if (!classesOf(n).some((c) => c === "table" || c === "table--compact")) return;
++        tables++;
++        if (inRegion(sf, n, new Set())) return;
++        outside.push(`${file} > ${componentOf(n) ?? "?"}`);
++        where.push(`${file}:${lineOf(sf, n)}`);
++      });
++    // Set-up check: the scan really sees the web source's tables (115 when this guard was written).
++    expect(tables).toBeGreaterThan(100);
++    expect({ outside: [...new Set(outside)].sort(), where }).toEqual({
++      outside: [...OUTSIDE_P5_PENDING].sort(),
++      where: expect.any(Array) as unknown,
++    });
++  });
+ });
+diff --git a/apps/web/src/pages/form-builder/FormSchemaPage.tsx b/apps/web/src/pages/form-builder/FormSchemaPage.tsx
+index c34caea..7ab635b 100644
+--- a/apps/web/src/pages/form-builder/FormSchemaPage.tsx
++++ b/apps/web/src/pages/form-builder/FormSchemaPage.tsx
+@@ -28,6 +28,7 @@ import { Field } from "../../components/Form.tsx";
+ import { Icon } from "../../components/Icon.tsx";
+ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+ import { QueryState } from "../../components/States.tsx";
++import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
+ import { ReadOnlyNote, type P4FieldSpec, type P4Values } from "../my-work/p4ui.tsx";
+ import { isEditableDraft, versionState } from "../studio/api.ts";
+ import { StudioFormDialog } from "../studio/StudioFormDialog.tsx";
+@@ -230,8 +231,9 @@ function FieldsTable({
+ }) {
+   const { t } = useTranslation();
+   const locale = useLocale();
++  // A wide field table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
+   return (
+-    <div className="table-scroll">
++    <TableScrollRegion caption={t("forms.schema.caption")}>
+       <table className="table" data-field-count={schema.fields.length}>
+         <caption>{t("forms.schema.caption")}</caption>
+         <thead>
+@@ -282,7 +284,7 @@ function FieldsTable({
+           ))}
+         </tbody>
+       </table>
+-    </div>
++    </TableScrollRegion>
+   );
+ }
+ 
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index 5350472..67912bf 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -973,6 +973,14 @@ input[type="radio"] {
+   display: grid;
+   gap: var(--mth-space-3);
+ }
++/* T-DG5-FE-Z1C (F-DG5-146 follow-up, D-176; WCAG 1.4.10 Reflow): a grid track's default minimum is its content's
++   min-content width, so a wide table (the T14 export preview) widened the dialog's body past the dialog at 390 px and
++   ran off the viewport. The dialog's tracks may shrink to the dialog; wide content scrolls inside its focusable, named
++   .table-wrap, and the footer's actions wrap. */
++.dialog,
++.dialog__body {
++  grid-template-columns: minmax(0, 1fr);
++}
+ .dialog__title {
+   margin: 0;
+ }
+@@ -982,9 +990,13 @@ input[type="radio"] {
+ }
+ .dialog__footer {
+   display: flex;
++  flex-wrap: wrap;
+   justify-content: flex-end;
+   gap: var(--mth-space-2);
+ }
++.dialog__footer > * {
++  min-inline-size: 0;
++}
+ 
+ /* ---------------------------------------------------------------- details & workspace */
+ .details {
+diff --git a/tools/agents/agent_settings.py b/tools/agents/agent_settings.py
+index 3c737bf..a81908c 100644
+--- a/tools/agents/agent_settings.py
++++ b/tools/agents/agent_settings.py
+@@ -137,6 +137,11 @@ def build(role, repo_root, cwd, stage=None):
+         "allowUnsandboxedCommands": False,
+         "autoAllowBashIfSandboxed": True,
+         "enableWeakerNestedSandbox": True,
++        # D-176 (user-approved 2026-10-20): Claude Code 2.1.304 started passing bwrap --disable-userns to the Bash
++        # sandbox, which stopped the reviewers' harnesses (unshare --user to run PostgreSQL as a non-root uid). This
++        # restores the pre-2.1.304 behaviour; write confinement rests on the process sandbox's read-only binds and
++        # Landlock (D-030), not on this.
++        "allowNestedUserNamespaces": True,
+         "filesystem": {"denyWrite": sorted(set(deny))},
+     }
+     return settings
+
+$ git diff -w fb9c221..0c88d5e -- apps/web/src/components/form-framework/FormFramework.tsx | grep -E '^[-+][^-+]'   (whitespace-insensitive: wrapping only)
++import { TableScrollRegion } from "../TableScrollRegion.tsx";
++        // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
++          <TableScrollRegion caption={t("forms.history.caption")}>
++          </TableScrollRegion>
++          // A wide table scrolls in its own focusable, named region, never the page (F-DG5-146, D-176).
++            <TableScrollRegion caption={t("forms.attachments.caption")}>
++            </TableScrollRegion>

@@ -1,0 +1,65 @@
+== baseline: npx vitest run --project unit-web apps/web/src/components/table-regions.test.tsx (2026-10-21T18:34:47Z)
+ ✓ |unit-web| src/components/table-regions.test.tsx (9 tests) 16202ms
+   ✓ shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption  397ms
+   ✓ no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)  1097ms
+   ✓ no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)  685ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+EXIT 0
+== mutant FormSchemaPage: git diff --stat
+ apps/web/src/pages/form-builder/FormSchemaPage.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+   ✓ shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption  348ms
+   ✓ shared table regions (en) > RegisterTable: the scroll container is a focusable region named by the caption 75ms
+   ✓ shared table regions (ar) > DataTable: the scroll container is a focusable region named by the caption 12ms
+   ✓ shared table regions (ar) > RegisterTable: the scroll container is a focusable region named by the caption 17ms
+   ✓ TableScrollRegion (en) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 34ms
+   ✓ TableScrollRegion (ar) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 37ms
+   ✓ no bare table wrapper in the web source > every opening tag with class table-wrap is role=region with tabIndex 0 and an aria-label or aria-labelledby 125ms
+   × no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container) 684ms
+   × no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region) 786ms
+     → expected { outside: [ …(5) ], where: [ …(5) ] } to deeply equal { Object (outside, where) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-web| src/components/table-regions.test.tsx > no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)
+- Expected
++ Received
+EXIT 1
+reverted: 0 changed files
+== mutant FormFramework-attachments: git diff --stat
+ apps/web/src/components/form-framework/FormFramework.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+   ✓ shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption  357ms
+   ✓ shared table regions (en) > RegisterTable: the scroll container is a focusable region named by the caption 32ms
+   ✓ shared table regions (ar) > DataTable: the scroll container is a focusable region named by the caption 15ms
+   ✓ shared table regions (ar) > RegisterTable: the scroll container is a focusable region named by the caption 43ms
+   ✓ TableScrollRegion (en) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 18ms
+   ✓ TableScrollRegion (ar) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 8ms
+   ✓ no bare table wrapper in the web source > every opening tag with class table-wrap is role=region with tabIndex 0 and an aria-label or aria-labelledby 28ms
+   ✓ no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)  1029ms
+   × no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region) 716ms
+     → expected { outside: [ …(5) ], where: [ …(5) ] } to deeply equal { Object (outside, where) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { outside: [ …(5) ], where: [ …(5) ] } to deeply equal { Object (outside, where) }
+- Expected
++ Received
+EXIT 1
+reverted: 0 changed files
+== mutant ExportDialog: git diff --stat
+ apps/web/src/components/form-framework/ExportDialog.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+   ✓ shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption 173ms
+   ✓ shared table regions (en) > RegisterTable: the scroll container is a focusable region named by the caption 44ms
+   ✓ shared table regions (ar) > DataTable: the scroll container is a focusable region named by the caption 18ms
+   ✓ shared table regions (ar) > RegisterTable: the scroll container is a focusable region named by the caption 18ms
+   ✓ TableScrollRegion (en) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 11ms
+   ✓ TableScrollRegion (ar) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 10ms
+   ✓ no bare table wrapper in the web source > every opening tag with class table-wrap is role=region with tabIndex 0 and an aria-label or aria-labelledby 85ms
+   ✓ no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)  903ms
+   × no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region) 1297ms
+     → expected { outside: [ …(5) ], where: [ …(5) ] } to deeply equal { Object (outside, where) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { outside: [ …(5) ], where: [ …(5) ] } to deeply equal { Object (outside, where) }
+- Expected
++ Received
+EXIT 1
+reverted: 0 changed files

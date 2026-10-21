@@ -1,0 +1,14 @@
+$ git clone /home/user/My-owns $TMPDIR/review-qa; git checkout 2ec59c7   (complete clone; done before this script)
+HEAD 2ec59c7a84c3d92ee349667a782e9bd8a401ebde  shallow=false  sparse=unset
+$ node tools/gates/candidate.mjs --stage DG5   (clone, 2026-10-21T18:05:27Z)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","files":2189}
+EXIT 0
+$ (main repo HEAD 2ec59c7a84c3d92ee349667a782e9bd8a401ebde) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","files":2189}
+EXIT 0
+$ git diff --name-only 0c88d5e 2ec59c7 | cut -d/ -f1-4 | sort | uniq -c   (delivery records only)
+      3 docs/delivery/assignments/DG5
+      1 docs/delivery/candidates/DG5
+      1 docs/delivery/stages.json
+$ git merge-base --is-ancestor 0c88d5e HEAD
+EXIT 0

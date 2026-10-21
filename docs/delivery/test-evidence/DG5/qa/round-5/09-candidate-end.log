@@ -1,0 +1,12 @@
+$ (clone $TMPDIR/review-qa, HEAD 2ec59c7a84c3d92ee349667a782e9bd8a401ebde, 2026-10-21T21:15:59Z) git status --short | wc -l: 0
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","files":2189}
+EXIT 0
+$ (repository working tree, HEAD f62285fbed9ccc13e2ab88ce1d95495f8c51c1ae) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","files":2189}
+EXIT 0
+$ git diff --name-only 2ec59c7..f62285f | cut -d/ -f1-5 | sort | uniq -c   (paths only; contents not read)
+      3 docs/delivery/reviews/DG5/round-5
+      6 docs/delivery/runs/DG5/DG5-T-DG5-REV-DOM-R5-domain-reviewer-20261021T180035Z-ed6349b3
+      6 docs/delivery/runs/DG5/DG5-T-DG5-REV-SEC-R5-code-security-reviewer-20261021T180035Z-b2609a61
+     30 docs/delivery/test-evidence/DG5/code-security
+    263 docs/delivery/test-evidence/DG5/domain

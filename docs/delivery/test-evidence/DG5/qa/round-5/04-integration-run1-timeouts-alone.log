@@ -1,0 +1,26 @@
+$ QA_PG_PORT=26662 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh pnpm test:integration apps/api/test/integration/access-derived-race.test.ts packages/db/test/integration/scratch-drop.test.ts  (node v24.21.0, 2026-10-21T19:22:52Z)
+ 19:22:52 up  8:13,  0 user,  load average: 6.91, 8.00, 10.72
+port-policy: PostgreSQL listening on port 26662 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration $TMPDIR/review-qa
+> vitest run --project integration apps/api/test/integration/access-derived-race.test.ts packages/db/test/integration/scratch-drop.test.ts
+
+
+ RUN  v3.2.4 $TMPDIR/review-qa
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvii1voi_df287c78 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 3796ms
+   ✓ a create racing the revocation of its source BU grant leaves no active derived assignment (F-DG1-115) > C. one of two source grants revoked concurrently: the create succeeds and derives only from the survivor  301ms
+ ✓ |integration| packages/db/test/integration/scratch-drop.test.ts (3 tests) 5787ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a drop right after pool.end() raises no 57P01 on the closing pool (40 rounds, 8 clients each)  5313ms
+   ✓ dropScratchDatabase never terminates a live client (F-DG1-009) > a client that is still connected is NOT terminated: the drop refuses, names it, and succeeds once it ends  472ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  19:22:54
+   Duration  27.41s (transform 6.93s, setup 0ms, collect 13.32s, tests 9.58s, environment 0ms, prepare 89ms)
+
+EXIT 0
+2026-10-21T19:23:22Z
+ 19:23:22 up  8:14,  0 user,  load average: 6.74, 7.84, 10.57
