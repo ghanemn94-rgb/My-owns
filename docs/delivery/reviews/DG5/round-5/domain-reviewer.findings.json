@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-124",
+      "stage_id": "DG5",
+      "requirement": "REQ-S18-001",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "On a demo database, the native form-record export files (exportFormRecords, CSV and JSON, en and ar) carry no 'Illustrative example — synthetic' label",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, MTH_ENV=demo, AUTH_MODE=dev; GET /api/v1/environment returns kind=demo, synthetic=true). As roaming.user.tl: GET /api/v1/transformations/01995000-0000-7000-8000-000000000001/form-records/{T14|T01}/export?format={csv|json}&lang={en|ar} (the file behind the 'Download CSV' and 'Download JSON' buttons of the T14 benefit and T01 diagnose export dialogs). Probe: docs/delivery/test-evidence/DG5/domain/round-5/probe/dom-r5-forms.spec.ts. Source: apps/api/src/modules/forms/export.ts (exportCsv / buildFormExport never read the deployment environment; apps/web/src/components/form-framework/ExportDialog.tsx downloadJson serialises the API body as is).",
+      "expected": "REQ-S18-001's acceptance: 'every demo screen, record and export shows the synthetic label in en and ar' (M0090 'Demonstration data must be explicitly marked'; M0339 'Clearly mark every example and added number as synthetic, not Mobily actual performance'; ADR-0050 §2 (d) 'every report and export generated in a demo database carries the illustrative label ... (a CSV: its first row)'; REQ-PB-089). In a demo database the CSV starts with the 'Illustrative example — synthetic' / 'مثال توضيحي — اصطناعي' row in the export language, and the JSON body marks the export as synthetic, so a downloaded file can never be read as Mobily actual performance.",
+      "actual": "All 8 files (T14 and T01 x csv and json x en and ar) return 200 with no illustrative label in either language. The CSV's first line is the column header (for example 'Record ID,Version,ID,ID (status),benefit,...'), and the T14 rows read 'B01, Revenue uplift, revenue, 0.240000, ...' with no marker at all. The T01 rows contain the word 'synthetic' only because the seeded record text ends in '(synthetic)', not as a label. The on-screen export dialog does show the badge in its header (en and ar), but the downloaded file does not. The report/export pipeline (packages/reporting, ADR-0050 D4) labels its PDF/DOCX/XLSX/PPTX/CSV outputs; this second export path, the form framework's per-form export (ADR-0041 §5, REQ-S05-001), is outside it, and no test checks it for the label (a02-demo-labels covers a worker-generated export only). The same files also carry no B0004 provenance line. REQ-PB-001's acceptance names report footers only, so I record that as context for the repair, not as a separate failure.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-5/probe/dom-r5-forms.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-5/probe-r5-forms-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/environment.json",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T14-en.csv",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T14-ar.csv",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T14-en.csv.meta.json",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T14-ar.csv.meta.json",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T14-en.json.meta.json",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T01-en.csv.meta.json",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/api/export-T01-ar.json.meta.json",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/shots/en/r5-t14-export-1280.png",
+        "docs/delivery/test-evidence/DG5/domain/round-5/demo/shots/ar/r5-t14-export-1280.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-5/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-21T19:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 5 (T-DG5-REV-DOM-R5) on candidate sha256:a18a9f05...; the code is unchanged since earlier rounds and was not caught there."
+        }
+      ]
+    }
+  ]
+}
