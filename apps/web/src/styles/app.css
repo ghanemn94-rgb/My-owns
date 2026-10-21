@@ -973,6 +973,14 @@ input[type="radio"] {
   display: grid;
   gap: var(--mth-space-3);
 }
+/* T-DG5-FE-Z1C (F-DG5-146 follow-up, D-176; WCAG 1.4.10 Reflow): a grid track's default minimum is its content's
+   min-content width, so a wide table (the T14 export preview) widened the dialog's body past the dialog at 390 px and
+   ran off the viewport. The dialog's tracks may shrink to the dialog; wide content scrolls inside its focusable, named
+   .table-wrap, and the footer's actions wrap. */
+.dialog,
+.dialog__body {
+  grid-template-columns: minmax(0, 1fr);
+}
 .dialog__title {
   margin: 0;
 }
@@ -982,8 +990,12 @@ input[type="radio"] {
 }
 .dialog__footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--mth-space-2);
+}
+.dialog__footer > * {
+  min-inline-size: 0;
 }
 
 /* ---------------------------------------------------------------- details & workspace */
