@@ -17,7 +17,7 @@ import {
   type DashboardHeadline,
   type FinanceValueLine,
 } from "@mth/shared/schemas";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
@@ -124,7 +124,8 @@ function DashboardCrumbs(kind: DashboardKind, t: (k: string) => string) {
 function TransformationChooser({ kind }: { kind: "transformation" | "workstream" }) {
   const { t } = useTranslation();
   usePageTitle(t(`dashboards.kind.${kind}.title`));
-  const list = useTransformations({ sort: "code:asc", limit: 100 });
+  // D-181: every transformation the user may see (all pages), not the first 100.
+  const list = useAllTransformations({ sort: "code:asc" });
   type Row = { id: string; code: string; name: string };
   const columns: RegisterColumn<Row>[] = [
     {
@@ -152,11 +153,11 @@ function TransformationChooser({ kind }: { kind: "transformation" | "workstream"
         subtitle={t(`dashboards.chooser.${kind}`)}
       />
       <QueryState query={list}>
-        {(page) => (
+        {(items) => (
           <RegisterTable
             id="dashboard-chooser"
             caption={t(`dashboards.kind.${kind}.title`)}
-            rows={page.items.map((x) => ({ id: x.id, code: x.code, name: x.name }))}
+            rows={items.map((x) => ({ id: x.id, code: x.code, name: x.name }))}
             columns={columns}
             getRowId={(r) => r.id}
             emptyTitle={t("dashboards.chooser.empty")}

@@ -10,7 +10,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { canAnywhere } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
@@ -410,8 +410,9 @@ function EditContent({
   runner: Runner;
 }) {
   const { t } = useTranslation();
-  const transformations = useTransformations({ sort: "code:asc", limit: 100 });
-  const trs = (transformations.data?.items ?? []).map((x) => ({ id: x.id, code: x.code, name: x.name }));
+  // D-181: every transformation the user may see (all pages): a rule action's target past the first 100 is shown and
+  // can be chosen.
+  const transformations = useAllTransformations({ sort: "code:asc" });
   const [draft, setDraft] = useState<ContentDraft>(() =>
     toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]),
   );
@@ -429,13 +430,17 @@ function EditContent({
         });
       }}
     >
-      <ContentEditor
-        value={draft}
-        onChange={setDraft}
-        catalogue={catalogue}
-        transformations={trs}
-        idPrefix={`v${v.versionNo}`}
-      />
+      <QueryState query={transformations}>
+        {(items) => (
+          <ContentEditor
+            value={draft}
+            onChange={setDraft}
+            catalogue={catalogue}
+            transformations={items.map((x) => ({ id: x.id, code: x.code, name: x.name }))}
+            idPrefix={`v${v.versionNo}`}
+          />
+        )}
+      </QueryState>
       <div className="form__actions">
         <button type="submit" className="button button--primary" disabled={runner.busy}>
           {t("workflowsP5.rules.saveDraft")}

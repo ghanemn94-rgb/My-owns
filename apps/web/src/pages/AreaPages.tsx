@@ -5,7 +5,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { DEFAULTS } from "@mth/shared";
-import { useTransformations } from "../api/queries.ts";
+import { useAllTransformations } from "../api/queries.ts";
 import { BeingBuiltState, EmptyState, QueryState } from "../components/States.tsx";
 import { LifecycleChip } from "../components/Badges.tsx";
 import {
@@ -34,7 +34,8 @@ function TransformationEntryList({
   moreTabs?: readonly AreaWorkspaceTab[];
 }) {
   const { t } = useTranslation();
-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages), most recently updated first.
+  const list = useAllTransformations({ sort: "updatedAt:desc" });
   return (
     <section className="card" aria-labelledby="entry-title">
       <h2 id="entry-title" className="card__title">
@@ -43,12 +44,12 @@ function TransformationEntryList({
       <p>{t("nav.entry.body")}</p>
       <QueryState
         query={list}
-        isEmpty={(page) => page.items.length === 0}
+        isEmpty={(items) => items.length === 0}
         empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
       >
-        {(page) => (
+        {(items) => (
           <ul className="plain-list entry-list">
-            {page.items.map((tr) => (
+            {items.map((tr) => (
               <li key={tr.id}>
                 <Link className="link" to={`/transformations/${tr.id}/${tab}`}>
                   <bdi dir="ltr" className="code">

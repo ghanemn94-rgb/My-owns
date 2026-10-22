@@ -9,14 +9,14 @@
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import { ApiError } from "../../api/client.ts";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { SyntheticApprovalLabel } from "../../components/demo-label/DemoLabels.tsx";
 import { Field } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { Section } from "../../components/Section.tsx";
-import { ErrorState, LoadingState, NoPermissionState } from "../../components/States.tsx";
+import { ErrorState, LoadingState, NoPermissionState, QueryState } from "../../components/States.tsx";
 import { problemText } from "../../lib/problem.ts";
 import { Chip } from "../automation/ui.tsx";
 import { AREA_WEB_ID, useDemoWalkthrough } from "./api.ts";
@@ -32,7 +32,8 @@ export function WalkthroughPage() {
     walkthrough.error instanceof ApiError &&
     walkthrough.error.status === 409 &&
     walkthrough.error.code === "environment.not_demo";
-  const transformations = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages): the one named in the URL is always among the choices.
+  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
   return (
     <div className="page" data-p5-screen="walkthrough">
       <PageHeader
@@ -65,23 +66,27 @@ export function WalkthroughPage() {
             title={t("playbookP5.walkthrough.transformation")}
             intro={t("playbookP5.walkthrough.transformationIntro")}
           >
-            <Field label={t("playbookP5.walkthrough.transformation")}>
-              {(p) => (
-                <select
-                  {...p}
-                  value={tid ?? ""}
-                  onChange={(e) => setParams(e.target.value ? { transformationId: e.target.value } : {})}
-                  data-filter="walkthrough-transformation"
-                >
-                  <option value="">{t("playbookP5.walkthrough.noTransformation")}</option>
-                  {(transformations.data?.items ?? []).map((tr) => (
-                    <option key={tr.id} value={tr.id}>
-                      {tr.code} · {tr.name}
-                    </option>
-                  ))}
-                </select>
+            <QueryState query={transformations}>
+              {(items) => (
+                <Field label={t("playbookP5.walkthrough.transformation")}>
+                  {(p) => (
+                    <select
+                      {...p}
+                      value={tid ?? ""}
+                      onChange={(e) => setParams(e.target.value ? { transformationId: e.target.value } : {})}
+                      data-filter="walkthrough-transformation"
+                    >
+                      <option value="">{t("playbookP5.walkthrough.noTransformation")}</option>
+                      {items.map((tr) => (
+                        <option key={tr.id} value={tr.id}>
+                          {tr.code} · {tr.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
               )}
-            </Field>
+            </QueryState>
           </Section>
           <Section id="steps" title={t("playbookP5.walkthrough.steps")}>
             <p role="status" data-progress={walkthrough.data.completedCount}>
