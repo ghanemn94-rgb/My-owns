@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { newIdempotencyKey } from "../../api/client.ts";
 import { p5Paths, useP5Refresh } from "../../api/p5.ts";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { useSessionNavigate } from "../../auth/sessionBound.ts";
 import { Field } from "../../components/Form.tsx";
@@ -201,7 +201,8 @@ function LaunchSection() {
   const { t } = useTranslation();
   const locale = useLocale();
   const definitions = useDefinitions();
-  const transformations = useTransformations({ sort: "code:asc", limit: 100 });
+  // D-181: every transformation the user may see (all pages), not the first 100.
+  const transformations = useAllTransformations({ sort: "code:asc" });
   const refresh = useP5Refresh();
   const runner = useRunner(refresh);
   const navigate = useSessionNavigate();
@@ -258,22 +259,26 @@ function LaunchSection() {
           )}
         </Field>
         {needsTransformation ? (
-          <Field
-            label={t("workflowsP5.field.transformation")}
-            required
-            error={missing && !tid ? t("problems.validation__required") : undefined}
-          >
-            {(p) => (
-              <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
-                <option value="">{t("workflowsP5.choose")}</option>
-                {(transformations.data?.items ?? []).map((tr) => (
-                  <option key={tr.id} value={tr.id}>
-                    {tr.code} · {tr.name}
-                  </option>
-                ))}
-              </select>
+          <QueryState query={transformations}>
+            {(items) => (
+              <Field
+                label={t("workflowsP5.field.transformation")}
+                required
+                error={missing && !tid ? t("problems.validation__required") : undefined}
+              >
+                {(p) => (
+                  <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
+                    <option value="">{t("workflowsP5.choose")}</option>
+                    {items.map((tr) => (
+                      <option key={tr.id} value={tr.id}>
+                        {tr.code} · {tr.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
             )}
-          </Field>
+          </QueryState>
         ) : null}
         <div className="form__actions">
           <button type="submit" className="button button--primary" disabled={runner.busy}>
