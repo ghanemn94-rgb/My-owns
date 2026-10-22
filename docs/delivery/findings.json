@@ -14531,14 +14531,48 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-5/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-21T19:10:00Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG5 round 5 (T-DG5-REV-DOM-R5) on candidate sha256:a18a9f05...; the code is unchanged since earlier rounds and was not caught there."
+        },
+        {
+          "at": "2026-10-22T05:30:06Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 6: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-DOM-R6-domain-reviewer-20261022T044203Z-fde53862",
+          "session_id": "fde53862-9772-4dc7-80aa-b5a27fc9eb17"
+        },
+        "at": "2026-10-22T05:30:06Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-6/probe-f124-demo.log",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-api.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-ui-en.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-ui-ar.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T14-en.csv",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T14-ar.csv",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T01-en.json",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T01-ar.json",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/en/demo-T14-export-dialog.png",
+          "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/ar/demo-T14-export-dialog.png",
+          "docs/delivery/test-evidence/DG5/domain/round-6/probe-prod.log",
+          "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-api.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-ui-en.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-ui-ar.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-6/probe/dom-r6-f124.spec.ts",
+          "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log"
+        ],
+        "note": "Verified on candidate sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d (source ad52a56; repair T-DG5-BE-AA1 plus the orchestrator follow-up d2f4579, D-178/D-179), in a disposable non-shallow clone at the freeze commit 3985d19, on real stacks. (1) Demo stack (e2e/support/with-demo-stack.sh, MTH_ENV=demo, AUTH_MODE=dev; GET /environment = kind demo, synthetic true; seed checksum 0a7fdc3f...37e4). My round-5 probe dom-r5-forms.spec.ts, unchanged, and my new dom-r6-f124.spec.ts ran together: 6 passed, 2 skipped by design (the API tests run in the en project only), exit 0. All 8 files (T14 and T01, CSV and JSON, en and ar) return 200 through the API as roaming.user.tl. Each CSV's line 1 is exactly BOM + 'Illustrative example — synthetic' (en) or BOM + 'مثال توضيحي — اصطناعي' (ar). Line 2 is the localized header. The data rows are intact (T14 3, T01 6, the same as round 5), with CRLF line ends. Each JSON body has illustrativeLabel equal to the label in its language, with the same rows. I also downloaded the files through the real export dialogs ('Download CSV' and 'Download JSON') in the en and ar UI. The 8 downloaded files carry the same labels, and the dialogs show the badge (screenshots in en and ar). The strings equal the reporting pipeline's export.illustrative (packages/reporting/src/labels.ts) and the web record badge. (2) Production-path stack (apps/web/e2e/support/with-stack.sh, no marker; GET /environment = production, synthetic false), with a transformation the probe created: all 8 API files return 200 with no label row (line 1 = BOM + header) and illustrativeLabel null. The T01 CSV/JSON UI downloads in en and ar are also unlabelled. The only two export surfaces in the product are this one and the report pipeline, which a02-demo-labels covers (12/12 this round). D-178 leaves the B0004 line out of these data exports because REQ-PB-001 names report footers. I accept that reading. The regression form-export-illustrative.test.ts passed 19/19 in my 42-file integration batch."
+      }
     },
     {
       "id": "F-DG5-147",
@@ -14563,12 +14597,104 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-5/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-21T21:20:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG5 round 5 (T-DG5-REV-QA-R5) on candidate sha256:a18a9f05... from the real-stack probe R5-TITLE, in en and ar and in both locale settings. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
+        },
+        {
+          "at": "2026-10-22T08:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-QA-R6-qa-verifier-20261022T044243Z-16797f30",
+          "session_id": "16797f30-6a35-43c2-89d6-90fb6923dc12"
+        },
+        "at": "2026-10-22T08:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6title-rev2-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6title-rev2-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-a.json",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/ar/r6-title-a.json",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-cutf8/en/r6-title-a.json",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-cutf8/ar/r6-title-a.json",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-w46-overview-390.png",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/ar/r6-title-w46-benefit-390.png",
+          "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-b.json",
+          "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-product-B-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-product-B-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-6/11-repair-diff.log"
+        ],
+        "note": "Verified on candidate sha256:3294f8fc... (source ad52a56; repairs T-DG5-FE-AA1 and d2f4579) on the production-initialized real stack, in a disposable complete clone, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8. (1) My round-5 reproduction R5-TITLE, with the SAME data, screens and sizes (per language, transformations whose name and T14 benefit title hold the 120-character word w120, the 46-character token 'Synthetic_roaming_bill_shock_reduction_program' and ordinary text; the T14 benefit page with the 'B01 · <title>' and 'Form tools: <title>' card headings, and the transformation overview with the h1 page header and the breadcrumbs; 390 x 900, 320 x 900, 1280 x 900 at 200 %), is now ASSERTED as R6-TITLE-A, with an unbroken 69-character Arabic token (arU) added. Every case passes: 0 px of page overflow and no visible element of main#main outside the viewport, in 26 cases per language and run, 4 runs. In round 5 the same cases overflowed by 44-415 px (w46) and up to 2797 px (w120). axe at 390 px with the w120 title reports 0 violations of any impact on both screens. The ordinary title keeps the h1 on one line at 1280 px with the default font (no needless wrapping). (2) Beyond the finding, R6-TITLE-B swept tokens w120, arU and plain in the transformation name, a Define outcome statement and a T13 stakeholder group name across all 42 workspace tabs and 5 global pages, at 390 px, 320 px and 200 % (432 measurements per run, 4 runs). The page header h1, breadcrumbs, card titles, .outcome-card__title, the entry list on /playbook/launch-plan and /playbook/health-check, and the .dialog__title of the T13 'Form tools: <code> <name>' dialog (dialog [16..304] at 320 px, title scroll 0) all wrap. Two DG4 screens outside the repair's selector list still overflow with an unbroken record name (Traceability's record link, Modular entry's missing-item label); they are not headings, breadcrumbs or card titles, so they are raised separately as F-DG5-148 (Low). Define's 61 px at 320 px occurs with ordinary text too, so it is a separate cause (F-DG5-149, Low). (3) The repair's product regression apps/web/e2e/p5-title-reflow.spec.ts passes in both projects in both full product runs (454/454 per locale setting). It reads my R5-TITLE probe as its basis and asserts its final condition. The CSS change (overflow-wrap: anywhere on .page-header__title/__subtitle, .breadcrumbs li, .card__title, .dialog__title, .outcome-card__title, .tom-box__title, .gate-card__title and .entry-list > li; min-inline-size: 0 on .page-header__row children) is logical, so it is the same in RTL, and it causes no regression in the 454 journeys or the 30 + 12 root and demo acceptance runs per locale setting. Revision 1 of my probe had a set-up error (an upper-case dev-login username, 400), disclosed in the record; revision 2 fixed it. Everything is SYNTHETIC."
+      }
+    },
+    {
+      "id": "F-DG5-148",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The F-DG5-147 class remains on two DG4 screens outside the repair's selector list: an unbroken token in a record name (an outcome statement) widens the Traceability page (record link in the trace panel) and the Modular entry page (the missing-item label '· <name>') by 137-1658 px at 390 px, 320 px and with 200 % text, in en and ar",
+      "reproduction": "Disposable complete clone of the frozen candidate (3985d19 = source ad52a56 + delivery records; sha256:3294f8fc...), offline install, pnpm -r build. Copy docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts (revision 2) into the clone's e2e/ and run 'E2E_PG_PORT=26610 E2E_API_PORT=26611 apps/web/e2e/support/with-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers). Its test R6-TITLE-B creates, per language and token, a SYNTHETIC transformation whose name, one Define outcome statement and one T13 stakeholder group name hold the token (w120: a 120-character word without spaces; arU: an unbroken 69-character Arabic token joined by underscores; plain: ordinary text), then opens all 42 workspace tabs and 5 global pages at 390 x 900, 320 x 900 and 1280 x 900 with a 200 % root font, and records document.documentElement.scrollWidth - innerWidth and each visible element outside the viewport that is not inside a horizontal scroll container. Ran in both locale settings (logs 05-e2e-probe-r6title-rev2-unset.log and -cutf8.log).",
+      "expected": "No page-level horizontal scroll, whatever text a user enters in a record name, on every screen that shows it: the rule T-DG5-FE-AA1 and d2f4579 apply to page headings, breadcrumbs, card, dialog, outcome, TOM, gate and entry-list titles (overflow-wrap: anywhere), and the product already uses for .text-cell values.",
+      "actual": "Identical in all four runs (en and ar, locale unset and C.UTF-8). /transformations/<T>/traceability: the trace panel's record link (a.link around RecordName, TracePanels.tsx) is 1167 px wide; the page scrolls by 823 px at 390 px, 893 px at 320 px and 1658 px at 200 % with w120, and by 164 / 234 / 372 px with arU. /transformations/<T>/modular-entry: the missing-item label (span '· <label>', ModularPage.tsx, plain-list) scrolls the page by 761 / 831 / 1589 px with w120 and 137 / 207 / 307 px with arU. In ar the overflow runs past the left edge. Ordinary text: 0 px on both screens at every size. The other 40 workspace tabs, /transformations, /my-work, /executive-overview, /playbook/launch-plan, /playbook/health-check, the Define outcome title and the T13 'Form tools: <code> <name>' dialog title show 0 px of token-caused overflow (Define's 320 px overflow is token-independent: F-DG5-149). Both screens are DG4 components that the repair diff ad52a56 does not touch, so this is not a regression. It needs an unusual name, and REQ-S15-009 has final gate DG6. Low, not mandatory, not blocking DG5; fix before DG6 (for example the same overflow-wrap rule on .link inside the trace panels and on the missing-item labels, or on .plain-list items), with the e2e case extended to these screens.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6title-rev2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6title-rev2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/ar/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-cutf8/en/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-cutf8/ar/r6-title-b.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-22T08:15:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 round 6 (T-DG5-REV-QA-R6) on candidate sha256:3294f8fc... from the real-stack probe R6-TITLE-B (revision 2), in en and ar, in both locale settings, while verifying F-DG5-147. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-149",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The Define page's outcome card has a fixed width of about 352 px (its Good-outcome test table is not in a scroll region), so with ORDINARY text the page scrolls horizontally at narrow phone widths: en 61 px at 320 px, 21 px at 360 px, 6 px at 375 px; ar 29 px at 320 px",
+      "reproduction": "Disposable complete clone of the frozen candidate (sha256:3294f8fc..., source ad52a56), pnpm -r build, production-initialized stack. Copy docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-define-narrow.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26614 E2E_API_PORT=26615 apps/web/e2e/support/with-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r6-define-narrow.spec.ts --workers=1'. As dev.lead it creates a SYNTHETIC transformation with one ordinary outcome ('Synthetic: fewer roaming bill complaints'), opens /transformations/<T>/define at 320, 360, 375 and 390 px wide, and records the page overflow, the outcome card's box, the Good-outcome table's box and whether the table sits in a .table-wrap region. Also seen in R6-TITLE-B (the plain control, 4 runs).",
+      "expected": "No page-level horizontal scroll at 360 px, the width REQ-S15-009 names, nor at 320 px (WCAG 2.1 SC 1.4.10 Reflow; the product's own reflow specs measure 320 px). Wide tables sit in a named, focusable scroll region, as elsewhere in the product.",
+      "actual": "en: page overflow 61 px at 320 px, 21 px at 360 px, 6 px at 375 px, 0 px at 390 px. The outcome card stays [29..381] at every width, and its table.good-outcome__table is [42..368] and has no .table-wrap ancestor. ar: 29 px at 320 px, 0 px from 360 px (the Arabic table is narrower, 294 px). R6-TITLE-B shows the same 61 px at 320 px for the plain, w120 and arU outcomes, in en and ar and in both locale settings, and 0 px at 390 px and 200 %, so it does not depend on the text. Every earlier round measured 390 px and 200 %, where Define has 0 px. Define and its Good-outcome table are DG2 components that DG5 did not change, so this is not a regression. Define is not one of the review, approval or KPI-update flows REQ-S15-009 names, and that requirement has final gate DG6. Low, not mandatory, not blocking DG5; fix before DG6 (for example wrap the table in the product's .table-wrap region, or let its columns shrink), and add 360 px and 320 px to a Define reflow check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-define-narrow.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6define-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6define-unset/en/r6-define-narrow.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6define-unset/ar/r6-define-narrow.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6define-unset/en/r6-define-narrow-360.png",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-b.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-22T08:15:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 round 6 (T-DG5-REV-QA-R6) on candidate sha256:3294f8fc... from R6-TITLE-B's plain-text control and the follow-up probe R6-DEFINE-NARROW, in en and ar. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
         }
       ]
     }
