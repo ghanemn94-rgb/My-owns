@@ -1,0 +1,11 @@
+$ git rev-parse HEAD (repo)
+3985d1967c86a82d891bcd5e278015efac218f3d
+$ node tools/gates/candidate.mjs --stage DG5 (repo, Node 24.21.0)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d","files":2191}
+$ git diff --name-only ad52a56 3985d19 | grep -v ^docs/delivery/ (expect empty)
+(end)
+$ clone: git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv6; sparse-checkout excludes only docs/delivery/{test-evidence,handbacks,runs} (meta-excluded from the manifest; disk on the shared host was at 4.6 GB free after a first plain clone filled it, so that clone was removed); git checkout 3985d19
+3985d1967c86a82d891bcd5e278015efac218f3d
+rev-list count: 1562; shallow: false
+$ node tools/gates/candidate.mjs --stage DG5 (clone, before install)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d","files":2191}

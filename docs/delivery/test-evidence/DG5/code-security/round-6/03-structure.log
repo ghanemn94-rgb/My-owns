@@ -1,0 +1,17 @@
+## 2026-10-22T05:07:29Z repo HEAD 3985d19
+$ git diff --stat e70ac02..ad52a56 -- apps packages | tail -1
+ 873 files changed, 175065 insertions(+), 3738 deletions(-)
+$ ls packages/db/migrations | sed -n contiguity 0001..0097
+GAP before 0068
+GAP before 0074
+GAP before 0080
+GAP before 0085
+last 97 count 89
+$ git diff --name-status e70ac02..ad52a56 -- packages/db/migrations (only additions expected)
+     28 A
+$ grep -c operationId: docs/api/openapi.yaml
+846
+$ module graph: reporting -> workflows/admin imports; worker -> apps/api imports
+apps/api/src/modules/reporting/reporting.test.ts:89:      expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
+reporting matches (non-comment): 1
+worker->api imports: 0

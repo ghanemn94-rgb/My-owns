@@ -1,0 +1,752 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: roaming.user.tl (synthetic)
+      - generic [ref=e14]: Synthetic Demo Operator
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - note [ref=e20]:
+    - img [ref=e21]
+    - strong [ref=e23]: Illustrative example — synthetic. Not Mobily actual performance.
+  - generic [ref=e24]:
+    - navigation "Primary navigation" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "My Work" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: My Work
+          - list "My Work" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "Tasks and inbox" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "Approvals" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "Delegations" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "Notification preferences" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "Executive Overview" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: Executive Overview
+          - list "Executive Overview" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "Dashboards" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "RAG policy" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "Transformations" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: Transformations
+        - listitem [ref=e50]:
+          - link "Playbook and Procedures" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "Phase steps and review queue" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "Playbook reader" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "My procedures" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "90-day launch plan" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "Health check" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "Strategy and KPIs" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "KPIs" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "Target Operating Model" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: Target Operating Model
+        - listitem [ref=e73]:
+          - link "Initiatives and Roadmaps" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "Portfolios" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "Owner updates" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "Governance" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: Governance
+          - list "Governance" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "Groups" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "Forums" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "Meetings" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "Executive decisions (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "Change requests" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "Risks and Actions" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: Risks and Actions
+          - list "Risks and Actions" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "RAID (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "Action register" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "Corrective actions" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "Benefits and Finance" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "Benefits register (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "Change and Adoption" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: Change and Adoption
+          - list "Change and Adoption" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Adoption plan (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "Evidence and Reports" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "Reports and snapshots" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "Exports" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "Presentation mode" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "Evidence register" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "BAU and Improvement" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "Performance areas" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "Improvement backlog" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "Lessons" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "Lesson search" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "About this product" [ref=e142] [cursor=pointer]:
+          - /url: /about
+        - link "Guided walkthrough" [ref=e143] [cursor=pointer]:
+          - /url: /walkthrough
+    - main [ref=e144]:
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - navigation "Breadcrumbs" [ref=e147]:
+            - list [ref=e148]:
+              - listitem [ref=e149]:
+                - link "Transformations" [ref=e150] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e151]:
+                - text: /
+                - link "ROAMING" [ref=e152] [cursor=pointer]:
+                  - /url: /transformations/01995000-0000-7000-8000-000000000001
+              - listitem [ref=e153]: /Benefits register (T14)
+          - generic [ref=e155]:
+            - heading "Benefits register (T14)" [level=1] [ref=e156]
+            - paragraph [ref=e157]:
+              - generic [ref=e158]:
+                - generic [ref=e159]: ROAMING
+                - generic [ref=e160]: International Roaming Transformation
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: Active
+                - generic [ref=e164]: Illustrative example — synthetic
+                - generic [ref=e165]: "Phase: Transform"
+        - navigation "Transformation workspace" [ref=e166]:
+          - list [ref=e167]:
+            - listitem [ref=e168]:
+              - link "Overview" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001
+            - listitem [ref=e170]:
+              - link "Diagnose" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+            - listitem [ref=e172]:
+              - link "Charter" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/charter
+            - listitem [ref=e174]:
+              - link "Define" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+            - listitem [ref=e176]:
+              - link "Design" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+            - listitem [ref=e178]:
+              - link "Portfolio" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/portfolio
+            - listitem [ref=e180]:
+              - link "Prioritization" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/prioritization
+            - listitem [ref=e182]:
+              - link "Roadmap" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/roadmap
+            - listitem [ref=e184]:
+              - link "Dependencies" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dependencies
+            - listitem [ref=e186]:
+              - link "Capacity" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/capacity
+            - listitem [ref=e188]:
+              - link "Business cases" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/business-cases
+            - listitem [ref=e190]:
+              - link "Benefit formulas" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-formulas
+            - listitem [ref=e192]:
+              - link "Decisions" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/decisions
+            - listitem [ref=e194]:
+              - link "Gates" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/gates
+            - listitem [ref=e196]:
+              - link "Readiness" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/readiness
+            - listitem [ref=e198]:
+              - link "Dispensations" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dispensations
+            - listitem [ref=e200]:
+              - link "Evidence" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/evidence
+            - listitem [ref=e202]:
+              - link "Team" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/team
+            - listitem [ref=e204]:
+              - link "Role mapping" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/role-mappings
+            - listitem [ref=e206]:
+              - link "Decision rights" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/decision-rights
+            - listitem [ref=e208]:
+              - link "RACI" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/raci
+            - listitem [ref=e210]:
+              - link "Transform readiness" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/transform-readiness
+            - listitem [ref=e212]:
+              - link "Approval records" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/approval-decisions
+            - listitem [ref=e214]:
+              - link "KPIs" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/kpis
+            - listitem [ref=e216]:
+              - link "Benefits register (T14)" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits
+            - listitem [ref=e218]:
+              - link "RAID (T15)" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/raid
+            - listitem [ref=e220]:
+              - link "Actions" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/actions
+            - listitem [ref=e222]:
+              - link "Corrective actions" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/corrective-actions
+            - listitem [ref=e224]:
+              - link "Forums" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/forums
+            - listitem [ref=e226]:
+              - link "Meetings" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/meetings
+            - listitem [ref=e228]:
+              - link "Executive decisions (T16)" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/executive-decisions
+            - listitem [ref=e230]:
+              - link "Adoption" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/adoption
+            - listitem [ref=e232]:
+              - link "BAU and performance areas" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/bau
+            - listitem [ref=e234]:
+              - link "Improvement backlog" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/improvement
+            - listitem [ref=e236]:
+              - link "Lessons" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/lessons
+            - listitem [ref=e238]:
+              - link "Dashboard (T10)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dashboard
+            - listitem [ref=e240]:
+              - link "Closure" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/closure
+            - listitem [ref=e242]:
+              - link "Phases" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/phases
+            - listitem [ref=e244]:
+              - link "Change requests" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/change-requests
+            - listitem [ref=e246]:
+              - link "Traceability" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/traceability
+            - listitem [ref=e248]:
+              - link "Modular entry" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/modular-entry
+            - listitem [ref=e250]:
+              - link "Workstreams" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/workstreams
+        - paragraph [ref=e252]: Every benefit of this transformation, counted once. Pending values are kept apart from validated and sustained values.
+        - navigation "Benefits screens" [ref=e253]:
+          - link "Benefits register (T14)" [ref=e254] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits
+            - img [ref=e255]
+            - text: Benefits register (T14)
+          - link "Shared-benefit groups" [ref=e257] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-groups
+            - img [ref=e258]
+            - text: Shared-benefit groups
+          - link "Overlap warnings" [ref=e260] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-overlaps
+            - img [ref=e261]
+            - text: Overlap warnings
+          - link "Scenarios" [ref=e263] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-scenarios
+            - img [ref=e264]
+            - text: Scenarios
+          - link "Valuation methods" [ref=e266] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-valuation-methods
+            - img [ref=e267]
+            - text: Valuation methods
+          - link "Finance validation queue" [ref=e269] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/finance-validations
+            - img [ref=e270]
+            - text: Finance validation queue
+        - region "Benefits" [ref=e272]:
+          - generic [ref=e273]:
+            - heading "Benefits" [level=2] [ref=e274]
+            - button "New benefit" [ref=e276] [cursor=pointer]:
+              - img [ref=e277]
+              - text: New benefit
+          - generic [ref=e279]: Value (SAR) n/a means a non-financial benefit without an approved valuation method; it is never counted as zero. Unknown is shown with its reason.
+          - paragraph [ref=e280]:
+            - generic [ref=e281]:
+              - img [ref=e282]
+              - text: Custom extension (playbook v1.0)
+            - generic [ref=e284]:
+              - img [ref=e285]
+              - generic [ref=e287]: "Guiding question:"
+              - text: How will we prove value?
+            - generic [ref=e288]:
+              - text: "Source:"
+              - link "B0122" [ref=e290] [cursor=pointer]:
+                - /url: /playbook/reader/B0122
+              - generic [ref=e291]:
+                - text: ","
+                - link "B0123" [ref=e292] [cursor=pointer]:
+                  - /url: /playbook/reader/B0123
+          - group "Filters" [ref=e293]:
+            - generic [ref=e294]:
+              - generic [ref=e295]: Record status
+              - combobox "Record status" [ref=e296]:
+                - option "Active" [selected]
+                - option "Archived"
+            - generic [ref=e297]:
+              - generic [ref=e298]: Lifecycle step
+              - combobox "Lifecycle step" [ref=e299]:
+                - option "All steps" [selected]
+                - option "Identify"
+                - option "Plan"
+                - option "Enable"
+                - option "Measure"
+                - option "Correct"
+                - option "Sustain"
+          - generic [ref=e300]:
+            - generic [ref=e301]:
+              - generic [ref=e302]:
+                - generic [ref=e303]: Search
+                - searchbox "Search" [ref=e304]
+              - button "Columns" [ref=e306] [cursor=pointer]:
+                - img [ref=e307]
+                - text: Columns
+            - region "Benefits (scrollable table)" [ref=e309]:
+              - table "Benefits" [ref=e310]:
+                - caption [ref=e311]: Benefits
+                - rowgroup [ref=e312]:
+                  - row "Benefit sorted ascending Type not sorted Baseline Target Value (SAR) Realized Owner not sorted Evidence not sorted Status not sorted Lifecycle not sorted Initiatives Counted in totals" [ref=e313]:
+                    - columnheader "Benefit sorted ascending" [ref=e314]:
+                      - button "Benefit sorted ascending" [ref=e315] [cursor=pointer]:
+                        - text: Benefit
+                        - img [ref=e316]
+                        - generic [ref=e318]: sorted ascending
+                    - columnheader "Type not sorted" [ref=e319]:
+                      - button "Type not sorted" [ref=e320] [cursor=pointer]:
+                        - text: Type
+                        - img [ref=e321]
+                        - generic [ref=e323]: not sorted
+                    - columnheader "Baseline" [ref=e324]
+                    - columnheader "Target" [ref=e325]
+                    - columnheader "Value (SAR)" [ref=e326]
+                    - columnheader "Realized" [ref=e327]
+                    - columnheader "Owner not sorted" [ref=e328]:
+                      - button "Owner not sorted" [ref=e329] [cursor=pointer]:
+                        - text: Owner
+                        - img [ref=e330]
+                        - generic [ref=e332]: not sorted
+                    - columnheader "Evidence not sorted" [ref=e333]:
+                      - button "Evidence not sorted" [ref=e334] [cursor=pointer]:
+                        - text: Evidence
+                        - img [ref=e335]
+                        - generic [ref=e337]: not sorted
+                    - columnheader "Status not sorted" [ref=e338]:
+                      - button "Status not sorted" [ref=e339] [cursor=pointer]:
+                        - text: Status
+                        - img [ref=e340]
+                        - generic [ref=e342]: not sorted
+                    - columnheader "Lifecycle not sorted" [ref=e343]:
+                      - button "Lifecycle not sorted" [ref=e344] [cursor=pointer]:
+                        - text: Lifecycle
+                        - img [ref=e345]
+                        - generic [ref=e347]: not sorted
+                    - columnheader "Initiatives" [ref=e348]
+                    - columnheader "Counted in totals" [ref=e349]
+                - rowgroup [ref=e350]:
+                  - 'row "B01 Revenue uplift Revenue Revenue uplift 0.18 fraction Baseline validated by Finance 0.24 fraction SAR 7,128,000.00 Validated SAR 222,750.00 (1) Sustained SAR 0.00 (0) Pending SAR 99,000.00 Pending Finance validation: not counted as validated Team member (Business Owner, ref. 0013) Evidence: 0 Unknown Measure Validated by Finance INI-01 Pass redesign + digital activation INI-02 Proactive comms + QoS monitoring Counted" [ref=e351]':
+                    - rowheader "B01 Revenue uplift" [ref=e352]:
+                      - link "B01 Revenue uplift" [ref=e353] [cursor=pointer]:
+                        - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000001
+                    - cell "Revenue Revenue uplift" [ref=e354]:
+                      - generic [ref=e355]:
+                        - text: Revenue
+                        - generic [ref=e356]: Revenue uplift
+                    - cell "0.18 fraction Baseline validated by Finance" [ref=e357]:
+                      - generic [ref=e358]:
+                        - generic [ref=e359]:
+                          - text: "0.18"
+                          - generic [ref=e360]: fraction
+                        - generic [ref=e361]: Baseline validated by Finance
+                    - cell "0.24 fraction" [ref=e362]:
+                      - generic [ref=e363]:
+                        - text: "0.24"
+                        - generic [ref=e364]: fraction
+                    - cell "SAR 7,128,000.00" [ref=e365]
+                    - 'cell "Validated SAR 222,750.00 (1) Sustained SAR 0.00 (0) Pending SAR 99,000.00 Pending Finance validation: not counted as validated" [ref=e366]':
+                      - generic [ref=e367]:
+                        - generic [ref=e368]:
+                          - term [ref=e369]: Validated
+                          - definition [ref=e370]:
+                            - text: SAR 222,750.00
+                            - generic [ref=e371]: (1)
+                        - generic [ref=e372]:
+                          - term [ref=e373]: Sustained
+                          - definition [ref=e374]:
+                            - text: SAR 0.00
+                            - generic [ref=e375]: (0)
+                        - generic [ref=e376]:
+                          - term [ref=e377]:
+                            - img [ref=e378]
+                            - text: Pending
+                          - definition [ref=e380]:
+                            - text: SAR 99,000.00
+                            - generic [ref=e381]: "Pending Finance validation: not counted as validated"
+                    - cell "Team member (Business Owner, ref. 0013)" [ref=e382]
+                    - 'cell "Evidence: 0" [ref=e383]'
+                    - cell "Unknown" [ref=e384]:
+                      - generic [ref=e385]:
+                        - img [ref=e386]
+                        - text: Unknown
+                    - cell "Measure Validated by Finance" [ref=e388]:
+                      - generic [ref=e389]:
+                        - generic [ref=e390]:
+                          - img [ref=e391]
+                          - text: Measure
+                        - generic [ref=e393]:
+                          - img [ref=e394]
+                          - text: Validated by Finance
+                    - cell "INI-01 Pass redesign + digital activation INI-02 Proactive comms + QoS monitoring" [ref=e396]:
+                      - list [ref=e397]:
+                        - listitem [ref=e398]: INI-01 Pass redesign + digital activation
+                        - listitem [ref=e399]: INI-02 Proactive comms + QoS monitoring
+                    - cell "Counted" [ref=e400]
+                  - 'row "B02 CX + care cost Cost Avoided cost 0.035 fraction Baseline not validated by Finance 0.025 fraction SAR 1,584,000.00 Validated SAR 0.00 (0) Sustained SAR 0.00 (0) Pending None pending Team member (Business Owner, ref. 0013) Evidence: 0 Unknown Enable Not enabled No allocation Counted" [ref=e401]':
+                    - rowheader "B02 CX + care cost" [ref=e402]:
+                      - link "B02 CX + care cost" [ref=e403] [cursor=pointer]:
+                        - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000002
+                    - cell "Cost Avoided cost" [ref=e404]:
+                      - generic [ref=e405]:
+                        - text: Cost
+                        - generic [ref=e406]: Avoided cost
+                    - cell "0.035 fraction Baseline not validated by Finance" [ref=e407]:
+                      - generic [ref=e408]:
+                        - generic [ref=e409]:
+                          - text: "0.035"
+                          - generic [ref=e410]: fraction
+                        - generic [ref=e411]: Baseline not validated by Finance
+                    - cell "0.025 fraction" [ref=e412]:
+                      - generic [ref=e413]:
+                        - text: "0.025"
+                        - generic [ref=e414]: fraction
+                    - cell "SAR 1,584,000.00" [ref=e415]
+                    - cell "Validated SAR 0.00 (0) Sustained SAR 0.00 (0) Pending None pending" [ref=e416]:
+                      - generic [ref=e417]:
+                        - generic [ref=e418]:
+                          - term [ref=e419]: Validated
+                          - definition [ref=e420]:
+                            - text: SAR 0.00
+                            - generic [ref=e421]: (0)
+                        - generic [ref=e422]:
+                          - term [ref=e423]: Sustained
+                          - definition [ref=e424]:
+                            - text: SAR 0.00
+                            - generic [ref=e425]: (0)
+                        - generic [ref=e426]:
+                          - term [ref=e427]:
+                            - img [ref=e428]
+                            - text: Pending
+                          - definition [ref=e430]: None pending
+                    - cell "Team member (Business Owner, ref. 0013)" [ref=e431]
+                    - 'cell "Evidence: 0" [ref=e432]'
+                    - cell "Unknown" [ref=e433]:
+                      - generic [ref=e434]:
+                        - img [ref=e435]
+                        - text: Unknown
+                    - cell "Enable Not enabled" [ref=e437]:
+                      - generic [ref=e438]:
+                        - generic [ref=e439]:
+                          - img [ref=e440]
+                          - text: Enable
+                        - generic [ref=e442]:
+                          - img [ref=e443]
+                          - text: Not enabled
+                    - cell "No allocation" [ref=e445]
+                    - cell "Counted" [ref=e446]
+                  - 'row "B03 Margin improvement Revenue Margin uplift 0.012 SAR per MB Baseline validated by Finance 0.01 SAR per MB SAR 1,920,000.00 Validated SAR 80,000.00 (1) Sustained SAR 0.00 (0) Pending None pending Team member (Business Owner, ref. 0013) Evidence: 0 Unknown Measure Validated by Finance No allocation Counted" [ref=e447]':
+                    - rowheader "B03 Margin improvement" [ref=e448]:
+                      - link "B03 Margin improvement" [ref=e449] [cursor=pointer]:
+                        - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000003
+                    - cell "Revenue Margin uplift" [ref=e450]:
+                      - generic [ref=e451]:
+                        - text: Revenue
+                        - generic [ref=e452]: Margin uplift
+                    - cell "0.012 SAR per MB Baseline validated by Finance" [ref=e453]:
+                      - generic [ref=e454]:
+                        - generic [ref=e455]:
+                          - text: "0.012"
+                          - generic [ref=e456]: SAR per MB
+                        - generic [ref=e457]: Baseline validated by Finance
+                    - cell "0.01 SAR per MB" [ref=e458]:
+                      - generic [ref=e459]:
+                        - text: "0.01"
+                        - generic [ref=e460]: SAR per MB
+                    - cell "SAR 1,920,000.00" [ref=e461]
+                    - cell "Validated SAR 80,000.00 (1) Sustained SAR 0.00 (0) Pending None pending" [ref=e462]:
+                      - generic [ref=e463]:
+                        - generic [ref=e464]:
+                          - term [ref=e465]: Validated
+                          - definition [ref=e466]:
+                            - text: SAR 80,000.00
+                            - generic [ref=e467]: (1)
+                        - generic [ref=e468]:
+                          - term [ref=e469]: Sustained
+                          - definition [ref=e470]:
+                            - text: SAR 0.00
+                            - generic [ref=e471]: (0)
+                        - generic [ref=e472]:
+                          - term [ref=e473]:
+                            - img [ref=e474]
+                            - text: Pending
+                          - definition [ref=e476]: None pending
+                    - cell "Team member (Business Owner, ref. 0013)" [ref=e477]
+                    - 'cell "Evidence: 0" [ref=e478]'
+                    - cell "Unknown" [ref=e479]:
+                      - generic [ref=e480]:
+                        - img [ref=e481]
+                        - text: Unknown
+                    - cell "Measure Validated by Finance" [ref=e483]:
+                      - generic [ref=e484]:
+                        - generic [ref=e485]:
+                          - img [ref=e486]
+                          - text: Measure
+                        - generic [ref=e488]:
+                          - img [ref=e489]
+                          - text: Validated by Finance
+                    - cell "No allocation" [ref=e491]
+                    - cell "Counted" [ref=e492]
+            - navigation "Pagination" [ref=e493]:
+              - generic [ref=e494]: Page 1 of 1 · 3 of 3 rows
+              - generic [ref=e495]:
+                - generic [ref=e496]: Rows per page
+                - combobox "Rows per page" [ref=e497]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e498]
+              - button "Next" [disabled] [ref=e499]
+        - region "Totals" [ref=e500]:
+          - heading "Totals" [level=2] [ref=e502]
+          - generic [ref=e503]: Each benefit counted once. One line per value class and state; states are never added together. Currencies are never converted.
+          - generic [ref=e504]:
+            - generic [ref=e505]:
+              - heading "Currency SAR" [level=3] [ref=e506]
+              - region "Totals by value class and state" [ref=e507]:
+                - table "Totals by value class and state" [ref=e508]:
+                  - caption [ref=e509]: Totals by value class and state
+                  - rowgroup [ref=e510]:
+                    - row "Value class Planned Forecast Submitted (pending) Validated Sustained Rejected" [ref=e511]:
+                      - columnheader "Value class" [ref=e512]
+                      - columnheader "Planned" [ref=e513]
+                      - columnheader "Forecast" [ref=e514]
+                      - columnheader "Submitted (pending)" [ref=e515]
+                      - columnheader "Validated" [ref=e516]
+                      - columnheader "Sustained" [ref=e517]
+                      - columnheader "Rejected" [ref=e518]
+                  - rowgroup [ref=e519]:
+                    - 'row "Revenue uplift SAR 891,000.00 Benefits: 3 SAR 148,500.00 Benefits: 1 SAR 99,000.00 Benefits: 1 SAR 222,750.00 Benefits: 1 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0" [ref=e520]':
+                      - rowheader "Revenue uplift" [ref=e521]
+                      - 'cell "SAR 891,000.00 Benefits: 3" [ref=e522]':
+                        - text: SAR 891,000.00
+                        - generic [ref=e523]: "Benefits: 3"
+                      - 'cell "SAR 148,500.00 Benefits: 1" [ref=e524]':
+                        - text: SAR 148,500.00
+                        - generic [ref=e525]: "Benefits: 1"
+                      - 'cell "SAR 99,000.00 Benefits: 1" [ref=e526]':
+                        - text: SAR 99,000.00
+                        - generic [ref=e527]: "Benefits: 1"
+                      - 'cell "SAR 222,750.00 Benefits: 1" [ref=e528]':
+                        - text: SAR 222,750.00
+                        - generic [ref=e529]: "Benefits: 1"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e530]':
+                        - text: SAR 0.00
+                        - generic [ref=e531]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e532]':
+                        - text: SAR 0.00
+                        - generic [ref=e533]: "Benefits: 0"
+                    - 'row "Margin uplift SAR 240,000.00 Benefits: 3 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0 SAR 80,000.00 Benefits: 1 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0" [ref=e534]':
+                      - rowheader "Margin uplift" [ref=e535]
+                      - 'cell "SAR 240,000.00 Benefits: 3" [ref=e536]':
+                        - text: SAR 240,000.00
+                        - generic [ref=e537]: "Benefits: 3"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e538]':
+                        - text: SAR 0.00
+                        - generic [ref=e539]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e540]':
+                        - text: SAR 0.00
+                        - generic [ref=e541]: "Benefits: 0"
+                      - 'cell "SAR 80,000.00 Benefits: 1" [ref=e542]':
+                        - text: SAR 80,000.00
+                        - generic [ref=e543]: "Benefits: 1"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e544]':
+                        - text: SAR 0.00
+                        - generic [ref=e545]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e546]':
+                        - text: SAR 0.00
+                        - generic [ref=e547]: "Benefits: 0"
+                    - 'row "Avoided cost SAR 184,800.00 Benefits: 3 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0 SAR 0.00 Benefits: 0" [ref=e548]':
+                      - rowheader "Avoided cost" [ref=e549]
+                      - 'cell "SAR 184,800.00 Benefits: 3" [ref=e550]':
+                        - text: SAR 184,800.00
+                        - generic [ref=e551]: "Benefits: 3"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e552]':
+                        - text: SAR 0.00
+                        - generic [ref=e553]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e554]':
+                        - text: SAR 0.00
+                        - generic [ref=e555]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e556]':
+                        - text: SAR 0.00
+                        - generic [ref=e557]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e558]':
+                        - text: SAR 0.00
+                        - generic [ref=e559]: "Benefits: 0"
+                      - 'cell "SAR 0.00 Benefits: 0" [ref=e560]':
+                        - text: SAR 0.00
+                        - generic [ref=e561]: "Benefits: 0"
+              - region "Gross, implementation cost and net" [ref=e562]:
+                - table "Gross, implementation cost and net" [ref=e563]:
+                  - caption [ref=e564]: Gross, implementation cost and net
+                  - rowgroup [ref=e565]:
+                    - row "Measure Planned Validated" [ref=e566]:
+                      - columnheader "Measure" [ref=e567]
+                      - columnheader "Planned" [ref=e568]
+                      - columnheader "Validated" [ref=e569]
+                  - rowgroup [ref=e570]:
+                    - row "Gross benefit (profit and cash) Margin uplift, cash saving and working capital release only. SAR 240,000.00 SAR 80,000.00" [ref=e571]:
+                      - rowheader "Gross benefit (profit and cash) Margin uplift, cash saving and working capital release only." [ref=e572]:
+                        - text: Gross benefit (profit and cash)
+                        - generic [ref=e573]: Margin uplift, cash saving and working capital release only.
+                      - cell "SAR 240,000.00" [ref=e574]
+                      - cell "SAR 80,000.00" [ref=e575]
+                    - 'row "Revenue uplift Top line, shown beside gross: not in gross or net. Its margin belongs in margin uplift. SAR 891,000.00 SAR 222,750.00" [ref=e576]':
+                      - 'rowheader "Revenue uplift Top line, shown beside gross: not in gross or net. Its margin belongs in margin uplift." [ref=e577]':
+                        - text: Revenue uplift
+                        - generic [ref=e578]: "Top line, shown beside gross: not in gross or net. Its margin belongs in margin uplift."
+                      - cell "SAR 891,000.00" [ref=e579]
+                      - cell "SAR 222,750.00" [ref=e580]
+                    - 'row "Avoided cost Non-cash, shown beside gross: not in gross or net. SAR 184,800.00 SAR 0.00" [ref=e581]':
+                      - 'rowheader "Avoided cost Non-cash, shown beside gross: not in gross or net." [ref=e582]':
+                        - text: Avoided cost
+                        - generic [ref=e583]: "Non-cash, shown beside gross: not in gross or net."
+                      - cell "SAR 184,800.00" [ref=e584]
+                      - cell "SAR 0.00" [ref=e585]
+                    - 'row "Implementation cost cash: SAR 3,660,000.00 · non-cash: SAR 1,170,000.00 SAR 4,830,000.00" [ref=e586]':
+                      - 'rowheader "Implementation cost cash: SAR 3,660,000.00 · non-cash: SAR 1,170,000.00" [ref=e587]':
+                        - text: Implementation cost
+                        - generic [ref=e588]: "cash: SAR 3,660,000.00 · non-cash: SAR 1,170,000.00"
+                      - cell "SAR 4,830,000.00" [ref=e589]
+                    - row "Net value (profit and cash) -SAR 4,590,000.00 -SAR 4,750,000.00" [ref=e590]:
+                      - rowheader "Net value (profit and cash)" [ref=e591]
+                      - cell "-SAR 4,590,000.00" [ref=e592]
+                      - cell "-SAR 4,750,000.00" [ref=e593]
+              - paragraph [ref=e594]: "Net = gross (profit and cash: margin uplift, cash saving, working capital release) − implementation cost. Revenue uplift (top line) and avoided cost (non-cash) are shown beside gross and are never added to gross or net. Valued non-financial benefits are shown on their own line and are not in gross."
+            - generic [ref=e595]:
+              - generic [ref=e596]:
+                - term [ref=e597]: Non-financial benefits without a valuation method
+                - definition [ref=e598]: "0 Value n/a: excluded from SAR totals, not counted as zero."
+              - generic [ref=e599]:
+                - term [ref=e600]: Computed
+                - definition [ref=e601]: 22 Oct 2026, 09:24
+```

@@ -1,0 +1,169 @@
+## register rows for the 42 assigned requirements (status, final_gate, acceptance, notes)
+
+### REQ-PB-093 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A07: an admin changes the default Feasibility rubric text and the default weights to 30/20/20/15/15 in the UI and publishes without a code change; a transformation created afterwards starts with the new default; an existing transformation keeps its weight set and rubric version; publishing defaults that total 95% is rejected
+NOTES: Playbook (B0077): weights are adjusted to the transformation context. Master-prompt additions (§9 M0176; §6 M0154, M0155): scoring rubrics and approved weights are configurable and versioned, administered in Playbook Studio with draft, publish and version pinning; the source weights 25/25/20/15/15 are seeded (M0176, REQ-PB-048). Interpretations: that seed is the initial Studio default for new transformations, and ADM configures defaults only, never approving a transformation's weights (permissions-matrix.md §5 rule 2). AN-05: split from REQ-PB-049 (finding F-DG0-001). DG5 analyst check (T-DG5-AN-P5A, base f78afff): scoring-defaults.test.ts, a06-configuration-change.test.ts and a07-historical-integrity.test.ts assert that a changed Feasibility rubric and weights 30/20/20/15/15 reach only transformations created afterwards, that an existing transformation keeps 25/25/20/15/15 and rubric v1, and that 95% is refused (422 config_version.weights_total); partly covered in the UI: p5-studio.spec.ts publishes a scoring-defaults version through the Studio screens but changes one rubric descriptor only, and the 30 entry with exact decimal totals is a studio.test.tsx component test, so the exact 30/20/20/15/15 browser path is not driven end to end.
+
+### REQ-S01-002 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A20: changing the name updates the shell header in en and ar and the next generated report header without a code change; a fresh install shows 'Mobily Transformation Hub'
+NOTES: Working name only; no claim of official Mobily branding. Branding screen details belong to §15 (AN-03). DG5 analyst check (T-DG5-AN-P5A, base f78afff): branding.test.ts asserts a fresh database serves 'Mobily Transformation Hub' (en, ar) and that the next generated report carries the new name in its header in en and ar; feg.test.tsx and p5-reader-branding-demo.spec.ts (chromium-en and chromium-ar) show the configured name in the shell header without a code change; QA-A's A06 suite asserts only the API part, and these implementer tests cover the shell-header and report-header clauses it left open; the name is a working name, with no claim of official Mobily branding.
+
+### REQ-S03-007 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A01;A12;A20: an ADM sees 14 areas in en and ar; a Workstream Lead does not see Administration; each area's landing page lists the contents named in §3
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): navigation.test.ts asserts that an ADM test user holding every role default sees the 14 areas with their M0100-M0113 contents in en and ar and that a Workstream Lead does not see Administration; p5-navigation.spec.ts proves the same in chromium-en and chromium-ar (D-163 option (a), FE-G2), and p5-shell.spec.ts checks each landing page's §3 contents; the DG1 journey pins in journeys.spec.ts were updated to the server rule.
+
+### REQ-S04-011 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A08: a conditional G5 approval limited to one region blocks a scale transition for another region; a conditional approval with no scope is rejected
+NOTES: Extension (not in playbook); disabled by default. Related SOURCE rows (share a master-prompt block): REQ-PB-015; class kept USER because this row specifies platform behaviour beyond the playbook (AN-04 class review). DG5 analyst check (T-DG5-AN-P5A, base f78afff): gate-conditions.test.ts asserts that a conditional G5 limited to one business unit (the region) refuses a scale transition for another (422 scale.outside_approved_scope) and that a conditional approval without scope is refused (422 gate.scale_scope_required), with conditions tracked to closure and escalated (gate-condition-escalation.test.ts); by D-142 Q2 the switch is seeded on for G5 in the shipped methodology v1 and off for a newly authored version.
+
+### REQ-S05-001 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A01;A14: for T01 and T14, a saved draft reopens, a new version is listed in history, a comment and attachment persist, export returns the rows, and a conflicting concurrent save returns a recoverable conflict
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): form-framework.test.ts (history, comments, attachments for T01 and T14) and form-records.test.ts (a saved draft reopens, a conflicting concurrent save returns the recoverable 409 with currentVersion, export returns the rows) assert the clause for T01 and T14; p5-forms.spec.ts drives every part on T14 and form tools plus export on T01; the BE-E2 bulk-edit gap was closed by BE-E3 (form-bulk-registers.test.ts, D-159 a).
+
+### REQ-S05-002 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06: adding an extension field to T03 publishes successfully; attempting to delete the T03 'Gap' column is rejected
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): form-schemas.test.ts and a06-configuration-change.test.ts assert that an extension field added to T03 publishes and that deleting the T03 'gap' column is refused (422 source_column_protected; retyping 422 source_column_type_fixed), and p5-forms.spec.ts does both in the form builder.
+
+### REQ-S05-006 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A01: all twelve record types can be created and retrieved via the API; extension-type forms show the extension badge in en and ar
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): form-schemas.test.ts asserts the extension badge on exactly the twelve M0149 record types and form-builder.test.tsx renders the twelve badges in en ('Extension') and ar; the twelve creates and reads are their DG2-DG4 operations (ADR-0041 §1), which contract.test.ts exercises with a success for every routed operation, so no single test creates all twelve in one place.
+
+### REQ-S06-001 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06: a procedure with a conditional and a parallel step publishes and runs; a definition missing a trigger or completion condition is rejected
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): procedure-definitions.test.ts and a06-configuration-change.test.ts assert that a definition with a conditional and a parallel step publishes and runs (both parallel steps active at once, the false condition not_applicable, the instance completed) and that a missing trigger or completion condition is refused (422 trigger_required / completion_required); p5-procedures-automation.spec.ts shows the trigger refusal in the procedure builder.
+
+### REQ-S06-002 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A02: a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline record linked to the instance
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): procedure-instances.test.ts and a02-a21-complete-lifecycle.test.ts assert that a baseline-validation instance shows record_baseline as its current step with assignee TL (procedures v2, 0095), and that completing it creates a validated baseline linked to the instance (QA-E2 mutations M1, M2 killed); the screen gap found in D-166 (no output record sent) was closed by FE-D4, whose p5-procedure-outputs.spec.ts records the baseline natively and chooses it as the step's output.
+
+### REQ-S06-004 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06: an admin adds a field to T13, changes a validation rule and changes an approver route in the UI; after publish, with no deployment or application-code change, a new T13 record stores the new field, the changed rule rejects a value it previously accepted, and a submission is routed to the new approver
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): e2e/a06-configuration-change.spec.ts adds a field, changes a form rule and changes a gate approver in the Studio UI, and with no deployment a new record stores the field, the changed rule refuses 80, which it accepted before, and the submission routes to the new approver; it passed in en and ar in the D-166 root e2e, and a06-configuration-change.test.ts asserts the same on T13 through the API; QA-A F-1 (the gate approver display) was repaired by BE-C3/BE-C4 and F-2 (T13 entry in the UI) by FE-C2/FE-C3 (D-164 to D-166).
+
+### REQ-S06-005 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A05;A06: a percentage field entered as 12% stores 0.12; a currency field stores decimal SAR without float error; a calculated field referencing an unknown field is rejected
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): form-schemas.test.ts and a06-configuration-change.test.ts assert that '12%' stores "0.12", that 1500000.10 SAR is stored exactly as a decimal, and that a calculated field naming an unknown field is refused (422 calculated_formula_invalid); the unit tests cover all eleven field types.
+
+### REQ-S06-006 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A12: renaming the label of G3 succeeds; changing its stable ID, deleting a TOM dimension or configuring ADM as an automatic approver is rejected
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): studio-checks.test.ts and a06-configuration-change.test.ts assert that relabelling G3 succeeds, that changing its stable key, origin or position is refused (422 config_version.stable_id_change), that deleting a TOM dimension is refused (422 source_element_protected), and that an administrator role as approver is refused (422 admin_approver_forbidden), with database guards behind each (mutations M3b, M5c killed).
+
+### REQ-S06-007 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06: publish without required review is rejected; editing a published version returns 409; the diff lists the added field
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): studio-review-publish.test.ts and a06-configuration-change.test.ts assert that publish without the required review is refused (422 config_version.review_required) and that a published version is immutable (409), and the diff lists the added field (a06, studio-checks.test.ts and the A06 e2e diff); studio-checks.test.ts also covers affected records and compatibility, which QA-A did not assert.
+
+### REQ-S06-008 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A07: after publishing v2, an existing transformation still renders v1 forms; the migration preview lists the new required field and a required G2 reapproval; historical records remain unchanged
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): methodology-migrations.test.ts and a06-configuration-change.test.ts assert that after v2 an existing transformation still renders v1 forms, that the migration preview lists the new required field and a required G2 re-approval, and that the pin moves only after an approved execution; a07-historical-integrity.test.ts asserts that the approved G2 decision and pack stay byte-identical.
+
+### REQ-S06-009 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A07: after rollback, records created under the rolled-back version remain retrievable and the audit trail shows the rollback
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): studio-review-publish.test.ts and a07-historical-integrity.test.ts assert that a rollback restores an earlier version as a new version, that a T13 value stored under the rolled-back version stays retrievable, and that the audit trail shows the rollback (mutation M4 killed); the A06 e2e afterAll exercises a rollback on the real stack.
+
+### REQ-S06-010 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A12: a methodology admin can publish a form change but receives 403 approving a funding reallocation; a KPI owner can update assigned KPI actuals but not Studio
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): studio-review-publish.test.ts and a06-configuration-change.test.ts assert that a methodology admin who publishes a form change gets 403 approving a funding reallocation, and that BO (a KPI owner) gets 403 on every Studio write; the 'KPI owner updates assigned actuals' part is the A04 journey e2e/a04-kpi-update.spec.ts, which passed in en and ar in the D-166 root e2e; QA-A did not re-test it.
+
+### REQ-S07-016 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A07: a prospective target change leaves last quarter's RAG unchanged; a restatement of Q1 without authority is rejected; the Q1 report issued earlier is unchanged and a reissue creates version 2
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): a07-historical-integrity.test.ts asserts that a prospective target change (100 -> 120) leaves last quarter's RAG unchanged, that a Q1 restatement without kpi_restatement.approve or by its requester is refused, and that after approval the earlier Q1 report is unchanged while a reissue creates version 2 (decisions.test.ts likewise; mutation M6 killed); QA-B P-1 (the executive dashboard not offered for reissue) was repaired by KBE-D4 (D-166), and the A07 e2e passed in en and ar in the D-166 root e2e.
+
+### REQ-S08-005 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A05: preview of the revenue uplift example shows SAR as the unit and 'Not computable' for a missing ARPU
+NOTES: DG5 analyst check (T-DG5-AN-P5A, base f78afff): formula-preview.test.ts asserts that the revenue uplift example's unit is SAR currency and that a missing ARPU gives not_computable (formula.missing_input, never 0), with worked edge cases, and fef.test.tsx and p5-launch-health-kpi.spec.ts show SAR and 'Not computable' on the preview screen.
+
+### REQ-S10-013 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A15: changing a linked decision before cut-off changes the presentation; the issued pack remains the snapshot
+NOTES: Related SOURCE rows (share a master-prompt block): REQ-PB-068, REQ-PB-081; class kept USER because this row specifies platform behaviour beyond the playbook (AN-04 class review). DG5 analyst check (T-DG5-AN-P5B, base f78afff): the live presentation follows a linked decision edited before cut-off while the issued pack stays the snapshot (a15-snapshots-and-packs 'changing the linked decision' and 'the issued meeting pack remains the snapshot', live JSON, ?snapshotId= and the issued PDF in en and ar; mutation M5 killed); PASS in the D-167 merged-tree integration run.
+
+### REQ-S10-015 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A08: in a sequential route step 2 is not notified until step 1 approves; in a parallel route both are notified at once
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): approval-routes.test.ts 'sequential route' asserts step 2 has no work item or notification until step 1 approves and 'parallel route' asserts every step is notified at once, and A06 routes a NEW transformation's submission to the new approvers in sequence; the QA-A F-DG5-QA-A-3 gap (routes not configurable in the UI) was repaired by FE-G2 (D-163/D-164: Studio route editor, route-editor.test.tsx, p5-studio-routes.spec.ts).
+
+### REQ-S12-001 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A13: each execution is recorded with rule version, trigger event and outcome
+NOTES: AN-04: at DG5 the engine must run all sixteen starter automations (M0224-M0239) as versioned, configurable rules, including those consolidated into REQ-S04-012 (M0228), REQ-PB-085 (M0227), REQ-PB-082 (M0233) and REQ-PB-083 (M0237), whose behaviour itself completes at DG4. DG5 analyst check (T-DG5-AN-P5B, base f78afff): A13D 'the execution history names the rule, its version, the trigger event and the outcome, per action' asserts ruleId, versionId/versionNo, triggerCode/triggerKey and status for admin rules, a13-starters-run asserts one execution of the effective version with its trigger_code and outcome for 12 starters, and worker starters.test.ts records every event and schedule starter once (replay x3 adds nothing); disclosed: starter 9's end-to-end run (the AN-04 sixteen-starter scope) waits for the D-QA-F2-1 relay repair (BE-T5, W22; held row REQ-S12-012), although its handler records its execution in starters.test.ts and in QA-F2's probe P1.
+
+### REQ-S12-002 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06;A13: a dry-run creates no tasks; a failed execution appears in the queue and succeeds on retry without duplicating actions
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): A13D 'a dry-run creates no tasks' asserts unchanged work_item, inbox_notification, automation_execution and outbox_event counts, and A13D plus e2e/a13-automation-recovery.spec.ts (en and ar, 30/30 in QA-F2's binding root run) assert a failed execution in the queue that succeeds on retry with 1 task, 1 reminder and 1 execution; the D-166 orchestrator root e2e failed A13 on shared-stack timing, which QA-F2 repaired, and the W21 orchestrator e2e is recorded with W22's verification.
+
+### REQ-S12-003 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A12: a rule configured to create records in a transformation outside its scope fails with an authorization error in the failure queue
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): automation-failures.test.ts 'REQ-S12-003' asserts that a rule on transformation A configured to create a task in transformation B fails at once with automation.action_forbidden into the failure queue and creates nothing, and its parity test checks the API and worker identity decisions agree on every scope, target, identity and permission combination; no QA acceptance suite re-tests this clause (A12 is a later-gate suite).
+
+### REQ-S12-004 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A13;A16: creating one transformation produces one set of phase checklists and role tasks; a retry creates no duplicates; with the plan flag the 90-day tasks are dated from the start date
+NOTES: Related SOURCE rows (share a master-prompt block): REQ-PB-086; class kept USER because this row specifies platform behaviour beyond the playbook (AN-04 class review). DG5 analyst check (T-DG5-AN-P5B, base f78afff): a13-starter-jobs and a16-launch-plan assert one set of phase_step rows, role tasks and one launch_plan after the event is replayed 3x, every task dated within its window from launchPlan.startDate, and no plan without the flag, with worker starters.test.ts 'one set of entry-phase checklist rows and role tasks'; disclosed (QA-D): the A13 clause is asserted as unchanged-on-retry, not as an exact expected count of entry-phase steps.
+
+### REQ-S12-012 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A13: a 5-day slip notifies each affected owner once and moves dependent forecasts per the logic
+NOTES: DG5 analyst check (T-DG5-AN-P5C, base b463552): a13-dependency-slip-rule-b.test.ts, through the public API, asserts one critical 5-day slip, the affected initiatives with their owners, the Rule B forecast moves (no-slack dependents move by 5 days directly and transitively, a dependent with slack does not move, an undated one stays Unknown) and that each distinct affected owner gets one dependency_slip work item and one reminder while the predecessor's owner gets none, and it passes 8/8 unchanged in BE-T5B batch 1 now that dependency.slipped v1 is registered (D-QA-F2-1 closed), with dependency-slip-relay.test.ts proving the real relay publishes on the first attempt and starter 9 succeeds once; disclosed: the relay negative control was run only by the interrupted BE-T5 run, and the merged-tree verification of 8c68a47 is still to come.
+
+### REQ-S12-015 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A13;A15: cut-off creates one draft agenda containing current open asks; it is not published without review
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): a13-starter-jobs and a15-snapshots-and-packs run the real cut-off scan (re-delivered 3x) and assert one draft pack holding the open asks, publish refused with 422 agenda_item.pack_not_reviewed before review and 200 after the chair's review.
+
+### REQ-S12-020 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A13: killing the worker mid-job and restarting completes the job once; after the retry limit it lands in the failure queue
+NOTES: AN-05 (§21 recheck): moved from P4;P5;P6/DG6 to P4;P5/DG5. The DG5 evidence 'durable rule retries' (M0408), and REQ-S12-002 (DG5, retry from the failure queue without duplicates), need durable jobs with bounded retries. P6 re-runs A13 for the DG6 evidence 'concurrency/failure recovery' (M0409). DG5 analyst check (T-DG5-AN-P5B, base f78afff): A13D SIGKILLs a real worker process inside the rule's transaction and asserts that after restart there is 1 succeeded execution, 1 task and 1 reminder, and 'bounded retries' asserts 1 + retryLimit attempts then a failure-queue entry (automation.retries_exhausted; mutation M1 killed); disclosed: the A13 export-job test fails on 7305433 only on its 'ONE file' assertion (orphan per-attempt file, D-QA-F2-3 Low, BE-T5 in W22), the job itself completing once, and the production retry policy (5 retries, 10 s exponential) is not exercised end to end.
+
+### REQ-S12-021 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A13: replaying the same event three times yields one reminder, one action and one approval task
+NOTES: AN-05 (§21 recheck): moved from P4;P5;P6/DG6 to P4;P5/DG5. The DG5 evidence 'durable rule retries' (M0408), and REQ-S12-002 (DG5, retry without duplicating actions), need de-duplicated side effects. P6 re-runs A13 at DG6. DG5 analyst check (T-DG5-AN-P5B, base f78afff): A13D 'replaying the same event three times' re-relays and re-delivers an admin rule's event 3x (1 execution, 1 task, 1 reminder) and a native G1 submission's gate.submitted 3x (the Sponsor's approval task and all work items and notifications unchanged), with a13-jobs-rerun covering the export and Day-90 job replays.
+
+### REQ-S12-022 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A22: the jobs screen shows last success and next run for each scheduled job; a non-admin gets 403
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): A22I asserts one row per job_schedule with lastSuccessAt and an independently computed Asia/Riyadh nextRunAt, the recorded run after run-now, and 403 for TL, TO, AUD and ADM_METHOD (401 anonymous; mutation M4 killed), and e2e/a22-operations-jobs.spec.ts checks the screen against the API in en and ar.
+
+### REQ-S12-025 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A09: a non-urgent reminder due in quiet hours is delivered in the next digest; an urgent escalation is delivered immediately
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): notification-delivery.test.ts asserts a non-urgent reminder in quiet hours is delivered in the next digest (one digest per window), an urgent approval_escalated in quiet hours is delivered immediately, and business-day timing uses the default calendar; no QA acceptance suite re-tests this clause (A09 is not among the DG5 QA suites).
+
+### REQ-S12-026 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A08;A13: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): kept SPECIFIED as a real gap: the 'approve gate' refusal is proven (A13D, 422 automation_rule.human_only_action, mutation M3 killed) and 15 of 16 starters run (a13-starters-run for 12, worker starters.test.ts for 4 and 13, starters-be-j for 14 and 15), but 'all automatic ... reminder rules run' fails on this base for starter 9 because the relay refuses dependency.slipped (D-QA-F2-1 High, a13-dependency-slip-rule-b failing in the D-167 run), so the row should be re-checked with the held rows after BE-T5 (W22). DG5 analyst check (T-DG5-AN-P5C, base b463552): the AN-P5B gap is closed: the 'approve gate' refusal stays proven (A13D, 422 automation_rule.human_only_action, M3 killed) and the sixteenth starter now runs, since BE-T5 registered dependency.slipped v1 and dependency-slip-relay.test.ts plus a13-dependency-slip-rule-b (8/8 in BE-T5B batch 1) show starter 9 executing once and creating its work items, so all sixteen preparation and reminder starters run (1-3, 5-8, 10-12, 14 on its schedules and 16 in a13-starters-run, 4 and 13 in worker starters.test.ts, 15 and 14's request trigger in starters-be-j, 9 above); disclosed: starters 4, 13 and 15 and starter 14's request trigger are run by the implementers' integration tests through the real engine but not by a QA suite (QA-F2 STARTERS_ELSEWHERE).
+
+### REQ-S13-005 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A15: an XLSX export of T15 contains exactly the filtered RAID rows; a PPTX gate pack contains the gate's criteria
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): a15-selected-records-and-injection asserts an XLSX (en, ar) of the risk-filtered T15 RAID register holds exactly the rows of GET /raid?type=risk (mutation M4 killed) and a PPTX gate pack (en, ar) lists every G1 criterion, and exports-paged.test.ts checks the PPTX for every G2 criterion.
+
+### REQ-S13-006 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A15;A12: a RAID description '=HYPERLINK(...)' exports as text; a system SUM total remains a formula
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): a15-selected-records-and-injection asserts that text starting with =, +, -, @, tab or CR exports as a quote-prefixed string in XLSX and CSV (mutation M1 killed), and the SUM part that QA-C found missing (D3, F-DG5-qa-c-3) was repaired by KBE-D3: a15-demo-transformation-outputs 'a system SUM total remains a formula' and table-totals-demo.test.ts pass from the D-164 merged-tree run on.
+
+### REQ-S13-007 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A07;A15: after a later KPI change, the issued snapshot still shows the old values and their versions
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): a15-snapshots-and-packs asserts the issued snapshot keeps the old KPI target and its kpi_version after an approved change moves it from 100 to 120 while the live report refreshes (mutation M3 killed), and a07-historical-integrity's dashboard-snapshot test (QA-B P-1: no calculation version recorded) passes since KBE-D4's repair (D-166).
+
+### REQ-S13-010 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A01;A12: an uploaded file stores a SHA-256 checksum and version 1; a second upload becomes version 2
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): evidence-register.test.ts asserts an uploaded file appears with its SHA-256 (recomputed by the test) and version 1, a second upload is version 2 and both are listed with their checksums, and authorization (AUD reads, 403/404/401); the DG2 increment's upload checks are in evidence.test.ts, and no QA acceptance suite re-tests this clause.
+
+### REQ-S15-004 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A20: changing brand.primary in Branding Settings changes the navigation colour and the header colour of a newly generated PDF report without a code change or redeploy
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): p5-navigation.spec.ts asserts a brand.primary change in Branding Settings changes the navigation's computed background (or its contrast-checked shade, D-163/D-164) and branding.test.ts asserts the next generated PDF's header band takes the new colour and name in en and ar, with no restart or code change; the colour tokens stay provisional (#0078FF is not a verified Mobily colour).
+
+### REQ-S16-010 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A06: a custom field value violating its schema is rejected by the API; core entities have typed columns and foreign keys
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): a06-configuration-change 'a custom-field value violating its schema is rejected before persistence' asserts 400/422 for a non-number, an above-max value, a float currency and an unknown key with the stored row unchanged and checks stakeholder_group's foreign keys, and the ERD and data dictionary list the typed core tables.
+
+### REQ-S16-012 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A08: the ERD and migrations contain every entity listed (Transformation, PerformanceArea, Charter, MethodologyVersion, Phase, GateDefinition, GateInstance, GateDecision) with primary keys, owner and status where applicable, and an integration test creates and reads each one through the API with authorization enforced
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): methodology/entity-group.test.ts creates and reads Transformation, Charter, GateInstance, GateDecision, MethodologyVersion, Phase, GateDefinition and PerformanceArea through the API with AUD 403 on writes and 404 or 403 outside scope, and the ERD maps each entity to its table (Phase and GateDefinition as version-scoped rows, D-142 Q4); no QA acceptance suite re-tests this group.
+
+### REQ-S16-015 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A01: the ERD and migrations contain every entity listed (TOMDimension, TOMCanvas, Capability, Gap, Journey, Process, ProcedureDefinition, ProcedureInstance) with primary keys, owner and status where applicable, and an integration test creates and reads each one through the API with authorization enforced
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): procedures/entity-group.test.ts creates and reads TOMDimension, TOMCanvas (tom_canvas_cell), Capability, Gap, Journey, Process (a journey row of kind process), ProcedureDefinition and ProcedureInstance through the API with AUD 403 and 404 or 403 outside scope, and the ERD records each mapping; no QA acceptance suite re-tests this group.
+
+### REQ-S16-021 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A11;A16: the ERD and migrations contain every entity listed (BAUHandover, Control, ControlCheck, ImprovementItem, Lesson, HealthAssessment) with primary keys, owner and status where applicable, and an integration test creates and reads each one through the API with authorization enforced
+NOTES: DG5 analyst check (T-DG5-AN-P5B, base f78afff): a16-s16-021-entities and s16-021-group.test.ts create and read BAUHandover, Control, ImprovementItem, Lesson and HealthAssessment through the API (AUD 403 with no row written, another organization 404, no session 401) and read ControlCheck after the production control-check job creates it (the contract has no create operation for it), and the tables are in the ERD and migrations 0048 and 0086.
+
+### REQ-S18-001 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A22;A01: running the reset twice yields identical record counts and checksums; every demo screen, record and export shows the synthetic label in en and ar
+NOTES: AN-04 consolidation: absorbs former REQ-S02-007 (Mark demonstration data explicitly and isolate it from production); its anchors M0090 and acceptance are carried here. Related SOURCE rows (share a master-prompt block): REQ-PB-088, REQ-PB-089; class kept USER because this row specifies platform behaviour beyond the playbook (AN-04 class review). DG5 analyst check (T-DG5-AN-P5C, base b463552): a22-operational-readiness (A22I) drives the built mth-db CLI to seed a separately initialized demo database and reset it twice, asserting identical counts and checksum equal to the seed's and the production refusals (8/8 in D-167 and in BE-T5B batch 5; demo.test.ts the same through the CLI), and e2e/a02-demo-labels.spec.ts asserts on a real demo stack in en and ar the banner on every visited screen, the record badge in record headers and, after FE-D5B closed D-QA-E2-1, in form and dialog headers, and the label in a worker-generated export (6/6), while fed5-demo-form-badge and p5-reader-branding-demo show no label in production; disclosed: these runs are the W22 tasks' own (D-164) and the merged-tree verification of 8c68a47 is still to come.
+
+### REQ-S18-003 status=IMPLEMENTED final_gate=DG5
+ACCEPTANCE: A22;A18: after production initialization, a query finds zero demo records and zero demo users; the demo seed command exits with an error in production mode
+NOTES: Also carries the production-exclusion clause of former REQ-S02-007 (M0090 is cited by REQ-S18-001). AN-04 gate fix: increments P5;P7 -> P5, final gate DG7 -> DG5. A22 (DG6) requires production/demo separation and REQ-PB-088 (DG5) checks production contains no demo records; the final package re-verifies it under A18/A28 (REQ-S20-018, REQ-S20-028). DG5 analyst check (T-DG5-AN-P5B, base f78afff): A22I runs the built mth-db bootstrap in production mode and asserts zero demo_seed_record and demo_dataset_run rows, no demo-namespace user and only the bootstrap admin, then asserts seed-demo exits 3 in production mode with table counts unchanged and the in-app reset gives 409 environment.not_demo (mutation M5 killed).

@@ -1,0 +1,83 @@
+## 2026-10-22T05:04:21Z node v24.21.0 pnpm 10.33.0 load: 3.25 2.96 2.49
+
+$ pnpm -r build   (05:04:21Z)
+apps/web build: dist/assets/BusinessCasePage-DwL2uk9l.js                              29.85 kB │ gzip:   8.60 kB │ map:    96.03 kB
+apps/web build: dist/assets/KpiPage-TTKDCSvP.js                                       31.70 kB │ gzip:   7.85 kB │ map:    90.32 kB
+apps/web build: dist/assets/GateDetailPage-CRwv_a6e.js                                32.59 kB │ gzip:   9.16 kB │ map:   108.21 kB
+apps/web build: dist/assets/ui-0L7QRPfb.js                                            33.85 kB │ gzip:   9.12 kB │ map:   118.29 kB
+apps/web build: dist/assets/BenefitPage-CI1Pdftu.js                                   35.93 kB │ gzip:   8.73 kB │ map:   104.89 kB
+apps/web build: dist/assets/PrioritizationPage-yOcC2G07.js                            40.16 kB │ gzip:  10.07 kB │ map:   131.37 kB
+apps/web build: dist/assets/DesignPage-T15Hu8PC.js                                    41.39 kB │ gzip:   9.11 kB │ map:   125.32 kB
+apps/web build: dist/assets/vendor-i18n-CCR7jdor.js                                   49.18 kB │ gzip:  16.30 kB │ map:   166.95 kB
+apps/web build: dist/assets/InitiativePage-b_Pdyc0I.js                                62.42 kB │ gzip:  14.88 kB │ map:   199.37 kB
+apps/web build: dist/assets/vendor-tanstack-fGzLzvsE.js                               85.26 kB │ gzip:  23.73 kB │ map:   371.56 kB
+apps/web build: dist/assets/vendor-forms-DNciwvPl.js                                 112.60 kB │ gzip:  36.66 kB │ map:   654.91 kB
+apps/web build: dist/assets/vendor-react-NIDFHmNi.js                                 273.20 kB │ gzip:  87.38 kB │ map: 1,376.51 kB
+apps/web build: dist/assets/index-BhZInSMC.js                                      1,581.66 kB │ gzip: 427.67 kB │ map: 1,536.71 kB
+apps/web build: ✓ built in 14.34s
+apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/web build: - Using dynamic import() to code-split the application
+apps/web build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/web build: Done
+packages/db build$ tsc -p tsconfig.build.json
+packages/db build: Done
+apps/worker build$ tsc -p tsconfig.build.json
+apps/api build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: Done
+EXIT 0
+
+$ pnpm -r typecheck   (05:06:59Z)
+Scope: 8 of 9 workspace projects
+packages/design-tokens typecheck$ tsc -p tsconfig.json
+packages/shared typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck: Done
+packages/shared typecheck: Done
+apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+packages/config typecheck$ tsc -p tsconfig.json
+packages/reporting typecheck$ tsc -p tsconfig.json
+packages/config typecheck: Done
+packages/reporting typecheck: Done
+apps/web typecheck: Done
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+EXIT 0
+
+$ pnpm lint   (05:10:30Z)
+
+> mobily-transformation-hub@0.1.0 lint $TMPDIR/review-r6
+> eslint . --max-warnings=0
+
+EXIT 0
+
+$ pnpm openapi:lint   (05:11:14Z)
+
+> mobily-transformation-hub@0.1.0 openapi:lint $TMPDIR/review-r6
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations
+EXIT 0
+
+$ pnpm check:no-cdn   (05:11:16Z)
+
+> mobily-transformation-hub@0.1.0 check:no-cdn $TMPDIR/review-r6
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+EXIT 0
+
+$ pnpm format:check   (05:11:17Z)
+
+> mobily-transformation-hub@0.1.0 format:check $TMPDIR/review-r6
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+EXIT 0
+
+$ pnpm deps:verify   (05:12:15Z)

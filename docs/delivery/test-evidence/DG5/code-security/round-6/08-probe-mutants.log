@@ -1,0 +1,78 @@
+## 2026-10-22T05:50:43Z probe negative controls; clone HEAD 3985d19; node v24.21.0; locale unset
+
+### mutant M1: git diff
+diff --git a/apps/api/src/modules/forms/export.ts b/apps/api/src/modules/forms/export.ts
+index 97afd40..ef4827b 100644
+--- a/apps/api/src/modules/forms/export.ts
++++ b/apps/api/src/modules/forms/export.ts
+@@ -232,7 +232,7 @@ export async function buildFormExport(
+     for (const v of values) stored.set(v.record_id, (v.field_values ?? {}) as Record<string, unknown>);
+   }
+   // ADR-0050 §2 (d): the environment at generation time (the deployment marker; no marker reads as production).
+-  const synthetic = (await readDeploymentEnvironment(db)).synthetic;
++  const synthetic = false && (await readDeploymentEnvironment(db)).synthetic;
+   const vars = numericVariables(form, t.currency);
+   const out: FormRecordExport["rows"] = [];
+   for (const r of rows) {
+$ env -u LANG -u LC_ALL QA_PG_PORT=26580 MTH_PORT_POOL=26581-26599 bash tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/forms/zz-sec-r6-form-export-label.test.ts
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T01 csv -> 404, no body content 19ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T01 json -> 404, no body content 8ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T14 csv -> 404, no body content 4ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T14 json -> 404, no body content 9ms
+   × SEC-R6 1: scope of the labelled export on the demo database > readers in the transformation (TL, CM, KDS): 200 and the label in the JSON body 95ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > an unknown transformation id -> 404 (no label oracle) 5ms
+   ✓ SEC-R6 2: the application role cannot steer detection > mth_app: INSERT/UPDATE/DELETE on deployment_environment are refused (42501) on both databases 107ms
+   ✓ SEC-R6 2: the application role cannot steer detection > the owner cannot flip the production marker to demo afterwards (append-only) 9ms
+   ✓ SEC-R6 3: an explicit production marker gives no label > GET /environment is production, not synthetic 23ms
+   ✓ SEC-R6 3: an explicit production marker gives no label > T01 json+csv en: illustrativeLabel null, CSV starts with BOM + header 55ms
+   ✓ SEC-R6 3: an explicit production marker gives no label > T01 json+csv ar: illustrativeLabel null, CSV starts with BOM + header 24ms
+   ✓ SEC-R6 4: the CSV writer with the label row > label row: one plain field; every formula-like text after it is apostrophe-prefixed; canonical decimals are not 1ms
+   ✓ SEC-R6 4: the CSV writer with the label row > label null: no label row (the header is the first line) 0ms
+   ✓ SEC-R6 4: the CSV writer with the label row > the Arabic label row is the Arabic string, unquoted 0ms
+   ✓ SEC-R6 5: format/Accept guard unchanged on the demo database > format=csv with Accept: application/json -> 400 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/forms/zz-sec-r6-form-export-label.test.ts > SEC-R6 1: scope of the labelled export on the demo database > readers in the transformation (TL, CM, KDS): 200 and the label in the JSON body
+AssertionError: expected [ 'roaming.user.tl:200:null', …(2) ] to deeply equal [ …(3) ]
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+EXIT 1 (non-zero expected: the mutant must be killed)
+
+### mutant M2: git diff
+diff --git a/apps/api/src/modules/forms/export.ts b/apps/api/src/modules/forms/export.ts
+index 97afd40..df85717 100644
+--- a/apps/api/src/modules/forms/export.ts
++++ b/apps/api/src/modules/forms/export.ts
+@@ -109,7 +109,7 @@ export function csvField(text: string): string {
+ export function csvCell(text: string | null, decimal: boolean): string {
+   if (text === null || text === "") return "";
+   if (decimal && DECIMAL.test(text)) return text;
+-  return csvField(FORMULA_TRIGGERS.has(text.charAt(0)) ? `'${text}` : text);
++  return csvField(text);
+ }
+ 
+ /** The export column of a field: the source columns in one typed column of the type's table, and extension fields. */
+$ env -u LANG -u LC_ALL QA_PG_PORT=26580 MTH_PORT_POOL=26581-26599 bash tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/forms/zz-sec-r6-form-export-label.test.ts
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T01 csv -> 404, no body content 16ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T01 json -> 404, no body content 5ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T14 csv -> 404, no body content 5ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > ADM_ACCESS only: T14 json -> 404, no body content 4ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > readers in the transformation (TL, CM, KDS): 200 and the label in the JSON body 72ms
+   ✓ SEC-R6 1: scope of the labelled export on the demo database > an unknown transformation id -> 404 (no label oracle) 7ms
+   ✓ SEC-R6 2: the application role cannot steer detection > mth_app: INSERT/UPDATE/DELETE on deployment_environment are refused (42501) on both databases 77ms
+   ✓ SEC-R6 2: the application role cannot steer detection > the owner cannot flip the production marker to demo afterwards (append-only) 15ms
+   ✓ SEC-R6 3: an explicit production marker gives no label > GET /environment is production, not synthetic 16ms
+   ✓ SEC-R6 3: an explicit production marker gives no label > T01 json+csv en: illustrativeLabel null, CSV starts with BOM + header 66ms
+   ✓ SEC-R6 3: an explicit production marker gives no label > T01 json+csv ar: illustrativeLabel null, CSV starts with BOM + header 88ms
+   × SEC-R6 4: the CSV writer with the label row > label row: one plain field; every formula-like text after it is apostrophe-prefixed; canonical decimals are not 74ms
+   ✓ SEC-R6 4: the CSV writer with the label row > label null: no label row (the header is the first line) 0ms
+   ✓ SEC-R6 4: the CSV writer with the label row > the Arabic label row is the Arabic string, unquoted 0ms
+   ✓ SEC-R6 5: format/Accept guard unchanged on the demo database > format=csv with Accept: application/json -> 400 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/forms/zz-sec-r6-form-export-label.test.ts > SEC-R6 4: the CSV writer with the label row > label row: one plain field; every formula-like text after it is apostrophe-prefixed; canonical decimals are not
+AssertionError: expected 'Record ID,Version,"=HYPERLINK(""http:…' to contain '"\'=HYPERLINK(""http://x"")"'
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+EXIT 1 (non-zero expected: the mutant must be killed)
+
+clone git status --short lines after revert: 0
+## end 2026-10-22T05:51:58Z

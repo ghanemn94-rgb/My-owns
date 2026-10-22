@@ -1,0 +1,34 @@
+$ grep -rniE 'official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily' apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo apps/api/src/modules/forms
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:130:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+exit=0
+$ grep -rnE '\bDG[0-7]\b' apps/web/src/i18n/{en,ar}/*.json
+exit=1
+$ git diff 0c88d5e..ad52a56 -- apps packages docs/api | grep '^+' | grep -niE 'official|certif|PMI|Mobily|DG[0-7]\b'
+4:+//   - Demo database (F-DG5-124; D-178; ADR-0050 §2 (d); REQ-S18-001, REQ-PB-089; M0090, M0339): the environment is read
+14:+ * The illustrative label of an export generated in a demo database (F-DG5-124; D-178): exactly the reporting pipeline's
+30:+ * The CSV text of an export: BOM, the illustrative label row on a demo database (F-DG5-124), a header row, then one row
+36:+// T-DG5-BE-AA1 (F-DG5-124; D-178; REQ-S18-001, REQ-PB-089; ADR-0050 §2 (d); M0090, M0339): the form framework's own
+46:+// and `illustrativeLabel: null`. Everything is SYNTHETIC; nothing here approves anything or touches DG0-DG7.
+110:+describe("F-DG5-124: the native form-record export on a demo database carries the illustrative label", () => {
+149:+describe("F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null)", () => {
+183:+    // F-DG5-124 (D-178): a demo export's label is the first row, after the BOM and before the header.
+187:+// Long unbroken text in record titles reflows at 390 px, 320 px and with 200 % text (T-DG5-FE-AA1, D-178; F-DG5-147,
+190:+// It is the qa-verifier's round-5 probe R5-TITLE (docs/delivery/test-evidence/DG5/qa/tests/round-5/e2e/
+195:+//  - each is opened on the T14 benefit page (the DG4 card heading "B01 · <title>" and the P5 form framework heading
+207:+// SYNTHETIC demo data; nothing here grants a business approval (G1-G6) or touches the delivery gates DG0-DG7.
+397:+/* T-DG5-FE-AA1 (F-DG5-147, D-178; REQ-S15-009, WCAG 2.1 SC 1.4.10 Reflow): a record title or transformation name is
+420:+  /* T-DG5-FE-AA1 (F-DG5-147 class): an entry is a record name (e.g. a transformation in the P5 transformation picker
+427:+        illustrativeLabel: { type: [string, "null"], minLength: 1, description: "F-DG5-124 (D-178; ADR-0050 §2 (d)): the illustrative label in the export language ('Illustrative example — synthetic' / 'مثال توضيحي — اصطناعي') when the export was generated in a demo database; null otherwise. The CSV form carries the same label as its first row, before the header." }
+430:+   * F-DG5-124 (D-178; ADR-0050 §2 (d)): the illustrative label in the export language ("Illustrative example —
+exit=0
+$ git diff 0c88d5e..ad52a56 --stat -- apps/web/src/i18n packages apps/api apps/worker docs/source docs/api
+ apps/api/src/modules/forms/export.ts               |  37 +++++-
+ .../forms/form-export-illustrative.test.ts         | 138 +++++++++++++++++++++
+ .../test/integration/forms/form-records.test.ts    |  17 ++-
+ docs/api/openapi.yaml                              |   7 +-
+ packages/shared/src/schemas/forms-records.ts       |   5 +
+ 5 files changed, 191 insertions(+), 13 deletions(-)
+exit=0

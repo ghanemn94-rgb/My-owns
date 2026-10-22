@@ -1,0 +1,752 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: roaming.user.tl (synthetic)
+      - generic [ref=e14]: مشغل عرض توضيحي اصطناعي
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - note [ref=e20]:
+    - img [ref=e21]
+    - strong [ref=e23]: مثال توضيحي — بيانات اصطناعية. ليست أداء موبايلي الفعلي.
+  - generic [ref=e24]:
+    - navigation "التنقل الرئيسي" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "عملي" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: عملي
+          - list "عملي" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "المهام وصندوق الوارد" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "الموافقات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "التفويضات" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "تفضيلات الإشعارات" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "النظرة التنفيذية" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "لوحات المؤشرات" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "سياسة ألوان الحالة" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "التحوّلات" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: التحوّلات
+        - listitem [ref=e50]:
+          - link "الدليل والإجراءات" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "قارئ الدليل" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "إجراءاتي" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "فحص سلامة التحوّل" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "مؤشرات الأداء" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "نموذج التشغيل المستهدف" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: نموذج التشغيل المستهدف
+        - listitem [ref=e73]:
+          - link "المبادرات وخرائط الطريق" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "المحافظ" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "تحديثات المسؤولين" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "الحوكمة" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: الحوكمة
+          - list "الحوكمة" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "المجموعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "المنتديات" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "الاجتماعات" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "القرارات التنفيذية (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "طلبات التغيير" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "المخاطر والإجراءات" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "سجل الإجراءات" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "الإجراءات التصحيحية" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "المنافع والمالية" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "سجل المنافع (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "التغيير والتبنّي" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "خطة التبنّي (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "الأدلة والتقارير" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "التقارير واللقطات" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "التصدير" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "وضع العرض التقديمي" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "سجل الأدلة" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "مجالات الأداء" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "قائمة التحسين المستمر" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "الدروس المستفادة" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "البحث في الدروس" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "حول هذا المنتج" [ref=e142] [cursor=pointer]:
+          - /url: /about
+        - link "الجولة الإرشادية" [ref=e143] [cursor=pointer]:
+          - /url: /walkthrough
+    - main [ref=e144]:
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - navigation "مسار التنقل" [ref=e147]:
+            - list [ref=e148]:
+              - listitem [ref=e149]:
+                - link "التحوّلات" [ref=e150] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e151]:
+                - text: /
+                - link "ROAMING" [ref=e152] [cursor=pointer]:
+                  - /url: /transformations/01995000-0000-7000-8000-000000000001
+              - listitem [ref=e153]: /سجل المنافع (T14)
+          - generic [ref=e155]:
+            - heading "سجل المنافع (T14)" [level=1] [ref=e156]
+            - paragraph [ref=e157]:
+              - generic [ref=e158]:
+                - generic [ref=e159]: ROAMING
+                - generic [ref=e160]: International Roaming Transformation
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: نشط
+                - generic [ref=e164]: مثال توضيحي — اصطناعي
+                - generic [ref=e165]: "المرحلة: التحويل والتنفيذ"
+        - navigation "مساحة عمل التحوّل" [ref=e166]:
+          - list [ref=e167]:
+            - listitem [ref=e168]:
+              - link "نظرة عامة" [ref=e169] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001
+            - listitem [ref=e170]:
+              - link "التشخيص" [ref=e171] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/diagnose
+            - listitem [ref=e172]:
+              - link "الميثاق" [ref=e173] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/charter
+            - listitem [ref=e174]:
+              - link "التحديد" [ref=e175] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/define
+            - listitem [ref=e176]:
+              - link "التصميم" [ref=e177] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/design
+            - listitem [ref=e178]:
+              - link "المحفظة" [ref=e179] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/portfolio
+            - listitem [ref=e180]:
+              - link "ترتيب الأولويات" [ref=e181] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/prioritization
+            - listitem [ref=e182]:
+              - link "خارطة الطريق" [ref=e183] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/roadmap
+            - listitem [ref=e184]:
+              - link "الاعتماديات" [ref=e185] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dependencies
+            - listitem [ref=e186]:
+              - link "السعة" [ref=e187] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/capacity
+            - listitem [ref=e188]:
+              - link "دراسات الجدوى" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/business-cases
+            - listitem [ref=e190]:
+              - link "معادلات المنفعة" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-formulas
+            - listitem [ref=e192]:
+              - link "القرارات" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/decisions
+            - listitem [ref=e194]:
+              - link "البوابات" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/gates
+            - listitem [ref=e196]:
+              - link "الجاهزية" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/readiness
+            - listitem [ref=e198]:
+              - link "الإعفاءات" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dispensations
+            - listitem [ref=e200]:
+              - link "الأدلة" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/evidence
+            - listitem [ref=e202]:
+              - link "الفريق" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/team
+            - listitem [ref=e204]:
+              - link "إسناد الأدوار" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/role-mappings
+            - listitem [ref=e206]:
+              - link "صلاحيات القرار" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/decision-rights
+            - listitem [ref=e208]:
+              - link "مصفوفة المسؤوليات" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/raci
+            - listitem [ref=e210]:
+              - link "جاهزية التحويل والتنفيذ" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/transform-readiness
+            - listitem [ref=e212]:
+              - link "سجل الموافقات" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/approval-decisions
+            - listitem [ref=e214]:
+              - link "مؤشرات الأداء" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/kpis
+            - listitem [ref=e216]:
+              - link "سجل المنافع (T14)" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits
+            - listitem [ref=e218]:
+              - link "سجل المخاطر (T15)" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/raid
+            - listitem [ref=e220]:
+              - link "الإجراءات" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/actions
+            - listitem [ref=e222]:
+              - link "الإجراءات التصحيحية" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/corrective-actions
+            - listitem [ref=e224]:
+              - link "المنتديات" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/forums
+            - listitem [ref=e226]:
+              - link "الاجتماعات" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/meetings
+            - listitem [ref=e228]:
+              - link "القرارات التنفيذية (T16)" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/executive-decisions
+            - listitem [ref=e230]:
+              - link "التبنّي" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/adoption
+            - listitem [ref=e232]:
+              - link "العمليات الاعتيادية ومجالات الأداء" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/bau
+            - listitem [ref=e234]:
+              - link "قائمة التحسين المستمر" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/improvement
+            - listitem [ref=e236]:
+              - link "الدروس المستفادة" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/lessons
+            - listitem [ref=e238]:
+              - link "لوحة المؤشرات (T10)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/dashboard
+            - listitem [ref=e240]:
+              - link "الإغلاق" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/closure
+            - listitem [ref=e242]:
+              - link "المراحل" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/phases
+            - listitem [ref=e244]:
+              - link "طلبات التغيير" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/change-requests
+            - listitem [ref=e246]:
+              - link "التتبّع" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/traceability
+            - listitem [ref=e248]:
+              - link "الدخول الجزئي المرن" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/modular-entry
+            - listitem [ref=e250]:
+              - link "مسارات العمل" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01995000-0000-7000-8000-000000000001/workstreams
+        - paragraph [ref=e252]: كل منافع هذا التحوّل، تُحسب كل منفعة مرة واحدة. القيم المعلّقة منفصلة عن القيم المتحقق منها والمستدامة.
+        - navigation "شاشات المنافع" [ref=e253]:
+          - link "سجل المنافع (T14)" [ref=e254] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits
+            - img [ref=e255]
+            - text: سجل المنافع (T14)
+          - link "مجموعات المنافع المشتركة" [ref=e257] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-groups
+            - img [ref=e258]
+            - text: مجموعات المنافع المشتركة
+          - link "تحذيرات التداخل" [ref=e260] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-overlaps
+            - img [ref=e261]
+            - text: تحذيرات التداخل
+          - link "السيناريوهات" [ref=e263] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-scenarios
+            - img [ref=e264]
+            - text: السيناريوهات
+          - link "طرق التقييم" [ref=e266] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/benefit-valuation-methods
+            - img [ref=e267]
+            - text: طرق التقييم
+          - link "قائمة التحقق المالي" [ref=e269] [cursor=pointer]:
+            - /url: /transformations/01995000-0000-7000-8000-000000000001/finance-validations
+            - img [ref=e270]
+            - text: قائمة التحقق المالي
+        - region "المنافع" [ref=e272]:
+          - generic [ref=e273]:
+            - heading "المنافع" [level=2] [ref=e274]
+            - button "منفعة جديدة" [ref=e276] [cursor=pointer]:
+              - img [ref=e277]
+              - text: منفعة جديدة
+          - generic [ref=e279]: القيمة (ريال) «لا ينطبق» تعني منفعة غير مالية بلا طريقة تقييم معتمدة؛ ولا تُحسب صفرًا أبدًا. وتظهر «غير معروفة» مع سببها.
+          - paragraph [ref=e280]:
+            - generic [ref=e281]:
+              - img [ref=e282]
+              - text: امتداد مخصص (الدليل، الإصدار 1.0)
+            - generic [ref=e284]:
+              - img [ref=e285]
+              - generic [ref=e287]: "السؤال الإرشادي:"
+              - text: كيف سنثبت القيمة؟
+            - generic [ref=e288]:
+              - text: "المصدر:"
+              - link "B0122" [ref=e290] [cursor=pointer]:
+                - /url: /playbook/reader/B0122
+              - generic [ref=e291]:
+                - text: ","
+                - link "B0123" [ref=e292] [cursor=pointer]:
+                  - /url: /playbook/reader/B0123
+          - group "عوامل التصفية" [ref=e293]:
+            - generic [ref=e294]:
+              - generic [ref=e295]: حالة السجل
+              - combobox "حالة السجل" [ref=e296]:
+                - option "نشطة" [selected]
+                - option "مؤرشفة"
+            - generic [ref=e297]:
+              - generic [ref=e298]: خطوة دورة الحياة
+              - combobox "خطوة دورة الحياة" [ref=e299]:
+                - option "كل الخطوات" [selected]
+                - option "التحديد"
+                - option "التخطيط"
+                - option "التمكين"
+                - option "القياس"
+                - option "التصحيح"
+                - option "الاستدامة"
+          - generic [ref=e300]:
+            - generic [ref=e301]:
+              - generic [ref=e302]:
+                - generic [ref=e303]: بحث
+                - searchbox "بحث" [ref=e304]
+              - button "الأعمدة" [ref=e306] [cursor=pointer]:
+                - img [ref=e307]
+                - text: الأعمدة
+            - region "المنافع (جدول قابل للتمرير)" [ref=e309]:
+              - table "المنافع" [ref=e310]:
+                - caption [ref=e311]: المنافع
+                - rowgroup [ref=e312]:
+                  - row "المنفعة مرتّب تصاعديًا النوع غير مرتّب خط الأساس المستهدف القيمة (ريال) المتحقق المالك غير مرتّب الأدلة غير مرتّب الحالة غير مرتّب دورة الحياة غير مرتّب المبادرات محسوبة في الإجماليات" [ref=e313]:
+                    - columnheader "المنفعة مرتّب تصاعديًا" [ref=e314]:
+                      - button "المنفعة مرتّب تصاعديًا" [ref=e315] [cursor=pointer]:
+                        - text: المنفعة
+                        - img [ref=e316]
+                        - generic [ref=e318]: مرتّب تصاعديًا
+                    - columnheader "النوع غير مرتّب" [ref=e319]:
+                      - button "النوع غير مرتّب" [ref=e320] [cursor=pointer]:
+                        - text: النوع
+                        - img [ref=e321]
+                        - generic [ref=e323]: غير مرتّب
+                    - columnheader "خط الأساس" [ref=e324]
+                    - columnheader "المستهدف" [ref=e325]
+                    - columnheader "القيمة (ريال)" [ref=e326]
+                    - columnheader "المتحقق" [ref=e327]
+                    - columnheader "المالك غير مرتّب" [ref=e328]:
+                      - button "المالك غير مرتّب" [ref=e329] [cursor=pointer]:
+                        - text: المالك
+                        - img [ref=e330]
+                        - generic [ref=e332]: غير مرتّب
+                    - columnheader "الأدلة غير مرتّب" [ref=e333]:
+                      - button "الأدلة غير مرتّب" [ref=e334] [cursor=pointer]:
+                        - text: الأدلة
+                        - img [ref=e335]
+                        - generic [ref=e337]: غير مرتّب
+                    - columnheader "الحالة غير مرتّب" [ref=e338]:
+                      - button "الحالة غير مرتّب" [ref=e339] [cursor=pointer]:
+                        - text: الحالة
+                        - img [ref=e340]
+                        - generic [ref=e342]: غير مرتّب
+                    - columnheader "دورة الحياة غير مرتّب" [ref=e343]:
+                      - button "دورة الحياة غير مرتّب" [ref=e344] [cursor=pointer]:
+                        - text: دورة الحياة
+                        - img [ref=e345]
+                        - generic [ref=e347]: غير مرتّب
+                    - columnheader "المبادرات" [ref=e348]
+                    - columnheader "محسوبة في الإجماليات" [ref=e349]
+                - rowgroup [ref=e350]:
+                  - 'row "B01 Revenue uplift إيرادات زيادة الإيرادات 0.18 fraction خط الأساس تحققت منه المالية 0.24 fraction ‏7,128,000.00 ر.س.‏ متحقق منها ‏222,750.00 ر.س.‏ (1) مستدامة ‏0.00 ر.س.‏ (0) معلّقة ‏99,000.00 ر.س.‏ بانتظار التحقق المالي: لا تُحسب ضمن المتحقق منه عضو في الفريق (المالك التشغيلي للأعمال، مرجع 0013) الأدلة: 0 غير معروفة القياس تحققت منها المالية INI-01 Pass redesign + digital activation INI-02 Proactive comms + QoS monitoring محسوبة" [ref=e351]':
+                    - rowheader "B01 Revenue uplift" [ref=e352]:
+                      - link "B01 Revenue uplift" [ref=e353] [cursor=pointer]:
+                        - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000001
+                    - cell "إيرادات زيادة الإيرادات" [ref=e354]:
+                      - generic [ref=e355]:
+                        - text: إيرادات
+                        - generic [ref=e356]: زيادة الإيرادات
+                    - cell "0.18 fraction خط الأساس تحققت منه المالية" [ref=e357]:
+                      - generic [ref=e358]:
+                        - generic [ref=e359]:
+                          - text: "0.18"
+                          - generic [ref=e360]: fraction
+                        - generic [ref=e361]: خط الأساس تحققت منه المالية
+                    - cell "0.24 fraction" [ref=e362]:
+                      - generic [ref=e363]:
+                        - text: "0.24"
+                        - generic [ref=e364]: fraction
+                    - cell "‏7,128,000.00 ر.س.‏" [ref=e365]
+                    - 'cell "متحقق منها ‏222,750.00 ر.س.‏ (1) مستدامة ‏0.00 ر.س.‏ (0) معلّقة ‏99,000.00 ر.س.‏ بانتظار التحقق المالي: لا تُحسب ضمن المتحقق منه" [ref=e366]':
+                      - generic [ref=e367]:
+                        - generic [ref=e368]:
+                          - term [ref=e369]: متحقق منها
+                          - definition [ref=e370]:
+                            - text: ‏222,750.00 ر.س.‏
+                            - generic [ref=e371]: (1)
+                        - generic [ref=e372]:
+                          - term [ref=e373]: مستدامة
+                          - definition [ref=e374]:
+                            - text: ‏0.00 ر.س.‏
+                            - generic [ref=e375]: (0)
+                        - generic [ref=e376]:
+                          - term [ref=e377]:
+                            - img [ref=e378]
+                            - text: معلّقة
+                          - definition [ref=e380]:
+                            - text: ‏99,000.00 ر.س.‏
+                            - generic [ref=e381]: "بانتظار التحقق المالي: لا تُحسب ضمن المتحقق منه"
+                    - cell "عضو في الفريق (المالك التشغيلي للأعمال، مرجع 0013)" [ref=e382]
+                    - 'cell "الأدلة: 0" [ref=e383]'
+                    - cell "غير معروفة" [ref=e384]:
+                      - generic [ref=e385]:
+                        - img [ref=e386]
+                        - text: غير معروفة
+                    - cell "القياس تحققت منها المالية" [ref=e388]:
+                      - generic [ref=e389]:
+                        - generic [ref=e390]:
+                          - img [ref=e391]
+                          - text: القياس
+                        - generic [ref=e393]:
+                          - img [ref=e394]
+                          - text: تحققت منها المالية
+                    - cell "INI-01 Pass redesign + digital activation INI-02 Proactive comms + QoS monitoring" [ref=e396]:
+                      - list [ref=e397]:
+                        - listitem [ref=e398]: INI-01 Pass redesign + digital activation
+                        - listitem [ref=e399]: INI-02 Proactive comms + QoS monitoring
+                    - cell "محسوبة" [ref=e400]
+                  - 'row "B02 CX + care cost تكلفة تكلفة متجنَّبة 0.035 fraction خط الأساس لم تتحقق منه المالية 0.025 fraction ‏1,584,000.00 ر.س.‏ متحقق منها ‏0.00 ر.س.‏ (0) مستدامة ‏0.00 ر.س.‏ (0) معلّقة لا شيء معلّق عضو في الفريق (المالك التشغيلي للأعمال، مرجع 0013) الأدلة: 0 غير معروفة التمكين غير مُمكَّنة بلا توزيع محسوبة" [ref=e401]':
+                    - rowheader "B02 CX + care cost" [ref=e402]:
+                      - link "B02 CX + care cost" [ref=e403] [cursor=pointer]:
+                        - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000002
+                    - cell "تكلفة تكلفة متجنَّبة" [ref=e404]:
+                      - generic [ref=e405]:
+                        - text: تكلفة
+                        - generic [ref=e406]: تكلفة متجنَّبة
+                    - cell "0.035 fraction خط الأساس لم تتحقق منه المالية" [ref=e407]:
+                      - generic [ref=e408]:
+                        - generic [ref=e409]:
+                          - text: "0.035"
+                          - generic [ref=e410]: fraction
+                        - generic [ref=e411]: خط الأساس لم تتحقق منه المالية
+                    - cell "0.025 fraction" [ref=e412]:
+                      - generic [ref=e413]:
+                        - text: "0.025"
+                        - generic [ref=e414]: fraction
+                    - cell "‏1,584,000.00 ر.س.‏" [ref=e415]
+                    - cell "متحقق منها ‏0.00 ر.س.‏ (0) مستدامة ‏0.00 ر.س.‏ (0) معلّقة لا شيء معلّق" [ref=e416]:
+                      - generic [ref=e417]:
+                        - generic [ref=e418]:
+                          - term [ref=e419]: متحقق منها
+                          - definition [ref=e420]:
+                            - text: ‏0.00 ر.س.‏
+                            - generic [ref=e421]: (0)
+                        - generic [ref=e422]:
+                          - term [ref=e423]: مستدامة
+                          - definition [ref=e424]:
+                            - text: ‏0.00 ر.س.‏
+                            - generic [ref=e425]: (0)
+                        - generic [ref=e426]:
+                          - term [ref=e427]:
+                            - img [ref=e428]
+                            - text: معلّقة
+                          - definition [ref=e430]: لا شيء معلّق
+                    - cell "عضو في الفريق (المالك التشغيلي للأعمال، مرجع 0013)" [ref=e431]
+                    - 'cell "الأدلة: 0" [ref=e432]'
+                    - cell "غير معروفة" [ref=e433]:
+                      - generic [ref=e434]:
+                        - img [ref=e435]
+                        - text: غير معروفة
+                    - cell "التمكين غير مُمكَّنة" [ref=e437]:
+                      - generic [ref=e438]:
+                        - generic [ref=e439]:
+                          - img [ref=e440]
+                          - text: التمكين
+                        - generic [ref=e442]:
+                          - img [ref=e443]
+                          - text: غير مُمكَّنة
+                    - cell "بلا توزيع" [ref=e445]
+                    - cell "محسوبة" [ref=e446]
+                  - 'row "B03 Margin improvement إيرادات زيادة الهامش 0.012 SAR per MB خط الأساس تحققت منه المالية 0.01 SAR per MB ‏1,920,000.00 ر.س.‏ متحقق منها ‏80,000.00 ر.س.‏ (1) مستدامة ‏0.00 ر.س.‏ (0) معلّقة لا شيء معلّق عضو في الفريق (المالك التشغيلي للأعمال، مرجع 0013) الأدلة: 0 غير معروفة القياس تحققت منها المالية بلا توزيع محسوبة" [ref=e447]':
+                    - rowheader "B03 Margin improvement" [ref=e448]:
+                      - link "B03 Margin improvement" [ref=e449] [cursor=pointer]:
+                        - /url: /transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000003
+                    - cell "إيرادات زيادة الهامش" [ref=e450]:
+                      - generic [ref=e451]:
+                        - text: إيرادات
+                        - generic [ref=e452]: زيادة الهامش
+                    - cell "0.012 SAR per MB خط الأساس تحققت منه المالية" [ref=e453]:
+                      - generic [ref=e454]:
+                        - generic [ref=e455]:
+                          - text: "0.012"
+                          - generic [ref=e456]: SAR per MB
+                        - generic [ref=e457]: خط الأساس تحققت منه المالية
+                    - cell "0.01 SAR per MB" [ref=e458]:
+                      - generic [ref=e459]:
+                        - text: "0.01"
+                        - generic [ref=e460]: SAR per MB
+                    - cell "‏1,920,000.00 ر.س.‏" [ref=e461]
+                    - cell "متحقق منها ‏80,000.00 ر.س.‏ (1) مستدامة ‏0.00 ر.س.‏ (0) معلّقة لا شيء معلّق" [ref=e462]:
+                      - generic [ref=e463]:
+                        - generic [ref=e464]:
+                          - term [ref=e465]: متحقق منها
+                          - definition [ref=e466]:
+                            - text: ‏80,000.00 ر.س.‏
+                            - generic [ref=e467]: (1)
+                        - generic [ref=e468]:
+                          - term [ref=e469]: مستدامة
+                          - definition [ref=e470]:
+                            - text: ‏0.00 ر.س.‏
+                            - generic [ref=e471]: (0)
+                        - generic [ref=e472]:
+                          - term [ref=e473]:
+                            - img [ref=e474]
+                            - text: معلّقة
+                          - definition [ref=e476]: لا شيء معلّق
+                    - cell "عضو في الفريق (المالك التشغيلي للأعمال، مرجع 0013)" [ref=e477]
+                    - 'cell "الأدلة: 0" [ref=e478]'
+                    - cell "غير معروفة" [ref=e479]:
+                      - generic [ref=e480]:
+                        - img [ref=e481]
+                        - text: غير معروفة
+                    - cell "القياس تحققت منها المالية" [ref=e483]:
+                      - generic [ref=e484]:
+                        - generic [ref=e485]:
+                          - img [ref=e486]
+                          - text: القياس
+                        - generic [ref=e488]:
+                          - img [ref=e489]
+                          - text: تحققت منها المالية
+                    - cell "بلا توزيع" [ref=e491]
+                    - cell "محسوبة" [ref=e492]
+            - navigation "التنقل بين الصفحات" [ref=e493]:
+              - generic [ref=e494]: الصفحة 1 من 1 · 3 من 3 صفوف
+              - generic [ref=e495]:
+                - generic [ref=e496]: عدد الصفوف في الصفحة
+                - combobox "عدد الصفوف في الصفحة" [ref=e497]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "السابق" [disabled] [ref=e498]
+              - button "التالي" [disabled] [ref=e499]
+        - region "الإجماليات" [ref=e500]:
+          - heading "الإجماليات" [level=2] [ref=e502]
+          - generic [ref=e503]: تُحسب كل منفعة مرة واحدة. سطر لكل فئة قيمة وحالة، ولا تُجمع الحالات معًا أبدًا. ولا تُحوَّل العملات.
+          - generic [ref=e504]:
+            - generic [ref=e505]:
+              - heading "العملة SAR" [level=3] [ref=e506]
+              - region "الإجماليات حسب فئة القيمة والحالة" [ref=e507]:
+                - table "الإجماليات حسب فئة القيمة والحالة" [ref=e508]:
+                  - caption [ref=e509]: الإجماليات حسب فئة القيمة والحالة
+                  - rowgroup [ref=e510]:
+                    - row "فئة القيمة مخططة متوقعة مقدَّمة (معلّقة) متحقق منها مستدامة مرفوضة" [ref=e511]:
+                      - columnheader "فئة القيمة" [ref=e512]
+                      - columnheader "مخططة" [ref=e513]
+                      - columnheader "متوقعة" [ref=e514]
+                      - columnheader "مقدَّمة (معلّقة)" [ref=e515]
+                      - columnheader "متحقق منها" [ref=e516]
+                      - columnheader "مستدامة" [ref=e517]
+                      - columnheader "مرفوضة" [ref=e518]
+                  - rowgroup [ref=e519]:
+                    - 'row "زيادة الإيرادات ‏891,000.00 ر.س.‏ المنافع: 3 ‏148,500.00 ر.س.‏ المنافع: 1 ‏99,000.00 ر.س.‏ المنافع: 1 ‏222,750.00 ر.س.‏ المنافع: 1 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0" [ref=e520]':
+                      - rowheader "زيادة الإيرادات" [ref=e521]
+                      - 'cell "‏891,000.00 ر.س.‏ المنافع: 3" [ref=e522]':
+                        - text: ‏891,000.00 ر.س.‏
+                        - generic [ref=e523]: "المنافع: 3"
+                      - 'cell "‏148,500.00 ر.س.‏ المنافع: 1" [ref=e524]':
+                        - text: ‏148,500.00 ر.س.‏
+                        - generic [ref=e525]: "المنافع: 1"
+                      - 'cell "‏99,000.00 ر.س.‏ المنافع: 1" [ref=e526]':
+                        - text: ‏99,000.00 ر.س.‏
+                        - generic [ref=e527]: "المنافع: 1"
+                      - 'cell "‏222,750.00 ر.س.‏ المنافع: 1" [ref=e528]':
+                        - text: ‏222,750.00 ر.س.‏
+                        - generic [ref=e529]: "المنافع: 1"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e530]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e531]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e532]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e533]: "المنافع: 0"
+                    - 'row "زيادة الهامش ‏240,000.00 ر.س.‏ المنافع: 3 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0 ‏80,000.00 ر.س.‏ المنافع: 1 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0" [ref=e534]':
+                      - rowheader "زيادة الهامش" [ref=e535]
+                      - 'cell "‏240,000.00 ر.س.‏ المنافع: 3" [ref=e536]':
+                        - text: ‏240,000.00 ر.س.‏
+                        - generic [ref=e537]: "المنافع: 3"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e538]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e539]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e540]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e541]: "المنافع: 0"
+                      - 'cell "‏80,000.00 ر.س.‏ المنافع: 1" [ref=e542]':
+                        - text: ‏80,000.00 ر.س.‏
+                        - generic [ref=e543]: "المنافع: 1"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e544]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e545]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e546]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e547]: "المنافع: 0"
+                    - 'row "تكلفة متجنَّبة ‏184,800.00 ر.س.‏ المنافع: 3 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0 ‏0.00 ر.س.‏ المنافع: 0" [ref=e548]':
+                      - rowheader "تكلفة متجنَّبة" [ref=e549]
+                      - 'cell "‏184,800.00 ر.س.‏ المنافع: 3" [ref=e550]':
+                        - text: ‏184,800.00 ر.س.‏
+                        - generic [ref=e551]: "المنافع: 3"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e552]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e553]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e554]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e555]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e556]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e557]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e558]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e559]: "المنافع: 0"
+                      - 'cell "‏0.00 ر.س.‏ المنافع: 0" [ref=e560]':
+                        - text: ‏0.00 ر.س.‏
+                        - generic [ref=e561]: "المنافع: 0"
+              - region "الإجمالي والتكلفة التنفيذية والصافي" [ref=e562]:
+                - table "الإجمالي والتكلفة التنفيذية والصافي" [ref=e563]:
+                  - caption [ref=e564]: الإجمالي والتكلفة التنفيذية والصافي
+                  - rowgroup [ref=e565]:
+                    - row "المقياس مخططة متحقق منها" [ref=e566]:
+                      - columnheader "المقياس" [ref=e567]
+                      - columnheader "مخططة" [ref=e568]
+                      - columnheader "متحقق منها" [ref=e569]
+                  - rowgroup [ref=e570]:
+                    - row "إجمالي المنفعة (الربح والنقد) زيادة الهامش، وفر نقدي، تحرير رأس المال العامل فقط. ‏240,000.00 ر.س.‏ ‏80,000.00 ر.س.‏" [ref=e571]:
+                      - rowheader "إجمالي المنفعة (الربح والنقد) زيادة الهامش، وفر نقدي، تحرير رأس المال العامل فقط." [ref=e572]:
+                        - text: إجمالي المنفعة (الربح والنقد)
+                        - generic [ref=e573]: زيادة الهامش، وفر نقدي، تحرير رأس المال العامل فقط.
+                      - cell "‏240,000.00 ر.س.‏" [ref=e574]
+                      - cell "‏80,000.00 ر.س.‏" [ref=e575]
+                    - 'row "زيادة الإيرادات إيراد إجمالي (الخط الأعلى) يُعرض بجانب الإجمالي: لا يدخل في الإجمالي ولا في الصافي. هامشه يُحتسب ضمن زيادة الهامش. ‏891,000.00 ر.س.‏ ‏222,750.00 ر.س.‏" [ref=e576]':
+                      - 'rowheader "زيادة الإيرادات إيراد إجمالي (الخط الأعلى) يُعرض بجانب الإجمالي: لا يدخل في الإجمالي ولا في الصافي. هامشه يُحتسب ضمن زيادة الهامش." [ref=e577]':
+                        - text: زيادة الإيرادات
+                        - generic [ref=e578]: "إيراد إجمالي (الخط الأعلى) يُعرض بجانب الإجمالي: لا يدخل في الإجمالي ولا في الصافي. هامشه يُحتسب ضمن زيادة الهامش."
+                      - cell "‏891,000.00 ر.س.‏" [ref=e579]
+                      - cell "‏222,750.00 ر.س.‏" [ref=e580]
+                    - 'row "تكلفة متجنَّبة غير نقدية، تُعرض بجانب الإجمالي: لا تدخل في الإجمالي ولا في الصافي. ‏184,800.00 ر.س.‏ ‏0.00 ر.س.‏" [ref=e581]':
+                      - 'rowheader "تكلفة متجنَّبة غير نقدية، تُعرض بجانب الإجمالي: لا تدخل في الإجمالي ولا في الصافي." [ref=e582]':
+                        - text: تكلفة متجنَّبة
+                        - generic [ref=e583]: "غير نقدية، تُعرض بجانب الإجمالي: لا تدخل في الإجمالي ولا في الصافي."
+                      - cell "‏184,800.00 ر.س.‏" [ref=e584]
+                      - cell "‏0.00 ر.س.‏" [ref=e585]
+                    - 'row "تكلفة التنفيذ نقدية: ‏3,660,000.00 ر.س.‏ · غير نقدية: ‏1,170,000.00 ر.س.‏ ‏4,830,000.00 ر.س.‏" [ref=e586]':
+                      - 'rowheader "تكلفة التنفيذ نقدية: ‏3,660,000.00 ر.س.‏ · غير نقدية: ‏1,170,000.00 ر.س.‏" [ref=e587]':
+                        - text: تكلفة التنفيذ
+                        - generic [ref=e588]: "نقدية: ‏3,660,000.00 ر.س.‏ · غير نقدية: ‏1,170,000.00 ر.س.‏"
+                      - cell "‏4,830,000.00 ر.س.‏" [ref=e589]
+                    - row "صافي القيمة (الربح والنقد) ‏‎-4,590,000.00 ر.س.‏ ‏‎-4,750,000.00 ر.س.‏" [ref=e590]:
+                      - rowheader "صافي القيمة (الربح والنقد)" [ref=e591]
+                      - cell "‏‎-4,590,000.00 ر.س.‏" [ref=e592]
+                      - cell "‏‎-4,750,000.00 ر.س.‏" [ref=e593]
+              - paragraph [ref=e594]: "الصافي = الإجمالي (الربح والنقد: زيادة الهامش، الوفر النقدي، تحرير رأس المال العامل) − تكلفة التنفيذ. تُعرض زيادة الإيرادات (الخط الأعلى) والتكلفة المتجنَّبة (غير نقدية) بجانب الإجمالي ولا تُضافان أبدًا إلى الإجمالي أو الصافي. المنافع غير المالية المقيّمة تُعرض في سطرها الخاص ولا تدخل في الإجمالي."
+            - generic [ref=e595]:
+              - generic [ref=e596]:
+                - term [ref=e597]: منافع غير مالية بلا طريقة تقييم
+                - definition [ref=e598]: "0 القيمة لا تنطبق: مستبعدة من إجماليات الريال، ولا تُحسب صفرًا."
+              - generic [ref=e599]:
+                - term [ref=e600]: وقت الاحتساب
+                - definition [ref=e601]: 22‏/10‏/2026 09:28
+```

@@ -1,0 +1,60 @@
+## 2026-10-22T05:08:37Z scans over added lines of git diff e70ac02..ad52a56 -- apps packages deploy e2e tests scripts (repo HEAD 3985d19)
+added lines: 188233
+
+--- secrets pattern (BEGIN .*PRIVATE KEY|AKIA[0-9A-Z]{16}|password\s*[:=]\s*"[^"]{6,}|secret\s*[:=]\s*"[^"]{8,}|api[_-]?key\s*[:=]\s*"|ghp_|xox[bp]-)
+137887:+    OIDC_CLIENT_SECRET: "synthetic-test-value",
+187135:+        OIDC_CLIENT_SECRET: "synthetic-not-a-secret",
+
+--- eval / new Function / dangerouslySetInnerHTML / innerHTML / child_process
+133054:+import { spawn } from "node:child_process";
+137624:+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+160365:+import { spawnSync } from "node:child_process";
+161669:+import { spawnSync } from "node:child_process";
+168252:+    ["eval(volume)", "not a function of the language"],
+186632:+import { spawnSync } from "node:child_process";
+187274:+import { spawn, type ChildProcess } from "node:child_process";
+
+--- external hosts (https?://) excluding localhost/127.0.0.1/example/w3/schemas
+     14 http://x
+     10 https://www.pmi.org
+      4 https://idp.example.invalid
+      2 https://www.brightline.org
+      2 http://scripts.sil.org
+      1 https://hub.example.invalid
+      1 https://demo-idp.mth.invalid
+      1 http://h
+      1 http://fsf.org
+      1 http://example.invalid
+
+--- sql.raw / sql.lit / unsafe raw interpolation
+6502:+      return sql`SELECT m.evidence_id, ${sql.lit(s.recordType ?? s.via)}::text AS record_type, ${sql.ref(
+6504:+      )} AS record_id, ${sql.lit(s.via)}::text AS via FROM ${sql.table(s.via)} CROSS JOIN LATERAL unnest(${sql.ref(
+6507:+        s.active === null ? sql`` : sql` AND ${sql.raw(s.active)}`
+6509:+    const recordType = s.recordType === null ? sql.ref("record_type") : sql.lit(s.recordType);
+6514:+      ...(s.active === null ? [] : [sql.raw(s.active)]),
+6516:+    return sql`SELECT evidence_id, ${recordType}::text AS record_type, ${sql.ref(s.recordIdColumn)} AS record_id, ${sql.lit(
+25043:+    const config = lang === "ar" ? sql.lit("arabic") : sql.lit("english");
+
+--- parseFloat / toFixed / Math.round in added product (non-test) src lines
+12967:+          ? new D(after.value).minus(before.value).toFixed()
+14438:+  return Math.round((at(to) - at(from)) / DAY_MS);
+22942:+    weightTotal: total.toFixed(2),
+22991:+      const attributes = { ...asRecord(w?.attributes), weightPercent: new Decimal(wanted).toFixed(2) };
+25228:+const dayNumber = (d: string): number => Math.round(Date.parse(`${d.slice(0, 10)}T00:00:00Z`) / DAY_MS);
+25350:+  Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY_MS);
+36199:+    const points = formatDecimal(new Decimal(value).times(100).toFixed(), { locale: "en", maxFractionDigits: 2 });
+43100:+      return `${new FD(value).times(100).toFixed()}%`;
+44701:+      return `${new FD(v).times(100).toFixed()}%`;
+54788:+                    ratio: (Math.floor(contrastRatio(WHITE, navShade) * 100) / 100).toFixed(2),
+54799:+                    { ratio: headerRatio.toFixed(2) },
+54811:+                      ratio: accentRatio.toFixed(2),
+56252:+  if (kib < 1024) return `${formatDecimal(String(Math.round(kib * 10) / 10), locale)} KB`;
+56253:+  return `${formatDecimal(String(Math.round((kib / 1024) * 10) / 10), locale)} MB`;
+90113:+    const widths = t.weights.map((w) => Math.round((9000 * w) / sum));
+90971:+  const fixed = new Decimal(value).toDecimalPlaces(max, Decimal.ROUND_HALF_UP).toFixed() as Intl.StringNumericLiteral;
+91913:+    const key = `${s.page}:${s.y.toFixed(1)}`;
+93000:+  return r.isZero() ? (0).toFixed(scale) : r.toFixed(scale);
+93042:+  return { value: fixed(total, 2), exact: total.isZero() ? "0" : total.toFixed(), reason: null };
+93735:+  return d.isZero() ? "0" : d.toFixed();
+94370:+  const distinct = new Set(minTexts.map((t) => new Decimal(t ?? "0").toFixed(2)));
+94408:+  const fixed = score.toFixed(2, Decimal.ROUND_HALF_UP);

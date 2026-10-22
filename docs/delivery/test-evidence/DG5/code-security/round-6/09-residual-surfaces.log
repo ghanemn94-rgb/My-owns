@@ -1,0 +1,16 @@
+## 2026-10-22T06:02:25Z environmental residual surfaces (repo HEAD 730caa9)
+$ ls .github/workflows
+ci.yml
+delivery-gates.yml
+$ grep -rlniE "openai|anthropic|azure.*openai|smtp|twilio|sendgrid|slack\.com|teams.*webhook" apps/*/src packages/*/src (adapters)
+(end of list)
+$ grep -rn "AUTH_MODE=dev is refused\|AUTH_MODE.*production" apps/api/src/config*.ts apps/api/src/**/config*.ts
+apps/api/src/server.test.ts:38:  it("registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely", async () => {
+apps/api/src/server.test.ts:52:    expect(() => loadConfig("api", { ...base, NODE_ENV: "production", AUTH_MODE: "dev" })).toThrow(
+apps/api/src/server.test.ts:53:      /AUTH_MODE=dev is refused/,
+apps/api/src/main.ts:2:// non-zero with a clear message on any problem, including AUTH_MODE=dev with NODE_ENV=production), connects as the
+$ grep -n "demoDevIssuerBindingAllowed" packages/db/src/demo/guard.ts
+125:export function demoDevIssuerBindingAllowed(env: {
+126-  readonly NODE_ENV?: string | undefined;
+127-  readonly AUTH_MODE?: string | undefined;
+128-}): boolean {

@@ -1,0 +1,44 @@
+## 2026-10-22T05:03:52Z candidate identity
+$ (main) git rev-parse HEAD
+3985d1967c86a82d891bcd5e278015efac218f3d
+$ (main) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d","files":2191}
+EXIT 0
+$ (clone $TMPDIR/review-r6) HEAD 3985d1967c86a82d891bcd5e278015efac218f3d shallow=false sparse=unset
+$ git status --short | wc -l
+0
+$ (clone) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d","files":2191}
+EXIT 0
+$ git diff --name-only ad52a56 HEAD   (freeze commit adds delivery records only)
+docs/delivery/assignments/DG5/round-6/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-6/domain-reviewer.md
+docs/delivery/assignments/DG5/round-6/qa-verifier.md
+docs/delivery/candidates/DG5/3294f8fc030f48dc.manifest.json
+docs/delivery/stages.json
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/build.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/contrast.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/demo.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/demo.rc
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e-build.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e-cutf8-killed-by-restart.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e-cutf8.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e-cutf8.rc
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e-unset.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e-unset.rc
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/e2e.sh
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/format.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/hist.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/install.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/integration.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/lint.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/openapi.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/root.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/root.rc
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/root.sh
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/summary.txt
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/typecheck.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/unit-cutf8.log
+docs/delivery/test-evidence/DG5/orchestrator-D-179/verify-aa-d2f4579/unit-unset.log
+$ git merge-base --is-ancestor ad52a56 HEAD
+EXIT 0

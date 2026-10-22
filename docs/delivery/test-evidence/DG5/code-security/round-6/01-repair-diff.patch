@@ -1,0 +1,178 @@
+diff --git a/apps/api/src/modules/forms/export.ts b/apps/api/src/modules/forms/export.ts
+index 28c7645..97afd40 100644
+--- a/apps/api/src/modules/forms/export.ts
++++ b/apps/api/src/modules/forms/export.ts
+@@ -9,15 +9,24 @@
+ // never a float), percentages as fractions, currency as "<code> <amount>", choice values as their labels in the
+ // language. A field without a value is Unknown: an empty value with the status `unknown`; a calculated field whose
+ // inputs are missing is Not computable (`not_computable`) - never 0.
+-//   - `format=json` (application/json): the FormRecordExport body (columns, then rows with values and statuses).
++//   - `format=json` (application/json): the FormRecordExport body (illustrativeLabel, columns, then rows with values and
++//     statuses).
+ //   - `format=csv` (default; text/csv): RFC 4180, UTF-8 with a byte-order mark (Arabic opens in spreadsheet
+ //     applications), CRLF line ends; a status column follows each value column; text that a spreadsheet would read as a
+ //     formula (first character = + - @ TAB CR) is prefixed with an apostrophe (the ADR-0046 §4 rule; the API does not
+ //     load @mth/reporting's renderers, so the two-line rule is applied here), decimals are never prefixed.
+ //   - `format` and the Accept header must agree when both are sent (400 at /query/format); without `format`, an Accept
+ //     of application/json alone selects JSON.
++//   - Demo database (F-DG5-124; D-178; ADR-0050 §2 (d); REQ-S18-001, REQ-PB-089; M0090, M0339): the environment is read
++//     at generation time from the same source as GET /environment and the report pipeline (the deployment marker,
++//     `@mth/db` readDeploymentEnvironment: synthetic exactly in a `demo` database; no marker = production, fail-safe).
++//     On a demo database the CSV's first row, after the byte-order mark and before the header, is the illustrative
++//     label in the export language, and the JSON body's `illustrativeLabel` is the same string; otherwise no label row
++//     and `illustrativeLabel: null`. The strings are the reporting pipeline's `export.illustrative` (packages/reporting
++//     labels.ts); the API does not load @mth/reporting's main entry (ADR-0046 §1), so they are repeated here and the
++//     integration test form-export-illustrative.test.ts holds them equal.
+ // Authorization: `transformation.read` in scope (404 outside it; AUD reads). Read only: nothing is written.
+-import { sql, type Db, type FormRecordTypeRow } from "@mth/db";
++import { readDeploymentEnvironment, sql, type Db, type FormRecordTypeRow } from "@mth/db";
+ import { evaluateCalculatedField, toCalculatedEntry } from "@mth/shared/calc";
+ import {
+   FORM_EXPORT_MAX_ROWS,
+@@ -79,6 +88,15 @@ const CSV_LABELS: Readonly<Record<Lang, CsvLabels>> = {
+   },
+ };
+ 
++/**
++ * The illustrative label of an export generated in a demo database (F-DG5-124; D-178): exactly the reporting pipeline's
++ * `export.illustrative` strings (packages/reporting/src/labels.ts FRAME_LABELS), en and ar.
++ */
++export const FORM_EXPORT_ILLUSTRATIVE_LABELS: Readonly<Record<Lang, string>> = {
++  en: "Illustrative example — synthetic",
++  ar: "مثال توضيحي — اصطناعي",
++};
++
+ const DECIMAL = /^-?\d+(\.\d+)?$/;
+ const FORMULA_TRIGGERS = new Set(["=", "+", "-", "@", "\t", "\r"]);
+ 
+@@ -213,6 +231,8 @@ export async function buildFormExport(
+       .execute();
+     for (const v of values) stored.set(v.record_id, (v.field_values ?? {}) as Record<string, unknown>);
+   }
++  // ADR-0050 §2 (d): the environment at generation time (the deployment marker; no marker reads as production).
++  const synthetic = (await readDeploymentEnvironment(db)).synthetic;
+   const vars = numericVariables(form, t.currency);
+   const out: FormRecordExport["rows"] = [];
+   for (const r of rows) {
+@@ -248,6 +268,11 @@ export async function buildFormExport(
+     recordType: rt.code,
+     formSchemaVersionId: pinned.versionId,
+     language: lang,
++    illustrativeLabel: !synthetic
++      ? null
++      : lang === "ar"
++        ? FORM_EXPORT_ILLUSTRATIVE_LABELS.ar
++        : FORM_EXPORT_ILLUSTRATIVE_LABELS.en,
+     columns: columns.map((c) => ({
+       key: c.field.key,
+       label: labelOf(c.field, lang),
+@@ -260,13 +285,17 @@ export async function buildFormExport(
+ 
+ const DECIMAL_TYPES = new Set(["number", "percentage", "calculated"]);
+ 
+-/** The CSV text of an export: BOM, a header row, then one row per record; a status column after each value. */
++/**
++ * The CSV text of an export: BOM, the illustrative label row on a demo database (F-DG5-124), a header row, then one row
++ * per record; a status column after each value.
++ */
+ export function exportCsv(e: FormRecordExport): string {
+   const L = e.language === "ar" ? CSV_LABELS.ar : CSV_LABELS.en;
+   const statusText = (s: Status) => (s === "unknown" ? L.unknown : L.not_computable);
+   const header = [L.recordId, L.version];
+   for (const c of e.columns) header.push(c.label, `${c.label} (${L.status})`);
+-  const lines = [header.map((h) => csvCell(h, false)).join(",")];
++  const lines = e.illustrativeLabel === null ? [] : [csvCell(e.illustrativeLabel, false)];
++  lines.push(header.map((h) => csvCell(h, false)).join(","));
+   for (const r of e.rows) {
+     const values = new Map(Object.entries(r.values));
+     const statuses = new Map(Object.entries(r.statuses));
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index 67912bf..3c3d06c 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -377,6 +377,29 @@ a:hover {
+   margin-inline-end: var(--mth-space-2);
+   color: var(--mth-text-secondary);
+ }
++/* T-DG5-FE-AA1 (F-DG5-147, D-178; REQ-S15-009, WCAG 2.1 SC 1.4.10 Reflow): a record title or transformation name is
++   user text and can hold an unbroken token wider than the column (an identifier-like word). The headings and title
++   containers that show it wrap it anywhere, the rule the product already uses for long values (.text-cell, the audit
++   changes, the automation failure queue): page headings and their subtitle, the breadcrumb items, card titles and
++   dialog titles ("Form tools: <title>" is a card title on the T14 page and a dialog title elsewhere). `anywhere` (not
++   `break-word`) also lowers their min-content width, so the flex and grid tracks around them (.page-header,
++   .page-header__row, .breadcrumbs ol, .card__header, .chip-row) can shrink to the viewport instead of widening the
++   page. Ordinary text still breaks at spaces first and stays on one line where it fits. Logical, so the same in RTL. */
++.page-header__title,
++.page-header__subtitle,
++.breadcrumbs li,
++.card__title,
++.dialog__title,
++/* D-178 orchestrator follow-up: the other title containers that show user text (Define, Design, Gates). */
++.outcome-card__title,
++.tom-box__title,
++.gate-card__title {
++  overflow-wrap: anywhere;
++}
++/* The title block of the header row is a flex item: it may shrink below its content's width (the actions wrap). */
++.page-header__row > * {
++  min-inline-size: 0;
++}
+ 
+ .grid {
+   display: grid;
+@@ -1565,6 +1588,9 @@ input[type="radio"] {
+ .entry-list > li {
+   padding-block: var(--mth-space-2);
+   border-block-end: 1px solid var(--mth-border-default);
++  /* T-DG5-FE-AA1 (F-DG5-147 class): an entry is a record name (e.g. a transformation in the P5 transformation picker
++     of /playbook/launch-plan and /playbook/health-check); an unbroken token in it wraps instead of widening the page. */
++  overflow-wrap: anywhere;
+ }
+ /* Grid items default to min-width:auto; a wide register must scroll inside its card, not widen the page. */
+ .page > *,
+diff --git a/docs/api/openapi.yaml b/docs/api/openapi.yaml
+index cdc768f..b877686 100644
+--- a/docs/api/openapi.yaml
++++ b/docs/api/openapi.yaml
+@@ -18473,7 +18473,7 @@ paths:
+           description: "OK."
+           content:
+             text/csv:
+-              schema: { type: string, description: 'RFC 4180 UTF-8 with BOM; header labels in the requested language (ADR-0041 §5).' }
++              schema: { type: string, description: 'RFC 4180 UTF-8 with BOM; on a demo database the first row is the illustrative label in the requested language (D-178); then header labels in the requested language (ADR-0041 §5).' }
+             application/json:
+               schema: { $ref: "#/components/schemas/FormRecordExport" }
+         "400": { $ref: "#/components/responses/ValidationError" }
+@@ -25899,13 +25899,14 @@ components:
+         reason: { type: string, minLength: 3, maxLength: 1000 }
+     FormRecordExport:
+       type: object
+-      description: "JSON export (format=json): column keys and labels, then one row per record; values are strings or null; statuses mark Unknown and Not computable."
+-      required: [recordType, formSchemaVersionId, language, columns, rows]
++      description: "JSON export (format=json): column keys and labels, then one row per record; values are strings or null; statuses mark Unknown and Not computable. On a demo database `illustrativeLabel` carries the illustrative label in the export language (D-178)."
++      required: [recordType, formSchemaVersionId, language, illustrativeLabel, columns, rows]
+       additionalProperties: false
+       properties:
+         recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+         formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
+         language: { type: string, enum: [en, ar] }
++        illustrativeLabel: { type: [string, "null"], minLength: 1, description: "F-DG5-124 (D-178; ADR-0050 §2 (d)): the illustrative label in the export language ('Illustrative example — synthetic' / 'مثال توضيحي — اصطناعي') when the export was generated in a demo database; null otherwise. The CSV form carries the same label as its first row, before the header." }
+         columns: { type: array, items: { type: object, additionalProperties: false, required: [key, label, fieldType, extension], properties: { key: { type: string }, label: { type: string }, fieldType: { $ref: "#/components/schemas/FormFieldType" }, extension: { type: boolean } } } }
+         rows: { type: array, maxItems: 5000, items: { type: object, additionalProperties: false, required: [recordId, version, values, statuses], properties: { recordId: { $ref: "#/components/schemas/Uuid" }, version: { $ref: "#/components/schemas/Version" }, values: { type: object }, statuses: { type: object, additionalProperties: { type: string, enum: [unknown, not_computable] } } } } }
+     FormBulkItem:
+diff --git a/packages/shared/src/schemas/forms-records.ts b/packages/shared/src/schemas/forms-records.ts
+index 9e1c2cf..7c46eda 100644
+--- a/packages/shared/src/schemas/forms-records.ts
++++ b/packages/shared/src/schemas/forms-records.ts
+@@ -27,6 +27,11 @@ export const formRecordExport = z.strictObject({
+   recordType: formRecordTypeCode,
+   formSchemaVersionId: uuid,
+   language: z.enum(FORM_EXPORT_LANGUAGES),
++  /**
++   * F-DG5-124 (D-178; ADR-0050 §2 (d)): the illustrative label in the export language ("Illustrative example —
++   * synthetic" / "مثال توضيحي — اصطناعي") when the export was generated in a demo database; null otherwise.
++   */
++  illustrativeLabel: z.string().min(1).nullable(),
+   columns: z.array(
+     z.strictObject({ key: z.string(), label: z.string(), fieldType: formFieldType, extension: z.boolean() }),
+   ),
