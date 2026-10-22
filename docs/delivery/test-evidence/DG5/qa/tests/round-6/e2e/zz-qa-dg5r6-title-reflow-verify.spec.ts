@@ -1,0 +1,240 @@
+// qa-verifier DG5 round 6 (T-DG5-REV-QA-R6): independent real-stack verification of F-DG5-147 (repairs T-DG5-FE-AA1 and
+// the orchestrator follow-up d2f4579) on the PRODUCTION-initialized stack (apps/web/e2e/support/with-stack.sh), in
+// chromium-en and chromium-ar. NOT part of the candidate: copied into a disposable clone's e2e/ for the run only. It does
+// not import the product spec apps/web/e2e/p5-title-reflow.spec.ts.
+//  R6-TITLE-A: my round-5 probe R5-TITLE UNCHANGED in data, screens and sizes (benefit page, transformation overview;
+//              tokens w120 / w46 / plain; 390 x 900, 320 x 900, 1280 x 900 at 200 % root font), now ASSERTED:
+//              page overflow <= 1 px and no visible element of main#main outside the viewport unless it sits in a
+//              horizontal scroll container (the round-5 "escape" scan, which also sees clipped content). Added: an
+//              unbroken ARABIC token (arU), and at 1280 x 900 default font the ordinary title keeps the h1 on one line.
+//  R6-TITLE-B: beyond the product spec. Per long token (w120, arU) one transformation whose NAME, a Define OUTCOME
+//              statement and a T13 STAKEHOLDER GROUP name hold the token. Swept at 320 x 900 and 200 % text: every
+//              workspace tab of components/Workspace.tsx (the h1 / breadcrumbs carry the name on each), the global
+//              pages that list names (/transformations, /my-work, /executive-overview, /playbook/launch-plan,
+//              /playbook/health-check), the Define page (.outcome-card__title), and the T13 "Form tools: <code name>"
+//              dialog (.dialog__title, the dialog-title class of the repair). Scan = the whole document (header and
+//              navigation included). Asserted: page overflow <= 1 px; no element whose text holds the token escapes
+//              the viewport. Other escapes are REPORTED (judged in the review record), not asserted.
+//  axe (wcag2a/aa, 21a/aa) at 390 px on the benefit page and the overview with the w120 title: no serious/critical.
+// Revision 2 (after revision 1's locale-unset run; source kept in round-6/probe-revisions/):
+//  - revision 1's R6-TITLE-A used the token key "arU" in a dev-login username; usernames are lower case, so the
+//    dev-login returned 400 (a probe set-up error, not a product result). The key is lower-cased now.
+//  - R6-TITLE-B adds the ordinary-text control ("plain") and the 390 px size, to separate a token-caused overflow
+//    from one that ordinary text also shows (revision 1 found Define overflowing 61 px at 320 px for both long tokens).
+// Everything is SYNTHETIC; nothing here grants a business approval (G1-G6) or touches the delivery gates DG0-DG7.
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import AxeBuilder from "@axe-core/playwright";
+import { expect, test, type Page } from "@playwright/test";
+import { asUser, syntheticUser } from "../apps/web/e2e/support/p3-journey-setup.ts";
+import { apiSession, langOf, shot, SYN_RETAIL, type Lang } from "../apps/web/e2e/support/ui.ts";
+
+const EVIDENCE = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa-r6");
+const ORG = "01920000-0000-7000-9000-000000000001";
+const stamp = Date.now().toString(36);
+const TOKENS = {
+  w120: `Synthetic_${"ABCDEFGHIJ".repeat(11)}`, // 120 characters, no break opportunity (as round 5)
+  w46: "Synthetic_roaming_bill_shock_reduction_program", // as round 5
+  arU: "اصطناعي_برنامج_خفض_صدمة_فواتير_التجوال_للمسافرين_الدوليين_عبر_التطبيق", // unbroken Arabic (underscores)
+  plain: "Synthetic churn reduction on the prepaid base", // as round 5
+} as const;
+const SIZES = [
+  ["390", 390, 0],
+  ["320", 320, 0],
+  ["200pct", 1280, 200],
+] as const;
+const TABS = [
+  "", "/diagnose", "/charter", "/define", "/design", "/portfolio", "/prioritization", "/roadmap", "/dependencies",
+  "/capacity", "/business-cases", "/benefit-formulas", "/decisions", "/gates", "/readiness", "/dispensations",
+  "/evidence", "/team", "/role-mappings", "/decision-rights", "/raci", "/transform-readiness", "/approval-decisions",
+  "/kpis", "/benefits", "/raid", "/actions", "/corrective-actions", "/forums", "/meetings", "/executive-decisions",
+  "/adoption", "/bau", "/improvement", "/lessons", "/dashboard", "/closure", "/phases", "/change-requests",
+  "/traceability", "/modular-entry", "/workstreams",
+];
+const GLOBAL = ["/transformations", "/my-work", "/executive-overview", "/playbook/launch-plan", "/playbook/health-check"];
+
+interface Measure {
+  W: number;
+  pageOverflow: number;
+  tokenEscapes: string[];
+  otherEscapes: string[];
+  tokenPresent: boolean;
+  h1Lines: number;
+}
+
+/** Scans `scope` (CSS selector). An element "escapes" when visible, not inside a horizontal scroll container, and
+ *  (partly) outside [0, innerWidth]. Escapes are split by whether the element's text holds `token`. */
+async function measure(page: Page, scope: string, token: string): Promise<Measure> {
+  return page.evaluate(
+    ({ scope, token }) => {
+      const W = window.innerWidth;
+      const root = document.querySelector<HTMLElement>(scope);
+      const inScroller = (el: Element) => {
+        for (let x = el.parentElement; x && x !== document.body; x = x.parentElement) {
+          const ox = getComputedStyle(x).overflowX;
+          if (ox === "auto" || ox === "scroll" || ox === "hidden" || ox === "clip") return true;
+        }
+        return false;
+      };
+      const tokenEscapes: string[] = [];
+      const otherEscapes: string[] = [];
+      for (const el of Array.from(root?.querySelectorAll<HTMLElement>("*") ?? [])) {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === "hidden" || (cs.position === "absolute" && r.width <= 1)) continue;
+        if (inScroller(el)) continue;
+        if (r.left < -1 || r.right > W + 1) {
+          const text = (el.textContent ?? "").trim();
+          const d = `${el.tagName.toLowerCase()}.${(el.getAttribute("class") ?? "").trim().split(/\s+/).join(".")} [${Math.round(r.left)}..${Math.round(r.right)}] "${text.slice(0, 40)}"`;
+          (text.includes(token) ? tokenEscapes : otherEscapes).push(d);
+        }
+      }
+      const h1 = document.querySelector("main#main h1");
+      const lh = h1 ? Number(getComputedStyle(h1).lineHeight.replace("px", "")) : 0;
+      return {
+        W,
+        pageOverflow: document.documentElement.scrollWidth - W,
+        tokenEscapes: tokenEscapes.slice(0, 8),
+        otherEscapes: otherEscapes.slice(0, 8),
+        tokenPresent: (root?.textContent ?? "").includes(token),
+        h1Lines: h1 && lh ? Math.round(h1.getBoundingClientRect().height / lh) : 0,
+      };
+    },
+    { scope, token },
+  );
+}
+
+async function settle(page: Page, font: number) {
+  if (font) await page.evaluate((f) => (document.documentElement.style.fontSize = `${f}%`), font);
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(250);
+}
+
+function save(lang: Lang, file: string, out: unknown) {
+  mkdirSync(path.join(EVIDENCE, lang), { recursive: true });
+  writeFileSync(path.join(EVIDENCE, lang, file), JSON.stringify(out, null, 1));
+}
+
+test("R6-TITLE-A: round-5 R5-TITLE re-run, asserted (benefit page, overview; w120, w46, arU, plain) at 390, 320 px and 200 % text", async ({ browser, playwright }, info) => {
+  test.setTimeout(600_000);
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const admin = await apiSession(playwright, "dev.admin");
+  const out: Record<string, unknown> = {};
+  const failures: string[] = [];
+  for (const [k, token] of Object.entries(TOKENS)) {
+    const tid = (await lead.call<{ id: string }>("POST", "/api/v1/transformations", { businessUnitId: SYN_RETAIL, name: `QA ${token} ${lang} ${stamp}`, mode: "end_to_end" })).id;
+    const T = `/api/v1/transformations/${tid}`;
+    const owner = await syntheticUser(admin, ORG, tid, `dev.qar6t.${k.toLowerCase()}.${lang}.${stamp}`, `Synthetic BO ${lang}`, "BO", lang);
+    const kpi = await lead.call<{ id: string }>("POST", `${T}/kpi-definitions`, { name: `Synthetic NPS ${k} ${lang} ${stamp}`, unitKind: "score", polarity: "higher_is_better" });
+    const bo = await apiSession(playwright, owner.username);
+    const bid = (await bo.call<{ id: string }>("POST", `${T}/benefits`, { title: token, description: "Synthetic.", benefitType: "cx", valueClass: "non_financial", ownerUserId: owner.id, currency: "SAR", measurementKpiDefinitionId: kpi.id })).id;
+    const u = await asUser(browser, lang, owner.username);
+    for (const [screen, url] of [["benefit", `/transformations/${tid}/benefits/${bid}`], ["overview", `/transformations/${tid}`]] as const) {
+      for (const [label, width, font] of SIZES) {
+        await u.page.setViewportSize({ width, height: 900 });
+        await u.page.goto(url);
+        await expect(u.page.locator("main#main h1")).toBeVisible();
+        await settle(u.page, font);
+        const m = await measure(u.page, "main#main", token);
+        const where = `${k}/${screen}/${label}`;
+        out[where] = m;
+        if (!m.tokenPresent) failures.push(`${where}: set-up, token not on the page`);
+        if (m.pageOverflow > 1) failures.push(`${where}: page scrolls ${m.pageOverflow} px`);
+        if (m.tokenEscapes.length || m.otherEscapes.length) failures.push(`${where}: escapes ${[...m.tokenEscapes, ...m.otherEscapes].join(" | ")}`);
+        if (label === "390") await shot(u.page, lang, `r6-title-${k}-${screen}-390`);
+        if (label === "390" && k === "w120") {
+          const axe = await new AxeBuilder({ page: u.page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+          out[`${where}/axe`] = axe.violations.map((v) => `${v.id}:${v.impact}:${v.nodes.length}`);
+          const serious = axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+          if (serious.length) failures.push(`${where}: axe ${serious.map((v) => v.id).join(",")}`);
+        }
+      }
+      if (k === "plain") {
+        await u.page.setViewportSize({ width: 1280, height: 900 });
+        await u.page.goto(url);
+        await expect(u.page.locator("main#main h1")).toBeVisible();
+        await settle(u.page, 0);
+        const m = await measure(u.page, "main#main", token);
+        out[`plain/${screen}/1280`] = m;
+        if (m.h1Lines !== 1) failures.push(`plain/${screen}/1280: h1 on ${m.h1Lines} lines (needless wrapping)`);
+        await shot(u.page, lang, `r6-title-plain-${screen}-1280`);
+      }
+    }
+    await u.close();
+  }
+  save(lang, "r6-title-a.json", out);
+  console.info(`R6-TITLE-A ${lang}: failures=${failures.length} ${JSON.stringify(failures)}`);
+  expect(failures).toEqual([]);
+});
+
+test("R6-TITLE-B: name / outcome / stakeholder group with unbroken tokens across every workspace tab, global lists, Define and the T13 Form tools dialog at 320 px and 200 % text", async ({ browser, playwright }, info) => {
+  test.setTimeout(1_500_000);
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const out: Record<string, unknown> = {};
+  const failures: string[] = [];
+  const reported: string[] = [];
+  const sizes = SIZES;
+  for (const k of ["w120", "arU", "plain"] as const) {
+    const token = TOKENS[k];
+    const tid = (await lead.call<{ id: string }>("POST", "/api/v1/transformations", { businessUnitId: SYN_RETAIL, name: `QA6 ${token} ${lang} ${stamp}`, mode: "end_to_end" })).id;
+    const T = `/api/v1/transformations/${tid}`;
+    await lead.call("POST", `${T}/outcomes`, { statement: `QA6 ${token}` });
+    const group = await lead.call<{ id: string; code: string }>("POST", `${T}/stakeholder-groups`, {
+      name: `QA6 ${token}`, impact: "H", currentStance: "neutral", requiredBehavior: "Synthetic behaviour.", interventionTypes: ["comms"], ownerUserId: lead.userId,
+    });
+    const u = await asUser(browser, lang, "dev.lead");
+    const p = u.page;
+    const urls = [...TABS.map((t) => `/transformations/${tid}${t}`), ...GLOBAL];
+    for (const [label, width, font] of sizes) {
+      await p.setViewportSize({ width, height: 900 });
+      for (const url of urls) {
+        await p.goto(url);
+        await expect(p.locator("main#main h1").first()).toBeVisible({ timeout: 20_000 });
+        await settle(p, font);
+        const m = await measure(p, "body", token);
+        const where = `${k}/${url.replace(tid, "<T>")}/${label}`;
+        out[where] = { pageOverflow: m.pageOverflow, tokenPresent: m.tokenPresent, tokenEscapes: m.tokenEscapes, otherEscapes: m.otherEscapes };
+        if (url.startsWith("/transformations/") && !m.tokenPresent) failures.push(`${where}: set-up, token not on the page`);
+        if (m.pageOverflow > 1) failures.push(`${where}: page scrolls ${m.pageOverflow} px`);
+        if (m.tokenEscapes.length) failures.push(`${where}: token escapes ${m.tokenEscapes.join(" | ")}`);
+        if (m.otherEscapes.length) reported.push(`${where}: other escapes ${m.otherEscapes.join(" | ")}`);
+        if (url.endsWith("/define") || url.endsWith("/playbook/launch-plan")) await shot(p, lang, `r6-b-${k}-${url.split("/").pop()}-${label}`);
+        if (font) await p.evaluate(() => (document.documentElement.style.fontSize = ""));
+      }
+      // Define: the outcome card heading holds the token.
+      await p.goto(`/transformations/${tid}/define`);
+      const oc = p.locator(".outcome-card__title", { hasText: token });
+      await expect(oc).toBeVisible();
+      // T13 Form tools dialog: title "Form tools: <code> <name>".
+      await p.goto(`/transformations/${tid}/adoption`);
+      await settle(p, font);
+      await p.locator(`[data-form-tools='${group.id}']`).first().click();
+      const dlg = p.getByRole("dialog");
+      await expect(dlg.locator(".dialog__title")).toContainText(token);
+      await p.waitForTimeout(300);
+      const d = await p.evaluate((token) => {
+        const W = window.innerWidth;
+        const dl = document.querySelector("[role='dialog']")!.getBoundingClientRect();
+        const t = document.querySelector("[role='dialog'] .dialog__title")!;
+        const tr = t.getBoundingClientRect();
+        return { W, dialog: [Math.round(dl.left), Math.round(dl.right)], title: [Math.round(tr.left), Math.round(tr.right)], titleHasToken: (t.textContent ?? "").includes(token), pageOverflow: document.documentElement.scrollWidth - W, titleScroll: t.scrollWidth - t.clientWidth };
+      }, token);
+      const where = `${k}/adoption-dialog/${label}`;
+      out[where] = d;
+      if (d.dialog[0]! < -1 || d.dialog[1]! > d.W + 1) failures.push(`${where}: dialog outside the viewport ${JSON.stringify(d)}`);
+      if (d.title[0]! < -1 || d.title[1]! > d.W + 1) failures.push(`${where}: dialog title outside the viewport ${JSON.stringify(d)}`);
+      if (d.titleScroll > 1) failures.push(`${where}: dialog title overflows its box by ${d.titleScroll} px`);
+      if (d.pageOverflow > 1) failures.push(`${where}: page scrolls ${d.pageOverflow} px`);
+      await shot(p, lang, `r6-b-${k}-adoption-dialog-${label}`);
+      await p.keyboard.press("Escape");
+      if (font) await p.evaluate(() => (document.documentElement.style.fontSize = ""));
+    }
+    await u.close();
+  }
+  save(lang, "r6-title-b.json", { failures, reported, out });
+  console.info(`R6-TITLE-B ${lang}: failures=${failures.length} reported=${reported.length} ${JSON.stringify(failures.slice(0, 20))} REPORTED ${JSON.stringify(reported.slice(0, 20))}`);
+  expect(failures).toEqual([]);
+});

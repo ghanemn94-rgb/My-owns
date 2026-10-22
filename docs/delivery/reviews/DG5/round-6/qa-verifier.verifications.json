@@ -1,0 +1,25 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-147",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:3294f8fc... (source ad52a56; repairs T-DG5-FE-AA1 and d2f4579) on the production-initialized real stack, in a disposable complete clone, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8. (1) My round-5 reproduction R5-TITLE, with the SAME data, screens and sizes (per language, transformations whose name and T14 benefit title hold the 120-character word w120, the 46-character token 'Synthetic_roaming_bill_shock_reduction_program' and ordinary text; the T14 benefit page with the 'B01 · <title>' and 'Form tools: <title>' card headings, and the transformation overview with the h1 page header and the breadcrumbs; 390 x 900, 320 x 900, 1280 x 900 at 200 %), is now ASSERTED as R6-TITLE-A, with an unbroken 69-character Arabic token (arU) added. Every case passes: 0 px of page overflow and no visible element of main#main outside the viewport, in 26 cases per language and run, 4 runs. In round 5 the same cases overflowed by 44-415 px (w46) and up to 2797 px (w120). axe at 390 px with the w120 title reports 0 violations of any impact on both screens. The ordinary title keeps the h1 on one line at 1280 px with the default font (no needless wrapping). (2) Beyond the finding, R6-TITLE-B swept tokens w120, arU and plain in the transformation name, a Define outcome statement and a T13 stakeholder group name across all 42 workspace tabs and 5 global pages, at 390 px, 320 px and 200 % (432 measurements per run, 4 runs). The page header h1, breadcrumbs, card titles, .outcome-card__title, the entry list on /playbook/launch-plan and /playbook/health-check, and the .dialog__title of the T13 'Form tools: <code> <name>' dialog (dialog [16..304] at 320 px, title scroll 0) all wrap. Two DG4 screens outside the repair's selector list still overflow with an unbroken record name (Traceability's record link, Modular entry's missing-item label); they are not headings, breadcrumbs or card titles, so they are raised separately as F-DG5-148 (Low). Define's 61 px at 320 px occurs with ordinary text too, so it is a separate cause (F-DG5-149, Low). (3) The repair's product regression apps/web/e2e/p5-title-reflow.spec.ts passes in both projects in both full product runs (454/454 per locale setting). It reads my R5-TITLE probe as its basis and asserts its final condition. The CSS change (overflow-wrap: anywhere on .page-header__title/__subtitle, .breadcrumbs li, .card__title, .dialog__title, .outcome-card__title, .tom-box__title, .gate-card__title and .entry-list > li; min-inline-size: 0 on .page-header__row children) is logical, so it is the same in RTL, and it causes no regression in the 454 journeys or the 30 + 12 root and demo acceptance runs per locale setting. Revision 1 of my probe had a set-up error (an upper-case dev-login username, 400), disclosed in the record; revision 2 fixed it. Everything is SYNTHETIC.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6title-rev2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-probe-r6title-rev2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-a.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/ar/r6-title-a.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-cutf8/en/r6-title-a.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-cutf8/ar/r6-title-a.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-w46-overview-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/ar/r6-title-w46-benefit-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-6/shots/probe-r6title-rev2-unset/en/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/05-e2e-product-B-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-6/11-repair-diff.log"
+      ]
+    }
+  ]
+}
