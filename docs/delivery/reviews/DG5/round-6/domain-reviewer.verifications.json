@@ -1,0 +1,28 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-124",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d (source ad52a56; repair T-DG5-BE-AA1 plus the orchestrator follow-up d2f4579, D-178/D-179), in a disposable non-shallow clone at the freeze commit 3985d19, on real stacks. (1) Demo stack (e2e/support/with-demo-stack.sh, MTH_ENV=demo, AUTH_MODE=dev; GET /environment = kind demo, synthetic true; seed checksum 0a7fdc3f...37e4). My round-5 probe dom-r5-forms.spec.ts, unchanged, and my new dom-r6-f124.spec.ts ran together: 6 passed, 2 skipped by design (the API tests run in the en project only), exit 0. All 8 files (T14 and T01, CSV and JSON, en and ar) return 200 through the API as roaming.user.tl. Each CSV's line 1 is exactly BOM + 'Illustrative example — synthetic' (en) or BOM + 'مثال توضيحي — اصطناعي' (ar). Line 2 is the localized header. The data rows are intact (T14 3, T01 6, the same as round 5), with CRLF line ends. Each JSON body has illustrativeLabel equal to the label in its language, with the same rows. I also downloaded the files through the real export dialogs ('Download CSV' and 'Download JSON') in the en and ar UI. The 8 downloaded files carry the same labels, and the dialogs show the badge (screenshots in en and ar). The strings equal the reporting pipeline's export.illustrative (packages/reporting/src/labels.ts) and the web record badge. (2) Production-path stack (apps/web/e2e/support/with-stack.sh, no marker; GET /environment = production, synthetic false), with a transformation the probe created: all 8 API files return 200 with no label row (line 1 = BOM + header) and illustrativeLabel null. The T01 CSV/JSON UI downloads in en and ar are also unlabelled. The only two export surfaces in the product are this one and the report pipeline, which a02-demo-labels covers (12/12 this round). D-178 leaves the B0004 line out of these data exports because REQ-PB-001 names report footers. I accept that reading. The regression form-export-illustrative.test.ts passed 19/19 in my 42-file integration batch.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-f124-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-api.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-ui-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-ui-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T14-en.csv",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T14-ar.csv",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T01-en.json",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api-demo/export-T01-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/en/demo-T14-export-dialog.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/ar/demo-T14-export-dialog.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-api.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-ui-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-ui-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe/dom-r6-f124.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log"
+      ]
+    }
+  ]
+}

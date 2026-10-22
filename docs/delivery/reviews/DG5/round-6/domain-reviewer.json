@@ -1,0 +1,331 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 6,
+  "candidate_id": "sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d",
+  "source_commit": "ad52a560ae26a49673cd3ac01b0677a4f7f55e57",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-DOM-R6-domain-reviewer-20261022T044203Z-fde53862",
+    "session_id": "fde53862-9772-4dc7-80aa-b5a27fc9eb17"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG5 implementation, test, register row, ADR, repair or delivery decision in the reviewed candidate. That includes repair wave AA (T-DG5-BE-AA1, T-DG5-FE-AA1, the orchestrator follow-up d2f4579) and D-178/D-179. I formed this verdict from my own runs in this session (T-DG5-REV-DOM-R6), on a disposable clone, before reading any other reviewer's round-6 record (none is visible to me). I read my own round-5 record and evidence only to re-run my probes and compare against them."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-6/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089",
+    "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-037", "REQ-S01-002", "REQ-S01-003", "REQ-S01-004",
+    "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008",
+    "REQ-S06-009", "REQ-S06-010", "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020",
+    "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026", "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007",
+    "REQ-S13-008", "REQ-S13-009", "REQ-S13-010", "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004",
+    "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021", "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R6-00-candidate",
+      "procedure": "Verify the frozen candidate on the repository and on a non-shallow disposable clone at the freeze commit. Confirm that the commits after the source touch only docs/delivery/. Install offline and build in the clone.",
+      "command": "git rev-parse HEAD; git diff --name-only ad52a56 3985d19 | grep -v '^docs/delivery/'; node tools/gates/candidate.mjs --stage DG5 (repo and clone); git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv6; git sparse-checkout set --no-cone '/*' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' '!/docs/delivery/runs/'; git checkout 3985d19; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pnpm-store/v10; pnpm -r build",
+      "environment": "Repository /home/user/My-owns at HEAD 3985d19 (the re-freeze commit); clone $TMPDIR/rv6 at 3985d19 (1562 commits, not shallow); Node 24.21.0; pnpm 10.33.0.",
+      "expected": "Candidate sha256:3294f8fc...ba6d with 2191 files in both trees; only docs/delivery/ changes after ad52a56; install and build exit 0.",
+      "actual": "HEAD is 3985d19. ad52a56..3985d19 changes only docs/delivery/. The candidate is sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d, 2191 files, in the repository and in the clone. Disclosure 1: my first plain clone filled the shared host disk (ENOSPC, 4.6 GB free while the three reviews ran), so I deleted it. I then used a --shared clone, which has the full, non-shallow history through the alternates of the repository's object store. Its sparse checkout leaves out only docs/delivery/test-evidence, handbacks and runs (1.4 GB, 487 MB, 374 MB). All three are meta-excluded from the DG5 manifest (none of the 2191 manifest entries is under them), and the recomputed candidate ID matches exactly. Disclosure 2: the install used a copy of the read-only HOME pnpm store under $TMPDIR and exited 0. Its 'WARN Failed to create bin ... mth-db' lines come from @mth/db/dist/cli.js, which doesn't exist until the build. The build exits 0, with no error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/candidate-clone.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/install.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-01-validators",
+      "procedure": "Run the historical validators of the four approved gates and the DG5 register check.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4 | DG3 | DG2 | DG1; node tools/gates/validate.mjs --register DG5",
+      "environment": "Repository working tree at 3985d19; Node 24.21.0.",
+      "expected": "Each exits 0 with PASS.",
+      "actual": "PASS gate DG4, DG3, DG2 and DG1 (historical), each exit 0. PASS register rules at DG5, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/domain/round-6/validators.log"]
+    },
+    {
+      "id": "DOM-R6-02-f124-demo-form-record-export-label",
+      "procedure": "Verify F-DG5-124 adversarially on a demo-initialized stack. As the demo TL, fetch the native form-record export for T14 and T01, in CSV and JSON, en and ar, through the API (my round-5 probe unchanged, plus a new round-6 probe that asserts). Also download the same files through the real export dialog buttons in the en and ar UI. Assert the label's exact position and text, and that the data rows are intact.",
+      "command": "env E2E_PG_PORT=26401 E2E_API_PORT=26402 MTH_PORT_POOL=26403-26429 PROBE_OUT=$TMPDIR/out-demo PROBE_MATCH='dom-r[56]-*.spec.ts' PROBE_STACK=demo e2e/support/with-demo-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1",
+      "environment": "Clone $TMPDIR/rv6; demo stack MTH_ENV=demo, AUTH_MODE=dev (D-165); Chromium from /opt/pw-browsers; ports 26401-26429; 1-minute load about 7.",
+      "expected": "All 8 files return 200. Each CSV's line 1 is BOM + the label in its language, and line 2 is the localized header. Each JSON body's illustrativeLabel is the label in its language. The rows are unchanged. The UI downloads match the API files.",
+      "actual": "8 tests: 6 passed and 2 skipped, exit 0. The skips are by design: both API tests run in the en project only. GET /environment returns kind demo, synthetic true. Seed checksum 0a7fdc3f...37e4. API, all 8 files return 200. The CSVs' line 1 is '\\ufeffIllustrative example — synthetic' (en) or '\\ufeffمثال توضيحي — اصطناعي' (ar), and line 2 is 'Record ID,Version,...' or 'معرّف السجل,الإصدار,...'. The JSON illustrativeLabel is the same string per language. T14 has 3 data rows and T01 has 6, the same as round 5, with CRLF ends. UI: the 'Download CSV' and 'Download JSON' buttons of the T14 and T01 dialogs, in the en and ar UI, give files T14-en.csv ... T01-ar.json with the same labels and rows. The dialogs show the badge, and the screenshots confirm RTL in ar. The round-5 probe's recorded metadata now reads hasIllustrativeEn/Ar true in every file of its language. F-DG5-124 is CLOSED_VERIFIED (verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-PB-089", "REQ-S05-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-f124-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe/dom-r6-f124.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe/dom-r5-forms.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-api.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-ui-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/results-demo-ui-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/api/export-T14-ar.csv.meta.json",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/ui-demo/en-download-T14-en.csv",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/ui-demo/ar-download-T01-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/en/demo-T14-export-dialog.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/ar/demo-T14-export-dialog.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/en/demo-T01-export-dialog.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/f124-demo/shots/ar/demo-T01-export-dialog.png"
+      ]
+    },
+    {
+      "id": "DOM-R6-03-f124-non-demo-unlabelled",
+      "procedure": "On a production-initialized stack with no environment marker, create a synthetic transformation with a filled T01 item. Fetch the same 8 export files through the API, and download the T01 CSV and JSON through the en and ar UI.",
+      "command": "env E2E_PG_PORT=26431 E2E_API_PORT=26432 MTH_PORT_POOL=26433-26459 PROBE_OUT=$TMPDIR/out-prod PROBE_MATCH='{dom-prod,dom-empty-g4,dom-r6-f124}.spec.ts' PROBE_STACK=prod apps/web/e2e/support/with-stack.sh npx playwright test -c probe/playwright.probe.config.ts --workers=1",
+      "environment": "Clone $TMPDIR/rv6; production-path stack (migrate + seed-dev, AUTH_MODE=dev, no marker); ports 26431-26459; 1-minute load about 4-6.",
+      "expected": "No label row anywhere, and illustrativeLabel null. Line 1 is BOM + header.",
+      "actual": "The run (shared with DOM-R6-05/07): 10 tests, 8 passed and 2 skipped by design (en-only API tests), exit 0. GET /environment returns production, synthetic false. All 8 API files return 200, each CSV's line 1 is BOM + the localized header, and each JSON body has illustrativeLabel null. T01 has 6 rows. T14 has 0 rows, because no benefit exists in this fresh transformation; the header and the null label are what I assert. The UI downloads of T01 CSV and JSON in en and ar are also unlabelled, and the dialog shows no badge.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-api.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-ui-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/results-prod-ui-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/api-prod/export-T01-en.csv",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/api-prod/export-T01-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/prod-T01-export-dialog.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/prod-T01-export-dialog.png"
+      ]
+    },
+    {
+      "id": "DOM-R6-04-repair-diff-and-d178-d179",
+      "procedure": "Inspect the repair diff 0c88d5e..ad52a56 for its domain effect. Look for other export surfaces of the same class. Judge D-178, D-179 and the BE-AA1/FE-AA1 handbacks, and check D-179's cited logs.",
+      "command": "git diff 0c88d5e..ad52a56 -- . ':!docs/delivery'; grep -rln 'text/csv|Content-Disposition' apps/api/src; grep -rn 'new Blob|download=' apps/web/src; grep export.illustrative packages/reporting/src/labels.ts",
+      "environment": "Repository at 3985d19.",
+      "expected": "Only the export label (API, zod, OpenAPI), the CSS wrap rule and tests change. No other data export lacks the label. The disclosures match.",
+      "actual": "Outside docs/delivery, the diff touches 7 files. apps/api forms/export.ts reads readDeploymentEnvironment, the same source as GET /environment and the report pipeline; it fails safe to production. It adds the label row and the illustrativeLabel field. packages/shared forms-records.ts and docs/api/openapi.yaml add the additive, required, nullable illustrativeLabel. Two integration tests change. apps/web/src/styles/app.css adds 'overflow-wrap: anywhere' on title, breadcrumb, card, dialog, outcome-card, tom-box and gate-card titles and on entry-list items. The CSS changes no text, value, state or label; my production UI texts equal round 5 (DOM-R6-06). The label strings equal packages/reporting export.illustrative and the web recordBadge. Exhaustiveness: the API's only download routes are reporting/exports (the labelled report pipeline), evidence file downloads (user-uploaded content, not a generated export) and this form export. The web's only client-side downloads are this dialog's JSON (the API body, so it is labelled) and the Exports page (the pipeline). D-178 scopes B0004 out of these data exports because REQ-PB-001's acceptance names 'reader/About/report footer'. I accept that: they are record data, not reports. D-179's claims match its logs in orchestrator-D-179/verify-aa-d2f4579/: integration 319 files, 3076 passed and 1 skipped; root 32 + demo 10; web e2e 454/454 in both locales. Its *.rc files are 0. The single integration skip and the two unit skips are pre-existing designed skips in that run, and I don't cite those logs as my evidence.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-PB-089", "REQ-PB-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/static-text-scan.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-05-source-fidelity-production",
+      "procedure": "On a production-initialized stack, dump the methodology API and compare it offline with docs/source: blocks, provenance, guiding questions, element counts, health questions, launch windows, branding, navigation and the environment refusals.",
+      "command": "(dom-prod.spec.ts in the DOM-R6-03 run) then python3 -I probe/compare.py /home/user/My-owns $TMPDIR/out-prod",
+      "environment": "Clone $TMPDIR/rv6; production-initialized stack as DOM-R6-03.",
+      "expected": "compare.py reports FAILS 0, the same as round 5.",
+      "actual": "compare.py: 20 PASS lines, FAILS 0, exit 0. The output is identical to round 5's apart from one requestId. That covers: 165 blocks verbatim and in source order; provenance = B0004; realizeNote = B0124; custom extensions B0157-B0162; the four B0016 questions; 56 elements (16 templates, 10 TOM dimensions, 6 phases, 6 gates, 6 benefit lifecycle steps and the rest); 25 health questions verbatim; three B0134 windows; 'Mobily Transformation Hub', #0078FF provisional with a provisional wordmark. Navigation: office 14 areas, admin 3, lead 13, auditor 14, nobody 2. Environment production; the walkthrough returns 409 environment.not_demo.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-PB-077", "REQ-S02-001", "REQ-S03-007", "REQ-S01-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/source-compare-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe/compare.py"
+      ]
+    },
+    {
+      "id": "DOM-R6-06-reader-about-studio-navigation-branding-ui",
+      "procedure": "Render the reader, B0124, About, launch plan, health check, Studio, branding and the navigation of the office, admin, lead and auditor users, in en and ar. Read the navigation colour and the wordmark. Compare with round 5 after normalising timestamps.",
+      "command": "(dom-prod.spec.ts UI test in the DOM-R6-03 run); python3 -I probe/normdiff.py <round-5 file> <round-6 file> for every text and API dump",
+      "environment": "As DOM-R6-03.",
+      "expected": "The same content as round 5 in both languages.",
+      "actual": "43 files are equal to round 5 apart from timestamps. Four differ, and each difference is explained. health-check-ar and launch-plan-ar list one more transformation in the picker, 'TR-0002 Synthetic DOM-R6 export probe', which my own probe created; the empty-portfolio one is renumbered TR-0003. api/empty-g4-en/ar differ only in generated transformation and exception IDs. About shows B0004 and 'It is not an official PMI standard, and this product is not certified by PMI or any other body' (en), with the Arabic equivalents. The wordmark reads 'Provisional' with the no-official-logo note. The navigation background is rgb(0, 113, 241), derived from the provisional #0078FF. The screenshots show en LTR and ar RTL.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-002", "REQ-S01-003", "REQ-S01-004", "REQ-S03-007", "REQ-S03-010", "REQ-S14-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/compare-vs-round5-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/about-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/about-ar.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/wordmark-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/nav-bg-en.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/01-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/01-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/02-reader-B0124-realize.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/02-reader-B0124-realize.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/04-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/04-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/07-studio-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/07-studio-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/09-admin-shell-nav.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/09-admin-shell-nav.png"
+      ]
+    },
+    {
+      "id": "DOM-R6-07-f122-regression",
+      "procedure": "Re-run my closed F-DG5-122 reproduction: an empty approved portfolio plus an accepted exception, shown on Initiative cards only, in en and ar.",
+      "command": "(dom-empty-g4.spec.ts in the DOM-R6-03 run)",
+      "environment": "As DOM-R6-03.",
+      "expected": "Passes in both projects.",
+      "actual": "Passed in chromium-en (5.5 s) and chromium-ar (6.1 s). No regression.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-021"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/en/e01-empty-portfolio-G4.png",
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod/shots/ar/e01-empty-portfolio-G4.png"
+      ]
+    },
+    {
+      "id": "DOM-R6-08-no-official-claims-scan",
+      "procedure": "Scan the shipped texts, reporting, worker, demo dataset and form export for official PMI/Mobily or certification claims, and the product catalogue for DG0-DG7. Scan the repair diff's added lines.",
+      "command": "grep -rniE 'official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily' apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo apps/api/src/modules/forms; grep -rnE '\\bDG[0-7]\\b' apps/web/src/i18n/{en,ar}/*.json; git diff 0c88d5e..ad52a56 -- apps packages docs/api | grep '^+' | grep -niE 'official|certif|PMI|Mobily|DG[0-7]\\b'",
+      "environment": "Clone at 3985d19.",
+      "expected": "Only disclaimers match; no DG token in the product strings; the added lines hold no claim.",
+      "actual": "The first grep exits 0 with four matches, all disclaimers: 'It is not an official PMI standard' twice, 'not official Mobily brand assets' and 'No official Mobily logo ...'. The DG grep exits 1 (no match). The diff grep exits 0 on 14 added lines. All of them are code or test comments, plus the OpenAPI description, naming F-DG5-124/147, D-178 or 'DG0-DG7' in a 'touches nothing' statement; the token matches inside 'F-DG5'. None is a product string. The diff touches no i18n file and no docs/source file.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-S01-004"],
+      "evidence": ["docs/delivery/test-evidence/DG5/domain/round-6/static-text-scan.log"]
+    },
+    {
+      "id": "DOM-R6-09-integration-batch",
+      "procedure": "Run the 40 integration files of rounds 3-5, plus forms/form-records.test.ts and the new form-export-illustrative.test.ts. They cover the Studio, scoring defaults, migrations, procedures (D-165/D-166/D-167), approval routes and conditions, automation and starters (Rule B), KPI restatement, formula preview and NPV/ROI, outputs, snapshots and injection, the health check and launch plan, the demo dataset, G4 and the form exports.",
+      "command": "env QA_PG_PORT=26481 MTH_PORT_POOL=26482-26499 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat probe/int-files-r6.txt)",
+      "environment": "Clone $TMPDIR/rv6; disposable PostgreSQL; Node 24.21.0; --configLoader runner, as the assignment asks (read-only node_modules); 1-minute load 4-15.",
+      "expected": "All files and tests pass, with no skip or timeout.",
+      "actual": "Test Files 42 passed (42); Tests 527 passed (527); exit 0; 637.8 s. That is round 5's 490 plus form-records 18 and form-export-illustrative 19. There is no failed, skipped or timed-out test and no hook timeout. The log's 'npm warn Unknown project config' lines are npm noticing pnpm settings in .npmrc; they are not errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe/int-files-r6.txt"
+      ]
+    },
+    {
+      "id": "DOM-R6-10-root-acceptance-e2e-production",
+      "procedure": "Run the ten root acceptance specs on the production-initialized stack, in en and ar. This was the only Playwright run in the clone at the time; the integration batch ran in parallel under vitest.",
+      "command": "env E2E_PG_PORT=26401 E2E_API_PORT=26402 MTH_PORT_POOL=26403-26429 E2E_SCREENSHOT_DIR=$TMPDIR/shots-root apps/web/e2e/support/with-stack.sh npx playwright test e2e/a03-modular-entry e2e/a04-kpi-update e2e/a06-configuration-change e2e/a07-historical-integrity e2e/a08-a09-gates-decisions e2e/a13-automation-recovery e2e/a15-reporting e2e/a16-health-launch e2e/a20-bilingual-shell e2e/a22-operations-jobs --workers=1",
+      "environment": "Clone $TMPDIR/rv6; E2E_SCREENSHOT_DIR pointed into $TMPDIR, as the assignment requires for A06/A07; 1-minute load 4-14.",
+      "expected": "30 passed.",
+      "actual": "30 passed (7.7 m), exit 0, on the first run, with no failed, flaky, skipped or timed-out test. The '[a13] own failed execution listed' lines are the A13 spec's own designed failing rule, not failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S06-001", "REQ-S12-002", "REQ-S13-005", "REQ-S14-001", "REQ-S14-003", "REQ-S20-006"],
+      "evidence": ["docs/delivery/test-evidence/DG5/domain/round-6/03-root-prod.log"]
+    },
+    {
+      "id": "DOM-R6-11-demo-root-e2e",
+      "procedure": "Run the four demo root specs on a demo-initialized stack: the guided walkthrough, the twelve steps by the demo role users, the demo labels, and no AI.",
+      "command": "env E2E_PG_PORT=26401 E2E_API_PORT=26402 MTH_PORT_POOL=26403-26429 E2E_SCREENSHOT_DIR=$TMPDIR/shots-demo QA_EVIDENCE_DIR=$TMPDIR/qa-ev e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-demo-labels.spec.ts e2e/a21-no-ai-operation.spec.ts --workers=1",
+      "environment": "Clone $TMPDIR/rv6; MTH_ENV=demo, AUTH_MODE=dev (D-165); 1-minute load 12-13.",
+      "expected": "12 passed.",
+      "actual": "12 passed (4.9 m), exit 0, on the first run, with no failed, flaky, skipped or timed-out test. Seed checksum 0a7fdc3f...37e4. This covers the banner and badges, 'Synthetic demonstration - approves nothing real' on demo G-approvals, the worker export label, and the twelve steps by the demo role users in en and ar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-004", "REQ-S20-002", "REQ-S21-001", "REQ-PB-089"],
+      "evidence": ["docs/delivery/test-evidence/DG5/domain/round-6/04-root-demo.log"]
+    },
+    {
+      "id": "DOM-R6-12-production-isolation-and-determinism",
+      "procedure": "On a production-path database, count the demo rows and users and try seed-demo. Compare the checksums of this round's independent demo seeds.",
+      "command": "env E2E_PG_PORT=26451 E2E_API_PORT=26452 MTH_PORT_POOL=26453-26479 apps/web/e2e/support/with-stack.sh bash probe/prod-isolation.sh; grep checksum probe-f124-demo.log 04-root-demo.log",
+      "environment": "Clone $TMPDIR/rv6.",
+      "expected": "0 demo rows and users; seed-demo is refused; identical checksums.",
+      "actual": "deployment_environment 0, demo_seed_record 0, demo_dataset_run 0, roaming users 0, ROAMING transformations 0. seed-demo is refused with MTH_ENV=production ('refused: MTH_ENV is production', exit 3) and on a non-empty database ('refused: this database is not empty', exit 3), and demo_seed_record is still 0 afterwards. The wrapper exits 0; the two exit-3 refusals are the designed outcome. This round's two independent demo seeds both give 0a7fdc3fd946f7063b92a40082e3291c419d042e58962f9ce0bdbb7f5c2737e4, the same as rounds 4 and 5.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-PB-088"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/prod-isolation.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/probe-f124-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/04-root-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-13-decisions-d163-d168",
+      "procedure": "Judge D-163 (a), D-164 (a)-(k), D-165's accepted observations, D-166 Rules A and B, D-167 and D-168 against this candidate's runs.",
+      "environment": "Repository at 3985d19.",
+      "expected": "Each decision is sound, or a finding is raised.",
+      "actual": "Accepted as in rounds 4 and 5. Wave AA touches none of these areas, and this round's runs re-confirm them. D-163 (a): navigation is hidden server-side by grants. The office has 14 areas, including Administration for the Studio review; a technical administrator without transformation.read has 3. That is a sound reading of REQ-S03-007. D-164 (a)-(k): the #0071F1 navigation derives from the provisional #0078FF, and business-case totals are by reference. D-165: QA-F P-1/P-2/P-3, QA-E O-3 and QA-B O-1/O-2 affect neither RAG nor the value states nor approvals. The dev-mode demo binding works only on a dev-mode demo database (DOM-R6-11/12), and procedures v2 assigning baseline_validation.record_baseline to TL fits REQ-PB-027. D-166: Rule A (the intake adopts the transformation it produced) and Rule B (a finish-to-start forward pass over planned starts, never treating Unknown as 0 or overwriting approved plans) meet M0232's 'defined scheduling logic'; both are green in DOM-R6-09. D-167 is accepted. D-168: the B0147 lines are exact; only the chain-1 outcome wording point remains, which is acceptable.",
+      "exit_status": null,
+      "result": "PASS",
+      "requirements": ["REQ-S03-007", "REQ-S06-003", "REQ-S12-012", "REQ-PB-090", "REQ-S18-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/source-compare-prod.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-14-requirement-acceptances",
+      "procedure": "Test each of the 78 DG5 acceptance texts literally against this round's runs, and judge each partial-coverage disclosure in the notes.",
+      "environment": "Repository at 3985d19.",
+      "expected": "All 78 are met, or the gaps are acceptably disclosed.",
+      "actual": "All 78 are met. REQ-S18-001's clause 'every demo screen, record and export shows the synthetic label in en and ar' now holds for the form-record export too (DOM-R6-02/03), as well as the report pipeline and the screens (DOM-R6-11). Its reset-determinism clause holds (DOM-R6-12). REQ-PB-089 ('every demo record and exported demo report') holds. REQ-S05-001's 'export returns the rows' holds with the label row added before the header in demo only. The other 75 are re-exercised as in round 5 by this round's source comparison, UI probes, 42-file integration batch, 30 root and 12 demo e2e tests. The disclosures remain acceptable, for example the REQ-S13-008 executive-pack staging gap and the REQ-S21-001 inbox label, as judged before. The notes of REQ-S18-001 and REQ-PB-089 still cite the pre-wave-AA runs and don't mention the form-record export. That is register drift with no behavioural effect, and it is not a finding.",
+      "exit_status": null,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/validators.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/03-root-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/04-root-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-15-environmental-residuals",
+      "procedure": "Record the environmental residuals on the offline and configuration surface.",
+      "environment": "Sandboxed review host with no network.",
+      "expected": "PASS on the offline/config surface, with each residual noted.",
+      "actual": "The live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058) are unreachable here; the offline install from the pinned lockfile and the build succeed (DOM-R6-00). Keycloak and a real demo IdP (D-049; ADR-0050 §1) are a devops item, and the D-165 dev-mode binding is the test path, which works (DOM-R6-11). No AI or external notification adapter ships in P5 (D-142 Q11), and A21 passes with the shipped 'disabled' configuration (DOM-R6-11).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-6/install.log",
+        "docs/delivery/test-evidence/DG5/domain/round-6/04-root-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R6-16-assignment-consistency",
+      "procedure": "Check the assignment's contract fields against the validator and the round entry in stages.json.",
+      "command": "grep -n 'rec.round' tools/gates/lib/rules.mjs; read docs/delivery/stages.json DG5 review_rounds[-1]",
+      "environment": "Repository at 3985d19.",
+      "expected": "The assignment's fields are consistent with the validator.",
+      "actual": "Two inconsistencies, disclosed per the agent protocol. (1) The assignment's 'Record format' asks for 'round: 5', but this is round 6 (path round-6, stages.json round 6), and rules.mjs rejects a record whose round differs from its round entry. I write round 6. (2) Its header names task 'T-DG5-REV-DOM-R5', while the invocation_reference and the round are R6. I treat this as a carry-over typo; the invocation_reference is copied verbatim. Neither affects the review's substance.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/domain/round-6/validators.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG5/round-6/domain-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG5/domain/round-6/candidate-clone.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/validators.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/probe-f124-demo.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/probe-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/source-compare-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/compare-vs-round5-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/static-text-scan.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/07-integration.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/03-root-prod.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/04-root-demo.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/prod-isolation.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/install.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/build.log",
+    "docs/delivery/test-evidence/DG5/domain/round-6/probe/dom-r6-f124.spec.ts"
+  ],
+  "reviewed_at": "2026-10-22T05:30:06Z",
+  "summary": "PASS on candidate 3294f8fc (source ad52a56). F-DG5-124 (Medium, mandatory, REQ-S18-001) is CLOSED_VERIFIED. On a demo database, all 8 form-record export files (T14/T01 × CSV/JSON × en/ar), fetched through the API and downloaded through the real en and ar UI, carry 'Illustrative example — synthetic' / 'مثال توضيحي — اصطناعي' as the CSV's first row and as the JSON illustrativeLabel, with the rows intact. On a production database they carry no label and illustrativeLabel is null. The only other export surface, the report pipeline, is labelled (a02 12/12). Everything else is green and matches round 5. Source comparison 0 FAIL; integration 42 files, 527/527; root e2e 30/30 and demo e2e 12/12, each on the first run with no timeout; production isolation holds; deterministic seed 0a7fdc3f...37e4; no official-claim text. Wave AA's CSS has no domain effect. D-163 to D-168 and D-178/D-179 are accepted. There are no new findings. Disclosed: a --shared sparse clone after the first plain clone hit ENOSPC (the candidate ID matches), and the assignment's 'round: 5'/'R5' typos (the record uses round 6)."
+}
