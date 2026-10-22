@@ -231,7 +231,8 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
                     {t(`traceability.severity.${i.severity}`)}
                   </StatusTag>{" "}
                   <strong>{t(`traceability.missingCode.${i.code}`)}</strong>
-                  {i.label ? <span> · {i.label}</span> : null}{" "}
+                  {/* The label is a record name (user text): it wraps anywhere (T-DG5-FE-AB1, F-DG5-148). */}
+                  {i.label ? <span className="record-name"> · {i.label}</span> : null}{" "}
                   {to ? (
                     <Link className="link" to={to}>
                       {t("traceability.modular.supply")}

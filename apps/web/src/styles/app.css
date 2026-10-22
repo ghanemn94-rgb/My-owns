@@ -393,7 +393,12 @@ a:hover {
 /* D-178 orchestrator follow-up: the other title containers that show user text (Define, Design, Gates). */
 .outcome-card__title,
 .tom-box__title,
-.gate-card__title {
+.gate-card__title,
+/* T-DG5-FE-AB1 (F-DG5-148, D-180): a record name outside a heading. RecordName (traceability/ui.tsx) renders every
+   Traceability record name (the graph's record links and link lists, the trace panels, the orphan and impact tables)
+   in .record-name, and so does the Modular entry missing-item label "· <name>". Inside a table it lowers the column's
+   min-content width only; auto table layout still gives the column its max-content width where the table fits. */
+.record-name {
   overflow-wrap: anywhere;
 }
 /* The title block of the header row is a flex item: it may shrink below its content's width (the actions wrap). */
@@ -1391,6 +1396,12 @@ input[type="radio"] {
   padding: 0;
   display: grid;
   gap: var(--mth-space-3);
+}
+/* T-DG5-FE-AB1 (F-DG5-149, D-180): an outcome is a grid item; without this its automatic minimum width is its
+   content's min-content width (the Good-outcome test table), which held the card at about 352 px and widened the page
+   at 320-375 px. The card now shrinks to the column, and the table scrolls in its own TableScrollRegion. */
+.outcome-tree > .outcome-node {
+  min-inline-size: 0;
 }
 .outcome-tree--nested {
   margin-block-start: var(--mth-space-3);
