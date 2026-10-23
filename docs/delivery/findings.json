@@ -13612,6 +13612,250 @@
         ],
         "note": "Verified by its reporter, the release-auditor (round-9 run 7b5f734c raised it; this is round-10 run 82e59b30). Candidate sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 (1475 files, source e70ac02f63cd1f42487cfa4dae73f68e933da015), recomputed in a complete clone. The owner is frontend-ux-engineer (T-DG4-FE-R11); I authored none of the repair.\n\nFix ancestry. fix_revision 30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66 is a commit (full 40-hex), merged by 5c18961. It is an ancestor of e70ac02 and of this run's starting HEAD e5587b8 (03-findings.log).\n\nMy round-9 reproduction no longer reproduces (13-f-dg4-160-reproduction-and-sweep.log):\n- en/ar transformations.json:88 form.statusHint now reads 'A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.' / '… يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.'\n- The stale sentence is found nowhere in apps/, packages/, tests/ or e2e/ (grep exit 1).\n- It still renders at TransformationEditPage.tsx:274.\n- What it points to exists: route transformations/:id/closure (router.tsx:402) and the workspace tab closureP4.tab 'Closure' / «الإغلاق».\n- The first sentence (the allowed transitions, no 'closed' option) is unchanged and still true.\n\nThe pins are not vacuous (09-fe-r11-mutants.log), checked in a scratch clone and restored clean:\n- Restoring the round-9 transformations.json fails 3 tests: the literal EN/AR pin and the en/ar rendered edit page.\n- Restoring the round-9 nav.json fails 11 tests: the planned-area pins in en and ar.\n- On the candidate, the two files pass 49/49 with the locale unset and with C.UTF-8 (08-fe-r11-unit-*.log).\n\nThe sweep (FE-R11 handback §3) is sound. I checked each kept string myself:\n- gates.notEnabled / notEnabledBody and problems.gate_not_enabled are unreachable. Migrations 0026 and 0059 enable G4-G6 (0059 aborts unless both G5 and G6 are enabled), catalogue.test.ts pins G1-G6 all true, and no API code writes gate_definition.\n- transformations.workspace.laterStage has 0 render sites.\n- nav.p4.beingBuilt* is unreachable: P4_PLANNED_ROUTES has 0 entries.\n- admin.plannedSections is true: every section it names is final gate DG5 or DG6 and SPECIFIED.\n- problems.access__scope_type_reserved is true (REQ-S10-002, DG6).\n\nThe three corrected sweep strings are true for DG4:\n- nav.plannedBody: each of the four planned areas (playbook, risks, change, bau) has delivered sub-screens without a permission requirement in NAV_SUBPAGES.\n- nav.entry.portfolioPlanned: the cross-portfolio view is REQ-S03-007 (DG5, SPECIFIED), and the dashboards are REQ-S13-001 (DG4, IMPLEMENTED).\n- nav.willContain now reads 'What this area covers'.\n\nAll three round-10 specialists checked the repair independently and agree, all PASS on the same candidate:\n- domain: DOM-R10-02 to -04, a real-stack EN/AR probe at 60/60;\n- code-security: SEC-R10-02, no key added or removed and no interpolation surface;\n- qa: QA-R10-03, -07 to -09, with a stale-text mutant failing 14/49, e2e 24/24 in both settings and axe 0.\n\nThe repair is text and tests only: the product diff from f2ae717 is exactly 9 files, with no API, worker, package or migration change."
       }
+    },
+    {
+      "id": "F-DG5-120",
+      "stage_id": "DG5",
+      "requirement": "REQ-S12-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A critical dependency slip's recomputed forecast impact (Rule B) reaches no screen: the affected owner is told to 'open the record for details', and the linked Dependencies page, the initiative page and the roadmap show neither the slip nor the moved forecast",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, clone at 53bd2d1). As roaming.user.tl, PATCH /api/v1/milestones/{INI-03 'Partner usage feed live for digital activation'} forecastDate 2026-09-28 -> 2026-10-03 (DEP-01: INI-01 needs it by 2026-10-01). With the production worker running, GET /dependency-slips records slipDays 5, criticalReason needed_by_breached, affected INI-01 (owner roaming.user.sp) forecastFinishBefore 2027-02-25, forecastFinishAfter 2027-03-02. Sign in as roaming.user.sp (en and ar): My Work lists 'A critical dependency slipped: open the record for details' (due Unknown), whose link opens /transformations/{id}/dependencies. Probe: docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-slip.spec.ts.",
+      "expected": "REQ-S12-012 (output 'Notifications and forecast update'; screen 'Initiatives and Roadmaps > Dependencies'; M0232 'notify affected owners and recompute forecast impacts'); ADR-0044 §7: a dependent's forecast finish that cannot be computed is null in affected and 'shown Unknown', i.e. the impact is shown. The notified owner can see, in en and ar, which dependency slipped by how many days and how the dependent initiative's forecast finish moved (before -> after, or Unknown).",
+      "actual": "The impact exists only in the API (GET /transformations/{id}/dependency-slips, which no web module calls: no reference to dependency-slips, forecastFinishAfter or slipDays in apps/web/src). The work item's message is the generic kind label; its messageParams (dependencyCode, slipDays, initiativeCodes) are not rendered. The Dependencies page shows only the DG4 needed-by conflict flag on DEP-01; the INI-01 page and the roadmap show its own milestone dates (no 2027-03-02 anywhere; 'Critical path: Unknown'). The Rule B computation itself is correct (+5 days for the no-slack dependent, and a second +5 slip in the ar run moved it to 2027-03-07), and each owner is notified once.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-slip.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-1/06-demo-run2.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api/en/dependency-slips.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api/ar/dependency-slips.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/slip-owner-my-work.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/slip-owner-dependencies.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/slip-owner-initiative-INI-01.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/slip-owner-my-work.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/slip-owner-my-work.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/slip-owner-dependencies.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/slip-owner-dependencies.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 1 (T-DG5-RG-DOM-R1) from a real slip on the demo stack, en and ar. Medium, not a mandatory violation: the notification and the Rule B computation work and are reachable through the documented API; the gap is that no screen shows the impact to the person notified."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-121",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-087",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The seeded roaming transformation has a 90-day launch plan but no Day-90 leadership test; its Day-90 page says 'Generate the launch plan first'",
+      "reproduction": "Demo-initialized stack, as roaming.user.tl: GET /api/v1/transformations/01995000-0000-7000-8000-000000000001/launch-plan -> 200 (33 tasks, start 2026-07-03); GET .../day-90-test -> 404. Open /transformations/{roaming}/day-90-test in en and ar. Control: a new transformation created by the same user with POST .../launch-plan {startDate: 2026-10-01} gets its Day-90 test (200, six B0136-B0141 questions verbatim, scheduled 2026-12-30, 'Incomplete (0/6)'). Probe: docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-day90.spec.ts.",
+      "expected": "M0261 / B0135-B0141: the Day-90 leadership test is part of the launch plan; plan.ts creates one with every plan. The demo's plan, seeded to exercise the methodology, carries its Day-90 test like any plan, and the page tells the truth.",
+      "actual": "packages/db/src/demo/data/roaming-states.ts seedLaunchPlan inserts launch_plan and its 33 launch_task rows directly and no day_ninety_test row, bypassing the invariant of apps/api/src/modules/launch/plan.ts. The page shows 'No Day-90 test yet - The test is created with the 90-day launch plan and scheduled on day 90. Generate the launch plan first.' (ar: «أنشئ خطة الإطلاق أولًا») although the plan exists, and the demo offers no way to run the Day-90 test on the roaming example.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-day90.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-1/11-day90-probe.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api-day90/en/roaming-day-90-test.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api-day90/en/roaming-launch-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api-day90/en/new-day-90-test.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/roaming-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/roaming-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/new-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/new-day-90-test.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 1 (T-DG5-RG-DOM-R1). Low, not mandatory: the product path creates the test correctly (verified); only the demo seed omits it and the page's hint is then untrue."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-122",
+      "stage_id": "DG5",
+      "requirement": "REQ-S03-010",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The playbook reader shows table blocks as raw Markdown in its lists and the B0024 panel, and renders one-cell callout tables (B0016, B0124) as a single unwrapped line clipped at the page edge",
+      "reproduction": "Any stack, the reader in en and ar: /playbook/reader (the 'About this methodology' B0024 panel and the block list) and /playbook/reader/B0016, /playbook/reader/B0124 at 1280 px.",
+      "expected": "Source text in the reader is readable as text: table blocks without Markdown syntax in previews and panels, and a one-cell callout (the B0016 rule of thumb, the B0124 PMI BRM connection) wrapped within the page.",
+      "actual": "The B0024 panel reads '| PMI/Brightline connection The playbook uses ... | |---|' and the list previews read e.g. 'B0009 | Mode | When to use | How | |---|---|---| ...' and 'B0003 | 6<br>PHASES ...' (38 lines with '|---|' on the en reader page). On the block pages the one-cell table is a header cell that does not wrap: 'Rule of thumb Every transformation deliverable should answer one of four questions: Why change? What must become different? How' and 'PMI BRM connection This phase aligns with PMI Benefits Realization Management logic: identify expected benefits, deliver/measure t' are cut at the edge; the rest is reachable only by scrolling the focusable table region horizontally. The four questions and the Realize note are verbatim elsewhere (reader intro, API), so no source text is lost.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/tl-reader.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/tl-reader-B0124.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/tl-reader-B0124.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/tl-reader-B0016.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/tl-reader-B0016.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 1 (T-DG5-RG-DOM-R1). Low, cosmetic: readability of source blocks in the reader; no content is lost."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-100",
+      "stage_id": "DG5",
+      "requirement": "REQ-S19-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The migration runner applies a pending migration whose id is below the highest applied id, and P5 leaves eight reserved ids unused, so a later file in a gap runs in a different order on an upgraded database than on a fresh one",
+      "reproduction": "In the candidate (270ebbf), the P5 migrations 0062-0097 leave eight ids unused: 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084 (planned gaps, p5-work-split shared rule 16). packages/db/src/migrate.ts:95 computes `pending` as every file not yet applied, and migrate.ts:159 applies the pending files in lexical order. The runner refuses only a changed checksum and an applied file the build does not ship. packages/db/src/seed.test.ts:767 admits any id from 0058 to 0099, and its comment says implementers 'fill' unused numbers. Reproduction (no database): docs/delivery/test-evidence/DG5/code-security/round-1/repro/migration-gap-order.mjs calls the runner's own compareStatus() with an upgraded database that applied all 89 candidate files, and a later build that adds 0066_p6_example.sql. Result (41-migration-gap-order.log): pending = [0066_p6_example.sql], unknownApplied = [], checksumMismatches = []. So nothing refuses the file. It runs at position 66 of 90 on a fresh database (before 0068_p5_form_schemas_framework.sql) and at position 90 on the upgraded one (after 0097).",
+      "expected": "Forward-only migrations apply in one order on every database. The runner, or the numbering test, refuses a pending migration whose id is lower than the highest applied id, so the P5 gaps can never be filled after their stage. Alternatively, the test pins the P5 gaps as permanently unused and requires every new id to be above the current maximum.",
+      "actual": "Nothing in the candidate is mis-ordered today, so there is no behavioural effect yet. But a future file in any of the eight P5 gaps would be accepted silently. It would then run against a different schema state on upgraded databases than on fresh ones, so the two kinds of database can diverge (for example, a backfill that a later P5 migration's guards would refuse).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/41-migration-gap-order.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/migration-gap-order.mjs",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/50-source-review.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-RG-SEC-R1). Low and non-mandatory: a latent ordering hazard with no effect on the candidate's own 89 migrations."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-101",
+      "stage_id": "DG5",
+      "requirement": "REQ-S13-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "CSV export writes a negative decimal of more than 15 significant digits with the formula-injection apostrophe ('-12345678901.23456), contrary to ADR-0046 §4",
+      "reproduction": "packages/reporting/src/model.ts:206 (valueCell) writes a decimal that does not fitsDouble (model.ts:191, more than 15 significant digits) as a TEXT cell with quotePrefix false (\"a system number ... is never prefixed\"). packages/reporting/src/csv.ts:48 (csvCell, case \"text\") re-applies neutralizeSpreadsheetText to every text cell and ignores quotePrefix. So a negative long decimal gets the apostrophe. A total cell takes the same path: model.ts totalRowCells falls back to valueCell when the total does not fitsDouble. Reproduction: the disposable unit test docs/delivery/test-evidence/DG5/code-security/round-1/repro/zz-sec-r1-csv-long-decimal.test.ts, copied into packages/reporting/src/ of the review clone, run with `npx vitest run --project unit-node`, then removed. It renders the package's own sampleDocument fixture with amounts that satisfy DECIMAL_PATTERN. The control -1234567890.12345 (15 significant digits) is written unprefixed, and so is the positive 12345678901.23456. But -12345678901.23456 and -1234567890.123456 are written '-12345678901.23456 and '-1234567890.123456 (43-csv-long-decimal.log: 1 failed, 2 passed, exit 1, failing by design on this assertion).",
+      "expected": "ADR-0046 §4 and the csv.ts header: \"a decimal is its canonical string, unprefixed\". The CSV field is -12345678901.23456, as it is for any shorter negative decimal. A decimal is a system number, not user text, so it is never neutralized.",
+      "actual": "The CSV field is '-12345678901.23456. A spreadsheet or a CSV consumer reads it as the text \"'-12345678901.23456\", not a number. The digits are preserved, so no value is lost and no formula is created. It needs at least 16 significant digits with a negative sign (for example, an amount of at least 1e10 with 5-6 decimal places, or at least 1e13 with 2), so it is rare in practice. XLSX is not affected (the text cell is an inline string with quotePrefix false).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/43-csv-long-decimal.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/zz-sec-r1-csv-long-decimal.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/50-source-review.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-RG-SEC-R1). Low and non-mandatory: a representation defect of rare long negative decimals in CSV only. No value is lost and no formula is executed."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-140",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "My procedures offers the read-only auditor (AUD) an enabled 'Launch a procedure' form that can only end in 403",
+      "reproduction": "Real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev), chromium-en and chromium-ar, both locale settings: dev.lead creates a transformation through the API; sign in as dev.auditor; open /playbook/procedures. The 'Launch a procedure' section (MyProceduresPage.tsx LaunchSection, rendered for every signed-in user with no permission gate) lists all 10 published procedures and an enabled Launch submit. Choose 'Gate review' and the transformation, press Launch. Probe: docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5rg1-aud-launch.spec.ts (and the AUD sweep zz-qa-dg5rg1-aud-p5.spec.ts, whose only remaining hit on 32 P5 screens is this one).",
+      "expected": "As on every other P5 and DG2-DG4 screen the auditor opens (Studio, scoring defaults, forms, automation, launch plan, health check, reports, evidence ...: no enabled write control, a read-only note where relevant), a user who cannot launch any procedure is not offered an enabled launch form; the server-side refusal stays as the backstop.",
+      "actual": "The form is enabled for AUD with all 10 procedures; POST /api/v1/procedure-instances returns 403 'You do not have permission for this action.' (ar: 'ليست لديك صلاحية لهذا الإجراء.'), shown as an alert; no instance is created (0 for the transformation). The server enforcement is correct (procedure.launch + launch role, instances.ts:293-296), so there is no authorization hole: the defect is an offered action the role can never perform, inconsistent with the product's read-only convention. Not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-audlaunch-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-aud-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-aud-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-audlaunch-unset/en/qa-aud-launch-refused.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-audlaunch-unset/ar/qa-aud-launch-refused.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5rg1-aud-launch.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5rg1-aud-p5.spec.ts",
+        "apps/web/src/pages/procedures/MyProceduresPage.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 clean re-gate round 1 (T-DG5-RG-QA-R1). Low, non-mandatory, not blocking: the server refuses (403) and nothing is created."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-141",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product e2e p4-dashboards.spec.ts test 6 (390 px and 200 % text) runs on the default 30 s budget with little headroom in chromium-ar in the full suite, and timed out there",
+      "reproduction": "Full product e2e on the real stack, --workers=1, locale unset: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e (docs/delivery/test-evidence/DG5/qa/round-1/scripts/run-e2e.sh unset ... product apps/web/e2e). Test 349 [chromium-ar] p4-dashboards.spec.ts:295 '6. 390 px wide and 200 % text' failed with 'Test timeout of 30000ms exceeded' at 30.1 s (load 3-6); its trace shows no failed assertion, only steps (seven full-page screenshots, networkidle) consuming the budget. The test sets no explicit timeout.",
+      "expected": "Like the other long reflow and journey tests that were given explicit budgets with at least 2x headroom over a measured loaded case (F-DG5-121 for the p2 journeys; D-173 for p4-gates-closure test 9), this test has a budget that a full-suite run does not exceed.",
+      "actual": "Alone it takes about 15 s (the whole spec 42/42 with --repeat-each=3, test 6 passing 6/6 in both projects), but in the full suite, where the shared database has grown, chromium-ar took 24-26 s even unloaded in the orchestrator's D-181/D-182 runs, and in this round it timed out in BOTH full runs: locale unset 30.1 s (load 3-6) and C.UTF-8 30.5 s (load about 2). The C.UTF-8 trace shows 18.1 s of the 30 s spent in full-page screenshots (one of 9.8 s; the pages at 200 % text are long by then) and no network request above 800 ms, so the time goes to the test's own screenshots, not to slow product responses. The gate's product e2e is therefore 459/460 in each locale setting for a timing reason only; no assertion failed. Not a product defect; a test-budget defect that makes a gate check fail.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-rerun-p4dash-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-cutf8-p4dash-trace-timing.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/product-cutf8-failure/p4-dashboards-295-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/product-unset-failure/p4-dashboards-295-chromium-ar-test-failed-1.png",
+        "apps/web/e2e/p4-dashboards.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 clean re-gate round 1 (T-DG5-RG-QA-R1). Low, non-mandatory, test-only; not blocking."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-142",
+      "stage_id": "DG5",
+      "requirement": "REQ-S12-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Root acceptance spec e2e/a22-operations-jobs.spec.ts compares an API read of nextRunAt with a later screen read, so it fails whenever a schedule boundary falls between them",
+      "reproduction": "Root acceptance specs on the real stack, C.UTF-8 (run-e2e.sh cutf8 ... root product e2e/a03 ... e2e/a22-operations-jobs.spec.ts). [chromium-en] A22 failed at 7.3 s: 'approval.escalation_scan: next run' expected [data-next-run='2026-10-23T08:30:00.000Z'], found 0. The trace's network log: the test's GET /api/v1/admin/jobs at 08:29:58.711Z (next run 08:30Z), the screen's own GET /api/v1/admin/jobs at 08:30:00.461Z; the job is '*/15 * * * *' Asia/Riyadh, so the screen correctly showed 23 Oct 2026, 11:45 (08:45Z).",
+      "expected": "The acceptance test checks that the screen shows each job's next run as the API computes it, robustly: e.g. it reads the expected values after the screen has loaded (or re-reads on mismatch), or avoids a boundary, so a correct product never fails it.",
+      "actual": "The product is correct (the next run is recomputed at request time); the spec is racy, with a failure window around every 15-minute boundary of the */15 jobs. Re-run alone: 6/6 (--repeat-each=3, both projects); the unset-locale root run passed 30/30. Owner note: the file is a qa acceptance spec (e2e/**); the listed owner is the job-operations module owner, and the orchestrator assigns the repair.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-rerun-a22-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/root-cutf8-failure/a22-chromium-en-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/root-cutf8-failure/a22-chromium-en-error-context.md",
+        "e2e/a22-operations-jobs.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 clean re-gate round 1 (T-DG5-RG-QA-R1). Low, non-mandatory, test-only; not blocking."
+        }
+      ]
     }
   ]
 }
