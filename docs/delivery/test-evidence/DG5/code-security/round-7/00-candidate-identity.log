@@ -1,0 +1,20 @@
+## 2026-10-22T22:12:02Z candidate identity
+$ (main) git rev-parse HEAD
+1932faa72f68191f0a288be3acae796ce4e06f53
+$ (main) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+$ (clone $TMPDIR/review-r7) HEAD 1932faa72f68191f0a288be3acae796ce4e06f53 shallow=false sparse=unset
+$ git status --short | wc -l
+0
+$ (clone) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+$ git diff --name-only 12dc33e HEAD   (freeze commit 1932faa adds delivery records only)
+docs/delivery/assignments/DG5/round-7/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-7/domain-reviewer.md
+docs/delivery/assignments/DG5/round-7/qa-verifier.md
+docs/delivery/candidates/DG5/33188e9e698fd11b.manifest.json
+docs/delivery/stages.json
+$ git merge-base --is-ancestor 12dc33e HEAD
+EXIT 0

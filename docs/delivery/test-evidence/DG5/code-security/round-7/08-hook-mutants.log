@@ -1,0 +1,140 @@
+## 2026-10-22T22:31:24Z D-181 hook probe and mutants; clone HEAD 1932faa; node v24.21.0; locale unset; load: 17.80 14.27 8.70
+copy probe -> apps/web/src/api/zz-sec-r7-all-transformations-cancel.test.tsx (9d1b274e2c257dff)
+
+### unmutated candidate
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/api/all-transformations.test.tsx apps/web/src/api/zz-sec-r7-all-transformations-cancel.test.tsx
+ ✓ |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx (4 tests) 6244ms
+ ✓ |unit-web| src/api/all-transformations.test.tsx (9 tests) 9528ms
+   ✓ launch-procedure transformation picker (en) > P1 offers all 250 transformations over three pages, the last one included (en)  1745ms
+   ✓ launch-procedure transformation picker (ar) > P1 offers all 250 transformations over three pages, the last one included (ar)  1046ms
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+EXIT 0
+
+### mutant M1: git diff
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index 9b43b7f..836246b 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -261,7 +261,7 @@ export async function fetchAllTransformations(
+       signal,
+     );
+     out.push(...page.items);
+-    if (!page.nextCursor) return out;
++    return out;
+     if (seen.has(page.nextCursor)) throw new Error("Transformation list: the server repeated a page cursor.");
+     seen.add(page.nextCursor);
+     cursor = page.nextCursor;
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/api/all-transformations.test.tsx apps/web/src/api/zz-sec-r7-all-transformations-cancel.test.tsx   (non-zero expected: the mutant must be killed)
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H1 one page: one request with limit 100 and no cursor 107ms
+   × fetchAllTransformations / useAllTransformations (D-181) > H2 several pages: follows nextCursor until null, keeps the filters, returns every item in order 78ms
+   × fetchAllTransformations / useAllTransformations (D-181) > H3 an error mid-way: the query is an error with no partial data, and no later page is requested 5029ms
+   × fetchAllTransformations / useAllTransformations (D-181) > H4 a repeated cursor is an error, not an endless loop or a shortened list 51ms
+   × fetchAllTransformations / useAllTransformations (D-181) > H5 the request signal is passed to every page request 4ms
+   × launch-procedure transformation picker (en) > P1 offers all 250 transformations over three pages, the last one included (en) 1221ms
+   × launch-procedure transformation picker (en) > P2 a failed page shows the translated error state with "Try again", and no partial picker (en) 5215ms
+   × launch-procedure transformation picker (ar) > P1 offers all 250 transformations over three pages, the last one included (ar) 403ms
+   × launch-procedure transformation picker (ar) > P2 a failed page shows the translated error state with "Try again", and no partial picker (ar) 5105ms
+   × D-181 hook cancellation and bound (code-security r7) > C1 abort while page 2 is in flight: rejects with AbortError, no page 3 20134ms
+   ✓ D-181 hook cancellation and bound (code-security r7) > C2 an already-aborted signal: rejects, at most one request 2ms
+   × D-181 hook cancellation and bound (code-security r7) > C3 unmount during page 2: the query is cancelled and no further page is requested 20009ms
+   × D-181 hook cancellation and bound (code-security r7) > C4 an endless chain of fresh cursors is bounded and is an error 15ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > fetchAllTransformations / useAllTransformations (D-181) > H2 several pages: follows nextCursor until null, keeps the filters, returns every item in order
+AssertionError: expected [ { …(22) }, { …(22) }, …(98) ] to have a length of 250 but got 100
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > fetchAllTransformations / useAllTransformations (D-181) > H3 an error mid-way: the query is an error with no partial data, and no later page is requested
+AssertionError: expected false to be true // Object.is equality
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > fetchAllTransformations / useAllTransformations (D-181) > H4 a repeated cursor is an error, not an endless loop or a shortened list
+AssertionError: promise resolved "[ { …(22) }, { …(22) }, …(98) ]" instead of rejecting
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > fetchAllTransformations / useAllTransformations (D-181) > H5 the request signal is passed to every page request
+AssertionError: expected [ { …(22) }, { …(22) }, …(98) ] to have a length of 150 but got 100
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > launch-procedure transformation picker (en) > P1 offers all 250 transformations over three pages, the last one included (en)
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > launch-procedure transformation picker (ar) > P1 offers all 250 transformations over three pages, the last one included (ar)
+AssertionError: expected [ …(100) ] to have a length of 250 but got 100
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > launch-procedure transformation picker (en) > P2 a failed page shows the translated error state with "Try again", and no partial picker (en)
+TestingLibraryElementError: Unable to find role="alert"
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > launch-procedure transformation picker (ar) > P2 a failed page shows the translated error state with "Try again", and no partial picker (ar)
+TestingLibraryElementError: Unable to find role="alert"
+ FAIL  |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx > D-181 hook cancellation and bound (code-security r7) > C1 abort while page 2 is in flight: rejects with AbortError, no page 3
+Error: Test timed out in 20000ms.
+ FAIL  |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx > D-181 hook cancellation and bound (code-security r7) > C3 unmount during page 2: the query is cancelled and no further page is requested
+Error: Test timed out in 20000ms.
+ FAIL  |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx > D-181 hook cancellation and bound (code-security r7) > C4 an endless chain of fresh cursors is bounded and is an error
+AssertionError: promise resolved "[]" instead of rejecting
+ Test Files  2 failed (2)
+      Tests  11 failed | 2 passed (13)
+EXIT 1
+
+### mutant M2: git diff
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index 9b43b7f..7445386 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -258,7 +258,6 @@ export async function fetchAllTransformations(
+         limit: PAGINATION.maxLimit,
+         ...(cursor ? { cursor } : {}),
+       },
+-      signal,
+     );
+     out.push(...page.items);
+     if (!page.nextCursor) return out;
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/api/all-transformations.test.tsx apps/web/src/api/zz-sec-r7-all-transformations-cancel.test.tsx   (non-zero expected: the mutant must be killed)
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H1 one page: one request with limit 100 and no cursor 112ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H2 several pages: follows nextCursor until null, keeps the filters, returns every item in order 81ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H3 an error mid-way: the query is an error with no partial data, and no later page is requested 57ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H4 a repeated cursor is an error, not an endless loop or a shortened list 8ms
+   × fetchAllTransformations / useAllTransformations (D-181) > H5 the request signal is passed to every page request 26ms
+   ✓ launch-procedure transformation picker (en) > P1 offers all 250 transformations over three pages, the last one included (en)  1610ms
+   ✓ launch-procedure transformation picker (en) > P2 a failed page shows the translated error state with "Try again", and no partial picker (en) 233ms
+   ✓ launch-procedure transformation picker (ar) > P1 offers all 250 transformations over three pages, the last one included (ar)  1464ms
+   ✓ launch-procedure transformation picker (ar) > P2 a failed page shows the translated error state with "Try again", and no partial picker (ar) 154ms
+   × D-181 hook cancellation and bound (code-security r7) > C1 abort while page 2 is in flight: rejects with AbortError, no page 3 20015ms
+   × D-181 hook cancellation and bound (code-security r7) > C2 an already-aborted signal: rejects, at most one request 20010ms
+   × D-181 hook cancellation and bound (code-security r7) > C3 unmount during page 2: the query is cancelled and no further page is requested 5066ms
+   ✓ D-181 hook cancellation and bound (code-security r7) > C4 an endless chain of fresh cursors is bounded and is an error 232ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > fetchAllTransformations / useAllTransformations (D-181) > H5 the request signal is passed to every page request
+AssertionError: expected undefined to be truthy
+ FAIL  |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx > D-181 hook cancellation and bound (code-security r7) > C1 abort while page 2 is in flight: rejects with AbortError, no page 3
+Error: Test timed out in 20000ms.
+ FAIL  |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx > D-181 hook cancellation and bound (code-security r7) > C2 an already-aborted signal: rejects, at most one request
+Error: Test timed out in 20000ms.
+ FAIL  |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx > D-181 hook cancellation and bound (code-security r7) > C3 unmount during page 2: the query is cancelled and no further page is requested
+AssertionError: expected undefined to be true // Object.is equality
+ Test Files  2 failed (2)
+      Tests  4 failed | 9 passed (13)
+EXIT 1
+
+### mutant M3: git diff
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index 9b43b7f..e24113e 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -262,7 +262,6 @@ export async function fetchAllTransformations(
+     );
+     out.push(...page.items);
+     if (!page.nextCursor) return out;
+-    if (seen.has(page.nextCursor)) throw new Error("Transformation list: the server repeated a page cursor.");
+     seen.add(page.nextCursor);
+     cursor = page.nextCursor;
+   }
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/api/all-transformations.test.tsx apps/web/src/api/zz-sec-r7-all-transformations-cancel.test.tsx   (non-zero expected: the mutant must be killed)
+ ✓ |unit-web| src/api/zz-sec-r7-all-transformations-cancel.test.tsx (4 tests) 8346ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H1 one page: one request with limit 100 and no cursor 94ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H2 several pages: follows nextCursor until null, keeps the filters, returns every item in order 66ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H3 an error mid-way: the query is an error with no partial data, and no later page is requested 75ms
+   × fetchAllTransformations / useAllTransformations (D-181) > H4 a repeated cursor is an error, not an endless loop or a shortened list 1825ms
+   ✓ fetchAllTransformations / useAllTransformations (D-181) > H5 the request signal is passed to every page request 12ms
+   ✓ launch-procedure transformation picker (en) > P1 offers all 250 transformations over three pages, the last one included (en)  2194ms
+   ✓ launch-procedure transformation picker (en) > P2 a failed page shows the translated error state with "Try again", and no partial picker (en)  423ms
+   ✓ launch-procedure transformation picker (ar) > P1 offers all 250 transformations over three pages, the last one included (ar)  900ms
+   ✓ launch-procedure transformation picker (ar) > P2 a failed page shows the translated error state with "Try again", and no partial picker (ar) 136ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-web| src/api/all-transformations.test.tsx > fetchAllTransformations / useAllTransformations (D-181) > H4 a repeated cursor is an error, not an endless loop or a shortened list
+AssertionError: expected [Function] to throw error matching /repeated a page cursor/ but got 'Transformation list: more than 1000 p…'
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 12 passed (13)
+EXIT 1
+
+clone git status --short lines after revert: 0
+## end 2026-10-22T22:34:01Z

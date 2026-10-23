@@ -1,0 +1,292 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - button "إظهار التنقل أو إخفاؤه" [ref=e6] [cursor=pointer]:
+      - img [ref=e7]
+      - generic [ref=e9]: إظهار التنقل أو إخفاؤه
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e10] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e11]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e12]': مؤقت
+      - generic [ref=e13]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e15] [cursor=pointer]: English
+    - button "تسجيل الخروج" [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - generic [ref=e19]: تسجيل الخروج
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - navigation "مسار التنقل" [ref=e25]:
+          - list [ref=e26]:
+            - listitem [ref=e27]:
+              - link "التحوّلات" [ref=e28] [cursor=pointer]:
+                - /url: /transformations
+            - listitem [ref=e29]:
+              - text: /
+              - link "TR-0002" [ref=e30] [cursor=pointer]:
+                - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5
+            - listitem [ref=e31]: /التتبّع
+        - generic [ref=e33]:
+          - heading "التتبّع" [level=1] [ref=e34]
+          - paragraph [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: TR-0002
+              - generic [ref=e38]: QA7r w120 ar mvk5jplr
+              - generic [ref=e39]:
+                - img [ref=e40]
+                - text: مسودة – لم تُقدَّم
+              - generic [ref=e42]: "المرحلة: التشخيص"
+      - navigation "مساحة عمل التحوّل" [ref=e43]:
+        - list [ref=e44]:
+          - listitem [ref=e45]:
+            - link "نظرة عامة" [ref=e46] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5
+          - listitem [ref=e47]:
+            - link "التشخيص" [ref=e48] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/diagnose
+          - listitem [ref=e49]:
+            - link "الميثاق" [ref=e50] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/charter
+          - listitem [ref=e51]:
+            - link "التحديد" [ref=e52] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/define
+          - listitem [ref=e53]:
+            - link "التصميم" [ref=e54] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/design
+          - listitem [ref=e55]:
+            - link "المحفظة" [ref=e56] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/portfolio
+          - listitem [ref=e57]:
+            - link "ترتيب الأولويات" [ref=e58] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/prioritization
+          - listitem [ref=e59]:
+            - link "خارطة الطريق" [ref=e60] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/roadmap
+          - listitem [ref=e61]:
+            - link "الاعتماديات" [ref=e62] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/dependencies
+          - listitem [ref=e63]:
+            - link "السعة" [ref=e64] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/capacity
+          - listitem [ref=e65]:
+            - link "دراسات الجدوى" [ref=e66] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/business-cases
+          - listitem [ref=e67]:
+            - link "معادلات المنفعة" [ref=e68] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/benefit-formulas
+          - listitem [ref=e69]:
+            - link "القرارات" [ref=e70] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/decisions
+          - listitem [ref=e71]:
+            - link "البوابات" [ref=e72] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/gates
+          - listitem [ref=e73]:
+            - link "الجاهزية" [ref=e74] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/readiness
+          - listitem [ref=e75]:
+            - link "الإعفاءات" [ref=e76] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/dispensations
+          - listitem [ref=e77]:
+            - link "الأدلة" [ref=e78] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/evidence
+          - listitem [ref=e79]:
+            - link "الفريق" [ref=e80] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/team
+          - listitem [ref=e81]:
+            - link "إسناد الأدوار" [ref=e82] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/role-mappings
+          - listitem [ref=e83]:
+            - link "صلاحيات القرار" [ref=e84] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/decision-rights
+          - listitem [ref=e85]:
+            - link "مصفوفة المسؤوليات" [ref=e86] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/raci
+          - listitem [ref=e87]:
+            - link "جاهزية التحويل والتنفيذ" [ref=e88] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/transform-readiness
+          - listitem [ref=e89]:
+            - link "سجل الموافقات" [ref=e90] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/approval-decisions
+          - listitem [ref=e91]:
+            - link "مؤشرات الأداء" [ref=e92] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/kpis
+          - listitem [ref=e93]:
+            - link "سجل المنافع (T14)" [ref=e94] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/benefits
+          - listitem [ref=e95]:
+            - link "سجل المخاطر (T15)" [ref=e96] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/raid
+          - listitem [ref=e97]:
+            - link "الإجراءات" [ref=e98] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/actions
+          - listitem [ref=e99]:
+            - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/corrective-actions
+          - listitem [ref=e101]:
+            - link "المنتديات" [ref=e102] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/forums
+          - listitem [ref=e103]:
+            - link "الاجتماعات" [ref=e104] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/meetings
+          - listitem [ref=e105]:
+            - link "القرارات التنفيذية (T16)" [ref=e106] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/executive-decisions
+          - listitem [ref=e107]:
+            - link "التبنّي" [ref=e108] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/adoption
+          - listitem [ref=e109]:
+            - link "العمليات الاعتيادية ومجالات الأداء" [ref=e110] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/bau
+          - listitem [ref=e111]:
+            - link "قائمة التحسين المستمر" [ref=e112] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/improvement
+          - listitem [ref=e113]:
+            - link "الدروس المستفادة" [ref=e114] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/lessons
+          - listitem [ref=e115]:
+            - link "لوحة المؤشرات (T10)" [ref=e116] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/dashboard
+          - listitem [ref=e117]:
+            - link "الإغلاق" [ref=e118] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/closure
+          - listitem [ref=e119]:
+            - link "المراحل" [ref=e120] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/phases
+          - listitem [ref=e121]:
+            - link "طلبات التغيير" [ref=e122] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/change-requests
+          - listitem [ref=e123]:
+            - link "التتبّع" [ref=e124] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/traceability
+          - listitem [ref=e125]:
+            - link "الدخول الجزئي المرن" [ref=e126] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/modular-entry
+          - listitem [ref=e127]:
+            - link "مسارات العمل" [ref=e128] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/workstreams
+      - paragraph [ref=e129]: "السلسلة من المشكلة المُشخَّصة إلى المنفعة، مقروءة مباشرةً من السجلات: كل عقدة تفتح سجلها، وتُعرض السجلات التي ينقصها ارتباط، ويمكن عرض الأثر اللاحق لأي سجل. لا يُخزَّن هنا أي شيء."
+      - navigation "التتبّع والهيكل" [ref=e130]:
+        - list [ref=e131]:
+          - listitem [ref=e132]:
+            - link "التتبّع" [ref=e133] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/traceability
+          - listitem [ref=e134]:
+            - link "الدخول الجزئي المرن" [ref=e135] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/modular-entry
+          - listitem [ref=e136]:
+            - link "مسارات العمل" [ref=e137] [cursor=pointer]:
+              - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/workstreams
+      - region "مخطط التتبّع" [ref=e138]:
+        - heading "مخطط التتبّع" [level=2] [ref=e140]
+        - generic [ref=e141]: عمود لكل خطوة في السلسلة. اختر سجلاً لفتحه؛ و"تركيز" يعرض فقط ما يرتبط به.
+        - group "خيارات المخطط" [ref=e142]:
+          - generic [ref=e143]:
+            - generic [ref=e144]: الاتجاه
+            - combobox "الاتجاه" [ref=e145]:
+              - option "باتجاه المصدر"
+              - option "باتجاه الأثر"
+              - option "الاتجاهان" [selected]
+          - generic [ref=e146]:
+            - generic [ref=e147]: العمق (عدد الخطوات)
+            - combobox "العمق (عدد الخطوات)" [ref=e148]:
+              - option "1"
+              - option "2"
+              - option "3"
+              - option "4"
+              - option "5"
+              - option "6"
+              - option "7"
+              - option "8" [selected]
+          - button "عرض السلسلة كاملة" [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+            - text: عرض السلسلة كاملة
+        - note [ref=e152]: تُعرض ارتباطات نتيجة "QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ".
+        - paragraph [ref=e153]: 1 سجل، 0 ارتباط.
+        - region "نتيجة (1)" [ref=e155]:
+          - heading "نتيجة (1)" [level=3] [ref=e156]:
+            - text: نتيجة
+            - generic [ref=e157]: (1)
+          - list [ref=e158]:
+            - listitem [ref=e159]:
+              - link "QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ" [ref=e160] [cursor=pointer]:
+                - /url: /transformations/01a165df-7bf5-77dc-a381-d03ce72280d5/define
+              - generic [ref=e161]: · مسودة
+              - generic [ref=e162]:
+                - button "تركيز QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ" [ref=e163] [cursor=pointer]:
+                  - text: تركيز
+                  - generic [ref=e164]: QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ
+                - link "الأثر QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ" [ref=e165] [cursor=pointer]:
+                  - /url: "#trace-impact"
+                  - text: الأثر
+                  - generic [ref=e166]: QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ
+      - region "تقرير السجلات اليتيمة" [ref=e167]:
+        - heading "تقرير السجلات اليتيمة" [level=2] [ref=e169]
+        - generic [ref=e170]: السجلات النشطة التي ينقصها ارتباط في السلسلة، والخطوة المتوقعة. لا تُدرج المسودات.
+        - group "عوامل تصفية تقرير السجلات اليتيمة" [ref=e171]:
+          - generic [ref=e172]:
+            - generic [ref=e173]: نوع السجل
+            - combobox "نوع السجل" [ref=e174]:
+              - option "الكل" [selected]
+              - option "مشكلة مُشخَّصة"
+              - option "فجوة الحالة المستهدفة"
+              - option "مبادرة"
+              - option "مُخرَج"
+              - option "تغيير في القدرة"
+              - option "نتيجة"
+              - option "حركة مؤشر الأداء"
+              - option "منفعة"
+          - generic [ref=e175]:
+            - generic [ref=e176]: الناقص
+            - combobox "الناقص" [ref=e177]:
+              - option "الكل" [selected]
+              - option "ينقصه ارتباط سابق"
+              - option "ينقصه ارتباط لاحق"
+              - option "ينقصه الارتباطان"
+        - generic [ref=e178]:
+          - img [ref=e179]
+          - generic [ref=e181]:
+            - paragraph [ref=e182]: لا توجد سجلات يتيمة
+            - paragraph [ref=e183]: كل سجل نشط في هذا الاختيار مرتبط في السلسلة صعوداً ونزولاً.
+      - region "الأثر اللاحق" [ref=e184]:
+        - heading "الأثر اللاحق" [level=2] [ref=e186]
+        - generic [ref=e187]: "اختر سجلاً أو تعريف مؤشر أداء لمعرفة ما يتأثر بتغييره: السجلات اللاحقة، والمنافع التي تتأثر قيمتها، ومجالات لوحات المتابعة التي تقرؤها. تُحسب الآن ولا تُخزَّن."
+        - generic [ref=e189]:
+          - generic [ref=e190]: السجل
+          - combobox "السجل" [ref=e191]:
+            - option "اختر…" [selected]
+            - option "QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ"
+        - paragraph [ref=e192]: اختر سجلاً لعرض أثره اللاحق.
+      - region "مجموعات التخصيص" [ref=e193]:
+        - heading "مجموعات التخصيص" [level=2] [ref=e195]
+        - generic [ref=e196]: الحصص المخصّصة لحركة مؤشر أداء أو لمنفعة. لا يمكن أن يتجاوز المجموع 100%؛ وما لم يُخصَّص يُعرض كغير مخصّص، وليس 0%.
+        - generic [ref=e198]:
+          - generic [ref=e199]: حركة مؤشر الأداء أو المنفعة
+          - combobox "حركة مؤشر الأداء أو المنفعة" [ref=e200]:
+            - option "اختر…" [selected]
+        - paragraph [ref=e201]: اختر حركة مؤشر أداء أو منفعة لعرض مجموعة تخصيصها.
+      - region "ارتباطات التتبّع" [ref=e202]:
+        - generic [ref=e203]:
+          - heading "ارتباطات التتبّع" [level=2] [ref=e204]
+          - button "إنشاء ارتباط تتبّع" [ref=e206] [cursor=pointer]:
+            - img [ref=e207]
+            - text: إنشاء ارتباط تتبّع
+        - generic [ref=e209]: "خطوات السلسلة التي ليس لها سجل آخر: مشكلة ← فجوة، ومُخرَج ← قدرة، وقدرة ← مؤشر، ومؤشر ← منفعة. يبقى الارتباط المُزال مُدرجاً ولا يُحذف أبداً."
+        - generic [ref=e210]:
+          - checkbox "عرض الارتباطات المُزالة" [ref=e211]
+          - text: عرض الارتباطات المُزالة
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - generic [ref=e214]:
+              - generic [ref=e215]: بحث
+              - searchbox "بحث" [ref=e216]
+            - button "الأعمدة" [ref=e218] [cursor=pointer]:
+              - img [ref=e219]
+              - text: الأعمدة
+          - generic [ref=e221]:
+            - img [ref=e222]
+            - paragraph [ref=e225]: لا توجد ارتباطات تتبّع بعد
+```

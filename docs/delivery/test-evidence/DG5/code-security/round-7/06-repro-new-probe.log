@@ -1,0 +1,49 @@
+## 2026-10-22T22:29:40Z probes on candidate 33188e9e (clone HEAD 1932faa); node v24.21.0; locale unset; load: 17.43 12.79 7.60
+copy picker-cursor-scope.r7.test.ts -> apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts (75f341ae2c50a22d)
+$ env -u LANG -u LC_ALL -u LC_CTYPE QA_PG_PORT=26560 MTH_PORT_POOL=26561-26599 bash tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts
+port-policy: PostgreSQL listening on port 26560 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-r7
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvk4604a_37d168e7 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S1 BU-scoped office, sort code:asc: all of a1 and a1x over >= 3 pages, nothing of a2 or org B, no duplicates
+S1 code:asc: pages=3 items=250
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S1 BU-scoped office, sort updatedAt:desc: all of a1 and a1x over >= 3 pages, nothing of a2 or org B, no duplicates
+S1 updatedAt:desc: pages=3 items=250
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S2 organization-wide office: all of org A over the pages, nothing of org B
+S2: pages=3 items=290
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S3 a cursor from org A's listing replayed by org B's office returns only org B rows
+S3: status=200 items=16
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S4 a cursor replayed with different filters is refused (400)
+S4: other filter=400 other sort=400 mangled=400
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S5 ADM-only and non-inheriting TL @ BU: 200 with an empty list, one page, for both sorts
+S5: adm code%3Aasc pages=1 items=0
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S5 ADM-only and non-inheriting TL @ BU: 200 with an empty list, one page, for both sorts
+S5: adm updatedAt%3Adesc pages=1 items=0
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S5 ADM-only and non-inheriting TL @ BU: 200 with an empty list, one page, for both sorts
+S5: tlBu code%3Aasc pages=1 items=0
+
+stdout | apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts > D-181 complete picker list: server-side scope over every page (code-security r7) > S5 ADM-only and non-inheriting TL @ BU: 200 with an empty list, one page, for both sorts
+S5: tlBu updatedAt%3Adesc pages=1 items=0
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r7-picker-cursor-scope.test.ts (7 tests) 1466ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  22:29:44
+   Duration  24.29s (transform 7.53s, setup 0ms, collect 16.37s, tests 1.47s, environment 0ms, prepare 74ms)
+
+EXIT 0
+clone git status --short lines after removing the probes: 0
+## end 2026-10-22T22:30:12Z load: 18.52 13.55 8.02

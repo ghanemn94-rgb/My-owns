@@ -1,0 +1,763 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Lead
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "حول هذا المنتج" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "مسار التنقل" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "Synthetic FE-F AR health" [ref=e145] [cursor=pointer]:
+                  - /url: /transformations/01a165c6-9243-75c5-ba4c-31eee44539d7
+              - listitem [ref=e146]: /فحص سلامة التحوّل
+          - generic [ref=e148]:
+            - heading "فحص سلامة التحوّل" [level=1] [ref=e149]
+            - paragraph [ref=e150]: "فحص سلامة التحوّل من 25 سؤالًا: الدرجة من 25 ونطاق التفسير وأهم 3 إجراءات، مع تتبعها عبر الزمن."
+        - note [ref=e151]:
+          - img [ref=e152]
+          - text: النصوص المصدرية العربية في هذه الشاشة ترجمات مؤقتة لنص الدليل الإنجليزي.
+        - region "التقييمات" [ref=e154]:
+          - heading "التقييمات" [level=2] [ref=e156]
+          - generic [ref=e157]: يُحتفظ بكل إعادة تقييم مع إصدار نظام التسجيل الذي استخدمه.
+          - region "التقييمات" [ref=e158]:
+            - table "التقييمات" [ref=e159]:
+              - caption [ref=e160]: التقييمات
+              - rowgroup [ref=e161]:
+                - row "# تاريخ التقييم الحالة الاكتمال الدرجة التفسير نظام التسجيل" [ref=e162]:
+                  - columnheader "#" [ref=e163]
+                  - columnheader "تاريخ التقييم" [ref=e164]
+                  - columnheader "الحالة" [ref=e165]
+                  - columnheader "الاكتمال" [ref=e166]
+                  - columnheader "الدرجة" [ref=e167]
+                  - columnheader "التفسير" [ref=e168]
+                  - columnheader "نظام التسجيل" [ref=e169]
+              - rowgroup [ref=e170]:
+                - 'row "التقييم 1 23‏/10‏/2026 قيد التنفيذ مكتمل (25/25) 17 من 25 16-20: أساس متين؛ عالج بعض الفجوات الهيكلية قبل التوسع. الإصدار 1" [ref=e171]':
+                  - rowheader "التقييم 1" [ref=e172]:
+                    - link "التقييم 1" [ref=e173] [cursor=pointer]:
+                      - /url: /transformations/01a165c6-9243-75c5-ba4c-31eee44539d7/health-check?assessment=01a165c6-a331-775a-b0d7-f0571aed04cf
+                  - cell "23‏/10‏/2026" [ref=e174]
+                  - cell "قيد التنفيذ" [ref=e175]:
+                    - generic [ref=e176]:
+                      - img [ref=e177]
+                      - text: قيد التنفيذ
+                  - cell "مكتمل (25/25)" [ref=e179]:
+                    - generic [ref=e180]:
+                      - img [ref=e181]
+                      - text: مكتمل (25/25)
+                  - cell "17 من 25" [ref=e183]
+                  - 'cell "16-20: أساس متين؛ عالج بعض الفجوات الهيكلية قبل التوسع." [ref=e184]':
+                    - generic [ref=e185]:
+                      - strong [ref=e186]: 16-20
+                      - text: ": أساس متين؛ عالج بعض الفجوات الهيكلية قبل التوسع."
+                  - cell "الإصدار 1" [ref=e187]
+        - region "التقييم 1 قيد التنفيذ مكتمل (25/25)" [ref=e188]:
+          - heading "التقييم 1 قيد التنفيذ مكتمل (25/25)" [level=2] [ref=e189]:
+            - text: التقييم 1
+            - generic [ref=e190]:
+              - img [ref=e191]
+              - text: قيد التنفيذ
+            - generic [ref=e193]:
+              - img [ref=e194]
+              - text: مكتمل (25/25)
+          - generic [ref=e196]:
+            - term [ref=e197]: تاريخ التقييم
+            - definition [ref=e198]: 23‏/10‏/2026
+            - term [ref=e199]: الدرجة
+            - definition [ref=e200]: 17 من 25
+            - term [ref=e201]: التفسير
+            - definition [ref=e202]:
+              - generic [ref=e203]:
+                - strong [ref=e204]: 16-20
+                - text: ": أساس متين؛ عالج بعض الفجوات الهيكلية قبل التوسع."
+            - term [ref=e205]: نظام التسجيل
+            - definition [ref=e206]: تقييم فحص الصحة — الإصدار 1 (نعم = 1، لا = 0؛ من 25) (ترجمة مؤقتة) · الإصدار 1
+          - note [ref=e207]:
+            - img [ref=e208]
+            - text: "طريقة التسجيل: كل «نعم» تُحسب 1 وكل «لا» تُحسب 0، من 25. هذا افتراض تطبيقي؛ يقدّم الدليل قائمة التحقق و«الدرجة: __ / 25» دون طريقة تسجيل."
+        - region "الأسئلة الخمسة والعشرون" [ref=e210]:
+          - heading "الأسئلة الخمسة والعشرون" [level=2] [ref=e212]
+          - generic [ref=e213]: أسئلة الدليل بنصها (B0150).
+          - list [ref=e214]:
+            - listitem [ref=e215]:
+              - paragraph [ref=e216]:
+                - strong [ref=e217]: "1."
+                - text: هل توجد مبررات تغيير مُقدَّرة كمياً؟
+                - generic [ref=e218]: B0150
+              - generic [ref=e219]:
+                - group "الإجابة عن السؤال 1" [ref=e220]:
+                  - generic [ref=e221]: الإجابة عن السؤال 1
+                  - generic [ref=e222]:
+                    - radio "نعم" [checked] [ref=e223]
+                    - text: نعم
+                  - generic [ref=e224]:
+                    - radio "لا" [ref=e225]
+                    - text: لا
+                - generic [ref=e226]:
+                  - generic [ref=e227]: ملاحظة الدليل للسؤال 1
+                  - textbox "ملاحظة الدليل للسؤال 1" [ref=e228]
+                - button "احفظ السؤال 1" [ref=e230] [cursor=pointer]
+            - listitem [ref=e231]:
+              - paragraph [ref=e232]:
+                - strong [ref=e233]: "2."
+                - text: هل تثق المالية بخط الأساس؟
+                - generic [ref=e234]: B0150
+              - generic [ref=e235]:
+                - group "الإجابة عن السؤال 2" [ref=e236]:
+                  - generic [ref=e237]: الإجابة عن السؤال 2
+                  - generic [ref=e238]:
+                    - radio "نعم" [checked] [ref=e239]
+                    - text: نعم
+                  - generic [ref=e240]:
+                    - radio "لا" [ref=e241]
+                    - text: لا
+                - generic [ref=e242]:
+                  - generic [ref=e243]: ملاحظة الدليل للسؤال 2
+                  - textbox "ملاحظة الدليل للسؤال 2" [ref=e244]
+                - button "احفظ السؤال 2" [ref=e246] [cursor=pointer]
+            - listitem [ref=e247]:
+              - paragraph [ref=e248]:
+                - strong [ref=e249]: "3."
+                - text: هل يوجد نجم شمال واحد واضح؟
+                - generic [ref=e250]: B0150
+              - generic [ref=e251]:
+                - group "الإجابة عن السؤال 3" [ref=e252]:
+                  - generic [ref=e253]: الإجابة عن السؤال 3
+                  - generic [ref=e254]:
+                    - radio "نعم" [checked] [ref=e255]
+                    - text: نعم
+                  - generic [ref=e256]:
+                    - radio "لا" [ref=e257]
+                    - text: لا
+                - generic [ref=e258]:
+                  - generic [ref=e259]: ملاحظة الدليل للسؤال 3
+                  - textbox "ملاحظة الدليل للسؤال 3" [ref=e260]
+                - button "احفظ السؤال 3" [ref=e262] [cursor=pointer]
+            - listitem [ref=e263]:
+              - paragraph [ref=e264]:
+                - strong [ref=e265]: "4."
+                - text: هل توجد 3-5 نتائج أعمال قابلة للقياس؟
+                - generic [ref=e266]: B0150
+              - generic [ref=e267]:
+                - group "الإجابة عن السؤال 4" [ref=e268]:
+                  - generic [ref=e269]: الإجابة عن السؤال 4
+                  - generic [ref=e270]:
+                    - radio "نعم" [checked] [ref=e271]
+                    - text: نعم
+                  - generic [ref=e272]:
+                    - radio "لا" [ref=e273]
+                    - text: لا
+                - generic [ref=e274]:
+                  - generic [ref=e275]: ملاحظة الدليل للسؤال 4
+                  - textbox "ملاحظة الدليل للسؤال 4" [ref=e276]
+                - button "احفظ السؤال 4" [ref=e278] [cursor=pointer]
+            - listitem [ref=e279]:
+              - paragraph [ref=e280]:
+                - strong [ref=e281]: "5."
+                - text: هل يملك قادة الأعمال النتائج؟
+                - generic [ref=e282]: B0150
+              - generic [ref=e283]:
+                - group "الإجابة عن السؤال 5" [ref=e284]:
+                  - generic [ref=e285]: الإجابة عن السؤال 5
+                  - generic [ref=e286]:
+                    - radio "نعم" [checked] [ref=e287]
+                    - text: نعم
+                  - generic [ref=e288]:
+                    - radio "لا" [ref=e289]
+                    - text: لا
+                - generic [ref=e290]:
+                  - generic [ref=e291]: ملاحظة الدليل للسؤال 5
+                  - textbox "ملاحظة الدليل للسؤال 5" [ref=e292]
+                - button "احفظ السؤال 5" [ref=e294] [cursor=pointer]
+            - listitem [ref=e295]:
+              - paragraph [ref=e296]:
+                - strong [ref=e297]: "6."
+                - text: هل منظور العميل صريح؟
+                - generic [ref=e298]: B0150
+              - generic [ref=e299]:
+                - group "الإجابة عن السؤال 6" [ref=e300]:
+                  - generic [ref=e301]: الإجابة عن السؤال 6
+                  - generic [ref=e302]:
+                    - radio "نعم" [checked] [ref=e303]
+                    - text: نعم
+                  - generic [ref=e304]:
+                    - radio "لا" [ref=e305]
+                    - text: لا
+                - generic [ref=e306]:
+                  - generic [ref=e307]: ملاحظة الدليل للسؤال 6
+                  - textbox "ملاحظة الدليل للسؤال 6" [ref=e308]
+                - button "احفظ السؤال 6" [ref=e310] [cursor=pointer]
+            - listitem [ref=e311]:
+              - paragraph [ref=e312]:
+                - strong [ref=e313]: "7."
+                - text: هل فُصلت الأسباب الجذرية عن الأعراض؟
+                - generic [ref=e314]: B0150
+              - generic [ref=e315]:
+                - group "الإجابة عن السؤال 7" [ref=e316]:
+                  - generic [ref=e317]: الإجابة عن السؤال 7
+                  - generic [ref=e318]:
+                    - radio "نعم" [checked] [ref=e319]
+                    - text: نعم
+                  - generic [ref=e320]:
+                    - radio "لا" [ref=e321]
+                    - text: لا
+                - generic [ref=e322]:
+                  - generic [ref=e323]: ملاحظة الدليل للسؤال 7
+                  - textbox "ملاحظة الدليل للسؤال 7" [ref=e324]
+                - button "احفظ السؤال 7" [ref=e326] [cursor=pointer]
+            - listitem [ref=e327]:
+              - paragraph [ref=e328]:
+                - strong [ref=e329]: "8."
+                - text: هل يوجد نموذج تشغيل مستهدف محدد؟
+                - generic [ref=e330]: B0150
+              - generic [ref=e331]:
+                - group "الإجابة عن السؤال 8" [ref=e332]:
+                  - generic [ref=e333]: الإجابة عن السؤال 8
+                  - generic [ref=e334]:
+                    - radio "نعم" [checked] [ref=e335]
+                    - text: نعم
+                  - generic [ref=e336]:
+                    - radio "لا" [ref=e337]
+                    - text: لا
+                - generic [ref=e338]:
+                  - generic [ref=e339]: ملاحظة الدليل للسؤال 8
+                  - textbox "ملاحظة الدليل للسؤال 8" [ref=e340]
+                - button "احفظ السؤال 8" [ref=e342] [cursor=pointer]
+            - listitem [ref=e343]:
+              - paragraph [ref=e344]:
+                - strong [ref=e345]: "9."
+                - text: هل صلاحيات القرار صريحة؟
+                - generic [ref=e346]: B0150
+              - generic [ref=e347]:
+                - group "الإجابة عن السؤال 9" [ref=e348]:
+                  - generic [ref=e349]: الإجابة عن السؤال 9
+                  - generic [ref=e350]:
+                    - radio "نعم" [checked] [ref=e351]
+                    - text: نعم
+                  - generic [ref=e352]:
+                    - radio "لا" [ref=e353]
+                    - text: لا
+                - generic [ref=e354]:
+                  - generic [ref=e355]: ملاحظة الدليل للسؤال 9
+                  - textbox "ملاحظة الدليل للسؤال 9" [ref=e356]
+                - button "احفظ السؤال 9" [ref=e358] [cursor=pointer]
+            - listitem [ref=e359]:
+              - paragraph [ref=e360]:
+                - strong [ref=e361]: "10."
+                - text: هل فجوات القدرات ظاهرة؟
+                - generic [ref=e362]: B0150
+              - generic [ref=e363]:
+                - group "الإجابة عن السؤال 10" [ref=e364]:
+                  - generic [ref=e365]: الإجابة عن السؤال 10
+                  - generic [ref=e366]:
+                    - radio "نعم" [checked] [ref=e367]
+                    - text: نعم
+                  - generic [ref=e368]:
+                    - radio "لا" [ref=e369]
+                    - text: لا
+                - generic [ref=e370]:
+                  - generic [ref=e371]: ملاحظة الدليل للسؤال 10
+                  - textbox "ملاحظة الدليل للسؤال 10" [ref=e372]
+                - button "احفظ السؤال 10" [ref=e374] [cursor=pointer]
+            - listitem [ref=e375]:
+              - paragraph [ref=e376]:
+                - strong [ref=e377]: "11."
+                - text: هل يمكن تتبع كل مبادرة إلى فجوة في نموذج التشغيل المستهدف؟
+                - generic [ref=e378]: B0150
+              - generic [ref=e379]:
+                - group "الإجابة عن السؤال 11" [ref=e380]:
+                  - generic [ref=e381]: الإجابة عن السؤال 11
+                  - generic [ref=e382]:
+                    - radio "نعم" [checked] [ref=e383]
+                    - text: نعم
+                  - generic [ref=e384]:
+                    - radio "لا" [ref=e385]
+                    - text: لا
+                - generic [ref=e386]:
+                  - generic [ref=e387]: ملاحظة الدليل للسؤال 11
+                  - textbox "ملاحظة الدليل للسؤال 11" [ref=e388]
+                - button "احفظ السؤال 11" [ref=e390] [cursor=pointer]
+            - listitem [ref=e391]:
+              - paragraph [ref=e392]:
+                - strong [ref=e393]: "12."
+                - text: هل يمكن تتبع كل مبادرة إلى نتيجة؟
+                - generic [ref=e394]: B0150
+              - generic [ref=e395]:
+                - group "الإجابة عن السؤال 12" [ref=e396]:
+                  - generic [ref=e397]: الإجابة عن السؤال 12
+                  - generic [ref=e398]:
+                    - radio "نعم" [checked] [ref=e399]
+                    - text: نعم
+                  - generic [ref=e400]:
+                    - radio "لا" [ref=e401]
+                    - text: لا
+                - generic [ref=e402]:
+                  - generic [ref=e403]: ملاحظة الدليل للسؤال 12
+                  - textbox "ملاحظة الدليل للسؤال 12" [ref=e404]
+                - button "احفظ السؤال 12" [ref=e406] [cursor=pointer]
+            - listitem [ref=e407]:
+              - paragraph [ref=e408]:
+                - strong [ref=e409]: "13."
+                - text: هل قُدّرت المنافع كمياً دون ازدواج في الاحتساب؟
+                - generic [ref=e410]: B0150
+              - generic [ref=e411]:
+                - group "الإجابة عن السؤال 13" [ref=e412]:
+                  - generic [ref=e413]: الإجابة عن السؤال 13
+                  - generic [ref=e414]:
+                    - radio "نعم" [checked] [ref=e415]
+                    - text: نعم
+                  - generic [ref=e416]:
+                    - radio "لا" [ref=e417]
+                    - text: لا
+                - generic [ref=e418]:
+                  - generic [ref=e419]: ملاحظة الدليل للسؤال 13
+                  - textbox "ملاحظة الدليل للسؤال 13" [ref=e420]
+                - button "احفظ السؤال 13" [ref=e422] [cursor=pointer]
+            - listitem [ref=e423]:
+              - paragraph [ref=e424]:
+                - strong [ref=e425]: "14."
+                - text: هل الاعتماديات متكاملة عبر مسارات العمل؟
+                - generic [ref=e426]: B0150
+              - generic [ref=e427]:
+                - group "الإجابة عن السؤال 14" [ref=e428]:
+                  - generic [ref=e429]: الإجابة عن السؤال 14
+                  - generic [ref=e430]:
+                    - radio "نعم" [checked] [ref=e431]
+                    - text: نعم
+                  - generic [ref=e432]:
+                    - radio "لا" [ref=e433]
+                    - text: لا
+                - generic [ref=e434]:
+                  - generic [ref=e435]: ملاحظة الدليل للسؤال 14
+                  - textbox "ملاحظة الدليل للسؤال 14" [ref=e436]
+                - button "احفظ السؤال 14" [ref=e438] [cursor=pointer]
+            - listitem [ref=e439]:
+              - paragraph [ref=e440]:
+                - strong [ref=e441]: "15."
+                - text: هل يستند الترتيب إلى القيمة وقابلية التنفيذ؟
+                - generic [ref=e442]: B0150
+              - generic [ref=e443]:
+                - group "الإجابة عن السؤال 15" [ref=e444]:
+                  - generic [ref=e445]: الإجابة عن السؤال 15
+                  - generic [ref=e446]:
+                    - radio "نعم" [checked] [ref=e447]
+                    - text: نعم
+                  - generic [ref=e448]:
+                    - radio "لا" [ref=e449]
+                    - text: لا
+                - generic [ref=e450]:
+                  - generic [ref=e451]: ملاحظة الدليل للسؤال 15
+                  - textbox "ملاحظة الدليل للسؤال 15" [ref=e452]
+                - button "احفظ السؤال 15" [ref=e454] [cursor=pointer]
+            - listitem [ref=e455]:
+              - paragraph [ref=e456]:
+                - strong [ref=e457]: "16."
+                - text: هل تتخذ المنتديات التنفيذية قرارات بدلاً من مراجعة العروض؟
+                - generic [ref=e458]: B0150
+              - generic [ref=e459]:
+                - group "الإجابة عن السؤال 16" [ref=e460]:
+                  - generic [ref=e461]: الإجابة عن السؤال 16
+                  - generic [ref=e462]:
+                    - radio "نعم" [checked] [ref=e463]
+                    - text: نعم
+                  - generic [ref=e464]:
+                    - radio "لا" [ref=e465]
+                    - text: لا
+                - generic [ref=e466]:
+                  - generic [ref=e467]: ملاحظة الدليل للسؤال 16
+                  - textbox "ملاحظة الدليل للسؤال 16" [ref=e468]
+                - button "احفظ السؤال 16" [ref=e470] [cursor=pointer]
+            - listitem [ref=e471]:
+              - paragraph [ref=e472]:
+                - strong [ref=e473]: "17."
+                - text: هل القرارات المتأخرة ظاهرة؟
+                - generic [ref=e474]: B0150
+              - generic [ref=e475]:
+                - group "الإجابة عن السؤال 17" [ref=e476]:
+                  - generic [ref=e477]: الإجابة عن السؤال 17
+                  - generic [ref=e478]:
+                    - radio "نعم" [checked] [ref=e479]
+                    - text: نعم
+                  - generic [ref=e480]:
+                    - radio "لا" [ref=e481]
+                    - text: لا
+                - generic [ref=e482]:
+                  - generic [ref=e483]: ملاحظة الدليل للسؤال 17
+                  - textbox "ملاحظة الدليل للسؤال 17" [ref=e484]
+                - button "احفظ السؤال 17" [ref=e486] [cursor=pointer]
+            - listitem [ref=e487]:
+              - paragraph [ref=e488]:
+                - strong [ref=e489]: "18."
+                - text: هل مسارات العمل مُمكَّنة ضمن حدود واضحة؟
+                - generic [ref=e490]: B0150
+              - generic [ref=e491]:
+                - group "الإجابة عن السؤال 18" [ref=e492]:
+                  - generic [ref=e493]: الإجابة عن السؤال 18
+                  - generic [ref=e494]:
+                    - radio "نعم" [ref=e495]
+                    - text: نعم
+                  - generic [ref=e496]:
+                    - radio "لا" [checked] [ref=e497]
+                    - text: لا
+                - generic [ref=e498]:
+                  - generic [ref=e499]: ملاحظة الدليل للسؤال 18
+                  - textbox "ملاحظة الدليل للسؤال 18" [ref=e500]
+                - button "احفظ السؤال 18" [ref=e502] [cursor=pointer]
+            - listitem [ref=e503]:
+              - paragraph [ref=e504]:
+                - strong [ref=e505]: "19."
+                - text: هل تُتابَع مقاييس التبنّي؟
+                - generic [ref=e506]: B0150
+              - generic [ref=e507]:
+                - group "الإجابة عن السؤال 19" [ref=e508]:
+                  - generic [ref=e509]: الإجابة عن السؤال 19
+                  - generic [ref=e510]:
+                    - radio "نعم" [ref=e511]
+                    - text: نعم
+                  - generic [ref=e512]:
+                    - radio "لا" [checked] [ref=e513]
+                    - text: لا
+                - generic [ref=e514]:
+                  - generic [ref=e515]: ملاحظة الدليل للسؤال 19
+                  - textbox "ملاحظة الدليل للسؤال 19" [ref=e516]
+                - button "احفظ السؤال 19" [ref=e518] [cursor=pointer]
+            - listitem [ref=e519]:
+              - paragraph [ref=e520]:
+                - strong [ref=e521]: "20."
+                - text: هل تشارك فرق الخطوط الأمامية والأعمال في التصميم؟
+                - generic [ref=e522]: B0150
+              - generic [ref=e523]:
+                - group "الإجابة عن السؤال 20" [ref=e524]:
+                  - generic [ref=e525]: الإجابة عن السؤال 20
+                  - generic [ref=e526]:
+                    - radio "نعم" [ref=e527]
+                    - text: نعم
+                  - generic [ref=e528]:
+                    - radio "لا" [checked] [ref=e529]
+                    - text: لا
+                - generic [ref=e530]:
+                  - generic [ref=e531]: ملاحظة الدليل للسؤال 20
+                  - textbox "ملاحظة الدليل للسؤال 20" [ref=e532]
+                - button "احفظ السؤال 20" [ref=e534] [cursor=pointer]
+            - listitem [ref=e535]:
+              - paragraph [ref=e536]:
+                - strong [ref=e537]: "21."
+                - text: هل يُتحقق من المنافع بالأدلة؟
+                - generic [ref=e538]: B0150
+              - generic [ref=e539]:
+                - group "الإجابة عن السؤال 21" [ref=e540]:
+                  - generic [ref=e541]: الإجابة عن السؤال 21
+                  - generic [ref=e542]:
+                    - radio "نعم" [ref=e543]
+                    - text: نعم
+                  - generic [ref=e544]:
+                    - radio "لا" [checked] [ref=e545]
+                    - text: لا
+                - generic [ref=e546]:
+                  - generic [ref=e547]: ملاحظة الدليل للسؤال 21
+                  - textbox "ملاحظة الدليل للسؤال 21" [ref=e548]
+                - button "احفظ السؤال 21" [ref=e550] [cursor=pointer]
+            - listitem [ref=e551]:
+              - paragraph [ref=e552]:
+                - strong [ref=e553]: "22."
+                - text: هل تُحدَّد ملكية العمليات الاعتيادية قبل الإغلاق؟
+                - generic [ref=e554]: B0150
+              - generic [ref=e555]:
+                - group "الإجابة عن السؤال 22" [ref=e556]:
+                  - generic [ref=e557]: الإجابة عن السؤال 22
+                  - generic [ref=e558]:
+                    - radio "نعم" [ref=e559]
+                    - text: نعم
+                  - generic [ref=e560]:
+                    - radio "لا" [checked] [ref=e561]
+                    - text: لا
+                - generic [ref=e562]:
+                  - generic [ref=e563]: ملاحظة الدليل للسؤال 22
+                  - textbox "ملاحظة الدليل للسؤال 22" [ref=e564]
+                - button "احفظ السؤال 22" [ref=e566] [cursor=pointer]
+            - listitem [ref=e567]:
+              - paragraph [ref=e568]:
+                - strong [ref=e569]: "23."
+                - text: هل يُحتفظ بقائمة أعمال للتحسين المستمر؟
+                - generic [ref=e570]: B0150
+              - generic [ref=e571]:
+                - group "الإجابة عن السؤال 23" [ref=e572]:
+                  - generic [ref=e573]: الإجابة عن السؤال 23
+                  - generic [ref=e574]:
+                    - radio "نعم" [ref=e575]
+                    - text: نعم
+                  - generic [ref=e576]:
+                    - radio "لا" [checked] [ref=e577]
+                    - text: لا
+                - generic [ref=e578]:
+                  - generic [ref=e579]: ملاحظة الدليل للسؤال 23
+                  - textbox "ملاحظة الدليل للسؤال 23" [ref=e580]
+                - button "احفظ السؤال 23" [ref=e582] [cursor=pointer]
+            - listitem [ref=e583]:
+              - paragraph [ref=e584]:
+                - strong [ref=e585]: "24."
+                - text: هل يُعاد استخدام الدروس المستفادة عبر التحولات؟
+                - generic [ref=e586]: B0150
+              - generic [ref=e587]:
+                - group "الإجابة عن السؤال 24" [ref=e588]:
+                  - generic [ref=e589]: الإجابة عن السؤال 24
+                  - generic [ref=e590]:
+                    - radio "نعم" [ref=e591]
+                    - text: نعم
+                  - generic [ref=e592]:
+                    - radio "لا" [checked] [ref=e593]
+                    - text: لا
+                - generic [ref=e594]:
+                  - generic [ref=e595]: ملاحظة الدليل للسؤال 24
+                  - textbox "ملاحظة الدليل للسؤال 24" [ref=e596]
+                - button "احفظ السؤال 24" [ref=e598] [cursor=pointer]
+            - listitem [ref=e599]:
+              - paragraph [ref=e600]:
+                - strong [ref=e601]: "25."
+                - text: هل تستطيع القيادة تحديد الدعم الذي يحتاجه التحول الآن؟
+                - generic [ref=e602]: B0150
+              - generic [ref=e603]:
+                - group "الإجابة عن السؤال 25" [ref=e604]:
+                  - generic [ref=e605]: الإجابة عن السؤال 25
+                  - generic [ref=e606]:
+                    - radio "نعم" [ref=e607]
+                    - text: نعم
+                  - generic [ref=e608]:
+                    - radio "لا" [checked] [ref=e609]
+                    - text: لا
+                - generic [ref=e610]:
+                  - generic [ref=e611]: ملاحظة الدليل للسؤال 25
+                  - textbox "ملاحظة الدليل للسؤال 25" [ref=e612]
+                - button "احفظ السؤال 25" [ref=e614] [cursor=pointer]
+        - region "أهم 3 إجراءات" [ref=e615]:
+          - heading "أهم 3 إجراءات" [level=2] [ref=e617]
+          - generic [ref=e618]: يلزم ثلاثة إجراءات مرتبة لتقديم التقييم.
+          - generic [ref=e619]:
+            - group "الإجراء 1" [ref=e620]:
+              - generic [ref=e621]: الإجراء 1
+              - generic [ref=e622]: "الإجراء 1: ما الذي سيُنفَّذ"
+              - 'textbox "الإجراء 1: ما الذي سيُنفَّذ" [ref=e623]': Synthetic action 1
+              - generic [ref=e624]: "الإجراء 1: المالك"
+              - 'combobox "الإجراء 1: المالك" [ref=e625]':
+                - option "غير محدد" [selected]
+                - option "Synthetic Transformation Lead (قائد التحوّل) · أنت"
+                - option "عضو في الفريق (مكتب التحوّل، مرجع 0202)"
+                - option "عضو في الفريق (مدقق (قراءة فقط)، مرجع 0204)"
+              - generic [ref=e626]: "الإجراء 1: تاريخ الاستحقاق"
+              - 'textbox "الإجراء 1: تاريخ الاستحقاق" [ref=e627]'
+            - group "الإجراء 2" [ref=e628]:
+              - generic [ref=e629]: الإجراء 2
+              - generic [ref=e630]: "الإجراء 2: ما الذي سيُنفَّذ"
+              - 'textbox "الإجراء 2: ما الذي سيُنفَّذ" [ref=e631]': Synthetic action 2
+              - generic [ref=e632]: "الإجراء 2: المالك"
+              - 'combobox "الإجراء 2: المالك" [ref=e633]':
+                - option "غير محدد" [selected]
+                - option "Synthetic Transformation Lead (قائد التحوّل) · أنت"
+                - option "عضو في الفريق (مكتب التحوّل، مرجع 0202)"
+                - option "عضو في الفريق (مدقق (قراءة فقط)، مرجع 0204)"
+              - generic [ref=e634]: "الإجراء 2: تاريخ الاستحقاق"
+              - 'textbox "الإجراء 2: تاريخ الاستحقاق" [ref=e635]'
+            - group "الإجراء 3" [ref=e636]:
+              - generic [ref=e637]: الإجراء 3
+              - generic [ref=e638]: "الإجراء 3: ما الذي سيُنفَّذ"
+              - 'textbox "الإجراء 3: ما الذي سيُنفَّذ" [ref=e639]': Synthetic action 3
+              - generic [ref=e640]: "الإجراء 3: المالك"
+              - 'combobox "الإجراء 3: المالك" [ref=e641]':
+                - option "غير محدد" [selected]
+                - option "Synthetic Transformation Lead (قائد التحوّل) · أنت"
+                - option "عضو في الفريق (مكتب التحوّل، مرجع 0202)"
+                - option "عضو في الفريق (مدقق (قراءة فقط)، مرجع 0204)"
+              - generic [ref=e642]: "الإجراء 3: تاريخ الاستحقاق"
+              - 'textbox "الإجراء 3: تاريخ الاستحقاق" [ref=e643]'
+            - button "احفظ الإجراءات" [ref=e645] [cursor=pointer]
+        - region "قدّم التقييم" [ref=e646]:
+          - heading "قدّم التقييم" [level=2] [ref=e647]
+          - paragraph [ref=e648]: يلزم الإجابة عن الأسئلة الخمسة والعشرين وأهم 3 إجراءات. يحتفظ التقييم المقدَّم بنظامه ودرجته ونطاقه.
+          - alert [ref=e649]:
+            - paragraph [ref=e650]:
+              - img [ref=e651]
+              - text: عدّل شخص آخر هذا السجل. لم يُحفظ شيء.
+            - paragraph [ref=e653]: لم يُحفظ أي شيء. حُمّلت أحدث نسخة؛ راجعها ثم حاول مرة أخرى.
+          - button "قدّم فحص سلامة التحوّل" [ref=e654] [cursor=pointer]
+```

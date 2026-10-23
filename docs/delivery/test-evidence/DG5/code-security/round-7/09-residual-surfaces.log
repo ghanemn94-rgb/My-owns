@@ -1,0 +1,18 @@
+## 2026-10-22T23:03:12Z environmental residual surfaces (clone HEAD 1932faa)
+$ ls .github/workflows
+ci.yml
+delivery-gates.yml
+$ grep -rlniE "openai|anthropic|azure.*openai|smtp|twilio|sendgrid|slack\.com|teams.*webhook" apps/*/src packages/*/src (adapters; tests excluded)
+(end of list)
+$ grep -n "AUTH_MODE=dev is refused" apps/api/src -r
+apps/api/src/server.test.ts:53:      /AUTH_MODE=dev is refused/,
+$ grep -n "demoDevIssuerBindingAllowed" -A8 packages/db/src/demo/guard.ts
+125:export function demoDevIssuerBindingAllowed(env: {
+126-  readonly NODE_ENV?: string | undefined;
+127-  readonly AUTH_MODE?: string | undefined;
+128-}): boolean {
+129-  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+130-}
+$ git diff --name-only ad52a56..12dc33e -- .github deploy scripts packages/db apps/api   (unchanged since round 6: expected empty)
+0
+## end

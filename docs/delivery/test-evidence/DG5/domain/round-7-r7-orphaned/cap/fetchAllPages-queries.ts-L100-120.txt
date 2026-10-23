@@ -1,0 +1,21 @@
+    enabled: Boolean(id),
+  });
+}
+
+/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
+export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+  const out: T[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const page: Page<T> = await api.get<Page<T>>(path, {
+      ...query,
+      limit: PAGINATION.maxLimit,
+      ...(cursor ? { cursor } : {}),
+    });
+    out.push(...page.items);
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return out;
+}
+

@@ -1,0 +1,5 @@
+## 2026-10-22T22:57:39Z note on 02-static-node24.log (written by code-security-reviewer after the fact; the log itself is unedited)
+The six assigned static checks (pnpm -r build, pnpm -r typecheck, pnpm lint, pnpm openapi:lint, pnpm check:no-cdn, pnpm format:check) each ended with EXIT 0 (22:14-22:20Z).
+The seventh, extra command 'pnpm deps:verify' (not a required check of this assignment) needs live registry access (scripts/verify-dependency-pins.mjs: 'Needs registry access'); this sandbox has no network, so it never returned.
+The background task that ran 02-static.sh was stopped by its 1800 s background limit at about 22:42Z, so the log has no EXIT line for deps:verify. It is the declared environmental residual REQ-DLV-042 AC-1 / D-057 (live registry), recorded as a residual, not as a pass.
+An attempt at 22:2xZ to stop that process early with pkill matched only the reviewer's own sandboxed shell (exit 143; each command runs in its own PID namespace) and did not affect any test run.

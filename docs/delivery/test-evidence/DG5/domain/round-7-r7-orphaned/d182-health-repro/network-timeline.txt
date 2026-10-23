@@ -1,0 +1,20 @@
+domain-reviewer DG5 round 7: p5-launch-health-kpi.spec.ts:159 [chromium-ar], locale unset, failed in 08-web-e2e-d181-d182.log.
+Assessment requests from trace.zip (0-trace.network), start -> end (UTC seconds of 22:41), method, status, if-match, etag:
+28.734 -> 29.149  PUT  200  answers/q25                              if-match="25"  etag="26"  
+29.435 -> 29.561  GET  200  GET assessment                           if-match=-     etag="26"  
+29.847 -> 29.904  POST 422  01a165c6-a331-775a-b0d7-f0571aed04cf/sub if-match="26"  etag=-     {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Submit the health check with its top 3 actions.","code":"health_check.actions_required","requestId":"01a165c6-ccdc-719a-94b4-02569f5fee11"}
+29.905 -> 30.067  GET  200  GET assessment                           if-match=-     etag="26"  
+30.216 -> 30.534  PUT  200  01a165c6-a331-775a-b0d7-f0571aed04cf/act if-match="26"  etag="27"  
+30.547 -> 30.826  GET  200  GET assessment                           if-match=-     etag="27"  
+30.701 -> 30.847  POST 409  01a165c6-a331-775a-b0d7-f0571aed04cf/sub if-match="26"  etag=-     {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a165c6-d05c-74fb-8727-99a6713f9c8f","currentVersion":27}
+30.902 -> 31.136  GET  200  GET assessment                           if-match=-     etag="27"  
+
+Reading: the actions PUT (If-Match 26) returned version 27 at 30.534. The spec then awaited `reloaded` (any GET of the
+assessment) and clicked Submit at 30.701 with If-Match "26": the page still held version 26, because the refresh that
+carries 27 (30.547 -> 30.826) had not landed. The GET the spec's waiter matched can only be the refresh issued after the
+earlier 422 refusal (29.905 -> 30.067, version 26), whose response event reached the test after the waiter was set.
+The server refused the stale submit with 409 version_conflict (currentVersion 27); the screen shows the recoverable
+conflict alert (chromium-ar-error-context.md line 757: 'عدّل شخص آخر هذا السجل. لم يُحفظ شيء.'). Cause: a
+synchronisation race in the spec (its reload wait does not tie the GET to the PUT's version), exposed under load. The
+product behaves as REQ-S05-001's recoverable-conflict rule requires; the D-181 picker is not involved (the entry
+picker was passed at the start of the test). Same assertion and project as D-182's unexplained failure.

@@ -1,0 +1,292 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - button "Show or hide navigation" [ref=e6] [cursor=pointer]:
+      - img [ref=e7]
+      - generic [ref=e9]: Show or hide navigation
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e10] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e11]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e12]': Provisional
+      - generic [ref=e13]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e15] [cursor=pointer]: العربية
+    - button "Sign out" [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - generic [ref=e19]: Sign out
+  - main [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - navigation "Breadcrumbs" [ref=e25]:
+          - list [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Transformations" [ref=e28] [cursor=pointer]:
+                - /url: /transformations
+            - listitem [ref=e29]:
+              - text: /
+              - link "TR-0001" [ref=e30] [cursor=pointer]:
+                - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205
+            - listitem [ref=e31]: /Traceability
+        - generic [ref=e33]:
+          - heading "Traceability" [level=1] [ref=e34]
+          - paragraph [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: TR-0001
+              - generic [ref=e38]: QA7r w120 en mvk5kr70
+              - generic [ref=e39]:
+                - img [ref=e40]
+                - text: Draft – not submitted
+              - generic [ref=e42]: "Phase: Diagnose"
+      - navigation "Transformation workspace" [ref=e43]:
+        - list [ref=e44]:
+          - listitem [ref=e45]:
+            - link "Overview" [ref=e46] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205
+          - listitem [ref=e47]:
+            - link "Diagnose" [ref=e48] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/diagnose
+          - listitem [ref=e49]:
+            - link "Charter" [ref=e50] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/charter
+          - listitem [ref=e51]:
+            - link "Define" [ref=e52] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/define
+          - listitem [ref=e53]:
+            - link "Design" [ref=e54] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/design
+          - listitem [ref=e55]:
+            - link "Portfolio" [ref=e56] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/portfolio
+          - listitem [ref=e57]:
+            - link "Prioritization" [ref=e58] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/prioritization
+          - listitem [ref=e59]:
+            - link "Roadmap" [ref=e60] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/roadmap
+          - listitem [ref=e61]:
+            - link "Dependencies" [ref=e62] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/dependencies
+          - listitem [ref=e63]:
+            - link "Capacity" [ref=e64] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/capacity
+          - listitem [ref=e65]:
+            - link "Business cases" [ref=e66] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/business-cases
+          - listitem [ref=e67]:
+            - link "Benefit formulas" [ref=e68] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/benefit-formulas
+          - listitem [ref=e69]:
+            - link "Decisions" [ref=e70] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/decisions
+          - listitem [ref=e71]:
+            - link "Gates" [ref=e72] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/gates
+          - listitem [ref=e73]:
+            - link "Readiness" [ref=e74] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/readiness
+          - listitem [ref=e75]:
+            - link "Dispensations" [ref=e76] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/dispensations
+          - listitem [ref=e77]:
+            - link "Evidence" [ref=e78] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/evidence
+          - listitem [ref=e79]:
+            - link "Team" [ref=e80] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/team
+          - listitem [ref=e81]:
+            - link "Role mapping" [ref=e82] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/role-mappings
+          - listitem [ref=e83]:
+            - link "Decision rights" [ref=e84] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/decision-rights
+          - listitem [ref=e85]:
+            - link "RACI" [ref=e86] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/raci
+          - listitem [ref=e87]:
+            - link "Transform readiness" [ref=e88] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/transform-readiness
+          - listitem [ref=e89]:
+            - link "Approval records" [ref=e90] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/approval-decisions
+          - listitem [ref=e91]:
+            - link "KPIs" [ref=e92] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/kpis
+          - listitem [ref=e93]:
+            - link "Benefits register (T14)" [ref=e94] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/benefits
+          - listitem [ref=e95]:
+            - link "RAID (T15)" [ref=e96] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/raid
+          - listitem [ref=e97]:
+            - link "Actions" [ref=e98] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/actions
+          - listitem [ref=e99]:
+            - link "Corrective actions" [ref=e100] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/corrective-actions
+          - listitem [ref=e101]:
+            - link "Forums" [ref=e102] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/forums
+          - listitem [ref=e103]:
+            - link "Meetings" [ref=e104] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/meetings
+          - listitem [ref=e105]:
+            - link "Executive decisions (T16)" [ref=e106] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/executive-decisions
+          - listitem [ref=e107]:
+            - link "Adoption" [ref=e108] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/adoption
+          - listitem [ref=e109]:
+            - link "BAU and performance areas" [ref=e110] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/bau
+          - listitem [ref=e111]:
+            - link "Improvement backlog" [ref=e112] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/improvement
+          - listitem [ref=e113]:
+            - link "Lessons" [ref=e114] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/lessons
+          - listitem [ref=e115]:
+            - link "Dashboard (T10)" [ref=e116] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/dashboard
+          - listitem [ref=e117]:
+            - link "Closure" [ref=e118] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/closure
+          - listitem [ref=e119]:
+            - link "Phases" [ref=e120] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/phases
+          - listitem [ref=e121]:
+            - link "Change requests" [ref=e122] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/change-requests
+          - listitem [ref=e123]:
+            - link "Traceability" [ref=e124] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/traceability
+          - listitem [ref=e125]:
+            - link "Modular entry" [ref=e126] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/modular-entry
+          - listitem [ref=e127]:
+            - link "Workstreams" [ref=e128] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/workstreams
+      - paragraph [ref=e129]: "The chain from diagnosed issue to benefit, read live from the records: every node opens its record, records with a missing link are reported, and any record's downstream impact can be shown. Nothing here is stored."
+      - navigation "Traceability and structure" [ref=e130]:
+        - list [ref=e131]:
+          - listitem [ref=e132]:
+            - link "Traceability" [ref=e133] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/traceability
+          - listitem [ref=e134]:
+            - link "Modular entry" [ref=e135] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/modular-entry
+          - listitem [ref=e136]:
+            - link "Workstreams" [ref=e137] [cursor=pointer]:
+              - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/workstreams
+      - region "Traceability graph" [ref=e138]:
+        - heading "Traceability graph" [level=2] [ref=e140]
+        - generic [ref=e141]: One column per step of the chain. Select a record to open it; Focus shows only what is linked to it.
+        - group "Graph options" [ref=e142]:
+          - generic [ref=e143]:
+            - generic [ref=e144]: Direction
+            - combobox "Direction" [ref=e145]:
+              - option "Upstream"
+              - option "Downstream"
+              - option "Both directions" [selected]
+          - generic [ref=e146]:
+            - generic [ref=e147]: Depth (steps)
+            - combobox "Depth (steps)" [ref=e148]:
+              - option "1"
+              - option "2"
+              - option "3"
+              - option "4"
+              - option "5"
+              - option "6"
+              - option "7"
+              - option "8" [selected]
+          - button "Show the whole chain" [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+            - text: Show the whole chain
+        - note [ref=e152]: Showing the links of Outcome "QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ".
+        - paragraph [ref=e153]: 1 records, 0 links.
+        - region "Outcome (1)" [ref=e155]:
+          - heading "Outcome (1)" [level=3] [ref=e156]:
+            - text: Outcome
+            - generic [ref=e157]: (1)
+          - list [ref=e158]:
+            - listitem [ref=e159]:
+              - link "QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ" [ref=e160] [cursor=pointer]:
+                - /url: /transformations/01a165e0-37ee-7091-8199-9ba5c0b5a205/define
+              - generic [ref=e161]: · draft
+              - generic [ref=e162]:
+                - button "Focus QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ" [ref=e163] [cursor=pointer]:
+                  - text: Focus
+                  - generic [ref=e164]: QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ
+                - link "Impact QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ" [ref=e165] [cursor=pointer]:
+                  - /url: "#trace-impact"
+                  - text: Impact
+                  - generic [ref=e166]: QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ
+      - region "Orphan report" [ref=e167]:
+        - heading "Orphan report" [level=2] [ref=e169]
+        - generic [ref=e170]: Active records with a missing link in the chain, and the step that is expected. Drafts are not listed.
+        - group "Orphan report filters" [ref=e171]:
+          - generic [ref=e172]:
+            - generic [ref=e173]: Record type
+            - combobox "Record type" [ref=e174]:
+              - option "All" [selected]
+              - option "Diagnosed issue"
+              - option "Target-state gap"
+              - option "Initiative"
+              - option "Deliverable"
+              - option "Capability change"
+              - option "Outcome"
+              - option "KPI movement"
+              - option "Benefit"
+          - generic [ref=e175]:
+            - generic [ref=e176]: Missing
+            - combobox "Missing" [ref=e177]:
+              - option "All" [selected]
+              - option "Upstream link missing"
+              - option "Downstream link missing"
+              - option "Both links missing"
+        - generic [ref=e178]:
+          - img [ref=e179]
+          - generic [ref=e181]:
+            - paragraph [ref=e182]: No orphan records
+            - paragraph [ref=e183]: Every active record in this selection is linked up and down the chain.
+      - region "Downstream impact" [ref=e184]:
+        - heading "Downstream impact" [level=2] [ref=e186]
+        - generic [ref=e187]: "Choose a record or a KPI definition to see what a change to it affects: the records downstream, the benefits whose value is affected, and the dashboard areas that read them. Computed now, not stored."
+        - generic [ref=e189]:
+          - generic [ref=e190]: Record
+          - combobox "Record" [ref=e191]:
+            - option "Choose…" [selected]
+            - option "QA7 Synthetic_ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ"
+        - paragraph [ref=e192]: Choose a record to show its downstream impact.
+      - region "Allocation sets" [ref=e193]:
+        - heading "Allocation sets" [level=2] [ref=e195]
+        - generic [ref=e196]: The shares allocated into a KPI movement or a benefit. The total can never exceed 100%; what is not allocated is shown as unallocated, never as 0%.
+        - generic [ref=e198]:
+          - generic [ref=e199]: KPI movement or benefit
+          - combobox "KPI movement or benefit" [ref=e200]:
+            - option "Choose…" [selected]
+        - paragraph [ref=e201]: Choose a KPI movement or a benefit to see its allocation set.
+      - region "Trace links" [ref=e202]:
+        - generic [ref=e203]:
+          - heading "Trace links" [level=2] [ref=e204]
+          - button "Create trace link" [ref=e206] [cursor=pointer]:
+            - img [ref=e207]
+            - text: Create trace link
+        - generic [ref=e209]: "The chain steps that have no other record: issue → gap, deliverable → capability, capability → KPI and KPI → benefit. A removed link stays listed and is never deleted."
+        - generic [ref=e210]:
+          - checkbox "Show removed links" [ref=e211]
+          - text: Show removed links
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - generic [ref=e214]:
+              - generic [ref=e215]: Search
+              - searchbox "Search" [ref=e216]
+            - button "Columns" [ref=e218] [cursor=pointer]:
+              - img [ref=e219]
+              - text: Columns
+          - generic [ref=e221]:
+            - img [ref=e222]
+            - paragraph [ref=e225]: No trace links yet
+```

@@ -1,0 +1,1467 @@
+{
+ "path": "/api/v1/procedure-definitions",
+ "status": 200,
+ "body": {
+  "items": [
+   {
+    "id": "01920005-0311-7000-8000-000000000001",
+    "code": "new_transformation_intake",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "New transformation intake",
+    "nameAr": "استقبال تحول جديد (ترجمة مؤقتة)",
+    "purposeEn": "Capture a proposed transformation, create its record and draft charter, and confirm the sponsor.",
+    "purposeAr": "تسجيل تحول مقترح وإنشاء سجله ومسودة ميثاقه وتأكيد الراعي.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "A sponsor or transformation lead proposes a new transformation.",
+     "descriptionAr": "يقترح الراعي أو قائد التحول تحولاً جديداً."
+    },
+    "scope": {
+     "level": "organization",
+     "descriptionEn": "One organization; the transformation does not exist yet.",
+     "descriptionAr": "منظمة واحدة؛ التحول غير موجود بعد."
+    },
+    "prerequisitesEn": null,
+    "prerequisitesAr": null,
+    "inputSchema": [
+     {
+      "key": "transformationName",
+      "fieldType": "text",
+      "labelEn": "Transformation name",
+      "labelAr": "اسم التحول",
+      "required": true
+     },
+     {
+      "key": "caseForChange",
+      "fieldType": "rich_text",
+      "labelEn": "Case for change",
+      "labelAr": "مبررات التغيير",
+      "required": true
+     }
+    ],
+    "launchRoleCodes": [
+     "SP",
+     "TL",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL"
+    ],
+    "slaWorkingDays": 10,
+    "validationRulesEn": "The name and case for change are required; the transformation is created through the standard create rules.",
+    "validationRulesAr": "الاسم ومبررات التغيير مطلوبة؛ ويُنشأ التحول وفق قواعد الإنشاء المعتادة.",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "SP"
+     ]
+    },
+    "escalation": {
+     "roleCode": "TO",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "A transformation record and its draft charter, linked to the instance.",
+    "expectedOutputsAr": "سجل تحول ومسودة ميثاقه مرتبطان بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The transformation exists, the charter draft is linked and the sponsor confirmed.",
+     "descriptionAr": "التحول موجود ومسودة الميثاق مرتبطة والراعي أكّد."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 1,
+    "steps": [
+     {
+      "stepKey": "capture_intake",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Capture the intake and create the transformation",
+      "nameAr": "تسجيل الطلب وإنشاء التحول",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 3,
+      "condition": null,
+      "requiredInputKeys": [
+       "transformationName",
+       "caseForChange"
+      ],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "transformation",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "draft_charter",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Draft the charter",
+      "nameAr": "إعداد مسودة الميثاق",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "charter",
+       "mode": "link"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "confirm_sponsor",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Sponsor confirms the transformation",
+      "nameAr": "تأكيد الراعي للتحول",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "SP",
+      "slaWorkingDays": 2,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "approval",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000002",
+    "code": "baseline_validation",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "Baseline validation",
+    "nameAr": "التحقق من خط الأساس (ترجمة مؤقتة)",
+    "purposeEn": "Record a baseline with its source and date, and have Finance validate it.",
+    "purposeAr": "تسجيل خط أساس بمصدره وتاريخه والتحقق منه من قبل المالية.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "A baseline is needed for a KPI or a benefit, or a recorded baseline changed.",
+     "descriptionAr": "الحاجة إلى خط أساس لمؤشر أو منفعة، أو تغيّر خط أساس مسجّل."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One baseline of one transformation.",
+     "descriptionAr": "خط أساس واحد لتحول واحد."
+    },
+    "prerequisitesEn": "The KPI definition exists.",
+    "prerequisitesAr": "تعريف المؤشر موجود.",
+    "inputSchema": [
+     {
+      "key": "metric",
+      "fieldType": "text",
+      "labelEn": "Metric",
+      "labelAr": "المقياس",
+      "required": true
+     },
+     {
+      "key": "value",
+      "fieldType": "number",
+      "labelEn": "Baseline value",
+      "labelAr": "قيمة خط الأساس",
+      "required": true
+     },
+     {
+      "key": "unit",
+      "fieldType": "text",
+      "labelEn": "Unit",
+      "labelAr": "الوحدة",
+      "required": true
+     },
+     {
+      "key": "baselineDate",
+      "fieldType": "date",
+      "labelEn": "Baseline date",
+      "labelAr": "تاريخ خط الأساس",
+      "required": true
+     },
+     {
+      "key": "source",
+      "fieldType": "text",
+      "labelEn": "Source",
+      "labelAr": "المصدر",
+      "required": true
+     }
+    ],
+    "launchRoleCodes": [
+     "TL",
+     "BO",
+     "FIN",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "FIN"
+    ],
+    "slaWorkingDays": 10,
+    "validationRulesEn": "Value is a decimal; the date is not in the future; the validator is not the person who recorded the baseline.",
+    "validationRulesAr": "القيمة عشرية؛ والتاريخ ليس في المستقبل؛ والمتحقق ليس من سجّل خط الأساس.",
+    "approval": {
+     "mode": "none",
+     "roleCodes": []
+    },
+    "escalation": {
+     "roleCode": "TL",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "A validated baseline record linked to the instance.",
+    "expectedOutputsAr": "سجل خط أساس متحقق منه مرتبط بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The baseline is recorded and validated by Finance.",
+     "descriptionAr": "سُجّل خط الأساس وتحققت منه المالية."
+    },
+    "exceptionsEn": "A baseline that cannot be measured is recorded as Unknown with a reason and stays unvalidated.",
+    "exceptionsAr": "خط الأساس غير القابل للقياس يُسجّل كمجهول مع السبب ويبقى غير متحقق منه.",
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 2,
+    "steps": [
+     {
+      "stepKey": "record_baseline",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Record the baseline",
+      "nameAr": "تسجيل خط الأساس",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [
+       "metric",
+       "value",
+       "unit",
+       "baselineDate",
+       "source"
+      ],
+      "evidenceRequired": true,
+      "output": {
+       "recordType": "baseline",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "validate_baseline",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Finance validates the baseline",
+      "nameAr": "تحقق المالية من خط الأساس",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "FIN",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "baseline",
+       "mode": "advance"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000003",
+    "code": "kpi_submission",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "KPI submission",
+    "nameAr": "تقديم مؤشر الأداء (ترجمة مؤقتة)",
+    "purposeEn": "Submit a KPI actual for a reporting period and have the data steward accept it.",
+    "purposeAr": "تقديم القيمة الفعلية لمؤشر عن فترة تقرير وقبولها من أمين البيانات.",
+    "trigger": {
+     "kind": "schedule",
+     "event": null,
+     "descriptionEn": "A reporting period opens for a KPI.",
+     "descriptionAr": "فتح فترة تقرير لمؤشر."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One KPI and one reporting period.",
+     "descriptionAr": "مؤشر واحد وفترة تقرير واحدة."
+    },
+    "prerequisitesEn": "The KPI version is active and the period is open.",
+    "prerequisitesAr": "إصدار المؤشر نشط والفترة مفتوحة.",
+    "inputSchema": [
+     {
+      "key": "period",
+      "fieldType": "text",
+      "labelEn": "Reporting period",
+      "labelAr": "فترة التقرير",
+      "required": true
+     }
+    ],
+    "launchRoleCodes": [
+     "BO",
+     "KDS",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "BO",
+     "KDS"
+    ],
+    "slaWorkingDays": 5,
+    "validationRulesEn": "The DG4 actual-submission rules apply unchanged.",
+    "validationRulesAr": "تنطبق قواعد تقديم القيم الفعلية المعتمدة في المرحلة الرابعة دون تغيير.",
+    "approval": {
+     "mode": "none",
+     "roleCodes": []
+    },
+    "escalation": {
+     "roleCode": "TL",
+     "afterWorkingDays": 3
+    },
+    "expectedOutputsEn": "A submitted and accepted KPI actual linked to the instance.",
+    "expectedOutputsAr": "قيمة فعلية مقدّمة ومقبولة مرتبطة بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The actual is submitted and accepted.",
+     "descriptionAr": "قُدّمت القيمة الفعلية وقُبلت."
+    },
+    "exceptionsEn": "A missing value is reported as Unknown, never as zero.",
+    "exceptionsAr": "القيمة المفقودة تُعرض كمجهولة وليست صفراً.",
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 3,
+    "steps": [
+     {
+      "stepKey": "submit_actual",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Submit the KPI actual",
+      "nameAr": "تقديم القيمة الفعلية",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "BO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 3,
+      "condition": null,
+      "requiredInputKeys": [
+       "period"
+      ],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "kpi_actual",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "accept_actual",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Data steward accepts the actual",
+      "nameAr": "قبول أمين البيانات للقيمة الفعلية",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "KDS",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 2,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "kpi_actual",
+       "mode": "advance"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000004",
+    "code": "tom_approval",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "TOM approval",
+    "nameAr": "اعتماد نموذج التشغيل المستهدف (ترجمة مؤقتة)",
+    "purposeEn": "Review the target operating model canvas in parallel and route it for the sponsor's business approval.",
+    "purposeAr": "مراجعة لوحة نموذج التشغيل المستهدف بالتوازي وتوجيهها لاعتماد الراعي.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "The TOM canvas is complete for all ten dimensions.",
+     "descriptionAr": "اكتمال لوحة نموذج التشغيل للأبعاد العشرة."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "The TOM canvas of one transformation.",
+     "descriptionAr": "لوحة نموذج التشغيل لتحول واحد."
+    },
+    "prerequisitesEn": "All ten TOM dimensions have a current and target design.",
+    "prerequisitesAr": "لكل الأبعاد العشرة تصميم حالي ومستهدف.",
+    "inputSchema": [],
+    "launchRoleCodes": [
+     "TL",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "TD",
+     "BO"
+    ],
+    "slaWorkingDays": 15,
+    "validationRulesEn": "Every dimension has a current and a target design; no dimension is removed.",
+    "validationRulesAr": "لكل بعد تصميم حالي ومستهدف؛ ولا يُحذف أي بعد.",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "SP"
+     ]
+    },
+    "escalation": {
+     "roleCode": "TO",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "An approval record of the TOM canvas linked to the instance.",
+    "expectedOutputsAr": "سجل اعتماد للوحة نموذج التشغيل مرتبط بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "Both reviews are closed and the sponsor decided.",
+     "descriptionAr": "أُغلقت المراجعتان وقرّر الراعي."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 4,
+    "steps": [
+     {
+      "stepKey": "complete_canvas",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Complete the TOM canvas",
+      "nameAr": "استكمال لوحة نموذج التشغيل",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "tom_canvas_cell",
+       "mode": "link"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "business_review",
+      "ordinal": 2,
+      "parallelGroup": "review",
+      "stepKind": "task",
+      "nameEn": "Business owner review",
+      "nameAr": "مراجعة مالك الأعمال",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "BO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "technology_review",
+      "ordinal": 2,
+      "parallelGroup": "review",
+      "stepKind": "task",
+      "nameEn": "Technology and data review",
+      "nameAr": "مراجعة التقنية والبيانات",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TD",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "sponsor_approval",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Sponsor approves the TOM",
+      "nameAr": "اعتماد الراعي لنموذج التشغيل",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "SP",
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "approval",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000005",
+    "code": "initiative_prioritization",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "Initiative prioritization",
+    "nameAr": "تحديد أولويات المبادرات (ترجمة مؤقتة)",
+    "purposeEn": "Score initiatives with the pinned T06 weights, record a ranking snapshot and route it for approval.",
+    "purposeAr": "تقييم المبادرات بالأوزان المثبتة للنموذج 6 وتسجيل لقطة ترتيب وتوجيهها للاعتماد.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "Initiative cards are ready for scoring.",
+     "descriptionAr": "بطاقات المبادرات جاهزة للتقييم."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "The candidate initiatives of one transformation.",
+     "descriptionAr": "المبادرات المرشحة لتحول واحد."
+    },
+    "prerequisitesEn": "The weight set is approved.",
+    "prerequisitesAr": "مجموعة الأوزان معتمدة.",
+    "inputSchema": [],
+    "launchRoleCodes": [
+     "TL",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "TO"
+    ],
+    "slaWorkingDays": 10,
+    "validationRulesEn": "The DG3 scoring and ranking rules apply unchanged.",
+    "validationRulesAr": "تنطبق قواعد التقييم والترتيب المعتمدة في المرحلة الثالثة دون تغيير.",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "SP"
+     ]
+    },
+    "escalation": {
+     "roleCode": "TO",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "A ranking snapshot linked to the instance.",
+    "expectedOutputsAr": "لقطة ترتيب مرتبطة بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The ranking snapshot is recorded and decided.",
+     "descriptionAr": "سُجّلت لقطة الترتيب وتقرر بشأنها."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 5,
+    "steps": [
+     {
+      "stepKey": "score_initiatives",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Score the initiatives",
+      "nameAr": "تقييم المبادرات",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "record_ranking",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Record the ranking snapshot",
+      "nameAr": "تسجيل لقطة الترتيب",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 2,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "ranking_snapshot",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "approve_ranking",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Sponsor approves the ranking",
+      "nameAr": "اعتماد الراعي للترتيب",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "SP",
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "approval",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000006",
+    "code": "gate_review",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "Gate review",
+    "nameAr": "مراجعة البوابة (ترجمة مؤقتة)",
+    "purposeEn": "Prepare a gate submission, review its criteria (and Finance where required) and obtain the gate decision.",
+    "purposeAr": "إعداد تقديم البوابة ومراجعة معاييرها (والمالية عند الحاجة) والحصول على قرار البوابة.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "The phase work for a gate is ready for review.",
+     "descriptionAr": "عمل المرحلة الخاص بالبوابة جاهز للمراجعة."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One gate of one transformation.",
+     "descriptionAr": "بوابة واحدة لتحول واحد."
+    },
+    "prerequisitesEn": "The previous gate is approved.",
+    "prerequisitesAr": "البوابة السابقة معتمدة.",
+    "inputSchema": [
+     {
+      "key": "gateCode",
+      "fieldType": "choice",
+      "labelEn": "Gate",
+      "labelAr": "البوابة",
+      "required": true,
+      "options": [
+       "G1",
+       "G2",
+       "G3",
+       "G4",
+       "G5",
+       "G6"
+      ]
+     },
+     {
+      "key": "financeReviewRequired",
+      "fieldType": "choice",
+      "labelEn": "Finance review required",
+      "labelAr": "مراجعة المالية مطلوبة",
+      "required": true,
+      "options": [
+       "yes",
+       "no"
+      ]
+     }
+    ],
+    "launchRoleCodes": [
+     "TL",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "TO",
+     "FIN"
+    ],
+    "slaWorkingDays": 15,
+    "validationRulesEn": "Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).",
+    "validationRulesAr": "غياب الأدلة الإلزامية يمنع التقديم ما لم يُسجّل استثناء معتمد (قواعد البوابات دون تغيير).",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "SP"
+     ]
+    },
+    "escalation": {
+     "roleCode": "SP",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "A gate submission and its decision linked to the instance.",
+    "expectedOutputsAr": "تقديم البوابة وقرارها مرتبطان بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The submission is reviewed and the gate decided by its business approver.",
+     "descriptionAr": "رُوجع التقديم وقرّر معتمد الأعمال بشأن البوابة."
+    },
+    "exceptionsEn": "A deferred or rejected gate closes the instance; a resubmission is a new instance.",
+    "exceptionsAr": "البوابة المؤجلة أو المرفوضة تغلق الإجراء؛ وإعادة التقديم إجراء جديد.",
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 6,
+    "steps": [
+     {
+      "stepKey": "prepare_submission",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Prepare and submit the gate submission",
+      "nameAr": "إعداد تقديم البوابة وتقديمه",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [
+       "gateCode"
+      ],
+      "evidenceRequired": true,
+      "output": {
+       "recordType": "gate_submission",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "criteria_review",
+      "ordinal": 2,
+      "parallelGroup": "review",
+      "stepKind": "task",
+      "nameEn": "Review the gate criteria",
+      "nameAr": "مراجعة معايير البوابة",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "finance_review",
+      "ordinal": 2,
+      "parallelGroup": "review",
+      "stepKind": "task",
+      "nameEn": "Finance review",
+      "nameAr": "مراجعة المالية",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "FIN",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": {
+       "inputKey": "financeReviewRequired",
+       "operator": "eq",
+       "value": "yes"
+      },
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "gate_decision",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Gate decision by the business approver",
+      "nameAr": "قرار البوابة من معتمد الأعمال",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "SP",
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "gate_submission",
+       "mode": "advance"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000007",
+    "code": "scope_target_change",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "Scope/target change",
+    "nameAr": "تغيير النطاق/المستهدف (ترجمة مؤقتة)",
+    "purposeEn": "Raise a change to approved scope or targets, assess its impact and route it for business approval.",
+    "purposeAr": "رفع تغيير على النطاق أو المستهدفات المعتمدة وتقييم أثره وتوجيهه لاعتماد الأعمال.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "An approved scope, baseline or target needs to change.",
+     "descriptionAr": "الحاجة إلى تغيير نطاق أو خط أساس أو مستهدف معتمد."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One approved record of one transformation.",
+     "descriptionAr": "سجل معتمد واحد لتحول واحد."
+    },
+    "prerequisitesEn": null,
+    "prerequisitesAr": null,
+    "inputSchema": [
+     {
+      "key": "reason",
+      "fieldType": "rich_text",
+      "labelEn": "Reason for change",
+      "labelAr": "سبب التغيير",
+      "required": true
+     }
+    ],
+    "launchRoleCodes": [
+     "TL",
+     "BO",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "TO"
+    ],
+    "slaWorkingDays": 10,
+    "validationRulesEn": "The DG4 change-control and impact-assessment rules apply unchanged.",
+    "validationRulesAr": "تنطبق قواعد ضبط التغيير وتقييم الأثر المعتمدة دون تغيير.",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "SP"
+     ]
+    },
+    "escalation": {
+     "roleCode": "SP",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "A change request linked to the instance.",
+    "expectedOutputsAr": "طلب تغيير مرتبط بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The change request is assessed and decided.",
+     "descriptionAr": "قُيّم طلب التغيير وتقرر بشأنه."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 7,
+    "steps": [
+     {
+      "stepKey": "raise_change",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Raise the change request",
+      "nameAr": "رفع طلب التغيير",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 3,
+      "condition": null,
+      "requiredInputKeys": [
+       "reason"
+      ],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "change_request",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "assess_impact",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Assess the impact",
+      "nameAr": "تقييم الأثر",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "decide_change",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Business approver decides the change",
+      "nameAr": "قرار معتمد الأعمال بشأن التغيير",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "SP",
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "change_request",
+       "mode": "advance"
+      },
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000008",
+    "code": "benefit_validation",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "Benefit validation",
+    "nameAr": "التحقق من المنفعة (ترجمة مؤقتة)",
+    "purposeEn": "Measure a benefit, attach evidence and Finance validation in parallel, and plan recovery when below target.",
+    "purposeAr": "قياس منفعة وإرفاق الأدلة وتحقق المالية بالتوازي، وتخطيط التعافي عند انخفاضها عن المستهدف.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "A benefit measurement is due.",
+     "descriptionAr": "حلول موعد قياس منفعة."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One benefit of one transformation.",
+     "descriptionAr": "منفعة واحدة لتحول واحد."
+    },
+    "prerequisitesEn": "The benefit has a validated baseline.",
+    "prerequisitesAr": "للمنفعة خط أساس متحقق منه.",
+    "inputSchema": [
+     {
+      "key": "belowTarget",
+      "fieldType": "choice",
+      "labelEn": "Below target",
+      "labelAr": "أقل من المستهدف",
+      "required": true,
+      "options": [
+       "yes",
+       "no"
+      ]
+     }
+    ],
+    "launchRoleCodes": [
+     "TL",
+     "BO",
+     "FIN",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "BO",
+     "FIN",
+     "TL"
+    ],
+    "slaWorkingDays": 15,
+    "validationRulesEn": "Finance validation follows the DG4 rules; the validator is not the benefit owner.",
+    "validationRulesAr": "يتبع تحقق المالية القواعد المعتمدة؛ والمتحقق ليس مالك المنفعة.",
+    "approval": {
+     "mode": "none",
+     "roleCodes": []
+    },
+    "escalation": {
+     "roleCode": "TL",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "A Finance validation record linked to the instance.",
+    "expectedOutputsAr": "سجل تحقق مالي مرتبط بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "Evidence is attached, Finance validated, and a recovery plan exists when below target.",
+     "descriptionAr": "أُرفقت الأدلة وتحققت المالية ووُضعت خطة تعافٍ عند الانخفاض."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 8,
+    "steps": [
+     {
+      "stepKey": "measure_benefit",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Record the benefit measurement",
+      "nameAr": "تسجيل قياس المنفعة",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "BO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "attach_evidence",
+      "ordinal": 2,
+      "parallelGroup": "validate",
+      "stepKind": "task",
+      "nameEn": "Attach the evidence",
+      "nameAr": "إرفاق الأدلة",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "BO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 3,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": true,
+      "output": {
+       "recordType": "evidence",
+       "mode": "link"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "finance_validation",
+      "ordinal": 2,
+      "parallelGroup": "validate",
+      "stepKind": "task",
+      "nameEn": "Finance validates the benefit",
+      "nameAr": "تحقق المالية من المنفعة",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "FIN",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "finance_validation",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "recovery_plan",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Plan the recovery",
+      "nameAr": "تخطيط التعافي",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": {
+       "inputKey": "belowTarget",
+       "operator": "eq",
+       "value": "yes"
+      },
+      "requiredInputKeys": [
+       "belowTarget"
+      ],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-000000000009",
+    "code": "executive_escalation",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "Executive escalation",
+    "nameAr": "التصعيد التنفيذي (ترجمة مؤقتة)",
+    "purposeEn": "Escalate a blocked decision to the executive level, record the executive decision and communicate it.",
+    "purposeAr": "تصعيد قرار متعثر إلى المستوى التنفيذي وتسجيل القرار التنفيذي وإبلاغه.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "A decision or blocker passed its escalation threshold.",
+     "descriptionAr": "تجاوز قرار أو عائق حد التصعيد."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One escalated decision of one transformation.",
+     "descriptionAr": "قرار مصعّد واحد لتحول واحد."
+    },
+    "prerequisitesEn": null,
+    "prerequisitesAr": null,
+    "inputSchema": [
+     {
+      "key": "whyNow",
+      "fieldType": "rich_text",
+      "labelEn": "Why now",
+      "labelAr": "لماذا الآن",
+      "required": true
+     }
+    ],
+    "launchRoleCodes": [
+     "TL",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "SP"
+    ],
+    "slaWorkingDays": 5,
+    "validationRulesEn": "The T16 executive decision rules apply unchanged.",
+    "validationRulesAr": "تنطبق قواعد القرار التنفيذي للنموذج 16 دون تغيير.",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "SP"
+     ]
+    },
+    "escalation": {
+     "roleCode": "SP",
+     "afterWorkingDays": 3
+    },
+    "expectedOutputsEn": "An executive decision record linked to the instance.",
+    "expectedOutputsAr": "سجل قرار تنفيذي مرتبط بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The executive decision is recorded and communicated.",
+     "descriptionAr": "سُجّل القرار التنفيذي وأُبلغ."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 9,
+    "steps": [
+     {
+      "stepKey": "raise_escalation",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Raise the executive decision",
+      "nameAr": "رفع القرار التنفيذي",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 2,
+      "condition": null,
+      "requiredInputKeys": [
+       "whyNow"
+      ],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "decision",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "executive_decision",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Sponsor decides",
+      "nameAr": "قرار الراعي",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "SP",
+      "slaWorkingDays": 3,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "decision",
+       "mode": "advance"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "communicate_decision",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Communicate the decision",
+      "nameAr": "إبلاغ القرار",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 2,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": true,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   },
+   {
+    "id": "01920005-0311-7000-8000-00000000000a",
+    "code": "bau_handover",
+    "methodologyVersionId": "01920005-0300-7000-8000-000000000002",
+    "versionNo": 2,
+    "versionStatus": "published",
+    "origin": "source",
+    "removed": false,
+    "productDefaults": true,
+    "sourceRef": "M0153",
+    "nameEn": "BAU handover",
+    "nameAr": "التسليم للعمليات الاعتيادية (ترجمة مؤقتة)",
+    "purposeEn": "Prepare the BAU handover of a performance area, obtain the receiving owner's acceptance and schedule the recurring reviews.",
+    "purposeAr": "إعداد تسليم مجال أداء للعمليات الاعتيادية والحصول على قبول المالك المستلم وجدولة المراجعات الدورية.",
+    "trigger": {
+     "kind": "manual",
+     "event": null,
+     "descriptionEn": "A performance area is ready to transfer to its business owner.",
+     "descriptionAr": "مجال أداء جاهز للنقل إلى مالكه."
+    },
+    "scope": {
+     "level": "transformation",
+     "descriptionEn": "One performance area of one transformation.",
+     "descriptionAr": "مجال أداء واحد لتحول واحد."
+    },
+    "prerequisitesEn": "Controls and KPI ownership are defined.",
+    "prerequisitesAr": "الضوابط وملكية المؤشرات محددة.",
+    "inputSchema": [],
+    "launchRoleCodes": [
+     "TL",
+     "BO",
+     "TO"
+    ],
+    "responsibleRoleCodes": [
+     "TL",
+     "BO",
+     "TO"
+    ],
+    "slaWorkingDays": 15,
+    "validationRulesEn": "The DG4 BAU handover rules apply unchanged.",
+    "validationRulesAr": "تنطبق قواعد التسليم المعتمدة دون تغيير.",
+    "approval": {
+     "mode": "any",
+     "roleCodes": [
+      "BO"
+     ]
+    },
+    "escalation": {
+     "roleCode": "SP",
+     "afterWorkingDays": 5
+    },
+    "expectedOutputsEn": "An accepted BAU handover record linked to the instance.",
+    "expectedOutputsAr": "سجل تسليم مقبول مرتبط بالإجراء.",
+    "completion": {
+     "rule": "all_steps_closed_and_outputs_linked",
+     "descriptionEn": "The handover is accepted and the recurring reviews are scheduled.",
+     "descriptionAr": "قُبل التسليم وجُدولت المراجعات الدورية."
+    },
+    "exceptionsEn": null,
+    "exceptionsAr": null,
+    "effectiveFrom": "2026-10-14",
+    "ordinal": 10,
+    "steps": [
+     {
+      "stepKey": "prepare_handover",
+      "ordinal": 1,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Prepare the handover",
+      "nameAr": "إعداد التسليم",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 10,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": true,
+      "output": {
+       "recordType": "bau_handover",
+       "mode": "create"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "accept_handover",
+      "ordinal": 2,
+      "parallelGroup": null,
+      "stepKind": "approval",
+      "nameEn": "Receiving business owner accepts",
+      "nameAr": "قبول مالك الأعمال المستلم",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TL",
+      "approvalRoleCode": "BO",
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": {
+       "recordType": "bau_handover",
+       "mode": "advance"
+      },
+      "skippable": false,
+      "removed": false
+     },
+     {
+      "stepKey": "schedule_reviews",
+      "ordinal": 3,
+      "parallelGroup": null,
+      "stepKind": "task",
+      "nameEn": "Schedule the recurring reviews",
+      "nameAr": "جدولة المراجعات الدورية",
+      "instructionsEn": null,
+      "instructionsAr": null,
+      "responsibleRoleCode": "TO",
+      "approvalRoleCode": null,
+      "slaWorkingDays": 5,
+      "condition": null,
+      "requiredInputKeys": [],
+      "evidenceRequired": false,
+      "output": null,
+      "skippable": false,
+      "removed": false
+     }
+    ],
+    "version": 1,
+    "createdAt": "2026-10-22T22:51:53.122Z",
+    "updatedAt": "2026-10-22T22:51:53.122Z"
+   }
+  ],
+  "nextCursor": null
+ }
+}

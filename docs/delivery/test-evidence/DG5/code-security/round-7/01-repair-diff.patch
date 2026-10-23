@@ -1,0 +1,1519 @@
+diff --git a/apps/web/e2e/p5-record-name-reflow.spec.ts b/apps/web/e2e/p5-record-name-reflow.spec.ts
+new file mode 100644
+index 0000000..1a8052e
+--- /dev/null
++++ b/apps/web/e2e/p5-record-name-reflow.spec.ts
+@@ -0,0 +1,170 @@
++// Record names with long unbroken text reflow on Traceability and Modular entry, and the Define page's outcome card
++// fits narrow phones (T-DG5-FE-AB1, D-180; F-DG5-148, F-DG5-149; REQ-S15-009, REQ-S15-012 WCAG 2.1 SC 1.4.10 Reflow),
++// against the REAL API (apps/web/e2e/support/with-stack.sh), in chromium-en and chromium-ar.
++// It turns the qa-verifier's round-6 probes into product tests that keep their final assertion,
++// document.documentElement.scrollWidth - innerWidth <= 1 (read, not imported:
++// docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts, R6-TITLE-B, and
++// zz-qa-dg5r6-define-narrow.spec.ts, R6-DEFINE-NARROW):
++//  - F-DG5-148: per language and token (a 120-character word without spaces, the 46-character token, an unbroken
++//    Arabic token joined by underscores, ordinary text), a SYNTHETIC transformation with one Define outcome whose
++//    statement holds the token. The outcome is a node of the Traceability graph (its record link, RecordName) and,
++//    having no KPI, an item of the Modular entry "missing" list (the label "· <statement>"). Both pages are opened at
++//    390, 360 and 320 px wide and at 1280 px with the root font at 200 %. Asserted: no page-level horizontal scroll,
++//    the token is on the page (set-up check), and every element whose text holds the token lies inside the viewport
++//    (in ar an overflow runs past the LEFT edge).
++//  - F-DG5-149: a SYNTHETIC transformation with one ORDINARY outcome; Define at 390, 375, 360 and 320 px and at 200 %.
++//    Asserted: no page-level horizontal scroll, the outcome card inside the viewport, and the Good-outcome test table
++//    inside a focusable scroll region named by its localized caption.
++// It collects every measurement first and then asserts once, so a failure names each failing case. Everything is
++// SYNTHETIC demo data; nothing here grants a business approval (G1-G6) or touches the delivery gates DG0-DG7.
++import { expect, test, type Page } from "@playwright/test";
++import { asUser } from "./support/p3-journey-setup.ts";
++import { apiSession, langOf, shot, SYN_RETAIL, tr } from "./support/ui.ts";
++
++const stamp = Date.now().toString(36);
++const TOKENS = {
++  w120: `Synthetic_${"ABCDEFGHIJ".repeat(11)}`, // 120 characters, no break opportunity
++  w46: "Synthetic_roaming_bill_shock_reduction_program",
++  arU: "اصطناعي_برنامج_خفض_صدمة_فواتير_التجوال_للمسافرين_الدوليين_عبر_التطبيق", // unbroken Arabic
++  plain: "Synthetic churn reduction on the prepaid base",
++} as const;
++const SIZES = [
++  ["390", 390, 0],
++  ["360", 360, 0],
++  ["320", 320, 0],
++  ["200pct", 1280, 200],
++] as const;
++
++async function settle(page: Page, font: number) {
++  if (font) await page.evaluate((f) => (document.documentElement.style.fontSize = `${f}%`), font);
++  await page.waitForLoadState("networkidle");
++  await page.waitForTimeout(300);
++}
++
++/** Page overflow, and the innermost elements of main#main whose text holds `token` that lie outside the viewport
++ *  without a horizontal scroll container between them and the page. */
++async function measure(page: Page, token: string) {
++  return page.evaluate((token) => {
++    const W = window.innerWidth;
++    const main = document.querySelector<HTMLElement>("main#main");
++    const inScroller = (el: Element) => {
++      for (let x = el.parentElement; x && x !== document.body; x = x.parentElement) {
++        const ox = getComputedStyle(x).overflowX;
++        if (ox === "auto" || ox === "scroll" || ox === "hidden" || ox === "clip") return true;
++      }
++      return false;
++    };
++    const outside: string[] = [];
++    for (const el of Array.from(main?.querySelectorAll<HTMLElement>("*") ?? [])) {
++      if (!(el.textContent ?? "").includes(token)) continue;
++      const r = el.getBoundingClientRect();
++      if (r.width === 0 || r.height === 0 || inScroller(el)) continue;
++      if (r.left < -1 || r.right > W + 1)
++        outside.push(`${el.tagName.toLowerCase()}.${el.className} [${Math.round(r.left)}..${Math.round(r.right)}]`);
++    }
++    return {
++      pageOverflow: document.documentElement.scrollWidth - W,
++      tokenPresent: (main?.textContent ?? "").includes(token),
++      outside: outside.slice(0, 6),
++    };
++  }, token);
++}
++
++test("Record names with long unbroken text wrap on Traceability (graph record link) and Modular entry (missing-item label) at 390, 360, 320 px and with 200 % text", async ({
++  browser,
++  playwright,
++}, info) => {
++  test.setTimeout(420_000);
++  const lang = langOf(info);
++  const lead = await apiSession(playwright, "dev.lead");
++  const failures: string[] = [];
++  const report: string[] = [];
++  for (const [k, token] of Object.entries(TOKENS)) {
++    const tid = (
++      await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
++        businessUnitId: SYN_RETAIL,
++        name: `Synthetic AB1 ${k} ${lang} ${stamp}`,
++        mode: "end_to_end",
++      })
++    ).id;
++    await lead.call("POST", `/api/v1/transformations/${tid}/outcomes`, { statement: `AB1 ${token}` });
++    const u = await asUser(browser, lang, "dev.lead");
++    const screens = [
++      ["traceability", `/transformations/${tid}/traceability`, "li.trace-node a.link"],
++      ["modular", `/transformations/${tid}/modular-entry`, "ul[data-missing-items] > li"],
++    ] as const;
++    for (const [screen, url, holder] of screens) {
++      for (const [label, width, font] of SIZES) {
++        await u.page.setViewportSize({ width, height: 900 });
++        await u.page.goto(url);
++        await expect(u.page.locator(holder, { hasText: token }).first()).toBeVisible({ timeout: 20_000 });
++        await settle(u.page, font);
++        const m = await measure(u.page, token);
++        const name = `${k}/${screen}/${label}`;
++        report.push(`${name}: overflow ${m.pageOverflow}`);
++        if (!m.tokenPresent) failures.push(`${name}: set-up, the token is not on the page`);
++        if (m.pageOverflow > 1) failures.push(`${name}: the page scrolls horizontally by ${m.pageOverflow} px`);
++        if (m.outside.length > 0) failures.push(`${name}: token text outside the viewport ${m.outside.join(", ")}`);
++        if (label === "320" && k !== "plain") await shot(u.page, lang, `p5-record-name-${k}-${screen}-320`);
++      }
++    }
++    await u.close();
++  }
++  console.info(`Record name reflow ${lang}: ${report.join("; ")}`);
++  expect(failures).toEqual([]);
++});
++
++test("Define: the outcome card with ordinary text fits 390, 375, 360 and 320 px and 200 % text; the Good-outcome test table scrolls in its own named region", async ({
++  browser,
++  playwright,
++}, info) => {
++  test.setTimeout(240_000);
++  const lang = langOf(info);
++  const lead = await apiSession(playwright, "dev.lead");
++  const statement = "Synthetic: fewer roaming bill complaints";
++  const tid = (
++    await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
++      businessUnitId: SYN_RETAIL,
++      name: `Synthetic AB1 define ${lang} ${stamp}`,
++      mode: "end_to_end",
++    })
++  ).id;
++  await lead.call("POST", `/api/v1/transformations/${tid}/outcomes`, { statement });
++  const u = await asUser(browser, lang, "dev.lead");
++  const regionName = tr(lang, "common.table.scrollRegion", {
++    caption: tr(lang, "define.goodOutcome.caption", { outcome: statement }),
++  });
++  const failures: string[] = [];
++  const report: string[] = [];
++  for (const [label, width, font] of [["375", 375, 0] as const, ...SIZES]) {
++    await u.page.setViewportSize({ width, height: 900 });
++    await u.page.goto(`/transformations/${tid}/define`);
++    await expect(u.page.locator(".outcome-card__title", { hasText: statement })).toBeVisible({ timeout: 20_000 });
++    await settle(u.page, font);
++    // The table's scroll region: focusable and named by the localized caption (collected, not thrown, so a missing
++    // region still reports the page overflow below).
++    const region = u.page.getByRole("region", { name: regionName });
++    const regions = await region.count();
++    const inRegion = regions === 1 ? await region.locator("table.good-outcome__table").count() : 0;
++    const focusable = regions === 1 ? await region.getAttribute("tabindex") : null;
++    if (regions !== 1 || inRegion !== 1 || focusable !== "0")
++      failures.push(`define/${label}: the Good-outcome table is not in one focusable region named "${regionName}"`);
++    const m = await u.page.evaluate(() => {
++      const W = window.innerWidth;
++      const card = document.querySelector(".outcome-card")!.getBoundingClientRect();
++      return {
++        pageOverflow: document.documentElement.scrollWidth - W,
++        card: [Math.round(card.left), Math.round(card.right)] as [number, number],
++        W,
++      };
++    });
++    report.push(`define/${label}: overflow ${m.pageOverflow}, card [${m.card[0]}..${m.card[1]}]`);
++    if (m.pageOverflow > 1) failures.push(`define/${label}: the page scrolls horizontally by ${m.pageOverflow} px`);
++    if (m.card[0] < -1 || m.card[1] > m.W + 1)
++      failures.push(`define/${label}: the outcome card [${m.card[0]}..${m.card[1]}] is outside the viewport`);
++    if (label === "320" || label === "360") await shot(u.page, lang, `p5-define-outcome-card-${label}`);
++  }
++  await u.close();
++  console.info(`Define reflow ${lang}: ${report.join("; ")}`);
++  expect(failures).toEqual([]);
++});
+diff --git a/apps/web/e2e/p5-transformation-picker-complete.spec.ts b/apps/web/e2e/p5-transformation-picker-complete.spec.ts
+new file mode 100644
+index 0000000..395a00a
+--- /dev/null
++++ b/apps/web/e2e/p5-transformation-picker-complete.spec.ts
+@@ -0,0 +1,91 @@
++// T-DG5-FE-AB2 (D-181; REQ-S15 usability): a transformation picker offers EVERY transformation the user may see, not
++// one page of them. Against the REAL API (apps/web/e2e/support/with-stack.sh), in EN and AR.
++//  - Through the API, the lead (TL) makes sure more than 100 transformations exist (PAGINATION.maxLimit is 100, the
++//    page size the old picker loaded once), then creates one more: the newest, whose code sorts last.
++//  - The API itself shows the regression's precondition: the first page of `code:asc` (limit 100) does not contain
++//    the newest one, so a one-page picker cannot offer it.
++//  - On "My procedures", the launch form's transformation picker (shown once `baseline_validation`, a
++//    transformation-scoped procedure, is chosen) offers the newest one and as many options as the API lists in all
++//    of its pages. It is chosen; nothing is launched (the launch itself is covered by p5-procedure-outputs.spec.ts).
++// All data is SYNTHETIC. Nothing here is a business approval, and nothing touches the engineering gates DG0-DG7.
++import { expect, test, type Page } from "@playwright/test";
++import {
++  SYN_RETAIL,
++  apiSession,
++  expectAccessible,
++  langOf,
++  shot,
++  signIn,
++  tr,
++  trackRequests,
++  type Lang,
++} from "./support/ui.ts";
++
++const h1 = (page: Page) => page.locator("main#main h1");
++const PAGE_LIMIT = 100;
++
++interface TrPage {
++  items: { id: string; code: string }[];
++  nextCursor: string | null;
++}
++
++test("Transformation picker: with more than 100 transformations, the launch-procedure picker offers the newest one", async ({
++  page,
++  playwright,
++}, info) => {
++  test.setTimeout(240_000);
++  const lang: Lang = langOf(info);
++  const foreign = trackRequests(page);
++  const lead = await apiSession(playwright, "dev.lead");
++
++  /** Every transformation the lead may see, through every page of the list operation. */
++  const listAll = async () => {
++    const all: { id: string; code: string }[] = [];
++    let cursor: string | null = null;
++    do {
++      const query = new URLSearchParams({ sort: "code:asc", limit: String(PAGE_LIMIT) });
++      if (cursor) query.set("cursor", cursor);
++      const p: TrPage = await lead.call<TrPage>("GET", `/api/v1/transformations?${query.toString()}`);
++      all.push(...p.items);
++      cursor = p.nextCursor;
++    } while (cursor);
++    return all;
++  };
++
++  // 1. More than 100 transformations exist (the ones already in this database count), then the newest one.
++  const before = await listAll();
++  for (let i = before.length; i <= PAGE_LIMIT; i++) {
++    await lead.call("POST", "/api/v1/transformations", {
++      businessUnitId: SYN_RETAIL,
++      name: `Synthetic FE-AB2 ${lang.toUpperCase()} filler ${i + 1}`,
++      mode: "end_to_end",
++    });
++  }
++  const newest = await lead.call<{ id: string; code: string }>("POST", "/api/v1/transformations", {
++    businessUnitId: SYN_RETAIL,
++    name: `Synthetic FE-AB2 ${lang.toUpperCase()} newest`,
++    mode: "end_to_end",
++  });
++  const all = await listAll();
++  expect(all.length).toBeGreaterThan(PAGE_LIMIT);
++  expect(all.map((x) => x.id)).toContain(newest.id);
++  const firstPage = await lead.call<TrPage>("GET", `/api/v1/transformations?sort=code:asc&limit=${PAGE_LIMIT}`);
++  expect(firstPage.nextCursor).not.toBeNull();
++  expect(firstPage.items.map((x) => x.id)).not.toContain(newest.id);
++
++  // 2. The launch-procedure picker offers the newest one, and every transformation the API lists.
++  await signIn(page, lang, "dev.lead");
++  await page.goto("/playbook/procedures");
++  await expect(h1(page)).toHaveText(tr(lang, "nav.p5.myProcedures.title"));
++  const launch = page.locator("[data-form='launch-procedure']");
++  await launch.getByLabel(tr(lang, "workflowsP5.procedures.procedure")).selectOption("baseline_validation");
++  const picker = launch.getByLabel(tr(lang, "workflowsP5.field.transformation"));
++  await expect(picker.locator(`option[value="${newest.id}"]`)).toHaveCount(1);
++  await expect(picker.locator("option:not([value=''])")).toHaveCount(all.length);
++  await picker.selectOption(newest.id);
++  await expect(picker).toHaveValue(newest.id);
++  await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
++  await shot(page, lang, "fe-ab2-launch-picker-all-transformations");
++  await expectAccessible(page, lang, "fe-ab2-launch-picker-all-transformations");
++  expect(foreign).toEqual([]);
++});
+diff --git a/apps/web/src/api/all-transformations.test.tsx b/apps/web/src/api/all-transformations.test.tsx
+new file mode 100644
+index 0000000..c8f54c8
+--- /dev/null
++++ b/apps/web/src/api/all-transformations.test.tsx
+@@ -0,0 +1,231 @@
++// T-DG5-FE-AB2 (D-181; REQ-S15 usability): a transformation picker offers every transformation the user may see.
++// fetchAllTransformations / useAllTransformations follow `nextCursor` of the existing list operation
++// (GET /api/v1/transformations, PAGINATION.maxLimit per page) until it is null, and a page that fails fails the whole
++// list (a picker never offers a partial list as if it were complete).
++//  H1  one page: one request, limit 100, no cursor; its items.
++//  H2  several pages: each cursor is sent once, in order; every item of every page, in order; the filters on every page.
++//  H3  an error mid-way (page 2 of 3 answers 500): the query is an error with NO data, and page 3 is never requested.
++//  H4  a server that repeats a cursor: an error, never an endless loop or a silently shortened list.
++//  H5  the request signal reaches every page request (the same cancellation convention as useTransformations).
++//  P1  the launch-procedure picker on "My procedures", EN (LTR) and AR (RTL): 250 transformations over three pages are
++//      all offered, the last one (past the old 100 cap) included.
++//  P2  the same picker when page 2 fails: the translated error state with "Try again", no picker with a partial list.
++// SYNTHETIC data, scripted API (the product's own test fixtures). Nothing here is a business approval.
++import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
++import { cleanup, fireEvent, renderHook, screen, waitFor, within } from "@testing-library/react";
++import type { ReactNode } from "react";
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
++import type { Permission } from "@mth/shared";
++import { createI18n, catalogues } from "../i18n/index.ts";
++import {
++  ORG_ID,
++  makeMe,
++  makeTransformation,
++  mockApi,
++  renderApp,
++  route,
++  type RecordedRequest,
++} from "../test/fixtures.tsx";
++import { ApiError } from "./client.ts";
++import { fetchAllTransformations, useAllTransformations } from "./queries.ts";
++import type { Transformation } from "./types.ts";
++
++beforeEach(() => localStorage.clear());
++afterEach(() => {
++  cleanup();
++  vi.unstubAllGlobals();
++  vi.restoreAllMocks();
++});
++
++const PAGE = 100;
++const idOf = (n: number) => `01920000-0000-7000-a1b2-${String(n).padStart(12, "0")}`;
++const many = (count: number): Transformation[] =>
++  Array.from({ length: count }, (_, i) =>
++    makeTransformation({
++      id: idOf(i + 1),
++      code: `TR-${String(i + 1).padStart(4, "0")}`,
++      name: `Synthetic transformation ${i + 1}`,
++    }),
++  );
++const isList = (r: RecordedRequest) => r.method === "GET" && /\/api\/v1\/transformations\?/.test(r.url);
++const paramsOf = (r: RecordedRequest) => new URL(r.url, "http://localhost").searchParams;
++
++/** Serves `all` in pages of 100 with opaque cursors ("c1", "c2", ...); `fail` answers that page number with a 500. */
++function pagedTransformations(all: readonly Transformation[], opts: { fail?: number; repeatCursor?: boolean } = {}) {
++  return route("GET", /\/api\/v1\/transformations\?/, (req) => {
++    const cursor = paramsOf(req).get("cursor");
++    const index = cursor ? Number(cursor.slice(1)) : 0;
++    if (opts.fail === index + 1) return { status: 500, body: { title: "Synthetic outage", status: 500 } };
++    const items = all.slice(index * PAGE, (index + 1) * PAGE);
++    const more = (index + 1) * PAGE < all.length;
++    return { status: 200, body: { items, nextCursor: more ? (opts.repeatCursor ? "c1" : `c${index + 1}`) : null } };
++  });
++}
++
++function wrapper() {
++  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++  return ({ children }: { children: ReactNode }) => (
++    <QueryClientProvider client={client}>{children}</QueryClientProvider>
++  );
++}
++
++describe("fetchAllTransformations / useAllTransformations (D-181)", () => {
++  it("H1 one page: one request with limit 100 and no cursor", async () => {
++    const api = mockApi(pagedTransformations(many(3)));
++    const { result } = renderHook(() => useAllTransformations({ sort: "code:asc" }), { wrapper: wrapper() });
++    await waitFor(() => expect(result.current.isSuccess).toBe(true));
++    expect(result.current.data?.map((x) => x.code)).toEqual(["TR-0001", "TR-0002", "TR-0003"]);
++    const lists = api.requests.filter(isList);
++    expect(lists).toHaveLength(1);
++    expect(paramsOf(lists[0]!).get("limit")).toBe(String(PAGE));
++    expect(paramsOf(lists[0]!).get("sort")).toBe("code:asc");
++    expect(paramsOf(lists[0]!).has("cursor")).toBe(false);
++  });
++
++  it("H2 several pages: follows nextCursor until null, keeps the filters, returns every item in order", async () => {
++    const all = many(250);
++    const api = mockApi(pagedTransformations(all));
++    const { result } = renderHook(
++      () => useAllTransformations({ sort: "updatedAt:desc", organizationId: ORG_ID, includeArchived: false }),
++      { wrapper: wrapper() },
++    );
++    await waitFor(() => expect(result.current.isSuccess).toBe(true));
++    expect(result.current.data).toHaveLength(250);
++    expect(result.current.data?.map((x) => x.id)).toEqual(all.map((x) => x.id));
++    const lists = api.requests.filter(isList).map(paramsOf);
++    expect(lists.map((p) => p.get("cursor"))).toEqual([null, "c1", "c2"]);
++    for (const p of lists) {
++      expect(p.get("limit")).toBe(String(PAGE));
++      expect(p.get("sort")).toBe("updatedAt:desc");
++      expect(p.get("organizationId")).toBe(ORG_ID);
++      expect(p.has("includeArchived")).toBe(false);
++    }
++  });
++
++  it("H3 an error mid-way: the query is an error with no partial data, and no later page is requested", async () => {
++    const api = mockApi(pagedTransformations(many(250), { fail: 2 }));
++    const { result } = renderHook(() => useAllTransformations({ sort: "code:asc" }), { wrapper: wrapper() });
++    await waitFor(() => expect(result.current.isError).toBe(true));
++    expect(result.current.data).toBeUndefined();
++    expect(result.current.error).toBeInstanceOf(ApiError);
++    expect((result.current.error as ApiError).status).toBe(500);
++    expect(
++      api.requests
++        .filter(isList)
++        .map(paramsOf)
++        .map((p) => p.get("cursor")),
++    ).toEqual([null, "c1"]);
++  });
++
++  it("H4 a repeated cursor is an error, not an endless loop or a shortened list", async () => {
++    const api = mockApi(pagedTransformations(many(350), { repeatCursor: true }));
++    await expect(fetchAllTransformations({ sort: "code:asc" })).rejects.toThrow(/repeated a page cursor/);
++    expect(api.requests.filter(isList)).toHaveLength(2);
++  });
++
++  it("H5 the request signal is passed to every page request", async () => {
++    mockApi(pagedTransformations(many(150)));
++    const signals: (AbortSignal | null | undefined)[] = [];
++    const scripted = globalThis.fetch;
++    vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) => {
++      signals.push(init?.signal);
++      return scripted(input, init);
++    });
++    const controller = new AbortController();
++    const items = await fetchAllTransformations({ sort: "code:asc" }, controller.signal);
++    expect(items).toHaveLength(150);
++    expect(signals).toHaveLength(2);
++    for (const s of signals) expect(s).toBeTruthy();
++    controller.abort();
++    for (const s of signals) expect(s?.aborted).toBe(true);
++  });
++});
++
++// ------------------------------------------------------------------------------------------------ the picker (P1, P2)
++
++const PERMISSIONS = ["organization.read", "procedure.read", "procedure.act", "transformation.read"] as Permission[];
++const definitions = {
++  items: [
++    {
++      id: "01920000-0000-7000-b200-000000000002",
++      code: "baseline_validation",
++      nameEn: "Synthetic baseline validation",
++      nameAr: "التحقق من خط الأساس (اصطناعي)",
++      versionNo: 2,
++      versionStatus: "published",
++      removed: false,
++      scope: { level: "transformation" },
++      inputSchema: [],
++      steps: [],
++    },
++  ],
++  nextCursor: null,
++};
++
++function pickerApp(lang: "en" | "ar", opts: { fail?: number } = {}) {
++  const api = mockApi(
++    route("GET", /\/api\/v1\/me$/, () => ({
++      status: 200,
++      body: makeMe(
++        [{ scope: { type: "organization" as const, id: ORG_ID }, inheritsDownward: true, permissions: PERMISSIONS }],
++        { preferredLocale: lang },
++      ),
++    })),
++    route("GET", /\/api\/v1\/procedure-definitions(\?|$)/, () => ({ status: 200, body: definitions })),
++    pagedTransformations(many(250), opts),
++    route("GET", /./, () => ({ status: 200, body: { items: [], nextCursor: null } })),
++  );
++  renderApp("/playbook/procedures", { i18n: createI18n(lang) });
++  return api;
++}
++
++const t = (lang: "en" | "ar", key: string): string => {
++  let node: unknown = catalogues[lang];
++  for (const part of key.split(".")) node = (node as Record<string, unknown>)[part];
++  return node as string;
++};
++
++async function chooseProcedure(lang: "en" | "ar") {
++  const form = await waitFor(() => {
++    const el = document.querySelector<HTMLFormElement>("[data-form='launch-procedure']");
++    if (!el) throw new Error("launch form not rendered");
++    return el;
++  });
++  const procedure = await within(form).findByRole("combobox", {
++    name: new RegExp(`^${t(lang, "workflowsP5.procedures.procedure")}`),
++  });
++  await waitFor(() => expect(within(procedure).getAllByRole("option").length).toBeGreaterThan(1));
++  fireEvent.change(procedure, { target: { value: "baseline_validation" } });
++  return form;
++}
++
++describe.each(["en", "ar"] as const)("launch-procedure transformation picker (%s)", (lang) => {
++  it(`P1 offers all 250 transformations over three pages, the last one included (${lang})`, async () => {
++    pickerApp(lang);
++    const form = await chooseProcedure(lang);
++    expect(document.documentElement.dir).toBe(lang === "ar" ? "rtl" : "ltr");
++    const picker = await within(form).findByRole("combobox", {
++      name: new RegExp(`^${t(lang, "workflowsP5.field.transformation")}`),
++    });
++    const values = within(picker)
++      .getAllByRole("option")
++      .map((o) => (o as HTMLOptionElement).value)
++      .filter(Boolean);
++    expect(values).toHaveLength(250);
++    expect(values).toContain(idOf(250));
++    expect(values).toContain(idOf(101));
++  });
++
++  it(`P2 a failed page shows the translated error state with "Try again", and no partial picker (${lang})`, async () => {
++    pickerApp(lang, { fail: 2 });
++    const form = await chooseProcedure(lang);
++    const alert = await within(form).findByRole("alert");
++    expect(alert.textContent).toContain(t(lang, "common.state.errorTitle"));
++    expect(alert.textContent).toContain(t(lang, "problems.status.5xx"));
++    expect(within(alert).getByRole("button", { name: t(lang, "common.action.retry") })).toBeTruthy();
++    expect(
++      within(form).queryByRole("combobox", { name: new RegExp(`^${t(lang, "workflowsP5.field.transformation")}`) }),
++    ).toBeNull();
++    expect(screen.queryByText("TR-0001 · Synthetic transformation 1")).toBeNull();
++  });
++});
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index cd8330f..9b43b7f 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -52,6 +52,7 @@ export const keys = {
+   permissions: ["permissions"] as const,
+   assignments: (params: object) => ["role-assignments", params] as const,
+   transformations: (params: object) => ["transformations", params] as const,
++  allTransformations: (params: object) => ["transformations", "all", params] as const,
+   transformation: (id: string) => ["transformation", id] as const,
+   audit: (id: string, cursor: string | null) => ["transformation-audit", id, cursor] as const,
+ };
+@@ -226,6 +227,59 @@ export function useTransformations(params: TransformationListParams) {
+     placeholderData: keepPreviousData,
+   });
+ }
++/** The filters of a complete transformation list: no cursor and no limit (the API's own page limit is used). */
++export type AllTransformationsParams = Omit<TransformationListParams, "cursor" | "limit">;
++
++/**
++ * Upper bound on the pages followed, only as a guard against a cursor loop. Reaching it is reported as an error,
++ * never as a shorter list (D-181).
++ */
++export const ALL_TRANSFORMATIONS_MAX_PAGES = 1000;
++
++/**
++ * D-181: every transformation the caller may see, for a picker. Follows `nextCursor` of GET /api/v1/transformations
++ * (the existing list operation, PAGINATION.maxLimit per page) until it is null. A page that fails fails the whole
++ * query: a picker never offers a partial list as if it were complete. The request signal is passed to every page, so
++ * a cancelled query stops at the page in flight.
++ */
++export async function fetchAllTransformations(
++  params: AllTransformationsParams,
++  signal?: AbortSignal,
++): Promise<Transformation[]> {
++  const out: Transformation[] = [];
++  const seen = new Set<string>();
++  let cursor: string | null = null;
++  for (let i = 0; i < ALL_TRANSFORMATIONS_MAX_PAGES; i++) {
++    const page: Page<Transformation> = await api.get<Page<Transformation>>(
++      "/api/v1/transformations",
++      {
++        ...params,
++        includeArchived: params.includeArchived ? true : undefined,
++        limit: PAGINATION.maxLimit,
++        ...(cursor ? { cursor } : {}),
++      },
++      signal,
++    );
++    out.push(...page.items);
++    if (!page.nextCursor) return out;
++    if (seen.has(page.nextCursor)) throw new Error("Transformation list: the server repeated a page cursor.");
++    seen.add(page.nextCursor);
++    cursor = page.nextCursor;
++  }
++  throw new Error(`Transformation list: more than ${ALL_TRANSFORMATIONS_MAX_PAGES} pages.`);
++}
++
++/**
++ * D-181: the complete transformation list for a picker (see fetchAllTransformations). Its key starts with
++ * "transformations", so the invalidation after a transformation mutation refreshes it too.
++ */
++export function useAllTransformations(params: AllTransformationsParams, enabled = true) {
++  return useQuery({
++    queryKey: keys.allTransformations(params),
++    queryFn: ({ signal }) => fetchAllTransformations(params, signal),
++    enabled,
++  });
++}
+ export function useTransformation(id: string | undefined) {
+   return useQuery({
+     queryKey: keys.transformation(id ?? ""),
+diff --git a/apps/web/src/components/table-regions.test.tsx b/apps/web/src/components/table-regions.test.tsx
+index cda41f0..09388f1 100644
+--- a/apps/web/src/components/table-regions.test.tsx
++++ b/apps/web/src/components/table-regions.test.tsx
+@@ -198,12 +198,13 @@ describe("no bare table wrapper in the web source", () => {
+   //  - FormConflict and ConflictPanel: the optimistic-concurrency (409) compare table inside the .conflict banner.
+   //    The banner's single grid track no longer grows to the table (D-174), and p5-diagnose-reflow.spec.ts measures
+   //    a real 409 at 390 px with no page-level scroll.
+-  //  - UserEdit (DG1, the identities of a user) and GoodOutcomeTest (DG2, Define): no page-level reflow measurement.
++  //  - UserEdit (DG1, the identities of a user): no page-level reflow measurement.
++  // GoodOutcomeTest (DG2, Define) left the list in T-DG5-FE-AB1 (F-DG5-149, D-180): its table is in a TableScrollRegion,
++  // and p5-record-name-reflow.spec.ts measures Define at 390, 375, 360, 320 px and 200 % text on the real stack.
+   const OUTSIDE_P5_PENDING = [
+     "components/RecordForm.tsx > FormConflict",
+     "components/States.tsx > ConflictPanel",
+     "pages/admin/UsersPage.tsx > UserEdit",
+-    "pages/define/DefinePage.tsx > GoodOutcomeTest",
+   ];
+ 
+   it("every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)", () => {
+diff --git a/apps/web/src/pages/AreaPages.tsx b/apps/web/src/pages/AreaPages.tsx
+index dad2790..dac8be0 100644
+--- a/apps/web/src/pages/AreaPages.tsx
++++ b/apps/web/src/pages/AreaPages.tsx
+@@ -5,7 +5,7 @@
+ import { useTranslation } from "react-i18next";
+ import { Link } from "react-router";
+ import { DEFAULTS } from "@mth/shared";
+-import { useTransformations } from "../api/queries.ts";
++import { useAllTransformations } from "../api/queries.ts";
+ import { BeingBuiltState, EmptyState, QueryState } from "../components/States.tsx";
+ import { LifecycleChip } from "../components/Badges.tsx";
+ import {
+@@ -34,7 +34,8 @@ function TransformationEntryList({
+   moreTabs?: readonly AreaWorkspaceTab[];
+ }) {
+   const { t } = useTranslation();
+-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages), most recently updated first.
++  const list = useAllTransformations({ sort: "updatedAt:desc" });
+   return (
+     <section className="card" aria-labelledby="entry-title">
+       <h2 id="entry-title" className="card__title">
+@@ -43,12 +44,12 @@ function TransformationEntryList({
+       <p>{t("nav.entry.body")}</p>
+       <QueryState
+         query={list}
+-        isEmpty={(page) => page.items.length === 0}
++        isEmpty={(items) => items.length === 0}
+         empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
+       >
+-        {(page) => (
++        {(items) => (
+           <ul className="plain-list entry-list">
+-            {page.items.map((tr) => (
++            {items.map((tr) => (
+               <li key={tr.id}>
+                 <Link className="link" to={`/transformations/${tr.id}/${tab}`}>
+                   <bdi dir="ltr" className="code">
+diff --git a/apps/web/src/pages/admin/AssignmentsPage.tsx b/apps/web/src/pages/admin/AssignmentsPage.tsx
+index 3b19c88..a9092be 100644
+--- a/apps/web/src/pages/admin/AssignmentsPage.tsx
++++ b/apps/web/src/pages/admin/AssignmentsPage.tsx
+@@ -16,7 +16,7 @@ import {
+   useBusinessUnits,
+   useOrganizations,
+   useRoles,
+-  useTransformations,
++  useAllTransformations,
+ } from "../../api/queries.ts";
+ import type { RoleAssignment } from "../../api/types.ts";
+ import { localName, useLocale } from "../../app/locale.ts";
+@@ -401,7 +401,8 @@ function GrantForm({
+   const org = (orgs.data ?? [me.organization]).find((o) => o.id === organizationId);
+   const tz = org?.defaultTimezone ?? me.organization.defaultTimezone;
+   const canListTransformations = canAnywhere(me, "transformation.read");
+-  const transformations = useTransformations({ sort: "code:asc", limit: 100, organizationId });
++  // D-181: every transformation of the organization (all pages), not the first 100.
++  const transformations = useAllTransformations({ sort: "code:asc", organizationId }, canListTransformations);
+   const [serverError, setServerError] = useState<unknown>(null);
+ 
+   const toPayload = (v: GrantValues) => {
+@@ -535,14 +536,17 @@ function GrantForm({
+           >
+             {(c) =>
+               canListTransformations ? (
+-                <select {...c} {...register("scopeId")}>
+-                  <option value="">{t("common.form.choose")}</option>
+-                  {(transformations.data?.items ?? []).map((tr) => (
+-                    <option key={tr.id} value={tr.id}>
+-                      {tr.code} · {tr.name}
+-                    </option>
+-                  ))}
+-                </select>
++                <>
++                  <select {...c} {...register("scopeId")}>
++                    <option value="">{t("common.form.choose")}</option>
++                    {(transformations.data ?? []).map((tr) => (
++                      <option key={tr.id} value={tr.id}>
++                        {tr.code} · {tr.name}
++                      </option>
++                    ))}
++                  </select>
++                  <QueryState query={transformations}>{() => null}</QueryState>
++                </>
+               ) : (
+                 <input {...c} {...register("scopeId")} dir="ltr" />
+               )
+diff --git a/apps/web/src/pages/automation/RulePage.tsx b/apps/web/src/pages/automation/RulePage.tsx
+index 0f6bdb0..821cfa1 100644
+--- a/apps/web/src/pages/automation/RulePage.tsx
++++ b/apps/web/src/pages/automation/RulePage.tsx
+@@ -10,7 +10,7 @@
+ import { useMemo, useState } from "react";
+ import { useTranslation } from "react-i18next";
+ import { Link, useParams } from "react-router";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { canAnywhere } from "../../auth/permissions.ts";
+ import { useMe } from "../../auth/session.tsx";
+@@ -410,8 +410,9 @@ function EditContent({
+   runner: Runner;
+ }) {
+   const { t } = useTranslation();
+-  const transformations = useTransformations({ sort: "code:asc", limit: 100 });
+-  const trs = (transformations.data?.items ?? []).map((x) => ({ id: x.id, code: x.code, name: x.name }));
++  // D-181: every transformation the user may see (all pages): a rule action's target past the first 100 is shown and
++  // can be chosen.
++  const transformations = useAllTransformations({ sort: "code:asc" });
+   const [draft, setDraft] = useState<ContentDraft>(() =>
+     toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]),
+   );
+@@ -429,13 +430,17 @@ function EditContent({
+         });
+       }}
+     >
+-      <ContentEditor
+-        value={draft}
+-        onChange={setDraft}
+-        catalogue={catalogue}
+-        transformations={trs}
+-        idPrefix={`v${v.versionNo}`}
+-      />
++      <QueryState query={transformations}>
++        {(items) => (
++          <ContentEditor
++            value={draft}
++            onChange={setDraft}
++            catalogue={catalogue}
++            transformations={items.map((x) => ({ id: x.id, code: x.code, name: x.name }))}
++            idPrefix={`v${v.versionNo}`}
++          />
++        )}
++      </QueryState>
+       <div className="form__actions">
+         <button type="submit" className="button button--primary" disabled={runner.busy}>
+           {t("workflowsP5.rules.saveDraft")}
+diff --git a/apps/web/src/pages/automation/RulesPage.tsx b/apps/web/src/pages/automation/RulesPage.tsx
+index d577697..e91f0d6 100644
+--- a/apps/web/src/pages/automation/RulesPage.tsx
++++ b/apps/web/src/pages/automation/RulesPage.tsx
+@@ -7,7 +7,7 @@
+ import { useState } from "react";
+ import { useTranslation } from "react-i18next";
+ import { Link } from "react-router";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { canAnywhere } from "../../auth/permissions.ts";
+ import { useMe } from "../../auth/session.tsx";
+@@ -198,7 +198,8 @@ function CreateRule({ onClose }: { onClose: () => void }) {
+   const { t } = useTranslation();
+   const me = useMe();
+   const catalogue = useCatalogue();
+-  const transformations = useTransformations({ sort: "code:asc", limit: 100 });
++  // D-181: every transformation the user may see (all pages), not the first 100.
++  const transformations = useAllTransformations({ sort: "code:asc" });
+   const refresh = useFedRefresh();
+   const runner = useRunner(refresh);
+   const navigate = useSessionNavigate();
+@@ -208,97 +209,111 @@ function CreateRule({ onClose }: { onClose: () => void }) {
+   const [scopeLevel, setScopeLevel] = useState<"organization" | "transformation">("transformation");
+   const [tid, setTid] = useState("");
+   const [content, setContent] = useState<ContentDraft>(emptyContent);
+-  const trs = (transformations.data?.items ?? []).map((x) => ({ id: x.id, code: x.code, name: x.name }));
+   return (
+     <Section id="create-rule" title={t("workflowsP5.rules.createTitle")} intro={t("workflowsP5.rules.createIntro")}>
+       <QueryState query={catalogue}>
+         {(cat) => (
+-          <form
+-            className="form"
+-            noValidate
+-            data-form="create-rule"
+-            onSubmit={(e) => {
+-              e.preventDefault();
+-              const organizationId =
+-                scopeLevel === "transformation"
+-                  ? (transformations.data?.items.find((x) => x.id === tid)?.organizationId ?? me.user.organizationId)
+-                  : me.user.organizationId;
+-              void runner
+-                .run<AutomationRule>(fedPaths.rules, {
+-                  body: {
+-                    code: code.trim(),
+-                    nameEn: nameEn.trim(),
+-                    nameAr: nameAr.trim(),
+-                    scopeLevel,
+-                    organizationId,
+-                    ...(scopeLevel === "transformation" && tid ? { transformationId: tid } : {}),
+-                    ownerUserId: me.user.id,
+-                    content: toContentBody(content),
+-                  },
+-                })
+-                .then((r) => {
+-                  if (r) navigate(`/admin/automation/rules/${r.id}`);
+-                });
++          <QueryState query={transformations}>
++            {(items) => {
++              const trs = items.map((x) => ({ id: x.id, code: x.code, name: x.name }));
++              return (
++                <form
++                  className="form"
++                  noValidate
++                  data-form="create-rule"
++                  onSubmit={(e) => {
++                    e.preventDefault();
++                    const organizationId =
++                      scopeLevel === "transformation"
++                        ? (items.find((x) => x.id === tid)?.organizationId ?? me.user.organizationId)
++                        : me.user.organizationId;
++                    void runner
++                      .run<AutomationRule>(fedPaths.rules, {
++                        body: {
++                          code: code.trim(),
++                          nameEn: nameEn.trim(),
++                          nameAr: nameAr.trim(),
++                          scopeLevel,
++                          organizationId,
++                          ...(scopeLevel === "transformation" && tid ? { transformationId: tid } : {}),
++                          ownerUserId: me.user.id,
++                          content: toContentBody(content),
++                        },
++                      })
++                      .then((r) => {
++                        if (r) navigate(`/admin/automation/rules/${r.id}`);
++                      });
++                  }}
++                >
++                  {runner.alert}
++                  <div className="grid grid--3">
++                    <Field label={t("workflowsP5.field.code")} hint={t("workflowsP5.rules.codeHint")} required>
++                      {(p) => (
++                        <input {...p} dir="ltr" maxLength={64} value={code} onChange={(e) => setCode(e.target.value)} />
++                      )}
++                    </Field>
++                    <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.en")})`} required>
++                      {(p) => (
++                        <input
++                          {...p}
++                          dir="ltr"
++                          maxLength={200}
++                          value={nameEn}
++                          onChange={(e) => setNameEn(e.target.value)}
++                        />
++                      )}
++                    </Field>
++                    <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.ar")})`} required>
++                      {(p) => (
++                        <input {...p} maxLength={200} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />
++                      )}
++                    </Field>
++                    <Field label={t("workflowsP5.rules.scope")} required>
++                      {(p) => (
++                        <select
++                          {...p}
++                          value={scopeLevel}
++                          onChange={(e) => setScopeLevel(e.target.value as typeof scopeLevel)}
++                        >
++                          <option value="transformation">{t("workflowsP5.scopeLevel.transformation")}</option>
++                          <option value="organization">{t("workflowsP5.scopeLevel.organization")}</option>
++                        </select>
++                      )}
++                    </Field>
++                    {scopeLevel === "transformation" ? (
++                      <Field label={t("workflowsP5.field.transformation")} required>
++                        {(p) => (
++                          <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
++                            <option value="">{t("workflowsP5.choose")}</option>
++                            {trs.map((x) => (
++                              <option key={x.id} value={x.id}>
++                                {x.code} · {x.name}
++                              </option>
++                            ))}
++                          </select>
++                        )}
++                      </Field>
++                    ) : null}
++                  </div>
++                  <ContentEditor
++                    value={content}
++                    onChange={setContent}
++                    catalogue={cat}
++                    transformations={trs}
++                    idPrefix="create"
++                  />
++                  <div className="form__actions">
++                    <button type="submit" className="button button--primary" disabled={runner.busy}>
++                      {t("workflowsP5.rules.createSubmit")}
++                    </button>
++                    <button type="button" className="button button--link" onClick={onClose}>
++                      {t("workflowsP5.close")}
++                    </button>
++                  </div>
++                </form>
++              );
+             }}
+-          >
+-            {runner.alert}
+-            <div className="grid grid--3">
+-              <Field label={t("workflowsP5.field.code")} hint={t("workflowsP5.rules.codeHint")} required>
+-                {(p) => (
+-                  <input {...p} dir="ltr" maxLength={64} value={code} onChange={(e) => setCode(e.target.value)} />
+-                )}
+-              </Field>
+-              <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.en")})`} required>
+-                {(p) => (
+-                  <input {...p} dir="ltr" maxLength={200} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
+-                )}
+-              </Field>
+-              <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.ar")})`} required>
+-                {(p) => <input {...p} maxLength={200} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
+-              </Field>
+-              <Field label={t("workflowsP5.rules.scope")} required>
+-                {(p) => (
+-                  <select
+-                    {...p}
+-                    value={scopeLevel}
+-                    onChange={(e) => setScopeLevel(e.target.value as typeof scopeLevel)}
+-                  >
+-                    <option value="transformation">{t("workflowsP5.scopeLevel.transformation")}</option>
+-                    <option value="organization">{t("workflowsP5.scopeLevel.organization")}</option>
+-                  </select>
+-                )}
+-              </Field>
+-              {scopeLevel === "transformation" ? (
+-                <Field label={t("workflowsP5.field.transformation")} required>
+-                  {(p) => (
+-                    <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
+-                      <option value="">{t("workflowsP5.choose")}</option>
+-                      {trs.map((x) => (
+-                        <option key={x.id} value={x.id}>
+-                          {x.code} · {x.name}
+-                        </option>
+-                      ))}
+-                    </select>
+-                  )}
+-                </Field>
+-              ) : null}
+-            </div>
+-            <ContentEditor
+-              value={content}
+-              onChange={setContent}
+-              catalogue={cat}
+-              transformations={trs}
+-              idPrefix="create"
+-            />
+-            <div className="form__actions">
+-              <button type="submit" className="button button--primary" disabled={runner.busy}>
+-                {t("workflowsP5.rules.createSubmit")}
+-              </button>
+-              <button type="button" className="button button--link" onClick={onClose}>
+-                {t("workflowsP5.close")}
+-              </button>
+-            </div>
+-          </form>
++          </QueryState>
+         )}
+       </QueryState>
+     </Section>
+diff --git a/apps/web/src/pages/dashboards/DashboardsPage.tsx b/apps/web/src/pages/dashboards/DashboardsPage.tsx
+index aa84af8..dda8e9b 100644
+--- a/apps/web/src/pages/dashboards/DashboardsPage.tsx
++++ b/apps/web/src/pages/dashboards/DashboardsPage.tsx
+@@ -17,7 +17,7 @@ import {
+   type DashboardHeadline,
+   type FinanceValueLine,
+ } from "@mth/shared/schemas";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { Icon } from "../../components/Icon.tsx";
+ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+@@ -124,7 +124,8 @@ function DashboardCrumbs(kind: DashboardKind, t: (k: string) => string) {
+ function TransformationChooser({ kind }: { kind: "transformation" | "workstream" }) {
+   const { t } = useTranslation();
+   usePageTitle(t(`dashboards.kind.${kind}.title`));
+-  const list = useTransformations({ sort: "code:asc", limit: 100 });
++  // D-181: every transformation the user may see (all pages), not the first 100.
++  const list = useAllTransformations({ sort: "code:asc" });
+   type Row = { id: string; code: string; name: string };
+   const columns: RegisterColumn<Row>[] = [
+     {
+@@ -152,11 +153,11 @@ function TransformationChooser({ kind }: { kind: "transformation" | "workstream"
+         subtitle={t(`dashboards.chooser.${kind}`)}
+       />
+       <QueryState query={list}>
+-        {(page) => (
++        {(items) => (
+           <RegisterTable
+             id="dashboard-chooser"
+             caption={t(`dashboards.kind.${kind}.title`)}
+-            rows={page.items.map((x) => ({ id: x.id, code: x.code, name: x.name }))}
++            rows={items.map((x) => ({ id: x.id, code: x.code, name: x.name }))}
+             columns={columns}
+             getRowId={(r) => r.id}
+             emptyTitle={t("dashboards.chooser.empty")}
+diff --git a/apps/web/src/pages/define/DefinePage.tsx b/apps/web/src/pages/define/DefinePage.tsx
+index 07206fe..8d353b8 100644
+--- a/apps/web/src/pages/define/DefinePage.tsx
++++ b/apps/web/src/pages/define/DefinePage.tsx
+@@ -36,6 +36,7 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
+ import { ArchiveAction, NoteDecisionDialog } from "../../components/RowActions.tsx";
+ import { Section, SectionNav, TextCell } from "../../components/Section.tsx";
+ import { EmptyState, QueryState } from "../../components/States.tsx";
++import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
+ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+ import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
+ import { pick } from "../../lib/methodology.ts";
+@@ -522,6 +523,7 @@ export function GoodOutcomeTest({ outcome }: { outcome: Outcome }) {
+   const results = [...outcome.goodOutcomeTest].sort((a, b) => a.ordinal - b.ordinal);
+   const fails = results.filter((r) => r.result === "fail").length;
+   const unknowns = results.filter((r) => r.result === "unknown").length;
++  const caption = t("define.goodOutcome.caption", { outcome: outcome.statement });
+   return (
+     <div className="good-outcome" data-good-outcome-test={outcome.id}>
+       <p className="good-outcome__summary">
+@@ -537,32 +539,36 @@ export function GoodOutcomeTest({ outcome }: { outcome: Outcome }) {
+           />
+         )}
+       </p>
+-      <table className="table table--compact good-outcome__table">
+-        <caption className="visually-hidden">{t("define.goodOutcome.caption", { outcome: outcome.statement })}</caption>
+-        <thead>
+-          <tr>
+-            <th scope="col">{t("define.goodOutcome.criterion")}</th>
+-            <th scope="col">{t("define.goodOutcome.result")}</th>
+-            <th scope="col">{t("define.goodOutcome.reason")}</th>
+-          </tr>
+-        </thead>
+-        <tbody>
+-          {results.map((r) => {
+-            const def = criteria.find((c) => c.code === r.criterionCode);
+-            return (
+-              <tr key={r.criterionCode} data-criterion={r.criterionCode} data-result={r.result}>
+-                <th scope="row">
+-                  {def ? pick(locale, def.sourceLabelEn, def.labelAr) : t("define.goodOutcome.unknownCriterion")}
+-                </th>
+-                <td>
+-                  <ResultChip result={r.result} />
+-                </td>
+-                <td>{goodOutcomeReason(t, outcome, r.criterionCode, r.result)}</td>
+-              </tr>
+-            );
+-          })}
+-        </tbody>
+-      </table>
++      {/* T-DG5-FE-AB1 (F-DG5-149): the table scrolls in its own focusable, named region, so the outcome card
++          shrinks to the column instead of widening the page at narrow widths. */}
++      <TableScrollRegion caption={caption}>
++        <table className="table table--compact good-outcome__table">
++          <caption className="visually-hidden">{caption}</caption>
++          <thead>
++            <tr>
++              <th scope="col">{t("define.goodOutcome.criterion")}</th>
++              <th scope="col">{t("define.goodOutcome.result")}</th>
++              <th scope="col">{t("define.goodOutcome.reason")}</th>
++            </tr>
++          </thead>
++          <tbody>
++            {results.map((r) => {
++              const def = criteria.find((c) => c.code === r.criterionCode);
++              return (
++                <tr key={r.criterionCode} data-criterion={r.criterionCode} data-result={r.result}>
++                  <th scope="row">
++                    {def ? pick(locale, def.sourceLabelEn, def.labelAr) : t("define.goodOutcome.unknownCriterion")}
++                  </th>
++                  <td>
++                    <ResultChip result={r.result} />
++                  </td>
++                  <td>{goodOutcomeReason(t, outcome, r.criterionCode, r.result)}</td>
++                </tr>
++              );
++            })}
++          </tbody>
++        </table>
++      </TableScrollRegion>
+     </div>
+   );
+ }
+diff --git a/apps/web/src/pages/delegations/DelegationsPage.tsx b/apps/web/src/pages/delegations/DelegationsPage.tsx
+index 74148e5..9e64a93 100644
+--- a/apps/web/src/pages/delegations/DelegationsPage.tsx
++++ b/apps/web/src/pages/delegations/DelegationsPage.tsx
+@@ -11,7 +11,7 @@ import { useState } from "react";
+ import { useTranslation } from "react-i18next";
+ import { DEFAULTS } from "@mth/shared";
+ import { p4Paths, useDelegations, useP4Refresh, type Delegation } from "../../api/p4.ts";
+-import { useAllUsers, useTransformations } from "../../api/queries.ts";
++import { useAllTransformations, useAllUsers } from "../../api/queries.ts";
+ import { useForwardArrow, useLocale } from "../../app/locale.ts";
+ import { canAnywhere } from "../../auth/permissions.ts";
+ import { useMe } from "../../auth/session.tsx";
+@@ -245,7 +245,8 @@ function CreateDelegationDialog({
+   const [tid, setTid] = useState("");
+   const canReadUsers = canAnywhere(me, "user.read");
+   const allUsers = useAllUsers(me.user.organizationId, canReadUsers);
+-  const transformations = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages), not the 50 most recently updated.
++  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+   const team = usePeople(tid);
+   const people = canReadUsers
+     ? (allUsers.data ?? []).filter((u) => u.status === "active").map((u) => ({ id: u.id, label: u.displayName }))
+@@ -256,7 +257,13 @@ function CreateDelegationDialog({
+   return (
+     <P4FormDialog
+       title={t("delegations.create.title")}
+-      description={<p>{t("delegations.create.description", { tz })}</p>}
++      description={
++        <>
++          <p>{t("delegations.create.description", { tz })}</p>
++          {/* The transformation choices' loading and error states (D-181): never an incomplete list without a word. */}
++          <QueryState query={transformations}>{() => null}</QueryState>
++        </>
++      }
+       onValuesChange={(v) => setTid(typeof v["transformationId"] === "string" ? v["transformationId"] : "")}
+       fields={[
+         ...(canManage && canReadUsers
+@@ -276,7 +283,7 @@ function CreateDelegationDialog({
+           kind: "select",
+           required: !canReadUsers,
+           hint: t(canReadUsers ? "delegations.create.scopeHint" : "delegations.create.teamHint"),
+-          options: (transformations.data?.items ?? []).map((tr) => ({ value: tr.id, label: `${tr.code} ${tr.name}` })),
++          options: (transformations.data ?? []).map((tr) => ({ value: tr.id, label: `${tr.code} ${tr.name}` })),
+         },
+         {
+           name: "limitToTransformation",
+diff --git a/apps/web/src/pages/launch-plan/ui.tsx b/apps/web/src/pages/launch-plan/ui.tsx
+index 04fa248..6e40b8e 100644
+--- a/apps/web/src/pages/launch-plan/ui.tsx
++++ b/apps/web/src/pages/launch-plan/ui.tsx
+@@ -11,7 +11,7 @@
+ import { type ReactNode } from "react";
+ import { useTranslation } from "react-i18next";
+ import { Link } from "react-router";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { Icon } from "../../components/Icon.tsx";
+ import { EmptyState, QueryState } from "../../components/States.tsx";
+ import { FormAlert } from "../my-work/p4ui.tsx";
+@@ -83,7 +83,8 @@ export function Notice({ state, children }: { state: string; children: ReactNode
+ /** The entry of a transformation-scoped screen from the navigation: the visible transformations, each a link. */
+ export function TransformationPicker({ segment, title }: { segment: string; title: string }) {
+   const { t } = useTranslation();
+-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages), most recently updated first.
++  const list = useAllTransformations({ sort: "updatedAt:desc" });
+   return (
+     <section className="card" aria-labelledby="fef-entry-title">
+       <h2 id="fef-entry-title" className="card__title">
+@@ -92,12 +93,12 @@ export function TransformationPicker({ segment, title }: { segment: string; titl
+       <p>{t("launchHealthP5.entry.body")}</p>
+       <QueryState
+         query={list}
+-        isEmpty={(page) => page.items.length === 0}
++        isEmpty={(items) => items.length === 0}
+         empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
+       >
+-        {(page) => (
++        {(items) => (
+           <ul className="plain-list entry-list" data-entry={segment}>
+-            {page.items.map((tr) => (
++            {items.map((tr) => (
+               <li key={tr.id}>
+                 <Link className="link" to={`/transformations/${tr.id}/${segment}`}>
+                   <bdi dir="ltr" className="code">
+diff --git a/apps/web/src/pages/methodology-migrations/MigrationsEntryPage.tsx b/apps/web/src/pages/methodology-migrations/MigrationsEntryPage.tsx
+index 0fce4f6..a8d8e5c 100644
+--- a/apps/web/src/pages/methodology-migrations/MigrationsEntryPage.tsx
++++ b/apps/web/src/pages/methodology-migrations/MigrationsEntryPage.tsx
+@@ -2,7 +2,7 @@
+ // entry lists the transformations the caller can see, each with its migrations and its configuration pins.
+ import { useTranslation } from "react-i18next";
+ import { Link } from "react-router";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+ import { EmptyState, QueryState } from "../../components/States.tsx";
+ import { BusinessApprovalNote } from "../my-work/p4ui.tsx";
+@@ -10,7 +10,8 @@ import { BusinessApprovalNote } from "../my-work/p4ui.tsx";
+ export function MigrationsEntryPage() {
+   const { t } = useTranslation();
+   usePageTitle(t("nav.p5.methodologyMigrations.title"));
+-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages), most recently updated first.
++  const list = useAllTransformations({ sort: "updatedAt:desc" });
+   return (
+     <div className="page" data-p5-screen="methodology-migrations-entry">
+       <PageHeader
+@@ -25,12 +26,12 @@ export function MigrationsEntryPage() {
+         </h2>
+         <QueryState
+           query={list}
+-          isEmpty={(page) => page.items.length === 0}
++          isEmpty={(items) => items.length === 0}
+           empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
+         >
+-          {(page) => (
++          {(items) => (
+             <ul className="plain-list entry-list">
+-              {page.items.map((tr) => (
++              {items.map((tr) => (
+                 <li key={tr.id}>
+                   <Link className="link" to={`/transformations/${tr.id}/methodology-migrations`}>
+                     <bdi dir="ltr" className="code">
+diff --git a/apps/web/src/pages/playbook/BlockPage.tsx b/apps/web/src/pages/playbook/BlockPage.tsx
+index 19dcdc7..ab18788 100644
+--- a/apps/web/src/pages/playbook/BlockPage.tsx
++++ b/apps/web/src/pages/playbook/BlockPage.tsx
+@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
+ import { Link, useParams, useSearchParams } from "react-router";
+ import { newIdempotencyKey } from "../../api/client.ts";
+ import { p5Paths } from "../../api/p5.ts";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { useSessionNavigate } from "../../auth/sessionBound.ts";
+ import { Field } from "../../components/Form.tsx";
+@@ -213,7 +213,9 @@ function LaunchForm({
+ }) {
+   const { t } = useTranslation();
+   const navigate = useSessionNavigate();
+-  const transformations = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages): the preset `defaultTid` is always among the choices,
++  // so a launch never falls back to organization level because the list was cut.
++  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+   const [tid, setTid] = useState(defaultTid);
+   // One idempotency key per intended launch: a retry of the same submission reuses it (one instance).
+   const key = useMemo(() => newIdempotencyKey(), [link.targetKey, tid]); // eslint-disable-line react-hooks/exhaustive-deps
+@@ -239,18 +241,22 @@ function LaunchForm({
+       <p className="muted">
+         <Icon name="info" /> {t("playbookP5.links.launchIntro")}
+       </p>
+-      <Field label={t("playbookP5.links.transformation")} hint={t("playbookP5.links.transformationHint")}>
+-        {(p) => (
+-          <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
+-            <option value="">{t("playbookP5.links.noTransformation")}</option>
+-            {(transformations.data?.items ?? []).map((tr) => (
+-              <option key={tr.id} value={tr.id}>
+-                {tr.code} · {tr.name}
+-              </option>
+-            ))}
+-          </select>
++      <QueryState query={transformations}>
++        {(items) => (
++          <Field label={t("playbookP5.links.transformation")} hint={t("playbookP5.links.transformationHint")}>
++            {(p) => (
++              <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
++                <option value="">{t("playbookP5.links.noTransformation")}</option>
++                {items.map((tr) => (
++                  <option key={tr.id} value={tr.id}>
++                    {tr.code} · {tr.name}
++                  </option>
++                ))}
++              </select>
++            )}
++          </Field>
+         )}
+-      </Field>
++      </QueryState>
+       <div className="form__actions">
+         <button type="submit" className="button button--primary" disabled={runner.busy}>
+           {t("playbookP5.links.launchConfirm")}
+diff --git a/apps/web/src/pages/procedures/MyProceduresPage.tsx b/apps/web/src/pages/procedures/MyProceduresPage.tsx
+index 2effe56..ca91eb4 100644
+--- a/apps/web/src/pages/procedures/MyProceduresPage.tsx
++++ b/apps/web/src/pages/procedures/MyProceduresPage.tsx
+@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
+ import { Link } from "react-router";
+ import { newIdempotencyKey } from "../../api/client.ts";
+ import { p5Paths, useP5Refresh } from "../../api/p5.ts";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { useSessionNavigate } from "../../auth/sessionBound.ts";
+ import { Field } from "../../components/Form.tsx";
+@@ -201,7 +201,8 @@ function LaunchSection() {
+   const { t } = useTranslation();
+   const locale = useLocale();
+   const definitions = useDefinitions();
+-  const transformations = useTransformations({ sort: "code:asc", limit: 100 });
++  // D-181: every transformation the user may see (all pages), not the first 100.
++  const transformations = useAllTransformations({ sort: "code:asc" });
+   const refresh = useP5Refresh();
+   const runner = useRunner(refresh);
+   const navigate = useSessionNavigate();
+@@ -258,22 +259,26 @@ function LaunchSection() {
+           )}
+         </Field>
+         {needsTransformation ? (
+-          <Field
+-            label={t("workflowsP5.field.transformation")}
+-            required
+-            error={missing && !tid ? t("problems.validation__required") : undefined}
+-          >
+-            {(p) => (
+-              <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
+-                <option value="">{t("workflowsP5.choose")}</option>
+-                {(transformations.data?.items ?? []).map((tr) => (
+-                  <option key={tr.id} value={tr.id}>
+-                    {tr.code} · {tr.name}
+-                  </option>
+-                ))}
+-              </select>
++          <QueryState query={transformations}>
++            {(items) => (
++              <Field
++                label={t("workflowsP5.field.transformation")}
++                required
++                error={missing && !tid ? t("problems.validation__required") : undefined}
++              >
++                {(p) => (
++                  <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
++                    <option value="">{t("workflowsP5.choose")}</option>
++                    {items.map((tr) => (
++                      <option key={tr.id} value={tr.id}>
++                        {tr.code} · {tr.name}
++                      </option>
++                    ))}
++                  </select>
++                )}
++              </Field>
+             )}
+-          </Field>
++          </QueryState>
+         ) : null}
+         <div className="form__actions">
+           <button type="submit" className="button button--primary" disabled={runner.busy}>
+diff --git a/apps/web/src/pages/reports/ui.tsx b/apps/web/src/pages/reports/ui.tsx
+index 34deb74..d34d98f 100644
+--- a/apps/web/src/pages/reports/ui.tsx
++++ b/apps/web/src/pages/reports/ui.tsx
+@@ -16,7 +16,7 @@ import { useState, type ReactNode } from "react";
+ import { useTranslation } from "react-i18next";
+ import { Link } from "react-router";
+ import { api, ApiError } from "../../api/client.ts";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { beginSessionGuard } from "../../auth/sessionBound.ts";
+ import { Icon, type IconName } from "../../components/Icon.tsx";
+@@ -516,7 +516,8 @@ export function TransformationEntry({
+ }) {
+   const { t } = useTranslation();
+   usePageTitle(title);
+-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages), most recently updated first.
++  const list = useAllTransformations({ sort: "updatedAt:desc" });
+   const crumbs: Crumb[] = [{ label: area.label, to: area.to }, { label: title }];
+   return (
+     <div className="page" data-p5-screen={`${screen}-entry`}>
+@@ -527,12 +528,12 @@ export function TransformationEntry({
+         </h2>
+         <QueryState
+           query={list}
+-          isEmpty={(page) => page.items.length === 0}
++          isEmpty={(items) => items.length === 0}
+           empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
+         >
+-          {(page) => (
++          {(items) => (
+             <ul className="plain-list entry-list">
+-              {page.items.map((tr) => (
++              {items.map((tr) => (
+                 <li key={tr.id}>
+                   <Link className="link" to={to(tr.id)}>
+                     <bdi dir="ltr" className="code">
+diff --git a/apps/web/src/pages/traceability/ModularPage.tsx b/apps/web/src/pages/traceability/ModularPage.tsx
+index d46bcd6..bee5173 100644
+--- a/apps/web/src/pages/traceability/ModularPage.tsx
++++ b/apps/web/src/pages/traceability/ModularPage.tsx
+@@ -231,7 +231,8 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
+                     {t(`traceability.severity.${i.severity}`)}
+                   </StatusTag>{" "}
+                   <strong>{t(`traceability.missingCode.${i.code}`)}</strong>
+-                  {i.label ? <span> · {i.label}</span> : null}{" "}
++                  {/* The label is a record name (user text): it wraps anywhere (T-DG5-FE-AB1, F-DG5-148). */}
++                  {i.label ? <span className="record-name"> · {i.label}</span> : null}{" "}
+                   {to ? (
+                     <Link className="link" to={to}>
+                       {t("traceability.modular.supply")}
+diff --git a/apps/web/src/pages/traceability/ui.tsx b/apps/web/src/pages/traceability/ui.tsx
+index eb2e76c..1df198a 100644
+--- a/apps/web/src/pages/traceability/ui.tsx
++++ b/apps/web/src/pages/traceability/ui.tsx
+@@ -111,11 +111,15 @@ export function expectedText(t: TFunction, expected: string): string {
+   });
+ }
+ 
+-/** A record's code and label; a record without a label reads "No label", never blank. */
++/**
++ * A record's code and label; a record without a label reads "No label", never blank. The label is user text and can
++ * hold an unbroken token wider than the column, so the name wraps anywhere (.record-name, T-DG5-FE-AB1, F-DG5-148)
++ * wherever it renders: the graph's record links, the trace panels, the orphan and impact tables.
++ */
+ export function RecordName({ code, label }: { code: string | null; label: string | null }) {
+   const { t } = useTranslation();
+   return (
+-    <>
++    <span className="record-name">
+       {code ? (
+         <bdi dir="ltr" className="code">
+           {code}
+@@ -123,7 +127,7 @@ export function RecordName({ code, label }: { code: string | null; label: string
+       ) : null}
+       {code ? " " : null}
+       {label ?? <span className="muted">{t("traceability.noLabel")}</span>}
+-    </>
++    </span>
+   );
+ }
+ 
+diff --git a/apps/web/src/pages/walkthrough/WalkthroughPage.tsx b/apps/web/src/pages/walkthrough/WalkthroughPage.tsx
+index dccd66e..1f2dba6 100644
+--- a/apps/web/src/pages/walkthrough/WalkthroughPage.tsx
++++ b/apps/web/src/pages/walkthrough/WalkthroughPage.tsx
+@@ -9,14 +9,14 @@
+ import { useTranslation } from "react-i18next";
+ import { Link, useSearchParams } from "react-router";
+ import { ApiError } from "../../api/client.ts";
+-import { useTransformations } from "../../api/queries.ts";
++import { useAllTransformations } from "../../api/queries.ts";
+ import { useLocale } from "../../app/locale.ts";
+ import { SyntheticApprovalLabel } from "../../components/demo-label/DemoLabels.tsx";
+ import { Field } from "../../components/Form.tsx";
+ import { Icon } from "../../components/Icon.tsx";
+ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+ import { Section } from "../../components/Section.tsx";
+-import { ErrorState, LoadingState, NoPermissionState } from "../../components/States.tsx";
++import { ErrorState, LoadingState, NoPermissionState, QueryState } from "../../components/States.tsx";
+ import { problemText } from "../../lib/problem.ts";
+ import { Chip } from "../automation/ui.tsx";
+ import { AREA_WEB_ID, useDemoWalkthrough } from "./api.ts";
+@@ -32,7 +32,8 @@ export function WalkthroughPage() {
+     walkthrough.error instanceof ApiError &&
+     walkthrough.error.status === 409 &&
+     walkthrough.error.code === "environment.not_demo";
+-  const transformations = useTransformations({ sort: "updatedAt:desc", limit: 50 });
++  // D-181: every transformation the user may see (all pages): the one named in the URL is always among the choices.
++  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+   return (
+     <div className="page" data-p5-screen="walkthrough">
+       <PageHeader
+@@ -65,23 +66,27 @@ export function WalkthroughPage() {
+             title={t("playbookP5.walkthrough.transformation")}
+             intro={t("playbookP5.walkthrough.transformationIntro")}
+           >
+-            <Field label={t("playbookP5.walkthrough.transformation")}>
+-              {(p) => (
+-                <select
+-                  {...p}
+-                  value={tid ?? ""}
+-                  onChange={(e) => setParams(e.target.value ? { transformationId: e.target.value } : {})}
+-                  data-filter="walkthrough-transformation"
+-                >
+-                  <option value="">{t("playbookP5.walkthrough.noTransformation")}</option>
+-                  {(transformations.data?.items ?? []).map((tr) => (
+-                    <option key={tr.id} value={tr.id}>
+-                      {tr.code} · {tr.name}
+-                    </option>
+-                  ))}
+-                </select>
++            <QueryState query={transformations}>
++              {(items) => (
++                <Field label={t("playbookP5.walkthrough.transformation")}>
++                  {(p) => (
++                    <select
++                      {...p}
++                      value={tid ?? ""}
++                      onChange={(e) => setParams(e.target.value ? { transformationId: e.target.value } : {})}
++                      data-filter="walkthrough-transformation"
++                    >
++                      <option value="">{t("playbookP5.walkthrough.noTransformation")}</option>
++                      {items.map((tr) => (
++                        <option key={tr.id} value={tr.id}>
++                          {tr.code} · {tr.name}
++                        </option>
++                      ))}
++                    </select>
++                  )}
++                </Field>
+               )}
+-            </Field>
++            </QueryState>
+           </Section>
+           <Section id="steps" title={t("playbookP5.walkthrough.steps")}>
+             <p role="status" data-progress={walkthrough.data.completedCount}>
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index 3c3d06c..df34b79 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -393,7 +393,12 @@ a:hover {
+ /* D-178 orchestrator follow-up: the other title containers that show user text (Define, Design, Gates). */
+ .outcome-card__title,
+ .tom-box__title,
+-.gate-card__title {
++.gate-card__title,
++/* T-DG5-FE-AB1 (F-DG5-148, D-180): a record name outside a heading. RecordName (traceability/ui.tsx) renders every
++   Traceability record name (the graph's record links and link lists, the trace panels, the orphan and impact tables)
++   in .record-name, and so does the Modular entry missing-item label "· <name>". Inside a table it lowers the column's
++   min-content width only; auto table layout still gives the column its max-content width where the table fits. */
++.record-name {
+   overflow-wrap: anywhere;
+ }
+ /* The title block of the header row is a flex item: it may shrink below its content's width (the actions wrap). */
+@@ -1392,6 +1397,12 @@ input[type="radio"] {
+   display: grid;
+   gap: var(--mth-space-3);
+ }
++/* T-DG5-FE-AB1 (F-DG5-149, D-180): an outcome is a grid item; without this its automatic minimum width is its
++   content's min-content width (the Good-outcome test table), which held the card at about 352 px and widened the page
++   at 320-375 px. The card now shrinks to the column, and the table scrolls in its own TableScrollRegion. */
++.outcome-tree > .outcome-node {
++  min-inline-size: 0;
++}
+ .outcome-tree--nested {
+   margin-block-start: var(--mth-space-3);
+   padding-inline-start: var(--mth-space-5);

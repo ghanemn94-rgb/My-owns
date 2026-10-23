@@ -1,0 +1,17 @@
+## 2026-10-22T23:56:29Z end identity and cleanup
+$ (main) git rev-parse HEAD
+1932faa72f68191f0a288be3acae796ce4e06f53
+$ (main) git log --oneline 1932faa..HEAD --stat (commits after the freeze; names only)
+$ (main) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+$ (clone) git status --short | wc -l
+0
+$ (clone) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+$ rm -rf $TMPDIR/review-r7 $TMPDIR/pnpm-store
+EXIT 0
+ls: cannot access '$TMPDIR/review-r7': No such file or directory
+ls: cannot access '$TMPDIR/pnpm-store': No such file or directory
+## end

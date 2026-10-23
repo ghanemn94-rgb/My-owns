@@ -1,0 +1,100 @@
+## 2026-10-22T22:34:50Z structure; clone HEAD 1932faa
+$ git diff --stat e70ac02..12dc33e -- apps packages | tail -1
+ 881 files changed, 175735 insertions(+), 3787 deletions(-)
+$ git diff --name-status ad52a56..12dc33e -- packages apps/api apps/worker   (the round-7 delta outside apps/web: expected empty)
+0
+$ git diff --name-status ad52a56..12dc33e -- docs/api   (contract change: expected empty)
+0
+$ ls packages/db/migrations | contiguity 0001..0097
+GAP before 0068
+GAP before 0074
+GAP before 0080
+GAP before 0085
+last 97 count 89
+$ git diff --name-status e70ac02..12dc33e -- packages/db/migrations | cut -f1 | sort | uniq -c   (only additions expected)
+     28 A
+$ grep -c 'operationId:' docs/api/openapi.yaml
+846
+$ module graph: reporting -> workflows/admin imports (non-test); worker -> apps/api imports
+0
+0
+$ web: the new hook's module imports
+2:import { keepPreviousData, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+3:import { PAGINATION } from "@mth/shared";
+4:import {
+16:import type {
+$ web: lazy routes (React.lazy count in the router)
+
+$ node --experimental-strip-types scripts/pend.mts apps/api/test/support
+p5-pending-arch-01.ts P5_PENDING_ARCH_01 length=0
+p5-pending-arch-02.ts P5_PENDING_ARCH_02 length=0
+p5-pending-arch-03.ts P5_PENDING_ARCH_03 length=0
+p5-pending-arch-04.ts P5_PENDING_ARCH_04 length=0
+p5-pending-arch-05.ts P5_PENDING_ARCH_05 length=0
+p5-pending-arch-06.ts P5_PENDING_ARCH_06 length=0
+p5-pending-be-a.ts P5_PENDING_BE_A length=0
+p5-pending-be-b.ts P5_PENDING_BE_B length=0
+p5-pending-be-b2.ts P5_PENDING_BE_B2 length=0
+p5-pending-be-b3.ts P5_PENDING_BE_B3 length=0
+p5-pending-be-c.ts P5_PENDING_BE_C length=0
+p5-pending-be-d.ts P5_PENDING_BE_D length=0
+p5-pending-be-e.ts P5_PENDING_BE_E length=0
+p5-pending-be-e2.ts P5_PENDING_BE_E2 length=0
+p5-pending-be-f.ts P5_PENDING_BE_F length=0
+p5-pending-be-f2.ts P5_PENDING_BE_F2 length=0
+p5-pending-be-g.ts P5_PENDING_BE_G length=0
+p5-pending-be-h.ts P5_PENDING_BE_H length=0
+p5-pending-be-h2.ts P5_PENDING_BE_H2 length=0
+p5-pending-be-i.ts P5_PENDING_BE_I length=0
+p5-pending-be-i2.ts P5_PENDING_BE_I2 length=0
+p5-pending-be-j.ts P5_PENDING_BE_J length=0
+p5-pending-be-j.ts P5_PENDING_TESTS_BE_J length=0
+p5-pending-be-k.ts P5_PENDING_BE_K length=0
+p5-pending-be-l.ts P5_PENDING_BE_L length=0
+p5-pending-be-l2.ts P5_PENDING_BE_L2 length=0
+p5-pending-be-m.ts P5_PENDING_BE_M length=0
+p5-pending-be-o.ts P5_PENDING_BE_O length=0
+p5-pending-be-o.ts P5_PENDING_TESTS_BE_O length=0
+p5-pending-be-p.ts P5_PENDING_BE_P length=0
+p5-pending-be-p2.ts P5_PENDING_BE_P2 length=0
+p5-pending-be-q.ts P5_PENDING_BE_Q length=0
+p5-pending-be-q2.ts P5_PENDING_BE_Q2 length=0
+p5-pending-be-r.ts P5_PENDING_BE_R length=0
+p5-pending-be-r2.ts P5_PENDING_BE_R2 length=0
+p5-pending-be-s.ts P5_PENDING_BE_S length=0
+p5-pending-be-t2.ts P5_PENDING_BE_T2 length=0
+p5-pending-kbe-a.ts P5_PENDING_KBE_A length=0
+p5-pending-kbe-c.ts P5_PENDING_KBE_C length=0
+p5-pending-kbe-d.ts P5_PENDING_KBE_D length=0
+p5-pending-kbe-e.ts P5_PENDING_KBE_E length=0
+p5-pending-kbe-e2.ts P5_PENDING_KBE_E2 length=0
+p5-pending-kbe-f.ts P5_PENDING_KBE_F length=0
+p5-pending-kbe-g.ts P5_PENDING_KBE_G length=0
+p5-pending-kbe-g2.ts P5_PENDING_KBE_G2 length=0
+lists=45 total_pending=0
+EXIT 0
+
+## scans over added lines of git diff ad52a56..12dc33e -- apps packages (the round-7 delta)
+added lines: 839
+--- dangerouslySetInnerHTML|innerHTML|eval(|new Function|window.open|href=\{|localStorage|sessionStorage|https?://
+294:+beforeEach(() => localStorage.clear());
+--- secrets (BEGIN .*PRIVATE KEY|AKIA|password=|secret=|api_key|ghp_|xox)
+(none)
+
+## validators
+$ node tools/gates/validate.mjs --historical --stage DG4
+PASS gate DG4 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG3
+PASS gate DG3 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG2
+PASS gate DG2 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --register DG5
+PASS register rules at DG5
+EXIT 0
+## end 2026-10-22T22:43:13Z
