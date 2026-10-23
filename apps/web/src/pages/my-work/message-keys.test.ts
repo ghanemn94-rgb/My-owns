@@ -127,6 +127,9 @@ const PRODUCED: Record<string, Params> = {
     transformationName: "Synthetic roaming",
     scheduledDate: "2026-12-30",
   },
+  // T-DG5-FE-RG1 (F-DG5-120; REQ-S12-012): the critical dependency slip task (worker handlers/portfolio.ts
+  // DEPENDENCY_SLIP_MESSAGE), one per affected owner, with the owner's affected initiative codes.
+  "portfolio.task.dependency_slip": { dependencyCode: "DEP-01", slipDays: 5, initiativeCodes: "INI-01" },
   "kpi_restatement.to_decide": { kpiName: "Synthetic churn", periodCount: 2 },
   "kpi_restatement.reissue_offer": {
     kpiName: "Synthetic churn",
@@ -229,6 +232,20 @@ describe.each(["en", "ar"] as const)("My Work message keys (%s)", (locale) => {
     // `raid.task.action_due` has a `sourceCode` placeholder; a whitespace-only `sourceCodeAr` replaces nothing.
     const text = renderMessage(t, locale, "raid.task.action_due", { sourceCode: "R-01", sourceCodeAr: "  " });
     expect(text).toContain("R-01");
+  });
+
+  it("portfolio.task.dependency_slip names the dependency, the slip in days and the affected initiatives (F-DG5-120)", () => {
+    const text = renderMessage(
+      t,
+      locale,
+      "portfolio.task.dependency_slip",
+      { dependencyCode: "DEP-01", slipDays: 5, initiativeCodes: "INI-01, INI-04" },
+      "dependency_slip",
+    );
+    expect(text).toContain("DEP-01");
+    expect(text).toContain("5");
+    expect(text).toContain("INI-01, INI-04");
+    expect(text).not.toBe(t("myWork.message.fallback", { kind: t("myWork.kind.dependency_slip") }));
   });
 
   it("a date parameter that is null is Unknown, never blank", () => {

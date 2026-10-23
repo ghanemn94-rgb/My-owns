@@ -776,6 +776,17 @@ input[type="radio"] {
 .table--compact td {
   padding-block: var(--mth-space-1);
 }
+/* Playbook reader table blocks (T-DG5-FE-RG1, F-DG5-122): source text, so the header cells wrap like body text
+   instead of the column-label nowrap above; a wide block still scrolls inside its focusable, named .table-wrap. A
+   one-cell callout (B0016, B0124) is a sentence or two: it wraps inside the page at any width and text size. */
+.table[data-block-table] thead th {
+  white-space: normal;
+}
+.table--callout th {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  color: var(--mth-text-primary);
+}
 .table caption:not(.visually-hidden) {
   text-align: start;
   font-weight: 500;

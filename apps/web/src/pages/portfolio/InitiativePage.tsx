@@ -64,6 +64,8 @@ import { InitiativeExecutionSlot } from "../actions/ExecutionPanel.tsx";
 import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
 import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
+// T-DG5-FE-RG1 (F-DG5-120; REQ-S12-012): the critical dependency slips that affect this initiative (forecast impact).
+import { DependencySlipsSection } from "../dependencies/slips.tsx";
 
 const READ_ONLY_STATUSES: ReadonlySet<string> = new Set(["cancelled", "completed"]);
 
@@ -153,6 +155,7 @@ function InitiativeCard({ initiative: i }: { initiative: Initiative }) {
       </section>
       <SectionNav
         sections={[
+          { id: "dependency-slips", title: t("dependencies.slips.initiativeTitle") },
           { id: "t05", title: t("portfolio.card.t05Title") },
           { id: "gap-links", title: t("portfolio.gap.title") },
           { id: "contributions", title: t("portfolio.contribution.title") },
@@ -166,6 +169,7 @@ function InitiativeCard({ initiative: i }: { initiative: Initiative }) {
           { id: "schedule-network", title: t("executionP4.network.title") },
         ]}
       />
+      <DependencySlipsSection tid={ws.tid} initiativeId={i.id} />
       <T05Card initiative={i} readOnly={readOnly} />
       <GapLinks initiative={i} readOnly={readOnly} />
       <Contributions initiative={i} readOnly={readOnly} />
