@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-120",
+      "stage_id": "DG5",
+      "requirement": "REQ-S12-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A critical dependency slip's recomputed forecast impact (Rule B) reaches no screen: the affected owner is told to 'open the record for details', and the linked Dependencies page, the initiative page and the roadmap show neither the slip nor the moved forecast",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, clone at 53bd2d1). As roaming.user.tl, PATCH /api/v1/milestones/{INI-03 'Partner usage feed live for digital activation'} forecastDate 2026-09-28 -> 2026-10-03 (DEP-01: INI-01 needs it by 2026-10-01). With the production worker running, GET /dependency-slips records slipDays 5, criticalReason needed_by_breached, affected INI-01 (owner roaming.user.sp) forecastFinishBefore 2027-02-25, forecastFinishAfter 2027-03-02. Sign in as roaming.user.sp (en and ar): My Work lists 'A critical dependency slipped: open the record for details' (due Unknown), whose link opens /transformations/{id}/dependencies. Probe: docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-slip.spec.ts.",
+      "expected": "REQ-S12-012 (output 'Notifications and forecast update'; screen 'Initiatives and Roadmaps > Dependencies'; M0232 'notify affected owners and recompute forecast impacts'); ADR-0044 §7: a dependent's forecast finish that cannot be computed is null in affected and 'shown Unknown', i.e. the impact is shown. The notified owner can see, in en and ar, which dependency slipped by how many days and how the dependent initiative's forecast finish moved (before -> after, or Unknown).",
+      "actual": "The impact exists only in the API (GET /transformations/{id}/dependency-slips, which no web module calls: no reference to dependency-slips, forecastFinishAfter or slipDays in apps/web/src). The work item's message is the generic kind label; its messageParams (dependencyCode, slipDays, initiativeCodes) are not rendered. The Dependencies page shows only the DG4 needed-by conflict flag on DEP-01; the INI-01 page and the roadmap show its own milestone dates (no 2027-03-02 anywhere; 'Critical path: Unknown'). The Rule B computation itself is correct (+5 days for the no-slack dependent, and a second +5 slip in the ar run moved it to 2027-03-07), and each owner is notified once.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-slip.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-1/06-demo-run2.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api/en/dependency-slips.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api/ar/dependency-slips.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/slip-owner-my-work.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/slip-owner-dependencies.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/slip-owner-initiative-INI-01.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/slip-owner-my-work.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/slip-owner-my-work.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/slip-owner-dependencies.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/slip-owner-dependencies.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 1 (T-DG5-RG-DOM-R1) from a real slip on the demo stack, en and ar. Medium, not a mandatory violation: the notification and the Rule B computation work and are reachable through the documented API; the gap is that no screen shows the impact to the person notified."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-121",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-087",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The seeded roaming transformation has a 90-day launch plan but no Day-90 leadership test; its Day-90 page says 'Generate the launch plan first'",
+      "reproduction": "Demo-initialized stack, as roaming.user.tl: GET /api/v1/transformations/01995000-0000-7000-8000-000000000001/launch-plan -> 200 (33 tasks, start 2026-07-03); GET .../day-90-test -> 404. Open /transformations/{roaming}/day-90-test in en and ar. Control: a new transformation created by the same user with POST .../launch-plan {startDate: 2026-10-01} gets its Day-90 test (200, six B0136-B0141 questions verbatim, scheduled 2026-12-30, 'Incomplete (0/6)'). Probe: docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-day90.spec.ts.",
+      "expected": "M0261 / B0135-B0141: the Day-90 leadership test is part of the launch plan; plan.ts creates one with every plan. The demo's plan, seeded to exercise the methodology, carries its Day-90 test like any plan, and the page tells the truth.",
+      "actual": "packages/db/src/demo/data/roaming-states.ts seedLaunchPlan inserts launch_plan and its 33 launch_task rows directly and no day_ninety_test row, bypassing the invariant of apps/api/src/modules/launch/plan.ts. The page shows 'No Day-90 test yet - The test is created with the 90-day launch plan and scheduled on day 90. Generate the launch plan first.' (ar: «أنشئ خطة الإطلاق أولًا») although the plan exists, and the demo offers no way to run the Day-90 test on the roaming example.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/probe/zz-dom-r1-day90.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-1/11-day90-probe.log",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api-day90/en/roaming-day-90-test.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api-day90/en/roaming-launch-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/api-day90/en/new-day-90-test.json",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/roaming-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/roaming-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/new-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/new-day-90-test.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 1 (T-DG5-RG-DOM-R1). Low, not mandatory: the product path creates the test correctly (verified); only the demo seed omits it and the page's hint is then untrue."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-122",
+      "stage_id": "DG5",
+      "requirement": "REQ-S03-010",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The playbook reader shows table blocks as raw Markdown in its lists and the B0024 panel, and renders one-cell callout tables (B0016, B0124) as a single unwrapped line clipped at the page edge",
+      "reproduction": "Any stack, the reader in en and ar: /playbook/reader (the 'About this methodology' B0024 panel and the block list) and /playbook/reader/B0016, /playbook/reader/B0124 at 1280 px.",
+      "expected": "Source text in the reader is readable as text: table blocks without Markdown syntax in previews and panels, and a one-cell callout (the B0016 rule of thumb, the B0124 PMI BRM connection) wrapped within the page.",
+      "actual": "The B0024 panel reads '| PMI/Brightline connection The playbook uses ... | |---|' and the list previews read e.g. 'B0009 | Mode | When to use | How | |---|---|---| ...' and 'B0003 | 6<br>PHASES ...' (38 lines with '|---|' on the en reader page). On the block pages the one-cell table is a header cell that does not wrap: 'Rule of thumb Every transformation deliverable should answer one of four questions: Why change? What must become different? How' and 'PMI BRM connection This phase aligns with PMI Benefits Realization Management logic: identify expected benefits, deliver/measure t' are cut at the edge; the rest is reachable only by scrolling the focusable table region horizontally. The four questions and the Realize note are verbatim elsewhere (reader intro, API), so no source text is lost.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/text/en/tl-reader.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/tl-reader-B0124.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/tl-reader-B0124.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/en/tl-reader-B0016.png",
+        "docs/delivery/test-evidence/DG5/domain/round-1/demo/shots/ar/tl-reader-B0016.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 1 (T-DG5-RG-DOM-R1). Low, cosmetic: readability of source blocks in the reader; no content is lost."
+        }
+      ]
+    }
+  ]
+}
