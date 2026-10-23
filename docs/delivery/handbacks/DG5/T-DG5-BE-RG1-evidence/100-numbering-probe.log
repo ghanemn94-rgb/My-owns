@@ -1,0 +1,135 @@
+## probe: packages/db/migrations/0066_p6_example.sql present; ORIGINAL numbering test (HEAD seed.test.ts)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg1
+
+ ✓ |unit-node| packages/db/src/seed.test.ts (52 tests | 51 skipped) 23ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 51 skipped (52)
+   Start at  10:19:05
+   Duration  665ms (transform 199ms, setup 0ms, collect 386ms, tests 23ms, environment 0ms, prepare 82ms)
+
+EXIT=0
+
+## probe: same file present; NEW numbering test
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg1
+
+ ❯ |unit-node| packages/db/src/seed.test.ts (53 tests | 2 failed | 51 skipped) 29ms
+   ↓ 0005 seed equals permissions.ts > permission rows
+   ↓ 0005 seed equals permissions.ts > role rows (kind, inheritance) and role_permission links
+   ↓ 0005 seed equals permissions.ts > no technical_admin role holds an approval permission in the seed
+   ↓ 0018 seed equals the P2 part of permissions.ts > permission rows
+   ↓ 0018 seed equals the P2 part of permissions.ts > role_permission links
+   ↓ 0018 seed equals the P2 part of permissions.ts > gives the read-only auditor no write, configure or approval permission (ADR-0020)
+   ↓ 0024 seed equals the P3 part of permissions.ts > permission rows
+   ↓ 0024 seed equals the P3 part of permissions.ts > role_permission links
+   ↓ 0024 seed equals the P3 part of permissions.ts > gives no business_approval or finance_validation permission to a technical admin, and none to AUD
+   ↓ 0031 seed equals the P4 part of permissions.ts (slices I and C) > permission rows
+   ↓ 0031 seed equals the P4 part of permissions.ts (slices I and C) > role_permission links
+   ↓ 0031 seed equals the P4 part of permissions.ts (slices I and C) > gives no business_approval or finance_validation permission to a technical admin, and nothing to AUD (REQ-S10-003)
+   ↓ 0036 seed equals the P4 part of permissions.ts (slice A) > permission rows
+   ↓ 0036 seed equals the P4 part of permissions.ts (slice A) > role_permission links
+   ↓ 0036 seed equals the P4 part of permissions.ts (slice A) > has no business_approval or finance_validation code, and nothing for AUD or a technical admin
+   ↓ 0040 seed equals the P4 part of permissions.ts (slice B) > permission rows
+   ↓ 0040 seed equals the P4 part of permissions.ts (slice B) > role_permission links
+   ↓ 0040 seed equals the P4 part of permissions.ts (slice B) > has no business_approval or finance_validation code, and nothing for AUD or a technical admin
+   ↓ 0043 seed equals the P4 part of permissions.ts (slice E) > permission rows
+   ↓ 0043 seed equals the P4 part of permissions.ts (slice E) > role_permission links
+   ↓ 0043 seed equals the P4 part of permissions.ts (slice E) > has no business_approval or finance_validation code, and nothing for AUD or a technical admin
+   ↓ 0046 seed equals the P4 part of permissions.ts (slice D) > permission rows
+   ↓ 0046 seed equals the P4 part of permissions.ts (slice D) > role_permission links
+   ↓ 0046 seed equals the P4 part of permissions.ts (slice D) > the one business_approval code is held only by SP, BO and FIN; nothing for AUD or a technical admin
+   ↓ 0049 seed equals the P4 part of permissions.ts (slices F and G) > permission rows
+   ↓ 0049 seed equals the P4 part of permissions.ts (slices F and G) > role_permission links
+   ↓ 0049 seed equals the P4 part of permissions.ts (slices F and G) > bau_handover.accept is the one business_approval code, held only by BO; AUD holds only lesson.search; no technical admin
+   ↓ 0053 seed equals the P4 part of permissions.ts (slice H) > permission rows
+   ↓ 0053 seed equals the P4 part of permissions.ts (slice H) > role_permission links
+   ↓ 0053 seed equals the P4 part of permissions.ts (slice H) > gate_exception.decide is the one business_approval code, held only by SP and BO (gate.decide holders); nothing for AUD or a technical admin
+   ↓ 0057 seed equals the P4 part of permissions.ts (slices J and K) > permission rows
+   ↓ 0057 seed equals the P4 part of permissions.ts (slices J and K) > role_permission links
+   ↓ 0057 seed equals the P4 part of permissions.ts (slices J and K) > has no business_approval or finance_validation code, and nothing for AUD or a technical admin
+   ↓ 0064 seed equals the P5 part of permissions.ts (slice A) > permission rows
+   ↓ 0064 seed equals the P5 part of permissions.ts (slice A) > role_permission links
+   ↓ 0064 seed equals the P5 part of permissions.ts (slice A) > has one business_approval code held by SP only (TL stays approval-free, 0008); AUD reads only; no technical admin approves
+   ↓ 0070 seed equals the P5 part of permissions.ts (slices B and C) > permission rows
+   ↓ 0070 seed equals the P5 part of permissions.ts (slices B and C) > role_permission links
+   ↓ 0070 seed equals the P5 part of permissions.ts (slices B and C) > has no approval code; AUD and the technical admins hold procedure.read only
+   ↓ 0076 seed equals the P5 part of permissions.ts (slices D and E) > permission rows
+   ↓ 0076 seed equals the P5 part of permissions.ts (slices D and E) > role_permission links
+   ↓ 0076 seed equals the P5 part of permissions.ts (slices D and E) > has no approval code; AUD reads automation only; the jobs view stays with ADM_TECH
+   ↓ 0082 seed equals the P5 part of permissions.ts (slice F) > permission rows
+   ↓ 0082 seed equals the P5 part of permissions.ts (slice F) > role_permission links
+   ↓ 0082 seed equals the P5 part of permissions.ts (slice F) > has no approval code; AUD and the technical admins get none; issue is TL, TO and SEC only
+   ↓ 0087 seed equals the P5 part of permissions.ts (slices G and H) > permission rows
+   ↓ 0087 seed equals the P5 part of permissions.ts (slices G and H) > role_permission links
+   ↓ 0087 seed equals the P5 part of permissions.ts (slices G and H) > one business approval (kpi_restatement.approve: SP, BO, FIN); never TL, AUD or a technical admin
+   ↓ 0091 seed equals the P5 part of permissions.ts (slices I and J) > permission rows
+   ↓ 0091 seed equals the P5 part of permissions.ts (slices I and J) > role_permission links
+   ↓ 0091 seed equals the P5 part of permissions.ts (slices I and J) > no business approval or Finance validation; ADM_TECH only; AUD gets nothing
+   × migration files > are named NNNN_snake_case.sql with strictly increasing ids, and never use plain timestamp in public 16ms
+     → expected [ Array(1) ] to deeply equal []
+   × migration files > pin the eight P5 gaps 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084 as permanently unused (F-DG5-100) 12ms
+     → expected [ 67, 73, 77, 78, 79, 83, 84 ] to deeply equal [ 66, 67, 73, 77, 78, 79, 83, 84 ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/db/src/seed.test.ts > migration files > are named NNNN_snake_case.sql with strictly increasing ids, and never use plain timestamp in public
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "0066_p6_example.sql: id 0066 is a retired P5 gap (F-DG5-100)",[39m
+[31m+ ][39m
+
+ ❯ packages/db/src/seed.test.ts:783:40
+    781|   it("are named NNNN_snake_case.sql with strictly increasing ids, and …
+    782|     const files = listMigrationFiles();
+    783|     expect(numberingViolations(files)).toEqual([]);
+       |                                        ^
+    784|     for (const f of files.filter((f) => !f.name.includes("pgboss"))) {
+    785|       const code = f.sql.replace(/--.*$/gm, "");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| packages/db/src/seed.test.ts > migration files > pin the eight P5 gaps 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084 as permanently unused (F-DG5-100)
+AssertionError: expected [ 67, 73, 77, 78, 79, 83, 84 ] to deeply equal [ 66, 67, 73, 77, 78, 79, 83, 84 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,6 @@[39m
+[2m  [[22m
+[32m-   66,[39m
+[2m    67,[22m
+[2m    73,[22m
+[2m    77,[22m
+[2m    78,[22m
+[2m    79,[22m
+
+ ❯ packages/db/src/seed.test.ts:796:18
+    794|     const p5 = files.filter((f) => f.id >= 62 && f.id <= 97).map((f) =…
+    795|     const gaps = Array.from({ length: 97 - 62 + 1 }, (_, i) => 62 + i)…
+    796|     expect(gaps).toEqual([...P5_RETIRED_MIGRATION_IDS]);
+       |                  ^
+    797|     // A later file in any gap is a numbering violation; a file above …
+    798|     for (const id of P5_RETIRED_MIGRATION_IDS) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 51 skipped (53)
+   Start at  10:19:07
+   Duration  657ms (transform 220ms, setup 0ms, collect 373ms, tests 29ms, environment 0ms, prepare 77ms)
+
+EXIT=1

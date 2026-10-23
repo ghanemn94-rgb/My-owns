@@ -1,6 +1,7 @@
 // The roaming transformation's workflow states the coverage check needs (ADR-0050 §4–§5; p5-work-split §J.2;
 // T-DG5-BE-T): the phase steps of the six phases (with the MISSING mandatory evidence: steps whose rule is
-// "evidence_linked" and that have no evidence attached), the 90-day launch plan (B0134) with its template tasks, a
+// "evidence_linked" and that have no evidence attached), the 90-day launch plan (B0134) with its template tasks and
+// its Day-90 leadership test (B0135-B0141; F-DG5-121: created with the plan, as plan.ts does for every plan), a
 // performance area with a draft BAU handover, one submitted 25-question health check and (T-DG5-BE-T5) one pending
 // business approval in the demo Business Owner's inbox. Runs after the chains (order 600).
 // SYNTHETIC: an illustrative example, not Mobily actual performance; a seeded approval or decision approves nothing
@@ -23,6 +24,8 @@ const st = (at: Date, by: string): Record<string, unknown> => ({
 
 /** The launch plan starts 60 days before the synthetic clock (2026-07-03), so its first windows are under way. */
 export const LAUNCH_PLAN_START_OFFSET_DAYS = -60;
+/** The template item of the Day-90 leadership test (B0135): its due day is the test's day (90; plan.ts DAY_NINETY). */
+export const DAY_NINETY_TEMPLATE_ITEM = "day_ninety_test";
 
 async function seedPhaseSteps(ctx: DemoSeedContext): Promise<void> {
   const at = ctx.at({ days: -100 });
@@ -76,8 +79,10 @@ async function seedLaunchPlan(ctx: DemoSeedContext): Promise<void> {
          FROM launch_template_item ORDER BY ordinal, code`.execute(ctx.tx)
   ).rows;
   let n = 0;
+  let dayNinety: number | null = null;
   for (const i of items) {
     n += 1;
+    if (i.code === DAY_NINETY_TEMPLATE_ITEM) dayNinety = i.due_day;
     await ctx.insert("launch_task", `roaming.launch_task.${i.code}`, {
       id: rtId(RT_BLOCK.launchPlan, 0x100 + n),
       ...scope,
@@ -95,6 +100,18 @@ async function seedLaunchPlan(ctx: DemoSeedContext): Promise<void> {
       ...st(at, U.tl),
     });
   }
+  // F-DG5-121: the plan's Day-90 leadership test, the row apps/api/src/modules/launch/plan.ts generateLaunchPlanInTx
+  // creates with every plan (REQ-PB-087, M0261): open, no response yet (answered_count 0, the table's defaults and its
+  // created-open guard), scheduled on the plan's start date + 90 calendar days (the template item's due day). Its
+  // six B0136-B0141 questions are the catalogue rows of day_ninety_question; none is answered in the demo.
+  if (dayNinety === null) throw new Error(`demo seed: the launch template has no ${DAY_NINETY_TEMPLATE_ITEM} item`);
+  await ctx.insert("day_ninety_test", "roaming.day_ninety_test", {
+    id: rtId(RT_BLOCK.launchPlan, 2),
+    ...scope,
+    plan_id: planId,
+    scheduled_date: ctx.date(LAUNCH_PLAN_START_OFFSET_DAYS + dayNinety),
+    ...st(at, U.tl),
+  });
 }
 
 async function seedBauHandover(ctx: DemoSeedContext): Promise<void> {
