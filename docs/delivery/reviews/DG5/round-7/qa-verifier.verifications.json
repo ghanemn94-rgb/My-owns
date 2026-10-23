@@ -1,0 +1,51 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-148",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:33188e9e... (source 12dc33e; repair T-DG5-FE-AB1) on the production-initialized real stack, in a disposable complete clone, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8 (4 runs of each probe). (1) My round-6 reproduction R6-TITLE-B, re-run UNCHANGED (tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts; tokens w120, arU and plain in the transformation name, a Define outcome statement and a T13 group name; all 42 workspace tabs and 5 global pages at 390 px, 320 px and 1280 px with 200 % text): 0 failures in every run. /transformations/<T>/traceability and /modular-entry now show 0 px of page overflow for every token and size, where round 6 measured 823/893/1658 px (w120) and 164/234/372 px (arU) on Traceability and 761/831/1589 px and 137/207/307 px on Modular entry. (2) My new asserted probe R7-F148 (tokens w120, w46, arU and plain; 390, 360 and 320 px and 200 %; the whole body scanned): Modular entry (missing-item label '· <statement>') and the Traceability graph with its record links pass in every case (0 px, no element holding the token outside the viewport). The product's regression p5-record-name-reflow.spec.ts passes in both projects in all 4 full product runs (460/460 per locale setting). (3) Beyond the finding: when a record is FOCUSED (its 'Focus' button, ?root=), Traceability still scrolls (w120 651 px at 390 px). The cause is a third element the finding did not name: the note 'Showing the links of <type> \"<name>\"' (p.small[data-root]), which prints the name as plain text outside .record-name. A test-only overflow-wrap on that note alone brings every case to 0 px, and the record link that F-DG5-148 named wraps in the same screenshot. The elements F-DG5-148 named are fixed, and its reproduction is clean, so I close it and raise the note separately as F-DG5-150 (Low, REQ-S15-009, not blocking DG5). The 9 R7-F148 cases that fail ('traceability+panel', the URL-selected state) are exactly that note's overflow, value for value.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6titleB-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6titleB-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-unset/en/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-unset/ar/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-cutf8/en/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-cutf8/ar/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-f148-f149-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f148.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/ar/r7-f148.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click-arU-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/10-repair-diff.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-149",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:33188e9e... (source 12dc33e; repair T-DG5-FE-AB1) on the production-initialized real stack, chromium-en and chromium-ar, locale unset and C.UTF-8. (1) My round-6 reproduction R6-DEFINE-NARROW, re-run UNCHANGED (one ordinary outcome, Define at 320, 360, 375 and 390 px): page overflow 0 px at every width in en and ar in both locale settings, where round 6 measured en 61/21/6 px at 320/360/375 px and ar 29 px at 320 px. The outcome card is now [29..291] at 320 px and [29..331] at 360 px (min-inline-size 0), and the Good-outcome table sits in a .table-wrap region (tableInWrap true) that scrolls inside the card. (2) My new asserted probe R7-F149 (an ordinary outcome and a w120 outcome; 390, 375, 360 and 320 px and 200 %) passes in all 4 runs: 0 px of page overflow; every outcome card inside the viewport; each Good-outcome table in a role=region with tabindex=0 and a localized accessible name ('Good outcome test of “...” (scrollable table)' and its Arabic equivalent); where the table is wider than the region (en 92 px at 320 px, 52 px at 360 px; ar 60/20 px), ArrowRight (en) or ArrowLeft (ar) moves it (keyScroll 80 px en, 60 px ar at 320 px); axe at 320 px reports no serious or critical violation. Screenshots at 320 px in ar show the table scrolling inside the card. The product's regression p5-record-name-reflow.spec.ts (its F-DG5-149 part) passes in both projects in all 4 full product runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-define-narrow.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6define-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6define-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/en/r6-define-narrow.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/ar/r6-define-narrow.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-cutf8/en/r6-define-narrow.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/ar/r6-define-narrow-320.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-f148-f149-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f149.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/ar/r7-f149.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-cutf8/en/r7-f149.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-cutf8/ar/r7-f149.json"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,423 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 7,
+  "candidate_id": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47",
+  "source_commit": "12dc33e4f9f2f804aeb0a9774a988d699709a235",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-QA-R7C-qa-verifier-20261023T003619Z-90667478",
+    "session_id": "90667478-5752-495e-9f63-13b3131293cf"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG5 scope or in repair waves AB and AB2/AB2B (T-DG5-FE-AB1, T-DG5-FE-AB2, T-DG5-FE-AB2B: frontend-ux-engineer; integration and D-180 to D-182: delivery-orchestrator). The QA authoring tasks T-DG5-QA-A..F2 wrote acceptance tests under tests/qa and e2e before the freeze; they are part of the candidate, and this run re-runs and reads them as tests. This run (T-DG5-REV-QA-R7C) wrote only evidence under docs/delivery/test-evidence/DG5/qa/round-7/, probe sources outside the candidate under docs/delivery/test-evidence/DG5/qa/tests/round-7/, and its own round-7 review files. The probe sources and harness scripts were first written by this role's earlier round-7 runs (T-DG5-REV-QA-R7 and R7B, stopped by container restarts, kept as *-orphaned); I copied, re-read, corrected and re-ran them, and every result cited here comes from this run. Every execution ran in a disposable clone under $TMPDIR. I formed this verdict without reading the other round-7 reviewers' records; the runner's auto-commits of other reviewers' round-7 files (09d8eb3, 546e460) were not opened."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-7/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-037",
+    "REQ-S01-002", "REQ-S01-003", "REQ-S01-004", "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011",
+    "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010",
+    "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026",
+    "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009", "REQ-S13-010",
+    "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004",
+    "REQ-S15-004", "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021",
+    "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016",
+    "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R7-00-candidate",
+      "procedure": "Confirm the frozen candidate on a complete clone, at the start, after cleaning the clone for disk space, and again after the main repository's HEAD moved during the run.",
+      "command": "git clone -q --shared /home/user/My-owns $TMPDIR/review-qa; git checkout 1932faa; node tools/gates/candidate.mjs --stage DG5 (clone and main repo); git diff --name-only 12dc33e 1932faa; git merge-base --is-ancestor 12dc33e HEAD",
+      "environment": "Disposable complete clone (not shallow, not sparse; shared object store) at 1932faa (the round-7 freeze commit = source 12dc33e + delivery records); main repo HEAD fbba1af at start, 546e460 later; Node 24.21.0",
+      "expected": "candidate_id sha256:33188e9e... over 2194 files in the clone and in the main repository; source 12dc33e is an ancestor; only delivery records differ.",
+      "actual": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47, 2194 files, in the clone (EXIT 0) and in the main repo (EXIT 0). 12dc33e..1932faa differ only in docs/delivery/{assignments,candidates,stages.json}; fbba1af..12dc33e only in docs/delivery/{test-evidence,runs,reviews,...}. Disk had 1.2 GB free, so I deleted docs/delivery/test-evidence and docs/delivery/runs in the clone. Both are META_EXCLUDES of tools/gates/lib/candidate.mjs, and the recomputed id was unchanged (EXIT 0). During my run the runner auto-committed another reviewer's round-7 files (546e460; diff limited to docs/delivery/{reviews,runs,test-evidence}, not opened); the main-repo candidate id stayed 33188e9e... (EXIT 0). The pnpm install --offline --frozen-lockfile exits 0. Its one WARN (bin mth-db not created, because @mth/db/dist did not exist before the build) is the usual pre-build warning; pnpm -r build then creates it, and the stacks run 'mth-db migrate'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/00-candidate.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/00-install.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/setup.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-01-static",
+      "procedure": "The assignment's static checks in the disposable clone.",
+      "command": "pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast (scripts/run-static.sh); then pnpm format:check again",
+      "environment": "Clone at 1932faa, Node 24.21.0, pnpm 10.33.0; load 2.5-4.8; the clone's node_modules is writable (offline install), so no --configLoader runner is needed",
+      "expected": "Every command exits 0.",
+      "actual": "build EXIT 0, typecheck EXIT 0, lint EXIT 0, openapi:lint 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations' EXIT 0, check:no-cdn 'PASS no-cdn: scanned apps, packages' EXIT 0, contrast 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented' EXIT 0 (the 3 'fails' lines are the documented prohibited pairs, e.g. border.default on surface.card, decorative divider only). format:check: the FIRST run exited 1. It flagged exactly one file, e2e/zz-qa-dg5r7-f148-f149-verify.spec.ts. That is my untracked probe, which my probe harness had copied into the clone's e2e/ while it ran; it is not candidate content. Two interim re-runs were disturbed the same way. The ignore-path run raced the harness removing the file (ENOENT, EXIT 2). A tracked-files run first errored on the evidence files I had deleted from the clone (EXIT 123). Then: tracked candidate files only, 'All matched files use Prettier code style!' EXIT 0. Final plain 'pnpm format:check', re-run with no probe file in the clone: 'All matched files use Prettier code style!' EXIT 0. All logs are kept.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-r-typecheck.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-check-contrast.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-format-check-rerun-probe-ignored.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-format-check-rerun-tracked.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-format-check-rerun.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/run-static.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-02-unit",
+      "procedure": "pnpm test (unit-node, unit-web, unit-formula-nocodegen) on Node 22 and Node 24, each with the locale unset and with LANG=LC_ALL=C.UTF-8; logs summarized (totals, failing/timeout lines, stderr histogram, boundary-walk budget).",
+      "command": "env -u LANG -u LC_ALL -u LC_CTYPE pnpm test; env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test (scripts/run-unit.sh, chain-unit.sh); python3 -I scripts/summarize-unit.py 02-unit-*.log",
+      "environment": "Clone at 1932faa; Node 22.22.2 (/opt/node22/bin) and Node 24.21.0; peak load 12-15",
+      "expected": "All projects pass in all four runs, with no failing or timeout lines.",
+      "actual": "All four runs are identical and EXIT 0: unit-node 144 files / 2341 tests, unit-web 91 files / 1722 tests (round 6: 90 / 1713; the +1 file / +9 tests are AB2's all-transformations.test.tsx), unit-formula-nocodegen 3 files / 259 passed + 2 skipped. There are 0 failing or timeout lines. The 2 skips are by design: it.skipIf(NOCODEGEN) in fuzz.test.ts, which runs those 2 cases in unit-node. Each run has 18 stderr blocks, with the same histogram as round 6 (branding.test.ts 1, extension-fields.test.tsx 4, extension-hosts-twelve.test.tsx 1, kpiUnit.test.tsx 2, percentKpi.test.tsx 10). They are the deliberate negative-path logs of those tests: React duplicate-key warnings from fixtures, ErrorBoundary output for malformed host data, and ajv 'unknown format' notes. Boundary walk 9.7-13.4 s against its 150 s budget; guard test 0.5-1.6 s of 30 s.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-node22-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-node24-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-summary.txt"
+      ]
+    },
+    {
+      "id": "QA-R7-03-integration-twice",
+      "procedure": "The integration project twice, each on a fresh disposable PostgreSQL cluster (migrations 0001-0097 applied to a fresh database; contract/contract.test.ts over 846 operations), then every p5-pending-*.ts list imported and sized.",
+      "command": "QA_PG_PORT=26600|26602 MTH_PORT_POOL=26600-26699 tests/qa/support/with-pg.sh pnpm test:integration (scripts/run-integration.sh run1|run2); node scripts/pending-lists.mjs",
+      "environment": "Clone at 1932faa, Node 24.21.0, PostgreSQL 16.13 (server_encoding UTF8, lc_collate C); load 3-10, shared with the other reviewers",
+      "expected": "Both runs exit 0 with every file passing; contract test passes; every p5-pending list is empty.",
+      "actual": "Run 1: Test Files 319 passed (319), Tests 3076 passed | 1 skipped (3077), 2518 s, EXIT 0. Run 2: identical, 2536 s, EXIT 0. 'applied 89 migrations to a fresh database'. The 89 files run 0001-0097; 0066-0067, 0073, 0077-0079 and 0083-0084 are unused numbers, the same as round 6. contract/contract.test.ts (83 tests) passes. The 1 skip is governance/presentation.test.ts:170, it.runIf(!hasMeetingPackAssembler): the complementary case for an unwired assembler, which is wired, so it is by design. Both logs contain one line with 'unhandled error ... ECONNRESET'. It is the stdout of the passing negative control request-io.test.ts 'a database-side ECONNRESET while the request body is still arriving is a 500 with an error log', so it is expected output. There are no × lines and no hook or test timeouts. p5-pending lists: files=43, non-empty exports=0, EXIT 0. The same counts as round 6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/04-integration-run1.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/04-integration-run2.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/04-pending-lists.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/run-integration.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-04-tests-qa-alone",
+      "procedure": "tests/qa on its own on a disposable PostgreSQL.",
+      "command": "QA_PG_PORT=26604 tests/qa/support/with-pg.sh pnpm test:integration tests/qa",
+      "environment": "Clone at 1932faa, Node 24.21.0, PostgreSQL 16.13",
+      "expected": "All tests/qa acceptance files pass.",
+      "actual": "Test Files 31 passed (31), Tests 336 passed (336), 430 s, EXIT 0; no skip, no × line, no timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/04-integration-testsqa-alone.log"
+      ]
+    },
+    {
+      "id": "QA-R7-05-e2e-product",
+      "procedure": "The product journeys (apps/web/e2e, 46 spec files in two halves by file name) on the production-initialized real stack, --workers=1, chromium-en and chromium-ar, with the locale unset and with C.UTF-8.",
+      "command": "E2E_PG_PORT/E2E_API_PORT 26624-26637 E2E_SCREENSHOT_DIR=$TMPDIR/shots/<run> apps/web/e2e/support/with-stack.sh npx playwright test <22|24 files> --workers=1 --reporter=list --trace=off (scripts/chain-product.sh, run-e2e.sh)",
+      "environment": "Clone at 1932faa, Node 24.21.0, pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers); load 4-10, run beside integration and probes",
+      "expected": "Every journey passes in both projects in both locale settings.",
+      "actual": "Locale unset: half A 286 passed (34.4 m) EXIT 0, half B 174 passed (27.9 m) EXIT 0 = 460/460. C.UTF-8: 286 passed (34.0 m) + 174 passed (27.0 m) = 460/460, EXIT 0. There are 0 failed, 0 flaky, 0 retries, 0 timeouts and 0 'Error:' lines in all four logs. The count matches D-182's 460. The new p5-transformation-picker-complete.spec.ts and p5-record-name-reflow.spec.ts, and the D-182 test p5-launch-health-kpi.spec.ts:159, pass in both projects in all four runs. Two empty failure-context directories (product-A-*), created by the harness's directory test although nothing failed, were removed. Full-suite screenshots stayed in scratch and were deleted for disk space; the axe summaries were kept.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-A-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-A-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-results-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/chain-product.sh",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/run-e2e.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-06-e2e-root-and-demo",
+      "procedure": "The root acceptance specs by explicit path on the production-initialized stack (a03, a04, a06, a07, a08-a09, a13, a15, a16, a20, a22), and a02-* plus a21 on the demo-initialized stack (e2e/support/with-demo-stack.sh, AUTH_MODE=dev, roaming.user.* dev sign-in per D-165), --workers=1, chromium-en and chromium-ar, both locale settings; E2E_SCREENSHOT_DIR points at a writable path (needed by A06/A07).",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test e2e/a03-modular-entry.spec.ts ... e2e/a22-operations-jobs.spec.ts --workers=1; e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-demo-labels.spec.ts e2e/a21-no-ai-operation.spec.ts --workers=1 (scripts/chain-root-demo.sh)",
+      "environment": "Clone at 1932faa, Node 24.21.0, Chromium; ports 26640-26643",
+      "expected": "Every root and demo spec passes in both projects in both locale settings.",
+      "actual": "Root: 30 passed (6.8 m) with the locale unset and 30 passed (6.7 m) with C.UTF-8, EXIT 0. Demo: 12 passed (3.1 m) and 12 passed (2.9 m), EXIT 0. There are 0 failed, flaky, retried or timed-out tests. These are the same counts as round 6. (D-182 reports 'root 32/32, demo 10/10', the same 42 tests split differently; I did not use its split.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/chain-root-demo.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-07-aud-and-axe",
+      "procedure": "The AUD read-only pass inside the product journeys (every auditor/read-only test line), and the axe summaries the product runs write (each expectAccessible call fails its test on a serious or critical violation; the root and demo specs call expectAccessible too and write no summary file), aggregated over every axe-summary*.json.",
+      "command": "grep -iE 'aud|read-only|read only|readonly' over the test lines of the four product logs; python3 -I scripts/axe-aggregate.py axe",
+      "environment": "The four product runs of QA-R7-05; axe summaries copied out of scratch by run-e2e.sh and scripts/axe-keeper.sh",
+      "expected": "Every AUD/read-only test passes; axe reports no serious or critical violation.",
+      "actual": "52 auditor/read-only tests pass in each locale setting (26 en + 26 ar), 0 fail; among them p2/p3 AUD journeys, the p5-forms T01 auditor and the read-only views. Axe: 553 (half A) + 148 (half B) screen checks per language and locale setting, 0 violations of ANY impact. Round 6 had 553 + 147; the +1 is the new picker spec's axe call. All 13 root/demo specs call expectAccessible and pass, so they have no serious or critical violation. My probes add axe at 390 px on Modular entry and Traceability with the w120 name, at 320 px on Define, and on the 100+ entry launch-plan list; each passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-aud-readonly-unset.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-aud-readonly-cutf8.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-axe-summaries.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/axe/product-A-unset/en/axe-summary.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/axe/product-B-cutf8/ar/axe-summary-session-end.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/axe-aggregate.py"
+      ]
+    },
+    {
+      "id": "QA-R7-08-dlv037-suites",
+      "procedure": "REQ-DLV-037: count the A06, A07, A15 and A16 executable tests on this frozen candidate in both integration runs and in tests/qa alone, plus their root e2e specs in both locale runs.",
+      "command": "bash scripts/dlv037-counts.sh 04-integration-run1.log 04-integration-run2.log 04-integration-testsqa-alone.log; grep of the root e2e logs",
+      "environment": "The runs of QA-R7-03, QA-R7-04 and QA-R7-06",
+      "expected": "Every A06, A07, A15 and A16 suite passes in every run.",
+      "actual": "The results are identical in run 1, run 2 and tests/qa alone, and all pass. A06: a06-configuration-change 27 tests. A07: a07-historical-integrity 12. A15: 34 (a15-snapshots-and-packs 15, a15-outputs-every-definition 5, a15-demo-transformation-outputs 7, a15-selected-records-and-injection 7). A16: 30 (a16-health-check 13, a16-launch-plan 11, a16-s16-021-entities 6). Root e2e per project, in both locale runs, all passing: a06 2, a07 1, a15 1, a16 2. These are the same counts as round 6, and the repair diff touches none of these tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/04-dlv037-counts.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/dlv037-counts.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-09-export-samples",
+      "procedure": "My round-2 export/provisional probe, re-run unchanged on a scratch database seeded with the synthetic demo dataset. It produces the executive pack, gate packs G1-G5 and the RAID/benefits registers through the API, rendered by the real worker export runner in en and ar. It checks the provisional label on each provisional value's PDF line (REQ-S13-008) and writes the samples. The 26 PDF/DOCX/PPTX/XLSX/CSV samples are then read with the package PDF reader and an independent unzip/XML reading, and the English files are scanned for Arabic letters.",
+      "command": "bash scripts/run-probe-integration.sh run1 (QA_PG_PORT=26690); node inspect-samples.ts <evidence>/samples (copy in the clone root); python3 -I scripts/arabic-in-english.py",
+      "environment": "Clone at 1932faa, Node 24.21.0 type stripping, PostgreSQL 16.13; system unzip; no LibreOffice or pixel renderer in this sandbox",
+      "expected": "The provisional label is on the PDF line of every provisional value (en, ar); every sample shows the provenance, the demo label and the provisional legend, and no DG0-DG7 reference; ar files are RTL; en files are LTR.",
+      "actual": "Probe 8/8, EXIT 0: the provisional label is on every provisional value's line in the executive pack and gate packs G1-G5, en and ar. Inspection EXIT 0 over 26 files: provenance ('practical synthesis'), demo label and provisional legend are present in every file; DG0-7 is absent from every file. ar DOCX carries w:bidi and w:rtl. ar PPTX carries rtl=\"1\" on 8/8 slides. ar XLSX has rightToLeft on 6/6 and 3/3 sheets. en files carry none of these; the en G1/G4 DOCX have run-level w:rtl only on Arabic runs. Arabic letters in English files appear only in gate_pack_G1/G4 DOCX and PPTX: the deliberate 'Criterion (Arabic)' column and the bilingual synthetic-approval label. There are 0 in the executive pack, the registers' XLSX and the CSV. The en RAID CSV's 'arabicText=true' in the inspection is its UTF-8 BOM (U+FEFF falls inside the inspector's Arabic-presentation range); the dedicated scan finds 0 Arabic runs and BOM=True. The ar PDF reads in logical order. Detached diacritics in its text extraction are a reader artifact, as in earlier rounds. Limitation, as before: this is a reader-level inspection, not a pixel rendering.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037", "REQ-S13-008", "REQ-S13-009", "REQ-S20-015", "REQ-PB-089", "REQ-S21-001", "REQ-PB-001"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/06-probe-packs-provisional-run1.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/07-inspect-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/07-arabic-in-english.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/samples/executive_pack-ar.pdf",
+        "docs/delivery/test-evidence/DG5/qa/round-7/samples/executive_pack-en.docx",
+        "docs/delivery/test-evidence/DG5/qa/round-7/samples/gate_pack_G4-ar.pptx",
+        "docs/delivery/test-evidence/DG5/qa/round-7/samples/registers_raid-ar.xlsx",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/inspect-samples.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/run-probe-integration.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-10-verify-f148",
+      "procedure": "F-DG5-148: my round-6 reproduction R6-TITLE-B re-run unchanged, the new asserted probe R7-F148, and the follow-ups R7-TRACE-ROOT and R7-TRACE-FOCUS-CLICK, on the real stack, chromium-en and chromium-ar, in both locale settings.",
+      "command": "bash scripts/chain-probes-mode.sh unset|cutf8 (run-probe-e2e.sh: copy the probe into the clone's e2e/, with-stack.sh npx playwright test <probe> --workers=1, remove it)",
+      "environment": "Clone at 1932faa, production-initialized stack, ports 26610-26667, Chromium",
+      "expected": "No page-level horizontal scroll from an unbroken record name on Traceability and Modular entry at 390, 360 and 320 px and 200 %, in en and ar.",
+      "actual": "R6-TITLE-B (unchanged): 2 passed in each locale setting (21.1 m, 20.3 m), with 0 failures across all 47 pages. Traceability and Modular entry are now 0 px for w120, arU and plain at 390, 320 and 200 %. R7-F148: Modular entry and the Traceability graph with its record links are 0 px in all cases. The probe EXITS 1 BY DESIGN of its assertion, identically in all 4 runs: its 'traceability+panel' state (a record selected through ?root=&impact=&alloc=) fails 9 of 48 cases (w120 651/681/721/1312 px; w46 40 px at 320; arU 85/115/155/210 px). R7-TRACE-FOCUS-CLICK reproduces this by clicking the node's Focus button: 0 px before the click, 651 px after (w120, 390 px). R7-TRACE-ROOT shows the only cause is the note 'Showing the links of <type> \"<name>\"' ([data-root]): with overflow-wrap set on that note in the page, every case is 0 px. That element is not one of the two F-DG5-148 named, and round 6 never focused a record. So F-DG5-148 is CLOSED_VERIFIED, and the note is the new F-DG5-150 (Low). R7-F149, in the same file, passes (QA-R7-11).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6titleB-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6titleB-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-unset/en/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-cutf8/ar/r6-title-b.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f148.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-cutf8/ar/r7-f148.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click-arU-390.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-f148-f149-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-trace-root-note.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/chain-probes-mode.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-11-verify-f149",
+      "procedure": "F-DG5-149: my round-6 reproduction R6-DEFINE-NARROW re-run unchanged, and the new asserted probe R7-F149, on the real stack, chromium-en and chromium-ar, both locale settings.",
+      "command": "bash scripts/chain-probes-mode.sh unset|cutf8 (R6-DEFINE-NARROW; R7-F149 in zz-qa-dg5r7-f148-f149-verify.spec.ts)",
+      "environment": "Clone at 1932faa, production-initialized stack, Chromium",
+      "expected": "Define with an ordinary outcome has no page overflow at 320, 360, 375 and 390 px and 200 %; the Good-outcome table sits in a named, focusable scroll region that the keyboard can scroll.",
+      "actual": "R6-DEFINE-NARROW: 2 passed per locale setting, with page overflow 0 px at 320/360/375/390 px in en and ar (round 6: en 61/21/6 px, ar 29 px). The card is [29..291] at 320 px and the table is in a .table-wrap. R7-F149: 2 passed in each of the 4 runs (failures=0). Region role=region, tabindex=0, localized accessible name; at 320 px the region scrolls 92 px (en) / 60 px (ar) and ArrowRight/ArrowLeft moves it 80/60 px; axe at 320 px passes. F-DG5-149 is CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6define-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6define-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/en/r6-define-narrow.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/ar/r6-define-narrow-320.png",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f149.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-cutf8/ar/r7-f149.json"
+      ]
+    },
+    {
+      "id": "QA-R7-12-d181-picker",
+      "procedure": "D-181 picker fix (waves AB2/AB2B). With more than 100 transformations (and a newest one whose code is not on the first code:asc page of 100), the probe opens each transformation-picking screen I could reach without filling a form. It counts the links and options to the newest and to the oldest-updated transformation (which a one-page updatedAt:desc picker could not offer), and checks the newest is first where the list is updatedAt:desc. It also reviews the hook's code and its call sites.",
+      "command": "bash scripts/chain-r7-probes3.sh (revision 1), chain-r7-picker2.sh (revision 2), chain-r7-picker3.sh and a single re-run (R7-PICKER-FOLLOWUP, revisions 3/4); git diff ad52a56..12dc33e -- apps/web/src/api/queries.ts and the 12 screens",
+      "environment": "Clone at 1932faa, production-initialized stack (fresh database per run; 102/103 transformations), dev.lead and dev.admin, Chromium, both locale settings",
+      "expected": "Every picker offers every transformation the user may see; nothing is silently truncated; updatedAt:desc lists start with the newest.",
+      "actual": "Revision 2 of the probe, 8 screens, all passing in en and ar and in both settings: /playbook/launch-plan, /playbook/health-check, /evidence-reports/reports, /presentation, /evidence-register, /initiatives-roadmaps/updates, /strategy-kpis/kpis and /risks-actions/raid. Each offers the newest and the oldest-updated, and the newest is the first entry. The revision-2 runs exit 1 on two screens because of probe expectations, not product defects. (a) /dashboards/transformation is a client-paged RegisterTable, 'Page 1 of 11 · 10 of 102 rows'. (b) /admin/methodology-migrations as dev.admin shows 'No transformation is visible to you', because dev.admin holds no transformation-scoped grant. The follow-up (revision 3/4) checks both: the dashboard pager total equals the API total (102 en / 103 ar) and its search finds the newest; the migrations entry as dev.lead offers the newest first and the oldest. It passes 2/2 with C.UTF-8 (revision 3) and 2/2 with the locale unset (revision 4). Disclosed probe errors, each kept with its log: revision 1 timed out in both projects and both settings (600 s), because an unbounded getAttribute waited on the screen with no link. Follow-up attempt 1 found 'No tests found': my harness removed the shared spec file at the end of the previous run, a race. Follow-up attempt 2 (revision 3) read the pager line before it rendered in en (1 failed, 1 passed); revision 4 waits for it. Code: useAllTransformations follows nextCursor with the API page limit, fails the whole list on any page error (no partial picker), and guards against cursor loops. It is used by all 12 picker call sites; the only remaining one-page transformation query is the DG4 business-unit chip (limit 51, a documented narrowing probe), which is not a picker. The product spec p5-transformation-picker-complete passes in all four full product runs. Not probed on the real stack: the form-embedded pickers (Assignments, Rules, Rule, Delegations, BlockPage launch, Walkthrough). They use the same hook (code review), and the launch picker is covered by unit P1 (250 transformations over 3 pages) and the product e2e. Judgement: the D-181 fix works.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-picker-complete.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/probe-revisions/zz-qa-dg5r7-picker-complete.rev1.spec.ts.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker2-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7picker2-unset/en/r7-picker.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7picker2-cutf8/ar/r7-picker.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7picker2-unset/en/r7-picker-_dashboards_transformation.png",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7picker2-unset/en/r7-picker-_admin_methodology-migrations.png",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker3-unset-attempt1-harness-race.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker3-unset-attempt2-rev3.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker3-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7picker3-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7picker3-unset/en/r7-picker3.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7picker3-cutf8/ar/r7-picker3.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/10-repair-diff.log"
+      ]
+    },
+    {
+      "id": "QA-R7-13-d182-health",
+      "procedure": "D-182's unexplained failure of p5-launch-health-kpi.spec.ts:159 (chromium-ar, locale unset; 'submitted' not visible within 5 s). Reproduction attempts: the full product suite in both locale settings, the test alone in chromium-ar x10 beside a full product run, R7-HEALTH-RACE (the test's ending replayed and instrumented, browser CPU slowed 1x and 4x), and R7-HEALTH-SLOWGET (the test's own waits, every assessment GET delayed 0 or 1500 ms). Plus a code reading of HealthCheckPage/useRunner.",
+      "command": "chain-product.sh (QA-R7-05); run-e2e.sh unset prod 26680 26681 d182repro apps/web/e2e/p5-launch-health-kpi.spec.ts --grep 'Health check: Incomplete' --project=chromium-ar --repeat-each=10; chain-r7-probes3.sh (QA_CPU_RATE=1|4, QA_SLOW_MS=0|1500)",
+      "environment": "Clone at 1932faa, production-initialized stack, Chromium; load up to 10 during the full runs, about 4.5 during the targeted run",
+      "expected": "Establish whether the failure reproduces, and whether it is a product or a test defect.",
+      "actual": "Not reproduced. The test passed in both projects in all 4 full product runs, 10/10 alone in chromium-ar, R7-HEALTH-RACE 5/5 at CPU rate 1 and 5/5 at rate 4, and R7-HEALTH-SLOWGET 6/6 at 0 ms and 6/6 at 1500 ms. In every run the screen sent If-Match equal to the saved version (27), the server answered 200, and 'submitted' appeared in 166-559 ms. Finding: with slow GETs (1500 ms), the test's 'reloaded' wait resolved in 6/6 runs on the GET issued BEFORE the Save-actions click: the refresh after the refused first Submit, version 26. useRunner shows the alert before awaiting that refresh, so the test can proceed while that GET is in flight. The test can therefore click Submit without the saved version on screen. In my runs the click still landed after the post-save GET (about 2000 ms vs 1880 ms), so the product sent the right version. If the order were reversed, the server's 409 (correct optimistic concurrency) would fail the test. Judgement: a test synchronization defect, demonstrated, raised as F-DG5-151 (Low). It is a plausible but unproven cause of the D-182 failure, whose trace is lost. I found no evidence of a product defect. D-182's disclosure (not counted as passed, cause not established) was accurate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-d182repro-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7health-rate1-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7health-rate4-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7slowget-0-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7slowget-1500-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7health-rate4-unset/r7-health-race.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-1500-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-health-submit-race.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/chain-r7-probes3.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-14-p5-screens-390-200pct",
+      "procedure": "390 px and 200 % text on the P5 screens: the product reflow specs inside the full runs (p5-reflow-axe, p5-title-reflow, p5-record-name-reflow, p5-form-tables-reflow, p5-diagnose-reflow, p5-table-regions-axe), plus my R6-TITLE-B sweep (42 workspace tabs and 5 global pages at 390 px, 320 px and 200 %) and the R7 probes.",
+      "command": "see QA-R7-05, QA-R7-10, QA-R7-11",
+      "environment": "As in QA-R7-05/10/11",
+      "expected": "No page-level horizontal scroll and no serious or critical axe issue at 390 px and with 200 % text.",
+      "actual": "All the product reflow specs pass in both projects in all four full runs. R6-TITLE-B reports 0 failures across the sweep in all 4 runs. The one remaining overflow is F-DG5-150, the Traceability focus note, and only with an unbroken record name; ordinary text gives 0 px there too.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-unset/ar/r6-title-b.json"
+      ]
+    },
+    {
+      "id": "QA-R7-15-repair-diff",
+      "procedure": "Read the repair diff ad52a56..12dc33e and check what it touches.",
+      "command": "git diff --stat ad52a56..12dc33e -- . ':!docs'; git diff --stat ... -- tests e2e docs/delivery/requirements.csv apps/api apps/worker packages; git diff of traceability, app.css, DefinePage.tsx",
+      "environment": "Clone",
+      "expected": "Only the planned web changes; no change to acceptance tests, register, API or worker.",
+      "actual": "21 files, all under apps/web (839+, 218-): the shared hook in queries.ts with all-transformations.test.tsx, 12 picker screens, RecordName/.record-name, the ModularPage label, the DefinePage TableScrollRegion, app.css (.record-name overflow-wrap and .outcome-tree > .outcome-node min-inline-size 0), and two new e2e specs. tests/, e2e/, requirements.csv, apps/api, apps/worker and packages are unchanged. The [data-root] note in TraceabilityPage.tsx is unchanged (F-DG5-150).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/10-repair-diff.log"
+      ]
+    },
+    {
+      "id": "QA-R7-16-validators",
+      "procedure": "Gate validators in the main repository (read-only).",
+      "command": "node tools/gates/validate.mjs --register DG5; --pipeline; --historical --stage DG4; --historical --stage DG3; --historical --stage DG2; --historical --stage DG1",
+      "environment": "Main repo, HEAD 546e460 (fbba1af + another reviewer's auto-committed files), Node 24.21.0",
+      "expected": "All exit 0.",
+      "actual": "'PASS register rules at DG5' EXIT 0; 'PASS pipeline (active stage: DG5 REVIEWING)' EXIT 0; 'PASS gate DG4 (historical)', DG3, DG2 and DG1, each EXIT 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/08-validate-register-DG5.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/08-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/08-validate-historical-stage-DG4.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/08-validate-historical-stage-DG3.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/08-validate-historical-stage-DG2.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/08-validate-historical-stage-DG1.log"
+      ]
+    },
+    {
+      "id": "QA-R7-17-acceptance-matrix",
+      "procedure": "Each of the 78 DG5-final acceptance texts tested literally. For each row, every test file named in its notes or evidence is resolved against the candidate's tracked files, with its result in THIS round's unit, integration and e2e logs. The clauses the notes call partial are covered by my probes or judged. The register is unchanged since round 6, and so are tests/qa and e2e/, so the per-row reading of rounds 3-6 stands and is re-checked against this round's results.",
+      "command": "python3 -I scripts/acceptance-matrix.py <clone> <evidence>; git diff ad52a56..12dc33e -- docs/delivery/requirements.csv tests e2e (empty)",
+      "environment": "Clone and this round's logs",
+      "expected": "Every row resolves to named tests that pass in this round; partial clauses are covered or acceptably disclosed.",
+      "actual": "78/78 rows resolve to named tests (406 references: 227 integration, 102 unit, 77 e2e). Every one was seen in this round's logs and passed; none failed, and no row names no test. EXIT 0. Partial clauses, judged as in round 6. REQ-S13-008 (executive-pack PDF with a pending value): covered by my probe (QA-R7-09, 8/8). REQ-PB-093 (the UI changes one rubric descriptor; 30/20/20/15/15 and the 95 % refusal are in A06/A07 and a component test): accepted. REQ-PB-090 (asserted on the API response the view renders): accepted, since the view renders that response. REQ-S14-003 (scheme pin migration not exercised): accepted; ADR-0040 migration is outside the clause's literal text. REQ-S01-004 and REQ-S21-001 ('disabled' = the shipped configuration with no adapter, D-142 Q11, D-165): accepted. REQ-S12-004 (unchanged-on-retry rather than an exact count): accepted. The interim wording in the notes of REQ-S20-002, REQ-S12-012, REQ-S12-020, REQ-S06-003, REQ-S18-001/002 ('merged-tree verification still to come', 'fails on 7305433 pending ...') is stale, as rounds 5-6 noted; this round's results show those items resolved (every named test passes). Documentation drift only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/09-acceptance-matrix.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/09-acceptance-matrix-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/acceptance-matrix.py"
+      ]
+    },
+    {
+      "id": "QA-R7-18-environmental-residuals",
+      "procedure": "The assignment's environmental residuals, checked on their offline/config surface.",
+      "environment": "The runs above and the decisions cited",
+      "expected": "Each residual is PASS on its offline/config surface, with the residual named.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057): the offline frozen-lockfile install and check:no-cdn pass; the live registry is the residual. Live CI (REQ-DLV-025 A24, D-058): the same commands ran locally; live CI is the residual. Keycloak and a real demo IdP (D-049; ADR-0050 §1): the dev-mode binding of D-165 is the test path; the roaming.user.* walkthroughs pass 12/12 in both settings, and the real IdP is a devops residual. AI and external notification adapters: none ships in P5 (D-142 Q11); A21 asserts the shipped 'disabled' configuration and passes in both settings. None of these is a BLOCKED gate check.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/00-install.log"
+      ]
+    },
+    {
+      "id": "QA-R7-19-assignment-and-harness",
+      "procedure": "Assignment consistency, and the harness incidents of this run, disclosed.",
+      "command": "sha256sum docs/delivery/assignments/DG5/round-7/qa-verifier.md; read tools/gates/lib/rules.mjs (round check)",
+      "environment": "Main repo",
+      "expected": "The assignment is consistent with the validator, or the contradiction is stated; every harness incident is explained.",
+      "actual": "Assignment sha256 0ff83caed043... matches the orchestrator's. It contradicts itself in two places. It says 'Task ID: T-DG5-REV-QA-R5' and 'round: 5', while its path, the invocation (T-DG5-REV-QA-R7C) and stages.json say round 7. tools/gates/lib/rules.mjs requires rec.round to equal the round directory, so this record uses round 7. Harness incidents, none affecting a product result: (1) I launched a first integration chain and tried to stop it with pkill, but each shell command has its own PID namespace, so it kept waiting; I added a per-label lock to run-integration.sh, and exactly one run 1 executed (the other caller waited and skipped). (2) The picker probe revisions and the follow-up's spec-file race are listed in QA-R7-12. (3) The format:check disturbances are listed in QA-R7-01. (4) Full-suite screenshots were deleted after each run for disk space (D-162 keeps them out of evidence); axe summaries were kept. The orphaned round-7 runs of this role (T-DG5-REV-QA-R7/R7B) produced no result I cite.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/run-integration.sh",
+        "docs/delivery/test-evidence/DG5/qa/round-7/scripts/axe-keeper.sh",
+        "docs/delivery/test-evidence/DG5/qa/round-7/00-candidate.log"
+      ]
+    }
+  ],
+  "findings": ["F-DG5-150", "F-DG5-151"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/qa/round-7/00-candidate.log",
+    "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-summary.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-7/04-integration-run1.log",
+    "docs/delivery/test-evidence/DG5/qa/round-7/04-integration-run2.log",
+    "docs/delivery/test-evidence/DG5/qa/round-7/04-integration-testsqa-alone.log",
+    "docs/delivery/test-evidence/DG5/qa/round-7/04-dlv037-counts.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-results-summary.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-7/05-axe-summaries.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-7/07-inspect-samples.log",
+    "docs/delivery/test-evidence/DG5/qa/round-7/09-acceptance-matrix-summary.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-7/10-repair-diff.log",
+    "docs/delivery/reviews/DG5/round-7/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG5/round-7/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG5/round-7/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-23T03:49:30Z",
+  "summary": "PASS on candidate sha256:33188e9e... (2194 files, source 12dc33e), confirmed on a complete clone at the start and after the main repository moved. F-DG5-148 and F-DG5-149 are CLOSED_VERIFIED: my round-6 reproductions, re-run unchanged on the real stack in en and ar in both locale settings, now give 0 px, and new asserted probes confirm both fixes at 390/375/360/320 px and 200 %. Beyond F-DG5-148, a third Traceability element still widens the page when a record is focused: the 'Showing the links of ...' note. It is raised as F-DG5-150 (Low, REQ-S15-009, DG6-final, not blocking). The D-181 picker fix works on every screen I probed with more than 100 transformations. The D-182 failure did not reproduce in 4 full suites, 10 targeted runs, CPU throttling or slow-GET runs. The product always sent the current version. The product test's wait is demonstrably unsound under slow GETs: F-DG5-151 (Low, test defect, a plausible but unproven cause). Static, unit (Node 22/24, both locales), integration x2 (3076 + 1 by-design skip), tests/qa alone (336), product e2e 460/460 x2, root 30 x2, demo 12 x2, AUD 52 x2, axe 0 violations, REQ-DLV-037 suites and the export samples all pass; validators exit 0. Every failure in my probe logs is a probe error or an assertion by design, explained in the checks.",
+  "narrative": "docs/delivery/reviews/DG5/round-7/qa-verifier.md"
+}
