@@ -84,6 +84,8 @@ _Amended 2026-10-18 (T-DG5-ARCH-R5, amendment D11): G4 rests on a real approved 
 
 _Amended 2026-10-19 (T-DG5-ARCH-R6, amendment D16): each of INI-01..03 also carries three key deliverables, linked to a capability change that is linked to the chain's outcome KPI (2 new capabilities, 9 deliverables, 12 trace links). Each B0147 line above still has exactly five nodes; each initiative now also reaches its KPI through deliverable → capability change → KPI (M0097), beside the line (D17)._
 
+_Amended 2026-10-23 (T-DG5-ARCH-RG1, amendment D21): the 90-day launch plan of the roaming transformation also carries its Day-90 leadership test (`roaming.day_ninety_test`), open and unanswered, as the product creates one with every plan._
+
 **Record counts:** `{<table>: count(*)}` for every base table of schema `public` except `demo_dataset_run`, ordered by name.
 
 **Checksum:** SHA-256 over the lines `<table>\t<record_id>\t<row>`, one per registered `demo_seed_record` row, sorted by `(record_type, record_id)`, and then a line per `demo_seed_record` row. `<row>` is `to_jsonb(row)` minus every column whose default is `now()`, `CURRENT_TIMESTAMP`, `CURRENT_DATE` or `transaction_timestamp()` (read from `information_schema.columns` at run time), serialized by PostgreSQL's `jsonb` text output, which is deterministic for equal values.
@@ -519,3 +521,22 @@ Unchanged and still true: `roaming-ids.ts:78–86` (blocks `0x070`–`0x078`) an
 - **G4, the totals and the gate history** are unchanged (D18). The coverage conditions of §5 read no deliverable or capability.
 
 Requirement rows: REQ-S18-002 and M0348 (M0097 for the chain; B0072 for T05's key deliverables). Product gates G1–G6 are business approvals inside the product; the demo's decisions are synthetic and approve nothing real, and no deliverable is accepted. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.
+
+## Amendment (2026-10-23, T-DG5-ARCH-RG1; D-185, F-DG5-121): §4 and §5, the launch plan's Day-90 leadership test
+
+Sources: D-185 (F-DG5-121, Low, domain round 1) and the T-DG5-BE-RG1 handback §5 item 5, verified against the merged code (`1e6a545`). No migration, contract or coverage condition changes.
+
+### D21. §4: the roaming launch plan carries its Day-90 test (T-DG5-BE-RG1)
+
+- **The gap.** The seeded workflow states (`roaming.states`, order 600) inserted the 90-day launch plan (B0134) and its template tasks directly, with no `day_ninety_test` row. The product creates that row with every plan (`apps/api/src/modules/launch/plan.ts` `generateLaunchPlanInTx`; ADR-0048 §4), so the demo's Day-90 page said "Generate the launch plan first".
+- **As merged** (`packages/db/src/demo/data/roaming-states.ts`):
+  - `seedLaunchPlan` reads the due day of the template item `day_ninety_test` while it inserts the tasks (`:28`, `:85`). It throws if the template has no such item (`:107`).
+  - It then inserts one `day_ninety_test` (fixture key `roaming.day_ninety_test`, `:108`) for the plan: open, no response, `answered_count` 0. It is scheduled on the plan's start date plus the template's day 90. The plan starts 60 days before the synthetic clock (`:26`), on 2026-07-03, so the test is scheduled on **2026-10-01**.
+  - Like every seeded row, it has a fixed id, the synthetic clock, one audit event (`day_ninety_test.create`, version 1) and one `demo_seed_record` row. The record counts and the checksum of §4 therefore include it. Two seeds still give identical counts and checksums (`demo-roaming.test.ts:364`).
+  - Its six questions are the B0136–B0141 catalogue rows of `day_ninety_question`. None is answered in the demo.
+- **§5 is unchanged.** No coverage condition reads the launch plan or the Day-90 test (`packages/db/src/demo/coverage.ts` has none); the conditions of §5 and their counts stay as they were.
+- **Tests.**
+  - `packages/db/test/integration/demo-roaming.test.ts:306`: the plan carries its test, on day 90, open, 0 answered, registered, with its audit event.
+  - `apps/api/test/integration/environment/demo-day-ninety.test.ts` (`describe` at `:62`): through the real API, `GET …/day-90-test` is 200 for the demo plan (33 tasks from 2026-07-03), the test is scheduled 2026-10-01, open, Incomplete (0/6) with the six questions verbatim, it agrees with the test the product path creates for the same start date, and the demo TL can respond while the WL gets 403.
+
+Requirement rows: REQ-PB-087 (the Day-90 test with every plan) and REQ-S18-001 (counts and checksum). The Day-90 test is synthetic demo data, an illustrative example, not Mobily performance. Recording a response in the demo is not a business approval. Product gates G1–G6 are business approvals inside the product, and nothing here touches the engineering gates DG0–DG7.

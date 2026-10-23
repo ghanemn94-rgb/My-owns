@@ -6,6 +6,7 @@
 ## Decision
 
 1. **REST under `/api/v1`** with JSON bodies. `/healthz` (liveness) and `/readyz` (DB reachable and all migrations shipped with the build applied) sit at the root.
+   - _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): the `Readiness` check `migrations` is `ok` when the database is up to date. It is `fail` for drift the migration runner refuses: an applied file whose checksum changed, an applied file this build does not ship, or **a pending file whose id is not above the highest applied id** (`apps/api/src/modules/platform/health.ts:48–52`; ADR-0003, "Migration order"). It is `pending` only for forward migrations the runner would apply. Anything but `ok` answers 503 `not_ready` (`health.ts:60–63`). The contract is unchanged: the `Readiness` enum is still `ok | pending | fail`, and the `getReadiness` summary is still true. Test: `apps/api/test/integration/platform.test.ts:49`._
    - Resource names are plural and kebab-case; JSON fields are camelCase; enum values are snake_case storage codes.
    - Actions that are not plain field updates are explicit sub-resources (`/archive`, `/revoke`), each needing a reason.
 2. **Contract-first OpenAPI 3.1.** `docs/api/openapi.yaml` is the **source of truth**. solution-architect owns it; other agents request changes through the orchestrator. It is kept in sync by:

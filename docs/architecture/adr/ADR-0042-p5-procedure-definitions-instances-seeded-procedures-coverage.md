@@ -146,7 +146,7 @@ The DG2 operation ids above exist in the contract at this commit; BE-G uses them
 |---|---|---|
 | list/get definitions, validate a definition body | `procedure.read` (validate: `methodology.configure`) | AUD reads |
 | put/remove definition in a draft | `methodology.configure` (ADM_METHOD); publish/review through slice A | REQ-S06-001 "author: ADM; review: TO" |
-| launch | `procedure.launch` **and** one of the definition's `launch_role_codes` held in scope (403 `procedure.launch_role`) | ADM_METHOD cannot launch |
+| launch | `procedure.launch` **and** one of the definition's `launch_role_codes` held in scope (403 `procedure.launch_role`) | ADM_METHOD cannot launch _Amended 2026-10-23 (V5):_ My procedures offers the launch form only to a holder of `procedure.launch`; a UI hint, the server check is unchanged |
 | update inputs, complete/skip a step | `procedure.act` and (the step's assignee, or a holder of its `assignee_role_code` in scope when unassigned) (403 `procedure_step.not_assignee`) | _Amended 2026-10-18 (V4):_ completing with an output also needs `transformation.read` on the output record's transformation, on grants reloaded in the completing transaction (else 422 `procedure_step.output_record_invalid`, audited as `authorization.denied`) |
 | link evidence to a step (_added 2026-10-18, V4_) | `procedure.act` and the step-actor rule above, **and** `transformation.read` on the evidence's transformation | else 422 `procedure_step.output_record_invalid`, audited as `authorization.denied`; nothing is linked |
 | assign a step, cancel an instance | `procedure.manage` in scope | |
@@ -333,3 +333,16 @@ Sources: D-170 (F-DG5-101, decided), the T-DG5-BE-V2 handback ("F-DG5-101" and i
 Requirement row: REQ-S06-002. Nothing here decides or grants a business approval, a G1–G6 gate or an engineering gate DG0–DG7.
 
 Product gates G1–G6 are business approvals inside the product. A procedure approval step is a canonical business approval decided by its person, never by an agent. Nothing here touches the engineering gates DG0–DG7.
+
+## Amendment (2026-10-23, T-DG5-ARCH-RG1; D-185, F-DG5-140): §4 and §9, My procedures offers launch only with `procedure.launch`
+
+Sources: D-185 (F-DG5-140, Low, qa round 1) and the T-DG5-FE-RG1 handback §5, verified against the merged code (`5474a66`). The assignment names §4. §4 holds the state machines, which are unchanged; the launch permission is §9's "launch" row, which this amendment annotates. No API, contract, migration or permission change.
+
+### V5. The launch form is a UI hint; the server decides (T-DG5-FE-RG1)
+
+- **The gap.** My procedures offered the read-only auditor (AUD) an enabled "Launch a procedure" form. Every launch then ended in 403, and nothing was created.
+- **As merged.** `LaunchSection` (`apps/web/src/pages/procedures/MyProceduresPage.tsx:208`) shows the launch form (`LaunchForm`, `:226`) only when the signed-in user holds `procedure.launch` in some scope (`canAnywhere(me, "procedure.launch")`, `:211`). Otherwise the section shows a read-only note in English and Arabic: "You can follow procedures and their steps here, but none of your roles may launch a procedure. Only a user holding one of a procedure's launch roles can launch it." (`apps/web/src/i18n/en/workflowsP5.json:240`, `ar/workflowsP5.json:240`).
+- **The server check is unchanged.** `launchProcedureInstance` still requires `procedure.launch` and one of the definition's `launch_role_codes` held in scope (`apps/api/src/modules/procedures/instances.ts:293`; 403 `procedure.launch_role`), as in §9. A user who holds `procedure.launch` but none of a definition's launch roles still sees the form and gets that 403. The UI only decides what it offers.
+- **Tests.** `apps/web/src/pages/procedures/launch-permission.test.tsx` (`:60`, without `procedure.launch`: the note, no form and no Launch button; `:77`, with it: the form with an enabled Launch, in en and ar) and `apps/web/e2e/p5-launch-permission.spec.ts` (`:15`, AUD gets the note and a direct launch is still 403 with nothing created; `:63`, the Transformation Lead launches).
+
+Requirement row: REQ-S06-002. Nothing here decides or grants a business approval, a G1–G6 gate or an engineering gate DG0–DG7.
