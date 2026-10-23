@@ -1,0 +1,71 @@
+++ grep -n '"source_commit"\|"candidate_id"\|"verdict"\|run_id' docs/delivery/reviews/DG5/round-3/domain-reviewer.json docs/delivery/reviews/DG5/round-4/domain-reviewer.json
+++ head
+docs/delivery/reviews/DG5/round-3/domain-reviewer.json:5:  "candidate_id": "sha256:fc93b239904677e598a3155695747f4c4b71c9ec7a9471a2d6748c41c0e757fd",
+docs/delivery/reviews/DG5/round-3/domain-reviewer.json:6:  "source_commit": "bbd6294",
+docs/delivery/reviews/DG5/round-3/domain-reviewer.json:10:    "run_id": "DG5-T-DG5-REV-DOM-R3-domain-reviewer-20261018T210046Z-67b8bed6",
+docs/delivery/reviews/DG5/round-3/domain-reviewer.json:308:  "verdict": "PASS",
+docs/delivery/reviews/DG5/round-4/domain-reviewer.json:5:  "candidate_id": "sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf",
+docs/delivery/reviews/DG5/round-4/domain-reviewer.json:6:  "source_commit": "fb9c221",
+docs/delivery/reviews/DG5/round-4/domain-reviewer.json:10:    "run_id": "DG5-T-DG5-REV-DOM-R4-domain-reviewer-20261019T095848Z-5435b9e8",
+docs/delivery/reviews/DG5/round-4/domain-reviewer.json:329:  "verdict": "PASS",
+++ node -e 'const s=require("./docs/delivery/stages.json").stages.find(s=>s.id==="DG5");for(const r of s.review_rounds||[])console.log(JSON.stringify(r).slice(0,300))'
+{"round":1,"candidate_id":"sha256:8e7d23a3ec0218717a8333e81a1fb59493ad2ddd70f76cdd0257af8b2af8f67b","frozen_at":"2026-10-17T21:55:25Z","source_commit":"601d7d282b4bf3293b0ca6213f29600f336a4df0","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-1/domain-reviewer.json","code-security-revie
+{"round":2,"candidate_id":"sha256:c4f70a80196e79c75883e970656a84fa8a365d9f9f5091d14ad144be2361f06e","frozen_at":"2026-10-18T11:09:41Z","source_commit":"d3528fcf0dbf1df5f91456c82f5ce188fdee7c75","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-2/domain-reviewer.json","code-security-revie
+{"round":3,"candidate_id":"sha256:fc93b239904677e598a3155695747f4c4b71c9ec7a9471a2d6748c41c0e757fd","frozen_at":"2026-10-18T20:58:29Z","source_commit":"bbd6294e96f3510af84fd6f4e96a1f20c64ca4a9","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-3/domain-reviewer.json","code-security-revie
+{"round":4,"candidate_id":"sha256:26d4ad92320eeaa2a9931a4254988c12b8d0ed175873dc7aab912894a8f5e1bf","frozen_at":"2026-10-19T09:57:55Z","source_commit":"fb9c2216feb399efa9e1a062bdc24b2eef16db33","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-4/domain-reviewer.json","code-security-revie
+{"round":5,"candidate_id":"sha256:a18a9f054f3e0ee48510750785112067cec3e1af336cd988a63e1f9254cd3a9c","frozen_at":"2026-10-21T17:59:45Z","source_commit":"0c88d5ec96df24d162dc157d409879987da0f2c5","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-5/domain-reviewer.json","code-security-revie
+{"round":6,"candidate_id":"sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d","frozen_at":"2026-10-22T04:31:09Z","source_commit":"ad52a560ae26a49673cd3ac01b0677a4f7f55e57","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-6/domain-reviewer.json","code-security-revie
+{"round":7,"candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","frozen_at":"2026-10-22T22:09:41Z","source_commit":"12dc33e4f9f2f804aeb0a9774a988d699709a235","records":{"domain-reviewer":"docs/delivery/reviews/DG5/round-7/domain-reviewer.json","code-security-revie
+{"round":8,"candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","frozen_at":"2026-10-22T22:09:41Z","source_commit":"12dc33e4f9f2f804aeb0a9774a988d699709a235","records":{"qa-verifier":"docs/delivery/reviews/DG5/round-8/qa-verifier.json","release-auditor":"docs/deli
+++ cat docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json
+++ node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).verifications.map(v=>v.finding_id+":"+v.result+":"+v.status_after).join(" ")))'
+F-DG5-122:PASS:CLOSED_VERIFIED F-DG5-120:PASS:CLOSED_VERIFIED
+++ cat docs/delivery/reviews/DG5/round-4/domain-reviewer.verifications.json
+++ node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).verifications.map(v=>v.finding_id+":"+v.result+":"+v.status_after).join(" ")))'
+F-DG5-123:PASS:CLOSED_VERIFIED
+++ cat docs/delivery/reviews/DG5/round-2/domain-reviewer.verifications.json
+++ node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).verifications.map(v=>v.finding_id+":"+v.result+":"+v.status_after).join(" ")))'
+F-DG5-120:FAIL:OPEN F-DG5-121:PASS:CLOSED_VERIFIED
+++ node -e 'const F=require("./docs/delivery/findings.json");for(const id of ["F-DG5-120","F-DG5-122","F-DG5-123"]){const f=F.findings.find(x=>x.id===id);console.log(id,f.owner,JSON.stringify(f.history.map(h=>h.at+" "+h.status+" "+h.note.slice(0,80))),f.verification.by_role,f.verification.invocation_reference.run_id)}'
+F-DG5-120 backend-workflow-engineer ["2026-10-17T23:50:00Z OPEN Raised in DG5 round 1 by the domain reviewer (T-DG5-REV-DOM-R1B). Medium, not a ","2026-10-18T12:45:00Z OPEN verified by domain-reviewer round 2: FAIL","2026-10-18T21:58:00Z CLOSED_VERIFIED verified by domain-reviewer round 3: PASS"] domain-reviewer DG5-T-DG5-REV-DOM-R3-domain-reviewer-20261018T210046Z-67b8bed6
+F-DG5-122 backend-workflow-engineer ["2026-10-18T12:40:00Z OPEN Raised in DG5 review round 2 while verifying F-DG5-120 on candidate c4f70a80 (so","2026-10-18T21:58:00Z CLOSED_VERIFIED verified by domain-reviewer round 3: PASS"] domain-reviewer DG5-T-DG5-REV-DOM-R3-domain-reviewer-20261018T210046Z-67b8bed6
+F-DG5-123 backend-workflow-engineer ["2026-10-18T21:55:00Z OPEN Raised in DG5 round 3 by domain-reviewer (T-DG5-REV-DOM-R3) as a Low, non-blocki","2026-10-19T10:55:00Z CLOSED_VERIFIED verified by domain-reviewer round 4: PASS"] domain-reviewer DG5-T-DG5-REV-DOM-R4-domain-reviewer-20261019T095848Z-5435b9e8
+++ git show --stat '--format=%h %ad %s' b6c03d7
+++ head -20
+b6c03d7 Mon Oct 19 12:33:12 2026 +0000 DG5 round 4: salvage the code-security and QA reviews stopped by the container restart of about 12:31Z (runs committed by their runners as they stood, c3c964e and bc450c1; partial sidecar, test sources and evidence moved to *-r4-orphaned for provenance, screenshots dropped); re-run assignments R4B
+
+ .../DG5/round-4/code-security-reviewer-rerun.md    |  183 ++
+ .../assignments/DG5/round-4/qa-verifier-rerun.md   |  165 ++
+ docs/delivery/progress.md                          |   12 +-
+ .../evidence/round-4/00-candidate-identity.log     |   17 +
+ .../evidence/round-4/01-install.log                |   28 +
+ .../evidence/round-4/02-static-node24.log          |  295 +++
+ .../evidence/round-4/03-unit-node24.log            | 1702 +++++++++++++++++
+ .../evidence/round-4/04-unit-node22.log            | 1697 +++++++++++++++++
+ .../round-4/04a-unit-node22-architecture-alone.log |   39 +
+ .../evidence/round-4/04b-unit-node22-run2.log      | 1703 +++++++++++++++++
+ .../evidence/round-4/04c-unit-node22-run3.log      | 1684 +++++++++++++++++
+ ...5-integration-locale-unset.attempt1-stopped.log |  928 ++++++++++
+ .../05a-integration-locale-unset-shard1of3.log     |  565 ++++++
+ .../05b-integration-locale-unset-shard2of3.log     |  624 +++++++
+ .../05c-integration-locale-unset-shard3of3.log     |  494 +++++
+ .../round-4/06a-integration-c-utf8-shard1of3.log   |  579 ++++++
+ .../round-4/06b-integration-c-utf8-shard2of3.log   |  565 ++++++
+ .../round-4/06c-integration-c-utf8-shard3of3.log   |  473 +++++
+++ git log '--format=%h %ad %s' --date=iso -- docs/delivery/reviews/DG5/round-4/code-security-reviewer.verifications.json
+05305ba 2026-10-20 09:08:57 +0000 run: DG5-T-DG5-REV-SEC-R4C-code-security-reviewer-20261020T074435Z-ed64647d (review evidence, auto-committed by run-agent.sh)
+b6c03d7 2026-10-19 12:33:12 +0000 DG5 round 4: salvage the code-security and QA reviews stopped by the container restart of about 12:31Z (runs committed by their runners as they stood, c3c964e and bc450c1; partial sidecar, test sources and evidence moved to *-r4-orphaned for provenance, screenshots dropped); re-run assignments R4B
+c3c964e 2026-10-19 12:31:36 +0000 run: DG5-T-DG5-REV-SEC-R4-code-security-reviewer-20261019T095848Z-d66ca737 (review evidence, auto-committed by run-agent.sh)
+Fix commits named in decisions (sample), ancestry to source 12dc33e4f9f2f804aeb0a9774a988d699709a235:
+1608c29 ancestor=yes Merge dg5/be-aa1 (wave AA, D-178) Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com> Claude-Ses
+a5900c0 ancestor=yes Merge dg5/fe-aa1 (wave AA, D-178) Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com> Claude-Ses
+d2f4579 ancestor=yes DG5 wave AA orchestrator follow-up (D-178): CSV export description notes the demo label row; the rem
+d3bcb4a ancestor=yes Merge dg5/fe-ab1 (wave AB, D-180)
+45287b4 ancestor=yes Merge dg5/fe-ab2 (wave AB2, D-181)
+ff5f561 ancestor=yes Merge T-DG5-FE-Z1B (F-DG5-146)
+c71d166 ancestor=yes Merge T-DG5-FE-Z1C (F-DG5-146 follow-up)
+
+Findings history entries with status FIXED_PENDING_VERIFICATION for DG5:
+0
+DG4 comparison: FIXED_PENDING_VERIFICATION entries:
+25

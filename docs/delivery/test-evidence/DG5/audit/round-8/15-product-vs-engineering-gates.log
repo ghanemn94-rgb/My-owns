@@ -1,0 +1,50 @@
+++ git grep -n -i -E '\bDG[0-7]\b' 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps packages ':!*.test.*' ':!**/test/**' ':!**/e2e/**'
+++ grep -v -i 'comment\|//\|/\*\|\*'
+++ head -10
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/src/modules/workflows/gates.ts:995:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/README.md:33:would be cleaner; it is requested in the T-DG1-FE handback.
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/config/src/index.ts:140:      "maintenance (F-DG4-128). Integer 1-600; 60 is the cadence pg-boss documents",
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0001_identity_access.sql:1:-- 0001 identity and access (T-DG1-BE). Contract: docs/architecture/data-dictionary.md; ADR-0003/0005/0006.
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0002_transformation.sql:1:-- 0002 transformation records (T-DG1-BE). Contract: docs/architecture/data-dictionary.md "transformation".
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0003_audit_event.sql:1:-- 0003 append-only audit trail (T-DG1-BE; ADR-0004, REQ-S16-032).
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0004_outbox_jobs.sql:2:-- (T-DG1-BE; ADR-0007 §6, ADR-0008).
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0005_seed_roles_permissions.sql:1:-- 0005 role and permission seed (T-DG1-BE; ADR-0006). EXACTLY packages/shared/src/permissions.ts:
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0006_pgboss_schema_v25.sql:1:-- 0006 pg-boss 11.0.0 queue schema, schema version 25 (T-DG1-BE; ADR-0008, data dictionary "pg-boss schema").
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/db/migrations/0007_oidc_login_browser_binding.sql:1:-- 0007 bind each OIDC login state to the browser that started the login (T-DG1-BE3, F-DG1-103; RFC 6749 §10.12,
+++ git grep -n -i -E 'PMI[- ](certified|official|standard)|officially certified|certified product' 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src packages/shared/src
+++ grep -v -i 'not \(an \)\?\(official\|certified\)\|never\|isn.t\|is not'
+++ head -10
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/playbook/feg.test.tsx:240:      // No element is labelled a PMI standard (REQ-PB-002); the page names no engineering delivery gate.
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/playbook/feg.test.tsx:242:        /PMI standard|certified/i,
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/playbook/feg.test.tsx:244:      expect(document.body.textContent).not.toMatch(/PMI certified|\bDG[0-7]\b/);
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/studio/route-editor.test.tsx:280:      // Nothing in the element view calls an element a PMI standard, official or certified.
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/studio/route-editor.test.tsx:282:      expect(table.textContent ?? "").not.toMatch(/PMI standard|official PMI|certified|معيار PMI الرسمي|معتمد من PMI/i);
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/text-scan/corpus.ts:21:  { text: "This is an official PMI standard.", expected: true },
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/text-scan/corpus.ts:22:  { text: "A PMI certified product", expected: true },
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/text-scan/corpus.ts:23:  { text: "PMI-certified methodology", expected: true },
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/text-scan/corpus.ts:55:  { text: "OFFICIAL PMI STANDARD", expected: true },
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/text-scan/corpus.ts:60:  { text: "PMI standard software for transformation", expected: true },
+++ git grep -n -i synthetic 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- 'packages/db/src/seed*' 'packages/**/demo*'
+++ wc -l
+266
+++ git grep -n -E '"(isSynthetic|synthetic)"' 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/api/src
+++ head -3
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/src/modules/evidence/evidence.test.ts:159:        writeFileSync(join(dir, name), "synthetic");
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/src/modules/evidence/evidence.test.ts:178:      expect(removed[0]!.sizeBytes).toBe("synthetic".length);
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/src/modules/platform/db-errors-p5-demo.test.ts:21:    const p = mapDatabaseGuardError({ code: "23514", constraint, message: "synthetic" });
+++ git grep -n -i 'Illustrative example — synthetic' 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- packages apps
+++ head -3
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/src/modules/forms/export.ts:96:  en: "Illustrative example — synthetic",
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/test/integration/forms/form-export-illustrative.test.ts:27:const LABEL = { en: "Illustrative example — synthetic", ar: "مثال توضيحي — اصطناعي" } as const;
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/api/test/integration/forms/form-records.test.ts:484:    expect(exportCsv({ ...body, illustrativeLabel: "Illustrative example — synthetic" })).toBe(
+++ git grep -n -i -E 'G6.*(DG7|engineering)|DG7' 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src/i18n packages/shared/src
+++ head -5
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/i18n/problems-p5.test.ts:101:  it("no P5 problem text names an engineering delivery gate (DG0–DG7)", () => {
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/schemas/approval-routes.ts:5:// nothing here decides anything, and nothing touches the engineering gates DG0-DG7.
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/schemas/approvals.ts:3:// and nothing here relates to the engineering gates DG0-DG7. A blank rationale is a 422 business rule
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/schemas/automation.ts:7:// engineering gates DG0-DG7.
+12dc33e4f9f2f804aeb0a9774a988d699709a235:packages/shared/src/schemas/benefit-scenarios.ts:16:// the engineering gates DG0-DG7.
+round-7/domain-reviewer.json DOM-R7-03-fetchallpages-2000-cap PASS :: 
+round-7/domain-reviewer.json DOM-R7-06-demo-probes PASS :: 
+round-7/domain-reviewer.json DOM-R7-12-no-official-claims-and-repair-diff PASS ::  In the diff, the matches are code comments that cite D-180/D-181 and say nothing touches DG0-DG7.
+round-7/qa-verifier.json QA-R7-09-export-samples PASS :: 

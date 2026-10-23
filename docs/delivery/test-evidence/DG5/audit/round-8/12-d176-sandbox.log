@@ -1,0 +1,15 @@
+== docs/delivery/reviews/DG5/round-5/code-security-reviewer.json
+SEC-R5-06-postgres-in-sandbox PASS :: Four clusters started on the first attempt, on ports 26510, 26530, 26560 and 26570: "PostgreSQL 16.13 ... server_encoding UTF8, lc_collate C, lc_ctype C". They were removed by the harness. Round 4's BLOCKED cause (unshare: Operation not permitted, max_user_namespaces 0) did not recur.
+SEC-R5-10-d176-sandbox-setting PASS :: Static reading:
+- The key only drops the inner Bash sandbox's bwrap --disable-userns, the Claude Code 2.1.304 default, restoring the pre-2.1.304 state.
+- The outer process sandbox is unchanged: --ro-bind / / and read-only repository binds; --cap-drop ALL then setpriv --bounding-set -all,+setfcap (agent_sandbox.py:187-188); no_new_privs; the per-run Landlock domain (D-033).
+- Mounts inherited into a child user namespace are locked copies, so the namespace's full capabilities cannot unlock them.
+
+Dynamic results:
+- The D-030 nested-namespace test PASSED in this environment. CapEff/CapBnd were 0x80000000 and NoNewPrivs 1. Inside `unshare -Urm` CapEff was full, yet no REMOUNTED, UNMOUNTED or WRO
+SEC-R5-11-repair-diff PASS :: The diff touches 7 files.
+- apps/web: FormFramework.tsx, FormSchemaPage.tsx and ExportDialog.tsx swap `div.table-scroll` for TableScrollRegion (with comments). app.css adds minmax(0, 1fr) grid tracks on .dialog and .dialog__body, plus flex-wrap on .dialog__footer. table-regions.test.tsx is a new unit guard and p5-form-tables-reflow.spec.ts a new e2e regression.
+- tools/agents/agent_settings.py: the D-176 key (SEC-R5-10).
+
+No data flow, request, authorization, href, innerHTML or eval change. Nothing security-relevant.
+== docs/delivery/reviews/DG5/round-7/code-security-reviewer.json

@@ -1,0 +1,86 @@
+++ git show 12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/api/queries.ts
+++ sed -n 95,125p
+}
+export function useOrganization(id: string | undefined) {
+  return useQuery({
+    queryKey: keys.organization(id ?? ""),
+    queryFn: () => api.get<Organization>(`/api/v1/organizations/${id}`),
+    enabled: Boolean(id),
+  });
+}
+
+/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
+export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+  const out: T[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const page: Page<T> = await api.get<Page<T>>(path, {
+      ...query,
+      limit: PAGINATION.maxLimit,
+      ...(cursor ? { cursor } : {}),
+    });
+    out.push(...page.items);
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return out;
+}
+
+export function useBusinessUnits(orgId: string | undefined) {
+  return useQuery({
+    queryKey: keys.businessUnits(orgId ?? ""),
+    queryFn: () => fetchAllPages<BusinessUnit>(`/api/v1/organizations/${orgId}/business-units`),
+    enabled: Boolean(orgId),
+++ git grep -n fetchAllPages 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src/features/traceability/api.ts apps/web/src/features/benefits/api.ts apps/web/src/features/procedures/CompleteWithOutput.tsx
+++ head
+++ git grep -n fetchAllPages 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- 'apps/web/src/**/api.ts'
+++ grep -i 'traceab\|benefit'
+++ head -5
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefit-formulas/api.ts:12:import { fetchAllPages, p3Keys, shouldRetry } from "../../api/queries.ts";
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefit-formulas/api.ts:23:      fetchAllPages<BenefitFormula>(FORMULAS_URL, {
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefit-formulas/api.ts:52:    queryFn: () => fetchAllPages<BenefitCalculation>(`${versionUrl(id, versionNo ?? 0)}/calculations`),
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts:34:import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts:125:    queryFn: () => fetchAllPages<BenefitRegisterRow>(benefitPaths.benefits(tid), query),
+++ git grep -n 'fetchAllPages\|for (let page\|20' e70ac02f63cd1f42487cfa4dae73f68e933da015 -- apps/web/src/api/queries.ts
+++ head -8
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:92:    queryFn: () => fetchAllPages<Organization>("/api/v1/organizations"),
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:103:/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:104:export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:107:  for (let i = 0; i < 20; i++) {
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:123:    queryFn: () => fetchAllPages<BusinessUnit>(`/api/v1/organizations/${orgId}/business-units`),
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:156:    queryFn: () => fetchAllPages<User>("/api/v1/users", { organizationId: orgId ?? "" }),
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:295: * A whole P2 register of one transformation (bounded: 20 pages of 100). The registers are small per transformation;
+e70ac02f63cd1f42487cfa4dae73f68e933da015:apps/web/src/api/queries.ts:301:    queryFn: () => fetchAllPages<T>(`${base(tid)}/${resource}`, query),
+++ git grep -c fetchAllPages e70ac02f63cd1f42487cfa4dae73f68e933da015 -- apps/web/src/features/traceability/api.ts apps/web/src/features/benefits/api.ts
+++ git grep -n ALL_TRANSFORMATIONS_MAX_PAGES 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src
+++ head -4
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/api/queries.ts:237:export const ALL_TRANSFORMATIONS_MAX_PAGES = 1000;
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/api/queries.ts:252:  for (let i = 0; i < ALL_TRANSFORMATIONS_MAX_PAGES; i++) {
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/api/queries.ts:269:  throw new Error(`Transformation list: more than ${ALL_TRANSFORMATIONS_MAX_PAGES} pages.`);
+REQ-PB-091 final_gate=DG5 status=IMPLEMENTED Implement the 25-question Transformation Health Check with score and top 3 actions
+REQ-S15-009 final_gate=DG6 status=SPECIFIED Provide responsive desktop and tablet layouts and mobile-friendly review, approval and KPI-update flows
+REQ-S15-011 final_gate=DG6 status=SPECIFIED Distinguish saved draft from submitted or approved data, and handle empty, loading, error, stale, conflict and no-permis
+++ git grep -n -A4 'function useReadableTransformations' 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src
+++ head -24
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts:311:export function useReadableTransformations() {
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts-312-  return useQuery({
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts-313-    queryKey: [...p4Keys.all, "finance-queue", "transformations"],
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts-314-    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/benefits/api.ts-315-    ...opts,
+--
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/traceability/api.ts:330:export function useReadableTransformations(orgId: string, enabled = true) {
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/traceability/api.ts-331-  return useQuery({
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/traceability/api.ts-332-    queryKey: orgKey(orgId, "readable-transformations"),
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/traceability/api.ts-333-    queryFn: () =>
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/traceability/api.ts-334-      fetchAllPages<{ id: string; code: string; name: string; businessUnitId: string | null }>(
+++ git grep -n -A4 'function useReadableTransformations' e70ac02f63cd1f42487cfa4dae73f68e933da015 -- apps/web/src
+++ grep -c fetchAllPages
+2
+++ git grep -n fetchAllPages 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src/pages/procedures/CompleteWithOutput.tsx 'apps/web/src/**/CompleteWithOutput.tsx'
+++ head -3
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/procedures/CompleteWithOutput.tsx:14:import { fetchAllPages } from "../../api/queries.ts";
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/procedures/CompleteWithOutput.tsx:37:  if (source.kind === "transformations") return fetchAllPages<OutputRow>("/api/v1/transformations");
+12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/src/pages/procedures/CompleteWithOutput.tsx:52:  return fetchAllPages<OutputRow>(base);
+++ git grep -l fetchAllPages 12dc33e4f9f2f804aeb0a9774a988d699709a235 -- apps/web/src ':!*.test.*'
+++ wc -l
+35

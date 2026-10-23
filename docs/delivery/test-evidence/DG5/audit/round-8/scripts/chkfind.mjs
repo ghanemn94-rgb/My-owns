@@ -1,0 +1,13 @@
+import {readFileSync} from "node:fs";
+const repo="/home/user/My-owns";
+const R=await import(repo+"/tools/gates/lib/rules.mjs");
+const errors=[];
+const doc=R.loadStages(repo,errors);
+const stage=doc.stages.find(s=>s.id==="DG5");
+const recs=["round-7/domain-reviewer.json","round-7/code-security-reviewer.json","round-8/qa-verifier.json"].map(p=>JSON.parse(readFileSync(repo+"/docs/delivery/reviews/DG5/"+p,"utf8")));
+const gate={stage_id:"DG5",candidate_id:stage.candidate.candidate_id,source_commit:stage.candidate.source_commit,accepted_observations:["F-DG5-125","F-DG5-150","F-DG5-151"],accepted_observation_rationale:{}};
+R.checkFindings(repo,stage,recs,gate,errors);
+console.log("stage state:",stage.state);
+console.log("checkFindings errors (hypothetical gate at source 12dc33e, specialist records only):",errors.length);
+for(const e of errors) console.log(" -",e);
+const e2=[]; R.checkReviewRounds(repo,stage,e2); console.log("checkReviewRounds errors:",e2.length); e2.forEach(e=>console.log(" -",e));

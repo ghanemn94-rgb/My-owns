@@ -1,0 +1,92 @@
+++ git clone -q --no-local --no-checkout /home/user/My-owns /var/tmp/mth-run.88rAkX/claude-0/c
+++ tail -3
+++ du -sh /var/tmp/mth-run.88rAkX/claude-0/c
+1.8G	/var/tmp/mth-run.88rAkX/claude-0/c
+++ cd /var/tmp/mth-run.88rAkX/claude-0/c
+++ git rev-parse HEAD
+792e693ad2eba989deba2c82169bfd7cea7c0c0c
+++ git rev-parse --is-shallow-repository
+false
+++ git fsck --connectivity-only
+++ grep -vc dangling
+0
+++ git for-each-ref refs/remotes refs/tags
+++ wc -l
+171
+++ git cat-file -e '12dc33e4f9f2f804aeb0a9774a988d699709a235^{commit}'
+++ echo has_source=0
+has_source=0
+++ git merge-base --is-ancestor 12dc33e4f9f2f804aeb0a9774a988d699709a235 HEAD
+++ echo ancestor=0
+ancestor=0
+++ mkdir -p /var/tmp/mth-run.88rAkX/claude-0/tools-src
+++ git archive 12dc33e4f9f2f804aeb0a9774a988d699709a235 tools/gates
+++ tar -x -C /var/tmp/mth-run.88rAkX/claude-0/tools-src
+++ git -C /var/tmp/mth-run.88rAkX/claude-0/c config core.sparseCheckout false
+++ git sparse-checkout set --no-cone /tools/ /docs/delivery/stages.json /docs/delivery/candidates/ /package.json
+++ tail -2
+++ git checkout -q
+++ tail -2
+++ git status --short
+++ head -3
+++ node tools/gates/candidate.mjs --stage DG5 --ref 12dc33e4f9f2f804aeb0a9774a988d699709a235
+{"stage":"DG5","source":"12dc33e4f9f2f804aeb0a9774a988d699709a235","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+++ echo exit_clone_ref=0
+exit_clone_ref=0
+++ cd /home/user/My-owns
+++ node tools/gates/candidate.mjs --stage DG5 --ref 12dc33e4f9f2f804aeb0a9774a988d699709a235
+{"stage":"DG5","source":"12dc33e4f9f2f804aeb0a9774a988d699709a235","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+++ echo exit_repo_ref=0
+exit_repo_ref=0
+++ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:15628ce49b17d9dec72398a60c73a9c92ba3749de9169fba8eb636c95e51fc8e","files":2194}
+++ echo exit_repo_wt=0
+exit_repo_wt=0
+++ node tools/gates/candidate.mjs --stage DG5 --diff
+++ head -40
+{
+  "frozen": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47",
+  "working_tree": "sha256:15628ce49b17d9dec72398a60c73a9c92ba3749de9169fba8eb636c95e51fc8e",
+  "matches": false,
+  "added": [],
+  "removed": [],
+  "changed": [
+    "docs/delivery/decisions.md"
+  ]
+}
+++ echo exit_diff=1
+exit_diff=1
+++ node -e 'const m=require("./docs/delivery/candidates/DG5/33188e9e698fd11b.manifest.json");console.log(m.candidate_id,m.source_commit||m.source,m.frozen_at,(m.entries||[]).length)'
+sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47 12dc33e4f9f2f804aeb0a9774a988d699709a235 2026-10-22T22:09:41Z 2194
+++ node -e 'const s=require("./docs/delivery/stages.json").stages.find(s=>s.id==="DG5");console.log(JSON.stringify({status:s.status,candidate:s.candidate},null,1))'
+{
+ "candidate": {
+  "candidate_id": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47",
+  "source_commit": "12dc33e4f9f2f804aeb0a9774a988d699709a235",
+  "frozen_at": "2026-10-22T22:09:41Z",
+  "manifest_path": "docs/delivery/candidates/DG5/33188e9e698fd11b.manifest.json"
+ }
+}
+++ git diff --name-only 12dc33e4f9f2f804aeb0a9774a988d699709a235 HEAD
+++ awk -F/ '{print $1"/"$2"/"$3"/"$4}'
+++ sort
+++ uniq -c
+      6 docs/delivery/assignments/DG5
+      1 docs/delivery/candidates/DG5
+      1 docs/delivery/decisions.md/
+      1 docs/delivery/findings.json/
+      9 docs/delivery/reviews/DG5
+     44 docs/delivery/runs/DG5
+      1 docs/delivery/stages.json/
+   2099 docs/delivery/test-evidence/DG5
+ docs/delivery/decisions.md | 1 +
+ 1 file changed, 1 insertion(+)
++| D-183 | 2026-10-23 | delivery-orchestrator | **DG5 round 7 on candidate `33188e9e`: all three PASS; three new Low, non-mandatory findings; a short acceptance round 8 on the same candidate.**<br>- code-security `T-DG5-REV-SEC-R7` PASS, no findings. Container restarts stopped domain and qa twice (R7, R7B; kept as `*-r7-orphaned`, `*-r7b-orphaned`); the third runs finished: domain `T-DG5-REV-DOM-R
+d7831c1 DG5: round-7 findings imported (F-DG5-148, 149 CLOSED_VERIFIED; new F-DG5-125, 150, 151 Low); D-183; acceptance round 8 on the same candidate
+
+NOTE (release-auditor, disclosed): the FIRST clone attempt, a plain `git clone /home/user/My-owns $TMPDIR/c` with checkout,
+filled the run's scratch volume (0 MB free; checkout failed: "You can inspect what was checked out with 'git status'"),
+so candidate.mjs was not found in that clone (MODULE_NOT_FOUND, exit 1). Its output was overwritten by the re-run above.
+I deleted only my own clone ($TMPDIR/c) and made a complete clone with `--no-local --no-checkout` (not shallow, fsck
+connectivity clean, all 171 refs), then a sparse checkout of /tools/, stages.json, candidates/ and package.json for the
+tool. candidate.mjs --ref reads git objects, so the sparse checkout does not affect the result.

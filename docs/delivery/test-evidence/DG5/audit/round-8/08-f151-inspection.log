@@ -1,0 +1,119 @@
+++ git ls-tree -r --name-only 12dc33e4f9f2f804aeb0a9774a988d699709a235
+++ grep p5-launch-health-kpi.spec.ts
+apps/web/e2e/p5-launch-health-kpi.spec.ts
++++ git ls-tree -r --name-only 12dc33e4f9f2f804aeb0a9774a988d699709a235
++++ grep p5-launch-health-kpi.spec.ts
++++ head -1
+++ f=apps/web/e2e/p5-launch-health-kpi.spec.ts
+++ git show 12dc33e4f9f2f804aeb0a9774a988d699709a235:apps/web/e2e/p5-launch-health-kpi.spec.ts
+++ sed -n 120,185p
+  const plan = await lead.call<{ version: number }>("GET", `/api/v1/transformations/${tid}/launch-plan`);
+  await aud.call(
+    "PATCH",
+    `/api/v1/transformations/${tid}/launch-plan`,
+    { startDate: "2026-10-09" },
+    { ifMatch: plan.version, expect: 403 },
+  );
+  expect(foreign).toEqual([]);
+
+  // REQ-PB-087: the Day-90 test of the same plan.
+  await page.goto(`/transformations/${tid}/day-90-test`);
+  await expect(h1(page)).toHaveText(tr(lang, "launchHealthP5.day90.title"));
+  await expect(page.locator("[data-question]")).toHaveCount(6);
+  await expect(page.locator("[data-question='q1'] h3")).toContainText(
+    lang === "en"
+      ? "Can leaders explain the same case for change and North Star?"
+      : "هل يستطيع القادة شرح مبررات التغيير والنجم الشمالي ذاتهما؟",
+  );
+  const q1 = page.locator("[data-form='respond-q1']");
+  await q1.getByLabel(tr(lang, "launchHealthP5.day90.answer.yes"), { exact: true }).check();
+  await q1.getByRole("button", { name: tr(lang, "launchHealthP5.day90.save", { n: 1 }), exact: true }).click();
+  await expect(page.locator("[data-test-status='open']")).toContainText(
+    tr(lang, "launchHealthP5.completion.incomplete", { answered: 1, total: 6 }),
+  );
+  await page.getByRole("button", { name: tr(lang, "launchHealthP5.day90.complete"), exact: true }).click();
+  await expect(alertOf(page)).toContainText(tr(lang, "problems.day_ninety_test__incomplete"));
+  await expectAccessible(page, lang, "p5-day-90-test");
+  await shot(page, lang, "p5-day-90-test");
+});
+
+test("Health check: Incomplete (24/25) with no band, 17 / 25 in band 16-20, the top-3-actions refusal, submit; the schemes", async ({
+  page,
+  playwright,
+}, info) => {
+  test.setTimeout(240_000);
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const { id: tid } = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL,
+    name: `Synthetic FE-F ${lang.toUpperCase()} health`,
+    mode: "end_to_end",
+  });
+  await signIn(page, lang, "dev.lead");
+  await page.goto("/playbook/health-check");
+  await page.locator(`[data-entry='health-check'] a[href='/transformations/${tid}/health-check']`).click();
+  await expect(h1(page)).toHaveText(tr(lang, "launchHealthP5.health.title"));
+  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.start"), exact: true }).click();
+  await expect(page.locator("[data-assessment-status='draft']")).toBeVisible();
+  // 24 answers through the API (17 Yes), the 25th through the screen.
+  const list = await lead.call<{ items: { id: string }[] }>("GET", `/api/v1/transformations/${tid}/health-checks`);
+  const aid = list.items[0]!.id;
+  for (let i = 1; i <= 24; i++) {
+    const a = await lead.call<{ version: number }>("GET", `/api/v1/transformations/${tid}/health-checks/${aid}`);
+    await lead.call(
+      "PUT",
+      `/api/v1/transformations/${tid}/health-checks/${aid}/answers/q${String(i).padStart(2, "0")}`,
+      { response: i <= 17 ? "yes" : "no" },
+      { ifMatch: a.version },
+    );
+  }
+  await page.reload();
+  const facts = page.locator("[data-assessment-status='draft']");
+  await expect(facts).toContainText(tr(lang, "launchHealthP5.completion.incomplete", { answered: 24, total: 25 }));
+  await expect(facts.locator("[data-band='none']")).toHaveText(tr(lang, "launchHealthP5.health.noBand"));
+  await expect(page.locator("[data-state='scoring-assumption']").first()).toContainText(
+    tr(lang, "launchHealthP5.health.scoringAssumption"),
+8-  await expect(page.locator("[data-field='score'] [data-score='17']")).toBeVisible();
+9-  await expect(page.locator("[data-field='band'] [data-band='16-20']")).toBeVisible();
+10:  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.submit"), exact: true }).click();
+11:  await expect(alertOf(page)).toContainText(tr(lang, "problems.health_check__actions_required"));
+12-  for (const n of [1, 2, 3])
+13-    await page
+14-      .getByLabel(tr(lang, "launchHealthP5.health.actionText", { n }), { exact: true })
+15-      .fill(`Synthetic action ${n}`);
+16:  // Wait for the save AND the reload of the assessment (its version steps), so Submit sends the current If-Match.
+17:  const saved = page.waitForResponse((r) => r.request().method() === "PUT" && /\/actions$/.test(r.url()));
+18:  const reloaded = page.waitForResponse(
+19-    (r) => r.request().method() === "GET" && new RegExp(`/health-checks/${aid}$`).test(r.url()),
+20-  );
+21-  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.saveActions"), exact: true }).click();
+22-  expect((await saved).status()).toBe(200);
+23-  await reloaded;
+24:  await expect(page.locator("[data-form='health-actions'] [role='alert']")).toHaveCount(0);
+25:  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.submit"), exact: true }).click();
+26:  await expect(page.locator("[data-assessment-status='submitted']")).toBeVisible();
+27:  await expect(page.locator("[data-assessment-status='submitted'] [data-band='16-20']")).toBeVisible();
+28:  await expectAccessible(page, lang, "p5-health-check-submitted");
+29:  await shot(page, lang, "p5-health-check-submitted");
+30-
+31-  // REQ-S14-003: the published scheme v1 with the four source bands.
+32-  await page.goto("/admin/health-schemes");
+{"probe":"slowget","lang":"en","slowMs":1500,"rep":0,"alertAt":204,"saveClickAt":275,"issued":[{"n":1,"at":147},{"n":2,"at":378},{"n":3,"at":2056}],"savedStatus":200,"savedVersion":27,"reloadedSeq":1,"reloadedIssuedAt":147,"reloadedIssuedBeforeSaveClick":true,"reloadedVersion":26,"ifMatch":"\"27\"","submitStatus":200,"submittedVisibleWithin5s":true,"alerts":"","serverStatus":"submitted","serverVersion":28}
+{"probe":"slowget","lang":"en","slowMs":1500,"rep":1,"alertAt":191,"saveClickAt":256,"issued":[{"n":1,"at":98},{"n":2,"at":348},{"n":3,"at":2049}],"savedStatus":200,"savedVersion":27,"reloadedSeq":1,"reloadedIssuedAt":98,"reloadedIssuedBeforeSaveClick":true,"reloadedVersion":26,"ifMatch":"\"27\"","submitStatus":200,"submittedVisibleWithin5s":true,"alerts":"","serverStatus":"submitted","serverVersion":28}
+{"probe":"slowget","lang":"en","slowMs":1500,"rep":2,"alertAt":195,"saveClickAt":2
+---
+{"probe":"slowget","lang":"en","slowMs":0,"rep":0,"alertAt":158,"saveClickAt":215,"issued":[{"n":1,"at":67},{"n":2,"at":315},{"n":3,"at":471}],"savedStatus":200,"savedVersion":27,"reloadedSeq":2,"reloadedIssuedAt":315,"reloadedIssuedBeforeSaveClick":false,"reloadedVersion":27,"ifMatch":"\"27\"","submitStatus":200,"submittedVisibleWithin5s":true,"alerts":"","serverStatus":"submitted","serverVersion":28}
+{"probe":"slowget","lang":"en","slowMs":0,"rep":1,"alertAt":160,"saveClickAt":221,"issued":[{"
+  6 passed (58.5s)
+EXIT 0
+2026-10-23T02:44:49Z
+ 02:44:49 up  2:13,  0 user,  load average: 5.03, 3.73, 3.49
+== docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log
+  174 passed (27.9m)
+EXIT 0
+== docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log
+  174 passed (27.0m)
+EXIT 0
+== docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-d182repro-unset.log
+  10 passed (1.6m)
+EXIT 0

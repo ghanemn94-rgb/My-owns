@@ -1,0 +1,61 @@
+keys sample: id,stage_id,requirement,severity,mandatory_violation,title,reproduction,expected,actual,evidence,reported_by,reported_in,owner,status,history,verification
+DG5 findings: 21
+F-DG5-120 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-121 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-100 Medium mand=true CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-101 Medium mand=true CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-140 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-141 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-122 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-142 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-143 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-123 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-102 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-144 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-145 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="solution-architect" verified_by=undefined
+F-DG5-146 Medium mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-124 Medium mand=true CLOSED_VERIFIED fix= full=false ancestor=none owner="backend-workflow-engineer" verified_by=undefined
+F-DG5-147 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-148 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-149 Low mand=false CLOSED_VERIFIED fix= full=false ancestor=none owner="frontend-ux-engineer" verified_by=undefined
+F-DG5-125 Low mand=false ACCEPTED_OBSERVATION owner="frontend-ux-engineer" acceptances=null
+F-DG5-150 Low mand=false ACCEPTED_OBSERVATION owner="frontend-ux-engineer" acceptances=null
+F-DG5-151 Low mand=false ACCEPTED_OBSERVATION owner="frontend-ux-engineer" acceptances=null
+status { CLOSED_VERIFIED: 18, ACCEPTED_OBSERVATION: 3 } severity { Medium: 10, Low: 11 }
+non-terminal or defective: [
+  'F-DG5-120', 'F-DG5-121',
+  'F-DG5-100', 'F-DG5-101',
+  'F-DG5-140', 'F-DG5-141',
+  'F-DG5-122', 'F-DG5-142',
+  'F-DG5-143', 'F-DG5-123',
+  'F-DG5-102', 'F-DG5-144',
+  'F-DG5-145', 'F-DG5-146',
+  'F-DG5-124', 'F-DG5-147',
+  'F-DG5-148', 'F-DG5-149'
+]
+unresolved Critical/High: 0 unresolved mandatory: 0
+
+NOTE (release-auditor): in this first pass, "verified_by=undefined" only means my script read the wrong field name;
+findings.json keeps the verifier in verification.by_role (see 05b/05c). The empty "fix=" column IS accurate: none of
+the 18 CLOSED_VERIFIED DG5 findings has a fix_revision (or fix_summary), and none went through
+FIXED_PENDING_VERIFICATION (05c). The validator's own checkFindings, run in 05b, gives the authoritative error list.
+Verifier vs owner, from verification.by_role: no DG5 closure was verified by its owner (all owners are implementers;
+all verifiers are domain-reviewer, code-security-reviewer or qa-verifier).
+F-DG5-120 owner=backend-workflow-engineer by=domain-reviewer self=false
+F-DG5-121 owner=frontend-ux-engineer by=domain-reviewer self=false
+F-DG5-100 owner=backend-workflow-engineer by=code-security-reviewer self=false
+F-DG5-101 owner=backend-workflow-engineer by=code-security-reviewer self=false
+F-DG5-140 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-141 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-122 owner=backend-workflow-engineer by=domain-reviewer self=false
+F-DG5-142 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-143 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-123 owner=backend-workflow-engineer by=domain-reviewer self=false
+F-DG5-102 owner=backend-workflow-engineer by=code-security-reviewer self=false
+F-DG5-144 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-145 owner=solution-architect by=qa-verifier self=false
+F-DG5-146 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-124 owner=backend-workflow-engineer by=domain-reviewer self=false
+F-DG5-147 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-148 owner=frontend-ux-engineer by=qa-verifier self=false
+F-DG5-149 owner=frontend-ux-engineer by=qa-verifier self=false
