@@ -1,0 +1,23 @@
+## candidate check (start) 2026-10-23T03:55:48Z, node v24.21.0
+$ git rev-parse HEAD
+a5d45be21c1b789effc263b59782eb4cfaed677f
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG5 --ref HEAD
+{"stage":"DG5","source":"HEAD","candidate_id":"sha256:15628ce49b17d9dec72398a60c73a9c92ba3749de9169fba8eb636c95e51fc8e","files":2194}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --ref 12dc33e
+{"stage":"DG5","source":"12dc33e","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --diff (working tree of the shared checkout)
+{
+  "frozen": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47",
+  "working_tree": "sha256:15628ce49b17d9dec72398a60c73a9c92ba3749de9169fba8eb636c95e51fc8e",
+  "matches": false,
+  "added": [],
+  "removed": [],
+  "changed": [
+    "docs/delivery/decisions.md"
+  ]
+}
+exit=1

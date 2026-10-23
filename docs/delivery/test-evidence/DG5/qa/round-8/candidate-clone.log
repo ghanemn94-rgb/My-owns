@@ -1,0 +1,13 @@
+## shared clone check 2026-10-23T04:03:31Z; df before: /dev/vda        252G   34G  3.9G  90% /var/tmp/mth-run.nzZrHu/claude-0
+$ git clone -q --shared /home/user/My-owns $TMPDIR/review-r8s && git checkout -q 12dc33e (only the 2194 candidate paths are needed; sparse not used)
+shallow=false commits=1587 head=a5d45be21c1b789effc263b59782eb4cfaed677f
+checkout exit=0 HEAD=12dc33e4f9f2f804aeb0a9774a988d699709a235 status_lines=0
+$ node tools/gates/candidate.mjs --stage DG5 (working tree of the clone at 12dc33e)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --diff (clone)
+{
+  "frozen": "sha256:3294f8fc030f48dc5c3c65caff150479ab4b4cdcb72daf02217e411c9cc8ba6d",
+  "working_tree": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47",
+exit=1
+df after: /dev/vda        252G   36G  1.5G  97% /var/tmp/mth-run.nzZrHu/claude-0

@@ -1,0 +1,50 @@
+## F-DG5-150 static inspection
+$ git show 12dc33e:apps/web/src/pages/traceability/TraceabilityPage.tsx | sed -n 100,118p
+              onClick={() => sel.set("root", null)}
+            >
+              <Icon name="cross" /> {t("traceability.graph.clearRoot")}
+            </button>
+          ) : null}
+        </div>
+        {root ? (
+          <p className="small" role="note" data-root={`${root.type}:${root.id}`}>
+            {t("traceability.graph.rooted", {
+              type: nodeTypeText(t, root.type),
+              name:
+                whole.data?.nodes.find((n) => n.recordId === root.id)?.label ??
+                whole.data?.nodes.find((n) => n.recordId === root.id)?.code ??
+                "…",
+            })}
+          </p>
+        ) : null}
+        <QueryState query={graph}>{(g) => <TraceGraphView graph={g} />}</QueryState>
+      </Section>
+$ git diff e70ac02 12dc33e -- apps/web/src/pages/traceability/TraceabilityPage.tsx
+diff --git a/apps/web/src/pages/traceability/TraceabilityPage.tsx b/apps/web/src/pages/traceability/TraceabilityPage.tsx
+index c82080d..fbddb56 100644
+--- a/apps/web/src/pages/traceability/TraceabilityPage.tsx
++++ b/apps/web/src/pages/traceability/TraceabilityPage.tsx
+@@ -311,7 +311,12 @@ function OrphanReport() {
+             <EmptyState title={t("traceability.orphans.empty")} body={t("traceability.orphans.emptyBody")} />
+           ) : (
+             <>
+-              <div className="table-wrap">
++              <div
++                className="table-wrap"
++                tabIndex={0}
++                role="region"
++                aria-label={t("common.table.scrollRegion", { caption: t("traceability.orphans.title") })}
++              >
+                 <table className="table table--compact" data-orphan-report>
+                   <caption className="visually-hidden">{t("traceability.orphans.title")}</caption>
+                   <thead>
+$ git grep -n 'record-name' 12dc33e -- apps/web/src/styles* apps/web/src/**/*.css
+12dc33e:apps/web/src/styles/app.css:399:   in .record-name, and so does the Modular entry missing-item label "· <name>". Inside a table it lowers the column's
+12dc33e:apps/web/src/styles/app.css:401:.record-name {
+$ DG5 rows whose acceptance names reflow/320 px/horizontal scroll
+matches: 0
+REQ-S15-008 DG4 IMPLEMENTED | Default the timezone to Asia/Riyadh and the currency to SAR, both configurable; store timestamps consistently and distinguish observation period, business date and event timestamp | A05;A09: a KPI actual for period 2026-10 entered on 2026-11-02 23:30 Asia/Riyadh keeps observation period 2026-10, business date 2026-11-02 and a UTC event timestamp; changing the default currency affects only new records
+REQ-S15-009 DG6 SPECIFIED | Provide responsive desktop and tablet layouts and mobile-friendly review, approval and KPI-update flows | A20: e2e tests at 360 px approve a gate item and submit a KPI actual in Arabic and English
+REQ-S15-010 DG6 SPECIFIED | Provide global search with permission filtering, saved views, filter chips, breadcrumbs, bulk updates, inline editing, draft recovery, record comparison and contextual help | A12;A14: search as a user scoped to transformation X returns no Y records; a bulk update touching a stale record reports a conflict for that record only; a draft survives a browser reload
+REQ-PB-088 | Seed the International Roaming worked example as clearly synthetic demo data | A01: the demo transformation's North Star equals 'Make international roaming effortless, trusted and economically accretive.'; the production initialization contains no demo records
+REQ-S13-009 | Preserve bilingual Arabic RTL and English LTR layout in exports | A15;A20: an Arabic PDF renders RTL with readable numbers and identifiers

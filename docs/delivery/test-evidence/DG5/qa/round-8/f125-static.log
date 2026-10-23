@@ -1,0 +1,114 @@
+## F-DG5-125 static inspection at candidate source 12dc33e (and DG4 e70ac02 for regression status)
+$ git show 12dc33e:apps/web/src/api/queries.ts | sed -n 104,119p
+/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
+export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+  const out: T[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const page: Page<T> = await api.get<Page<T>>(path, {
+      ...query,
+      limit: PAGINATION.maxLimit,
+      ...(cursor ? { cursor } : {}),
+    });
+    out.push(...page.items);
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return out;
+}
+$ git show e70ac02:apps/web/src/api/queries.ts | grep -n -A14 'export async function fetchAllPages'
+104:export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+105-  const out: T[] = [];
+106-  let cursor: string | null = null;
+107-  for (let i = 0; i < 20; i++) {
+108-    const page: Page<T> = await api.get<Page<T>>(path, {
+109-      ...query,
+110-      limit: PAGINATION.maxLimit,
+111-      ...(cursor ? { cursor } : {}),
+112-    });
+113-    out.push(...page.items);
+114-    if (!page.nextCursor) break;
+115-    cursor = page.nextCursor;
+116-  }
+117-  return out;
+118-}
+$ git grep -c 'fetchAllPages<' 12dc33e -- apps/web/src (non-test callers)
+169
+$ transformation-list callers of fetchAllPages at 12dc33e
+12dc33e:apps/web/src/pages/benefits/api.ts:314:    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+12dc33e:apps/web/src/pages/procedures/CompleteWithOutput.tsx:37:  if (source.kind === "transformations") return fetchAllPages<OutputRow>("/api/v1/transformations");
+  });
+}
+
+/** The transformations the caller may read in the organization (DG1 `listTransformations`, scope-filtered). */
+export function useReadableTransformations(orgId: string, enabled = true) {
+  return useQuery({
+    queryKey: orgKey(orgId, "readable-transformations"),
+    queryFn: () =>
+      fetchAllPages<{ id: string; code: string; name: string; businessUnitId: string | null }>(
+        tracePaths.transformations,
+        { organizationId: orgId, sort: "code:asc" },
+      ),
+    enabled: Boolean(orgId) && enabled,
+    retry: shouldRetry,
+    staleTime: 30_000,
+$ same callers at DG4 e70ac02
+e70ac02:apps/web/src/pages/benefits/api.ts:314:    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+328-
+329-/** The transformations the caller may read in the organization (DG1 `listTransformations`, scope-filtered). */
+330:export function useReadableTransformations(orgId: string, enabled = true) {
+331-  return useQuery({
+332-    queryKey: orgKey(orgId, "readable-transformations"),
+333-    queryFn: () =>
+334-      fetchAllPages<{ id: string; code: string; name: string; businessUnitId: string | null }>(
+$ server ordering of the DG5 automation lists that also use fetchAllPages
+    if (after)
+      q = q.where(sql<boolean>`(e.started_at, e.id) < (${String(after[0])}::timestamptz, ${String(after[1])}::uuid)`);
+    const rows = await q
+      .orderBy("e.started_at", "desc")
+      .orderBy("e.id", "desc")
+      .limit(query.limit + 1)
+      .execute();
+    }
+    const rows = await q
+      .orderBy(STATUS_RANK)
+      .orderBy("f.last_failed_at", "desc")
+      .orderBy("f.id", "desc")
+      .limit(query.limit + 1)
+      .execute();
+$ useAllTransformations guard (the D-181 pattern)
+ */
+export const ALL_TRANSFORMATIONS_MAX_PAGES = 1000;
+
+/**
+ * D-181: every transformation the caller may see, for a picker. Follows `nextCursor` of GET /api/v1/transformations
+ * (the existing list operation, PAGINATION.maxLimit per page) until it is null. A page that fails fails the whole
+ * query: a picker never offers a partial list as if it were complete. The request signal is passed to every page, so
+ * a cancelled query stops at the page in flight.
+ */
+export async function fetchAllTransformations(
+  params: AllTransformationsParams,
+  signal?: AbortSignal,
+): Promise<Transformation[]> {
+  const out: Transformation[] = [];
+  const seen = new Set<string>();
+  let cursor: string | null = null;
+  for (let i = 0; i < ALL_TRANSFORMATIONS_MAX_PAGES; i++) {
+    const page: Page<Transformation> = await api.get<Page<Transformation>>(
+      "/api/v1/transformations",
+      {
+        ...params,
+        includeArchived: params.includeArchived ? true : undefined,
+        limit: PAGINATION.maxLimit,
+        ...(cursor ? { cursor } : {}),
+      },
+      signal,
+    );
+    out.push(...page.items);
+    if (!page.nextCursor) return out;
+    if (seen.has(page.nextCursor)) throw new Error("Transformation list: the server repeated a page cursor.");
+    seen.add(page.nextCursor);
+    cursor = page.nextCursor;
+  }
+  throw new Error(`Transformation list: more than ${ALL_TRANSFORMATIONS_MAX_PAGES} pages.`);
+}

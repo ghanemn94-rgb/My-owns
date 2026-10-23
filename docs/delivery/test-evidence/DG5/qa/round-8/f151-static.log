@@ -1,0 +1,56 @@
+## F-DG5-151 static inspection of apps/web/e2e/p5-launch-health-kpi.spec.ts at 12dc33e
+$ git show 12dc33e:apps/web/e2e/p5-launch-health-kpi.spec.ts | sed -n 196,212p
+  await expect(alertOf(page)).toContainText(tr(lang, "problems.health_check__actions_required"));
+  for (const n of [1, 2, 3])
+    await page
+      .getByLabel(tr(lang, "launchHealthP5.health.actionText", { n }), { exact: true })
+      .fill(`Synthetic action ${n}`);
+  // Wait for the save AND the reload of the assessment (its version steps), so Submit sends the current If-Match.
+  const saved = page.waitForResponse((r) => r.request().method() === "PUT" && /\/actions$/.test(r.url()));
+  const reloaded = page.waitForResponse(
+    (r) => r.request().method() === "GET" && new RegExp(`/health-checks/${aid}$`).test(r.url()),
+  );
+  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.saveActions"), exact: true }).click();
+  expect((await saved).status()).toBe(200);
+  await reloaded;
+  await expect(page.locator("[data-form='health-actions'] [role='alert']")).toHaveCount(0);
+  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.submit"), exact: true }).click();
+  await expect(page.locator("[data-assessment-status='submitted']")).toBeVisible();
+  await expect(page.locator("[data-assessment-status='submitted'] [data-band='16-20']")).toBeVisible();
+$ D-182 failure (orchestrator-D-182/verify-ab2-45287b4/e2e-unset.log)
+545:  ✘  414 [chromium-ar] › apps/web/e2e/p5-launch-health-kpi.spec.ts:159:1 › Health check: Incomplete (24/25) with no band, 17 / 25 in band 16-20, the top-3-actions refusal, submit; the schemes (16.0s)
+605:    Timeout: 5000ms
+606:    Error: element(s) not found
+636:  1 failed
+638:  459 passed (1.2h)
+$ api.log tail section of that log: no lines after the header (nothing to correlate)
+---- api.log (tail)
+$ round-7 probe outcomes cited
+-- 05-e2e-probe-r7slowget-1500-unset.log
+  6 passed (58.5s)
+EXIT 0
+-- 05-e2e-probe-r7slowget-0-unset.log
+  6 passed (37.6s)
+EXIT 0
+-- 05-e2e-d182repro-unset.log
+  10 passed (1.6m)
+EXIT 0
+-- 05-e2e-product-B-unset.log
+  174 passed (27.9m)
+EXIT 0
+-- 05-e2e-product-B-cutf8.log
+  174 passed (27.0m)
+EXIT 0
+$ python3: reloadedSeq / reloadedVersion / ifMatch / submitStatus per slowget record
+1500 en 0 reloadedSeq 1 beforeSave True reloadedV 26 savedV 27 ifMatch "27" submit 200 visible5s True
+1500 en 1 reloadedSeq 1 beforeSave True reloadedV 26 savedV 27 ifMatch "27" submit 200 visible5s True
+1500 en 2 reloadedSeq 1 beforeSave True reloadedV 26 savedV 27 ifMatch "27" submit 200 visible5s True
+1500 ar 0 reloadedSeq 1 beforeSave True reloadedV 26 savedV 27 ifMatch "27" submit 200 visible5s True
+1500 ar 1 reloadedSeq 1 beforeSave True reloadedV 26 savedV 27 ifMatch "27" submit 200 visible5s True
+1500 ar 2 reloadedSeq 1 beforeSave True reloadedV 26 savedV 27 ifMatch "27" submit 200 visible5s True
+0 en 0 reloadedSeq 2 beforeSave False reloadedV 27 savedV 27 ifMatch "27" submit 200 visible5s True
+0 en 1 reloadedSeq 2 beforeSave False reloadedV 27 savedV 27 ifMatch "27" submit 200 visible5s True
+0 en 2 reloadedSeq 2 beforeSave False reloadedV 27 savedV 27 ifMatch "27" submit 200 visible5s True
+0 ar 0 reloadedSeq 2 beforeSave False reloadedV 27 savedV 27 ifMatch "27" submit 200 visible5s True
+0 ar 1 reloadedSeq 2 beforeSave False reloadedV 27 savedV 27 ifMatch "27" submit 200 visible5s True
+0 ar 2 reloadedSeq 2 beforeSave False reloadedV 27 savedV 27 ifMatch "27" submit 200 visible5s True

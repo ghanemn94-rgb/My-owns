@@ -1,0 +1,23 @@
+## candidate check (end) 2026-10-23T04:03:09Z, node v24.21.0
+$ git rev-parse HEAD; git rev-parse --is-shallow-repository; git rev-list --count HEAD
+a5d45be21c1b789effc263b59782eb4cfaed677f
+false
+1587
+$ git merge-base --is-ancestor 12dc33e HEAD
+exit=0
+$ node tools/gates/candidate.mjs --stage DG5 --ref 12dc33e4f9f2f804aeb0a9774a988d699709a235
+{"stage":"DG5","source":"12dc33e4f9f2f804aeb0a9774a988d699709a235","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+exit=0
+$ frozen manifest
+sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47 12dc33e4f9f2f804aeb0a9774a988d699709a235 2194
+$ round-7 qa record candidate
+sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47 12dc33e4f9f2f804aeb0a9774a988d699709a235 PASS
+$ git diff --name-only 12dc33e HEAD | grep -v '^docs/delivery/' | wc -l   (non-delivery-record changes since the freeze source)
+0
+$ manifest files changed since 12dc33e (candidate.mjs --diff on the main checkout)
+False [] [] ['docs/delivery/decisions.md']
+$ git diff 12dc33e HEAD -- docs/delivery/decisions.md | grep -c '^[-+]|'
++| D-183 | 2
+$ grep -n manifestFromRef tools/gates/lib/rules.mjs (the validator recomputes from the committed source)
+929:    const fromCommit = candidateId(manifestFromRef(repo, m.source_commit, m.spec), m.hash_algorithm || "mth-candidate-v1");
+988:      ? manifestFromRef(repo, gate.source_commit, manifest.spec)
