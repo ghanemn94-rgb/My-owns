@@ -14659,14 +14659,49 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-6/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-22T08:15:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG5 round 6 (T-DG5-REV-QA-R6) on candidate sha256:3294f8fc... from the real-stack probe R6-TITLE-B (revision 2), in en and ar, in both locale settings, while verifying F-DG5-147. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
+        },
+        {
+          "at": "2026-10-23T03:49:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-QA-R7C-qa-verifier-20261023T003619Z-90667478",
+          "session_id": "90667478-5752-495e-9f63-13b3131293cf"
+        },
+        "at": "2026-10-23T03:49:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6titleB-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6titleB-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-unset/en/r6-title-b.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-unset/ar/r6-title-b.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-cutf8/en/r6-title-b.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6titleB-cutf8/ar/r6-title-b.json",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-f148-f149-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f148.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/ar/r7-f148.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click-arU-390.png",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/10-repair-diff.log"
+        ],
+        "note": "Verified on candidate sha256:33188e9e... (source 12dc33e; repair T-DG5-FE-AB1) on the production-initialized real stack, in a disposable complete clone, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8 (4 runs of each probe). (1) My round-6 reproduction R6-TITLE-B, re-run UNCHANGED (tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts; tokens w120, arU and plain in the transformation name, a Define outcome statement and a T13 group name; all 42 workspace tabs and 5 global pages at 390 px, 320 px and 1280 px with 200 % text): 0 failures in every run. /transformations/<T>/traceability and /modular-entry now show 0 px of page overflow for every token and size, where round 6 measured 823/893/1658 px (w120) and 164/234/372 px (arU) on Traceability and 761/831/1589 px and 137/207/307 px on Modular entry. (2) My new asserted probe R7-F148 (tokens w120, w46, arU and plain; 390, 360 and 320 px and 200 %; the whole body scanned): Modular entry (missing-item label '· <statement>') and the Traceability graph with its record links pass in every case (0 px, no element holding the token outside the viewport). The product's regression p5-record-name-reflow.spec.ts passes in both projects in all 4 full product runs (460/460 per locale setting). (3) Beyond the finding: when a record is FOCUSED (its 'Focus' button, ?root=), Traceability still scrolls (w120 651 px at 390 px). The cause is a third element the finding did not name: the note 'Showing the links of <type> \"<name>\"' (p.small[data-root]), which prints the name as plain text outside .record-name. A test-only overflow-wrap on that note alone brings every case to 0 px, and the record link that F-DG5-148 named wraps in the same screenshot. The elements F-DG5-148 named are fixed, and its reproduction is clean, so I close it and raise the note separately as F-DG5-150 (Low, REQ-S15-009, not blocking DG5). The 9 R7-F148 cases that fail ('traceability+panel', the URL-selected state) are exactly that note's overflow, value for value."
+      }
     },
     {
       "id": "F-DG5-149",
@@ -14689,12 +14724,147 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-6/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-22T08:15:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG5 round 6 (T-DG5-REV-QA-R6) on candidate sha256:3294f8fc... from R6-TITLE-B's plain-text control and the follow-up probe R6-DEFINE-NARROW, in en and ar. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
+        },
+        {
+          "at": "2026-10-23T03:49:30Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-REV-QA-R7C-qa-verifier-20261023T003619Z-90667478",
+          "session_id": "90667478-5752-495e-9f63-13b3131293cf"
+        },
+        "at": "2026-10-23T03:49:30Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-define-narrow.spec.ts",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6define-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r6define-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/en/r6-define-narrow.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/ar/r6-define-narrow.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-cutf8/en/r6-define-narrow.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r6define-unset/ar/r6-define-narrow-320.png",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-f148-f149-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7f148f149-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f149.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/ar/r7-f149.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-cutf8/en/r7-f149.json",
+          "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-cutf8/ar/r7-f149.json"
+        ],
+        "note": "Verified on candidate sha256:33188e9e... (source 12dc33e; repair T-DG5-FE-AB1) on the production-initialized real stack, chromium-en and chromium-ar, locale unset and C.UTF-8. (1) My round-6 reproduction R6-DEFINE-NARROW, re-run UNCHANGED (one ordinary outcome, Define at 320, 360, 375 and 390 px): page overflow 0 px at every width in en and ar in both locale settings, where round 6 measured en 61/21/6 px at 320/360/375 px and ar 29 px at 320 px. The outcome card is now [29..291] at 320 px and [29..331] at 360 px (min-inline-size 0), and the Good-outcome table sits in a .table-wrap region (tableInWrap true) that scrolls inside the card. (2) My new asserted probe R7-F149 (an ordinary outcome and a w120 outcome; 390, 375, 360 and 320 px and 200 %) passes in all 4 runs: 0 px of page overflow; every outcome card inside the viewport; each Good-outcome table in a role=region with tabindex=0 and a localized accessible name ('Good outcome test of “...” (scrollable table)' and its Arabic equivalent); where the table is wider than the region (en 92 px at 320 px, 52 px at 360 px; ar 60/20 px), ArrowRight (en) or ArrowLeft (ar) moves it (keyScroll 80 px en, 60 px ar at 320 px); axe at 320 px reports no serious or critical violation. Screenshots at 320 px in ar show the table scrolling inside the card. The product's regression p5-record-name-reflow.spec.ts (its F-DG5-149 part) passes in both projects in all 4 full product runs."
+      }
+    },
+    {
+      "id": "F-DG5-125",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-011",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Transformation lists still fed by fetchAllPages silently stop at 2000: the executive-overview Transformation filter and the organization Finance validation queue omit every readable transformation past the 20th page, with no notice (the D-181 class at a higher cap)",
+      "reproduction": "Candidate 33188e9e (source 12dc33e), disposable clone, production-initialized stack (apps/web/e2e/support/with-stack.sh), en and ar. Probe docs/delivery/test-evidence/DG5/domain/round-7/probe/dom-r7-cap-route.spec.ts: signed in as dev.office, the browser's GET /api/v1/transformations list is answered by a Playwright route that serves the real items followed by synthetic filler rows (2150 in all, 100 per page, with nextCursor). 1) Open /executive-overview and count the options of select[data-filter='transformation']. 2) Open /finance-validation and count the distinct transformations whose /finance-validations queue the page requests. Static cause: apps/web/src/api/queries.ts:104-119 fetchAllPages loops at most 20 pages of PAGINATION.maxLimit (100) and then breaks without an error ('bounded to 20 pages of 100' for 'a small catalogue'). It still feeds transformation lists that wave AB2 did not move to useAllTransformations: traceability/api.ts:330 useReadableTransformations (the executive-overview and dashboard Transformation filter, StructurePages), benefits/api.ts:311 useReadableTransformations (the organization Finance validation queue) and procedures/CompleteWithOutput.tsx:37 (a procedure step's output picker when the record type is a transformation).",
+      "expected": "D-181's decision: every list that offers or covers transformations loads every transformation the caller may see, or says plainly that it is incomplete. A page failing or a guard being reached is an error, never a shorter list shown as complete (as useAllTransformations does with ALL_TRANSFORMATIONS_MAX_PAGES).",
+      "actual": "Both screens requested exactly 20 pages and stopped, in en (LTR) and ar (RTL). The executive-overview filter offered 2000 of 2150 options, and the 150 transformations past the cap were missing; its hint still read 'Repeatable: 0 of at most 50 chosen. Only transformations you may read are offered.' The Finance validation queue read 2000 of 2150 transformations' queues and showed 'Nothing in the queue' with no note; queue items of the other 150 would not appear. Server-side portfolio totals are not affected, and each transformation's own Finance queue page is complete. The defect stays latent below 2001 readable transformations, far beyond the scale this deployment is likely to reach, so it is Low and not blocking.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-7/probe/dom-r7-cap-route.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-7/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-finance-validation-queue.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-finance-validation-queue.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/en/r7-cap-finance-validation-queue.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/ar/r7-cap-finance-validation-queue.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/en/r7-cap-executive-overview-filter.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/ar/r7-cap-executive-overview-filter.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/repair-diff-and-picker-static.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-7/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T01:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 7 (T-DG5-REV-DOM-R7C) on candidate 33188e9e. Low, non-mandatory, not blocking: latent above 2000 readable transformations. The D-181 fix itself (12 picker screens on useAllTransformations) is verified complete in en and ar with 102 and 105 transformations."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-150",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Traceability with a focused record: the note 'Showing the links of <type> \"<name>\"' (TraceabilityPage.tsx, p.small[data-root]) prints the record name as plain text outside .record-name, so an unbroken record name still widens the page (651 px at 390 px, 721 px at 320 px, 1312 px at 200 % with a 120-character word; 85-155 px with an unbroken Arabic token), in en and ar",
+      "reproduction": "Disposable complete clone of the frozen candidate (1932faa = source 12dc33e + delivery records; sha256:33188e9e...), offline install, pnpm -r build, production-initialized stack. Copy docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-trace-root-note.spec.ts into the clone's e2e/ and run 'E2E_PG_PORT=26612 E2E_API_PORT=26613 apps/web/e2e/support/with-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r7-trace-root-note.spec.ts --workers=1' (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers), with the locale unset and with LANG=LC_ALL=C.UTF-8. As dev.lead, per language and token (w120: 'Synthetic_' + 110 letters with no break opportunity; arU: an unbroken 69-character Arabic token joined by underscores; plain: ordinary text) it creates a SYNTHETIC transformation with one Define outcome holding the token, opens /transformations/<T>/traceability at 390, 360 and 320 px, measures document.documentElement.scrollWidth - innerWidth, then clicks the outcome node's 'Focus' button (data-action='focus', which sets ?root=) and measures again (R7-TRACE-FOCUS-CLICK). R7-TRACE-ROOT opens the same state by URL and, as a diagnosis only, sets overflow-wrap:anywhere on the [data-root] note through the CSSOM in the page (never in the product) to show that the note is the only cause. The asserted probe R7-F148 (zz-qa-dg5r7-f148-f149-verify.spec.ts) shows the same values for the Traceability state with ?root=&impact=&alloc=.",
+      "expected": "No page-level horizontal scroll whatever text a user enters in a record name, on every state of the Traceability screen (WCAG 2.1 SC 1.4.10 Reflow; the rule wave AB applied to RecordName and the Modular entry label as .record-name, overflow-wrap: anywhere).",
+      "actual": "Identical in en and ar and in both locale settings (4 runs). Before the click: 0 px for every token. After clicking Focus: w120 651 px at 390, 681 px at 360, 721 px at 320 (the note's own scrollWidth - clientWidth 680/710/750 px); arU 85/115/155 px; the 46-character token 40 px at 320 px; plain 0 px. With 200 % text at 1280 px: w120 1312 px, arU 210 px. With the diagnostic style on the note only, every case is 0 px, so the note is the sole cause. In the screenshot (en, arU, 390 px) the graph's record link wraps (the wave AB fix works) while the note's text runs past the right edge. Cause in source: TraceabilityPage.tsx renders t('traceability.graph.rooted', {type, name}) in <p className='small' role='note' data-root>, and the record name is interpolated as plain text, not through RecordName/.record-name; wave AB (T-DG5-FE-AB1) did not touch this element, and my round-6 reproduction (which this round re-runs unchanged: 0 px everywhere) never focused a record, so F-DG5-148 did not name it. Not a regression of the repair: the note is a DG4 element that ad52a56..12dc33e leaves unchanged. It needs an unusual name and REQ-S15-009 is DG6-final, so it is Low, not mandatory and not blocking DG5. Suggested fix: render the name in the note with the same .record-name rule (or overflow-wrap:anywhere on [data-root]), and extend p5-record-name-reflow.spec.ts to click Focus.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-trace-root-note.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/ar/r7-trace-focus-click.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-root.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-cutf8/ar/r7-trace-root.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click-arU-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click-w120-390.png",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7f148f149-unset/en/r7-f148.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/10-repair-diff.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-7/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T03:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 round 7 (T-DG5-REV-QA-R7C) on candidate sha256:33188e9e... while verifying F-DG5-148, from real-stack probes R7-F148, R7-TRACE-ROOT and R7-TRACE-FOCUS-CLICK in en and ar, in both locale settings. Low, non-mandatory, not blocking DG5 (REQ-S15-009 is DG6-final)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-151",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-091",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The product e2e test p5-launch-health-kpi.spec.ts:159 (the test D-182 saw fail once) synchronizes on 'any GET of the assessment' after Save actions; with a slow API that wait resolves on the GET issued by the earlier refused Submit's refresh (the pre-save version), so the test can click Submit before the screen holds the saved version: an unsound wait, and a plausible but unproven cause of the D-182 failure",
+      "reproduction": "Disposable complete clone of the frozen candidate (sha256:33188e9e..., source 12dc33e), production-initialized stack. Copy docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-health-submit-race.spec.ts into the clone's e2e/ and run 'QA_SLOW_MS=1500 E2E_PG_PORT=26622 E2E_API_PORT=26623 apps/web/e2e/support/with-stack.sh npx playwright test <clone>/e2e/zz-qa-dg5r7-health-submit-race.spec.ts --grep R7-HEALTH-SLOWGET --repeat-each=3 --workers=1' (and QA_SLOW_MS=0 as the control). R7-HEALTH-SLOWGET replays the product test's ending with the product test's own waits (saved = the PUT .../actions response; reloaded = the first GET .../health-checks/<id> response after the waiter is registered; then Submit and the 5 s 'submitted' assertion), and answers every GET of the assessment after QA_SLOW_MS (route.fetch, pause, fulfil: a slow server). It records which GET resolved 'reloaded' (numbered by a test-only header), its version, the If-Match the screen sent and the outcome.",
+      "expected": "The test waits for a signal that the saved version is on the screen (for example the response of a GET issued after the PUT response, or a rendered marker of the new version) before it clicks Submit, so the test cannot fail because of response ordering under load.",
+      "actual": "QA_SLOW_MS=1500, 6/6 runs (en and ar): 'reloaded' resolved with GET #1, issued at about 147 ms, BEFORE the Save-actions click at about 275 ms (the refresh that useRunner starts after the refused Submit; automation/ui.tsx shows the alert before 'await refresh()'), carrying version 26, while the PUT had produced version 27. The product nevertheless sent If-Match \"27\" and showed 'submitted' within 5 s in every run, because the click landed after the post-save GET #2 had returned (about 1880 ms vs 2000 ms). So the race window exists in the test, while the product behaved correctly in every run. A stale If-Match would be answered 409, the correct optimistic-concurrency result, and the test would then fail. QA_SLOW_MS=0 control: 6/6, 'reloaded' = the post-save GET. Not reproduced otherwise: the product test passed in all 4 full product runs (460/460 with the locale unset and with C.UTF-8), 10/10 alone in chromium-ar (--repeat-each=10, beside the C.UTF-8 product run), and R7-HEALTH-RACE 5/5 at CPU rate 1 and 5/5 at rate 4 (If-Match = the saved version every time, submitted shown in 166-559 ms). The D-182 trace is lost, so its cause stays unestablished. I find no evidence of a product defect: the screen always sent the current version and the server accepted it. The test defect is demonstrated. Low, not mandatory, not blocking DG5.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-health-submit-race.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7slowget-1500-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-1500-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-0-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7health-rate1-unset/r7-health-race.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7health-rate4-unset/r7-health-race.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-d182repro-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-7/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T03:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 round 7 (T-DG5-REV-QA-R7C) on candidate sha256:33188e9e... while judging the D-182 failure, from real-stack probes R7-HEALTH-SLOWGET and R7-HEALTH-RACE. A test synchronization defect, not a product defect. Low, non-mandatory, not blocking DG5."
         }
       ]
     }
