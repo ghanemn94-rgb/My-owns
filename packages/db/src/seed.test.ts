@@ -752,24 +752,55 @@ describe("0091 seed equals the P5 part of permissions.ts (slices I and J)", () =
   });
 });
 
+/**
+ * F-DG5-100: the P5 ids its stage left unused (planned gaps of the p5-plan §4 ranges, D-142). They are permanently
+ * unused: a file in a gap would run at its lexical position on a fresh database but last on an upgraded one (the
+ * runner refuses that case too: migrate.ts `outOfOrderPending`). Never fill them; a new migration takes an id above
+ * the highest shipped id.
+ */
+const P5_RETIRED_MIGRATION_IDS = [66, 67, 73, 77, 78, 79, 83, 84] as const;
+
+/** The numbering rule of the shipped migration files (returns the violations; empty when the numbering is valid). */
+function numberingViolations(files: readonly { id: number; name: string }[]): string[] {
+  const out: string[] = [];
+  // D-089: 0058-0061 were the DG4 repair ids. P5 (p5-plan §4, D-142) used ids 0062-0097 with planned gaps, and
+  // 0094-0099 are held by the orchestrator for P5 repairs, so ids from 0058 may have gaps but stay at most 0099. Ids
+  // below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses anything else).
+  const REPAIR_FIRST = 58;
+  const REPAIR_LAST = 99;
+  const planned = files.filter((f) => f.id < REPAIR_FIRST).map((f) => f.id);
+  if (planned.some((id, i) => id !== i + 1)) out.push(`ids below ${REPAIR_FIRST} are not contiguous from 0001`);
+  for (const f of files.filter((f) => f.id > REPAIR_LAST)) out.push(`${f.name}: above 0099`);
+  // F-DG5-100: the eight P5 gaps are never filled, by any later stage or repair.
+  for (const f of files.filter((f) => (P5_RETIRED_MIGRATION_IDS as readonly number[]).includes(f.id)))
+    out.push(`${f.name}: id ${String(f.id).padStart(4, "0")} is a retired P5 gap (F-DG5-100)`);
+  return out;
+}
+
 describe("migration files", () => {
   it("are named NNNN_snake_case.sql with strictly increasing ids, and never use plain timestamp in public", () => {
     const files = listMigrationFiles();
-    // D-089: 0058-0061 were the DG4 repair ids. P5 (p5-plan §4, D-142): each architecture task owns a contiguous range
-    // (0062-0067 slice A, 0068-0073, 0074-0079, 0080-0084, 0085-0088, 0089-0093) whose unused numbers its implementers
-    // fill in order, and 0094-0099 are held by the orchestrator for repairs, so ids from 0058 may have gaps but stay
-    // at most 0099. Ids below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses
-    // anything else).
-    const REPAIR_FIRST = 58;
-    const REPAIR_LAST = 99;
-    const planned = files.filter((f) => f.id < REPAIR_FIRST).map((f) => f.id);
-    expect(planned).toEqual(planned.map((_, i) => i + 1));
-    for (const f of files.filter((f) => f.id >= REPAIR_FIRST)) expect(f.id, f.name).toBeLessThanOrEqual(REPAIR_LAST);
+    expect(numberingViolations(files)).toEqual([]);
     for (const f of files.filter((f) => !f.name.includes("pgboss"))) {
       const code = f.sql.replace(/--.*$/gm, "");
       expect(code, f.name).not.toMatch(/timestamp(?!tz)(?! with time zone)\b(?!\()/i);
       expect(code, f.name).not.toMatch(/\bfloat|double precision|\breal\b/i);
       expect(code, f.name).not.toMatch(/\buuidv7\(/i);
     }
+  });
+
+  it("pin the eight P5 gaps 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084 as permanently unused (F-DG5-100)", () => {
+    const files = listMigrationFiles();
+    const p5 = files.filter((f) => f.id >= 62 && f.id <= 97).map((f) => f.id);
+    const gaps = Array.from({ length: 97 - 62 + 1 }, (_, i) => 62 + i).filter((id) => !p5.includes(id));
+    expect(gaps).toEqual([...P5_RETIRED_MIGRATION_IDS]);
+    // A later file in any gap is a numbering violation; a file above the highest id is not.
+    for (const id of P5_RETIRED_MIGRATION_IDS) {
+      const name = `${String(id).padStart(4, "0")}_p6_example.sql`;
+      expect(numberingViolations([...files, { id, name }].sort((a, b) => a.id - b.id)), name).toEqual([
+        `${name}: id ${String(id).padStart(4, "0")} is a retired P5 gap (F-DG5-100)`,
+      ]);
+    }
+    expect(numberingViolations([...files, { id: 98, name: "0098_p5_repair.sql" }])).toEqual([]);
   });
 });

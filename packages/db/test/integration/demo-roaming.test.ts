@@ -303,6 +303,54 @@ describe("REQ-S18-002: the seed-coverage check on the roaming dataset", () => {
     expect(p!.tasks).toBe(p!.items);
   });
 
+  it("F-DG5-121: the launch plan carries its Day-90 leadership test, as plan.ts creates one with every plan", async () => {
+    // REQ-PB-087 / B0135: one test per plan, open with no response, scheduled on the plan's start date + 90 calendar
+    // days (plan.ts DAY_NINETY; the template item day_ninety_test is due on day 90), created by the plan's creator,
+    // audited as day_ninety_test.create at version 1 and registered as a seeded record.
+    const tests = await rows<{
+      plan_ok: boolean;
+      scheduled_date: string;
+      day: number;
+      template_day: number;
+      status: string;
+      answered_count: number;
+      completed_at: Date | null;
+      version: number;
+      same_creator: boolean;
+      responses: string;
+      audits: string;
+      registered: string;
+    }>(
+      `SELECT t.plan_id = p.id AS plan_ok, t.scheduled_date::text, (t.scheduled_date - p.start_date) AS day,
+              (SELECT due_day FROM launch_template_item WHERE code = 'day_ninety_test') AS template_day,
+              t.status, t.answered_count, t.completed_at, t.version,
+              (t.created_by = p.created_by AND t.updated_by = p.created_by) AS same_creator,
+              (SELECT count(*) FROM day_ninety_response r WHERE r.test_id = t.id) AS responses,
+              (SELECT count(*) FROM audit_event a WHERE a.record_type = 'day_ninety_test' AND a.record_id = t.id
+                  AND a.action = 'day_ninety_test.create' AND a.new_version = 1) AS audits,
+              (SELECT count(*) FROM demo_seed_record d WHERE d.record_type = 'day_ninety_test' AND d.record_id = t.id
+                  AND d.fixture_key = 'roaming.day_ninety_test') AS registered
+         FROM day_ninety_test t JOIN launch_plan p ON p.id = t.plan_id
+        WHERE t.transformation_id = $1`,
+      [T],
+    );
+    expect(tests).toHaveLength(1);
+    expect(tests[0]).toEqual({
+      plan_ok: true,
+      scheduled_date: "2026-10-01",
+      day: 90,
+      template_day: 90,
+      status: "open",
+      answered_count: 0,
+      completed_at: null,
+      version: 1,
+      same_creator: true,
+      responses: "0",
+      audits: "1",
+      registered: "1",
+    });
+  });
+
   it("the overdue decision and the stale KPI are relative to the synthetic clock (2026-09-01)", async () => {
     const [d] = await rows<{ due_date: string }>(
       "SELECT due_date::text FROM decision WHERE transformation_id = $1 AND kind = 'executive' AND status = 'open'",

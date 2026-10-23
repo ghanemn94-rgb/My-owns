@@ -3,6 +3,8 @@
 //  - applies each pending file in lexical order, each in its own transaction, recording (id, name, sha256);
 //  - REFUSES to run when an applied file's checksum changed, or when the database has a migration this build
 //    does not ship (database newer than code);
+//  - REFUSES to run when a pending file's id is not above the highest applied id (F-DG5-100): it would run at its
+//    lexical position on a fresh database but last on this one, so the two kinds of database could diverge;
 //  - REFUSES to touch a database whose encoding is not UTF8 (encoding.ts), before creating anything;
 //  - is idempotent on an up-to-date database.
 import { createHash } from "node:crypto";
@@ -33,6 +35,8 @@ export interface MigrationStatus {
   readonly checksumMismatches: readonly string[];
   /** Applied in the database but not shipped with this build. */
   readonly unknownApplied: readonly string[];
+  /** Pending files whose id is not above the highest applied id: migrate() refuses them (F-DG5-100). */
+  readonly outOfOrderPending: readonly string[];
   readonly upToDate: boolean;
 }
 
@@ -92,12 +96,17 @@ export function compareStatus(files: readonly MigrationFile[], applied: readonly
     .filter((a) => byName.has(a.name) && byName.get(a.name)!.sha256 !== a.sha256)
     .map((a) => a.name);
   const unknownApplied = applied.filter((a) => !byName.has(a.name)).map((a) => a.name);
-  const pending = files.filter((f) => !appliedNames.has(f.name)).map((f) => f.name);
+  const pendingFiles = files.filter((f) => !appliedNames.has(f.name));
+  const pending = pendingFiles.map((f) => f.name);
+  // Forward-only means one order on every database: a pending id must be above every applied id (F-DG5-100).
+  const highestApplied = applied.reduce((max, a) => Math.max(max, a.id), 0);
+  const outOfOrderPending = pendingFiles.filter((f) => f.id <= highestApplied).map((f) => f.name);
   return {
     applied,
     pending,
     checksumMismatches,
     unknownApplied,
+    outOfOrderPending,
     upToDate: pending.length === 0 && checksumMismatches.length === 0 && unknownApplied.length === 0,
   };
 }
@@ -154,6 +163,14 @@ export async function migrate(ownerUrl: string, options: MigrateOptions = {}): P
       if (status.unknownApplied.length > 0) {
         throw new MigrationError(
           `refusing to run: database has migration(s) this build does not ship: ${status.unknownApplied.join(", ")}`,
+        );
+      }
+      if (status.outOfOrderPending.length > 0) {
+        const highest = status.applied.reduce((a, b) => (b.id > a.id ? b : a));
+        throw new MigrationError(
+          `refusing to run: pending migration(s) ${status.outOfOrderPending.join(", ")} have an id not above the ` +
+            `highest applied migration ${highest.name}; forward-only migrations must apply in one order on every ` +
+            `database, so give each new migration an id above ${String(highest.id).padStart(4, "0")}`,
         );
       }
       for (const file of files.filter((f) => status.pending.includes(f.name))) {

@@ -45,6 +45,22 @@ describe("health and readiness", () => {
       await drift.close();
     }
   });
+
+  it("reports 503 fail, not pending, when a pending migration's id is below the highest applied id (F-DG5-100)", async () => {
+    // migrate() refuses that file (a P5 gap filled later), so the database can never catch up: drift, not pending.
+    const files = listMigrationFiles();
+    const gap = { id: 66, name: "0066_p6_example.sql", sha256: "0".repeat(64), sql: "" };
+    const late = await startApi({ migrationFiles: [...files, gap].sort((x, y) => x.id - y.id) });
+    try {
+      const r = await call(late.app, "GET", "/readyz");
+      expect([r.status, r.body]).toEqual([
+        503,
+        { status: "not_ready", checks: { database: "ok", migrations: "fail" } },
+      ]);
+    } finally {
+      await late.close();
+    }
+  });
 });
 
 describe("readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9)", () => {

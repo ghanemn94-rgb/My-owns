@@ -9,7 +9,6 @@
 // string, unprefixed; Unknown/Stale is an empty field with its status in the companion column; a total is its
 // decimal.js value (CSV has no formulas).
 import { reportDocument, type ReportDocument } from "@mth/shared/schemas";
-import { neutralizeSpreadsheetText } from "./injection.ts";
 import { createLabels } from "./labels.ts";
 import {
   EXPORT_CONTENT_TYPES,
@@ -22,6 +21,7 @@ import {
   sectionRows,
   tableColumns,
   tableRowCells,
+  textCell,
   totalRowCells,
   type RenderOptions,
   type RenderResult,
@@ -36,7 +36,12 @@ export function csvField(text: string): string {
   return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-/** One CSV field of a sheet cell (ADR-0046 §4 CSV column). */
+/**
+ * One CSV field of a sheet cell (ADR-0046 §4 CSV column). A text cell carries the neutralization decision made once
+ * for XLSX and CSV (model.ts `textCell`: `quotePrefix` when the text starts like a formula): CSV writes it as the
+ * leading apostrophe. A decimal too long for a double is a text cell with `quotePrefix: false` (`valueCell`, a system
+ * number), so it is written as its canonical string, unprefixed, like any other decimal (F-DG5-101).
+ */
 export function csvCell(c: SheetCell): string {
   switch (c.kind) {
     case "empty":
@@ -46,12 +51,12 @@ export function csvCell(c: SheetCell): string {
     case "sum":
       return c.cached;
     case "text":
-      return csvField(neutralizeSpreadsheetText(c.text).text);
+      return csvField(c.quotePrefix ? `'${c.text}` : c.text);
   }
 }
 
-const textRow = (...texts: string[]): string =>
-  texts.map((t) => csvCell({ kind: "text", text: t, quotePrefix: false, italic: false })).join(",");
+/** A row of plain texts (labels, frame values, titles): each one neutralized through `textCell`. */
+const textRow = (...texts: string[]): string => texts.map((t) => csvCell(textCell(t))).join(",");
 
 export async function renderCsv(input: ReportDocument, o: RenderOptions): Promise<RenderResult> {
   const parsed = reportDocument.safeParse(input);
