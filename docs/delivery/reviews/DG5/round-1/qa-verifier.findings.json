@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-140",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "My procedures offers the read-only auditor (AUD) an enabled 'Launch a procedure' form that can only end in 403",
+      "reproduction": "Real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev), chromium-en and chromium-ar, both locale settings: dev.lead creates a transformation through the API; sign in as dev.auditor; open /playbook/procedures. The 'Launch a procedure' section (MyProceduresPage.tsx LaunchSection, rendered for every signed-in user with no permission gate) lists all 10 published procedures and an enabled Launch submit. Choose 'Gate review' and the transformation, press Launch. Probe: docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5rg1-aud-launch.spec.ts (and the AUD sweep zz-qa-dg5rg1-aud-p5.spec.ts, whose only remaining hit on 32 P5 screens is this one).",
+      "expected": "As on every other P5 and DG2-DG4 screen the auditor opens (Studio, scoring defaults, forms, automation, launch plan, health check, reports, evidence ...: no enabled write control, a read-only note where relevant), a user who cannot launch any procedure is not offered an enabled launch form; the server-side refusal stays as the backstop.",
+      "actual": "The form is enabled for AUD with all 10 procedures; POST /api/v1/procedure-instances returns 403 'You do not have permission for this action.' (ar: 'ليست لديك صلاحية لهذا الإجراء.'), shown as an alert; no instance is created (0 for the transformation). The server enforcement is correct (procedure.launch + launch role, instances.ts:293-296), so there is no authorization hole: the defect is an offered action the role can never perform, inconsistent with the product's read-only convention. Not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-audlaunch-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-aud-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-probe-aud-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-audlaunch-unset/en/qa-aud-launch-refused.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/probe-audlaunch-unset/ar/qa-aud-launch-refused.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5rg1-aud-launch.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-1/e2e/zz-qa-dg5rg1-aud-p5.spec.ts",
+        "apps/web/src/pages/procedures/MyProceduresPage.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 clean re-gate round 1 (T-DG5-RG-QA-R1). Low, non-mandatory, not blocking: the server refuses (403) and nothing is created."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-141",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product e2e p4-dashboards.spec.ts test 6 (390 px and 200 % text) runs on the default 30 s budget with little headroom in chromium-ar in the full suite, and timed out there",
+      "reproduction": "Full product e2e on the real stack, --workers=1, locale unset: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e (docs/delivery/test-evidence/DG5/qa/round-1/scripts/run-e2e.sh unset ... product apps/web/e2e). Test 349 [chromium-ar] p4-dashboards.spec.ts:295 '6. 390 px wide and 200 % text' failed with 'Test timeout of 30000ms exceeded' at 30.1 s (load 3-6); its trace shows no failed assertion, only steps (seven full-page screenshots, networkidle) consuming the budget. The test sets no explicit timeout.",
+      "expected": "Like the other long reflow and journey tests that were given explicit budgets with at least 2x headroom over a measured loaded case (F-DG5-121 for the p2 journeys; D-173 for p4-gates-closure test 9), this test has a budget that a full-suite run does not exceed.",
+      "actual": "Alone it takes about 15 s (the whole spec 42/42 with --repeat-each=3, test 6 passing 6/6 in both projects), but in the full suite, where the shared database has grown, chromium-ar took 24-26 s even unloaded in the orchestrator's D-181/D-182 runs, and in this round it timed out in BOTH full runs: locale unset 30.1 s (load 3-6) and C.UTF-8 30.5 s (load about 2). The C.UTF-8 trace shows 18.1 s of the 30 s spent in full-page screenshots (one of 9.8 s; the pages at 200 % text are long by then) and no network request above 800 ms, so the time goes to the test's own screenshots, not to slow product responses. The gate's product e2e is therefore 459/460 in each locale setting for a timing reason only; no assertion failed. Not a product defect; a test-budget defect that makes a gate check fail.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-rerun-p4dash-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-product-cutf8-p4dash-trace-timing.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/product-cutf8-failure/p4-dashboards-295-chromium-ar-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/product-unset-failure/p4-dashboards-295-chromium-ar-test-failed-1.png",
+        "apps/web/e2e/p4-dashboards.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 clean re-gate round 1 (T-DG5-RG-QA-R1). Low, non-mandatory, test-only; not blocking."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-142",
+      "stage_id": "DG5",
+      "requirement": "REQ-S12-022",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Root acceptance spec e2e/a22-operations-jobs.spec.ts compares an API read of nextRunAt with a later screen read, so it fails whenever a schedule boundary falls between them",
+      "reproduction": "Root acceptance specs on the real stack, C.UTF-8 (run-e2e.sh cutf8 ... root product e2e/a03 ... e2e/a22-operations-jobs.spec.ts). [chromium-en] A22 failed at 7.3 s: 'approval.escalation_scan: next run' expected [data-next-run='2026-10-23T08:30:00.000Z'], found 0. The trace's network log: the test's GET /api/v1/admin/jobs at 08:29:58.711Z (next run 08:30Z), the screen's own GET /api/v1/admin/jobs at 08:30:00.461Z; the job is '*/15 * * * *' Asia/Riyadh, so the screen correctly showed 23 Oct 2026, 11:45 (08:45Z).",
+      "expected": "The acceptance test checks that the screen shows each job's next run as the API computes it, robustly: e.g. it reads the expected values after the screen has loaded (or re-reads on mismatch), or avoids a boundary, so a correct product never fails it.",
+      "actual": "The product is correct (the next run is recomputed at request time); the spec is racy, with a failure window around every 15-minute boundary of the */15 jobs. Re-run alone: 6/6 (--repeat-each=3, both projects); the unset-locale root run passed 30/30. Owner note: the file is a qa acceptance spec (e2e/**); the listed owner is the job-operations module owner, and the orchestrator assigns the repair.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/05-e2e-rerun-a22-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/root-cutf8-failure/a22-chromium-en-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-1/shots/root-cutf8-failure/a22-chromium-en-error-context.md",
+        "e2e/a22-operations-jobs.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 clean re-gate round 1 (T-DG5-RG-QA-R1). Low, non-mandatory, test-only; not blocking."
+        }
+      ]
+    }
+  ]
+}
