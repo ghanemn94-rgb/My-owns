@@ -143,7 +143,14 @@ describe("fetchAllTransformations / useAllTransformations (D-181)", () => {
 
 // ------------------------------------------------------------------------------------------------ the picker (P1, P2)
 
-const PERMISSIONS = ["organization.read", "procedure.read", "procedure.act", "transformation.read"] as Permission[];
+// procedure.launch: the launch form is offered only to a user who may launch (T-DG5-FE-RG1, F-DG5-140).
+const PERMISSIONS = [
+  "organization.read",
+  "procedure.read",
+  "procedure.act",
+  "procedure.launch",
+  "transformation.read",
+] as Permission[];
 const definitions = {
   items: [
     {

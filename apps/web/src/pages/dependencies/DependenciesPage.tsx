@@ -37,6 +37,8 @@ import {
 } from "../prioritization/p3ui.tsx";
 import { useRoadmap, type T08Dependency } from "../roadmap/api.ts";
 import { dependencyUrls, useDependencyTypes, useT08Dependencies, type CycleNode, type DependencyType } from "./api.ts";
+// T-DG5-FE-RG1 (F-DG5-120; REQ-S12-012): the critical dependency slips with each affected initiative's forecast impact.
+import { DependencySlipsSection } from "./slips.tsx";
 // T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
 import {
   RecordExtensionTools,
@@ -113,6 +115,8 @@ function DependenciesBody() {
   return (
     <>
       {conflict ? <ConflictNotice onDismiss={() => setConflict(false)} /> : null}
+      {/* First on the page: the slip work item (portfolio.task.dependency_slip) links here (F-DG5-120). */}
+      <DependencySlipsSection tid={tid} />
       <Section
         id="map"
         title={t("dependencies.map.title")}
