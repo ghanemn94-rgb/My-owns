@@ -1,0 +1,72 @@
+$ grep -rniE "official|certif|accredit|endorsed|PMI standard|PMI-standard" apps/web/src/i18n packages/reporting/src packages/shared/src/reports apps/worker/src/reports (excluding *.test.ts)
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:130:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/en/reportsP5.json:190:    "draftBanner": "Draft — not an issued report. Its content is fixed; issue it to make it the official report, or discard it.",
+apps/web/src/i18n/en/reportsP5.json:202:    "issueIntro": "Issuing makes this snapshot the next official issue of its series. Its content does not change. Issuing is not an approval.",
+apps/web/src/i18n/en/problems.json:807:  "methodology_reader__prohibited_text": "Reader text must not describe the methodology as having official status or accreditation from PMI, and must not name an engineering delivery gate.",
+apps/web/src/i18n/en/problems.json:808:  "branding__prohibited_claim": "Branding text must not describe the product as having official status or accreditation from PMI.",
+packages/shared/src/reports/content-labels.ts:15:// label names an engineering delivery gate or claims any certification.
+(end)
+
+$ grep -rnE "\\bDG[0-7]\\b" apps/web/src/i18n packages/reporting/src apps/worker/src/reports packages/shared/src/reports (excluding tests)
+apps/web/src/i18n/index.ts:23:// P3 (DG3) namespaces: one per page area, each owned by its FE task (p3-work-split §4).
+apps/web/src/i18n/index.ts:49:// P4 slices I and C namespaces (T-DG4-FE-A).
+apps/web/src/i18n/index.ts:64:// P4 slice A namespace (T-DG4-FE-B): the KPI engine screens (pages/kpi).
+apps/web/src/i18n/index.ts:77:// P4 slice J namespace (T-DG4-FE-G): dashboards, Executive Overview, workspace header, My Work sections.
+apps/web/src/i18n/index.ts:80:// P4 slice E execution panels on the initiative page (T-DG4-FE-D2): budget lines, execution, schedule network.
+apps/web/src/i18n/index.ts:83:// P4 slice G closure namespace (T-DG4-FE-F): status model, closure and transition decisions (pages/closure).
+apps/web/src/i18n/index.ts:86:// P4 slice H change control and phase workspace namespaces (T-DG4-FE-F2): pages/change-requests, pages/phases.
+apps/web/src/i18n/index.ts:91:// P4 slice K and the RAG policy (T-DG4-FE-G2).
+apps/web/src/i18n/index.ts:101:// P5 slice A namespace (T-DG5-FE-B): the Playbook Studio, methodology-migration and source-coverage screens.
+apps/web/src/i18n/index.ts:104:// P5 slice B namespace (T-DG5-FE-C): the form builder and the common form framework (ADR-0041).
+apps/web/src/i18n/index.ts:107:// P5 slices C, D and E namespace (T-DG5-FE-D): procedures, automation, jobs operations, approval routes, gate conditions,
+apps/web/src/i18n/index.ts:111:// P5 slice F namespace (T-DG5-FE-E): reports and snapshots, exports, presentation mode, owner updates, evidence register.
+apps/web/src/i18n/index.ts:114:// P5 slices G and H namespace (T-DG5-FE-F): the 90-day launch plan, the Day-90 leadership test, the health check and
+apps/web/src/i18n/index.ts:118:// P5 slices I and J namespace (T-DG5-FE-G): the playbook reader, provenance badges and question tags, Branding Settings,
+apps/web/src/i18n/index.ts:278:  // ADR-0038 Q1 (T-DG4-FE-R3): "{{date, businessDate}}" formats a "YYYY-MM-DD" business date for the text's own
+packages/reporting/src/docx.ts:7:// the worker from slice I's branding port at generation time (T-DG5-BE-R).
+packages/reporting/src/docx.ts:182:  if (paged.reportHeader !== null) b.add(...b.paragraphs(paged.reportHeader, { size: 18, color: "5A6275" })); // T-DG5-BE-R
+packages/reporting/src/docx.ts:200:    // T-DG5-BE-R: the configured report footer and the provenance statement (B0004), then the issue line.
+packages/reporting/src/layout/blocks.ts:34:  /** T-DG5-BE-R: the header colour (the configured branding's primary colour, #RRGGBB), or null for the defaults. */
+packages/reporting/src/layout/blocks.ts:36:  /** T-DG5-BE-R: the configured report header line, or null. */
+packages/reporting/src/layout/blocks.ts:38:  /** T-DG5-BE-R: the footer lines above the issue line: the configured report footer, then the provenance (B0004). */
+packages/reporting/src/layout/blocks.ts:120:    brandColour: /^#[0-9A-F]{6}$/.test(o.branding.primaryColour ?? "") ? o.branding.primaryColour! : null, // T-DG5-BE-R
+packages/reporting/src/pptx.ts:9:// report header and footer and the provenance statement (B0004), read by the worker at generation time (T-DG5-BE-R).
+packages/reporting/src/pptx.ts:148:          // T-DG5-BE-R: the configured report header and footer and the provenance statement (B0004).
+packages/reporting/src/model.ts:39:   * The branding current at generation time (slice I's branding port, T-DG5-BE-R): the product name in the export
+packages/reporting/src/labels.ts:12:// No label names an engineering gate (DG0-DG7); a gate pack names product gates G1-G6 as business approvals.
+packages/reporting/src/pdf/index.ts:8:// branding port at generation time, T-DG5-BE-R) and a band in the configured primary colour, and the configured report
+packages/reporting/src/pdf/index.ts:37:/** T-DG5-BE-R: the size of the report footer and provenance lines under the issue line. */
+packages/reporting/src/pdf/index.ts:323:   * The footer of every page: the issue line on the start side, "Page n of m" on the end side; below them (T-DG5-BE-R)
+packages/reporting/src/pdf/index.ts:405:  // T-DG5-BE-R (ADR-0049 §8; REQ-S15-004): a configured branding colours the header band of the first page; the
+packages/reporting/src/pdf/index.ts:410:  if (paged.reportHeader !== null) w.text(paged.reportHeader, 9, 400, MUTED, 4); // T-DG5-BE-R
+apps/worker/src/reports/export-runner.ts:1:// The export runner (ADR-0046 §2-§5, §9; REQ-S13-005, REQ-S13-006; p5-work-split §F.5; T-DG5-BE-M): consumer of the
+apps/worker/src/reports/export-runner.ts:17://      attempt starts and again when it succeeds (T-DG5-BE-T5, D-QA-F2-3; never another job's files).
+apps/worker/src/reports/export-runner.ts:25:// An export approves nothing; product gates G1-G6 are business approvals and nothing here touches DG0-DG7.
+apps/worker/src/reports/export-runner.ts:267: * T-DG5-BE-R (ADR-0049 §8 render-time reads; REQ-S01-002, REQ-S15-004): the organization's branding CURRENT at
+apps/worker/src/reports/export-runner.ts:318: * T-DG5-BE-R (ADR-0045 "every file carries ... slice I's provenance footer (B0004)"; REQ-PB-001): the provenance
+apps/worker/src/reports/export-runner.ts:339: * T-DG5-BE-T5 (D-167; QA-F2 D-QA-F2-3): removes the files of this job's EARLIER attempts (1 .. attempt - 1) through the
+apps/worker/src/reports/export-runner.ts:372:    const brand = await brandingAtGeneration(db, job.organization_id); // T-DG5-BE-R: the branding port at generation
+(end)
+
+$ grep -rn "رسمي\|معتمد من\|شهادة" apps/web/src/i18n/ar
+apps/web/src/i18n/ar/dashboards.json:197:    "validated": "معتمد من الإدارة المالية",
+apps/web/src/i18n/ar/gates.json:157:    "g6__benefit_not_validated": "أدلة المنافع: منفعة ليس لها قياس معتمد من المالية ولا قرار انتقال معتمد.",
+apps/web/src/i18n/ar/calendar.json:3:  "intro": "تقاويم الأعمال: المنطقة الزمنية وأسبوع العمل والعطلات. تتخطى تواريخ الاستحقاق بأيام العمل عطلات نهاية الأسبوع والعطلات الرسمية.",
+apps/web/src/i18n/ar/calendar.json:79:      "holiday": "عطلة رسمية"
+apps/web/src/i18n/ar/playbookP5.json:12:    "intro": "خلاصة عملية مستوحاة من أسس PMI وبرايتلاين، مع امتدادات مخصصة. وهي ليست معيارًا رسميًا من PMI.",
+apps/web/src/i18n/ar/traceability.json:219:    "waiverInForce": "يسري إعفاء معتمد من خط الأساس وارتباطات النتائج الناقصة حتى {{date}} (شاملاً). يسمح بتقديم G3؛ لكن الارتباطات لا تزال ناقصة.",
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+apps/web/src/i18n/ar/common.json:130:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.",
+apps/web/src/i18n/ar/common.json:133:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/web/src/i18n/ar/reportsP5.json:50:    "validated": "معتمد من المالية",
+apps/web/src/i18n/ar/reportsP5.json:190:    "draftBanner": "مسودة — ليست تقريرًا صادرًا. محتواها ثابت؛ أصدرها لتصبح التقرير الرسمي، أو استبعدها.",
+apps/web/src/i18n/ar/reportsP5.json:202:    "issueIntro": "الإصدار يجعل هذه اللقطة الإصدار الرسمي التالي في سلسلتها. ولا يتغير محتواها. والإصدار ليس موافقة.",
+apps/web/src/i18n/ar/kpi.json:6:    "validated": "معتمد من الإدارة المالية",
+apps/web/src/i18n/ar/problems.json:807:  "methodology_reader__prohibited_text": "يجب ألا يدّعي نص القارئ صفة رسمية أو اعتمادًا من معهد إدارة المشاريع، وألا يسمّي بوابة تسليم هندسية.",
+apps/web/src/i18n/ar/problems.json:808:  "branding__prohibited_claim": "يجب ألا يدّعي نص الهوية البصرية صفة رسمية أو اعتمادًا من معهد إدارة المشاريع.",
+(end)

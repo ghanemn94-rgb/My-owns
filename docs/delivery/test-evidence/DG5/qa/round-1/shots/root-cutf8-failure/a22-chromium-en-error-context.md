@@ -1,0 +1,518 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Dev Admin
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - generic [ref=e20]:
+    - navigation "Primary navigation" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "My Work" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: My Work
+          - list "My Work" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Tasks and inbox" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "Approvals" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "Delegations" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "Notification preferences" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "Playbook and Procedures" [ref=e36] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e37]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Phase steps and review queue" [ref=e40] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e41]:
+              - link "Playbook reader" [ref=e42] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e43]:
+              - link "My procedures" [ref=e44] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e45]:
+              - link "90-day launch plan" [ref=e46] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e47]:
+              - link "Health check" [ref=e48] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e49]:
+          - link "Administration" [ref=e50] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e51]: Administration
+          - list "Administration" [ref=e52]:
+            - listitem [ref=e53]:
+              - link "Calendar" [ref=e54] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e55]:
+              - link "Jobs" [ref=e56] [cursor=pointer]:
+                - /url: /admin/jobs
+            - listitem [ref=e57]:
+              - link "Form builder" [ref=e58] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e59]:
+              - link "Procedure builder" [ref=e60] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e61]:
+              - link "Automation" [ref=e62] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e63]:
+              - link "Approval routes" [ref=e64] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e65]:
+              - link "Branding" [ref=e66] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e67]:
+              - link "Demo environment" [ref=e68] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e69]:
+              - link "Job operations" [ref=e70] [cursor=pointer]:
+                - /url: /admin/jobs/operations
+      - paragraph [ref=e71]:
+        - link "About this product" [ref=e72] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - navigation "Breadcrumbs" [ref=e76]:
+            - list [ref=e77]:
+              - listitem [ref=e78]:
+                - link "Administration" [ref=e79] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=e80]: /Job operations
+          - generic [ref=e82]:
+            - heading "Job operations" [level=1] [ref=e83]
+            - paragraph [ref=e84]: Each scheduled job with its last success, next run, last outcome, open failures and repair actions.
+        - note [ref=e85]:
+          - img [ref=e86]
+          - text: "Automations and jobs prepare, route, calculate and remind. They never decide a business approval, a gate, an investment or a Finance attestation: those decisions are always taken by a person."
+        - paragraph [ref=e88]:
+          - link "Edit the schedules" [ref=e89] [cursor=pointer]:
+            - /url: /admin/jobs
+          - text: ·
+          - link "Automation failure queue" [ref=e90] [cursor=pointer]:
+            - /url: /admin/automation/failures
+        - region "Scheduled jobs" [ref=e91]:
+          - heading "Scheduled jobs" [level=2] [ref=e93]
+          - generic [ref=e94]:
+            - generic [ref=e95]:
+              - generic [ref=e96]:
+                - generic [ref=e97]: Search
+                - searchbox "Search" [ref=e98]
+              - button "Columns" [ref=e100] [cursor=pointer]:
+                - img [ref=e101]
+                - text: Columns
+            - region "Scheduled jobs (scrollable table)" [ref=e103]:
+              - table "Scheduled jobs" [ref=e104]:
+                - caption [ref=e105]: Scheduled jobs
+                - rowgroup [ref=e106]:
+                  - row "Job sorted ascending Last success not sorted Next run not sorted Last outcome Open failures not sorted Schedule Actions" [ref=e107]:
+                    - columnheader "Job sorted ascending" [ref=e108]:
+                      - button "Job sorted ascending" [ref=e109] [cursor=pointer]:
+                        - text: Job
+                        - img [ref=e110]
+                        - generic [ref=e112]: sorted ascending
+                    - columnheader "Last success not sorted" [ref=e113]:
+                      - button "Last success not sorted" [ref=e114] [cursor=pointer]:
+                        - text: Last success
+                        - img [ref=e115]
+                        - generic [ref=e117]: not sorted
+                    - columnheader "Next run not sorted" [ref=e118]:
+                      - button "Next run not sorted" [ref=e119] [cursor=pointer]:
+                        - text: Next run
+                        - img [ref=e120]
+                        - generic [ref=e122]: not sorted
+                    - columnheader "Last outcome" [ref=e123]
+                    - columnheader "Open failures not sorted" [ref=e124]:
+                      - button "Open failures not sorted" [ref=e125] [cursor=pointer]:
+                        - text: Open failures
+                        - img [ref=e126]
+                        - generic [ref=e128]: not sorted
+                    - columnheader "Schedule" [ref=e129]
+                    - columnheader "Actions" [ref=e130]
+                - rowgroup [ref=e131]:
+                  - 'row "Escalate overdue approvals once to the next authority; never approves (REQ-S10-019). approval.escalation_scan Never run 23 Oct 2026, 11:45 Never run 0 */15 * * * * · Asia/Riyadh Run now : approval.escalation_scan" [ref=e132]':
+                    - rowheader "Escalate overdue approvals once to the next authority; never approves (REQ-S10-019). approval.escalation_scan" [ref=e133]:
+                      - generic [ref=e134]:
+                        - link "Escalate overdue approvals once to the next authority; never approves (REQ-S10-019)." [ref=e135] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/approval.escalation_scan
+                        - generic [ref=e136]: approval.escalation_scan
+                    - cell "Never run" [ref=e137]:
+                      - generic [ref=e138]:
+                        - img [ref=e139]
+                        - text: Never run
+                    - cell "23 Oct 2026, 11:45" [ref=e141]
+                    - cell "Never run" [ref=e142]:
+                      - generic [ref=e143]:
+                        - img [ref=e144]
+                        - text: Never run
+                    - cell "0" [ref=e146]
+                    - cell "*/15 * * * * · Asia/Riyadh" [ref=e147]:
+                      - generic [ref=e148]: "*/15 * * * * · Asia/Riyadh"
+                    - 'cell "Run now : approval.escalation_scan" [ref=e149]':
+                      - 'button "Run now : approval.escalation_scan" [ref=e150] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e151]: ": approval.escalation_scan"
+                  - 'row "Evaluate the daily admin automation rules once per day; never approves. automation.tick_daily Never run 24 Oct 2026, 00:20 Never run 0 20 0 * * * · Asia/Riyadh Run now : automation.tick_daily" [ref=e152]':
+                    - rowheader "Evaluate the daily admin automation rules once per day; never approves. automation.tick_daily" [ref=e153]:
+                      - generic [ref=e154]:
+                        - link "Evaluate the daily admin automation rules once per day; never approves." [ref=e155] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/automation.tick_daily
+                        - generic [ref=e156]: automation.tick_daily
+                    - cell "Never run" [ref=e157]:
+                      - generic [ref=e158]:
+                        - img [ref=e159]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:20" [ref=e161]
+                    - cell "Never run" [ref=e162]:
+                      - generic [ref=e163]:
+                        - img [ref=e164]
+                        - text: Never run
+                    - cell "0" [ref=e166]
+                    - cell "20 0 * * * · Asia/Riyadh" [ref=e167]:
+                      - generic [ref=e168]: 20 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : automation.tick_daily" [ref=e169]':
+                      - 'button "Run now : automation.tick_daily" [ref=e170] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e171]: ": automation.tick_daily"
+                  - 'row "Evaluate the hourly admin automation rules once per hour; never approves. automation.tick_hourly Never run 23 Oct 2026, 12:07 Never run 0 7 * * * * · Asia/Riyadh Run now : automation.tick_hourly" [ref=e172]':
+                    - rowheader "Evaluate the hourly admin automation rules once per hour; never approves. automation.tick_hourly" [ref=e173]:
+                      - generic [ref=e174]:
+                        - link "Evaluate the hourly admin automation rules once per hour; never approves." [ref=e175] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/automation.tick_hourly
+                        - generic [ref=e176]: automation.tick_hourly
+                    - cell "Never run" [ref=e177]:
+                      - generic [ref=e178]:
+                        - img [ref=e179]
+                        - text: Never run
+                    - cell "23 Oct 2026, 12:07" [ref=e181]
+                    - cell "Never run" [ref=e182]:
+                      - generic [ref=e183]:
+                        - img [ref=e184]
+                        - text: Never run
+                    - cell "0" [ref=e186]
+                    - cell "7 * * * * · Asia/Riyadh" [ref=e187]:
+                      - generic [ref=e188]: 7 * * * * · Asia/Riyadh
+                    - 'cell "Run now : automation.tick_hourly" [ref=e189]':
+                      - 'button "Run now : automation.tick_hourly" [ref=e190] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e191]: ": automation.tick_hourly"
+                  - 'row "Mark delegations whose end has passed as expired (REQ-S10-010). delegation.expiry_sweep Never run 23 Oct 2026, 11:45 Never run 0 */15 * * * * · Asia/Riyadh Run now : delegation.expiry_sweep" [ref=e192]':
+                    - rowheader "Mark delegations whose end has passed as expired (REQ-S10-010). delegation.expiry_sweep" [ref=e193]:
+                      - generic [ref=e194]:
+                        - link "Mark delegations whose end has passed as expired (REQ-S10-010)." [ref=e195] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/delegation.expiry_sweep
+                        - generic [ref=e196]: delegation.expiry_sweep
+                    - cell "Never run" [ref=e197]:
+                      - generic [ref=e198]:
+                        - img [ref=e199]
+                        - text: Never run
+                    - cell "23 Oct 2026, 11:45" [ref=e201]
+                    - cell "Never run" [ref=e202]:
+                      - generic [ref=e203]:
+                        - img [ref=e204]
+                        - text: Never run
+                    - cell "0" [ref=e206]
+                    - cell "*/15 * * * * · Asia/Riyadh" [ref=e207]:
+                      - generic [ref=e208]: "*/15 * * * * · Asia/Riyadh"
+                    - 'cell "Run now : delegation.expiry_sweep" [ref=e209]':
+                      - 'button "Run now : delegation.expiry_sweep" [ref=e210] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e211]: ": delegation.expiry_sweep"
+                  - 'row "Escalate each overdue open condition of a conditional approval once; never approves (REQ-S04-011). gate.condition_escalation_scan Never run 24 Oct 2026, 01:00 Never run 0 0 1 * * * · Asia/Riyadh Run now : gate.condition_escalation_scan" [ref=e212]':
+                    - rowheader "Escalate each overdue open condition of a conditional approval once; never approves (REQ-S04-011). gate.condition_escalation_scan" [ref=e213]:
+                      - generic [ref=e214]:
+                        - link "Escalate each overdue open condition of a conditional approval once; never approves (REQ-S04-011)." [ref=e215] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/gate.condition_escalation_scan
+                        - generic [ref=e216]: gate.condition_escalation_scan
+                    - cell "Never run" [ref=e217]:
+                      - generic [ref=e218]:
+                        - img [ref=e219]
+                        - text: Never run
+                    - cell "24 Oct 2026, 01:00" [ref=e221]
+                    - cell "Never run" [ref=e222]:
+                      - generic [ref=e223]:
+                        - img [ref=e224]
+                        - text: Never run
+                    - cell "0" [ref=e226]
+                    - cell "0 1 * * * · Asia/Riyadh" [ref=e227]:
+                      - generic [ref=e228]: 0 1 * * * · Asia/Riyadh
+                    - 'cell "Run now : gate.condition_escalation_scan" [ref=e229]':
+                      - 'button "Run now : gate.condition_escalation_scan" [ref=e230] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e231]: ": gate.condition_escalation_scan"
+                  - 'row "Notify the requester and the gate approver once when an accepted gate exception has expired, and create one task to close the reopened evidence gap (REQ-S04-013). Never changes an exception or a gate. gate.exception_expiry_scan Never run 24 Oct 2026, 00:30 Never run 0 30 0 * * * · Asia/Riyadh Run now : gate.exception_expiry_scan" [ref=e232]':
+                    - rowheader "Notify the requester and the gate approver once when an accepted gate exception has expired, and create one task to close the reopened evidence gap (REQ-S04-013). Never changes an exception or a gate. gate.exception_expiry_scan" [ref=e233]:
+                      - generic [ref=e234]:
+                        - link "Notify the requester and the gate approver once when an accepted gate exception has expired, and create one task to close the reopened evidence gap (REQ-S04-013). Never changes an exception or a gate." [ref=e235] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/gate.exception_expiry_scan
+                        - generic [ref=e236]: gate.exception_expiry_scan
+                    - cell "Never run" [ref=e237]:
+                      - generic [ref=e238]:
+                        - img [ref=e239]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:30" [ref=e241]
+                    - cell "Never run" [ref=e242]:
+                      - generic [ref=e243]:
+                        - img [ref=e244]
+                        - text: Never run
+                    - cell "0" [ref=e246]
+                    - cell "30 0 * * * · Asia/Riyadh" [ref=e247]:
+                      - generic [ref=e248]: 30 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : gate.exception_expiry_scan" [ref=e249]':
+                      - 'button "Run now : gate.exception_expiry_scan" [ref=e250] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e251]: ": gate.exception_expiry_scan"
+                  - 'row "Evaluate red blockers against the forum escalation rule and escalate each once per cycle; never decides or approves anything (REQ-PB-082). governance.blocker_escalation_scan Never run 24 Oct 2026, 00:45 Never run 0 45 0 * * * · Asia/Riyadh Run now : governance.blocker_escalation_scan" [ref=e252]':
+                    - rowheader "Evaluate red blockers against the forum escalation rule and escalate each once per cycle; never decides or approves anything (REQ-PB-082). governance.blocker_escalation_scan" [ref=e253]:
+                      - generic [ref=e254]:
+                        - link "Evaluate red blockers against the forum escalation rule and escalate each once per cycle; never decides or approves anything (REQ-PB-082)." [ref=e255] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/governance.blocker_escalation_scan
+                        - generic [ref=e256]: governance.blocker_escalation_scan
+                    - cell "Never run" [ref=e257]:
+                      - generic [ref=e258]:
+                        - img [ref=e259]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:45" [ref=e261]
+                    - cell "Never run" [ref=e262]:
+                      - generic [ref=e263]:
+                        - img [ref=e264]
+                        - text: Never run
+                    - cell "0" [ref=e266]
+                    - cell "45 0 * * * · Asia/Riyadh" [ref=e267]:
+                      - generic [ref=e268]: 45 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : governance.blocker_escalation_scan" [ref=e269]':
+                      - 'button "Run now : governance.blocker_escalation_scan" [ref=e270] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e271]: ": governance.blocker_escalation_scan"
+                  - 'row "On a working day, escalate once each open or deferred executive ask whose SLA date has passed; an ask with an Unknown SLA date is never selected; never decides the ask (REQ-S12-011). governance.decision_sla_scan Never run 24 Oct 2026, 00:40 Never run 0 40 0 * * * · Asia/Riyadh Run now : governance.decision_sla_scan" [ref=e272]':
+                    - rowheader "On a working day, escalate once each open or deferred executive ask whose SLA date has passed; an ask with an Unknown SLA date is never selected; never decides the ask (REQ-S12-011). governance.decision_sla_scan" [ref=e273]:
+                      - generic [ref=e274]:
+                        - link "On a working day, escalate once each open or deferred executive ask whose SLA date has passed; an ask with an Unknown SLA date is never selected; never decides the ask (REQ-S12-011)." [ref=e275] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/governance.decision_sla_scan
+                        - generic [ref=e276]: governance.decision_sla_scan
+                    - cell "Never run" [ref=e277]:
+                      - generic [ref=e278]:
+                        - img [ref=e279]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:40" [ref=e281]
+                    - cell "Never run" [ref=e282]:
+                      - generic [ref=e283]:
+                        - img [ref=e284]
+                        - text: Never run
+                    - cell "0" [ref=e286]
+                    - cell "40 0 * * * · Asia/Riyadh" [ref=e287]:
+                      - generic [ref=e288]: 40 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : governance.decision_sla_scan" [ref=e289]':
+                      - 'button "Run now : governance.decision_sla_scan" [ref=e290] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e291]: ": governance.decision_sla_scan"
+                  - 'row "Generate one draft agenda and pack for each meeting whose cut-off is reached; publication needs the chair''s review (REQ-S12-015). governance.meeting_cutoff_scan Never run 24 Oct 2026, 00:30 Never run 0 30 0 * * * · Asia/Riyadh Run now : governance.meeting_cutoff_scan" [ref=e292]':
+                    - rowheader "Generate one draft agenda and pack for each meeting whose cut-off is reached; publication needs the chair's review (REQ-S12-015). governance.meeting_cutoff_scan" [ref=e293]:
+                      - generic [ref=e294]:
+                        - link "Generate one draft agenda and pack for each meeting whose cut-off is reached; publication needs the chair's review (REQ-S12-015)." [ref=e295] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/governance.meeting_cutoff_scan
+                        - generic [ref=e296]: governance.meeting_cutoff_scan
+                    - cell "Never run" [ref=e297]:
+                      - generic [ref=e298]:
+                        - img [ref=e299]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:30" [ref=e301]
+                    - cell "Never run" [ref=e302]:
+                      - generic [ref=e303]:
+                        - img [ref=e304]
+                        - text: Never run
+                    - cell "0" [ref=e306]
+                    - cell "30 0 * * * · Asia/Riyadh" [ref=e307]:
+                      - generic [ref=e308]: 30 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : governance.meeting_cutoff_scan" [ref=e309]':
+                      - 'button "Run now : governance.meeting_cutoff_scan" [ref=e310] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e311]: ": governance.meeting_cutoff_scan"
+                  - 'row "Create the missing meetings of every active meeting series up to its horizon, once per occurrence; never decides or approves anything (REQ-PB-060, REQ-S10-005). governance.meeting_series_generate Never run 24 Oct 2026, 00:35 Never run 0 35 0 * * * · Asia/Riyadh Run now : governance.meeting_series_generate" [ref=e312]':
+                    - rowheader "Create the missing meetings of every active meeting series up to its horizon, once per occurrence; never decides or approves anything (REQ-PB-060, REQ-S10-005). governance.meeting_series_generate" [ref=e313]:
+                      - generic [ref=e314]:
+                        - link "Create the missing meetings of every active meeting series up to its horizon, once per occurrence; never decides or approves anything (REQ-PB-060, REQ-S10-005)." [ref=e315] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/governance.meeting_series_generate
+                        - generic [ref=e316]: governance.meeting_series_generate
+                    - cell "Never run" [ref=e317]:
+                      - generic [ref=e318]:
+                        - img [ref=e319]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:35" [ref=e321]
+                    - cell "Never run" [ref=e322]:
+                      - generic [ref=e323]:
+                        - img [ref=e324]
+                        - text: Never run
+                    - cell "0" [ref=e326]
+                    - cell "35 0 * * * · Asia/Riyadh" [ref=e327]:
+                      - generic [ref=e328]: 35 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : governance.meeting_series_generate" [ref=e329]':
+                      - 'button "Run now : governance.meeting_series_generate" [ref=e330] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e331]: ": governance.meeting_series_generate"
+                  - 'row "Open due reporting periods and create one update task and reminder per KPI owner (REQ-S12-005). kpi.reporting_period_open Never run 24 Oct 2026, 00:05 Never run 0 5 0 * * * · Asia/Riyadh Run now : kpi.reporting_period_open" [ref=e332]':
+                    - rowheader "Open due reporting periods and create one update task and reminder per KPI owner (REQ-S12-005). kpi.reporting_period_open" [ref=e333]:
+                      - generic [ref=e334]:
+                        - link "Open due reporting periods and create one update task and reminder per KPI owner (REQ-S12-005)." [ref=e335] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/kpi.reporting_period_open
+                        - generic [ref=e336]: kpi.reporting_period_open
+                    - cell "Never run" [ref=e337]:
+                      - generic [ref=e338]:
+                        - img [ref=e339]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:05" [ref=e341]
+                    - cell "Never run" [ref=e342]:
+                      - generic [ref=e343]:
+                        - img [ref=e344]
+                        - text: Never run
+                    - cell "0" [ref=e346]
+                    - cell "5 0 * * * · Asia/Riyadh" [ref=e347]:
+                      - generic [ref=e348]: 5 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : kpi.reporting_period_open" [ref=e349]':
+                      - 'button "Run now : kpi.reporting_period_open" [ref=e350] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e351]: ": kpi.reporting_period_open"
+                  - 'row "Create one Day-90 leadership test task per due open test and respondent (REQ-PB-087). launch.day_ninety_tests Never run 24 Oct 2026, 00:50 Never run 0 50 0 * * * · Asia/Riyadh Run now : launch.day_ninety_tests" [ref=e352]':
+                    - rowheader "Create one Day-90 leadership test task per due open test and respondent (REQ-PB-087). launch.day_ninety_tests" [ref=e353]:
+                      - generic [ref=e354]:
+                        - link "Create one Day-90 leadership test task per due open test and respondent (REQ-PB-087)." [ref=e355] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/launch.day_ninety_tests
+                        - generic [ref=e356]: launch.day_ninety_tests
+                    - cell "Never run" [ref=e357]:
+                      - generic [ref=e358]:
+                        - img [ref=e359]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:50" [ref=e361]
+                    - cell "Never run" [ref=e362]:
+                      - generic [ref=e363]:
+                        - img [ref=e364]
+                        - text: Never run
+                    - cell "0" [ref=e366]
+                    - cell "50 0 * * * · Asia/Riyadh" [ref=e367]:
+                      - generic [ref=e368]: 50 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : launch.day_ninety_tests" [ref=e369]':
+                      - 'button "Run now : launch.day_ninety_tests" [ref=e370] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e371]: ": launch.day_ninety_tests"
+                  - 'row "Deliver held non-urgent notifications in one digest per user and window (REQ-S12-025). notification.digest Never run 23 Oct 2026, 11:45 Never run 0 */15 * * * * · Asia/Riyadh Run now : notification.digest" [ref=e372]':
+                    - rowheader "Deliver held non-urgent notifications in one digest per user and window (REQ-S12-025). notification.digest" [ref=e373]:
+                      - generic [ref=e374]:
+                        - link "Deliver held non-urgent notifications in one digest per user and window (REQ-S12-025)." [ref=e375] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/notification.digest
+                        - generic [ref=e376]: notification.digest
+                    - cell "Never run" [ref=e377]:
+                      - generic [ref=e378]:
+                        - img [ref=e379]
+                        - text: Never run
+                    - cell "23 Oct 2026, 11:45" [ref=e381]
+                    - cell "Never run" [ref=e382]:
+                      - generic [ref=e383]:
+                        - img [ref=e384]
+                        - text: Never run
+                    - cell "0" [ref=e386]
+                    - cell "*/15 * * * * · Asia/Riyadh" [ref=e387]:
+                      - generic [ref=e388]: "*/15 * * * * · Asia/Riyadh"
+                    - 'cell "Run now : notification.digest" [ref=e389]':
+                      - 'button "Run now : notification.digest" [ref=e390] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e391]: ": notification.digest"
+                  - 'row "Create one structured-update task per open monthly reporting period, subject and owner (REQ-S09-011). reports.owner_update_tasks Never run 24 Oct 2026, 00:40 Never run 0 40 0 * * * · Asia/Riyadh Run now : reports.owner_update_tasks" [ref=e392]':
+                    - rowheader "Create one structured-update task per open monthly reporting period, subject and owner (REQ-S09-011). reports.owner_update_tasks" [ref=e393]:
+                      - generic [ref=e394]:
+                        - link "Create one structured-update task per open monthly reporting period, subject and owner (REQ-S09-011)." [ref=e395] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/reports.owner_update_tasks
+                        - generic [ref=e396]: reports.owner_update_tasks
+                    - cell "Never run" [ref=e397]:
+                      - generic [ref=e398]:
+                        - img [ref=e399]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:40" [ref=e401]
+                    - cell "Never run" [ref=e402]:
+                      - generic [ref=e403]:
+                        - img [ref=e404]
+                        - text: Never run
+                    - cell "0" [ref=e406]
+                    - cell "40 0 * * * · Asia/Riyadh" [ref=e407]:
+                      - generic [ref=e408]: 40 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : reports.owner_update_tasks" [ref=e409]':
+                      - 'button "Run now : reports.owner_update_tasks" [ref=e410] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e411]: ": reports.owner_update_tasks"
+                  - 'row "Create the next control check once per control and due date, at the latest 7 days before it is due (REQ-S11-008). sustainment.control_check_scan Never run 24 Oct 2026, 00:25 Never run 0 25 0 * * * · Asia/Riyadh Run now : sustainment.control_check_scan" [ref=e412]':
+                    - rowheader "Create the next control check once per control and due date, at the latest 7 days before it is due (REQ-S11-008). sustainment.control_check_scan" [ref=e413]:
+                      - generic [ref=e414]:
+                        - link "Create the next control check once per control and due date, at the latest 7 days before it is due (REQ-S11-008)." [ref=e415] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/sustainment.control_check_scan
+                        - generic [ref=e416]: sustainment.control_check_scan
+                    - cell "Never run" [ref=e417]:
+                      - generic [ref=e418]:
+                        - img [ref=e419]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:25" [ref=e421]
+                    - cell "Never run" [ref=e422]:
+                      - generic [ref=e423]:
+                        - img [ref=e424]
+                        - text: Never run
+                    - cell "0" [ref=e426]
+                    - cell "25 0 * * * · Asia/Riyadh" [ref=e427]:
+                      - generic [ref=e428]: 25 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : sustainment.control_check_scan" [ref=e429]':
+                      - 'button "Run now : sustainment.control_check_scan" [ref=e430] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e431]: ": sustainment.control_check_scan"
+                  - 'row "Create the next performance-area review and benefit-monitoring review once per due date, at the latest 7 days before it is due; never reads the transformation status (REQ-S11-004, REQ-S11-007). sustainment.review_scan Never run 24 Oct 2026, 00:20 Never run 0 20 0 * * * · Asia/Riyadh Run now : sustainment.review_scan" [ref=e432]':
+                    - rowheader "Create the next performance-area review and benefit-monitoring review once per due date, at the latest 7 days before it is due; never reads the transformation status (REQ-S11-004, REQ-S11-007). sustainment.review_scan" [ref=e433]:
+                      - generic [ref=e434]:
+                        - link "Create the next performance-area review and benefit-monitoring review once per due date, at the latest 7 days before it is due; never reads the transformation status (REQ-S11-004, REQ-S11-007)." [ref=e435] [cursor=pointer]:
+                          - /url: /admin/jobs/operations/sustainment.review_scan
+                        - generic [ref=e436]: sustainment.review_scan
+                    - cell "Never run" [ref=e437]:
+                      - generic [ref=e438]:
+                        - img [ref=e439]
+                        - text: Never run
+                    - cell "24 Oct 2026, 00:20" [ref=e441]
+                    - cell "Never run" [ref=e442]:
+                      - generic [ref=e443]:
+                        - img [ref=e444]
+                        - text: Never run
+                    - cell "0" [ref=e446]
+                    - cell "20 0 * * * · Asia/Riyadh" [ref=e447]:
+                      - generic [ref=e448]: 20 0 * * * · Asia/Riyadh
+                    - 'cell "Run now : sustainment.review_scan" [ref=e449]':
+                      - 'button "Run now : sustainment.review_scan" [ref=e450] [cursor=pointer]':
+                        - text: Run now
+                        - generic [ref=e451]: ": sustainment.review_scan"
+            - navigation "Pagination" [ref=e452]:
+              - generic [ref=e453]: Page 1 of 1 · 16 of 16 rows
+              - generic [ref=e454]:
+                - generic [ref=e455]: Rows per page
+                - combobox "Rows per page" [ref=e456]:
+                  - option "10"
+                  - option "25"
+                  - option "50"
+                  - option "100" [selected]
+              - button "Previous" [disabled] [ref=e457]
+              - button "Next" [disabled] [ref=e458]
+```

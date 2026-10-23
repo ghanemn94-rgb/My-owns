@@ -1,0 +1,24 @@
+# 48 environmental residuals, offline surface 2026-10-23T07:05:49Z node=v24.21.0
+$ node scripts/verify-dependency-pins.mjs  -> needs registry access (its header: 'run it where npm view works'); the sandbox has no network; the run hung on the registry call and was stopped (its process ended with the killed shell, exit 143): not checkable here, which is the REQ-DLV-042 AC-1 / D-057 environmental residual.
+$ node -e (offline): every dependency entry in every workspace package.json is an exact version (workspace:* allowed)
+manifests 9, dependency entries 81, non-exact: []
+exit=0
+$ git diff --stat e70ac02 270ebbf -- pnpm-lock.yaml; ls packages/reporting/THIRD_PARTY_NOTICES.md licenses
+ 1 file changed, 344 insertions(+), 2 deletions(-)
+packages/reporting/THIRD_PARTY_NOTICES.md
+
+licenses:
+README.md
+collect-notices.mjs
+generate-sbom.mjs
+inventory.csv
+lib
+sbom.cdx.json
+$ ls .github/workflows; grep -c runs-on .github/workflows/*.yml  (CI configured; a live CI run is the REQ-DLV-025 A24 / D-058 residual)
+ci.yml
+delivery-gates.yml
+.github/workflows/ci.yml:5
+.github/workflows/delivery-gates.yml:1
+$ git grep outbound clients in product source at 270ebbf (expect none: no AI or external notification adapter ships in P5, D-142 Q11)
+(end of matches)
+exit=0

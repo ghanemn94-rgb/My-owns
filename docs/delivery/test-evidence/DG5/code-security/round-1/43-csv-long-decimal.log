@@ -1,0 +1,46 @@
+# 43 CSV long decimal repro 2026-10-23T05:35:32Z node=v22.22.2
+$ npx vitest run --project unit-node packages/reporting/src/zz-sec-r1-csv-long-decimal.test.ts   (file copied from docs/delivery/test-evidence/DG5/code-security/round-1/repro/, removed afterwards)
+
+ RUN  v3.2.4 /var/tmp/mth-run.Xtxnbk/claude-0/rv
+
+stdout | packages/reporting/src/zz-sec-r1-csv-long-decimal.test.ts > SEC-R1: CSV export of long decimals (ADR-0046 §4) > a negative decimal of > 15 significant digits is written as its canonical string (ADR-0046 §4)
+SEC-R1 CSV amounts: {"r902":"'-12345678901.23456","r903":"'-1234567890.123456"}
+
+ ❯ |unit-node| packages/reporting/src/zz-sec-r1-csv-long-decimal.test.ts (3 tests | 1 failed) 32ms
+   ✓ SEC-R1: CSV export of long decimals (ADR-0046 §4) > control: a negative decimal of <= 15 significant digits is written unprefixed 20ms
+   ✓ SEC-R1: CSV export of long decimals (ADR-0046 §4) > a positive long decimal is written as its canonical string 2ms
+   × SEC-R1: CSV export of long decimals (ADR-0046 §4) > a negative decimal of > 15 significant digits is written as its canonical string (ADR-0046 §4) 10ms
+     → expected { r902: '\'-12345678901.23456', …(1) } to deeply equal { r902: '-12345678901.23456', …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/reporting/src/zz-sec-r1-csv-long-decimal.test.ts > SEC-R1: CSV export of long decimals (ADR-0046 §4) > a negative decimal of > 15 significant digits is written as its canonical string (ADR-0046 §4)
+AssertionError: expected { r902: '\'-12345678901.23456', …(1) } to deeply equal { r902: '-12345678901.23456', …(1) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "r902": "-12345678901.23456",[39m
+[32m-   "r903": "-1234567890.123456",[39m
+[31m+   "r902": "'-12345678901.23456",[39m
+[31m+   "r903": "'-1234567890.123456",[39m
+[2m  }[22m
+
+ ❯ packages/reporting/src/zz-sec-r1-csv-long-decimal.test.ts:45:17
+     43|     const got = { r902: amountOf(csv, "RAID-902"), r903: amountOf(csv,…
+     44|     console.log("SEC-R1 CSV amounts:", JSON.stringify(got));
+     45|     expect(got).toEqual({ r902: "-12345678901.23456", r903: "-12345678…
+       |                 ^
+     46|   });
+     47| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  05:35:34
+   Duration  5.15s (transform 1.68s, setup 0ms, collect 3.90s, tests 32ms, environment 0ms, prepare 270ms)
+
+exit=1

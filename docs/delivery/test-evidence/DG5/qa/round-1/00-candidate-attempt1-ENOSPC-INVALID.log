@@ -1,0 +1,26 @@
+$ git clone /home/user/My-owns $TMPDIR/review-dg5 (2026-10-23T05:19:50Z)
+error: copy-fd: write returned: No space left on device
+fatal: failed to copy file to '$TMPDIR/review-dg5/.git/objects/bc/083f84e030072ac816f271ed9e6bd56bd16357': No space left on device
+/bin/bash: line 3: cd: $TMPDIR/review-dg5: No such file or directory
+HEAD 53bd2d11dfbb611b448c14358c640f961be4177e
+shallow: false
+$ node tools/gates/candidate.mjs --stage DG5 (freeze 53bd2d1)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+fatal: Unable to create '/home/user/My-owns/.git/index.lock': Read-only file system
+$ node tools/gates/candidate.mjs --stage DG5 (source 270ebbf)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+fatal: Unable to create '/home/user/My-owns/.git/index.lock': Read-only file system
+back at 53bd2d11dfbb611b448c14358c640f961be4177e
+$ git diff --name-only 270ebbf HEAD (outside docs/delivery):
+(end)
+A	docs/delivery/assignments/DG5/round-1/code-security-reviewer.md
+A	docs/delivery/assignments/DG5/round-1/domain-reviewer.md
+A	docs/delivery/assignments/DG5/round-1/qa-verifier.md
+A	docs/delivery/candidates/DG5/8df7f922775ffe81.manifest.json
+M	docs/delivery/stages.json
+$ (working tree /home/user/My-owns) candidate.mjs
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+working tree HEAD 53bd2d11dfbb611b448c14358c640f961be4177e

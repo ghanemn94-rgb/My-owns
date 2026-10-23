@@ -1,0 +1,37 @@
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/review-dg5 (2026-10-23T05:25:06Z); df: /dev/vda        252G   34G  3.9G  90% $TMPDIR
+sparse-checkout patterns:
+/*
+!/docs/delivery/test-evidence/
+!/docs/delivery/runs/
+!/docs/delivery/handbacks/
+HEAD 53bd2d11dfbb611b448c14358c640f961be4177e
+shallow: false
+alternates: /home/user/My-owns/.git/objects
+commits reachable: 1438
+dangling tree 1add1f1c35c49b02d23714d90613c6d00ba0e549
+dangling tree e6e765e55243d246844de7cb4fd08b89dda371ef
+dangling tree 39f77b576979c29d0b6466f8dc93b9ae1002b1f6
+fsck EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 (working tree at freeze 53bd2d1)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 --ref 270ebbf7477664cb17202ee2c32ac49c6f36c5ce
+{"stage":"DG5","source":"270ebbf7477664cb17202ee2c32ac49c6f36c5ce","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 --ref HEAD
+{"stage":"DG5","source":"HEAD","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+$ manifest compare: every manifest path present on disk with the same sha256
+entries 2194 missing_or_mismatch 0 []
+$ git diff --name-status 270ebbf HEAD
+A	docs/delivery/assignments/DG5/round-1/code-security-reviewer.md
+A	docs/delivery/assignments/DG5/round-1/domain-reviewer.md
+A	docs/delivery/assignments/DG5/round-1/qa-verifier.md
+A	docs/delivery/candidates/DG5/8df7f922775ffe81.manifest.json
+M	docs/delivery/stages.json
+outside docs/delivery: []
+$ (repository working tree) candidate.mjs
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+EXIT 0
+working tree HEAD 53bd2d11dfbb611b448c14358c640f961be4177e
+df after: /dev/vda        252G   34G  3.6G  91% $TMPDIR

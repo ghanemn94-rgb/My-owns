@@ -1,0 +1,25 @@
+# 01 candidate identity (2026-10-23T05:25:05Z)
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv; sparse-checkout (no-cone) '/*' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' '!/docs/delivery/runs/'; git checkout 53bd2d1
+Reason: shared disk had 2.7-4.0 GB free; a full object copy (2.4 GB .git) + 1.9 GB tree hit ENOSPC on the first attempt (removed). The shared clone borrows objects via alternates and is NOT shallow.
+$ git rev-parse HEAD
+53bd2d11dfbb611b448c14358c640f961be4177e
+$ git rev-parse --is-shallow-repository
+false
+$ cat .git/objects/info/alternates
+/home/user/My-owns/.git/objects
+$ node tools/gates/candidate.mjs --stage DG5   (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+exit=0
+$ (cd /home/user/My-owns && node tools/gates/candidate.mjs --stage DG5)   (repository tree)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+exit=0
+$ git -C /home/user/My-owns rev-parse HEAD
+53bd2d11dfbb611b448c14358c640f961be4177e
+$ git diff --name-only 270ebbf HEAD
+docs/delivery/assignments/DG5/round-1/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-1/domain-reviewer.md
+docs/delivery/assignments/DG5/round-1/qa-verifier.md
+docs/delivery/candidates/DG5/8df7f922775ffe81.manifest.json
+docs/delivery/stages.json
+$ git diff --stat ac68d1b 270ebbf -- . ':!docs/delivery'  (expect empty: byte-identical product)
+exit=0 (empty above = identical)

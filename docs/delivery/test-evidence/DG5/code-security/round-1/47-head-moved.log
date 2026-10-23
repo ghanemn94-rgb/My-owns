@@ -1,0 +1,12 @@
+# 47 HEAD moved during the run 2026-10-23T07:02:55Z
+$ git log --oneline 53bd2d1..HEAD
+e1b45a5 run: DG5-T-DG5-RG-DOM-R1-domain-reviewer-20261023T051126Z-da3fcea7 (review evidence, auto-committed by run-agent.sh)
+$ git diff --name-only 53bd2d1 HEAD | grep -v '^docs/delivery/' | wc -l   (expect 0: delivery records only)
+0
+$ git diff --name-only 53bd2d1 HEAD | sed 's#/[^/]*$##' | sort -u   (directories only; contents NOT read by this reviewer)
+docs/delivery/reviews/DG5/round-1
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R1-domain-reviewer-20261023T051126Z-da3fcea7
+docs/delivery/test-evidence/DG5/domain/round-1/probe
+$ node tools/gates/candidate.mjs --stage DG5   (repository tree at the new HEAD)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+exit=0

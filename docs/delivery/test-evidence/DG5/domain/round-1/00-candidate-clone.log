@@ -1,0 +1,21 @@
+$ git rev-parse HEAD (repo)
+53bd2d11dfbb611b448c14358c640f961be4177e
+$ node tools/gates/candidate.mjs --stage DG5 (repo, Node v24.21.0)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+$ git diff --name-only 270ebbf HEAD | grep -v ^docs/delivery/ (expect empty)
+(end)
+$ git diff --name-only 270ebbf HEAD | cut -d/ -f1-3 | sort | uniq -c
+      3 docs/delivery/assignments
+      1 docs/delivery/candidates
+      1 docs/delivery/stages.json
+$ git diff --stat ac68d1b 270ebbf -- . ":!docs/delivery" (expect empty: product byte-identical to the old branch head)
+(end)
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv1; sparse-checkout excluding docs/delivery/test-evidence, handbacks, runs (disk 4.5G free); git checkout 53bd2d1
+53bd2d11dfbb611b448c14358c640f961be4177e
+shallow: false; rev-list count: 1438
+$ node tools/gates/candidate.mjs --stage DG5 (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c","files":2194}
+$ manifest
+-rw-r--r-- 1 root root 371816 Oct 23 05:06 /home/user/My-owns/docs/delivery/candidates/DG5/8df7f922775ffe81.manifest.json
+sha256:8df7f922775ffe8134d0f1c9848d94aa7d16a315997211bcb162ad727d88b74c 270ebbf7477664cb17202ee2c32ac49c6f36c5ce DG5 0
+NOTE: the sparse-checkout above excludes only docs/delivery/test-evidence/ and docs/delivery/runs/ (handbacks are checked out); the echo line's mention of handbacks is wrong.

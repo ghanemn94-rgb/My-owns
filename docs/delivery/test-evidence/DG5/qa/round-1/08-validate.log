@@ -1,0 +1,56 @@
+===== in /home/user/My-owns (HEAD 53bd2d11dfbb611b448c14358c640f961be4177e, 2026-10-23T05:33:54Z)
+$ node tools/gates/validate.mjs --register DG5
+PASS register rules at DG5
+EXIT 0
+$ node tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG5 REVIEWING)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG4
+PASS gate DG4 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG3
+PASS gate DG3 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG2
+PASS gate DG2 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+EXIT 0
+===== in $TMPDIR/review-dg5 (HEAD 53bd2d11dfbb611b448c14358c640f961be4177e, 2026-10-23T05:52:31Z)
+$ node tools/gates/validate.mjs --register DG5
+  - requirements.csv REQ-S21-001: evidence is not an existing repository file: docs/delivery/test-evidence/DG5/qa/T-DG5-QA-F-authoring/handback.md
+  - requirements.csv REQ-S21-001: evidence is not an existing repository file: docs/delivery/test-evidence/DG5/qa/T-DG5-QA-E2-authoring/handback.md
+  - requirements.csv REQ-S21-001: evidence is not an existing repository file: docs/delivery/test-evidence/DG5/orchestrator-D-167/verify-w21-7305433/unit-unset.log
+  - requirements.csv REQ-S21-001: evidence is not an existing repository file: docs/delivery/handbacks/DG5/T-DG5-FE-D5-evidence/e2e-a02-demo-labels-B.log
+EXIT 1
+$ node tools/gates/validate.mjs --pipeline
+  - DG0: write-once: docs/delivery/runs/DG0/DG0-T-DG0-AN-12-transformation-analyst-20260928T214926Z-c0090b3d/stderr.log is missing from the working tree
+  - DG0: write-once: docs/delivery/runs/DG0/DG0-T-DG0-AN-12-transformation-analyst-20260928T214926Z-c0090b3d/transcript.jsonl.gz is missing from the working tree
+  - DG0: write-once: docs/delivery/runs/DG0/DG0-T-DG0-AN-11-transformation-analyst-20260928T213955Z-e288d74a/meta.json is missing from the working tree
+  - DG0: write-once: docs/delivery/runs/DG0/DG0-T-DG0-AN-11-transformation-analyst-20260928T213955Z-e288d74a/result.json is missing from the working tree
+EXIT 1
+$ node tools/gates/validate.mjs --historical --stage DG4
+  - history: working-tree docs/delivery/runs/DG4/DG4-T-DG4-REV-QA-R10-qa-verifier-20261013T163806Z-9cc4696b/transcript.jsonl.gz differs from the approved version
+  - history: working-tree docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R10-release-auditor-20261013T180247Z-82e59b30/meta.json differs from the approved version
+  - history: working-tree docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R10-release-auditor-20261013T180247Z-82e59b30/result.json differs from the approved version
+  - history: working-tree docs/delivery/runs/DG4/DG4-T-DG4-AUDIT-R10-release-auditor-20261013T180247Z-82e59b30/transcript.jsonl.gz differs from the approved version
+EXIT 1
+$ node tools/gates/validate.mjs --historical --stage DG3
+  - finding F-DG3-120 (Low): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-accepted-gate-view.png
+  - finding F-DG3-120 (Low): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-revoked-gates-list.png
+  - finding F-DG3-120 (Low): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG3/domain/round-2/screens/ar-inherited-revoked-gates-list.png
+  - finding F-DG3-120 (Low): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG3/domain/round-2/screens/en-inherited-rejected-gates-list.png
+EXIT 1
+$ node tools/gates/validate.mjs --historical --stage DG2
+  - finding F-DG2-411 (Medium): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG2/code-security/round-12/probes/zz-sec-r12-probe.test.ts
+  - finding F-DG2-411 (Medium): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG2/code-security/round-12/probes/README.md
+  - finding F-DG2-411 (Medium): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG2/code-security/round-12/integration-run1-lang-unset.log
+  - finding F-DG2-411 (Medium): verification evidence is not an existing repository file: docs/delivery/test-evidence/DG2/code-security/round-12/integration-run2-lang-c-utf8.log
+EXIT 1
+$ node tools/gates/validate.mjs --historical --stage DG1
+  - history: working-tree docs/delivery/runs/DG1/DG1-T-DG1-REV-QA-R4-qa-verifier-20261001T231504Z-11fc4f1d/transcript.jsonl.gz differs from the approved version
+  - history: working-tree docs/delivery/runs/DG1/DG1-T-DG1-AUDIT-R4-release-auditor-20261001T234146Z-876e1050/meta.json differs from the approved version
+  - history: working-tree docs/delivery/runs/DG1/DG1-T-DG1-AUDIT-R4-release-auditor-20261001T234146Z-876e1050/result.json differs from the approved version
+  - history: working-tree docs/delivery/runs/DG1/DG1-T-DG1-AUDIT-R4-release-auditor-20261001T234146Z-876e1050/transcript.jsonl.gz differs from the approved version
+EXIT 1

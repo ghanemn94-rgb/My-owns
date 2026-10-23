@@ -1,0 +1,670 @@
+# 45 P5 role sweep, run 4 (final: run 3 + a non-empty inputValues body) 2026-10-23T05:42:25Z node=v22.22.2
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts   (copied from docs/delivery/test-evidence/DG5/code-security/round-1/repro/, removed afterwards)
+port-policy: PostgreSQL listening on port 26556 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.Xtxnbk/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvkjmk09_a958e6a7 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts > P5 contract-generated role sweep (code-security-reviewer DG5 r1) > covers the P5 operations
+P5 operations: 194; mutations: 90; transformation-scoped reads: 40
+
+stdout | apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts
+
+# SWEEP RESULTS (300 requests)
+AUD	403	createConfigDraft	POST /api/v1/admin/methodology-versions	forbidden	authorization.denied	
+AUD	403	updateConfigDraft	PATCH /api/v1/admin/methodology-versions/{versionId}	forbidden	authorization.denied	
+AUD	403	putConfigElement	PUT /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}	forbidden	authorization.denied	
+AUD	403	removeConfigElement	POST /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}/remove	forbidden	authorization.denied	
+AUD	403	runConfigCompatibilityCheck	POST /api/v1/admin/methodology-versions/{versionId}/compatibility-checks	forbidden	authorization.denied	
+AUD	403	runConfigPreview	POST /api/v1/admin/methodology-versions/{versionId}/preview	forbidden	authorization.denied	
+AUD	403	submitConfigReview	POST /api/v1/admin/methodology-versions/{versionId}/submit-review	forbidden	authorization.denied	
+AUD	403	decideConfigReview	POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/decision	forbidden	authorization.denied	
+AUD	403	withdrawConfigReview	POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/withdraw	forbidden	authorization.denied	
+AUD	403	publishConfigVersion	POST /api/v1/admin/methodology-versions/{versionId}/publish	forbidden	authorization.denied	
+AUD	403	rollbackConfigVersion	POST /api/v1/admin/methodology-versions/{versionId}/rollback	forbidden	authorization.denied	
+AUD	403	discardConfigDraft	POST /api/v1/admin/methodology-versions/{versionId}/discard	forbidden	authorization.denied	
+AUD	403	putScoringDefaultsDraft	PUT /api/v1/admin/methodology-versions/{versionId}/scoring-defaults	forbidden	authorization.denied	
+AUD	403	updateConfigReviewPolicy	PATCH /api/v1/admin/config-review-policies/{configKind}	forbidden	authorization.denied	
+AUD	403	runSourceCoverageCheck	POST /api/v1/admin/source-coverage/runs	forbidden	authorization.denied	
+AUD	403	createMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations	forbidden	authorization.denied	
+AUD	403	previewMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/preview	forbidden	authorization.denied	
+AUD	403	submitMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/submit	forbidden	authorization.denied	
+AUD	403	decideMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/decision	forbidden	authorization.denied	
+AUD	403	executeMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/execute	forbidden	authorization.denied	
+AUD	403	withdrawMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/withdraw	forbidden	authorization.denied	
+AUD	404	putFormRecordCustomFields	PUT /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields	not_found		
+AUD	404	createFormRecordComment	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments	not_found		
+AUD	404	attachFormRecordEvidence	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments	not_found		
+AUD	404	removeFormRecordAttachment	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove	not_found		
+AUD	404	bulkUpdateFormRecords	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk	not_found		
+AUD	404	createFormDraft	POST /api/v1/transformations/{transformationId}/form-drafts	not_found		
+AUD	404	updateFormDraft	PUT /api/v1/transformations/{transformationId}/form-drafts/{draftId}	not_found		
+AUD	404	closeFormDraft	POST /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close	not_found		
+AUD	403	validateProcedureDefinition	POST /api/v1/procedure-definitions/validate	forbidden	authorization.denied	
+AUD	403	putProcedureDefinition	PUT /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}	forbidden	authorization.denied	
+AUD	403	removeProcedureDefinition	POST /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}/remove	forbidden	authorization.denied	
+AUD	403	launchProcedureInstance	POST /api/v1/procedure-instances	forbidden		
+AUD	404	updateProcedureInstanceInputs	PATCH /api/v1/procedure-instances/{instanceId}/inputs	not_found		
+AUD	404	completeProcedureStep	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/complete	not_found		
+AUD	404	skipProcedureStep	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/skip	not_found		
+AUD	404	assignProcedureStep	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/assign	not_found		
+AUD	404	linkProcedureStepEvidence	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/evidence	not_found		
+AUD	404	cancelProcedureInstance	POST /api/v1/procedure-instances/{instanceId}/cancel	not_found		
+AUD	403	createAutomationRule	POST /api/v1/admin/automation-rules	forbidden	authorization.denied	
+AUD	403	updateAutomationRule	PATCH /api/v1/admin/automation-rules/{ruleId}	forbidden	authorization.denied	
+AUD	403	enableAutomationRule	POST /api/v1/admin/automation-rules/{ruleId}/enable	forbidden	authorization.denied	
+AUD	403	disableAutomationRule	POST /api/v1/admin/automation-rules/{ruleId}/disable	forbidden	authorization.denied	
+AUD	403	createAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions	forbidden	authorization.denied	
+AUD	403	updateAutomationRuleVersion	PATCH /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}	forbidden	authorization.denied	
+AUD	403	runAutomationDryRun	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/dry-runs	forbidden		
+AUD	403	submitAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/submit	forbidden	authorization.denied	
+AUD	404	decideAutomationRuleReview	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/review	not_found		
+AUD	403	publishAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/publish	forbidden	authorization.denied	
+AUD	403	discardAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/discard	forbidden	authorization.denied	
+AUD	403	retryAutomationFailure	POST /api/v1/admin/automation-failures/{failureId}/retry	forbidden		
+AUD	403	dismissAutomationFailure	POST /api/v1/admin/automation-failures/{failureId}/dismiss	forbidden		
+AUD	403	runJobNow	POST /api/v1/admin/jobs/{jobCode}/run	forbidden	authorization.denied	
+AUD	404	decideApprovalRouteStep	POST /api/v1/approvals/{approvalId}/route/steps/{stepNo}/decision	not_found		
+AUD	403	closeGateCondition	POST /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close	forbidden	authorization.denied	
+AUD	404	reviewMeetingCutoffPack	POST /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review	not_found		
+AUD	403	putMyNotificationPreferences	PUT /api/v1/me/notification-preferences	forbidden	authorization.denied	
+AUD	403	putNotificationPolicy	PUT /api/v1/admin/notification-policy	forbidden	authorization.denied	
+AUD	403	generateReportSnapshot	POST /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate	forbidden	authorization.denied	
+AUD	403	issueReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue	forbidden	authorization.denied	
+AUD	403	discardReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard	forbidden	authorization.denied	
+AUD	403	reissueReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue	forbidden	authorization.denied	
+AUD	403	createExport	POST /api/v1/exports	forbidden		
+AUD	403	cancelExport	POST /api/v1/exports/{exportId}/cancel	forbidden		
+AUD	403	createOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates	forbidden	authorization.denied	
+AUD	403	updateOwnerUpdate	PATCH /api/v1/transformations/{transformationId}/updates/{updateId}	forbidden	authorization.denied	
+AUD	403	submitOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates/{updateId}/submit	forbidden	authorization.denied	
+AUD	403	reopenOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates/{updateId}/reopen	forbidden	authorization.denied	
+AUD	403	createKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements	forbidden	authorization.denied	
+AUD	403	submitKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit	forbidden	authorization.denied	
+AUD	404	decideKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision	not_found		
+AUD	403	withdrawKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw	forbidden	authorization.denied	
+AUD	400	previewFormula	POST /api/v1/formula-previews	validation		/expression:validation.invalid
+AUD	403	putFinancialMetricEnablement	PUT /api/v1/benefits/financial-metrics/settings/enablement	forbidden	authorization.denied	
+AUD	403	putFinancialMetricAssumptions	PUT /api/v1/benefits/financial-metrics/settings/assumptions	forbidden	authorization.denied	
+AUD	404	putBusinessCaseCashFlows	PUT /api/v1/business-cases/{businessCaseId}/cash-flows	not_found		
+AUD	403	generateLaunchPlan	POST /api/v1/transformations/{transformationId}/launch-plan	forbidden	authorization.denied	
+AUD	403	updateLaunchPlan	PATCH /api/v1/transformations/{transformationId}/launch-plan	forbidden	authorization.denied	
+AUD	403	createLaunchTask	POST /api/v1/transformations/{transformationId}/launch-plan/tasks	forbidden	authorization.denied	
+AUD	403	updateLaunchTask	PATCH /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}	forbidden	authorization.denied	
+AUD	403	putLaunchTaskPredecessors	PUT /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors	forbidden	authorization.denied	
+AUD	403	putDayNinetyResponse	PUT /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}	forbidden	authorization.denied	
+AUD	403	completeDayNinetyTest	POST /api/v1/transformations/{transformationId}/day-90-test/complete	forbidden	authorization.denied	
+AUD	403	createHealthCheck	POST /api/v1/transformations/{transformationId}/health-checks	forbidden	authorization.denied	
+AUD	403	updateHealthCheck	PATCH /api/v1/transformations/{transformationId}/health-checks/{assessmentId}	forbidden	authorization.denied	
+AUD	403	putHealthCheckAnswer	PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}	forbidden	authorization.denied	
+AUD	403	putHealthCheckActions	PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions	forbidden	authorization.denied	
+AUD	403	submitHealthCheck	POST /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit	forbidden	authorization.denied	
+AUD	403	putBrandingSettings	PUT /api/v1/admin/branding	forbidden	authorization.denied	
+AUD	403	requestDemoReset	POST /api/v1/admin/environment/demo-resets	forbidden	authorization.denied	
+ADM	403	createConfigDraft	POST /api/v1/admin/methodology-versions	forbidden	authorization.denied
+ADM	403	updateConfigDraft	PATCH /api/v1/admin/methodology-versions/{versionId}	forbidden	authorization.denied
+ADM	403	putConfigElement	PUT /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}	forbidden	authorization.denied
+ADM	403	removeConfigElement	POST /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}/remove	forbidden	authorization.denied
+ADM	403	runConfigCompatibilityCheck	POST /api/v1/admin/methodology-versions/{versionId}/compatibility-checks	forbidden	authorization.denied
+ADM	403	runConfigPreview	POST /api/v1/admin/methodology-versions/{versionId}/preview	forbidden	authorization.denied
+ADM	403	submitConfigReview	POST /api/v1/admin/methodology-versions/{versionId}/submit-review	forbidden	authorization.denied
+ADM	403	decideConfigReview	POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/decision	forbidden	authorization.denied
+ADM	403	withdrawConfigReview	POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/withdraw	forbidden	authorization.denied
+ADM	403	publishConfigVersion	POST /api/v1/admin/methodology-versions/{versionId}/publish	forbidden	authorization.denied
+ADM	403	rollbackConfigVersion	POST /api/v1/admin/methodology-versions/{versionId}/rollback	forbidden	authorization.denied
+ADM	403	discardConfigDraft	POST /api/v1/admin/methodology-versions/{versionId}/discard	forbidden	authorization.denied
+ADM	403	putScoringDefaultsDraft	PUT /api/v1/admin/methodology-versions/{versionId}/scoring-defaults	forbidden	authorization.denied
+ADM	403	updateConfigReviewPolicy	PATCH /api/v1/admin/config-review-policies/{configKind}	forbidden	authorization.denied
+ADM	403	runSourceCoverageCheck	POST /api/v1/admin/source-coverage/runs	forbidden	authorization.denied
+ADM	404	createMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations	not_found	authorization.denied
+ADM	404	previewMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/preview	not_found	authorization.denied
+ADM	404	submitMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/submit	not_found	authorization.denied
+ADM	404	decideMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/decision	not_found	authorization.denied
+ADM	404	executeMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/execute	not_found	authorization.denied
+ADM	404	withdrawMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/withdraw	not_found	authorization.denied
+ADM	404	putFormRecordCustomFields	PUT /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields	not_found	
+ADM	404	createFormRecordComment	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments	not_found	
+ADM	404	attachFormRecordEvidence	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments	not_found	
+ADM	404	removeFormRecordAttachment	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove	not_found	
+ADM	404	bulkUpdateFormRecords	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk	not_found	
+ADM	400	createFormDraft	POST /api/v1/transformations/{transformationId}/form-drafts	validation	
+ADM	404	updateFormDraft	PUT /api/v1/transformations/{transformationId}/form-drafts/{draftId}	not_found	authorization.denied
+ADM	404	closeFormDraft	POST /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close	not_found	authorization.denied
+ADM	403	validateProcedureDefinition	POST /api/v1/procedure-definitions/validate	forbidden	authorization.denied
+ADM	403	putProcedureDefinition	PUT /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}	forbidden	authorization.denied
+ADM	403	removeProcedureDefinition	POST /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}/remove	forbidden	authorization.denied
+ADM	403	launchProcedureInstance	POST /api/v1/procedure-instances	forbidden	
+ADM	400	updateProcedureInstanceInputs	PATCH /api/v1/procedure-instances/{instanceId}/inputs	validation	
+ADM	404	completeProcedureStep	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/complete	not_found	
+ADM	400	skipProcedureStep	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/skip	validation	
+ADM	400	assignProcedureStep	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/assign	validation	
+ADM	400	linkProcedureStepEvidence	POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/evidence	validation	
+ADM	400	cancelProcedureInstance	POST /api/v1/procedure-instances/{instanceId}/cancel	validation	
+ADM	403	createAutomationRule	POST /api/v1/admin/automation-rules	forbidden	authorization.denied
+ADM	403	updateAutomationRule	PATCH /api/v1/admin/automation-rules/{ruleId}	forbidden	authorization.denied
+ADM	403	enableAutomationRule	POST /api/v1/admin/automation-rules/{ruleId}/enable	forbidden	authorization.denied
+ADM	403	disableAutomationRule	POST /api/v1/admin/automation-rules/{ruleId}/disable	forbidden	authorization.denied
+ADM	403	createAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions	forbidden	authorization.denied
+ADM	403	updateAutomationRuleVersion	PATCH /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}	forbidden	authorization.denied
+ADM	403	runAutomationDryRun	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/dry-runs	forbidden	
+ADM	403	submitAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/submit	forbidden	authorization.denied
+ADM	404	decideAutomationRuleReview	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/review	not_found	
+ADM	403	publishAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/publish	forbidden	authorization.denied
+ADM	403	discardAutomationRuleVersion	POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/discard	forbidden	authorization.denied
+ADM	404	retryAutomationFailure	POST /api/v1/admin/automation-failures/{failureId}/retry	not_found	
+ADM	404	dismissAutomationFailure	POST /api/v1/admin/automation-failures/{failureId}/dismiss	not_found	
+ADM	202	runJobNow	POST /api/v1/admin/jobs/{jobCode}/run	automation.tick_daily	job_schedule.run_now
+ADM	400	decideApprovalRouteStep	POST /api/v1/approvals/{approvalId}/route/steps/{stepNo}/decision	validation	
+ADM	400	closeGateCondition	POST /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close	validation	
+ADM	404	reviewMeetingCutoffPack	POST /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review	not_found	authorization.denied
+ADM	400	putMyNotificationPreferences	PUT /api/v1/me/notification-preferences	validation	
+ADM	400	putNotificationPolicy	PUT /api/v1/admin/notification-policy	validation	
+ADM	404	generateReportSnapshot	POST /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate	not_found	authorization.denied
+ADM	403	issueReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue	forbidden	authorization.denied
+ADM	403	discardReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard	forbidden	authorization.denied
+ADM	404	reissueReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue	not_found	authorization.denied
+ADM	403	createExport	POST /api/v1/exports	forbidden	
+ADM	403	cancelExport	POST /api/v1/exports/{exportId}/cancel	forbidden	
+ADM	404	createOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates	not_found	authorization.denied
+ADM	404	updateOwnerUpdate	PATCH /api/v1/transformations/{transformationId}/updates/{updateId}	not_found	authorization.denied
+ADM	404	submitOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates/{updateId}/submit	not_found	authorization.denied
+ADM	404	reopenOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates/{updateId}/reopen	not_found	authorization.denied
+ADM	403	createKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements	forbidden	authorization.denied
+ADM	403	submitKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit	forbidden	authorization.denied
+ADM	403	decideKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision	forbidden	authorization.denied
+ADM	403	withdrawKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw	forbidden	authorization.denied
+ADM	400	previewFormula	POST /api/v1/formula-previews	validation	
+ADM	403	putFinancialMetricEnablement	PUT /api/v1/benefits/financial-metrics/settings/enablement	forbidden	authorization.denied
+ADM	403	putFinancialMetricAssumptions	PUT /api/v1/benefits/financial-metrics/settings/assumptions	forbidden	authorization.denied
+ADM	404	putBusinessCaseCashFlows	PUT /api/v1/business-cases/{businessCaseId}/cash-flows	not_found	
+ADM	404	generateLaunchPlan	POST /api/v1/transformations/{transformationId}/launch-plan	not_found	authorization.denied
+ADM	404	updateLaunchPlan	PATCH /api/v1/transformations/{transformationId}/launch-plan	not_found	authorization.denied
+ADM	404	createLaunchTask	POST /api/v1/transformations/{transformationId}/launch-plan/tasks	not_found	authorization.denied
+ADM	404	updateLaunchTask	PATCH /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}	not_found	authorization.denied
+ADM	404	putLaunchTaskPredecessors	PUT /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors	not_found	authorization.denied
+ADM	404	putDayNinetyResponse	PUT /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}	not_found	authorization.denied
+ADM	404	completeDayNinetyTest	POST /api/v1/transformations/{transformationId}/day-90-test/complete	not_found	authorization.denied
+ADM	404	createHealthCheck	POST /api/v1/transformations/{transformationId}/health-checks	not_found	authorization.denied
+ADM	404	updateHealthCheck	PATCH /api/v1/transformations/{transformationId}/health-checks/{assessmentId}	not_found	authorization.denied
+ADM	404	putHealthCheckAnswer	PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}	not_found	authorization.denied
+ADM	404	putHealthCheckActions	PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions	not_found	authorization.denied
+ADM	404	submitHealthCheck	POST /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit	not_found	authorization.denied
+ADM	400	putBrandingSettings	PUT /api/v1/admin/branding	validation	
+ADM	409	requestDemoReset	POST /api/v1/admin/environment/demo-resets	environment.not_demo	
+ADM-READ	404	listTransformationConfigPins	GET /api/v1/transformations/{transformationId}/config-pins	not_found
+ADM-READ	404	listConfigPinHistory	GET /api/v1/transformations/{transformationId}/config-pins/history	not_found
+ADM-READ	404	getTransformationScoringDefaults	GET /api/v1/transformations/{transformationId}/scoring-defaults	not_found
+ADM-READ	404	listGateReapprovals	GET /api/v1/transformations/{transformationId}/gate-reapprovals	not_found
+ADM-READ	404	listMethodologyMigrations	GET /api/v1/transformations/{transformationId}/methodology-migrations	not_found
+ADM-READ	404	getMethodologyMigration	GET /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}	not_found
+ADM-READ	404	getTransformationFormSchema	GET /api/v1/transformations/{transformationId}/form-schemas/{recordType}	not_found
+ADM-READ	404	getFormRecordCustomFields	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields	not_found
+ADM-READ	404	listFormRecordVersions	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/versions	not_found
+ADM-READ	404	listFormRecordComments	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments	not_found
+ADM-READ	404	listFormRecordAttachments	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments	not_found
+ADM-READ	404	exportFormRecords	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/export	not_found
+ADM-READ	404	listFormDrafts	GET /api/v1/transformations/{transformationId}/form-drafts	not_found
+ADM-READ	404	getFormDraft	GET /api/v1/transformations/{transformationId}/form-drafts/{draftId}	not_found
+ADM-READ	404	listGateConditions	GET /api/v1/transformations/{transformationId}/gate-conditions	not_found
+ADM-READ	404	listDependencySlips	GET /api/v1/transformations/{transformationId}/dependency-slips	not_found
+ADM-READ	404	getMeetingCutoffPack	GET /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack	not_found
+ADM-READ	404	getLiveReport	GET /api/v1/transformations/{transformationId}/reports/{definitionCode}/live	not_found
+ADM-READ	404	listReportSnapshots	GET /api/v1/transformations/{transformationId}/report-snapshots	not_found
+ADM-READ	404	getReportSnapshot	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}	not_found
+ADM-READ	404	listReportSnapshotSources	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/sources	not_found
+ADM-READ	404	listReportSnapshotVersions	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/versions	not_found
+ADM-READ	404	listReportSnapshotEvidence	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/evidence	not_found
+ADM-READ	403	getMeetingPresentation	GET /api/v1/transformations/{transformationId}/meetings/{meetingId}/presentation	forbidden
+ADM-READ	404	listOwnerUpdates	GET /api/v1/transformations/{transformationId}/updates	not_found
+ADM-READ	404	getOwnerUpdate	GET /api/v1/transformations/{transformationId}/updates/{updateId}	not_found
+ADM-READ	404	listOwnerUpdateRevisions	GET /api/v1/transformations/{transformationId}/updates/{updateId}/revisions	not_found
+ADM-READ	403	listEvidenceRegister	GET /api/v1/transformations/{transformationId}/evidence-register	forbidden
+ADM-READ	403	listEvidenceVersions	GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/versions	forbidden
+ADM-READ	404	listKpiRestatements	GET /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements	not_found
+ADM-READ	404	getKpiRestatement	GET /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}	not_found
+ADM-READ	404	getKpiRestatementReconciliation	GET /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reconciliation	not_found
+ADM-READ	404	listKpiRestatementReissueOffers	GET /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reissue-offers	not_found
+ADM-READ	404	listTransformationFinancialMetrics	GET /api/v1/transformations/{transformationId}/benefits/financial-metrics	not_found
+ADM-READ	404	getLaunchPlan	GET /api/v1/transformations/{transformationId}/launch-plan	not_found
+ADM-READ	404	listLaunchTasks	GET /api/v1/transformations/{transformationId}/launch-plan/tasks	not_found
+ADM-READ	404	getLaunchTask	GET /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}	not_found
+ADM-READ	404	getDayNinetyTest	GET /api/v1/transformations/{transformationId}/day-90-test	not_found
+ADM-READ	404	listHealthChecks	GET /api/v1/transformations/{transformationId}/health-checks	not_found
+ADM-READ	404	getHealthCheck	GET /api/v1/transformations/{transformationId}/health-checks/{assessmentId}	not_found
+METH-READ	200	listTransformationConfigPins	GET /api/v1/transformations/{transformationId}/config-pins	null
+METH-READ	200	listConfigPinHistory	GET /api/v1/transformations/{transformationId}/config-pins/history	null
+METH-READ	404	getTransformationScoringDefaults	GET /api/v1/transformations/{transformationId}/scoring-defaults	not_found
+METH-READ	404	listGateReapprovals	GET /api/v1/transformations/{transformationId}/gate-reapprovals	not_found
+METH-READ	200	listMethodologyMigrations	GET /api/v1/transformations/{transformationId}/methodology-migrations	null
+METH-READ	404	getMethodologyMigration	GET /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}	not_found
+METH-READ	404	getTransformationFormSchema	GET /api/v1/transformations/{transformationId}/form-schemas/{recordType}	not_found
+METH-READ	404	getFormRecordCustomFields	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields	not_found
+METH-READ	404	listFormRecordVersions	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/versions	not_found
+METH-READ	404	listFormRecordComments	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments	not_found
+METH-READ	404	listFormRecordAttachments	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments	not_found
+METH-READ	404	exportFormRecords	GET /api/v1/transformations/{transformationId}/form-records/{recordType}/export	not_found
+METH-READ	404	listFormDrafts	GET /api/v1/transformations/{transformationId}/form-drafts	not_found
+METH-READ	404	getFormDraft	GET /api/v1/transformations/{transformationId}/form-drafts/{draftId}	not_found
+METH-READ	404	listGateConditions	GET /api/v1/transformations/{transformationId}/gate-conditions	not_found
+METH-READ	404	listDependencySlips	GET /api/v1/transformations/{transformationId}/dependency-slips	not_found
+METH-READ	404	getMeetingCutoffPack	GET /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack	not_found
+METH-READ	404	getLiveReport	GET /api/v1/transformations/{transformationId}/reports/{definitionCode}/live	not_found
+METH-READ	404	listReportSnapshots	GET /api/v1/transformations/{transformationId}/report-snapshots	not_found
+METH-READ	404	getReportSnapshot	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}	not_found
+METH-READ	404	listReportSnapshotSources	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/sources	not_found
+METH-READ	404	listReportSnapshotVersions	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/versions	not_found
+METH-READ	404	listReportSnapshotEvidence	GET /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/evidence	not_found
+METH-READ	403	getMeetingPresentation	GET /api/v1/transformations/{transformationId}/meetings/{meetingId}/presentation	forbidden
+METH-READ	404	listOwnerUpdates	GET /api/v1/transformations/{transformationId}/updates	not_found
+METH-READ	404	getOwnerUpdate	GET /api/v1/transformations/{transformationId}/updates/{updateId}	not_found
+METH-READ	404	listOwnerUpdateRevisions	GET /api/v1/transformations/{transformationId}/updates/{updateId}/revisions	not_found
+METH-READ	403	listEvidenceRegister	GET /api/v1/transformations/{transformationId}/evidence-register	forbidden
+METH-READ	403	listEvidenceVersions	GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/versions	forbidden
+METH-READ	404	listKpiRestatements	GET /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements	not_found
+METH-READ	404	getKpiRestatement	GET /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}	not_found
+METH-READ	404	getKpiRestatementReconciliation	GET /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reconciliation	not_found
+METH-READ	404	listKpiRestatementReissueOffers	GET /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reissue-offers	not_found
+METH-READ	404	listTransformationFinancialMetrics	GET /api/v1/transformations/{transformationId}/benefits/financial-metrics	not_found
+METH-READ	404	getLaunchPlan	GET /api/v1/transformations/{transformationId}/launch-plan	not_found
+METH-READ	404	listLaunchTasks	GET /api/v1/transformations/{transformationId}/launch-plan/tasks	not_found
+METH-READ	404	getLaunchTask	GET /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}	not_found
+METH-READ	404	getDayNinetyTest	GET /api/v1/transformations/{transformationId}/day-90-test	not_found
+METH-READ	404	listHealthChecks	GET /api/v1/transformations/{transformationId}/health-checks	not_found
+METH-READ	404	getHealthCheck	GET /api/v1/transformations/{transformationId}/health-checks/{assessmentId}	not_found
+METH	400	createMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations	validation	
+METH	400	previewMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/preview	validation	
+METH	404	submitMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/submit	not_found	
+METH	403	decideMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/decision	forbidden	authorization.denied
+METH	404	executeMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/execute	not_found	
+METH	404	withdrawMethodologyMigration	POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/withdraw	not_found	
+METH	404	putFormRecordCustomFields	PUT /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields	not_found	
+METH	404	createFormRecordComment	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments	not_found	
+METH	404	attachFormRecordEvidence	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments	not_found	
+METH	404	removeFormRecordAttachment	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove	not_found	
+METH	404	bulkUpdateFormRecords	POST /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk	not_found	
+METH	400	createFormDraft	POST /api/v1/transformations/{transformationId}/form-drafts	validation	
+METH	404	updateFormDraft	PUT /api/v1/transformations/{transformationId}/form-drafts/{draftId}	not_found	authorization.denied
+METH	404	closeFormDraft	POST /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close	not_found	authorization.denied
+METH	400	closeGateCondition	POST /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close	validation	
+METH	404	reviewMeetingCutoffPack	POST /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review	not_found	authorization.denied
+METH	404	generateReportSnapshot	POST /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate	not_found	authorization.denied
+METH	403	issueReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue	forbidden	authorization.denied
+METH	403	discardReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard	forbidden	authorization.denied
+METH	404	reissueReportSnapshot	POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue	not_found	authorization.denied
+METH	404	createOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates	not_found	authorization.denied
+METH	404	updateOwnerUpdate	PATCH /api/v1/transformations/{transformationId}/updates/{updateId}	not_found	authorization.denied
+METH	404	submitOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates/{updateId}/submit	not_found	authorization.denied
+METH	404	reopenOwnerUpdate	POST /api/v1/transformations/{transformationId}/updates/{updateId}/reopen	not_found	authorization.denied
+METH	403	createKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements	forbidden	authorization.denied
+METH	403	submitKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit	forbidden	authorization.denied
+METH	403	decideKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision	forbidden	authorization.denied
+METH	403	withdrawKpiRestatement	POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw	forbidden	authorization.denied
+METH	404	generateLaunchPlan	POST /api/v1/transformations/{transformationId}/launch-plan	not_found	authorization.denied
+METH	404	updateLaunchPlan	PATCH /api/v1/transformations/{transformationId}/launch-plan	not_found	authorization.denied
+METH	404	createLaunchTask	POST /api/v1/transformations/{transformationId}/launch-plan/tasks	not_found	authorization.denied
+METH	404	updateLaunchTask	PATCH /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}	not_found	authorization.denied
+METH	404	putLaunchTaskPredecessors	PUT /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors	not_found	authorization.denied
+METH	404	putDayNinetyResponse	PUT /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}	not_found	authorization.denied
+METH	404	completeDayNinetyTest	POST /api/v1/transformations/{transformationId}/day-90-test/complete	not_found	authorization.denied
+METH	404	createHealthCheck	POST /api/v1/transformations/{transformationId}/health-checks	not_found	authorization.denied
+METH	404	updateHealthCheck	PATCH /api/v1/transformations/{transformationId}/health-checks/{assessmentId}	not_found	authorization.denied
+METH	404	putHealthCheckAnswer	PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}	not_found	authorization.denied
+METH	404	putHealthCheckActions	PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions	not_found	authorization.denied
+METH	404	submitHealthCheck	POST /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit	not_found	authorization.denied
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts (301 tests | 5 failed) 5417ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > covers the P5 operations 2ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createConfigDraft (POST /api/v1/admin/methodology-versions): 403 (or 404 for an unknown record), only the denial written 27ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateConfigDraft (PATCH /api/v1/admin/methodology-versions/{versionId}): 403 (or 404 for an unknown record), only the denial written 30ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putConfigElement (PUT /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}): 403 (or 404 for an unknown record), only the denial written 72ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD removeConfigElement (POST /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}/remove): 403 (or 404 for an unknown record), only the denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD runConfigCompatibilityCheck (POST /api/v1/admin/methodology-versions/{versionId}/compatibility-checks): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD runConfigPreview (POST /api/v1/admin/methodology-versions/{versionId}/preview): 403 (or 404 for an unknown record), only the denial written 34ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD submitConfigReview (POST /api/v1/admin/methodology-versions/{versionId}/submit-review): 403 (or 404 for an unknown record), only the denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD decideConfigReview (POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/decision): 403 (or 404 for an unknown record), only the denial written 33ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD withdrawConfigReview (POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/withdraw): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD publishConfigVersion (POST /api/v1/admin/methodology-versions/{versionId}/publish): 403 (or 404 for an unknown record), only the denial written 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD rollbackConfigVersion (POST /api/v1/admin/methodology-versions/{versionId}/rollback): 403 (or 404 for an unknown record), only the denial written 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD discardConfigDraft (POST /api/v1/admin/methodology-versions/{versionId}/discard): 403 (or 404 for an unknown record), only the denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putScoringDefaultsDraft (PUT /api/v1/admin/methodology-versions/{versionId}/scoring-defaults): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateConfigReviewPolicy (PATCH /api/v1/admin/config-review-policies/{configKind}): 403 (or 404 for an unknown record), only the denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD runSourceCoverageCheck (POST /api/v1/admin/source-coverage/runs): 403 (or 404 for an unknown record), only the denial written 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations): 403 (or 404 for an unknown record), only the denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD previewMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/preview): 403 (or 404 for an unknown record), only the denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD submitMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/submit): 403 (or 404 for an unknown record), only the denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD decideMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/decision): 403 (or 404 for an unknown record), only the denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD executeMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/execute): 403 (or 404 for an unknown record), only the denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD withdrawMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/withdraw): 403 (or 404 for an unknown record), only the denial written 18ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putFormRecordCustomFields (PUT /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields): 403 (or 404 for an unknown record), only the denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createFormRecordComment (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments): 403 (or 404 for an unknown record), only the denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD attachFormRecordEvidence (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments): 403 (or 404 for an unknown record), only the denial written 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD removeFormRecordAttachment (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove): 403 (or 404 for an unknown record), only the denial written 39ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD bulkUpdateFormRecords (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk): 403 (or 404 for an unknown record), only the denial written 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createFormDraft (POST /api/v1/transformations/{transformationId}/form-drafts): 403 (or 404 for an unknown record), only the denial written 20ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateFormDraft (PUT /api/v1/transformations/{transformationId}/form-drafts/{draftId}): 403 (or 404 for an unknown record), only the denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD closeFormDraft (POST /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close): 403 (or 404 for an unknown record), only the denial written 39ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD validateProcedureDefinition (POST /api/v1/procedure-definitions/validate): 403 (or 404 for an unknown record), only the denial written 20ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putProcedureDefinition (PUT /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}): 403 (or 404 for an unknown record), only the denial written 21ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD removeProcedureDefinition (POST /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}/remove): 403 (or 404 for an unknown record), only the denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD launchProcedureInstance (POST /api/v1/procedure-instances): 403 (or 404 for an unknown record), only the denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateProcedureInstanceInputs (PATCH /api/v1/procedure-instances/{instanceId}/inputs): 403 (or 404 for an unknown record), only the denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD completeProcedureStep (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/complete): 403 (or 404 for an unknown record), only the denial written 43ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD skipProcedureStep (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/skip): 403 (or 404 for an unknown record), only the denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD assignProcedureStep (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/assign): 403 (or 404 for an unknown record), only the denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD linkProcedureStepEvidence (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/evidence): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD cancelProcedureInstance (POST /api/v1/procedure-instances/{instanceId}/cancel): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createAutomationRule (POST /api/v1/admin/automation-rules): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateAutomationRule (PATCH /api/v1/admin/automation-rules/{ruleId}): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD enableAutomationRule (POST /api/v1/admin/automation-rules/{ruleId}/enable): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD disableAutomationRule (POST /api/v1/admin/automation-rules/{ruleId}/disable): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions): 403 (or 404 for an unknown record), only the denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateAutomationRuleVersion (PATCH /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}): 403 (or 404 for an unknown record), only the denial written 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD runAutomationDryRun (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/dry-runs): 403 (or 404 for an unknown record), only the denial written 4ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD submitAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/submit): 403 (or 404 for an unknown record), only the denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD decideAutomationRuleReview (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/review): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD publishAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/publish): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD discardAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/discard): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD retryAutomationFailure (POST /api/v1/admin/automation-failures/{failureId}/retry): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD dismissAutomationFailure (POST /api/v1/admin/automation-failures/{failureId}/dismiss): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD runJobNow (POST /api/v1/admin/jobs/{jobCode}/run): 403 (or 404 for an unknown record), only the denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD decideApprovalRouteStep (POST /api/v1/approvals/{approvalId}/route/steps/{stepNo}/decision): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD closeGateCondition (POST /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close): 403 (or 404 for an unknown record), only the denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD reviewMeetingCutoffPack (POST /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review): 403 (or 404 for an unknown record), only the denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putMyNotificationPreferences (PUT /api/v1/me/notification-preferences): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putNotificationPolicy (PUT /api/v1/admin/notification-policy): 403 (or 404 for an unknown record), only the denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD generateReportSnapshot (POST /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate): 403 (or 404 for an unknown record), only the denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD issueReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD discardReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard): 403 (or 404 for an unknown record), only the denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD reissueReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue): 403 (or 404 for an unknown record), only the denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createExport (POST /api/v1/exports): 403 (or 404 for an unknown record), only the denial written 3ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD cancelExport (POST /api/v1/exports/{exportId}/cancel): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateOwnerUpdate (PATCH /api/v1/transformations/{transformationId}/updates/{updateId}): 403 (or 404 for an unknown record), only the denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD submitOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates/{updateId}/submit): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD reopenOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates/{updateId}/reopen): 403 (or 404 for an unknown record), only the denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD submitKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD decideKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision): 403 (or 404 for an unknown record), only the denial written 20ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD withdrawKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw): 403 (or 404 for an unknown record), only the denial written 7ms
+   × P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD previewFormula (POST /api/v1/formula-previews): 403 (or 404 for an unknown record), only the denial written 11ms
+     → {"status":400,"written":[],"code":"validation","errors":"/expression:validation.invalid"}: expected [ 403, 404 ] to include 400
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putFinancialMetricEnablement (PUT /api/v1/benefits/financial-metrics/settings/enablement): 403 (or 404 for an unknown record), only the denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putFinancialMetricAssumptions (PUT /api/v1/benefits/financial-metrics/settings/assumptions): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putBusinessCaseCashFlows (PUT /api/v1/business-cases/{businessCaseId}/cash-flows): 403 (or 404 for an unknown record), only the denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD generateLaunchPlan (POST /api/v1/transformations/{transformationId}/launch-plan): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateLaunchPlan (PATCH /api/v1/transformations/{transformationId}/launch-plan): 403 (or 404 for an unknown record), only the denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createLaunchTask (POST /api/v1/transformations/{transformationId}/launch-plan/tasks): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateLaunchTask (PATCH /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}): 403 (or 404 for an unknown record), only the denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putLaunchTaskPredecessors (PUT /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putDayNinetyResponse (PUT /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD completeDayNinetyTest (POST /api/v1/transformations/{transformationId}/day-90-test/complete): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD createHealthCheck (POST /api/v1/transformations/{transformationId}/health-checks): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD updateHealthCheck (PATCH /api/v1/transformations/{transformationId}/health-checks/{assessmentId}): 403 (or 404 for an unknown record), only the denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putHealthCheckAnswer (PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}): 403 (or 404 for an unknown record), only the denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putHealthCheckActions (PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD submitHealthCheck (POST /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit): 403 (or 404 for an unknown record), only the denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD putBrandingSettings (PUT /api/v1/admin/branding): 403 (or 404 for an unknown record), only the denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD requestDemoReset (POST /api/v1/admin/environment/demo-resets): 403 (or 404 for an unknown record), only the denial written 4ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createConfigDraft (POST /api/v1/admin/methodology-versions): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateConfigDraft (PATCH /api/v1/admin/methodology-versions/{versionId}): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putConfigElement (PUT /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}): never 2xx, nothing but a denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) removeConfigElement (POST /api/v1/admin/methodology-versions/{versionId}/elements/{elementType}/{stableKey}/remove): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) runConfigCompatibilityCheck (POST /api/v1/admin/methodology-versions/{versionId}/compatibility-checks): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) runConfigPreview (POST /api/v1/admin/methodology-versions/{versionId}/preview): never 2xx, nothing but a denial written 4ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) submitConfigReview (POST /api/v1/admin/methodology-versions/{versionId}/submit-review): never 2xx, nothing but a denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) decideConfigReview (POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/decision): never 2xx, nothing but a denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) withdrawConfigReview (POST /api/v1/admin/methodology-versions/{versionId}/reviews/{reviewId}/withdraw): never 2xx, nothing but a denial written 28ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) publishConfigVersion (POST /api/v1/admin/methodology-versions/{versionId}/publish): never 2xx, nothing but a denial written 21ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) rollbackConfigVersion (POST /api/v1/admin/methodology-versions/{versionId}/rollback): never 2xx, nothing but a denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) discardConfigDraft (POST /api/v1/admin/methodology-versions/{versionId}/discard): never 2xx, nothing but a denial written 18ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putScoringDefaultsDraft (PUT /api/v1/admin/methodology-versions/{versionId}/scoring-defaults): never 2xx, nothing but a denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateConfigReviewPolicy (PATCH /api/v1/admin/config-review-policies/{configKind}): never 2xx, nothing but a denial written 34ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) runSourceCoverageCheck (POST /api/v1/admin/source-coverage/runs): never 2xx, nothing but a denial written 19ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations): never 2xx, nothing but a denial written 63ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) previewMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/preview): never 2xx, nothing but a denial written 29ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) submitMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/submit): never 2xx, nothing but a denial written 18ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) decideMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/decision): never 2xx, nothing but a denial written 28ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) executeMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/execute): never 2xx, nothing but a denial written 28ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) withdrawMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/withdraw): never 2xx, nothing but a denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putFormRecordCustomFields (PUT /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields): never 2xx, nothing but a denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createFormRecordComment (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) attachFormRecordEvidence (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) removeFormRecordAttachment (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) bulkUpdateFormRecords (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk): never 2xx, nothing but a denial written 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createFormDraft (POST /api/v1/transformations/{transformationId}/form-drafts): never 2xx, nothing but a denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateFormDraft (PUT /api/v1/transformations/{transformationId}/form-drafts/{draftId}): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) closeFormDraft (POST /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) validateProcedureDefinition (POST /api/v1/procedure-definitions/validate): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putProcedureDefinition (PUT /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}): never 2xx, nothing but a denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) removeProcedureDefinition (POST /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}/remove): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) launchProcedureInstance (POST /api/v1/procedure-instances): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateProcedureInstanceInputs (PATCH /api/v1/procedure-instances/{instanceId}/inputs): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) completeProcedureStep (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/complete): never 2xx, nothing but a denial written 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) skipProcedureStep (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/skip): never 2xx, nothing but a denial written 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) assignProcedureStep (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/assign): never 2xx, nothing but a denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) linkProcedureStepEvidence (POST /api/v1/procedure-instances/{instanceId}/steps/{stepKey}/evidence): never 2xx, nothing but a denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) cancelProcedureInstance (POST /api/v1/procedure-instances/{instanceId}/cancel): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createAutomationRule (POST /api/v1/admin/automation-rules): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateAutomationRule (PATCH /api/v1/admin/automation-rules/{ruleId}): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) enableAutomationRule (POST /api/v1/admin/automation-rules/{ruleId}/enable): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) disableAutomationRule (POST /api/v1/admin/automation-rules/{ruleId}/disable): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions): never 2xx, nothing but a denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateAutomationRuleVersion (PATCH /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) runAutomationDryRun (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/dry-runs): never 2xx, nothing but a denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) submitAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/submit): never 2xx, nothing but a denial written 21ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) decideAutomationRuleReview (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/review): never 2xx, nothing but a denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) publishAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/publish): never 2xx, nothing but a denial written 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) discardAutomationRuleVersion (POST /api/v1/admin/automation-rules/{ruleId}/versions/{versionNo}/discard): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) retryAutomationFailure (POST /api/v1/admin/automation-failures/{failureId}/retry): never 2xx, nothing but a denial written 19ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) dismissAutomationFailure (POST /api/v1/admin/automation-failures/{failureId}/dismiss): never 2xx, nothing but a denial written 53ms
+   × P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) runJobNow (POST /api/v1/admin/jobs/{jobCode}/run): never 2xx, nothing but a denial written 54ms
+     → {"status":202,"written":["job_schedule.run_now"],"code":"automation.tick_daily","errors":""}: expected 202 to be greater than or equal to 400
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) decideApprovalRouteStep (POST /api/v1/approvals/{approvalId}/route/steps/{stepNo}/decision): never 2xx, nothing but a denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) closeGateCondition (POST /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close): never 2xx, nothing but a denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) reviewMeetingCutoffPack (POST /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putMyNotificationPreferences (PUT /api/v1/me/notification-preferences): never 2xx, nothing but a denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putNotificationPolicy (PUT /api/v1/admin/notification-policy): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) generateReportSnapshot (POST /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate): never 2xx, nothing but a denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) issueReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue): never 2xx, nothing but a denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) discardReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard): never 2xx, nothing but a denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) reissueReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue): never 2xx, nothing but a denial written 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createExport (POST /api/v1/exports): never 2xx, nothing but a denial written 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) cancelExport (POST /api/v1/exports/{exportId}/cancel): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateOwnerUpdate (PATCH /api/v1/transformations/{transformationId}/updates/{updateId}): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) submitOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates/{updateId}/submit): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) reopenOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates/{updateId}/reopen): never 2xx, nothing but a denial written 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements): never 2xx, nothing but a denial written 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) submitKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) decideKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision): never 2xx, nothing but a denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) withdrawKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw): never 2xx, nothing but a denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) previewFormula (POST /api/v1/formula-previews): never 2xx, nothing but a denial written 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putFinancialMetricEnablement (PUT /api/v1/benefits/financial-metrics/settings/enablement): never 2xx, nothing but a denial written 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putFinancialMetricAssumptions (PUT /api/v1/benefits/financial-metrics/settings/assumptions): never 2xx, nothing but a denial written 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putBusinessCaseCashFlows (PUT /api/v1/business-cases/{businessCaseId}/cash-flows): never 2xx, nothing but a denial written 20ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) generateLaunchPlan (POST /api/v1/transformations/{transformationId}/launch-plan): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateLaunchPlan (PATCH /api/v1/transformations/{transformationId}/launch-plan): never 2xx, nothing but a denial written 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createLaunchTask (POST /api/v1/transformations/{transformationId}/launch-plan/tasks): never 2xx, nothing but a denial written 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateLaunchTask (PATCH /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}): never 2xx, nothing but a denial written 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putLaunchTaskPredecessors (PUT /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putDayNinetyResponse (PUT /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}): never 2xx, nothing but a denial written 28ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) completeDayNinetyTest (POST /api/v1/transformations/{transformationId}/day-90-test/complete): never 2xx, nothing but a denial written 18ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) createHealthCheck (POST /api/v1/transformations/{transformationId}/health-checks): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) updateHealthCheck (PATCH /api/v1/transformations/{transformationId}/health-checks/{assessmentId}): never 2xx, nothing but a denial written 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putHealthCheckAnswer (PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}): never 2xx, nothing but a denial written 25ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putHealthCheckActions (PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions): never 2xx, nothing but a denial written 26ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) submitHealthCheck (POST /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit): never 2xx, nothing but a denial written 35ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) putBrandingSettings (PUT /api/v1/admin/branding): never 2xx, nothing but a denial written 22ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) requestDemoReset (POST /api/v1/admin/environment/demo-resets): never 2xx, nothing but a denial written 18ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listTransformationConfigPins (/api/v1/transformations/{transformationId}/config-pins): transformation-scoped read is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listConfigPinHistory (/api/v1/transformations/{transformationId}/config-pins/history): transformation-scoped read is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getTransformationScoringDefaults (/api/v1/transformations/{transformationId}/scoring-defaults): transformation-scoped read is not 2xx 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listGateReapprovals (/api/v1/transformations/{transformationId}/gate-reapprovals): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listMethodologyMigrations (/api/v1/transformations/{transformationId}/methodology-migrations): transformation-scoped read is not 2xx 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getMethodologyMigration (/api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}): transformation-scoped read is not 2xx 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getTransformationFormSchema (/api/v1/transformations/{transformationId}/form-schemas/{recordType}): transformation-scoped read is not 2xx 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getFormRecordCustomFields (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields): transformation-scoped read is not 2xx 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listFormRecordVersions (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/versions): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listFormRecordComments (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments): transformation-scoped read is not 2xx 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listFormRecordAttachments (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET exportFormRecords (/api/v1/transformations/{transformationId}/form-records/{recordType}/export): transformation-scoped read is not 2xx 51ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listFormDrafts (/api/v1/transformations/{transformationId}/form-drafts): transformation-scoped read is not 2xx 49ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getFormDraft (/api/v1/transformations/{transformationId}/form-drafts/{draftId}): transformation-scoped read is not 2xx 21ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listGateConditions (/api/v1/transformations/{transformationId}/gate-conditions): transformation-scoped read is not 2xx 13ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listDependencySlips (/api/v1/transformations/{transformationId}/dependency-slips): transformation-scoped read is not 2xx 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getMeetingCutoffPack (/api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack): transformation-scoped read is not 2xx 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getLiveReport (/api/v1/transformations/{transformationId}/reports/{definitionCode}/live): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listReportSnapshots (/api/v1/transformations/{transformationId}/report-snapshots): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getReportSnapshot (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}): transformation-scoped read is not 2xx 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listReportSnapshotSources (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/sources): transformation-scoped read is not 2xx 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listReportSnapshotVersions (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/versions): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listReportSnapshotEvidence (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/evidence): transformation-scoped read is not 2xx 17ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getMeetingPresentation (/api/v1/transformations/{transformationId}/meetings/{meetingId}/presentation): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listOwnerUpdates (/api/v1/transformations/{transformationId}/updates): transformation-scoped read is not 2xx 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getOwnerUpdate (/api/v1/transformations/{transformationId}/updates/{updateId}): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listOwnerUpdateRevisions (/api/v1/transformations/{transformationId}/updates/{updateId}/revisions): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listEvidenceRegister (/api/v1/transformations/{transformationId}/evidence-register): transformation-scoped read is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listEvidenceVersions (/api/v1/transformations/{transformationId}/evidence/{evidenceId}/versions): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listKpiRestatements (/api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements): transformation-scoped read is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getKpiRestatement (/api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getKpiRestatementReconciliation (/api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reconciliation): transformation-scoped read is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listKpiRestatementReissueOffers (/api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reissue-offers): transformation-scoped read is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listTransformationFinancialMetrics (/api/v1/transformations/{transformationId}/benefits/financial-metrics): transformation-scoped read is not 2xx 34ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getLaunchPlan (/api/v1/transformations/{transformationId}/launch-plan): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listLaunchTasks (/api/v1/transformations/{transformationId}/launch-plan/tasks): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getLaunchTask (/api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getDayNinetyTest (/api/v1/transformations/{transformationId}/day-90-test): transformation-scoped read is not 2xx 129ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET listHealthChecks (/api/v1/transformations/{transformationId}/health-checks): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) GET getHealthCheck (/api/v1/transformations/{transformationId}/health-checks/{assessmentId}): transformation-scoped read is not 2xx 17ms
+   × P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listTransformationConfigPins (/api/v1/transformations/{transformationId}/config-pins): transformation-scoped read is not 2xx 22ms
+     → {"status":200,"written":[],"code":null,"errors":""}: expected [ 403, 404 ] to include 200
+   × P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listConfigPinHistory (/api/v1/transformations/{transformationId}/config-pins/history): transformation-scoped read is not 2xx 11ms
+     → {"status":200,"written":[],"code":null,"errors":""}: expected [ 403, 404 ] to include 200
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getTransformationScoringDefaults (/api/v1/transformations/{transformationId}/scoring-defaults): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listGateReapprovals (/api/v1/transformations/{transformationId}/gate-reapprovals): transformation-scoped read is not 2xx 8ms
+   × P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listMethodologyMigrations (/api/v1/transformations/{transformationId}/methodology-migrations): transformation-scoped read is not 2xx 10ms
+     → {"status":200,"written":[],"code":null,"errors":""}: expected [ 403, 404 ] to include 200
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getMethodologyMigration (/api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getTransformationFormSchema (/api/v1/transformations/{transformationId}/form-schemas/{recordType}): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getFormRecordCustomFields (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listFormRecordVersions (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/versions): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listFormRecordComments (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listFormRecordAttachments (/api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments): transformation-scoped read is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET exportFormRecords (/api/v1/transformations/{transformationId}/form-records/{recordType}/export): transformation-scoped read is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listFormDrafts (/api/v1/transformations/{transformationId}/form-drafts): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getFormDraft (/api/v1/transformations/{transformationId}/form-drafts/{draftId}): transformation-scoped read is not 2xx 21ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listGateConditions (/api/v1/transformations/{transformationId}/gate-conditions): transformation-scoped read is not 2xx 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listDependencySlips (/api/v1/transformations/{transformationId}/dependency-slips): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getMeetingCutoffPack (/api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getLiveReport (/api/v1/transformations/{transformationId}/reports/{definitionCode}/live): transformation-scoped read is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listReportSnapshots (/api/v1/transformations/{transformationId}/report-snapshots): transformation-scoped read is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getReportSnapshot (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}): transformation-scoped read is not 2xx 18ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listReportSnapshotSources (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/sources): transformation-scoped read is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listReportSnapshotVersions (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/versions): transformation-scoped read is not 2xx 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listReportSnapshotEvidence (/api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/evidence): transformation-scoped read is not 2xx 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getMeetingPresentation (/api/v1/transformations/{transformationId}/meetings/{meetingId}/presentation): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listOwnerUpdates (/api/v1/transformations/{transformationId}/updates): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getOwnerUpdate (/api/v1/transformations/{transformationId}/updates/{updateId}): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listOwnerUpdateRevisions (/api/v1/transformations/{transformationId}/updates/{updateId}/revisions): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listEvidenceRegister (/api/v1/transformations/{transformationId}/evidence-register): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listEvidenceVersions (/api/v1/transformations/{transformationId}/evidence/{evidenceId}/versions): transformation-scoped read is not 2xx 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listKpiRestatements (/api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getKpiRestatement (/api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}): transformation-scoped read is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getKpiRestatementReconciliation (/api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reconciliation): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listKpiRestatementReissueOffers (/api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/reissue-offers): transformation-scoped read is not 2xx 32ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listTransformationFinancialMetrics (/api/v1/transformations/{transformationId}/benefits/financial-metrics): transformation-scoped read is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getLaunchPlan (/api/v1/transformations/{transformationId}/launch-plan): transformation-scoped read is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listLaunchTasks (/api/v1/transformations/{transformationId}/launch-plan/tasks): transformation-scoped read is not 2xx 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getLaunchTask (/api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}): transformation-scoped read is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getDayNinetyTest (/api/v1/transformations/{transformationId}/day-90-test): transformation-scoped read is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listHealthChecks (/api/v1/transformations/{transformationId}/health-checks): transformation-scoped read is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET getHealthCheck (/api/v1/transformations/{transformationId}/health-checks/{assessmentId}): transformation-scoped read is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations): transformation-scoped write is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD previewMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/preview): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD submitMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/submit): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD decideMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/decision): transformation-scoped write is not 2xx 19ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD executeMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/execute): transformation-scoped write is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD withdrawMethodologyMigration (POST /api/v1/transformations/{transformationId}/methodology-migrations/{migrationId}/withdraw): transformation-scoped write is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD putFormRecordCustomFields (PUT /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/custom-fields): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createFormRecordComment (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/comments): transformation-scoped write is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD attachFormRecordEvidence (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments): transformation-scoped write is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD removeFormRecordAttachment (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/attachments/{attachmentId}/remove): transformation-scoped write is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD bulkUpdateFormRecords (POST /api/v1/transformations/{transformationId}/form-records/{recordType}/bulk): transformation-scoped write is not 2xx 5ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createFormDraft (POST /api/v1/transformations/{transformationId}/form-drafts): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD updateFormDraft (PUT /api/v1/transformations/{transformationId}/form-drafts/{draftId}): transformation-scoped write is not 2xx 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD closeFormDraft (POST /api/v1/transformations/{transformationId}/form-drafts/{draftId}/close): transformation-scoped write is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD closeGateCondition (POST /api/v1/transformations/{transformationId}/gate-conditions/{conditionId}/close): transformation-scoped write is not 2xx 4ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD reviewMeetingCutoffPack (POST /api/v1/transformations/{transformationId}/meetings/{meetingId}/cutoff-pack/review): transformation-scoped write is not 2xx 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD generateReportSnapshot (POST /api/v1/transformations/{transformationId}/reports/{definitionCode}/generate): transformation-scoped write is not 2xx 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD issueReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/issue): transformation-scoped write is not 2xx 14ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD discardReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/discard): transformation-scoped write is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD reissueReportSnapshot (POST /api/v1/transformations/{transformationId}/report-snapshots/{snapshotId}/reissue): transformation-scoped write is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD updateOwnerUpdate (PATCH /api/v1/transformations/{transformationId}/updates/{updateId}): transformation-scoped write is not 2xx 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD submitOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates/{updateId}/submit): transformation-scoped write is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD reopenOwnerUpdate (POST /api/v1/transformations/{transformationId}/updates/{updateId}/reopen): transformation-scoped write is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-definitions/{kpiDefinitionId}/restatements): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD submitKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/submit): transformation-scoped write is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD decideKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/decision): transformation-scoped write is not 2xx 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD withdrawKpiRestatement (POST /api/v1/transformations/{transformationId}/kpi-restatements/{restatementId}/withdraw): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD generateLaunchPlan (POST /api/v1/transformations/{transformationId}/launch-plan): transformation-scoped write is not 2xx 12ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD updateLaunchPlan (PATCH /api/v1/transformations/{transformationId}/launch-plan): transformation-scoped write is not 2xx 15ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createLaunchTask (POST /api/v1/transformations/{transformationId}/launch-plan/tasks): transformation-scoped write is not 2xx 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD updateLaunchTask (PATCH /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}): transformation-scoped write is not 2xx 16ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD putLaunchTaskPredecessors (PUT /api/v1/transformations/{transformationId}/launch-plan/tasks/{taskId}/predecessors): transformation-scoped write is not 2xx 8ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD putDayNinetyResponse (PUT /api/v1/transformations/{transformationId}/day-90-test/responses/{questionCode}): transformation-scoped write is not 2xx 6ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD completeDayNinetyTest (POST /api/v1/transformations/{transformationId}/day-90-test/complete): transformation-scoped write is not 2xx 9ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD createHealthCheck (POST /api/v1/transformations/{transformationId}/health-checks): transformation-scoped write is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD updateHealthCheck (PATCH /api/v1/transformations/{transformationId}/health-checks/{assessmentId}): transformation-scoped write is not 2xx 7ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD putHealthCheckAnswer (PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/answers/{questionCode}): transformation-scoped write is not 2xx 10ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD putHealthCheckActions (PUT /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/actions): transformation-scoped write is not 2xx 11ms
+   ✓ P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD submitHealthCheck (POST /api/v1/transformations/{transformationId}/health-checks/{assessmentId}/submit): transformation-scoped write is not 2xx 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts > P5 contract-generated role sweep (code-security-reviewer DG5 r1) > AUD previewFormula (POST /api/v1/formula-previews): 403 (or 404 for an unknown record), only the denial written
+AssertionError: {"status":400,"written":[],"code":"validation","errors":"/expression:validation.invalid"}: expected [ 403, 404 ] to include 400
+ ❯ apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts:139:45
+    137|       const r = await send(aud, method, path, id);
+    138|       rows.push(`AUD\t${r.status}\t${id}\t${method} ${path}\t${String(…
+    139|       expect([403, 404], JSON.stringify(r)).toContain(r.status);
+       |                                             ^
+    140|       expect(r.written.filter((a) => a !== "authorization.denied"), JS…
+    141|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts > P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM(tech+access) runJobNow (POST /api/v1/admin/jobs/{jobCode}/run): never 2xx, nothing but a denial written
+AssertionError: {"status":202,"written":["job_schedule.run_now"],"code":"automation.tick_daily","errors":""}: expected 202 to be greater than or equal to 400
+ ❯ apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts:149:43
+    147|       const r = await send(adm, method, path);
+    148|       rows.push(`ADM\t${r.status}\t${id}\t${method} ${path}\t${String(…
+    149|       expect(r.status, JSON.stringify(r)).toBeGreaterThanOrEqual(400);
+       |                                           ^
+    150|       expect(r.written.filter((a) => a !== "authorization.denied"), JS…
+    151|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts > P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listTransformationConfigPins (/api/v1/transformations/{transformationId}/config-pins): transformation-scoped read is not 2xx
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts > P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listConfigPinHistory (/api/v1/transformations/{transformationId}/config-pins/history): transformation-scoped read is not 2xx
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts > P5 contract-generated role sweep (code-security-reviewer DG5 r1) > ADM_METHOD GET listMethodologyMigrations (/api/v1/transformations/{transformationId}/methodology-migrations): transformation-scoped read is not 2xx
+AssertionError: {"status":200,"written":[],"code":null,"errors":""}: expected [ 403, 404 ] to include 200
+ ❯ apps/api/test/integration/zz-sec-r1-p5-role-sweep.test.ts:168:45
+    166|       const r = await send(meth, "GET", path);
+    167|       rows.push(`METH-READ\t${r.status}\t${id}\tGET ${path}\t${String(…
+    168|       expect([403, 404], JSON.stringify(r)).toContain(r.status);
+       |                                             ^
+    169|     },
+    170|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 296 passed (301)
+   Start at  05:42:30
+   Duration  30.72s (transform 7.49s, setup 0ms, collect 18.19s, tests 5.42s, environment 21ms, prepare 183ms)
+
+exit=1
