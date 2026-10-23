@@ -1,0 +1,136 @@
+$ git diff --stat ad52a56..12dc33e -- . ":!docs/delivery"
+ apps/web/e2e/p5-record-name-reflow.spec.ts         | 170 +++++++++++++++
+ .../e2e/p5-transformation-picker-complete.spec.ts  |  91 ++++++++
+ apps/web/src/api/all-transformations.test.tsx      | 231 +++++++++++++++++++++
+ apps/web/src/api/queries.ts                        |  54 +++++
+ apps/web/src/components/table-regions.test.tsx     |   5 +-
+ apps/web/src/pages/AreaPages.tsx                   |  11 +-
+ apps/web/src/pages/admin/AssignmentsPage.tsx       |  24 ++-
+ apps/web/src/pages/automation/RulePage.tsx         |  25 ++-
+ apps/web/src/pages/automation/RulesPage.tsx        | 191 +++++++++--------
+ apps/web/src/pages/dashboards/DashboardsPage.tsx   |   9 +-
+ apps/web/src/pages/define/DefinePage.tsx           |  58 +++---
+ apps/web/src/pages/delegations/DelegationsPage.tsx |  15 +-
+ apps/web/src/pages/launch-plan/ui.tsx              |  11 +-
+ .../methodology-migrations/MigrationsEntryPage.tsx |  11 +-
+ apps/web/src/pages/playbook/BlockPage.tsx          |  32 +--
+ apps/web/src/pages/procedures/MyProceduresPage.tsx |  39 ++--
+ apps/web/src/pages/reports/ui.tsx                  |  11 +-
+ apps/web/src/pages/traceability/ModularPage.tsx    |   3 +-
+ apps/web/src/pages/traceability/ui.tsx             |  10 +-
+ apps/web/src/pages/walkthrough/WalkthroughPage.tsx |  43 ++--
+ apps/web/src/styles/app.css                        |  13 +-
+ 21 files changed, 839 insertions(+), 218 deletions(-)
+
+$ grep -rn "useTransformations(|useAllTransformations(" apps/web/src (non-test)
+apps/web/src/api/queries.ts:218:export function useTransformations(params: TransformationListParams) {
+apps/web/src/api/queries.ts:276:export function useAllTransformations(params: AllTransformationsParams, enabled = true) {
+apps/web/src/pages/admin/AssignmentsPage.tsx:405:  const transformations = useAllTransformations({ sort: "code:asc", organizationId }, canListTransformations);
+apps/web/src/pages/transformations/TransformationListPage.tsx:85:  const query = useTransformations(listParams);
+apps/web/src/pages/automation/RulesPage.tsx:202:  const transformations = useAllTransformations({ sort: "code:asc" });
+apps/web/src/pages/automation/RulePage.tsx:415:  const transformations = useAllTransformations({ sort: "code:asc" });
+apps/web/src/pages/delegations/DelegationsPage.tsx:249:  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+apps/web/src/pages/launch-plan/ui.tsx:87:  const list = useAllTransformations({ sort: "updatedAt:desc" });
+apps/web/src/pages/AreaPages.tsx:38:  const list = useAllTransformations({ sort: "updatedAt:desc" });
+apps/web/src/pages/dashboards/DashboardsPage.tsx:128:  const list = useAllTransformations({ sort: "code:asc" });
+apps/web/src/pages/playbook/BlockPage.tsx:218:  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+apps/web/src/pages/reports/ui.tsx:520:  const list = useAllTransformations({ sort: "updatedAt:desc" });
+apps/web/src/pages/procedures/MyProceduresPage.tsx:205:  const transformations = useAllTransformations({ sort: "code:asc" });
+apps/web/src/pages/methodology-migrations/MigrationsEntryPage.tsx:14:  const list = useAllTransformations({ sort: "updatedAt:desc" });
+apps/web/src/pages/walkthrough/WalkthroughPage.tsx:36:  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+
+$ other GET /api/v1/transformations list consumers (non-test)
+apps/web/src/api/queries.ts:223:        "/api/v1/transformations",
+apps/web/src/api/queries.ts:254:      "/api/v1/transformations",
+apps/web/src/pages/transformations/TransformationCreatePage.tsx:191:      const created = await api.send<Transformation>("/api/v1/transformations", {
+apps/web/src/pages/benefits/api.ts:314:    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+apps/web/src/pages/dashboards/api.ts:240:        "/api/v1/transformations",
+apps/web/src/pages/procedures/CompleteWithOutput.tsx:37:  if (source.kind === "transformations") return fetchAllPages<OutputRow>("/api/v1/transformations");
+apps/web/src/pages/traceability/api.ts:98:  transformations: `${v1}/transformations`, // listTransformations (DG1, scope-filtered)
+apps/web/src/pages/traceability/api.ts:335:        tracePaths.transformations,
+
+$ sed -n 104,119p apps/web/src/api/queries.ts   (fetchAllPages: 20 pages, then break, no error)
+/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
+export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+  const out: T[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const page: Page<T> = await api.get<Page<T>>(path, {
+      ...query,
+      limit: PAGINATION.maxLimit,
+      ...(cursor ? { cursor } : {}),
+    });
+    out.push(...page.items);
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
+  }
+  return out;
+}
+
+$ fetchAllPages callers over the transformation list
+apps/web/src/pages/benefits/api.ts:314:    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+apps/web/src/pages/procedures/CompleteWithOutput.tsx:37:  if (source.kind === "transformations") return fetchAllPages<OutputRow>("/api/v1/transformations");
+apps/web/src/pages/traceability/api.ts:320:      fetchAllPages<PortfolioTransformation>(
+apps/web/src/pages/traceability/api.ts:335:        tracePaths.transformations,
+apps/web/src/pages/finance-validation/FinanceValidationPages.tsx:157:  const transformations = useReadableTransformations();
+apps/web/src/pages/dashboards/ui.tsx:1187:  const readable = useReadableTransformations(me.organization.id, Boolean(state.bu) && state.tr.length > 0);
+apps/web/src/pages/dashboards/ui.tsx:1265:  const readable = useReadableTransformations(me.organization.id, orgWide);
+apps/web/src/pages/traceability/StructurePages.tsx:641:  const readable = useReadableTransformations(orgId, canManage);
+
+$ sed -n 311,317p apps/web/src/pages/benefits/api.ts; sed -n 328,342p apps/web/src/pages/traceability/api.ts
+export function useReadableTransformations() {
+  return useQuery({
+    queryKey: [...p4Keys.all, "finance-queue", "transformations"],
+    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+    ...opts,
+  });
+}
+
+/** The transformations the caller may read in the organization (DG1 `listTransformations`, scope-filtered). */
+export function useReadableTransformations(orgId: string, enabled = true) {
+  return useQuery({
+    queryKey: orgKey(orgId, "readable-transformations"),
+    queryFn: () =>
+      fetchAllPages<{ id: string; code: string; name: string; businessUnitId: string | null }>(
+        tracePaths.transformations,
+        { organizationId: orgId, sort: "code:asc" },
+      ),
+    enabled: Boolean(orgId) && enabled,
+    retry: shouldRetry,
+    staleTime: 30_000,
+  });
+}
+$ dashboards/api.ts:230-256 (business-unit chip: first 51, documented F-DG4-144 behaviour)
+
+/**
+ * The readable transformations of one business unit (DG1 `listTransformations`, server-side unit filter), for the
+ * business-unit chip: the dashboard contract has no unit parameter, so the chip narrows by these ids (at most 50).
+ * F-DG4-144: the dashboard's phase and status chips narrow this list too (`listTransformations` takes `phase` and
+ * `status` with the dashboards' meaning: `current_phase` and `status`, archived excluded), so narrowing by phase or
+ * status can bring a large unit within the 50-transformation limit.
+ */
+export function useBusinessUnitTransformations(
+  orgId: string,
+  businessUnitId: string,
+  narrow: { readonly phase: string; readonly status: string } = { phase: "", status: "" },
+) {
+  const { phase, status } = narrow;
+  return useQuery({
+    queryKey: p4Keys.dashboard("unit-transformations", { orgId, businessUnitId, phase, status }),
+    queryFn: ({ signal }) =>
+      api.get<{ items: { id: string }[]; nextCursor: string | null }>(
+        "/api/v1/transformations",
+        {
+          organizationId: orgId,
+          businessUnitId,
+          ...(phase ? { phase } : {}),
+          ...(status ? { status } : {}),
+          sort: "code:asc",
+          limit: 51,
+        },
+        signal,
+      ),
+    enabled: Boolean(orgId && businessUnitId),
+    retry: shouldRetry,
+  });
+}

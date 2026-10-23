@@ -1,0 +1,267 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Lead
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - generic [ref=e20]:
+    - navigation "Primary navigation" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "My Work" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: My Work
+          - list "My Work" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Tasks and inbox" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "Approvals" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "Delegations" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "Notification preferences" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "Executive Overview" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: Executive Overview
+          - list "Executive Overview" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Dashboards" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "RAG policy" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "Transformations" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: Transformations
+        - listitem [ref=e46]:
+          - link "Playbook and Procedures" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "Phase steps and review queue" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "Playbook reader" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "My procedures" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "90-day launch plan" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "Health check" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "Strategy and KPIs" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "KPIs" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "Target Operating Model" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: Target Operating Model
+        - listitem [ref=e69]:
+          - link "Initiatives and Roadmaps" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "Portfolios" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "Owner updates" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "Governance" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: Governance
+          - list "Governance" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "Groups" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "Forums" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "Meetings" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "Executive decisions (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "Change requests" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "Risks and Actions" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: Risks and Actions
+          - list "Risks and Actions" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "RAID (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "Action register" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "Corrective actions" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "Benefits and Finance" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "Benefits register (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "Change and Adoption" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: Change and Adoption
+          - list "Change and Adoption" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Adoption plan (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "Evidence and Reports" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "Reports and snapshots" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "Exports" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "Presentation mode" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "Evidence register" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "BAU and Improvement" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "Performance areas" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "Improvement backlog" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "Lessons" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "Lesson search" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "About this product" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "Breadcrumbs" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "Dashboards" [ref=e145] [cursor=pointer]:
+                  - /url: /dashboards
+              - listitem [ref=e146]: /Transformation dashboard
+          - generic [ref=e148]:
+            - heading "Transformation dashboard" [level=1] [ref=e149]
+            - paragraph [ref=e150]: Choose a transformation to open its dashboard.
+        - generic [ref=e151]:
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]: Search
+              - searchbox "Search" [ref=e155]
+            - button "Columns" [ref=e157] [cursor=pointer]:
+              - img [ref=e158]
+              - text: Columns
+          - region "Transformation dashboard (scrollable table)" [ref=e160]:
+            - table "Transformation dashboard" [ref=e161]:
+              - caption [ref=e162]: Transformation dashboard
+              - rowgroup [ref=e163]:
+                - row "Transformation sorted ascending" [ref=e164]:
+                  - columnheader "Transformation sorted ascending" [ref=e165]:
+                    - button "Transformation sorted ascending" [ref=e166] [cursor=pointer]:
+                      - text: Transformation
+                      - img [ref=e167]
+                      - generic [ref=e169]: sorted ascending
+              - rowgroup [ref=e170]:
+                - row "TR-0001 QA7 picker filler en mvkceuw3 1" [ref=e171]:
+                  - rowheader "TR-0001 QA7 picker filler en mvkceuw3 1" [ref=e172]:
+                    - link "TR-0001 QA7 picker filler en mvkceuw3 1" [ref=e173] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-60b5-710c-b700-079dc7a70e8c/dashboard
+                - row "TR-0002 QA7 picker filler en mvkceuw3 2" [ref=e174]:
+                  - rowheader "TR-0002 QA7 picker filler en mvkceuw3 2" [ref=e175]:
+                    - link "TR-0002 QA7 picker filler en mvkceuw3 2" [ref=e176] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-6114-74a0-a869-eac021d025d4/dashboard
+                - row "TR-0003 QA7 picker filler en mvkceuw3 3" [ref=e177]:
+                  - rowheader "TR-0003 QA7 picker filler en mvkceuw3 3" [ref=e178]:
+                    - link "TR-0003 QA7 picker filler en mvkceuw3 3" [ref=e179] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-613d-73ad-94d2-e8036435b086/dashboard
+                - row "TR-0004 QA7 picker filler en mvkceuw3 4" [ref=e180]:
+                  - rowheader "TR-0004 QA7 picker filler en mvkceuw3 4" [ref=e181]:
+                    - link "TR-0004 QA7 picker filler en mvkceuw3 4" [ref=e182] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-6162-7490-8ebf-9a8478adda03/dashboard
+                - row "TR-0005 QA7 picker filler en mvkceuw3 5" [ref=e183]:
+                  - rowheader "TR-0005 QA7 picker filler en mvkceuw3 5" [ref=e184]:
+                    - link "TR-0005 QA7 picker filler en mvkceuw3 5" [ref=e185] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-619f-75f4-b596-a2e339b4de3e/dashboard
+                - row "TR-0006 QA7 picker filler en mvkceuw3 6" [ref=e186]:
+                  - rowheader "TR-0006 QA7 picker filler en mvkceuw3 6" [ref=e187]:
+                    - link "TR-0006 QA7 picker filler en mvkceuw3 6" [ref=e188] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-61d0-702a-a7d6-ea3ab5475fb8/dashboard
+                - row "TR-0007 QA7 picker filler en mvkceuw3 7" [ref=e189]:
+                  - rowheader "TR-0007 QA7 picker filler en mvkceuw3 7" [ref=e190]:
+                    - link "TR-0007 QA7 picker filler en mvkceuw3 7" [ref=e191] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-6203-7689-bfb8-a41d480228e0/dashboard
+                - row "TR-0008 QA7 picker filler en mvkceuw3 8" [ref=e192]:
+                  - rowheader "TR-0008 QA7 picker filler en mvkceuw3 8" [ref=e193]:
+                    - link "TR-0008 QA7 picker filler en mvkceuw3 8" [ref=e194] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-6245-7418-849d-d78c6aa8d221/dashboard
+                - row "TR-0009 QA7 picker filler en mvkceuw3 9" [ref=e195]:
+                  - rowheader "TR-0009 QA7 picker filler en mvkceuw3 9" [ref=e196]:
+                    - link "TR-0009 QA7 picker filler en mvkceuw3 9" [ref=e197] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-6291-71df-9895-6336cfe29633/dashboard
+                - row "TR-0010 QA7 picker filler en mvkceuw3 10" [ref=e198]:
+                  - rowheader "TR-0010 QA7 picker filler en mvkceuw3 10" [ref=e199]:
+                    - link "TR-0010 QA7 picker filler en mvkceuw3 10" [ref=e200] [cursor=pointer]:
+                      - /url: /transformations/01a1668f-62ca-760e-863f-4b7c18bb174c/dashboard
+          - navigation "Pagination" [ref=e201]:
+            - generic [ref=e202]: Page 1 of 11 · 10 of 102 rows
+            - generic [ref=e203]:
+              - generic [ref=e204]: Rows per page
+              - combobox "Rows per page" [ref=e205]:
+                - option "10" [selected]
+                - option "25"
+                - option "50"
+                - option "100"
+            - button "Previous" [disabled] [ref=e206]
+            - button "Next" [ref=e207] [cursor=pointer]
+```

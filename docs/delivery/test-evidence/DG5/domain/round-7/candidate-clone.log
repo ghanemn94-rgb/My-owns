@@ -1,0 +1,20 @@
+$ git rev-parse HEAD (repo)
+fbba1afc516d8b6b8b75407496fae4095a1e8bae
+$ node tools/gates/candidate.mjs --stage DG5 (repo, Node 24.21.0)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+$ git diff --name-only 12dc33e HEAD | grep -v ^docs/delivery/ (expect empty)
+(end)
+$ git diff --name-only 12dc33e HEAD | cut -d/ -f1-3 | sort | uniq -c
+      3 docs/delivery/assignments
+      1 docs/delivery/candidates
+      1 docs/delivery/reviews
+     26 docs/delivery/runs
+      1 docs/delivery/stages.json
+    977 docs/delivery/test-evidence
+$ clone: git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv7; sparse-checkout '/*' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' '!/docs/delivery/runs/' (4.2 GB free on the shared disk); git checkout 12dc33e
+12dc33e4f9f2f804aeb0a9774a988d699709a235
+shallow: false; rev-list count: 1578
+$ node tools/gates/candidate.mjs --stage DG5 (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+$ manifest file
+-rw-r--r-- 1 root root 371816 Oct 22 22:09 /home/user/My-owns/docs/delivery/candidates/DG5/33188e9e698fd11b.manifest.json

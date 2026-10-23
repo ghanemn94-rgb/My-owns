@@ -1,0 +1,25 @@
+$ git clone --shared /home/user/My-owns $TMPDIR/review-qa; git checkout 1932faa   (complete clone with shared object store (alternates; disk is tight); full history reachable; done before this script)
+HEAD 1932faa72f68191f0a288be3acae796ce4e06f53  shallow=false  sparse=unset
+$ node tools/gates/candidate.mjs --stage DG5   (clone, 2026-10-23T00:59:46Z)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+$ (main repo HEAD fbba1afc516d8b6b8b75407496fae4095a1e8bae) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+$ git diff --name-only 12dc33e 1932faa | cut -d/ -f1-5 | sort | uniq -c   (delivery records only)
+      3 docs/delivery/assignments/DG5
+      1 docs/delivery/candidates/DG5
+      1 docs/delivery/stages.json
+$ git merge-base --is-ancestor 12dc33e HEAD
+EXIT 0
+$ rm -rf docs/delivery/test-evidence docs/delivery/runs  (in the clone, to save disk: 1.2 GB free; both are META_EXCLUDES of tools/gates/lib/candidate.mjs) 2026-10-23T01:00:30Z
+$ node tools/gates/candidate.mjs --stage DG5  (clone, after removal)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0
+
+$ (main repo moved during my run: HEAD 546e460 = fbba1af + the runner's auto-commit of another reviewer's round-7 files; diff limited to docs/delivery/{reviews,runs,test-evidence}, not opened) node tools/gates/candidate.mjs --stage DG5  2026-10-23T01:49:51Z
+      2 docs/delivery/reviews/DG5
+      6 docs/delivery/runs/DG5
+      1 docs/delivery/test-evidence/DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47","files":2194}
+EXIT 0

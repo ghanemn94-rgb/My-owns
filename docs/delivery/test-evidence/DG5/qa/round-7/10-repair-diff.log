@@ -1,0 +1,197 @@
+$ git diff --stat ad52a56..12dc33e -- . ':!docs'
+ apps/web/e2e/p5-record-name-reflow.spec.ts         | 170 +++++++++++++++
+ .../e2e/p5-transformation-picker-complete.spec.ts  |  91 ++++++++
+ apps/web/src/api/all-transformations.test.tsx      | 231 +++++++++++++++++++++
+ apps/web/src/api/queries.ts                        |  54 +++++
+ apps/web/src/components/table-regions.test.tsx     |   5 +-
+ apps/web/src/pages/AreaPages.tsx                   |  11 +-
+ apps/web/src/pages/admin/AssignmentsPage.tsx       |  24 ++-
+ apps/web/src/pages/automation/RulePage.tsx         |  25 ++-
+ apps/web/src/pages/automation/RulesPage.tsx        | 191 +++++++++--------
+ apps/web/src/pages/dashboards/DashboardsPage.tsx   |   9 +-
+ apps/web/src/pages/define/DefinePage.tsx           |  58 +++---
+ apps/web/src/pages/delegations/DelegationsPage.tsx |  15 +-
+ apps/web/src/pages/launch-plan/ui.tsx              |  11 +-
+ .../methodology-migrations/MigrationsEntryPage.tsx |  11 +-
+ apps/web/src/pages/playbook/BlockPage.tsx          |  32 +--
+ apps/web/src/pages/procedures/MyProceduresPage.tsx |  39 ++--
+ apps/web/src/pages/reports/ui.tsx                  |  11 +-
+ apps/web/src/pages/traceability/ModularPage.tsx    |   3 +-
+ apps/web/src/pages/traceability/ui.tsx             |  10 +-
+ apps/web/src/pages/walkthrough/WalkthroughPage.tsx |  43 ++--
+ apps/web/src/styles/app.css                        |  13 +-
+ 21 files changed, 839 insertions(+), 218 deletions(-)
+$ git diff --stat ad52a56..12dc33e -- tests e2e docs/delivery/requirements.csv apps/api apps/worker packages   (empty = unchanged)
+$ git diff ad52a56..12dc33e -- apps/web/src/pages/traceability apps/web/src/styles/app.css apps/web/src/pages/define/DefinePage.tsx
+diff --git a/apps/web/src/pages/define/DefinePage.tsx b/apps/web/src/pages/define/DefinePage.tsx
+index 07206fe..8d353b8 100644
+--- a/apps/web/src/pages/define/DefinePage.tsx
++++ b/apps/web/src/pages/define/DefinePage.tsx
+@@ -36,6 +36,7 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
+ import { ArchiveAction, NoteDecisionDialog } from "../../components/RowActions.tsx";
+ import { Section, SectionNav, TextCell } from "../../components/Section.tsx";
+ import { EmptyState, QueryState } from "../../components/States.tsx";
++import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
+ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+ import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
+ import { pick } from "../../lib/methodology.ts";
+@@ -522,6 +523,7 @@ export function GoodOutcomeTest({ outcome }: { outcome: Outcome }) {
+   const results = [...outcome.goodOutcomeTest].sort((a, b) => a.ordinal - b.ordinal);
+   const fails = results.filter((r) => r.result === "fail").length;
+   const unknowns = results.filter((r) => r.result === "unknown").length;
++  const caption = t("define.goodOutcome.caption", { outcome: outcome.statement });
+   return (
+     <div className="good-outcome" data-good-outcome-test={outcome.id}>
+       <p className="good-outcome__summary">
+@@ -537,32 +539,36 @@ export function GoodOutcomeTest({ outcome }: { outcome: Outcome }) {
+           />
+         )}
+       </p>
+-      <table className="table table--compact good-outcome__table">
+-        <caption className="visually-hidden">{t("define.goodOutcome.caption", { outcome: outcome.statement })}</caption>
+-        <thead>
+-          <tr>
+-            <th scope="col">{t("define.goodOutcome.criterion")}</th>
+-            <th scope="col">{t("define.goodOutcome.result")}</th>
+-            <th scope="col">{t("define.goodOutcome.reason")}</th>
+-          </tr>
+-        </thead>
+-        <tbody>
+-          {results.map((r) => {
+-            const def = criteria.find((c) => c.code === r.criterionCode);
+-            return (
+-              <tr key={r.criterionCode} data-criterion={r.criterionCode} data-result={r.result}>
+-                <th scope="row">
+-                  {def ? pick(locale, def.sourceLabelEn, def.labelAr) : t("define.goodOutcome.unknownCriterion")}
+-                </th>
+-                <td>
+-                  <ResultChip result={r.result} />
+-                </td>
+-                <td>{goodOutcomeReason(t, outcome, r.criterionCode, r.result)}</td>
+-              </tr>
+-            );
+-          })}
+-        </tbody>
+-      </table>
++      {/* T-DG5-FE-AB1 (F-DG5-149): the table scrolls in its own focusable, named region, so the outcome card
++          shrinks to the column instead of widening the page at narrow widths. */}
++      <TableScrollRegion caption={caption}>
++        <table className="table table--compact good-outcome__table">
++          <caption className="visually-hidden">{caption}</caption>
++          <thead>
++            <tr>
++              <th scope="col">{t("define.goodOutcome.criterion")}</th>
++              <th scope="col">{t("define.goodOutcome.result")}</th>
++              <th scope="col">{t("define.goodOutcome.reason")}</th>
++            </tr>
++          </thead>
++          <tbody>
++            {results.map((r) => {
++              const def = criteria.find((c) => c.code === r.criterionCode);
++              return (
++                <tr key={r.criterionCode} data-criterion={r.criterionCode} data-result={r.result}>
++                  <th scope="row">
++                    {def ? pick(locale, def.sourceLabelEn, def.labelAr) : t("define.goodOutcome.unknownCriterion")}
++                  </th>
++                  <td>
++                    <ResultChip result={r.result} />
++                  </td>
++                  <td>{goodOutcomeReason(t, outcome, r.criterionCode, r.result)}</td>
++                </tr>
++              );
++            })}
++          </tbody>
++        </table>
++      </TableScrollRegion>
+     </div>
+   );
+ }
+diff --git a/apps/web/src/pages/traceability/ModularPage.tsx b/apps/web/src/pages/traceability/ModularPage.tsx
+index d46bcd6..bee5173 100644
+--- a/apps/web/src/pages/traceability/ModularPage.tsx
++++ b/apps/web/src/pages/traceability/ModularPage.tsx
+@@ -231,7 +231,8 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
+                     {t(`traceability.severity.${i.severity}`)}
+                   </StatusTag>{" "}
+                   <strong>{t(`traceability.missingCode.${i.code}`)}</strong>
+-                  {i.label ? <span> · {i.label}</span> : null}{" "}
++                  {/* The label is a record name (user text): it wraps anywhere (T-DG5-FE-AB1, F-DG5-148). */}
++                  {i.label ? <span className="record-name"> · {i.label}</span> : null}{" "}
+                   {to ? (
+                     <Link className="link" to={to}>
+                       {t("traceability.modular.supply")}
+diff --git a/apps/web/src/pages/traceability/ui.tsx b/apps/web/src/pages/traceability/ui.tsx
+index eb2e76c..1df198a 100644
+--- a/apps/web/src/pages/traceability/ui.tsx
++++ b/apps/web/src/pages/traceability/ui.tsx
+@@ -111,11 +111,15 @@ export function expectedText(t: TFunction, expected: string): string {
+   });
+ }
+ 
+-/** A record's code and label; a record without a label reads "No label", never blank. */
++/**
++ * A record's code and label; a record without a label reads "No label", never blank. The label is user text and can
++ * hold an unbroken token wider than the column, so the name wraps anywhere (.record-name, T-DG5-FE-AB1, F-DG5-148)
++ * wherever it renders: the graph's record links, the trace panels, the orphan and impact tables.
++ */
+ export function RecordName({ code, label }: { code: string | null; label: string | null }) {
+   const { t } = useTranslation();
+   return (
+-    <>
++    <span className="record-name">
+       {code ? (
+         <bdi dir="ltr" className="code">
+           {code}
+@@ -123,7 +127,7 @@ export function RecordName({ code, label }: { code: string | null; label: string
+       ) : null}
+       {code ? " " : null}
+       {label ?? <span className="muted">{t("traceability.noLabel")}</span>}
+-    </>
++    </span>
+   );
+ }
+ 
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index 3c3d06c..df34b79 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -393,7 +393,12 @@ a:hover {
+ /* D-178 orchestrator follow-up: the other title containers that show user text (Define, Design, Gates). */
+ .outcome-card__title,
+ .tom-box__title,
+-.gate-card__title {
++.gate-card__title,
++/* T-DG5-FE-AB1 (F-DG5-148, D-180): a record name outside a heading. RecordName (traceability/ui.tsx) renders every
++   Traceability record name (the graph's record links and link lists, the trace panels, the orphan and impact tables)
++   in .record-name, and so does the Modular entry missing-item label "· <name>". Inside a table it lowers the column's
++   min-content width only; auto table layout still gives the column its max-content width where the table fits. */
++.record-name {
+   overflow-wrap: anywhere;
+ }
+ /* The title block of the header row is a flex item: it may shrink below its content's width (the actions wrap). */
+@@ -1392,6 +1397,12 @@ input[type="radio"] {
+   display: grid;
+   gap: var(--mth-space-3);
+ }
++/* T-DG5-FE-AB1 (F-DG5-149, D-180): an outcome is a grid item; without this its automatic minimum width is its
++   content's min-content width (the Good-outcome test table), which held the card at about 352 px and widened the page
++   at 320-375 px. The card now shrinks to the column, and the table scrolls in its own TableScrollRegion. */
++.outcome-tree > .outcome-node {
++  min-inline-size: 0;
++}
+ .outcome-tree--nested {
+   margin-block-start: var(--mth-space-3);
+   padding-inline-start: var(--mth-space-5);
+$ grep -n data-root apps/web/src/pages/traceability/TraceabilityPage.tsx (the rooted note, unchanged by the repair)
+        </div>
+        {root ? (
+          <p className="small" role="note" data-root={`${root.type}:${root.id}`}>
+            {t("traceability.graph.rooted", {
+              type: nodeTypeText(t, root.type),
+              name:
+                whole.data?.nodes.find((n) => n.recordId === root.id)?.label ??
+                whole.data?.nodes.find((n) => n.recordId === root.id)?.code ??
+                "…",
+            })}
+          </p>
+        ) : null}

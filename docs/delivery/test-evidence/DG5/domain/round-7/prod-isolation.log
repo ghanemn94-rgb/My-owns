@@ -1,0 +1,24 @@
+$ env E2E_PG_PORT=26451 E2E_API_PORT=26452 MTH_PORT_POOL=26453-26479 apps/web/e2e/support/with-stack.sh bash probe/prod-isolation.sh   [2026-10-23T01:16:33Z]
+port-policy: PostgreSQL listening on port 26451 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 89 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 26452 (attempt 1)
+API: http://localhost:26452 (APP_BASE_URL=http://localhost:26452, PORT=26452)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+== with-stack DB (migrate + seed-dev, no environment marker)
+deployment_environment rows|0
+demo_seed_record rows|0
+demo_dataset_run rows|0
+roaming users|0
+ROAMING transformations|0
+== seed-demo with MTH_ENV=production
+mth-db seed-demo: refused: MTH_ENV is production
+seed-demo exit=3
+== seed-demo with MTH_ENV unset on a non-empty DB
+mth-db seed-demo: refused: this database is not empty
+seed-demo exit=3
+demo_seed_record rows after refusals|0
+exit=0
+$ grep checksum probe-demo.log
+checksum  0a7fdc3fd946f7063b92a40082e3291c419d042e58962f9ce0bdbb7f5c2737e4

@@ -1,0 +1,25 @@
+$ grep -rniE 'official PMI|PMI[- ]certified|certified by PMI|PMI standard|accredited|official Mobily' apps/web/src/i18n packages/reporting/src apps/worker/src packages/db/src/demo apps/api/src/modules/forms
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:130:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+grep exit=0
+$ grep -rnE '\bDG[0-7]\b' apps/web/src/i18n/{en,ar}/*.json
+grep exit=1
+$ git diff ad52a56..12dc33e -- apps packages docs/api | grep '^+' | grep -niE 'official|certif|PMI|Mobily|DG[0-7]\b'
+3:+// fits narrow phones (T-DG5-FE-AB1, D-180; F-DG5-148, F-DG5-149; REQ-S15-009, REQ-S15-012 WCAG 2.1 SC 1.4.10 Reflow),
+7:+// docs/delivery/test-evidence/DG5/qa/tests/round-6/e2e/zz-qa-dg5r6-title-reflow-verify.spec.ts, R6-TITLE-B, and
+9:+//  - F-DG5-148: per language and token (a 120-character word without spaces, the 46-character token, an unbroken
+16:+//  - F-DG5-149: a SYNTHETIC transformation with one ORDINARY outcome; Define at 390, 375, 360 and 320 px and at 200 %.
+20:+// SYNTHETIC demo data; nothing here grants a business approval (G1-G6) or touches the delivery gates DG0-DG7.
+173:+// T-DG5-FE-AB2 (D-181; REQ-S15 usability): a transformation picker offers EVERY transformation the user may see, not
+182:+// All data is SYNTHETIC. Nothing here is a business approval, and nothing touches the engineering gates DG0-DG7.
+265:+// T-DG5-FE-AB2 (D-181; REQ-S15 usability): a transformation picker offers every transformation the user may see.
+552:+  //  - UserEdit (DG1, the identities of a user): no page-level reflow measurement.
+553:+  // GoodOutcomeTest (DG2, Define) left the list in T-DG5-FE-AB1 (F-DG5-149, D-180): its table is in a TableScrollRegion,
+706:+      {/* T-DG5-FE-AB1 (F-DG5-149): the table scrolls in its own focusable, named region, so the outcome card
+813:+                  {/* The label is a record name (user text): it wraps anywhere (T-DG5-FE-AB1, F-DG5-148). */}
+818:+ * hold an unbroken token wider than the column, so the name wraps anywhere (.record-name, T-DG5-FE-AB1, F-DG5-148)
+850:+/* T-DG5-FE-AB1 (F-DG5-148, D-180): a record name outside a heading. RecordName (traceability/ui.tsx) renders every
+855:+/* T-DG5-FE-AB1 (F-DG5-149, D-180): an outcome is a grid item; without this its automatic minimum width is its
+grep exit=0

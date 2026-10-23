@@ -1,0 +1,267 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Transformation Lead
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e137]:
+        - link "حول هذا المنتج" [ref=e138] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e139]:
+      - generic [ref=e140]:
+        - generic [ref=e141]:
+          - navigation "مسار التنقل" [ref=e142]:
+            - list [ref=e143]:
+              - listitem [ref=e144]:
+                - link "لوحات المؤشرات" [ref=e145] [cursor=pointer]:
+                  - /url: /dashboards
+              - listitem [ref=e146]: /لوحة مؤشرات التحوّل
+          - generic [ref=e148]:
+            - heading "لوحة مؤشرات التحوّل" [level=1] [ref=e149]
+            - paragraph [ref=e150]: اختر تحوّلًا لفتح لوحة مؤشراته.
+        - generic [ref=e151]:
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]: بحث
+              - searchbox "بحث" [ref=e155]
+            - button "الأعمدة" [ref=e157] [cursor=pointer]:
+              - img [ref=e158]
+              - text: الأعمدة
+          - region "لوحة مؤشرات التحوّل (جدول قابل للتمرير)" [ref=e160]:
+            - table "لوحة مؤشرات التحوّل" [ref=e161]:
+              - caption [ref=e162]: لوحة مؤشرات التحوّل
+              - rowgroup [ref=e163]:
+                - row "التحوّل مرتّب تصاعديًا" [ref=e164]:
+                  - columnheader "التحوّل مرتّب تصاعديًا" [ref=e165]:
+                    - button "التحوّل مرتّب تصاعديًا" [ref=e166] [cursor=pointer]:
+                      - text: التحوّل
+                      - img [ref=e167]
+                      - generic [ref=e169]: مرتّب تصاعديًا
+              - rowgroup [ref=e170]:
+                - row "TR-0001 QA7 picker filler en mvkboszf 1" [ref=e171]:
+                  - rowheader "TR-0001 QA7 picker filler en mvkboszf 1" [ref=e172]:
+                    - link "TR-0001 QA7 picker filler en mvkboszf 1" [ref=e173] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d4fb-727e-8f06-870b7c0f61c2/dashboard
+                - row "TR-0002 QA7 picker filler en mvkboszf 2" [ref=e174]:
+                  - rowheader "TR-0002 QA7 picker filler en mvkboszf 2" [ref=e175]:
+                    - link "TR-0002 QA7 picker filler en mvkboszf 2" [ref=e176] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d55e-75cf-8cd0-6a3e38b50c20/dashboard
+                - row "TR-0003 QA7 picker filler en mvkboszf 3" [ref=e177]:
+                  - rowheader "TR-0003 QA7 picker filler en mvkboszf 3" [ref=e178]:
+                    - link "TR-0003 QA7 picker filler en mvkboszf 3" [ref=e179] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d58e-7295-a4fa-16525714a15f/dashboard
+                - row "TR-0004 QA7 picker filler en mvkboszf 4" [ref=e180]:
+                  - rowheader "TR-0004 QA7 picker filler en mvkboszf 4" [ref=e181]:
+                    - link "TR-0004 QA7 picker filler en mvkboszf 4" [ref=e182] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d5ce-7199-9314-6c23de838389/dashboard
+                - row "TR-0005 QA7 picker filler en mvkboszf 5" [ref=e183]:
+                  - rowheader "TR-0005 QA7 picker filler en mvkboszf 5" [ref=e184]:
+                    - link "TR-0005 QA7 picker filler en mvkboszf 5" [ref=e185] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d632-706d-a4df-8154409e8388/dashboard
+                - row "TR-0006 QA7 picker filler en mvkboszf 6" [ref=e186]:
+                  - rowheader "TR-0006 QA7 picker filler en mvkboszf 6" [ref=e187]:
+                    - link "TR-0006 QA7 picker filler en mvkboszf 6" [ref=e188] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d66f-7289-92e2-777842497912/dashboard
+                - row "TR-0007 QA7 picker filler en mvkboszf 7" [ref=e189]:
+                  - rowheader "TR-0007 QA7 picker filler en mvkboszf 7" [ref=e190]:
+                    - link "TR-0007 QA7 picker filler en mvkboszf 7" [ref=e191] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d6ab-76e8-9baa-032dcf3062d8/dashboard
+                - row "TR-0008 QA7 picker filler en mvkboszf 8" [ref=e192]:
+                  - rowheader "TR-0008 QA7 picker filler en mvkboszf 8" [ref=e193]:
+                    - link "TR-0008 QA7 picker filler en mvkboszf 8" [ref=e194] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d6df-74cd-9844-55d3157c09bf/dashboard
+                - row "TR-0009 QA7 picker filler en mvkboszf 9" [ref=e195]:
+                  - rowheader "TR-0009 QA7 picker filler en mvkboszf 9" [ref=e196]:
+                    - link "TR-0009 QA7 picker filler en mvkboszf 9" [ref=e197] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d714-757f-944a-d726cc787984/dashboard
+                - row "TR-0010 QA7 picker filler en mvkboszf 10" [ref=e198]:
+                  - rowheader "TR-0010 QA7 picker filler en mvkboszf 10" [ref=e199]:
+                    - link "TR-0010 QA7 picker filler en mvkboszf 10" [ref=e200] [cursor=pointer]:
+                      - /url: /transformations/01a1667c-d746-75d6-a4fa-c0ea464244ec/dashboard
+          - navigation "التنقل بين الصفحات" [ref=e201]:
+            - generic [ref=e202]: الصفحة 1 من 11 · 10 من 103 صفوف
+            - generic [ref=e203]:
+              - generic [ref=e204]: عدد الصفوف في الصفحة
+              - combobox "عدد الصفوف في الصفحة" [ref=e205]:
+                - option "10" [selected]
+                - option "25"
+                - option "50"
+                - option "100"
+            - button "السابق" [disabled] [ref=e206]
+            - button "التالي" [ref=e207] [cursor=pointer]
+```
