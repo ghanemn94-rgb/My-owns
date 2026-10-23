@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-125",
+      "stage_id": "DG5",
+      "requirement": "REQ-S15-011",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Transformation lists still fed by fetchAllPages silently stop at 2000: the executive-overview Transformation filter and the organization Finance validation queue omit every readable transformation past the 20th page, with no notice (the D-181 class at a higher cap)",
+      "reproduction": "Candidate 33188e9e (source 12dc33e), disposable clone, production-initialized stack (apps/web/e2e/support/with-stack.sh), en and ar. Probe docs/delivery/test-evidence/DG5/domain/round-7/probe/dom-r7-cap-route.spec.ts: signed in as dev.office, the browser's GET /api/v1/transformations list is answered by a Playwright route that serves the real items followed by synthetic filler rows (2150 in all, 100 per page, with nextCursor). 1) Open /executive-overview and count the options of select[data-filter='transformation']. 2) Open /finance-validation and count the distinct transformations whose /finance-validations queue the page requests. Static cause: apps/web/src/api/queries.ts:104-119 fetchAllPages loops at most 20 pages of PAGINATION.maxLimit (100) and then breaks without an error ('bounded to 20 pages of 100' for 'a small catalogue'). It still feeds transformation lists that wave AB2 did not move to useAllTransformations: traceability/api.ts:330 useReadableTransformations (the executive-overview and dashboard Transformation filter, StructurePages), benefits/api.ts:311 useReadableTransformations (the organization Finance validation queue) and procedures/CompleteWithOutput.tsx:37 (a procedure step's output picker when the record type is a transformation).",
+      "expected": "D-181's decision: every list that offers or covers transformations loads every transformation the caller may see, or says plainly that it is incomplete. A page failing or a guard being reached is an error, never a shorter list shown as complete (as useAllTransformations does with ALL_TRANSFORMATIONS_MAX_PAGES).",
+      "actual": "Both screens requested exactly 20 pages and stopped, in en (LTR) and ar (RTL). The executive-overview filter offered 2000 of 2150 options, and the 150 transformations past the cap were missing; its hint still read 'Repeatable: 0 of at most 50 chosen. Only transformations you may read are offered.' The Finance validation queue read 2000 of 2150 transformations' queues and showed 'Nothing in the queue' with no note; queue items of the other 150 would not appear. Server-side portfolio totals are not affected, and each transformation's own Finance queue page is complete. The defect stays latent below 2001 readable transformations, far beyond the scale this deployment is likely to reach, so it is Low and not blocking.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-7/probe/dom-r7-cap-route.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-7/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-finance-validation-queue.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-finance-validation-queue.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/en/r7-cap-finance-validation-queue.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/ar/r7-cap-finance-validation-queue.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/en/r7-cap-executive-overview-filter.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/shots/ar/r7-cap-executive-overview-filter.png",
+        "docs/delivery/test-evidence/DG5/domain/round-7/repair-diff-and-picker-static.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-7/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T01:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG5 round 7 (T-DG5-REV-DOM-R7C) on candidate 33188e9e. Low, non-mandatory, not blocking: latent above 2000 readable transformations. The D-181 fix itself (12 picker screens on useAllTransformations) is verified complete in en and ar with 102 and 105 transformations."
+        }
+      ]
+    }
+  ]
+}
