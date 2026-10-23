@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 8,
+  "candidate_id": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47",
+  "source_commit": "12dc33e4f9f2f804aeb0a9774a988d699709a235",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-REV-QA-R8-qa-verifier-20261023T035238Z-db6223e4",
+    "session_id": "db6223e4-ae3b-4778-8049-7c49f94b53eb"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier authored no product implementation in the DG5 scope or in its repair waves (AB, AB2/AB2B: frontend-ux-engineer; integration and D-180 to D-183: delivery-orchestrator). The QA authoring tasks T-DG5-QA-A..F2 wrote acceptance tests under tests/qa and e2e before the freeze; they are part of the candidate and are read here as tests, not as product code. In this round I wrote only evidence under docs/delivery/test-evidence/DG5/qa/round-8/ and my own round-8 review files. I formed this verdict before reading any other reviewer's round-8 record; none was visible to me. F-DG5-150 and F-DG5-151 are my own round-7 findings, and F-DG5-125 is the domain reviewer's. The protocol lets the reporting specialist accept a Low, non-mandatory finding together with the release-auditor, and I re-judged all three adversarially. The assignment's task-ID line reads T-DG5-REV-QA-R5, while the invocation and D-183 say T-DG5-REV-QA-R8. I treat that as a typo: the round, path and run ID are all round 8."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-8/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-037",
+    "REQ-S01-002", "REQ-S01-003", "REQ-S01-004", "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011",
+    "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010",
+    "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026",
+    "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009", "REQ-S13-010",
+    "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004",
+    "REQ-S15-004", "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021",
+    "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R8-00-candidate",
+      "procedure": "Confirm the frozen candidate at the start and the end of the run: recompute it from the committed source in the (non-shallow) main repository, and from the working tree of a separate complete clone checked out at the source commit. Confirm that it is the candidate my round-7 record reviewed, and that nothing outside docs/delivery changed since the source commit.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG5 --ref HEAD; node tools/gates/candidate.mjs --stage DG5 --ref 12dc33e; node tools/gates/candidate.mjs --stage DG5 --diff; git clone -q --shared --no-checkout /home/user/My-owns $TMPDIR/review-r8s && git checkout 12dc33e4f9f2f804aeb0a9774a988d699709a235 && node tools/gates/candidate.mjs --stage DG5 (and --diff); git diff --name-only 12dc33e HEAD | grep -v '^docs/delivery/'; git merge-base --is-ancestor 12dc33e HEAD",
+      "environment": "Main repository /home/user/My-owns, HEAD a5d45be (1587 commits, not shallow); disposable shared-object clone under $TMPDIR, not shallow and not sparse, checked out at 12dc33e and removed afterwards; Node 24.21.0",
+      "expected": "candidate_id sha256:33188e9e... over 2194 files at the source commit, both in the repository and in the clone; the same id and source as the round-7 qa record and the frozen manifest; no product change since the source.",
+      "actual": "sha256:33188e9e698fd11bb80cc95c3ccb865f24f83df1451f7c46788ec9b1e51c7f47, 2194 files: --ref 12dc33e at the start (EXIT 0) and the end (EXIT 0), and the clone's working tree at 12dc33e (EXIT 0, clean status). The frozen manifest 33188e9e698fd11b.manifest.json and my round-7 record give the same id and source. 12dc33e is an ancestor of HEAD, and 0 files outside docs/delivery differ. Disclosed non-zero exits and deviations: (1) My first full clone (git clone without --shared) filled the scratch volume and failed with 'No space left on device' (EXIT 1). I removed that clone of my own, which freed 3.9 GB, and used a --shared clone instead (objects borrowed from the main repository, full history, not shallow). (2) Main-repository HEAD a5d45be has candidate id sha256:15628ce4... (--ref HEAD EXIT 0; --diff EXIT 1). The only changed manifest file is docs/delivery/decisions.md, and the only change to it is the D-183 row the orchestrator added after the freeze. That is a delivery record, not product content. The validator recomputes the gate and round candidates from the committed source_commit (rules.mjs:929, 988 manifestFromRef), so the candidate under review is unaffected. I report it so the auditor sees it. (3) In the clone at 12dc33e, --diff exits 1 against sha256:3294f8fc.... That is expected: at 12dc33e, stages.json still names the earlier frozen candidate, and the freeze commit that followed recorded 33188e9e. Each of these is explained; none is a defect in the candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/candidate-start.log",
+        "docs/delivery/test-evidence/DG5/qa/round-8/candidate-clone.log",
+        "docs/delivery/test-evidence/DG5/qa/round-8/candidate-end.log",
+        "docs/delivery/candidates/DG5/33188e9e698fd11b.manifest.json",
+        "docs/delivery/reviews/DG5/round-7/qa-verifier.json"
+      ]
+    },
+    {
+      "id": "QA-R8-01-validators",
+      "procedure": "Run the historical gate validation for DG4, DG3, DG2 and DG1, and the DG5 register rules.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4|DG3|DG2|DG1; node tools/gates/validate.mjs --register DG5",
+      "environment": "Main repository at HEAD a5d45be (read-only use), Node 24.21.0",
+      "expected": "Every command prints PASS and exits 0.",
+      "actual": "'PASS gate DG4 (historical)', 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)', 'PASS register rules at DG5'; all EXIT 0. No error lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/validate-historical.log"
+      ]
+    },
+    {
+      "id": "QA-R8-02-requirements-carried-from-round-7",
+      "procedure": "D-183: round 8 reviews the same candidate as round 7. For the 78 DG5 requirements, cite my round-7 execution on this same candidate (QA-R7-00 to QA-R7-19: static checks, unit tests on Node 22/24 in both locale settings, integration twice, tests/qa alone, the product e2e 460/460 twice, root and demo e2e, AUD and axe, the REQ-DLV-037 suites, the export samples, the acceptance matrix). I did not re-run the full suites in this round. Checked that the round-7 record covers exactly the same 78 ids and that the candidate is unchanged (QA-R8-00).",
+      "command": "python3 -I: compare the round-8 assignment's id list with reviews/DG5/round-7/qa-verifier.json requirements_checked; read its checks_run results",
+      "environment": "Main repository, read-only",
+      "expected": "The same 78 ids; every round-7 check is PASS with exit 0 on sha256:33188e9e...",
+      "actual": "78 ids, identical sets. The round-7 record is on sha256:33188e9e... / 12dc33e, verdict PASS, and all 20 checks are PASS with exit_status 0. That record discloses and explains its non-zero exits (for example its format:check re-runs, disturbed by my own untracked probe file) and the by-design skips (2 in unit-formula-nocodegen, 1 in integration). I rely on it explicitly as evidence for this same candidate. The partial-coverage disclosures in the register's notes were judged in round 7 and are unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037", "REQ-PB-091", "REQ-S20-016"],
+      "evidence": [
+        "docs/delivery/reviews/DG5/round-7/qa-verifier.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/00-candidate.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/02-unit-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R8-03-F-DG5-125",
+      "procedure": "Judge F-DG5-125 adversarially. Read fetchAllPages and every caller at 12dc33e and at the approved DG4 source e70ac02. Compare it with the D-181 guard (useAllTransformations). Check the server ordering of the DG5 automation lists that share the helper. Look for any DG5 acceptance text that a 2000-row cap would break. Re-read the domain reviewer's route-stubbed probe results (cited, same candidate).",
+      "command": "git show 12dc33e:apps/web/src/api/queries.ts; git grep -n fetchAllPages 12dc33e -- apps/web/src; git grep e70ac02 (same callers); git show 12dc33e:apps/api/src/modules/automation/{executions,failures}.ts (orderBy); python3 -I scan of requirements.csv DG5 acceptance texts",
+      "environment": "Main repository, git objects only (no build)",
+      "expected": "Either the finding is Low, non-mandatory, latent and not a DG5 regression (accept), or it breaks a DG5 acceptance text, a financial result or access control (keep open).",
+      "actual": "Confirmed: fetchAllPages loops 20 pages of 100 and returns a silent prefix (queries.ts:104-119), whereas useAllTransformations throws after 1000 pages. The transformation-list callers in the finding already existed at DG4 e70ac02 (traceability/api.ts useReadableTransformations; benefits/api.ts:314), so this is not a regression. CompleteWithOutput.tsx:37 is a DG5 caller. The helper has 169 non-test callers. The DG5 automation lists among them are sorted newest first (executions) and by status rank, then newest (failures), so at the cap the oldest rows would drop. No DG5 acceptance text needs more than 2000 rows, and server-side totals are unaffected. The domain probe shows 2000/2150 in en and ar. Decision: ACCEPTED_OBSERVATION. The DG6 fix is to be scoped to fetchAllPages itself, with the rationale in the verifications sidecar. No new finding: the wider scope has the same root cause.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/f125-static.log",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-finance-validation-queue.json",
+        "docs/delivery/reviews/DG5/round-8/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-R8-04-F-DG5-150",
+      "procedure": "Judge F-DG5-150 adversarially. Re-inspect the Traceability root note at 12dc33e and diff it against DG4 e70ac02. Scan the DG5 acceptance texts for reflow, 320 px, horizontal scrolling, WCAG or RTL clauses. Cite my round-7 real-stack measurements on this same candidate (en and ar, both locale settings).",
+      "command": "git show 12dc33e:apps/web/src/pages/traceability/TraceabilityPage.tsx | sed -n 100,118p; git diff e70ac02 12dc33e -- apps/web/src/pages/traceability/TraceabilityPage.tsx; python3 -I scan of requirements.csv",
+      "environment": "Main repository, git objects only; round-7 probe logs (Chromium from /opt/pw-browsers, production-initialized stack)",
+      "expected": "Accept if the overflow is cosmetic, needs unusual input, is not a DG5 regression and breaks no DG5 acceptance text.",
+      "actual": "The note interpolates the name as plain text in p.small[data-root] (lines 106-115), outside .record-name. The element is unchanged since DG4; the only diff in the file is the orphan-report table-wrap. No DG5 acceptance text matches reflow, 320, horizontal or scroll. REQ-S15-009 is DG6, SPECIFIED. The round-7 probes R7-TRACE-ROOT and R7-TRACE-FOCUS-CLICK (4 runs, each '4 passed', EXIT 0; they measure and do not assert) give 651/681/721 px (w120 at 390/360/320) and 85/115/155 px (arU) only after Focus. Every other state, and plain text, gives 0 px. Decision: ACCEPTED_OBSERVATION, with the DG6 fix in the sidecar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-090"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/f150-static.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/ar/r7-trace-focus-click.json",
+        "docs/delivery/reviews/DG5/round-8/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-R8-05-F-DG5-151",
+      "procedure": "Judge F-DG5-151 adversarially. Re-read the product test's waits at 12dc33e. Re-read the D-182 failure in the orchestrator's log. Tabulate my round-7 slow-GET probe records per run (which GET resolved 'reloaded', its version, the If-Match sent, the Submit status), and re-check the outcomes of the round-7 product and targeted runs.",
+      "command": "git show 12dc33e:apps/web/e2e/p5-launch-health-kpi.spec.ts | sed -n 196,212p; grep the D-182 e2e-unset.log; python3 -I over round-7 r7-health-slowget.jsonl (1500 ms and 0 ms)",
+      "environment": "Main repository, git objects only; round-7 probe evidence on this same candidate (production-initialized stack, Chromium /opt/pw-browsers)",
+      "expected": "Accept only if the defect is in the test and the product behaves correctly (current If-Match, submission accepted, A16 clauses met).",
+      "actual": "The wait 'reloaded' matches any GET of the assessment and is registered before the Save-actions click, so it can resolve on the refused Submit's refresh: a test defect. Slow-GET probe (1500 ms), 6/6 records: reloadedSeq 1, issued before the Save click, version 26 against saved version 27, If-Match \"27\", Submit 200, submitted within 5 s. Control (0 ms), 6/6: reloadedSeq 2, version 27. Run outcomes cited: slowget-1500 '6 passed' EXIT 0; slowget-0 '6 passed' EXIT 0; d182repro '10 passed' EXIT 0; product part B '174 passed' EXIT 0 in each locale setting. Disclosed failure: D-182 e2e-unset.log line 545, '✘ 414 [chromium-ar] p5-launch-health-kpi.spec.ts:159' at line 211, toBeVisible on [data-assessment-status='submitted'], 'Timeout: 5000ms', 'element(s) not found', '1 failed, 459 passed'. Its trace was overwritten and the api.log tail section is empty, so the cause is unestablished. It is not counted as a pass; the race shown is a plausible cause, and I found no product defect. Decision: ACCEPTED_OBSERVATION, with the DG6 fix in the sidecar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-091", "REQ-S20-016"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/f151-static.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-1500-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-0-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-d182repro-unset.log",
+        "docs/delivery/test-evidence/DG5/orchestrator-D-182/verify-ab2-45287b4/e2e-unset.log",
+        "docs/delivery/reviews/DG5/round-8/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-R8-06-environmental-residuals",
+      "procedure": "Record the assignment's environmental residuals as PASS on the offline/config surface, citing round 7's QA-R7-18 on this same candidate (not re-run in this round).",
+      "command": "read reviews/DG5/round-7/qa-verifier.json QA-R7-18-environmental-residuals",
+      "environment": "Main repository, read-only",
+      "expected": "Each residual is recorded with its decision reference and the surface that was tested.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058), Keycloak and a real demo IdP (D-049; ADR-0050 §1 devops item; the D-165 dev-mode binding is the tested path) and the AI and external notification adapters (none ships in P5, D-142 Q11; A21 'disabled' is the shipped configuration, D-165). Round 7 recorded each one PASS on the offline/config surface with exit 0. These residuals remain, and the candidate is unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG5/round-7/qa-verifier.json"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/qa/round-8/candidate-start.log",
+    "docs/delivery/test-evidence/DG5/qa/round-8/candidate-clone.log",
+    "docs/delivery/test-evidence/DG5/qa/round-8/candidate-end.log",
+    "docs/delivery/test-evidence/DG5/qa/round-8/validate-historical.log",
+    "docs/delivery/test-evidence/DG5/qa/round-8/f125-static.log",
+    "docs/delivery/test-evidence/DG5/qa/round-8/f150-static.log",
+    "docs/delivery/test-evidence/DG5/qa/round-8/f151-static.log",
+    "docs/delivery/reviews/DG5/round-8/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG5/round-7/qa-verifier.json"
+  ],
+  "reviewed_at": "2026-10-23T04:10:00Z",
+  "summary": "PASS on candidate sha256:33188e9e... (2194 files, source 12dc33e), the same candidate my round-7 record reviewed. It was confirmed from the committed source at the start and the end, and in a complete clone. HEAD's id differs only because D-183 was appended to decisions.md after the freeze; the validator recomputes from the source commit. No new finding. All three open Low, non-mandatory findings are accepted as observations, each with a DG6 fix: F-DG5-125, the silent 2000-row cap, which is latent, existed at DG4, and needs a fix in fetchAllPages itself, which has 169 callers; F-DG5-150, the root note's overflow with an unbroken name, which is cosmetic, unchanged since DG4 and tied to a DG6-final requirement; F-DG5-151, the unsound wait in the health-check e2e, which is a test defect: the product always sent the current If-Match. The single D-182 failure is disclosed and its cause stays unestablished. The historical validators for DG4 to DG1 and the DG5 register rules pass. The 78 requirements rest on my round-7 execution on this same candidate."
+}

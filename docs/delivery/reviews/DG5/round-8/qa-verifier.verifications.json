@@ -1,0 +1,48 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-125",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation after my own judgement (I did not raise this finding). Confirmed in source at 12dc33e: fetchAllPages (apps/web/src/api/queries.ts:104-119) loops at most 20 pages of 100 and returns the shorter list with no error and no notice, unlike useAllTransformations (ALL_TRANSFORMATIONS_MAX_PAGES = 1000, which throws). The domain reviewer's route-stubbed probe shows 2000 of 2150 transformations in en and ar (cited, same candidate). Why it is acceptable for DG5: (1) it is latent below 2001 readable transformations; every DG5 acceptance text runs at demo scale (about 100 transformations) and none states a list size above 2000; (2) the two transformation lists the finding names (traceability/api.ts:330 useReadableTransformations for the Executive Overview and dashboard filter, and benefits/api.ts:314 for the organization Finance validation queue) already used fetchAllPages at the approved DG4 source e70ac02, so this is not a DG5 regression; (3) server-side portfolio totals and each transformation's own Finance queue are complete, so no financial result is wrong and no access control is affected; (4) the requirement it cites, REQ-S15-011, has final_gate DG6. Wider scope I found and the DG6 fix must cover: the cap sits in fetchAllPages itself, which has 169 non-test callers at 12dc33e, including DG5 lists such as automation executions and operational failures and the procedure output picker (CompleteWithOutput.tsx:37, a DG5 caller for the 'transformations' source). At DG5 scale they are latent too. The server sorts executions newest first and failures by status rank and then newest, so if the cap were reached the oldest rows would be the ones dropped. That is the same root cause, so I do not raise a separate finding. DG6 follow-up (owner: frontend-ux-engineer): make fetchAllPages fail or flag 'incomplete' (en and ar) when its guard is reached, never return a silent prefix; move the three transformation lists to useAllTransformations; add a unit test for the guard and a route-stubbed e2e above 2000 rows.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/f125-static.log",
+        "docs/delivery/test-evidence/DG5/domain/round-7/probe/dom-r7-cap-route.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-finance-validation-queue.json",
+        "docs/delivery/test-evidence/DG5/qa/round-8/candidate-end.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-150",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation. I raised this finding in round 7. It is on the same candidate 33188e9e, re-confirmed at its source 12dc33e, and I cite my own round-7 measurements explicitly (4 probe runs, en and ar, locale unset and C.UTF-8, all EXIT 0; they are measurement probes that record overflow and do not assert it). Static re-inspection: TraceabilityPage.tsx:106-115 interpolates the record name as plain text into <p className='small' role='note' data-root>, outside .record-name (app.css:401). The element is byte-identical to the approved DG4 source e70ac02: the only diff in this file between e70ac02 and 12dc33e is the orphan-report table-wrap region, so this is not a regression of DG5 or of waves AB/AB2. Why it is acceptable: the overflow appears only after a user focuses a record whose name is one unbroken token (651-721 px for a 120-character Latin word, 85-155 px for an unbroken Arabic token joined by underscores; 0 px for ordinary text and in every non-focused state); no DG5 acceptance text names reflow, 320 px or horizontal scrolling; the responsive requirement it cites, REQ-S15-009, has final_gate DG6 (SPECIFIED); the graph itself and all record links still wrap. It is cosmetic, there is no data or authorization effect, and it is not mandatory. DG6 follow-up (owner: frontend-ux-engineer): render the name in the note through RecordName/.record-name (or overflow-wrap:anywhere on [data-root]) and extend p5-record-name-reflow.spec.ts to click Focus at 320/360/390 px and at 200 % text, in en and ar.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/f150-static.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-trace-root-note.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/ar/r7-trace-focus-click.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click-w120-390.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-151",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation. I raised this finding in round 7. It is on the same candidate, and I cite my own round-7 probes for it explicitly. Static re-inspection of apps/web/e2e/p5-launch-health-kpi.spec.ts:203-211 at 12dc33e: 'reloaded' waits for ANY GET of /health-checks/<id>, registered while the earlier refused Submit's refresh GET can still be in flight. So it can resolve on a pre-save response. This is a defect in the test's synchronization. The product test is not wrong in what it asserts. Product behaviour, re-read from my round-7 records: with every assessment GET delayed by 1500 ms, 6/6 runs (en and ar) resolved 'reloaded' on GET #1 (version 26, issued before the Save click). Yet the screen sent If-Match \"27\" (the saved version), Submit returned 200 and 'submitted' showed within 5 s every time. The 0 ms control was 6/6 on the post-save GET. A stale If-Match would get 409, which is correct optimistic concurrency, not a defect. The product spec passed in every full run I made in round 7 (the 174-test part B in each locale setting, EXIT 0) and 10/10 in the targeted D-182 re-run. The one D-182 failure is disclosed: p5-launch-health-kpi.spec.ts:211, chromium-ar, locale unset, '[data-assessment-status=submitted]' not visible within 5000 ms, 459 passed and 1 failed. Its trace was overwritten and the api.log tail in that log is empty, so its cause stays unestablished. The race is a demonstrated, plausible cause, and the timing is compatible with machine load. I found no evidence of a product defect: A16's acceptance clauses (25 questions verbatim, Incomplete 24/25 with no band, the three-actions refusal, submission) are met in every run, and the root A16 spec e2e/a16-health-launch.spec.ts is a separate test. Low, not mandatory, not a broken DG5 acceptance text. DG6 follow-up (owner: frontend-ux-engineer): register 'reloaded' on a GET issued after the PUT response, or wait for a rendered marker of the new version (for example data-version) before Submit; keep R7-HEALTH-SLOWGET as a regression probe.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-8/f151-static.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-7/e2e/zz-qa-dg5r7-health-submit-race.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7slowget-1500-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-1500-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-0-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-d182repro-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-product-B-cutf8.log",
+        "docs/delivery/test-evidence/DG5/orchestrator-D-182/verify-ab2-45287b4/e2e-unset.log"
+      ]
+    }
+  ]
+}
