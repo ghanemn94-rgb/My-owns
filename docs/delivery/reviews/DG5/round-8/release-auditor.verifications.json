@@ -1,0 +1,40 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-125",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation by the release-auditor after my own judgement (I did not raise it). Confirmed in source at the candidate source 12dc33e: fetchAllPages (apps/web/src/api/queries.ts:104-119) loops at most 20 pages of PAGINATION.maxLimit and returns the shorter list with no error or notice. It still feeds pages/traceability/api.ts:330 and pages/benefits/api.ts:311 useReadableTransformations and procedures/CompleteWithOutput.tsx:37. useAllTransformations (ALL_TRANSFORMATIONS_MAX_PAGES = 1000) throws instead. Both useReadableTransformations hooks already used fetchAllPages at the approved DG4 source e70ac02, with the same 20-page loop, so this is not a DG5 regression. The domain reviewer's route-stubbed probe (same candidate) shows 2000 of 2150 in en and ar; its 4 failing assertions are the defect being shown and are disclosed. Why it is acceptable at DG5: (1) it is latent below 2001 readable transformations, far above demo scale and any DG5 acceptance text; (2) server-side portfolio totals and each transformation's own Finance queue are complete, so no financial result is wrong and access control is unaffected; (3) its requirement, REQ-S15-011, is DG6-final (SPECIFIED); (4) Low, not mandatory. I note it sits in the D-181 class (a silently short list), so the DG6 fix is mandatory follow-up, not optional polish. DG6 carry-forward (owner: frontend-ux-engineer): fetchAllPages must fail or show 'incomplete' (en and ar) when its guard is reached, never return a silent prefix; move the three transformation lists to useAllTransformations; add a unit test for the guard and a route-stubbed e2e above 2000 rows.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/audit/round-8/06-f125-inspection.log",
+        "docs/delivery/test-evidence/DG5/domain/round-7/probe-prod.log",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/en-executive-overview-filter.json",
+        "docs/delivery/test-evidence/DG5/domain/round-7/prod/cap/ar-finance-validation-queue.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-150",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation by the release-auditor after my own judgement. Confirmed in source at 12dc33e: TraceabilityPage.tsx:106-115 interpolates the focused record's name as plain text into <p className='small' role='note' data-root>, outside .record-name (styles/app.css:401, overflow-wrap: anywhere). The e70ac02..12dc33e diff of that file (7 lines) does not touch the data-root note, so this is a DG4 element and not a regression of waves AB/AB2. qa's measurement JSON (same candidate) supports the claim: 0 px before Focus for every token; after Focus 651/681/721 px for a 120-character unbroken Latin word and 85/115/155 px for an unbroken Arabic token at 390/360/320 px; 0 px for ordinary text. Why it is acceptable at DG5: it needs a user to focus a record whose name is a single unbroken token; it is cosmetic, with no data, calculation or authorization effect; the graph and record links still wrap; its requirement, REQ-S15-009, is DG6-final; Low, not mandatory. DG6 carry-forward (owner: frontend-ux-engineer): render the name in the note through RecordName/.record-name (or overflow-wrap:anywhere on [data-root]), and extend p5-record-name-reflow.spec.ts to click Focus at 320/360/390 px and at 200 % text, in en and ar.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/audit/round-8/07-f150-inspection.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7traceroot-unset/en/r7-trace-focus-click.json",
+        "docs/delivery/test-evidence/DG5/qa/round-7/05-e2e-probe-r7traceroot-unset.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-151",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation by the release-auditor after my own judgement. Confirmed in the product test at 12dc33e: apps/web/e2e/p5-launch-health-kpi.spec.ts registers `reloaded` (any GET of /health-checks/<id>) BEFORE the Save-actions click, right after the refused Submit, whose refresh GET may still be in flight. So `await reloaded` can resolve on the pre-save GET, and Submit can be clicked before the screen holds the saved version. qa's SLOWGET probe evidence supports this: with 1500 ms GETs, 'reloaded' resolved on GET #1 (issued about 100-150 ms, before the save click at about 250-275 ms) with version 26, while the PUT made 27; the product still sent If-Match \"27\" and showed 'submitted' each time. In the 0 ms control, 'reloaded' was the post-save GET. A stale If-Match would get a 409, the correct optimistic-concurrency result. So the defect is in the test's synchronization, not the product. The D-182 failure (chromium-ar, locale unset, 459/460; e2e-unset.rc = 1) is disclosed in D-182 and matches its log. Its trace is lost, so its cause stays unproven: this race is plausible but not established. It did not recur in 4 full product suites (174 passed per qa run-B log, both locale settings), 20/20 in the orchestrator's targeted re-run, or 10/10 in qa's targeted runs. Why it is acceptable at DG5: no product defect is shown (the screen always sent the current version and the server accepted it); it is test-only; Low, not mandatory. DG6 carry-forward (owner: frontend-ux-engineer, with qa-verifier for the regression): register the reload waiter after the PUT response, or wait for a rendered marker of the saved version, before clicking Submit; keep qa's SLOWGET probe as a regression. If the failure recurs with a trace, re-open it as a product question.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/audit/round-8/08-f151-inspection.log",
+        "docs/delivery/test-evidence/DG5/audit/round-8/11-incidents-d182.log",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-1500-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/qa/round-7/shots/probe-r7slowget-0-unset/r7-health-slowget.jsonl",
+        "docs/delivery/test-evidence/DG5/orchestrator-D-182/verify-ab2-45287b4/e2e-unset.log"
+      ]
+    }
+  ]
+}
