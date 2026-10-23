@@ -14,7 +14,7 @@
 //     affected records of ADR-0039 §5 (affected-records.ts), and no benefits (no Studio element type binds a benefit
 //     formula: they keep their DG3/DG4 versioned records, §4), stated as such and never as a count of 0; routing = the
 //     kind's review policy; tasks = one per active holder of the reviewer role in the organization, never the requester
-//     nor the draft's author (SoD, §5). `createConfigReviewTasks` then creates them, once the caller knows the subject
+//     nor an author of the draft (its creator or a recorded contributor; SoD, §5, D-170). `createConfigReviewTasks` then creates them, once the caller knows the subject
 //     the reviewer acts on (its review request).
 //  2. Formula revision (`proposeFormulaRevision`): the composition root (server.ts) wraps the DG4 material-change port
 //     with `withRevisionProposals`, so `benefitFormulaVersionCreated` (DG3 createBenefitFormulaVersion, a new version)
@@ -55,6 +55,7 @@ import {
 } from "../platform/index.ts";
 import { affectedRecords } from "./affected-records.ts";
 import { canonicalContentJson } from "./content-hash.ts";
+import { configAuthors } from "./contributors.ts";
 import { requireStudioPermission, type MethodologyVersionRow } from "./drafts.ts";
 import { recordRequestExecution, REQUEST_STARTERS } from "../platform/index.ts";
 
@@ -306,7 +307,7 @@ export async function proposeConfigRevision(
   const policy = await reviewPolicy(tx, version.config_kind);
   const target = await targetFor(tx, "organization", { organizationId: input.organizationId });
   const reviewers = policy.required
-    ? await reviewerHolders(tx, policy.roleCode, target, [input.requestedBy, version.created_by])
+    ? await reviewerHolders(tx, policy.roleCode, target, [input.requestedBy, ...(await configAuthors(tx, version))])
     : [];
   const { row, created } = await insertProposalOnce(tx, audit, {
     organizationId: input.organizationId,

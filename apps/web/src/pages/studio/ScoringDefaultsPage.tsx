@@ -271,7 +271,12 @@ function DefaultsView({ defaults }: { defaults: ScoringDefaults }) {
         {rubricCriteria.map((c) => (
           <fieldset key={c} className="fieldset" data-rubric={c}>
             <legend>{t(`studio.criterion.${c}`)}</legend>
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label={t("common.table.scrollRegion", { caption: t(`studio.criterion.${c}`) })}
+            >
               <table className="table table--compact">
                 <caption className="visually-hidden">{t(`studio.criterion.${c}`)}</caption>
                 <thead>

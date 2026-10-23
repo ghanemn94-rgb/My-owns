@@ -41,7 +41,12 @@ export function ConfigPinsPage() {
           empty={<EmptyState title={t("studio.pins.empty")} />}
         >
           {(rows) => (
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label={t("common.table.scrollRegion", { caption: t("studio.pins.current") })}
+            >
               <table className="table" data-table="pins">
                 <caption className="visually-hidden">{t("studio.pins.current")}</caption>
                 <thead>
@@ -86,7 +91,12 @@ export function ConfigPinsPage() {
           empty={<EmptyState title={t("studio.pins.historyEmpty")} />}
         >
           {(rows) => (
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label={t("common.table.scrollRegion", { caption: t("studio.pins.history") })}
+            >
               <table className="table" data-table="pin-history">
                 <caption className="visually-hidden">{t("studio.pins.history")}</caption>
                 <thead>

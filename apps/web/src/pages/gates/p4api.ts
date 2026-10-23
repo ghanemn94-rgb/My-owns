@@ -63,6 +63,19 @@ export function useCriterionReviews(tid: string, code: string, no: number, key: 
   });
 }
 
+/**
+ * Every gate exception of the transformation (all gates, every status), for the gates list's readiness lines
+ * (T-DG5-FE-V1B, D-170). Same operation and key area as the per-gate list, so `useP4Refresh(tid)` refreshes it too.
+ */
+export function useTransformationGateExceptions(tid: string) {
+  return useQuery({
+    queryKey: p4Keys.area("gate-exceptions", tid, "list", "*"),
+    queryFn: () => fetchAllPages<GateException>(gateP4Paths.exceptions(tid)),
+    enabled: Boolean(tid),
+    ...opts,
+  });
+}
+
 /** The gate exceptions of one gate (every status; `covering` is computed for today's business date by the server). */
 export function useGateExceptions(tid: string, gateCode: string) {
   return useQuery({

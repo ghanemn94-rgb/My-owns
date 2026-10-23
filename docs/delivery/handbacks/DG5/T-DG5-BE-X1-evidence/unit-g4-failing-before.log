@@ -1,0 +1,211 @@
+# new unit tests on the UNFIXED g4.ts (git show HEAD:apps/api/src/modules/workflows/g4.ts)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-x1
+
+ ❯ |unit-node| apps/api/src/modules/workflows/g4.test.ts (10 tests | 5 failed) 48ms
+   ✓ G4 evaluators > complete facts -> every criterion complete 9ms
+   ✓ G4 evaluators > an unwired provider (no facts) fails closed on all eight criteria 1ms
+   ✓ G4 evaluators > the exact English labels name the initiative's code and name 1ms
+   ✓ G4 evaluators > Finance validation: a stale or unvalidated baseline, or an unvalidated formula version, never counts 0ms
+   ✓ G4 evaluators > an empty portfolio, a ranking under an old weight set, a schedule conflict and a capacity conflict 2ms
+   × G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > roadmap, owners, funding and capacity each carry exactly the one missing item naming the cause 16ms
+     → expected [ [], [], [], [] ] to deeply equal [ [ { …(3) } ], [ { …(3) } ], …(2) ]
+   × G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > prioritization: a current ranking over no initiative is incomplete; a missing ranking names both causes 1ms
+     → expected [] to deeply equal [ { …(3) } ]
+   × G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > business cases and Finance validation: a complete, validated transformation-level part never completes them alone 2ms
+     → expected [] to deeply equal [ { …(3) } ]
+   × G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > Initiative cards keeps g4.portfolio_empty; other conflicts are still listed beside the cause 7ms
+     → expected [ { …(3) } ] to deeply equal [ { …(3) }, { …(3) } ]
+   × G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > every criterion over the portfolio is incomplete; not loaded keeps the NOT_LOADED item, never the empty one 2ms
+     → expected [ [ 'g4.business_cases', [] ], …(6) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/workflows/g4.test.ts > G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > roadmap, owners, funding and capacity each carry exactly the one missing item naming the cause
+AssertionError: expected [ [], [], [], [] ] to deeply equal [ [ { …(3) } ], [ { …(3) } ], …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   [[39m
+[32m-     {[39m
+[32m-       "code": "g4.no_approved_initiative",[39m
+[32m-       "message": "No initiative in the approved portfolio",[39m
+[32m-       "pointer": "/initiatives",[39m
+[32m-     },[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     {[39m
+[32m-       "code": "g4.no_approved_initiative",[39m
+[32m-       "message": "No initiative in the approved portfolio",[39m
+[32m-       "pointer": "/initiatives",[39m
+[32m-     },[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     {[39m
+[32m-       "code": "g4.no_approved_initiative",[39m
+[32m-       "message": "No initiative in the approved portfolio",[39m
+[32m-       "pointer": "/initiatives",[39m
+[32m-     },[39m
+[32m-   ],[39m
+[32m-   [[39m
+[32m-     {[39m
+[32m-       "code": "g4.no_approved_initiative",[39m
+[32m-       "message": "No initiative in the approved portfolio",[39m
+[32m-       "pointer": "/initiatives",[39m
+[32m-     },[39m
+[32m-   ],[39m
+[31m+   [],[39m
+[31m+   [],[39m
+[31m+   [],[39m
+[31m+   [],[39m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/workflows/g4.test.ts:202:92
+    200|     it("roadmap, owners, funding and capacity each carry exactly the o…
+    201|       const out = empty();
+    202|       expect([out["g4.roadmap"], out["g4.owners"], out["g4.funding"], …
+       |                                                                                            ^
+    203|         [NONE],
+    204|         [NONE],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/workflows/g4.test.ts > G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > prioritization: a current ranking over no initiative is incomplete; a missing ranking names both causes
+AssertionError: expected [] to deeply equal [ { …(3) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   {[39m
+[32m-     "code": "g4.no_approved_initiative",[39m
+[32m-     "message": "No initiative in the approved portfolio",[39m
+[32m-     "pointer": "/initiatives",[39m
+[32m-   },[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/src/modules/workflows/g4.test.ts:213:9
+    211|       expect(
+    212|         empty({ portfolio: { ranking: { snapshotId: "s", weightSetId: …
+    213|       ).toEqual([NONE]);
+       |         ^
+    214|       expect(empty({ portfolio: { ranking: null } })["g4.prioritizatio…
+    215|         { code: "g4.prioritization_missing", message: "Prioritization"…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/workflows/g4.test.ts > G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > business cases and Finance validation: a complete, validated transformation-level part never completes them alone
+AssertionError: expected [] to deeply equal [ { …(3) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   {[39m
+[32m-     "code": "g4.no_approved_initiative",[39m
+[32m-     "message": "No initiative in the approved portfolio",[39m
+[32m-     "pointer": "/initiatives",[39m
+[32m-   },[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/src/modules/workflows/g4.test.ts:222:40
+    220|     it("business cases and Finance validation: a complete, validated t…
+    221|       const out = empty();
+    222|       expect(out["g4.business_cases"]).toEqual([NONE]);
+       |                                        ^
+    223|       expect(out["g4.finance_validation"]).toEqual([NONE]);
+    224|       // The transformation-level parts keep their own checks beside t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/workflows/g4.test.ts > G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > Initiative cards keeps g4.portfolio_empty; other conflicts are still listed beside the cause
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(3) }, { …(3) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[32m-     "code": "g4.no_approved_initiative",[39m
+[32m-     "message": "No initiative in the approved portfolio",[39m
+[32m-     "pointer": "/initiatives",[39m
+[32m-   },[39m
+[32m-   {[39m
+[2m      "code": "g4.capacity_conflict",[22m
+[2m      "message": "Capacity conflict: Data engineer 2027-02",[22m
+[2m      "pointer": "/resource-roles/r",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/workflows/g4.test.ts:257:86
+    255|         availableFte: null,
+    256|       };
+    257|       expect(empty({ portfolio: { capacityConflicts: [conflict] } })["…
+       |                                                                                      ^
+    258|         NONE,
+    259|         {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/workflows/g4.test.ts > G4 evaluators > an empty approved portfolio (F-DG5-122, D-172) > every criterion over the portfolio is incomplete; not loaded keeps the NOT_LOADED item, never the empty one
+AssertionError: expected [ [ 'g4.business_cases', [] ], …(6) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   [[39m
+[31m+     "g4.business_cases",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+   [[39m
+[31m+     "g4.finance_validation",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+   [[39m
+[31m+     "g4.prioritization",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+   [[39m
+[31m+     "g4.roadmap",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+   [[39m
+[31m+     "g4.owners",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+   [[39m
+[31m+     "g4.funding",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+   [[39m
+[31m+     "g4.capacity",[39m
+[31m+     [],[39m
+[31m+   ],[39m
+[31m+ ][39m
+
+ ❯ apps/api/src/modules/workflows/g4.test.ts:272:69
+    270|     it("every criterion over the portfolio is incomplete; not loaded k…
+    271|       const out = empty();
+    272|       expect(Object.entries(out).filter(([, m]) => m.length === 0)).to…
+       |                                                                     ^
+    273|       const { initiatives: _absent, ...withoutInitiatives } = complete…
+    274|       const notLoaded = evaluate({ ...complete(), portfolio: withoutIn…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)
+   Start at  15:44:21
+   Duration  576ms (transform 127ms, setup 0ms, collect 122ms, tests 48ms, environment 0ms, prepare 100ms)
+
+exit=1

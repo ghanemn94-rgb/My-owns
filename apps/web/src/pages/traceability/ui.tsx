@@ -111,11 +111,15 @@ export function expectedText(t: TFunction, expected: string): string {
   });
 }
 
-/** A record's code and label; a record without a label reads "No label", never blank. */
+/**
+ * A record's code and label; a record without a label reads "No label", never blank. The label is user text and can
+ * hold an unbroken token wider than the column, so the name wraps anywhere (.record-name, T-DG5-FE-AB1, F-DG5-148)
+ * wherever it renders: the graph's record links, the trace panels, the orphan and impact tables.
+ */
 export function RecordName({ code, label }: { code: string | null; label: string | null }) {
   const { t } = useTranslation();
   return (
-    <>
+    <span className="record-name">
       {code ? (
         <bdi dir="ltr" className="code">
           {code}
@@ -123,7 +127,7 @@ export function RecordName({ code, label }: { code: string | null; label: string
       ) : null}
       {code ? " " : null}
       {label ?? <span className="muted">{t("traceability.noLabel")}</span>}
-    </>
+    </span>
   );
 }
 

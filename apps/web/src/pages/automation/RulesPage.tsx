@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { canAnywhere } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
@@ -198,7 +198,8 @@ function CreateRule({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const me = useMe();
   const catalogue = useCatalogue();
-  const transformations = useTransformations({ sort: "code:asc", limit: 100 });
+  // D-181: every transformation the user may see (all pages), not the first 100.
+  const transformations = useAllTransformations({ sort: "code:asc" });
   const refresh = useFedRefresh();
   const runner = useRunner(refresh);
   const navigate = useSessionNavigate();
@@ -208,97 +209,111 @@ function CreateRule({ onClose }: { onClose: () => void }) {
   const [scopeLevel, setScopeLevel] = useState<"organization" | "transformation">("transformation");
   const [tid, setTid] = useState("");
   const [content, setContent] = useState<ContentDraft>(emptyContent);
-  const trs = (transformations.data?.items ?? []).map((x) => ({ id: x.id, code: x.code, name: x.name }));
   return (
     <Section id="create-rule" title={t("workflowsP5.rules.createTitle")} intro={t("workflowsP5.rules.createIntro")}>
       <QueryState query={catalogue}>
         {(cat) => (
-          <form
-            className="form"
-            noValidate
-            data-form="create-rule"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const organizationId =
-                scopeLevel === "transformation"
-                  ? (transformations.data?.items.find((x) => x.id === tid)?.organizationId ?? me.user.organizationId)
-                  : me.user.organizationId;
-              void runner
-                .run<AutomationRule>(fedPaths.rules, {
-                  body: {
-                    code: code.trim(),
-                    nameEn: nameEn.trim(),
-                    nameAr: nameAr.trim(),
-                    scopeLevel,
-                    organizationId,
-                    ...(scopeLevel === "transformation" && tid ? { transformationId: tid } : {}),
-                    ownerUserId: me.user.id,
-                    content: toContentBody(content),
-                  },
-                })
-                .then((r) => {
-                  if (r) navigate(`/admin/automation/rules/${r.id}`);
-                });
+          <QueryState query={transformations}>
+            {(items) => {
+              const trs = items.map((x) => ({ id: x.id, code: x.code, name: x.name }));
+              return (
+                <form
+                  className="form"
+                  noValidate
+                  data-form="create-rule"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const organizationId =
+                      scopeLevel === "transformation"
+                        ? (items.find((x) => x.id === tid)?.organizationId ?? me.user.organizationId)
+                        : me.user.organizationId;
+                    void runner
+                      .run<AutomationRule>(fedPaths.rules, {
+                        body: {
+                          code: code.trim(),
+                          nameEn: nameEn.trim(),
+                          nameAr: nameAr.trim(),
+                          scopeLevel,
+                          organizationId,
+                          ...(scopeLevel === "transformation" && tid ? { transformationId: tid } : {}),
+                          ownerUserId: me.user.id,
+                          content: toContentBody(content),
+                        },
+                      })
+                      .then((r) => {
+                        if (r) navigate(`/admin/automation/rules/${r.id}`);
+                      });
+                  }}
+                >
+                  {runner.alert}
+                  <div className="grid grid--3">
+                    <Field label={t("workflowsP5.field.code")} hint={t("workflowsP5.rules.codeHint")} required>
+                      {(p) => (
+                        <input {...p} dir="ltr" maxLength={64} value={code} onChange={(e) => setCode(e.target.value)} />
+                      )}
+                    </Field>
+                    <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.en")})`} required>
+                      {(p) => (
+                        <input
+                          {...p}
+                          dir="ltr"
+                          maxLength={200}
+                          value={nameEn}
+                          onChange={(e) => setNameEn(e.target.value)}
+                        />
+                      )}
+                    </Field>
+                    <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.ar")})`} required>
+                      {(p) => (
+                        <input {...p} maxLength={200} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />
+                      )}
+                    </Field>
+                    <Field label={t("workflowsP5.rules.scope")} required>
+                      {(p) => (
+                        <select
+                          {...p}
+                          value={scopeLevel}
+                          onChange={(e) => setScopeLevel(e.target.value as typeof scopeLevel)}
+                        >
+                          <option value="transformation">{t("workflowsP5.scopeLevel.transformation")}</option>
+                          <option value="organization">{t("workflowsP5.scopeLevel.organization")}</option>
+                        </select>
+                      )}
+                    </Field>
+                    {scopeLevel === "transformation" ? (
+                      <Field label={t("workflowsP5.field.transformation")} required>
+                        {(p) => (
+                          <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
+                            <option value="">{t("workflowsP5.choose")}</option>
+                            {trs.map((x) => (
+                              <option key={x.id} value={x.id}>
+                                {x.code} · {x.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </Field>
+                    ) : null}
+                  </div>
+                  <ContentEditor
+                    value={content}
+                    onChange={setContent}
+                    catalogue={cat}
+                    transformations={trs}
+                    idPrefix="create"
+                  />
+                  <div className="form__actions">
+                    <button type="submit" className="button button--primary" disabled={runner.busy}>
+                      {t("workflowsP5.rules.createSubmit")}
+                    </button>
+                    <button type="button" className="button button--link" onClick={onClose}>
+                      {t("workflowsP5.close")}
+                    </button>
+                  </div>
+                </form>
+              );
             }}
-          >
-            {runner.alert}
-            <div className="grid grid--3">
-              <Field label={t("workflowsP5.field.code")} hint={t("workflowsP5.rules.codeHint")} required>
-                {(p) => (
-                  <input {...p} dir="ltr" maxLength={64} value={code} onChange={(e) => setCode(e.target.value)} />
-                )}
-              </Field>
-              <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.en")})`} required>
-                {(p) => (
-                  <input {...p} dir="ltr" maxLength={200} value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
-                )}
-              </Field>
-              <Field label={`${t("workflowsP5.builder.name")} (${t("workflowsP5.lang.ar")})`} required>
-                {(p) => <input {...p} maxLength={200} value={nameAr} onChange={(e) => setNameAr(e.target.value)} />}
-              </Field>
-              <Field label={t("workflowsP5.rules.scope")} required>
-                {(p) => (
-                  <select
-                    {...p}
-                    value={scopeLevel}
-                    onChange={(e) => setScopeLevel(e.target.value as typeof scopeLevel)}
-                  >
-                    <option value="transformation">{t("workflowsP5.scopeLevel.transformation")}</option>
-                    <option value="organization">{t("workflowsP5.scopeLevel.organization")}</option>
-                  </select>
-                )}
-              </Field>
-              {scopeLevel === "transformation" ? (
-                <Field label={t("workflowsP5.field.transformation")} required>
-                  {(p) => (
-                    <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
-                      <option value="">{t("workflowsP5.choose")}</option>
-                      {trs.map((x) => (
-                        <option key={x.id} value={x.id}>
-                          {x.code} · {x.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </Field>
-              ) : null}
-            </div>
-            <ContentEditor
-              value={content}
-              onChange={setContent}
-              catalogue={cat}
-              transformations={trs}
-              idPrefix="create"
-            />
-            <div className="form__actions">
-              <button type="submit" className="button button--primary" disabled={runner.busy}>
-                {t("workflowsP5.rules.createSubmit")}
-              </button>
-              <button type="button" className="button button--link" onClick={onClose}>
-                {t("workflowsP5.close")}
-              </button>
-            </div>
-          </form>
+          </QueryState>
         )}
       </QueryState>
     </Section>

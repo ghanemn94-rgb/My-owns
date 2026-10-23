@@ -700,6 +700,9 @@ test("Define → G2: activate a KPI, pass the good outcome test, add a guardrail
   browser,
   playwright,
 }, info) => {
+  // F-DG5-121 (D-170): measured 25.4-27.9 s unloaded and 37.2 s under review load (load 9-12), against the 30 s
+  // default; 90 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing asserted changes.
+  test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
   const lead = await apiSession(playwright, "dev.lead");
@@ -1000,6 +1003,9 @@ test("Team: the six governance roles with their B0018 accountability; the lead a
 test("read-only auditor (AUD): every P2 screen without write controls; Unknown and Unquantified rendered", async ({
   page,
 }, info) => {
+  // F-DG5-121 (D-170): measured 16.9-18.1 s unloaded (under half the 30 s default as headroom) and 26.7 s under review
+  // load; 60 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing asserted changes.
+  test.setTimeout(60_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.auditor");

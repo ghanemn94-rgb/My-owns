@@ -1,0 +1,77 @@
+
+ RUN  v3.2.4 /home/user/wt/dg5-fe-z1
+
+ ❯ |unit-web| src/components/table-regions.test.tsx (9 tests | 2 failed) 6298ms
+   ✓ shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption 184ms
+   ✓ shared table regions (en) > RegisterTable: the scroll container is a focusable region named by the caption 36ms
+   ✓ shared table regions (ar) > DataTable: the scroll container is a focusable region named by the caption 18ms
+   ✓ shared table regions (ar) > RegisterTable: the scroll container is a focusable region named by the caption 15ms
+   ✓ TableScrollRegion (en) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 15ms
+   ✓ TableScrollRegion (ar) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 15ms
+   ✓ no bare table wrapper in the web source > every opening tag with class table-wrap is role=region with tabIndex 0 and an aria-label or aria-labelledby 27ms
+   × no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container) 353ms
+     → expected [ …(2) ] to deeply equal []
+   × no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region) 537ms
+     → expected { outside: [ …(8) ], where: [ …(8) ] } to deeply equal { Object (outside, where) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/components/table-regions.test.tsx > no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)
+AssertionError: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "components/form-framework/ExportDialog.tsx:125",[39m
+[31m+   "pages/form-builder/FormSchemaPage.tsx:234",[39m
+[31m+ ][39m
+
+ ❯ src/components/table-regions.test.tsx:192:18
+    190|         if (isJsx(n) && classesOf(n).includes("table-scroll")) uses.pu…
+    191|       });
+    192|     expect(uses).toEqual([]);
+       |                  ^
+    193|   });
+    194| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/components/table-regions.test.tsx > no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)
+AssertionError: expected { outside: [ …(8) ], where: [ …(8) ] } to deeply equal { Object (outside, where) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "outside": [[22m
+[2m      "components/RecordForm.tsx > FormConflict",[22m
+[2m      "components/States.tsx > ConflictPanel",[22m
+[31m+     "components/form-framework/ExportDialog.tsx > ExportPreview",[39m
+[31m+     "components/form-framework/FormFramework.tsx > AttachmentsTab",[39m
+[31m+     "components/form-framework/FormFramework.tsx > HistoryTab",[39m
+[2m      "pages/admin/UsersPage.tsx > UserEdit",[22m
+[2m      "pages/define/DefinePage.tsx > GoodOutcomeTest",[22m
+[31m+     "pages/form-builder/FormSchemaPage.tsx > FieldsTable",[39m
+[2m    ],[22m
+[2m    "where": Any<Array>,[22m
+[2m  }[22m
+
+ ❯ src/components/table-regions.test.tsx:224:62
+    222|     // Set-up check: the scan really sees the web source's tables (115…
+    223|     expect(tables).toBeGreaterThan(100);
+    224|     expect({ outside: [...new Set(outside)].sort(), where }).toEqual({
+       |                                                              ^
+    225|       outside: [...OUTSIDE_P5_PENDING].sort(),
+    226|       where: expect.any(Array) as unknown,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  19:30:51
+   Duration  9.74s (transform 326.77s, setup 200ms, collect 2.27s, tests 6.30s, environment 540ms, prepare 136ms)
+
+exit 1

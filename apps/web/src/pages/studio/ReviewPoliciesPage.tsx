@@ -40,7 +40,12 @@ export function ReviewPoliciesPage() {
         empty={<EmptyState title={t("studio.policies.empty")} />}
       >
         {(rows) => (
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: t("studio.policies.title") })}
+          >
             <table className="table" data-table="policies">
               <caption className="visually-hidden">{t("studio.policies.title")}</caption>
               <thead>

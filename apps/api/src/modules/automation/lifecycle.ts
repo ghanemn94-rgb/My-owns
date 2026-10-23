@@ -23,8 +23,10 @@
 // per row written.
 //
 // A rule review is a CONFIGURATION review by a second person (automation.review, TO by default), never a business
-// approval (G1-G6), and never engineering gate DG0-DG7. The author never reviews their own version (403
-// automation_rule_version.self_review; CHECK automation_rule_version_review_sod again). Submitting opens one
+// approval (G1-G6), and never engineering gate DG0-DG7. An author never reviews their own version (403
+// automation_rule_version.self_review; CHECK automation_rule_version_review_sod again). The authors are `authored_by`
+// and every person who wrote part of the version's content (D-170; the 0097 contributor record and its trigger
+// automation_rule_version_reviewer_not_contributor). Submitting opens one
 // `automation_rule_review` work item per reviewer (dedupe `automation_rule_review:<versionId>:<userId>`); the decision,
 // a discard or a publish closes them.
 //
@@ -98,6 +100,26 @@ export const lifecycleRefusals = {
 } as const;
 
 // ------------------------------------------------------------------------------------------------ shared reads
+
+/**
+ * The authors of a rule version (D-170; F-DG5-100; 0097): its `authored_by` and every person recorded as having
+ * written its content while it was a draft (automation_rule_version_contributor, maintained by the 0097 triggers in
+ * the writer's own transaction). None of them decides its review, and none gets a review task.
+ */
+export async function versionAuthors(
+  db: DbOrTx,
+  v: Pick<AutomationRuleVersionRow, "id" | "authored_by">,
+): Promise<string[]> {
+  const rows = await db
+    .selectFrom("automation_rule_version_contributor")
+    .select("user_id")
+    .where("automation_rule_version_id", "=", v.id)
+    .orderBy("user_id")
+    .execute();
+  const out = v.authored_by === null ? [] : [v.authored_by];
+  for (const r of rows) if (!out.includes(r.user_id)) out.push(r.user_id);
+  return out;
+}
 
 export const versionParams = z.strictObject({
   ruleId: z.uuid(),
@@ -228,13 +250,14 @@ async function submitVersion(tx: Tx, request: FastifyRequest, ruleId: string, ve
       review_note: { from: v.review_note, to: null },
     },
   });
-  // One review task per reviewer other than the author (the author can never review; SoD).
+  // One review task per reviewer who is not an author (an author can never review; SoD, D-170).
   const principal = await refreshPrincipal(tx, request);
   const org = ruleOrganization(rule, principal);
   if (org !== null) {
     const actorAudit = actorOf(request);
+    const authors = await versionAuthors(tx, v);
     for (const userId of await reviewersOf(tx, org)) {
-      if (userId === v.authored_by) continue;
+      if (authors.includes(userId)) continue;
       await createWorkItemOnce(tx, actorAudit, {
         organizationId: org,
         transformationId: rule.transformation_id,
@@ -314,7 +337,8 @@ async function decideReview(tx: Tx, request: FastifyRequest, ruleId: string, ver
   const v = await loadVersion(tx, rule.id, versionNo, true);
   if (v.version !== expected) throw problems.versionConflict(v.version);
   if (v.status !== "in_review") throw lifecycleRefusals.invalidTransition();
-  if (v.authored_by === userId) throw lifecycleRefusals.selfReview();
+  // Separation of duties (D-170): never an author, i.e. authored_by or anyone who wrote part of the content (0097).
+  if ((await versionAuthors(tx, v)).includes(userId)) throw lifecycleRefusals.selfReview();
   const approve = body.outcome === "approve";
   const updated = await tx
     .updateTable("automation_rule_version")

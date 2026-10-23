@@ -1,0 +1,36 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-x2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mve0wa9x_82f3c52f (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/environment/walkthrough.test.ts (16 tests) 14988ms
+   ✓ production gives 409 environment.not_demo (ADR-0050 §9) > with and without a transformation, for every signed-in user; nothing is written  383ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > a fresh demo database: a transformation created through the API completes step 1 only; 2-12 incomplete  398ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 2 diagnose and agree baseline: FIN validates the baseline; a later edit makes it stale again  344ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 3 define outcomes/KPIs: an outcome, a KPI definition and their T02 link  605ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 4 design TOM: a target-state canvas cell and a TOM gap (either alone is not enough)  533ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  576ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 6 update delivery/adoption: a submitted owner update, then a completed training record  700ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 7 submit KPI actual: the KPI owner submits the period's actual  761ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  686ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  693ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 10 generate report: a generated snapshot completes it; a discarded one does not  395ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  663ms
+ ✓ |integration| apps/api/test/integration/environment/environment.test.ts (14 tests) 12676ms
+   ✓ GET /environment (REQ-S18-001, REQ-PB-089) > returns synthetic: false in production (production-marked, and unmarked fails safe to production)  301ms
+   ✓ the worker's demo.reset job (ADR-0050 §6) > acknowledges before the drop, then re-creates and re-seeds the database (requested_via api); a redelivery does nothing  3412ms
+ ✓ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (3 tests) 7518ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted  337ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception  408ms
+ ✓ |integration| apps/api/test/integration/environment/demo-users-new-transformation.test.ts (7 tests) 7796ms
+   ✓ QA-E O-2: procedures v2 assigns record_baseline to TL (migration 0095) > a new transformation's baseline_validation assigns record_baseline to TL, who completes it end to end  376ms
+ ✓ |integration| apps/api/test/integration/environment/demo-pending-approval.test.ts (4 tests) 6210ms
+ ✓ |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts (6 tests) 5853ms
+
+ Test Files  6 passed (6)
+      Tests  50 passed (50)
+   Start at  16:11:35
+   Duration  97.43s (transform 8.95s, setup 0ms, collect 35.65s, tests 55.04s, environment 0ms, prepare 110ms)
+
+EXIT=0

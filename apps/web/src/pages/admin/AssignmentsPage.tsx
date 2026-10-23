@@ -16,7 +16,7 @@ import {
   useBusinessUnits,
   useOrganizations,
   useRoles,
-  useTransformations,
+  useAllTransformations,
 } from "../../api/queries.ts";
 import type { RoleAssignment } from "../../api/types.ts";
 import { localName, useLocale } from "../../app/locale.ts";
@@ -401,7 +401,8 @@ function GrantForm({
   const org = (orgs.data ?? [me.organization]).find((o) => o.id === organizationId);
   const tz = org?.defaultTimezone ?? me.organization.defaultTimezone;
   const canListTransformations = canAnywhere(me, "transformation.read");
-  const transformations = useTransformations({ sort: "code:asc", limit: 100, organizationId });
+  // D-181: every transformation of the organization (all pages), not the first 100.
+  const transformations = useAllTransformations({ sort: "code:asc", organizationId }, canListTransformations);
   const [serverError, setServerError] = useState<unknown>(null);
 
   const toPayload = (v: GrantValues) => {
@@ -535,14 +536,17 @@ function GrantForm({
           >
             {(c) =>
               canListTransformations ? (
-                <select {...c} {...register("scopeId")}>
-                  <option value="">{t("common.form.choose")}</option>
-                  {(transformations.data?.items ?? []).map((tr) => (
-                    <option key={tr.id} value={tr.id}>
-                      {tr.code} · {tr.name}
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select {...c} {...register("scopeId")}>
+                    <option value="">{t("common.form.choose")}</option>
+                    {(transformations.data ?? []).map((tr) => (
+                      <option key={tr.id} value={tr.id}>
+                        {tr.code} · {tr.name}
+                      </option>
+                    ))}
+                  </select>
+                  <QueryState query={transformations}>{() => null}</QueryState>
+                </>
               ) : (
                 <input {...c} {...register("scopeId")} dir="ltr" />
               )

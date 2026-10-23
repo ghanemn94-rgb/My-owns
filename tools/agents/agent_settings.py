@@ -137,6 +137,11 @@ def build(role, repo_root, cwd, stage=None):
         "allowUnsandboxedCommands": False,
         "autoAllowBashIfSandboxed": True,
         "enableWeakerNestedSandbox": True,
+        # D-176 (user-approved 2026-10-20): Claude Code 2.1.304 started passing bwrap --disable-userns to the Bash
+        # sandbox, which stopped the reviewers' harnesses (unshare --user to run PostgreSQL as a non-root uid). This
+        # restores the pre-2.1.304 behaviour; write confinement rests on the process sandbox's read-only binds and
+        # Landlock (D-030), not on this.
+        "allowNestedUserNamespaces": True,
         "filesystem": {"denyWrite": sorted(set(deny))},
     }
     return settings

@@ -17576,7 +17576,7 @@ paths:
     post:
       tags: [studio]
       operationId: decideConfigReview
-      summary: "Approve the reviewed content or request changes with a note; never the author or the requester (methodology.review; TO). 403 config_review.self_review. If-Match is the review request's version."
+      summary: "Approve the reviewed content or request changes with a note; never an author (the draft's creator or any person recorded as having written part of its content) or the requester (methodology.review; TO). 403 config_review.self_review. If-Match is the review request's version."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -18473,7 +18473,7 @@ paths:
           description: "OK."
           content:
             text/csv:
-              schema: { type: string, description: 'RFC 4180 UTF-8 with BOM; header labels in the requested language (ADR-0041 §5).' }
+              schema: { type: string, description: 'RFC 4180 UTF-8 with BOM; on a demo database the first row is the illustrative label in the requested language (D-178); then header labels in the requested language (ADR-0041 §5).' }
             application/json:
               schema: { $ref: "#/components/schemas/FormRecordExport" }
         "400": { $ref: "#/components/responses/ValidationError" }
@@ -25899,13 +25899,14 @@ components:
         reason: { type: string, minLength: 3, maxLength: 1000 }
     FormRecordExport:
       type: object
-      description: "JSON export (format=json): column keys and labels, then one row per record; values are strings or null; statuses mark Unknown and Not computable."
-      required: [recordType, formSchemaVersionId, language, columns, rows]
+      description: "JSON export (format=json): column keys and labels, then one row per record; values are strings or null; statuses mark Unknown and Not computable. On a demo database `illustrativeLabel` carries the illustrative label in the export language (D-178)."
+      required: [recordType, formSchemaVersionId, language, illustrativeLabel, columns, rows]
       additionalProperties: false
       properties:
         recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
         formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
         language: { type: string, enum: [en, ar] }
+        illustrativeLabel: { type: [string, "null"], minLength: 1, description: "F-DG5-124 (D-178; ADR-0050 §2 (d)): the illustrative label in the export language ('Illustrative example — synthetic' / 'مثال توضيحي — اصطناعي') when the export was generated in a demo database; null otherwise. The CSV form carries the same label as its first row, before the header." }
         columns: { type: array, items: { type: object, additionalProperties: false, required: [key, label, fieldType, extension], properties: { key: { type: string }, label: { type: string }, fieldType: { $ref: "#/components/schemas/FormFieldType" }, extension: { type: boolean } } } }
         rows: { type: array, maxItems: 5000, items: { type: object, additionalProperties: false, required: [recordId, version, values, statuses], properties: { recordId: { $ref: "#/components/schemas/Uuid" }, version: { $ref: "#/components/schemas/Version" }, values: { type: object }, statuses: { type: object, additionalProperties: { type: string, enum: [unknown, not_computable] } } } } }
     FormBulkItem:
@@ -26232,7 +26233,10 @@ components:
         produced since the instance was launched and not another instance's output (422
         procedure_step.output_required when none is named). For a link output, outputRecordId names the existing
         record. For an advance output, outputRecordId is omitted (or names the same record): the record an earlier step
-        of this instance linked must have reached the state this step records.
+        of this instance linked must have reached the state this step records. In every mode, the acting person must
+        be able to read the output record in that record's own scope (transformation.read on its transformation),
+        re-checked on grants reloaded in the completing transaction; otherwise the completion is refused with 422
+        procedure_step.output_record_invalid, exactly as for an unknown record, and nothing is linked or adopted.
       additionalProperties: false
       properties:
         note: { type: [string, "null"], minLength: 1, maxLength: 4000 }

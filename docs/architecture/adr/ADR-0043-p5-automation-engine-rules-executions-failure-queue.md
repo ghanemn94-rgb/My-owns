@@ -86,7 +86,7 @@ published -> superseded (only when a newer version of the rule is published)
 
 - A new version starts as `draft` (AV08) by copying the effective version (or empty for a new rule). At most one open (`draft`/`in_review`/`approved`) version per rule (unique index `automation_rule_version_one_open_key`). Content changes only in `draft` (`automation_rule_version_content_frozen`; AV14, AV16): published versions are immutable.
 - **Dry run (preview/test).** `POST …/dry-runs` evaluates the draft against a sample event (validated against the trigger's payload schema) inside a **read-only transaction that is rolled back**: conditions are evaluated, each action's `plan()` returns what it would do (target, assignee, key) and each permission check is run. It writes only its own `automation_dry_run` row (append-only; DR04, AO): never a work item, notification, business record or execution — REQ-S12-002's "a dry-run creates no tasks". A run tests exactly the current `content_sha256` of a draft (`automation_dry_run_current_draft`, DR01); a failing run lists its findings (`automation_dry_run_fail_has_finding`, DR02). Leaving `draft` (to `in_review` or `published`) needs a `pass` run for the current hash (`automation_rule_version_dry_run_required`; AV10, DR03).
-- **Review where configured (M0155).** The `config_review_policy` row `automation_rule_set` (review required, reviewer TO, switchable by TO only; D-143 (5)) decides. When it requires review, publishing straight from `draft` is refused (`automation_rule_version_review_required`, AV11), and a holder of `automation.review` (TO by default) other than the author approves (`automation_rule_version_review_sod`, AV13). A rule review is a configuration review, not a business approval. Submitting creates one `automation_rule_review` work item per reviewer (dedupe `automation_rule_review:<versionId>:<userId>`).
+- **Review where configured (M0155).** The `config_review_policy` row `automation_rule_set` (review required, reviewer TO, switchable by TO only; D-143 (5)) decides. When it requires review, publishing straight from `draft` is refused (`automation_rule_version_review_required`, AV11), and a holder of `automation.review` (TO by default) other than the author approves (`automation_rule_version_review_sod`, AV13; _amended 2026-10-18, T-DG5-ARCH-R4: other than every author, meaning `authored_by` or any recorded contributor, also refused by `automation_rule_version_reviewer_not_contributor`; see amendment F1–F4_). A rule review is a configuration review, not a business approval. Submitting creates one `automation_rule_review` work item per reviewer (dedupe `automation_rule_review:<versionId>:<userId>`).
 - **Publish** (lock 730258 is not needed; the publish takes the rule row `FOR UPDATE` with `If-Match` on the rule): in one transaction, in this order: (1) the new version → `published` (`published_by`, `published_at`); (2) the rule's `effective_version_id` → the new version; (3) the previous published version → `superseded`. The exclusion "one published version per rule" and the effective-version check are both deferred to COMMIT (AV17, AV18, AV20). A version is effective from its `published_at`; there is no future-dated effective date in P5.
 - **Enable / disable.** `enable` needs an effective version (AR08). `disable` needs a reason (3–1000 characters) and is refused for a rule with `disable_allowed = false` (the sixteen starters; 422 `automation_rule.guarantee_protected`, AR05). An admin rule starts disabled.
 
@@ -129,7 +129,7 @@ Lock classes (ADR-0016 §6 registry, `platform/advisory-locks.ts`): **730258** `
 |---|---|---|
 | Read rules, versions, dry runs, executions, failures, catalogue | `automation.read` | ADM_METHOD, ADM_TECH, TO, AUD |
 | Create/update rules and versions, dry run, submit, publish, discard, enable, disable | `automation.configure` | ADM_METHOD |
-| Decide a rule-version review | `automation.review` | TO |
+| Decide a rule-version review | `automation.review` | TO; never an author (amendment F5, 2026-10-18) |
 | Retry/dismiss a `rule_execution` failure | `automation.repair` | ADM_TECH, ADM_METHOD |
 | Jobs view | `job.read` (DG4) | ADM_TECH |
 | Retry/dismiss a `job` failure; run now | `job.repair` | ADM_TECH |
@@ -245,3 +245,35 @@ Sources: D-163 (QA-A O-1), D-164 (d) (the contract addition approved), D-166 (W2
 - **Tests.** `apps/api/test/integration/automation/catalogue-sample-payload.test.ts` (every served sample parses with its schema, and the `gate.submitted` sample gives a 201 dry run) and `apps/api/src/modules/automation/samples.test.ts`. On the web side: `apps/web/src/pages/automation/fed.test.tsx` › "D-164 d".
 
 Requirement row: REQ-S12-002 ("dry-run preview"; A06, A13: "a dry-run creates no tasks"). Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R4; D-170, F-DG5-100): §4 and §8, who is an author of a rule version (`0097`)
+
+Sources: D-170 (F-DG5-100: "the other configured-review paths (automation rule versions) are checked for the same gap, and closed or proved closed") and the T-DG5-BE-V1 handback §2 and §5, checked against the merged tree (`9c96ee3`). Nothing above is removed. Where this amendment and §4 or §8 differ, this amendment wins. The Studio counterpart is ADR-0039 amendment F1–F5. Migration: `packages/db/migrations/0097_p5_config_review_contributors.sql` (cited as `0097:<line>`).
+
+### F1. "Other than the author" means other than every author
+
+- **The gap.** Any `automation.configure` holder of the rule's organization may PATCH another person's draft version (`versions.ts` `updateVersion`). §4's review SoD compared the decider only with `authored_by` (the `0074` CHECK `automation_rule_version_review_sod`, AV13), so a co-author could approve content they wrote.
+- **The rule (D-170).** The authors of a rule version are its `authored_by` plus every person recorded in `automation_rule_version_contributor` for it (`apps/api/src/modules/automation/lifecycle.ts:104–122`, `versionAuthors`). No author decides the version's review.
+- **The record** (`0097:63–73`): `automation_rule_version_contributor (automation_rule_version_id, user_id, first_written_at)`; primary key (version, user); foreign keys to `automation_rule_version` and `app_user`; append-only (`p2_attach_append_only`); `mth_app` holds `SELECT, INSERT` only. It is written by triggers in the writer's own transaction, as ADR-0039 amendment F2 describes: AFTER ROW from `updated_by` (or `created_by` on INSERT), and at COMMIT from the write's own audit event (`0097:185–202`). Only the draft's INSERT and an UPDATE, while it is `draft`, that changes `trigger_codes`, `conditions`, `actions`, `action_types`, `run_as`, `service_permission_codes`, `parameters`, `content_sha256` or `change_summary` count. Submit, decide, publish and discard record nobody.
+- **Backfill** (`0097:279–293`, `:301–305`): for every version in `draft`, `in_review` or `approved` at migration time, its `authored_by`, `created_by` and `updated_by`, and the actors of its `automation_rule_version.create` and `.update` audit events; one audit event `automation_rule_version.contributors_backfill` per backfilled version (`actor_type 'system'`, `source 'migration'`).
+
+### F2. §4: the refusals, at the API and in the database
+
+- **API.** `decideReview` loads the version FOR UPDATE (`lifecycle.ts:337`) and refuses any author with **403 `automation_rule_version.self_review`**, the §9 text "You cannot review a version you authored." (`lifecycle.ts:340–341`).
+- **Database** (runtime role). `automation_rule_version_contributor_guard()` (`0097:226–238`), trigger `automation_rule_version_sod_contributor` BEFORE INSERT OR UPDATE (`0097:239–240`), raises constraint **`automation_rule_version_reviewer_not_contributor`** when `reviewed_by` is set to a contributor, or on the decision `in_review → approved | draft` by one. The `0074` CHECK `automation_rule_version_review_sod` is unchanged.
+- **Mapping.** `apps/api/src/modules/platform/db-errors.ts:2712–2719` maps the new constraint to the same 403 and text. The `0074` CHECK has no mapping (the API refuses first, `db-errors.ts:2690–2692`).
+- **Publish.** An in-review version cannot be published (422 `automation_rule_version.invalid_transition`), and an author cannot approve it, so a co-author cannot publish their own content where review is required (`apps/api/test/integration/automation/rule-coauthor-review.test.ts:149`).
+
+### F3. The firing order (BE-V1 handback §2.4)
+
+PostgreSQL evaluates CHECK constraints after every BEFORE trigger (`0097:205–210`). `authored_by` is always a recorded contributor of the version (its INSERT records it, and the backfill records it). So a direct decision by the version's `authored_by` now reports `automation_rule_version_reviewer_not_contributor` before the `0074` CHECK `automation_rule_version_review_sod` is reached. Both express the same refusal, and the reported one maps to 403 `automation_rule_version.self_review` (tested at the database through the runtime role, `rule-coauthor-review.test.ts:226`).
+
+### F4. §4: review tasks skip every author
+
+"Submitting creates one `automation_rule_review` work item per reviewer" now means per reviewer who is not an author: `submitVersion` skips every member of `versionAuthors` (`lifecycle.ts:257–261`).
+
+### F5. §8: the table row
+
+The row "Decide a rule-version review | `automation.review` | TO" is read as: TO, never an author of the version (its `authored_by` or any recorded contributor; 403 `automation_rule_version.self_review`).
+
+Requirement row: REQ-S12-002 (review where configured, M0155) and REQ-S06-007. Tests: `apps/api/test/integration/automation/rule-coauthor-review.test.ts` (4 tests) and the "0097" test of `packages/db/test/integration/catalogue.test.ts` (`:850`). A rule review is a configuration review, not a business approval. Nothing here grants a G1–G6 approval or touches the engineering gates DG0–DG7.

@@ -1,0 +1,49 @@
+
+ RUN  v3.2.4 /home/user/wt/dg5-fe-ab1/apps/web
+
+ ❯ |unit-web| src/components/table-regions.test.tsx (9 tests | 1 failed) 5296ms
+   ✓ shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption 142ms
+   ✓ shared table regions (en) > RegisterTable: the scroll container is a focusable region named by the caption 29ms
+   ✓ shared table regions (ar) > DataTable: the scroll container is a focusable region named by the caption 11ms
+   ✓ shared table regions (ar) > RegisterTable: the scroll container is a focusable region named by the caption 15ms
+   ✓ TableScrollRegion (en) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 9ms
+   ✓ TableScrollRegion (ar) > is a focusable .table-wrap region named by the caption plus the localized scroll note, and keeps extra attributes 7ms
+   ✓ no bare table wrapper in the web source > every opening tag with class table-wrap is role=region with tabIndex 0 and an aria-label or aria-labelledby 21ms
+   ✓ no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container) 287ms
+   × no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region) 315ms
+     → expected { outside: [ …(4) ], where: [ …(4) ] } to deeply equal { Object (outside, where) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/components/table-regions.test.tsx > no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)
+AssertionError: expected { outside: [ …(4) ], where: [ …(4) ] } to deeply equal { Object (outside, where) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "outside": [[22m
+[2m      "components/RecordForm.tsx > FormConflict",[22m
+[2m      "components/States.tsx > ConflictPanel",[22m
+[2m      "pages/admin/UsersPage.tsx > UserEdit",[22m
+[31m+     "pages/define/DefinePage.tsx > GoodOutcomeTest",[39m
+[2m    ],[22m
+[2m    "where": Any<Array>,[22m
+[2m  }[22m
+
+ ❯ src/components/table-regions.test.tsx:225:62
+    223|     // Set-up check: the scan really sees the web source's tables (115…
+    224|     expect(tables).toBeGreaterThan(100);
+    225|     expect({ outside: [...new Set(outside)].sort(), where }).toEqual({
+       |                                                              ^
+    226|       outside: [...OUTSIDE_P5_PENDING].sort(),
+    227|       where: expect.any(Array) as unknown,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  08:22:25
+   Duration  8.77s (transform 285.64s, setup 205ms, collect 2.31s, tests 5.30s, environment 533ms, prepare 133ms)
+

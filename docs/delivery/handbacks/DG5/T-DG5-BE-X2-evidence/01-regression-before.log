@@ -1,0 +1,73 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-x2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvdz8nzj_aefac957 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (3 tests | 2 failed) 6799ms
+   × F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted 373ms
+     → G4 incomplete criteria: expected [ 'g4.initiative_cards', …(1) ] to deeply equal []
+   × F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception 164ms
+     → g4.initiative_cards: expected [ 'g4.initiative_cards', …(2) ] to deeply equal [ 'g4.initiative_cards', …(2) ]
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > the phase history: four phase advances, one per approved gate, ending in Transform 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted
+AssertionError: G4 incomplete criteria: expected [ 'g4.initiative_cards', …(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "g4.initiative_cards",[39m
+[31m+   "g4.prioritization",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:96:9
+     94|         (v.criteria as Body[]).filter((c) => c.completeness !== "compl…
+     95|         `${code} incomplete criteria`,
+     96|       ).toEqual([]);
+       |         ^
+     97|       expect([...covered].sort(), `${code} covering exceptions`).toEqu…
+     98|       expect(exceptions, `${code} has no gate exception at all`).toEqu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception
+AssertionError: g4.initiative_cards: expected [ 'g4.initiative_cards', …(2) ] to deeply equal [ 'g4.initiative_cards', …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "g4.initiative_cards",[22m
+[32m-   "complete",[39m
+[32m-   [],[39m
+[31m+   "incomplete",[39m
+[31m+   [[39m
+[31m+     {[39m
+[31m+       "code": "g4.portfolio_empty",[39m
+[31m+       "message": "Initiative cards",[39m
+[31m+       "pointer": "/initiatives",[39m
+[31m+     },[39m
+[31m+   ],[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:196:82
+    194|       "g4.roadmap",
+    195|     ]);
+    196|     for (const c of mandatory) expect([c.key, c.completeness, c.missin…
+       |                                                                                  ^
+    197|     const exceptions = (await get("TL", `/api/v1/transformations/${T}/…
+    198|     expect(exceptions, "no gate exception anywhere in the demo").toEqu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  15:25:13
+   Duration  22.93s (transform 5.93s, setup 0ms, collect 11.68s, tests 6.80s, environment 0ms, prepare 99ms)
+

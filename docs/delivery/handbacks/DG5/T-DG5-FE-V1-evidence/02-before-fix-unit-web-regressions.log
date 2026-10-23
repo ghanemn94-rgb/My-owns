@@ -1,0 +1,46 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-fe-v1
+
+ ❯ |unit-web| src/styles/styles.test.ts (7 tests | 1 failed) 9862ms
+   ✓ stylesheets > exist 1ms
+   ✓ stylesheets > use logical properties only (no physical left/right) 1ms
+   ✓ stylesheets > take colours from design tokens, not hard-coded values 0ms
+   ✓ stylesheets > never reference a remote URL 1ms
+   ✓ stylesheets > the app imports only the bundled Plex font subsets it needs 0ms
+   × stylesheets > lets every fieldset shrink to its container (F-DG5-140, WCAG 1.4.10 Reflow) 377ms
+     → expected '\n\n\n*,\n*::before,\n*::after {\n  b…' to match /(^|\})\s*fieldset\s*\{[^}]*min-inline…/
+   ✓ stylesheets > contains no logo image (the wordmark is text; REQ-S15-006) 36ms
+ ❯ |unit-web| src/components/table-regions.test.tsx (4 tests | 4 failed) 3893ms
+   × shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption 631ms
+     → Unable to find an accessible element with the role "region" and name "Synthetic register"
+
+Here are the accessible roles:
+754: FAIL  |unit-web| src/components/table-regions.test.tsx > shared table regions (en) > DataTable: the scroll container is a focusable region named by the caption
+755-TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "Synthetic register"
+756-
+757-Here are the accessible roles:
+857: FAIL  |unit-web| src/components/table-regions.test.tsx > shared table regions (en) > RegisterTable: the scroll container is a focusable region named by the caption
+858-TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "Synthetic register"
+859-
+860-Here are the accessible roles:
+1149: FAIL  |unit-web| src/components/table-regions.test.tsx > shared table regions (ar) > DataTable: the scroll container is a focusable region named by the caption
+1150-TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "سجل اصطناعي"
+1151-
+1152-Here are the accessible roles:
+1252: FAIL  |unit-web| src/components/table-regions.test.tsx > shared table regions (ar) > RegisterTable: the scroll container is a focusable region named by the caption
+1253-TestingLibraryElementError: Unable to find an accessible element with the role "region" and name "سجل اصطناعي"
+1254-
+1255-Here are the accessible roles:
+1544: FAIL  |unit-web| src/styles/styles.test.ts > stylesheets > lets every fieldset shrink to its container (F-DG5-140, WCAG 1.4.10 Reflow)
+1545-AssertionError: expected '\n\n\n*,\n*::before,\n*::after {\n  b…' to match /(^|\})\s*fieldset\s*\{[^}]*min-inline…/
+1546-
+1547-[32m- Expected:[39m 
+ Test Files  2 failed (2)
+      Tests  5 failed | 6 passed (11)
+   Start at  05:45:08
+   Duration  13.01s (transform 582.39s, setup 610ms, collect 7.52s, tests 13.76s, environment 1.13s, prepare 467ms)
+
+EXIT=1

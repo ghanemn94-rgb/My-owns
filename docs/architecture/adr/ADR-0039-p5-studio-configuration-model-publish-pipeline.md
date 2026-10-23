@@ -102,7 +102,7 @@ A methodology admin (`methodology.configure`) creates a draft from a published v
 - **Compatibility** (`runConfigCompatibilityCheck`): classifies every element change against the base: label/help only → compatible; new required field, removed element, changed formula reference, changed approver → `warn` with the affected pinned transformations listed (they stay pinned; ADR-0040 maps them); an unknown reference (a role, gate, phase, template or criterion that does not exist), an invariant break, or an element the kind's provider rejects → `fail`. `pass`/`warn` are publishable; `fail` is not.
 - **Affected records** (`getConfigAffectedRecords`): per pinned transformation of the base lineage, counts per record type the draft's changed elements touch (e.g. T13 records for a T13 field), computed live; Unknown counts are shown as Unknown, never 0.
 - **Diff** (`getConfigVersionDiff?against=`): side-by-side, per `(elementType, stableKey)`: `added`, `removed`, `changed` with field-level `from`/`to` of the resolved attributes, plus title/definition changes; the kind provider supplies the rows for its own tables (ADR-0041 lists added fields, which is REQ-S06-007's "the diff lists the added field").
-- **Review where configured** (`config_review_policy`, one row per kind, seeded `review_required = true`, reviewer `TO`; `benefit_formula` row reviewer `FIN`, §8): `submitConfigReview` (stage `preview → review`) creates a `config_review_request` for the current hash, a `revision_proposal` (§8) and one `config_review` work item per active holder of the reviewer role in the organization; `decideConfigReview` (`methodology.review`) approves (stage → `approved`) or requests changes (note required; stage → `editing`); `withdrawConfigReview` (stage → `editing`). Database: one pending request per version, only the decision columns move, the reviewer is never the requester (CHECK) nor the draft's author (trigger) (RR01–RR03); the policy's reviewer is never `AUD` (CHECK) nor a technical admin (trigger) (RP01, RP02). For a kind whose policy has `review_required = false`, `publishConfigVersion` on a draft in `preview` performs both steps in one transaction (stage `preview → approved`, then published; two version steps, two audit events).
+- **Review where configured** (`config_review_policy`, one row per kind, seeded `review_required = true`, reviewer `TO`; `benefit_formula` row reviewer `FIN`, §8): `submitConfigReview` (stage `preview → review`) creates a `config_review_request` for the current hash, a `revision_proposal` (§8) and one `config_review` work item per active holder of the reviewer role in the organization; `decideConfigReview` (`methodology.review`) approves (stage → `approved`) or requests changes (note required; stage → `editing`); `withdrawConfigReview` (stage → `editing`). Database: one pending request per version, only the decision columns move, the reviewer is never the requester (CHECK) nor the draft's author (trigger) (RR01–RR03; _amended 2026-10-18, T-DG5-ARCH-R4: "author" means the draft's creator or any recorded contributor, and review tasks skip every author; see amendment F1–F4_); the policy's reviewer is never `AUD` (CHECK) nor a technical admin (trigger) (RP01, RP02). For a kind whose policy has `review_required = false`, `publishConfigVersion` on a draft in `preview` performs both steps in one transaction (stage `preview → approved`, then published; two version steps, two audit events).
 - **Publish** (`publishConfigVersion`, `methodology.publish`, lock 730251 on `"<kind>:<key>"`): re-runs nothing implicitly; it checks the stored runs and review for the exact hash (the database refuses otherwise, §1), sets `published_at/by`, and writes `methodology_version.publish` to the audit trail. Published versions are immutable: any write to one returns 409 `config_version.not_editable`.
 
 ### 6. The source-completeness gate (REQ-S02-001)
@@ -131,7 +131,7 @@ REQ-S12-018's acceptance ("proposing a formula change lists affected benefits an
 | list/get versions, elements, diff, runs, reviews, affected records, source coverage, review policies, revision proposals | `methodology.read` | AUD reads all, writes nothing (403 on every write). |
 | create/update/discard draft, put/remove element, scoring-defaults draft | `methodology.configure` | ADM_METHOD |
 | preview, compatibility, submit/withdraw review, publish, rollback | `methodology.publish` | ADM_METHOD |
-| decide review | `methodology.review` | TO; never the author or requester (403 `config_review.self_review`) |
+| decide review | `methodology.review` | TO; never an author (the draft's creator or any recorded contributor; amendment F1, 2026-10-18) or the requester (403 `config_review.self_review`) |
 | update review policy | `config_review_policy.configure` | TO: an admin cannot switch off the review of its own changes |
 | run source coverage | `source_coverage.run` | ADM_METHOD |
 
@@ -256,3 +256,53 @@ Before this column, "no named user and the catalogue default role" could not be 
 - The data dictionary (`gate_instance`) and the ERD list the column.
 
 Requirement row: REQ-S06-004. Product gates G1–G6 are business approvals inside the product. Nothing here grants one, and nothing here touches the engineering gates DG0–DG7.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R4; D-170, F-DG5-100): §1, §5 and §9, who is an author of a configuration draft (`0097`)
+
+Sources: D-170 (F-DG5-100, decided) and the T-DG5-BE-V1 handback §2 and §5, checked against the merged tree (`9c96ee3`). Nothing above is removed. Where this amendment and §1, §5 or §9 differ, this amendment wins. The same rule for automation rule versions is ADR-0043 amendment F1. Migration: `packages/db/migrations/0097_p5_config_review_contributors.sql` (cited below as `0097:<line>`).
+
+### F1. "Author" means the creator and every recorded contributor (§1, §5, §9)
+
+- **The rule (D-170).** A person who wrote any part of a configuration draft is one of its authors, and an author never decides its configured review. The authors of a Studio draft are its `created_by` plus every person recorded in `methodology_version_contributor` for it (`apps/api/src/modules/methodology/contributors.ts:23–31`, `configAuthors`). The requester is still refused as before.
+- **Why it was needed.** Any `methodology.configure` holder may write another admin's draft (`updateConfigDraft`, the element PUT and remove, the kind providers' writers such as the procedure definition PUT). Before `0097`, the decision compared the decider only with `requested_by` and `created_by`, so a co-author could approve and publish content they wrote (F-DG5-100).
+
+### F2. §1: the contributor record (data model)
+
+- **The table** `methodology_version_contributor (methodology_version_id, user_id, first_written_at)` (`0097:51–61`): primary key (version, user); foreign keys to `methodology_version` and `app_user`; index on `user_id`; append-only through `p2_attach_append_only` (UPDATE, DELETE and TRUNCATE refused; `0097:58`); `mth_app` holds `SELECT, INSERT` only (`0097:59`), so a direct insert by the runtime role can only add refusals. Its rule-version twin is ADR-0043 amendment F1.
+- **How it is written: database triggers, in the writer's own transaction.** The database has no session-actor setting, and a draft's content is written by several modules (methodology, and the kind providers in `procedures/`, `forms/` and `health/`). Triggers on every content table therefore record the writer whatever the write path (`0097:16–35`):
+  - **at once** (AFTER ROW, `p5_config_contributor_from_row`, `0097:114–128`): the row's `updated_by`, or `created_by` on an INSERT without `updated_by`;
+  - **at COMMIT** (deferred constraint trigger, `p5_config_contributor_from_audit`, `0097:131–152`): the `actor_user_id` and `on_behalf_of_user_id` of the write's own `audit_event` (same `record_type`, `record_id` and `new_version`). The deferred P2 guard `p2_audit_required` already makes that event mandatory, so a writer that forgot to stamp `updated_by` is still recorded.
+  - `p5_add_config_contributor` (`0097:77–88`) records nothing for a NULL person or a version that is not `draft`. `p5_config_content_version` (`0097:101–111`) maps a content row to its draft.
+- **What counts as content** (the tables the content hash and the diff cover):
+  - `methodology_version`: the draft's INSERT, and an UPDATE that changes `title_en`, `title_ar`, `definition`, `change_summary` or `content_sha256` (`0097:155–168`);
+  - `methodology_element`: every insert and update (every element kind: methodology, scoring defaults, form schemas, health-check schemes; `0097:171–174`);
+  - `procedure_definition` and `procedure_step_definition`: the procedure kind's rows (`0097:175–182`).
+  - An UPDATE that only moves the stage or status (submit, decide, withdraw, publish, discard) records nobody. So a TO who requested changes does not become an author by deciding, and may decide the next round (`apps/api/test/integration/methodology/studio-coauthor-review.test.ts:247`).
+- **Backfill** (`0097:250–277`, `:295–300`): for each Studio draft open at migration time (`status = 'draft'`, not discarded), its `created_by` and `updated_by`, every actor of an audited content write of the version row, and every actor of an audited write of its element and procedure rows; only existing users; idempotent by the primary key. One `audit_event` per backfilled draft (`actor_type 'system'`, `source 'migration'`, action `methodology_version.contributors_backfill`, `changes.contributors {from: null, to: [...]}`). The version rows are not written, so their versions, ETags and audit histories do not move. Using `updated_by` errs towards refusing a reviewer, never towards allowing an author (BE-V1 handback §2.3).
+- **Audit.** A contributor row has no `id` or `version`. At run time it is derived from an audited write in the same transaction, whose audit event already names the person, so no second event is written (the `0094` precedent).
+
+### F3. §5: the reviewer is never an author or the requester, at the API and in the database
+
+- **API.** `decideConfigReview` locks the version and the review request (`lockVersion`, `lockedReview`), then refuses `actor.userId === review.requested_by` or any member of `configAuthors` with **403 `config_review.self_review`** and the existing §13 text "You cannot review a configuration change you authored or requested." (`apps/api/src/modules/methodology/reviews.ts:334–340`). The check runs inside the decision transaction, so it is re-checked at commit time.
+- **Database** (runtime role). `config_review_request_contributor_guard()` (`0097:211–221`), trigger `config_review_request_sod_contributor` BEFORE INSERT OR UPDATE (`0097:222–223`), raises constraint **`config_review_request_reviewer_not_contributor`** when `decided_by` is set to a recorded contributor of the draft. The `0062` refusals stay: the CHECK `config_review_request_reviewer_not_requester` and the trigger refusal `config_review_request_reviewer_not_author` (the creator).
+- **Mapping.** `apps/api/src/modules/platform/db-errors.ts:2626–2628`: all three constraints give the same 403 `config_review.self_review`.
+- **Publish.** Where review is required, publishing still needs an approved review for the exact hash (`methodology_version_review_required`, §1, unchanged). An author's decision is refused, so an author cannot produce that approval: the co-author's publish gives 422 `config_version.review_required` (`apps/api/test/integration/methodology/studio-coauthor-review.test.ts:175`).
+- **No contract change.** The code and the text are the §13 ones. The `decideConfigReview` summary in `docs/api/openapi.yaml` now spells out "author" (description text only).
+
+### F4. §5 and §8: review tasks skip every author
+
+§5 says one `config_review` work item goes to each active holder of the reviewer role. It now excludes every author as well as the requester:
+
+- the first round (the §8 revision proposal): `reviewerHolders(…, [input.requestedBy, ...configAuthors])` (`apps/api/src/modules/methodology/revision-impact.ts:310`);
+- a later round of the same content: `reviewerHolders(…, [actor.userId, ...configAuthors])` (`reviews.ts:289–294`).
+
+### F5. The firing order of the BEFORE triggers (BE-V1 handback §2.4)
+
+PostgreSQL fires BEFORE triggers of the same event in name order, and evaluates CHECK constraints after every BEFORE trigger (`0097:205–210`). On `config_review_request`, `config_review_request_guard` (`0062`) and `config_review_request_row_guard` sort before `config_review_request_sod_contributor`, so a direct decision by the draft's creator still reports `config_review_request_reviewer_not_author` (tested, `studio-coauthor-review.test.ts:338`). Both map to the same 403. The rule-version case is ADR-0043 amendment F1.
+
+### F6. Not changed by `0097` (BE-V1 handback §2.4 and §7, for the orchestrator)
+
+- The `benefit_formula` revision path (§8 case 2) routes `config_review` tasks to FIN except the editor; its decision is the DG3 Finance validation, outside `config_review_request`. BE-V1 found no co-editor write path but did not prove it with a test.
+- `methodology_migration` approval (ADR-0040) is a business approval governed by the DG4 canonical-approval SoD (requester and submitter refused), not a configured review. A re-planner is not recorded as a co-author.
+
+Requirement row: REQ-S06-007 (and REQ-S06-010 for §9). Tests: `apps/api/test/integration/methodology/studio-coauthor-review.test.ts` (9 tests) and the "0097" test of `packages/db/test/integration/catalogue.test.ts` (`:850`). The data dictionary section "P5 repair migration 0097" lists the tables, functions and triggers. A configuration review is not a business approval. Nothing here grants a G1–G6 approval, and nothing here touches the engineering gates DG0–DG7.

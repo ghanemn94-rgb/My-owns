@@ -10,6 +10,7 @@ import { Icon } from "../../components/Icon.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace } from "../../components/Workspace.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { useBusinessCases, useCaseTotals } from "./api.ts";
 import { Money, ownProblemText } from "./formKit.tsx";
 
@@ -168,7 +169,7 @@ function Breakdown({
     .filter((r): r is readonly [string, MoneyTotal] => r[1] !== undefined);
   if (rows.length === 0) return null;
   return (
-    <div className="table-wrap">
+    <TableScrollRegion caption={title}>
       <table className="table table--compact">
         <caption>{title}</caption>
         <tbody>
@@ -182,6 +183,6 @@ function Breakdown({
           ))}
         </tbody>
       </table>
-    </div>
+    </TableScrollRegion>
   );
 }

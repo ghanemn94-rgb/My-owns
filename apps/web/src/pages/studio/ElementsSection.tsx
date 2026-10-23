@@ -350,7 +350,12 @@ export function ElementsSection({
         empty={<EmptyState title={t("studio.elements.empty")} />}
       >
         {(rows) => (
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label={t("common.table.scrollRegion", { caption: t("studio.elements.title") })}
+          >
             <table className="table" data-table="elements">
               <caption className="visually-hidden">{t("studio.elements.title")}</caption>
               <thead>

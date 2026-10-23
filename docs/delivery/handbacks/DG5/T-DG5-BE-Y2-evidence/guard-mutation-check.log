@@ -1,0 +1,28 @@
+## mutation A: syntaxErrors transpiles with target ES2015 instead of transpile's own default
+ apps/api/src/architecture.testkit.ts | 26 ++++++++++++++++++++++++--
+ 1 file changed, 24 insertions(+), 2 deletions(-)
+560:        compilerOptions: { jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ES2015 },
+ ✓ |unit-node| apps/api/src/architecture.test.ts (140 tests | 139 skipped) 637ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  634ms
+      Tests  1 passed | 139 skipped (140)
+EXIT=0
+## mutation B: syntaxErrors reads the diagnostics of scanSource's own parse (TS kind for .js, Latest), not transpileModule's
+557:    : declarationSyntaxErrors(fileName.replace(/\.[cm]?[jt]sx?$/, ".ts"), source);
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 85ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-node| apps/api/src/architecture.test.ts > the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)
+AssertionError: .js: import { x } from "./a.ts";
+[32m- Expected[39m
+[31m+ Received[39m
+      Tests  1 failed | 139 skipped (140)
+EXIT=1
+testkit restored
+## mutation A2: syntaxErrors transpiles with target ES5 (deprecated in TypeScript 6: an options diagnostic)
+560:        compilerOptions: { jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ES5 },
+   × the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145) 58ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: .ts: import { x } from "./a.ts";
+[31m+   "unparseable source: Option 'target=ES5' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '\"ignoreDeprecations\": \"6.0\"' to silence this error. (line 0)",[39m
+      Tests  1 failed | 139 skipped (140)
+EXIT=1
+testkit restored

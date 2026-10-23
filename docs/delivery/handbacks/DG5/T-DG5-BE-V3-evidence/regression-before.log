@@ -1,0 +1,80 @@
+port-policy: PostgreSQL listening on port 23101 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvddqh6h_36f530cb (server_encoding UTF8); applied 88 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (2 tests | 2 failed) 4496ms
+   × F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted 239ms
+     → G1: expected [ 'G1', 'draft', +0 ] to deeply equal [ 'G1', 'approved', 1 ]
+   × F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > the phase history: four phase advances, one per approved gate, ending in Transform 5ms
+     → expected [] to deeply equal [ …(4) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted
+AssertionError: G1: expected [ 'G1', 'draft', +0 ] to deeply equal [ 'G1', 'approved', 1 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "G1",[22m
+[32m-   "approved",[39m
+[32m-   1,[39m
+[31m+   "draft",[39m
+[31m+   0,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:71:70
+     69|     for (const v of gates.slice(0, 4)) {
+     70|       const code = v.gate.gateCode as string;
+     71|       expect([code, v.gate.status, v.gate.latestSubmissionNo], code).t…
+       |                                                                      ^
+     72|       expect(v.gate.approvedAt, code).not.toBeNull();
+     73|       expect(v.canSubmit, `${code} is approved: no resubmission`).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > the phase history: four phase advances, one per approved gate, ending in Transform
+AssertionError: expected [] to deeply equal [ …(4) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   {[39m
+[32m-     "from": "diagnose",[39m
+[32m-     "to": "define",[39m
+[32m-   },[39m
+[32m-   {[39m
+[32m-     "from": "define",[39m
+[32m-     "to": "design",[39m
+[32m-   },[39m
+[32m-   {[39m
+[32m-     "from": "design",[39m
+[32m-     "to": "mobilize",[39m
+[32m-   },[39m
+[32m-   {[39m
+[32m-     "from": "mobilize",[39m
+[32m-     "to": "transform",[39m
+[32m-   },[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:163:67
+    161|       .orderBy("seq")
+    162|       .execute();
+    163|     expect(advances.map((a) => (a.changes as Body).currentPhase)).toEq…
+       |                                                                   ^
+    164|       { from: "diagnose", to: "define" },
+    165|       { from: "define", to: "design" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  05:23:13
+   Duration  19.98s (transform 5.85s, setup 0ms, collect 11.24s, tests 4.50s, environment 0ms, prepare 175ms)
+

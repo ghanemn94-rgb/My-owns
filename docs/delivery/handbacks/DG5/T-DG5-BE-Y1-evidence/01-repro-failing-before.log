@@ -1,0 +1,254 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-y1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mves32xu_b77b5e83 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (4 tests | 1 failed) 6731ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted  334ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception  366ms
+   × F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan 249ms
+     → INI-01 on the portfolio list: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+     → INI-01 on the initiative: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+     → INI-01: 0 key deliverables: expected false to be true // Object.is equality
+     → INI-01: expected { …(2) } to be null
+     → INI-02 on the portfolio list: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+     → INI-02 on the initiative: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+     → INI-02: 0 key deliverables: expected false to be true // Object.is equality
+     → INI-02: expected { …(2) } to be null
+     → INI-03 on the portfolio list: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+     → INI-03 on the initiative: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+     → INI-03: 0 key deliverables: expected false to be true // Object.is equality
+     → INI-03: expected { …(2) } to be null
+     → the orphan report lists no launched initiative: expected [ 'INI-01', 'INI-02', 'INI-03' ] to deeply equal []
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > the phase history: four phase advances, one per approved gate, ending in Transform 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-01 on the portfolio list: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:368:66
+    366|       const listed = (i.warnings as Body[]).map((w) => w.code);
+    367|       const one = (await get("TL", `/api/v1/initiatives/${i.id}`)).war…
+    368|       expect.soft(listed, `${i.code} on the portfolio list`).not.toCon…
+       |                                                                  ^
+    369|       expect.soft(
+    370|         one.map((w) => w.code),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-01 on the initiative: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:372:13
+    370|         one.map((w) => w.code),
+    371|         `${i.code} on the initiative`,
+    372|       ).not.toContain("initiative.deliverable_count");
+       |             ^
+    373|       const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverab…
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-01: 0 key deliverables: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:375:109
+    373|       const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverab…
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+    375|       expect.soft(active.length >= 3 && active.length <= 7, `${i.code}…
+       |                                                                                                             ^
+    376|       expect.soft(d.countWarning, i.code).toBeNull();
+    377|       // Ordinals in order; written by the demo TL (initiative.edit) o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-01: expected { …(2) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "code": "initiative.deliverable_count",
+  "message": "The initiative has 0 key deliverables; 3-7 are recommended.",
+}
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:376:43
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+    375|       expect.soft(active.length >= 3 && active.length <= 7, `${i.code}…
+    376|       expect.soft(d.countWarning, i.code).toBeNull();
+       |                                           ^
+    377|       // Ordinals in order; written by the demo TL (initiative.edit) o…
+    378|       // owned by the workstream lead; due inside the planned window, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-02 on the portfolio list: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:368:66
+    366|       const listed = (i.warnings as Body[]).map((w) => w.code);
+    367|       const one = (await get("TL", `/api/v1/initiatives/${i.id}`)).war…
+    368|       expect.soft(listed, `${i.code} on the portfolio list`).not.toCon…
+       |                                                                  ^
+    369|       expect.soft(
+    370|         one.map((w) => w.code),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-02 on the initiative: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:372:13
+    370|         one.map((w) => w.code),
+    371|         `${i.code} on the initiative`,
+    372|       ).not.toContain("initiative.deliverable_count");
+       |             ^
+    373|       const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverab…
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-02: 0 key deliverables: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:375:109
+    373|       const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverab…
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+    375|       expect.soft(active.length >= 3 && active.length <= 7, `${i.code}…
+       |                                                                                                             ^
+    376|       expect.soft(d.countWarning, i.code).toBeNull();
+    377|       // Ordinals in order; written by the demo TL (initiative.edit) o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-02: expected { …(2) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "code": "initiative.deliverable_count",
+  "message": "The initiative has 0 key deliverables; 3-7 are recommended.",
+}
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:376:43
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+    375|       expect.soft(active.length >= 3 && active.length <= 7, `${i.code}…
+    376|       expect.soft(d.countWarning, i.code).toBeNull();
+       |                                           ^
+    377|       // Ordinals in order; written by the demo TL (initiative.edit) o…
+    378|       // owned by the workstream lead; due inside the planned window, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-03 on the portfolio list: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:368:66
+    366|       const listed = (i.warnings as Body[]).map((w) => w.code);
+    367|       const one = (await get("TL", `/api/v1/initiatives/${i.id}`)).war…
+    368|       expect.soft(listed, `${i.code} on the portfolio list`).not.toCon…
+       |                                                                  ^
+    369|       expect.soft(
+    370|         one.map((w) => w.code),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-03 on the initiative: expected [ 'initiative.deliverable_count' ] to not include 'initiative.deliverable_count'
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:372:13
+    370|         one.map((w) => w.code),
+    371|         `${i.code} on the initiative`,
+    372|       ).not.toContain("initiative.deliverable_count");
+       |             ^
+    373|       const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverab…
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-03: 0 key deliverables: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:375:109
+    373|       const d = await get("TL", `/api/v1/initiatives/${i.id}/deliverab…
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+    375|       expect.soft(active.length >= 3 && active.length <= 7, `${i.code}…
+       |                                                                                                             ^
+    376|       expect.soft(d.countWarning, i.code).toBeNull();
+    377|       // Ordinals in order; written by the demo TL (initiative.edit) o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: INI-03: expected { …(2) } to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+{
+  "code": "initiative.deliverable_count",
+  "message": "The initiative has 0 key deliverables; 3-7 are recommended.",
+}
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:376:43
+    374|       const active = (d.items as Body[]).filter((x) => x.status === "a…
+    375|       expect.soft(active.length >= 3 && active.length <= 7, `${i.code}…
+    376|       expect.soft(d.countWarning, i.code).toBeNull();
+       |                                           ^
+    377|       // Ordinals in order; written by the demo TL (initiative.edit) o…
+    378|       // owned by the workstream lead; due inside the planned window, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/environment/demo-gate-history.test.ts > F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan
+AssertionError: the orphan report lists no launched initiative: expected [ 'INI-01', 'INI-02', 'INI-03' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "INI-01",[39m
+[31m+   "INI-02",[39m
+[31m+   "INI-03",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/environment/demo-gate-history.test.ts:419:7
+    417|       orphans.filter((o) => o.recordType === "initiative").map((o) => …
+    418|       "the orphan report lists no launched initiative",
+    419|     ).toEqual([]);
+       |       ^
+    420|   });
+    421| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  04:52:41
+   Duration  20.36s (transform 4.85s, setup 0ms, collect 9.44s, tests 6.73s, environment 0ms, prepare 78ms)
+

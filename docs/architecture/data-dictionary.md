@@ -9209,6 +9209,7 @@ Generated from the catalogue of a freshly migrated disposable database by `docs/
 - `config_review_request_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
 - `config_review_request_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `config_review_request_guard()`
 - `config_review_request_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `config_review_request_sod_contributor`: BEFORE INSERT OR UPDATE FOR EACH ROW → `config_review_request_contributor_guard()` (_added by 0097, 2026-10-18_; constraint `config_review_request_reviewer_not_contributor`)
 
 ## transformation_config_pin
 
@@ -9428,7 +9429,7 @@ Generated from the catalogue of a freshly migrated disposable database by `docs/
 | `methodology_version_studio_guard()` | 0062 | fixed identity, status and stage transitions, content frozen outside editing/preview, preview/review/check-run requirements, the 100 % rule of `scoring_defaults` at publish | via trigger |
 | `config_review_policy_guard()` | 0062 | the kind never changes; no technical-admin reviewer | via trigger |
 | `methodology_element_guard()` | 0062 | draft-only writes, fixed identity, element types per kind, source identities, decimal weights, no technical-admin or AUD approver | via trigger |
-| `config_review_request_guard()` | 0062 | starts pending; only decision columns move; legal transitions; reviewer is not the draft's author | via trigger |
+| `config_review_request_guard()` | 0062 | starts pending; only decision columns move; legal transitions; reviewer is not the draft's creator (`config_review_request_reviewer_not_author`). _Amended 2026-10-18 (T-DG5-ARCH-R4): the other authors, every recorded contributor, are refused by `config_review_request_contributor_guard()` (0097; section "P5 repair migration 0097")._ | via trigger |
 | `transformation_config_pin_guard()` | 0063 | pin kind = version kind; new pins name published versions; moves only through the approved migration | via trigger |
 | `methodology_migration_guard()` | 0063 | starts draft with from = current pin and a published target; fixed identity; plan frozen after submit; transitions; outcomes need a person's approval decision | via trigger |
 | `methodology_migration_executed_moved_pin()` | 0063 | an executed migration has moved its pin (deferred) | via constraint trigger |
@@ -9927,6 +9928,8 @@ Generated from the catalogue of a freshly migrated disposable database by `docs/
 - `procedure_instance_link_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
 - `procedure_instance_link_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
 - `procedure_instance_link_guard`: BEFORE INSERT FOR EACH ROW → `procedure_instance_link_guard()`
+
+_Amended 2026-10-18 (T-DG5-ARCH-R4; F-DG5-101): the guard does not check that the writer can read the linked record; the API does (section "P5 repair migration 0097", `procedure_instance_link`: the API's read rule)._
 - `procedure_instance_link_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
 
 ## methodology_coverage_link
@@ -10133,7 +10136,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - `automation_rule_version_no_key` (UNIQUE): `UNIQUE (automation_rule_id, version_no)`
 - `automation_rule_version_one_published` (EXCLUDE): `EXCLUDE USING btree (automation_rule_id WITH =) WHERE ((status = 'published')) DEFERRABLE INITIALLY DEFERRED`
 - `automation_rule_version_published_complete` (CHECK): `CHECK ((((status = ANY (ARRAY['published', 'superseded'])) = (published_at IS NOT NULL)) AND ((published_by IS NULL) OR (published_at IS NOT NULL))))`
-- `automation_rule_version_review_sod` (CHECK): `CHECK (((reviewed_by IS NULL) OR (authored_by IS NULL) OR (reviewed_by <> authored_by)))`
+- `automation_rule_version_review_sod` (CHECK): `CHECK (((reviewed_by IS NULL) OR (authored_by IS NULL) OR (reviewed_by <> authored_by)))`. _Amended 2026-10-18 (T-DG5-ARCH-R4): every other author (a recorded contributor) is refused by the 0097 trigger `automation_rule_version_sod_contributor` (constraint `automation_rule_version_reviewer_not_contributor`), which fires before this CHECK is evaluated._
 - `automation_rule_version_reviewed_complete` (CHECK): `CHECK (((reviewed_at IS NULL) = (reviewed_by IS NULL)))`
 - `automation_rule_version_rule_id_key` (UNIQUE): `UNIQUE (automation_rule_id, id)`
 - `automation_rule_version_service_permissions` (CHECK): `CHECK (((run_as = 'service') OR (cardinality(service_permission_codes) = 0)))`
@@ -10148,6 +10151,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - `automation_rule_version_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
 - `automation_rule_version_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `automation_rule_version_guard()`
 - `automation_rule_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+- `automation_rule_version_sod_contributor` and four contributor-recording triggers: _added by 0097, 2026-10-18_; listed in section "P5 repair migration 0097"
 
 ## automation_dry_run
 
@@ -12251,4 +12255,158 @@ Written by T-DG5-ARCH-R1 (2026-10-17) from the merged migrations `0094` and `009
 
 Approvals of the adopted steps are requested on T and routed by T's role mappings (DG4 `resolveParty`, never a fallback). Until T has a mapped Sponsor, `confirm_sponsor` keeps the next action `procedures.next_action.await_approval_unrouted`. As merged: for an adopted step, the DG4 refusals `routing.role_unmapped` and `routing.assignee_not_approver` leave the step active with no approval instead of failing the action (`steps.ts:647`, `:694`); `advance` retries the request first (`routeWaitingApprovals`, `steps.ts:703`, `:765`), so the next instance action, for example `PATCH /api/v1/procedure-instances/{instanceId}/inputs` (`instances.ts:436–438`), requests it once T's Sponsor is mapped. Tests: `apps/api/test/integration/procedures/intake-adoption.test.ts`.
 
-**Who reads and acts on an adopted step (D-167).** A step adopted into T is read and acted on with T's authorization and the step's assignee role on T; the instance's other steps and its organization-level reads keep organization scope. No column or constraint changes for this. This was decided by D-167, implemented by T-DG5-BE-T5 (W22), continued as T-DG5-BE-T5B, and merged (D-168). _Brought to the built state 2026-10-17 (T-DG5-ARCH-R3; D-168): this said the read gate and step actors still used the instance's organization scope (`steps.ts:1142–1144`, the W21 state)._ As merged (`b463552`), `apps/api/src/modules/procedures/steps.ts` treats a step as adopted when its instance's `transformation_id` is NULL and its own is not (`adoptedTransformationOf`, `:409–414`). It authorizes such a step in the instance's scope first and then in T (`stepTargets`, `:417–429`; reads through `requireReadInAny`, `:444–458`, and `openStep`, `:1285`; writes through `authorizeStepWrite`, `:501–536`). An assignee must hold the step's role on T (`stepRoleTarget`, `:432–439`, used at `:1400`), and linked evidence must belong to T (`:1421–1431`). The single-instance read accepts T of an adopted step (`requireInstanceOrAdoptedRead`, `:464–493`; `instances.ts:464`, `:592`). No column, constraint, trigger or migration was added for this (T-DG5-BE-T5 handback §1). Test: `apps/api/test/integration/procedures/adopted-step-authorization.test.ts` (`describe` at `:110`, tests at `:111` and `:212`).
+**Who reads and acts on an adopted step (D-167).** A step adopted into T is read and acted on with T's authorization and the step's assignee role on T; the instance's other steps and its organization-level reads keep organization scope. No column or constraint changes for this. This was decided by D-167, implemented by T-DG5-BE-T5 (W22), continued as T-DG5-BE-T5B, and merged (D-168). _Brought to the built state 2026-10-17 (T-DG5-ARCH-R3; D-168): this said the read gate and step actors still used the instance's organization scope (`steps.ts:1142–1144`, the W21 state)._ As merged (`b463552`), `apps/api/src/modules/procedures/steps.ts` treats a step as adopted when its instance's `transformation_id` is NULL and its own is not (`adoptedTransformationOf`, `:409–414`). It authorizes such a step in the instance's scope first and then in T (`stepTargets`, `:417–429`; reads through `requireReadInAny`, `:444–458`, and `openStep`, `:1285`; writes through `authorizeStepWrite`, `:501–536`). An assignee must hold the step's role on T (`stepRoleTarget`, `:432–439`, used at `:1400`), and linked evidence must belong to T (`:1421–1431`; _as merged at `9c96ee3`, `:1426–1434`, and for every instance the actor must also read the evidence's transformation, `:1439`; T-DG5-ARCH-R4_). The single-instance read accepts T of an adopted step (`requireInstanceOrAdoptedRead`, `:464–493`; `instances.ts:464`, `:592`). No column, constraint, trigger or migration was added for this (T-DG5-BE-T5 handback §1). Test: `apps/api/test/integration/procedures/adopted-step-authorization.test.ts` (`describe` at `:110`, tests at `:111` and `:212`).
+
+# P5 repair migration 0097 and the round-1 repairs (DG5)
+
+Written by T-DG5-ARCH-R4 (2026-10-18) from the merged migration `packages/db/migrations/0097_p5_config_review_contributors.sql` (T-DG5-BE-V1; D-170, F-DG5-100), the catalogue test `packages/db/test/integration/catalogue.test.ts:850`, and the merged API (`9c96ee3`). These entries are **edited by hand**, not regenerated from the catalogue. ADR-0039 amendment F1–F6 and ADR-0043 amendment F1–F5 state the rule. `0097` is forward-only and runs in `mth-db migrate`'s single transaction, after `0096`.
+
+## methodology_version_contributor
+
+- **Purpose:** Every person who wrote content of a Studio configuration draft. Together with the draft's `created_by`, they are its authors, and no author decides its configured review (D-170; ADR-0039 §5, amendment F1).
+- **Migration:** `0097_p5_config_review_contributors.sql` (`:51–61`). **API module:** `methodology` (read only: `contributors.ts` `configContributors`, `configAuthors`). **Who writes:** the 0097 triggers, in the writer's own transaction (no API writer). **Lifecycle:** append-only (`p2_attach_append_only`: UPDATE, DELETE and TRUNCATE refused).
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| methodology_version_id | uuid | NOT NULL |  | FK → methodology_version(id) ON DELETE RESTRICT ON UPDATE RESTRICT |
+| user_id | uuid | NOT NULL |  | FK → app_user(id) ON DELETE RESTRICT ON UPDATE RESTRICT |
+| first_written_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `methodology_version_contributor_pkey` (PRIMARY KEY): `(methodology_version_id, user_id)`
+
+**Indexes:**
+
+- `methodology_version_contributor_user_idx`: `(user_id)`
+
+**Triggers:**
+
+- `methodology_version_contributor_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `methodology_version_contributor_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## automation_rule_version_contributor
+
+- **Purpose:** Every person who wrote content of an automation rule version while it was a draft. Together with its `authored_by`, they are its authors, and no author decides its review (D-170; ADR-0043 §4, amendment F1).
+- **Migration:** `0097_p5_config_review_contributors.sql` (`:63–73`). **API module:** `automation` (read only: `lifecycle.ts` `versionAuthors`). **Who writes:** the 0097 triggers, in the writer's own transaction (no API writer). **Lifecycle:** append-only (`p2_attach_append_only`).
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| automation_rule_version_id | uuid | NOT NULL |  | FK → automation_rule_version(id) ON DELETE RESTRICT ON UPDATE RESTRICT |
+| user_id | uuid | NOT NULL |  | FK → app_user(id) ON DELETE RESTRICT ON UPDATE RESTRICT |
+| first_written_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `automation_rule_version_contributor_pkey` (PRIMARY KEY): `(automation_rule_version_id, user_id)`
+
+**Indexes:**
+
+- `automation_rule_version_contributor_user_idx`: `(user_id)`
+
+**Triggers:**
+
+- `automation_rule_version_contributor_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `automation_rule_version_contributor_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## Triggers added to earlier tables (0097)
+
+The 20 triggers the "0097" catalogue test lists (`catalogue.test.ts:850`) are the four append-only triggers above and these 16. "Deferred" means `DEFERRABLE INITIALLY DEFERRED` (a constraint trigger that runs at COMMIT).
+
+| Table (owner) | Trigger | When | Function |
+|---|---|---|---|
+| `methodology_version` (DG2, P5 0062) | `methodology_version_contributor_insert` | AFTER INSERT, row, `WHEN (NEW.status = 'draft')` | `p5_config_contributor_from_row()` |
+| `methodology_version` | `methodology_version_contributor_update` | AFTER UPDATE, row, a draft whose `title_en`, `title_ar`, `definition`, `change_summary` or `content_sha256` changes | `p5_config_contributor_from_row()` |
+| `methodology_version` | `methodology_version_contributor_audit_insert` | CONSTRAINT AFTER INSERT, deferred, row, `WHEN (NEW.status = 'draft')` | `p5_config_contributor_from_audit()` |
+| `methodology_version` | `methodology_version_contributor_audit_update` | CONSTRAINT AFTER UPDATE, deferred, row, the same content condition | `p5_config_contributor_from_audit()` |
+| `methodology_element` (P5 0062) | `methodology_element_contributor` | AFTER INSERT OR UPDATE, row | `p5_config_contributor_from_row()` |
+| `methodology_element` | `methodology_element_contributor_audit` | CONSTRAINT AFTER INSERT OR UPDATE, deferred, row | `p5_config_contributor_from_audit()` |
+| `procedure_definition` (P5 0069) | `procedure_definition_contributor` | AFTER INSERT OR UPDATE, row | `p5_config_contributor_from_row()` |
+| `procedure_definition` | `procedure_definition_contributor_audit` | CONSTRAINT AFTER INSERT OR UPDATE, deferred, row | `p5_config_contributor_from_audit()` |
+| `procedure_step_definition` (P5 0069) | `procedure_step_definition_contributor` | AFTER INSERT OR UPDATE, row | `p5_config_contributor_from_row()` |
+| `procedure_step_definition` | `procedure_step_definition_contributor_audit` | CONSTRAINT AFTER INSERT OR UPDATE, deferred, row | `p5_config_contributor_from_audit()` |
+| `automation_rule_version` (P5 0074) | `automation_rule_version_contributor_insert` | AFTER INSERT, row, `WHEN (NEW.status = 'draft')` | `p5_config_contributor_from_row()` |
+| `automation_rule_version` | `automation_rule_version_contributor_update` | AFTER UPDATE, row, a draft whose `trigger_codes`, `conditions`, `actions`, `action_types`, `run_as`, `service_permission_codes`, `parameters`, `content_sha256` or `change_summary` changes | `p5_config_contributor_from_row()` |
+| `automation_rule_version` | `automation_rule_version_contributor_audit_insert` | CONSTRAINT AFTER INSERT, deferred, row, `WHEN (NEW.status = 'draft')` | `p5_config_contributor_from_audit()` |
+| `automation_rule_version` | `automation_rule_version_contributor_audit_update` | CONSTRAINT AFTER UPDATE, deferred, row, the same content condition | `p5_config_contributor_from_audit()` |
+| `automation_rule_version` | `automation_rule_version_sod_contributor` | BEFORE INSERT OR UPDATE, row | `automation_rule_version_contributor_guard()` |
+| `config_review_request` (P5 0062) | `config_review_request_sod_contributor` | BEFORE INSERT OR UPDATE, row | `config_review_request_contributor_guard()` |
+
+Stage and status moves (submit, decide, withdraw, publish, discard) change no content column, so they record nobody (`0097:33–35`).
+
+**Firing order.** PostgreSQL fires BEFORE triggers of one event in name order and evaluates CHECK constraints after them. On `config_review_request`, `config_review_request_guard` and `config_review_request_row_guard` fire before `config_review_request_sod_contributor`, so a direct decision by the draft's creator still reports `config_review_request_reviewer_not_author`. On `automation_rule_version`, a direct decision by `authored_by` (always a contributor) reports `automation_rule_version_reviewer_not_contributor` before the `0074` CHECK `automation_rule_version_review_sod` is evaluated (`0097:205–210`).
+
+## P5 functions (0097)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `p5_add_config_contributor(uuid, uuid)` | 0097 (`:77–88`) | adds (version, user) to `methodology_version_contributor`; nothing for a NULL argument or a version that is not `draft`; idempotent (`ON CONFLICT DO NOTHING`) | EXECUTE (granted; `PUBLIC` revoked) |
+| `p5_add_rule_contributor(uuid, uuid)` | 0097 (`:90–98`) | adds (version, user) to `automation_rule_version_contributor`; nothing for a NULL argument; idempotent (the callers record only drafts) | EXECUTE (granted; `PUBLIC` revoked) |
+| `p5_config_content_version(text, jsonb)` | 0097 (`:101–111`) | STABLE: the draft (`methodology_version` id) a row of `methodology_version`, `methodology_element`, `procedure_definition` or `procedure_step_definition` belongs to; NULL for any other table | EXECUTE (granted; `PUBLIC` revoked) |
+| `p5_config_contributor_from_row()` | 0097 (`:114–128`) | AFTER ROW: records the row's `updated_by` (or `created_by` on an INSERT without one) as a contributor of its draft | via trigger |
+| `p5_config_contributor_from_audit()` | 0097 (`:131–152`) | at COMMIT: records the `actor_user_id` and `on_behalf_of_user_id` of the row's own `audit_event` (same `record_type`, `record_id` and `new_version`) | via constraint trigger |
+| `config_review_request_contributor_guard()` | 0097 (`:211–221`) | refuses setting `decided_by` to a recorded contributor of the draft: constraint `config_review_request_reviewer_not_contributor` (check_violation) | via trigger |
+| `automation_rule_version_contributor_guard()` | 0097 (`:226–238`) | refuses setting `reviewed_by` to a contributor, or the decision from `in_review` to `approved` or `draft` by one: constraint `automation_rule_version_reviewer_not_contributor` (check_violation) | via trigger |
+
+## The named refusals and their mapping (0097)
+
+| Constraint | Raised by | API mapping (`apps/api/src/modules/platform/db-errors.ts`) | The API's own check |
+|---|---|---|---|
+| `config_review_request_reviewer_not_contributor` | `config_review_request_contributor_guard()` | 403 `config_review.self_review` (`:2626–2628`, with the `0062` requester and author refusals) | `reviews.ts:339–340` (requester or any author) |
+| `automation_rule_version_reviewer_not_contributor` | `automation_rule_version_contributor_guard()` | 403 `automation_rule_version.self_review` (`:2712–2719`) | `lifecycle.ts:341` (any author) |
+
+## Backfill (0097 §4)
+
+| Record | Recorded contributors | Audit |
+|---|---|---|
+| Studio drafts open at migration time (`status = 'draft'`, `draft_stage <> 'discarded'`) | `created_by`, `updated_by`; every actor and on-behalf-of user of an audited content write of the version row (an event whose `changes` names a content column or `based_on_version_id`); every actor of an audited write of its `methodology_element`, `procedure_definition` and `procedure_step_definition` rows (`0097:250–277`) | one `audit_event` per backfilled draft: `actor_type 'system'`, `source 'migration'`, action `methodology_version.contributors_backfill`, `changes.contributors {from: null, to: [...]}` (`:295–300`) |
+| Rule versions in `draft`, `in_review` or `approved` | `authored_by`, `created_by`, `updated_by`; the actors of `automation_rule_version.create` and `.update` events (`0097:279–293`) | one `audit_event` per backfilled version, action `automation_rule_version.contributors_backfill` (`:301–305`) |
+
+Only existing users are recorded, idempotently by the primary key. The version rows are not written, so their versions, ETags and audit histories do not move. Using `updated_by` errs towards refusing a reviewer, never towards allowing an author.
+
+## `procedure_instance_link`: the API's read rule (T-DG5-BE-V2, BE-V2C; D-170, F-DG5-101)
+
+The database guard `procedure_instance_link_guard()` (`0069`) is unchanged: it accepts only an existing record of the link's type in the instance's scope. It does **not** check that the person writing the link can read the record. The API does, before every `insertLink` (`apps/api/src/modules/procedures/steps.ts:680`, the table's only writer):
+
+- an output linked by an adapter (`outputs/kit.ts:243–250`) or by the engine's generic `link` (`steps.ts:1341–1344`), and the step evidence link (`steps.ts:1439`), require `transformation.read` on the record's transformation (`requireOutputRead`, `outputs/kit.ts:124–137`), on grants reloaded in the writing transaction after the instance lock;
+- otherwise 422 `procedure_step.output_record_invalid` (the unknown-record refusal), audited as `authorization.denied`, and no row is written;
+- an approval step completed through its business approver's decision (`principal: null`) names no record and is not checked here (ADR-0042 amendment V4).
+
+No column, constraint, trigger or migration was added for this.
+
+## Demo dataset gate history (T-DG5-BE-V3; D-170, F-DG5-120)
+
+No table changes. The demo `international_roaming` dataset now creates its transformation in `diagnose` and seeds G1–G4 as submitted and approved (rows in `gate_submission`, `gate_submission_criterion`, `decision`, `gate_decision` and `gate_decision_agreement`), with four `transformation.phase_advance` updates to `transform`. G5 and G6 have no submission. ADR-0050 amendment D7 has the details. _Corrected 2026-10-18 (T-DG5-ARCH-R5; D-172, F-DG5-120): the words "and two accepted `gate_exception` rows on G4" are removed, because the demo writes no `gate_exception` row; see the next section._
+
+## Demo dataset: the approved portfolio behind G4 (T-DG5-BE-X2; D-172, F-DG5-120) and the G4 empty-portfolio item (T-DG5-BE-X1; F-DG5-122)
+
+_Amendment 2026-10-18, T-DG5-ARCH-R5._ No table, column, constraint, trigger or migration changes.
+
+_Amended 2026-10-19, T-DG5-ARCH-R6 (D-174, F-DG5-123; T-DG5-BE-Y1):_ the demo also writes the key deliverables of INI-01..INI-03, the two capability changes they deliver and their trace links (the last three table rows below; ADR-0050 amendment D16). The `roaming-portfolio.ts` line references are corrected to the merged tree (`c0f6208`). Each new row has one audit event `<table>.create` and one `demo_seed_record` row (+23 each), with fixed ids in the blocks `0x079`–`0x07b` (`roaming-ids.ts:87–94`). Still no table, column, constraint, trigger or migration change.
+
+**The demo writes no `gate_exception` row.** G4 is complete on a real approved portfolio of INI-01..INI-03, and every G4 `gate_submission_criterion` row has `gate_exception_id` NULL (`packages/db/src/demo/data/roaming-gates.ts:516–533`). The earlier statement "two accepted `gate_exception` rows on G4" (the paragraph above, at T-DG5-BE-V3) is corrected there.
+
+**New rows the demo writes, in existing tables** (`packages/db/src/demo/data/roaming-portfolio.ts`, `seedApprovedPortfolio` `:429` and `launchApprovedPortfolio` `:678`, _corrected 2026-10-19 (T-DG5-ARCH-R6) from `:221` and `:467`_; `seedKeyDeliverables` `:350–423`; `business-cases.ts`). They are all synthetic, with fixed ids and synthetic-clock dates (ADR-0050 amendment D11):
+
+| Table | Rows | Notes |
+|---|---|---|
+| `initiative_score_result` | 3 | one per initiative, under weight set v1 |
+| `ranking_snapshot` | 1 | ranking snapshot 1, status `current` |
+| `ranking_entry` | 3 | INI-03 rank 1, INI-01 rank 2, INI-02 rank 3 |
+| `portfolio_selection` | 3 | action `selected`, by the demo Sponsor, from snapshot 1 (audit action `portfolio_selection.create`, where the API writes `portfolio_selection.select`; ADR-0050 D14) |
+| `decision` | 3 | DEC-02..DEC-04, kind `executive`, decided by the demo Finance user: the canonical record of each funding decision |
+| `funding_decision` | 3 | outcome approved, approver role FIN, amount = the initiative case's existing cash investment line |
+| `business_case` | 3 | BC-02..BC-04, level `initiative`, parent BC-01, author TL, baseline validated by FIN (`business-cases.ts:559–560`) |
+| `resource_role` | 3 | one per initiative |
+| `capacity` | 18 | three roles × July–December 2026 |
+| `resource_demand` | 18 | planned by WL, then committed by BO |
+| `milestone` | 6 | two per initiative, dates approved by TL |
+| `capability` | 2 | _added 2026-10-19 (T-DG5-ARCH-R6)._ Written 2026-06-03 06:00 by TL (`tom.edit`; `capability.create`): "Proactive roaming service assurance (synthetic)" for INI-02 (`journeys_processes`, level 2 → 4, `build`) and "Partner cost and usage analytics (synthetic)" for INI-03 (`partners_sourcing`, level 1 → 3, `partner`), each owned by WL, status `active`, on the initiative's chain TOM gap (`roaming-portfolio.ts:353–369`). INI-01 delivers G3's existing capability. The dataset now holds 3 capabilities. |
+| `deliverable` | 9 | _added 2026-10-19 (T-DG5-ARCH-R6)._ Written 2026-06-03 06:10 by TL (`initiative.edit`; `deliverable.create`): three per initiative (T05's 3–7), ordinals 1–3, owner WL, `acceptance_status` `pending`, status `active`, none submitted or accepted; title `<en> (synthetic) / <ar> (اصطناعي)`; each due on one of the initiative's approved milestone dates (`:370–395`). |
+| `trace_link` | 12 | _added 2026-10-19 (T-DG5-ARCH-R6)._ Written 2026-06-03 06:20 by TL (`traceability.link`; `trace_link.create`): 9 `deliverable_capability` (each deliverable → its initiative's capability) and 3 `capability_kpi` (each capability → its chain's outcome KPI), status `active`, a synthetic contribution statement, **no allocation share** (`:396–422`). |
+
+**Updated rows** (P2 version step and one audit event each, with the product's verb): `initiative` status `draft → submitted → ranked → selected → funded`, and `→ launched` after G4 (`initiative.submit`, `.rank`, `.select`, `.fund`, `.launch`); `business_case` `validate_baseline` for BC-02..BC-04; `resource_demand` `commit`; `milestone` `approve_date`. Each initiative card now also has `scope_in` (`roaming.ts:734`). Each chain's benefit line and cash investment line is written with `business_case_id` = that chain's initiative case (`business-cases.ts:590`, `caseIdOfLine`); the amounts are unchanged. The seed writes no outbox row for any of these (ADR-0050 D14).
+
+**G4 missing-item codes.** This dictionary does not list the G4 missing-item codes. They are defined in ADR-0021 §7, and the new code `g4.no_approved_initiative` ('No initiative in the approved portfolio', pointer `/initiatives`) is defined in ADR-0035 amendment E2 and in the ADR-0021 amendment of 2026-10-18. It is a value of the existing `Warning.code` (free text), stored in the `detail` JSON of `gate_submission_criterion` and in the submission snapshot. No column changes.

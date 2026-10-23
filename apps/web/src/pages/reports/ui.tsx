@@ -16,7 +16,7 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { api, ApiError } from "../../api/client.ts";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Icon, type IconName } from "../../components/Icon.tsx";
@@ -516,7 +516,8 @@ export function TransformationEntry({
 }) {
   const { t } = useTranslation();
   usePageTitle(title);
-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages), most recently updated first.
+  const list = useAllTransformations({ sort: "updatedAt:desc" });
   const crumbs: Crumb[] = [{ label: area.label, to: area.to }, { label: title }];
   return (
     <div className="page" data-p5-screen={`${screen}-entry`}>
@@ -527,12 +528,12 @@ export function TransformationEntry({
         </h2>
         <QueryState
           query={list}
-          isEmpty={(page) => page.items.length === 0}
+          isEmpty={(items) => items.length === 0}
           empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
         >
-          {(page) => (
+          {(items) => (
             <ul className="plain-list entry-list">
-              {page.items.map((tr) => (
+              {items.map((tr) => (
                 <li key={tr.id}>
                   <Link className="link" to={to(tr.id)}>
                     <bdi dir="ltr" className="code">

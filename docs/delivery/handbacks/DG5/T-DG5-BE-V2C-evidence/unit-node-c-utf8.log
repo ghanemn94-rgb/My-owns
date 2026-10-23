@@ -1,0 +1,208 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v2
+
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 7524ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  1786ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  1435ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  2817ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1010ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  431ms
+ ✓ |unit-node| packages/reporting/src/pdf/pdf.test.ts (13 tests) 9134ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > has a right-to-left base direction: /Lang (ar-SA), /Direction /R2L, right-aligned text, mirrored tables  1467ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > embeds IBM Plex Sans Arabic (every font is an embedded subset of it, with its TrueType program)  947ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > identifiers and numbers keep their left-to-right order inside Arabic text (text extraction)  907ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a multi-word Arabic phrase reads right to left, word by word (the leftmost word is the last one)  765ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > the glyph-run check: the drawn Arabic word uses GSUB's joined forms, not the isolated forms  699ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a provisional value prints مؤقت, an Unknown value prints غير معروف and no number, never 0  704ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a generated snapshot carries مسودة — ليس تقريراً صادراً on every page  736ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > a generated snapshot carries 'Draft — not an issued report'; an issued one its version and no Draft line  546ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > prints every row of a long register once, repeats the table header on each page, and numbers the pages  1443ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (139 tests) 13237ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  8931ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  678ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  2756ms
+ ✓ |unit-node| packages/reporting/src/provenance-illustrative.test.ts (24 tests) 4670ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF en: in the header and on every page  696ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF ar: in the header and on every page  937ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > production (no `synthetic` member): no format prints the label in any language  1773ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > the label is translated (no missing label key in either language)  875ms
+ ✓ |unit-node| packages/shared/src/finance/metrics.test.ts (21 tests) 2819ms
+   ✓ properties (seeded) > NPV equals the precision-200 oracle rounded once half-up to 2 decimals (both timings)  1356ms
+   ✓ properties (seeded) > end_of_period NPV = beginning_of_period NPV / (1 + r), before rounding  595ms
+   ✓ properties (seeded) > a conventional set (outflows only at t = 0, beginning of period) has an NPV that never rises with the rate  572ms
+ ✓ |unit-node| packages/shared/src/notifications/delivery.test.ts (15 tests) 2324ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > urgent is always delivered at once; a held notification is never released before it was created  664ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > a release is outside quiet hours, on a working day when the policy says so, and at a digest time when one is on  939ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > delivered at once only when no rule applies at that instant  609ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (44 tests) 1378ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  1296ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 1380ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  1305ms
+ ✓ |unit-node| packages/shared/src/time/cron-next.test.ts (9 tests) 1606ms
+   ✓ nextCronRun (ADR-0043 §6) > property: for each seeded cron and zone, the result is the FIRST matching whole minute strictly after now  915ms
+   ✓ nextCronRun (ADR-0043 §6) > never a guessed time: no match in 366 days, an invalid cron or an unknown zone is null  401ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 1821ms
+   ✓ reporting module (P1 scaffold, D-048) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  1763ms
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 986ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  404ms
+ ✓ |unit-node| packages/shared/src/kpi/property.test.ts (11 tests) 988ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 1040ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  1004ms
+ ✓ |unit-node| packages/shared/src/forms/property.test.ts (6 tests) 581ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 448ms
+   ✓ evidence module (P2) > its declared boundary holds  369ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 1086ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  413ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  422ms
+ ✓ |unit-node| packages/reporting/src/layout/layout.test.ts (11 tests) 305ms
+ ✓ |unit-node| packages/shared/src/adoption/measures.test.ts (24 tests) 349ms
+ ✓ |unit-node| packages/shared/src/health/scoring.test.ts (29 tests) 340ms
+ ✓ |unit-node| packages/reporting/src/docx.test.ts (4 tests) 406ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts (36 tests) 417ms
+   ✓ property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation > stored value, 2-digit display and 0–100 view all match for 3125 combinations  363ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 304ms
+ ✓ |unit-node| packages/reporting/src/pptx.test.ts (5 tests) 1228ms
+   ✓ renderPptx: direction and labels (REQ-S13-009, REQ-S13-008) > a provisional value prints Provisional and مؤقت  726ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/areas.test.ts (35 tests) 476ms
+ ✓ |unit-node| packages/config/src/load.test.ts (33 tests) 146ms
+ ✓ |unit-node| packages/reporting/src/xlsx/xlsx.test.ts (10 tests) 391ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 132ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 311ms
+ ✓ |unit-node| tests/qa/unit/a22-s21-001-text-scan.test.ts (7 tests) 207ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 201ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 51ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 279ms
+stderr | apps/api/src/modules/admin/branding.test.ts > version 0 defaults and the zod mirrors (REQ-S01-002) > each mirror accepts what its contract component accepts and rejects an extra member
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (12 tests) 244ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts (140 tests) 205ms
+ ✓ |unit-node| packages/shared/src/reports/content-labels.test.ts (5 tests) 241ms
+ ✓ |unit-node| packages/reporting/src/storage.test.ts (4 tests) 46ms
+ ✓ |unit-node| apps/api/src/modules/automation/outbox-registry.test.ts (5 tests) 106ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts (12 tests) 112ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (52 tests) 153ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (21 tests) 43ms
+ ✓ |unit-node| packages/reporting/src/injection.test.ts (4 tests) 59ms
+ ✓ |unit-node| apps/api/src/modules/kpi/formulas.test.ts (10 tests) 35ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 120ms
+ ✓ |unit-node| apps/api/src/modules/raid/raid.test.ts (7 tests) 75ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 85ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 157ms
+ ✓ |unit-node| apps/api/src/modules/health/assessments.test.ts (19 tests) 43ms
+ ✓ |unit-node| apps/api/src/modules/benefits/benefits.test.ts (2 tests) 57ms
+ ✓ |unit-node| packages/shared/src/time/working-days.test.ts (19 tests) 45ms
+ ✓ |unit-node| packages/reporting/src/csv.test.ts (8 tests) 70ms
+ ✓ |unit-node| apps/worker/src/handlers/demo.test.ts (2 tests) 73ms
+ ✓ |unit-node| apps/api/src/modules/sustainment/sustainment.test.ts (2 tests) 76ms
+ ✓ |unit-node| apps/api/src/modules/governance/governance.test.ts (2 tests) 91ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 57ms
+ ✓ |unit-node| packages/shared/src/kpi/a05.test.ts (17 tests) 77ms
+(node:1170) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 75ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 34ms
+ ✓ |unit-node| packages/shared/src/forms/field-types.test.ts (39 tests) 61ms
+ ✓ |unit-node| apps/api/src/modules/benefits/register-rules.test.ts (45 tests) 58ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/schedule.test.ts (23 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/identity/navigation.test.ts (12 tests) 37ms
+ ✓ |unit-node| tests/qa/unit/a05-calc-units.test.ts (15 tests) 39ms
+ ✓ |unit-node| apps/api/src/modules/benefits/totals.test.ts (15 tests) 44ms
+ ✓ |unit-node| apps/api/src/modules/automation/samples.test.ts (4 tests) 20ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/k1-value-class.test.ts (7 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/kpi/totals.test.ts (20 tests) 48ms
+ ✓ |unit-node| apps/api/src/modules/forms/forms.test.ts (2 tests) 61ms
+ ✓ |unit-node| apps/api/src/modules/kpi/p3-gate-facts.test.ts (9 tests) 13ms
+ ✓ |unit-node| packages/db/src/demo/coverage.test.ts (3 tests) 29ms
+ ✓ |unit-node| apps/api/src/modules/procedures/definitions.test.ts (8 tests) 49ms
+ ✓ |unit-node| apps/api/src/modules/tasks/tasks.test.ts (5 tests) 27ms
+ ✓ |unit-node| apps/api/src/modules/adoption/adoption.test.ts (2 tests) 40ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts (22 tests) 20ms
+ ✓ |unit-node| packages/shared/src/forms/normalize.test.ts (18 tests) 23ms
+ ✓ |unit-node| packages/shared/src/forms/validate.test.ts (103 tests) 30ms
+ ✓ |unit-node| packages/shared/src/kpi/measures.test.ts (30 tests) 8ms
+ ✓ |unit-node| packages/shared/src/kpi/purity.test.ts (14 tests) 21ms
+ ✓ |unit-node| packages/shared/src/schemas/missing-links.test.ts (10 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/health/health.test.ts (4 tests) 29ms
+ ✓ |unit-node| packages/shared/src/kpi/rag.test.ts (38 tests) 40ms
+ ✓ |unit-node| apps/api/src/modules/automation/automation.test.ts (2 tests) 50ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4.test.ts (5 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/provisional.test.ts (22 tests) 31ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts (22 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/executive-pack.test.ts (13 tests) 94ms
+ ✓ |unit-node| apps/api/src/modules/methodology/studio-core.test.ts (7 tests) 66ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts (26 tests) 36ms
+ ✓ |unit-node| apps/api/src/modules/benefits/d2-rules.test.ts (15 tests) 50ms
+ ✓ |unit-node| packages/shared/src/schemas/scoring-defaults.test.ts (12 tests) 41ms
+ ✓ |unit-node| apps/api/src/modules/procedures/procedures.test.ts (2 tests) 24ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-d2.test.ts (13 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/automation/content.test.ts (8 tests) 15ms
+ ✓ |unit-node| packages/shared/src/kpi/types.test.ts (40 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-d4.test.ts (8 tests) 126ms
+ ✓ |unit-node| packages/shared/src/schemas/roadmap.test.ts (6 tests) 18ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-c2.test.ts (9 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/table-totals.test.ts (16 tests) 67ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kbe-c.test.ts (9 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/launch/launch.test.ts (2 tests) 23ms
+ ✓ |unit-node| packages/shared/src/adoption/form-schema.test.ts (8 tests) 14ms
+ ✓ |unit-node| packages/shared/src/schemas/report.test.ts (6 tests) 80ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-demo.test.ts (11 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts (12 tests) 12ms
+ ✓ |unit-node| packages/shared/src/schemas/corrective.test.ts (10 tests) 20ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/capacity.test.ts (4 tests) 13ms
+ ✓ |unit-node| packages/shared/src/kpi/periods.test.ts (26 tests) 19ms
+ ✓ |unit-node| packages/shared/src/schedule/working-day-slip.test.ts (11 tests) 15ms
+ ✓ |unit-node| packages/shared/src/text-scan/text-scan.test.ts (77 tests) 12ms
+ ✓ |unit-node| packages/shared/src/kpi/aggregate.test.ts (20 tests) 32ms
+ ✓ |unit-node| apps/api/src/modules/launch/day-ninety.test.ts (3 tests) 11ms
+ ✓ |unit-node| packages/shared/src/governance/recurrence.test.ts (19 tests) 15ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/budget.test.ts (13 tests) 19ms
+ ✓ |unit-node| packages/shared/src/kpi/status.test.ts (25 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/raid/corrective.test.ts (4 tests) 33ms
+ ✓ |unit-node| apps/api/src/modules/launch/plan-dates.test.ts (5 tests) 19ms
+ ✓ |unit-node| packages/db/src/demo/guard.test.ts (9 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/sequencing.test.ts (9 tests) 18ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-cutoff-pack.test.ts (4 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/governance/raci.test.ts (2 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 4ms
+ ✓ |unit-node| apps/api/src/modules/workflows/g4.test.ts (5 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 12ms
+ ✓ |unit-node| packages/db/src/demo/data/dataset-helpers.test.ts (8 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-owner-updates.test.ts (4 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/procedures/outputs/outputs.test.ts (8 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 12ms
+ ✓ |unit-node| packages/shared/src/kpi/trajectory.test.ts (14 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-restatements.test.ts (5 tests) 10ms
+ ✓ |unit-node| packages/shared/src/schedule/critical-path.test.ts (13 tests) 15ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-reports.test.ts (3 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5.test.ts (3 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/methodology/source-coverage.test.ts (1 test) 3ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/kpi/restatement-reconciliation.test.ts (4 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 15ms
+ ✓ |unit-node| apps/api/src/modules/methodology/compatibility.test.ts (3 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/readiness-transform.test.ts (4 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/automation/conditions.test.ts (4 tests) 23ms
+ ✓ |unit-node| apps/worker/src/reports/export-runner.test.ts (2 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/workflows/t08-cycle-problem.test.ts (2 tests) 3ms
+
+ Test Files  144 passed (144)
+      Tests  2335 passed (2335)
+   Start at  06:57:13
+   Duration  104.98s (transform 9.24s, setup 0ms, collect 195.50s, tests 61.07s, environment 25ms, prepare 13.31s)
+
+exit=0

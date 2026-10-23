@@ -11,7 +11,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DEFAULTS } from "@mth/shared";
 import { p4Paths, useDelegations, useP4Refresh, type Delegation } from "../../api/p4.ts";
-import { useAllUsers, useTransformations } from "../../api/queries.ts";
+import { useAllTransformations, useAllUsers } from "../../api/queries.ts";
 import { useForwardArrow, useLocale } from "../../app/locale.ts";
 import { canAnywhere } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
@@ -245,7 +245,8 @@ function CreateDelegationDialog({
   const [tid, setTid] = useState("");
   const canReadUsers = canAnywhere(me, "user.read");
   const allUsers = useAllUsers(me.user.organizationId, canReadUsers);
-  const transformations = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages), not the 50 most recently updated.
+  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
   const team = usePeople(tid);
   const people = canReadUsers
     ? (allUsers.data ?? []).filter((u) => u.status === "active").map((u) => ({ id: u.id, label: u.displayName }))
@@ -256,7 +257,13 @@ function CreateDelegationDialog({
   return (
     <P4FormDialog
       title={t("delegations.create.title")}
-      description={<p>{t("delegations.create.description", { tz })}</p>}
+      description={
+        <>
+          <p>{t("delegations.create.description", { tz })}</p>
+          {/* The transformation choices' loading and error states (D-181): never an incomplete list without a word. */}
+          <QueryState query={transformations}>{() => null}</QueryState>
+        </>
+      }
       onValuesChange={(v) => setTid(typeof v["transformationId"] === "string" ? v["transformationId"] : "")}
       fields={[
         ...(canManage && canReadUsers
@@ -276,7 +283,7 @@ function CreateDelegationDialog({
           kind: "select",
           required: !canReadUsers,
           hint: t(canReadUsers ? "delegations.create.scopeHint" : "delegations.create.teamHint"),
-          options: (transformations.data?.items ?? []).map((tr) => ({ value: tr.id, label: `${tr.code} ${tr.name}` })),
+          options: (transformations.data ?? []).map((tr) => ({ value: tr.id, label: `${tr.code} ${tr.name}` })),
         },
         {
           name: "limitToTransformation",

@@ -25,9 +25,10 @@ import { createScratchDatabase, dropScratchDatabase, pgError, roleUrl, testDatab
 const { adminUrl } = testDatabase();
 const cli = fileURLToPath(new URL("../../src/cli.ts", import.meta.url));
 const dropAtEnd: string[] = [];
+// D-174: dropping 11 scratch databases took 33.4 s at load 20 (30 s project budget); 120 s is over 3x that measurement.
 afterAll(async () => {
   for (const name of dropAtEnd.reverse()) await dropScratchDatabase(adminUrl, name);
-});
+}, 120_000);
 
 async function scratch(prefix: string, migrated = true): Promise<{ name: string; ownerUrl: string }> {
   const name = await createScratchDatabase(adminUrl, prefix);

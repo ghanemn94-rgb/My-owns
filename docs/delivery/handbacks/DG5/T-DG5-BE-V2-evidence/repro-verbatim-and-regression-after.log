@@ -1,0 +1,30 @@
+port-policy: PostgreSQL listening on port 23050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-v2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvddu4ku_5684cbf1 (server_encoding UTF8); applied 88 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/procedures/output-read-authorization.test.ts (3 tests) 1173ms
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+TL1 GET X -> [33m404[39m
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+TL1 capture_intake with X -> [33m422[39m procedure_step.output_record_invalid
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+steps after: [["capture_intake","active",null],["draft_charter","pending",null],["confirm_sponsor","pending",null]]
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+links: []
+
+stdout | apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts > SEC-R1 repro: an intake claims a transformation its actor cannot read > capture_intake naming another BU's transformation should be refused (422 output_record_invalid)
+TL2 GET TL1's intake -> [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/procedures/zz-sec-r1-intake-foreign.test.ts (1 test) 571ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  05:26:03
+   Duration  17.53s (transform 4.71s, setup 0ms, collect 11.37s, tests 1.74s, environment 0ms, prepare 121ms)
+
+exit=0

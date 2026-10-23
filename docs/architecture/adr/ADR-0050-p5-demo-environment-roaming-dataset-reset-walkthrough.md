@@ -78,6 +78,12 @@ REQ-S18-003's query: after production initialization, `SELECT count(*) FROM demo
 - nothing seeded reads `now()`, `random()` or `gen_random_uuid()`;
 - rows are inserted in a fixed order, with one audit event each (fixed ids, `source = 'cli'`).
 
+_Amended 2026-10-18 (T-DG5-ARCH-R4, amendment D7): the transformation is created in Diagnose and advanced to Transform by the synthetic G1–G4 approvals; G5 and G6 are not submitted._
+
+_Amended 2026-10-18 (T-DG5-ARCH-R5, amendment D11): G4 rests on a real approved portfolio of INI-01..03 (ranking snapshot 1, three selections, three funding decisions DEC-02..DEC-04, initiative cases BC-02..BC-04, three resourcing roles with 18 capacity rows and 18 committed demands, six approved milestones), with no gate exception; the three initiatives are launched after G4._
+
+_Amended 2026-10-19 (T-DG5-ARCH-R6, amendment D16): each of INI-01..03 also carries three key deliverables, linked to a capability change that is linked to the chain's outcome KPI (2 new capabilities, 9 deliverables, 12 trace links). Each B0147 line above still has exactly five nodes; each initiative now also reaches its KPI through deliverable → capability change → KPI (M0097), beside the line (D17)._
+
 **Record counts:** `{<table>: count(*)}` for every base table of schema `public` except `demo_dataset_run`, ordered by name.
 
 **Checksum:** SHA-256 over the lines `<table>\t<record_id>\t<row>`, one per registered `demo_seed_record` row, sorted by `(record_type, record_id)`, and then a line per `demo_seed_record` row. `<row>` is `to_jsonb(row)` minus every column whose default is `now()`, `CURRENT_TIMESTAMP`, `CURRENT_DATE` or `transaction_timestamp()` (read from `information_schema.columns` at run time), serialized by PostgreSQL's `jsonb` text output, which is deterministic for equal values.
@@ -284,17 +290,17 @@ Sources: D-167 (QA-E2 O-1), D-168 (W22 integrated, with the analysts' gap REQ-PB
   - Negative cases: a demo user without a read right gets no chain text (`:169`), and an anonymous request gets 401 (`:176`).
   - Also: `packages/db/test/integration/demo-roaming.test.ts`, the `REQ-PB-090` block. BE-T6's control with `outcome_kpi_id` set back to `null` failed all three chain cases (T-DG5-BE-T6 handback §2). D-168 records 74/74 for BE-T6's tests.
 - **Determinism.** Seed-twice and reset-twice still give identical counts and checksums (`demo-roaming.test.ts` and `demo.test.ts` passed; T-DG5-BE-T6 handback §2).
-- **A demo wording point, not a defect (D-168).** Each chain's outcome statement still carries the B0147 KPI text (`packages/db/src/demo/data/roaming.ts:669`, `statement: c.kpi`), and the comment above it (`:665`) is no longer accurate. So in the whole graph an outcome and its outcome KPI share one label. The outcome is not on the line, so the acceptance is met. D-168 records this for the review. This amendment changes nothing about it.
+- **A demo wording point, not a defect (D-168).** Each chain's outcome statement still carries the B0147 KPI text (`packages/db/src/demo/data/roaming.ts:676`, `statement: c.kpi`), and the comment above it (`:672`) is no longer accurate (_corrected 2026-10-18, D10_). So in the whole graph an outcome and its outcome KPI share one label. The outcome is not on the line, so the acceptance is met. D-168 records this for the review. This amendment changes nothing about it.
 
 ### D6. §5: the seeded pending approval reaches a demo role user (T-DG5-BE-T5; D-167 QA-E2 O-1; REQ-S18-002)
 
 - **The gap.** Before W22, §5's "a pending approval" was met only by a submitted gate or a queued Finance validation (`packages/db/src/demo/coverage.ts:235–239` counts any of the three). No `GET /approvals` inbox lists those, so no demo role user had a pending approval to act on.
 - **As merged** (`packages/db/src/demo/data/roaming-states.ts`, all synthetic):
-  - `DEMO_PENDING_APPROVAL` (`:259–269`) describes the request. The Transformation Lead asks for the T04 design decision D-01 to be decided through the T11 row "Target-state design", whose Approve party is BO.
-  - `seedPendingApproval` (`:280–345`) runs in module `roaming.states` (`:348`, called at `:355`). Every row goes through `ctx.insert`:
-    - a role mapping of party BO to `roaming.user.bo` on the roaming transformation (`:283–290`);
-    - the `approval` row (`:292–312`): `decision_request`, pending, round 1, assignee `roaming.user.bo`, `sod_policy` `requester_excluded`. Its SLA is `working_days` with `due_date` null and `due_unknown_reason` `calendar_not_configured` (`:308–310`), because the demo organization has no business calendar. The due date therefore shows Unknown, never a guessed date;
-    - the `approval_decision` work item for that user (`:317–331`) and its inbox notification (`:332–344`).
+  - `DEMO_PENDING_APPROVAL` (`:264–274` (_corrected 2026-10-18, D10_)) describes the request. The Transformation Lead asks for the T04 design decision D-01 to be decided through the T11 row "Target-state design", whose Approve party is BO.
+  - `seedPendingApproval` (`:285–350`) runs in module `roaming.states` (`:353`, called at `:360`) (_corrected 2026-10-18, D10_). Every row goes through `ctx.insert`:
+    - a role mapping of party BO to `roaming.user.bo` on the roaming transformation (`:288–295` (_corrected 2026-10-18, D10_));
+    - the `approval` row (`:297–317` (_corrected 2026-10-18, D10_)): `decision_request`, pending, round 1, assignee `roaming.user.bo`, `sod_policy` `requester_excluded`. Its SLA is `working_days` with `due_date` null and `due_unknown_reason` `calendar_not_configured` (`:313–315` (_corrected 2026-10-18, D10_)), because the demo organization has no business calendar. The due date therefore shows Unknown, never a guessed date;
+    - the `approval_decision` work item for that user (`:322–336`) and its inbox notification (`:337–349`) (_corrected 2026-10-18, D10_).
   - The new ids are fixed (`roaming-ids.ts:59–61`: `roleMapping` 0x057, `workItem` 0x058, `inboxNotification` 0x059), so seed and reset stay deterministic.
 - **Tests.** `apps/api/test/integration/environment/demo-pending-approval.test.ts` (`describe` at `:54`):
   - `:55`: the rules name BO;
@@ -304,3 +310,212 @@ Sources: D-167 (QA-E2 O-1), D-168 (W22 integrated, with the analysts' gap REQ-PB
 - **It approves nothing real.** The approval is a synthetic demo request that nobody has decided. Deciding it approves nothing real (M0412).
 
 Every approval in the demo is synthetic and approves nothing real. Product gates G1–G6 are business approvals inside the product. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7. The playbook is a practical synthesis inspired by PMI, Brightline and BRM, not an official PMI standard.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R4; D-170, F-DG5-120): §4 and §5, the demo transformation's gate history, and corrected line references
+
+Sources: D-170 (F-DG5-120, decided), the T-DG5-BE-V3 handback (§2, §6 and §8) and the T-DG5-FE-V1B handback §2, checked against the merged tree (`9c96ee3`). Nothing above is removed. Where this amendment and §4 or §5 differ, this amendment wins. No migration, contract or schema change: these are dataset rows (`packages/db/src/demo/data/**`, all synthetic). File references are in that directory unless named otherwise.
+
+### D7. §4: the transformation is created in Diagnose and advanced to Transform by the synthetic G1–G4 approvals (T-DG5-BE-V3)
+
+- **The gap (F-DG5-120).** The transformation was inserted directly in `transform`, with the six gate instances `draft` and never submitted, so the demo showed Transform-phase progress with G1–G6 never submitted (M0348).
+- **The phase.** The transformation is created in **Diagnose** (`roaming.ts:230`, `current_phase: "diagnose"`). The new module `roaming.gates` (`roaming-gates.ts:761–769`, order 550: after the chains and the KBE-H case and formulas, before `roaming.states` at 600; registered in `index.ts:10`, `:18`) records the gate history as the product records it (the tables, guards and action names of `apps/api/src/modules/workflows/gates.ts` `submitGate`/`decideGate` and `transformations/phase.ts`). Each approved gate advances the phase by exactly one step (`transformation.phase_advance`, `roaming-gates.ts:709`), so the transformation ends in **Transform** after four advances. The seed throws if a gate is not an unconfigured draft routed to SP or the transformation is not in that gate's phase (`roaming-gates.ts:489–515`). _Corrected 2026-10-18 (T-DG5-ARCH-R5, amendment D12): `roaming.gates` also calls `seedApprovedPortfolio` just before G4 is submitted and `launchApprovedPortfolio` after the G4 approval (`roaming-gates.ts:727–735`); the line references of this amendment are corrected in D15._
+- **G1–G3: complete on seeded evidence** (`seedGateEvidence`, `roaming-gates.ts:231`ff., every row dated before its gate). G1: a measured baseline, one verified evidence note (created by TL, reviewed by KDS), the six T01 rows completed, a confirmed `root_cause` finding and a quantified value pool. G2: the B0037 thesis and the B0051 good-outcome inputs (`roaming.ts`), the three T02 trajectories approved by SP, one active strategic guardrail. G3: a capability gap and an active future-state journey. _Amended 2026-10-19 (T-DG5-ARCH-R6, amendment D18): G3's evidence is unchanged; the dataset now holds 3 capabilities, G3's plus two recorded in Mobilize after G3 (D16)._
+- **G4: complete except two accepted exceptions** (`DEMO_GATE_EXCEPTIONS`, `roaming-gates.ts:136–167`; `seedGateExceptions`, `:442`ff.). The business case's baseline section is validated by the demo Finance user (`validate_baseline`, `roaming-gates.ts:423–434`). The criteria `g4.initiative_cards` (portfolio empty) and `g4.prioritization` (no ranking snapshot) are each covered by a gate exception requested by TL (`pending`), then accepted by SP, the gate's approver and never the requester (the DB CHECK). Each carries a reason, a scope, a compensating action owned by TL, and an expiry of the synthetic clock + 730 days (`EXCEPTION_EXPIRES_DAYS`, `:169`; `expires_on`, `:457`), which is **2028-08-31**. After that date the live G4 page reads those two criteria as missing again, as the product does for any expired exception (BE-V3 handback §8 item 1). _Superseded 2026-10-18 by amendment D12 (T-DG5-ARCH-R5; D-172): untrue since T-DG5-BE-X2. G4 is complete on a real approved portfolio of INI-01..03 and the demo has no gate exception._
+- **Submission and decision, per gate** (`seedGateApproval`, `roaming-gates.ts:489`ff.; dates `DEMO_GATE_HISTORY`, `:67`): a `gate_submission` by `roaming.user.tl`, routed to role SP with no named user, with its frozen snapshot and criterion rows (`:592–634`); the canonical `decision` row `GD-01`…`GD-04` (`:649–658`) and the `gate_decision` (approved, by `roaming.user.sp`, never the submitter; `:664–674`); G1's three B0032 agreements; then the submission decided, the gate approved and the phase advanced (`:695–709`). G1 is decided on 22 May, G2 on 30 May, G3 on 2 June and G4 on 10 June 2026, before the Transform-phase records that depend on G4.
+- **G5 and G6 are not submitted.** They stay `draft` with no submission; their readiness is computed by the product.
+- **The synthetic label on each decision.** Every rationale starts with "Synthetic demonstration - approves nothing real / عرض توضيحي اصطناعي - لا يعتمد أي شيء حقيقي." (`finance.ts:30`, `roaming-gates.ts:48–50`, `:642`). The exception reasons carry the same label (`roaming-gates.ts:150`, `:161`). _Moot since 2026-10-18 (amendment D12): there are no exception rows._ `SyntheticApprovalLabel` also shows the label on every gate page in a demo database (§2, unchanged).
+- **The phase steps.** Each Define…Transform phase step names the approved gate decision that enabled its phase (`enabled_by_gate_decision_id`, `roaming-states.ts:48`), as the `gates.decided` consumer does. Diagnose and Realize steps name none.
+- **What the seed does not emit** (stated so it is not claimed):
+  - **no outbox events.** `gate.submitted` and `gate.decided` are not written, because their consumers would create approver tasks and phase-step rows from the real clock (`roaming-gates.ts:23–25`). Their effect on the phase steps is seeded directly;
+  - **no automation request execution.** The `REQUEST_STARTERS.gateEvidenceMissing` request execution that `submitGate` records is not seeded (BE-V3 handback §8 item 4);
+  - **audit attribution.** As for every demo-seeded row, the audit events carry the seed's actor (system, source `cli`); the acting demo user is on the rows (`submitted_by`, `decided_by`, `requested_by`).
+- **§4 "rows are inserted in a fixed order, with one audit event each"** now also covers updates: the seed's updates (for example the gate moves and the phase advances) take the P2 version step and write one audit event each with the product's action name (`change`, `roaming-gates.ts:180–213`).
+- **Determinism.** The new rows have fixed ids (`roaming-ids.ts:63–72`, blocks `0x060`–`0x069`) and synthetic-clock dates. The record counts and the checksum differ from those of round 1, and stay identical across seed, reset and reset (BE-V3 handback §3). The dataset version stays `1.0.0` (`packages/db/src/demo/guard.ts:17`).
+- **Not an approval.** Every seeded G-decision and exception is a synthetic demonstration decision by a demo role user on demo data, and approves nothing real (M0412). Seeding stays refused in production (`demo/guard.ts`, §3). _Corrected 2026-10-18 (amendment D12): there is no seeded exception; the seeded selections, funding decisions, Finance validations and milestone approvals are synthetic demonstration decisions too._
+- **Test.** `apps/api/test/integration/environment/demo-gate-history.test.ts` runs the real seed and the real API (`MTH_ENV=demo`): G1–G4 approved by SP and submitted by TL, each rationale carries the label in English and Arabic, only `g4.initiative_cards` and `g4.prioritization` are excepted, G5 and G6 have no submission (`:60`; the gate statuses at `:164`), and four `transformation.phase_advance` events lead from Diagnose to Transform (`:167`). _Superseded 2026-10-18 by amendment D12 (T-DG5-ARCH-R5): the test now asserts that no criterion of G1–G4 is incomplete and that no gate exception exists, and a new test asserts the approved portfolio (`demo-gate-history.test.ts:174`)._
+
+### D8. §5: G1–G6
+
+"G1–G6: a gate instance each" stays true. G1–G4 now also carry approved decisions, and G5–G6 none (D7).
+
+### D9. The gate readiness line on the demo's approved G4 (T-DG5-FE-V1B)
+
+No ADR or data-dictionary statement says what the gate readiness line shows, so none is made untrue. For the demo: the line on the gate page and the gates list now names the mandatory outputs covered by an accepted exception, using the server's `covering` value only (`apps/web/src/pages/gates/GatesPage.tsx:97–125`; `GateDetailPage.tsx:102`, `:242`; keys `gates.readinessCovered` and `gates.readinessCoveredPartly`, `apps/web/src/i18n/en/gates.json:40–41` and `ar/gates.json:40–41`). With both G4 gaps covered, it reads "6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions". FE-V1B did not render it on the demo stack (its tree did not hold BE-V3's seed), so that reading is the code's expected output, still to be checked on the merged tree (FE-V1B handback §5). _Superseded for the demo 2026-10-18 by amendment D13 (T-DG5-ARCH-R5): the demo's G4 has no covering exception, so the line takes the plain variant._
+
+### D10. Line references corrected (the shifts BE-V3 reported, and the ones it did not list)
+
+The new lines in `roaming.ts` and `roaming-states.ts` moved the references of D5 and D6. They are corrected in place above. Each corrected reference is marked "corrected 2026-10-18".
+
+| Reference (at `b463552`) | As merged (`9c96ee3`) | Listed by BE-V3 |
+|---|---|---|
+| `roaming.ts:669` (`statement: c.kpi`) | `roaming.ts:676` | yes |
+| `roaming.ts:665` (the comment above it) | `roaming.ts:672` | yes |
+| `roaming-states.ts:259–269` (`DEMO_PENDING_APPROVAL`) | `:264–274` | no |
+| `roaming-states.ts:280–345` (`seedPendingApproval`) | `:285–350` | yes |
+| `roaming-states.ts:283–290` (the role mapping) | `:288–295` | no |
+| `roaming-states.ts:292–312` (the `approval` row) | `:297–317` | no |
+| `roaming-states.ts:308–310` (the SLA and Unknown due date) | `:313–315` | no |
+| `roaming-states.ts:317–331` (the work item) | `:322–336` | no |
+| `roaming-states.ts:332–344` (the notification) | `:337–349` | no |
+| `roaming-states.ts:348` (module `roaming.states`) | `:353` | yes |
+| `roaming-states.ts:355` (the call) | `:360` | yes |
+
+`roaming.ts:110`, `:118`, `:132` (D1, D2) and `roaming-ids.ts:59–61` (D6) are unchanged.
+
+Requirement rows: REQ-S18-002 and M0348 (and REQ-S21-001 for the labels). Product gates G1–G6 are business approvals inside the product; the demo's G1–G4 decisions are synthetic and approve nothing real. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.
+
+## Amendment (2026-10-18, T-DG5-ARCH-R5; D-172, F-DG5-120): §4, §5, D7 and D9, the demo's G4 on a real approved portfolio
+
+Sources: D-172 (F-DG5-120 remaining part, decided) and the T-DG5-BE-X2 handback §2, §6 and §8, checked against the merged tree (`c184328`, which holds BE-X1 and BE-X2). Nothing above is removed: the statements this amendment replaces are marked in place ("Superseded" or "Corrected 2026-10-18"). Where this amendment and §4, §5, D7 or D9 differ, this amendment wins. No migration, contract or schema change: these are dataset rows (`packages/db/src/demo/data/**`, all synthetic) in existing tables. File references are in that directory unless named otherwise.
+
+### D11. §4: the approved portfolio behind G4 (T-DG5-BE-X2)
+
+The dataset now records G4's approved portfolio **as the product records it**, on the synthetic clock, between the G3 approval (2026-06-02) and the G4 submission (2026-06-08). The new file is `roaming-portfolio.ts`: `seedApprovedPortfolio` at `:429`, `launchApprovedPortfolio` at `:678` (_corrected 2026-10-19, D19_). Each step is written by the demo role user who holds the product permission, through the same tables and database guards, with one audit event per write:
+
+| Step (UTC) | Who | Rows written or updated | Evidence (`roaming-portfolio.ts`; _lines corrected 2026-10-19, D19_) |
+|---|---|---|---|
+| 06-03 06:00: the two capability changes INI-02 and INI-03 deliver, permission `tom.edit` (_added 2026-10-19, D16_) | TL | `capability` ×2 (`capability.create`) | `:353–369` |
+| 06-03 06:10: three key deliverables per initiative, permission `initiative.edit` (_added 2026-10-19, D16_) | TL | `deliverable` ×9, owner WL, `pending` (`deliverable.create`) | `:370–395` |
+| 06-03 06:20: the trace links, permission `traceability.link`, no allocation share (_added 2026-10-19, D16_) | TL | `trace_link` ×9 `deliverable_capability` and ×3 `capability_kpi` (`trace_link.create`) | `:396–422` |
+| 06-03 07:00: INI-01..03 submitted for prioritization (`draft → submitted`) | TL | `initiative` (`initiative.submit`) | `:438` |
+| 06-03 09:00: score results under weight set v1, **ranking snapshot 1** and its entries; `submitted → ranked` | TL | `initiative_score_result` ×3, `ranking_snapshot` ×1, `ranking_entry` ×3; `initiative.rank` | `:440–489` |
+| 06-04 07:00: selection from snapshot 1 (`ranked → selected`) | SP | `portfolio_selection` ×3 (action `selected`); `initiative.select` | `:491–506` |
+| 06-05 09:30: Finance validation of the baselines of BC-02..BC-04 (the validator is never the author) | FIN | `business_case` (`business_case.validate_baseline`) | `:508`ff. |
+| 06-05 11:00: an approved funding decision per initiative, amount = the initiative case's existing cash investment line (`selected → funded`) | FIN | `decision` DEC-02..DEC-04 (kind `executive`) and `funding_decision` ×3 (outcome approved, approver role FIN); `initiative.fund` | `:534–573` |
+| 06-05 13:00: resourcing roles, capacity Jul–Dec 2026, planned demand | TL (roles, capacity), WL (demand) | `resource_role` ×3, `capacity` ×18, `resource_demand` ×18 | `:576`ff. |
+| 06-05 14:00: two milestones per initiative | TL | `milestone` ×6 | `:617`ff. |
+| 06-06 08:00: the demand committed (`planned → committed`) | BO | `resource_demand` (`resource_demand.commit`) ×18 | `:637–651` |
+| 06-06 09:00: the milestone dates approved, with a reason | TL | `milestone` (`milestone.approve_date`) ×6 | `:654–674` |
+| 07-03 08:00, after G4 is approved: launch (`funded → launched`) | TL | `initiative` (`initiative.launch`) | `:678–682` |
+
+- **Initiative business cases.** `business-cases.ts` adds BC-02, BC-03 and BC-04 (`DEMO_INITIATIVE_CASES`, `:280`; inserted at `:559–560`). Each is an ADR-0024 §1 lighter-set case, level `initiative`, under BC-01 and linked to one B0147 initiative. The author is TL and the validator is FIN. Each B0147 chain's benefit line and its cash investment line move to that chain's initiative case (`caseIdOfLine`, `:337`, used at `:590`). The internal-team line stays on BC-01.
+- **The initiative cards.** Each card now has `scope_in` (`roaming.ts:734`), so the T05 card that G4 reads is complete (name, objective, scope in).
+- **Ranking.** INI-03 ranks 1st, INI-01 2nd and INI-02 3rd (`roaming-portfolio.ts:137`, `:177`, `:226` (_corrected 2026-10-19, D19_)). The weighted scores are literal decimal strings, recomputed in the test with `@mth/shared/calc` (BE-X2 handback §2).
+- **Schedule and capacity** (BE-X2 handback §2). The milestones fall inside each initiative's planned window. INI-03's last milestone (2026-09-28, `roaming-portfolio.ts:230` (_corrected 2026-10-19, D19_)) is before DEP-01's needed-by date (2026-10-01), so G4 lists no `g4.schedule_conflict` and no `g4.schedule_unknown`. Committed demand never exceeds the capacity of its role and month, and no cell is Unknown.
+- **Totals unchanged.** BC-01's totals read its own lines plus those of its active initiative cases. The same lines with the same amounts give the same figures, asserted through `GET /business-cases/{BC-01}/totals` (`apps/api/test/integration/environment/demo-gate-history.test.ts:328–343`): revenue uplift 7,128,000; avoided cost 1,584,000; margin uplift 1,920,000; cash cost 3,660,000 (3 lines); non-cash cost 1,170,000 SAR (1 line). BE-X2 reports that no acceptance-pinned value changed (handback §5).
+- **Determinism.** The new rows have fixed ids (`roaming-ids.ts:78–86`, blocks `0x070`–`0x078`; the funding decisions' canonical `decision` rows use numbers 7–9 of the `decision` block, `roaming-portfolio.ts:289` (_corrected 2026-10-19, D19_); _added 2026-10-19, D16:_ the key deliverables, their capability changes and trace links use blocks `0x079` `deliverable`, `0x07a` `deliverableCapability` and `0x07b` `deliverableTraceLink`, `roaming-ids.ts:87–94`, through the id helpers at `roaming-portfolio.ts:294–301`) and synthetic-clock dates. Block `0x069` (`gateException`) is unused and kept, so no block number is reused (`roaming-ids.ts:72–73`). The record counts and the checksum change by design, and stay identical across seed, reset and reset. The dataset version stays `1.0.0` (`packages/db/src/demo/guard.ts:17`).
+
+### D12. D7 corrected: G4 rests on a real approved portfolio, with no exception
+
+Each D7 statement that BE-X2 lists as untrue (handback §6) is replaced as follows:
+
+| D7 statement | Now | Evidence |
+|---|---|---|
+| "G4: complete except two accepted exceptions … expiry … 2028-08-31" | **G4 is complete on the approved portfolio INI-01..03, with no gate exception.** `DEMO_GATE_EXCEPTIONS`, `seedGateExceptions` and `EXCEPTION_EXPIRES_DAYS` are removed. All eight snapshot criteria are `complete` with `missing: []` (`roaming-gates.ts:485–490`), and every `gate_submission_criterion` row is `complete` with `gate_exception_id: null` (`:516–533`). The G4 snapshot member is read from the seeded records, the way `g4.ts buildG4Snapshot` builds it (`g4SnapshotOf`, `roaming-gates.ts:627–709`). It names INI-01..03 (status `funded` at submission), ranking snapshot 1, the active weight set, BC-01 then BC-02..BC-04, the formula versions, three funding decision ids and the committed demand ids. The seed throws unless G4 is submitted on exactly that portfolio (`:687–688`). | `roaming-gates.ts:14–18` (header) |
+| The `roaming.gates` module order (`roaming-gates.ts:761–769`) | `roaming.gates` (order 550) runs the G1–G3 approvals, calls `seedApprovedPortfolio` just before G4 is submitted, then approves G4, then calls `launchApprovedPortfolio` (`roaming-gates.ts:723–736`, the calls at `:731` and `:734`). | — |
+| "The exception reasons carry the same label" | Moot: there are no exception rows. The new seeded selections, funding decisions and Finance validations carry the same synthetic label in their rationale or note (`roaming-portfolio.ts:59`, used e.g. at `:499` (_corrected 2026-10-19, D19_)). | — |
+| "Every seeded G-decision and exception is a synthetic demonstration decision" | Every seeded G-decision, selection, funding decision, Finance validation and milestone approval is a synthetic demonstration decision by a demo role user on demo data, and approves nothing real (M0412). Seeding stays refused in production (`demo/guard.ts`). | `roaming-portfolio.ts:45–47` (_corrected 2026-10-19, D19_) |
+| The test "only `g4.initiative_cards` and `g4.prioritization` are excepted" | `demo-gate-history.test.ts` now asserts that no criterion of G1–G4 is incomplete and that no gate exception exists on any of them (`:93–100`). The new test at `:174` asserts the real portfolio. G4 live: 8 of 8 mandatory criteria `complete` with `missing: []`, and no gate exception in the transformation (`:184–200`). G4 frozen: every criterion `complete` with no `gateExceptionId`, and the snapshot names INI-01..03 (`:202–215`). It also checks the ranking, selection, funding, milestones, schedule, capacity, initiative cases, the totals and GD-04. G5 and G6 have no submission (`:157–163`; the gate statuses at `:166`), and the phase history test is at `:430` (_corrected 2026-10-19, D19_). | — |
+| The G4 submission note and the GD-04 rationale (D7 "Submission and decision") | Rewritten to match the records. The G4 note reads "Mobilization: initiative cards, ranking and selection, business cases, Finance validation, funding, roadmap, owners, capacity (synthetic demonstration)." GD-04 reads "The portfolio is executable and value-backed: INI-01, INI-02 and INI-03 are ranked, selected and funded, each with a Finance-validated initiative business case, owners, approved milestones and committed capacity within the plan; Finance validated the transformation case baseline and the three formulas. Proceed to Transform." Each keeps the bilingual synthetic label, and the rationale contains no "exception" (test `:346–348`). | `roaming-gates.ts:106–120` |
+
+G1–G3, their evidence and dates, G5 and G6 (not submitted), the phase advances, the phase steps and the "What the seed does not emit" statements of D7 are unchanged. The fail-closed G4 rule of ADR-0035 amendment E1–E5 does not affect the demo, whose approved portfolio is not empty. BE-X2 states that its test asserts the portfolio directly and does not depend on that rule (handback §2).
+
+### D13. D9 for the demo: the readiness line
+
+The demo's G4 has no covering exception, so the readiness line takes the plain variant: `readinessText` returns `gates.readiness` when `covered === 0` (`apps/web/src/pages/gates/GatesPage.tsx:120–121`; "{{complete}} of {{total}} mandatory outputs complete", `apps/web/src/i18n/en/gates.json:39`). By the live API reading above (8 of 8 complete), the expected text is "8 of 8 mandatory outputs complete". The D9 reading "6 of 8 mandatory outputs complete; the other 2 are covered by accepted exceptions" is untrue for the demo. The covered variants (`gates.readinessCovered`, `gates.readinessCoveredPartly`) are unchanged and stay true for gates that do carry exceptions. BE-X2 did not render the G4 page (handback §8 item 5), so the rendered text is the code's expected output and is not yet checked on screen.
+
+### D14. §5 and the observations BE-X2 discloses (stated so they are not claimed)
+
+- **§5 coverage is unchanged.** The conditions are the same. BE-X2's demo e2e run reports `coverage complete` on the demo stack (`docs/delivery/handbacks/DG5/T-DG5-BE-X2-evidence/30-e2e-demo.log`, line 95). The seeded pending approval, the three B0147 chains and the walkthrough are unchanged (BE-X2 handback §2, "Kept unchanged").
+- **The seed emits no outbox events for the new records.** `roaming-portfolio.ts` writes no outbox row, as D7 already states for the gates. No `ranking`, `funding` or `launch` consumer runs from the real clock. Each row still has its audit event.
+- **The selection's audit action differs from the API's.** The seed writes the `portfolio_selection` row through `ctx.insert`, whose audit action is `portfolio_selection.create` (`packages/db/src/demo/seed.ts:158`). The API writes `portfolio_selection.select` (`apps/api/src/modules/portfolio/selections.ts:117`). The initiative's status step uses the product's verb `initiative.select` in both (`roaming-portfolio.ts:505` (_corrected 2026-10-19, D19_); `selections.ts:133`; `seedUpdate` names the action `<table>.<verb>`, `kpis.ts:165`).
+- **INI-01 carries a `schedule.before_predecessor` warning.** INI-01 starts on its planned start (2026-07-03) before INI-03's finish (2026-09-28), against DEP-01 (`roaming-portfolio.ts:229–230` (_corrected 2026-10-19, D19_); the flag is defined at `apps/api/src/modules/portfolio/schedule.ts:7`, `:20`). It is a roadmap warning that G4 does not list. The needed-by date is met, so there is no needed-by conflict. BE-X2 reports that the warning was present before its change (handback §8 item 3).
+- **G5 readiness was not re-checked on the demo stack.** The three funding decisions add three decided executive decisions (DEC-02..DEC-04) to the T16 decision log, and the initiatives are now launched. G5's live readiness text may therefore differ from the round-1 reading. G5 and G6 stay not submitted (asserted), and no test pins their readiness (BE-X2 handback §8 item 1).
+- **No organization-level "portfolio" is seeded.** `GET /organizations/{o}/portfolios` is the P4 grouping of transformations (`portfolio/structure.ts`), not the G4 approved selection, and G4 does not read it (BE-X2 handback §8 item 2).
+
+### D15. Line references in D7 corrected (as merged, `c184328`)
+
+BE-X2's change moved most `roaming-gates.ts` references of D7. The references to removed code have no new location.
+
+| D7 reference (at `9c96ee3`) | As merged (`c184328`) |
+|---|---|
+| `DEMO_GATE_EXCEPTIONS`, `roaming-gates.ts:136–167`; `seedGateExceptions`, `:442`ff.; `EXCEPTION_EXPIRES_DAYS`, `:169`; `expires_on`, `:457`; exception reasons `:150`, `:161` | removed (D12) |
+| `validate_baseline`, `roaming-gates.ts:423–434` | `:381–403` |
+| `seedGateApproval`, `:489`ff. | `:414`ff. |
+| the gate checks that throw, `:489–515` | `:429–439` |
+| `DEMO_GATE_HISTORY`, `:67` | `:69` |
+| the frozen snapshot and criterion rows, `:592–634` | `:470–533` |
+| the canonical `decision` GD-01…GD-04, `:649–658` | `:554–567` |
+| the `gate_decision`, `:664–674` | `:569–584` |
+| the submission decided, the gate approved, the phase advanced, `:695–709` | `:600–617` |
+| `transformation.phase_advance`, `:709` | `:614` |
+| module `roaming.gates`, `:761–769` | `:723–736` |
+| the label, `roaming-gates.ts:48–50`, `:642` | `:50–52`, `:547` |
+| `change`, `:180–213` | `:145–179` |
+| the outbox comment, `:23–25` | `:24–26` |
+| `seedGateEvidence`, `:231`ff. | `:196`ff. |
+| `roaming-ids.ts:63–72` (blocks `0x060`–`0x069`) | `:62–73`; new blocks `0x070`–`0x078` at `:78–86` |
+| `demo-gate-history.test.ts` `:60`, `:164`, `:167` | `:157–163` (G5/G6), `:166` (gate statuses), `:352` (phase history) |
+
+`roaming.ts:230`, `index.ts:10`, `:18`, `roaming-states.ts:48`, `finance.ts:30` and `guard.ts:17` are unchanged.
+
+Requirement rows: REQ-S18-002 and M0348 (REQ-PB-019 for G4). Product gates G1–G6 are business approvals inside the product. The demo's G1–G4 decisions, selections, funding decisions, Finance validations and milestone approvals are synthetic and approve nothing real. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.
+
+## Amendment (2026-10-19, T-DG5-ARCH-R6; D-174, F-DG5-123): §4, D7, D11, D12 and D14, the key deliverables of the approved portfolio, and corrected line references
+
+Sources: D-174 (F-DG5-123, decided) and the T-DG5-BE-Y1 handback §2 and §5, checked against the merged tree (`c0f6208`, which holds BE-Y1, BE-Y2 and FE-Y1). Nothing above is removed: the statements this amendment changes are marked in place ("added 2026-10-19", "corrected 2026-10-19" or "Amended 2026-10-19"). Where this amendment and §4, D7, D11, D12 or D14 differ, this amendment wins. No migration, contract or schema change: these are dataset rows (`packages/db/src/demo/data/**`, all synthetic) in existing tables. File references are in that directory unless named otherwise.
+
+### D16. D11: the key deliverables, their capability changes and their trace links (T-DG5-BE-Y1)
+
+- **The gap (F-DG5-123).** BE-X2 took INI-01..03 to `launched` with no `deliverable` row. The portfolio then reported `initiative.deliverable_count` (fewer than 3 or more than 7; `apps/api/src/modules/portfolio/repository.ts:176`) on each of them, next to an approved G4. The orphan report listed each launched initiative as "initiative → deliverable" missing (`apps/api/src/modules/reporting/traceability.ts:385`).
+- **Why capabilities and links too.** Under the same orphan rules an active deliverable without a `deliverable_capability` link is an orphan (`traceability.ts:388`), and so is a capability without an incoming `deliverable_capability` link or an outgoing `capability_kpi` link (`:391–392`). So each deliverable is linked to a capability change, and each capability to its chain's outcome KPI.
+- **As merged** (`seedKeyDeliverables`, `roaming-portfolio.ts:350–423`, called first in `seedApprovedPortfolio` at `:435`). The rows are written on 2026-06-03 in Mobilize (`DEMO_PORTFOLIO_TIMES`, `:63–66`), after the G3 approval (06-02) and before INI-01..03 are submitted for prioritization (06-03 07:00), so the cards are still drafts. The three steps are the rows added at the top of the D11 table:
+
+| Step (UTC) | Who, permission | Rows | Facts | Evidence (`roaming-portfolio.ts`) |
+|---|---|---|---|---|
+| 06-03 06:00 | TL, `tom.edit` (the capability heatmap register, `apps/api/src/modules/transformations/registers.ts:509`) | `capability` ×2 | "Proactive roaming service assurance (synthetic)" for INI-02 (`journeys_processes`, level 2 → 4, `build`) and "Partner cost and usage analytics (synthetic)" for INI-03 (`partners_sourcing`, level 1 → 3, `partner`). Each is owned by WL, status `active`, on the initiative's chain TOM gap. INI-01 delivers G3's existing "Digital roaming activation (synthetic)" (`roaming-gates.ts:355`), so no capability is added for it. | data `:206–214`, `:256–264`; insert `:353–369` |
+| 06-03 06:10 | TL, `initiative.edit` (`deliverables.ts createDeliverable`, `apps/api/src/modules/portfolio/deliverables.ts:113`) | `deliverable` ×9 | Three per initiative, ordinals 1–3, inside T05's 3–7 (B0072; ADR-0021 §2); the seed throws outside 3–7 (`:371–372`). Owner WL, `acceptance_status` `pending`, status `active`; none is submitted or accepted. The title is `<en> (synthetic) / <ar> (اصطناعي)`, and the description names the initiative's B0147 line and repeats the synthetic label in Arabic (`:384–387`). Each due date is one of the initiative's approved milestone dates: INI-01 09-30, 11-30, 11-30; INI-02 10-15, 12-15, 12-15; INI-03 09-15, 09-28, 09-28 (data `:149–165`, `:189–205`, `:239–255`). The seed throws if a due date is after the last milestone or not after the synthetic clock (`:377–378`). | `:370–395` |
+| 06-03 06:20 | TL, `traceability.link` (`traceability.ts createTraceLink`, `apps/api/src/modules/reporting/traceability.ts:625`) | `trace_link` ×12 | 9 `deliverable_capability` (each deliverable → its initiative's capability; `:396–411`) and 3 `capability_kpi` (each capability → its chain's outcome KPI; `:412–422`). Each carries a contribution statement marked synthetic, status `active`, and **no allocation share**, so no value is attributed and the totals are unchanged. | `:396–422` |
+
+- **The permissions.** The demo TL's role holds all three: `tom.edit` (`packages/db/migrations/0018_p2_access_instantiation.sql:62`), `initiative.edit` (`0024_p3_gates_access_instantiation.sql:81`) and `traceability.link` (`0057_p4_dashboards_traceability_permissions.sql:18`).
+- **One audit event per write.** Each row goes through `ctx.insert`, which writes exactly one audit event `<table>.create` (`packages/db/src/demo/seed.ts:157–158`) and registers the row in `demo_seed_record` (`seed.ts:172`). As D7 states for every demo-seeded row, the audit event carries the seed's actor (system, source `cli`), and the acting demo user is on the row (`created_by` TL, through `stamps`). The F-DG5-123 regression test asserts exactly one `deliverable.create` event per deliverable (`apps/api/test/integration/environment/demo-gate-history.test.ts:411–412`).
+- **Determinism.** Fixed ids in three new blocks, `0x079` `deliverable`, `0x07a` `deliverableCapability` and `0x07b` `deliverableTraceLink` (`roaming-ids.ts:87–94`; the D11 "Determinism" bullet is extended). No existing block or id is reused: INI-01's capability is G3's `capability` id (`roaming-portfolio.ts:297`). The record counts and the checksum change by design: `capability` +2, `deliverable` +9, `trace_link` +12, and `demo_seed_record` and `audit_event` +23 each (BE-Y1 handback §2, side effect 4). Seed, reset and reset still give identical counts and checksums (BE-Y1 handback §2, "What stays unchanged"). The dataset version stays `1.0.0` (`packages/db/src/demo/guard.ts:17`).
+- **The test.** `demo-gate-history.test.ts:357`, "F-DG5-123: the launched portfolio INI-01..03 carries 3-7 key deliverables: no count warning, no orphan", runs the real seed and the real API (`MTH_ENV=demo`) as the demo TL. It reads only product operations, and asserts for each of INI-01..03: launched, no `initiative.deliverable_count` warning, 3–7 active deliverables, ordinals 1..n, created by TL and owned by WL, `pending`, en and ar titles with the synthetic marks, and one audit event each (`:357–427`).
+- **Not seeded, stated so it is not claimed.** No deliverable acceptance (`deliverable.accept` is the owner's later business decision), no outbox row (as D14), and no allocation share on any new link.
+
+### D17. §4: the three chains, the M0097 chain beside them, and the orphan report
+
+- **The B0147 lines are unchanged.** Each still reads as one line of exactly five nodes: diagnostic item → TOM gap → initiative → KPI → benefit (D5). The new edges are of other kinds (`initiative_deliverable`, from `deliverable.initiative_id`; `deliverable_capability`; `capability_kpi`), and `demo-traceability-chains.test.ts` and `demo-roaming.test.ts` are unchanged by BE-Y1 and pass in its runs (BE-Y1 handback §2, §3 check 11).
+- **What is new (§4 was incomplete).** Each initiative now also reaches its chain's outcome KPI through deliverable → capability change → KPI, the longer chain of M0097 ("Diagnosed issue → target-state gap → initiative → deliverable → capability change → KPI movement → benefit."). This is beside each B0147 line, not on it.
+- **The orphan report on the demo holds one entry.** It is the fourth diagnosed issue, "Fragmented roaming propositions and an inconsistent digital activation journey" (Downstream link missing: diagnosed issue → target-state gap), which is not a B0147 line. BE-Y1 discloses this (handback §2, side effect 1): the report had 2 entries in round 2 and 5 in round 3. G3's capability, previously listed as "Both links missing", is now linked both ways. The test asserts that no initiative, deliverable or capability is an orphan and that no launched initiative is listed (`demo-gate-history.test.ts:420–427`). It does not pin the number of diagnostic-finding entries, so "one entry" rests on BE-Y1's disclosure.
+- **The graph** gains 11 nodes (9 deliverables, 2 capabilities) and 21 edges (9 `initiative_deliverable`, 9 `deliverable_capability`, 3 `capability_kpi`), far below the 2000-node cap of `getTraceability` (ADR-0038) (BE-Y1 handback §2, side effect 2).
+
+### D18. D7: G3's evidence is unchanged; the dataset holds 3 capabilities
+
+D7's "G3: a capability gap and an active future-state journey" stays true for G3's evidence. The G3 capability is still seeded by `roaming.gates` (`roaming-gates.ts:353–356`), dated before G3. The dataset now holds 3 capabilities: G3's, plus the two recorded in Mobilize on 2026-06-03 (D16), after G3. The capability heatmap and the TOM report therefore list 3 capabilities instead of 1 (BE-Y1 handback §2, side effect 3). G4's criteria, evaluator and snapshot read no deliverable or capability. G4 stays approved with 8 of 8 mandatory criteria complete, and the totals are unchanged (`demo-gate-history.test.ts:174`; BE-Y1 handback §2).
+
+### D19. Line references corrected (as merged, `c0f6208`)
+
+BE-Y1 added about 210 lines to `roaming-portfolio.ts` (`git diff --stat 24a803d c0f6208`: +211), and 78 lines to `demo-gate-history.test.ts`, all after line 351. The references below are corrected in place in D11, D12 and D14, each marked "corrected 2026-10-19". Each new value was read from the merged file.
+
+| Where | Reference (at `24a803d`) | As merged (`c0f6208`) | Listed by BE-Y1 |
+|---|---|---|---|
+| D11 intro | `seedApprovedPortfolio` `:221` | `:429` | yes |
+| D11 intro | `launchApprovedPortfolio` `:467` | `:678` | yes |
+| D11 table | submit `:227` | `:438` | yes |
+| D11 table | ranking `:229–278` | `:440–489` | yes |
+| D11 table | selection `:280–295` | `:491–506` | yes |
+| D11 table | Finance validation `:297`ff. | `:508`ff. | yes |
+| D11 table | funding `:323–362` | `:534–573` | yes |
+| D11 table | roles, capacity, demand `:365`ff. | `:576`ff. | yes |
+| D11 table | milestones `:406`ff. | `:617`ff. | yes |
+| D11 table | commit `:426–440` | `:637–651` | yes |
+| D11 table | approve dates `:443–463` | `:654–674` | yes |
+| D11 table | launch `:467–471` | `:678–682` | yes |
+| D11 Ranking | `rank` of INI-01, INI-02, INI-03: `:105`, `:125`, `:145` | `:137`, `:177`, `:226` (not one uniform shift: each initiative's data grew) | yes |
+| D11 Schedule | INI-03's last milestone `:149` | `:230` | yes |
+| D11 Determinism | `fundingCanonicalDecision` `:179` | `:289` | yes |
+| D12 table | `LABEL` `:53`, used at `:288` | `:59`, `:499` | yes |
+| D12 table | the synthetic-decision header `:39–41` | `:45–47` | yes |
+| D12 table | the phase history test `demo-gate-history.test.ts:352` | `:430` | no |
+| D14 | the `initiative.select` step `:294` | `:505` | no |
+| D14 | DEP-01 and INI-03's last milestone `:148–149` | `:229–230` | no |
+
+Unchanged and still true: `roaming-ids.ts:78–86` (blocks `0x070`–`0x078`) and `:72–73`; the `demo-gate-history.test.ts` references before line 352 (`:93–100`, `:157–163`, `:166`, `:174`, `:184–200`, `:202–215`, `:328–343`, `:346–348`); `business-cases.ts`, `roaming.ts`, `roaming-gates.ts`, `seed.ts` and `kpis.ts`, which BE-Y1 did not change. D15's column "As merged (`c184328`)" records that tree and is left as it was; its `:352` (phase history) is now `:430`.
+
+### D20. What this amendment does not change
+
+- **No ADR or data-dictionary statement names BE-Y2's or FE-Y1's changes.** ADR-0002 says its rules are "enforced by an architecture test" and describes no mechanism (no budget, no `ts.transpileModule`), so no enforcement text is added. No ADR describes the Diagnose workstream layout, the 409 conflict banner's layout or reflow; ADR-0041's conflict behaviour ("theirs vs yours", re-apply) is unchanged.
+- **G4, the totals and the gate history** are unchanged (D18). The coverage conditions of §5 read no deliverable or capability.
+
+Requirement rows: REQ-S18-002 and M0348 (M0097 for the chain; B0072 for T05's key deliverables). Product gates G1–G6 are business approvals inside the product; the demo's decisions are synthetic and approve nothing real, and no deliverable is accepted. Product gate G6 never implies the engineering gate DG7, and nothing here touches DG0–DG7.

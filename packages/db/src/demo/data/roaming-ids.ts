@@ -59,4 +59,37 @@ export const RT_BLOCK = {
   roleMapping: 0x057,
   workItem: 0x058,
   inboxNotification: 0x059,
+  /** T-DG5-BE-V3 (F-DG5-120, D-170): the G1-G4 gate history and the evidence its criteria read (roaming-gates.ts). */
+  baseline: 0x060,
+  valuePool: 0x061,
+  guardrail: 0x062,
+  capability: 0x063,
+  journey: 0x064,
+  evidenceLink: 0x065,
+  gateSubmissionCriterion: 0x066,
+  gateDecision: 0x067,
+  gateDecisionAgreement: 0x068,
+  /** Unused since T-DG5-BE-X2 (D-172: the demo G4 has no exception); kept so no block number is reused. */
+  gateException: 0x069,
+  /**
+   * T-DG5-BE-X2 (F-DG5-120, F-DG5-122, D-172): the approved portfolio behind G4 (roaming-portfolio.ts). The canonical
+   * decisions of the funding decisions use the `decision` block (numbers 7-9, after GD-01..GD-04).
+   */
+  scoreResult: 0x070,
+  rankingSnapshot: 0x071,
+  rankingEntry: 0x072,
+  portfolioSelection: 0x073,
+  fundingDecision: 0x074,
+  milestone: 0x075,
+  resourceRole: 0x076,
+  capacity: 0x077,
+  resourceDemand: 0x078,
+  /**
+   * T-DG5-BE-Y1 (F-DG5-123, D-174): the key deliverables of INI-01..03 (T05 "Key deliverables [3-7]"), the two
+   * capability changes they deliver beyond G3's (INI-02, INI-03), and the deliverable -> capability and capability ->
+   * outcome KPI trace links that keep them out of the orphan report (roaming-portfolio.ts seedKeyDeliverables).
+   */
+  deliverable: 0x079,
+  deliverableCapability: 0x07a,
+  deliverableTraceLink: 0x07b,
 } as const;

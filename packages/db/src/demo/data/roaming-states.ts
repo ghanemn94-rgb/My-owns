@@ -9,6 +9,7 @@ import { sql } from "kysely";
 import type { DemoDatasetModule, DemoSeedContext } from "../seed.ts";
 import { DEMO_ANCHORS, seedUpdate } from "./kpis.ts";
 import { RT_BLOCK, rtId } from "./roaming-ids.ts";
+import { demoEnablingGateDecision } from "./roaming-gates.ts";
 
 const T = DEMO_ANCHORS.transformationId;
 const U = DEMO_ANCHORS.users;
@@ -34,6 +35,7 @@ async function seedPhaseSteps(ctx: DemoSeedContext): Promise<void> {
   let n = 0;
   for (const d of defs) {
     n += 1;
+    const enabled = demoEnablingGateDecision(ctx, d.phase_code);
     await ctx.insert("phase_step", `roaming.phase_step.${d.key}`, {
       id: rtId(RT_BLOCK.phaseStep, n),
       ...scope,
@@ -41,7 +43,10 @@ async function seedPhaseSteps(ctx: DemoSeedContext): Promise<void> {
       phase_code: d.phase_code,
       owner_user_id: U.tl,
       status: "not_started",
-      ...st(at, U.tl),
+      // F-DG5-120 (D-170): the approved gate that enabled the phase (the gates.decided consumer); Diagnose and the
+      // phases after Transform name none.
+      enabled_by_gate_decision_id: enabled?.gateDecisionId ?? null,
+      ...st(enabled?.at ?? at, U.tl),
     });
   }
 }

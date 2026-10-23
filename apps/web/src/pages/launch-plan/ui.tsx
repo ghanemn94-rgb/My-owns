@@ -11,7 +11,7 @@
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { Icon } from "../../components/Icon.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { FormAlert } from "../my-work/p4ui.tsx";
@@ -83,7 +83,8 @@ export function Notice({ state, children }: { state: string; children: ReactNode
 /** The entry of a transformation-scoped screen from the navigation: the visible transformations, each a link. */
 export function TransformationPicker({ segment, title }: { segment: string; title: string }) {
   const { t } = useTranslation();
-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages), most recently updated first.
+  const list = useAllTransformations({ sort: "updatedAt:desc" });
   return (
     <section className="card" aria-labelledby="fef-entry-title">
       <h2 id="fef-entry-title" className="card__title">
@@ -92,12 +93,12 @@ export function TransformationPicker({ segment, title }: { segment: string; titl
       <p>{t("launchHealthP5.entry.body")}</p>
       <QueryState
         query={list}
-        isEmpty={(page) => page.items.length === 0}
+        isEmpty={(items) => items.length === 0}
         empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
       >
-        {(page) => (
+        {(items) => (
           <ul className="plain-list entry-list" data-entry={segment}>
-            {page.items.map((tr) => (
+            {items.map((tr) => (
               <li key={tr.id}>
                 <Link className="link" to={`/transformations/${tr.id}/${segment}`}>
                   <bdi dir="ltr" className="code">
