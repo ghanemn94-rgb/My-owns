@@ -159,7 +159,7 @@ Sources: D-163 (F-DG5-qa-c-1, F-DG5-qa-c-2, QA-C O3), D-164 (g), D-166 (W20 inte
 The statement is the text the worker passes as `branding.provenance`, read from the catalogue (`provenanceFooter`). `packages/reporting/src/model.ts:140` `provenanceText` returns that text, or null. With null, nothing is printed in its place, and the text is never invented.
 
 - **XLSX** (`packages/reporting/src/xlsx/index.ts`). It is the **last row of every sheet**: About, each table sheet and Legend. It is a plain inline-string cell, never a formula, and it gets `quotePrefix` only if it ever started like a formula (§4).
-- **CSV** (`packages/reporting/src/csv.ts:66–68`). It is **one row right after the header rows**, written through `csvCell`, so `neutralizeSpreadsheetText` applies.
+- **CSV** (`packages/reporting/src/csv.ts:66–68`). It is **one row right after the header rows**, written through `csvCell`, so `neutralizeSpreadsheetText` applies. _Corrected 2026-10-23 (T-DG5-ARCH-RG1; D-185, amendment E5): the row is now at `csv.ts:71–73`. It is written by `textRow`, which builds each field with `textCell` (`model.ts:196–198`), so `neutralizeSpreadsheetText` decides the cell's `quotePrefix` once, and `csvCell` writes that decision as the leading apostrophe. `csvCell` no longer neutralizes a second time._
 - **PDF, DOCX and PPTX** keep the footer of §2, unchanged.
 
 Requirement rows: REQ-PB-001 and REQ-S20-015 (A15). Test: `tests/qa/integration/a15-outputs-every-definition.test.ts` › "every file, in every format, prints the B0004 provenance statement in its language", which passes unchanged.
@@ -215,3 +215,19 @@ Sources: D-167 (QA-F2 D-QA-F2-3, Low), D-168 (W22 integrated), and the T-DG5-BE-
   - Black-box: `tests/qa/integration/a13-jobs-rerun.test.ts` passed unchanged, including its orphan assertion (T-DG5-BE-T5 handback §2.2; D-168: D-QA-F2-3 closed).
 
 Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
+
+## Amendment (2026-10-23, T-DG5-ARCH-RG1; D-185, F-DG5-101): §4, a long negative decimal is unprefixed in CSV, and the CSV neutralization is decided once
+
+Sources: D-185 (F-DG5-101, Low, code-security round 1) and the T-DG5-BE-RG1 handback §5 item 4, verified against the merged code (`1e6a545`). §4 is unchanged; this amendment makes its CSV column true for every decimal. No contract, migration or XLSX writer change.
+
+### E5. CSV follows the cell's `quotePrefix` decision (T-DG5-BE-RG1; F-DG5-101)
+
+- **The defect (historical).** A decimal with more than 15 significant digits is a `text` sheet cell with `quotePrefix: false` (`valueCell`, `packages/reporting/src/model.ts:201–208`: a system number, never prefixed). `csvCell` neutralized every text cell again, so a long **negative** decimal (for example `-12345678901.23456`) was written as `'-12345678901.23456`, contrary to §4 ("the canonical decimal string, unprefixed").
+- **As merged** (`packages/reporting/src/csv.ts`):
+  - **One decision.** `textCell(text)` (`model.ts:196–198`) sets `quotePrefix` from `neutralizeSpreadsheetText(text).prefixed`. XLSX and CSV both read that flag.
+  - **The CSV writer.** `csvCell` writes a text cell as `'<text>` when `quotePrefix` is true and as the text otherwise, quoted by `csvField` when needed (`csv.ts:45–56`, the text case at `:54`). It no longer calls `neutralizeSpreadsheetText` itself.
+  - **Plain text rows.** `textRow` (labels, frame values, titles, the B0004 statement, the illustrative label, the legend) builds each field with `textCell` (`csv.ts:59`), so these texts are still neutralized.
+- **Result.** Positive and negative decimals, long and short, and a long negative total, are written as their canonical strings, unprefixed. User text that starts with one of the six §4 characters keeps its apostrophe, in English and in Arabic. XLSX already used the flag: a long negative decimal is an inline string without `quotePrefix`.
+- **Tests.** `packages/reporting/src/csv.test.ts` (`describe` at `:136`: the reviewer's reproduction, the long and short cases with a long negative total at `:158`, an injection string that keeps its apostrophe, and `csvCell` following `quotePrefix`), and `packages/reporting/src/xlsx/xlsx.test.ts` ("a negative decimal of more than 15 significant digits is text without quotePrefix").
+
+Requirement row: REQ-S13-006. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

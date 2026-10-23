@@ -11576,7 +11576,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 ## day_ninety_test
 
 - **Purpose:** The Day-90 leadership test of a plan, scheduled on day 90 (REQ-PB-087; ADR-0048 §4).
-- **Migration:** `0086_p5_launch_plans_health_checks.sql`. **API module:** `launch`. **Who writes:** the plan's generation, `day_ninety_test.respond` (complete). **Lifecycle:** open → completed (all six answered); versioned.
+- **Migration:** `0086_p5_launch_plans_health_checks.sql`. **API module:** `launch`. **Who writes:** the plan's generation, `day_ninety_test.respond` (complete). **Lifecycle:** open → completed (all six answered); versioned. _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-121): the demo seed (`mth-db seed-demo`, owner, demo database only) also writes one row, `roaming.day_ninety_test`, for the roaming plan: synthetic, open, unanswered (ADR-0050 amendment D21)._
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
 | Column | Type | Null | Default | Column constraints |
