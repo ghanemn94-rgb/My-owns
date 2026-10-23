@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-100",
+      "stage_id": "DG5",
+      "requirement": "REQ-S19-013",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The migration runner applies a pending migration whose id is below the highest applied id, and P5 leaves eight reserved ids unused, so a later file in a gap runs in a different order on an upgraded database than on a fresh one",
+      "reproduction": "In the candidate (270ebbf), the P5 migrations 0062-0097 leave eight ids unused: 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084 (planned gaps, p5-work-split shared rule 16). packages/db/src/migrate.ts:95 computes `pending` as every file not yet applied, and migrate.ts:159 applies the pending files in lexical order. The runner refuses only a changed checksum and an applied file the build does not ship. packages/db/src/seed.test.ts:767 admits any id from 0058 to 0099, and its comment says implementers 'fill' unused numbers. Reproduction (no database): docs/delivery/test-evidence/DG5/code-security/round-1/repro/migration-gap-order.mjs calls the runner's own compareStatus() with an upgraded database that applied all 89 candidate files, and a later build that adds 0066_p6_example.sql. Result (41-migration-gap-order.log): pending = [0066_p6_example.sql], unknownApplied = [], checksumMismatches = []. So nothing refuses the file. It runs at position 66 of 90 on a fresh database (before 0068_p5_form_schemas_framework.sql) and at position 90 on the upgraded one (after 0097).",
+      "expected": "Forward-only migrations apply in one order on every database. The runner, or the numbering test, refuses a pending migration whose id is lower than the highest applied id, so the P5 gaps can never be filled after their stage. Alternatively, the test pins the P5 gaps as permanently unused and requires every new id to be above the current maximum.",
+      "actual": "Nothing in the candidate is mis-ordered today, so there is no behavioural effect yet. But a future file in any of the eight P5 gaps would be accepted silently. It would then run against a different schema state on upgraded databases than on fresh ones, so the two kinds of database can diverge (for example, a backfill that a later P5 migration's guards would refuse).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/41-migration-gap-order.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/migration-gap-order.mjs",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/50-source-review.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-RG-SEC-R1). Low and non-mandatory: a latent ordering hazard with no effect on the candidate's own 89 migrations."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-101",
+      "stage_id": "DG5",
+      "requirement": "REQ-S13-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "CSV export writes a negative decimal of more than 15 significant digits with the formula-injection apostrophe ('-12345678901.23456), contrary to ADR-0046 §4",
+      "reproduction": "packages/reporting/src/model.ts:206 (valueCell) writes a decimal that does not fitsDouble (model.ts:191, more than 15 significant digits) as a TEXT cell with quotePrefix false (\"a system number ... is never prefixed\"). packages/reporting/src/csv.ts:48 (csvCell, case \"text\") re-applies neutralizeSpreadsheetText to every text cell and ignores quotePrefix. So a negative long decimal gets the apostrophe. A total cell takes the same path: model.ts totalRowCells falls back to valueCell when the total does not fitsDouble. Reproduction: the disposable unit test docs/delivery/test-evidence/DG5/code-security/round-1/repro/zz-sec-r1-csv-long-decimal.test.ts, copied into packages/reporting/src/ of the review clone, run with `npx vitest run --project unit-node`, then removed. It renders the package's own sampleDocument fixture with amounts that satisfy DECIMAL_PATTERN. The control -1234567890.12345 (15 significant digits) is written unprefixed, and so is the positive 12345678901.23456. But -12345678901.23456 and -1234567890.123456 are written '-12345678901.23456 and '-1234567890.123456 (43-csv-long-decimal.log: 1 failed, 2 passed, exit 1, failing by design on this assertion).",
+      "expected": "ADR-0046 §4 and the csv.ts header: \"a decimal is its canonical string, unprefixed\". The CSV field is -12345678901.23456, as it is for any shorter negative decimal. A decimal is a system number, not user text, so it is never neutralized.",
+      "actual": "The CSV field is '-12345678901.23456. A spreadsheet or a CSV consumer reads it as the text \"'-12345678901.23456\", not a number. The digits are preserved, so no value is lost and no formula is created. It needs at least 16 significant digits with a negative sign (for example, an amount of at least 1e10 with 5-6 decimal places, or at least 1e13 with 2), so it is rare in practice. XLSX is not affected (the text cell is an inline string with quotePrefix false).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/43-csv-long-decimal.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/zz-sec-r1-csv-long-decimal.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/50-source-review.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-23T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 round 1 (T-DG5-RG-SEC-R1). Low and non-mandatory: a representation defect of rare long negative decimals in CSV only. No value is lost and no formula is executed."
+        }
+      ]
+    }
+  ]
+}
