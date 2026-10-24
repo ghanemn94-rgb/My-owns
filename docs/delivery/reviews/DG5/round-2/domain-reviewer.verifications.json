@@ -1,0 +1,71 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b (source edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7). I used a complete disposable clone at the freeze commit 7144a19 and re-ran my round-1 reproduction on a real demo-initialized stack with the production worker running. fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0 is a commit and an ancestor of edbf5ce. en: roaming.user.tl PATCHed INI-03's 'Partner usage feed' forecast 2026-09-28 -> 2026-10-03. The API recorded DEP-01, slipDays 5, needed_by_breached, with affected INI-01 (owner roaming.user.sp) moving 2027-02-25 -> 2027-03-02. ar: a further +5 moved 2027-03-02 -> 2027-03-07. Signed in as the owner (roaming.user.sp), en and ar. (1) My Work now reads 'Critical dependency DEP-01 slipped (calendar days late: 5); forecast impact on INI-01: open the Dependencies page to see each forecast finish before and after' (ar: «تأخّرت الاعتمادية الحرجة DEP-01 (عدد أيام التأخّر التقويمية: 5)؛ الأثر على توقعات INI-01 ...»). The item's link opens /transformations/{roaming}/dependencies (clicked). (2) The Dependencies page's first section, 'Critical dependency slips', shows DEP-01, INI-01, Forecast finish '25 Feb 2027 -> 2 Mar 2027', change +5, slip 5 and 'Needed-by date missed'. In ar it shows both slips, with RTL arrows (2027/03/02 ← 2027/02/25 and 2027/03/07 ← 2027/03/02) and «تجاوز تاريخ «مطلوبة بحلول»». The data-before/data-after values equal the API exactly. (3) INI-01's page has 'Critical dependency slips affecting this initiative' with the same before/after values. On the production-path stack, p5-dependency-slip-impact (en and ar) shows uncomputable forecasts as 'Unknown', never 0 or blank. The roadmap still shows no slip; I accept that, because the notified owner now sees the impact on the item's target page and on the initiative page, which meets M0232 'notify affected owners and recompute forecast impacts'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/probe/zz-dom-r2-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/03-demo.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-en.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/dependency-slips.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/ar/dependency-slips.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/en/slip-owner-my-work.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/ar/slip-owner-my-work.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/slip-owner-my-work.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/slip-owner-my-work.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/slip-owner-dependencies-section.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/slip-owner-dependencies-section.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/slip-owner-initiative-INI-01-section.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/slip-owner-initiative-INI-01-section.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/web-shots/en/p5-rg1-slip-dependencies-section.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/web-shots/ar/p5-rg1-slip-dependencies-section.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/05-web-p5.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:5df44203…186b (source edbf5ce), demo-initialized stack, en and ar. fix_revision 1e6a545e96f31160fa15d8408072d18cb0221b93 is a commit and an ancestor of edbf5ce. As roaming.user.tl: GET /transformations/{roaming}/launch-plan returns 200 (start 2026-07-03, 33 tasks). GET .../day-90-test now returns 200 (round 1: 404): status open, scheduledDate 2026-10-01 = start + 90 calendar days (the same rule as plan.ts DAY_NINETY), 6 questions. The page no longer says 'Generate the launch plan first'. It shows 'Incomplete (0/6)', 'Scheduled for 1 Oct 2026' and the six B0136-B0141 questions verbatim in en, and in Arabic in ar (the analyser checks them verbatim: ui.en.day-90.six-questions-verbatim OK). Each question has suggested evidence from the roaming records. The test is operable: a PUT of q1 = yes through the real API returned completion 1/6 and version 2, and the ar run then read the en answer back. demo-day-ninety.test.ts (4 tests) passed in my integration run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/probe/zz-dom-r2-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/roaming-day-90-test.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/roaming-launch-plan.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/roaming-day-90-answer-q1.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/en/roaming-day-90-test.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/ar/roaming-day-90-test.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/roaming-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/roaming-day-90-test.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/roaming-day-90-test-after-answer.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/roaming-day-90-test-after-answer.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/07-analyse.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/04-integration.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate sha256:5df44203…186b (source edbf5ce), demo stack, en and ar. fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0. The reader list, the B0024 About panel, the search results (?q=PMI) and the block pages B0003, B0016, B0024 and B0124 have 0 rendered lines with Markdown table syntax and 0 literal '<br>' in both languages (round 1: 38 '|---|' lines on the en list). The list previews read 'B0009 Mode · When to use · How; End-to-End · ...' and 'B0003 6 PHASES · 15+ READY TEMPLATES · 1 OPERATING SYSTEM'. The B0024 panel shows 'PMI/Brightline connection The playbook uses ...' as text. The one-cell callouts wrap inside the page: at 1280 px the table is 940 px with wrap clientWidth = scrollWidth = 940; at 390 px, 330 = 330 (no horizontal overflow). The en B0124 page at 390 px shows the full 'PMI BRM connection This phase aligns with PMI Benefits Realization Management logic: ... after transition to the business.' wrapped. The ar B0016 page shows the provisional Arabic and the verbatim English, both wrapped. The remaining '|' on the list page is B0005's own source text 'Version 1.0 | September 2026', not a table. p5-reader-tables (1280 px, 390 px, 200 % text) passed in en and ar.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/probe/zz-dom-r2-verify.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-en.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-ar.json",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/en/reader.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/ar/reader.txt",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0124.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0124.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0016.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0016.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0124-390.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0016-390.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0024.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0024.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/rg2/05-web-p5.log"
+      ]
+    }
+  ]
+}
