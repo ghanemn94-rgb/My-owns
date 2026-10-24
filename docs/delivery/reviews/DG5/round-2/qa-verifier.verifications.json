@@ -1,0 +1,49 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its reporter (qa-verifier raised it in re-gate round 1). Candidate sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b (2203 files, source edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7), recomputed in a complete disposable clone. Owner frontend-ux-engineer (T-DG5-FE-RG1); I authored none of the repair. fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0 is a commit and an ancestor of edbf5ce (03-findings-fix-ancestry.log). The fix: MyProceduresPage.tsx LaunchSection renders the form only when canAnywhere(me, 'procedure.launch'), otherwise a role=note read-only banner (workflowsP5.procedures.launchReadOnly, en and ar); the server check in instances.ts is unchanged. My round-1 reproduction no longer reproduces, on the real stack, chromium-en and chromium-ar, locale unset and C.UTF-8 (zz-qa-dg5rg2-aud-launch.spec.ts, 8/8 in each setting): for dev.auditor (AUD) and dev.admin (ADM_ACCESS + ADM_TECH, also without procedure.launch) there is no launch form, no Launch button anywhere on the page and no control at all inside section#launch, the read-only note has the catalogue text in the page language with the right lang/dir, and this holds after a reload and after navigating away and back; the only enabled controls left in main are read-only table controls (search boxes, column choosers, a status filter). The server backstop still answers 403 to the same POST /api/v1/procedure-instances as either user, and no instance is created. Regression: dev.lead (TL) and dev.office (TO) still get the form with 10 procedures and an enabled Launch. My AUD sweep of 34 P5 screens (390 px, 200 % text, axe) has 0 problems in en and ar in both settings; in round 1 its only real hit was this form. Adversarial mutation (09-mutation-setup.log, 05-e2e-mutants-unset.log): with the gate removed in a disposable build, p5-launch-permission test 1 and my probe fail, so the fix is pinned by tests. The product tests p5-launch-permission.spec.ts (4/4) and launch-permission.test.tsx pass on this candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-audlaunch-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-audlaunch-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-aud-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-aud-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-mutants-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/09-mutation-setup.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/09-mutation-teardown.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/03-findings-fix-ancestry.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5rg2-aud-launch.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5rg2-aud-p5.spec.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its reporter (qa-verifier, re-gate round 1). Same candidate and clone as above. Owner frontend-ux-engineer (T-DG5-FE-RG1); fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0 is an ancestor of edbf5ce (03-findings-fix-ancestry.log). The fix splits p4-dashboards test 6 into 6a (390 px) and 6b (200 % text) with the same five screens, the same assertions and the same screenshots, each with a 60 s budget and per-step timing annotations; I read the diff and no assertion was removed or weakened. My round-1 reproduction (the full product e2e on the real stack, --workers=1) passes in chromium-en and chromium-ar in both locale settings: unset 6a 10.2 s / 9.5 s (en/ar), 6b 13.9 s / 17.5 s; C.UTF-8 6a 8.4 s / 9.0 s, 6b 10.6 s / 18.2 s. The slowest half (18.2 s) uses under a third of its budget, against round 1's 30.1 s and 30.5 s timeouts of the undivided test. The same timing class in a different test (p4-raid-governance test 5) is raised separately as F-DG5-144; it does not affect this closure.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/03-findings-fix-ancestry.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-142",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its reporter (qa-verifier, re-gate round 1). Same candidate and clone as above. Owner backend-workflow-engineer (T-DG5-BE-RG1); fix_revision 1e6a545e96f31160fa15d8408072d18cb0221b93 is an ancestor of edbf5ce (03-findings-fix-ancestry.log). The fix compares every row with the jobs response the SCREEN itself loaded, and brackets that snapshot between the test's own API reads before and after it (the same jobs; each value within [before, after]). QA_A22_CROSS_BOUNDARY=1 waits after the first read until a quarter hour has passed. My round-1 failure was a */15 boundary between the test's read and the screen's read. With the boundary forced, A22 passes in chromium-en and chromium-ar in both locale settings: unset 17:12:58Z read, screen after 17:15:03Z, approval.escalation_scan 17:15Z -> 17:30Z; C.UTF-8 17:39:32Z read, 17:45Z -> 18:00Z. Each time the run proves the boundary was crossed and the screen still matched. A22 also passes normally in both root runs (en and ar). The fix is not a weakening: in a disposable build where the jobs screen shows a next run one quarter early (mutant M1), A22 fails at 'approval.escalation_scan: next run' (expected data-next-run 2026-10-24T18:45:00.000Z, found 0). The non-admin 403 clause is unchanged (dev.auditor and dev.lead: API 403 and the no-permission screen).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-en-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-ar-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-en-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-ar-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-mutants-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/03-findings-fix-ancestry.log"
+      ]
+    }
+  ]
+}

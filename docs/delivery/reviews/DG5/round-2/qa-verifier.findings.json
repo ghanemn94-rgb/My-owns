@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-143",
+      "stage_id": "DG5",
+      "requirement": "REQ-S12-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Since the RG1 slips table, the product e2e suite fails deterministically in chromium-ar: p3-prioritization-roadmap's auditor test reads the Arabic sort header 'الاعتمادية' (dependency) as an 'اعتماد' (approve) write control",
+      "reproduction": "Candidate sha256:5df44203... (source edbf5ce), disposable clone, real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev), --workers=1. Run the full product e2e (npx playwright test apps/web/e2e) in either locale setting, or the spec alone (npx playwright test apps/web/e2e/p3-prioritization-roadmap.spec.ts). Test ':542 the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control' fails in chromium-ar at its last assertion, expect(page.locator('main#main').getByRole('button', { name: /approve|اعتماد|move|نقل/i })).toHaveCount(0) (spec line ~502): 'Expected: 0, Received: 1'. The one match is on /transformations/<id>/dependencies: the column-sort header button 'الاعتمادية غير مرتّب' ('Dependency, not sorted') of the 'تأخّرات الاعتماديات الحرجة' (critical dependency slips) table. T-DG5-FE-RG1 (F-DG5-120; apps/web/src/pages/dependencies/slips.tsx, merge 5474a66) added that table to the Dependencies page. The catalogue key dependencies.slips.col.dependency (apps/web/src/i18n/ar/dependencies.json) ='الاعتمادية' contains the substring 'اعتماد'. Because the spec is serial, ':569 capacity screen ...' then does not run in chromium-ar. chromium-en passes ('Dependency' matches neither 'approve' nor 'move'). The spec is unchanged since DG3 (f805130); round 1 (candidate 8df7f922, before RG1) passed it. The orchestrator's D-186 verification skipped the e2e runs (disclosed), so the merged tree never ran it.",
+      "expected": "The candidate's own product e2e suite passes on the real stack in chromium-en and chromium-ar. The auditor read-only test keeps its intent (no enabled approve/move write control for AUD on the three screens) without treating a read-only column-sort control whose Arabic label contains the letters of 'اعتماد' as a write control (for example, by excluding sort headers, as the round-1/2 qa AUD sweep does, or by matching whole words or exact catalogue labels). Alternatively, the new table's label is chosen so that it does not collide, if the frontend owner prefers.",
+      "actual": "Locale unset: 465 passed, 2 failed, 3 did not run (this test is one of the 2; the other is F-DG5-144). C.UTF-8: 468 passed, 1 failed (this test), 1 did not run (:569 capacity, ar). Alone: 12 passed, 1 failed (this test), 1 did not run. The PRODUCT is correct. The matched button is a read-only sort control inside a th. The page shows the auditor the read-only note. My AUD sweep of the same Dependencies page (zz-qa-dg5rg2-aud-p5.spec.ts) records 0 mutating requests and 0 enabled write controls in en and ar. So there is no authorization or data effect (not mandatory). The defect is that a required check of this gate, the product journey e2e suite, cannot pass on the frozen candidate. The chromium-ar coverage of the auditor's read-only assertions on these three screens, and the stubbed capacity test, is lost until it is repaired. Medium: a material defect of limited scope that a re-freeze must fix; per D-185 a Medium finding cannot be accepted as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-rerun-p3prio-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-alone-unset-error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-alone-unset-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-fullsuite-unset-error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-fullsuite-cutf8-error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-aud-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-24T18:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 2 (run DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5). Reproduced deterministically: the full product suite in both locale settings, and the spec alone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-144",
+      "stage_id": "DG5",
+      "requirement": "REQ-S10-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "p4-raid-governance.spec.ts test 5 (meeting workspace) runs on the default 30 s budget and timed out in chromium-ar in the full product suite (the F-DG5-141 class in another test)",
+      "reproduction": "Full product e2e on the real stack, --workers=1, locale unset (scripts/run-e2e.sh unset ... product apps/web/e2e). Test 396 [chromium-ar] apps/web/e2e/p4-raid-governance.spec.ts:290 '5. Meeting workspace: an incomplete executive ask is refused, then published to T16 and decided in session' failed with 'Test timeout of 30000ms exceeded' (30.1 s) at a 1-minute load of about 7-8.5. No assertion failed, and the trace has no step above 1.8 s: it is a long chain of steps. Its serial followers 6 and 7 (the auditor's read-only views, and 390 px / 200 % text) then did not run in chromium-ar. The test sets no explicit timeout. Measured durations: this round, unset en 27.2 s, ar 30.1 s (timeout); C.UTF-8 en 16.0 s, ar 25.0 s; alone at load ~3, 16.9 s and 16.5 s (14/14). Round 1: 22.7 s / 27.8 s and 17.4 s / 21.6 s.",
+      "expected": "As for p4-dashboards test 6 (F-DG5-141), the p2 journeys (earlier DG5 history) and p4-gates-closure test 9 (D-173): the test has an explicit budget with at least 2x headroom over a measured loaded case, so a full-suite run does not exceed it. Its assertions are unchanged.",
+      "actual": "Under the default 30 s budget the chromium-ar run has almost no headroom (25-30 s in the full suite), so the required product e2e check fails intermittently with no product defect. The product behaviour is correct: the spec passes 14/14 alone and passed in the C.UTF-8 full run. Low and not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-rerun-p4raid-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-24T18:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 2 (run DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5)."
+        }
+      ]
+    }
+  ]
+}
