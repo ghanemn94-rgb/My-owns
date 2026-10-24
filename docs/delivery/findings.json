@@ -13639,7 +13639,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T06:10:00Z",
@@ -13650,10 +13650,45 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+        },
+        {
+          "at": "2026-10-24T15:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "5474a668785e1cb6abc21762342b565dc2e0c1e0",
-      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-DOM-R2-domain-reviewer-20261024T145031Z-63673283",
+          "session_id": "63673283-b612-4674-90e2-57737663a0c5"
+        },
+        "at": "2026-10-24T15:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/probe/zz-dom-r2-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/03-demo.log",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-en.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-ar.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/dependency-slips.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/ar/dependency-slips.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/en/slip-owner-my-work.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/ar/slip-owner-my-work.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/slip-owner-my-work.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/slip-owner-my-work.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/slip-owner-dependencies-section.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/slip-owner-dependencies-section.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/slip-owner-initiative-INI-01-section.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/slip-owner-initiative-INI-01-section.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/web-shots/en/p5-rg1-slip-dependencies-section.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/web-shots/ar/p5-rg1-slip-dependencies-section.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/05-web-p5.log"
+        ],
+        "note": "Re-verified on candidate sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b (source edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7). I used a complete disposable clone at the freeze commit 7144a19 and re-ran my round-1 reproduction on a real demo-initialized stack with the production worker running. fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0 is a commit and an ancestor of edbf5ce. en: roaming.user.tl PATCHed INI-03's 'Partner usage feed' forecast 2026-09-28 -> 2026-10-03. The API recorded DEP-01, slipDays 5, needed_by_breached, with affected INI-01 (owner roaming.user.sp) moving 2027-02-25 -> 2027-03-02. ar: a further +5 moved 2027-03-02 -> 2027-03-07. Signed in as the owner (roaming.user.sp), en and ar. (1) My Work now reads 'Critical dependency DEP-01 slipped (calendar days late: 5); forecast impact on INI-01: open the Dependencies page to see each forecast finish before and after' (ar: «تأخّرت الاعتمادية الحرجة DEP-01 (عدد أيام التأخّر التقويمية: 5)؛ الأثر على توقعات INI-01 ...»). The item's link opens /transformations/{roaming}/dependencies (clicked). (2) The Dependencies page's first section, 'Critical dependency slips', shows DEP-01, INI-01, Forecast finish '25 Feb 2027 -> 2 Mar 2027', change +5, slip 5 and 'Needed-by date missed'. In ar it shows both slips, with RTL arrows (2027/03/02 ← 2027/02/25 and 2027/03/07 ← 2027/03/02) and «تجاوز تاريخ «مطلوبة بحلول»». The data-before/data-after values equal the API exactly. (3) INI-01's page has 'Critical dependency slips affecting this initiative' with the same before/after values. On the production-path stack, p5-dependency-slip-impact (en and ar) shows uncomputable forecasts as 'Unknown', never 0 or blank. The roadmap still shows no slip; I accept that, because the notified owner now sees the impact on the item's target page and on the initiative page, which meets M0232 'notify affected owners and recompute forecast impacts'."
+      }
     },
     {
       "id": "F-DG5-121",
@@ -13679,7 +13714,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T06:10:00Z",
@@ -13690,10 +13725,40 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1e6a545e96f31160fa15d8408072d18cb0221b93"
+        },
+        {
+          "at": "2026-10-24T15:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "1e6a545e96f31160fa15d8408072d18cb0221b93",
-      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93"
+      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-DOM-R2-domain-reviewer-20261024T145031Z-63673283",
+          "session_id": "63673283-b612-4674-90e2-57737663a0c5"
+        },
+        "at": "2026-10-24T15:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/probe/zz-dom-r2-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/roaming-day-90-test.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/roaming-launch-plan.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/api/en/roaming-day-90-answer-q1.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/en/roaming-day-90-test.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/ar/roaming-day-90-test.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/roaming-day-90-test.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/roaming-day-90-test.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/roaming-day-90-test-after-answer.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/roaming-day-90-test-after-answer.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/07-analyse.log",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/04-integration.log"
+        ],
+        "note": "Re-verified on candidate sha256:5df44203…186b (source edbf5ce), demo-initialized stack, en and ar. fix_revision 1e6a545e96f31160fa15d8408072d18cb0221b93 is a commit and an ancestor of edbf5ce. As roaming.user.tl: GET /transformations/{roaming}/launch-plan returns 200 (start 2026-07-03, 33 tasks). GET .../day-90-test now returns 200 (round 1: 404): status open, scheduledDate 2026-10-01 = start + 90 calendar days (the same rule as plan.ts DAY_NINETY), 6 questions. The page no longer says 'Generate the launch plan first'. It shows 'Incomplete (0/6)', 'Scheduled for 1 Oct 2026' and the six B0136-B0141 questions verbatim in en, and in Arabic in ar (the analyser checks them verbatim: ui.en.day-90.six-questions-verbatim OK). Each question has suggested evidence from the roaming records. The test is operable: a PUT of q1 = yes through the real API returned completion 1/6 and version 2, and the ar run then read the en answer back. demo-day-ninety.test.ts (4 tests) passed in my integration run."
+      }
     },
     {
       "id": "F-DG5-122",
@@ -13715,7 +13780,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T06:10:00Z",
@@ -13726,10 +13791,42 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+        },
+        {
+          "at": "2026-10-24T15:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "5474a668785e1cb6abc21762342b565dc2e0c1e0",
-      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-DOM-R2-domain-reviewer-20261024T145031Z-63673283",
+          "session_id": "63673283-b612-4674-90e2-57737663a0c5"
+        },
+        "at": "2026-10-24T15:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/probe/zz-dom-r2-verify.spec.ts",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-en.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/results-verify-ar.json",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/en/reader.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/text/ar/reader.txt",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0124.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0124.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0016.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0016.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0124-390.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0016-390.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/en/reader-B0024.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/demo/shots/ar/reader-B0024.png",
+          "docs/delivery/test-evidence/DG5/domain/round-2/rg2/05-web-p5.log"
+        ],
+        "note": "Re-verified on candidate sha256:5df44203…186b (source edbf5ce), demo stack, en and ar. fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0. The reader list, the B0024 About panel, the search results (?q=PMI) and the block pages B0003, B0016, B0024 and B0124 have 0 rendered lines with Markdown table syntax and 0 literal '<br>' in both languages (round 1: 38 '|---|' lines on the en list). The list previews read 'B0009 Mode · When to use · How; End-to-End · ...' and 'B0003 6 PHASES · 15+ READY TEMPLATES · 1 OPERATING SYSTEM'. The B0024 panel shows 'PMI/Brightline connection The playbook uses ...' as text. The one-cell callouts wrap inside the page: at 1280 px the table is 940 px with wrap clientWidth = scrollWidth = 940; at 390 px, 330 = 330 (no horizontal overflow). The en B0124 page at 390 px shows the full 'PMI BRM connection This phase aligns with PMI Benefits Realization Management logic: ... after transition to the business.' wrapped. The ar B0016 page shows the provisional Arabic and the verbatim English, both wrapped. The remaining '|' on the list page is B0005's own source text 'Version 1.0 | September 2026', not a table. p5-reader-tables (1280 px, 390 px, 200 % text) passed in en and ar."
+      }
     },
     {
       "id": "F-DG5-100",
@@ -13749,7 +13846,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T07:00:00Z",
@@ -13760,10 +13857,36 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1e6a545e96f31160fa15d8408072d18cb0221b93"
+        },
+        {
+          "at": "2026-10-24T16:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "1e6a545e96f31160fa15d8408072d18cb0221b93",
-      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93"
+      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-SEC-R2-code-security-reviewer-20261024T145051Z-d799789e",
+          "session_id": "d799789e-c0cb-4507-802e-0871207076c8"
+        },
+        "at": "2026-10-24T16:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/code-security/round-2/39-f100-r1-repro-rerun.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/46-f100-cli.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/40b-f100-stack.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/migration-gap-order-r2.mjs",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/f100-cli.sh",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-migration-order-stack.test.ts",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/30-integration-lang-unset.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/31-integration-lang-c-utf8.log"
+        ],
+        "note": "Verified on candidate sha256:5df44203…186b (source edbf5ce), in a disposable clone and on disposable PostgreSQL 16.13 clusters. The fix (T-DG5-BE-RG1) is packages/db/src/migrate.ts:99-111 (outOfOrderPending = pending files whose id is not above the highest applied id) and :168-175 (migrate() refuses before the first file). Also cli.ts:90-97 (status prints ORDER, DRIFT, exit 4), apps/api/src/modules/platform/health.ts:50-52 (/readyz reports fail, not pending) and seed.test.ts (the eight P5 gaps are pinned as retired).\n\n(1) Round-1 reproduction re-run unchanged (39-f100-r1-repro-rerun.log). That script predates the fix: it never reads outOfOrderPending, its last line is hard-coded, and it numbered the applied rows 1..89. So I added a corrected pure probe using real ids. All eight gaps (0066, 0067, 0073, 0077-0079, 0083, 0084) land in outOfOrderPending, and a database at 0065 accepts 0066 with no refusal.\n\n(2) Real CLI (46-f100-cli.log). On a scratch database, the shipped build gives 'applied 89', and status is up to date. A later build adds 0066_p6_example.sql and 0098_p6_forward.sql. migrate then exits 1 with 'refusing to run: pending migration(s) 0066_p6_example.sql have an id not above the highest applied migration 0097_…; … give each new migration an id above 0097'. The result is the same with LANG unset and with LANG/LC_ALL=ar_SA.UTF-8. That locale is not installed (disclosed in the log), and the CLI's operator text is English-only. status prints 'ORDER 0066_p6_example.sql …', 'DRIFT', exit 4. Nothing was applied: 0 sec_r2_* tables, 89 rows. Control: with the gap file removed, 0098 applies.\n\n(3) Real server and runner (40b-f100-stack.log, 23/23). /readyz answers 503 {database: ok, migrations: fail} for each of the eight gaps, with Accept-Language en and ar. A forward 0098 gives 503 'pending', and the shipped build gives 200 'ready'. On a scratch database migrated to 0097, migrate() refuses each gap file and applies nothing, not even a valid 0098 in the same build. A duplicate id 0097_other.sql is refused by the listing. A database at 0065 applies 0066 in place, in the fresh-database order.\n\nThe integration suites' own packages/db/test/integration/migrate.test.ts (9/9) and platform.test.ts (13/13) also pass in both runs."
+      }
     },
     {
       "id": "F-DG5-101",
@@ -13783,7 +13906,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T07:00:00Z",
@@ -13794,10 +13917,33 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1e6a545e96f31160fa15d8408072d18cb0221b93"
+        },
+        {
+          "at": "2026-10-24T16:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "1e6a545e96f31160fa15d8408072d18cb0221b93",
-      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93"
+      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-SEC-R2-code-security-reviewer-20261024T145051Z-d799789e",
+          "session_id": "d799789e-c0cb-4507-802e-0871207076c8"
+        },
+        "at": "2026-10-24T16:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/code-security/round-2/41b-f101-r1-repro-rerun.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/41-f101-csv-stack.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/41-f101-csv-stack.run1.log",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-csv-long-decimal-stack.test.ts",
+          "docs/delivery/test-evidence/DG5/code-security/round-2/50-source-review.md"
+        ],
+        "note": "Verified on candidate sha256:5df44203…186b (source edbf5ce). The fix (T-DG5-BE-RG1) is packages/reporting/src/csv.ts:45-56: a text cell is written with the leading apostrophe exactly when its quotePrefix is set, instead of being re-neutralized. Frame, title and legend rows go through textCell (csv.ts:59). I checked that the change cannot weaken formula-injection protection. Every user-text cell is built by model.ts textCell, whose quotePrefix comes from neutralizeSpreadsheetText. The only quotePrefix:false literals are a decimal that does not fit a double (model.ts:208) and a fixed validation label (:217). The decimal's value has passed DECIMAL_PATTERN in reportDocument (renderCsv safeParses its input), so it can only start with a digit or with '-' followed by a digit.\n\n(1) Round-1 reproduction re-run unchanged (41b-f101-r1-repro-rerun.log): 3/3 pass (round 1: 1 failed by design). '-12345678901.23456' and '-1234567890.123456' are now written unprefixed.\n\n(2) Real stack, en and ar (41-f101-csv-stack.log, 4/4). I created a financial benefit through the API with baselineValue -12345678901.234567, targetValue -1234567890.123456 and plannedValue -1234567890123.4567 (16-17 significant digits, accepted by the API). A control benefit has 15-digit negatives and the formula-like user texts title '=HYPERLINK(\"http://x\",\"y\")' and baseline unit '-2+3'. I generated the benefits register snapshot, then ran POST /api/v1/exports, the worker export runner and GET …/download for CSV and XLSX in en and ar.\n\nCSV en and ar: the three long negatives are their canonical strings with no apostrophe, and the controls are unchanged. The user texts are written '\"'=HYPERLINK(…)\"' and ''-2+3'. No field anywhere in the file is an unprefixed formula-like text.\n\nXLSX en and ar: the long decimals are inline strings without quotePrefix. The HYPERLINK cell is an inline string with quotePrefix and no formula.\n\nRun 1 of this repro (41-f101-csv-stack.run1.log) failed 2 of 4 because of my own repro's row selector (it looked for 'BEN-' codes; the codes are B01/B02) and its control strings (the measure column exports -1234567890.123450). Its CSV lines already show the correct output, and its 2 XLSX tests passed. I fixed both bugs, and run 2 passed 4/4."
+      }
     },
     {
       "id": "F-DG5-140",
@@ -13822,7 +13968,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T09:30:00Z",
@@ -13833,10 +13979,38 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+        },
+        {
+          "at": "2026-10-24T18:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "5474a668785e1cb6abc21762342b565dc2e0c1e0",
-      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5",
+          "session_id": "ef4aa8c5-7883-4c1a-bc51-4e92667c6c73"
+        },
+        "at": "2026-10-24T18:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-audlaunch-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-audlaunch-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-aud-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-aud-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-mutants-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/09-mutation-setup.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/09-mutation-teardown.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/03-findings-fix-ancestry.log",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5rg2-aud-launch.spec.ts",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5rg2-aud-p5.spec.ts"
+        ],
+        "note": "Verified by its reporter (qa-verifier raised it in re-gate round 1). Candidate sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b (2203 files, source edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7), recomputed in a complete disposable clone. Owner frontend-ux-engineer (T-DG5-FE-RG1); I authored none of the repair. fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0 is a commit and an ancestor of edbf5ce (03-findings-fix-ancestry.log). The fix: MyProceduresPage.tsx LaunchSection renders the form only when canAnywhere(me, 'procedure.launch'), otherwise a role=note read-only banner (workflowsP5.procedures.launchReadOnly, en and ar); the server check in instances.ts is unchanged. My round-1 reproduction no longer reproduces, on the real stack, chromium-en and chromium-ar, locale unset and C.UTF-8 (zz-qa-dg5rg2-aud-launch.spec.ts, 8/8 in each setting): for dev.auditor (AUD) and dev.admin (ADM_ACCESS + ADM_TECH, also without procedure.launch) there is no launch form, no Launch button anywhere on the page and no control at all inside section#launch, the read-only note has the catalogue text in the page language with the right lang/dir, and this holds after a reload and after navigating away and back; the only enabled controls left in main are read-only table controls (search boxes, column choosers, a status filter). The server backstop still answers 403 to the same POST /api/v1/procedure-instances as either user, and no instance is created. Regression: dev.lead (TL) and dev.office (TO) still get the form with 10 procedures and an enabled Launch. My AUD sweep of 34 P5 screens (390 px, 200 % text, axe) has 0 problems in en and ar in both settings; in round 1 its only real hit was this form. Adversarial mutation (09-mutation-setup.log, 05-e2e-mutants-unset.log): with the gate removed in a disposable build, p5-launch-permission test 1 and my probe fail, so the fix is pinned by tests. The product tests p5-launch-permission.spec.ts (4/4) and launch-permission.test.tsx pass on this candidate."
+      }
     },
     {
       "id": "F-DG5-141",
@@ -13861,7 +14035,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T09:30:00Z",
@@ -13872,10 +14046,31 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+        },
+        {
+          "at": "2026-10-24T18:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "5474a668785e1cb6abc21762342b565dc2e0c1e0",
-      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0"
+      "fix_summary": "T-DG5-FE-RG1 (D-185), merge 5474a668785e1cb6abc21762342b565dc2e0c1e0",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5",
+          "session_id": "ef4aa8c5-7883-4c1a-bc51-4e92667c6c73"
+        },
+        "at": "2026-10-24T18:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/03-findings-fix-ancestry.log"
+        ],
+        "note": "Verified by its reporter (qa-verifier, re-gate round 1). Same candidate and clone as above. Owner frontend-ux-engineer (T-DG5-FE-RG1); fix_revision 5474a668785e1cb6abc21762342b565dc2e0c1e0 is an ancestor of edbf5ce (03-findings-fix-ancestry.log). The fix splits p4-dashboards test 6 into 6a (390 px) and 6b (200 % text) with the same five screens, the same assertions and the same screenshots, each with a 60 s budget and per-step timing annotations; I read the diff and no assertion was removed or weakened. My round-1 reproduction (the full product e2e on the real stack, --workers=1) passes in chromium-en and chromium-ar in both locale settings: unset 6a 10.2 s / 9.5 s (en/ar), 6b 13.9 s / 17.5 s; C.UTF-8 6a 8.4 s / 9.0 s, 6b 10.6 s / 18.2 s. The slowest half (18.2 s) uses under a third of its budget, against round 1's 30.1 s and 30.5 s timeouts of the undivided test. The same timing class in a different test (p4-raid-governance test 5) is raised separately as F-DG5-144; it does not affect this closure."
+      }
     },
     {
       "id": "F-DG5-142",
@@ -13897,7 +14092,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-23T09:30:00Z",
@@ -13908,10 +14103,98 @@
           "at": "2026-10-23T16:09:52Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1e6a545e96f31160fa15d8408072d18cb0221b93"
+        },
+        {
+          "at": "2026-10-24T18:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "1e6a545e96f31160fa15d8408072d18cb0221b93",
-      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93"
+      "fix_summary": "T-DG5-BE-RG1 (D-185), merge 1e6a545e96f31160fa15d8408072d18cb0221b93",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5",
+          "session_id": "ef4aa8c5-7883-4c1a-bc51-4e92667c6c73"
+        },
+        "at": "2026-10-24T18:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-en-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-ar-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-en-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-a22xb-ar-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-root-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-root-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-mutants-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-2/03-findings-fix-ancestry.log"
+        ],
+        "note": "Verified by its reporter (qa-verifier, re-gate round 1). Same candidate and clone as above. Owner backend-workflow-engineer (T-DG5-BE-RG1); fix_revision 1e6a545e96f31160fa15d8408072d18cb0221b93 is an ancestor of edbf5ce (03-findings-fix-ancestry.log). The fix compares every row with the jobs response the SCREEN itself loaded, and brackets that snapshot between the test's own API reads before and after it (the same jobs; each value within [before, after]). QA_A22_CROSS_BOUNDARY=1 waits after the first read until a quarter hour has passed. My round-1 failure was a */15 boundary between the test's read and the screen's read. With the boundary forced, A22 passes in chromium-en and chromium-ar in both locale settings: unset 17:12:58Z read, screen after 17:15:03Z, approval.escalation_scan 17:15Z -> 17:30Z; C.UTF-8 17:39:32Z read, 17:45Z -> 18:00Z. Each time the run proves the boundary was crossed and the screen still matched. A22 also passes normally in both root runs (en and ar). The fix is not a weakening: in a disposable build where the jobs screen shows a next run one quarter early (mutant M1), A22 fails at 'approval.escalation_scan: next run' (expected data-next-run 2026-10-24T18:45:00.000Z, found 0). The non-admin 403 clause is unchanged (dev.auditor and dev.lead: API 403 and the no-permission screen)."
+      }
+    },
+    {
+      "id": "F-DG5-143",
+      "stage_id": "DG5",
+      "requirement": "REQ-S12-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Since the RG1 slips table, the product e2e suite fails deterministically in chromium-ar: p3-prioritization-roadmap's auditor test reads the Arabic sort header 'الاعتمادية' (dependency) as an 'اعتماد' (approve) write control",
+      "reproduction": "Candidate sha256:5df44203... (source edbf5ce), disposable clone, real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev), --workers=1. Run the full product e2e (npx playwright test apps/web/e2e) in either locale setting, or the spec alone (npx playwright test apps/web/e2e/p3-prioritization-roadmap.spec.ts). Test ':542 the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control' fails in chromium-ar at its last assertion, expect(page.locator('main#main').getByRole('button', { name: /approve|اعتماد|move|نقل/i })).toHaveCount(0) (spec line ~502): 'Expected: 0, Received: 1'. The one match is on /transformations/<id>/dependencies: the column-sort header button 'الاعتمادية غير مرتّب' ('Dependency, not sorted') of the 'تأخّرات الاعتماديات الحرجة' (critical dependency slips) table. T-DG5-FE-RG1 (F-DG5-120; apps/web/src/pages/dependencies/slips.tsx, merge 5474a66) added that table to the Dependencies page. The catalogue key dependencies.slips.col.dependency (apps/web/src/i18n/ar/dependencies.json) ='الاعتمادية' contains the substring 'اعتماد'. Because the spec is serial, ':569 capacity screen ...' then does not run in chromium-ar. chromium-en passes ('Dependency' matches neither 'approve' nor 'move'). The spec is unchanged since DG3 (f805130); round 1 (candidate 8df7f922, before RG1) passed it. The orchestrator's D-186 verification skipped the e2e runs (disclosed), so the merged tree never ran it.",
+      "expected": "The candidate's own product e2e suite passes on the real stack in chromium-en and chromium-ar. The auditor read-only test keeps its intent (no enabled approve/move write control for AUD on the three screens) without treating a read-only column-sort control whose Arabic label contains the letters of 'اعتماد' as a write control (for example, by excluding sort headers, as the round-1/2 qa AUD sweep does, or by matching whole words or exact catalogue labels). Alternatively, the new table's label is chosen so that it does not collide, if the frontend owner prefers.",
+      "actual": "Locale unset: 465 passed, 2 failed, 3 did not run (this test is one of the 2; the other is F-DG5-144). C.UTF-8: 468 passed, 1 failed (this test), 1 did not run (:569 capacity, ar). Alone: 12 passed, 1 failed (this test), 1 did not run. The PRODUCT is correct. The matched button is a read-only sort control inside a th. The page shows the auditor the read-only note. My AUD sweep of the same Dependencies page (zz-qa-dg5rg2-aud-p5.spec.ts) records 0 mutating requests and 0 enabled write controls in en and ar. So there is no authorization or data effect (not mandatory). The defect is that a required check of this gate, the product journey e2e suite, cannot pass on the frozen candidate. The chromium-ar coverage of the auditor's read-only assertions on these three screens, and the stubbed capacity test, is lost until it is repaired. Medium: a material defect of limited scope that a re-freeze must fix; per D-185 a Medium finding cannot be accepted as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-rerun-p3prio-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-alone-unset-error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-alone-unset-test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-fullsuite-unset-error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-2/failures/p3prio-aud-ar-fullsuite-cutf8-error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-probe-aud-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-24T18:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 2 (run DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5). Reproduced deterministically: the full product suite in both locale settings, and the spec alone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-144",
+      "stage_id": "DG5",
+      "requirement": "REQ-S10-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "p4-raid-governance.spec.ts test 5 (meeting workspace) runs on the default 30 s budget and timed out in chromium-ar in the full product suite (the F-DG5-141 class in another test)",
+      "reproduction": "Full product e2e on the real stack, --workers=1, locale unset (scripts/run-e2e.sh unset ... product apps/web/e2e). Test 396 [chromium-ar] apps/web/e2e/p4-raid-governance.spec.ts:290 '5. Meeting workspace: an incomplete executive ask is refused, then published to T16 and decided in session' failed with 'Test timeout of 30000ms exceeded' (30.1 s) at a 1-minute load of about 7-8.5. No assertion failed, and the trace has no step above 1.8 s: it is a long chain of steps. Its serial followers 6 and 7 (the auditor's read-only views, and 390 px / 200 % text) then did not run in chromium-ar. The test sets no explicit timeout. Measured durations: this round, unset en 27.2 s, ar 30.1 s (timeout); C.UTF-8 en 16.0 s, ar 25.0 s; alone at load ~3, 16.9 s and 16.5 s (14/14). Round 1: 22.7 s / 27.8 s and 17.4 s / 21.6 s.",
+      "expected": "As for p4-dashboards test 6 (F-DG5-141), the p2 journeys (earlier DG5 history) and p4-gates-closure test 9 (D-173): the test has an explicit budget with at least 2x headroom over a measured loaded case, so a full-suite run does not exceed it. Its assertions are unchanged.",
+      "actual": "Under the default 30 s budget the chromium-ar run has almost no headroom (25-30 s in the full suite), so the required product e2e check fails intermittently with no product defect. The product behaviour is correct: the spec passes 14/14 alone and passed in the C.UTF-8 full run. Low and not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-rerun-p4raid-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-24T18:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 2 (run DG5-T-DG5-RG-QA-R2-qa-verifier-20261024T145111Z-ef4aa8c5)."
+        }
+      ]
     }
   ]
 }
