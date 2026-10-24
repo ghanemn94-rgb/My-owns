@@ -463,10 +463,38 @@ test("dependencies: the seven T08 columns, the needed-by flag and a cycle refuse
   await expectAccessible(page, lang, "p3-prioritization-cycle");
 });
 
+// An approve or move WRITE control, matched as a whole word (F-DG5-143). A bare substring /اعتماد/ also matched
+// read-only labels whose word merely contains those letters: the column-sort header «الاعتمادية» ("dependency") of the
+// critical dependency slips table (dependencies.slips.col.dependency). Arabic and Latin words are delimited by any
+// character that is not a letter or a combining mark, so «اعتماد تاريخ …», «إعادة اعتماد …», «نقل …», "Approve …",
+// "Re-approve …" and "Move …" still match while «الاعتمادية», «اعتماديات», "Removed" and "Approved" do not.
+const APPROVE_OR_MOVE = /(?<![\p{L}\p{M}])(?:approve|move|اعتماد|نقل)(?![\p{L}\p{M}])/iu;
+// Every approve/move write label of the three screens, from the catalogue: the matcher must catch each of them.
+const APPROVE_OR_MOVE_WRITE_KEYS = [
+  "prioritization.weights.approve",
+  "prioritization.weights.approveConfirm",
+  "roadmap.milestones.move",
+  "roadmap.milestones.approveDate",
+  "roadmap.milestones.reapprove",
+  "roadmap.milestones.approveConfirm",
+];
+// Read-only labels on the same screens that contain the letters of a verb but are not that verb.
+const NOT_APPROVE_OR_MOVE_KEYS = [
+  "dependencies.slips.col.dependency",
+  "dependencies.col.dependency",
+  "dependencies.tab",
+  "dependencies.slips.title",
+  "dependencies.map.add",
+];
+
 test("the read-only auditor: prioritization, roadmap and dependencies show data with no enabled write control", async ({
   browser,
 }, info) => {
   const lang = langOf(info);
+  // The matcher itself, against the real catalogue in this test's language (no weakening: every write label matches).
+  for (const k of APPROVE_OR_MOVE_WRITE_KEYS)
+    expect(APPROVE_OR_MOVE.test(tr(lang, k, { n: "2", title: "Synthetic" })), k).toBe(true);
+  for (const k of NOT_APPROVE_OR_MOVE_KEYS) expect(APPROVE_OR_MOVE.test(tr(lang, k)), k).toBe(false);
   const aud = await asUser(browser, lang, "dev.auditor");
   const page = aud.page;
   const writes: string[] = [];
@@ -499,7 +527,7 @@ test("the read-only auditor: prioritization, roadmap and dependencies show data 
         ),
       });
     await expect(enabledWrites).toHaveCount(0);
-    await expect(page.locator("main#main").getByRole("button", { name: /approve|اعتماد|move|نقل/i })).toHaveCount(0);
+    await expect(page.locator("main#main").getByRole("button", { name: APPROVE_OR_MOVE })).toHaveCount(0);
     await shot(page, lang, name);
     await expectAccessible(page, lang, name);
   }
