@@ -1,0 +1,34 @@
+# 22 unit stderr analysis 2026-10-24T15:41:14Z (20-unit-node22.log; the same lines recur in 21-unit-node24.log)
+$ grep -n "^stderr |" 20-unit-node22.log | sort | uniq -c
+154:stderr | apps/api/src/modules/admin/branding.test.ts > version 0 defaults and the zod mirrors (REQ-S01-002) > each mirror accepts what its contract component accepts and rejects an extra member
+1083:stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (en) > T12: the form header carries the template's provenance strip (/raci)
+1137:stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (en) > T14: the form header carries the template's provenance strip (/benefits)
+1191:stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (ar) > T12: the form header carries the template's provenance strip (/raci)
+1245:stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (ar) > T14: the form header carries the template's provenance strip (/benefits)
+1333:stderr | src/components/form-framework/extension-hosts-twelve.test.tsx > extension fields on the twelve FE-C3 hosts (en) > charter: the input renders in the create form and the record view; Form tools saves with If-Match
+1575:stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+1579:stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+1601:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+1604:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+1607:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+1610:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas
+1613:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items
+1616:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+1619:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+1622:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+1625:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas
+1628:stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items
+
+## the contract requires the arrays the fixtures omit (docs/api/openapi.yaml):
+Raci required: ["transformationId","matrix","parties","deliverables"]
+BenefitTotals required: ["scope","scopeId","allocated","transformationIds","currencies","nonFinancialCount","excluded","computedAt"]
+
+## fixture source: apps/web/src/components/form-framework/extension-fields.test.tsx:371-396 mocks only the template source links, adoption plan, TOM canvas and roadmap; the /raci and /benefits page bodies come from the p4Handlers defaults without 'deliverables' / 'currencies' (the test asserts only the header strip, which renders).
+## kpiUnit/percentKpi duplicate-key warnings: the fixtures reuse one id for two rows (kpiUnit.test.tsx:196 f1).
+## branding.test.ts 'unknown format' lines: the ajv contract-mirror check ignores the date-time/uuid formats (the zod mirrors check them).
+## extension-hosts-twelve 'unique key' warning: React dev warning for a <select> child list in the test render; no assertion fails.
+## FSTDEP022: a Fastify 5 deprecation warning (router options access), not a failure.
+
+## 2 skipped (unit-formula-nocodegen, both Node versions): packages/shared/src/formula/fuzz.test.ts:600 and :833 are it.skipIf(NOCODEGEN): they need string code generation, which that project disables by design (--disallow-code-generation-from-strings, ADR-0024 §6); the same two tests run and pass in unit-node (fuzz.test.ts in the unit-node file list).
+13: ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 26122ms
+## 21-unit-node24.log has exactly the same stderr test set (diff of the sorted 'stderr |' lines is empty).

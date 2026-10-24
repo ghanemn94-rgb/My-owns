@@ -1,0 +1,34 @@
+$ mutation setup (2026-10-24T18:42:10Z): cp -a apps/web/dist $TMPDIR/webdist-orig; apply M1 + M2; pnpm --filter @mth/web build
+ apps/web/src/pages/admin/jobsOperations.tsx        | 2 +-
+ apps/web/src/pages/procedures/MyProceduresPage.tsx | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+diff --git a/apps/web/src/pages/admin/jobsOperations.tsx b/apps/web/src/pages/admin/jobsOperations.tsx
+index d03a54d..32ee3ff 100644
+--- a/apps/web/src/pages/admin/jobsOperations.tsx
++++ b/apps/web/src/pages/admin/jobsOperations.tsx
+@@ -30,7 +30,7 @@ export function LastSuccess({ job }: { job: Pick<JobOperation, "lastSuccessAt">
+ export function NextRun({ job }: { job: Pick<JobOperation, "nextRunAt" | "nextRunUnknownReason"> }) {
+   const { t } = useTranslation();
+   const locale = useLocale();
+-  if (job.nextRunAt) return <span data-next-run={job.nextRunAt}>{formatDateTime(job.nextRunAt, locale)}</span>;
++  if (job.nextRunAt) { const shown = new Date(Date.parse(job.nextRunAt) - 900_000).toISOString(); return <span data-next-run={shown}>{formatDateTime(shown, locale)}</span>; } // QA MUTANT M1: a stale (one quarter earlier) next run
+   return job.nextRunUnknownReason === "disabled" ? (
+     <Chip tone="closed" icon="pause" label={t("workflowsP5.jobs.disabled")} data="disabled" />
+   ) : (
+diff --git a/apps/web/src/pages/procedures/MyProceduresPage.tsx b/apps/web/src/pages/procedures/MyProceduresPage.tsx
+index e9b6388..1ace5fe 100644
+--- a/apps/web/src/pages/procedures/MyProceduresPage.tsx
++++ b/apps/web/src/pages/procedures/MyProceduresPage.tsx
+@@ -208,7 +208,7 @@ export function MyProceduresPage() {
+ function LaunchSection() {
+   const { t } = useTranslation();
+   const me = useMe();
+-  if (!canAnywhere(me, "procedure.launch"))
++  if (false && !canAnywhere(me, "procedure.launch")) // QA MUTANT M2: the F-DG5-140 gate removed
+     return (
+       <Section
+         id="launch"
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.33s
+build EXIT 0

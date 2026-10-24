@@ -1,0 +1,20 @@
+# 39 round-1 F-DG5-100 reproduction re-run unchanged (round-1/repro/migration-gap-order.mjs) 2026-10-24T15:53:40Z node=v24.21.0
+$ node round-1/repro/migration-gap-order.mjs
+candidate migrations: 89, last 0097_p5_config_review_contributors.sql; P5 ids 0062-0097 missing: 0066, 0067, 0073, 0077, 0078, 0079, 0083, 0084
+later build (adds 0066_p6_example.sql) on an upgraded DB: {"pending":["0066_p6_example.sql"],"unknownApplied":[],"checksumMismatches":[]}
+fresh DB order: 0066_p6_example.sql runs at position 66 of 90 (before 0068_p5_form_schemas_framework.sql)
+upgraded DB order: it runs at position 90 (after 0097_p5_config_review_contributors.sql) -> the two orders differ; nothing refuses it
+exit=0
+
+## NOTE (reviewer): the round-1 script above prints a hard-coded last line ('nothing refuses it') and does not read the new outOfOrderPending field (it predates the fix), and it numbered the applied rows 1..89. Its exit 0 only asserts pending=[0066]. The corrected check follows.
+$ node round-2/repro/migration-gap-order-r2.mjs
+OK  gap 0066_p6_example.sql: pending=["0066_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0066_p6_example.sql"]
+OK  gap 0067_p6_example.sql: pending=["0067_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0067_p6_example.sql"]
+OK  gap 0073_p6_example.sql: pending=["0073_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0073_p6_example.sql"]
+OK  gap 0077_p6_example.sql: pending=["0077_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0077_p6_example.sql"]
+OK  gap 0078_p6_example.sql: pending=["0078_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0078_p6_example.sql"]
+OK  gap 0079_p6_example.sql: pending=["0079_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0079_p6_example.sql"]
+OK  gap 0083_p6_example.sql: pending=["0083_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0083_p6_example.sql"]
+OK  gap 0084_p6_example.sql: pending=["0084_p6_example.sql","0098_p6_forward.sql"] outOfOrderPending=["0084_p6_example.sql"]
+OK  database at 0065 + 0066: pending=["0066_p6_example.sql"] outOfOrderPending=[]
+exit=0

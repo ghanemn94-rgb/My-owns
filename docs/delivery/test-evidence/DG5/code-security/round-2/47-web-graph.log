@@ -1,0 +1,16 @@
+# 47 web import cycles / lazy routes 2026-10-24T15:21:55Z node=v24.21.0
+$ node repro/web-import-cycles.mjs
+web modules: 286; static (value) import cycles: 1
+CYCLE apps/web/src/pages/admin/AssignmentsPage.tsx -> apps/web/src/pages/admin/UsersPage.tsx -> apps/web/src/pages/admin/AssignmentsPage.tsx
+router files and lazy() counts: [["apps/web/src/app/router.tsx",172]]
+eager (non-lazy) page imports in router files: ["apps/web/src/app/router.tsx: ../pages/LoginPage.tsx"]
+exit=1
+
+## the same check on the P5 base e70ac02 (git archive apps/web/src into $TMPDIR/base-web)
+web modules: 202; static (value) import cycles: 1
+CYCLE apps/web/src/pages/admin/AssignmentsPage.tsx -> apps/web/src/pages/admin/UsersPage.tsx -> apps/web/src/pages/admin/AssignmentsPage.tsx
+router files and lazy() counts: [["apps/web/src/app/router.tsx",115]]
+eager (non-lazy) page imports in router files: ["apps/web/src/app/router.tsx: ../pages/LoginPage.tsx"]
+exit=1
+## origin: git log -S'from "./AssignmentsPage' -- apps/web/src/pages/admin/UsersPage.tsx
+4cd9224 Wed Sep 30 22:50:02 2026 +0000 DG1(T-DG1-FE): bilingual web shell, screens, design tokens (frontend-ux-engineer)

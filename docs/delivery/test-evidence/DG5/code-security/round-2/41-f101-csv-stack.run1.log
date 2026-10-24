@@ -1,0 +1,191 @@
+# 41 F-DG5-101 real stack (CSV/XLSX, en+ar) 2026-10-24T15:52:02Z node=v22.22.2 LANG=<unset>
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts
+port-policy: PostgreSQL listening on port 26550 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.AdYsET/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvmkucf2_8de400d4 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, en > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed
+SEC-R2 CSV en long row: undefined
+SEC-R2 CSV en formula-text row: B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,Provisional,'-2+3,-123456789.012345,n/a,-12345678901.2345,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.64264ae80b,unknown,identify,counted
+
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, en > XLSX en cross-check: long decimals are text WITHOUT quotePrefix, user formulas text WITH quotePrefix
+SEC-R2 XLSX en -12345678901.234567: {"ref":"E3","type":"inlineStr","style":2,"formula":null,"value":null,"text":"-12345678901.234567"} quotePrefix=false
+SEC-R2 XLSX en -1234567890.123456: {"ref":"H3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890.123456"} quotePrefix=false
+SEC-R2 XLSX en -1234567890123.4567: {"ref":"J3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890123.4567"} quotePrefix=false
+SEC-R2 XLSX en hyperlink cell: {"ref":"B4","type":"inlineStr","style":1,"formula":null,"value":null,"text":"=HYPERLINK(\"http://x\",\"y\")"} quotePrefix=true
+
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, ar > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed
+SEC-R2 CSV ar long row: undefined
+SEC-R2 CSV ar formula-text row: B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,مؤقت,'-2+3,-123456789.012345,لا ينطبق,-12345678901.2345,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.64264ae80b,unknown,identify,counted
+
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, ar > XLSX ar cross-check: long decimals are text WITHOUT quotePrefix, user formulas text WITH quotePrefix
+SEC-R2 XLSX ar -12345678901.234567: {"ref":"E3","type":"inlineStr","style":2,"formula":null,"value":null,"text":"-12345678901.234567"} quotePrefix=false
+SEC-R2 XLSX ar -1234567890.123456: {"ref":"H3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890.123456"} quotePrefix=false
+SEC-R2 XLSX ar -1234567890123.4567: {"ref":"J3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890123.4567"} quotePrefix=false
+SEC-R2 XLSX ar hyperlink cell: {"ref":"B4","type":"inlineStr","style":1,"formula":null,"value":null,"text":"=HYPERLINK(\"http://x\",\"y\")"} quotePrefix=true
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts (4 tests | 2 failed) 3278ms
+   × F-DG5-101 on the real stack, CSV, en > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed 262ms
+     → Product,Mobily Transformation Hub
+Output,Registers
+Transformation,TXB84353 — Synthetic fixture transformation
+Subject,TXB84353 — Synthetic fixture transformation
+Period,
+As of,2026-10-24 18:52 (Asia/Riyadh)
+Snapshot ID,01a16e9d-14c9-718a-a29f-0e46351a18f7
+Issue,Draft — not an issued report
+Methodology version,playbook v1
+"Approval state of the sources (recorded, not an approval)",Not applicable
+"Practical synthesis inspired by PMI Organizational Transformation, Brightline Transformation Compass and PMI Benefits Realization Management; extended with a custom Target Operating Model toolkit."
+
+Filters
+No filters
+
+Title
+Code,Title,Benefit type,Value class,Baseline,Baseline — status,Baseline unit,Target,Target — status,Planned value,Planned value — status,Realized validated,Realized validated — status,Realized sustained,Realized sustained — status,Pending,Pending — status,Pending count,Owner,Status,Lifecycle step,Counting
+B01,SEC-R2 long negative decimals,revenue,revenue_uplift,-12345678901.234567,Provisional,SAR,-1234567890.123456,n/a,-1234567890123.4567,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.64264ae80b,unknown,identify,counted
+B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,Provisional,'-2+3,-123456789.012345,n/a,-12345678901.2345,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.64264ae80b,unknown,identify,counted
+
+Revenue uplift
+Code,Title,Realized validated,Realized validated — status,Realized sustained,Realized sustained — status,Pending,Pending — status
+B01,SEC-R2 long negative decimals,0.0000,n/a,0.0000,n/a,0.0000,n/a
+B02,"'=HYPERLINK(""http://x"",""y"")",0.0000,n/a,0.0000,n/a,0.0000,n/a
+Total,,0,n/a,0,n/a,0,n/a
+
+Validation labels
+Validated,The value is validated by its owner process.
+Provisional,The value is provisional: pending validation or approval; it is shown and counted.
+Unknown,No value is available; the cell is empty and is never shown as 0.
+Stale,The value is out of date; no curr: expected undefined to be defined
+   ✓ F-DG5-101 on the real stack, CSV, en > XLSX en cross-check: long decimals are text WITHOUT quotePrefix, user formulas text WITH quotePrefix 242ms
+   × F-DG5-101 on the real stack, CSV, ar > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed 103ms
+     → المنتج,Mobily Transformation Hub
+المخرَج,السجلات
+التحول,TXB84353 — Synthetic fixture transformation
+الموضوع,TXB84353 — Synthetic fixture transformation
+الفترة,
+حتى تاريخ,2026-10-24 18:52 (Asia/Riyadh)
+معرّف اللقطة,01a16e9d-14c9-718a-a29f-0e46351a18f7
+الإصدار,مسودة — ليس تقريراً صادراً
+إصدار المنهجية,playbook v1
+حالة اعتماد المصادر (مسجّلة، وليست اعتماداً),لا ينطبق
+توليفة عملية مستوحاة من سلسلة PMI للتحول المؤسسي وبوصلة برايتلاين للتحول وإدارة تحقيق المنافع من PMI؛ ومُوسَّعة بمجموعة أدوات مخصصة لنموذج التشغيل المستهدف.
+
+Filters
+No filters
+
+Title
+Code,Title,Benefit type,Value class,Baseline,Baseline — الحالة,Baseline unit,Target,Target — الحالة,Planned value,Planned value — الحالة,Realized validated,Realized validated — الحالة,Realized sustained,Realized sustained — الحالة,Pending,Pending — الحالة,Pending count,Owner,Status,Lifecycle step,Counting
+B01,SEC-R2 long negative decimals,revenue,revenue_uplift,-12345678901.234567,مؤقت,SAR,-1234567890.123456,لا ينطبق,-1234567890123.4567,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.64264ae80b,unknown,identify,counted
+B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,مؤقت,'-2+3,-123456789.012345,لا ينطبق,-12345678901.2345,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.64264ae80b,unknown,identify,counted
+
+Revenue uplift
+Code,Title,Realized validated,Realized validated — الحالة,Realized sustained,Realized sustained — الحالة,Pending,Pending — الحالة
+B01,SEC-R2 long negative decimals,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق
+B02,"'=HYPERLINK(""http://x"",""y"")",0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق
+الإجمالي,,0,لا ينطبق,0,لا ينطبق,0,لا ينطبق
+
+تسميات التحقق
+متحقَّق منه,القيمة متحقَّق منها من الجهة المالكة.
+مؤقت,القيمة مؤقتة: بانتظار التحقق أو الاعتماد؛ تُعرض وتُحتسب.
+غير معروف,لا تتوفر قيمة؛ تبقى الخلية فارغة ولا تُعرض صفراً أبداً.
+قديم,القيمة غير محدَّثة؛ لا يُعرض رقم حالي.
+لا ينطبق,القيمة لا تنطبق على هذا : expected undefined to be defined
+   ✓ F-DG5-101 on the real stack, CSV, ar > XLSX ar cross-check: long decimals are text WITHOUT quotePrefix, user formulas text WITH quotePrefix 118ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, en > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed
+AssertionError: Product,Mobily Transformation Hub
+Output,Registers
+Transformation,TXB84353 — Synthetic fixture transformation
+Subject,TXB84353 — Synthetic fixture transformation
+Period,
+As of,2026-10-24 18:52 (Asia/Riyadh)
+Snapshot ID,01a16e9d-14c9-718a-a29f-0e46351a18f7
+Issue,Draft — not an issued report
+Methodology version,playbook v1
+"Approval state of the sources (recorded, not an approval)",Not applicable
+"Practical synthesis inspired by PMI Organizational Transformation, Brightline Transformation Compass and PMI Benefits Realization Management; extended with a custom Target Operating Model toolkit."
+
+Filters
+No filters
+
+Title
+Code,Title,Benefit type,Value class,Baseline,Baseline — status,Baseline unit,Target,Target — status,Planned value,Planned value — status,Realized validated,Realized validated — status,Realized sustained,Realized sustained — status,Pending,Pending — status,Pending count,Owner,Status,Lifecycle step,Counting
+B01,SEC-R2 long negative decimals,revenue,revenue_uplift,-12345678901.234567,Provisional,SAR,-1234567890.123456,n/a,-1234567890123.4567,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.64264ae80b,unknown,identify,counted
+B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,Provisional,'-2+3,-123456789.012345,n/a,-12345678901.2345,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.64264ae80b,unknown,identify,counted
+
+Revenue uplift
+Code,Title,Realized validated,Realized validated — status,Realized sustained,Realized sustained — status,Pending,Pending — status
+B01,SEC-R2 long negative decimals,0.0000,n/a,0.0000,n/a,0.0000,n/a
+B02,"'=HYPERLINK(""http://x"",""y"")",0.0000,n/a,0.0000,n/a,0.0000,n/a
+Total,,0,n/a,0,n/a,0,n/a
+
+Validation labels
+Validated,The value is validated by its owner process.
+Provisional,The value is provisional: pending validation or approval; it is shown and counted.
+Unknown,No value is available; the cell is empty and is never shown as 0.
+Stale,The value is out of date; no curr: expected undefined to be defined
+ ❯ apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts:116:39
+    114|     console.log(`SEC-R2 CSV ${language} long row: ${long}`);
+    115|     console.log(`SEC-R2 CSV ${language} formula-text row: ${evil}`);
+    116|     expect(long, text.slice(0, 2000)).toBeDefined();
+       |                                       ^
+    117|     const fields = long!.split(",");
+    118|     for (const v of Object.values(LONG)) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, ar > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed
+AssertionError: المنتج,Mobily Transformation Hub
+المخرَج,السجلات
+التحول,TXB84353 — Synthetic fixture transformation
+الموضوع,TXB84353 — Synthetic fixture transformation
+الفترة,
+حتى تاريخ,2026-10-24 18:52 (Asia/Riyadh)
+معرّف اللقطة,01a16e9d-14c9-718a-a29f-0e46351a18f7
+الإصدار,مسودة — ليس تقريراً صادراً
+إصدار المنهجية,playbook v1
+حالة اعتماد المصادر (مسجّلة، وليست اعتماداً),لا ينطبق
+توليفة عملية مستوحاة من سلسلة PMI للتحول المؤسسي وبوصلة برايتلاين للتحول وإدارة تحقيق المنافع من PMI؛ ومُوسَّعة بمجموعة أدوات مخصصة لنموذج التشغيل المستهدف.
+
+Filters
+No filters
+
+Title
+Code,Title,Benefit type,Value class,Baseline,Baseline — الحالة,Baseline unit,Target,Target — الحالة,Planned value,Planned value — الحالة,Realized validated,Realized validated — الحالة,Realized sustained,Realized sustained — الحالة,Pending,Pending — الحالة,Pending count,Owner,Status,Lifecycle step,Counting
+B01,SEC-R2 long negative decimals,revenue,revenue_uplift,-12345678901.234567,مؤقت,SAR,-1234567890.123456,لا ينطبق,-1234567890123.4567,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.64264ae80b,unknown,identify,counted
+B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,مؤقت,'-2+3,-123456789.012345,لا ينطبق,-12345678901.2345,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.64264ae80b,unknown,identify,counted
+
+Revenue uplift
+Code,Title,Realized validated,Realized validated — الحالة,Realized sustained,Realized sustained — الحالة,Pending,Pending — الحالة
+B01,SEC-R2 long negative decimals,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق
+B02,"'=HYPERLINK(""http://x"",""y"")",0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق
+الإجمالي,,0,لا ينطبق,0,لا ينطبق,0,لا ينطبق
+
+تسميات التحقق
+متحقَّق منه,القيمة متحقَّق منها من الجهة المالكة.
+مؤقت,القيمة مؤقتة: بانتظار التحقق أو الاعتماد؛ تُعرض وتُحتسب.
+غير معروف,لا تتوفر قيمة؛ تبقى الخلية فارغة ولا تُعرض صفراً أبداً.
+قديم,القيمة غير محدَّثة؛ لا يُعرض رقم حالي.
+لا ينطبق,القيمة لا تنطبق على هذا : expected undefined to be defined
+ ❯ apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts:116:39
+    114|     console.log(`SEC-R2 CSV ${language} long row: ${long}`);
+    115|     console.log(`SEC-R2 CSV ${language} formula-text row: ${evil}`);
+    116|     expect(long, text.slice(0, 2000)).toBeDefined();
+       |                                       ^
+    117|     const fields = long!.split(",");
+    118|     for (const v of Object.values(LONG)) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  15:52:06
+   Duration  25.19s (transform 7.69s, setup 0ms, collect 16.17s, tests 3.28s, environment 0ms, prepare 150ms)
+
+exit=1

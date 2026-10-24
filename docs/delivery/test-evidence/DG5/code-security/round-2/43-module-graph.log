@@ -1,0 +1,12 @@
+# 43 module graph 2026-10-24T15:21:29Z (clone @7144a19)
+$ grep -rnE "from \"(\.\./)+(workflows|admin)/" apps/api/src/modules/reporting --include=*.ts (non-test)
+matches=0
+$ grep -rnE "apps/api|@mth/api|\.\./\.\./api/" apps/worker/src --include=*.ts (non-test)
+matches=0
+$ ports wired in server.ts:
+90:import { setWorkflowsReadPort } from "./modules/reporting/ports.ts";
+108:// T-DG4-KBE-G2 (ADR-0037 §1 item 3, §9): the read-only gate readiness behind reporting's WorkflowsReadPort (the same
+384:  setWorkflowsReadPort({
+393:  setMaterialChangePort(withRevisionProposals(materialChangePortImpl));
+415:  registerLaunchPlanPort(launchPlanGenerator); // T-DG5-BE-P (ADR-0044 §1, ADR-0048 §1): the S12-004 LaunchPlanPort of the API process
+$ madge-free cycle check of the web import graph (scripts present?)

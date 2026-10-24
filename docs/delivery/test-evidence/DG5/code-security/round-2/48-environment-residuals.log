@@ -1,0 +1,34 @@
+# 48 environmental residuals 2026-10-24T15:57:25Z node=v24.21.0 (clone @7144a19, no network)
+$ timeout 20 node scripts/verify-dependency-pins.mjs
+exit=124 (124 = stopped by the 20 s timeout: the verifier queries the live registry; no network in the sandbox -> REQ-DLV-042 AC-1 / D-057 residual)
+## offline: every dependency in every package.json is an exact version
+manifests 9; entries 81; non-exact: []
+$ ls pnpm-lock.yaml licenses .github/workflows
+-rw-r--r-- 1 root root 136664 Oct 24 15:07 pnpm-lock.yaml
+.github/workflows:
+ci.yml
+delivery-gates.yml
+
+licenses:
+README.md
+collect-notices.mjs
+generate-sbom.mjs
+inventory.csv
+lib
+sbom.cdx.json
+$ git diff --stat e70ac02 edbf5ce -- pnpm-lock.yaml
+ 1 file changed, 344 insertions(+), 2 deletions(-)
+## outbound AI / external notification clients in product source (expect none)
+matches=0
+## dev IdP binding path (D-165): demoDevIssuerBindingAllowed
+/**
+ * D-165: whether `seed-demo` (and `reset-demo`) also bind the demo users to the dev issuer, so the dev sign-in of an
+ * `AUTH_MODE=dev` stack can choose them. Only with AUTH_MODE=dev, and never with NODE_ENV=production (the same rule as
+ * `mth-db seed-dev`); in every other mode nothing changes. No secret or password is involved.
+ */
+export function demoDevIssuerBindingAllowed(env: {
+  readonly NODE_ENV?: string | undefined;
+  readonly AUTH_MODE?: string | undefined;
+}): boolean {
+  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+}

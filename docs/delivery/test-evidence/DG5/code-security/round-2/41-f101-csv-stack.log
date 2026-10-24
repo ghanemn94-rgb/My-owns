@@ -1,0 +1,36 @@
+# 41 F-DG5-101 real stack (CSV/XLSX, en+ar) run 2 (run 1 = 41-f101-csv-stack.run1.log: my repro's row selector and control strings were wrong) 2026-10-24T15:52:56Z node=v22.22.2 LANG=<unset>
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts
+port-policy: PostgreSQL listening on port 26550 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.AdYsET/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvmkvgo9_92816479 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, en > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed
+SEC-R2 CSV en long row: B01,SEC-R2 long negative decimals,revenue,revenue_uplift,-12345678901.234567,Provisional,SAR,-1234567890.123456,n/a,-1234567890123.4567,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.087b4bde45,unknown,identify,counted
+SEC-R2 CSV en formula-text row: B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,Provisional,'-2+3,-123456789.012345,n/a,-12345678901.2345,n/a,0.0000,n/a,0.0000,n/a,0.0000,n/a,0,Synthetic u.087b4bde45,unknown,identify,counted
+
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, en > XLSX en cross-check: long decimals are text WITHOUT quotePrefix, user formulas text WITH quotePrefix
+SEC-R2 XLSX en -12345678901.234567: {"ref":"E3","type":"inlineStr","style":2,"formula":null,"value":null,"text":"-12345678901.234567"} quotePrefix=false
+SEC-R2 XLSX en -1234567890.123456: {"ref":"H3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890.123456"} quotePrefix=false
+SEC-R2 XLSX en -1234567890123.4567: {"ref":"J3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890123.4567"} quotePrefix=false
+SEC-R2 XLSX en hyperlink cell: {"ref":"B4","type":"inlineStr","style":1,"formula":null,"value":null,"text":"=HYPERLINK(\"http://x\",\"y\")"} quotePrefix=true
+
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, ar > long negative decimals are unprefixed canonical strings; formula-like user text is prefixed
+SEC-R2 CSV ar long row: B01,SEC-R2 long negative decimals,revenue,revenue_uplift,-12345678901.234567,مؤقت,SAR,-1234567890.123456,لا ينطبق,-1234567890123.4567,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.087b4bde45,unknown,identify,counted
+SEC-R2 CSV ar formula-text row: B02,"'=HYPERLINK(""http://x"",""y"")",revenue,revenue_uplift,-1234567890.123450,مؤقت,'-2+3,-123456789.012345,لا ينطبق,-12345678901.2345,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0.0000,لا ينطبق,0,Synthetic u.087b4bde45,unknown,identify,counted
+
+stdout | apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts > F-DG5-101 on the real stack, CSV, ar > XLSX ar cross-check: long decimals are text WITHOUT quotePrefix, user formulas text WITH quotePrefix
+SEC-R2 XLSX ar -12345678901.234567: {"ref":"E3","type":"inlineStr","style":2,"formula":null,"value":null,"text":"-12345678901.234567"} quotePrefix=false
+SEC-R2 XLSX ar -1234567890.123456: {"ref":"H3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890.123456"} quotePrefix=false
+SEC-R2 XLSX ar -1234567890123.4567: {"ref":"J3","type":"inlineStr","style":0,"formula":null,"value":null,"text":"-1234567890123.4567"} quotePrefix=false
+SEC-R2 XLSX ar hyperlink cell: {"ref":"B4","type":"inlineStr","style":1,"formula":null,"value":null,"text":"=HYPERLINK(\"http://x\",\"y\")"} quotePrefix=true
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r2-csv-long-decimal-stack.test.ts (4 tests) 2309ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  15:52:58
+   Duration  20.11s (transform 7.16s, setup 0ms, collect 14.17s, tests 2.31s, environment 0ms, prepare 161ms)
+
+exit=0

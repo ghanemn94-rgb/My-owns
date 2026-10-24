@@ -1,0 +1,34 @@
+# qa-verifier DG5 clean re-gate round 2: run notes (T-DG5-RG-QA-R2; assignment task id T-DG5-REV-QA-R5)
+
+Candidate `sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b` (2203 files), source `edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7`, freeze `7144a19`.
+Every build and test ran in a disposable COMPLETE clone `$TMPDIR/review-dg5` (no sparse checkout this round; env.txt). It, the store copy and all scratch are removed (00-candidate-end.log).
+
+## Order of work (UTC, 2026-10-24)
+1. 15:00 clone + identity (00-candidate-start.log): same id and 2203 files in the clone (working tree, --ref edbf5ce, --ref HEAD); 0 manifest mismatches; HEAD differs from the source only in 5 docs/delivery files. 15:02 offline install.
+2. 15:03-15:20 static 7/7 EXIT 0 (01-*.log).
+3. 15:21 validators in the working tree: register, pipeline, historical DG4/DG3/DG2/DG1 all PASS (08-validate.log).
+4. 15:21-16:22 integration run1; 16:22-17:09 run2: 320 files, 3084 passed + 1 skipped (by design) each, EXIT 0 (04-integration-run{1,2}.log). A first attempt to start run2 at 16:22 never ran (my relative script path; exit 127 before any command; no log).
+5. 15:21-16:58 product e2e (locale unset): 465 passed, 2 failed, 3 did not run (05-e2e-product-unset.log). Investigated both failures (below).
+6. 15:33 CSV injection unit probe (attempt 1 PROBE ERROR, fixed: 9/9).
+7. 16:23 root acceptance specs (unset): 26/26; my command misnamed the A20 file (a20-bilingual-accessibility instead of a20-bilingual-shell), so A20 ran separately at 16:41: 4/4 (05-e2e-root-a20-unset.log). Total 30/30.
+8. 16:42-16:49 demo stack (unset): a02-* + a21 12/12; the dual-branch product specs on the demo stack 8 passed + 2 failed: the 2 failures are fed5-demo-form-badge.spec.ts, a PRODUCTION-only spec ("production database: no demo record badge", it asserts synthetic=false) that my selection included by mistake; it passes on the production stack in both full product runs. The C.UTF-8 re-run uses the corrected selection (8/8).
+9. 17:00-18:00 probes (unset, then C.UTF-8): F-DG5-140 launch probe 8/8 x2; AUD sweep 34 screens x en/ar, 0 problems x2; PB-093 Studio UI en/ar x2; demo probe (B0147 chains, inbox approval label, Day-90 test) 6/6 x2; A22 with QA_A22_CROSS_BOUNDARY=1 en/ar x2: all pass; exec-pack probe 3/3 + 18 samples; tests/qa alone 31 files 336/336 (64 A15 matrix files dumped).
+10. 17:01-18:20 product e2e (C.UTF-8): 468 passed, 1 failed, 1 did not run (05-e2e-product-cutf8.log).
+11. 17:57-18:21 unit series r1: 4/4 EXIT 0, all tests passed, but OUTSIDE the D-134 envelope (max load 9.48, 38/103 samples above 8: my product run and the other reviewers were running). Not the gate check.
+12. 18:22-18:41 unit series r2, nothing else of mine running: INSIDE the envelope (78 samples, max 6.38): 4/4 EXIT 0, 2350 / 1746 / 259 + 2 skipped (by design). This is the gate check.
+13. 18:42-18:44 mutation check in the clone (09-mutation-*.log, 05-e2e-mutants-unset.log): M1 (jobs screen shows a next run one quarter early) kills A22; M2 (the F-DG5-140 gate removed) kills p5-launch-permission test 1 and my probe (2 tests); the launching-role controls still pass. Clone restored (0 tracked changes; candidate id re-checked).
+14. 18:45 end-of-review identity: unchanged; clone removed.
+
+## Failures in my logs, each explained
+- 05-e2e-product-unset.log, 05-e2e-product-cutf8.log, 05-e2e-rerun-p3prio-unset.log EXIT 1: `apps/web/e2e/p3-prioritization-roadmap.spec.ts:542` [chromium-ar] fails DETERMINISTICALLY (both full runs and alone): `locator('main#main').getByRole('button', { name: /approve|اعتماد|move|نقل/i })` expected 0, received 1. The one match is the column-sort header button "الاعتمادية غير مرتّب" ("Dependency, not sorted") of the critical-dependency-slips table that T-DG5-FE-RG1 (F-DG5-120, slips.tsx) added to the Dependencies page: "الاعتمادية" (dependency) contains "اعتماد" (approval). The product is correct (a read-only sort control; my AUD sweep of that page: 0 mutations, 0 write controls), the spec is unchanged since DG3, and the next serial test (:569 capacity, chromium-ar) does not run. -> F-DG5-143 (Medium). failures/ holds the error contexts and screenshots.
+- 05-e2e-product-unset.log: `apps/web/e2e/p4-raid-governance.spec.ts:290` (test 5) [chromium-ar] "Test timeout of 30000ms exceeded" (30.1 s; en 27.2 s), no failed assertion; its trace has no step over 1.8 s; tests 6 and 7 then did not run (serial). Alone 14/14 (16.5-16.9 s); C.UTF-8 full run: passed at 25.0 s (ar), 16.0 s (en). Round 1 measured 27.8 s (ar). Same class as F-DG5-141, in a test with no explicit budget. -> F-DG5-144 (Low).
+- 05-e2e-demo-productspecs-unset.log EXIT 1: my selection error (item 8 above), not a product or test defect.
+- 05-e2e-mutants-unset.log EXIT 1: by design (4 failed = the mutants killed; 3 passed = the controls).
+- 03-unit-probe-csv-injection-attempt1-PROBE-ERROR.log EXIT 1: my fixture's 24-digit decimal exceeded the report schema's DECIMAL_PATTERN (18 integer digits), so my positive control failed; the 8 other assertions passed. Fixed to an 18-digit value: 9/9.
+- Unit: every log carries the 18 stderr blocks D-169 disclosed (10 percentKpi.test.tsx, 2 kpiUnit.test.tsx, 4 extension-fields.test.tsx, 1 extension-hosts-twelve.test.tsx, 1 branding.test.ts), all from passing tests; 0 unhandled errors; 2 skipped by design (fuzz.test.ts it.skipIf(NOCODEGEN) in unit-formula-nocodegen; they run in unit-node).
+- Integration: 1 skipped by design (presentation.test.ts:170 it.runIf(!hasMeetingPackAssembler); its :211 runIf(has...) counterpart passes). "BE17 db-econnreset ... ECONNRESET" and "BE18 Q7 ... idp_unavailable" are the tests' own logs of deliberate fault injection (request-io.test.ts; commit-time-auth.test.ts Q7, a never-answering IdP) in passing tests.
+- 01-pnpm-r-build.log: Vite's "Some chunks are larger than 500 kB" warning (informational; EXIT 0). 01-pnpm-check-contrast.log lists 3 documented prohibited pairs (by design, EXIT 0).
+- 07-render-samples-BLOCKED.log: raster rendering is impossible in this sandbox (full Chromium aborts on its singleton socket; LibreOffice needs a writable /tmp; no PDF library). The samples were inspected at content level (07-inspect-samples.txt, 07-inspect-summary.txt), as in round 1.
+- The trace-prune guard (06-prune-traces.log) reached its 2 h background limit and was not restarted; one manual prune followed. Disk never fell below 8 GB free.
+- 00-candidate-end.log: the repository HEAD moved during my run through two auto-commits of the OTHER reviewers' round-2 records (0 files outside docs/delivery); I did not open them.
+- The assignment's "mirror reviews/DG4/round-20/qa-verifier.json": that file does not exist (DG4 has rounds 1-10); the record follows review.schema.json and the field set of my DG5 round-1 record.

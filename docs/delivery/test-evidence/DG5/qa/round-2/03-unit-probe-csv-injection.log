@@ -1,0 +1,33 @@
+$ cp tests/round-2/unit/zz-qa-dg5rg2-csv-injection.test.ts packages/reporting/src/; npx vitest run --project unit-node --reporter=verbose packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts (2026-10-24T15:33:59Z, node v24.21.0); attempt 2 (attempt 1: my fixture's 24-digit decimal exceeded the schema's 18-digit DECIMAL_PATTERN, so the positive control failed)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/review-dg5
+
+stdout | packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > a long negative system decimal (beyond a double) is written unprefixed and unchanged; a short one is a number
+QA-RG2-CSV long decimal cell: {"kind":"text","text":"-123456789012345678.123456","quotePrefix":false,"italic":false} -> -123456789012345678.123456
+
+stdout | packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > the report schema refuses a decimal value that is not a canonical decimal (no user text on the unprefixed path)
+QA-RG2-CSV schema decimal "=1+1": refused
+QA-RG2-CSV schema decimal "-1+cmd": refused
+QA-RG2-CSV schema decimal "1e5": refused
+QA-RG2-CSV schema decimal " -1": refused
+QA-RG2-CSV schema decimal "-1,000": refused
+
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > user text "=HYPERLINK(\"http://x.invalid\",\"x\")" is written with the apostrophe 2ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > user text "+1+1" is written with the apostrophe 0ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > user text "-1+cmd|' /C calc'!A0" is written with the apostrophe 0ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > user text "@SUM(A1)" is written with the apostrophe 0ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > user text "\tTAB" is written with the apostrophe 0ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > user text "\rCR" is written with the apostrophe 0ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > ordinary user text is unchanged; a neutralized text with a comma and a quote is still CSV-quoted 0ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > a long negative system decimal (beyond a double) is written unprefixed and unchanged; a short one is a number 2ms
+ ✓ |unit-node| packages/reporting/src/zz-qa-dg5rg2-csv-injection.test.ts > QA RG2 REQ-S13-006 CSV neutralization after the F-DG5-101 change > the report schema refuses a decimal value that is not a canonical decimal (no user text on the unprefixed path) 4ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  15:34:01
+   Duration  3.88s (transform 1.59s, setup 0ms, collect 3.11s, tests 10ms, environment 0ms, prepare 193ms)
+
+EXIT 0

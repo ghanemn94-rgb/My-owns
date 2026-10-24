@@ -1,0 +1,10 @@
+# 91 repository HEAD moved during my run 2026-10-24T16:44:11Z
+$ git log --oneline 7144a19..HEAD
+23b89db run: DG5-T-DG5-RG-DOM-R2-domain-reviewer-20261024T145031Z-63673283 (review evidence, auto-committed by run-agent.sh)
+$ git diff --name-only 7144a19 HEAD | grep -v ^docs/delivery/ (expect none)
+0
+$ git diff --name-only 7144a19 HEAD | sed s#/[^/]*$## | sort -u (directories only; I did not open these files)
+docs/delivery/reviews/DG5/round-2
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R2-domain-reviewer-20261024T145031Z-63673283
+$ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}

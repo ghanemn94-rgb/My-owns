@@ -1,0 +1,71 @@
+# 01 candidate identity (2026-10-24T15:00:51Z)
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv; git checkout 7144a19 (freeze commit; source edbf5ce + delivery records only)
+$ git rev-parse HEAD
+7144a190ce4967d5f5448fda8ed04bf56e70756e
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG5 (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+exit=0
+$ (repo tree) node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+exit=0
+$ git -C /home/user/My-owns rev-parse HEAD
+7144a190ce4967d5f5448fda8ed04bf56e70756e
+$ git diff --name-only edbf5ce HEAD
+docs/delivery/assignments/DG5/round-2/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-2/domain-reviewer.md
+docs/delivery/assignments/DG5/round-2/qa-verifier.md
+docs/delivery/candidates/DG5/5df44203b73c7c9e.manifest.json
+docs/delivery/stages.json
+$ git diff --stat ac68d1b edbf5ce -- . :!docs/delivery  (P5 product vs old branch; shows the RG1 repair diff only)
+ packages/reporting/src/csv.ts                      |  15 +-
+ packages/reporting/src/xlsx/xlsx.test.ts           |  10 +
+ 45 files changed, 2196 insertions(+), 77 deletions(-)
+$ git diff --stat 270ebbf edbf5ce -- . :!docs/delivery (RG1 repair diff)
+ apps/api/src/modules/platform/health.ts            |   4 +-
+ .../environment/demo-day-ninety.test.ts            | 129 ++++++++
+ apps/api/test/integration/platform.test.ts         |  16 +
+ apps/web/e2e/p4-dashboards.spec.ts                 |  73 +++--
+ apps/web/e2e/p5-dependency-slip-impact.spec.ts     | 340 +++++++++++++++++++++
+ apps/web/e2e/p5-launch-permission.spec.ts          |  96 ++++++
+ apps/web/e2e/p5-reader-tables.spec.ts              | 155 ++++++++++
+ apps/web/src/api/all-transformations.test.tsx      |   9 +-
+ apps/web/src/i18n/ar/dependencies.json             |  27 ++
+ apps/web/src/i18n/ar/myWork.json                   |   3 +-
+ apps/web/src/i18n/ar/workflowsP5.json              |   3 +-
+ apps/web/src/i18n/en/dependencies.json             |  27 ++
+ apps/web/src/i18n/en/myWork.json                   |   3 +-
+ apps/web/src/i18n/en/workflowsP5.json              |   3 +-
+ .../src/pages/dependencies/DependenciesPage.tsx    |   4 +
+ apps/web/src/pages/dependencies/slips.test.tsx     | 125 ++++++++
+ apps/web/src/pages/dependencies/slips.tsx          | 248 +++++++++++++++
+ apps/web/src/pages/my-work/message-keys.test.ts    |  17 ++
+ apps/web/src/pages/playbook/reader-tables.test.tsx | 181 +++++++++++
+ apps/web/src/pages/playbook/ui.tsx                 |  97 +++++-
+ apps/web/src/pages/portfolio/InitiativePage.tsx    |   4 +
+ apps/web/src/pages/procedures/MyProceduresPage.tsx |  28 +-
+ .../pages/procedures/launch-permission.test.tsx    |  88 ++++++
+ apps/web/src/styles/app.css                        |  11 +
+ docs/architecture/adr/ADR-0003-persistence.md      |  20 ++
+ docs/architecture/adr/ADR-0007-api-conventions.md  |   1 +
+ ...nitions-instances-seeded-procedures-coverage.md |  15 +-
+ ...omations-approval-routes-notification-policy.md |  19 +-
+ ...lsx-pptx-csv-fonts-rtl-injection-export-jobs.md |  18 +-
+ ...aybook-reader-provenance-navigation-branding.md |  21 +-
+ ...nvironment-roaming-dataset-reset-walkthrough.md |  21 ++
+ docs/architecture/data-dictionary.md               |   2 +-
+ docs/architecture/p4-work-split.md                 |   2 +-
+ docs/architecture/p5-work-split.md                 |  10 +-
+ e2e/a22-operations-jobs.spec.ts                    | 115 ++++++-
+ packages/db/src/cli.ts                             |   4 +-
+ packages/db/src/demo/data/roaming-states.ts        |  19 +-
+ packages/db/src/migrate.test.ts                    |  54 ++++
+ packages/db/src/migrate.ts                         |  19 +-
+ packages/db/src/seed.test.ts                       |  51 +++-
+ packages/db/test/integration/demo-roaming.test.ts  |  48 +++
+ packages/db/test/integration/migrate.test.ts       |  51 ++++
+ packages/reporting/src/csv.test.ts                 |  67 +++-
+ packages/reporting/src/csv.ts                      |  15 +-
+ packages/reporting/src/xlsx/xlsx.test.ts           |  10 +
+ 45 files changed, 2196 insertions(+), 77 deletions(-)

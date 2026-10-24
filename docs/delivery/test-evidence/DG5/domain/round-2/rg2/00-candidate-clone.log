@@ -1,0 +1,20 @@
+$ git rev-parse HEAD (repo)
+7144a190ce4967d5f5448fda8ed04bf56e70756e
+$ node tools/gates/candidate.mjs --stage DG5 (repo)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+$ git diff --name-only edbf5ce HEAD | grep -v ^docs/delivery/ (expect empty)
+(end)
+$ git diff --name-only edbf5ce HEAD
+docs/delivery/assignments/DG5/round-2/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-2/domain-reviewer.md
+docs/delivery/assignments/DG5/round-2/qa-verifier.md
+docs/delivery/candidates/DG5/5df44203b73c7c9e.manifest.json
+docs/delivery/stages.json
+$ git diff --stat ac68d1b 270ebbf -- . :!docs/delivery (expect empty)
+(end)
+$ git clone --no-checkout + sparse (exclude docs/delivery/test-evidence, runs) + checkout HEAD
+7144a190ce4967d5f5448fda8ed04bf56e70756e
+shallow: false; rev-list count: 1455
+$ node tools/gates/candidate.mjs --stage DG5 (clone)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+exit 0

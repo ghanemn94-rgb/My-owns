@@ -1,0 +1,710 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - button "تغيير اللغة إلى English" [ref=e11] [cursor=pointer]: English
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Auditor
+      - generic [ref=e14]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: تسجيل الخروج
+  - generic [ref=e20]:
+    - navigation "التنقل الرئيسي" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "عملي" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: عملي
+          - list "عملي" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "المهام وصندوق الوارد" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "الموافقات" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "التفويضات" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "تفضيلات الإشعارات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "النظرة التنفيذية" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "لوحات المؤشرات" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "سياسة ألوان الحالة" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "التحوّلات" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: التحوّلات
+        - listitem [ref=e46]:
+          - link "الدليل والإجراءات" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "قارئ الدليل" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "إجراءاتي" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "فحص سلامة التحوّل" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "مؤشرات الأداء" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "نموذج التشغيل المستهدف" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: نموذج التشغيل المستهدف
+        - listitem [ref=e69]:
+          - link "المبادرات وخرائط الطريق" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "المحافظ" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "تحديثات المسؤولين" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "الحوكمة" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: الحوكمة
+          - list "الحوكمة" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "المجموعات" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "المنتديات" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "الاجتماعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "القرارات التنفيذية (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "طلبات التغيير" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "المخاطر والإجراءات" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "سجل الإجراءات" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "الإجراءات التصحيحية" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "المنافع والمالية" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "سجل المنافع (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "التغيير والتبنّي" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "خطة التبنّي (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "الأدلة والتقارير" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "التقارير واللقطات" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "التصدير" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "وضع العرض التقديمي" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "سجل الأدلة" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "مجالات الأداء" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "قائمة التحسين المستمر" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "الدروس المستفادة" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "البحث في الدروس" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+        - listitem [ref=e137]:
+          - link "الإدارة" [ref=e138] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e139]: الإدارة
+          - list "الإدارة" [ref=e140]:
+            - listitem [ref=e141]:
+              - link "التقويم" [ref=e142] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e143]:
+              - link "استوديو الدليل" [ref=e144] [cursor=pointer]:
+                - /url: /admin/studio
+            - listitem [ref=e145]:
+              - link "ترحيل المنهجية" [ref=e146] [cursor=pointer]:
+                - /url: /admin/methodology-migrations
+            - listitem [ref=e147]:
+              - link "تغطية المصدر" [ref=e148] [cursor=pointer]:
+                - /url: /admin/source-coverage
+            - listitem [ref=e149]:
+              - link "منشئ النماذج" [ref=e150] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e151]:
+              - link "منشئ الإجراءات" [ref=e152] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e153]:
+              - link "الأتمتة" [ref=e154] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e155]:
+              - link "مسارات الاعتماد" [ref=e156] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e157]:
+              - link "الهوية البصرية" [ref=e158] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e159]:
+              - link "بيئة العرض التوضيحي" [ref=e160] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e161]:
+              - link "تسجيل فحص سلامة التحوّل" [ref=e162] [cursor=pointer]:
+                - /url: /admin/health-schemes
+      - paragraph [ref=e163]:
+        - link "حول هذا المنتج" [ref=e164] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - navigation "مسار التنقل" [ref=e168]:
+            - list [ref=e169]:
+              - listitem [ref=e170]:
+                - link "التحوّلات" [ref=e171] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e172]:
+                - text: /
+                - link "TR-0171" [ref=e173] [cursor=pointer]:
+                  - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9
+              - listitem [ref=e174]: /خريطة الاعتماديات (T08)
+          - generic [ref=e176]:
+            - heading "خريطة الاعتماديات (T08)" [level=1] [ref=e177]
+            - paragraph [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: TR-0171
+                - generic [ref=e181]: Synthetic P3 prioritization AR check
+                - generic [ref=e182]:
+                  - img [ref=e183]
+                  - text: مسودة – لم تُقدَّم
+                - generic [ref=e185]: "المرحلة: التحديد (تحديد التوجّه)"
+        - navigation "مساحة عمل التحوّل" [ref=e186]:
+          - list [ref=e187]:
+            - listitem [ref=e188]:
+              - link "نظرة عامة" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9
+            - listitem [ref=e190]:
+              - link "التشخيص" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/diagnose
+            - listitem [ref=e192]:
+              - link "الميثاق" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/charter
+            - listitem [ref=e194]:
+              - link "التحديد" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/define
+            - listitem [ref=e196]:
+              - link "التصميم" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/design
+            - listitem [ref=e198]:
+              - link "المحفظة" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/portfolio
+            - listitem [ref=e200]:
+              - link "ترتيب الأولويات" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/prioritization
+            - listitem [ref=e202]:
+              - link "خارطة الطريق" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/roadmap
+            - listitem [ref=e204]:
+              - link "الاعتماديات" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/dependencies
+            - listitem [ref=e206]:
+              - link "السعة" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/capacity
+            - listitem [ref=e208]:
+              - link "دراسات الجدوى" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/business-cases
+            - listitem [ref=e210]:
+              - link "معادلات المنفعة" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/benefit-formulas
+            - listitem [ref=e212]:
+              - link "القرارات" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/decisions
+            - listitem [ref=e214]:
+              - link "البوابات" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/gates
+            - listitem [ref=e216]:
+              - link "الجاهزية" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/readiness
+            - listitem [ref=e218]:
+              - link "الإعفاءات" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/dispensations
+            - listitem [ref=e220]:
+              - link "الأدلة" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/evidence
+            - listitem [ref=e222]:
+              - link "الفريق" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/team
+            - listitem [ref=e224]:
+              - link "إسناد الأدوار" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/role-mappings
+            - listitem [ref=e226]:
+              - link "صلاحيات القرار" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/decision-rights
+            - listitem [ref=e228]:
+              - link "مصفوفة المسؤوليات" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/raci
+            - listitem [ref=e230]:
+              - link "جاهزية التحويل والتنفيذ" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/transform-readiness
+            - listitem [ref=e232]:
+              - link "سجل الموافقات" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/approval-decisions
+            - listitem [ref=e234]:
+              - link "مؤشرات الأداء" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/kpis
+            - listitem [ref=e236]:
+              - link "سجل المنافع (T14)" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/benefits
+            - listitem [ref=e238]:
+              - link "سجل المخاطر (T15)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/raid
+            - listitem [ref=e240]:
+              - link "الإجراءات" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/actions
+            - listitem [ref=e242]:
+              - link "الإجراءات التصحيحية" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/corrective-actions
+            - listitem [ref=e244]:
+              - link "المنتديات" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/forums
+            - listitem [ref=e246]:
+              - link "الاجتماعات" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/meetings
+            - listitem [ref=e248]:
+              - link "القرارات التنفيذية (T16)" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/executive-decisions
+            - listitem [ref=e250]:
+              - link "التبنّي" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/adoption
+            - listitem [ref=e252]:
+              - link "العمليات الاعتيادية ومجالات الأداء" [ref=e253] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/bau
+            - listitem [ref=e254]:
+              - link "قائمة التحسين المستمر" [ref=e255] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/improvement
+            - listitem [ref=e256]:
+              - link "الدروس المستفادة" [ref=e257] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/lessons
+            - listitem [ref=e258]:
+              - link "لوحة المؤشرات (T10)" [ref=e259] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/dashboard
+            - listitem [ref=e260]:
+              - link "الإغلاق" [ref=e261] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/closure
+            - listitem [ref=e262]:
+              - link "المراحل" [ref=e263] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/phases
+            - listitem [ref=e264]:
+              - link "طلبات التغيير" [ref=e265] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/change-requests
+            - listitem [ref=e266]:
+              - link "التتبّع" [ref=e267] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/traceability
+            - listitem [ref=e268]:
+              - link "الدخول الجزئي المرن" [ref=e269] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/modular-entry
+            - listitem [ref=e270]:
+              - link "مسارات العمل" [ref=e271] [cursor=pointer]:
+                - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/workstreams
+        - paragraph [ref=e272]: ما تحتاجه كل مبادرة من مبادرة أخرى أو من جهة خارجية، ومتى، ومن المسؤول عنه. تنبيهات الجدولة تحذيرات؛ وتُرفض الاعتمادية التي تُغلق حلقة.
+        - note [ref=e273]:
+          - img [ref=e274]
+          - text: "عرض للاطلاع فقط: إسناداتك لا تسمح بإجراء تغييرات هنا. ويتحقق الخادم من كل تغيير."
+        - region "تأخّرات الاعتماديات الحرجة" [ref=e276]:
+          - heading "تأخّرات الاعتماديات الحرجة" [level=2] [ref=e278]
+          - generic [ref=e279]: يُسجَّل التأخّر عندما يؤخّر تغيير تاريخ معلم موعدَ انتهاء المبادرة السابقة في اعتمادية تقع على المسار الحرج أو تتجاوز تاريخ «مطلوبة بحلول». يُبلَّغ كل مالك متأثر مرة واحدة. موعد الانتهاء المتوقع الذي يتعذر حسابه يظهر «غير معروف»، ولا يظهر صفرًا أبدًا. لتغيير التواريخ، عدّل معالم المبادرة السابقة.
+          - generic [ref=e281]:
+            - generic [ref=e282]:
+              - generic [ref=e283]:
+                - generic [ref=e284]: بحث
+                - searchbox "بحث" [ref=e285]
+              - button "الأعمدة" [ref=e287] [cursor=pointer]:
+                - img [ref=e288]
+                - text: الأعمدة
+            - 'region "تأخّرات الاعتماديات الحرجة: الاعتمادية، وانتهاء المبادرة السابقة، والتأخّر، والسبب، وموعد الانتهاء المتوقع لكل مبادرة متأثرة قبل التأخّر وبعده (جدول قابل للتمرير)" [ref=e290]':
+              - 'table "تأخّرات الاعتماديات الحرجة: الاعتمادية، وانتهاء المبادرة السابقة، والتأخّر، والسبب، وموعد الانتهاء المتوقع لكل مبادرة متأثرة قبل التأخّر وبعده" [ref=e291]':
+                - caption [ref=e292]: "تأخّرات الاعتماديات الحرجة: الاعتمادية، وانتهاء المبادرة السابقة، والتأخّر، والسبب، وموعد الانتهاء المتوقع لكل مبادرة متأثرة قبل التأخّر وبعده"
+                - rowgroup [ref=e293]:
+                  - row "الاعتمادية غير مرتّب المبادرة المتأثرة غير مرتّب موعد الانتهاء المتوقع (قبل ← بعد) غير مرتّب تغيّر التوقع (أيام تقويمية) غير مرتّب التأخّر (أيام تقويمية) غير مرتّب سبب كونها حرجة غير مرتّب مطلوبة بحلول غير مرتّب انتهاء المبادرة السابقة (قبل ← بعد) غير مرتّب المالك المُبلَّغ تاريخ التسجيل مرتّب تنازليًا" [ref=e294]:
+                    - columnheader "الاعتمادية غير مرتّب" [ref=e295]:
+                      - button "الاعتمادية غير مرتّب" [ref=e296] [cursor=pointer]:
+                        - text: الاعتمادية
+                        - img [ref=e297]
+                        - generic [ref=e299]: غير مرتّب
+                    - columnheader "المبادرة المتأثرة غير مرتّب" [ref=e300]:
+                      - button "المبادرة المتأثرة غير مرتّب" [ref=e301] [cursor=pointer]:
+                        - text: المبادرة المتأثرة
+                        - img [ref=e302]
+                        - generic [ref=e304]: غير مرتّب
+                    - columnheader "موعد الانتهاء المتوقع (قبل ← بعد) غير مرتّب" [ref=e305]:
+                      - button "موعد الانتهاء المتوقع (قبل ← بعد) غير مرتّب" [ref=e306] [cursor=pointer]:
+                        - text: موعد الانتهاء المتوقع (قبل ← بعد)
+                        - img [ref=e307]
+                        - generic [ref=e309]: غير مرتّب
+                    - columnheader "تغيّر التوقع (أيام تقويمية) غير مرتّب" [ref=e310]:
+                      - button "تغيّر التوقع (أيام تقويمية) غير مرتّب" [ref=e311] [cursor=pointer]:
+                        - text: تغيّر التوقع (أيام تقويمية)
+                        - img [ref=e312]
+                        - generic [ref=e314]: غير مرتّب
+                    - columnheader "التأخّر (أيام تقويمية) غير مرتّب" [ref=e315]:
+                      - button "التأخّر (أيام تقويمية) غير مرتّب" [ref=e316] [cursor=pointer]:
+                        - text: التأخّر (أيام تقويمية)
+                        - img [ref=e317]
+                        - generic [ref=e319]: غير مرتّب
+                    - columnheader "سبب كونها حرجة غير مرتّب" [ref=e320]:
+                      - button "سبب كونها حرجة غير مرتّب" [ref=e321] [cursor=pointer]:
+                        - text: سبب كونها حرجة
+                        - img [ref=e322]
+                        - generic [ref=e324]: غير مرتّب
+                    - columnheader "مطلوبة بحلول غير مرتّب" [ref=e325]:
+                      - button "مطلوبة بحلول غير مرتّب" [ref=e326] [cursor=pointer]:
+                        - text: مطلوبة بحلول
+                        - img [ref=e327]
+                        - generic [ref=e329]: غير مرتّب
+                    - columnheader "انتهاء المبادرة السابقة (قبل ← بعد) غير مرتّب" [ref=e330]:
+                      - button "انتهاء المبادرة السابقة (قبل ← بعد) غير مرتّب" [ref=e331] [cursor=pointer]:
+                        - text: انتهاء المبادرة السابقة (قبل ← بعد)
+                        - img [ref=e332]
+                        - generic [ref=e334]: غير مرتّب
+                    - columnheader "المالك المُبلَّغ" [ref=e335]
+                    - columnheader "تاريخ التسجيل مرتّب تنازليًا" [ref=e336]:
+                      - button "تاريخ التسجيل مرتّب تنازليًا" [ref=e337] [cursor=pointer]:
+                        - text: تاريخ التسجيل
+                        - img [ref=e338]
+                        - generic [ref=e340]: مرتّب تنازليًا
+                - rowgroup [ref=e341]:
+                  - row "DEP-01 INI-02 غير معروف تغيّر إلى غير معروف غير معروف 5 تجاوز تاريخ «مطلوبة بحلول» 01‏/11‏/2026 05‏/12‏/2026 تغيّر إلى 10‏/12‏/2026 غير محدد 24‏/10‏/2026 20:48" [ref=e342]:
+                    - rowheader "DEP-01" [ref=e343]
+                    - cell "INI-02" [ref=e344]:
+                      - link "INI-02" [ref=e345] [cursor=pointer]:
+                        - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/initiatives/01a16f07-4214-75c9-897f-088569d07617
+                    - cell "غير معروف تغيّر إلى غير معروف" [ref=e346]:
+                      - generic [ref=e347]:
+                        - generic [ref=e348]:
+                          - img [ref=e349]
+                          - text: غير معروف
+                        - text: ←
+                        - generic [ref=e351]: تغيّر إلى
+                        - generic [ref=e352]:
+                          - img [ref=e353]
+                          - text: غير معروف
+                    - cell "غير معروف" [ref=e355]:
+                      - generic [ref=e356]:
+                        - img [ref=e357]
+                        - text: غير معروف
+                    - cell "5" [ref=e359]
+                    - cell "تجاوز تاريخ «مطلوبة بحلول»" [ref=e360]:
+                      - generic [ref=e361]:
+                        - img [ref=e362]
+                        - text: تجاوز تاريخ «مطلوبة بحلول»
+                    - cell "01‏/11‏/2026" [ref=e364]
+                    - cell "05‏/12‏/2026 تغيّر إلى 10‏/12‏/2026" [ref=e365]:
+                      - generic [ref=e366]:
+                        - text: 05‏/12‏/2026 ←
+                        - generic [ref=e367]: تغيّر إلى
+                        - text: 10‏/12‏/2026
+                    - cell "غير محدد" [ref=e368]
+                    - cell "24‏/10‏/2026 20:48" [ref=e369]
+                  - row "DEP-01 INI-03 غير معروف تغيّر إلى غير معروف غير معروف 5 تجاوز تاريخ «مطلوبة بحلول» 01‏/11‏/2026 05‏/12‏/2026 تغيّر إلى 10‏/12‏/2026 غير محدد 24‏/10‏/2026 20:48" [ref=e370]:
+                    - rowheader "DEP-01" [ref=e371]
+                    - cell "INI-03" [ref=e372]:
+                      - link "INI-03" [ref=e373] [cursor=pointer]:
+                        - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/initiatives/01a16f07-43cb-7470-9718-b2ca06594e42
+                    - cell "غير معروف تغيّر إلى غير معروف" [ref=e374]:
+                      - generic [ref=e375]:
+                        - generic [ref=e376]:
+                          - img [ref=e377]
+                          - text: غير معروف
+                        - text: ←
+                        - generic [ref=e379]: تغيّر إلى
+                        - generic [ref=e380]:
+                          - img [ref=e381]
+                          - text: غير معروف
+                    - cell "غير معروف" [ref=e383]:
+                      - generic [ref=e384]:
+                        - img [ref=e385]
+                        - text: غير معروف
+                    - cell "5" [ref=e387]
+                    - cell "تجاوز تاريخ «مطلوبة بحلول»" [ref=e388]:
+                      - generic [ref=e389]:
+                        - img [ref=e390]
+                        - text: تجاوز تاريخ «مطلوبة بحلول»
+                    - cell "01‏/11‏/2026" [ref=e392]
+                    - cell "05‏/12‏/2026 تغيّر إلى 10‏/12‏/2026" [ref=e393]:
+                      - generic [ref=e394]:
+                        - text: 05‏/12‏/2026 ←
+                        - generic [ref=e395]: تغيّر إلى
+                        - text: 10‏/12‏/2026
+                    - cell "غير محدد" [ref=e396]
+                    - cell "24‏/10‏/2026 20:48" [ref=e397]
+                  - row "DEP-01 INI-02 غير معروف تغيّر إلى غير معروف غير معروف 15 تجاوز تاريخ «مطلوبة بحلول» 01‏/11‏/2026 20‏/11‏/2026 تغيّر إلى 05‏/12‏/2026 غير محدد 24‏/10‏/2026 20:48" [ref=e398]:
+                    - rowheader "DEP-01" [ref=e399]
+                    - cell "INI-02" [ref=e400]:
+                      - link "INI-02" [ref=e401] [cursor=pointer]:
+                        - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/initiatives/01a16f07-4214-75c9-897f-088569d07617
+                    - cell "غير معروف تغيّر إلى غير معروف" [ref=e402]:
+                      - generic [ref=e403]:
+                        - generic [ref=e404]:
+                          - img [ref=e405]
+                          - text: غير معروف
+                        - text: ←
+                        - generic [ref=e407]: تغيّر إلى
+                        - generic [ref=e408]:
+                          - img [ref=e409]
+                          - text: غير معروف
+                    - cell "غير معروف" [ref=e411]:
+                      - generic [ref=e412]:
+                        - img [ref=e413]
+                        - text: غير معروف
+                    - cell "15" [ref=e415]
+                    - cell "تجاوز تاريخ «مطلوبة بحلول»" [ref=e416]:
+                      - generic [ref=e417]:
+                        - img [ref=e418]
+                        - text: تجاوز تاريخ «مطلوبة بحلول»
+                    - cell "01‏/11‏/2026" [ref=e420]
+                    - cell "20‏/11‏/2026 تغيّر إلى 05‏/12‏/2026" [ref=e421]:
+                      - generic [ref=e422]:
+                        - text: 20‏/11‏/2026 ←
+                        - generic [ref=e423]: تغيّر إلى
+                        - text: 05‏/12‏/2026
+                    - cell "غير محدد" [ref=e424]
+                    - cell "24‏/10‏/2026 20:48" [ref=e425]
+                  - row "DEP-01 INI-03 غير معروف تغيّر إلى غير معروف غير معروف 15 تجاوز تاريخ «مطلوبة بحلول» 01‏/11‏/2026 20‏/11‏/2026 تغيّر إلى 05‏/12‏/2026 غير محدد 24‏/10‏/2026 20:48" [ref=e426]:
+                    - rowheader "DEP-01" [ref=e427]
+                    - cell "INI-03" [ref=e428]:
+                      - link "INI-03" [ref=e429] [cursor=pointer]:
+                        - /url: /transformations/01a16f07-3b88-7331-b6cb-0b041bd731d9/initiatives/01a16f07-43cb-7470-9718-b2ca06594e42
+                    - cell "غير معروف تغيّر إلى غير معروف" [ref=e430]:
+                      - generic [ref=e431]:
+                        - generic [ref=e432]:
+                          - img [ref=e433]
+                          - text: غير معروف
+                        - text: ←
+                        - generic [ref=e435]: تغيّر إلى
+                        - generic [ref=e436]:
+                          - img [ref=e437]
+                          - text: غير معروف
+                    - cell "غير معروف" [ref=e439]:
+                      - generic [ref=e440]:
+                        - img [ref=e441]
+                        - text: غير معروف
+                    - cell "15" [ref=e443]
+                    - cell "تجاوز تاريخ «مطلوبة بحلول»" [ref=e444]:
+                      - generic [ref=e445]:
+                        - img [ref=e446]
+                        - text: تجاوز تاريخ «مطلوبة بحلول»
+                    - cell "01‏/11‏/2026" [ref=e448]
+                    - cell "20‏/11‏/2026 تغيّر إلى 05‏/12‏/2026" [ref=e449]:
+                      - generic [ref=e450]:
+                        - text: 20‏/11‏/2026 ←
+                        - generic [ref=e451]: تغيّر إلى
+                        - text: 05‏/12‏/2026
+                    - cell "غير محدد" [ref=e452]
+                    - cell "24‏/10‏/2026 20:48" [ref=e453]
+            - navigation "التنقل بين الصفحات" [ref=e454]:
+              - generic [ref=e455]: الصفحة 1 من 1 · 4 من 4 صفوف
+              - generic [ref=e456]:
+                - generic [ref=e457]: عدد الصفوف في الصفحة
+                - combobox "عدد الصفوف في الصفحة" [ref=e458]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "السابق" [disabled] [ref=e459]
+              - button "التالي" [disabled] [ref=e460]
+        - region "خريطة الاعتماديات" [ref=e461]:
+          - heading "خريطة الاعتماديات" [level=2] [ref=e463]
+          - generic [ref=e464]: يجب أن يُسلّم «من» قبل «إلى». تقارن التنبيهات نهاية السابق بتاريخ الحاجة وبالتسلسل؛ والتاريخ الناقص يظهر غير معروف ولا يُعدّ عدم تعارض.
+          - paragraph [ref=e465]:
+            - generic [ref=e466]:
+              - img [ref=e467]
+              - text: امتداد مخصص (الدليل، الإصدار 1.0)
+            - generic [ref=e469]:
+              - img [ref=e470]
+              - generic [ref=e472]: "السؤال الإرشادي:"
+              - text: كيف سننفذ؟
+            - generic [ref=e473]:
+              - text: "المصدر:"
+              - link "B0080" [ref=e475] [cursor=pointer]:
+                - /url: /playbook/reader/B0080
+              - generic [ref=e476]:
+                - text: ","
+                - link "B0081" [ref=e477] [cursor=pointer]:
+                  - /url: /playbook/reader/B0081
+          - 'region "خريطة الاعتماديات T08: الاعتمادية، من، إلى، النوع، مطلوبة بحلول، المسؤول، الحالة والمعالجة" [ref=e478]':
+            - 'table "خريطة الاعتماديات T08: الاعتمادية، من، إلى، النوع، مطلوبة بحلول، المسؤول، الحالة والمعالجة" [ref=e479]':
+              - caption [ref=e480]: "خريطة الاعتماديات T08: الاعتمادية، من، إلى، النوع، مطلوبة بحلول، المسؤول، الحالة والمعالجة"
+              - rowgroup [ref=e481]:
+                - row "الاعتمادية من إلى النوع مطلوبة بحلول المسؤول الحالة / المعالجة تنبيهات الجدولة أدوات النموذج وحقول الامتداد" [ref=e482]:
+                  - columnheader "الاعتمادية" [ref=e483]
+                  - columnheader "من" [ref=e484]
+                  - columnheader "إلى" [ref=e485]
+                  - columnheader "النوع" [ref=e486]
+                  - columnheader "مطلوبة بحلول" [ref=e487]
+                  - columnheader "المسؤول" [ref=e488]
+                  - columnheader "الحالة / المعالجة" [ref=e489]
+                  - columnheader "تنبيهات الجدولة" [ref=e490]
+                  - columnheader "أدوات النموذج وحقول الامتداد" [ref=e491]
+              - rowgroup [ref=e492]:
+                - 'row "DEP-02 Synthetic: rating engine change INI-02 Synthetic initiative 2 INI-03 Synthetic initiative 3 تقنية غير معروف غير محدد مفتوحة الجدولة غير معروفة: ينقص تاريخ لازم للتحقق" [ref=e493]':
+                  - 'rowheader "DEP-02 Synthetic: rating engine change" [ref=e494]'
+                  - cell "INI-02 Synthetic initiative 2" [ref=e495]:
+                    - generic [ref=e496]: INI-02 Synthetic initiative 2
+                  - cell "INI-03 Synthetic initiative 3" [ref=e497]:
+                    - generic [ref=e498]: INI-03 Synthetic initiative 3
+                  - cell "تقنية" [ref=e499]
+                  - cell "غير معروف" [ref=e500]:
+                    - generic [ref=e501]:
+                      - img [ref=e502]
+                      - text: غير معروف
+                  - cell "غير محدد" [ref=e504]
+                  - cell "مفتوحة" [ref=e505]
+                  - 'cell "الجدولة غير معروفة: ينقص تاريخ لازم للتحقق" [ref=e506]':
+                    - generic [ref=e508]:
+                      - img [ref=e509]
+                      - text: "الجدولة غير معروفة: ينقص تاريخ لازم للتحقق"
+                  - cell [ref=e511]
+                - 'row "DEP-01 Synthetic: billing data feed INI-01 Synthetic initiative 1 INI-02 Synthetic initiative 2 بيانات 01‏/11‏/2026 غير محدد مفتوحة تعارض مع موعد الحاجة: ينتهي السابق بعد التاريخ المطلوب الجدولة غير معروفة: ينقص تاريخ لازم للتحقق" [ref=e512]':
+                  - 'rowheader "DEP-01 Synthetic: billing data feed" [ref=e513]'
+                  - cell "INI-01 Synthetic initiative 1" [ref=e514]:
+                    - generic [ref=e515]: INI-01 Synthetic initiative 1
+                  - cell "INI-02 Synthetic initiative 2" [ref=e516]:
+                    - generic [ref=e517]: INI-02 Synthetic initiative 2
+                  - cell "بيانات" [ref=e518]
+                  - cell "01‏/11‏/2026" [ref=e519]
+                  - cell "غير محدد" [ref=e520]
+                  - cell "مفتوحة" [ref=e521]
+                  - 'cell "تعارض مع موعد الحاجة: ينتهي السابق بعد التاريخ المطلوب الجدولة غير معروفة: ينقص تاريخ لازم للتحقق" [ref=e522]':
+                    - generic [ref=e523]:
+                      - generic [ref=e524]:
+                        - img [ref=e525]
+                        - text: "تعارض مع موعد الحاجة: ينتهي السابق بعد التاريخ المطلوب"
+                      - generic [ref=e527]:
+                        - img [ref=e528]
+                        - text: "الجدولة غير معروفة: ينقص تاريخ لازم للتحقق"
+                  - cell [ref=e530]
+        - region "أنواع الاعتماديات" [ref=e531]:
+          - heading "أنواع الاعتماديات" [level=2] [ref=e533]
+          - generic [ref=e534]: القرار والتقنية والبيانات والمورّد (B0081) وأخرى أنواع نظامية لا يمكن حذفها. يمكن للمسؤولين إضافة أنواع أخرى وإعادة تسميتها وإيقافها.
+          - region "أنواع الاعتماديات" [ref=e535]:
+            - table "أنواع الاعتماديات" [ref=e536]:
+              - caption [ref=e537]: أنواع الاعتماديات
+              - rowgroup [ref=e538]:
+                - row "الرمز التسمية الإنجليزية التسمية العربية الفئة الحالة" [ref=e539]:
+                  - columnheader "الرمز" [ref=e540]
+                  - columnheader "التسمية الإنجليزية" [ref=e541]
+                  - columnheader "التسمية العربية" [ref=e542]
+                  - columnheader "الفئة" [ref=e543]
+                  - columnheader "الحالة" [ref=e544]
+              - rowgroup [ref=e545]:
+                - row "decision Decision قرار نوع نظامي نشط" [ref=e546]:
+                  - rowheader "decision" [ref=e547]
+                  - cell "Decision" [ref=e548]
+                  - cell "قرار" [ref=e549]
+                  - cell "نوع نظامي" [ref=e550]:
+                    - generic [ref=e551]:
+                      - img [ref=e552]
+                      - text: نوع نظامي
+                  - cell "نشط" [ref=e554]
+                - row "tech Tech تقنية نوع نظامي نشط" [ref=e555]:
+                  - rowheader "tech" [ref=e556]
+                  - cell "Tech" [ref=e557]
+                  - cell "تقنية" [ref=e558]
+                  - cell "نوع نظامي" [ref=e559]:
+                    - generic [ref=e560]:
+                      - img [ref=e561]
+                      - text: نوع نظامي
+                  - cell "نشط" [ref=e563]
+                - row "data Data بيانات نوع نظامي نشط" [ref=e564]:
+                  - rowheader "data" [ref=e565]
+                  - cell "Data" [ref=e566]
+                  - cell "بيانات" [ref=e567]
+                  - cell "نوع نظامي" [ref=e568]:
+                    - generic [ref=e569]:
+                      - img [ref=e570]
+                      - text: نوع نظامي
+                  - cell "نشط" [ref=e572]
+                - row "vendor Vendor مورّد نوع نظامي نشط" [ref=e573]:
+                  - rowheader "vendor" [ref=e574]
+                  - cell "Vendor" [ref=e575]
+                  - cell "مورّد" [ref=e576]
+                  - cell "نوع نظامي" [ref=e577]:
+                    - generic [ref=e578]:
+                      - img [ref=e579]
+                      - text: نوع نظامي
+                  - cell "نشط" [ref=e581]
+                - row "other Other أخرى نوع نظامي نشط" [ref=e582]:
+                  - rowheader "other" [ref=e583]
+                  - cell "Other" [ref=e584]
+                  - cell "أخرى" [ref=e585]
+                  - cell "نوع نظامي" [ref=e586]:
+                    - generic [ref=e587]:
+                      - img [ref=e588]
+                      - text: نوع نظامي
+                  - cell "نشط" [ref=e590]
+```

@@ -1,0 +1,43 @@
+# 46 F-DG5-100 on the real CLI (mth-db migrate/status) 2026-10-24T16:43:04Z node=v22.22.2
+$ tests/qa/support/with-pg.sh bash round-2/repro/f100-cli.sh
+port-policy: PostgreSQL listening on port 26580 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+NOTICE:  database "sec_r2_cli" does not exist, skipping
+## 1. fresh scratch database: mth-db migrate (the shipped build)
+mth-db migrate: applying 0097_p5_config_review_contributors.sql
+mth-db migrate: applied 89 migration(s)
+exit=0
+## 2. mth-db status (shipped build)
+mth-db status: up to date (89 applied)
+exit=0
+## 3. later build adds 0066_p6_example.sql (retired gap) + 0098_p6_forward.sql: mth-db migrate, LANG unset
+mth-db: refusing to run: pending migration(s) 0066_p6_example.sql have an id not above the highest applied migration 0097_p5_config_review_contributors.sql; forward-only migrations must apply in one order on every database, so give each new migration an id above 0097
+exit=1
+## 4. same, LANG=ar_SA.UTF-8 LC_ALL=ar_SA.UTF-8
+/home/user/My-owns/docs/delivery/test-evidence/DG5/code-security/round-2/repro/f100-cli.sh: line 24: warning: setlocale: LC_ALL: cannot change locale (ar_SA.UTF-8)
+mth-db: refusing to run: pending migration(s) 0066_p6_example.sql have an id not above the highest applied migration 0097_p5_config_review_contributors.sql; forward-only migrations must apply in one order on every database, so give each new migration an id above 0097
+exit=1
+## 5. mth-db status (expect ORDER line, DRIFT, exit 4)
+applied  0097_p5_config_review_contributors.sql
+pending  0066_p6_example.sql
+pending  0098_p6_forward.sql
+ORDER    0066_p6_example.sql (pending, but its id is not above the highest applied id; migrate refuses it)
+mth-db status: DRIFT
+exit=4
+## 6. nothing applied: tables sec_r2_*, schema_migration rows, files shipped
+tables=0 applied=89 shipped=91
+## 7. control: the gap file removed, only 0098_p6_forward.sql pending: mth-db migrate applies it
+mth-db migrate: applying 0098_p6_forward.sql
+mth-db migrate: applied 1 migration(s)
+exit=0
+tables=sec_r2_fwd
+## scratch database dropped; exit=0
+exit=0
+$ git -C $TMPDIR/rv status --porcelain -- packages/db/migrations (expect empty: trap removed both files)
+
+## NOTE (reviewer): step 4's 'setlocale: LC_ALL: cannot change locale (ar_SA.UTF-8)' is bash reporting that the ar_SA.UTF-8 locale is not installed on this machine (locale -a below); the variables were still exported to node. The CLI's operator output is English-only text and does not read the locale; the refusal is identical in steps 3 and 4. The Arabic-language surface of readiness is the API: /readyz with Accept-Language: ar gives the same 503 migrations: fail for every gap (40b-f100-stack.log).
+$ locale -a
+C
+C.utf8
+POSIX
+## the clone's git status above is empty: both simulated files were removed by the trap.

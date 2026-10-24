@@ -1,0 +1,31 @@
+$ git clone --shared /home/user/My-owns $TMPDIR/review-dg5 (2026-10-24T15:00:46Z); df: /dev/vda        252G   22G   16G  59% $TMPDIR
+checkout EXIT 0
+HEAD 7144a190ce4967d5f5448fda8ed04bf56e70756e
+shallow: false
+sparse: none
+alternates: /home/user/My-owns/.git/objects
+commits reachable: 1455
+dangling tree 1add1f1c35c49b02d23714d90613c6d00ba0e549
+dangling tree e6e765e55243d246844de7cb4fd08b89dda371ef
+dangling tree 39f77b576979c29d0b6466f8dc93b9ae1002b1f6
+fsck EXIT 0
+tracked files: 24928; missing on disk: 0
+$ node tools/gates/candidate.mjs --stage DG5 
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 --ref edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7
+{"stage":"DG5","source":"edbf5ce2be5212f9de2e7d5f1af5ce57ca2eb9e7","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 --ref HEAD
+{"stage":"DG5","source":"HEAD","candidate_id":"sha256:5df44203b73c7c9e4a7a34d65abde4f7060bcd5b1ef66ee84e7d47ba7699186b","files":2203}
+EXIT 0
+$ manifest compare
+manifest keys stage_id,candidate_id,hash_algorithm,source_commit,frozen_at,spec,meta_excluded,entries entries 2203 missing_or_mismatch 0 []
+$ git diff --name-status edbf5ce HEAD
+A	docs/delivery/assignments/DG5/round-2/code-security-reviewer.md
+A	docs/delivery/assignments/DG5/round-2/domain-reviewer.md
+A	docs/delivery/assignments/DG5/round-2/qa-verifier.md
+A	docs/delivery/candidates/DG5/5df44203b73c7c9e.manifest.json
+M	docs/delivery/stages.json
+outside docs/delivery: 0
+df after: /dev/vda        252G   27G   11G  73% $TMPDIR

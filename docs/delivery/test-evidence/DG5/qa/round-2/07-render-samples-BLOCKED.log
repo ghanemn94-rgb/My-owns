@@ -1,0 +1,14 @@
+$ /opt/pw-browsers/chromium-1194/chrome-linux/chrome --headless=new --no-sandbox --screenshot=... file://<sample>.pdf  (2026-10-24T16:26:51Z)
+FATAL:chrome/browser/process_singleton_posix.cc:292] Check failed: . socket() failed: Operation not permitted (1)
+EXIT 1 (no output)
+$ node (playwright chromium.launch executablePath=<full chromium>, args --headless=new) goto file://<sample>.pdf; screenshot  (2026-10-24T16:27:09Z)
+browserType.launch: Target page, context or browser has been closed; [err] FATAL:chrome/browser/process_singleton_posix.cc:292] Check failed: . socket() failed: Operation not permitted (1); exit signal=SIGABRT
+EXIT 1 (no output)
+Reason: the full Chromium (the only build with the PDF viewer) aborts on its process-singleton unix socket, which the sandbox refuses; the headless shell Playwright uses for e2e has no PDF viewer.
+$ ls /tmp writable? touch: cannot touch '/tmp/qa-x': Read-only file system
+LibreOffice: needs a writable /tmp or /var/tmp for its IPC pipe (round-1 reproduction: 'ERROR: no valid pipe path found'); both are read-only in this sandbox.
+python modules fitz/pypdfium2/pdfplumber/pdfminer/PIL/docx/openpyxl/pptx: none installed; pdftoppm/mutool/gs/magick: none on PATH; node_modules has only writers (pdfkit, docx, pptxgenjs, jszip, fontkit), no renderer.
+=> raster rendering of the samples is not possible in this sandbox; the samples are inspected at content level (07-inspect-samples.txt).
+$ HOME=$TMPDIR/lo-home soffice -env:UserInstallation=file://$TMPDIR/lo-profile --headless --norestore --convert-to png --outdir $TMPDIR/lot $TMPDIR/lot/raid-register-ar.pdf  (2026-10-24T16:27:39Z, this round)
+ERROR: no valid pipe path found.
+EXIT 1; output files: 0
