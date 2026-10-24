@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-100",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:5df44203…186b (source edbf5ce), in a disposable clone and on disposable PostgreSQL 16.13 clusters. The fix (T-DG5-BE-RG1) is packages/db/src/migrate.ts:99-111 (outOfOrderPending = pending files whose id is not above the highest applied id) and :168-175 (migrate() refuses before the first file). Also cli.ts:90-97 (status prints ORDER, DRIFT, exit 4), apps/api/src/modules/platform/health.ts:50-52 (/readyz reports fail, not pending) and seed.test.ts (the eight P5 gaps are pinned as retired).\n\n(1) Round-1 reproduction re-run unchanged (39-f100-r1-repro-rerun.log). That script predates the fix: it never reads outOfOrderPending, its last line is hard-coded, and it numbered the applied rows 1..89. So I added a corrected pure probe using real ids. All eight gaps (0066, 0067, 0073, 0077-0079, 0083, 0084) land in outOfOrderPending, and a database at 0065 accepts 0066 with no refusal.\n\n(2) Real CLI (46-f100-cli.log). On a scratch database, the shipped build gives 'applied 89', and status is up to date. A later build adds 0066_p6_example.sql and 0098_p6_forward.sql. migrate then exits 1 with 'refusing to run: pending migration(s) 0066_p6_example.sql have an id not above the highest applied migration 0097_…; … give each new migration an id above 0097'. The result is the same with LANG unset and with LANG/LC_ALL=ar_SA.UTF-8. That locale is not installed (disclosed in the log), and the CLI's operator text is English-only. status prints 'ORDER 0066_p6_example.sql …', 'DRIFT', exit 4. Nothing was applied: 0 sec_r2_* tables, 89 rows. Control: with the gap file removed, 0098 applies.\n\n(3) Real server and runner (40b-f100-stack.log, 23/23). /readyz answers 503 {database: ok, migrations: fail} for each of the eight gaps, with Accept-Language en and ar. A forward 0098 gives 503 'pending', and the shipped build gives 200 'ready'. On a scratch database migrated to 0097, migrate() refuses each gap file and applies nothing, not even a valid 0098 in the same build. A duplicate id 0097_other.sql is refused by the listing. A database at 0065 applies 0066 in place, in the fresh-database order.\n\nThe integration suites' own packages/db/test/integration/migrate.test.ts (9/9) and platform.test.ts (13/13) also pass in both runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/39-f100-r1-repro-rerun.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46-f100-cli.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/40b-f100-stack.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/migration-gap-order-r2.mjs",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/f100-cli.sh",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-migration-order-stack.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/30-integration-lang-unset.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/31-integration-lang-c-utf8.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-101",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:5df44203…186b (source edbf5ce). The fix (T-DG5-BE-RG1) is packages/reporting/src/csv.ts:45-56: a text cell is written with the leading apostrophe exactly when its quotePrefix is set, instead of being re-neutralized. Frame, title and legend rows go through textCell (csv.ts:59). I checked that the change cannot weaken formula-injection protection. Every user-text cell is built by model.ts textCell, whose quotePrefix comes from neutralizeSpreadsheetText. The only quotePrefix:false literals are a decimal that does not fit a double (model.ts:208) and a fixed validation label (:217). The decimal's value has passed DECIMAL_PATTERN in reportDocument (renderCsv safeParses its input), so it can only start with a digit or with '-' followed by a digit.\n\n(1) Round-1 reproduction re-run unchanged (41b-f101-r1-repro-rerun.log): 3/3 pass (round 1: 1 failed by design). '-12345678901.23456' and '-1234567890.123456' are now written unprefixed.\n\n(2) Real stack, en and ar (41-f101-csv-stack.log, 4/4). I created a financial benefit through the API with baselineValue -12345678901.234567, targetValue -1234567890.123456 and plannedValue -1234567890123.4567 (16-17 significant digits, accepted by the API). A control benefit has 15-digit negatives and the formula-like user texts title '=HYPERLINK(\"http://x\",\"y\")' and baseline unit '-2+3'. I generated the benefits register snapshot, then ran POST /api/v1/exports, the worker export runner and GET …/download for CSV and XLSX in en and ar.\n\nCSV en and ar: the three long negatives are their canonical strings with no apostrophe, and the controls are unchanged. The user texts are written '\"'=HYPERLINK(…)\"' and ''-2+3'. No field anywhere in the file is an unprefixed formula-like text.\n\nXLSX en and ar: the long decimals are inline strings without quotePrefix. The HYPERLINK cell is an inline string with quotePrefix and no formula.\n\nRun 1 of this repro (41-f101-csv-stack.run1.log) failed 2 of 4 because of my own repro's row selector (it looked for 'BEN-' codes; the codes are B01/B02) and its control strings (the measure column exports -1234567890.123450). Its CSV lines already show the correct output, and its 2 XLSX tests passed. I fixed both bugs, and run 2 passed 4/4.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/41b-f101-r1-repro-rerun.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/41-f101-csv-stack.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/41-f101-csv-stack.run1.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-r2-csv-long-decimal-stack.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/50-source-review.md"
+      ]
+    }
+  ]
+}
