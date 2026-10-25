@@ -1,0 +1,43 @@
+$ node tools/gates/validate.mjs --historical --stage DG4  (2026-10-25T02:49:23Z, HEAD 8fbdc7ab043703d393d7ad6e532f382162248917)
+PASS gate DG4 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG3  (2026-10-25T02:50:37Z, HEAD 8fbdc7ab043703d393d7ad6e532f382162248917)
+PASS gate DG3 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG2  (2026-10-25T02:51:06Z, HEAD 8fbdc7ab043703d393d7ad6e532f382162248917)
+PASS gate DG2 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --historical --stage DG1  (2026-10-25T02:52:02Z, HEAD 8fbdc7ab043703d393d7ad6e532f382162248917)
+PASS gate DG1 (historical)
+EXIT 0
+$ node tools/gates/validate.mjs --register DG5
+PASS register rules at DG5
+EXIT 0
+$ node tools/gates/validate.mjs --reconcile
+active stage: DG5 (REVIEWING)
+frozen candidate: sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9
+working tree:     sha256:ec9b3d94feeb3d0807f875179dfca49858105f636607d2d9df3e22e996544d19 (differs: 1 changed, 0 added, 0 removed)
+round 1 domain-reviewer: PASS (STALE for current content)
+round 1 code-security-reviewer: PASS (STALE for current content)
+round 1 qa-verifier: PASS (STALE for current content)
+round 2 domain-reviewer: PASS (STALE for current content)
+round 2 code-security-reviewer: PASS (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: PASS (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 --diff   (repository working tree at HEAD)
+{
+  "frozen": "sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9",
+  "working_tree": "sha256:ec9b3d94feeb3d0807f875179dfca49858105f636607d2d9df3e22e996544d19",
+  "matches": false,
+  "added": [],
+  "removed": [],
+  "changed": [
+    "docs/delivery/decisions.md"
+  ]
+}
+EXIT 1

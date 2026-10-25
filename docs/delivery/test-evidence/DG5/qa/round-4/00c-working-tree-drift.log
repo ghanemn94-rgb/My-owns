@@ -1,0 +1,32 @@
+# 2026-10-25T02:53:28Z why the repository working tree no longer hashes to the frozen candidate
+$ git log --format='%H %s' 54e02b61961550386d5ab24a74e8ae8bb612218f..HEAD -- docs/delivery/decisions.md
+8fbdc7ab043703d393d7ad6e532f382162248917 DG5 re-gate: round-3 findings imported (F-DG5-143, 144 CLOSED_VERIFIED; new F-DG5-145, 146 Low); D-189; acceptance round 4 on the same candidate
+$ git diff --stat 54e02b6 HEAD -- docs/delivery/decisions.md
+ docs/delivery/decisions.md | 1 +
+ 1 file changed, 1 insertion(+)
+$ git diff --name-only 54e02b6 HEAD | files NOT under a META_EXCLUDES path (tools/gates/lib/candidate.mjs)
+docs/delivery/decisions.md
+$ grep -c 'docs/delivery/decisions.md' (manifest entry; not meta-excluded)
+8463:   "path": "docs/delivery/decisions.md",
+frozen sha256 of decisions.md (manifest):    "sha256": "818f68c0f40d4318a07fc5cd897752b87530f4d55e630273b31add5b8910a676",
+at 54e02b6: 818f68c0f40d4318a07fc5cd897752b87530f4d55e630273b31add5b8910a676  -
+at HEAD:    6be9eda5ce296045049c2d532c9e83019f5c2bdd1be0219fbccfb988aaa2b833  -
+$ tools/gates/lib/rules.mjs: current-mode (approval-time) validation recomputes from the working tree
+  let recomputed;
+  try {
+    recomputed = mode === "historical"
+      ? manifestFromRef(repo, gate.source_commit, manifest.spec)
+      : manifestFromWorkingTree(repo, manifest.spec);
+  } catch (e) {
+    errors.push(`candidate: cannot recompute from ${mode === "historical" ? gate.source_commit : "working tree"} (${e.message.split("\n")[0]})`);
+    return;
+  }
+  const id = candidateId(recomputed);
+  if (id !== gate.candidate_id) {
+    const d = diffManifests(manifest.entries || [], recomputed);
+    const sample = [...d.changed.map((p) => `~${p}`), ...d.added.map((p) => `+${p}`), ...d.removed.map((p) => `-${p}`)].slice(0, 12);
+    errors.push(`candidate: ${mode} content hashes to ${id}, approval covers ${gate.candidate_id}; changed: ${sample.join(" ")}`);
+  }
+}
+$ precedent D-136 (B1) excerpt
+B1, D-135 was added to `decisions.md` (a candidate entry) after the round-8 freeze
