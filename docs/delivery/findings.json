@@ -13612,6 +13612,65 @@
         ],
         "note": "Verified by its reporter, the release-auditor (round-9 run 7b5f734c raised it; this is round-10 run 82e59b30). Candidate sha256:f38274cb6d50c49857a89876cec1bc4713f69ef84b29a6f5b9af10061317ccc6 (1475 files, source e70ac02f63cd1f42487cfa4dae73f68e933da015), recomputed in a complete clone. The owner is frontend-ux-engineer (T-DG4-FE-R11); I authored none of the repair.\n\nFix ancestry. fix_revision 30f2b1798fbbc723fbdba0149fef1b4cd0cf9b66 is a commit (full 40-hex), merged by 5c18961. It is an ancestor of e70ac02 and of this run's starting HEAD e5587b8 (03-findings.log).\n\nMy round-9 reproduction no longer reproduces (13-f-dg4-160-reproduction-and-sweep.log):\n- en/ar transformations.json:88 form.statusHint now reads 'A transformation is closed from its Closure page, once the G6 (Sustain) business approval and the closure conditions are met.' / '… يُغلَق التحوّل من صفحة «الإغلاق» الخاصة به، بعد اعتماد الأعمال للبوابة G6 (الاستدامة) واستيفاء شروط الإغلاق.'\n- The stale sentence is found nowhere in apps/, packages/, tests/ or e2e/ (grep exit 1).\n- It still renders at TransformationEditPage.tsx:274.\n- What it points to exists: route transformations/:id/closure (router.tsx:402) and the workspace tab closureP4.tab 'Closure' / «الإغلاق».\n- The first sentence (the allowed transitions, no 'closed' option) is unchanged and still true.\n\nThe pins are not vacuous (09-fe-r11-mutants.log), checked in a scratch clone and restored clean:\n- Restoring the round-9 transformations.json fails 3 tests: the literal EN/AR pin and the en/ar rendered edit page.\n- Restoring the round-9 nav.json fails 11 tests: the planned-area pins in en and ar.\n- On the candidate, the two files pass 49/49 with the locale unset and with C.UTF-8 (08-fe-r11-unit-*.log).\n\nThe sweep (FE-R11 handback §3) is sound. I checked each kept string myself:\n- gates.notEnabled / notEnabledBody and problems.gate_not_enabled are unreachable. Migrations 0026 and 0059 enable G4-G6 (0059 aborts unless both G5 and G6 are enabled), catalogue.test.ts pins G1-G6 all true, and no API code writes gate_definition.\n- transformations.workspace.laterStage has 0 render sites.\n- nav.p4.beingBuilt* is unreachable: P4_PLANNED_ROUTES has 0 entries.\n- admin.plannedSections is true: every section it names is final gate DG5 or DG6 and SPECIFIED.\n- problems.access__scope_type_reserved is true (REQ-S10-002, DG6).\n\nThe three corrected sweep strings are true for DG4:\n- nav.plannedBody: each of the four planned areas (playbook, risks, change, bau) has delivered sub-screens without a permission requirement in NAV_SUBPAGES.\n- nav.entry.portfolioPlanned: the cross-portfolio view is REQ-S03-007 (DG5, SPECIFIED), and the dashboards are REQ-S13-001 (DG4, IMPLEMENTED).\n- nav.willContain now reads 'What this area covers'.\n\nAll three round-10 specialists checked the repair independently and agree, all PASS on the same candidate:\n- domain: DOM-R10-02 to -04, a real-stack EN/AR probe at 60/60;\n- code-security: SEC-R10-02, no key added or removed and no interpolation surface;\n- qa: QA-R10-03, -07 to -09, with a stale-text mutant failing 14/49, e2e 24/24 in both settings and axe 0.\n\nThe repair is text and tests only: the product diff from f2ae717 is exactly 9 files, with no API, worker, package or migration change."
       }
+    },
+    {
+      "id": "F-DG5-100",
+      "stage_id": "DG5",
+      "requirement": "REQ-S13-005",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "DOCX and PPTX exports are not well-formed XML 1.0 when accepted user text contains a C0 control character (U+0001-U+0008, U+000B, U+000C, U+000E-U+001F); the export job still reports succeeded",
+      "reproduction": "1. The API accepts such characters in user text: the shared validator refuses only U+0000 and lone surrogates (packages/shared/src/schemas/common.ts:94 hasInvalidCharacter, used by freeText and by the central request check apps/api/src/modules/platform/validation.ts:68-113). 2. End to end, real API and real worker export runner on a migrated, demo-seeded scratch database (synthetic data): a TO+TL user renames the demo transformation through PATCH /api/v1/transformations/{id} to 'International Roaming\\u000Bprogramme (pasted)' (U+000B is the character Word uses for a manual line break); the answer is 200 and the name is stored. Then POST .../reports/charter/generate and POST /exports {format: docx}, and POST .../reports/roadmap/generate and POST /exports {format: pptx}; the worker reports both jobs 'succeeded' and GET /exports/{id}/download answers 200. Run: tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts (probe copied from docs/delivery/test-evidence/DG5/code-security/round-1/repro/; log 46-ooxml-control-char.log). 3. Renderer level, from the built packages: node docs/delivery/test-evidence/DG5/code-security/round-1/repro/ooxml-control-chars.mjs renders one register row whose description is 'Supplier\\u0001delay\\u000B(pasted)' to docx, pptx and xlsx and checks every XML part against the XML 1.0 Char production (log 46b-ooxml-control-chars-renderer.log). Cause: the XLSX writer replaces XML-invalid characters with U+FFFD (packages/reporting/src/xlsx/sheet.ts:13-26 INVALID_XML/xmlText), but the DOCX writer (packages/reporting/src/docx.ts, library docx 9.8.1) and the PPTX writer (packages/reporting/src/pptx.ts, library pptxgenjs 4.0.1) pass user text to libraries that escape only & < > \" and write the control character raw. XML 1.0 (section 2.2, Char) forbids these characters raw and as character references, so the part is not well-formed: Word refuses the file or offers a repair; PowerPoint offers a repair that may drop content. Affected: every DOCX/PPTX output that prints the text, including the transformation name in every header (charter, diagnostic, tom, business_cases, roadmap, meeting_minutes, gate_pack, executive_dashboard, handover, executive_pack, meeting_pack). PDF and CSV of the same text render (no XML constraint).",
+      "expected": "Every export the worker marks succeeded is a well-formed OOXML package: user text that XML 1.0 cannot carry is replaced (for example by U+FFFD, as xlsx/sheet.ts xmlText already does) or refused at input, for DOCX and PPTX as for XLSX; a corrupt file is never stored with status succeeded and a checksum.",
+      "actual": "charter.docx: job succeeded, 14695 bytes; word/document.xml and docProps/core.xml contain a raw U+000B ('...International Roaming\\u000bprogramme (pasted)</w:t>'). roadmap.pptx: job succeeded, 38497 bytes; ppt/slides/slide1.xml and docProps/core.xml contain a raw U+000B. roadmap.xlsx of the same snapshot: well-formed. Renderer level: docx word/document.xml and pptx ppt/slides/slide2.xml contain a raw U+0001; xlsx none. The probe's two assertions 'not-well-formed parts: none' for charter.docx and roadmap.pptx fail on the candidate (by design: they encode the expected behaviour).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/46-ooxml-control-char.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/46b-ooxml-control-chars-renderer.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/zz-sec-rg2-ooxml-control-char.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/ooxml-control-chars.mjs",
+        "packages/reporting/src/xlsx/sheet.ts",
+        "packages/reporting/src/docx.ts",
+        "packages/reporting/src/pptx.ts",
+        "packages/shared/src/schemas/common.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T17:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 corrected re-gate round 1 (session 3a37f8d1) on candidate ff3bc2c4. Reproduced end to end (46-ooxml-control-char.log) and at the renderer level (46b). Medium, not a mandatory violation: no stored data is corrupted, no authorization or calculation is affected, PDF/XLSX/CSV of the same text are correct, and the literal REQ-S13-005 acceptance (filtered XLSX rows, PPTX gate criteria) holds on normal text; but any user who can edit a printed text field can make that transformation's DOCX/PPTX deliverables unreadable while the job reports success. Owner: the renderers are T-DG5-BE-N (backend-workflow-engineer)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-140",
+      "stage_id": "DG5",
+      "requirement": "REQ-S01-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "At branding version 0 every Arabic export prints the English product name 'Mobily Transformation Hub' in its header, while the API and the Arabic shell use the version-0 Arabic name 'منصة موبايلي للتحوّل'",
+      "reproduction": "On a fresh database with no branding_setting row (version 0), generate any report and export it in Arabic (here: the A15 matrix of tests/qa/integration/a15-outputs-every-definition.test.ts run alone with QA_A15_DUMP, then my inspection 11-inspect-samples.log). All 25 Arabic PDF, DOCX and PPTX files (12 + 8 + 5) start with the header text 'Mobily Transformation Hub'. Cause: apps/worker/src/reports/export-runner.ts:379-381 passes `productName: deps.productName ?? DEFAULTS.productName` when brandingAtGeneration returns null, for every language; DEFAULTS.productName (packages/shared/src/constants.ts:61) is the English text only. After a branding version is saved, the runner uses productNameAr for Arabic (branding.test.ts asserts that case), so only version 0 is affected.",
+      "expected": "ADR-0049 §8 'Version 0 is the default': 'the name \"Mobily Transformation Hub\" / \"منصة موبايلي للتحوّل\" (the shipped i18n texts)'; GET /api/v1/branding at version 0 returns productNameAr 'منصة موبايلي للتحوّل' (apps/api/src/modules/admin/branding-port.ts:19, asserted by branding.test.ts 'version 0'), and the Arabic shell shows it (common.brand.productName). An Arabic export at version 0 should carry the same Arabic name in its header (CLAUDE.md: Arabic RTL for every user-facing string; REQ-S13-009 bilingual exports).",
+      "actual": "The Arabic file headers carry the English default name at version 0, so the screen and the generated output of the same organization show different product names in Arabic. The literal acceptance of REQ-S01-002 ('a fresh install shows \"Mobily Transformation Hub\"'; a changed name reaches the next report header in en and ar) still holds, and no number, approval or authorization is affected: cosmetic bilingual inconsistency, Low.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-1/12-f140-static.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/11-inspect-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-1/04b-integration-tests-qa-only.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T19:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 round 1 of the corrected clean re-gate (T-DG5-RG2-QA-R1). Low, not mandatory, not blocking. Id note: the history branch 5a7c189 also used F-DG5-140 (closed there); this branch's findings.json has no DG5 finding and the assignment requires F-DG5-140 onward."
+        }
+      ]
     }
   ]
 }

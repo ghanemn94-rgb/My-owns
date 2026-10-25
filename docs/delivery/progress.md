@@ -56,3 +56,8 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 ## Unresolved blockers
 
 None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
+
+## D-191 (2026-10-25, delivery-orchestrator; recorded here because decisions.md is a frozen candidate file until the DG5 gate is decided, D-190)
+
+**Corrected re-gate round 1 on candidate `ff3bc2c4`: domain, code-security and qa all PASS.** code-security raised **F-DG5-100** (Medium, not mandatory: DOCX and PPTX exports are not well-formed XML 1.0 when accepted user text holds a C0 control character, and the job still reports succeeded); qa raised **F-DG5-140** (Low: at branding version 0 the Arabic export header prints the English product name). domain raised none.
+**Decision:** a Medium finding cannot be accepted, so both are repaired in **T-DG5-BE-RG3** (backend), recorded with `import-findings --fix` and the full merge commit, followed by a full merged-tree verification including e2e in both locale settings, a re-freeze, round 2 with all three reviewers, and the release audit per D-140 option 1. D-191 is copied into `decisions.md` only after the gate is decided.
