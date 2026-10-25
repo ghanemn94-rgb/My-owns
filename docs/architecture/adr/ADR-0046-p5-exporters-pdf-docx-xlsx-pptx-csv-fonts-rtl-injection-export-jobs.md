@@ -231,3 +231,8 @@ Sources: D-185 (F-DG5-101, Low, code-security round 1) and the T-DG5-BE-RG1 hand
 - **Tests.** `packages/reporting/src/csv.test.ts` (`describe` at `:136`: the reviewer's reproduction, the long and short cases with a long negative total at `:158`, an injection string that keeps its apostrophe, and `csvCell` following `quotePrefix`), and `packages/reporting/src/xlsx/xlsx.test.ts` ("a negative decimal of more than 15 significant digits is text without quotePrefix").
 
 Requirement row: REQ-S13-006. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
+
+## Amendment (2026-10-25, delivery-orchestrator; D-191, F-DG5-100): §3, characters XML 1.0 cannot carry
+
+- Every OOXML writer (DOCX, PPTX, XLSX) replaces the characters XML 1.0 cannot carry (C0 controls other than tab, LF and CR; lone surrogates; U+FFFE and U+FFFF) with U+FFFD, through the shared `packages/reporting/src/xml-chars.ts` (`xmlSafe`), and checks the finished package (`assertWellFormedChars`). A package that still holds such a character is a `RenderError` (`export.render_failed`): no file is stored and the job does not report succeeded.
+- Stored record text is not changed; the input rule (`hasInvalidCharacter`, ADR-0007) is unchanged.
