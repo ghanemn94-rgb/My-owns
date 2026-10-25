@@ -1,0 +1,19 @@
+Sun Oct 25 20:34:57 UTC 2026
+# qa-verifier F-DG5-140 reproduction, step 1: the A15 matrix alone with QA_A15_DUMP (locale unset)
+$ QA_A15_DUMP=$TMPDIR/a15dump tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/a15-outputs-every-definition.test.ts
+port-policy: PostgreSQL listening on port 23150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvoadzkb_d8159e6d (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a15-outputs-every-definition.test.ts (5 tests) 24469ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout  21220ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > an export is the requester's own: another user of the organization gets 404 on the job and the file  353ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  20:34:59
+   Duration  38.46s (transform 5.61s, setup 0ms, collect 10.32s, tests 24.47s, environment 0ms, prepare 75ms)
+
+EXIT=0

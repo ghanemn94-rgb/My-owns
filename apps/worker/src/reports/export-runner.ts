@@ -26,6 +26,7 @@
 import { insertAuditEvent, sql, type Db, type ExportJobRow, type Tx } from "@mth/db";
 import {
   createExportStore,
+  DEFAULT_PRODUCT_NAMES,
   EXPORT_MAX_BYTES,
   exportFileName,
   exportStorageKey,
@@ -37,7 +38,6 @@ import {
   type LabelTable,
 } from "@mth/reporting";
 import { ENV_VARS } from "@mth/config";
-import { DEFAULTS } from "@mth/shared";
 import { exportJobRequestedV1, outboxEnvelope, type ReportDocument } from "@mth/shared/schemas";
 import { jobActor } from "../kit.ts";
 import type { JobAttempt } from "../handlers/spec.ts";
@@ -61,8 +61,6 @@ export interface ExportRunnerDeps {
   readonly store: ExportFileStore;
   /** The content label table (`report.*` keys) in en and ar; the frame labels are built into @mth/reporting. */
   readonly labels?: LabelTable;
-  /** The product name printed in the file header while no branding version is published (version 0). */
-  readonly productName?: string;
   /** Test seam: called after each rendered section (before the status check). */
   readonly afterSection?: (done: number, total: number) => void | Promise<void>;
 }
@@ -268,7 +266,8 @@ async function loadSource(db: Db, job: ExportJobRow) {
  * generation time, read outside any transaction just before rendering, so the next generated file carries a newly
  * published product name and colour without a code change or redeploy. The worker imports no API code, so this is the
  * API's `BrandingReadPort.current` (apps/api admin/branding-port.ts) in one query. No branding row = version 0: the
- * shipped product name and no brand colour (the defaults). A file already stored never changes.
+ * shipped product name in the export language (DEFAULT_PRODUCT_NAMES, F-DG5-140) and no brand colour (the defaults). A
+ * file already stored never changes.
  */
 export async function brandingAtGeneration(
   db: Db,
@@ -378,7 +377,8 @@ export async function runExport(
       title: language === "ar" ? src.label_ar : src.label_en,
       branding:
         brand === null
-          ? { productName: deps.productName ?? DEFAULTS.productName, provenance }
+          ? // F-DG5-140: version 0 prints the shipped name in the export language (the API's and the shell's text).
+            { productName: DEFAULT_PRODUCT_NAMES[language], provenance }
           : {
               productName: ar ? brand.productNameAr : brand.productNameEn,
               primaryColour: brand.primaryColour,

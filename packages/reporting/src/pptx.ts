@@ -18,6 +18,7 @@ import { createLabels, type Labels } from "./labels.ts";
 import { pagedDocument, type Block, type TableBlock } from "./layout/blocks.ts";
 import { withPagedLabels } from "./layout/values.ts";
 import { EXPORT_CONTENT_TYPES, issueLine, RenderError, type RenderOptions, type RenderResult } from "./model.ts";
+import { assertWellFormedChars, xmlSafe } from "./xml-chars.ts";
 
 // pptxgenjs is a CommonJS module whose `module.exports` is the class; its types declare it as `export default`.
 type Pptx = typeof pptxModule.default;
@@ -121,10 +122,11 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_16x9";
   pptx.rtlMode = rtl;
-  pptx.author = o.branding.productName;
-  pptx.company = o.branding.productName;
-  pptx.title = `${o.title} — ${content.transformation.code}`;
-  pptx.subject = `${content.transformation.code} — ${content.transformation.name}; snapshot ${o.snapshot.id}`;
+  // F-DG5-100: every string handed to pptxgenjs is `xmlSafe` (it escapes only & < > " and writes C0 controls raw).
+  pptx.author = xmlSafe(o.branding.productName);
+  pptx.company = xmlSafe(o.branding.productName);
+  pptx.title = xmlSafe(`${o.title} — ${content.transformation.code}`);
+  pptx.subject = xmlSafe(`${content.transformation.code} — ${content.transformation.name}; snapshot ${o.snapshot.id}`);
 
   const titleSlide: SlideSpec = {
     title: paged.title,
@@ -162,7 +164,7 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
     // D-163 (ADR-0050 §2 (d); REQ-PB-089): a demo snapshot's illustrative label at the top of every slide, the title
     // slide's header included.
     if (paged.illustrative !== null)
-      slide.addText(paged.illustrative, {
+      slide.addText(xmlSafe(paged.illustrative), {
         ...textProps,
         x: X,
         y: 0,
@@ -173,8 +175,16 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
         color: "7A4B00",
       });
     if (index === 0)
-      slide.addText(paged.productName, { ...textProps, x: X, y: 0.15, w: W, h: 0.35, fontSize: 12, bold: true });
-    slide.addText(spec.title, {
+      slide.addText(xmlSafe(paged.productName), {
+        ...textProps,
+        x: X,
+        y: 0.15,
+        w: W,
+        h: 0.35,
+        fontSize: 12,
+        bold: true,
+      });
+    slide.addText(xmlSafe(spec.title), {
       ...textProps,
       x: X,
       y: index === 0 ? 0.45 : 0.25,
@@ -187,7 +197,7 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
     for (const item of spec.items) {
       if (item.kind === "text") {
         const h = (estimateLines(item.text, item.size, W) * item.size * 1.3) / 72 + 0.1;
-        slide.addText(item.text, { ...textProps, x: X, y, w: W, h, fontSize: item.size, valign: "top" });
+        slide.addText(xmlSafe(item.text), { ...textProps, x: X, y, w: W, h, fontSize: item.size, valign: "top" });
         y += h + 0.05;
         continue;
       }
@@ -196,7 +206,7 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
       const widths = columnWidths(t);
       const order = (cells: readonly string[]) => (rtl ? [...cells].reverse() : [...cells]);
       const cellOf = (text: string, header: boolean): TableCell => ({
-        text,
+        text: xmlSafe(text),
         options: { ...textProps, fontSize: size, bold: header, ...(header ? { fill: { color: "EEF1F5" } } : {}) },
       });
       const rows: TableRow[] = [];
@@ -204,7 +214,7 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
       for (const r of item.rows) {
         // A one-cell row is the empty-state line ("No records"): it spans the table.
         if (r.length === 1 && t.weights.length > 1)
-          rows.push([{ text: r[0]!, options: { ...textProps, fontSize: size, colspan: t.weights.length } }]);
+          rows.push([{ text: xmlSafe(r[0]!), options: { ...textProps, fontSize: size, colspan: t.weights.length } }]);
         else rows.push(order(r).map((c) => cellOf(c, r === t.totals)));
       }
       const h = (t.header === null ? 0 : rowHeight(t.header, t)) + item.rows.reduce((a, r) => a + rowHeight(r, t), 0);
@@ -222,7 +232,7 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
       y += h + 0.15;
     }
     const footer = labels.text("export.slide", { n: index + 1, m: specs.length });
-    slide.addText(issue, {
+    slide.addText(xmlSafe(issue), {
       ...textProps,
       x: rtl ? X + W / 2 : X,
       y: SLIDE_H - 0.38,
@@ -231,7 +241,7 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
       fontSize: 8,
       color: "5A6275",
     });
-    slide.addText(footer, {
+    slide.addText(xmlSafe(footer), {
       ...textProps,
       x: rtl ? X : X + W / 2,
       y: SLIDE_H - 0.38,
@@ -246,8 +256,10 @@ export async function renderPptx(input: ReportDocument, o: RenderOptions): Promi
   // Only pptxgenjs's STREAM output (a Node Buffer) honours `compression` (DEFLATE); the other outputs are stored.
   const out = await pptx.write({ outputType: "STREAM", compression: true });
   if (!(out instanceof Uint8Array)) throw new RenderError("the presentation writer returned no bytes");
+  const bytes = new Uint8Array(out.buffer, out.byteOffset, out.byteLength);
+  await assertWellFormedChars(bytes); // F-DG5-100: a package PowerPoint would repair is a RenderError, never stored
   return {
-    bytes: new Uint8Array(out.buffer, out.byteOffset, out.byteLength),
+    bytes,
     contentType: EXPORT_CONTENT_TYPES.pptx,
     extension: "pptx",
     sections: total,

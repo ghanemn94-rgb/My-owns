@@ -17,6 +17,17 @@ export type ExportLanguage = "en" | "ar";
 /** A label table: i18n key -> text, per language. */
 export type LabelTable = Readonly<Record<ExportLanguage, Readonly<Record<string, string>>>>;
 
+/**
+ * F-DG5-140 (ADR-0049 §8 "Version 0 is the default"; REQ-S01-002, REQ-S13-009): the shipped product name in each export
+ * language, printed while no branding version is published (version 0). The same texts as the shell's i18n
+ * `common.brand.productName` (apps/web/src/i18n/{en,ar}/common.json) and the API's version-0 branding
+ * (apps/api/src/modules/admin/branding-port.ts DEFAULT_PRODUCT_NAME_EN / _AR); labels.test.ts asserts all three agree.
+ */
+export const DEFAULT_PRODUCT_NAMES: Readonly<Record<ExportLanguage, string>> = {
+  en: "Mobily Transformation Hub",
+  ar: "منصة موبايلي للتحوّل",
+};
+
 /** The frame labels shared by every format (en, ar). */
 export const FRAME_LABELS: LabelTable = {
   en: {
