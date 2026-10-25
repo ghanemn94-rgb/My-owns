@@ -27,7 +27,7 @@ Each slice section lists: what the architect already delivered (do not re-create
 13. **Deterministic tests.** Tests are deterministic under load (F-DG4-143 to F-DG4-148) and never read growing delivery folders (D-138).
 14. **Contract seams.** Each task removes its operations from its own `p5-pending-<task>.ts` in the same change that routes them, and exercises each through the validating client in its own `p5-exercises-<task>.ts` (success and every declared refusal it can reach). The pinned counts in `contract.test.ts` (media-type triple, rate-limit floor) are reconciled by the orchestrator from the handbacks (D-079 precedent): report your deltas.
 15. **Exact refusals.** Problem codes and English `detail` texts are exactly those in the slice ADR tables (slice A: ADR-0039 §13, ADR-0040 §8). A code you need that is not there goes in your handback with its proposed text; do not invent it silently.
-16. **Migrations.** Forward-only; a merged migration is never edited. P5 ranges have gaps by design: `packages/db/src/seed.test.ts` requires ids below 0058 contiguous and every id from 0058 at most 0099, strictly increasing. Write only the numbers your slice section assigns you, in its order.
+16. **Migrations.** Forward-only; a merged migration is never edited. P5 ranges have gaps by design: `packages/db/src/seed.test.ts` requires ids below 0058 contiguous and every id from 0058 at most 0099, strictly increasing. Write only the numbers your slice section assigns you, in its order. _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): the eight P5 ids left unused, 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084, are **retired and never filled**, by any later stage or repair (`packages/db/src/seed.test.ts:761` `P5_RETIRED_MIGRATION_IDS`; the test at `:792` pins them). A new migration takes an id **above the highest shipped id**, and the runner refuses a pending file whose id is not above the highest applied id (ADR-0003, "Migration order"). For P5 and later, this supersedes the `p4-work-split.md` orchestrator note that a range's unused numbers must be filled._
 17. **No dependency, secret or CDN.** A dependency you need goes in your handback with its official documentation, support window and licence (D-142 Q8).
 18. **Clones, not worktrees.** Never run `git worktree add`; use a `git clone` under `$TMPDIR` (D-082).
 
@@ -72,7 +72,7 @@ The plan's BE-B is split into **BE-B, BE-B2, BE-B3** (one review/publish engine 
 
 - **Files:** `methodology/reviews.ts` (submit — which calls `revision-impact.ts` for the proposal — decide, withdraw, list; `config_review` work items via `createWorkItemOnce`), `methodology/publish.ts` (publish, rollback; lock 730251), `methodology/review-policies.ts`, `packages/shared/src/schemas/studio-review.ts`.
 - **Operations (8):** `submitConfigReview`, `listConfigReviews`, `decideConfigReview`, `withdrawConfigReview`, `publishConfigVersion`, `rollbackConfigVersion`, `listConfigReviewPolicies`, `updateConfigReviewPolicy`.
-- **Tests (REQ-S06-007, S06-009 literal):** publish without the required review → 422 `config_version.review_required`; editing a published version → 409 `config_version.not_editable`; publish with a failed coverage run → 422 `config_version.source_incomplete`; the author/requester deciding its review → 403 `config_review.self_review`; a kind with `review_required = false` publishes from preview in one call; rollback creates a new version (reason required), later business records stay retrievable and the audit trail shows `methodology_version.rollback_create` and `.publish`; TO can switch review off, ADM_METHOD gets 403.
+- **Tests (REQ-S06-007, S06-009 literal):** publish without the required review → 422 `config_version.review_required`; editing a published version → 409 `config_version.not_editable`; publish with a failed coverage run → 422 `config_version.source_incomplete`; the author/requester deciding its review → 403 `config_review.self_review` (_amended 2026-10-18, T-DG5-ARCH-R4: an author is the draft's creator or any recorded contributor, D-170, ADR-0039 amendment F1_); a kind with `review_required = false` publishes from preview in one call; rollback creates a new version (reason required), later business records stay retrievable and the audit trail shows `methodology_version.rollback_create` and `.publish`; TO can switch review off, ADM_METHOD gets 403.
 
 ### A.5 BE-C — methodology migrations, gate re-approvals, the gates reader, the S16-012 group (backend-workflow-engineer; after BE-B3)
 
@@ -88,7 +88,7 @@ The plan's BE-B is split into **BE-B, BE-B2, BE-B3** (one review/publish engine 
 
 ### A.7 Migrations of slice A
 
-`0062`–`0064` are delivered. **`0065`**: KBE-A (above). **`0066`–`0067`**: free; used only if a slice A task's handback shows a database need, in task order (BE-C first). **Rule A-7 (source inventory):** BE-P (launch windows), KBE-G (health questions) and BE-T (roaming example) each add, in a migration of their own range, `UPDATE source_element SET feature_status = 'working' WHERE set_code = '…'` when their feature ships, so the coverage report stays true (F-DG4-160).
+`0062`–`0064` are delivered. **`0065`**: KBE-A (above). **`0066`–`0067`**: free; used only if a slice A task's handback shows a database need, in task order (BE-C first). _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): neither was used; both are retired and never filled (shared rule 16)._ **Rule A-7 (source inventory):** BE-P (launch windows), KBE-G (health questions) and BE-T (roaming example) each add, in a migration of their own range, `UPDATE source_element SET feature_status = 'working' WHERE set_code = '…'` when their feature ships, so the coverage report stays true (F-DG4-160).
 
 ### A.8 Integration order
 
@@ -164,7 +164,7 @@ The plan's BE-E is split into **BE-E** and **BE-E2** (thirteen framework operati
 
 ### B.5 Migrations of slice B and C
 
-`0068`–`0070` are delivered. **`0071`–`0073`** are free and are taken, in this order, only by a slice B/C task whose handback shows a database need: **`0071` BE-F2** (expected: the work-item kind `procedure_step` and its My Work section line, if the step assignment is shown in My Work — ADR-0042 §7); **`0072` BE-G** (only if an output adapter needs a constraint or seed change); **`0073` BE-E2** (only if bulk edit or export needs one). A task that needs none leaves its number unused; numbers are never reordered.
+`0068`–`0070` are delivered. **`0071`–`0073`** are free and are taken, in this order, only by a slice B/C task whose handback shows a database need: **`0071` BE-F2** (expected: the work-item kind `procedure_step` and its My Work section line, if the step assignment is shown in My Work — ADR-0042 §7); **`0072` BE-G** (only if an output adapter needs a constraint or seed change); **`0073` BE-E2** (only if bulk edit or export needs one). A task that needs none leaves its number unused; numbers are never reordered. _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): an unused number stays unused permanently (0073 is retired; shared rule 16)._
 
 ### B.6 Integration order (slice B)
 
@@ -271,7 +271,7 @@ The plan's BE-H, BE-I and BE-L are each split in two (**BE-H/BE-H2**, **BE-I/BE-
 - **Files:** `automation/dry-run.ts` (rolled-back read-only transaction; planners only), `automation/lifecycle.ts` (submit, review, publish, discard; `automation_rule_review` work items), `automation/conditions.ts` (pure evaluation with decimal.js; `automation.condition_unknown_value`), their `automation/routes.ts` lines (after BE-H), `apps/worker/src/handlers/automation.ts` and `apps/worker/src/queues/automation.ts` (fill BE-A's stubs: `automation.evaluate` mapped from every admin-selectable event trigger, `automation.tick_hourly`, `automation.tick_daily`; executions under lock 730258), `apps/worker/src/automation/engine.ts`, `apps/worker/src/automation/actions/{create-task,notify,escalate}.ts` (each with a parity test against its API planner), tests.
 - **Operations (6):** `listAutomationDryRuns`, `runAutomationDryRun`, `submitAutomationRuleVersion`, `decideAutomationRuleReview`, `publishAutomationRuleVersion`, `discardAutomationRuleVersion`.
 - **Consumes:** ADR-0043 §2, §4, §5; `config_review_policy` row `automation_rule_set` (read only); the kit's `createWorkItemOnce`, `runOnce`, `jobActor`.
-- **Tests (literal):** REQ-S12-002: a dry run creates no work item, notification, execution or business record (counts before/after), and records one `automation_dry_run`; submit without a pass dry run → 422 `automation_rule_version.dry_run_required`; the author reviewing → 403 `automation_rule_version.self_review`; publish with review required and none → 422 `automation_rule_version.review_required`; TO switches review off (slice A operation) and a draft publishes after its dry run. REQ-S12-001: an enabled admin rule on `gate.decided` records one execution naming its version, trigger event and outcome; conditions not met → `skipped`. REQ-S12-021: the same event ×3 → one execution, one task.
+- **Tests (literal):** REQ-S12-002: a dry run creates no work item, notification, execution or business record (counts before/after), and records one `automation_dry_run`; submit without a pass dry run → 422 `automation_rule_version.dry_run_required`; the author reviewing → 403 `automation_rule_version.self_review` (_amended 2026-10-18, T-DG5-ARCH-R4: any author, meaning `authored_by` or any recorded contributor, D-170, ADR-0043 amendment F1_); publish with review required and none → 422 `automation_rule_version.review_required`; TO switches review off (slice A operation) and a draft publishes after its dry run. REQ-S12-001: an enabled admin rule on `gate.decided` records one execution naming its version, trigger event and outcome; conditions not met → `skipped`. REQ-S12-021: the same event ×3 → one execution, one task.
 
 ### D.3 BE-I — executions, the failure queue, retry and dismiss, service identity (backend-workflow-engineer; after BE-H2)
 
@@ -323,7 +323,7 @@ See §D.0 (shared artifacts). Slice E's seeds are in `0075`: the sixteen starter
 
 ### E.5 Migrations of slices D and E
 
-`0074`–`0076` are delivered. **`0077`–`0079`** are free and are taken, in this order, only by a task whose handback shows a database need: **`0077` BE-J** (expected only if a starter needs a seed change, e.g. a further trigger row a DG4 handler consumes that `0075` missed); **`0078` BE-K** (only if route resolution needs a constraint); **`0079` BE-L/BE-L2** (only if delivery or the cut-off scan needs one). A task that needs none leaves its number unused; numbers are never reordered.
+`0074`–`0076` are delivered. **`0077`–`0079`** are free and are taken, in this order, only by a task whose handback shows a database need: **`0077` BE-J** (expected only if a starter needs a seed change, e.g. a further trigger row a DG4 handler consumes that `0075` missed); **`0078` BE-K** (only if route resolution needs a constraint); **`0079` BE-L/BE-L2** (only if delivery or the cut-off scan needs one). A task that needs none leaves its number unused; numbers are never reordered. _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): an unused number stays unused permanently (0077, 0078 and 0079 are retired; shared rule 16)._
 
 ### E.6 Integration order (slices D and E)
 
@@ -430,7 +430,7 @@ The plan's KBE-C and KBE-D are each split in two (**KBE-C/KBE-C2**, **KBE-D/KBE-
 
 ### F.8 Migrations of slice F
 
-`0080`–`0082` are delivered. **`0083`–`0084`** are free and are taken, in this order, only by a task whose handback shows a database need: **`0083` KBE-C/KBE-D** (expected only if an assembler needs an index on a DG2–DG4 table for the 5,000-row reads); **`0084` BE-M/BE-N** (only if export retention or a further error code needs one). A task that needs none leaves its number unused; numbers are never reordered.
+`0080`–`0082` are delivered. **`0083`–`0084`** are free and are taken, in this order, only by a task whose handback shows a database need: **`0083` KBE-C/KBE-D** (expected only if an assembler needs an index on a DG2–DG4 table for the 5,000-row reads); **`0084` BE-M/BE-N** (only if export retention or a further error code needs one). A task that needs none leaves its number unused; numbers are never reordered. _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): an unused number stays unused permanently (0083 and 0084 are retired; shared rule 16)._
 
 ### F.9 Integration order (slice F)
 

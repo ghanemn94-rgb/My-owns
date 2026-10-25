@@ -13,7 +13,8 @@
 //  4. Finance and adoption dashboards (REQ-S13-001): headlines, non-financial benefits n/a (never 0), the People &
 //     adoption area.
 //  5. My Work (REQ-S03-008): the six sections with totals and the upcoming deadlines; the personal dashboard.
-//  6. 390 px wide, and 200 % text: no page-level horizontal scroll on the overview, the dashboard and the header.
+//  6. 390 px wide (6a), and 200 % text (6b): no page-level horizontal scroll on the overview, the dashboard, the
+//     header, the finance dashboard and My Work.
 // Every step: a full-page screenshot per language and axe with 0 serious or critical issues.
 import { expect, test, type Page } from "@playwright/test";
 import { asUser } from "./support/p3-journey-setup.ts";
@@ -323,34 +324,66 @@ test("5. My Work: the six sections with totals and the upcoming deadlines; the p
   await tl.close();
 });
 
-test("6. 390 px wide and 200 % text: no page-level horizontal scroll", async ({ browser }, info) => {
+// Test 6 (T-DG5-FE-RG1, F-DG5-141): the same five screens, the same assertions and the same ten full-page screenshots
+// as before, split into its two halves (6a 390 px, 6b 200 % text) so each half has its own budget. Each half records
+// the time of every screen (navigation, networkidle, the overflow check, the full-page screenshot) as a test annotation
+// ("timing"), so a slow run names the slow step. Measured reason for the budget: alone, the undivided test takes about
+// 14-15 s and the halves about 7-9 s each (T-DG5-FE-RG1 handback evidence); in the round-1 full suite (the shared
+// database grown by every earlier spec) the undivided test was cut at its 30 s budget in both locale settings (30.1 s,
+// load 3-6; 30.5 s, load about 2), 18.1 s of it in full-page screenshots (one of 9.8 s: the pages are long by then) and
+// no request above 800 ms, so that loaded figure is a lower bound. Each half does half of that work; 60 s per half is
+// at least 2x the whole undivided loaded figure and about 4x its half-share (about 15 s), and no assertion changes.
+const SCREENS = (tid: string): [string, string][] => [
+  ["/executive-overview", "p4dash-12-overview"],
+  [`/transformations/${tid}/dashboard`, "p4dash-13-dashboard"],
+  [`/transformations/${tid}`, "p4dash-14-header"],
+  ["/dashboards/finance", "p4dash-15-finance"],
+  ["/my-work", "p4dash-16-my-work"],
+];
+
+async function timed<T>(label: string, step: () => Promise<T>): Promise<T> {
+  const started = Date.now();
+  try {
+    return await step();
+  } finally {
+    test.info().annotations.push({ type: "timing", description: `${label}: ${Date.now() - started} ms` });
+  }
+}
+
+test("6a. 390 px wide: no page-level horizontal scroll", async ({ browser }, info) => {
+  test.setTimeout(60_000);
   const lang = langOf(info);
   const to = await asUser(browser, lang, "dev.office");
   const page = to.page;
-  const screens: [string, string][] = [
-    ["/executive-overview", "p4dash-12-overview"],
-    [`/transformations/${tidA}/dashboard`, "p4dash-13-dashboard"],
-    [`/transformations/${tidA}`, "p4dash-14-header"],
-    ["/dashboards/finance", "p4dash-15-finance"],
-    ["/my-work", "p4dash-16-my-work"],
-  ];
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const [path, name] of screens) {
-    await go(page, path);
-    await expect(page.locator("main#main h1")).toBeVisible();
-    await page.waitForLoadState("networkidle");
-    await expectNoPageOverflow(page);
-    await shot(page, lang, `${name}-390`);
-  }
-  await page.setViewportSize({ width: 1280, height: 900 });
-  for (const [path, name] of screens) {
-    await go(page, path);
-    await page.evaluate(() => {
-      document.documentElement.style.fontSize = "200%";
+  for (const [path, name] of SCREENS(tidA)) {
+    await timed(`${name}-390 open`, async () => {
+      await go(page, path);
+      await expect(page.locator("main#main h1")).toBeVisible();
+      await page.waitForLoadState("networkidle");
     });
-    await page.waitForLoadState("networkidle");
     await expectNoPageOverflow(page);
-    await shot(page, lang, `${name}-200pct`);
+    await timed(`${name}-390 screenshot`, () => shot(page, lang, `${name}-390`));
+  }
+  await to.close();
+});
+
+test("6b. 200 % text: no page-level horizontal scroll", async ({ browser }, info) => {
+  test.setTimeout(60_000);
+  const lang = langOf(info);
+  const to = await asUser(browser, lang, "dev.office");
+  const page = to.page;
+  await page.setViewportSize({ width: 1280, height: 900 });
+  for (const [path, name] of SCREENS(tidA)) {
+    await timed(`${name}-200pct open`, async () => {
+      await go(page, path);
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = "200%";
+      });
+      await page.waitForLoadState("networkidle");
+    });
+    await expectNoPageOverflow(page);
+    await timed(`${name}-200pct screenshot`, () => shot(page, lang, `${name}-200pct`));
   }
   await to.close();
 });

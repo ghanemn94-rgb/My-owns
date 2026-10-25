@@ -1,0 +1,32 @@
+# 2026-10-19T05:23:05Z  05:23:05 up  5:50,  0 user,  load average: 4.08, 5.90, 5.57
+## script
+// Profile of the module walk and differential of rule 4 (T-DG5-BE-Y2). Run from apps/api with the testkit path as argv[2].
+import { readFileSync } from "node:fs";
+import ts from "typescript";
+const { walk, MODULES_DIR, scanSource, syntaxErrors, moduleViolations } = await import(process.argv[2]!);
+const files: string[] = walk(MODULES_DIR);
+const srcs = files.map((f) => [f, readFileSync(f, "utf8")] as const);
+let bytes = 0; for (const [, s] of srcs) bytes += s.length;
+const full = (f: string, s: string) => (ts.transpileModule(s, { fileName: f, reportDiagnostics: true, compilerOptions: { jsx: ts.JsxEmit.Preserve } }).diagnostics ?? [])
+  .filter((d) => d.category === ts.DiagnosticCategory.Error)
+  .map((d) => `unparseable source: ${ts.flattenDiagnosticMessageText(d.messageText, " ")} (line ${d.file && d.start !== undefined ? d.file.getLineAndCharacterOfPosition(d.start).line + 1 : 0})`);
+const ms = (fn: () => void) => { const a = performance.now(); fn(); return Math.round(performance.now() - a); };
+console.log(`node ${process.version}; ${files.length} module files, ${(bytes / 1e6).toFixed(2)} MB`);
+for (let r = 0; r < 2; r++)
+  console.log(`round ${r}: scanSource ${ms(() => { for (const [f, s] of srcs) scanSource(f, s); })} ms | full transpileModule (before) ${ms(() => { for (const [f, s] of srcs) full(f, s); })} ms | syntaxErrors with EMPTY_EMIT (after) ${ms(() => { for (const [f, s] of srcs) syntaxErrors(f, s); })} ms | moduleViolations over every module (after) ${ms(() => { const mods = [...new Set(files.map((f) => f.slice(MODULES_DIR.length + 1).split("/")[0]))]; mods.flatMap((m) => moduleViolations(m)); })} ms`);
+let n = 0, diff = 0, withErr = 0;
+for (const [f, s] of srcs) for (const v of [s, s.slice(0, Math.floor(s.length / 2)), s + "\n)}{", s.replace(/;/, ";;(")]) for (const ext of ["", ".js", ".jsx", ".mjs", ".cjs", ".tsx"]) {
+  n++; const a = JSON.stringify(full(f + ext, v)); const b = JSON.stringify(syntaxErrors(f + ext, v)); if (a !== "[]") withErr++; if (a !== b) diff++; }
+console.log(`differential: ${n} cases (each file as-is, cut in half, with trailing junk, with an injected '(' x 6 extension forms), ${withErr} with syntax errors, ${diff} differences`);
+## run
+node v24.21.0; 448 module files, 5.79 MB
+round 0: scanSource 1516 ms | full transpileModule (before) 3793 ms | syntaxErrors with EMPTY_EMIT (after) 1925 ms | moduleViolations over every module (after) 2840 ms
+round 1: scanSource 847 ms | full transpileModule (before) 3044 ms | syntaxErrors with EMPTY_EMIT (after) 1820 ms | moduleViolations over every module (after) 3073 ms
+differential: 10752 cases (each file as-is, cut in half, with trailing junk, with an injected '(' x 6 extension forms), 8888 with syntax errors, 0 differences
+EXIT=0
+## run
+node v22.22.2; 448 module files, 5.79 MB
+round 0: scanSource 1173 ms | full transpileModule (before) 3981 ms | syntaxErrors with EMPTY_EMIT (after) 2003 ms | moduleViolations over every module (after) 3207 ms
+round 1: scanSource 891 ms | full transpileModule (before) 3262 ms | syntaxErrors with EMPTY_EMIT (after) 2169 ms | moduleViolations over every module (after) 3353 ms
+differential: 10752 cases (each file as-is, cut in half, with trailing junk, with an injected '(' x 6 extension forms), 8888 with syntax errors, 0 differences
+EXIT=0

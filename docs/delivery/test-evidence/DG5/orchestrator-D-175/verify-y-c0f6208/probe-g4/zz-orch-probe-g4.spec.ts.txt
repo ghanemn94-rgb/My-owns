@@ -1,0 +1,36 @@
+// Orchestrator probe (not product code; never committed under e2e/): on a demo-initialized stack, render the seeded
+// roaming transformation's gate pages G1-G6 as roaming.user.tl in en and ar, and record each page's readiness line,
+// status and the synthetic approval label. Purpose: confirm D-170's F-DG5-120 repair on the merged tree.
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { expect, test } from "@playwright/test";
+import { langOf } from "../apps/web/e2e/support/ui.ts";
+import { demoPage } from "./support/a02-demo.ts";
+
+const ROAMING = "01995000-0000-7000-8000-000000000001";
+const OUT = process.env["ORCH_PROBE_DIR"] ?? "test-results/orch-probe-g4";
+test.setTimeout(180_000);
+
+test("orchestrator probe: demo gate pages G1-G6 (readiness line, status, synthetic label)", async ({ browser }, info) => {
+  const lang = langOf(info);
+  const dir = path.join(OUT, lang);
+  mkdirSync(dir, { recursive: true });
+  const p = await demoPage(browser, lang, "tl");
+  const rows: Record<string, unknown>[] = [];
+  for (const g of ["G1", "G2", "G3", "G4", "G5", "G6"]) {
+    await p.goto(`/transformations/${ROAMING}/gates/${g}`);
+    await expect(p.locator("main#main h1")).toBeVisible();
+    await p.waitForLoadState("networkidle");
+    const readiness = (await p.locator("#readiness").innerText().catch(() => "")).replace(/\s+/g, " ").trim();
+    const main = (await p.locator("main#main").innerText()).replace(/\s+/g, " ");
+    rows.push({
+      gate: g,
+      readiness: readiness.slice(0, 400),
+      approvesNothingReal: /approves nothing real|لا يعتمد أي شيء حقيقي/.test(main),
+      approvedWord: /\bApproved\b|معتمد/.test(main),
+    });
+    await p.screenshot({ path: path.join(dir, `${g}.png`), fullPage: true });
+  }
+  writeFileSync(path.join(dir, "gates.json"), JSON.stringify(rows, null, 2));
+  console.log(JSON.stringify(rows, null, 2));
+});

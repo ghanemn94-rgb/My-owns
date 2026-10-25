@@ -123,7 +123,12 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
         title={t("traceability.modular.gatesTitle")}
         intro={t("traceability.modular.gatesIntro")}
       >
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label={t("common.table.scrollRegion", { caption: t("traceability.modular.gatesTitle") })}
+        >
           <table className="table table--compact" data-gate-labels>
             <caption className="visually-hidden">{t("traceability.modular.gatesTitle")}</caption>
             <thead>
@@ -226,7 +231,8 @@ function MissingLinksView({ m }: { m: MissingLinks }) {
                     {t(`traceability.severity.${i.severity}`)}
                   </StatusTag>{" "}
                   <strong>{t(`traceability.missingCode.${i.code}`)}</strong>
-                  {i.label ? <span> · {i.label}</span> : null}{" "}
+                  {/* The label is a record name (user text): it wraps anywhere (T-DG5-FE-AB1, F-DG5-148). */}
+                  {i.label ? <span className="record-name"> · {i.label}</span> : null}{" "}
                   {to ? (
                     <Link className="link" to={to}>
                       {t("traceability.modular.supply")}

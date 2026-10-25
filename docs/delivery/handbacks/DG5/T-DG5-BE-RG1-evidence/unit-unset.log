@@ -1,0 +1,71 @@
+$ [locale unset] npx vitest run --project unit-node packages/reporting/src packages/db/src apps/api/src/modules/platform (2026-10-23T10:49:32Z)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg1
+
+ ✓ |unit-node| packages/reporting/src/csv.test.ts (12 tests) 103ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 230ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 291ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 62ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 16ms
+ ✓ |unit-node| packages/reporting/src/provenance-illustrative.test.ts (24 tests) 8743ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF en: in the header and on every page  1170ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF ar: in the header and on every page  2199ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > production (no `synthetic` member): no format prints the label in any language  2753ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > the label is translated (no missing label key in either language)  1608ms
+ ✓ |unit-node| packages/reporting/src/pptx.test.ts (5 tests) 865ms
+   ✓ renderPptx: a gate pack contains each criterion of the gate (REQ-S13-005) > en: every criterion with its labels and state, over several slides with the header repeated  342ms
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 1973ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  744ms
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  325ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  590ms
+ ✓ |unit-node| packages/reporting/src/pdf/pdf.test.ts (13 tests) 14543ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > has a right-to-left base direction: /Lang (ar-SA), /Direction /R2L, right-aligned text, mirrored tables  2088ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > embeds IBM Plex Sans Arabic (every font is an embedded subset of it, with its TrueType program)  1096ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > identifiers and numbers keep their left-to-right order inside Arabic text (text extraction)  1166ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a multi-word Arabic phrase reads right to left, word by word (the leftmost word is the last one)  1207ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > the glyph-run check: the drawn Arabic word uses GSUB's joined forms, not the isolated forms  1249ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a provisional value prints مؤقت, an Unknown value prints غير معروف and no number, never 0  1114ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a generated snapshot carries مسودة — ليس تقريراً صادراً on every page  1262ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > is left to right: /Lang (en-GB), no R2L preference, left-aligned text, IBM Plex Sans embedded  447ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > prints Provisional under a pending value, Unknown with no number, and the legend  355ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > a generated snapshot carries 'Draft — not an issued report'; an issued one its version and no Draft line  753ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > prints every row of a long register once, repeats the table header on each page, and numbers the pages  2914ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > an empty table prints its empty line; progress is reported per section; an invalid document is refused  359ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > render() dispatches every export format, PDF included  511ms
+ ✓ |unit-node| packages/reporting/src/xlsx/xlsx.test.ts (11 tests) 326ms
+ ✓ |unit-node| packages/reporting/src/docx.test.ts (4 tests) 560ms
+ ✓ |unit-node| packages/reporting/src/layout/layout.test.ts (11 tests) 888ms
+   ✓ layoutText (bidi-js levels, visual order, fonts) > breaks lines at spaces within the width, in logical order (the first Arabic word on the first line)  459ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (53 tests) 291ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4.test.ts (5 tests) 24ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5.test.ts (3 tests) 18ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 523ms
+(node:337) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 72ms
+ ✓ |unit-node| packages/reporting/src/injection.test.ts (4 tests) 95ms
+ ✓ |unit-node| packages/reporting/src/storage.test.ts (4 tests) 31ms
+ ✓ |unit-node| packages/db/src/demo/data/dataset-helpers.test.ts (8 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 154ms
+ ✓ |unit-node| packages/db/src/demo/guard.test.ts (9 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 58ms
+ ✓ |unit-node| packages/db/src/migrate.test.ts (3 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-cutoff-pack.test.ts (4 tests) 5ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-restatements.test.ts (5 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-owner-updates.test.ts (4 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-reports.test.ts (3 tests) 26ms
+ ✓ |unit-node| packages/db/src/demo/coverage.test.ts (3 tests) 15ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 44ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-demo.test.ts (11 tests) 5ms
+
+ Test Files  33 passed (33)
+      Tests  329 passed (329)
+   Start at  10:49:33
+   Duration  36.03s (transform 4.72s, setup 0ms, collect 59.44s, tests 30.05s, environment 6ms, prepare 3.62s)
+
+EXIT=0

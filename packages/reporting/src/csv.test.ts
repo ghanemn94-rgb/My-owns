@@ -1,7 +1,9 @@
 // REQ-S13-005, REQ-S13-006, REQ-S13-008 (ADR-0046 §3, §4, §9): the CSV writer.
 import { describe, expect, it } from "vitest";
-import { csvField, renderCsv } from "./csv.ts";
-import { options, sampleDocument } from "./test-fixtures.ts";
+import { csvCell, csvField, renderCsv } from "./csv.ts";
+import { textCell, valueCell } from "./model.ts";
+import { createLabels } from "./labels.ts";
+import { money, options, sampleDocument } from "./test-fixtures.ts";
 
 /** RFC 4180 parse (test helper): fields of every CRLF-terminated record. */
 function parseCsv(text: string): string[][] {
@@ -124,5 +126,66 @@ describe("renderCsv", () => {
     expect(csvField('a"b')).toBe('"a""b"');
     expect(csvField("a\rb")).toBe('"a\rb"');
     expect(csvField("a\nb")).toBe('"a\nb"');
+  });
+});
+
+// F-DG5-101 (code-security DG5 round 1; reproduction docs/delivery/test-evidence/DG5/code-security/round-1/repro/
+// zz-sec-r1-csv-long-decimal.test.ts): a decimal of more than 15 significant digits is a text cell (it does not fit a
+// double), but it is still a system number, so CSV writes its canonical string unprefixed (ADR-0046 §4), exactly as for
+// a shorter decimal. Injection-looking text keeps its apostrophe.
+describe("renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101)", () => {
+  const doc = sampleDocument(
+    [
+      { code: "RAID-901", description: "control: 15 significant digits", amount: "-1234567890.12345" },
+      { code: "RAID-902", description: "16 significant digits negative", amount: "-12345678901.23456" },
+      { code: "RAID-903", description: "16 significant digits, 6 decimal places", amount: "-1234567890.123456" },
+      { code: "RAID-904", description: "16 significant digits positive", amount: "12345678901.23456" },
+      { code: "RAID-905", description: "short positive", amount: "42.5" },
+      { code: "RAID-906", description: "-2+3+cmd|' /C calc'!A0", amount: "-7" },
+      { code: "RAID-907", description: "24 significant digits negative", amount: "-123456789012345678.123456" },
+    ],
+    // The decimal.js total (-123456791481481422.87) does not fit a double either: written as its value (valueCell).
+    "-123456791481481422.87",
+  );
+
+  it("the reviewer's reproduction: -12345678901.23456 and -1234567890.123456 are written without the apostrophe", async () => {
+    const rows = parseCsv(decode((await renderCsv(doc, options("csv"))).bytes).slice(1));
+    const amount = (code: string) => rows.find((r) => r[0] === code)![3];
+    const got = { r902: amount("RAID-902"), r903: amount("RAID-903") };
+    expect(got).toEqual({ r902: "-12345678901.23456", r903: "-1234567890.123456" });
+  });
+
+  it("positive/negative x long/short decimals, and a long negative total, are their canonical strings", async () => {
+    const rows = parseCsv(decode((await renderCsv(doc, options("csv"))).bytes).slice(1));
+    const amount = (code: string) => rows.find((r) => r[0] === code)!.slice(3);
+    expect(amount("RAID-901")).toEqual(["-1234567890.12345", "Validated"]);
+    expect(amount("RAID-904")).toEqual(["12345678901.23456", "Validated"]);
+    expect(amount("RAID-905")).toEqual(["42.5", "Validated"]);
+    expect(amount("RAID-906")).toEqual(["-7", "Validated"]);
+    expect(amount("RAID-907")).toEqual(["-123456789012345678.123456", "Validated"]);
+    expect(rows.find((r) => r[0] === "Total")!.slice(3)).toEqual(["-123456791481481422.87", "Validated"]);
+    // No amount field (column 4) of any data or total row carries the apostrophe.
+    for (const r of rows.filter((r) => /^(RAID-9|Total$)/.test(r[0] ?? ""))) expect(r[3], r[0]).not.toMatch(/^'/);
+  });
+
+  it("a real injection string in user text keeps its apostrophe (and the same text in Arabic)", async () => {
+    for (const lang of ["en", "ar"] as const) {
+      const rows = parseCsv(decode((await renderCsv(doc, options("csv", lang))).bytes).slice(1));
+      expect(rows.find((r) => r[0] === "RAID-906")![2]).toBe("'-2+3+cmd|' /C calc'!A0");
+    }
+  });
+
+  it("csvCell follows the cell's quotePrefix decision, the one XLSX uses (ADR-0046 §4: decided once)", () => {
+    const labels = createLabels("en");
+    const long = valueCell(money("-12345678901.23456"), labels);
+    expect(long).toMatchObject({ kind: "text", quotePrefix: false });
+    expect(csvCell(long)).toBe("-12345678901.23456");
+    expect(csvCell(valueCell(money("-1234567890.12345"), labels))).toBe("-1234567890.12345");
+    expect(csvCell(valueCell(money("12345678901.23456"), labels))).toBe("12345678901.23456");
+    const injection = textCell('=HYPERLINK("http://x","y")');
+    expect(injection).toMatchObject({ kind: "text", quotePrefix: true });
+    expect(csvCell(injection)).toBe(`"'=HYPERLINK(""http://x"",""y"")"`);
+    expect(csvCell(textCell("-12345678901.23456"))).toBe("'-12345678901.23456");
+    expect(csvCell(textCell("plain"))).toBe("plain");
   });
 });

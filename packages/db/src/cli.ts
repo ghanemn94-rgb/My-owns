@@ -87,11 +87,13 @@ async function main(argv: string[]): Promise<number> {
         for (const m of s.checksumMismatches)
           console.log(`CHANGED  ${m} (applied file content differs from this build)`);
         for (const u of s.unknownApplied) console.log(`UNKNOWN  ${u} (applied but not shipped with this build)`);
+        for (const o of s.outOfOrderPending)
+          console.log(`ORDER    ${o} (pending, but its id is not above the highest applied id; migrate refuses it)`);
         if (s.upToDate) {
           console.log(`mth-db status: up to date (${s.applied.length} applied)`);
           return 0;
         }
-        const drift = s.checksumMismatches.length > 0 || s.unknownApplied.length > 0;
+        const drift = s.checksumMismatches.length > 0 || s.unknownApplied.length > 0 || s.outOfOrderPending.length > 0;
         console.log(`mth-db status: ${drift ? "DRIFT" : `${s.pending.length} pending`}`);
         return drift ? 4 : 3;
       } finally {

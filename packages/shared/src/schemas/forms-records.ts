@@ -27,6 +27,11 @@ export const formRecordExport = z.strictObject({
   recordType: formRecordTypeCode,
   formSchemaVersionId: uuid,
   language: z.enum(FORM_EXPORT_LANGUAGES),
+  /**
+   * F-DG5-124 (D-178; ADR-0050 §2 (d)): the illustrative label in the export language ("Illustrative example —
+   * synthetic" / "مثال توضيحي — اصطناعي") when the export was generated in a demo database; null otherwise.
+   */
+  illustrativeLabel: z.string().min(1).nullable(),
   columns: z.array(
     z.strictObject({ key: z.string(), label: z.string(), fieldType: formFieldType, extension: z.boolean() }),
   ),

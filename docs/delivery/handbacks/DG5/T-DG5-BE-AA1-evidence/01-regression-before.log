@@ -1,0 +1,197 @@
+port-policy: PostgreSQL listening on port 23150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-aa1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvimzr8a_deb5086c (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts (19 tests | 13 failed) 7351ms
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > the label strings are the reporting pipeline's export.illustrative (en, ar) 9ms
+     → expected undefined to deeply equal { …(2) }
+   ✓ F-DG5-124: the native form-record export on a demo database carries the illustrative label > the stack under test is a demo database (GET /environment: kind demo, synthetic) 10ms
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 csv en starts with / carries the label in the export language 30ms
+     → first row: BOM + label, before the header: expected '\ufeffRecord ID,Version,ID,ID (status…' to be '\ufeffIllustrative example — synthetic' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 json en starts with / carries the label in the export language 27ms
+     → expected undefined to be 'Illustrative example — synthetic' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 csv ar starts with / carries the label in the export language 16ms
+     → first row: BOM + label, before the header: expected '\ufeffمعرّف السجل,الإصدار,المعرّف,الم…' to be '\ufeffمثال توضيحي — اصطناعي' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 json ar starts with / carries the label in the export language 19ms
+     → expected undefined to be 'مثال توضيحي — اصطناعي' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 csv en starts with / carries the label in the export language 13ms
+     → first row: BOM + label, before the header: expected '\ufeffRecord ID,Version,Dimension,Dim…' to be '\ufeffIllustrative example — synthetic' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 json en starts with / carries the label in the export language 13ms
+     → expected undefined to be 'Illustrative example — synthetic' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 csv ar starts with / carries the label in the export language 14ms
+     → first row: BOM + label, before the header: expected '\ufeffمعرّف السجل,الإصدار,البُعد,البُ…' to be '\ufeffمثال توضيحي — اصطناعي' // Object.is equality
+   × F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 json ar starts with / carries the label in the export language 17ms
+     → expected undefined to be 'مثال توضيحي — اصطناعي' // Object.is equality
+   ✓ F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > the stack under test is not a demo database 4ms
+   ✓ F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T14 csv en has no label row and illustrativeLabel null 17ms
+   × F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T14 json en has no label row and illustrativeLabel null 15ms
+     → expected undefined to be null
+   ✓ F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T14 csv ar has no label row and illustrativeLabel null 13ms
+   × F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T14 json ar has no label row and illustrativeLabel null 11ms
+     → expected undefined to be null
+   ✓ F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T01 csv en has no label row and illustrativeLabel null 17ms
+   × F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T01 json en has no label row and illustrativeLabel null 13ms
+     → expected undefined to be null
+   ✓ F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T01 csv ar has no label row and illustrativeLabel null 11ms
+   × F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T01 json ar has no label row and illustrativeLabel null 9ms
+     → expected undefined to be null
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > the label strings are the reporting pipeline's export.illustrative (en, ar)
+AssertionError: expected undefined to deeply equal { …(2) }
+
+[32m- Expected:[39m 
+{
+  "ar": "مثال توضيحي — اصطناعي",
+  "en": "Illustrative example — synthetic",
+}
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:77:45
+     75| describe("F-DG5-124: the native form-record export on a demo database …
+     76|   it("the label strings are the reporting pipeline's export.illustrati…
+     77|     expect(FORM_EXPORT_ILLUSTRATIVE_LABELS).toEqual({
+       |                                             ^
+     78|       en: FRAME_LABELS.en["export.illustrative"],
+     79|       ar: FRAME_LABELS.ar["export.illustrative"],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 csv en starts with / carries the label in the export language
+AssertionError: first row: BOM + label, before the header: expected '\ufeffRecord ID,Version,ID,ID (status…' to be '\ufeffIllustrative example — synthetic' // Object.is equality
+
+Expected: [32m"﻿[7mIllu[27mst[7mr[27mat[7mive example — synthetic[27m"[39m
+Received: [31m"﻿[7mRecord ID,Version,ID,ID ([27mstat[7mus),benefit,benefit (status),type,type (status),target,target (status),owner,owner (status)[27m"[39m
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:98:71
+     96|         expect(res.headers["content-type"]).toBe("text/csv; charset=ut…
+     97|         const lines = body.split("\r\n");
+     98|         expect(lines[0], "first row: BOM + label, before the header").…
+       |                                                                       ^
+     99|         expect(lines[1]!.startsWith(HEADER[lang]), lines[1]).toBe(true…
+    100|         expect(lines.length, "label, header, at least one record, fina…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 json en starts with / carries the label in the export language
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 json en starts with / carries the label in the export language
+AssertionError: expected undefined to be 'Illustrative example — synthetic' // Object.is equality
+
+[32m- Expected:[39m 
+"Illustrative example — synthetic"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:106:44
+    104|         expect(formRecordExport.safeParse(res.body).success, JSON.stri…
+    105|         expect(res.body.language).toBe(lang);
+    106|         expect(res.body.illustrativeLabel).toBe(LABEL[lang]);
+       |                                            ^
+    107|         expect(res.body.rows.length).toBeGreaterThan(0);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 csv ar starts with / carries the label in the export language
+AssertionError: first row: BOM + label, before the header: expected '\ufeffمعرّف السجل,الإصدار,المعرّف,الم…' to be '\ufeffمثال توضيحي — اصطناعي' // Object.is equality
+
+Expected: [32m"﻿م[7mثال توضيحي — اصطناعي[27m"[39m
+Received: [31m"﻿م[7mعرّف السجل,الإصدار,المعرّف,المعرّف (الحالة),المنفعة,المنفعة (الحالة),النوع,النوع (الحالة),المستهدف,المستهدف (الحالة),المالك,المالك (الحالة)[27m"[39m
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:98:71
+     96|         expect(res.headers["content-type"]).toBe("text/csv; charset=ut…
+     97|         const lines = body.split("\r\n");
+     98|         expect(lines[0], "first row: BOM + label, before the header").…
+       |                                                                       ^
+     99|         expect(lines[1]!.startsWith(HEADER[lang]), lines[1]).toBe(true…
+    100|         expect(lines.length, "label, header, at least one record, fina…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T14 json ar starts with / carries the label in the export language
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 json ar starts with / carries the label in the export language
+AssertionError: expected undefined to be 'مثال توضيحي — اصطناعي' // Object.is equality
+
+[32m- Expected:[39m 
+"مثال توضيحي — اصطناعي"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:106:44
+    104|         expect(formRecordExport.safeParse(res.body).success, JSON.stri…
+    105|         expect(res.body.language).toBe(lang);
+    106|         expect(res.body.illustrativeLabel).toBe(LABEL[lang]);
+       |                                            ^
+    107|         expect(res.body.rows.length).toBeGreaterThan(0);
+    108|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 csv en starts with / carries the label in the export language
+AssertionError: first row: BOM + label, before the header: expected '\ufeffRecord ID,Version,Dimension,Dim…' to be '\ufeffIllustrative example — synthetic' // Object.is equality
+
+Expected: [32m"﻿[7mIllustrative example — synthetic[27m"[39m
+Received: [31m"﻿[7mRecord ID,Version,Dimension,Dimension (status),current state,current state (status),root cause,root cause (status),confidence H/M/L,confidence H/M/L (status)[27m"[39m
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:98:71
+     96|         expect(res.headers["content-type"]).toBe("text/csv; charset=ut…
+     97|         const lines = body.split("\r\n");
+     98|         expect(lines[0], "first row: BOM + label, before the header").…
+       |                                                                       ^
+     99|         expect(lines[1]!.startsWith(HEADER[lang]), lines[1]).toBe(true…
+    100|         expect(lines.length, "label, header, at least one record, fina…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: the native form-record export on a demo database carries the illustrative label > demo: T01 csv ar starts with / carries the label in the export language
+AssertionError: first row: BOM + label, before the header: expected '\ufeffمعرّف السجل,الإصدار,البُعد,البُ…' to be '\ufeffمثال توضيحي — اصطناعي' // Object.is equality
+
+Expected: [32m"﻿م[7mثال توضيحي — اصطناعي[27m"[39m
+Received: [31m"﻿م[7mعرّف السجل,الإصدار,البُعد,البُعد (الحالة),الوضع الحالي,الوضع الحالي (الحالة),السبب الجذري,السبب الجذري (الحالة),مستوى الثقة مرتفع/متوسط/منخفض,مستوى الثقة مرتفع/متوسط/منخفض (الحالة)[27m"[39m
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:98:71
+     96|         expect(res.headers["content-type"]).toBe("text/csv; charset=ut…
+     97|         const lines = body.split("\r\n");
+     98|         expect(lines[0], "first row: BOM + label, before the header").…
+       |                                                                       ^
+     99|         expect(lines[1]!.startsWith(HEADER[lang]), lines[1]).toBe(true…
+    100|         expect(lines.length, "label, header, at least one record, fina…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T14 json en has no label row and illustrativeLabel null
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T14 json ar has no label row and illustrativeLabel null
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T01 json en has no label row and illustrativeLabel null
+ FAIL  |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts > F-DG5-124: a database that is not a demo database carries no label (illustrativeLabel: null) > non-demo: T01 json ar has no label row and illustrativeLabel null
+AssertionError: expected undefined to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/forms/form-export-illustrative.test.ts:134:44
+    132|       } else {
+    133|         expect(formRecordExport.safeParse(res.body).success).toBe(true…
+    134|         expect(res.body.illustrativeLabel).toBeNull();
+       |                                            ^
+    135|         expect(res.body.rows.length).toBeGreaterThan(0);
+    136|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 6 passed (19)
+   Start at  21:41:13
+   Duration  21.28s (transform 5.05s, setup 0ms, collect 10.11s, tests 7.35s, environment 0ms, prepare 374ms)
+
+EXIT=1

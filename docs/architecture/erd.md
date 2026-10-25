@@ -1923,6 +1923,20 @@ No new table or relationship. The changes to earlier tables:
 
 The column lists are in the data dictionary, section "P5 repair migrations (0094–0096, DG5)".
 
+## 1s. P5 repair migration 0097 (T-DG5-ARCH-R4, 2026-10-18; ADR-0039 amendment F1–F6, ADR-0043 amendment F1–F5)
+
+Two new append-only tables record who wrote the content of a configuration draft (D-170, F-DG5-100). Their rows are written by `0097` triggers in the writer's own transaction, and no author (the creator or `authored_by`, plus every contributor) decides the draft's configured review.
+
+```mermaid
+erDiagram
+    methodology_version ||--o{ methodology_version_contributor : "people who wrote its content"
+    app_user ||--o{ methodology_version_contributor : "contributor"
+    automation_rule_version ||--o{ automation_rule_version_contributor : "people who wrote its content"
+    app_user ||--o{ automation_rule_version_contributor : "contributor"
+```
+
+The column lists, the 20 triggers and the functions are in the data dictionary, section "P5 repair migration 0097 and the round-1 repairs (DG5)".
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

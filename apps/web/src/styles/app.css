@@ -14,6 +14,13 @@
   box-sizing: border-box;
 }
 
+/* T-DG5-FE-V1 (F-DG5-140, WCAG 1.4.10 Reflow): a fieldset's UA default `min-inline-size: min-content` makes it as wide
+   as its widest content (for example a rubric table), so the page scrolls instead of the table's own .table-wrap.
+   Every fieldset may shrink to its container; wide content scrolls inside its focusable, named .table-wrap. */
+fieldset {
+  min-inline-size: 0;
+}
+
 :root {
   --mth-font-latin: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
   --mth-font-arabic: "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;
@@ -369,6 +376,34 @@ a:hover {
   content: "/";
   margin-inline-end: var(--mth-space-2);
   color: var(--mth-text-secondary);
+}
+/* T-DG5-FE-AA1 (F-DG5-147, D-178; REQ-S15-009, WCAG 2.1 SC 1.4.10 Reflow): a record title or transformation name is
+   user text and can hold an unbroken token wider than the column (an identifier-like word). The headings and title
+   containers that show it wrap it anywhere, the rule the product already uses for long values (.text-cell, the audit
+   changes, the automation failure queue): page headings and their subtitle, the breadcrumb items, card titles and
+   dialog titles ("Form tools: <title>" is a card title on the T14 page and a dialog title elsewhere). `anywhere` (not
+   `break-word`) also lowers their min-content width, so the flex and grid tracks around them (.page-header,
+   .page-header__row, .breadcrumbs ol, .card__header, .chip-row) can shrink to the viewport instead of widening the
+   page. Ordinary text still breaks at spaces first and stays on one line where it fits. Logical, so the same in RTL. */
+.page-header__title,
+.page-header__subtitle,
+.breadcrumbs li,
+.card__title,
+.dialog__title,
+/* D-178 orchestrator follow-up: the other title containers that show user text (Define, Design, Gates). */
+.outcome-card__title,
+.tom-box__title,
+.gate-card__title,
+/* T-DG5-FE-AB1 (F-DG5-148, D-180): a record name outside a heading. RecordName (traceability/ui.tsx) renders every
+   Traceability record name (the graph's record links and link lists, the trace panels, the orphan and impact tables)
+   in .record-name, and so does the Modular entry missing-item label "· <name>". Inside a table it lowers the column's
+   min-content width only; auto table layout still gives the column its max-content width where the table fits. */
+.record-name {
+  overflow-wrap: anywhere;
+}
+/* The title block of the header row is a flex item: it may shrink below its content's width (the actions wrap). */
+.page-header__row > * {
+  min-inline-size: 0;
 }
 
 .grid {
@@ -741,6 +776,17 @@ input[type="radio"] {
 .table--compact td {
   padding-block: var(--mth-space-1);
 }
+/* Playbook reader table blocks (T-DG5-FE-RG1, F-DG5-122): source text, so the header cells wrap like body text
+   instead of the column-label nowrap above; a wide block still scrolls inside its focusable, named .table-wrap. A
+   one-cell callout (B0016, B0124) is a sentence or two: it wraps inside the page at any width and text size. */
+.table[data-block-table] thead th {
+  white-space: normal;
+}
+.table--callout th {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  color: var(--mth-text-primary);
+}
 .table caption:not(.visually-hidden) {
   text-align: start;
   font-weight: 500;
@@ -918,9 +964,23 @@ input[type="radio"] {
   font-size: 0.85rem;
 }
 
+/* One column whose track never grows to its items' min-content (D-174, the F-DG5-144 pattern): the compare table, with
+   no-wrap headers, otherwise sized the track and the page scrolled sideways at 390 px. Inside the banner its headers
+   wrap between words and its values anywhere (a long value without spaces too), so the table fits the banner and no
+   scroll region is needed. Headers and row labels never break inside a word (Arabic letters stay joined). */
 .conflict {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--mth-space-3);
+}
+.conflict > * {
+  min-inline-size: 0;
+}
+.conflict .table thead th {
+  white-space: normal;
+}
+.conflict .table td {
+  overflow-wrap: anywhere;
 }
 .conflict__title {
   color: var(--mth-feedback-warning-fg);
@@ -952,6 +1012,14 @@ input[type="radio"] {
   display: grid;
   gap: var(--mth-space-3);
 }
+/* T-DG5-FE-Z1C (F-DG5-146 follow-up, D-176; WCAG 1.4.10 Reflow): a grid track's default minimum is its content's
+   min-content width, so a wide table (the T14 export preview) widened the dialog's body past the dialog at 390 px and
+   ran off the viewport. The dialog's tracks may shrink to the dialog; wide content scrolls inside its focusable, named
+   .table-wrap, and the footer's actions wrap. */
+.dialog,
+.dialog__body {
+  grid-template-columns: minmax(0, 1fr);
+}
 .dialog__title {
   margin: 0;
 }
@@ -961,8 +1029,12 @@ input[type="radio"] {
 }
 .dialog__footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--mth-space-2);
+}
+.dialog__footer > * {
+  min-inline-size: 0;
 }
 
 /* ---------------------------------------------------------------- details & workspace */
@@ -1295,9 +1367,17 @@ input[type="radio"] {
 }
 
 /* Diagnose */
+/* One column whose track never grows to its items' min-content (F-DG5-144, D-174): with an implicit `auto` track the
+   widest card's findings register (its table's min-content) sized the track and every card, so the page scrolled
+   sideways at 390 px and with 200 % text. The cards are shrinkable grid items, and a wide register scrolls inside its
+   own focusable, named region (TableScrollRegion). */
 .workstreams {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--mth-space-4);
+}
+.workstreams > .workstream {
+  min-inline-size: 0;
 }
 .workstream {
   border: 1px solid var(--mth-border-default);
@@ -1327,6 +1407,12 @@ input[type="radio"] {
   padding: 0;
   display: grid;
   gap: var(--mth-space-3);
+}
+/* T-DG5-FE-AB1 (F-DG5-149, D-180): an outcome is a grid item; without this its automatic minimum width is its
+   content's min-content width (the Good-outcome test table), which held the card at about 352 px and widened the page
+   at 320-375 px. The card now shrinks to the column, and the table scrolls in its own TableScrollRegion. */
+.outcome-tree > .outcome-node {
+  min-inline-size: 0;
 }
 .outcome-tree--nested {
   margin-block-start: var(--mth-space-3);
@@ -1524,6 +1610,9 @@ input[type="radio"] {
 .entry-list > li {
   padding-block: var(--mth-space-2);
   border-block-end: 1px solid var(--mth-border-default);
+  /* T-DG5-FE-AA1 (F-DG5-147 class): an entry is a record name (e.g. a transformation in the P5 transformation picker
+     of /playbook/launch-plan and /playbook/health-check); an unbroken token in it wraps instead of widening the page. */
+  overflow-wrap: anywhere;
 }
 /* Grid items default to min-width:auto; a wide register must scroll inside its card, not widen the page. */
 .page > *,

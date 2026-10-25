@@ -285,9 +285,29 @@ test("4. Forums: five layers verbatim; a series changed to fortnightly only afte
   await to.close();
 });
 
+// Test 5's budget (T-DG5-FE-RG2, F-DG5-144). The test is one serial chain over two signed-in users (lead and chair),
+// so it cannot be split like p4-dashboards test 6 (F-DG5-141) without re-seeding its state; its steps and assertions
+// are unchanged. Measured reason: alone it takes about 13-17 s (qa round 2 at load about 3: 16.9 s / 16.5 s en/ar;
+// T-DG5-FE-RG2 at load about 2: 13.3 s / 13.9 s). In the full product suite (the shared database grown by every earlier
+// spec) chromium-ar took 21.6-27.8 s and was cut at the default 30 s budget at a load of about 7-8.5 (30.1 s, so a
+// lower bound), with no failed assertion and no step above 1.8 s: the time is the length of the chain, not a slow
+// response. 90 s is 3x that cut figure and over 3x every completed loaded run. Each phase records its elapsed time as a "timing" annotation, so a slow run names the phase.
+const MEETING_WORKSPACE_BUDGET_MS = 90_000;
+
+function phaseTimer() {
+  let last = Date.now();
+  return (phase: string) => {
+    const now = Date.now();
+    test.info().annotations.push({ type: "timing", description: `${phase}: ${now - last} ms` });
+    last = now;
+  };
+}
+
 test("5. Meeting workspace: an incomplete executive ask is refused, then published to T16 and decided in session", async ({
   browser,
 }, info) => {
+  test.setTimeout(MEETING_WORKSPACE_BUDGET_MS);
+  const mark = phaseTimer();
   const lang = langOf(info);
   const tl = await asUser(browser, lang, "dev.lead");
   let page = tl.page;
@@ -315,6 +335,7 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
     await submitOf(dialog).click();
     await expect(dialog).toBeHidden();
   }
+  mark("meeting created and chair set");
   // An executive ask without Impact of delay and Required date: saved as a draft that lists both
   await page.getByRole("button", { name: tr(lang, "governanceP4.agenda.add") }).click();
   dialog = page.getByRole("dialog");
@@ -331,6 +352,7 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
   await expect(missing).toContainText(tr(lang, "governanceP4.ask.required_date"));
   await shot(page, lang, "p4gov-08-ask-missing-elements");
   await expectAccessible(page, lang, "p4gov-meeting");
+  mark("incomplete ask saved and checked (axe)");
   // The chair's publish is refused (422, translated, one alert)
   const sp = await asUser(browser, lang, sponsor.username);
   await go(sp.page, `/transformations/${tid}/meetings/${meetingId}`);
@@ -340,6 +362,7 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
   await expect(alert).toContainText(tr(lang, "problems.agenda_item__executive_ask_incomplete"));
   await expect(sp.page.locator("#meeting-agenda [role='alert']")).toHaveCount(1);
   await shot(sp.page, lang, "p4gov-09-publish-refused");
+  mark("chair's publish refused");
   // The lead completes the brief; the chair publishes the item and the agenda
   await page.reload();
   await page.locator("[data-edit-item]").click();
@@ -354,12 +377,14 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
   await expect(sp.page.locator("[data-item-status='published']")).toBeVisible();
   await sp.page.locator("[data-meeting-action='publish-agenda']").click();
   await expect(sp.page.locator("[data-meeting-status='agenda_published']").first()).toBeVisible();
+  mark("brief completed, item and agenda published");
   // The ask is in the T16 log (from the agenda)
   const t16 = await lead.call<{ items: { id: string; askOrigin: string; status: string }[] }>(
     "GET",
     `${T}/executive-decisions`,
   );
   expect(t16.items.filter((d) => d.askOrigin === "agenda")).toHaveLength(1);
+  mark("T16 log checked");
   // The lead starts the meeting and records the Sponsor present
   await page.reload();
   await page.locator("[data-meeting-action='start']").click();
@@ -369,6 +394,7 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
   await field(dialog, "userId").selectOption(sponsor.id);
   await submitOf(dialog).click();
   await expect(dialog).toBeHidden();
+  mark("meeting started, attendance recorded");
   // The decision owner records the Outcome: a business decision, never an engineering gate
   await sp.page.reload();
   await sp.page.locator("[data-outcome-item]").click();
@@ -384,6 +410,7 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
   await submitOf(dialog).click();
   await expect(dialog).toBeHidden();
   await expect(sp.page.locator("[data-outcome='decided']")).toBeVisible();
+  mark("outcome recorded");
   // End the meeting; minutes drafted (lead), approved and published (chair); read-only afterwards
   await page.reload();
   await page.locator("[data-meeting-action='close']").click();
@@ -404,6 +431,7 @@ test("5. Meeting workspace: an incomplete executive ask is refused, then publish
   page = sp.page;
   await shot(page, lang, "p4gov-11-minutes-published");
   await expectAccessible(page, lang, "p4gov-minutes-published");
+  mark("minutes drafted, approved and published (axe)");
   await sp.close();
   await tl.close();
 });

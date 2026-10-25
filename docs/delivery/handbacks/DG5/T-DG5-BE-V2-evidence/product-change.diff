@@ -1,0 +1,116 @@
+diff --git a/apps/api/src/modules/procedures/outputs/kit.ts b/apps/api/src/modules/procedures/outputs/kit.ts
+index 3be3530..f2911b9 100644
+--- a/apps/api/src/modules/procedures/outputs/kit.ts
++++ b/apps/api/src/modules/procedures/outputs/kit.ts
+@@ -19,12 +19,22 @@
+ //   - advance: the record an earlier step of this instance linked, now in the state this step records (a baseline
+ //              validated, a gate submission decided, a change request decided, a handover accepted, ...);
+ //   - link:    the record is of the step's type and in scope (and complete where the step says so).
++// Every mode first requires that the ACTING PERSON MAY READ the record (F-DG5-101; D-170; REQ-S06-002): the read
++// permission of the record's type in the record's own scope, on the grants the engine reloaded inside this transaction
++// (commit time, after the instance and step locks). Every output record type's own GET reads it with
++// `transformation.read` on the record's transformation (OUTPUT_READ_PERMISSION), so the kit asks the same policy
++// resolver (access.requireRead). A record the person cannot read is refused exactly like an unknown one (422
++// procedure_step.output_record_invalid, the same body): nothing is linked, and an intake adopts nothing (D-166 Rule A
++// only follows a valid link). The read gate's denial rides on the refusal, so the existing failed-mutation audit
++// (access/denials.ts) records `authorization.denied`; it is never in the response.
+ // The refusals are the ADR-0042 §10 codes: no record named -> 422 procedure_step.output_required; a record that is not
+ // of the type, not in scope, or not produced by this step -> 422 procedure_step.output_record_invalid; a record that
+ // has not reached the state the step records -> 422 procedure_step.output_required (the handback proposes a narrower
+ // code). The whole completion rolls back on any refusal.
+-import { sql } from "@mth/db";
+-import { problems, type HttpProblem } from "../../platform/index.ts";
++import { sql, type DbOrTx } from "@mth/db";
++import type { Permission } from "@mth/shared";
++import { requireRead, type Principal } from "../../access/index.ts";
++import { HttpProblem, problems } from "../../platform/index.ts";
+ import type { ProcedureOutputAdapter, ProcedureOutputContext } from "../steps.ts";
+ 
+ /** The exact ADR-0042 §10 texts this kit raises (the same as steps.ts's PROCEDURE_INSTANCE_MESSAGES). */
+@@ -96,6 +106,56 @@ export function inScope<T extends RecordFacts>(ctx: ProcedureOutputContext, row:
+   return row;
+ }
+ 
++/**
++ * The read permission of every output record type, as the record's own GET checks it, always in the record's
++ * transformation: transformation (GET /transformations/{id}), charter, baseline, kpi_actual, tom_canvas_cell,
++ * ranking_snapshot, gate_submission, change_request, finance_validation, decision, bau_handover, evidence and approval
++ * (each module's read gate is `requireTransformationRead`, i.e. this permission on that transformation).
++ */
++export const OUTPUT_READ_PERMISSION: Permission = "transformation.read";
++
++/**
++ * F-DG5-101 (D-170): the acting person may read the record (OUTPUT_READ_PERMISSION in its transformation), on
++ * `principal`'s grants (the engine's, reloaded inside the completing transaction), else 422 output_record_invalid -
++ * the unknown-record refusal, with the read gate's denial attached for the failed-mutation audit (never in the body).
++ * A null principal is an approval step completing through its business approver's decision (workflows): it names no
++ * record, and its `advance` acts on the record an earlier step linked after this same check.
++ */
++export async function requireOutputRead(
++  tx: DbOrTx,
++  principal: Principal | null,
++  recordTransformationId: string,
++): Promise<void> {
++  if (principal === null) return;
++  try {
++    await requireRead(tx, principal, OUTPUT_READ_PERMISSION, { type: "transformation", id: recordTransformationId });
++  } catch (err) {
++    if (!(err instanceof HttpProblem) || err.status !== 404) throw err;
++    const refused = outputRecordInvalid();
++    throw err.denial === undefined ? refused : refused.withDenial(err.denial);
++  }
++}
++
++/**
++ * The same read check for a record the engine links WITHOUT an adapter (steps.ts's generic `link`, e.g. an `approval`
++ * named by a task step): every output table has `transformation_id` (`transformation`: its id). A record that does
++ * not exist is left to the link guard (procedure_instance_link_record_ref), as before.
++ */
++export async function requireNamedRecordRead(
++  tx: DbOrTx,
++  principal: Principal | null,
++  recordType: string,
++  recordId: string,
++): Promise<void> {
++  if (principal === null) return;
++  const column = recordType === "transformation" ? "id" : "transformation_id";
++  const res = await sql<{ transformation_id: string }>`
++    SELECT ${sql.ref(column)} AS transformation_id FROM ${sql.table(recordType)} WHERE id = ${recordId}`.execute(tx);
++  const row = res.rows[0];
++  if (row === undefined) return;
++  await requireOutputRead(tx, principal, row.transformation_id);
++}
++
+ /**
+  * The `create` check: the record was produced (through the owning module's operation, by whoever holds that right
+  * there) since the instance was launched, and no other procedure instance already took it as its output. A record that
+@@ -186,6 +246,8 @@ export function outputAdapter(spec: OutputSpec): ProcedureOutputAdapter {
+     produce: async (ctx) => {
+       const id = ctx.mode === "advance" ? earlierOutput(ctx, spec.recordType) : namedRecord(ctx);
+       const row = inScope(ctx, await readOutputRecord(ctx, spec.recordType, id, spec.stateColumns));
++      // F-DG5-101: before anything is linked (every mode), the acting person may read the record in its own scope.
++      await requireOutputRead(ctx.tx, ctx.principal, row.transformationId);
+       if (ctx.mode === "create") {
+         const at = spec.producedAt === undefined ? row.createdAt : spec.producedAt(row);
+         if (at === null) throw outputRequired();
+diff --git a/apps/api/src/modules/procedures/steps.ts b/apps/api/src/modules/procedures/steps.ts
+index 085f8bc..653eb75 100644
+--- a/apps/api/src/modules/procedures/steps.ts
++++ b/apps/api/src/modules/procedures/steps.ts
+@@ -89,6 +89,7 @@ import {
+   type ModuleDeps,
+ } from "../platform/index.ts";
+ import { inputFieldAttributes, inputSchemaOf } from "./definitions.ts";
++import { requireNamedRecordRead } from "./outputs/kit.ts";
+ 
+ // ------------------------------------------------------------------------------------------------ refusals (§10)
+ 
+@@ -1339,6 +1340,8 @@ async function completeStep(tx: Tx, request: FastifyRequest): Promise<InstanceBu
+       ).recordId;
+     } else if (sd.output_mode === "link" && (body.outputRecordId ?? null) !== null) {
+       recordId = body.outputRecordId!;
++      // F-DG5-101 (D-170): the kit's read rule also holds when no adapter verifies the record.
++      await requireNamedRecordRead(tx, acting.principal, sd.output_record_type, recordId);
+     } else {
+       throw refusal("procedure_step.output_required");
+     }

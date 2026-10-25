@@ -1,0 +1,56 @@
+port-policy: PostgreSQL listening on port 23151 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvktj3zd_e9d20e25 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/migrate.test.ts (9 tests | 2 failed) 4440ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  1947ms
+   ✓ mth-db migrate on a fresh database > is idempotent on an up-to-date database 22ms
+   ✓ mth-db migrate on a fresh database > records id, name, sha256, applied_at and applied_by = mth_owner 19ms
+   ✓ mth-db migrate on a fresh database > refuses to run when an applied file changed on disk 45ms
+   ✓ mth-db migrate on a fresh database > refuses to run when the database has a migration the build does not ship 58ms
+   ✓ mth-db migrate on a fresh database > applies a new forward migration atomically: a failing file leaves no trace 43ms
+   ✓ mth-db migrate guards > refuses to run as the app role (objects must be owned by mth_owner) 60ms
+   × mth-db migrate refuses a pending id below the highest applied id (F-DG5-100) > refuses a later build that fills the gap 0066 on an upgraded database, and applies nothing 39ms
+     → expected [ '0066_p6_example.sql', …(1) ] to be an instance of MigrationError
+   × mth-db migrate refuses a pending id below the highest applied id (F-DG5-100) > positive: a new id above the highest applied is applied 27ms
+     → refusing to run: database has migration(s) this build does not ship: 0066_p6_example.sql
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate refuses a pending id below the highest applied id (F-DG5-100) > refuses a later build that fills the gap 0066 on an upgraded database, and applies nothing
+AssertionError: expected [ '0066_p6_example.sql', …(1) ] to be an instance of MigrationError
+ ❯ packages/db/test/integration/migrate.test.ts:151:17
+    149|     const logged: string[] = [];
+    150|     const err = await migrate(owner, { dir, log: (l) => logged.push(l)…
+    151|     expect(err).toBeInstanceOf(MigrationError);
+       |                 ^
+    152|     expect((err as Error).message).toBe(
+    153|       `refusing to run: pending migration(s) 0066_p6_example.sql have …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| packages/db/test/integration/migrate.test.ts > mth-db migrate refuses a pending id below the highest applied id (F-DG5-100) > positive: a new id above the highest applied is applied
+MigrationError: refusing to run: database has migration(s) this build does not ship: 0066_p6_example.sql
+ ❯ migrate packages/db/src/migrate.ts:155:15
+    153|       }
+    154|       if (status.unknownApplied.length > 0) {
+    155|         throw new MigrationError(
+       |               ^
+    156|           `refusing to run: database has migration(s) this build does …
+    157|         );
+ ❯ packages/db/test/integration/migrate.test.ts:165:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  10:19:46
+   Duration  8.32s (transform 82ms, setup 0ms, collect 218ms, tests 4.44s, environment 0ms, prepare 69ms)
+
+EXIT=1

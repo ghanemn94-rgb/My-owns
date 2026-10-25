@@ -124,7 +124,12 @@ export function SourceCoveragePage() {
               <h2 id="coverage-sets" className="card__title">
                 {t("studio.coverage.sets")}
               </h2>
-              <div className="table-wrap">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label={t("common.table.scrollRegion", { caption: t("studio.coverage.sets") })}
+              >
                 <table className="table" data-table="coverage">
                   <caption className="visually-hidden">{t("studio.coverage.sets")}</caption>
                   <thead>

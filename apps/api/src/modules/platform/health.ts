@@ -1,5 +1,7 @@
 // GET /healthz (liveness: no dependency checks) and GET /readyz (database reachable AND UTF8 AND every migration
 // shipped with this build applied with the same checksum). ADR-0007 §1, REQ-S19-010; encoding: ADR-0003, T-DG2-BE9.
+// `migrations: fail` is drift the runner refuses (a changed checksum, an applied file this build does not ship, or a
+// pending file whose id is not above the highest applied id: F-DG5-100); `pending` is a forward migration to apply.
 //
 // Encoding: a non-UTF8 database (e.g. SQL_ASCII, where char_length counts bytes) reports `database: fail`, since the
 // contract's Readiness schema has no separate encoding check. The encoding of a database is fixed at CREATE DATABASE,
@@ -45,7 +47,7 @@ export function registerHealthRoutes(
           const s = await migrationStatus(client, files);
           migrations = s.upToDate
             ? "ok"
-            : s.checksumMismatches.length > 0 || s.unknownApplied.length > 0
+            : s.checksumMismatches.length > 0 || s.unknownApplied.length > 0 || s.outOfOrderPending.length > 0
               ? "fail"
               : "pending";
         }

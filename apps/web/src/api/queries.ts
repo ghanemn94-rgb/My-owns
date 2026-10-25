@@ -52,6 +52,7 @@ export const keys = {
   permissions: ["permissions"] as const,
   assignments: (params: object) => ["role-assignments", params] as const,
   transformations: (params: object) => ["transformations", params] as const,
+  allTransformations: (params: object) => ["transformations", "all", params] as const,
   transformation: (id: string) => ["transformation", id] as const,
   audit: (id: string, cursor: string | null) => ["transformation-audit", id, cursor] as const,
 };
@@ -224,6 +225,59 @@ export function useTransformations(params: TransformationListParams) {
         signal,
       ),
     placeholderData: keepPreviousData,
+  });
+}
+/** The filters of a complete transformation list: no cursor and no limit (the API's own page limit is used). */
+export type AllTransformationsParams = Omit<TransformationListParams, "cursor" | "limit">;
+
+/**
+ * Upper bound on the pages followed, only as a guard against a cursor loop. Reaching it is reported as an error,
+ * never as a shorter list (D-181).
+ */
+export const ALL_TRANSFORMATIONS_MAX_PAGES = 1000;
+
+/**
+ * D-181: every transformation the caller may see, for a picker. Follows `nextCursor` of GET /api/v1/transformations
+ * (the existing list operation, PAGINATION.maxLimit per page) until it is null. A page that fails fails the whole
+ * query: a picker never offers a partial list as if it were complete. The request signal is passed to every page, so
+ * a cancelled query stops at the page in flight.
+ */
+export async function fetchAllTransformations(
+  params: AllTransformationsParams,
+  signal?: AbortSignal,
+): Promise<Transformation[]> {
+  const out: Transformation[] = [];
+  const seen = new Set<string>();
+  let cursor: string | null = null;
+  for (let i = 0; i < ALL_TRANSFORMATIONS_MAX_PAGES; i++) {
+    const page: Page<Transformation> = await api.get<Page<Transformation>>(
+      "/api/v1/transformations",
+      {
+        ...params,
+        includeArchived: params.includeArchived ? true : undefined,
+        limit: PAGINATION.maxLimit,
+        ...(cursor ? { cursor } : {}),
+      },
+      signal,
+    );
+    out.push(...page.items);
+    if (!page.nextCursor) return out;
+    if (seen.has(page.nextCursor)) throw new Error("Transformation list: the server repeated a page cursor.");
+    seen.add(page.nextCursor);
+    cursor = page.nextCursor;
+  }
+  throw new Error(`Transformation list: more than ${ALL_TRANSFORMATIONS_MAX_PAGES} pages.`);
+}
+
+/**
+ * D-181: the complete transformation list for a picker (see fetchAllTransformations). Its key starts with
+ * "transformations", so the invalidation after a transformation mutation refreshes it too.
+ */
+export function useAllTransformations(params: AllTransformationsParams, enabled = true) {
+  return useQuery({
+    queryKey: keys.allTransformations(params),
+    queryFn: ({ signal }) => fetchAllTransformations(params, signal),
+    enabled,
   });
 }
 export function useTransformation(id: string | undefined) {

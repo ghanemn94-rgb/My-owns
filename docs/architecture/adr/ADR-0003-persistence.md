@@ -27,6 +27,7 @@
   - applies each pending file in lexical order, in its own transaction;
   - records `(id, name, sha256, applied_at, applied_by)` in `schema_migration`;
   - **refuses to start if an applied file's checksum changed**.
+  - _Amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): it also refuses to start when the database has an applied migration this build does not ship (a database newer than the code), and when a **pending file's id is not above the highest applied id**. "Lexical order" therefore holds only above the highest applied id. See the section "Migration order (amendment, T-DG5-ARCH-RG1, 2026-10-23)" below._
 - **Forward-only.** There are no down migrations. Recovery is by backup and restore plus a new corrective migration, as §19 item 10 anticipates.
 - The runner must pass on a **fresh, empty database** and is idempotent on an up-to-date one. Both are integration-tested.
 - Migrations run as the **owner role** (`mth_owner`, `DATABASE_OWNER_URL`). The API and worker connect as **`mth_app`**, which has DML on business tables and only `INSERT`/`SELECT` on `audit_event` (ADR-0004), and no DDL.
@@ -36,6 +37,25 @@
   - node-pg-migrate and graphile-migrate: an extra dependency that encourages down migrations or has its own workflow.
   - Kysely `Migrator`: TypeScript migrations are harder for IT DBAs to review than SQL.
   - Prisma: generated client, engine binaries, and weaker control over SQL, triggers and roles.
+
+### Migration order (amendment, T-DG5-ARCH-RG1, 2026-10-23; D-185, F-DG5-100)
+
+Sources: D-185 (F-DG5-100, Low, code-security round 1) and the T-DG5-BE-RG1 handback §5 item 1, verified against the merged code (`1e6a545`).
+
+- **The gap.** Forward-only means one order on every database. A file numbered below the highest applied id (for example, a later file filling a P5 gap) would run at its lexical position on a fresh database, but last on an upgraded one, so the two kinds of database could diverge.
+- **The rule as merged** (`packages/db/src/migrate.ts`):
+  - `compareStatus` reports `outOfOrderPending`: every pending file whose id is not above the highest applied id (`migrate.ts:102–103`, the field at `:39`).
+  - `migrate()` refuses before applying anything, after the checksum and unknown-file checks, with `refusing to run: pending migration(s) <names> have an id not above the highest applied migration <name>; forward-only migrations must apply in one order on every database, so give each new migration an id above <NNNN>` (`migrate.ts:168–174`). A valid forward file in the same build is not applied either.
+  - `mth-db status` prints `ORDER    <name> (pending, but its id is not above the highest applied id; migrate refuses it)` and reports `DRIFT` with exit 4 (`packages/db/src/cli.ts:90–98`).
+  - The API's `/readyz` reports `migrations: fail` for the same case (ADR-0007 amendment of 2026-10-23).
+- **Unchanged.** Each pending file still runs in its own transaction, in lexical order. A fresh database has nothing applied, so it has nothing out of order. Merged migrations are never edited.
+- **Numbering.** A new migration takes an id above the highest shipped id. The eight P5 gaps (0066, 0067, 0073, 0077, 0078, 0079, 0083, 0084) are retired and never filled (p5-work-split shared rule 16, amended 2026-10-23; `packages/db/src/seed.test.ts:761` `P5_RETIRED_MIGRATION_IDS`).
+- **Tests.**
+  - Unit: `packages/db/src/migrate.test.ts` (`describe` at `:16`; the positive case at `:44`).
+  - Integration on a disposable database: `packages/db/test/integration/migrate.test.ts` (`describe` at `:122`). At `:143`, a later build with `0066_p6_example.sql` and `0098_p6_forward.sql` is refused with the exact message, nothing is applied or recorded, and the status lists the file as out of order. At `:162`, a new id above the highest applied one is applied.
+  - Readiness: `apps/api/test/integration/platform.test.ts:49` (503, `migrations: fail`).
+  - Numbering: `packages/db/src/seed.test.ts:792` pins the eight gaps.
+- Requirement row: REQ-S19-013. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
 
 ### Database encoding (amendment, T-DG2-BE9, 2026-10-06)
 

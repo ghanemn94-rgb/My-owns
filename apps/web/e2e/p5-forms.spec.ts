@@ -38,6 +38,8 @@ let owner: SyntheticUser;
 let auditor: SyntheticUser;
 let benefitId = "";
 let evidenceTitle = "";
+/** The T01 item the fixture fills; the T01 test opens THIS record's form tools (F-DG5-143). */
+let t01ItemId = "";
 
 test.beforeAll(async ({ playwright }, info) => {
   const lang = langOf(info);
@@ -93,12 +95,15 @@ test.beforeAll(async ({ playwright }, info) => {
       measurementKpiDefinitionId: kpi.id,
     })
   ).id;
-  // One filled T01 item, so the T01 grid has a record with form tools.
+  // One filled T01 item, so the T01 grid has a record with form tools. The API lists items by id (a UUIDv7, not
+  // monotonic within one millisecond) while the screen orders rows by dimension ordinal, so the test opens the form
+  // tools of this item by its id, never "the first row" (T-DG5-FE-X1, F-DG5-143).
   const items = await lead.call<{ items: { id: string; version: number; dimensionCode: string }[] }>(
     "GET",
     `${T}/diagnostic-items?limit=100`,
   );
   const first = items.items[0]!;
+  t01ItemId = first.id;
   await lead.call(
     "PATCH",
     `${T}/diagnostic-items/${first.id}`,
@@ -220,7 +225,7 @@ test("T01: form tools on a diagnostic record (comment, attachment, history) and 
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.lead");
   await page.goto(`/transformations/${tid}/diagnose`);
-  const tools = page.locator("#t01 [data-form-tools]").first();
+  const tools = page.locator(`#t01 [data-form-tools='${t01ItemId}']`);
   await expect(tools).toBeVisible();
   await tools.click();
   const dialog = page.getByRole("dialog");
@@ -264,7 +269,7 @@ test("T01: form tools on a diagnostic record (comment, attachment, history) and 
   // The auditor reads the same record without any write action.
   const aud = await asUser(browser, lang, auditor.username);
   await aud.page.goto(`/transformations/${tid}/diagnose`);
-  const audTools = aud.page.locator("#t01 [data-form-tools]").first();
+  const audTools = aud.page.locator(`#t01 [data-form-tools='${t01ItemId}']`);
   await audTools.click();
   const audFf = aud.page.getByRole("dialog").locator("[data-form-framework='T01']");
   await expect(audFf.getByText(tr(lang, "forms.framework.readOnly"), { exact: true })).toBeVisible();

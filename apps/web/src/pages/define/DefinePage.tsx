@@ -36,6 +36,7 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
 import { ArchiveAction, NoteDecisionDialog } from "../../components/RowActions.tsx";
 import { Section, SectionNav, TextCell } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { pick } from "../../lib/methodology.ts";
@@ -522,6 +523,7 @@ export function GoodOutcomeTest({ outcome }: { outcome: Outcome }) {
   const results = [...outcome.goodOutcomeTest].sort((a, b) => a.ordinal - b.ordinal);
   const fails = results.filter((r) => r.result === "fail").length;
   const unknowns = results.filter((r) => r.result === "unknown").length;
+  const caption = t("define.goodOutcome.caption", { outcome: outcome.statement });
   return (
     <div className="good-outcome" data-good-outcome-test={outcome.id}>
       <p className="good-outcome__summary">
@@ -537,32 +539,36 @@ export function GoodOutcomeTest({ outcome }: { outcome: Outcome }) {
           />
         )}
       </p>
-      <table className="table table--compact good-outcome__table">
-        <caption className="visually-hidden">{t("define.goodOutcome.caption", { outcome: outcome.statement })}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t("define.goodOutcome.criterion")}</th>
-            <th scope="col">{t("define.goodOutcome.result")}</th>
-            <th scope="col">{t("define.goodOutcome.reason")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {results.map((r) => {
-            const def = criteria.find((c) => c.code === r.criterionCode);
-            return (
-              <tr key={r.criterionCode} data-criterion={r.criterionCode} data-result={r.result}>
-                <th scope="row">
-                  {def ? pick(locale, def.sourceLabelEn, def.labelAr) : t("define.goodOutcome.unknownCriterion")}
-                </th>
-                <td>
-                  <ResultChip result={r.result} />
-                </td>
-                <td>{goodOutcomeReason(t, outcome, r.criterionCode, r.result)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* T-DG5-FE-AB1 (F-DG5-149): the table scrolls in its own focusable, named region, so the outcome card
+          shrinks to the column instead of widening the page at narrow widths. */}
+      <TableScrollRegion caption={caption}>
+        <table className="table table--compact good-outcome__table">
+          <caption className="visually-hidden">{caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t("define.goodOutcome.criterion")}</th>
+              <th scope="col">{t("define.goodOutcome.result")}</th>
+              <th scope="col">{t("define.goodOutcome.reason")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((r) => {
+              const def = criteria.find((c) => c.code === r.criterionCode);
+              return (
+                <tr key={r.criterionCode} data-criterion={r.criterionCode} data-result={r.result}>
+                  <th scope="row">
+                    {def ? pick(locale, def.sourceLabelEn, def.labelAr) : t("define.goodOutcome.unknownCriterion")}
+                  </th>
+                  <td>
+                    <ResultChip result={r.result} />
+                  </td>
+                  <td>{goodOutcomeReason(t, outcome, r.criterionCode, r.result)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </TableScrollRegion>
     </div>
   );
 }

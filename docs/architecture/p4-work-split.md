@@ -80,7 +80,7 @@
 
 - `0028`–`0031`: architect, frozen.
 - **`0032`: landed by the orchestrator as the documented no-op `0032_p4_slice_i_c_reserved.sql` (D-090), so ARCH-02 can write `0033` in parallel with BE-A. BE-A therefore writes no `0032`; any slice I/C schema need takes a repair-range number. The original text follows.** BE-A. Because migration numbers must be contiguous (S-12), `0032` must merge **before** ARCH-02's `0033`. BE-A writes it in its first merge: its own slice I follow-up if it has one, otherwise a documented no-op `0032_p4_slice_i_c_reserved.sql` (a header comment and `SELECT 1;`). BE-B and BE-C have no migration number; a schema need goes in their handback, and the orchestrator assigns a number from the repair range `0058`–`0069`.
-- **Orchestrator note (applies to every ARCH range):** an ARCH range whose numbers are not all used leaves a gap that breaks `seed.test.ts`. Each range's unused numbers must be filled (or the ranges renumbered) before the next range lands.
+- **Orchestrator note (applies to every ARCH range):** an ARCH range whose numbers are not all used leaves a gap that breaks `seed.test.ts`. Each range's unused numbers must be filled (or the ranges renumbered) before the next range lands. _Superseded for P5 and later, 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-100): `seed.test.ts` allows gaps from 0058, the eight P5 gaps are retired and never filled, and a new id is above the highest shipped id (`p5-work-split.md` shared rule 16; ADR-0003, "Migration order")._
 
 ### I+C.5 Frontend (FE-A, wave W4) and KPI (KBE-C, wave W5) parts of these slices
 

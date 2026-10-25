@@ -14,6 +14,14 @@
 // run-rate (12 × the monthly preview), and four investment lines kept apart by class (cash capex, opex and vendor
 // cost; non-cash internal FTE), so gross benefit, implementation cost and net are never mixed (value bases, D-117).
 //
+// T-DG5-BE-X2 (D-172; F-DG5-120, F-DG5-122): G4 reads an initiative-level case per initiative of the approved
+// portfolio (ADR-0024 §1, the lighter set: rationale, interventions, investment, benefits, timing, ownership; investment
+// and benefits each need >= 1 active line). The three initiative cases BC-02..BC-04 (INI-01..INI-03) therefore carry the
+// existing lines of their chain: each B0147 chain's benefit line and the cash investment that delivers it. The internal
+// team line stays on the transformation case. The transformation case's totals read its own lines and those of its
+// active initiative cases BY REFERENCE (kpi/totals.ts), so splitting the lines changes no figure: the same seven lines,
+// the same amounts, the same gross, cost and net (the tests pin them unchanged).
+//
 // EVERY NUMBER IS SYNTHETIC (B0144, M0339). Decimal strings only; fractions for rates. The formula previews, result
 // types and line amounts are literals (this package may not import the formula engine, ADR-0002 rule 5); the tests
 // recompute every one of them with the engine (@mth/shared/calc): packages/db/test/integration/demo-numbers-spec.test.ts
@@ -243,9 +251,91 @@ export interface DemoCaseLine {
   readonly fte: string | null;
   readonly recurrence: "one_off" | "recurring";
   readonly formula: DemoFormula["key"] | null;
+  /** The case that holds the line: null = the transformation case BC-01, else the initiative case of that chain. */
+  readonly initiativeCase: DemoInitiativeCase["key"] | null;
 }
 
 export const DEMO_CASE_ID = kbeId(ID_BLOCK.businessCase, 1);
+
+/** One initiative-level business case (ADR-0024 §1 lighter set), linked to BC-01 and to one B0147 initiative. */
+export interface DemoInitiativeCase {
+  readonly key: "activation" | "complaints" | "partner";
+  readonly no: number;
+  readonly id: string;
+  readonly code: string;
+  readonly initiativeId: string;
+  readonly initiativeCode: "INI-01" | "INI-02" | "INI-03";
+  readonly title: string;
+  readonly strategicRationale: string;
+  readonly baselineSummary: string;
+  readonly interventionsSummary: string;
+  readonly investmentSummary: string;
+  readonly benefitsSummary: string;
+  /** The cash investment the funding decision approves (the case's cash investment lines; decimal string). */
+  readonly fundingAmount: string;
+}
+
+const INI = DEMO_ANCHORS.initiatives;
+
+export const DEMO_INITIATIVE_CASES: readonly DemoInitiativeCase[] = [
+  {
+    key: "activation",
+    no: 2,
+    id: kbeId(ID_BLOCK.businessCase, 2),
+    code: "BC-02",
+    initiativeId: INI.passRedesign,
+    initiativeCode: "INI-01",
+    title: "INI-01 Pass redesign + digital activation: initiative business case (synthetic)",
+    strategicRationale:
+      "Low activation -> Proposition + journey -> attach rate / activation (B0147). " + SYNTHETIC_NOTE,
+    baselineSummary: "May 2026 baseline: attach rate 18 % of 220,000 travelling customers per month. " + SYNTHETIC_NOTE,
+    interventionsSummary: "Roaming pass architecture redesign and one-tap digital activation in the app.",
+    investmentSummary: "Cash: capex 2,400,000 SAR for the digital roaming activation platform.",
+    benefitsSummary: "Revenue uplift 7,128,000 SAR at the annual run-rate at target (formula BF-01).",
+    fundingAmount: "2400000",
+  },
+  {
+    key: "complaints",
+    no: 3,
+    id: kbeId(ID_BLOCK.businessCase, 3),
+    code: "BC-03",
+    initiativeId: INI.proactiveComms,
+    initiativeCode: "INI-02",
+    title: "INI-02 Proactive comms + QoS monitoring: initiative business case (synthetic)",
+    strategicRationale: "High complaints -> Journey + service assurance -> complaint rate (B0147). " + SYNTHETIC_NOTE,
+    baselineSummary: "May 2026 baseline: complaint rate 3.5 %, 60 SAR per complaint. " + SYNTHETIC_NOTE,
+    interventionsSummary: "Proactive pre-travel and in-trip communications, and roaming QoS monitoring.",
+    investmentSummary: "Cash: opex 360,000 SAR for proactive communications and QoS monitoring.",
+    benefitsSummary: "Avoided care cost 1,584,000 SAR at the annual run-rate at target (formula BF-02).",
+    fundingAmount: "360000",
+  },
+  {
+    key: "partner",
+    no: 4,
+    id: kbeId(ID_BLOCK.businessCase, 4),
+    code: "BC-04",
+    initiativeId: INI.partnerOptimization,
+    initiativeCode: "INI-03",
+    title: "INI-03 Partner optimization: initiative business case (synthetic)",
+    strategicRationale:
+      "Partner cost pressure -> Partner model + analytics -> cost/MB, margin (B0147). " + SYNTHETIC_NOTE,
+    baselineSummary: "May 2026 baseline: partner cost 0.012 SAR per MB on 80,000,000 MB per month. " + SYNTHETIC_NOTE,
+    interventionsSummary: "Partner renegotiation for the highest-cost partners, backed by partner usage analytics.",
+    investmentSummary: "Cash: vendor cost 900,000 SAR for the partner analytics service.",
+    benefitsSummary: "Margin uplift 1,920,000 SAR at the annual run-rate at target (formula BF-03).",
+    fundingAmount: "900000",
+  },
+];
+
+export function demoInitiativeCase(key: DemoInitiativeCase["key"]): DemoInitiativeCase {
+  const c = DEMO_INITIATIVE_CASES.find((x) => x.key === key);
+  if (c === undefined) throw new Error(`demo seed: no initiative case ${key}`);
+  return c;
+}
+
+/** The id of the case that holds a line. */
+export const caseIdOfLine = (l: DemoCaseLine): string =>
+  l.initiativeCase === null ? DEMO_CASE_ID : demoInitiativeCase(l.initiativeCase).id;
 
 export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
   {
@@ -260,6 +350,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: null,
     recurrence: "recurring",
     formula: "revenue_uplift",
+    initiativeCase: "activation",
   },
   {
     key: "benefit.care_cost_avoidance",
@@ -273,6 +364,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: null,
     recurrence: "recurring",
     formula: "care_cost_avoidance",
+    initiativeCase: "complaints",
   },
   {
     key: "benefit.margin_improvement",
@@ -286,6 +378,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: null,
     recurrence: "recurring",
     formula: "margin_improvement",
+    initiativeCase: "partner",
   },
   {
     key: "investment.activation_platform",
@@ -299,6 +392,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: null,
     recurrence: "one_off",
     formula: null,
+    initiativeCase: "activation",
   },
   {
     key: "investment.proactive_comms",
@@ -312,6 +406,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: null,
     recurrence: "recurring",
     formula: null,
+    initiativeCase: "complaints",
   },
   {
     key: "investment.partner_analytics",
@@ -325,6 +420,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: null,
     recurrence: "recurring",
     formula: null,
+    initiativeCase: "partner",
   },
   {
     key: "investment.internal_team",
@@ -338,6 +434,7 @@ export const DEMO_CASE_LINES: readonly DemoCaseLine[] = [
     fte: "6.5",
     recurrence: "recurring",
     formula: null,
+    initiativeCase: null,
   },
 ];
 
@@ -456,11 +553,41 @@ async function seedCase(ctx: DemoSeedContext): Promise<void> {
     version: 1,
     ...stamps(at, tl),
   });
+  // The initiative cases (ADR-0024 §1 lighter set), created with the transformation case by its author (the TL), each
+  // linked to BC-01 and to its initiative; the demo Finance user is their validator (roaming-portfolio.ts validates
+  // their baselines; never the author).
+  for (const c of DEMO_INITIATIVE_CASES)
+    await ctx.insert("business_case", `kbe.business_case.initiative.${c.key}`, {
+      id: c.id,
+      ...scoped(),
+      code: c.code,
+      level: "initiative",
+      initiative_id: c.initiativeId,
+      parent_case_id: DEMO_CASE_ID,
+      title: c.title,
+      currency: SAR,
+      strategic_rationale: c.strategicRationale,
+      baseline_summary: c.baselineSummary,
+      interventions_summary: c.interventionsSummary,
+      investment_summary: c.investmentSummary,
+      benefits_summary: c.benefitsSummary,
+      benefit_ramp: "Monthly ramp from July 2026 to the December 2026 targets.",
+      recurrence_summary: "Recurring benefit; the investment is approved once.",
+      implementation_horizon: "July 2026 to December 2026.",
+      initiative_owner_user_id: wl,
+      finance_validator_user_id: fin,
+      decision_ask_types: ["funding"],
+      decision_ask_text: `Fund ${c.initiativeCode}: ${c.investmentSummary} (synthetic demonstration).`,
+      baseline_validation_status: "unvalidated",
+      status: "draft",
+      version: 1,
+      ...stamps(at, tl),
+    });
   for (const l of DEMO_CASE_LINES) {
     await ctx.insert("business_case_line", `kbe.business_case.line.${l.key}`, {
       id: caseLineId(l),
       ...scoped(),
-      business_case_id: DEMO_CASE_ID,
+      business_case_id: caseIdOfLine(l),
       line_kind: l.lineKind,
       investment_class: l.investmentClass,
       benefit_class: l.benefitClass,

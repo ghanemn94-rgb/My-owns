@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router";
 import { newIdempotencyKey } from "../../api/client.ts";
 import { p5Paths } from "../../api/p5.ts";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { useSessionNavigate } from "../../auth/sessionBound.ts";
 import { Field } from "../../components/Form.tsx";
@@ -213,7 +213,9 @@ function LaunchForm({
 }) {
   const { t } = useTranslation();
   const navigate = useSessionNavigate();
-  const transformations = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages): the preset `defaultTid` is always among the choices,
+  // so a launch never falls back to organization level because the list was cut.
+  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
   const [tid, setTid] = useState(defaultTid);
   // One idempotency key per intended launch: a retry of the same submission reuses it (one instance).
   const key = useMemo(() => newIdempotencyKey(), [link.targetKey, tid]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -239,18 +241,22 @@ function LaunchForm({
       <p className="muted">
         <Icon name="info" /> {t("playbookP5.links.launchIntro")}
       </p>
-      <Field label={t("playbookP5.links.transformation")} hint={t("playbookP5.links.transformationHint")}>
-        {(p) => (
-          <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
-            <option value="">{t("playbookP5.links.noTransformation")}</option>
-            {(transformations.data?.items ?? []).map((tr) => (
-              <option key={tr.id} value={tr.id}>
-                {tr.code} · {tr.name}
-              </option>
-            ))}
-          </select>
+      <QueryState query={transformations}>
+        {(items) => (
+          <Field label={t("playbookP5.links.transformation")} hint={t("playbookP5.links.transformationHint")}>
+            {(p) => (
+              <select {...p} value={tid} onChange={(e) => setTid(e.target.value)}>
+                <option value="">{t("playbookP5.links.noTransformation")}</option>
+                {items.map((tr) => (
+                  <option key={tr.id} value={tr.id}>
+                    {tr.code} · {tr.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
         )}
-      </Field>
+      </QueryState>
       <div className="form__actions">
         <button type="submit" className="button button--primary" disabled={runner.busy}>
           {t("playbookP5.links.launchConfirm")}

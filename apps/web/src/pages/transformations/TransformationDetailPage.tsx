@@ -26,6 +26,7 @@ import { describeAuditAction, describeAuditChanges, type AuditValue } from "../.
 import { formatDateTime } from "../../lib/format.ts";
 import { isNoPermission } from "../../lib/problem.ts";
 import { DemoRecordBadge, IllustrativeExampleNote } from "../../components/demo-label/DemoLabels.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { BusinessUnitName, UserName, useBusinessUnitIndex, useTransformationTarget } from "./common.tsx";
 
 /**
@@ -329,7 +330,7 @@ function AuditTrail({ tr }: { tr: Transformation }) {
       >
         {(page) => (
           <>
-            <div className="table-wrap">
+            <TableScrollRegion caption={t("transformations.audit.title")}>
               <table className="table table--compact">
                 <caption className="visually-hidden">{t("transformations.audit.title")}</caption>
                 <thead>
@@ -397,7 +398,7 @@ function AuditTrail({ tr }: { tr: Transformation }) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </TableScrollRegion>
             <Pager
               pageNumber={pager.pageNumber}
               hasPrevious={pager.hasPrevious}

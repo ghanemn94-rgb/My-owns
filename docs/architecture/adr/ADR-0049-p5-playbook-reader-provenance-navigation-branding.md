@@ -27,7 +27,7 @@
 **Entity `playbook_block`** (catalogue; `0089`; seeded by BE-Q in `0092`). Fields:
 - `block_ref` `B0001`…`B0165` (PK) and `ordinal` = its number (`playbook_block_ordinal_matches`);
 - `block_kind` `text` | `table`, `is_heading`, `section_block_ref` (the heading the block sits under, an earlier block: `playbook_block_section_before`), `phase_code` (the phase whose section holds it, for the Diagnose…Realize sections; null elsewhere);
-- `text_en`: **verbatim** from `docs/source/playbook.md` (a table block keeps the source's Markdown rows); `text_ar`: a provisional translation, with `ar_provisional` (true at seed);
+- `text_en`: **verbatim** from `docs/source/playbook.md` (a table block keeps the source's Markdown rows); `text_ar`: a provisional translation, with `ar_provisional` (true at seed); _amended 2026-10-23 (T-DG5-ARCH-RG1; D-185, F-DG5-122): storage stays verbatim; how the reader renders a table block is stated in amendment N3_;
 - `search_en`, `search_ar`: stored generated `tsvector`s (§3).
 
 The verbatim text, position and section never change (`playbook_block_immutable`, as the owner too); only `text_ar`/`ar_provisional` may be corrected, by a migration. No block is ever deleted. mth_app has SELECT only.
@@ -301,3 +301,22 @@ Requirement row: REQ-S03-007.
 - **Limitation (D-164 (i)).** The Studio badge reflects the published methodology's profiles, so a draft's own override shows only after publication.
 
 Requirement row: REQ-S15-004 ("changing brand.primary in Branding Settings changes the navigation colour …"; the navigation part). Test: `p5-navigation.spec.ts` (publishing `#C8102E` gives the computed background `rgb(200, 16, 46)`, `#FFD700` gives `rgb(139, 117, 0)`, and the default is restored afterwards).
+
+## Amendment (2026-10-23, T-DG5-ARCH-RG1; D-185, F-DG5-122): §1, how the reader renders table blocks
+
+Sources: D-185 (F-DG5-122, Low, domain round 1) and the T-DG5-FE-RG1 handback §5, verified against the merged code (`5474a66`). §1's storage rule is unchanged: `text_en` is verbatim, a table block keeps the source's Markdown rows, and nothing in `playbook_block` changes. This amendment states only how the web reader renders that text. No migration, API or contract change.
+
+### N3. Table blocks are rendered as tables or as cell text, never as raw Markdown (T-DG5-FE-RG1)
+
+All in `apps/web/src/pages/playbook/ui.tsx`. Nothing from the server is ever rendered as HTML.
+
+- **Block pages and source texts.** `BlockText` (`ui.tsx:79`) renders a table block as a table (first row as header). `SourceText` (`ui.tsx:132`; the About panel and the reader's provenance, connection and Realize notes) now does the same when its English or Arabic text is a table (`ui.tsx:136`), so B0024 in the About panel is a table, not Markdown.
+- **A one-cell table is a callout.** A table of one row and one cell (`isCalloutTable`, `ui.tsx:48`; for example B0016 "Rule of thumb", B0124) is rendered with the class `table--callout`. Its text wraps inside the page at any width and text size (`apps/web/src/styles/app.css:782–789`), instead of one unwrapped header line. A wider block still scrolls inside its focusable, named region.
+- **`<br>` in a cell** (for example B0003) is rendered as a line-break element by `cellContent` (`ui.tsx:36`), never as HTML.
+- **Previews and snippets show cells as text.**
+  - List previews (`excerpt`, `ui.tsx:213`, through `plainBlockText`, `ui.tsx:55`) show a table block's cells as text: "·" between cells, ";" between rows, a `<br>` as a space.
+  - Search snippets (`Snippet`, through `plainSnippetPiece`, `ui.tsx:66`) drop the separator rows and show cell pipes as "·". The highlights are applied before this, so the marks stay on the matched words.
+- **Search is unchanged.** `search_en` and `search_ar` are still generated from the stored text (§3).
+- **Tests.** `apps/web/src/pages/playbook/reader-tables.test.tsx` (the text helpers at `:119` and `:127`; R1–R4 in en and ar at `:135`, `:152` and `:169`) and `apps/web/e2e/p5-reader-tables.spec.ts` (`:76`: tables not Markdown, and the B0016, B0024 and B0124 callouts wrap at 1280 px, 390 px and 200 % text).
+
+Requirement row: REQ-S03-010. The playbook is a practical synthesis inspired by PMI, Brightline and BRM; neither it nor the product is an official PMI standard. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

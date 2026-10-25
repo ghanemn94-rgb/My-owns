@@ -115,3 +115,54 @@ describe("mth-db migrate guards", () => {
     expect((err as Error).message).toMatch(/must run as mth_owner|permission denied/);
   });
 });
+
+// F-DG5-100: forward-only migrations apply in one order on every database. On an upgraded database, a pending file
+// whose id is not above the highest applied id is refused before anything runs (en log text), so a later build can
+// never fill a P5 gap (0066, 0067, 0073, 0077, 0078, 0079, 0083, 0084) and run it last here but in place elsewhere.
+describe("mth-db migrate refuses a pending id below the highest applied id (F-DG5-100)", () => {
+  let owner: string;
+  beforeAll(async () => {
+    owner = roleUrl(adminUrl, await freshDb(), "mth_owner");
+    await migrate(owner);
+  });
+
+  async function probe(): Promise<{ table: string | null; recorded: number }> {
+    const c = new pg.Client({ connectionString: owner });
+    await c.connect();
+    try {
+      const { rows } = await c.query(
+        `SELECT to_regclass('gap_should_not_exist')::text AS table,
+                (SELECT count(*) FROM schema_migration WHERE name LIKE '0066_%' OR name LIKE '0098_%')::int AS recorded`,
+      );
+      return rows[0] as { table: string | null; recorded: number };
+    } finally {
+      await c.end();
+    }
+  }
+
+  it("refuses a later build that fills the gap 0066 on an upgraded database, and applies nothing", async () => {
+    const dir = copyMigrations();
+    writeFileSync(join(dir, "0066_p6_example.sql"), "CREATE TABLE gap_should_not_exist (id int);\n");
+    // A valid forward file in the same build is not applied either: the run refuses before the first file.
+    writeFileSync(join(dir, "0098_p6_forward.sql"), "SELECT 1;\n");
+    const highest = listMigrationFiles().at(-1)!.name;
+    const logged: string[] = [];
+    const err = await migrate(owner, { dir, log: (l) => logged.push(l) }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(MigrationError);
+    expect((err as Error).message).toBe(
+      `refusing to run: pending migration(s) 0066_p6_example.sql have an id not above the highest applied migration ` +
+        `${highest}; forward-only migrations must apply in one order on every database, so give each new ` +
+        `migration an id above ${highest.slice(0, 4)}`,
+    );
+    expect(logged).toEqual([]);
+    expect(await probe()).toEqual({ table: null, recorded: 0 });
+    expect((await statusOf(owner, dir)).outOfOrderPending).toEqual(["0066_p6_example.sql"]);
+  });
+
+  it("positive: a new id above the highest applied is applied", async () => {
+    const dir = copyMigrations();
+    writeFileSync(join(dir, "0098_p6_forward.sql"), "SELECT 1;\n");
+    expect(await migrate(owner, { dir })).toEqual(["0098_p6_forward.sql"]);
+    expect(await statusOf(owner, dir)).toMatchObject({ upToDate: true, outOfOrderPending: [] });
+  });
+});

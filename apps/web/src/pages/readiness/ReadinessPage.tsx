@@ -15,6 +15,7 @@ import { GateStatusChip } from "../../components/P2Badges.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
 import { diagnosticDimensionLabel } from "../../lib/methodology.ts";
 
@@ -124,7 +125,7 @@ function Diagnostic({ r }: { r: TransformationReadiness }) {
           <Icon name="check" /> {t("readiness.diagnostic.allCovered")}
         </p>
       )}
-      <div className="table-wrap">
+      <TableScrollRegion caption={t("readiness.diagnostic.title")}>
         <table className="table">
           <caption className="visually-hidden">{t("readiness.diagnostic.title")}</caption>
           <thead>
@@ -162,7 +163,7 @@ function Diagnostic({ r }: { r: TransformationReadiness }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </TableScrollRegion>
       <p className="small">
         <Link className="link" to={`/transformations/${ws.tid}/diagnose`}>
           {t("readiness.diagnostic.openDiagnose")}
@@ -197,7 +198,7 @@ function Gates({ r }: { r: TransformationReadiness }) {
   const ws = useWorkspace();
   return (
     <Section id="gates-status" title={t("readiness.gates.title")} intro={t("readiness.gates.intro")}>
-      <div className="table-wrap">
+      <TableScrollRegion caption={t("readiness.gates.title")}>
         <table className="table">
           <caption className="visually-hidden">{t("readiness.gates.title")}</caption>
           <thead>
@@ -236,7 +237,7 @@ function Gates({ r }: { r: TransformationReadiness }) {
             })}
           </tbody>
         </table>
-      </div>
+      </TableScrollRegion>
       <p className="small">
         <Link className="link" to={`/transformations/${ws.tid}/dispensations`}>
           {t("readiness.gates.openDispensations")}

@@ -1,0 +1,93 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg1
+
+ ❯ |unit-node| packages/reporting/src/csv.test.ts (12 tests | 3 failed) 52ms
+   ✓ renderCsv > is UTF-8 with a byte-order mark and CRLF line ends only (REQ-S13-005) 23ms
+   ✓ renderCsv > writes =HYPERLINK(...) as '=HYPERLINK(...), quoted per RFC 4180 (REQ-S13-006) 2ms
+   ✓ renderCsv > decimals are canonical and unprefixed; Unknown is an empty field with status Unknown, never 0 (ADR-0046 §9) 2ms
+   ✓ renderCsv > the header block names the draft state and the legend explains the labels (REQ-S13-008) 1ms
+   ✓ renderCsv > an issued snapshot prints its issue version; Arabic labels and the Arabic draft text 2ms
+   ✓ renderCsv > an empty table prints No records; a user-authored frame value is neutralized too 2ms
+   ✓ renderCsv > reports progress after each section and refuses an invalid document 3ms
+   ✓ renderCsv > csvField quotes commas, quotes, CR and LF only 0ms
+   × renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > the reviewer's reproduction: -12345678901.23456 and -1234567890.123456 are written without the apostrophe 8ms
+     → expected { r902: '\'-12345678901.23456', …(1) } to deeply equal { r902: '-12345678901.23456', …(1) }
+   × renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > positive/negative x long/short decimals, and a long negative total, are their canonical strings 3ms
+     → expected [ Array(2) ] to deeply equal [ '-123456789012345678.123456', …(1) ]
+   ✓ renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > a real injection string in user text keeps its apostrophe (and the same text in Arabic) 3ms
+   × renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > csvCell follows the cell's quotePrefix decision, the one XLSX uses (ADR-0046 §4: decided once) 2ms
+     → expected '\'-12345678901.23456' to be '-12345678901.23456' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/reporting/src/csv.test.ts > renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > the reviewer's reproduction: -12345678901.23456 and -1234567890.123456 are written without the apostrophe
+AssertionError: expected { r902: '\'-12345678901.23456', …(1) } to deeply equal { r902: '-12345678901.23456', …(1) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "r902": "-12345678901.23456",[39m
+[32m-   "r903": "-1234567890.123456",[39m
+[31m+   "r902": "'-12345678901.23456",[39m
+[31m+   "r903": "'-1234567890.123456",[39m
+[2m  }[22m
+
+ ❯ packages/reporting/src/csv.test.ts:155:17
+    153|     const amount = (code: string) => rows.find((r) => r[0] === code)![…
+    154|     const got = { r902: amount("RAID-902"), r903: amount("RAID-903") };
+    155|     expect(got).toEqual({ r902: "-12345678901.23456", r903: "-12345678…
+       |                 ^
+    156|   });
+    157| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit-node| packages/reporting/src/csv.test.ts > renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > positive/negative x long/short decimals, and a long negative total, are their canonical strings
+AssertionError: expected [ Array(2) ] to deeply equal [ '-123456789012345678.123456', …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "-123456789012345678.123456",[39m
+[31m+   "'-123456789012345678.123456",[39m
+[2m    "Validated",[22m
+[2m  ][22m
+
+ ❯ packages/reporting/src/csv.test.ts:165:32
+    163|     expect(amount("RAID-905")).toEqual(["42.5", "Validated"]);
+    164|     expect(amount("RAID-906")).toEqual(["-7", "Validated"]);
+    165|     expect(amount("RAID-907")).toEqual(["-123456789012345678.123456", …
+       |                                ^
+    166|     expect(rows.find((r) => r[0] === "Total")!.slice(3)).toEqual(["-12…
+    167|     // No amount field (column 4) of any data or total row carries the…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit-node| packages/reporting/src/csv.test.ts > renderCsv: long decimals are canonical and unprefixed; injection text stays neutralized (F-DG5-101) > csvCell follows the cell's quotePrefix decision, the one XLSX uses (ADR-0046 §4: decided once)
+AssertionError: expected '\'-12345678901.23456' to be '-12345678901.23456' // Object.is equality
+
+Expected: [32m"-12345678901.23456"[39m
+Received: [31m"[7m'[27m-12345678901.23456"[39m
+
+ ❯ packages/reporting/src/csv.test.ts:182:27
+    180|     const long = valueCell(money("-12345678901.23456"), labels);
+    181|     expect(long).toMatchObject({ kind: "text", quotePrefix: false });
+    182|     expect(csvCell(long)).toBe("-12345678901.23456");
+       |                           ^
+    183|     expect(csvCell(valueCell(money("-1234567890.12345"), labels))).toB…
+    184|     expect(csvCell(valueCell(money("12345678901.23456"), labels))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 9 passed (12)
+   Start at  10:17:22
+   Duration  2.05s (transform 834ms, setup 0ms, collect 1.71s, tests 52ms, environment 0ms, prepare 85ms)
+
+EXIT=1

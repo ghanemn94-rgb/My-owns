@@ -95,6 +95,16 @@ describe("renderXlsx", () => {
     expect(sheet.rows.flat().some((x) => x.formula !== null)).toBe(false);
   });
 
+  it("a negative decimal of more than 15 significant digits is text without quotePrefix (F-DG5-101, ADR-0046 §4)", async () => {
+    const d = sampleDocument(
+      [{ code: "RAID-001", description: "x", amount: "-12345678901.23456" }],
+      "-12345678901.23456",
+    );
+    const wb = await readXlsx((await renderXlsx(d, options("xlsx"))).bytes);
+    const c = find(wb.sheets[1]!, "D3")!;
+    expect([c.type, c.text, wb.quotePrefix[c.style]]).toEqual(["inlineStr", "-12345678901.23456", false]);
+  });
+
   it("Arabic sheets are right-to-left in IBM Plex Sans Arabic; English left-to-right in IBM Plex Sans (REQ-S13-009)", async () => {
     const ar = await readXlsx((await renderXlsx(doc, options("xlsx", "ar"))).bytes);
     expect(ar.sheets.every((s) => s.rtl)).toBe(true);

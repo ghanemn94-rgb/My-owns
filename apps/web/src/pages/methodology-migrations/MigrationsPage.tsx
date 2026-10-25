@@ -77,7 +77,12 @@ export function MigrationsPage() {
           empty={<EmptyState title={t("studio.migration.empty")} body={t("studio.migration.emptyBody")} />}
         >
           {(rows) => (
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label={t("common.table.scrollRegion", { caption: t("studio.migration.listTitle") })}
+            >
               <table className="table" data-table="migrations">
                 <caption className="visually-hidden">{t("studio.migration.listTitle")}</caption>
                 <thead>
@@ -120,7 +125,12 @@ export function MigrationsPage() {
           empty={<EmptyState title={t("studio.reapproval.empty")} />}
         >
           {(rows) => (
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label={t("common.table.scrollRegion", { caption: t("studio.reapproval.title") })}
+            >
               <table className="table" data-table="reapprovals">
                 <caption className="visually-hidden">{t("studio.reapproval.title")}</caption>
                 <thead>

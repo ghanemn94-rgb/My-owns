@@ -2,7 +2,7 @@
 // entry lists the transformations the caller can see, each with its migrations and its configuration pins.
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { useTransformations } from "../../api/queries.ts";
+import { useAllTransformations } from "../../api/queries.ts";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { BusinessApprovalNote } from "../my-work/p4ui.tsx";
@@ -10,7 +10,8 @@ import { BusinessApprovalNote } from "../my-work/p4ui.tsx";
 export function MigrationsEntryPage() {
   const { t } = useTranslation();
   usePageTitle(t("nav.p5.methodologyMigrations.title"));
-  const list = useTransformations({ sort: "updatedAt:desc", limit: 50 });
+  // D-181: every transformation the user may see (all pages), most recently updated first.
+  const list = useAllTransformations({ sort: "updatedAt:desc" });
   return (
     <div className="page" data-p5-screen="methodology-migrations-entry">
       <PageHeader
@@ -25,12 +26,12 @@ export function MigrationsEntryPage() {
         </h2>
         <QueryState
           query={list}
-          isEmpty={(page) => page.items.length === 0}
+          isEmpty={(items) => items.length === 0}
           empty={<EmptyState title={t("transformations.emptyTitle")} body={t("transformations.emptyBody")} />}
         >
-          {(page) => (
+          {(items) => (
             <ul className="plain-list entry-list">
-              {page.items.map((tr) => (
+              {items.map((tr) => (
                 <li key={tr.id}>
                   <Link className="link" to={`/transformations/${tr.id}/methodology-migrations`}>
                     <bdi dir="ltr" className="code">

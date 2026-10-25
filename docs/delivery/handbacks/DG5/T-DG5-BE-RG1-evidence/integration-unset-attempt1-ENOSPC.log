@@ -1,0 +1,58 @@
+$ [locale unset] QA_PG_PORT=23151 MTH_PORT_POOL=23152-23199 tests/qa/support/with-pg.sh npx vitest run --project integration packages/db/test/integration/migrate.test.ts packages/db/test/integration/demo-roaming.test.ts packages/db/test/integration/demo.test.ts packages/db/test/integration/demo-numbers.test.ts packages/db/test/integration/demo-numbers-spec.test.ts packages/db/test/integration/demo-dev-binding.test.ts apps/api/test/integration/platform.test.ts apps/api/test/integration/environment/ (2026-10-23T11:15:31Z)
+port-policy: PostgreSQL listening on port 23151 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg1
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvkviumb_43893828 (server_encoding UTF8); applied 89 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/environment/walkthrough.test.ts (16 tests) 12342ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > 404 outside the caller's scope and for an unknown id (never disclosed); 400; 401  340ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 2 diagnose and agree baseline: FIN validates the baseline; a later edit makes it stale again  368ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 4 design TOM: a target-state canvas cell and a TOM gap (either alone is not enough)  325ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  526ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 6 update delivery/adoption: a submitted owner update, then a completed training record  470ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 7 submit KPI actual: the KPI owner submits the period's actual  347ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  604ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  562ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 10 generate report: a generated snapshot completes it; a discarded one does not  393ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  692ms
+ ✓ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (4 tests) 6978ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > an End-to-End transformation in Transform: G1-G4 approved by the routed approver, G5-G6 not submitted  311ms
+   ✓ F-DG5-120: the seeded roaming transformation carries the gate history its phase implies > G4 is approved on a real approved portfolio of INI-01..03: every criterion complete, no exception  348ms
+ ✓ |integration| packages/db/test/integration/demo-numbers.test.ts (10 tests) 7452ms
+   ✓ §J.3: recomputed values equal the seeded values (from the stored rows, with the engines) > is deterministic: a second seed into a fresh database gives the same counts and checksum  2911ms
+ ✓ |integration| packages/db/test/integration/demo-roaming.test.ts (69 tests) 9227ms
+   ✓ REQ-S18-001 (with BE-S): the roaming dataset is deterministic > a second seed into a fresh database gives identical record counts and checksum  4407ms
+ ✓ |integration| apps/api/test/integration/environment/environment.test.ts (14 tests) 11245ms
+   ✓ GET /environment (REQ-S18-001, REQ-PB-089) > returns synthetic: false in production (production-marked, and unmarked fails safe to production)  309ms
+   ✓ the worker's demo.reset job (ADR-0050 §6) > acknowledges before the drop, then re-creates and re-seeds the database (requested_via api); a redelivery does nothing  3456ms
+ ❯ |integration| packages/db/test/integration/demo.test.ts (9 tests | 6 failed) 17804ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  5107ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  9076ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  3472ms
+   × REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3) 78ms
+     → migration 0001_identity_access.sql failed: could not extend file "base/248987/249056": No space left on device
+   × REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write 14ms
+     → could not extend file "base/249057/4148": No space left on device
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset 17ms
+     → could not extend file "base/249058/4148": No space left on device
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums 8ms
+     → could not write to file "pg_wal/xlogtemp.363": No space left on device
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target 6ms
+     → the database system is in recovery mode
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it) 24ms
+     → the database system is in recovery mode
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts [ apps/api/test/integration/platform.test.ts ]
+ FAIL  |integration| packages/db/test/integration/demo-dev-binding.test.ts [ packages/db/test/integration/demo-dev-binding.test.ts ]
+ FAIL  |integration| packages/db/test/integration/demo-numbers-spec.test.ts [ packages/db/test/integration/demo-numbers-spec.test.ts ]
+ FAIL  |integration| packages/db/test/integration/migrate.test.ts [ packages/db/test/integration/migrate.test.ts ]
+ FAIL  |integration| apps/api/test/integration/environment/demo-day-ninety.test.ts [ apps/api/test/integration/environment/demo-day-ninety.test.ts ]
+ FAIL  |integration| apps/api/test/integration/environment/demo-pending-approval.test.ts [ apps/api/test/integration/environment/demo-pending-approval.test.ts ]
+ FAIL  |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts [ apps/api/test/integration/environment/demo-traceability-chains.test.ts ]
+ FAIL  |integration| apps/aEXIT=1

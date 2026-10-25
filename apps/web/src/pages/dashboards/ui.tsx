@@ -40,6 +40,7 @@ import { useSessionBoundAction } from "../../auth/sessionBound.ts";
 import { Dialog } from "../../components/Form.tsx";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { QueryState } from "../../components/States.tsx";
+import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatPercent } from "../../lib/format.ts";
 import { formatKpiValue, reasonText as kpiReasonText, times100 } from "../kpi/ui.tsx";
 import { useBusinessUnitTransformations, useDashboardPeriods, useDrilldown, type DashboardQuery } from "./api.ts";
@@ -751,7 +752,7 @@ function AreaItems({ area, contextTid }: { area: T10Area; contextTid: string | n
   const based = area.items.some((i) => i.valueBasis);
   return (
     <>
-      <div className="table-wrap">
+      <TableScrollRegion caption={t("dashboards.area.itemsCaption")}>
         <table className="table table--compact" data-area-items={area.code}>
           <caption className="visually-hidden">{t("dashboards.area.itemsCaption")}</caption>
           <thead>
@@ -770,7 +771,7 @@ function AreaItems({ area, contextTid }: { area: T10Area; contextTid: string | n
             ))}
           </tbody>
         </table>
-      </div>
+      </TableScrollRegion>
       {area.items.length > 10 ? (
         <button type="button" className="button button--link button--small" onClick={() => setAll((x) => !x)}>
           {all ? t("dashboards.area.showFewer") : t("dashboards.area.showAll", { n: area.items.length })}
@@ -867,7 +868,7 @@ export function TransformationRows({
           <option value="name">{t("dashboards.rows.name")}</option>
         </select>
       </label>
-      <div className="table-wrap">
+      <TableScrollRegion caption={t("dashboards.rows.caption")}>
         <table className="table table--compact" data-transformation-rows={rows.length}>
           <caption className="visually-hidden">{t("dashboards.rows.caption")}</caption>
           <thead>
@@ -903,7 +904,7 @@ export function TransformationRows({
             ))}
           </tbody>
         </table>
-      </div>
+      </TableScrollRegion>
     </>
   );
 }
@@ -1013,7 +1014,7 @@ export function DrilldownPanel({
                   {t("dashboards.drill.noRecords")}
                 </p>
               ) : (
-                <div className="table-wrap">
+                <TableScrollRegion caption={t("dashboards.drill.records")}>
                   <table className="table table--compact" data-drill-items={d.items.length}>
                     <caption className="visually-hidden">{t("dashboards.drill.records")}</caption>
                     <thead>
@@ -1029,7 +1030,7 @@ export function DrilldownPanel({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </TableScrollRegion>
               )}
               <div className="pager">
                 <button

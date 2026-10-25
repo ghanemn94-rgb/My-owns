@@ -89,6 +89,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { inputFieldAttributes, inputSchemaOf } from "./definitions.ts";
+import { requireNamedRecordRead, requireOutputRead } from "./outputs/kit.ts";
 
 // ------------------------------------------------------------------------------------------------ refusals (§10)
 
@@ -1339,6 +1340,8 @@ async function completeStep(tx: Tx, request: FastifyRequest): Promise<InstanceBu
       ).recordId;
     } else if (sd.output_mode === "link" && (body.outputRecordId ?? null) !== null) {
       recordId = body.outputRecordId!;
+      // F-DG5-101 (D-170): the kit's read rule also holds when no adapter verifies the record.
+      await requireNamedRecordRead(tx, acting.principal, sd.output_record_type, recordId);
     } else {
       throw refusal("procedure_step.output_required");
     }
@@ -1422,14 +1425,18 @@ async function linkEvidence(tx: Tx, request: FastifyRequest): Promise<InstanceBu
   // organization for an organization-scope instance, so T is checked here).
   const t = bundle.instance.transformation_id ?? step.transformation_id;
   if (t === null) throw refusal("procedure_step.output_record_invalid");
-  if (bundle.instance.transformation_id === null) {
-    const ev = await tx
-      .selectFrom("evidence")
-      .select("transformation_id")
-      .where("id", "=", body.evidenceId)
-      .executeTakeFirst();
-    if (ev?.transformation_id !== t) throw refusal("procedure_step.output_record_invalid");
-  }
+  const ev = await tx
+    .selectFrom("evidence")
+    .select("transformation_id")
+    .where("id", "=", body.evidenceId)
+    .executeTakeFirst();
+  if (bundle.instance.transformation_id === null && ev?.transformation_id !== t)
+    throw refusal("procedure_step.output_record_invalid");
+  // F-DG5-101's rule (D-170; T-DG5-BE-V2B): a person never links a record they cannot read. The evidence's own read
+  // (transformation.read on its transformation, as the evidence GET checks it), on the grants authorizeStepWrite
+  // reloaded in this transaction, after openStep's locks; refused like an unknown evidence record, with the read
+  // gate's denial for the failed-mutation audit (`authorization.denied`). An unknown id is left to the link guard.
+  if (ev !== undefined) await requireOutputRead(tx, acting.principal, ev.transformation_id);
   await insertLink(tx, acting.audit, bundle.instance, step, "evidence", "evidence", body.evidenceId);
   return finish(tx, acting.audit, await reload(tx, bundle), "step_evidence");
 }

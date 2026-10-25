@@ -9,15 +9,24 @@
 // never a float), percentages as fractions, currency as "<code> <amount>", choice values as their labels in the
 // language. A field without a value is Unknown: an empty value with the status `unknown`; a calculated field whose
 // inputs are missing is Not computable (`not_computable`) - never 0.
-//   - `format=json` (application/json): the FormRecordExport body (columns, then rows with values and statuses).
+//   - `format=json` (application/json): the FormRecordExport body (illustrativeLabel, columns, then rows with values and
+//     statuses).
 //   - `format=csv` (default; text/csv): RFC 4180, UTF-8 with a byte-order mark (Arabic opens in spreadsheet
 //     applications), CRLF line ends; a status column follows each value column; text that a spreadsheet would read as a
 //     formula (first character = + - @ TAB CR) is prefixed with an apostrophe (the ADR-0046 §4 rule; the API does not
 //     load @mth/reporting's renderers, so the two-line rule is applied here), decimals are never prefixed.
 //   - `format` and the Accept header must agree when both are sent (400 at /query/format); without `format`, an Accept
 //     of application/json alone selects JSON.
+//   - Demo database (F-DG5-124; D-178; ADR-0050 §2 (d); REQ-S18-001, REQ-PB-089; M0090, M0339): the environment is read
+//     at generation time from the same source as GET /environment and the report pipeline (the deployment marker,
+//     `@mth/db` readDeploymentEnvironment: synthetic exactly in a `demo` database; no marker = production, fail-safe).
+//     On a demo database the CSV's first row, after the byte-order mark and before the header, is the illustrative
+//     label in the export language, and the JSON body's `illustrativeLabel` is the same string; otherwise no label row
+//     and `illustrativeLabel: null`. The strings are the reporting pipeline's `export.illustrative` (packages/reporting
+//     labels.ts); the API does not load @mth/reporting's main entry (ADR-0046 §1), so they are repeated here and the
+//     integration test form-export-illustrative.test.ts holds them equal.
 // Authorization: `transformation.read` in scope (404 outside it; AUD reads). Read only: nothing is written.
-import { sql, type Db, type FormRecordTypeRow } from "@mth/db";
+import { readDeploymentEnvironment, sql, type Db, type FormRecordTypeRow } from "@mth/db";
 import { evaluateCalculatedField, toCalculatedEntry } from "@mth/shared/calc";
 import {
   FORM_EXPORT_MAX_ROWS,
@@ -77,6 +86,15 @@ const CSV_LABELS: Readonly<Record<Lang, CsvLabels>> = {
     unknown: "غير معروف",
     not_computable: "غير قابل للحساب",
   },
+};
+
+/**
+ * The illustrative label of an export generated in a demo database (F-DG5-124; D-178): exactly the reporting pipeline's
+ * `export.illustrative` strings (packages/reporting/src/labels.ts FRAME_LABELS), en and ar.
+ */
+export const FORM_EXPORT_ILLUSTRATIVE_LABELS: Readonly<Record<Lang, string>> = {
+  en: "Illustrative example — synthetic",
+  ar: "مثال توضيحي — اصطناعي",
 };
 
 const DECIMAL = /^-?\d+(\.\d+)?$/;
@@ -213,6 +231,8 @@ export async function buildFormExport(
       .execute();
     for (const v of values) stored.set(v.record_id, (v.field_values ?? {}) as Record<string, unknown>);
   }
+  // ADR-0050 §2 (d): the environment at generation time (the deployment marker; no marker reads as production).
+  const synthetic = (await readDeploymentEnvironment(db)).synthetic;
   const vars = numericVariables(form, t.currency);
   const out: FormRecordExport["rows"] = [];
   for (const r of rows) {
@@ -248,6 +268,11 @@ export async function buildFormExport(
     recordType: rt.code,
     formSchemaVersionId: pinned.versionId,
     language: lang,
+    illustrativeLabel: !synthetic
+      ? null
+      : lang === "ar"
+        ? FORM_EXPORT_ILLUSTRATIVE_LABELS.ar
+        : FORM_EXPORT_ILLUSTRATIVE_LABELS.en,
     columns: columns.map((c) => ({
       key: c.field.key,
       label: labelOf(c.field, lang),
@@ -260,13 +285,17 @@ export async function buildFormExport(
 
 const DECIMAL_TYPES = new Set(["number", "percentage", "calculated"]);
 
-/** The CSV text of an export: BOM, a header row, then one row per record; a status column after each value. */
+/**
+ * The CSV text of an export: BOM, the illustrative label row on a demo database (F-DG5-124), a header row, then one row
+ * per record; a status column after each value.
+ */
 export function exportCsv(e: FormRecordExport): string {
   const L = e.language === "ar" ? CSV_LABELS.ar : CSV_LABELS.en;
   const statusText = (s: Status) => (s === "unknown" ? L.unknown : L.not_computable);
   const header = [L.recordId, L.version];
   for (const c of e.columns) header.push(c.label, `${c.label} (${L.status})`);
-  const lines = [header.map((h) => csvCell(h, false)).join(",")];
+  const lines = e.illustrativeLabel === null ? [] : [csvCell(e.illustrativeLabel, false)];
+  lines.push(header.map((h) => csvCell(h, false)).join(","));
   for (const r of e.rows) {
     const values = new Map(Object.entries(r.values));
     const statuses = new Map(Object.entries(r.statuses));
