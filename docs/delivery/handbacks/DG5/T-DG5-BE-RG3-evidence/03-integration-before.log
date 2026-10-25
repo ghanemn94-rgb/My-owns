@@ -1,0 +1,89 @@
+# BEFORE the fix: product sources at HEAD 94b465f (fix patch reversed in the working tree with git apply -R), new tests only; locale unset
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/exports-xml-chars.test.ts apps/api/test/integration/branding/branding.test.ts
+Sun Oct 25 20:13:55 UTC 2026
+port-policy: PostgreSQL listening on port 23150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg3
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvo9my3b_6c96d86c (server_encoding UTF8); applied 89 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/branding/branding.test.ts (26 tests | 1 failed) 3834ms
+   ✓ version 0: a fresh database shows the shipped defaults (REQ-S01-002) > getBranding returns 'Mobily Transformation Hub' (en, ar), the provisional colours and the provisional wordmark 25ms
+   ✓ version 0: a fresh database shows the shipped defaults (REQ-S01-002) > getBrandingSettings answers version 0 with ETag "0"; the logo answers 404 branding.logo_not_found 21ms
+   ✓ version 0: a fresh database shows the shipped defaults (REQ-S01-002) > GET /branding/tokens keeps its shape: the seeded tokens plus the derived action shades of #0078FF, provisional 10ms
+   ✓ authorization (ADR-0049 §10): branding.configure, held by ADM_TECH only > AUD and WL get 403 on every settings operation, TL too; nothing is written 83ms
+   ✓ authorization (ADR-0049 §10): branding.configure, held by ADM_TECH only > commit-time re-authorization: branding.configure revoked while the request waits -> 403, no version 45ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.logo_invalid: an SVG logo 23ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.logo_invalid: a PNG without Arabic alternative text 18ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.colour_invalid: #0078ff (lower case) 11ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.colour_invalid: a three-digit secondary colour 11ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.font_unavailable: a font outside the bundled pair 10ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.text_pair_required: a report header in one language only 11ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.text_pair_required: a report footer in Arabic only 10ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.prohibited_claim: "PMI certified" in the name 31ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 422 branding.engineering_gate_reference: "DG7" in the footer 18ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > a disclaimer such as 'not an official PMI standard' is allowed (the claim rule's negation) 41ms
+   ✓ the §11 refusals (exact codes and texts); none writes a version > 400 for a malformed body: an unknown member, a blank name, a missing member 19ms
+   ✓ publish: If-Match, one audit event per row, the outbox event (ADR-0049 §8, §12) > 428 without If-Match; If-Match "0" creates version 1; a stale "0" then gives 409; "1" steps to version 2 59ms
+   ✓ publish: If-Match, one audit event per row, the outbox event (ADR-0049 §8, §12) > the worker consumes branding.published on its own queue and acknowledges each event exactly once 8ms
+   ✓ publish: If-Match, one audit event per row, the outbox event (ADR-0049 §8, §12) > two concurrent saves with the same If-Match: exactly one wins, the other gets 409 22ms
+   ✓ publish: If-Match, one audit event per row, the outbox event (ADR-0049 §8, §12) > organization isolation: org B still reads the defaults; org A's versions are not listed for org B 4ms
+   ✓ render-time reads: name, tokens and the logo change without a restart (REQ-S01-002, REQ-S15-004) > a new name is returned in en and ar; a new primary colour changes brand.primary and the derived action shade 28ms
+   ✓ render-time reads: name, tokens and the logo change without a restart (REQ-S01-002, REQ-S15-004) > logo: set -> image/png with the same bytes; keep keeps it; none removes it (404 again) 73ms
+   ✓ render-time reads: name, tokens and the logo change without a restart (REQ-S01-002, REQ-S15-004) > versions: newest first, paginated, immutable; one version; 404 for a version that does not exist 50ms
+   × the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > version 0: an Arabic export's header carries «منصة موبايلي للتحوّل» (as GET /branding), an English one the English name 249ms
+     → ar docx header: expected 'Mobily Transformation Hub' to be 'منصة موبايلي للتحوّل' // Object.is equality
+   ✓ the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > version 0: the shipped name in the header and no brand band; after a PUT: the new name (en, ar) and colour  1842ms
+   ✓ the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > a configured version: the DOCX and PPTX headers carry its own names (en, ar), never the shipped ones  431ms
+ ❯ |integration| apps/api/test/integration/reporting/exports-xml-chars.test.ts (1 test | 1 failed) 714ms
+   × F-DG5-100: a C0 control character in a record title -> well-formed DOCX, PPTX and XLSX exports > the API accepts the text; each export job succeeds and every XML part of every package parses 269ms
+     → charter.en.docx: expected 'job succeeded, 12637 bytes, not-well-…' to match /not-well-formed parts: none$/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/branding/branding.test.ts > the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > version 0: an Arabic export's header carries «منصة موبايلي للتحوّل» (as GET /branding), an English one the English name
+AssertionError: ar docx header: expected 'Mobily Transformation Hub' to be 'منصة موبايلي للتحوّل' // Object.is equality
+
+Expected: [32m"منصة موبايلي للتحوّل"[39m
+Received: [31m"Mobily Transformation Hub"[39m
+
+ ❯ apps/api/test/integration/branding/branding.test.ts:578:44
+    576|     for (const format of ["docx", "pptx"] as const) {
+    577|       const ar = await headerTexts("ar", format);
+    578|       expect(ar[0], `ar ${format} header`).toBe(v0.body.productNameAr);
+       |                                            ^
+    579|       expect(ar.join("|"), `ar ${format}`).not.toContain(DEFAULT_EN);
+    580|       const en = await headerTexts("en", format);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/exports-xml-chars.test.ts > F-DG5-100: a C0 control character in a record title -> well-formed DOCX, PPTX and XLSX exports > the API accepts the text; each export job succeeds and every XML part of every package parses
+AssertionError: charter.en.docx: expected 'job succeeded, 12637 bytes, not-well-…' to match /not-well-formed parts: none$/
+
+[32m- Expected:[39m 
+/not-well-formed parts: none$/
+
+[31m+ Received:[39m 
+"job succeeded, 12637 bytes, not-well-formed parts: docProps/core.xml: character U+000B is not an XML 1.0 Char | word/document.xml: character U+000B is not an XML 1.0 Char"
+
+ ❯ apps/api/test/integration/reporting/exports-xml-chars.test.ts:129:31
+    127|           `job ${out.job.status}, ${out.bytes.byteLength} bytes, not-w…
+    128|         // The reviewer's final assertion, for every package of the ma…
+    129|         expect(results[k], k).toMatch(/not-well-formed parts: none$/);
+       |                               ^
+    130|         const { parts } = await readOoxml(out.bytes, /\.xml$/);
+    131|         const data = [...parts.values()].map((xml) => xml.replace(/<[^…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 25 passed (27)
+   Start at  20:13:57
+   Duration  20.13s (transform 5.00s, setup 0ms, collect 11.37s, tests 4.55s, environment 0ms, prepare 53ms)
+
+EXIT=1
+Sun Oct 25 20:14:18 UTC 2026

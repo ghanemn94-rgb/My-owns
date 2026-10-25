@@ -9,6 +9,7 @@ export {
 } from "./injection.ts";
 export {
   createLabels,
+  DEFAULT_PRODUCT_NAMES,
   fallbackLabel,
   FRAME_LABELS,
   type ExportLanguage,

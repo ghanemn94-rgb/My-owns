@@ -40,6 +40,7 @@ import { createLabels, type ExportLanguage } from "./labels.ts";
 import { pagedDocument, type Block, type TableBlock } from "./layout/blocks.ts";
 import { withPagedLabels } from "./layout/values.ts";
 import { EXPORT_CONTENT_TYPES, issueLine, RenderError, type RenderOptions, type RenderResult } from "./model.ts";
+import { assertWellFormedChars, xmlSafe } from "./xml-chars.ts";
 
 /** A run boundary: a stretch of right-to-left script (with the spaces and punctuation inside it) or of anything else. */
 const RTL_STRETCH =
@@ -51,7 +52,10 @@ interface RunStyle {
   readonly color?: string;
 }
 
-/** The text of one line as runs: right-to-left script stretches as `rightToLeft` runs, the rest left to right. */
+/**
+ * The text of one line as runs: right-to-left script stretches as `rightToLeft` runs, the rest left to right. Every run's
+ * text is `xmlSafe` (F-DG5-100): the docx library escapes only & < > " and would write a C0 control character raw.
+ */
 export function scriptRuns(text: string, language: ExportLanguage, style: RunStyle = {}): TextRun[] {
   const runs: TextRun[] = [];
   const font = {
@@ -64,7 +68,7 @@ export function scriptRuns(text: string, language: ExportLanguage, style: RunSty
     if (t.length === 0) return;
     runs.push(
       new TextRun({
-        text: t,
+        text: xmlSafe(t),
         font,
         language: lang,
         rightToLeft: rtl,
@@ -208,9 +212,12 @@ export async function renderDocx(input: ReportDocument, o: RenderOptions): Promi
   ];
   const family = rtl ? FONT_FAMILIES.arabic : FONT_FAMILIES.latin;
   const document = new Document({
-    creator: o.branding.productName,
-    title: `${o.title} \u2014 ${content.transformation.code}`,
-    description: `${content.transformation.code} \u2014 ${content.transformation.name}; snapshot ${o.snapshot.id}`,
+    // The core properties are user text too (F-DG5-100).
+    creator: xmlSafe(o.branding.productName),
+    title: xmlSafe(`${o.title} \u2014 ${content.transformation.code}`),
+    description: xmlSafe(
+      `${content.transformation.code} \u2014 ${content.transformation.name}; snapshot ${o.snapshot.id}`,
+    ),
     styles: {
       default: {
         document: {
@@ -241,9 +248,10 @@ export async function renderDocx(input: ReportDocument, o: RenderOptions): Promi
       },
     ],
   });
-  const bytes = await Packer.toBuffer(document);
+  const bytes = new Uint8Array(await Packer.toBuffer(document));
+  await assertWellFormedChars(bytes); // F-DG5-100: a package Word would refuse is a RenderError, never a stored file
   return {
-    bytes: new Uint8Array(bytes),
+    bytes,
     contentType: EXPORT_CONTENT_TYPES.docx,
     extension: "docx",
     sections: total,

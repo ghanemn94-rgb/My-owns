@@ -15,6 +15,7 @@
 import { crc32, deflateSync } from "node:zlib";
 import { deriveDarkerShade } from "@mth/design-tokens";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { readOoxml, xmlTexts } from "../../../../../packages/reporting/src/ooxml-read.ts";
 import { drawsArabic, lines, readPdf } from "../../../../../packages/reporting/src/pdf/read.ts";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
 import { handleBrandingPublished } from "../../../../worker/src/handlers/branding.ts";
@@ -515,15 +516,17 @@ describe("the next generated report carries the current branding and the provena
     admin = await signIn(api.app, x.admin.subject);
   }, 120_000);
 
-  async function pdf(language: "en" | "ar"): Promise<Buffer> {
-    const snap = await call<Body>(api.app, "POST", `${b.base}/reports/registers/generate`, {
+  async function pdf(language: "en" | "ar", format: "pdf" | "docx" | "pptx" = "pdf"): Promise<Buffer> {
+    // The registers output offers no DOCX or PPTX (0080): the charter is a DOCX output, the roadmap a PPTX output.
+    const definition = format === "docx" ? "charter" : format === "pptx" ? "roadmap" : "registers";
+    const snap = await call<Body>(api.app, "POST", `${b.base}/reports/${definition}/generate`, {
       session: b.s.tl,
-      body: { parameters: { register: "raid", filters: {} } },
+      body: definition === "registers" ? { parameters: { register: "raid", filters: {} } } : {},
     });
     expect(snap.status, JSON.stringify(snap.body).slice(0, 400)).toBe(201);
     const job = await call<Body>(api.app, "POST", "/api/v1/exports", {
       session: b.s.tl,
-      body: { snapshotId: snap.body.id, format: "pdf", language },
+      body: { snapshotId: snap.body.id, format, language },
     });
     expect(job.status).toBe(202);
     const row = await api.db
@@ -557,6 +560,33 @@ describe("the next generated report carries the current branding and the provena
     const doc = readPdf(bytes);
     return [...doc.objects.values()].some((o) => o.stream !== null && band.test(o.stream.toString("latin1")));
   }
+
+  /** The text runs of the charter DOCX body or of the roadmap PPTX title slide, in order: the header block comes first. */
+  async function headerTexts(language: "en" | "ar", format: "docx" | "pptx"): Promise<string[]> {
+    const part = format === "docx" ? /^word\/document\.xml$/ : /^ppt\/slides\/slide1\.xml$/;
+    const { parts } = await readOoxml(await pdf(language, format), part);
+    return [...parts.values()].flatMap((xml) => xmlTexts(xml));
+  }
+
+  // F-DG5-140 (qa-verifier round 1; ADR-0049 §8 "Version 0 is the default"): at version 0 an Arabic export's header
+  // carries the Arabic shipped name, the same text as GET /api/v1/branding productNameAr; an English export the English.
+  it("version 0: an Arabic export's header carries «منصة موبايلي للتحوّل» (as GET /branding), an English one the English name", async () => {
+    const v0 = await call<Body>(api.app, "GET", CURRENT, { session: b.s.tl });
+    expect([v0.body.versionNo, v0.body.productNameEn, v0.body.productNameAr]).toEqual([0, DEFAULT_EN, DEFAULT_AR]);
+    for (const format of ["docx", "pptx"] as const) {
+      const ar = await headerTexts("ar", format);
+      expect(ar[0], `ar ${format} header`).toBe(v0.body.productNameAr);
+      expect(ar.join("|"), `ar ${format}`).not.toContain(DEFAULT_EN);
+      const en = await headerTexts("en", format);
+      expect(en[0], `en ${format} header`).toBe(v0.body.productNameEn);
+      expect(en.join("|"), `en ${format}`).not.toContain(DEFAULT_AR);
+    }
+    // The PDF: the Arabic file draws the Arabic name and never prints the English one.
+    const arPdf = readPdf(await pdf("ar"));
+    expect(drawsArabic(arPdf, "موبايلي")).toBe(true);
+    expect(lines(arPdf).some((l) => l.includes(DEFAULT_EN))).toBe(false);
+    expect(lines(readPdf(await pdf("en"))).some((l) => l.includes(DEFAULT_EN))).toBe(true);
+  });
 
   it("version 0: the shipped name in the header and no brand band; after a PUT: the new name (en, ar) and colour", async () => {
     const before = await pdf("en");
@@ -600,5 +630,22 @@ describe("the next generated report carries the current branding and the provena
     expect(drawsArabic(ar, "عنوان")).toBe(true);
     expect(drawsArabic(ar, "تذييل")).toBe(true);
     expect(drawsArabic(ar, "المنافع")).toBe(true); // B0004 in Arabic (provisional translation)
+  });
+
+  // F-DG5-140: a configured branding version keeps its own names, in DOCX and PPTX too (runs after the PUT above).
+  it("a configured version: the DOCX and PPTX headers carry its own names (en, ar), never the shipped ones", async () => {
+    const cur = await call<Body>(api.app, "GET", CURRENT, { session: b.s.tl });
+    expect([cur.body.productNameEn, cur.body.productNameAr]).toEqual([
+      "Synthetic Roaming Hub",
+      "منصة التجوال التجريبية",
+    ]);
+    for (const format of ["docx", "pptx"] as const) {
+      const ar = await headerTexts("ar", format);
+      expect(ar[0], `ar ${format}`).toBe("منصة التجوال التجريبية");
+      expect(ar.join("|")).not.toContain(DEFAULT_AR);
+      const en = await headerTexts("en", format);
+      expect(en[0], `en ${format}`).toBe("Synthetic Roaming Hub");
+      expect(en.join("|")).not.toContain(DEFAULT_EN);
+    }
   });
 });

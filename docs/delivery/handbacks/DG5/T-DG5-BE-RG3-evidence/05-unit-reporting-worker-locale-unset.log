@@ -1,0 +1,48 @@
+Sun Oct 25 20:22:39 UTC 2026
+# locale unset
+$ npx vitest run --project unit-node packages/reporting apps/worker
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg5-be-rg3
+
+ ✓ |unit-node| packages/reporting/src/csv.test.ts (12 tests) 63ms
+ ✓ |unit-node| packages/reporting/src/pptx.test.ts (5 tests) 681ms
+ ✓ |unit-node| packages/reporting/src/xlsx/xlsx.test.ts (11 tests) 405ms
+ ✓ |unit-node| packages/reporting/src/layout/layout.test.ts (11 tests) 357ms
+ ✓ |unit-node| packages/reporting/src/provenance-illustrative.test.ts (24 tests) 6001ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF en: in the header and on every page  700ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF ar: in the header and on every page  1117ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > production (no `synthetic` member): no format prints the label in any language  2504ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > the label is translated (no missing label key in either language)  1150ms
+ ✓ |unit-node| packages/reporting/src/xml-chars.test.ts (13 tests) 912ms
+   ✓ F-DG5-100: DOCX, PPTX and XLSX parts parse as XML 1.0 with control characters in user text > docx (en): every XML part is well-formed; the text is kept with U+FFFD in place  396ms
+ ✓ |unit-node| packages/reporting/src/docx.test.ts (4 tests) 560ms
+ ✓ |unit-node| packages/reporting/src/storage.test.ts (4 tests) 33ms
+ ✓ |unit-node| packages/reporting/src/injection.test.ts (4 tests) 83ms
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 1338ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  462ms
+ ✓ |unit-node| packages/reporting/src/pdf/pdf.test.ts (13 tests) 11131ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > has a right-to-left base direction: /Lang (ar-SA), /Direction /R2L, right-aligned text, mirrored tables  1272ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > embeds IBM Plex Sans Arabic (every font is an embedded subset of it, with its TrueType program)  946ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > identifiers and numbers keep their left-to-right order inside Arabic text (text extraction)  814ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a multi-word Arabic phrase reads right to left, word by word (the leftmost word is the last one)  939ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > the glyph-run check: the drawn Arabic word uses GSUB's joined forms, not the isolated forms  912ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a provisional value prints مؤقت, an Unknown value prints غير معروف and no number, never 0  863ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a generated snapshot carries مسودة — ليس تقريراً صادراً on every page  929ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > is left to right: /Lang (en-GB), no R2L preference, left-aligned text, IBM Plex Sans embedded  535ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > prints Provisional under a pending value, Unknown with no number, and the legend  396ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > a generated snapshot carries 'Draft — not an issued report'; an issued one its version and no Draft line  874ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > prints every row of a long register once, repeats the table header on each page, and numbers the pages  2048ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > render() dispatches every export format, PDF included  340ms
+ ✓ |unit-node| packages/reporting/src/labels.test.ts (3 tests) 10ms
+ ✓ |unit-node| apps/worker/src/reports/export-runner.test.ts (2 tests) 7ms
+ ✓ |unit-node| apps/worker/src/handlers/demo.test.ts (2 tests) 60ms
+
+ Test Files  14 passed (14)
+      Tests  113 passed (113)
+   Start at  20:22:40
+   Duration  15.43s (transform 2.24s, setup 0ms, collect 18.50s, tests 21.64s, environment 3ms, prepare 1.27s)
+
+EXIT=0

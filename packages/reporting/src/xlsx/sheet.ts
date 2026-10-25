@@ -6,18 +6,17 @@
 // fixed template: `SUM(<col><first>:<col><last>)` over one contiguous range of the same column of the same sheet, with
 // the decimal.js total as its cached value. No user text ever reaches the formula template (it takes only integers).
 import type { SheetCell } from "../model.ts";
+import { xmlSafe } from "../xml-chars.ts";
 
 export const MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 export const REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 
-/** Characters XML 1.0 cannot carry are replaced by U+FFFD (they cannot be valid user text either). */
-const INVALID_XML =
-  /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
-
-/** Escapes text content and attribute values; CR is a character reference so XML end-of-line handling keeps it. */
+/**
+ * Escapes text content and attribute values; CR is a character reference so XML end-of-line handling keeps it. Characters
+ * XML 1.0 cannot carry are replaced by U+FFFD first (xml-chars.ts `xmlSafe`, the rule the DOCX and PPTX writers share).
+ */
 export function xmlText(s: string): string {
-  return s
-    .replace(INVALID_XML, "�")
+  return xmlSafe(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

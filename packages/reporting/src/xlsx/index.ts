@@ -30,6 +30,7 @@ import {
   type SheetCell,
 } from "../model.ts";
 import { REL_NS, MAIN_NS, stylesXml, worksheetXml, xmlText, type SheetRow } from "./sheet.ts";
+import { assertWellFormedChars } from "../xml-chars.ts";
 
 export { cellXml, columnName, sumFormula, styleId, worksheetXml, xmlText } from "./sheet.ts";
 
@@ -162,6 +163,7 @@ export async function renderXlsx(input: ReportDocument, o: RenderOptions): Promi
     compression: "DEFLATE",
     compressionOptions: { level: 6 },
   });
+  await assertWellFormedChars(bytes); // F-DG5-100: the same package check as the DOCX and PPTX writers
   return {
     bytes,
     contentType: EXPORT_CONTENT_TYPES.xlsx,
