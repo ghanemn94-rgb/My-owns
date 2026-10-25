@@ -14158,7 +14158,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-24T18:50:00Z",
@@ -14169,10 +14169,40 @@
           "at": "2026-10-24T19:32:53Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1d8d6d56a11279e92be044d51686a03e26e4b56e"
+        },
+        {
+          "at": "2026-10-25T02:29:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "1d8d6d56a11279e92be044d51686a03e26e4b56e",
-      "fix_summary": "T-DG5-FE-RG2 (D-187), merge 1d8d6d56a11279e92be044d51686a03e26e4b56e"
+      "fix_summary": "T-DG5-FE-RG2 (D-187), merge 1d8d6d56a11279e92be044d51686a03e26e4b56e",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860",
+          "session_id": "16b1a860-0d4e-45b3-a254-155bb80ea74b"
+        },
+        "at": "2026-10-25T02:29:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-f143-M1-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-f143-M2-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-f143-control-restored-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/09-f143-mutation-setup-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/03-f143-matcher-coverage.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/03-findings-fix-ancestry.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/scripts/run-f143-mutants.sh",
+          "docs/delivery/test-evidence/DG5/qa/tests/round-3/static/zz-qa-dg5rg3-f143-matcher-coverage.mjs",
+          "docs/delivery/test-evidence/DG5/qa/round-3/00-candidate-start.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/00-candidate-end.log"
+        ],
+        "note": "Verified by its reporter (qa-verifier raised it in re-gate round 2). Candidate sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9 (2203 files, source 54e02b61961550386d5ab24a74e8ae8bb612218f), recomputed in a complete disposable clone at the start and at the end of my run. The owner is frontend-ux-engineer (T-DG5-FE-RG2); I authored none of the repair. fix_revision 1d8d6d56a11279e92be044d51686a03e26e4b56e is a commit and an ancestor of 54e02b6 (03-findings-fix-ancestry.log). The diff edbf5ce..54e02b6 touches only two test files. In p3-prioritization-roadmap.spec.ts the substring matcher /approve|اعتماد|move|نقل/i is replaced by the whole-word APPROVE_OR_MOVE = /(?<![\\p{L}\\p{M}])(?:approve|move|اعتماد|نقل)(?![\\p{L}\\p{M}])/iu, and the test now asserts against the real catalogue that every approve/move write label of the three screens matches, while five read-only labels (among them «الاعتمادية») do not. The fix keeps the test's intent and does not weaken it: (1) My original reproduction, the full product e2e on the real stack (--workers=1), now passes the auditor test in both projects and both locale settings: unset 12.4 s en / 8.5 s ar; C.UTF-8 9.2 s / 7.1 s. Neither full run has a p3-prioritization-roadmap failure. (2) Adversarial mutants in the disposable clone: M1 shows the roadmap 'approve date' button to the auditor (canApprove = true) and M2 shows the 'move' button (canMove = true). Each makes the auditor test fail in chromium-en and chromium-ar at exactly the APPROVE_OR_MOVE assertion (spec line 530; 'Expected: 0, Received: 1'). On the restored build the spec passes 14/14. (3) My static probe of the matcher against every literal t() key of the three screens' 11 source files (en and ar) finds 0 button labels that the old matcher caught and the new one misses, except two that stay covered: dependencies.map.add is in the test's named-label assertion, and dependencies.form.save is that dialog's own submit. Every other old-only match is a non-button text (bodies, hints, column headers). A breadth limit that predates the fix is recorded as an observation in my record, not as part of this finding: neither assertion catches some write labels, such as decide, revoke, withdraw, archive or edit (Q2 of the probe). The old matcher did not catch them either."
+      }
     },
     {
       "id": "F-DG5-144",
@@ -14194,7 +14224,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG5/round-2/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-10-24T18:50:00Z",
@@ -14205,10 +14235,96 @@
           "at": "2026-10-24T19:32:54Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1d8d6d56a11279e92be044d51686a03e26e4b56e"
+        },
+        {
+          "at": "2026-10-25T02:29:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "1d8d6d56a11279e92be044d51686a03e26e4b56e",
-      "fix_summary": "T-DG5-FE-RG2 (D-187), merge 1d8d6d56a11279e92be044d51686a03e26e4b56e"
+      "fix_summary": "T-DG5-FE-RG2 (D-187), merge 1d8d6d56a11279e92be044d51686a03e26e4b56e",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860",
+          "session_id": "16b1a860-0d4e-45b3-a254-155bb80ea74b"
+        },
+        "at": "2026-10-25T02:29:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset-samples.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/03-findings-fix-ancestry.log",
+          "docs/delivery/test-evidence/DG5/qa/round-3/00-candidate-start.log"
+        ],
+        "note": "Verified by its reporter (qa-verifier, re-gate round 2). Same candidate and clone as above. The owner is frontend-ux-engineer (T-DG5-FE-RG2); fix_revision 1d8d6d56a11279e92be044d51686a03e26e4b56e is an ancestor of 54e02b6 (03-findings-fix-ancestry.log). The fix gives p4-raid-governance.spec.ts test 5 (meeting workspace) an explicit 90 s budget (MEETING_WORKSPACE_BUDGET_MS) and per-phase timing annotations. I read the diff: no step, assertion or screenshot is removed or changed; only test.setTimeout and seven mark() calls are added. Re-run under full-suite load, as assigned. Locale unset full product run, with the other two reviews running (1-minute load median 6.2, max 16.8 over the run): chromium-ar 24.6 s and chromium-en 24.6 s, both passed, and tests 6 and 7 ran and passed in both projects. C.UTF-8 full run: ar 18.0 s, en 16.8 s. The slowest loaded run uses 27 % of the new budget, against round 2's 30.1 s timeout on the old 30 s budget. The same timing class in another test (p4-benefits test 8) is raised separately as F-DG5-145; it does not affect this closure."
+      }
+    },
+    {
+      "id": "F-DG5-145",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-075",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "p4-benefits.spec.ts test 8 (auditor read-only views, 390 px and 200 % text) runs on the default 30 s budget with almost no headroom, and timed out in chromium-en in the full product suite (the F-DG5-141/144 class in another test)",
+      "reproduction": "Candidate sha256:d8d83181... (source 54e02b6), disposable clone, real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev), --workers=1. Full product e2e, locale unset (scripts/run-e2e.sh unset 26630 26631 product product apps/web/e2e), with the other two reviews running (1-minute load median 6.2, max 16.8). Test 104 [chromium-en], apps/web/e2e/p4-benefits.spec.ts '8. Auditor read-only; register and benefit page at 390 px and 200 % text; the other benefit screens' (source line 490; Playwright prints :454), failed with 'Test timeout of 30000ms exceeded' (30.2 s), then 'browserContext.close: Target page, context or browser has been closed' at its last line, aud.close(). No assertion failed. Its trace has 321 calls, and the longest step is 1.53 s. The time is the length of the chain: 9 axe scans, 11 full-page screenshots and two viewport sweeps in one test with no explicit budget. Its serial follower, test 9 [chromium-en] (plan-value edit), then did not run. Measured durations: this run, ar 20.5 s; C.UTF-8 full run, en 23.6 s and ar 15.4 s; the spec alone at a load of about 8, 25.8 s / 25.7 s (en/ar, 28/28 with session-end). The earlier DG5 evidence reaches 28.3 s and 29.0 s, and the same test exceeded 30 s in several DG4 qa full runs under load (for example DG4 qa round 7, 32.4 s).",
+      "expected": "As for p4-dashboards test 6 (F-DG5-141), p4-raid-governance test 5 (F-DG5-144) and p4-gates-closure test 9 (D-173): the test has an explicit budget with at least 2x headroom over a measured loaded case, or it is split into its 390 px and 200 % halves, so that a full-suite run does not exceed it. Its steps and assertions stay unchanged.",
+      "actual": "Under the default 30 s budget the test has 0-15 % headroom when loaded: 25.7-25.8 s even alone at a load of about 8, and 30.2 s in the full suite. The required product e2e check therefore fails intermittently with no product defect. The product behaviour is correct. The auditor sees the read-only state and no create, decide or amend control. The 390 px and 200 % checks find no page-level overflow, and axe finds no serious or critical issue: the test passes alone in en and ar, and in the C.UTF-8 full run in both projects. Low and not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-rerun-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T02:23:30Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 3 (run DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860). Low, not mandatory, not blocking in my judgement: test reliability only, and the product behaviour is verified correct."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-146",
+      "stage_id": "DG5",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "session-end.spec.ts 'signed out in another tab, then an in-app link' races My Work's paged work-items load: the app ends the session itself before the test clicks, and the test waits 30 s for a navigation link that no longer exists",
+      "reproduction": "Candidate sha256:d8d83181... (source 54e02b6), real stack, --workers=1, full product e2e, locale unset (same run as F-DG5-145). Test 466 [chromium-ar], apps/web/e2e/session-end.spec.ts 'signed out in another tab, then an in-app link: one landing on sign-in with the message' (source line 145; Playwright prints :156), failed at 30.2 s. locator.click waited 28.1 s for getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: 'التحوّلات' }). The error context shows the page already on the sign-in page with the alert «انتهت جلستك. يُرجى تسجيل الدخول مجددًا.» (session ended). The trace's network order (trace-summary.txt) shows the race. signIn() (apps/web/e2e/support/ui.ts) returns once My Work's h1 is visible. My Work was still paging through dev.lead's open work items: GET /me/work-items?status=open&limit=100 -> 200, then cursor page 2 -> 200. signOutElsewhere() then POSTed /auth/logout -> 200, cursor page 3 was answered 401, and GET /me -> 401. The app correctly ended the session and showed the sign-in page before the test's click on the in-app link. By the end of the suite (chromium-ar runs after the whole chromium-en project) dev.lead has more than 200 open work items, so the paging window is long, and under load it is longer still. The 4 serial followers [chromium-ar] then did not run. The same test passed in chromium-en in the same run (6.3 s), in both projects of the C.UTF-8 full run (5.6 s / 5.5 s), and alone in en and ar (6.3 s / 6.6 s). This is its first failure in the DG2-DG5 evidence.",
+      "expected": "The test's precondition holds before it signs out elsewhere: it waits until the signed-in page has finished loading (for example, no request to /api/v1/me/work-items in flight, or a page with no background paging), or it starts from a page that does not page through the user's work items. It then asserts, as it intends, that the in-app link leads to exactly one landing on sign-in with the message. The assertions stay unchanged.",
+      "actual": "The required product e2e check fails intermittently when the logout falls between two work-items pages, and the window grows as the suite's data grows. The product behaviour is correct, and it is exactly what the spec intends to prove: one landing on the sign-in page with the localized message, no loop. Only the test's ordering assumption fails. Low and not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-rerun-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T02:23:30Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 3 (run DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860). Low, not mandatory, not blocking in my judgement: test reliability only, and the product's session-end behaviour is verified correct."
+        }
+      ]
     }
   ]
 }
