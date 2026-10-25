@@ -1,0 +1,42 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-145",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation by its reporter (qa-verifier, round 4, run DG5-T-DG5-RG-QA-R4-qa-verifier-20261025T023414Z-2882bb99) on the SAME candidate sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9 (2203 files, source 54e02b61961550386d5ab24a74e8ae8bb612218f), recomputed in a complete disposable clone at the start and at the end. Severity Low, not mandatory, not blocking. Rationale, judged adversarially: (1) It is a test-only defect. p4-benefits.spec.ts test 8 (source line 490) still runs on the default 30 s budget (no test.setTimeout) and chains 9 axe scans, 11 full-page screenshots and two viewport sweeps. Its duration tracks machine load and suite data, not a slow product step. In round 4 (new runs on the real stack, --workers=1) it took 16.7 s en / 15.5 s ar alone at load median 1.77, and 23.7 s en alone under synthetic contention (six CPU burners, load median 5.90, max 8.26). In round 3 (cited, same candidate) it took 25.8/25.7 s alone at load about 8, and 30.2 s (the timeout) in the loaded full suite, where no assertion failed and the longest single step was 1.53 s. (2) The product behaviour it proves is correct. Every round-4 run passed (28/28 and 9/9): the auditor sees the read-only register, no create, decide or amend control, no page-level overflow at 390 px and 200 % text, and axe reports 0 serious or critical issues in en and ar. (3) It fails safe: a timeout is a FAIL, never a false PASS, so no coverage is overstated. (4) It breaks no DG5 acceptance text. Its requirement, REQ-PB-075, is a DG4 row (IMPLEMENTED, approved), and the DG5 auditor read-only checks are covered independently by my round-3 AUD sweep of 34 P5 screens. (5) No data, calculation, access-control or portability effect. DG6 follow-up (D-189 carry item): give test 8 an explicit budget with at least 2x headroom over the measured loaded case (for example test.setTimeout(90_000), as for F-DG5-141, F-DG5-144 and D-173), or split it into its 390 px and 200 % halves, with its steps and assertions unchanged. Then sweep the remaining e2e specs that chain several axe scans or screenshots on the default 30 s budget. The full product e2e check stays intermittently red until this is fixed, and DG6 must not count such a timeout as a pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-loaded-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-loaded-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-loaded-burners.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-rerun-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/error-context.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-146",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Accepted as an observation by its reporter (qa-verifier, round 4, run DG5-T-DG5-RG-QA-R4-qa-verifier-20261025T023414Z-2882bb99) on the SAME candidate sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9 (source 54e02b61961550386d5ab24a74e8ae8bb612218f). Severity Low, not mandatory, not blocking. Rationale, judged adversarially: (1) I reproduced the race deterministically this round with my spec zz-qa-dg5rg4-session-race.spec.ts (outside the candidate; real stack, --workers=1; 4/4, en and ar). R1 holds My Work's first GET /api/v1/me/work-items for 2.5 s, and signIn() returns while it is held, so the original test's implicit precondition (the page has finished loading) is false. After signing out elsewhere, the app ITSELF lands once on /login?error=session_expired&returnTo=/my-work with the localized alert, in LTR for en and RTL for ar. It never leaves /login in 3 s, makes at most 3 further GET /me, shows no stale shell and receives no 429. The primary-navigation link that the original test clicks no longer exists (count 0), which is the round-3 failure exactly. (2) The product behaviour is the one the spec intends to prove: one landing on sign-in with the message, no loop. R2 uses the same hold, waits for the load to settle before signing out, and passes the original steps and assertions (returnTo=/transformations) unchanged. So the fix direction named in the finding works, and a fix needs no product change. (3) It fails safe: when the race hits, the test FAILS (a timeout), so the in-app-link scenario is never falsely reported as covered. In round 4 the unmodified session-end.spec.ts passed 14/14 alone (5.1 s en / 5.2 s ar). (4) It breaks no DG5 acceptance text. Its requirement, REQ-S16-030, is a DG6 row (SPECIFIED). (5) No data, calculation, access-control or portability effect. DG6 follow-up (D-189 carry item): in session-end.spec.ts, establish the precondition before signOutElsewhere(), for example by waiting until no /api/v1/me/work-items request is in flight (or for network idle), or by starting from a page that does not page through the user's work items, with the assertions unchanged. Check the other specs that change the session right after signIn() for the same assumption. Product note for DG6 performance work, not a DG5 defect: My Work loads all pages of open work items eagerly (useMyWorkItems -> fetchAllPages, apps/web/src/api/p4.ts l.310-316), which is why the window grows with the user's open-item count.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/e2e/zz-qa-dg5rg4-session-race.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-race-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-race-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/error-context.md"
+      ]
+    }
+  ]
+}

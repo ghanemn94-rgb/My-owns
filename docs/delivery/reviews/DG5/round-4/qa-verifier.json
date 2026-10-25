@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 4,
+  "candidate_id": "sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9",
+  "source_commit": "54e02b61961550386d5ab24a74e8ae8bb612218f",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-RG-QA-R4-qa-verifier-20261025T023414Z-2882bb99",
+    "session_id": "2882bb99-fd1c-4869-97b1-84d99644906b"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "This qa-verifier run authored no product implementation in the DG5 scope. The P5 product was written by the implementer roles listed (D-155 to D-188). Round 4 reviews the same candidate as round 3 (D-189), and nothing in it has changed. The two findings I judge here, F-DG5-145 and F-DG5-146, are my own round-3 findings, so I am their reporting specialist. Their subjects (apps/web/e2e/p4-benefits.spec.ts and apps/web/e2e/session-end.spec.ts) were written by frontend-ux-engineer, not by me. This round I wrote only evidence under docs/delivery/test-evidence/DG5/qa/round-4/, one probe spec under docs/delivery/test-evidence/DG5/qa/tests/round-4/ (outside the candidate; copied into the disposable clone only for its run and removed before the end-of-review identity check) and these review files. Every build and test ran in a disposable complete clone under $TMPDIR, which is now removed. I formed my verdict without reading any other reviewer's or the auditor's round-4 or round-5 records or assignments. The untracked docs/delivery/assignments/DG5/round-4/release-auditor.md and round-5/ were present, and I did not open them."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-4/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089",
+    "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-037", "REQ-S01-002", "REQ-S01-003", "REQ-S01-004",
+    "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008",
+    "REQ-S06-009", "REQ-S06-010", "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020",
+    "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026", "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007",
+    "REQ-S13-008", "REQ-S13-009", "REQ-S13-010", "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004",
+    "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021", "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-RG4-00-candidate",
+      "procedure": "Confirm the frozen candidate on a COMPLETE disposable clone at the source commit, at the start and at the end of the review. Also recompute it with --ref 54e02b6 in the repository, and confirm that it is the candidate my round-3 record reviewed and the one stages.json names.",
+      "command": "git clone /home/user/My-owns $TMPDIR/review-r4 && git -C $TMPDIR/review-r4 checkout 54e02b61961550386d5ab24a74e8ae8bb612218f && git rev-parse --is-shallow-repository && (cd $TMPDIR/review-r4 && node tools/gates/candidate.mjs --stage DG5); node tools/gates/candidate.mjs --stage DG5 --ref 54e02b61961550386d5ab24a74e8ae8bb612218f",
+      "environment": "Complete clone $TMPDIR/review-r4 at 54e02b6 (not shallow, 25592 tracked files); Node 24.21.0; repository HEAD 8fbdc7a.",
+      "expected": "sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9, 2203 files, at the start and at the end. The clone is not shallow and has no tracked changes at the end. It equals the round-3 qa record's candidate_id and the stages.json DG5 candidate.",
+      "actual": "Run this round. Start (02:34Z) and end (02:53Z): the clone at 54e02b6 printed candidate_id sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9, files 2203, exit 0. --ref 54e02b6 in the repository printed the same at the end. The clone is not shallow ('false'), and it has 25592 tracked files and 0 tracked changes at the end, after my copied probe spec was removed. The round-3 qa record and stages.json name the same candidate_id and source commit (manifest d8d831814a6065af.manifest.json, frozen 2026-10-24T22:52:07Z). The repository working tree at HEAD does NOT hash to it (see QA-RG4-00b).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-end.log"
+      ]
+    },
+    {
+      "id": "QA-RG4-00b-working-tree-vs-frozen",
+      "procedure": "Confirm that the repository working tree at HEAD still hashes to the frozen candidate, that is, that the commits after the freeze touch only META_EXCLUDES paths. Approval-time gate validation (tools/gates/lib/rules.mjs, current mode) recomputes the candidate from the working tree.",
+      "command": "node tools/gates/candidate.mjs --stage DG5; node tools/gates/candidate.mjs --stage DG5 --diff; node tools/gates/validate.mjs --reconcile; git diff --name-only 54e02b6 HEAD (filtered by META_EXCLUDES); git log 54e02b6..HEAD -- docs/delivery/decisions.md",
+      "environment": "Repository working tree at HEAD 8fbdc7ab043703d393d7ad6e532f382162248917; Node 24.21.0.",
+      "expected": "The working tree hashes to sha256:d8d83181…, `--diff` matches (exit 0), and no candidate-scope file has changed since 54e02b6.",
+      "actual": "Run this round, at the start and at the end: the working tree hashes to sha256:ec9b3d94feeb3d0807f875179dfca49858105f636607d2d9df3e22e996544d19 (2203 files). `candidate.mjs --diff` reports matches false, changed ['docs/delivery/decisions.md'], added and removed empty, and EXIT 1. `--reconcile` reports every DG5 review record as 'STALE for current content' (its structure check passes, EXIT 0). The cause is commit 8fbdc7a ('round-3 findings imported … D-189 …'): it added the one D-189 row to docs/delivery/decisions.md, which is a candidate entry (not META_EXCLUDED). The frozen sha256 of that file is 818f68c0…, and at HEAD it is 6be9eda5…. No other candidate-scope file differs between 54e02b6 and HEAD, so no product, test or tooling file changed. This is the D-136 B1 defect class (in DG4, D-135 was added to decisions.md after the round-8 freeze). It does not change what I reviewed, which is exactly d8d83181 (QA-RG4-00), and it does not change any judgement in this record. It is a delivery-record defect owned by the delivery-orchestrator, not an implementer role, so it is recorded here and not as a finding. As long as it stands, current-mode validation of a DG5 gate on d8d83181 fails with 'candidate: current content hashes to ec9b3d94…, approval covers d8d83181…; changed: ~docs/delivery/decisions.md'. The orchestrator must restore docs/delivery/decisions.md in the working tree to its frozen content (D-189 recorded outside the candidate scope, or added after approval) before the audit. A re-freeze instead would make every DG5 review record stale, this one included.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/00c-working-tree-drift.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-end.log"
+      ]
+    },
+    {
+      "id": "QA-RG4-01-install-build",
+      "procedure": "Install the dependencies offline and build the clone, so that the two specs and my probe run against the candidate's own build.",
+      "command": "cp -a /root/.local/share/pnpm/store $TMPDIR/pnpm-store; pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pnpm-store/v10; pnpm -r build",
+      "environment": "Clone $TMPDIR/review-r4 at 54e02b6; Node 24.21.0; pnpm 10.33.0. The clone's node_modules is writable, so --configLoader runner was not needed. No vitest run this round.",
+      "expected": "Both commands exit 0.",
+      "actual": "Run this round. The install printed 'Done in 1.4s', EXIT 0. Its four 'WARN Failed to create bin … mth-db … ENOENT' lines are pnpm linking the mth-db bin before packages/db is built. The build creates it, and the same lines appear in round 3. pnpm -r build EXIT 0. Its only advisory is Vite's 'Some chunks are larger than 500 kB' (informational). The string 'FailuresPage-….js' in the build log is a page bundle name, not a failure.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/00b-install.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/01-pnpm-r-build.log"
+      ]
+    },
+    {
+      "id": "QA-RG4-02-judge-F-DG5-145",
+      "procedure": "Judge F-DG5-145 adversarially. Read p4-benefits.spec.ts test 8 in the candidate (source line 490; no test.setTimeout). Re-run p4-benefits.spec.ts alone on the real stack in both projects, then chromium-en alone under synthetic CPU contention (six `node -e 'for(;;){}'` burners on 4 cores, killed afterwards), and compare test 8's duration with the round-3 measurements on the same candidate (cited). Check that the product behaviour it asserts holds, that a timeout can never produce a false pass, and whether the finding breaks any DG5 acceptance text.",
+      "command": "scripts/run-e2e.sh unset 26620 26621 benefits-session product apps/web/e2e/p4-benefits.spec.ts apps/web/e2e/session-end.spec.ts; (6 CPU burners) scripts/run-e2e.sh unset 26640 26641 benefits-loaded product apps/web/e2e/p4-benefits.spec.ts --project=chromium-en  [= env -u LANG -u LC_ALL -u LC_CTYPE E2E_PG_PORT=… E2E_API_PORT=… MTH_PORT_POOL=26600-26699 E2E_SCREENSHOT_DIR=$TMPDIR/shots-… apps/web/e2e/support/with-stack.sh npx playwright test … --workers=1 --reporter=list]",
+      "environment": "Clone $TMPDIR/review-r4 at 54e02b6; real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev, disposable PostgreSQL 16); PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (pre-installed Chromium; playwright install never run); --workers=1; locale unset; ports 26620/26621 and 26640/26641. Run 1 had a 1-minute load of median 1.77 and max 2.36. The loaded run had median 5.90 and max 8.26 (2 samples above 8).",
+      "expected": "Test 8 passes with its assertions, and its duration is load-dependent and not caused by a slow product step. Accept as an observation only if the finding is Low, test-only, fail-safe and outside every DG5 acceptance text.",
+      "actual": "Run this round. Run 1: 28 passed, EXIT 0, with no failure, flake, skip or 'did not run'. Test 8 took 16.7 s en and 15.5 s ar. Loaded run: 9 passed, EXIT 0, and test 8 took 23.7 s en, 42 % slower under contention. Cited from round 3 (same candidate): 25.8/25.7 s alone at load about 8, and 30.2 s, the timeout, in the loaded full suite, where no assertion failed and the longest step was 1.53 s. The duration is the length of the chain: 9 axe scans, 11 full-page screenshots and two viewport sweeps on the default 30 s budget. The product is correct in every run: the auditor sees the read-only state and no create, decide or amend control; no page-level overflow at 390 px or 200 %; axe passes in en and ar. A timeout is a FAIL, never a false pass. Its requirement, REQ-PB-075, is a DG4 row, so no DG5 acceptance text is affected. Judgement: ACCEPTED_OBSERVATION (Low, not mandatory, not blocking), carried to DG6 as a fix: an explicit budget with at least 2x headroom, or a split, plus the D-189 sweep of the default-budget specs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-loaded-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-loaded-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-loaded-burners.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/scripts/run-e2e.sh",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/trace-summary.txt",
+        "docs/delivery/reviews/DG5/round-4/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-RG4-03-judge-F-DG5-146",
+      "procedure": "Judge F-DG5-146 adversarially. Reproduce the race deterministically with my spec zz-qa-dg5rg4-session-race.spec.ts (outside the candidate; copied into the clone only for the run). R1 holds My Work's first GET /api/v1/me/work-items for 2.5 s, signs in, signs out elsewhere, then releases it; it asserts the product's session-end landing and that the original click target is gone. R2 uses the same hold, waits for the load to settle before signing out, and runs the original steps and assertions. Re-run the unmodified session-end.spec.ts alone, read the My Work load code, and check the requirement's gate.",
+      "command": "cp docs/delivery/test-evidence/DG5/qa/tests/round-4/e2e/zz-qa-dg5rg4-session-race.spec.ts $TMPDIR/review-r4/apps/web/e2e/; scripts/run-e2e.sh unset 26610 26611 race product apps/web/e2e/zz-qa-dg5rg4-session-race.spec.ts; (session-end.spec.ts in the run of QA-RG4-02)",
+      "environment": "Clone $TMPDIR/review-r4 at 54e02b6; real stack (with-stack.sh, AUTH_MODE=dev); pre-installed Chromium; --workers=1; locale unset; ports 26610/26611; load median 0.69.",
+      "expected": "R1: the forced race reproduces the round-3 failure mode while the product lands once on sign-in with the localized message (returnTo=/my-work), with no loop and no stale shell, in en LTR and ar RTL. R2: with the precondition established, the original assertions pass unchanged. The unmodified spec passes alone. Accept only if the finding is Low, test-only, fail-safe and outside every DG5 acceptance text.",
+      "actual": "Run this round. Probe: 4 passed (R1 7.1 s en / 7.1 s ar; R2 7.5 s en / 7.6 s ar), EXIT 0, with no failure, flake or skip. R1: signIn() returned while the work-items request was held. After the logout, the app itself landed on /login?error=session_expired&returnTo=/my-work with the localized alert and dir rtl or ltr. The URL stayed on /login for 3 s, there were at most 3 further GET /me, no stale shell, no 429, and at least one work-items 401. The original test's navigation link had count 0, which is the round-3 failure made deterministic. R2: the original steps passed with returnTo=/transformations and 0 work-items 401s, so the fix direction needs no product change. The unmodified session-end.spec.ts passed 14/14 alone (QA-RG4-02 run; 'signed out in another tab' 5.1 s en / 5.2 s ar). A race makes the test FAIL, never falsely pass. Its requirement, REQ-S16-030, is a DG6 SPECIFIED row, so no DG5 acceptance text is affected. Observation, not a finding: My Work eagerly fetches every page of open work items (useMyWorkItems -> fetchAllPages, apps/web/src/api/p4.ts l.310-316). That is DG4 behaviour and the reason the window grows with data, and it is a DG6 performance follow-up. Judgement: ACCEPTED_OBSERVATION (Low, not mandatory, not blocking), carried to DG6 as a fix of the test's precondition.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/tests/round-4/e2e/zz-qa-dg5rg4-session-race.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-race-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-race-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/error-context.md",
+        "docs/delivery/reviews/DG5/round-4/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-RG4-04-validators",
+      "procedure": "Run the previous gates' historical validation and the DG5 register rules.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4; … DG3; … DG2; … DG1; node tools/gates/validate.mjs --register DG5",
+      "environment": "Repository at HEAD 8fbdc7a; Node 24.21.0.",
+      "expected": "All five PASS, exit 0.",
+      "actual": "Run this round (02:49–02:53Z): 'PASS gate DG4 (historical)', 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)' and 'PASS register rules at DG5', each EXIT 0. The 78 DG5 rows are all IMPLEMENTED, and the assigned list equals the 78 DG5-final register rows. The same log holds the reconcile and diff outputs described in QA-RG4-00b. Those are the only non-zero exit (the diff, EXIT 1) and the only 'STALE' lines, and both are explained there.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-4/08-validate.log"
+      ]
+    },
+    {
+      "id": "QA-RG4-05-requirements-carried-from-round-3",
+      "procedure": "For the 78 requirements, cite my round-3 verification of the SAME candidate. D-189 and the assignment allow it, and the candidate content is identical (QA-RG4-00). Confirm that the round-3 record's checks and the requirement-to-test map cover all 78, and that every failure in its logs was disclosed there.",
+      "command": "python3: compare docs/delivery/reviews/DG5/round-3/qa-verifier.json requirements_checked with the assigned 78 and with the register's DG5 rows; read its checks_run results and RUN-NOTES.md",
+      "environment": "Repository at HEAD 8fbdc7a (read-only); round-3 evidence for candidate d8d83181.",
+      "expected": "Round 3 covers exactly these 78 on d8d83181, with verdict PASS and every failure in its logs explained. The only open items are F-DG5-145 and F-DG5-146, judged in QA-RG4-02 and QA-RG4-03.",
+      "actual": "Cited, NOT re-run this round. The round-3 qa record (run DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860) is on candidate sha256:d8d83181… with source 54e02b6. Its requirements_checked equals the assigned 78, and its verdict is PASS. Its 17 checks are all PASS. The product e2e check (QA-RG3-05) has exit_status 1: its explained failures are F-DG5-145, F-DG5-146 and one harness-caused failure (my own disk guard deleted a shared trace resource; the spec passed alone 16/16). Its run notes explain every failure, error line and skip, including 2 skips by design in unit and 1 in integration, and the probe attempts. The coverage cited: static 7/7; unit 4/4 within the D-134 envelope; integration twice (3084 passed + 1 skipped by design); tests/qa 336/336; root acceptance 30/30 x2; demo 18/18 x2 and 8/8 x2; the AUD sweep of 34 P5 screens; 82 export samples at content level (raster rendering BLOCKED in the sandbox, disclosed there); and the requirement-to-test map. Since the candidate is unchanged, these results stand for round 4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+        "docs/delivery/test-evidence/DG5/qa/round-3/RUN-NOTES.md",
+        "docs/delivery/test-evidence/DG5/qa/round-3/11-requirement-test-map.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/04-integration-testsqa-alone.log"
+      ]
+    },
+    {
+      "id": "QA-RG4-06-environmental-residuals",
+      "procedure": "Record the assignment's environmental residuals as PASS on the offline and config surface, citing round 3 (same candidate).",
+      "command": "(cited) docs/delivery/reviews/DG5/round-3/qa-verifier.json check QA-RG3-16-environmental-residuals",
+      "environment": "No network in the sandbox; no live registry, live CI, Keycloak or demo IdP; no AI or external notification adapter ships in P5.",
+      "expected": "PASS on the offline and config surface, with each residual noted.",
+      "actual": "Cited from round 3, not re-run, since the candidate is unchanged. Live registry REQ-DLV-042 AC-1 (D-057) and live CI REQ-DLV-025 A24 (D-058): PASS on the offline and config surface, live residual noted. Keycloak and a real demo IdP (D-049; ADR-0050 §1 devops item): the dev-mode binding of D-165 is the test path; the real IdP is a residual. AI and external notification adapters: none ships in P5 (D-142 Q11); A21's 'disabled' is the shipped configuration (D-165). No G1–G6 business approval is implied, and product G6 never implies DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG5/round-3/qa-verifier.json"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/qa/round-4/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-start.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/00c-working-tree-drift.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-race-unset.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-session-unset.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/05-e2e-benefits-loaded-unset.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/08-validate.log",
+    "docs/delivery/test-evidence/DG5/qa/round-4/09-cleanup.log",
+    "docs/delivery/test-evidence/DG5/qa/tests/round-4/e2e/zz-qa-dg5rg4-session-race.spec.ts",
+    "docs/delivery/reviews/DG5/round-4/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG5/round-4/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-25T02:58:00Z",
+  "summary": "PASS on candidate sha256:d8d83181… (2203 files, source 54e02b6), verified on a complete clone at the start and the end. No new finding. Both open Low, non-mandatory findings are ACCEPTED_OBSERVATION and carried to DG6 as fixes. F-DG5-145: p4-benefits test 8 took 16.7/15.5 s alone, 23.7 s under synthetic load and 30.2 s in round 3's loaded full suite, with no slow step; the product is correct, a timeout never passes falsely, and the requirement is DG4's. F-DG5-146: my probe reproduces the race deterministically (4/4 in en and ar). The product lands once on sign-in with the message, and with the precondition established the original assertions pass; the requirement is DG6's. The 78 DG5 requirements are carried from my round-3 PASS on the identical candidate. Validators DG1–DG4 historical and register DG5 PASS. ORCHESTRATOR ACTION, recorded as FAIL check QA-RG4-00b: the D-189 row added to docs/delivery/decisions.md (a candidate file) after the freeze makes the working tree hash to ec9b3d94…, not d8d83181…. Current-mode gate validation will fail until that file is restored to its frozen content (the D-136 B1 class).",
+  "narrative": "docs/delivery/reviews/DG5/round-4/qa-verifier.md"
+}
