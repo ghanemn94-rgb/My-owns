@@ -1,0 +1,52 @@
+# 47 commit-time authorization: static scan of P5-touched API files that register write routes  2026-10-25T16:46:30Z
+# Flags a file that registers app.post/put/patch/delete but names no commit-time helper itself; each flag is then traced by hand.
+FLAG apps/api/src/modules/kpi/formula-preview.ts
+FLAG apps/api/src/modules/launch/predecessors.ts
+FLAG apps/api/src/modules/launch/tasks.ts
+FLAG apps/api/src/modules/methodology/routes.ts
+FLAG apps/api/src/modules/reporting/exports/routes.ts
+FLAG apps/api/src/modules/reporting/reports/routes.ts
+FLAG apps/api/src/modules/sustainment/handovers.ts
+FLAG apps/api/src/modules/transformations/routes.ts
+FLAG apps/api/src/modules/workflows/decisions.ts
+
+## Trace of each flag
+- kpi/formula-preview.ts: POST /formula-previews is a stateless calculation preview; it writes nothing (the sweep: AUD 200 with no table change).
+- launch/tasks.ts, launch/predecessors.ts: every write opens with plan.ts openLaunchWrite -> openWrite(..., { atCommit: true }) (plan.ts:286-293):
+apps/api/src/modules/launch/tasks.ts:297:  const ctx = await openLaunchWrite(tx, request, transformationId);
+apps/api/src/modules/launch/tasks.ts:345:  const ctx = await openLaunchWrite(tx, request, transformationId);
+apps/api/src/modules/launch/predecessors.ts:51:  const ctx = await openLaunchWrite(tx, request, transformationId);
+- methodology/routes.ts: delegates to drafts/elements/reviews/publish/migrations, which call requireStudioWrite / refreshPrincipal inside the transaction:
+apps/api/src/modules/methodology/checks.ts
+apps/api/src/modules/methodology/drafts.ts
+apps/api/src/modules/methodology/elements.ts
+apps/api/src/modules/methodology/migrations.ts
+apps/api/src/modules/methodology/publish.ts
+apps/api/src/modules/methodology/review-policies.ts
+apps/api/src/modules/methodology/reviews.ts
+apps/api/src/modules/methodology/scoring-defaults.ts
+apps/api/src/modules/methodology/source-coverage.ts
+- reporting/exports/routes.ts: delegates to exports/jobs.ts:
+43:  refreshPrincipal,
+346:    const fresh = await refreshPrincipal(tx, request);
+494:  const principal = await refreshPrincipal(tx, request);
+- reporting/reports/routes.ts: delegates to reports/snapshots.ts (requireWriteAtCommit):
+102:async function requireWriteAtCommit(
+555:    const actor = await requireWriteAtCommit(tx, request, req.transformationId, "report.generate");
+612:  const actor = await requireWriteAtCommit(tx, request, transformationId, "report.issue");
+713:  const actor = await requireWriteAtCommit(tx, request, transformationId, "report.issue");
+778:    const actor = await requireWriteAtCommit(tx, request, transformationId, "report.issue");
+- sustainment/handovers.ts, transformations/routes.ts, workflows/decisions.ts: DG2-DG4 files touched by P5; their write paths delegate to the DG2-DG4 services, which use the approved commit-time pattern:
+  apps/api/src/modules/sustainment/handovers.ts imports: WriteContext 
+  apps/api/src/modules/transformations/routes.ts imports: 
+  apps/api/src/modules/workflows/decisions.ts imports: 
+
+The behavioural proof is the integration suite's commit-time tests (commit-time-auth.test.ts and each P5 slice's 'commit-time' cases) in 30/31.
+
+## Reviewer note on the three DG2-DG4 files
+transformations/register-kit.ts:267-286 openWrite reloads the principal inside the transaction only with { atCommit: true }; without it, it
+authorizes the request-start principal inside the same transaction. workflows/decisions.ts (the T04 PATCH core that T-DG5-BE-E3 extracted for
+bulk editing), transformations/routes.ts and sustainment/handovers.ts keep their DG2-DG4 write paths, which were approved on that pattern
+(D-073: the upload is the only route that waits on the client between authentication and commit). The P5 caller that reuses these cores,
+forms/bulk.ts, re-checks the record type's write permission on the principal reloaded inside its transaction (bulk.ts header and
+requireRecordWrite) before it calls any updater, so P5 adds no stale-authorization window. No finding.

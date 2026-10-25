@@ -1,0 +1,24 @@
+# 43 module graph  2026-10-25T16:12:06Z
+$ grep -rnE "from ['\"](\.\./)+(workflows|admin)/" apps/api/src/modules/reporting --include=*.ts   (expect none)
+apps/api/src/modules/reporting/reporting.test.ts:89:      expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
+grep exit=0
+$ grep -rnE "from ['\"].*apps/api|from ['\"]@mth/api" apps/worker/src --include=*.ts   (expect none)
+grep exit=1
+$ grep -n 'ReadPort\|ports' apps/api/src/server.ts | head
+90:import { setWorkflowsReadPort } from "./modules/reporting/ports.ts";
+108:// T-DG4-KBE-G2 (ADR-0037 §1 item 3, §9): the read-only gate readiness behind reporting's WorkflowsReadPort (the same
+384:  setWorkflowsReadPort({
+393:  setMaterialChangePort(withRevisionProposals(materialChangePortImpl));
+415:  registerLaunchPlanPort(launchPlanGenerator); // T-DG5-BE-P (ADR-0044 §1, ADR-0048 §1): the S12-004 LaunchPlanPort of the API process
+$ grep -rn 'WorkflowsReadPort' apps/api/src --include=*.ts | grep -v test | head
+apps/api/src/modules/reporting/workspace-header.ts:5://  2. gateReadiness   the gate of the current phase with its LIVE readiness, read through WorkflowsReadPort
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:21:// WorkflowsReadPort carries the readiness summary and, since T-DG5-KBE-D4, the effective approver), so such a pack
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:26:// through the WorkflowsReadPort (a pinned methodology's default role), and the stored value only when it cannot be read.
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:179:  // it was routed to); without one, the EFFECTIVE approver through the WorkflowsReadPort (workflows' routing rule, so a
+apps/api/src/modules/reporting/ports.ts:3:// `WorkflowsReadPort`, which the composition root (server.ts) wires to `workflows/gate-readiness-read.ts` with one line
+apps/api/src/modules/reporting/ports.ts:9:export interface WorkflowsReadPort {
+apps/api/src/modules/reporting/ports.ts:24:const UNWIRED: WorkflowsReadPort = Object.freeze({ gateReadiness: async () => null, gateApprover: async () => null });
+apps/api/src/modules/reporting/ports.ts:26:let port: WorkflowsReadPort = UNWIRED;
+apps/api/src/modules/reporting/ports.ts:29:export function setWorkflowsReadPort(p: WorkflowsReadPort): void {
+apps/api/src/modules/reporting/ports.ts:34:export function workflowsReadPort(): WorkflowsReadPort {
+# Reviewer note: the one hit above is a string literal inside reporting.test.ts:89 (a negative test that plants a forbidden import into a fixture and expects the architecture guard to reject it), not an import of workflows/admin by reporting source. No reporting source file imports workflows or admin; the worker imports no API code (grep exit 1). The gate data reaches reporting only through the WorkflowsReadPort wired in server.ts:384.

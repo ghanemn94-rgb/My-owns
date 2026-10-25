@@ -1,0 +1,14 @@
+# 90 cleanup  2026-10-25T17:56:10Z
+$ git -C $TMPDIR/rv status --porcelain   (before removal: empty; the probes were copied in and removed after each run)
+(empty)
+$ ls $TMPDIR/rv/tests/qa/integration/zz-*   -> No such file or directory (no probe left in the working copy)
+$ disposable PostgreSQL clusters: none running; no qa-pg.* work directory left (with-pg.sh removes each on exit)
+$ rm -rf $TMPDIR/rv $TMPDIR/pstore and the probe scratch files -> exit=0
+$ rm -rf the test suites' own temporary directories in this run's TMPDIR (mth-evidence-it-*, mth-evidence-shutdown-*, mth-spa-*, cfg-*, be-r2-scan-*): 605 removed, exit=0, 0 left
+$ ls $TMPDIR
+-home-user-My-owns
+bash-edit-diff
+cache-break-state-3a37f8d1-f94f-4a01-a212-2a87d876b1fa.json
+node-compile-cache
+/dev/vda        252G   31G  7.1G  82% /var/tmp/mth-run.YWGjPQ/claude-0
+The earlier full clone $TMPDIR/r (4.5 GB) was removed at 16:11 after the identity check (01-candidate-identity.log).

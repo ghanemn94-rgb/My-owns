@@ -1,0 +1,7 @@
+# 30-integration-lang-unset  started 2026-10-25T16:16:37Z  node=v22.22.2  LANG=<unset> LC_ALL=<unset>  load=13.84 7.50 4.39  commit=f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+$ tests/qa/support/with-pg.sh pnpm test:integration
+2026-10-25 16:16:38.001 UTC [25] FATAL:  could not write to file "pg_wal/xlogtemp.25": No space left on device
+child process exited with exit code 1
+initdb: removing data directory "/var/tmp/mth-run.YWGjPQ/claude-0/qa-pg.DvNa6u/pg"
+exit=1  finished 2026-10-25T16:16:38Z  load=14.41 7.73 4.48
+# Reviewer note: attempt 1 never ran a test. initdb of the disposable cluster failed with ENOSPC (the shared scratch filesystem had 89 MB free while the three reviews ran concurrently; this review's own footprint was ~400 MB). with-pg.sh exited 1 before vitest started. Retried when space was free: see 30-integration-lang-unset.log.

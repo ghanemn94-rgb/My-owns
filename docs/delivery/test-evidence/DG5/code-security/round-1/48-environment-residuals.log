@@ -1,0 +1,29 @@
+# 48 environmental residuals (assignment: record as PASS on the offline/config surface, residual noted)  2026-10-25T16:45:31Z
+
+## Live registry (REQ-DLV-042 AC-1, D-057): offline surface = frozen lockfile install from a local store
+$ grep -E 'Lockfile|Done|exit=' 05-install.log
+Lockfile is up to date, resolution step is skipped
+Done in 2.2s using pnpm v10.33.0
+exit=0  finished 2026-10-25T16:11:36Z  load=2.57 3.07 2.59
+Residual: no network in the sandbox; a live registry resolution was not attempted (D-057).
+
+## Live CI (REQ-DLV-025 A24, D-058): offline surface = the same commands run locally (10-15, 20, 21, 30, 31)
+ci.yml
+delivery-gates.yml
+Residual: no CI runner is reachable from the sandbox (D-058).
+
+## Keycloak / real demo IdP (D-049; ADR-0050 §1; D-165): offline surface = the dev-issuer binding rule
+125:export function demoDevIssuerBindingAllowed(env: {
+126-  readonly NODE_ENV?: string | undefined;
+127-  readonly AUTH_MODE?: string | undefined;
+128-}): boolean {
+129-  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+130-}
+packages/db/src/demo/data/roaming.ts:33:export const DEMO_IDP_ISSUER = "https://demo-idp.mth.invalid/realms/roaming-demo";
+packages/db/src/demo/data/roaming.ts:188:      { id: rtId(RT_BLOCK.userIdentity, n), user_id: u.id, issuer: DEMO_IDP_ISSUER, subject: u.name, created_at: at },
+Residual: no Keycloak or demo IdP runs in the sandbox; the demo IdP is a devops item (ADR-0050 §1).
+
+## AI and external notification adapters (D-142 Q11; D-165): offline surface = none ships in P5
+$ grep -rniE "from ['\"](openai|@anthropic|nodemailer|twilio|@sendgrid|@slack)" apps packages --include=*.ts | grep -v node_modules
+grep exit=1 (1 = no adapter import)
+Residual: none (the shipped configuration has no AI or external notification adapter; A21's 'disabled').

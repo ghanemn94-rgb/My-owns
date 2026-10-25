@@ -1,0 +1,35 @@
+# 40 outbox registry  2026-10-25T16:14:35Z  node=v24.21.0  dir=$TMPDIR/rv (built)
+$ node docs/delivery/test-evidence/DG5/code-security/round-1/repro/outbox-registry.mjs
+registered (26): adoption.check_failed, automation_failure.retry_requested, benefit.evidence_submitted, benefit.value_rejected, benefit.value_validated, benefit.variance_evaluated, blocker_status.recorded, branding.published, control_check.failed, demo.reset_requested, dependency.slipped, export_job.requested, gate.decided, gate.submitted, job.failed, job.run_requested, job_schedule.updated, kpi.actual_accepted, kpi.deviation_evaluated, kpi.threshold_changed, kpi.trajectory_approved, kpi.values_recalculated, kpi.version_activated, kpi_restatement.approved, procedure_step.activated, transformation.created
+QUEUES_FOR_EVENT (26): adoption.check_failed, automation_failure.retry_requested, benefit.evidence_submitted, benefit.value_rejected, benefit.value_validated, benefit.variance_evaluated, blocker_status.recorded, branding.published, control_check.failed, demo.reset_requested, dependency.slipped, export_job.requested, gate.decided, gate.submitted, job.failed, job.run_requested, job_schedule.updated, kpi.actual_accepted, kpi.deviation_evaluated, kpi.threshold_changed, kpi.trajectory_approved, kpi.values_recalculated, kpi.version_activated, kpi_restatement.approved, procedure_step.activated, transformation.created
+enqueued types found in source (24):
+  adoption.check_failed  <- apps/api/src/modules/adoption/interventions.ts, apps/worker/src/handlers/adoption.ts
+  automation_failure.retry_requested  <- apps/api/src/modules/automation/failures.ts
+  benefit.evidence_submitted  <- apps/api/src/modules/benefits/measurements.ts
+  benefit.variance_evaluated  <- apps/api/src/modules/benefits/values.ts, apps/worker/src/handlers/benefits.ts
+  blocker_status.recorded  <- apps/api/src/modules/governance/escalations.ts
+  branding.published  <- apps/api/src/modules/admin/branding.ts
+  control_check.failed  <- apps/api/src/modules/sustainment/controls.ts
+  demo.reset_requested  <- apps/api/src/modules/admin/environment.ts
+  dependency.slipped  <- apps/api/src/modules/portfolio/slip-events.ts
+  export_job.requested  <- apps/api/src/modules/reporting/exports/jobs.ts
+  gate.decided  <- apps/api/src/modules/workflows/gates.ts
+  gate.submitted  <- apps/api/src/modules/workflows/gates.ts
+  job.failed  <- apps/worker/src/kit.ts
+  job.run_requested  <- apps/api/src/modules/jobs/operations.ts
+  job_schedule.updated  <- apps/api/src/modules/jobs/schedules.ts
+  kpi.actual_accepted  <- apps/api/src/modules/kpi/accept-pipeline.ts
+  kpi.deviation_evaluated  <- apps/worker/src/handlers/kpi.ts
+  kpi.threshold_changed  <- apps/api/src/modules/kpi/rag-thresholds.ts
+  kpi.trajectory_approved  <- apps/api/src/modules/kpi/trajectories.ts
+  kpi.version_activated  <- apps/api/src/modules/kpi/kpi-versions.ts
+  kpi_restatement.approved  <- apps/api/src/modules/kpi/restatement-decisions.ts
+  procedure_step.activated  <- apps/api/src/modules/procedures/steps.ts
+  report_snapshot.issued  <- apps/api/src/modules/reporting/reports/snapshots.ts
+  transformation.created  <- apps/api/src/modules/transformations/routes.ts
+(1) enqueued but NOT registered: ["report_snapshot.issued"]
+(2) registered with NO queue: []
+(3) queue map type NOT registered: []
+RESULT: PASS
+exit=0
+# Reviewer note: (1) lists report_snapshot.issued because the scan finds its insert site, but apps/api/src/modules/reporting/reports/snapshots.ts:580 returns before the insert while outboxPayloadSchema('report_snapshot.issued', 1) is null (it is not registered), so it is never written to outbox_event and cannot reach the relay. Three registered types (benefit.value_validated/rejected, kpi.values_recalculated) are written through helper paths this regex does not match; they are registered and queued, which is what matters. The relay (apps/worker/src/relay.ts:69-72) throws for a type with no queue or schema, counts the attempt, and the select excludes rows at maxPublishAttempts (relay.ts:61), so an unregistered type delays later events by at most that many polls and never stalls them permanently.

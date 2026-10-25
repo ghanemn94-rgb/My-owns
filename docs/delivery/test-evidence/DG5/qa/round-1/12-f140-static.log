@@ -1,0 +1,87 @@
+F-DG5-140 static evidence (clone $TMPDIR/rv at f816fb2 = source 2fe8f85 + freeze records; 2026-10-25T17:36:54Z)
+
+$ sed -n 375,385p apps/worker/src/reports/export-runner.ts   # version 0 (brand === null): one name for every language
+    const result = await render(src.content as ReportDocument, {
+      format,
+      language,
+      title: language === "ar" ? src.label_ar : src.label_en,
+      branding:
+        brand === null
+          ? { productName: deps.productName ?? DEFAULTS.productName, provenance }
+          : {
+              productName: ar ? brand.productNameAr : brand.productNameEn,
+              primaryColour: brand.primaryColour,
+              reportHeader: ar ? brand.reportHeaderAr : brand.reportHeaderEn,
+
+$ sed -n 59,65p packages/shared/src/constants.ts
+/** Configurable defaults (REQ-S15-008, REQ-S01-002). Runtime overrides come from @mth/config / organization rows. */
+export const DEFAULTS = {
+  productName: "Mobily Transformation Hub",
+  timezone: "Asia/Riyadh",
+  currency: "SAR",
+  locale: "ar",
+} as const satisfies { productName: string; timezone: string; currency: string; locale: Locale };
+
+$ grep -n DEFAULT_PRODUCT_NAME apps/api/src/modules/admin/branding-port.ts   # what the API serves at version 0
+18:export const DEFAULT_PRODUCT_NAME_EN = "Mobily Transformation Hub";
+19:export const DEFAULT_PRODUCT_NAME_AR = "منصة موبايلي للتحوّل";
+76:      productNameEn: DEFAULT_PRODUCT_NAME_EN,
+77:      productNameAr: DEFAULT_PRODUCT_NAME_AR,
+
+$ ADR-0049 §8 'Version 0 is the default'
+158:- the name "Mobily Transformation Hub" / "منصة موبايلي للتحوّل" (the shipped i18n texts);
+
+$ the API's version-0 read (apps/api/test/integration/branding/branding.test.ts:137-146; passes in 04-integration-run1.log) and the shell's header text (common.productName, ar)
+describe("version 0: a fresh database shows the shipped defaults (REQ-S01-002)", () => {
+  it("getBranding returns 'Mobily Transformation Hub' (en, ar), the provisional colours and the provisional wordmark", async () => {
+    const r = await call<Body>(api.app, "GET", CURRENT, { session: lead });
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({
+      versionNo: 0,
+      source: "default",
+      productNameEn: DEFAULT_EN,
+      productNameAr: DEFAULT_AR,
+      primaryColour: "#0078FF",
+3:    "productName": "منصة موبايلي للتحوّل",
+$ sed -n 5,12p apps/web/src/components/Wordmark.tsx   # the shell: the default name is the i18n string common.brand.productName (en / ar)
+import { Link } from "react-router";
+import { DEFAULTS } from "@mth/shared";
+
+/** The configured name (REQ-S01-002); the default name is shown in the current language. */
+export function useProductName(configured?: string | null): string {
+  const { t } = useTranslation();
+  return !configured || configured === DEFAULTS.productName ? t("common.brand.productName") : configured;
+}
+
+$ Arabic export samples from tests/qa alone (11-inspect-samples.log): the first text pieces (the header) of each Arabic file
+business_cases-e82709.ar.docx ["Mobily Transformation Hub", "دراسات الجدوى", "المنتج", "Mobily Transformation Hub"]
+business_cases-e82709.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "ىودجلا تاسارد"]
+business_cases-e82709.ar.xlsx ["دراسات الجدوى", "أقسام دراسة الجدوى", "بنود الاستثمار والمنافع", "الإجماليات (من إجماليات دراسة ا"]
+charter-0ac721.ar.docx ["Mobily Transformation Hub", "ميثاق التحول", "المنتج", "Mobily Transformation Hub"]
+charter-0ac721.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "لوحتلا قاثيم"]
+diagnostic-747645.ar.docx ["Mobily Transformation Hub", "تشخيص الوضع الحالي", "المنتج", "Mobily Transformation Hub"]
+diagnostic-747645.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "لياحلا عضولا صيخشت"]
+diagnostic-747645.ar.xlsx ["تشخيص الحالة الراهنة", "النتائج", "خطوط الأساس", "مجمّعات القيمة"]
+executive_dashboard-621eb5.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "ةيذيفنتلا لوحتلا ةحول"]
+executive_dashboard-621eb5.ar.pptx ["Mobily Transformation Hub", "لوحة التحول التنفيذية", "Mobily Transformation Hub", "المنتج"]
+executive_dashboard-621eb5.ar.xlsx ["البنود", "البنود (2)", "البنود (3)", "البنود (4)"]
+executive_pack-9da4aa.ar.docx ["Mobily Transformation Hub", "الحزمة التنفيذية", "المنتج", "Mobily Transformation Hub"]
+executive_pack-9da4aa.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "ةيذيفنتلا ةمزحلا"]
+executive_pack-9da4aa.ar.pptx ["Mobily Transformation Hub", "الحزمة التنفيذية", "Mobily Transformation Hub", "المنتج"]
+gate_pack-22368f.ar.docx ["Mobily Transformation Hub", "حزمة البوابة", "المنتج", "Mobily Transformation Hub"]
+gate_pack-22368f.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "ةباوبلا ةمزح"]
+gate_pack-22368f.ar.pptx ["Mobily Transformation Hub", "حزمة البوابة", "Mobily Transformation Hub", "المنتج"]
+handover-0835a5.ar.docx ["Mobily Transformation Hub", "التسليم إلى العمليات الاعتيادية", "المنتج", "Mobily Transformation Hub"]
+handover-0835a5.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "ةيدايتعلاا تايلمعلا لىإ ميلستلا"]
+meeting_minutes-56cdaf.ar.docx ["Mobily Transformation Hub", "محضر الاجتماع", "المنتج", "Mobily Transformation Hub"]
+meeting_minutes-56cdaf.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "عامتجلاا ضرحم"]
+meeting_pack-9da77c.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "عامتجلاا ةمزح"]
+meeting_pack-9da77c.ar.pptx ["Mobily Transformation Hub", "حزمة الاجتماع", "Mobily Transformation Hub", "المنتج"]
+registers-edb580.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "تلاجسلا"]
+registers-edb580.ar.xlsx ["العنوان", "دليل الرموز", "المنتج", "Mobily Transformation Hub"]
+roadmap-f5ff33.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "تاجوملاب قي"]
+roadmap-f5ff33.ar.pptx ["Mobily Transformation Hub", "خارطة الطريق بالموجات", "Mobily Transformation Hub", "المنتج"]
+roadmap-f5ff33.ar.xlsx ["الموجات", "المبادرات", "المعالم الرئيسية", "الاعتماديات"]
+tom-3d43b3.ar.docx ["Mobily Transformation Hub", "نموذج التشغيل المستهدف", "المنتج", "Mobily Transformation Hub"]
+tom-3d43b3.ar.pdf ["Mobily Transformation Hub", "buH noitamrofsnarT yliboM", "buH noitamrofsnarT yliboM", "فدهتسملا ليغشتلا جذومن"]
+tom-3d43b3.ar.xlsx ["لوحة نموذج التشغيل المستهدف", "الفجوات", "قرارات التصميم", "الاعتماديات"]

@@ -1,0 +1,15 @@
+# 47b HEAD moved during the review  2026-10-25T17:55:30Z
+$ git rev-parse HEAD
+e4cbc435056f563cd07c972ba978a1f7cb7fc508
+$ git log --oneline f816fb2..HEAD
+e4cbc43 run: DG5-T-DG5-RG2-DOM-R1-domain-reviewer-20261025T155245Z-3e76bac3 (review evidence, auto-committed by run-agent.sh)
+$ git diff --name-only f816fb2 HEAD | grep -v '^docs/delivery/'   (expect nothing)
+grep exit=1 (1 = only docs/delivery changed)
+$ git diff --name-only f816fb2 HEAD | sed 's|/[^/]*$||' | sort | uniq -c
+      1 docs/delivery/reviews/DG5/round-1
+      6 docs/delivery/runs/DG5/DG5-T-DG5-RG2-DOM-R1-domain-reviewer-20261025T155245Z-3e76bac3
+$ node tools/gates/candidate.mjs --stage DG5   (committed tree at HEAD, via a fresh shared clone)
+e4cbc435056f563cd07c972ba978a1f7cb7fc508
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:ff3bc2c42889d232a84658da7ff850117a8c0c1ba1de6b4c8e32bcc30dae1008","files":2203}
+exit=0
+Reviewer note: the runner auto-committed another reviewer's finished run (review evidence only). The candidate tree is unchanged: same candidate_id, and no file outside docs/delivery changed. My review stays bound to f816fb2 / candidate ff3bc2c4.

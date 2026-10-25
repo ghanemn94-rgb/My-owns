@@ -1,0 +1,50 @@
+# 46-ooxml-control-char  started 2026-10-25T16:41:55Z  node=v22.22.2  LANG=<unset> LC_ALL=<unset>  load=15.39 16.19 14.49  commit=f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+$ tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts
+port-policy: PostgreSQL listening on port 26570 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.YWGjPQ/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvo22dd6_c259b33c (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts > C0 control character in accepted user text -> DOCX / PPTX export > the API accepts the name; the worker reports success; the DOCX and PPTX parts are not well-formed XML 1.0
+REPRO rename status 200; stored name "International Roaming\u000bprogramme (pasted)"
+
+stdout | tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts > C0 control character in accepted user text -> DOCX / PPTX export > the API accepts the name; the worker reports success; the DOCX and PPTX parts are not well-formed XML 1.0
+REPRO results: {
+ "charter.docx": "job succeeded, 14695 bytes, not-well-formed parts: docProps/core.xml: U+000b in \"cription>ROAMING — International Roaming\\u000bprogramme (pasted);\" | word/document.xml: U+000b in \"reserve\\\">ROAMING — International Roaming\\u000bprogramme (pasted)<\"",
+ "roadmap.pptx": "job succeeded, 38497 bytes, not-well-formed parts: docProps/core.xml: U+000b in \":subject>ROAMING — International Roaming\\u000bprogramme (pasted);\" | ppt/slides/slide1.xml: U+000b in \"rPr><a:t>ROAMING — International Roaming\\u000bprogramme (pasted)<\"",
+ "roadmap.xlsx": "job succeeded, 8055 bytes, not-well-formed parts: none"
+}
+
+ ❯ |integration| tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts (1 test | 1 failed) 14092ms
+   × C0 control character in accepted user text -> DOCX / PPTX export > the API accepts the name; the worker reports success; the DOCX and PPTX parts are not well-formed XML 1.0 2436ms
+     → expected 'job succeeded, 14695 bytes, not-well-…' to match /not-well-formed parts: none$/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts > C0 control character in accepted user text -> DOCX / PPTX export > the API accepts the name; the worker reports success; the DOCX and PPTX parts are not well-formed XML 1.0
+AssertionError: expected 'job succeeded, 14695 bytes, not-well-…' to match /not-well-formed parts: none$/
+
+[32m- Expected:[39m 
+/not-well-formed parts: none$/
+
+[31m+ Received:[39m 
+"job succeeded, 14695 bytes, not-well-formed parts: docProps/core.xml: U+000b in \"cription>ROAMING — International Roaming\\u000bprogramme (pasted);\" | word/document.xml: U+000b in \"reserve\\\">ROAMING — International Roaming\\u000bprogramme (pasted)<\""
+
+ ❯ tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts:93:37
+     91|     console.info(`REPRO results: ${JSON.stringify(results, null, 1)}`);
+     92|     // The defect: these two expectations FAIL on the candidate (the p…
+     93|     expect(results["charter.docx"]).toMatch(/not-well-formed parts: no…
+       |                                     ^
+     94|     expect(results["roadmap.pptx"]).toMatch(/not-well-formed parts: no…
+     95|   }, 300_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:42:00
+   Duration  47.47s (transform 11.13s, setup 0ms, collect 24.92s, tests 14.09s, environment 0ms, prepare 283ms)
+
+exit=1  finished 2026-10-25T16:42:51Z  load=16.13 16.35 14.65

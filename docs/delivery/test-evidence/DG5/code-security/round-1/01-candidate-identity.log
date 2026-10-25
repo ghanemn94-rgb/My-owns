@@ -1,0 +1,42 @@
+# 01 candidate identity  2026-10-25T16:10:33Z  node=v24.21.0
+$ git rev-parse HEAD (repository)
+f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+$ git log --oneline -2
+f816fb2 DG5 corrected re-gate frozen for review round 1: candidate ff3bc2c4 (2203 files, source 2fe8f85); REVIEWING; round-1 assignments
+2fe8f85 DG5 corrected clean re-gate (D-190): the final P5 product of 5a7c189 on 601d7d2, keeping every implementer run record; no DG5 review artefacts
+$ git diff --stat 2fe8f85 f816fb2
+ .../DG5/round-1/code-security-reviewer.md          |   137 +
+ .../assignments/DG5/round-1/domain-reviewer.md     |   163 +
+ .../assignments/DG5/round-1/qa-verifier.md         |   119 +
+ .../candidates/DG5/ff3bc2c42889d232.manifest.json  | 11033 +++++++++++++++++++
+ docs/delivery/stages.json                          |    30 +-
+ 5 files changed, 11476 insertions(+), 6 deletions(-)
+$ git diff --name-only 2fe8f85 f816fb2 | grep -v '^docs/delivery/'   (expect nothing)
+grep exit=1 (1 = no non-delivery file)
+$ node tools/gates/candidate.mjs --stage DG5   (repository tree)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:ff3bc2c42889d232a84658da7ff850117a8c0c1ba1de6b4c8e32bcc30dae1008","files":2203}
+exit=0
+
+$ git clone -q /home/user/My-owns $TMPDIR/r/c   (FULL object copy, not --shared)
+$ git -C $TMPDIR/r/c rev-parse --is-shallow-repository
+false
+$ cat $TMPDIR/r/c/.git/objects/info/alternates   (expect none)
+cat: /var/tmp/mth-run.YWGjPQ/claude-0/r/c/.git/objects/info/alternates: No such file or directory
+$ (clone) git checkout f816fb2 && node tools/gates/candidate.mjs --stage DG5; git checkout 2fe8f85... && node tools/gates/candidate.mjs --stage DG5   (background task output, verbatim):
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:ff3bc2c42889d232a84658da7ff850117a8c0c1ba1de6b4c8e32bcc30dae1008","files":2203}
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:ff3bc2c42889d232a84658da7ff850117a8c0c1ba1de6b4c8e32bcc30dae1008","files":2203}
+
+[exited with code 0]
+$ git -C $TMPDIR/r/c rev-parse HEAD
+f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+$ git -C $TMPDIR/r/c status --porcelain | wc -l
+0
+
+# Working copy for the build/test checks (2026-10-25T16:11:18Z). The full clone above (4.5 GB) was removed after the identity check: the shared scratch disk
+# had 1.2 GB free, which the three concurrent reviews share. The working copy is a --shared (alternates, not shallow) sparse
+# clone that omits only docs/delivery/{test-evidence,handbacks,runs}, which the DG5 manifest excludes.
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv; git sparse-checkout set --no-cone '/*' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' '!/docs/delivery/runs/'; git checkout f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+false
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:ff3bc2c42889d232a84658da7ff850117a8c0c1ba1de6b4c8e32bcc30dae1008","files":2203}
+exit=0

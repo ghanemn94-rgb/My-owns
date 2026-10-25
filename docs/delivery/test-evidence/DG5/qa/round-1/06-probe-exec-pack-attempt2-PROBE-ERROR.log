@@ -1,0 +1,59 @@
+$ (cd $TMPDIR/rv-e2e) tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts ; start 2026-10-25T16:19:47Z; node v24.21.0; LANG=unset LC_ALL=unset
+port-policy: PostgreSQL listening on port 26641 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 $TMPDIR/rv-e2e
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvo19wv6_c74efb6e (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts > QA-R1 REQ-S13-008 on the generated executive pack > the pack's value headlines: a pending (submitted) value carries a number and the label 'provisional'
+QA-R1 exec-pack value fields: [{"s":"metrics_transformation","k":"value_planned_profit_and_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"not_applicable","valueBasis":"planned"}},{"s":"metrics_transformation","k":"value_forecast_profit_and_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"provisional","valueBasis":"forecast"}},{"s":"metrics_transformation","k":"value_submitted_profit_and_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"provisional","valueBasis":"submitted"}},{"s":"metrics_transformation","k":"value_validated_profit_and_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"validated","valueBasis":"validated"}},{"s":"metrics_transformation","k":"value_planned_top_line_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"not_applicable","valueBasis":"planned"}},{"s":"metrics_transformation","k":"value_forecast_top_line_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"provisional","valueBasis":"forecast"}},{"s":"metrics_transformation","k":"value_submitted_top_line_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"provisional","valueBasis":"submitted"}},{"s":"metrics_transformation","k":"value_validated_top_line_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"validated","valueBasis":"validated"}},{"s":"metrics_transformation","k":"value_planned_non_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"not_applicable","valueBasis":"planned"}},{"s":"metrics_transformation","k":"value_forecast_non_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"provisional","valueBasis":"forecast"}},{"s":"metrics_transformation","k":"value_submitted_non_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"provisional","valueBasis":"submitted"}},{"s":"metrics_transformation","k":"value_validated_non_cash_sar","v":{"type":"decimal","value":"0","reason":null,"currency":"SAR","unitKind":"currency","validation":"validated","valueBasis":"validated"}}]
+
+stdout | tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts > QA-R1 REQ-S13-008 on the generated executive pack > PDF (en): the pending value is printed with the label 'Provisional'
+QA-R1 exec-pack PDF en: 21 lines with 'Provisional': ["Provisional","Provisional","Provisional","Provisional","Provisional","Provisional","Provisional","Provisional","Provisional","Provisional","Provisional","Provisional"]
+
+stdout | tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts > QA-R1 REQ-S13-008 on the generated executive pack > PDF (ar): the pending value is printed with the label 'مؤقت'
+QA-R1 exec-pack PDF ar: 23 lines with 'مؤقت': ["مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت","مؤقت"]
+
+ ❯ |integration| tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts (3 tests | 2 failed) 14719ms
+   ✓ QA-R1 REQ-S13-008 on the generated executive pack > the pack's value headlines: a pending (submitted) value carries a number and the label 'provisional' 2ms
+   × QA-R1 REQ-S13-008 on the generated executive pack > PDF (en): the pending value is printed with the label 'Provisional' 2790ms
+     → a figure labelled 'Provisional': expected 0 to be greater than 0
+   × QA-R1 REQ-S13-008 on the generated executive pack > PDF (ar): the pending value is printed with the label 'مؤقت' 2444ms
+     → a figure labelled 'مؤقت': expected 0 to be greater than 0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts > QA-R1 REQ-S13-008 on the generated executive pack > PDF (en): the pending value is printed with the label 'Provisional'
+AssertionError: a figure labelled 'Provisional': expected 0 to be greater than 0
+ ❯ tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts:104:69
+    102|       // more than the legend: at least one line carries the label nex…
+    103|       const labelledFigures = withWord.filter((l) => /[0-9٠-٩]/.test(l…
+    104|       expect(labelledFigures.length, `a figure labelled '${word}'`).to…
+       |                                                                     ^
+    105|     }, 120_000);
+    106| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts > QA-R1 REQ-S13-008 on the generated executive pack > PDF (ar): the pending value is printed with the label 'مؤقت'
+AssertionError: a figure labelled 'مؤقت': expected 0 to be greater than 0
+ ❯ tests/qa/integration/zz-qa-dg5r1-exec-pack-provisional.test.ts:104:69
+    102|       // more than the legend: at least one line carries the label nex…
+    103|       const labelledFigures = withWord.filter((l) => /[0-9٠-٩]/.test(l…
+    104|       expect(labelledFigures.length, `a figure labelled '${word}'`).to…
+       |                                                                     ^
+    105|     }, 120_000);
+    106| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  16:19:52
+   Duration  47.55s (transform 11.00s, setup 0ms, collect 24.89s, tests 14.72s, environment 0ms, prepare 94ms)
+
+EXIT 1 ; end 2026-10-25T16:20:44Z

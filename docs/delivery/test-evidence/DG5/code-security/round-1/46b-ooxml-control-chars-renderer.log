@@ -1,0 +1,11 @@
+# 46b OOXML control characters, renderer level  2026-10-25T16:59:23Z  node=v24.21.0  dir=$TMPDIR/rv (built)
+$ node docs/delivery/test-evidence/DG5/code-security/round-1/repro/ooxml-control-chars.mjs
+docx: 11985 bytes; user text present: true; not-well-formed parts: word/document.xml: raw forbidden char U+0001 near " xml:space=\"preserve\">Supplier\u0001delay\u000b(pasted)</w:t"
+pptx: 24753 bytes; user text present: true; not-well-formed parts: ppt/slides/slide2.xml: raw forbidden char U+0001 near "=\"-120\"/></a:rPr><a:t>Supplier\u0001delay\u000b(pasted)</a:t"
+xlsx: 3938 bytes; user text present: true; not-well-formed parts: none
+RESULT: 2 format(s) emit XML that is not well-formed
+exit=1  (non-zero BY DESIGN when a format emits XML that is not well-formed: here docx and pptx, see the lines above; xlsx passes because xlsx/sheet.ts xmlText replaces such characters with U+FFFD)
+
+$ PDF and CSV of a document whose transformation name holds U+000B (no XML constraint):
+pdf rendered 12706 bytes
+csv rendered 833 bytes

@@ -1,0 +1,30 @@
+# 05-install  started 2026-10-25T16:11:33Z  node=v24.21.0  LANG=<unset> LC_ALL=<unset>  load=2.57 3.07 2.59  commit=f816fb2b2247b68bdb0291e89b5f2761dec7d4b4
+$ pnpm install --offline --frozen-lockfile --store-dir /var/tmp/mth-run.YWGjPQ/claude-0/pstore/v10
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +414
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 414, reused 414, downloaded 0, added 370
+Progress: resolved 414, reused 414, downloaded 0, added 414, done
+ WARN  Failed to create bin at /var/tmp/mth-run.YWGjPQ/claude-0/rv/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.YWGjPQ/claude-0/rv/packages/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.YWGjPQ/claude-0/rv/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.YWGjPQ/claude-0/rv/packages/db/dist/cli.js'
+
+devDependencies:
++ @apidevtools/swagger-parser 10.1.1
++ @axe-core/playwright 4.10.2
++ @playwright/test 1.56.1
++ @types/node 22.18.0
++ eslint 10.1.0
++ eslint-plugin-react-hooks 7.1.1
++ openapi-types 12.1.3
++ prettier 3.8.1
++ typescript 6.0.2
++ typescript-eslint 8.71.0
++ vitest 3.2.4
+
+ WARN  Failed to create bin at /var/tmp/mth-run.YWGjPQ/claude-0/rv/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.YWGjPQ/claude-0/rv/apps/worker/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.YWGjPQ/claude-0/rv/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.YWGjPQ/claude-0/rv/apps/api/node_modules/@mth/db/dist/cli.js'
+Done in 2.2s using pnpm v10.33.0
+exit=0  finished 2026-10-25T16:11:36Z  load=2.57 3.07 2.59
+# Reviewer note: the four 'Failed to create bin ... mth-db' warnings are from this first install, run before @mth/db/dist existed (pnpm -r build creates it). No test uses the .bin link: tests/qa/integration/a22-operational-readiness.test.ts:205 spawns packages/db/dist/cli.js directly.
