@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-145",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-075",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "p4-benefits.spec.ts test 8 (auditor read-only views, 390 px and 200 % text) runs on the default 30 s budget with almost no headroom, and timed out in chromium-en in the full product suite (the F-DG5-141/144 class in another test)",
+      "reproduction": "Candidate sha256:d8d83181... (source 54e02b6), disposable clone, real stack (apps/web/e2e/support/with-stack.sh, AUTH_MODE=dev), --workers=1. Full product e2e, locale unset (scripts/run-e2e.sh unset 26630 26631 product product apps/web/e2e), with the other two reviews running (1-minute load median 6.2, max 16.8). Test 104 [chromium-en], apps/web/e2e/p4-benefits.spec.ts '8. Auditor read-only; register and benefit page at 390 px and 200 % text; the other benefit screens' (source line 490; Playwright prints :454), failed with 'Test timeout of 30000ms exceeded' (30.2 s), then 'browserContext.close: Target page, context or browser has been closed' at its last line, aud.close(). No assertion failed. Its trace has 321 calls, and the longest step is 1.53 s. The time is the length of the chain: 9 axe scans, 11 full-page screenshots and two viewport sweeps in one test with no explicit budget. Its serial follower, test 9 [chromium-en] (plan-value edit), then did not run. Measured durations: this run, ar 20.5 s; C.UTF-8 full run, en 23.6 s and ar 15.4 s; the spec alone at a load of about 8, 25.8 s / 25.7 s (en/ar, 28/28 with session-end). The earlier DG5 evidence reaches 28.3 s and 29.0 s, and the same test exceeded 30 s in several DG4 qa full runs under load (for example DG4 qa round 7, 32.4 s).",
+      "expected": "As for p4-dashboards test 6 (F-DG5-141), p4-raid-governance test 5 (F-DG5-144) and p4-gates-closure test 9 (D-173): the test has an explicit budget with at least 2x headroom over a measured loaded case, or it is split into its 390 px and 200 % halves, so that a full-suite run does not exceed it. Its steps and assertions stay unchanged.",
+      "actual": "Under the default 30 s budget the test has 0-15 % headroom when loaded: 25.7-25.8 s even alone at a load of about 8, and 30.2 s in the full suite. The required product e2e check therefore fails intermittently with no product defect. The product behaviour is correct. The auditor sees the read-only state and no create, decide or amend control. The 390 px and 200 % checks find no page-level overflow, and axe finds no serious or critical issue: the test passes alone in en and ar, and in the C.UTF-8 full run in both projects. Low and not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-rerun-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-p4-benefits-8-en/test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T02:23:30Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 3 (run DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860). Low, not mandatory, not blocking in my judgement: test reliability only, and the product behaviour is verified correct."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-146",
+      "stage_id": "DG5",
+      "requirement": "REQ-S16-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "session-end.spec.ts 'signed out in another tab, then an in-app link' races My Work's paged work-items load: the app ends the session itself before the test clicks, and the test waits 30 s for a navigation link that no longer exists",
+      "reproduction": "Candidate sha256:d8d83181... (source 54e02b6), real stack, --workers=1, full product e2e, locale unset (same run as F-DG5-145). Test 466 [chromium-ar], apps/web/e2e/session-end.spec.ts 'signed out in another tab, then an in-app link: one landing on sign-in with the message' (source line 145; Playwright prints :156), failed at 30.2 s. locator.click waited 28.1 s for getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { name: 'التحوّلات' }). The error context shows the page already on the sign-in page with the alert «انتهت جلستك. يُرجى تسجيل الدخول مجددًا.» (session ended). The trace's network order (trace-summary.txt) shows the race. signIn() (apps/web/e2e/support/ui.ts) returns once My Work's h1 is visible. My Work was still paging through dev.lead's open work items: GET /me/work-items?status=open&limit=100 -> 200, then cursor page 2 -> 200. signOutElsewhere() then POSTed /auth/logout -> 200, cursor page 3 was answered 401, and GET /me -> 401. The app correctly ended the session and showed the sign-in page before the test's click on the in-app link. By the end of the suite (chromium-ar runs after the whole chromium-en project) dev.lead has more than 200 open work items, so the paging window is long, and under load it is longer still. The 4 serial followers [chromium-ar] then did not run. The same test passed in chromium-en in the same run (6.3 s), in both projects of the C.UTF-8 full run (5.6 s / 5.5 s), and alone in en and ar (6.3 s / 6.6 s). This is its first failure in the DG2-DG5 evidence.",
+      "expected": "The test's precondition holds before it signs out elsewhere: it waits until the signed-in page has finished loading (for example, no request to /api/v1/me/work-items in flight, or a page with no background paging), or it starts from a page that does not page through the user's work items. It then asserts, as it intends, that the in-app link leads to exactly one landing on sign-in with the message. The assertions stay unchanged.",
+      "actual": "The required product e2e check fails intermittently when the logout falls between two work-items pages, and the window grows as the suite's data grows. The product behaviour is correct, and it is exactly what the spec intends to prove: one landing on the sign-in page with the localized message, no loop. Only the test's ordering assumption fails. Low and not mandatory: no data, calculation, access-control or portability effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-rerun-benefits-session-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/trace-summary.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/error-context.md",
+        "docs/delivery/test-evidence/DG5/qa/round-3/failures/product-unset-session-end-156-ar/test-failed-1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-3/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG5/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T02:23:30Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG5 re-gate round 3 (run DG5-T-DG5-RG-QA-R3-qa-verifier-20261024T225703Z-16b1a860). Low, not mandatory, not blocking in my judgement: test reliability only, and the product's session-end behaviour is verified correct."
+        }
+      ]
+    }
+  ]
+}

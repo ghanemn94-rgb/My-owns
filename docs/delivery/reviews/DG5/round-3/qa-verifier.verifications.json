@@ -1,0 +1,37 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its reporter (qa-verifier raised it in re-gate round 2). Candidate sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9 (2203 files, source 54e02b61961550386d5ab24a74e8ae8bb612218f), recomputed in a complete disposable clone at the start and at the end of my run. The owner is frontend-ux-engineer (T-DG5-FE-RG2); I authored none of the repair. fix_revision 1d8d6d56a11279e92be044d51686a03e26e4b56e is a commit and an ancestor of 54e02b6 (03-findings-fix-ancestry.log). The diff edbf5ce..54e02b6 touches only two test files. In p3-prioritization-roadmap.spec.ts the substring matcher /approve|اعتماد|move|نقل/i is replaced by the whole-word APPROVE_OR_MOVE = /(?<![\\p{L}\\p{M}])(?:approve|move|اعتماد|نقل)(?![\\p{L}\\p{M}])/iu, and the test now asserts against the real catalogue that every approve/move write label of the three screens matches, while five read-only labels (among them «الاعتمادية») do not. The fix keeps the test's intent and does not weaken it: (1) My original reproduction, the full product e2e on the real stack (--workers=1), now passes the auditor test in both projects and both locale settings: unset 12.4 s en / 8.5 s ar; C.UTF-8 9.2 s / 7.1 s. Neither full run has a p3-prioritization-roadmap failure. (2) Adversarial mutants in the disposable clone: M1 shows the roadmap 'approve date' button to the auditor (canApprove = true) and M2 shows the 'move' button (canMove = true). Each makes the auditor test fail in chromium-en and chromium-ar at exactly the APPROVE_OR_MOVE assertion (spec line 530; 'Expected: 0, Received: 1'). On the restored build the spec passes 14/14. (3) My static probe of the matcher against every literal t() key of the three screens' 11 source files (en and ar) finds 0 button labels that the old matcher caught and the new one misses, except two that stay covered: dependencies.map.add is in the test's named-label assertion, and dependencies.form.save is that dialog's own submit. Every other old-only match is a non-button text (bodies, hints, column headers). A breadth limit that predates the fix is recorded as an observation in my record, not as part of this finding: neither assertion catches some write labels, such as decide, revoke, withdraw, archive or edit (Q2 of the probe). The old matcher did not catch them either.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-f143-M1-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-f143-M2-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-f143-control-restored-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/09-f143-mutation-setup-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/03-f143-matcher-coverage.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/03-findings-fix-ancestry.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/scripts/run-f143-mutants.sh",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-3/static/zz-qa-dg5rg3-f143-matcher-coverage.mjs",
+        "docs/delivery/test-evidence/DG5/qa/round-3/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/00-candidate-end.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG5-144",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its reporter (qa-verifier, re-gate round 2). Same candidate and clone as above. The owner is frontend-ux-engineer (T-DG5-FE-RG2); fix_revision 1d8d6d56a11279e92be044d51686a03e26e4b56e is an ancestor of 54e02b6 (03-findings-fix-ancestry.log). The fix gives p4-raid-governance.spec.ts test 5 (meeting workspace) an explicit 90 s budget (MEETING_WORKSPACE_BUDGET_MS) and per-phase timing annotations. I read the diff: no step, assertion or screenshot is removed or changed; only test.setTimeout and seven mark() calls are added. Re-run under full-suite load, as assigned. Locale unset full product run, with the other two reviews running (1-minute load median 6.2, max 16.8 over the run): chromium-ar 24.6 s and chromium-en 24.6 s, both passed, and tests 6 and 7 ran and passed in both projects. C.UTF-8 full run: ar 18.0 s, en 16.8 s. The slowest loaded run uses 27 % of the new budget, against round 2's 30.1 s timeout on the old 30 s budget. The same timing class in another test (p4-benefits test 8) is raised separately as F-DG5-145; it does not affect this closure.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-unset-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/03-findings-fix-ancestry.log",
+        "docs/delivery/test-evidence/DG5/qa/round-3/00-candidate-start.log"
+      ]
+    }
+  ]
+}
