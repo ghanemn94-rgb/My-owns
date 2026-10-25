@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-100",
+      "stage_id": "DG5",
+      "requirement": "REQ-S13-005",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "DOCX and PPTX exports are not well-formed XML 1.0 when accepted user text contains a C0 control character (U+0001-U+0008, U+000B, U+000C, U+000E-U+001F); the export job still reports succeeded",
+      "reproduction": "1. The API accepts such characters in user text: the shared validator refuses only U+0000 and lone surrogates (packages/shared/src/schemas/common.ts:94 hasInvalidCharacter, used by freeText and by the central request check apps/api/src/modules/platform/validation.ts:68-113). 2. End to end, real API and real worker export runner on a migrated, demo-seeded scratch database (synthetic data): a TO+TL user renames the demo transformation through PATCH /api/v1/transformations/{id} to 'International Roaming\\u000Bprogramme (pasted)' (U+000B is the character Word uses for a manual line break); the answer is 200 and the name is stored. Then POST .../reports/charter/generate and POST /exports {format: docx}, and POST .../reports/roadmap/generate and POST /exports {format: pptx}; the worker reports both jobs 'succeeded' and GET /exports/{id}/download answers 200. Run: tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-sec-rg2-ooxml-control-char.test.ts (probe copied from docs/delivery/test-evidence/DG5/code-security/round-1/repro/; log 46-ooxml-control-char.log). 3. Renderer level, from the built packages: node docs/delivery/test-evidence/DG5/code-security/round-1/repro/ooxml-control-chars.mjs renders one register row whose description is 'Supplier\\u0001delay\\u000B(pasted)' to docx, pptx and xlsx and checks every XML part against the XML 1.0 Char production (log 46b-ooxml-control-chars-renderer.log). Cause: the XLSX writer replaces XML-invalid characters with U+FFFD (packages/reporting/src/xlsx/sheet.ts:13-26 INVALID_XML/xmlText), but the DOCX writer (packages/reporting/src/docx.ts, library docx 9.8.1) and the PPTX writer (packages/reporting/src/pptx.ts, library pptxgenjs 4.0.1) pass user text to libraries that escape only & < > \" and write the control character raw. XML 1.0 (section 2.2, Char) forbids these characters raw and as character references, so the part is not well-formed: Word refuses the file or offers a repair; PowerPoint offers a repair that may drop content. Affected: every DOCX/PPTX output that prints the text, including the transformation name in every header (charter, diagnostic, tom, business_cases, roadmap, meeting_minutes, gate_pack, executive_dashboard, handover, executive_pack, meeting_pack). PDF and CSV of the same text render (no XML constraint).",
+      "expected": "Every export the worker marks succeeded is a well-formed OOXML package: user text that XML 1.0 cannot carry is replaced (for example by U+FFFD, as xlsx/sheet.ts xmlText already does) or refused at input, for DOCX and PPTX as for XLSX; a corrupt file is never stored with status succeeded and a checksum.",
+      "actual": "charter.docx: job succeeded, 14695 bytes; word/document.xml and docProps/core.xml contain a raw U+000B ('...International Roaming\\u000bprogramme (pasted)</w:t>'). roadmap.pptx: job succeeded, 38497 bytes; ppt/slides/slide1.xml and docProps/core.xml contain a raw U+000B. roadmap.xlsx of the same snapshot: well-formed. Renderer level: docx word/document.xml and pptx ppt/slides/slide2.xml contain a raw U+0001; xlsx none. The probe's two assertions 'not-well-formed parts: none' for charter.docx and roadmap.pptx fail on the candidate (by design: they encode the expected behaviour).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-1/46-ooxml-control-char.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/46b-ooxml-control-chars-renderer.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/zz-sec-rg2-ooxml-control-char.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-1/repro/ooxml-control-chars.mjs",
+        "packages/reporting/src/xlsx/sheet.ts",
+        "packages/reporting/src/docx.ts",
+        "packages/reporting/src/pptx.ts",
+        "packages/shared/src/schemas/common.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-25T17:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG5 corrected re-gate round 1 (session 3a37f8d1) on candidate ff3bc2c4. Reproduced end to end (46-ooxml-control-char.log) and at the renderer level (46b). Medium, not a mandatory violation: no stored data is corrupted, no authorization or calculation is affected, PDF/XLSX/CSV of the same text are correct, and the literal REQ-S13-005 acceptance (filtered XLSX rows, PPTX gate criteria) holds on normal text; but any user who can edit a printed text field can make that transformation's DOCX/PPTX deliverables unreadable while the job reports success. Owner: the renderers are T-DG5-BE-N (backend-workflow-engineer)."
+        }
+      ]
+    }
+  ]
+}
