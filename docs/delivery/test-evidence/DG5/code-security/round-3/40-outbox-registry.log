@@ -1,0 +1,39 @@
+# 40-outbox-registry  2026-10-24T23:09:25Z  clone /var/tmp/mth-run.ee6mqb/claude-0/rv @ bd2e7f9; node 24.21.0 --experimental-strip-types
+$ node --experimental-strip-types repro/outbox-registry.mjs $TMPDIR/rv
+REG Q adoption.check_failed  <- apps/api/src/modules/adoption/interventions.ts, apps/worker/src/handlers/adoption.ts
+--- - automation.action_failed  <- apps/worker/src/automation/actions/common.ts, apps/worker/src/job-runs.ts
+--- - automation.job_failed  <- apps/worker/src/kit.ts
+REG Q automation_failure.retry_requested  <- apps/api/src/modules/automation/failures.ts, apps/worker/src/kit.ts
+REG Q benefit.evidence_submitted  <- apps/api/src/modules/benefits/measurements.ts
+REG Q benefit.variance_evaluated  <- apps/api/src/modules/benefits/values.ts, apps/worker/src/handlers/benefits.ts
+REG Q blocker_status.recorded  <- apps/api/src/modules/governance/escalations.ts, apps/worker/src/handlers/escalations.ts
+REG Q branding.published  <- apps/api/src/modules/admin/branding.ts
+REG Q control_check.failed  <- apps/api/src/modules/sustainment/controls.ts
+REG Q demo.reset_requested  <- apps/api/src/modules/admin/environment.ts
+REG Q dependency.slipped  <- apps/api/src/modules/portfolio/slip-events.ts
+REG Q export_job.requested  <- apps/api/src/modules/reporting/exports/jobs.ts, apps/worker/src/reports/export-runner.ts
+REG Q gate.decided  <- apps/api/src/modules/workflows/gates.ts
+REG Q gate.submitted  <- apps/api/src/modules/workflows/gates.ts
+REG Q job.failed  <- apps/worker/src/kit.ts
+REG Q job.run_requested  <- apps/api/src/modules/jobs/operations.ts
+REG Q job_schedule.updated  <- apps/api/src/modules/jobs/schedules.ts
+REG Q kpi.actual_accepted  <- apps/api/src/modules/kpi/accept-pipeline.ts
+REG Q kpi.deviation_evaluated  <- apps/worker/src/handlers/adoption.ts, apps/worker/src/handlers/kpi.ts
+--- - kpi.recalculate_failed  <- apps/worker/src/handlers/kpi.ts
+REG Q kpi.threshold_changed  <- apps/api/src/modules/kpi/rag-thresholds.ts
+REG Q kpi.trajectory_approved  <- apps/api/src/modules/kpi/trajectories.ts
+REG Q kpi.version_activated  <- apps/api/src/modules/kpi/kpi-versions.ts
+REG Q kpi_restatement.approved  <- apps/api/src/modules/kpi/restatement-decisions.ts, apps/worker/src/handlers/kpi.ts
+--- - report_snapshot.issued  <- apps/api/src/modules/reporting/reports/snapshots.ts
+REG Q transformation.created  <- apps/api/src/modules/transformations/routes.ts
+types found in source: 26; registered: 26; unregistered-or-unrouted lines: 4
+exit=0
+# Reviewer analysis of the 4 '---' lines (none is an outbox event type written unregistered):
+#  automation.action_failed  = JOB_RUN_FAILED_CODE / ACTION_FAILED error code (job-runs.ts:23, actions/common.ts), not an event
+#  automation.job_failed     = JOB_FAILED_QUEUE queue name (kit.ts:475); the event is job.failed (registered, routed)
+#  kpi.recalculate_failed    = RECALCULATE_FAILED_CODE error code (handlers/kpi.ts:758), not an event
+#  report_snapshot.issued    = written ONLY when registered: snapshots.ts:580 `if (outboxPayloadSchema(...) === null) return;`
+# Dynamic writers (steps.ts:735, jobs/outbox.ts, kpi-outbox.ts, benefits/values.ts, gates.ts, worker kpi.ts/benefits.ts,
+# kit.ts:841) all call outboxPayloadSchema and throw / parse before INSERT, so an unregistered type rolls back its write.
+# Relay (relay.ts:53-124): an unpublishable head row increments publish_attempts and ends the round; after
+# OUTBOX_RELAY.maxPublishAttempts it is excluded by the WHERE clause, so it never blocks later rows permanently.

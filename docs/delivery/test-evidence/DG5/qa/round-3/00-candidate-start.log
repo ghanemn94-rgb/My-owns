@@ -1,0 +1,29 @@
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/review-dg5 && git checkout bd2e7f9 (2026-10-24T22:58:12Z)
+Cloning into '$TMPDIR/review-dg5'...
+done.
+EXIT 0
+HEAD bd2e7f904bb975f39ee6188af181eae83983f968
+sparse: none
+shallow: false
+tracked: 25596; on-disk-missing: 0
+dangling tree 1add1f1c35c49b02d23714d90613c6d00ba0e549
+dangling tree e6e765e55243d246844de7cb4fd08b89dda371ef
+dangling tree 39f77b576979c29d0b6466f8dc93b9ae1002b1f6
+fsck EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9","files":2203}
+EXIT 0
+$ node tools/gates/candidate.mjs --stage DG5 --ref 54e02b61961550386d5ab24a74e8ae8bb612218f
+{"stage":"DG5","source":"54e02b61961550386d5ab24a74e8ae8bb612218f","candidate_id":"sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9","files":2203}
+EXIT 0
+$ git diff --stat 54e02b6..HEAD
+ .../DG5/round-3/code-security-reviewer.md          |   141 +
+ .../assignments/DG5/round-3/domain-reviewer.md     |   167 +
+ .../assignments/DG5/round-3/qa-verifier.md         |   126 +
+ .../candidates/DG5/d8d831814a6065af.manifest.json  | 11033 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 11489 insertions(+), 5 deletions(-)
+$ git diff --stat edbf5ce..54e02b6 (since round 2)
+ apps/web/e2e/p3-prioritization-roadmap.spec.ts | 30 +++++++++++++++++++++++++-
+ apps/web/e2e/p4-raid-governance.spec.ts        | 28 ++++++++++++++++++++++++
+ 2 files changed, 57 insertions(+), 1 deletion(-)

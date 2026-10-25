@@ -1,0 +1,5 @@
+$ HOME=$TMPDIR/lo-home soffice -env:UserInstallation=file://$TMPDIR/lo-profile -env:SingleAppInstance=false --headless --norestore --convert-to pdf --outdir $TMPDIR/lot $TMPDIR/lot/t.txt  (2026-10-24T23:20Z)
+ERROR: no valid pipe path found.
+EXIT (timeout wrapper) 0 from LibreOffice, but output files: 0
+Reason: LibreOffice creates its IPC pipe under the hard-coded /tmp or /var/tmp, both read-only in this sandbox (SingleAppInstance=false does not avoid it). Python fitz/pypdf/openpyxl/docx/pptx: not installed; pdftoppm/mutool/gs: not on PATH; node_modules holds writers only (pdfkit, ...), no renderer. Round 2 also showed full Chromium aborting on its process-singleton socket.
+=> raster rendering of the export samples is not possible here; the samples are inspected at content level (07-inspect-*.txt).

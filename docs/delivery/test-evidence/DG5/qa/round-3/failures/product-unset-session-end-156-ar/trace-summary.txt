@@ -1,0 +1,36 @@
+== test-level calls (pw:api and unfinished), offset from the first call
+   0.05s   0.01s {"acceptDownloads": "accept", "bypassCSP": "false", "colorScheme": "light", "deviceScaleFactor": "1", "hasTouch": "false", "ignoreHTTPSError 
+   0.06s   0.03s {} 
+   0.09s   0.61s {"url": "/login", "waitUntil": "load", "timeout": "0"} 
+   0.92s   0.02s {"selector": "internal:label=/^(?:اسم المستخدم الاصطناعي|Synthetic user name)(?:\\s*\\((?:مطلوب|required)\\))?$/", "value": "dev.lead", "str 
+   0.95s   0.03s {"selector": "internal:label=/^(?:اسم المستخدم الاصطناعي|Synthetic user name)(?:\\s*\\((?:مطلوب|required)\\))?$/", "key": "Enter", "strict": 
+   0.98s   0.10s {"info": "Object"} 
+   1.67s   0.01s {"selector": "html", "name": "lang", "strict": "true", "timeout": "0"} 
+   1.75s   0.37s {"expression": "async () => {\n    const me = await (await fetch(\"/api/v1/me\")).json();\n    const res = await fetch(\"/api/v1/auth/logout 
+   2.13s  28.11s {"selector": "internal:role=navigation[name=\"التنقل الرئيسي\"i] >> internal:role=link[name=\"التحوّلات\"i]", "strict": "true", "timeout": " Error: locator.click: Test timeout of 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('navigation', { name: 'التنقل الرئيسي' }).getByRole('link', { na
+   2.13s never finished {"selector": "internal:role=navigation[name=\"التنقل الرئيسي\"i] >> internal:role=link[name=\"التحوّلات\"i]", "strict": true, "timeout": 0} 
+  30.23s   0.01s {"reason": "Test timeout of 30000ms exceeded."} 
+calls: 57; longest finished call: 28.11s
+== network requests in start order (offset from the first request)
+    0.00 GET /login -> 200
+   72.34 GET /locale-boot.js -> 200
+  648.22 GET /api/v1/me -> 401
+  715.56 POST /api/v1/auth/dev-login -> 400
+  872.84 POST /api/v1/auth/dev-login -> 204
+  892.51 GET /api/v1/me -> 200
+  977.69 GET /api/v1/environment -> 200
+ 1006.90 GET /api/v1/me/navigation -> 200
+ 1007.00 GET /api/v1/branding -> 200
+ 1007.04 GET /api/v1/branding/tokens -> 200
+ 1007.58 GET /api/v1/me -> 200
+ 1620.67 GET /api/v1/me/work -> 200
+ 1621.03 GET /api/v1/me/work-items?status=open&limit=100 -> 200
+ 1633.01 GET /api/v1/me/inbox?limit=100 -> 200
+ 1659.66 GET /api/v1/me -> 200
+ 1845.08 GET /api/v1/me/work-items?status=open&limit=100&cursor=eyJrIjpbMCwiOTk5OS0xMi0zMSIsIjAxYTE3MDRhLTI5MmYtNzk2NS04ZWU -> 200
+ 1903.81 POST /api/v1/auth/logout -> 200
+ 1958.81 GET /api/v1/me/work-items?status=open&limit=100&cursor=eyJrIjpbMCwiOTk5OS0xMi0zMSIsIjAxYTE3MDZlLTI1NTQtN2M2My1hOTI -> 401
+ 2030.89 GET /api/v1/me -> 401
+ 2046.34 POST /api/v1/auth/dev-login -> 400

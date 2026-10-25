@@ -1,0 +1,17 @@
+# 47-web-graph 2026-10-24T23:15:23Z clone bd2e7f9 node 24.21.0
+$ node repro/web-cycles.mjs $TMPDIR/rv
+web source modules=286 dynamic import() sites=171 cycles(value imports)=1
+CYCLE: apps/web/src/pages/admin/UsersPage.tsx <-> apps/web/src/pages/admin/AssignmentsPage.tsx
+exit=1
+$ grep lazy routes (React.lazy / lazy()) in apps/web/src
+0
+$ external http(s) URLs in apps/web/index.html and src (non-test)
+$ font files bundled
+12
+# Reviewer explanation of exit=1: my cycle detector exits 1 when it finds any value-import cycle. It finds exactly one,
+# apps/web/src/pages/admin/UsersPage.tsx:32 <-> AssignmentsPage.tsx:40, present unchanged since DG1 (4cd9224, also at the
+# DG4-approved base e70ac02). Both modules export function components and a hook used only at render time, so ES module
+# evaluation order cannot leave a binding uninitialised when it is used: no runtime effect. P5 added no cycle. Judged an
+# observation (pre-existing, no behaviour), not a finding. 'lazy(() => import' single-line grep count 0 because the router wraps React.lazy in one helper
+# (apps/web/src/app/router.tsx:35 `const Lazy = lazy(() =>` with the import on the next line) and passes 172 page import() thunks
+# to it; 171 dynamic import() sites counted by the detector across apps/web/src (router.tsx header l.11: route-level splitting).

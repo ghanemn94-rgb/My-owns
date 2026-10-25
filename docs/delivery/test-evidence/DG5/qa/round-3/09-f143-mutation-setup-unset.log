@@ -1,0 +1,43 @@
+== M1 (2026-10-25T02:12:55Z) diff:
+diff --git a/apps/web/src/pages/roadmap/RoadmapPage.tsx b/apps/web/src/pages/roadmap/RoadmapPage.tsx
+index d6c09ed..f591d4e 100644
+--- a/apps/web/src/pages/roadmap/RoadmapPage.tsx
++++ b/apps/web/src/pages/roadmap/RoadmapPage.tsx
+@@ -437,7 +437,7 @@ function MilestonesSection({ view, onConflict }: { view: RoadmapView; onConflict
+   const codeOf = new Map(view.initiatives.map((i) => [i.id, i.code]));
+   const date = (d: string | null) => (d ? formatBusinessDate(d, locale) : null);
+   const canMove = can("roadmap.edit") || can("initiative.edit");
+-  const canApprove = can("roadmap.approve");
++  const canApprove = true; // QA MUTANT M1
+   const conflictThenReload = async () => {
+     setMoving(null);
+     setApproving(null);
+web build EXIT 0 (✓ built in 7.03s)
+  2 failed
+  2 did not run
+  10 passed (1.3m)
+EXIT 1
+load1 samples n=6 min=1.75 median=2.11 max=2.91 above8=0
+== M2 (2026-10-25T02:15:11Z) diff:
+diff --git a/apps/web/src/pages/roadmap/RoadmapPage.tsx b/apps/web/src/pages/roadmap/RoadmapPage.tsx
+index d6c09ed..426f2b7 100644
+--- a/apps/web/src/pages/roadmap/RoadmapPage.tsx
++++ b/apps/web/src/pages/roadmap/RoadmapPage.tsx
+@@ -436,7 +436,7 @@ function MilestonesSection({ view, onConflict }: { view: RoadmapView; onConflict
+   const [approving, setApproving] = useState<Milestone | null>(null);
+   const codeOf = new Map(view.initiatives.map((i) => [i.id, i.code]));
+   const date = (d: string | null) => (d ? formatBusinessDate(d, locale) : null);
+-  const canMove = can("roadmap.edit") || can("initiative.edit");
++  const canMove = true; // QA MUTANT M2
+   const canApprove = can("roadmap.approve");
+   const conflictThenReload = async () => {
+     setMoving(null);
+web build EXIT 0 (✓ built in 7.86s)
+  2 failed
+  2 did not run
+  10 passed (1.3m)
+EXIT 1
+load1 samples n=6 min=1.68 median=1.81 max=2.09 above8=0
+== restore (2026-10-25T02:17:26Z): tracked changes: 0
+web build EXIT 0 (✓ built in 7.10s)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:88c4beca8a843d174a0f819fbcd7205bdb36eb782c9eef58154a8308d78cabd7","files":2207}

@@ -1,0 +1,48 @@
+$ npx vitest run --configLoader runner --project unit-node tests/qa/unit/a22-s21-001-text-scan.test.ts packages/shared/src/finance/metrics.test.ts packages/shared/src/health/scoring.test.ts packages/reporting/src/csv.test.ts packages/shared/src/schemas/scoring-defaults.test.ts apps/api/src/modules/automation/content.test.ts (load 7.58 8.62 9.93)
+
+ RUN  v3.2.4 /var/tmp/mth-run.OCAPDD/claude-0/rv3
+
+ ✓ |unit-node| packages/shared/src/health/scoring.test.ts (29 tests) 801ms
+   ✓ properties (seeded, 2,000 generated answer sets per scheme) > v1: incomplete -> null; complete -> 0 <= score <= max, the reference formula, the highest band <= score  494ms
+ ✓ |unit-node| packages/reporting/src/csv.test.ts (12 tests) 125ms
+ ✓ |unit-node| tests/qa/unit/a22-s21-001-text-scan.test.ts (7 tests) 429ms
+ ✓ |unit-node| packages/shared/src/finance/metrics.test.ts (21 tests) 5619ms
+   ✓ properties (seeded) > NPV equals the precision-200 oracle rounded once half-up to 2 decimals (both timings)  2520ms
+   ✓ properties (seeded) > end_of_period NPV = beginning_of_period NPV / (1 + r), before rounding  770ms
+   ✓ properties (seeded) > a conventional set (outflows only at t = 0, beginning of period) has an NPV that never rises with the rate  1279ms
+   ✓ properties (seeded) > ROI equals the precision-200 oracle rounded half-up to 6 decimals; payback equals an integer (BigInt) oracle  996ms
+ ✓ |unit-node| packages/shared/src/schemas/scoring-defaults.test.ts (12 tests) 41ms
+ ✓ |unit-node| apps/api/src/modules/automation/content.test.ts (8 tests) 16ms
+
+ Test Files  6 passed (6)
+      Tests  89 passed (89)
+   Start at  23:48:44
+   Duration  7.46s (transform 3.68s, setup 0ms, collect 10.10s, tests 7.03s, environment 2ms, prepare 739ms)
+
+exit 0
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/pages/playbook/feg.test.tsx apps/web/src/pages/playbook/reader-tables.test.tsx apps/web/src/pages/dependencies/slips.test.tsx apps/web/src/pages/my-work/message-keys.test.ts
+
+ RUN  v3.2.4 /var/tmp/mth-run.OCAPDD/claude-0/rv3
+
+ ✓ |unit-web| src/pages/my-work/message-keys.test.ts (97 tests) 7061ms
+ ✓ |unit-web| src/pages/playbook/reader-tables.test.tsx (8 tests) 3270ms
+   ✓ the reader shows tables, not Markdown (en) > R1 + R2: the B0024 panel is a table cell and the block list has no Markdown (en)  786ms
+   ✓ the reader shows tables, not Markdown (en) > R3: B0016 is a callout table holding the whole sentence; B0003's <br> is an element (en)  700ms
+   ✓ the reader shows tables, not Markdown (en) > R4: a snippet from a table shows no Markdown and keeps the mark on the matched word (en)  357ms
+ ✓ |unit-web| src/pages/dependencies/slips.test.tsx (8 tests) 2157ms
+   ✓ critical dependency slips on the Dependencies page (en) > names the dependency, the slip in days, the reason and each dependent's forecast finish before -> after  835ms
+ ✓ |unit-web| src/pages/playbook/feg.test.tsx (19 tests) 6294ms
+   ✓ the playbook reader > en: About, questions, badges and the Realize note; B0004 stays verbatim in English  825ms
+   ✓ the playbook reader > refuses a 1-character search in the field, then marks the highlights of the results  440ms
+   ✓ a block and its links > en: B0031 shows its table, the T01 register link with badges, the requirement ID and Launch  932ms
+   ✓ a block and its links > ar: B0031 shows its table, the T01 register link with badges, the requirement ID and Launch  357ms
+   ✓ Branding Settings > en: publishes with If-Match "0", then a stale save shows the conflict; a 422 is shown by its code  598ms
+   ✓ the walkthrough and the environment screen > en: outside a demo database the walkthrough shows environment.not_demo; in one it lists 12 steps  463ms
+   ✓ the walkthrough and the environment screen > the reset of a production database is refused with environment.not_demo, sent with If-Match  468ms
+
+ Test Files  4 passed (4)
+      Tests  132 passed (132)
+   Start at  23:48:52
+   Duration  16.84s (transform 375.91s, setup 1.22s, collect 18.64s, tests 18.78s, environment 5.17s, prepare 571ms)
+
+exit 0

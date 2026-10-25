@@ -1,0 +1,24 @@
+# 41-injection-probe 2026-10-24T23:19:17Z clone bd2e7f9 node 24.21.0 --experimental-strip-types
+# Run 1 of this probe (not kept) searched only the first worksheet and passed no total: 7 XLSX lines failed and formulas=[] - a probe defect (the RAID table is not in sheet 1), fixed here: all worksheets are searched and the total 60.50 is declared.
+$ node --experimental-strip-types repro/injection-probe.ts
+CSV OK  trigger=true "=HYPERLINK(\"http://x\",\"y\")" -> expected field "\"'=HYPERLINK(\"\"http://x\"\",\"\"y\"\")\"" (quoted)
+CSV OK  trigger=true "+1+1" -> expected field "'+1+1"
+CSV OK  trigger=true "-2+3" -> expected field "'-2+3"
+CSV OK  trigger=true "@SUM(A1)" -> expected field "'@SUM(A1)"
+CSV OK  trigger=true "\t=1+1" -> expected field "'\t=1+1"
+CSV OK  trigger=true "\r=1+1" -> expected field "\"'\r=1+1\"" (quoted)
+CSV OK  trigger=true "=cmd|' /C calc'!A0" -> expected field "'=cmd|' /C calc'!A0"
+CSV OK  trigger=false " =1+1" -> expected field " =1+1"
+CSV OK  trigger=false "＝1+1" -> expected field "＝1+1"
+CSV OK  trigger=false "'=already" -> expected field "'=already"
+CSV OK  trigger=false "a\"b,=c" -> expected field "\"a\"\"b,=c\"" (quoted)
+XLSX sheets=3 formulas=["SUM(D3:D13)"] quotePrefix styles=4
+XLSX OK  "=HYPERLINK(\"http://x\",\"y\")" inlineStr style=1 (odd = quotePrefix)
+XLSX OK  "+1+1" inlineStr style=1 (odd = quotePrefix)
+XLSX OK  "-2+3" inlineStr style=1 (odd = quotePrefix)
+XLSX OK  "@SUM(A1)" inlineStr style=1 (odd = quotePrefix)
+XLSX OK  "\t=1+1" inlineStr style=1 (odd = quotePrefix)
+XLSX OK  "\r=1+1" inlineStr style=1 (odd = quotePrefix)
+XLSX OK  "=cmd|' /C calc'!A0" inlineStr style=1 (odd = quotePrefix)
+failures=0
+exit=0

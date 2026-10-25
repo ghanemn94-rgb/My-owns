@@ -1,0 +1,28 @@
+# 43-module-graph 2026-10-24T23:10:44Z repo tree = candidate (non-delivery identical to 54e02b6)
+$ grep -rnE "from \"\.\./\.\./(workflows|admin)/" apps/api/src/modules/reporting (non-test)
+count=0
+$ grep worker imports of apps/api
+count=0
+$ procedures importing workflows (forbidden by modules.ts)
+0
+$ ports wired in server.ts
+16:import { existsSync } from "node:fs";
+17:import { fileURLToPath } from "node:url";
+18:import cookie from "@fastify/cookie";
+19:import helmet, { type FastifyHelmetOptions } from "@fastify/helmet";
+20:import rateLimit from "@fastify/rate-limit";
+21:import fastifyStatic from "@fastify/static";
+22:import type { AppConfig } from "@mth/config";
+23:import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
+24:import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
+25:import type pg from "pg";
+26:import { registerAccessP2Routes, registerAccessP4Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
+27:import { colorTokens, deriveDarkerShade, tokenSource, tokensAreProvisional } from "@mth/design-tokens";
+28:import { registerAdminRoutes, registerBrandingRoutes, registerEnvironmentRoutes } from "./modules/admin/index.ts";
+29:import {
+36:import { registerEvidenceModule } from "./modules/evidence/index.ts";
+37:import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
+38:import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
+39:import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
+40:import { registerJobOperationRoutes, registerJobScheduleRoutes } from "./modules/jobs/index.ts";
+42:import { registerAutomationModule } from "./modules/automation/index.ts";

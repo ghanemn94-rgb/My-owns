@@ -1,0 +1,48 @@
+$ grep -rniE "official|certif|accredit|endorsed|PMI standard|PMI-standard" apps/web/src/i18n packages/reporting/src packages/shared/src/reports apps/worker/src/reports apps/api/src/modules/methodology (excluding *.test.ts)
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+apps/web/src/i18n/en/common.json:130:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are provisional design tokens that can be replaced through Branding Settings once official values are approved.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by PMI or any other body.",
+apps/web/src/i18n/en/reportsP5.json:190:    "draftBanner": "Draft — not an issued report. Its content is fixed; issue it to make it the official report, or discard it.",
+apps/web/src/i18n/en/reportsP5.json:202:    "issueIntro": "Issuing makes this snapshot the next official issue of its series. Its content does not change. Issuing is not an approval.",
+apps/web/src/i18n/en/problems.json:807:  "methodology_reader__prohibited_text": "Reader text must not describe the methodology as having official status or accreditation from PMI, and must not name an engineering delivery gate.",
+apps/web/src/i18n/en/problems.json:808:  "branding__prohibited_claim": "Branding text must not describe the product as having official status or accreditation from PMI.",
+packages/shared/src/reports/content-labels.ts:15:// label names an engineering delivery gate or claims any certification.
+apps/api/src/modules/methodology/provenance.ts:13:// official-PMI or certification claim and any engineering-gate name in it). The response never claims that the
+apps/api/src/modules/methodology/provenance.ts:14:// methodology or the product is an official PMI standard or certified (M0089). Read-only: nothing here writes.
+apps/api/src/modules/methodology/element-profiles.ts:11:// standard: `foundation_inspired` is rendered "Inspired by …", never "PMI standard". Labels come from the element's
+apps/api/src/modules/methodology/element-profiles.ts:29://   - a label, help or body text that claims official PMI status or certification or names DG0-DG7 (the SQL rules
+apps/api/src/modules/methodology/element-profiles.ts:30://     p5_claims_official_pmi and p5_mentions_engineering_gate themselves, so both layers agree)
+apps/api/src/modules/methodology/element-profiles.ts:107:    "Reader text must not claim official PMI status or certification, or name an engineering delivery gate.",
+apps/api/src/modules/methodology/element-profiles.ts:228:    SELECT coalesce(bool_or(p5_claims_official_pmi(t) OR p5_mentions_engineering_gate(t)), false) AS bad
+$ grep -rnE "\bDG[0-7]\b" apps/web/src/i18n/*/ (catalogue JSON only)
+(end; count 0 files)
+$ grep -rn "رسمي\|معتمد من\|شهادة" apps/web/src/i18n/ar
+apps/web/src/i18n/ar/dashboards.json:197:    "validated": "معتمد من الإدارة المالية",
+apps/web/src/i18n/ar/gates.json:157:    "g6__benefit_not_validated": "أدلة المنافع: منفعة ليس لها قياس معتمد من المالية ولا قرار انتقال معتمد.",
+apps/web/src/i18n/ar/calendar.json:3:  "intro": "تقاويم الأعمال: المنطقة الزمنية وأسبوع العمل والعطلات. تتخطى تواريخ الاستحقاق بأيام العمل عطلات نهاية الأسبوع والعطلات الرسمية.",
+apps/web/src/i18n/ar/calendar.json:79:      "holiday": "عطلة رسمية"
+apps/web/src/i18n/ar/playbookP5.json:12:    "intro": "خلاصة عملية مستوحاة من أسس PMI وبرايتلاين، مع امتدادات مخصصة. وهي ليست معيارًا رسميًا من PMI.",
+apps/web/src/i18n/ar/traceability.json:219:    "waiverInForce": "يسري إعفاء معتمد من خط الأساس وارتباطات النتائج الناقصة حتى {{date}} (شاملاً). يسمح بتقديم G3؛ لكن الارتباطات لا تزال ناقصة.",
+apps/web/src/i18n/ar/common.json:5:    "provisionalHint": "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.",
+apps/web/src/i18n/ar/common.json:6:    "provisionalNotice": "الهوية البصرية مؤقتة: الشعار النصي والألوان بدائل مؤقتة وليست أصولًا رسمية لعلامة موبايلي."
+apps/web/src/i18n/ar/common.json:130:    "brandBody": "لم يُقدَّم شعار رسمي لموبايلي ولا ألوان علامة معتمدة. يعرض الترويسة شعارًا نصيًا مؤقتًا، والألوان (ومنها #0078FF) رموز تصميم مؤقتة يمكن استبدالها من إعدادات الهوية البصرية بعد اعتماد القيم الرسمية.",
+apps/web/src/i18n/ar/common.json:133:    "methodBody": "يطبّق المنتج دليل تحوّل الأعمال الإصدار 1.0، وهو خلاصة عملية مستوحاة من ممارسات PMI وBrightline وBRM مع إضافات مخصصة. وهو ليس معيارًا رسميًا من PMI، وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.",
+apps/web/src/i18n/ar/reportsP5.json:50:    "validated": "معتمد من المالية",
+apps/web/src/i18n/ar/reportsP5.json:190:    "draftBanner": "مسودة — ليست تقريرًا صادرًا. محتواها ثابت؛ أصدرها لتصبح التقرير الرسمي، أو استبعدها.",
+apps/web/src/i18n/ar/reportsP5.json:202:    "issueIntro": "الإصدار يجعل هذه اللقطة الإصدار الرسمي التالي في سلسلتها. ولا يتغير محتواها. والإصدار ليس موافقة.",
+apps/web/src/i18n/ar/kpi.json:6:    "validated": "معتمد من الإدارة المالية",
+apps/web/src/i18n/ar/problems.json:807:  "methodology_reader__prohibited_text": "يجب ألا يدّعي نص القارئ صفة رسمية أو اعتمادًا من معهد إدارة المشاريع، وألا يسمّي بوابة تسليم هندسية.",
+apps/web/src/i18n/ar/problems.json:808:  "branding__prohibited_claim": "يجب ألا يدّعي نص الهوية البصرية صفة رسمية أو اعتمادًا من معهد إدارة المشاريع.",
+$ grep -rn "0078FF\|provisional" apps/web/src/i18n/en/common.json packages/design-tokens/src | head
+packages/design-tokens/src/tokens.json:2:  "$comment": "Single design-token source (ADR-0009). PROVISIONAL values from master prompt §15 (REQ-S15-002). They are NOT verified or official Mobily colours; #0078FF is a provisional brand token. Replace only through the Branding Settings flow (REQ-S15-004) once official values are supplied.",
+packages/design-tokens/src/tokens.json:5:    "brand.primary": { "value": "#0078FF", "purpose": "Primary accents and selected elements", "provisional": true },
+packages/design-tokens/src/tokens.json:18:    "$comment": "Derived from the seeded tokens by a rule (REQ-S15-003). `value` is the result of the rule and a test re-derives it, so a change to a seed without regenerating fails. #0078FF itself is NOT used behind small white text.",
+packages/design-tokens/src/tokens.json:226:        "why": "white small text on #0078FF is about 4.09:1; action buttons use action.primary instead"
+packages/design-tokens/src/tokens.test.ts:24:      "brand.primary": "#0078FF",
+packages/design-tokens/src/tokens.test.ts:39:    expect(contrastRatio("#0078FF", "#FFFFFF")).toBeCloseTo(4.09, 2);
+packages/design-tokens/src/tokens.test.ts:40:    expect(contrastRatio("#0078FF", "#F5F8FC")).toBeCloseTo(3.84, 2);
+packages/design-tokens/src/tokens.test.ts:51:  it("never puts small white text on #0078FF: the action shade passes 4.5:1 on card and page", () => {
+$ git diff edbf5ce2be52..54e02b61961 -- apps/web/src packages apps/api apps/worker (product code changed since round 2?)
+(end)

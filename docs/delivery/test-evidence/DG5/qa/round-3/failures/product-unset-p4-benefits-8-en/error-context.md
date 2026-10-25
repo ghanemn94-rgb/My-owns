@@ -1,0 +1,811 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - button "Switch language to العربية" [ref=e11] [cursor=pointer]: العربية
+    - generic [ref=e12]:
+      - generic [ref=e13]: Synthetic Auditor en
+      - generic [ref=e14]: Synthetic Dev Organization
+    - button "Sign out" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - generic [ref=e18]: Sign out
+  - generic [ref=e20]:
+    - navigation "Primary navigation" [ref=e21]:
+      - list [ref=e22]:
+        - listitem [ref=e23]:
+          - link "My Work" [ref=e24] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e25]: My Work
+          - list "My Work" [ref=e26]:
+            - listitem [ref=e27]:
+              - link "Tasks and inbox" [ref=e28] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e29]:
+              - link "Approvals" [ref=e30] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e31]:
+              - link "Delegations" [ref=e32] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e33]:
+              - link "Notification preferences" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e35]:
+          - link "Executive Overview" [ref=e36] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e37]: Executive Overview
+          - list "Executive Overview" [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Dashboards" [ref=e40] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e41]:
+              - link "RAG policy" [ref=e42] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e43]:
+          - link "Transformations" [ref=e44] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e45]: Transformations
+        - listitem [ref=e46]:
+          - link "Playbook and Procedures" [ref=e47] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e48]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e49]:
+            - listitem [ref=e50]:
+              - link "Phase steps and review queue" [ref=e51] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e52]:
+              - link "Playbook reader" [ref=e53] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e54]:
+              - link "My procedures" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e56]:
+              - link "90-day launch plan" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e58]:
+              - link "Health check" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e60]:
+          - link "Strategy and KPIs" [ref=e61] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e62]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e63]:
+            - listitem [ref=e64]:
+              - link "KPIs" [ref=e65] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e66]:
+          - link "Target Operating Model" [ref=e67] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e68]: Target Operating Model
+        - listitem [ref=e69]:
+          - link "Initiatives and Roadmaps" [ref=e70] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e71]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e72]:
+            - listitem [ref=e73]:
+              - link "Portfolios" [ref=e74] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e75]:
+              - link "Owner updates" [ref=e76] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e77]:
+          - link "Governance" [ref=e78] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e79]: Governance
+          - list "Governance" [ref=e80]:
+            - listitem [ref=e81]:
+              - link "Groups" [ref=e82] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e83]:
+              - link "Forums" [ref=e84] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e85]:
+              - link "Meetings" [ref=e86] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e87]:
+              - link "Executive decisions (T16)" [ref=e88] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e89]:
+              - link "Change requests" [ref=e90] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e91]:
+          - link "Risks and Actions" [ref=e92] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e93]: Risks and Actions
+          - list "Risks and Actions" [ref=e94]:
+            - listitem [ref=e95]:
+              - link "RAID (T15)" [ref=e96] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e97]:
+              - link "Action register" [ref=e98] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e99]:
+              - link "Corrective actions" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e101]:
+          - link "Benefits and Finance" [ref=e102] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e103]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e104]:
+            - listitem [ref=e105]:
+              - link "Benefits register (T14)" [ref=e106] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e107]:
+          - link "Change and Adoption" [ref=e108] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e109]: Change and Adoption
+          - list "Change and Adoption" [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Adoption plan (T13)" [ref=e112] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e113]:
+          - link "Evidence and Reports" [ref=e114] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e115]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e116]:
+            - listitem [ref=e117]:
+              - link "Reports and snapshots" [ref=e118] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e119]:
+              - link "Exports" [ref=e120] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e121]:
+              - link "Presentation mode" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e123]:
+              - link "Evidence register" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e125]:
+          - link "BAU and Improvement" [ref=e126] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e127]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e128]:
+            - listitem [ref=e129]:
+              - link "Performance areas" [ref=e130] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e131]:
+              - link "Improvement backlog" [ref=e132] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e133]:
+              - link "Lessons" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e135]:
+              - link "Lesson search" [ref=e136] [cursor=pointer]:
+                - /url: /lessons
+        - listitem [ref=e137]:
+          - link "Administration" [ref=e138] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e139]: Administration
+          - list "Administration" [ref=e140]:
+            - listitem [ref=e141]:
+              - link "Calendar" [ref=e142] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e143]:
+              - link "Playbook Studio" [ref=e144] [cursor=pointer]:
+                - /url: /admin/studio
+            - listitem [ref=e145]:
+              - link "Methodology migrations" [ref=e146] [cursor=pointer]:
+                - /url: /admin/methodology-migrations
+            - listitem [ref=e147]:
+              - link "Source coverage" [ref=e148] [cursor=pointer]:
+                - /url: /admin/source-coverage
+            - listitem [ref=e149]:
+              - link "Form builder" [ref=e150] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e151]:
+              - link "Procedure builder" [ref=e152] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e153]:
+              - link "Automation" [ref=e154] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e155]:
+              - link "Approval routes" [ref=e156] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e157]:
+              - link "Branding" [ref=e158] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e159]:
+              - link "Demo environment" [ref=e160] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e161]:
+              - link "Health check scoring" [ref=e162] [cursor=pointer]:
+                - /url: /admin/health-schemes
+      - paragraph [ref=e163]:
+        - link "About this product" [ref=e164] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - navigation "Breadcrumbs" [ref=e168]:
+            - list [ref=e169]:
+              - listitem [ref=e170]:
+                - link "Transformations" [ref=e171] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e172]:
+                - text: /
+                - link "TR-0019" [ref=e173] [cursor=pointer]:
+                  - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f
+              - listitem [ref=e174]: /Benefit
+          - generic [ref=e176]:
+            - heading "Benefit" [level=1] [ref=e177]
+            - paragraph [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: TR-0019
+                - generic [ref=e181]: Synthetic P4 benefits EN mvn18498
+                - generic [ref=e182]:
+                  - img [ref=e183]
+                  - text: Draft – not submitted
+                - generic [ref=e185]: "Phase: Diagnose"
+        - navigation "Transformation workspace" [ref=e186]:
+          - list [ref=e187]:
+            - listitem [ref=e188]:
+              - link "Overview" [ref=e189] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f
+            - listitem [ref=e190]:
+              - link "Diagnose" [ref=e191] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/diagnose
+            - listitem [ref=e192]:
+              - link "Charter" [ref=e193] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/charter
+            - listitem [ref=e194]:
+              - link "Define" [ref=e195] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/define
+            - listitem [ref=e196]:
+              - link "Design" [ref=e197] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/design
+            - listitem [ref=e198]:
+              - link "Portfolio" [ref=e199] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/portfolio
+            - listitem [ref=e200]:
+              - link "Prioritization" [ref=e201] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/prioritization
+            - listitem [ref=e202]:
+              - link "Roadmap" [ref=e203] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/roadmap
+            - listitem [ref=e204]:
+              - link "Dependencies" [ref=e205] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/dependencies
+            - listitem [ref=e206]:
+              - link "Capacity" [ref=e207] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/capacity
+            - listitem [ref=e208]:
+              - link "Business cases" [ref=e209] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/business-cases
+            - listitem [ref=e210]:
+              - link "Benefit formulas" [ref=e211] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-formulas
+            - listitem [ref=e212]:
+              - link "Decisions" [ref=e213] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/decisions
+            - listitem [ref=e214]:
+              - link "Gates" [ref=e215] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/gates
+            - listitem [ref=e216]:
+              - link "Readiness" [ref=e217] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/readiness
+            - listitem [ref=e218]:
+              - link "Dispensations" [ref=e219] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/dispensations
+            - listitem [ref=e220]:
+              - link "Evidence" [ref=e221] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/evidence
+            - listitem [ref=e222]:
+              - link "Team" [ref=e223] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/team
+            - listitem [ref=e224]:
+              - link "Role mapping" [ref=e225] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/role-mappings
+            - listitem [ref=e226]:
+              - link "Decision rights" [ref=e227] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/decision-rights
+            - listitem [ref=e228]:
+              - link "RACI" [ref=e229] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/raci
+            - listitem [ref=e230]:
+              - link "Transform readiness" [ref=e231] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/transform-readiness
+            - listitem [ref=e232]:
+              - link "Approval records" [ref=e233] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/approval-decisions
+            - listitem [ref=e234]:
+              - link "KPIs" [ref=e235] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/kpis
+            - listitem [ref=e236]:
+              - link "Benefits register (T14)" [ref=e237] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefits
+            - listitem [ref=e238]:
+              - link "RAID (T15)" [ref=e239] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/raid
+            - listitem [ref=e240]:
+              - link "Actions" [ref=e241] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/actions
+            - listitem [ref=e242]:
+              - link "Corrective actions" [ref=e243] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/corrective-actions
+            - listitem [ref=e244]:
+              - link "Forums" [ref=e245] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/forums
+            - listitem [ref=e246]:
+              - link "Meetings" [ref=e247] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/meetings
+            - listitem [ref=e248]:
+              - link "Executive decisions (T16)" [ref=e249] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/executive-decisions
+            - listitem [ref=e250]:
+              - link "Adoption" [ref=e251] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/adoption
+            - listitem [ref=e252]:
+              - link "BAU and performance areas" [ref=e253] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/bau
+            - listitem [ref=e254]:
+              - link "Improvement backlog" [ref=e255] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/improvement
+            - listitem [ref=e256]:
+              - link "Lessons" [ref=e257] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/lessons
+            - listitem [ref=e258]:
+              - link "Dashboard (T10)" [ref=e259] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/dashboard
+            - listitem [ref=e260]:
+              - link "Closure" [ref=e261] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/closure
+            - listitem [ref=e262]:
+              - link "Phases" [ref=e263] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/phases
+            - listitem [ref=e264]:
+              - link "Change requests" [ref=e265] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/change-requests
+            - listitem [ref=e266]:
+              - link "Traceability" [ref=e267] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/traceability
+            - listitem [ref=e268]:
+              - link "Modular entry" [ref=e269] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/modular-entry
+            - listitem [ref=e270]:
+              - link "Workstreams" [ref=e271] [cursor=pointer]:
+                - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/workstreams
+        - paragraph [ref=e272]: Profile, lifecycle, enablers, allocations, values and measurements of one benefit.
+        - note [ref=e273]:
+          - img [ref=e274]
+          - text: "Read-only view: your role assignments do not allow changes here. The server checks every change."
+        - navigation "Benefits screens" [ref=e276]:
+          - link "Benefits register (T14)" [ref=e277] [cursor=pointer]:
+            - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefits
+            - img [ref=e278]
+            - text: Benefits register (T14)
+          - link "Shared-benefit groups" [ref=e280] [cursor=pointer]:
+            - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-groups
+            - img [ref=e281]
+            - text: Shared-benefit groups
+          - link "Overlap warnings" [ref=e283] [cursor=pointer]:
+            - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-overlaps
+            - img [ref=e284]
+            - text: Overlap warnings
+          - link "Scenarios" [ref=e286] [cursor=pointer]:
+            - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-scenarios
+            - img [ref=e287]
+            - text: Scenarios
+          - link "Valuation methods" [ref=e289] [cursor=pointer]:
+            - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-valuation-methods
+            - img [ref=e290]
+            - text: Valuation methods
+          - link "Finance validation queue" [ref=e292] [cursor=pointer]:
+            - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/finance-validations
+            - img [ref=e293]
+            - text: Finance validation queue
+        - region "B02 · Synthetic churn reduction EN mvn18498" [ref=e295]:
+          - heading "B02 · Synthetic churn reduction EN mvn18498" [level=2] [ref=e297]
+          - generic [ref=e298]: Lower churn on the synthetic prepaid base.
+          - generic [ref=e299]:
+            - generic [ref=e300]:
+              - img [ref=e301]
+              - text: Measure
+            - generic [ref=e303]:
+              - img [ref=e304]
+              - text: Validated by Finance
+            - generic [ref=e306]:
+              - img [ref=e307]
+              - text: Unknown
+          - generic [ref=e309]:
+            - generic [ref=e310]:
+              - term [ref=e311]: Benefit type
+              - definition [ref=e312]: Revenue
+            - generic [ref=e313]:
+              - term [ref=e314]: Value class
+              - definition [ref=e315]: Revenue uplift
+            - generic [ref=e316]:
+              - term [ref=e317]: Benefit owner (one person)
+              - definition [ref=e318]: Team member (Business Owner, ref. 03e8)
+            - generic [ref=e319]:
+              - term [ref=e320]: Currency
+              - definition [ref=e321]: SAR
+            - generic [ref=e322]:
+              - term [ref=e323]: Financial-statement line
+              - definition [ref=e324]: Revenue - prepaid
+            - generic [ref=e325]:
+              - term [ref=e326]: Planned value
+              - definition [ref=e327]: SAR 10,000,000.00
+            - generic [ref=e328]:
+              - term [ref=e329]: Baseline value
+              - definition [ref=e330]:
+                - generic [ref=e331]:
+                  - text: 1,000,000
+                  - generic [ref=e332]: SAR
+                - generic [ref=e333]:
+                  - text: (
+                  - generic [ref=e334]:
+                    - img [ref=e335]
+                    - generic [ref=e337]: Unknown
+                  - text: )
+            - generic [ref=e338]:
+              - term [ref=e339]: Baseline validation
+              - definition [ref=e340]: Baseline validated by Finance
+            - generic [ref=e341]:
+              - term [ref=e342]: Counterfactual (what would happen without the change)
+              - definition [ref=e343]: —
+            - generic [ref=e344]:
+              - term [ref=e345]: Target value
+              - definition [ref=e346]:
+                - generic [ref=e347]:
+                  - text: 1,200,000
+                  - generic [ref=e348]: SAR
+                - generic [ref=e349]:
+                  - text: (
+                  - generic [ref=e350]:
+                    - img [ref=e351]
+                    - generic [ref=e353]: Unknown
+                  - text: )
+            - generic [ref=e354]:
+              - term [ref=e355]: Benefit formula (T09)
+              - definition [ref=e356]:
+                - link "Open the benefit formula" [ref=e357] [cursor=pointer]:
+                  - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-formulas/01a17040-9604-766b-b5d7-ed10c585a399
+            - generic [ref=e358]:
+              - term [ref=e359]: Realization window
+              - definition [ref=e360]:
+                - generic [ref=e361]:
+                  - img [ref=e362]
+                  - generic [ref=e364]: Unknown
+            - generic [ref=e365]:
+              - term [ref=e366]: Value driver key
+              - definition [ref=e367]: —
+            - generic [ref=e368]:
+              - term [ref=e369]: Finance validator
+              - definition [ref=e370]: The transformation's Finance role
+            - generic [ref=e371]:
+              - term [ref=e372]: Confidence
+              - definition [ref=e373]: —
+            - generic [ref=e374]:
+              - term [ref=e375]: Assumptions
+              - definition [ref=e376]: —
+            - generic [ref=e377]:
+              - term [ref=e378]: Recovery plan (Correct step)
+              - definition [ref=e379]: —
+            - generic [ref=e380]:
+              - term [ref=e381]: BAU owner (Sustain step)
+              - definition [ref=e382]: —
+            - generic [ref=e383]:
+              - term [ref=e384]: Control cadence (Sustain step)
+              - definition [ref=e385]: —
+            - generic [ref=e386]:
+              - term [ref=e387]: Counted in totals
+              - definition [ref=e388]: Counted
+        - 'region "Form tools: Synthetic churn reduction EN mvn18498" [ref=e389]':
+          - generic [ref=e390]:
+            - 'heading "Form tools: Synthetic churn reduction EN mvn18498" [level=2] [ref=e391]'
+            - 'button "Export : Benefits register (T14)" [ref=e393] [cursor=pointer]':
+              - img [ref=e394]
+              - text: Export
+              - generic [ref=e396]: ": Benefits register (T14)"
+          - generic [ref=e397]:
+            - paragraph [ref=e398]: Extension fields with inline help, drafts, version history, comments and attachments of this record. A draft is not saved to the record until you save it.
+            - tablist "Form tools sections" [ref=e399]:
+              - tab "Edit and drafts" [selected] [ref=e400] [cursor=pointer]
+              - tab "Version history" [ref=e401] [cursor=pointer]
+              - tab "Comments" [ref=e402] [cursor=pointer]
+              - tab "Attachments" [ref=e403] [cursor=pointer]
+            - tabpanel "Edit and drafts" [ref=e404]:
+              - generic [ref=e405]:
+                - paragraph [ref=e406]: Change the fields below. Save a draft to keep your changes without changing the record; save to the record when you are ready.
+                - note [ref=e407]:
+                  - img [ref=e408]
+                  - text: You can read this record but not change it.
+                - group "Source fields" [ref=e410]:
+                  - generic [ref=e411]: Source fields
+                  - generic [ref=e412]:
+                    - generic [ref=e413]: Title
+                    - textbox "Title" [disabled] [ref=e414]: Synthetic churn reduction EN mvn18498
+                  - generic [ref=e415]:
+                    - generic [ref=e416]: Description
+                    - textbox "Description" [disabled] [ref=e417]: Lower churn on the synthetic prepaid base.
+                - group "Extension fields" [ref=e418]:
+                  - generic [ref=e419]: Extension fields
+                  - paragraph [ref=e420]: This form has no extension fields in the form version your transformation uses.
+        - region "Benefits lifecycle" [ref=e421]:
+          - heading "Benefits lifecycle" [level=2] [ref=e423]
+          - generic [ref=e424]: Six steps from the playbook, each with its question and output. A benefit moves one step at a time; a step can start only when its outputs are present.
+          - list [ref=e425]:
+            - listitem [ref=e426]:
+              - generic [ref=e427]:
+                - paragraph [ref=e428]:
+                  - strong [ref=e429]: 1. Identify
+                - paragraph [ref=e430]:
+                  - generic [ref=e431]: "Question:"
+                  - text: What benefit should this change create?
+                - paragraph [ref=e432]:
+                  - generic [ref=e433]: "Output:"
+                  - text: Benefit profile
+            - listitem [ref=e434]:
+              - generic [ref=e435]:
+                - paragraph [ref=e436]:
+                  - strong [ref=e437]: 2. Plan
+                - paragraph [ref=e438]:
+                  - generic [ref=e439]: "Question:"
+                  - text: How will it be measured, when, and by whom?
+                - paragraph [ref=e440]:
+                  - generic [ref=e441]: "Output:"
+                  - text: Baseline, formula, target, owner
+                - paragraph [ref=e442]:
+                  - img [ref=e443]
+                  - text: Outputs present
+            - listitem [ref=e445]:
+              - generic [ref=e446]:
+                - paragraph [ref=e447]:
+                  - strong [ref=e448]: 3. Enable
+                - paragraph [ref=e449]:
+                  - generic [ref=e450]: "Question:"
+                  - text: What capability/deliverable must exist first?
+                - paragraph [ref=e451]:
+                  - generic [ref=e452]: "Output:"
+                  - text: Benefit dependency chain
+                - paragraph [ref=e453]:
+                  - img [ref=e454]
+                  - text: Outputs present
+            - listitem [ref=e456]:
+              - generic [ref=e457]:
+                - paragraph [ref=e458]:
+                  - strong [ref=e459]: 4. Measure
+                  - generic [ref=e460]:
+                    - img [ref=e461]
+                    - text: Current step
+                - paragraph [ref=e463]:
+                  - generic [ref=e464]: "Question:"
+                  - text: Is the benefit appearing in actual performance?
+                - paragraph [ref=e465]:
+                  - generic [ref=e466]: "Output:"
+                  - text: Evidence / actuals
+                - paragraph [ref=e467]:
+                  - img [ref=e468]
+                  - text: Outputs present
+            - listitem [ref=e470]:
+              - generic [ref=e471]:
+                - paragraph [ref=e472]:
+                  - strong [ref=e473]: 5. Correct
+                - paragraph [ref=e474]:
+                  - generic [ref=e475]: "Question:"
+                  - text: What action is needed if benefit is off track?
+                - paragraph [ref=e476]:
+                  - generic [ref=e477]: "Output:"
+                  - text: Recovery plan
+                - paragraph [ref=e478]:
+                  - img [ref=e479]
+                  - text: "Missing before this step: recovery plan"
+            - listitem [ref=e481]:
+              - generic [ref=e482]:
+                - paragraph [ref=e483]:
+                  - strong [ref=e484]: 6. Sustain
+                - paragraph [ref=e485]:
+                  - generic [ref=e486]: "Question:"
+                  - text: Who owns the metric after transformation closure?
+                - paragraph [ref=e487]:
+                  - generic [ref=e488]: "Output:"
+                  - text: BAU owner + control cadence
+                - paragraph [ref=e489]:
+                  - img [ref=e490]
+                  - text: "Missing before this step: BAU owner, control cadence"
+          - heading "History" [level=3] [ref=e492]
+          - list [ref=e493]:
+            - listitem [ref=e494]: Created → Identify · 25 Oct 2026, 02:30 · Team member (Business Owner, ref. 03e8)
+            - listitem [ref=e495]: Identify → Plan · 25 Oct 2026, 02:30 · Team member (Business Owner, ref. 03e8)
+            - listitem [ref=e496]: Plan → Enable · 25 Oct 2026, 02:30 · Team member (Business Owner, ref. 03e8)
+            - listitem [ref=e497]: Enable → Measure · 25 Oct 2026, 02:30 · Team member (Business Owner, ref. 03e8)
+          - paragraph [ref=e498]: "Order: Identify → Plan → Enable → Measure → Correct → Sustain. Measure and Correct can alternate; Sustain follows Measure."
+        - region "Enablers" [ref=e499]:
+          - heading "Enablers" [level=2] [ref=e501]
+          - generic [ref=e502]: The initiatives, deliverables or capabilities that enable this benefit. A delivered enabler is not realized value.
+          - list [ref=e503]:
+            - listitem [ref=e504]:
+              - generic [ref=e505]:
+                - paragraph [ref=e506]:
+                  - text: INI-01 · Synthetic retention offers en
+                  - generic [ref=e507]:
+                    - img [ref=e508]
+                    - text: Active
+                - paragraph [ref=e510]: Not delivered yet.
+        - region "Contribution allocations" [ref=e511]:
+          - heading "Contribution allocations" [level=2] [ref=e513]
+          - generic [ref=e514]: How this benefit is attributed to initiatives. Shares total at most 100 %; the rest is unallocated.
+          - region "Contribution allocations" [ref=e515]:
+            - table "Contribution allocations" [ref=e516]:
+              - caption [ref=e517]: Contribution allocations
+              - rowgroup [ref=e518]:
+                - row "Initiative Share Basis" [ref=e519]:
+                  - columnheader "Initiative" [ref=e520]
+                  - columnheader "Share" [ref=e521]
+                  - columnheader "Basis" [ref=e522]
+              - rowgroup [ref=e523]:
+                - row "INI-01 · Synthetic retention offers en 60 % —" [ref=e524]:
+                  - rowheader "INI-01 · Synthetic retention offers en" [ref=e525]
+                  - cell "60 %" [ref=e526]
+                  - cell "—" [ref=e527]
+                - row "INI-02 · Synthetic digital care en 30 % —" [ref=e528]:
+                  - rowheader "INI-02 · Synthetic digital care en" [ref=e529]
+                  - cell "30 %" [ref=e530]
+                  - cell "—" [ref=e531]
+          - generic [ref=e532]:
+            - generic [ref=e533]:
+              - term [ref=e534]: Allocated
+              - definition [ref=e535]: 90 %
+            - generic [ref=e536]:
+              - term [ref=e537]: Unallocated
+              - definition [ref=e538]: 10 %
+          - paragraph [ref=e539]: Allocations attribute the benefit to initiatives for their views. Transformation totals count the benefit once, never its allocations.
+        - region "Values by state" [ref=e540]:
+          - heading "Values by state" [level=2] [ref=e542]
+          - generic [ref=e543]: Planned, forecast, submitted (pending), validated, sustained, rejected and measured values are kept apart and never added together. A forecast is never validated.
+          - region "Values by state" [ref=e544]:
+            - table "Values by state" [ref=e545]:
+              - caption [ref=e546]: Values by state
+              - rowgroup [ref=e547]:
+                - row "State Total Values" [ref=e548]:
+                  - columnheader "State" [ref=e549]
+                  - columnheader "Total" [ref=e550]
+                  - columnheader "Values" [ref=e551]
+              - rowgroup [ref=e552]:
+                - 'row "Planned The plan. SAR 0.00 Benefits: 0 —" [ref=e553]':
+                  - rowheader "Planned The plan." [ref=e554]:
+                    - text: Planned
+                    - generic [ref=e555]: The plan.
+                  - 'cell "SAR 0.00 Benefits: 0" [ref=e556]':
+                    - text: SAR 0.00
+                    - generic [ref=e557]: "Benefits: 0"
+                  - cell "—" [ref=e558]
+                - 'row "Forecast An estimate; never validated. SAR 0.00 Benefits: 0 —" [ref=e559]':
+                  - rowheader "Forecast An estimate; never validated." [ref=e560]:
+                    - text: Forecast
+                    - generic [ref=e561]: An estimate; never validated.
+                  - 'cell "SAR 0.00 Benefits: 0" [ref=e562]':
+                    - text: SAR 0.00
+                    - generic [ref=e563]: "Benefits: 0"
+                  - cell "—" [ref=e564]
+                - 'row "Submitted (pending) Pending Finance validation; not counted as validated. SAR 0.00 Benefits: 0 —" [ref=e565]':
+                  - rowheader "Submitted (pending) Pending Finance validation; not counted as validated." [ref=e566]:
+                    - text: Submitted (pending)
+                    - generic [ref=e567]: Pending Finance validation; not counted as validated.
+                  - 'cell "SAR 0.00 Benefits: 0" [ref=e568]':
+                    - text: SAR 0.00
+                    - generic [ref=e569]: "Benefits: 0"
+                  - cell "—" [ref=e570]
+                - 'row "Validated Approved by Finance. SAR 0.00 Benefits: 3 1 Jul 2026 – 30 Sept 2026: SAR 240,000.50 Open the measurement and its lineage 1 Jul 2026 – 30 Sept 2026: -SAR 500.50 Open the measurement and its lineage 1 Jul 2026 – 30 Sept 2026: -SAR 239,500.00 Open the measurement and its lineage" [ref=e571]':
+                  - rowheader "Validated Approved by Finance." [ref=e572]:
+                    - text: Validated
+                    - generic [ref=e573]: Approved by Finance.
+                  - 'cell "SAR 0.00 Benefits: 3" [ref=e574]':
+                    - text: SAR 0.00
+                    - generic [ref=e575]: "Benefits: 3"
+                  - 'cell "1 Jul 2026 – 30 Sept 2026: SAR 240,000.50 Open the measurement and its lineage 1 Jul 2026 – 30 Sept 2026: -SAR 500.50 Open the measurement and its lineage 1 Jul 2026 – 30 Sept 2026: -SAR 239,500.00 Open the measurement and its lineage" [ref=e576]':
+                    - list [ref=e577]:
+                      - listitem [ref=e578]:
+                        - generic [ref=e579]: 1 Jul 2026 – 30 Sept 2026
+                        - text: ": SAR 240,000.50"
+                        - link "Open the measurement and its lineage" [ref=e580] [cursor=pointer]:
+                          - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-341e-736a-a8e2-f30a037fb63c
+                      - listitem [ref=e581]:
+                        - generic [ref=e582]: 1 Jul 2026 – 30 Sept 2026
+                        - text: ": -SAR 500.50"
+                        - link "Open the measurement and its lineage" [ref=e583] [cursor=pointer]:
+                          - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-9876-71f3-bb18-6b1b6cbfe2e6
+                      - listitem [ref=e584]:
+                        - generic [ref=e585]: 1 Jul 2026 – 30 Sept 2026
+                        - text: ": -SAR 239,500.00"
+                        - link "Open the measurement and its lineage" [ref=e586] [cursor=pointer]:
+                          - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-ab7e-7588-b343-3e369f3456d2
+                - 'row "Sustained Validated during Sustain. SAR 0.00 Benefits: 0 —" [ref=e587]':
+                  - rowheader "Sustained Validated during Sustain." [ref=e588]:
+                    - text: Sustained
+                    - generic [ref=e589]: Validated during Sustain.
+                  - 'cell "SAR 0.00 Benefits: 0" [ref=e590]':
+                    - text: SAR 0.00
+                    - generic [ref=e591]: "Benefits: 0"
+                  - cell "—" [ref=e592]
+                - 'row "Rejected Rejected by Finance; kept visible. SAR 0.00 Benefits: 0 —" [ref=e593]':
+                  - rowheader "Rejected Rejected by Finance; kept visible." [ref=e594]:
+                    - text: Rejected
+                    - generic [ref=e595]: Rejected by Finance; kept visible.
+                  - 'cell "SAR 0.00 Benefits: 0" [ref=e596]':
+                    - text: SAR 0.00
+                    - generic [ref=e597]: "Benefits: 0"
+                  - cell "—" [ref=e598]
+                - 'row "Measured Everything measured (overlaps submitted and validated; not a separate total). SAR 250,000.00 Benefits: 1 1 Jul 2026 – 30 Sept 2026: SAR 250,000.00 Open the measurement and its lineage" [ref=e599]':
+                  - rowheader "Measured Everything measured (overlaps submitted and validated; not a separate total)." [ref=e600]:
+                    - text: Measured
+                    - generic [ref=e601]: Everything measured (overlaps submitted and validated; not a separate total).
+                  - 'cell "SAR 250,000.00 Benefits: 1" [ref=e602]':
+                    - text: SAR 250,000.00
+                    - generic [ref=e603]: "Benefits: 1"
+                  - 'cell "1 Jul 2026 – 30 Sept 2026: SAR 250,000.00 Open the measurement and its lineage" [ref=e604]':
+                    - list [ref=e605]:
+                      - listitem [ref=e606]:
+                        - generic [ref=e607]: 1 Jul 2026 – 30 Sept 2026
+                        - text: ": SAR 250,000.00"
+                        - link "Open the measurement and its lineage" [ref=e608] [cursor=pointer]:
+                          - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-341e-736a-a8e2-f30a037fb63c
+        - region "Measurements" [ref=e609]:
+          - heading "Measurements" [level=2] [ref=e611]
+          - generic [ref=e612]: "A measured value is pending until Finance validates it. A validated value is never edited: Finance records an amendment or a reversal."
+          - region "Measurements" [ref=e613]:
+            - table "Measurements" [ref=e614]:
+              - caption [ref=e615]: Measurements
+              - rowgroup [ref=e616]:
+                - row "No. Measurement period Value Status Actions" [ref=e617]:
+                  - columnheader "No." [ref=e618]
+                  - columnheader "Measurement period" [ref=e619]
+                  - columnheader "Value" [ref=e620]
+                  - columnheader "Status" [ref=e621]
+                  - columnheader "Actions" [ref=e622]
+              - rowgroup [ref=e623]:
+                - 'row "#3 Reversal · Finance correction 1 Jul 2026 – 30 Sept 2026 -SAR 239,500.00 Validated by Finance Submitted 25 Oct 2026, 02:31 Validated: never edited" [ref=e624]':
+                  - rowheader "#3 Reversal · Finance correction" [ref=e625]:
+                    - link "#3" [ref=e626] [cursor=pointer]:
+                      - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-ab7e-7588-b343-3e369f3456d2
+                    - generic [ref=e627]: Reversal · Finance correction
+                  - cell "1 Jul 2026 – 30 Sept 2026" [ref=e628]:
+                    - generic [ref=e629]: 1 Jul 2026 – 30 Sept 2026
+                  - cell "-SAR 239,500.00" [ref=e630]:
+                    - generic [ref=e631]: "-SAR 239,500.00"
+                  - cell "Validated by Finance Submitted 25 Oct 2026, 02:31" [ref=e632]:
+                    - generic [ref=e634]:
+                      - img [ref=e635]
+                      - text: Validated by Finance
+                    - generic [ref=e637]: Submitted 25 Oct 2026, 02:31
+                  - 'cell "Validated: never edited" [ref=e638]'
+                - 'row "#2 Amendment · Finance correction 1 Jul 2026 – 30 Sept 2026 -SAR 500.50 Validated by Finance Submitted 25 Oct 2026, 02:31 Validated: never edited" [ref=e639]':
+                  - rowheader "#2 Amendment · Finance correction" [ref=e640]:
+                    - link "#2" [ref=e641] [cursor=pointer]:
+                      - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-9876-71f3-bb18-6b1b6cbfe2e6
+                    - generic [ref=e642]: Amendment · Finance correction
+                  - cell "1 Jul 2026 – 30 Sept 2026" [ref=e643]:
+                    - generic [ref=e644]: 1 Jul 2026 – 30 Sept 2026
+                  - cell "-SAR 500.50" [ref=e645]:
+                    - generic [ref=e646]: "-SAR 500.50"
+                  - cell "Validated by Finance Submitted 25 Oct 2026, 02:31" [ref=e647]:
+                    - generic [ref=e649]:
+                      - img [ref=e650]
+                      - text: Validated by Finance
+                    - generic [ref=e652]: Submitted 25 Oct 2026, 02:31
+                  - 'cell "Validated: never edited" [ref=e653]'
+                - 'row "#1 Measurement · entered 1 Jul 2026 – 30 Sept 2026 SAR 250,000.00 Validated amount: SAR 240,000.50 Validated by Finance Submitted 25 Oct 2026, 02:31 Validated: never edited" [ref=e654]':
+                  - rowheader "#1 Measurement · entered" [ref=e655]:
+                    - link "#1" [ref=e656] [cursor=pointer]:
+                      - /url: /transformations/01a17040-9512-708a-a17d-e88743b7f97f/benefit-measurements/01a17041-341e-736a-a8e2-f30a037fb63c
+                    - generic [ref=e657]: Measurement · entered
+                  - cell "1 Jul 2026 – 30 Sept 2026" [ref=e658]:
+                    - generic [ref=e659]: 1 Jul 2026 – 30 Sept 2026
+                  - 'cell "SAR 250,000.00 Validated amount: SAR 240,000.50" [ref=e660]':
+                    - generic [ref=e661]:
+                      - text: SAR 250,000.00
+                      - generic [ref=e662]: "Validated amount: SAR 240,000.50"
+                  - cell "Validated by Finance Submitted 25 Oct 2026, 02:31" [ref=e663]:
+                    - generic [ref=e665]:
+                      - img [ref=e666]
+                      - text: Validated by Finance
+                    - generic [ref=e668]: Submitted 25 Oct 2026, 02:31
+                  - 'cell "Validated: never edited" [ref=e669]'
+```

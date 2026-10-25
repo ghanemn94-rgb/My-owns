@@ -1,0 +1,35 @@
+# 01-candidate-identity 2026-10-25T00:22:46Z
+$ git -C /home/user/My-owns rev-parse HEAD
+bc79516de7348466ca60abd70f7c3661d9dd11a6
+$ git log --oneline 54e02b6..HEAD
+bc79516 run: DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1 (review evidence, auto-committed by run-agent.sh)
+bd2e7f9 DG5 re-gate frozen for review round 3: candidate d8d83181 (2203 files, source 54e02b6); REVIEWING; round-3 assignments
+$ git diff --name-only 54e02b6 HEAD
+docs/delivery/assignments/DG5/round-3/code-security-reviewer.md
+docs/delivery/assignments/DG5/round-3/domain-reviewer.md
+docs/delivery/assignments/DG5/round-3/qa-verifier.md
+docs/delivery/candidates/DG5/d8d831814a6065af.manifest.json
+docs/delivery/reviews/DG5/round-3/domain-reviewer.json
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1/meta.json
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1/result.json
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1/sandbox.json
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1/settings.json
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1/stderr.log
+docs/delivery/runs/DG5/DG5-T-DG5-RG-DOM-R3-domain-reviewer-20261024T225623Z-65ac15f1/transcript.jsonl.gz
+docs/delivery/stages.json
+$ git diff --quiet 54e02b6 HEAD -- . ':!docs/delivery' ; echo $?
+0
+$ node tools/gates/candidate.mjs --stage DG5 (repository tree, node 24.21.0)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9","files":2203}
+exit=0
+$ clone $TMPDIR/rv (git clone /home/user/My-owns; checkout bd2e7f9)
+bd2e7f904bb975f39ee6188af181eae83983f968
+is-shallow: false
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9","files":2203}
+exit=0
+clone status (tracked changes): ''
+# Reviewer note: at the start of this run (2026-10-24T23:0xZ) HEAD was bd2e7f9 (the round-3 freeze commit); during the
+# run the runner auto-committed the domain reviewer's run evidence as bc79516 (docs/delivery/** only, listed above).
+# Both trees equal source 54e02b6 outside docs/delivery and give the same candidate id over 2203 files; every product
+# check ran in the clone at bd2e7f9. I did not open docs/delivery/reviews/DG5/round-3/domain-reviewer.json (verdict
+# formed independently).

@@ -1,0 +1,57 @@
+# 44-advisory-locks 2026-10-25T00:22:46Z repo tree (= candidate outside docs/delivery)
+$ grep -n "730" apps/api/src/modules/platform/advisory-locks.ts
+18:  businessUnitHierarchy: 730219,
+20:  outcomeTree: 730220,
+22:  dependencyGraph: 730221,
+24:  prioritization: 730222,
+26:  dependencyType: 730223,
+30:  delegationGraph: 730224,
+32:  raciDeliverable: 730225,
+34:  approvalSubject: 730226,
+38:  kpiFormulaGraph: 730228,
+40:  kpiActualSlot: 730229,
+42:  reportingPeriod: 730230,
+46:  benefitAllocationSet: 730232,
+48:  financeValidationQueue: 730233,
+50:  benefitOverlap: 730234,
+54:  correctiveCase: 730236,
+58:  meetingSeriesGeneration: 730238,
+60:  executiveAskBlocker: 730239,
+62:  decisionEscalation: 730240,
+66:  adoptionIntervention: 730242,
+68:  bauHandover: 730243,
+70:  closure: 730244,
+74:  changeRequestSubject: 730246,
+76:  gateException: 730247,
+79:  traceAllocationSet: 730249,
+83:  configDraft: 730250,
+85:  configPublish: 730251,
+87:  methodologyMigration: 730252,
+92:  procedureInstanceStep: 730254,
+96:  automationRuleExecution: 730258,
+98:  failureRepair: 730259,
+100:  approvalRouteStep: 730260,
+102:  digestWindow: 730261,
+106:  reportSnapshotIssue: 730263,
+108:  exportJob: 730264,
+112:  kpiRestatement: 730266,
+114:  launchPlan: 730267,
+116:  healthAssessmentSubmit: 730268,
+120:  brandingPublish: 730270,
+122:  demoReset: 730271,
+$ duplicate values in the API registry
+duplicates=0
+$ worker constants (apps/worker/src, non-test)
+apps/worker/src/automation/ports/launch-plan-generator.ts:19:const LAUNCH_PLAN_LOCK_CLASS = 730267;
+apps/worker/src/automation/engine.ts:41:export const AUTOMATION_RULE_EXECUTION_LOCK = 730258;
+apps/worker/src/handlers/benefits.ts:46:export const FINANCE_VALIDATION_QUEUE_LOCK = 730233;
+apps/worker/src/handlers/adoption.ts:33:export const ADOPTION_INTERVENTION_LOCK_CLASS = 730242;
+apps/worker/src/handlers/kpi.ts:1459:export const KPI_RESTATEMENT_LOCK = 730266;
+apps/worker/src/handlers/digests.ts:21:export const DIGEST_WINDOW_LOCK = 730261;
+apps/worker/src/handlers/escalations.ts:61:export const EXECUTIVE_ASK_BLOCKER_LOCK_CLASS = 730239;
+apps/worker/src/handlers/escalations.ts:62:export const DECISION_ESCALATION_LOCK_CLASS = 730240;
+apps/worker/src/handlers/raid.ts:54:export const CORRECTIVE_CASE_LOCK_CLASS = 730236;
+apps/worker/src/handlers/meetings.ts:38:export const MEETING_SERIES_LOCK_CLASS = 730238;
+apps/worker/src/reports/export-runner.ts:48:export const EXPORT_JOB_LOCK = 730264;
+apps/worker/src/kit.ts:480:export const FAILURE_REPAIR_LOCK = 730259;
+# Reviewer check: each worker constant equals the API class of the same purpose: 730233 financeValidationQueue, 730236 correctiveCase, 730238 meetingSeriesGeneration, 730239 executiveAskBlocker, 730240 decisionEscalation, 730242 adoptionIntervention, 730258 automationRuleExecution, 730259 failureRepair, 730261 digestWindow, 730264 exportJob, 730266 kpiRestatement, 730267 launchPlan.

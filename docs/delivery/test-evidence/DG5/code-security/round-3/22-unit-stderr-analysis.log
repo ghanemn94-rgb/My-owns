@@ -1,0 +1,55 @@
+# 22-unit-stderr-analysis 2026-10-24T23:36:51Z: classification of every stderr / warning line in 20-unit-node22.log and 21-unit-node24.log
+## 20-unit-node22.log: stderr blocks=18; FAIL lines=4; summary:
+ Test Files  145 passed (145)
+      Tests  2350 passed (2350)
+ Test Files  94 passed (94)
+      Tests  1746 passed (1746)
+ Test Files  3 passed (3)
+      Tests  259 passed | 2 skipped (261)
+exit=0  finished=2026-10-24T23:26:08Z  load=9.95 12.00 9.31
+### distinct stderr sources:
+      1 stderr | apps/api/src/modules/admin/branding.test.ts
+      4 stderr | src/components/form-framework/extension-fields.test.tsx
+      1 stderr | src/components/form-framework/extension-hosts-twelve.test.tsx
+      2 stderr | src/pages/dashboards/kpiUnit.test.tsx
+     10 stderr | src/pages/dashboards/percentKpi.test.tsx
+### distinct message kinds:
+      1 Each child in a list should have a unique "key" prop
+     14 Encountered two children with the same key
+      1 FSTDEP022
+     10 raci.deliverables is not iterable
+     10 reading 'length'
+      4 unknown format "date-time" ignored
+      4 unknown format "uuid" ignored
+## 21-unit-node24.log: stderr blocks=18; FAIL lines=4; summary:
+ Test Files  145 passed (145)
+      Tests  2350 passed (2350)
+ Test Files  94 passed (94)
+      Tests  1746 passed (1746)
+ Test Files  3 passed (3)
+      Tests  259 passed | 2 skipped (261)
+exit=0  finished=2026-10-24T23:36:40Z  load=11.70 13.48 11.69
+### distinct stderr sources:
+      1 stderr | apps/api/src/modules/admin/branding.test.ts
+      4 stderr | src/components/form-framework/extension-fields.test.tsx
+      1 stderr | src/components/form-framework/extension-hosts-twelve.test.tsx
+      2 stderr | src/pages/dashboards/kpiUnit.test.tsx
+     10 stderr | src/pages/dashboards/percentKpi.test.tsx
+### distinct message kinds:
+      1 Each child in a list should have a unique "key" prop
+     14 Encountered two children with the same key
+      1 FSTDEP022
+     10 raci.deliverables is not iterable
+     10 reading 'length'
+      4 unknown format "date-time" ignored
+      4 unknown format "uuid" ignored
+## Explanation (no test fails in either run; identical classes in both; all listed in D-169 "Unit stderr lines, disclosed"):
+#  (1) kpiUnit.test.tsx / percentKpi.test.tsx: React duplicate-key warnings; their DG4 fixtures reuse one id across items.
+#  (2) extension-fields.test.tsx T12 (/raci) and T14 (/benefits), en+ar: the stubs return no deliverables / benefit totals,
+#      the page body falls to React Router's error boundary while the asserted form header renders (test fixture gap).
+#  (3) extension-hosts-twelve.test.tsx charter (en): missing-key warning from a <select> rendered by Field.
+#  (4) branding.test.ts: Ajv 'unknown format "date-time"/"uuid" ignored' (the test's Ajv instance has no formats plugin).
+#  (5) FSTDEP022 FastifyWarning (router options deprecation for fastify@6): a deprecation notice, no behaviour change.
+#  The 2 skipped tests: fuzz.test.ts it.skipIf(NOCODEGEN) in unit-formula-nocodegen, by design (D-169).
+#  None of these is a product security/correctness defect; (2) is a test-fixture weakness already disclosed.
+#  The 'FAIL lines=4' count above is the grep for ' FAIL |✗|×' matching four PASSING test titles that contain the multiplication sign × (T09 'monthly ARPU × annual customers' en/ar; capacity 'role × month' en/ar), each prefixed ✓; no test failed.

@@ -1,0 +1,13 @@
+code-security-reviewer DG5 round 3 (clean re-gate): check exit statuses
+candidate sha256:d8d831814a6065af8b417c862486dc2132ee6cca40bae0573f4918ff52e782c9 (2203 files); source 54e02b6; clone at freeze bd2e7f9
+01-candidate-identity 0 (repo + complete clone, same id)
+10-build 0 | 11-typecheck 0 | 12-lint 0 | 13-format-check 0 | 14-openapi-lint 0 (846 ops) | 15-no-cdn 0
+16-validators: --historical DG4/DG3/DG2/DG1 PASS, --register DG5 PASS, candidate id 0
+20-unit-node22 0 (2350 / 1746 / 259+2 skipped by design) | 21-unit-node24 0 (same)
+30-integration-lang-unset 0 (320 files, 3084 passed + 1 skipped by design; 89 migrations 0001-0097)
+31-integration-lang-c-utf8 0 (320 files, 3084 passed + 1 skipped by design; 89 migrations)
+40-outbox-registry 0 | 41-injection-probe 0 | 42-contract-pending 0 | 43-module-graph 0 | 44-advisory-locks 0
+45-p5-role-sweep 1 (probe's own over-broad read assertion; explained in the log) -> 45b-p5-role-sweep-v2 0 (6/6)
+47-web-graph 1 (my cycle detector: the single pre-existing DG1 cycle UsersPage<->AssignmentsPage; observation)
+48-environment-residuals 0 | 49-secrets-scan 0 (8 matches, all synthetic fixtures / transcript signature) | 90-cleanup 0
+New findings: none.

@@ -1,0 +1,28 @@
+# 48-environment-residuals 2026-10-24T23:20:00Z (offline/config surface; sandbox has no network)
+$ grep AI / external notification adapters in apps/*/src (non-test)
+apps/api/src/modules/portfolio/schedule.ts
+apps/api/src/modules/portfolio/slip-events.ts
+count=2
+$ AI flag/config names in packages/config
+$ dev-login gating (identity/routes.ts:247-249, config/load.ts:196-197)
+  // ------------------------------------------------------------ dev login (AUTH_MODE=dev only; 404 otherwise)
+  if (config.authMode === "dev") {
+    if (config.nodeEnv === "production") throw new Error("refusing to register dev login with NODE_ENV=production");
+    app.post(
+  // ADR-0005: the dev login must never be reachable in production.
+  if (authMode === "dev" && nodeEnv === "production") {
+    problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+  }
+$ seed binding of dev issuer (packages/db/src/demo/guard.ts:121-130)
+ * D-165: whether `seed-demo` (and `reset-demo`) also bind the demo users to the dev issuer, so the dev sign-in of an
+ * `AUTH_MODE=dev` stack can choose them. Only with AUTH_MODE=dev, and never with NODE_ENV=production (the same rule as
+ * `mth-db seed-dev`); in every other mode nothing changes. No secret or password is involved.
+ */
+export function demoDevIssuerBindingAllowed(env: {
+  readonly NODE_ENV?: string | undefined;
+  readonly AUTH_MODE?: string | undefined;
+}): boolean {
+  return env.NODE_ENV !== "production" && env.AUTH_MODE === "dev";
+}
+$ Keycloak / OIDC: AUTH_MODE=oidc is configuration only here (no IdP reachable; D-049); live registry (D-057) and live CI (D-058) not reachable from this sandbox.
+# Reviewer analysis: the 2 matches are the English word 'slack' (schedule slack) in comments (schedule.ts:177, slip-events.ts:19), not an adapter. No AI or external notification adapter ships in P5 (D-142 Q11).
