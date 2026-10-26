@@ -283,3 +283,116 @@ BE-A → BE-J → (BE-J2, BE-J3 in parallel; disjoint handler files) and BE-K �
 7. **Credentials are `SecretRef`s** (`{provider, name}`), never values, in the database, in API bodies and in the UI.
 8. **In-app first, channels after commit.** A channel failure never blocks or rolls back a workflow. With no channel row, nothing is written.
 9. **Not live:** the corporate IdP, the brokered SAML path, an IT object store, SMTP and enterprise messaging are residuals with ports, fakes and contract tests (§2 rule 14).
+
+## §B/A. Slices B (connectors, outbound writes, external-change confirmation) and A (controlled imports and webhooks) — T-DG6-ARCH-03
+
+The §2 shared rules apply unchanged. For slices B and A, rule 17's "slice ADR tables" are ADR-0055 §4 (connector error codes with their why and what-to-do texts) and §9 (refusals), and ADR-0056 §5 (row reasons) and §9 (refusals); rule 16's pending files are the ones named below. Rule 14 applies to every adapter here: the test adapter and the local fake HTTP source are the only sources exercised; `http_pull` against a corporate source and any downstream system are residuals (D-195 Q14).
+
+### B/A.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0055-p6-connector-framework-runs-outbound-writes-external-change.md`, `ADR-0056-p6-controlled-imports-staging-validation-lineage-webhooks.md` | Binding design, with the refusal codes, error texts and row reasons |
+| Migrations | `packages/db/migrations/0104_p6_connectors_runs_outbound_writes.sql`, `0105_p6_imports_lineage_webhooks.sql`, `0106_p6_deliverable_external_change.sql`, `0107_p6_integrations_permissions.sql` | Applied on a fresh PostgreSQL 16.13 and over a P5-populated database (0001–0097, then 0098–0107); 110/110 guard probes PASS (`docs/delivery/handbacks/DG6/T-DG6-ARCH-03-evidence/probe-output.txt`) |
+| Kysely types, catalogue and seed pins | `packages/db/src/schema.ts` (16 tables, generated from the catalogue), `packages/db/test/integration/catalogue.test.ts` (test "0104-0106: the P6 slice B/A guards are attached": 49 triggers; 6 mutable tables; 16 privilege pins), `packages/db/src/seed.test.ts` (0107 block; the free-id example is now 0108) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P6_INTEGRATIONS_PERMISSIONS`, `P6_INTEGRATIONS_ROLE_PERMISSIONS`, in `P6_PERMISSIONS`; 11 codes) | Equals `0107` |
+| Lock classes | `platform/advisory-locks.ts` (`connectorRun` 730310, `importCommit` 730311, `webhookReceipt` 730312, `outboundWrite` 730313, `deliverableConfirmation` 730314; 730315–730317 reserved), ADR-0016 §6 | Registry test updated (49 classes) |
+| Contract | `docs/api/openapi.yaml` 1.5.0-p6: 34 operations (new tags `integrations`, `imports`), the `PermissionCode` enum gains the 11 codes; `scripts/openapi-lint.mjs` lists `receiveWebhook` as the second public unsafe operation | `pnpm openapi:lint` PASS (910 operations); no earlier line changed |
+| Contract-test seams | `apps/api/test/support/p6-pending-arch-03.ts` (slice aggregate; frozen), `p6-pending-be-l.ts` (9), `p6-pending-be-l2.ts` (4), `p6-pending-be-m2.ts` (8), `p6-pending-be-n.ts` (6), `p6-pending-be-n2.ts` (4), `p6-pending-be-o.ts` (3); one import line in `p6-pending.ts`; `contract.test.ts` count 910; `p6-operations.ts` (+34 ids) | Green |
+| ERD §1v (and the §2.12 table-name corrections), data dictionary "P6 tables, slices B and A", permissions matrix §26 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+p6-plan §5.1's BE-L, BE-M and BE-N are split (BE-L/L2, BE-M/M2 with KBE-A between them, BE-N/N2) so each fits 60–75 minutes and so the import routes are written once the KPI target exists. The split adds no file outside the plan's boundaries. A split task appends to its parent's contract-exercise seam file (`p6-exercises-be-l.ts`, `-be-m.ts`, `-be-n.ts`; created by BE-A), after the parent.
+
+### B/A.1 BE-L — connectors, configuration versions, mappings, the connector service identity (backend-workflow-engineer; after ARCH-03, BE-J, BE-E)
+
+- **Files:** `apps/api/src/modules/integrations/connectors.ts` (create with version 1 and the service identity in one transaction; put; mappings; enable; disable; the derived `verification`, `lastSuccessAt`, `actionableError`), `integrations/adapters/port.ts` (the adapter port of ADR-0055 §3: `fetch`, `dispatch`, `outcome`), `integrations/secret-refs.ts` (`resolvable` through BE-E's `SecretProvider`, never a value), the connector route block in `integrations/routes.ts` (first editor of the file; BE-A's stub), the B/A P6 mappings in `apps/api/src/modules/platform/db-errors.ts` (after BE-K's): `connector_organization_code_key` → 409 `connector.code_taken`; `connector_config_version_credential_refs`, `connector_config_version_no_secret_settings` → 422 `connector.secret_value_refused`; `connector_config_version_field_mappings` → 422 `connector.mappings_invalid`; `connector_config_version_adapter_shape`, `connector_config_version_outbound_test_only` → 422 `connector.adapter_settings_invalid`; `connector_config_version_target_shape` → 422 `connector.target_invalid`; `integration_run_one_active` → 409 `connector.run_active`; `integration_run_one_retry_key`, `integration_run_retry_chain` → 409 `integration_run.not_retryable`; `outbound_write_idempotency_key` → 409 `outbound_write.idempotency_key_reused`; `outbound_write_action_allowed` → 422 `outbound_write.action_not_allowed`; `outbound_write_final`, `outbound_write_transition` → 409 `outbound_write.final`; `deliverable_external_change_final` → 409 `external_change.already_confirmed`; `deliverable_external_change_evidence_verified` → 422 `external_change.evidence_not_verified`; `webhook_endpoint_connector_kind` → 422 `webhook.connector_not_webhook`; `webhook_endpoint_final` → 409 `webhook.endpoint_disabled`; `webhook_receipt_delivery_key` → 409 `webhook.delivery_id_reused`; `import_batch_transition`, `import_batch_final` → 409 `import.not_staged`; `import_batch_counts_match_rows` → 500 (a defect, never a user error). Plus `apps/api/test/integration/integrations/connectors.test.ts`, `p6-exercises-be-l.ts`, `p6-pending-be-l.ts`.
+- **Operations (9):** `listConnectors`, `createConnector`, `getConnector`, `putConnector`, `enableConnector`, `disableConnector`, `testConnector` (BE-L routes it against the port; BE-L2's test adapter makes it pass), `getConnectorMappings`, `putConnectorMappings`.
+- **Consumes:** ADR-0055 §1, §4, §9; ADR-0053 §1 (connector identity rows: `code = 'connector:<id>'`, `declared = granted = ['transformation.read']`); ADR-0052 §5 (`SecretRef`, `SecretProvider`); ADR-0051 §1 (`ReadScope` for the transformation-scope read rule).
+- **Tests:** create writes connector, version 1, identity and 3 audit events in one transaction; a credential with a value, a secret-like settings key, a duplicate mapping target, a test adapter without mode each give their 422; code taken 409; put creates version n+1; If-Match 409/428; AUD 403 on every mutation; ADM_TECH may configure, KDS may not (403); `verification` is `not_verified` until a succeeded test on the current version; the credential view never contains a value (response scan).
+- **Demo record (§3 row 25):** one disabled test connector in `packages/db/src/demo/**`, synthetic, with the reset checksums re-baselined in the same change and the reason recorded.
+
+### B/A.2 BE-L2 — integration runs, retries, the test adapter, the worker handler (backend-workflow-engineer; after BE-L, BE-K)
+
+- **Files:** `integrations/runs.ts` (queue, start, finish, retry, counts, reconciliation with the shared decimal helper), `integrations/adapters/test-adapter.ts` (modes `healthy`, `failing`, `stopped`; `confirm` `immediate` | `never`; the per-key effect counter; ADR-0055 §3), `integrations/adapters/http-pull.ts` with `apps/api/test/support/fake-http-source.ts` (a local server on the harness port range) and the shared adapter contract suite `integrations/adapters/contract.test.ts` (both adapters), the run route block in `integrations/routes.ts` (after BE-L), `apps/worker/src/handlers/integrations.ts` and `apps/worker/src/queues/integrations.ts` (BE-A's stubs: queue `integrations.connector_run`, the cadence schedule `schedule:<connector id>:<slot>`; remote call outside the transaction; failure → retry with backoff and, on the last attempt, the BE-K raise under lock 730305), the job-identity migration for the new queue (next id at merge, D-196; ADR-0053 §1), `apps/api/test/integration/integrations/runs.test.ts`, `p6-pending-be-l2.ts`, its block in `p6-exercises-be-l.ts`.
+- **Operations (4):** `listIntegrationRuns`, `runConnector`, `getIntegrationRun`, `retryIntegrationRun`.
+- **Consumes:** ADR-0055 §2–§4, §8 (lock 730310); ADR-0053 §2 (connector failure classes) and §3 (`connector.run_failed`); ADR-0056 §3–§5 (BE-M's staging engine, for the run's batch).
+- **Tests:** the A17 run (healthy: 10 read, 10 staged, counts 8/1/1, reconciliation `matched`, last success set); failing: `failed` with `connector.source_unavailable`, retries up to the bound with backoff, then exactly one operational exception; stopped: `connector.stopped`; the same scheduled slot twice creates one run; a worker kill between start and finish leaves the run `running` and the next attempt recovers it (A13 hook for QA-C); counts are null until known.
+
+### B/A.3 BE-M — the import engine: port, parsers, staging, duplicates (backend-workflow-engineer; after BE-L)
+
+- **Files:** `integrations/imports/targets.ts` (the `ImportTargetRegistry` port of ADR-0056 §1 and the registry), `integrations/imports/parsers/{csv,xlsx}.ts` with their limit tests (no dependency; `node:zlib` for the ZIP entries), `integrations/imports/{staging,validate,duplicates}.ts` (the engine: parse → validate through the target → duplicate keys within the batch and against `existingKeys` → rows and counts in one transaction), the registry line in `apps/api/src/server.ts` (BE-A's wiring point), `integrations/imports/*.test.ts`. **No route** (BE-M2 routes them once KBE-A's target exists).
+- **Consumes:** ADR-0056 §1–§5; ADR-0052 §2 (free-text rules); `packages/shared/src/calc.ts` (decimal normalization).
+- **Tests:** every limit of ADR-0056 §3 (10 MiB, 5,000 rows, 50 columns, 4,000-character cells, non-UTF-8 CSV, BOM removed, quoted commas and newlines, ZIP entry count, entry and total unpacked size, ratio, macros, external links); formula cells reported (`import.row.formula_cell`), never their cached value; a numeric XLSX cell read as its stored text; formula-like CSV text kept as text; duplicate within the batch points at the first valid row; a test target (in the test file only) for the engine.
+
+### B/A.4 KBE-A — the KPI actual import target (kpi-benefits-engineer; after BE-M)
+
+- **Files:** `apps/api/src/modules/kpi/import-target.ts` (the `kpi_actual.v1` target: columns of ADR-0056 §9; `validateRow` with the DG4 `submitKpiActual` rules, read-only; `existingKeys` from `kpi_actual_slot_key`; `commitRow` through the DG4 submission service, never accepting directly), its one registration line in `apps/api/src/server.ts` (below BE-M's registry line), the "Imported from {source} row {n}" lineage read lines in `kpi/actuals.ts` (read lines only), `apps/api/test/integration/kpi/import-target.test.ts` with the 8/1/1 fixture (CSV and XLSX, built with the P5 writers), the en/ar `imports.json` row-reason texts requested through the handback (FE-A merges).
+- **Consumes:** ADR-0056 §4–§6; ADR-0027/0028 (DG4 path, unchanged); ADR-0041 §4 (the pinned form-schema validator).
+- **Tests:** each row reason of ADR-0056 §5 that the KPI rules produce; the 8/1/1 fixture → 8 committed actuals (status per the DG4 route), 8 lineage rows, the 2 others with their reasons; `duplicate_committed` against a form-entered actual; a KPI that requires evidence gives `import.row.evidence_required`; a non-updater gives `import.row.not_kpi_updater`; recalculation runs once per affected KPI.
+
+### B/A.5 BE-M2 — import routes, commit and cancel, templates (backend-workflow-engineer; after KBE-A)
+
+- **Files:** `integrations/imports/{commit,templates}.ts` (commit-time re-authorization, re-validation, one transaction, lineage, lock 730311; cancel; template build with the P5 CSV/XLSX writers), the import route block in `integrations/routes.ts` (after BE-L2), `apps/api/test/integration/integrations/imports.test.ts`, `p6-pending-be-m2.ts`, `p6-exercises-be-m.ts`.
+- **Operations (8):** `listImports`, `createImport` (`config.consumes`: `text/csv` and the XLSX media type; `X-File-Name` header; `template` query), `getImport`, `listImportRows`, `commitImport`, `cancelImport`, `listImportTemplates`, `downloadImportTemplate`.
+- **Consumes:** ADR-0056 §2, §6, §9; KBE-A's target; ADR-0051 §1.
+- **Tests:** CSV and XLSX 8/1/1 through the API (staged counts, rows with reasons, commit 8 with provenance); `import.revalidation_failed` when a slot is filled between staging and commit; commit twice → 409 `import.not_staged`; commit without `kpi_actual.submit` → 403; AUD 403 on upload, commit and cancel; templates download as CSV and XLSX in both formats and re-import cleanly; 413/415/422 file refusals. **Media-type pins:** report the new request media types (`text/csv`, XLSX) to the orchestrator for `contract.test.ts` (rule 16).
+
+### B/A.6 BE-N — signed webhooks (backend-workflow-engineer; after BE-M2)
+
+- **Files:** `integrations/webhooks.ts` (endpoint admin; `receiveWebhook`: signature v1, constant-time compare, current and previous secret, tolerance window, lock 730312, replay and `delivery_id_reused`, the run and staged batch in one transaction, auto commit after it), the webhook route block in `integrations/routes.ts` (after BE-M2; the receiving route is `{ public: true }`, CSRF-exempt and in its own rate-limit class), `apps/api/test/integration/integrations/webhooks.test.ts`, `p6-pending-be-n.ts`, `p6-exercises-be-n.ts`.
+- **Operations (6):** `listWebhookEndpoints`, `createWebhookEndpoint`, `getWebhookEndpoint`, `rotateWebhookSecret`, `disableWebhookEndpoint`, `receiveWebhook`.
+- **Consumes:** ADR-0056 §7–§9; ADR-0052 §5 (`SecretProvider` resolves the HMAC secret before the transaction); ADR-0053 §4 (rejections logged redacted).
+- **Tests:** a signed delivery → 202 and a staged batch; with `auto` commit → committed on behalf of the configured user; unsigned, wrong signature, stale timestamp, unknown key, disabled endpoint → the same 401 `webhook.unauthenticated` and no row; the same delivery id and body → 200 replay, nothing new; a different body → 409; the previous secret accepted inside the grace period and refused after it; body > 1 MiB → 413; JSON numbers as values → row reason. **CSRF-exempt pin:** report `receiveWebhook` to the orchestrator for the contract test's CSRF-exempt list (rule 16).
+
+### B/A.7 BE-N2 — guarded outbound writes (backend-workflow-engineer; after BE-N)
+
+- **Files:** `integrations/outbound.ts` (execute: replay or 409 by payload hash, insert `requested`, dispatch outside the transaction, record the outcome; confirm: ask the adapter for the key's outcome, re-dispatch a `requested` row with the same key; lock 730313), the outbound route block in `integrations/routes.ts` (after BE-N), `apps/api/test/integration/integrations/outbound.test.ts`, `p6-pending-be-n2.ts`, its block in `p6-exercises-be-n.ts`.
+- **Operations (4):** `listOutboundWrites`, `executeOutboundWrite`, `getOutboundWrite`, `confirmOutboundWrite`.
+- **Consumes:** ADR-0055 §5, §9; BE-L2's test adapter (effect counter, `confirm: never`).
+- **Tests (A13/A12):** the same key replayed (including after a simulated crash between steps) → one effect at the test adapter; `confirm: never` → `pending_confirmation`, shown as pending, never done; no `outbound_write.execute` → 403 (KDS, ADM_TECH, AUD); an action the configuration does not allow → 422; a disabled connector → 409; confirmed and failed rows never change.
+
+### B/A.8 BE-O — the deliverable external-change confirmation, graceful degradation proof, the S16-022 entity group (backend-workflow-engineer; after BE-N2, BE-K)
+
+- **Files:** `apps/api/src/modules/portfolio/deliverable-confirmation.ts` (flag, withdraw, confirm with verified evidence, lock 730314; the connector-confirmation service that BE-N2's confirm path calls through a port registered at composition, so `integrations` imports no `portfolio` code), the `external_change` route lines in the portfolio deliverable routes (a named block; DG3 routes unchanged), the actionable-error texts of ADR-0055 §4 requested for `i18n/{en,ar}/problems.json` through the handback, `apps/api/test/integration/portfolio/deliverable-confirmation.test.ts`, `apps/api/test/integration/integrations/graceful-degradation.test.ts`, `apps/api/test/integration/integrations/s16-022-entity-group.test.ts`, `p6-pending-be-o.ts`, `p6-exercises-be-o.ts`.
+- **Operations (3):** `getDeliverableConfirmation`, `putDeliverableExternalChange`, `confirmDeliverableExternalChange`.
+- **Consumes:** ADR-0055 §4, §6, §7, §9; ADR-0018 (evidence review).
+- **Tests:** REQ-S01-005's four cases (task completed and deliverable accepted → still Unconfirmed; a `file_reference` → 422, still Unconfirmed; verified evidence → Confirmed with its evidence id and user; a confirmed test-adapter write → Confirmed with connector, source system id, reference and time); withdraw only while unconfirmed; AUD 403; REQ-S17-005 (connector `stopped`: `submitKpiActual` by form succeeds; `createImport` succeeds; `getConnector` shows the actionable error with both fallbacks); REQ-S16-022 (each of the seven entities produced by its mutation and read with authorization, ADR-0055 §7).
+
+### B/A.9 FE work for slices B and A (frontend-ux-engineer)
+
+- **FE-A** (shell, already planned): the route entries for Administration > Integrations (connectors, runs, mappings, webhooks, outbound writes) and Strategy and KPIs > Imports (D-195 Q1; no fifteenth area), the API client functions and query keys for the 34 operations, and the `i18n/{en,ar}/{nav,problems}.json` B/A blocks (codes of ADR-0055 §4, §9 and ADR-0056 §5, §9; Arabic labelled provisional).
+- **FE-C** (after FE-A, BE-O, BE-M2): `pages/integrations/**` (connector list and detail with verification "Not verified" until a test passes, last success "Never succeeded" when none, the actionable error with its two fallback links, run history with counts shown "Unknown" when null and the retry chain, mappings editor, webhook endpoints with secret references only, outbound writes with "Pending confirmation"), `pages/imports/**` (upload, staged rows with reasons rendered in en/ar, commit, cancel, template download), `components/external-confirmation/**` (the deliverable panel: Unconfirmed / Confirmed by reviewed evidence / Confirmed by connector result, next to the DG3 acceptance, never replacing it). One form-level alert per form; AUD read-only; e2e budgets measured (rule 13).
+
+### B/A.10 Migrations left and their order
+
+The architect shipped `0104`–`0107` directly above `0103` (D-196). The implementer migrations of this section take the next id above the highest shipped file **at merge time** (rule 18, D-196), in this order: BE-L's demo connector seed (if it is a migration rather than a demo-seed file), BE-L2's job identity for `integrations.connector_run`. No other B/A task needs a migration; a schema change found necessary goes to the orchestrator first.
+
+### B/A.11 Integration order
+
+ARCH-03 → BE-L → BE-L2 → BE-M → KBE-A → BE-M2 → BE-N → BE-N2 → BE-O → FE-C → QA-A (A17 test-first may start after KBE-A against the ADRs). `integrations/routes.ts` is edited strictly in the order BE-L, BE-L2, BE-M2, BE-N, BE-N2 (each adds a named block); `server.ts` gets BE-M's registry line, then KBE-A's registration line, then BE-O's connector-confirmation port line; `db-errors.ts` gets BE-L's block after BE-K's.
+
+### B/A.12 Requirement → owner
+
+| Requirement | Architect delivered | Implementer owner(s) | Proof |
+|---|---|---|---|
+| REQ-S01-005 | `0106`, `0107`; ADR-0055 §6; probe DX | BE-O (with BE-N2's connector confirmation), FE-C | BE-O four-case test; QA-A A11/A17 |
+| REQ-S16-022 | `0104` (IntegrationRun); ADR-0055 §7; ERD §1v and §2.12 corrections | BE-L2 (runs), BE-O (entity-group test) | BE-O s16-022 test |
+| REQ-S17-001 | `0104`, `0107`; ADR-0055 §1–§3; probes CN, IR | BE-L, BE-L2, FE-C | BE-L2 run tests; QA-A A17 |
+| REQ-S17-005 | ADR-0055 §4 | BE-L2 (error codes), BE-O (degradation test), FE-C (page) | BE-O test; QA-A A17/A21 |
+| REQ-S17-006 | `0104`, `0107`; ADR-0055 §5; probe OW | BE-N2 | BE-N2 A13/A12 tests; QA-C |
+| REQ-S17-002 | `0105`, `0107`; ADR-0056 §2–§6; probe IM | BE-M, KBE-A, BE-M2, FE-C | KBE-A and BE-M2 8/1/1 tests; QA-A A17 |
+| REQ-S17-003 | `0105`; ADR-0056 §3, §7, §9; probe WH; contract `receiveWebhook` | BE-M (parsers), BE-M2 (templates), BE-N (webhooks), FE-C | BE-N tests; QA-A A17 |
+
+No requirement of this section is complete yet: each needs its implementer work.
+
+### B/A.13 What the implementers must know
+
+1. **Credentials are references.** A `SecretRef` is resolved at the moment of the remote call, outside any transaction, and never written to a row, response, audit event or log.
+2. **No remote I/O in a transaction.** Adapter calls, dispatches and webhook-secret resolution happen before or after the transaction (rule 4); every state change is a short transaction under its lock.
+3. **Imports go through DG4.** A commit calls the DG4 submission service; it never writes `kpi_actual` rows directly and never accepts a value.
+4. **Cells are text.** Never `Number()` a cell; decimals stay strings from the parser to `numeric`.
+5. **Unknown is null.** Counts, last success and reconciliation that are not known render "Unknown", "Never succeeded" or "Not checked", never 0 or green.
+6. **Done means confirmed.** An outbound write is done only on a confirmed response; there is no manual confirmation; an external change is confirmed only by verified evidence or a confirmed connector result.
+7. **One 401 for webhooks.** Every authentication failure of `receiveWebhook` gives the same code and text; the reason goes only to the redacted log.
+8. **Exactly once.** Every run, receipt and write has its unique key and lock; a replay returns the existing record and creates nothing.
+9. **Nothing is "live".** The test adapter and the local fake source are the only exercised sources; the UI says "Not verified" until a test passes and never "connected to Mobily".

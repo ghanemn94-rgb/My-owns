@@ -341,10 +341,38 @@ export const P6_OPERATIONS_CHANNELS_PERMISSIONS = {
   "notification_channel.configure": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P6 slices B and A (seeded by 0107; ADR-0055 §9, ADR-0056 §9; T-DG6-ARCH-03). A configurable starting point, not a
+ * Mobily-approved access policy. connector.read reads Administration > Integrations (connectors, configuration
+ * versions, runs, counts, reconciliation, errors; never staged row values; REQ-S17-001 "view-runs:ADM,KDS");
+ * connector.configure creates, changes, enables, disables and tests connectors and mappings ("configure:ADM");
+ * connector.run runs a connector now or retries a failed run; webhook.configure manages webhook endpoints and their
+ * secret references; import.read, import.create and import.commit are the staged imports (REQ-S17-002 "import:KDS,ADM":
+ * KDS; the technical administrators hold no business-record write, REQ-S10-003); outbound_write.read and
+ * outbound_write.execute are the guarded downstream writes (REQ-S17-006 "execute-write: explicitly granted role only":
+ * TD alone); external_change.flag and external_change.confirm are the deliverable external-change flag and its
+ * confirmation with reviewed evidence (REQ-S01-005 "confirm-external: evidence reviewer (BO or TD)"). No code is a
+ * business_approval or finance_validation code; AUD gets read codes only.
+ */
+export const P6_INTEGRATIONS_PERMISSIONS = {
+  "connector.read": "read",
+  "connector.configure": "configure",
+  "connector.run": "write",
+  "webhook.configure": "configure",
+  "import.read": "read",
+  "import.create": "write",
+  "import.commit": "write",
+  "outbound_write.read": "read",
+  "outbound_write.execute": "write",
+  "external_change.flag": "write",
+  "external_change.confirm": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 /** Every P6 permission block (each P6 architecture task appends its block here and to PERMISSIONS). */
 export const P6_PERMISSIONS = {
   ...P6_ACCESS_HARDENING_PERMISSIONS,
   ...P6_OPERATIONS_CHANNELS_PERMISSIONS,
+  ...P6_INTEGRATIONS_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 
 export const PERMISSIONS = {
@@ -853,6 +881,30 @@ export const P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS = {
   ADM_METHOD: [],
 } as const satisfies Record<string, readonly (keyof typeof P6_OPERATIONS_CHANNELS_PERMISSIONS)[]>;
 
+/**
+ * P6 slices B and A role defaults (seeded by 0107; ADR-0055 §9, ADR-0056 §9). ADM_TECH configures connectors and
+ * webhooks and runs connectors; KDS runs connectors and stages, commits and cancels imports; TD alone executes outbound
+ * writes and, with BO, confirms external changes with reviewed evidence; TL, BO, WL and TO flag external changes;
+ * ADM_TECH, KDS, TD, TO and AUD read connectors; KDS, BO, TO and AUD read imports; TD, KDS, TO and AUD read outbound
+ * writes.
+ */
+export const P6_INTEGRATIONS_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: ["external_change.flag"],
+  BO: ["import.read", "external_change.flag", "external_change.confirm"],
+  WL: ["external_change.flag"],
+  FIN: [],
+  TO: ["connector.read", "import.read", "outbound_write.read", "external_change.flag"],
+  KDS: ["connector.read", "connector.run", "import.read", "import.create", "import.commit", "outbound_write.read"],
+  TD: ["connector.read", "outbound_write.read", "outbound_write.execute", "external_change.confirm"],
+  CM: [],
+  SEC: [],
+  AUD: ["connector.read", "import.read", "outbound_write.read"],
+  ADM_TECH: ["connector.read", "connector.configure", "connector.run", "webhook.configure"],
+  ADM_ACCESS: [],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P6_INTEGRATIONS_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -898,6 +950,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TL,
       ...P5_REPORTING_ROLE_PERMISSIONS.TL,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TL,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -920,6 +973,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.BO,
       ...P5_REPORTING_ROLE_PERMISSIONS.BO,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.BO,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -940,6 +994,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.WL,
       ...P5_REPORTING_ROLE_PERMISSIONS.WL,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.WL,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -987,6 +1042,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TO,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TO,
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.TO,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -1007,6 +1063,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.KDS,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.KDS,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.KDS,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -1022,6 +1079,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.TD,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TD,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TD,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -1065,6 +1123,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.AUD,
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.AUD,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.AUD,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -1084,6 +1143,7 @@ export const ROLES = {
       ...P5_READER_DEMO_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {

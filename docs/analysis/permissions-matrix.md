@@ -1029,3 +1029,48 @@ Legend as in 8.3. **A** = acknowledge/resolve, **E** = edit (PUT), **T** = run a
 - **AUD (read-only auditor):** every slice J/C mutation returns **403** for AUD and writes nothing: acknowledge, resolve, change a service identity's grant, save or test storage, save or test a channel. AUD reads every page above.
 - **Technical administrators:** ADM_TECH configures service identities, storage and channels and acknowledges exceptions; ADM_ACCESS reads the identity settings. Neither gains any business approval.
 - **SoD:** no slice J/C operation approves anything. A service identity cannot approve anything (invariant 1 of ADR-0053 §1).
+
+## 26. P6 implementation, slices B and A (DG6): connectors, integration runs, webhooks, staged imports, guarded outbound writes and the deliverable external-change confirmation
+
+- **Task:** T-DG6-ARCH-03 (solution-architect), 2026-10-26. **Sources:** ADR-0055 §1, §2, §5, §6, §9; ADR-0056 §6, §7, §9; master prompt M0080, M0334, M0335; REQ-S17-001 "configure:ADM; view-runs:ADM,KDS", REQ-S17-002 "import:KDS,ADM; view:scoped", REQ-S17-003 "import:KDS,ADM", REQ-S17-006 "execute-write:explicitly granted role only", REQ-S01-005 "complete-task:WL; confirm-external:evidence reviewer (BO or TD) or connector service identity; view:scoped".
+- **Seed:** `0107_p6_integrations_permissions.sql`, equal to `P6_INTEGRATIONS_PERMISSIONS` / `P6_INTEGRATIONS_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM05). A connector's service identity holds read/write codes only (`service_identity_guard`). Confirming an external change, committing an import or executing an outbound write is never a G1–G6 business approval; a committed KPI actual still goes through the DG4 review route.
+- **Interpretation of "ADM" in REQ-S17-002/003 (raised to the orchestrator):** the technical administrators hold no business-record write (REQ-S10-003; matrix row "Transformation: — (technical support only)"), so ADM_TECH gets connector and webhook configuration, not `import.*`. The KDS stages and commits imports. A later seed can grant `import.*` to another role if the business decides.
+
+### 26.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `connector.read` | read | Administration > Integrations: connectors, configuration versions and mappings (credential references, never values), runs with counts, errors, retries and reconciliation, webhook endpoints; never staged row values | ADM_TECH, KDS, TD, TO, AUD |
+| `connector.configure` | configure | Create, change, enable, disable and test connectors and change their field mappings | ADM_TECH |
+| `connector.run` | write | Run a connector now; retry a failed run | ADM_TECH, KDS |
+| `webhook.configure` | configure | Create webhook endpoints, rotate their signing secret reference, disable them | ADM_TECH |
+| `import.read` | read | Staged imports, rows, row-level reasons, lineage; templates (scoped by the batch's transformation) | KDS, BO, TO, AUD |
+| `import.create` | write | Upload a CSV or XLSX file to staging | KDS |
+| `import.commit` | write | Commit the valid rows of a staged import (plus `kpi_actual.submit` at commit time), or cancel it | KDS |
+| `outbound_write.read` | read | Outbound writes and their confirmation state (scoped by transformation) | TD, KDS, TO, AUD |
+| `outbound_write.execute` | write | Execute a connector-defined downstream write; re-check its confirmation. Implied by no other code | TD |
+| `external_change.flag` | write | Flag a deliverable as an external change, change its type or description, withdraw it while unconfirmed | TL, BO, WL, TO |
+| `external_change.confirm` | write | Confirm an external change with reviewed (verified) evidence | BO, TD |
+
+Reused codes: `transformation.read` (every scoped read, through `ReadScope`); `kpi_actual.submit` (re-checked for the committer of an import, or for the configured user of an automatic commit); the DG2 `evidence.review` decides which evidence is verified. `receiveWebhook` needs no permission: it is authenticated by its signature and acts as the connector's service identity.
+
+### 26.2 Per-entity rights in P6 (slices B and A)
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **E** here also covers enable, disable, rotate a secret reference; **T** = run a test, **R** = run now or retry, **U** = upload, **K** = commit or cancel, **X** = execute or re-check, **F** = flag or withdraw, **Cf** = confirm, "sys" = written only by the system (worker, webhook receipt).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Connector and configuration versions (`connector`, `connector_config_version`) | — | — | — | — | — | V | V | V | — | — | V | — | C V E T | — |
+| IntegrationRun (`integration_run`, events) | — | — | — | — | — | V | V R | V | — | — | V | — | V R T | — |
+| Webhook endpoint (`webhook_endpoint`) | — | — | — | — | — | V | V | V | — | — | V | — | C V E | — |
+| Webhook receipt (`webhook_receipt`) | — | — | — | — | — | V | V | V | — | — | V | — | V | — |
+| Import batch, rows and lineage (`import_batch`, `import_row`, `import_row_commit`) | — | — | V | — | — | V | V U K | — | — | — | V | — | — | — |
+| Outbound write (`outbound_write`, events) | — | — | — | — | — | V | V | V X | — | — | V | — | — | — |
+| External-change flag and confirmation (`deliverable_external_change`, events) | V | V F | V F Cf | V F | V | V F | V | V Cf | V | V | V | — | — | — |
+
+- **Scope:** connector, run and webhook rights are organization-level (a transformation-level holder of `connector.read` sees only the connectors whose current configuration targets that transformation). Import, outbound-write and external-change rights are scoped by the record's transformation through `ReadScope`; "V" on the external-change row is the scoped `transformation.read` of the deliverable.
+- **System writers:** runs are started and finished by the worker (actor `service`, the connector's service identity); webhook receipts and their staged batches by `receiveWebhook`; a connector confirmation of an external change by the `confirmOutboundWrite` path (actor `service`).
+- **AUD (read-only auditor):** every slice B/A mutation returns **403** for AUD and writes nothing: create, change, enable, disable, test or run a connector; change mappings; create, rotate or disable a webhook; upload, commit or cancel an import; execute or re-check an outbound write; flag, withdraw or confirm an external change. AUD reads every row above.
+- **Technical administrators:** ADM_TECH configures, tests and runs connectors and configures webhooks; it holds no import, outbound-write or external-change right and gains no business approval. ADM_ACCESS and ADM_METHOD get nothing here.
+- **SoD:** outbound writes are executed by TD by default, not by the administrator who configured the connector. External changes are confirmed only by reviewed evidence (verified by someone other than its creator, `evidence_verified_rule`) or a confirmed connector result; task completion and the DG3 acceptance never confirm one.

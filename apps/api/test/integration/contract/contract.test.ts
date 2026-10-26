@@ -1091,9 +1091,11 @@ describe("every operation, validated against the contract and the zod mirrors", 
     expect(byId("createCharter")).toEqual([400, 401, 403, 429]);
     expect(byId("updateTransformation")).toEqual([400, 401, 403, 409, 428, 429]);
     // Every governed route feeds the derivation with its declared access (public or a permission).
+    // T-DG6-ARCH-03: + receiveWebhook, the session-less, CSRF-exempt webhook receiver authenticated by its signature
+    // (ADR-0056 §7; p6-plan §3 row 12). It declares its own 401 webhook.unauthenticated.
     const publicIds = operations.filter((o) => !platformStatuses(o, api.routes, openapi).includes(401));
     expect(publicIds.map((o) => o.operationId).sort()).toEqual(
-      ["completeOidcLogin", "devLogin", "getHealth", "getReadiness", "startOidcLogin"].sort(),
+      ["completeOidcLogin", "devLogin", "getHealth", "getReadiness", "receiveWebhook", "startOidcLogin"].sort(),
     );
   });
 
@@ -1145,7 +1147,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 19 P5 operations of slices I and J (T-DG5-ARCH-06; pending in p5-pending-be-q/q2/r/r2/s/t2.ts)
     // + 13 P6 operations of slices E and F (T-DG6-ARCH-01; pending in p6-pending-be-b/c/d/e.ts).
     // + 17 P6 operations of slices J and C (T-DG6-ARCH-02; pending in p6-pending-be-g/h2/i/i2/j/k.ts).
+    // + 34 P6 operations of slices B and A (T-DG6-ARCH-03; pending in p6-pending-be-l/l2/m2/n/n2/o.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(876);
+    expect(operations).toHaveLength(910);
   });
 });

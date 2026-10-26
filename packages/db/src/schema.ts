@@ -6584,6 +6584,360 @@ export type NotificationChannelRow = Selectable<NotificationChannelTable>;
 export type NotificationChannelChangeRow = Selectable<NotificationChannelChangeTable>;
 export type NotificationDeliveryRow = Selectable<NotificationDeliveryTable>;
 
+// ---- P6 slices B and A (migrations 0104-0106; T-DG6-ARCH-03; ADR-0055, ADR-0056): connectors, configuration versions,
+// integration runs, outbound writes, webhook endpoints and receipts, staged imports and lineage, and the deliverable
+// external-change confirmation. Generated from the migrated catalogue (handback evidence gen-dictionary.ts).
+export interface ConnectorTable {
+  id: string;
+  organization_id: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  adapter_kind: string;
+  target_kind: string;
+  status: Generated<string>;
+  config_version_no: number;
+  status_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ConnectorConfigVersionTable {
+  id: string;
+  organization_id: string;
+  connector_id: string;
+  version_no: number;
+  source_system_id: string;
+  endpoint_url: string | null;
+  credential_refs: JsonDefault;
+  field_mappings: JsonDefault;
+  target_transformation_id: string | null;
+  cadence: string;
+  retry_max_attempts: Generated<number>;
+  retry_backoff_seconds: Generated<number>;
+  commit_mode: Generated<string>;
+  commit_on_behalf_of: string | null;
+  outbound_actions: Generated<string[]>;
+  reconciliation_rule: Generated<string>;
+  adapter_settings: JsonDefault;
+  reason: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ConnectorChangeTable {
+  id: string;
+  connector_id: string;
+  record_version: number;
+  status: string;
+  config_version_no: number;
+  status_reason: string | null;
+  name_en: string;
+  name_ar: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface IntegrationRunTable {
+  id: string;
+  organization_id: string;
+  connector_id: string;
+  config_version_no: number;
+  trigger_kind: string;
+  status: Generated<string>;
+  attempt_no: Generated<number>;
+  retry_of_run_id: string | null;
+  idempotency_key: string;
+  requested_by: string | null;
+  service_identity_id: string;
+  queued_at: Timestamp;
+  started_at: NullableTimestamp;
+  finished_at: NullableTimestamp;
+  rows_read: number | null;
+  rows_staged: number | null;
+  rows_committed: number | null;
+  rows_rejected: number | null;
+  rows_duplicate: number | null;
+  error_count: number | null;
+  error_code: string | null;
+  error_message: string | null;
+  reconciliation_status: Generated<string>;
+  source_row_count: number | null;
+  source_control_total: string | null;
+  staged_control_total: string | null;
+  import_batch_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface IntegrationRunEventTable {
+  id: string;
+  integration_run_id: string;
+  record_version: number;
+  status: string;
+  rows_read: number | null;
+  rows_staged: number | null;
+  rows_committed: number | null;
+  rows_rejected: number | null;
+  rows_duplicate: number | null;
+  error_count: number | null;
+  error_code: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface OutboundWriteTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  connector_id: string;
+  config_version_no: number;
+  action_code: string;
+  deliverable_id: string;
+  idempotency_key: string;
+  payload: Json;
+  payload_sha256: string;
+  status: Generated<string>;
+  attempt_count: Generated<number>;
+  last_attempt_at: NullableTimestamp;
+  external_reference: string | null;
+  confirmed_at: NullableTimestamp;
+  failure_code: string | null;
+  failure_message: string | null;
+  requested_by: string;
+  service_identity_id: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface OutboundWriteEventTable {
+  id: string;
+  outbound_write_id: string;
+  record_version: number;
+  status: string;
+  attempt_count: number;
+  external_reference: string | null;
+  failure_code: string | null;
+  actor_user_id: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface WebhookEndpointTable {
+  id: string;
+  organization_id: string;
+  connector_id: string;
+  endpoint_key: string;
+  label: string;
+  signing_secret_ref: Json;
+  previous_secret_ref: NullableJson;
+  previous_valid_until: NullableTimestamp;
+  secret_rotated_at: NullableTimestamp;
+  tolerance_seconds: Generated<number>;
+  status: Generated<string>;
+  disabled_at: NullableTimestamp;
+  disabled_by: string | null;
+  disable_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface WebhookEndpointChangeTable {
+  id: string;
+  webhook_endpoint_id: string;
+  record_version: number;
+  status: string;
+  signing_secret_ref: Json;
+  previous_secret_ref: NullableJson;
+  previous_valid_until: NullableTimestamp;
+  tolerance_seconds: number;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface WebhookReceiptTable {
+  id: string;
+  organization_id: string;
+  webhook_endpoint_id: string;
+  delivery_id: string;
+  signed_at: Timestamp;
+  received_at: Timestamp;
+  secret_slot: string;
+  body_sha256: string;
+  body_bytes: number;
+  item_count: number;
+  created_at: TimestampDefault;
+}
+
+export interface ImportBatchTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  target_kind: string;
+  template_version: string;
+  form_schema_version_id: string;
+  source_kind: string;
+  connector_id: string | null;
+  integration_run_id: string | null;
+  webhook_receipt_id: string | null;
+  file_name: string | null;
+  media_type: string | null;
+  byte_size: number | null;
+  content_sha256: string | null;
+  status: Generated<string>;
+  rows_total: number | null;
+  rows_valid: number | null;
+  rows_invalid: number | null;
+  rows_duplicate: number | null;
+  rows_committed: number | null;
+  failure_code: string | null;
+  commit_mode: Generated<string>;
+  on_behalf_of_user_id: string | null;
+  committed_at: NullableTimestamp;
+  committed_by: string | null;
+  cancelled_at: NullableTimestamp;
+  cancelled_by: string | null;
+  cancel_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ImportBatchEventTable {
+  id: string;
+  import_batch_id: string;
+  record_version: number;
+  status: string;
+  rows_total: number | null;
+  rows_valid: number | null;
+  rows_invalid: number | null;
+  rows_duplicate: number | null;
+  rows_committed: number | null;
+  failure_code: string | null;
+  actor_user_id: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface ImportRowTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  import_batch_id: string;
+  row_number: number;
+  source_record_id: string | null;
+  raw: Json;
+  normalized: NullableJson;
+  duplicate_key: string | null;
+  validation_status: string;
+  duplicate_of_row_id: string | null;
+  reasons: JsonDefault;
+  commit_status: Generated<string>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface ImportRowCommitTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  import_batch_id: string;
+  import_row_id: string;
+  target_record_type: string;
+  target_record_id: string;
+  target_value_no: number | null;
+  committed_at: Timestamp;
+}
+
+export interface DeliverableExternalChangeTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  deliverable_id: string;
+  is_external_change: Generated<boolean>;
+  change_type: string;
+  description: string | null;
+  confirmation_status: Generated<string>;
+  confirmation_source: string | null;
+  evidence_id: string | null;
+  outbound_write_id: string | null;
+  connector_id: string | null;
+  source_system_id: string | null;
+  source_reference: string | null;
+  source_confirmed_at: NullableTimestamp;
+  service_identity_id: string | null;
+  confirmed_at: NullableTimestamp;
+  confirmed_by: string | null;
+  confirmation_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface DeliverableExternalChangeEventTable {
+  id: string;
+  deliverable_external_change_id: string;
+  record_version: number;
+  is_external_change: boolean;
+  change_type: string;
+  confirmation_status: string;
+  confirmation_source: string | null;
+  evidence_id: string | null;
+  outbound_write_id: string | null;
+  source_reference: string | null;
+  actor_user_id: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface Database {
+  connector: ConnectorTable;
+  connector_config_version: ConnectorConfigVersionTable;
+  connector_change: ConnectorChangeTable;
+  integration_run: IntegrationRunTable;
+  integration_run_event: IntegrationRunEventTable;
+  outbound_write: OutboundWriteTable;
+  outbound_write_event: OutboundWriteEventTable;
+  webhook_endpoint: WebhookEndpointTable;
+  webhook_endpoint_change: WebhookEndpointChangeTable;
+  webhook_receipt: WebhookReceiptTable;
+  import_batch: ImportBatchTable;
+  import_batch_event: ImportBatchEventTable;
+  import_row: ImportRowTable;
+  import_row_commit: ImportRowCommitTable;
+  deliverable_external_change: DeliverableExternalChangeTable;
+  deliverable_external_change_event: DeliverableExternalChangeEventTable;
+}
+
+export type ConnectorRow = Selectable<ConnectorTable>;
+export type ConnectorConfigVersionRow = Selectable<ConnectorConfigVersionTable>;
+export type ConnectorChangeRow = Selectable<ConnectorChangeTable>;
+export type IntegrationRunRow = Selectable<IntegrationRunTable>;
+export type IntegrationRunEventRow = Selectable<IntegrationRunEventTable>;
+export type OutboundWriteRow = Selectable<OutboundWriteTable>;
+export type OutboundWriteEventRow = Selectable<OutboundWriteEventTable>;
+export type WebhookEndpointRow = Selectable<WebhookEndpointTable>;
+export type WebhookEndpointChangeRow = Selectable<WebhookEndpointChangeTable>;
+export type WebhookReceiptRow = Selectable<WebhookReceiptTable>;
+export type ImportBatchRow = Selectable<ImportBatchTable>;
+export type ImportBatchEventRow = Selectable<ImportBatchEventTable>;
+export type ImportRowRow = Selectable<ImportRowTable>;
+export type ImportRowCommitRow = Selectable<ImportRowCommitTable>;
+export type DeliverableExternalChangeRow = Selectable<DeliverableExternalChangeTable>;
+export type DeliverableExternalChangeEventRow = Selectable<DeliverableExternalChangeEventTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -12088,6 +12442,305 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+  ],
+  connector: [
+    "id",
+    "organization_id",
+    "code",
+    "name_en",
+    "name_ar",
+    "adapter_kind",
+    "target_kind",
+    "status",
+    "config_version_no",
+    "status_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  connector_config_version: [
+    "id",
+    "organization_id",
+    "connector_id",
+    "version_no",
+    "source_system_id",
+    "endpoint_url",
+    "credential_refs",
+    "field_mappings",
+    "target_transformation_id",
+    "cadence",
+    "retry_max_attempts",
+    "retry_backoff_seconds",
+    "commit_mode",
+    "commit_on_behalf_of",
+    "outbound_actions",
+    "reconciliation_rule",
+    "adapter_settings",
+    "reason",
+    "created_at",
+    "created_by",
+  ],
+  connector_change: [
+    "id",
+    "connector_id",
+    "record_version",
+    "status",
+    "config_version_no",
+    "status_reason",
+    "name_en",
+    "name_ar",
+    "changed_by",
+    "changed_at",
+  ],
+  integration_run: [
+    "id",
+    "organization_id",
+    "connector_id",
+    "config_version_no",
+    "trigger_kind",
+    "status",
+    "attempt_no",
+    "retry_of_run_id",
+    "idempotency_key",
+    "requested_by",
+    "service_identity_id",
+    "queued_at",
+    "started_at",
+    "finished_at",
+    "rows_read",
+    "rows_staged",
+    "rows_committed",
+    "rows_rejected",
+    "rows_duplicate",
+    "error_count",
+    "error_code",
+    "error_message",
+    "reconciliation_status",
+    "source_row_count",
+    "source_control_total",
+    "staged_control_total",
+    "import_batch_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  integration_run_event: [
+    "id",
+    "integration_run_id",
+    "record_version",
+    "status",
+    "rows_read",
+    "rows_staged",
+    "rows_committed",
+    "rows_rejected",
+    "rows_duplicate",
+    "error_count",
+    "error_code",
+    "occurred_at",
+  ],
+  outbound_write: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "connector_id",
+    "config_version_no",
+    "action_code",
+    "deliverable_id",
+    "idempotency_key",
+    "payload",
+    "payload_sha256",
+    "status",
+    "attempt_count",
+    "last_attempt_at",
+    "external_reference",
+    "confirmed_at",
+    "failure_code",
+    "failure_message",
+    "requested_by",
+    "service_identity_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  outbound_write_event: [
+    "id",
+    "outbound_write_id",
+    "record_version",
+    "status",
+    "attempt_count",
+    "external_reference",
+    "failure_code",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  webhook_endpoint: [
+    "id",
+    "organization_id",
+    "connector_id",
+    "endpoint_key",
+    "label",
+    "signing_secret_ref",
+    "previous_secret_ref",
+    "previous_valid_until",
+    "secret_rotated_at",
+    "tolerance_seconds",
+    "status",
+    "disabled_at",
+    "disabled_by",
+    "disable_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  webhook_endpoint_change: [
+    "id",
+    "webhook_endpoint_id",
+    "record_version",
+    "status",
+    "signing_secret_ref",
+    "previous_secret_ref",
+    "previous_valid_until",
+    "tolerance_seconds",
+    "changed_by",
+    "changed_at",
+  ],
+  webhook_receipt: [
+    "id",
+    "organization_id",
+    "webhook_endpoint_id",
+    "delivery_id",
+    "signed_at",
+    "received_at",
+    "secret_slot",
+    "body_sha256",
+    "body_bytes",
+    "item_count",
+    "created_at",
+  ],
+  import_batch: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "target_kind",
+    "template_version",
+    "form_schema_version_id",
+    "source_kind",
+    "connector_id",
+    "integration_run_id",
+    "webhook_receipt_id",
+    "file_name",
+    "media_type",
+    "byte_size",
+    "content_sha256",
+    "status",
+    "rows_total",
+    "rows_valid",
+    "rows_invalid",
+    "rows_duplicate",
+    "rows_committed",
+    "failure_code",
+    "commit_mode",
+    "on_behalf_of_user_id",
+    "committed_at",
+    "committed_by",
+    "cancelled_at",
+    "cancelled_by",
+    "cancel_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  import_batch_event: [
+    "id",
+    "import_batch_id",
+    "record_version",
+    "status",
+    "rows_total",
+    "rows_valid",
+    "rows_invalid",
+    "rows_duplicate",
+    "rows_committed",
+    "failure_code",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  import_row: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "import_batch_id",
+    "row_number",
+    "source_record_id",
+    "raw",
+    "normalized",
+    "duplicate_key",
+    "validation_status",
+    "duplicate_of_row_id",
+    "reasons",
+    "commit_status",
+    "created_at",
+    "updated_at",
+  ],
+  import_row_commit: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "import_batch_id",
+    "import_row_id",
+    "target_record_type",
+    "target_record_id",
+    "target_value_no",
+    "committed_at",
+  ],
+  deliverable_external_change: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "deliverable_id",
+    "is_external_change",
+    "change_type",
+    "description",
+    "confirmation_status",
+    "confirmation_source",
+    "evidence_id",
+    "outbound_write_id",
+    "connector_id",
+    "source_system_id",
+    "source_reference",
+    "source_confirmed_at",
+    "service_identity_id",
+    "confirmed_at",
+    "confirmed_by",
+    "confirmation_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  deliverable_external_change_event: [
+    "id",
+    "deliverable_external_change_id",
+    "record_version",
+    "is_external_change",
+    "change_type",
+    "confirmation_status",
+    "confirmation_source",
+    "evidence_id",
+    "outbound_write_id",
+    "source_reference",
+    "actor_user_id",
+    "occurred_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

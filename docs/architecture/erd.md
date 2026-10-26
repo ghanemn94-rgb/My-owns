@@ -2004,6 +2004,60 @@ erDiagram
 | Notification channel (S12-023) | `notification_channel` (+ `notification_channel_change`) | `id`; `(organization_id, channel_kind)` unique | `created_by` | `notification_channel.configure` | `enabled` | yes (history append-only) | tasks (channels) |
 | Notification delivery (S12-023) | `notification_delivery` | `id`; `(inbox_notification_id, channel_kind)` unique | — (system) | worker fan-out | `status` (pending, sent, failed, skipped) | yes | tasks (channels) |
 
+## 1v. P6 slices B and A: connectors, configuration versions, integration runs, outbound writes, the deliverable external-change confirmation, webhook endpoints and receipts, staged imports and lineage (migrations 0104–0107; T-DG6-ARCH-03; ADR-0055, ADR-0056)
+
+Six new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `connector`, `integration_run`, `outbound_write`, `deliverable_external_change`, `webhook_endpoint` and `import_batch`. Six append-only histories are written only by SECURITY DEFINER triggers (`connector_change`, `integration_run_event`, `outbound_write_event`, `deliverable_external_change_event`, `webhook_endpoint_change`, `import_batch_event`). `connector_config_version`, `webhook_receipt` and `import_row_commit` are append-only records written by the application. `import_row` is inserted while its batch is staging and afterwards only its `commit_status` moves (column grant); it is never deleted. `0107` adds eleven permission codes. The column lists are in `data-dictionary.md` ("P6 tables, slices B and A").
+
+```mermaid
+erDiagram
+    organization ||--o{ connector : "unique (organization_id, code)"
+    connector ||--|{ connector_config_version : "numbered 1, 2, 3 (append-only); current = config_version_no (deferred FK)"
+    connector ||--o{ connector_change : "one history row per version"
+    connector ||--|| service_identity : "connector:<id> (FK added here)"
+    transformation |o--o{ connector_config_version : "target transformation (kpi_actual connectors)"
+    connector ||--o{ integration_run : "one active run; unique idempotency key"
+    connector_config_version ||--o{ integration_run : "the configuration it used"
+    service_identity ||--o{ integration_run : "acts as the connector's identity"
+    integration_run |o--o| integration_run : "retry_of_run_id (at most one retry)"
+    integration_run ||--o{ integration_run_event : "one event per version"
+    integration_run |o--o| import_batch : "the batch the run staged"
+    connector ||--o{ outbound_write : "unique (connector_id, idempotency_key)"
+    deliverable ||--o{ outbound_write : "deliverable_status_push"
+    outbound_write ||--o{ outbound_write_event : "one event per version"
+    deliverable ||--o| deliverable_external_change : "flag and separate confirmation"
+    evidence |o--o{ deliverable_external_change : "reviewed (verified) evidence confirms"
+    outbound_write |o--o{ deliverable_external_change : "a confirmed connector result confirms"
+    deliverable_external_change ||--o{ deliverable_external_change_event : "one event per version"
+    connector ||--o{ webhook_endpoint : "webhook connectors only"
+    webhook_endpoint ||--o{ webhook_endpoint_change : "one history row per version"
+    webhook_endpoint ||--o{ webhook_receipt : "unique (endpoint, delivery id)"
+    webhook_receipt ||--o| import_batch : "one batch per receipt"
+    transformation ||--o{ import_batch : "one target transformation"
+    methodology_version ||--o{ import_batch : "the pinned form schema version"
+    import_batch ||--o{ import_batch_event : "one event per version"
+    import_batch ||--|{ import_row : "row_number unique per batch"
+    import_row |o--o| import_row : "duplicate_of_row_id (same batch and key)"
+    import_row ||--o| import_row_commit : "lineage of a committed row"
+    kpi_actual ||--o{ import_row_commit : "target record (trigger-checked value number)"
+```
+
+`import_row_commit.target_record_id` has no declared foreign key (the target is polymorphic by `target_record_type`; `kpi_actual` is the only value); the trigger `import_row_commit_guard` requires the named KPI actual value in the same transformation (probe IM16).
+
+### 1v.1 P6 entity register (slices B and A) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Connector (S17-001) | `connector` (+ `connector_change`) | `id`; `(organization_id, code)` unique | `created_by` | `connector.configure` | `status` (disabled, enabled) | yes (history append-only) | integrations |
+| Connector configuration version (S17-001) | `connector_config_version` | `id`; `(connector_id, version_no)` unique | `created_by` | `connector.configure` | — | no (append-only) | integrations |
+| IntegrationRun (S16-022, S17-001) | `integration_run` (+ `integration_run_event`) | `id`; `(connector_id, idempotency_key)` unique | `requested_by`; `service_identity_id` | worker (service), `connector.run`, `connector.configure` (test), webhook receipt | `status` (queued, running, succeeded, failed, cancelled) | yes (events append-only) | integrations |
+| Outbound write (S17-006) | `outbound_write` (+ `outbound_write_event`) | `id`; `(connector_id, idempotency_key)` unique | `requested_by` | `outbound_write.execute` | `status` (requested, pending_confirmation, confirmed, failed) | yes (events append-only) | integrations |
+| External-change confirmation (S01-005) | `deliverable_external_change` (+ `deliverable_external_change_event`) | `id`; `deliverable_id` unique | `created_by`; `confirmed_by` or `service_identity_id` | `external_change.flag`, `external_change.confirm`, the connector-confirmation path | `confirmation_status` (unconfirmed, confirmed) | yes (events append-only) | portfolio |
+| Webhook endpoint (S17-003) | `webhook_endpoint` (+ `webhook_endpoint_change`) | `id`; `endpoint_key` unique | `created_by` | `webhook.configure` | `status` (active, disabled) | yes (history append-only) | integrations |
+| Webhook receipt (S17-003) | `webhook_receipt` | `id`; `(webhook_endpoint_id, delivery_id)` unique | — (signed sender; service actor) | `receiveWebhook` | — | no (append-only) | integrations |
+| Import batch (S17-002) | `import_batch` (+ `import_batch_event`) | `id`; `webhook_receipt_id` unique | `created_by` (uploads), `committed_by` | `import.create`, `import.commit`, webhook and connector staging | `status` (staging, staged, committed, cancelled, failed) | yes (events append-only) | integrations (imports) |
+| Import row (S17-002) | `import_row` | `id`; `(import_batch_id, row_number)` unique; one valid row per `(import_batch_id, duplicate_key)` | — (the batch's) | staging; commit (`commit_status` only) | `validation_status`, `commit_status` | no (covered by the batch's audit) | integrations (imports) |
+| Lineage (S17-002) | `import_row_commit` | `id`; `import_row_id` unique | — (the batch's committer) | commit | — | no (append-only) | integrations (imports) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -2278,11 +2332,11 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| FormSchemaVersion | `form_schema_version` | P2/P5 (ADR-0014) |
+| FormSchemaVersion | `methodology_version` rows with `key = 'forms'` (`0011`, seeded v1 `0068`), pinned per transformation by `transformation_config_pin` kind `form_schema` (`0063`; corrected by T-DG6-ARCH-03, ADR-0055 §7: no table `form_schema_version` exists) | P2/P5 (ADR-0014, ADR-0041) |
 | AutomationRuleVersion | `automation_rule_version` | P5 |
-| Job | `pgboss.job` (+ `pgboss.schedule`), plus `outbox_event` and `processed_message` | **P1** (queue, outbox, ledger) |
-| Notification | `notification` (in-app inbox) | P4 |
-| IntegrationRun | `integration_run` | P6 |
+| Job | `pgboss.job` (+ `pgboss.schedule`), plus `outbox_event` and `processed_message`; P5 `job_schedule` and `job_run` (`0074`) | **P1** (queue, outbox, ledger); P5 run history |
+| Notification | `inbox_notification` (in-app inbox, `0028`; corrected by T-DG6-ARCH-03, ADR-0055 §7: no table `notification` exists) | P4 |
+| IntegrationRun | `integration_run` (`0104`; ERD §1v, ADR-0055 §2) | P6 |
 | ReportSnapshot | `report_snapshot` (immutable once issued) | P5 |
 | AuditEvent | `audit_event` | **P1** |
 

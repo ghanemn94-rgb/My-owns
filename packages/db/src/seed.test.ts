@@ -41,6 +41,8 @@ import {
   P6_ACCESS_HARDENING_ROLE_PERMISSIONS,
   P6_OPERATIONS_CHANNELS_PERMISSIONS,
   P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS,
+  P6_INTEGRATIONS_PERMISSIONS,
+  P6_INTEGRATIONS_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from "@mth/shared";
@@ -81,6 +83,7 @@ const sqlP6OperationsChannels = readFileSync(
   `${defaultMigrationsDir()}/0103_p6_operations_channels_permissions.sql`,
   "utf8",
 );
+const sqlP6Integrations = readFileSync(`${defaultMigrationsDir()}/0107_p6_integrations_permissions.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -100,6 +103,7 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P5_READER_DEMO_PERMISSIONS),
   ...Object.keys(P6_ACCESS_HARDENING_PERMISSIONS),
   ...Object.keys(P6_OPERATIONS_CHANNELS_PERMISSIONS),
+  ...Object.keys(P6_INTEGRATIONS_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -189,6 +193,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P5_READER_DEMO_PERMISSIONS,
       ...P6_ACCESS_HARDENING_PERMISSIONS,
       ...P6_OPERATIONS_CHANNELS_PERMISSIONS,
+      ...P6_INTEGRATIONS_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -845,6 +850,52 @@ describe("0103 seed equals the P6 part of permissions.ts (slices J and C)", () =
   });
 });
 
+describe("0107 seed equals the P6 part of permissions.ts (slices B and A)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6Integrations).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P6_INTEGRATIONS_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_INTEGRATIONS_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6Integrations).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_INTEGRATIONS_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_INTEGRATIONS_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; configure codes are ADM_TECH only; AUD reads only; ADM_TECH holds no import, outbound-write or external-change right; outbound_write.execute is TD only", () => {
+    for (const c of Object.values(P6_INTEGRATIONS_PERMISSIONS as Record<string, string>))
+      expect(["read", "write", "configure"]).toContain(c);
+    for (const [role, perms] of Object.entries(P6_INTEGRATIONS_ROLE_PERMISSIONS))
+      for (const p of perms as readonly (keyof typeof P6_INTEGRATIONS_PERMISSIONS)[])
+        if (P6_INTEGRATIONS_PERMISSIONS[p] === "configure") expect(role).toBe("ADM_TECH");
+    for (const p of P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD) expect(P6_INTEGRATIONS_PERMISSIONS[p]).toBe("read");
+    expect(
+      P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH.filter((p) => /^(import|outbound_write|external_change)\./.test(p)),
+    ).toEqual([]);
+    const executors = Object.entries(P6_INTEGRATIONS_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("outbound_write.execute"))
+      .map(([r]) => r);
+    expect(executors).toEqual(["TD"]);
+  });
+});
+
 /**
  * F-DG5-100: the P5 ids its stage left unused (planned gaps of the p5-plan §4 ranges, D-142). They are permanently
  * unused: a file in a gap would run at its lexical position on a fresh database but last on an upgraded one (the
@@ -897,8 +948,8 @@ describe("migration files", () => {
       ]);
     }
     // T-DG6-ARCH-01: a free id of a P6 range is accepted; an id above the P6 repair block (0133) is not.
-    // T-DG6-ARCH-02: 0101 is now shipped, so the free-id example is 0104.
-    expect(numberingViolations([...files, { id: 104, name: "0104_p6_example.sql" }])).toEqual([]);
+    // T-DG6-ARCH-02: 0101 is now shipped, so the free-id example was 0104; T-DG6-ARCH-03 shipped 0104-0107, so it is 0108.
+    expect(numberingViolations([...files, { id: 108, name: "0108_p6_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 134, name: "0134_p7_example.sql" }])).toEqual([
       "0134_p7_example.sql: above 0133",
     ]);

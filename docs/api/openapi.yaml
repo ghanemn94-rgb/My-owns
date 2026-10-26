@@ -374,6 +374,10 @@ tags:
     description: Operational exceptions, the worker heartbeat and the service identities of jobs and connectors (P6, ADR-0053).
   - name: platform-admin
     description: Identity, evidence storage and notification channels in Administration (P6, ADR-0054).
+  - name: integrations
+    description: Connectors, integration runs, webhooks and guarded outbound writes (P6, ADR-0055, ADR-0056 §7).
+  - name: imports
+    description: Staged CSV/XLSX imports, row-level validation, commit with lineage and templates (P6, ADR-0056).
 security:
   - sessionCookie: []
 paths:
@@ -22716,6 +22720,943 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors:
+    get:
+      tags: [integrations]
+      operationId: listConnectors
+      summary: "Connectors of an organization with their status, verification (verified only after a succeeded test run on the current configuration), last success (derived; null = never succeeded) and newest run (connector.read; ADM_TECH, KDS, TD, TO, AUD). ADR-0055 §1-§2; REQ-S17-001."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/ConnectorStatus" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConnectorPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [integrations]
+      operationId: createConnector
+      summary: "Create a connector, disabled, with configuration version 1 and its connector service identity, in one transaction (connector.configure; ADM_TECH). Credentials are SecretRefs only. Audit connector.created. 409 connector.code_taken; 422 connector.secret_value_refused, connector.mappings_invalid, connector.adapter_settings_invalid, connector.target_invalid. ADR-0055 §1."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Connector" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+    get:
+      tags: [integrations]
+      operationId: getConnector
+      summary: "One connector with its current configuration (credential references with whether each resolves, never a value), verification, last success and the newest failed run's actionable error (why, what to do, and the form and import fallbacks). connector.read. ADR-0055 §1, §4; REQ-S17-005."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Connector" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [integrations]
+      operationId: putConnector
+      summary: "Change the names and the configuration; a configuration change is a new configuration version and the connector moves to it (connector.configure; ADM_TECH). Audit connector.updated. 422 as createConnector. ADR-0055 §1."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Connector" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/enable:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+    post:
+      tags: [integrations]
+      operationId: enableConnector
+      summary: "Enable a disabled connector (connector.configure; ADM_TECH). Enabling does not verify it; verification needs a succeeded test run. Audit connector.enabled. ADR-0055 §1."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorEnable" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Connector" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/disable:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+    post:
+      tags: [integrations]
+      operationId: disableConnector
+      summary: "Disable a connector with a reason (connector.configure; ADM_TECH); queued runs are cancelled; forms and imports keep working. Audit connector.disabled. ADR-0055 §1, §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorDisable" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Connector" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/test:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+    post:
+      tags: [integrations]
+      operationId: testConnector
+      summary: "Run a test of the current configuration now: a run with trigger test, the adapter called outside any transaction, nothing committed (connector.configure; ADM_TECH). A succeeded test makes the connector verified for this configuration version. Audit integration_run.*. 409 connector.run_active. ADR-0055 §1-§3."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorTestRequest" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/mappings:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+    get:
+      tags: [integrations]
+      operationId: getConnectorMappings
+      summary: "The field mappings of the current configuration version and the target columns they can map to (the import template of the connector's target). connector.read. ADR-0055 §1; ADR-0056 §9."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConnectorMappings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [integrations]
+      operationId: putConnectorMappings
+      summary: "Replace the field mappings: a new configuration version (connector.configure; ADM_TECH). If-Match is the connector's version. Audit connector.mappings_changed. 422 connector.mappings_invalid. ADR-0055 §1."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorMappingsUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConnectorMappings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/runs:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+    get:
+      tags: [integrations]
+      operationId: listIntegrationRuns
+      summary: "IntegrationRuns of a connector, newest first: trigger, attempt, status, row counts (null = Unknown, never 0), error code, reconciliation (connector.read). ADR-0055 §2; REQ-S17-001, REQ-S16-022."
+      parameters:
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/IntegrationRunStatus" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationRunPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [integrations]
+      operationId: runConnector
+      summary: "Queue a manual run (connector.run; ADM_TECH, KDS). The same Idempotency-Key returns the existing run with 200. Audit integration_run.queued. 409 connector.disabled, connector.run_active. ADR-0055 §2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectorRunRequest" }
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationRun" }
+        "200":
+          description: "The existing run for this Idempotency-Key."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/runs/{runId}:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+      - $ref: "#/components/parameters/IntegrationRunId"
+    get:
+      tags: [integrations]
+      operationId: getIntegrationRun
+      summary: "One IntegrationRun with its status history, its retry chain (retry of, retried by), its staged import batch and, when failed, the actionable error (why, what to do). connector.read. ADR-0055 §2, §4."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationRunDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/connectors/{connectorId}/runs/{runId}/retry:
+    parameters:
+      - $ref: "#/components/parameters/ConnectorId"
+      - $ref: "#/components/parameters/IntegrationRunId"
+    post:
+      tags: [integrations]
+      operationId: retryIntegrationRun
+      summary: "Queue the retry of a failed run as its next attempt, once (connector.run; ADM_TECH, KDS). Audit integration_run.queued. 409 integration_run.not_retryable, connector.disabled, connector.run_active; 422 integration_run.retry_limit_reached. ADR-0055 §2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntegrationRunRetry" }
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IntegrationRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/imports:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [imports]
+      operationId: listImports
+      summary: "Import batches of a transformation, newest first (import.read; KDS, BO, TO, AUD; scoped). Counts are null while staging (Unknown). ADR-0056 §2; REQ-S17-002."
+      parameters:
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/ImportBatchStatus" } }
+        - { name: sourceKind, in: query, required: false, schema: { $ref: "#/components/schemas/ImportSourceKind" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportBatchPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [imports]
+      operationId: createImport
+      summary: "Upload a CSV (UTF-8) or XLSX file and stage it: parsed with limits (10 MiB, 5,000 rows, XLSX parts and unpacked size), every row validated with the target's rules and the transformation's pinned form schema version, duplicates detected in the file and against committed data, row-level reasons; nothing is committed (import.create; KDS). Audit import_batch.staged. 413 import.file_too_large; 415 import.unsupported_media_type; 422 import.csv_not_utf8, import.xlsx_unsafe, import.too_many_rows, import.header_mismatch, import.template_unknown. ADR-0056 §2-§5; REQ-S17-002, REQ-S17-003."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - { name: template, in: query, required: true, schema: { type: string, pattern: "^[a-z][a-z0-9_]*\\.v[1-9][0-9]*$", examples: ["kpi_actual.v1"] } }
+        - { name: X-File-Name, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 255 } }
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema: { type: string, contentMediaType: text/csv }
+          application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+            schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
+      responses:
+        "201":
+          description: "Staged."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportBatch" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "413":
+          description: "Larger than 10 MiB (code import.file_too_large)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "415":
+          description: "Not CSV or XLSX (code import.unsupported_media_type)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /api/v1/transformations/{transformationId}/imports/{importId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ImportId"
+    get:
+      tags: [imports]
+      operationId: getImport
+      summary: "One import batch: source (file name, size and hash; webhook receipt; or connector run), pinned form schema version, status, counts and the commit or cancel record. import.read. ADR-0056 §2."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportBatch" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/imports/{importId}/rows:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ImportId"
+    get:
+      tags: [imports]
+      operationId: listImportRows
+      summary: "Staged rows in source order with their raw cells (text), validation status, row-level reason codes (rendered in English or Arabic by the client), duplicate pointer, commit status and lineage (the KPI actual a committed row created). import.read. ADR-0056 §5-§6; REQ-S17-002."
+      parameters:
+        - { name: validationStatus, in: query, required: false, schema: { $ref: "#/components/schemas/ImportRowValidationStatus" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportRowPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/imports/{importId}/commit:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ImportId"
+    post:
+      tags: [imports]
+      operationId: commitImport
+      summary: "Commit the valid rows only, in one transaction, each through the target's own path (KPI actuals: the DG4 submission path, never accepted directly), with lineage; invalid and duplicate rows stay visible and uncommitted (import.commit plus kpi_actual.submit, re-checked at commit; KDS). Audit import_batch.committed. 409 import.not_staged, import.revalidation_failed; 422 import.nothing_to_commit. ADR-0056 §6; REQ-S17-002."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImportCommit" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportBatch" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/imports/{importId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/ImportId"
+    post:
+      tags: [imports]
+      operationId: cancelImport
+      summary: "Cancel a staged import with a reason; its rows are kept (import.commit; KDS). Audit import_batch.cancelled. 409 import.not_staged. ADR-0056 §6."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ImportCancel" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportBatch" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/import-templates:
+    get:
+      tags: [imports]
+      operationId: listImportTemplates
+      summary: "The downloadable import templates (kpi_actual.v1) with their columns (English and Arabic labels, required, kind, example) and media types (import.read). ADR-0056 §9; REQ-S17-003."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportTemplateList" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/import-templates/{templateVersion}/download:
+    parameters:
+      - $ref: "#/components/parameters/ImportTemplateVersion"
+    get:
+      tags: [imports]
+      operationId: downloadImportTemplate
+      summary: "Download a template as CSV or XLSX, prefilled with one row per active KPI of the transformation the caller can read (empty values) (import.read). ADR-0056 §9."
+      parameters:
+        - { name: format, in: query, required: false, schema: { type: string, enum: [csv, xlsx], default: csv } }
+        - { name: transformationId, in: query, required: true, schema: { $ref: "#/components/schemas/Uuid" } }
+      responses:
+        "200":
+          description: "The template file (attachment)."
+          content:
+            text/csv:
+              schema: { type: string, contentMediaType: text/csv }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/webhooks:
+    get:
+      tags: [integrations]
+      operationId: listWebhookEndpoints
+      summary: "Webhook endpoints of an organization (connector.read). Secret references only, never a value. ADR-0056 §7."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpointPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [integrations]
+      operationId: createWebhookEndpoint
+      summary: "Create an active endpoint for a webhook connector; the server generates the endpoint key; the signing secret is a SecretRef that IT provisions (webhook.configure; ADM_TECH). Audit webhook_endpoint.created. 422 connector.secret_value_refused, webhook.connector_not_webhook. ADR-0056 §7."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookEndpointCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/webhooks/{webhookId}:
+    parameters:
+      - $ref: "#/components/parameters/WebhookEndpointId"
+    get:
+      tags: [integrations]
+      operationId: getWebhookEndpoint
+      summary: "One webhook endpoint with its receive path, secret references, tolerance and newest accepted receipt (connector.read). ADR-0056 §7."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/webhooks/{webhookId}/rotate-secret:
+    parameters:
+      - $ref: "#/components/parameters/WebhookEndpointId"
+    post:
+      tags: [integrations]
+      operationId: rotateWebhookSecret
+      summary: "Switch to a new signing SecretRef; the old one stays valid for graceHours (1-168) (webhook.configure; ADM_TECH). Audit webhook_endpoint.secret_rotated. 409 webhook.endpoint_disabled; 422 webhook.grace_invalid, connector.secret_value_refused. ADR-0056 §7."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookSecretRotate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/webhooks/{webhookId}/disable:
+    parameters:
+      - $ref: "#/components/parameters/WebhookEndpointId"
+    post:
+      tags: [integrations]
+      operationId: disableWebhookEndpoint
+      summary: "Disable an endpoint with a reason; final (webhook.configure; ADM_TECH). Audit webhook_endpoint.disabled. 409 webhook.endpoint_disabled. ADR-0056 §7."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookDisable" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/webhooks/{endpointKey}:
+    parameters:
+      - $ref: "#/components/parameters/WebhookEndpointKey"
+    post:
+      tags: [integrations]
+      operationId: receiveWebhook
+      summary: "Receive a signed webhook delivery and stage it as an import (no session, CSRF-exempt; authenticated by signature). Headers X-MTH-Webhook-Timestamp (Unix seconds), X-MTH-Webhook-Delivery and X-MTH-Webhook-Signature: v1=<hex HMAC-SHA256 of '<timestamp>.<deliveryId>.<raw body>'>, within the endpoint's tolerance (default 300 s). Every authentication failure (unknown or disabled endpoint, missing or bad signature, stale timestamp) is 401 webhook.unauthenticated; an unsigned webhook is rejected. The same delivery id with the same body returns the original result with 200 (replay); with a different body 409 webhook.delivery_id_reused. ADR-0056 §7; REQ-S17-003."
+      security: []
+      parameters:
+        - { name: X-MTH-Webhook-Timestamp, in: header, required: true, schema: { type: string, pattern: "^[0-9]{1,12}$" } }
+        - { name: X-MTH-Webhook-Delivery, in: header, required: true, schema: { type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" } }
+        - { name: X-MTH-Webhook-Signature, in: header, required: true, schema: { type: string, pattern: "^v1=[0-9a-f]{64}$" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebhookDelivery" }
+      responses:
+        "202":
+          description: "Accepted and staged."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookReceiptResult" }
+        "200":
+          description: "Replay of an accepted delivery: the original result, nothing new."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookReceiptResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401":
+          description: "Not signed correctly (code webhook.unauthenticated)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "409":
+          description: "Delivery id reused with a different body (code webhook.delivery_id_reused)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "413":
+          description: "Body larger than 1 MiB (code webhook.payload_too_large)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/outbound-writes:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+    get:
+      tags: [integrations]
+      operationId: listOutboundWrites
+      summary: "Outbound writes of a transformation, newest first; 'requested' and 'pending_confirmation' are shown as Pending confirmation, never done (outbound_write.read; TD, KDS, TO, AUD). ADR-0055 §5; REQ-S17-006."
+      parameters:
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/OutboundWriteStatus" } }
+        - { name: deliverableId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OutboundWritePage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [integrations]
+      operationId: executeOutboundWrite
+      summary: "Execute a connector-defined downstream write with an explicit idempotency key (outbound_write.execute; TD only by default). The write is recorded first, dispatched outside any transaction with the same key, and marked confirmed only on a confirmed response; otherwise it stays pending_confirmation. The same key and payload returns the existing write with 200 and no second effect. Audit outbound_write.requested and the result. 409 outbound_write.idempotency_key_reused, connector.disabled; 422 outbound_write.action_not_allowed. ADR-0055 §5."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OutboundWriteExecute" }
+      responses:
+        "201":
+          description: "Created and dispatched."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OutboundWrite" }
+        "200":
+          description: "The existing write for this idempotency key (replay; no second effect)."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OutboundWrite" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/outbound-writes/{writeId}:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/OutboundWriteId"
+    get:
+      tags: [integrations]
+      operationId: getOutboundWrite
+      summary: "One outbound write with its status history (outbound_write.read). ADR-0055 §5."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OutboundWriteDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/outbound-writes/{writeId}/confirm:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/OutboundWriteId"
+    post:
+      tags: [integrations]
+      operationId: confirmOutboundWrite
+      summary: "Ask the adapter for the outcome of this write's idempotency key (re-dispatching a write left 'requested' with the same key) and record a confirmed response; there is no manual confirmation (outbound_write.execute). A confirmed deliverable_status_push for a flagged deliverable also records the connector confirmation of REQ-S01-005. Audit outbound_write.confirmed or .failed. 409 outbound_write.final. ADR-0055 §5-§6."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OutboundWriteConfirm" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OutboundWriteDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/deliverables/{deliverableId}/confirmation:
+    parameters:
+      - $ref: "#/components/parameters/DeliverableId"
+    get:
+      tags: [portfolio]
+      operationId: getDeliverableConfirmation
+      summary: "Whether a deliverable is flagged as an external change and its separate confirmation (Unconfirmed; Confirmed by reviewed evidence; Confirmed by connector result) with provenance and history. Task completion and the DG3 acceptance never set it. ETag 0 when the deliverable was never flagged. Scoped read of the deliverable. ADR-0055 §6; REQ-S01-005."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETagOrZero" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeliverableConfirmation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [portfolio]
+      operationId: confirmDeliverableExternalChange
+      summary: "Confirm a flagged external change with reviewed (verified) evidence of the same transformation; a filename-only link never confirms (external_change.confirm; BO, TD). Audit deliverable_external_change.confirmed. 409 external_change.not_flagged, external_change.already_confirmed; 422 external_change.evidence_not_verified. ADR-0055 §6."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeliverableConfirmationRequest" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeliverableConfirmation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/deliverables/{deliverableId}/external-change:
+    parameters:
+      - $ref: "#/components/parameters/DeliverableId"
+    put:
+      tags: [portfolio]
+      operationId: putDeliverableExternalChange
+      summary: "Flag a deliverable as an external change (customer system, network upgrade, procurement transaction, other), change its type or description, or withdraw the flag while unconfirmed; If-Match 0 creates the flag (external_change.flag; TL, BO, WL, TO). Audit deliverable_external_change.flagged / .changed / .withdrawn. 409 external_change.already_confirmed, external_change.withdraw_confirmed. ADR-0055 §6."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeliverableExternalChangeUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeliverableConfirmation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -24327,6 +25268,41 @@ components:
       in: path
       required: true
       schema: { $ref: "#/components/schemas/NotificationChannelKind" }
+    ConnectorId:
+      name: connectorId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    IntegrationRunId:
+      name: runId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ImportId:
+      name: importId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ImportTemplateVersion:
+      name: templateVersion
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z][a-z0-9_]*\\.v[1-9][0-9]*$" }
+    WebhookEndpointId:
+      name: webhookId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    WebhookEndpointKey:
+      name: endpointKey
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[A-Za-z0-9_-]{32,64}$" }
+    OutboundWriteId:
+      name: writeId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
   headers:
     X-Request-Id:
       description: Request correlation ID (echoed from a valid inbound header or generated), also in every log line and audit event.
@@ -27315,6 +28291,17 @@ components:
         - identity.read
         - storage.configure
         - notification_channel.configure
+        - connector.read
+        - connector.configure
+        - connector.run
+        - webhook.configure
+        - import.read
+        - import.create
+        - import.commit
+        - outbound_write.read
+        - outbound_write.execute
+        - external_change.flag
+        - external_change.confirm
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -38667,3 +39654,598 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/NotificationDelivery" } }
         nextCursor: { type: [string, "null"] }
+    ConnectorAdapterKind:
+      type: string
+      enum: [test_adapter, webhook, http_pull]
+    ConnectorTargetKind:
+      type: string
+      enum: [kpi_actual, none]
+    ConnectorStatus:
+      type: string
+      enum: [disabled, enabled]
+    ConnectorCadence:
+      type: string
+      enum: [manual, hourly, daily, weekly]
+    FieldMapping:
+      type: object
+      required: [source, target]
+      additionalProperties: false
+      properties:
+        source: { type: string, minLength: 1, maxLength: 100 }
+        target: { type: string, pattern: "^[a-z][a-zA-Z0-9_]{0,63}$" }
+    CredentialRefView:
+      type: object
+      required: [provider, name, resolvable]
+      additionalProperties: false
+      description: "A credential reference and whether the SecretProvider can resolve it now; never the value (ADR-0055 §1)."
+      properties:
+        provider: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
+        name: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_./-]{0,127}$" }
+        resolvable: { type: [boolean, "null"], description: "null = not checked (Unknown)." }
+    ConnectorConfigInput:
+      type: object
+      required: [sourceSystemId, endpointUrl, credentialRefs, fieldMappings, targetTransformationId, cadence, retryMaxAttempts, retryBackoffSeconds, commitMode, commitOnBehalfOf, outboundActions, reconciliationRule, adapterSettings, reason]
+      additionalProperties: false
+      properties:
+        sourceSystemId: { type: string, minLength: 1, maxLength: 200, pattern: "^[A-Za-z0-9][A-Za-z0-9_.:/-]*$" }
+        endpointUrl: { type: [string, "null"], maxLength: 500, pattern: "^https://" }
+        credentialRefs:
+          type: object
+          maxProperties: 8
+          propertyNames: { pattern: "^[a-z][a-z0-9_]{0,31}$" }
+          additionalProperties: { $ref: "#/components/schemas/SecretRef" }
+        fieldMappings: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/FieldMapping" } }
+        targetTransformationId: { $ref: "#/components/schemas/NullableUuid" }
+        cadence: { $ref: "#/components/schemas/ConnectorCadence" }
+        retryMaxAttempts: { type: integer, minimum: 0, maximum: 5 }
+        retryBackoffSeconds: { type: integer, minimum: 10, maximum: 3600 }
+        commitMode: { type: string, enum: [manual, auto] }
+        commitOnBehalfOf: { $ref: "#/components/schemas/NullableUuid" }
+        outboundActions: { type: array, maxItems: 1, uniqueItems: true, items: { type: string, enum: [deliverable_status_push] } }
+        reconciliationRule: { type: string, enum: [none, row_count, row_count_and_total] }
+        adapterSettings: { type: object, description: "Adapter-specific settings (test adapter: mode healthy | failing | stopped, confirm immediate | never, fixture). Never a secret." }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    ConnectorConfig:
+      type: object
+      required: [versionNo, sourceSystemId, endpointUrl, credentialRefs, fieldMappings, targetTransformationId, cadence, retryMaxAttempts, retryBackoffSeconds, commitMode, commitOnBehalfOf, outboundActions, reconciliationRule, adapterSettings, reason, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        versionNo: { type: integer, minimum: 1 }
+        sourceSystemId: { type: string }
+        endpointUrl: { type: [string, "null"] }
+        credentialRefs: { type: object, additionalProperties: { $ref: "#/components/schemas/CredentialRefView" } }
+        fieldMappings: { type: array, items: { $ref: "#/components/schemas/FieldMapping" } }
+        targetTransformationId: { $ref: "#/components/schemas/NullableUuid" }
+        cadence: { $ref: "#/components/schemas/ConnectorCadence" }
+        retryMaxAttempts: { type: integer, minimum: 0, maximum: 5 }
+        retryBackoffSeconds: { type: integer, minimum: 10, maximum: 3600 }
+        commitMode: { type: string, enum: [manual, auto] }
+        commitOnBehalfOf: { $ref: "#/components/schemas/NullableUuid" }
+        outboundActions: { type: array, items: { type: string, enum: [deliverable_status_push] } }
+        reconciliationRule: { type: string, enum: [none, row_count, row_count_and_total] }
+        adapterSettings: { type: object }
+        reason: { type: string }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    ConnectorActionableError:
+      type: object
+      required: [runId, triggerKind, attemptNo, finishedAt, errorCode, params, fallbacks]
+      additionalProperties: false
+      description: "The newest failed run: which run, why (errorCode, rendered with its why and what-to-do texts in English or Arabic), and the fallbacks that keep working (REQ-S17-005; ADR-0055 §4)."
+      properties:
+        runId: { $ref: "#/components/schemas/Uuid" }
+        triggerKind: { $ref: "#/components/schemas/IntegrationRunTrigger" }
+        attemptNo: { type: integer, minimum: 1 }
+        finishedAt: { $ref: "#/components/schemas/Timestamp" }
+        errorCode: { type: string, enum: [connector.source_unavailable, connector.stopped, connector.credentials_rejected, connector.secret_unresolvable, connector.mapping_mismatch, connector.response_invalid] }
+        params: { type: object, additionalProperties: { type: string } }
+        fallbacks: { type: array, items: { type: string, enum: [kpi_form, import_file] } }
+    Connector:
+      type: object
+      required: [id, organizationId, code, nameEn, nameAr, adapterKind, targetKind, status, statusReason, config, verification, lastSuccessAt, lastRun, actionableError, serviceIdentityId, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^[a-z][a-z0-9_-]{1,62}$" }
+        nameEn: { type: string, maxLength: 200 }
+        nameAr: { type: string, maxLength: 200 }
+        adapterKind: { $ref: "#/components/schemas/ConnectorAdapterKind" }
+        targetKind: { $ref: "#/components/schemas/ConnectorTargetKind" }
+        status: { $ref: "#/components/schemas/ConnectorStatus" }
+        statusReason: { type: [string, "null"] }
+        config: { $ref: "#/components/schemas/ConnectorConfig" }
+        verification: { type: string, enum: [verified, not_verified], description: "verified iff a test run succeeded on the current configuration version; never 'live'." }
+        lastSuccessAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        lastRun: { oneOf: [{ $ref: "#/components/schemas/IntegrationRun" }, { type: "null" }] }
+        actionableError: { oneOf: [{ $ref: "#/components/schemas/ConnectorActionableError" }, { type: "null" }] }
+        serviceIdentityId: { $ref: "#/components/schemas/Uuid" }
+        version: { type: integer, minimum: 1 }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    ConnectorPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Connector" } }
+        nextCursor: { type: [string, "null"] }
+    ConnectorCreate:
+      type: object
+      required: [organizationId, code, nameEn, nameAr, adapterKind, targetKind, config]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^[a-z][a-z0-9_-]{1,62}$" }
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        adapterKind: { $ref: "#/components/schemas/ConnectorAdapterKind" }
+        targetKind: { $ref: "#/components/schemas/ConnectorTargetKind" }
+        config: { $ref: "#/components/schemas/ConnectorConfigInput" }
+    ConnectorUpdate:
+      type: object
+      required: [nameEn, nameAr, config]
+      additionalProperties: false
+      properties:
+        nameEn: { type: string, minLength: 1, maxLength: 200 }
+        nameAr: { type: string, minLength: 1, maxLength: 200 }
+        config: { oneOf: [{ $ref: "#/components/schemas/ConnectorConfigInput" }, { type: "null" }], description: "null keeps the current configuration version." }
+    ConnectorEnable:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+    ConnectorDisable:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    ConnectorTestRequest:
+      type: object
+      required: []
+      additionalProperties: false
+      properties: {}
+    ConnectorRunRequest:
+      type: object
+      required: []
+      additionalProperties: false
+      properties: {}
+    IntegrationRunRetry:
+      type: object
+      required: []
+      additionalProperties: false
+      properties: {}
+    ConnectorMappings:
+      type: object
+      required: [connectorId, configVersionNo, fieldMappings, targetColumns]
+      additionalProperties: false
+      properties:
+        connectorId: { $ref: "#/components/schemas/Uuid" }
+        configVersionNo: { type: integer, minimum: 1 }
+        fieldMappings: { type: array, items: { $ref: "#/components/schemas/FieldMapping" } }
+        targetColumns: { type: array, items: { $ref: "#/components/schemas/ImportTemplateColumn" } }
+    ConnectorMappingsUpdate:
+      type: object
+      required: [fieldMappings, reason]
+      additionalProperties: false
+      properties:
+        fieldMappings: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/FieldMapping" } }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    IntegrationRunStatus:
+      type: string
+      enum: [queued, running, succeeded, failed, cancelled]
+    IntegrationRunTrigger:
+      type: string
+      enum: [schedule, manual, retry, test, webhook]
+    IntegrationRun:
+      type: object
+      required: [id, connectorId, configVersionNo, triggerKind, status, attemptNo, retryOfRunId, idempotencyKey, requestedBy, serviceIdentityId, queuedAt, startedAt, finishedAt, rowsRead, rowsStaged, rowsCommitted, rowsRejected, rowsDuplicate, errorCount, errorCode, errorMessage, reconciliation, importBatchId, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        connectorId: { $ref: "#/components/schemas/Uuid" }
+        configVersionNo: { type: integer, minimum: 1 }
+        triggerKind: { $ref: "#/components/schemas/IntegrationRunTrigger" }
+        status: { $ref: "#/components/schemas/IntegrationRunStatus" }
+        attemptNo: { type: integer, minimum: 1, maximum: 6 }
+        retryOfRunId: { $ref: "#/components/schemas/NullableUuid" }
+        idempotencyKey: { type: string }
+        requestedBy: { $ref: "#/components/schemas/NullableUuid" }
+        serviceIdentityId: { $ref: "#/components/schemas/Uuid" }
+        queuedAt: { $ref: "#/components/schemas/Timestamp" }
+        startedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        finishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        rowsRead: { type: [integer, "null"], minimum: 0 }
+        rowsStaged: { type: [integer, "null"], minimum: 0 }
+        rowsCommitted: { type: [integer, "null"], minimum: 0 }
+        rowsRejected: { type: [integer, "null"], minimum: 0 }
+        rowsDuplicate: { type: [integer, "null"], minimum: 0 }
+        errorCount: { type: [integer, "null"], minimum: 0 }
+        errorCode: { type: [string, "null"], maxLength: 100 }
+        errorMessage: { type: [string, "null"], maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4)." }
+        reconciliation:
+          type: object
+          required: [status, sourceRowCount, sourceControlTotal, stagedControlTotal]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [not_checked, matched, mismatched, not_applicable] }
+            sourceRowCount: { type: [integer, "null"], minimum: 0 }
+            sourceControlTotal: { $ref: "#/components/schemas/NullableDecimal" }
+            stagedControlTotal: { $ref: "#/components/schemas/NullableDecimal" }
+        importBatchId: { $ref: "#/components/schemas/NullableUuid" }
+        version: { type: integer, minimum: 1 }
+    IntegrationRunDetail:
+      type: object
+      required: [run, retriedByRunId, events, actionableError]
+      additionalProperties: false
+      properties:
+        run: { $ref: "#/components/schemas/IntegrationRun" }
+        retriedByRunId: { $ref: "#/components/schemas/NullableUuid" }
+        events:
+          type: array
+          items:
+            type: object
+            required: [recordVersion, status, rowsRead, rowsStaged, rowsCommitted, rowsRejected, rowsDuplicate, errorCount, errorCode, occurredAt]
+            additionalProperties: false
+            properties:
+              recordVersion: { type: integer, minimum: 1 }
+              status: { $ref: "#/components/schemas/IntegrationRunStatus" }
+              rowsRead: { type: [integer, "null"], minimum: 0 }
+              rowsStaged: { type: [integer, "null"], minimum: 0 }
+              rowsCommitted: { type: [integer, "null"], minimum: 0 }
+              rowsRejected: { type: [integer, "null"], minimum: 0 }
+              rowsDuplicate: { type: [integer, "null"], minimum: 0 }
+              errorCount: { type: [integer, "null"], minimum: 0 }
+              errorCode: { type: [string, "null"] }
+              occurredAt: { $ref: "#/components/schemas/Timestamp" }
+        actionableError: { oneOf: [{ $ref: "#/components/schemas/ConnectorActionableError" }, { type: "null" }] }
+    IntegrationRunPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/IntegrationRun" } }
+        nextCursor: { type: [string, "null"] }
+    ImportBatchStatus:
+      type: string
+      enum: [staging, staged, committed, cancelled, failed]
+    ImportSourceKind:
+      type: string
+      enum: [csv_upload, xlsx_upload, webhook, connector]
+    ImportRowValidationStatus:
+      type: string
+      enum: [valid, invalid, duplicate_in_batch, duplicate_committed]
+    ImportBatch:
+      type: object
+      required: [id, transformationId, targetKind, templateVersion, formSchemaVersionId, sourceKind, connectorId, integrationRunId, webhookReceiptId, fileName, mediaType, byteSize, contentSha256, status, rowsTotal, rowsValid, rowsInvalid, rowsDuplicate, rowsCommitted, failureCode, commitMode, onBehalfOfUserId, committedAt, committedBy, cancelledAt, cancelledBy, cancelReason, createdAt, createdBy, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        targetKind: { type: string, enum: [kpi_actual] }
+        templateVersion: { type: string }
+        formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
+        sourceKind: { $ref: "#/components/schemas/ImportSourceKind" }
+        connectorId: { $ref: "#/components/schemas/NullableUuid" }
+        integrationRunId: { $ref: "#/components/schemas/NullableUuid" }
+        webhookReceiptId: { $ref: "#/components/schemas/NullableUuid" }
+        fileName: { type: [string, "null"], maxLength: 255 }
+        mediaType: { type: [string, "null"], enum: [text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/json, null] }
+        byteSize: { type: [integer, "null"], minimum: 1, maximum: 10485760 }
+        contentSha256: { type: [string, "null"], pattern: "^[0-9a-f]{64}$" }
+        status: { $ref: "#/components/schemas/ImportBatchStatus" }
+        rowsTotal: { type: [integer, "null"], minimum: 0, maximum: 5000, description: "null while staging (Unknown, never 0)." }
+        rowsValid: { type: [integer, "null"], minimum: 0 }
+        rowsInvalid: { type: [integer, "null"], minimum: 0 }
+        rowsDuplicate: { type: [integer, "null"], minimum: 0 }
+        rowsCommitted: { type: [integer, "null"], minimum: 0 }
+        failureCode: { type: [string, "null"], maxLength: 100 }
+        commitMode: { type: string, enum: [manual, auto] }
+        onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
+        committedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        committedBy: { $ref: "#/components/schemas/NullableUuid" }
+        cancelledAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        cancelledBy: { $ref: "#/components/schemas/NullableUuid" }
+        cancelReason: { type: [string, "null"] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { type: integer, minimum: 1 }
+    ImportBatchPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ImportBatch" } }
+        nextCursor: { type: [string, "null"] }
+    ImportRowReason:
+      type: object
+      required: [code, field, params]
+      additionalProperties: false
+      description: "A row-level reason; the client renders the code's English or Arabic text with the params (ADR-0056 §5)."
+      properties:
+        code: { type: string, pattern: "^import\\.row\\.[a-z_]+$" }
+        field: { type: [string, "null"] }
+        params: { type: object, additionalProperties: { type: [string, integer] } }
+    ImportRow:
+      type: object
+      required: [id, rowNumber, sourceRecordId, raw, normalized, duplicateKey, validationStatus, duplicateOfRowNumber, reasons, commitStatus, lineage]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        rowNumber: { type: integer, minimum: 1 }
+        sourceRecordId: { type: [string, "null"], maxLength: 200 }
+        raw: { type: object, additionalProperties: { type: [string, "null"] }, description: "The source cells as text (never a number parsed from a spreadsheet double)." }
+        normalized: { type: [object, "null"], additionalProperties: { type: [string, "null"] }, description: "Normalized values (decimal strings); set for valid rows only." }
+        duplicateKey: { type: [string, "null"] }
+        validationStatus: { $ref: "#/components/schemas/ImportRowValidationStatus" }
+        duplicateOfRowNumber: { type: [integer, "null"], minimum: 1 }
+        reasons: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/ImportRowReason" } }
+        commitStatus: { type: string, enum: [pending, committed, not_committed] }
+        lineage:
+          oneOf:
+            - type: object
+              required: [targetRecordType, targetRecordId, targetValueNo, committedAt]
+              additionalProperties: false
+              properties:
+                targetRecordType: { type: string, enum: [kpi_actual] }
+                targetRecordId: { $ref: "#/components/schemas/Uuid" }
+                targetValueNo: { type: integer, minimum: 1 }
+                committedAt: { $ref: "#/components/schemas/Timestamp" }
+            - { type: "null" }
+    ImportRowPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ImportRow" } }
+        nextCursor: { type: [string, "null"] }
+    ImportCommit:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+    ImportCancel:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    ImportTemplateColumn:
+      type: object
+      required: [key, labelEn, labelAr, required, kind, example]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: "^[a-z][a-z0-9_]{0,63}$" }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        required: { type: boolean }
+        kind: { type: string, enum: [text, uuid, decimal, date, boolean, enum] }
+        example: { type: [string, "null"] }
+    ImportTemplate:
+      type: object
+      required: [templateVersion, targetKind, titleEn, titleAr, mediaTypes, columns]
+      additionalProperties: false
+      properties:
+        templateVersion: { type: string }
+        targetKind: { type: string, enum: [kpi_actual] }
+        titleEn: { type: string }
+        titleAr: { type: string }
+        mediaTypes: { type: array, items: { type: string, enum: [text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet] } }
+        columns: { type: array, items: { $ref: "#/components/schemas/ImportTemplateColumn" } }
+    ImportTemplateList:
+      type: object
+      required: [items]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ImportTemplate" } }
+    WebhookEndpoint:
+      type: object
+      required: [id, organizationId, connectorId, endpointKey, receivePath, label, signingSecretRef, previousSecretRef, previousValidUntil, secretRotatedAt, toleranceSeconds, status, disabledAt, disabledBy, disableReason, lastReceiptAt, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        connectorId: { $ref: "#/components/schemas/Uuid" }
+        endpointKey: { type: string, pattern: "^[A-Za-z0-9_-]{32,64}$" }
+        receivePath: { type: string, description: "/api/v1/webhooks/{endpointKey}" }
+        label: { type: string, maxLength: 200 }
+        signingSecretRef: { $ref: "#/components/schemas/SecretRef" }
+        previousSecretRef: { oneOf: [{ $ref: "#/components/schemas/SecretRef" }, { type: "null" }] }
+        previousValidUntil: { $ref: "#/components/schemas/NullableTimestamp" }
+        secretRotatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        toleranceSeconds: { type: integer, minimum: 30, maximum: 900 }
+        status: { type: string, enum: [active, disabled] }
+        disabledAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        disabledBy: { $ref: "#/components/schemas/NullableUuid" }
+        disableReason: { type: [string, "null"] }
+        lastReceiptAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { type: integer, minimum: 1 }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    WebhookEndpointPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/WebhookEndpoint" } }
+        nextCursor: { type: [string, "null"] }
+    WebhookEndpointCreate:
+      type: object
+      required: [connectorId, label, signingSecretRef, toleranceSeconds]
+      additionalProperties: false
+      properties:
+        connectorId: { $ref: "#/components/schemas/Uuid" }
+        label: { type: string, minLength: 1, maxLength: 200 }
+        signingSecretRef: { $ref: "#/components/schemas/SecretRef" }
+        toleranceSeconds: { type: integer, minimum: 30, maximum: 900 }
+    WebhookSecretRotate:
+      type: object
+      required: [signingSecretRef, graceHours, reason]
+      additionalProperties: false
+      properties:
+        signingSecretRef: { $ref: "#/components/schemas/SecretRef" }
+        graceHours: { type: integer, minimum: 1, maximum: 168 }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    WebhookDisable:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    WebhookDelivery:
+      type: object
+      required: [templateVersion, items]
+      additionalProperties: false
+      description: "The signed body (≤ 1 MiB, strict UTF-8). Every item value is a JSON string; a decimal is sent as a string (ADR-0056 §7)."
+      properties:
+        templateVersion: { type: string, pattern: "^[a-z][a-z0-9_]*\\.v[1-9][0-9]*$" }
+        items:
+          type: array
+          maxItems: 5000
+          items: { type: object, maxProperties: 50, additionalProperties: { type: [string, "null"], maxLength: 4000 } }
+    WebhookReceiptResult:
+      type: object
+      required: [receiptId, importBatchId, replay, rowsTotal, rowsValid, rowsInvalid, rowsDuplicate]
+      additionalProperties: false
+      properties:
+        receiptId: { $ref: "#/components/schemas/Uuid" }
+        importBatchId: { $ref: "#/components/schemas/Uuid" }
+        replay: { type: boolean }
+        rowsTotal: { type: integer, minimum: 0 }
+        rowsValid: { type: integer, minimum: 0 }
+        rowsInvalid: { type: integer, minimum: 0 }
+        rowsDuplicate: { type: integer, minimum: 0 }
+    OutboundWriteStatus:
+      type: string
+      enum: [requested, pending_confirmation, confirmed, failed]
+    OutboundWrite:
+      type: object
+      required: [id, transformationId, connectorId, configVersionNo, actionCode, deliverableId, idempotencyKey, payload, payloadSha256, status, attemptCount, lastAttemptAt, externalReference, confirmedAt, failureCode, failureMessage, requestedBy, createdAt, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        connectorId: { $ref: "#/components/schemas/Uuid" }
+        configVersionNo: { type: integer, minimum: 1 }
+        actionCode: { type: string, enum: [deliverable_status_push] }
+        deliverableId: { $ref: "#/components/schemas/Uuid" }
+        idempotencyKey: { type: string }
+        payload: { type: object }
+        payloadSha256: { type: string, pattern: "^[0-9a-f]{64}$" }
+        status: { $ref: "#/components/schemas/OutboundWriteStatus" }
+        attemptCount: { type: integer, minimum: 0, maximum: 10 }
+        lastAttemptAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        externalReference: { type: [string, "null"], maxLength: 200 }
+        confirmedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        failureCode: { type: [string, "null"] }
+        failureMessage: { type: [string, "null"] }
+        requestedBy: { $ref: "#/components/schemas/Uuid" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        version: { type: integer, minimum: 1 }
+    OutboundWriteDetail:
+      type: object
+      required: [write, events]
+      additionalProperties: false
+      properties:
+        write: { $ref: "#/components/schemas/OutboundWrite" }
+        events:
+          type: array
+          items:
+            type: object
+            required: [recordVersion, status, attemptCount, externalReference, failureCode, actorUserId, occurredAt]
+            additionalProperties: false
+            properties:
+              recordVersion: { type: integer, minimum: 1 }
+              status: { $ref: "#/components/schemas/OutboundWriteStatus" }
+              attemptCount: { type: integer, minimum: 0 }
+              externalReference: { type: [string, "null"] }
+              failureCode: { type: [string, "null"] }
+              actorUserId: { $ref: "#/components/schemas/NullableUuid" }
+              occurredAt: { $ref: "#/components/schemas/Timestamp" }
+    OutboundWritePage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/OutboundWrite" } }
+        nextCursor: { type: [string, "null"] }
+    OutboundWriteExecute:
+      type: object
+      required: [connectorId, actionCode, deliverableId, idempotencyKey, payload]
+      additionalProperties: false
+      properties:
+        connectorId: { $ref: "#/components/schemas/Uuid" }
+        actionCode: { type: string, enum: [deliverable_status_push] }
+        deliverableId: { $ref: "#/components/schemas/Uuid" }
+        idempotencyKey: { type: string, minLength: 8, maxLength: 200, pattern: "^[A-Za-z0-9][A-Za-z0-9_.:-]*$" }
+        payload: { type: object, description: "At most 16 KiB; never a secret." }
+    OutboundWriteConfirm:
+      type: object
+      required: []
+      additionalProperties: false
+      properties: {}
+    ExternalChangeType:
+      type: string
+      enum: [customer_system, network_upgrade, procurement_transaction, other]
+    DeliverableConfirmation:
+      type: object
+      required: [deliverableId, transformationId, externalChange]
+      additionalProperties: false
+      properties:
+        deliverableId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        externalChange:
+          description: "null = the deliverable was never flagged as an external change."
+          oneOf:
+            - type: object
+              required: [id, isExternalChange, changeType, description, confirmationStatus, confirmationSource, evidenceId, outboundWriteId, connectorId, sourceSystemId, sourceReference, sourceConfirmedAt, serviceIdentityId, confirmedAt, confirmedBy, confirmationNote, version, events]
+              additionalProperties: false
+              properties:
+                id: { $ref: "#/components/schemas/Uuid" }
+                isExternalChange: { type: boolean }
+                changeType: { $ref: "#/components/schemas/ExternalChangeType" }
+                description: { type: [string, "null"], maxLength: 2000 }
+                confirmationStatus: { type: string, enum: [unconfirmed, confirmed] }
+                confirmationSource: { type: [string, "null"], enum: [reviewed_evidence, connector_result, null] }
+                evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+                outboundWriteId: { $ref: "#/components/schemas/NullableUuid" }
+                connectorId: { $ref: "#/components/schemas/NullableUuid" }
+                sourceSystemId: { type: [string, "null"] }
+                sourceReference: { type: [string, "null"] }
+                sourceConfirmedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+                serviceIdentityId: { $ref: "#/components/schemas/NullableUuid" }
+                confirmedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+                confirmedBy: { $ref: "#/components/schemas/NullableUuid" }
+                confirmationNote: { type: [string, "null"] }
+                version: { type: integer, minimum: 1 }
+                events:
+                  type: array
+                  items:
+                    type: object
+                    required: [recordVersion, isExternalChange, changeType, confirmationStatus, confirmationSource, actorUserId, occurredAt]
+                    additionalProperties: false
+                    properties:
+                      recordVersion: { type: integer, minimum: 1 }
+                      isExternalChange: { type: boolean }
+                      changeType: { $ref: "#/components/schemas/ExternalChangeType" }
+                      confirmationStatus: { type: string, enum: [unconfirmed, confirmed] }
+                      confirmationSource: { type: [string, "null"] }
+                      actorUserId: { $ref: "#/components/schemas/NullableUuid" }
+                      occurredAt: { $ref: "#/components/schemas/Timestamp" }
+            - { type: "null" }
+    DeliverableExternalChangeUpdate:
+      type: object
+      required: [isExternalChange, changeType, description]
+      additionalProperties: false
+      properties:
+        isExternalChange: { type: boolean, description: "false withdraws the flag (only while unconfirmed)." }
+        changeType: { $ref: "#/components/schemas/ExternalChangeType" }
+        description: { type: [string, "null"], minLength: 1, maxLength: 2000 }
+    DeliverableConfirmationRequest:
+      type: object
+      required: [evidenceId, note]
+      additionalProperties: false
+      properties:
+        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        note: { type: [string, "null"], minLength: 3, maxLength: 2000 }

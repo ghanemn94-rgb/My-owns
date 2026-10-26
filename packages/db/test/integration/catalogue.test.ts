@@ -921,6 +921,68 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0104-0106: the P6 slice B/A guards are attached (deferred audit, state machines, trigger-written histories, append-only configuration versions, receipts and lineage, staged rows never deleted)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('connector', 'connector_change', 'connector_config_version', 'deliverable_external_change', 'deliverable_external_change_event', 'import_batch', 'import_batch_event', 'import_row', 'import_row_commit', 'integration_run', 'integration_run_event', 'outbound_write', 'outbound_write_event', 'webhook_endpoint', 'webhook_endpoint_change', 'webhook_receipt')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["connector", "connector_audit_required", true, true],
+      ["connector", "connector_guard", false, false],
+      ["connector", "connector_history", false, false],
+      ["connector", "connector_row_guard", false, false],
+      ["connector_change", "connector_change_append_only", false, false],
+      ["connector_change", "connector_change_append_only_truncate", false, false],
+      ["connector_config_version", "connector_config_version_append_only", false, false],
+      ["connector_config_version", "connector_config_version_append_only_truncate", false, false],
+      ["connector_config_version", "connector_config_version_guard", false, false],
+      ["deliverable_external_change", "deliverable_external_change_audit_required", true, true],
+      ["deliverable_external_change", "deliverable_external_change_guard", false, false],
+      ["deliverable_external_change", "deliverable_external_change_history", false, false],
+      ["deliverable_external_change", "deliverable_external_change_row_guard", false, false],
+      ["deliverable_external_change_event", "deliverable_external_change_event_append_only", false, false],
+      ["deliverable_external_change_event", "deliverable_external_change_event_append_only_truncate", false, false],
+      ["import_batch", "import_batch_audit_required", true, true],
+      ["import_batch", "import_batch_guard", false, false],
+      ["import_batch", "import_batch_history", false, false],
+      ["import_batch", "import_batch_row_guard", false, false],
+      ["import_batch_event", "import_batch_event_append_only", false, false],
+      ["import_batch_event", "import_batch_event_append_only_truncate", false, false],
+      ["import_row", "import_row_guard", false, false],
+      ["import_row", "import_row_no_delete", false, false],
+      ["import_row", "import_row_no_truncate", false, false],
+      ["import_row", "import_row_row_guard", false, false],
+      ["import_row_commit", "import_row_commit_append_only", false, false],
+      ["import_row_commit", "import_row_commit_append_only_truncate", false, false],
+      ["import_row_commit", "import_row_commit_guard", false, false],
+      ["integration_run", "integration_run_audit_required", true, true],
+      ["integration_run", "integration_run_guard", false, false],
+      ["integration_run", "integration_run_history", false, false],
+      ["integration_run", "integration_run_row_guard", false, false],
+      ["integration_run_event", "integration_run_event_append_only", false, false],
+      ["integration_run_event", "integration_run_event_append_only_truncate", false, false],
+      ["outbound_write", "outbound_write_audit_required", true, true],
+      ["outbound_write", "outbound_write_guard", false, false],
+      ["outbound_write", "outbound_write_history", false, false],
+      ["outbound_write", "outbound_write_row_guard", false, false],
+      ["outbound_write_event", "outbound_write_event_append_only", false, false],
+      ["outbound_write_event", "outbound_write_event_append_only_truncate", false, false],
+      ["webhook_endpoint", "webhook_endpoint_audit_required", true, true],
+      ["webhook_endpoint", "webhook_endpoint_guard", false, false],
+      ["webhook_endpoint", "webhook_endpoint_history", false, false],
+      ["webhook_endpoint", "webhook_endpoint_row_guard", false, false],
+      ["webhook_endpoint_change", "webhook_endpoint_change_append_only", false, false],
+      ["webhook_endpoint_change", "webhook_endpoint_change_append_only_truncate", false, false],
+      ["webhook_receipt", "webhook_receipt_append_only", false, false],
+      ["webhook_receipt", "webhook_receipt_append_only_truncate", false, false],
+      ["webhook_receipt", "webhook_receipt_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
@@ -1196,6 +1258,14 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "storage_setting",
       "notification_channel",
       "notification_delivery",
+      // P6 slices B and A (0104-0106, T-DG6-ARCH-03; ADR-0055, ADR-0056). The histories carry record_version;
+      // connector_config_version is numbered by version_no (append-only), import_row has no version (column grant).
+      "connector",
+      "integration_run",
+      "outbound_write",
+      "webhook_endpoint",
+      "import_batch",
+      "deliverable_external_change",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1566,6 +1636,25 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       notification_channel: SIU,
       notification_channel_change: "SELECT",
       notification_delivery: SIU,
+      // P6 slices B and A (0104-0106): still no DELETE anywhere. Configuration versions, webhook receipts and lineage are
+      // append-only (INSERT and SELECT); import_row has a COLUMN-level UPDATE of commit_status and updated_at only (probe
+      // IM14). Histories: SELECT only.
+      connector: SIU,
+      connector_config_version: "INSERT,SELECT",
+      connector_change: "SELECT",
+      integration_run: SIU,
+      integration_run_event: "SELECT",
+      outbound_write: SIU,
+      outbound_write_event: "SELECT",
+      webhook_endpoint: SIU,
+      webhook_endpoint_change: "SELECT",
+      webhook_receipt: "INSERT,SELECT",
+      import_batch: SIU,
+      import_batch_event: "SELECT",
+      import_row: "INSERT,SELECT",
+      import_row_commit: "INSERT,SELECT",
+      deliverable_external_change: SIU,
+      deliverable_external_change_event: "SELECT",
     });
   });
 

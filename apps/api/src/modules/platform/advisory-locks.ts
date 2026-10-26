@@ -134,6 +134,18 @@ export const ADVISORY_LOCK_CLASSES = {
   channelDelivery: 730306,
   /** The evidence-storage setting and its connection test (evidence storage: a setting change and a test never interleave). One class-wide key: "storage". */
   storageSetting: 730307,
+  // P6 block of T-DG6-ARCH-03 (730310-730317; p6-plan §4, ADR-0055 §8, ADR-0056 §8). 730315-730317 are RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** One connector's runs (integrations: queueing a run, a retry or a test, and the worker's start and finish of a run; one active run per connector is also held by the unique index integration_run_one_active, and one run per idempotency key by integration_run_idempotency_key). Key: "<connectorId>". */
+  connectorRun: 730310,
+  /** One import batch's staging end, commit and cancel (integrations imports: the commit through the ImportTargetRegistry never interleaves with a cancel or a second commit; the counts are re-checked by the 0105 trigger import_batch_guard). Key: "<importBatchId>". */
+  importCommit: 730311,
+  /** One webhook delivery (integrations webhooks: the receipt and its staged batch; one receipt per endpoint and delivery id is also held by webhook_receipt_delivery_key). Key: "<webhookEndpointId>:<deliveryId>". */
+  webhookReceipt: 730312,
+  /** One outbound write (integrations outbound: create, dispatch result and confirmation re-check never interleave; one write per connector and idempotency key is also held by outbound_write_idempotency_key). Key: "<connectorId>:<idempotencyKey>". */
+  outboundWrite: 730313,
+  /** One deliverable's external-change flag and confirmation (portfolio: flag, withdraw and confirm by evidence or connector result never interleave; one row per deliverable is also held by deliverable_external_change_deliverable_key). Key: "<deliverableId>". */
+  deliverableConfirmation: 730314,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;
