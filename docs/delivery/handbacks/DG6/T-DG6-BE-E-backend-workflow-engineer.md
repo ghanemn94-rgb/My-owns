@@ -1,15 +1,41 @@
 # Handback T-DG6-BE-E: `SecretProvider`, rate-limit classes, the security view, the global audit API (backend-workflow-engineer)
 
 - **Stage:** P6 "Integration and system hardening", gate DG6 (BUILDING). Section: `docs/architecture/p6-work-split.md` §E/F.7.
-- **Invocation:** run `DG6-T-DG6-BE-E-backend-workflow-engineer-20261026T195909Z-e2d8bc34`, session `e2d8bc34-6dea-4668-af9b-9a1fb856ecbf`.
-- **Assignment:** `docs/delivery/assignments/DG6/T-DG6-BE-E.md`, sha256 `f4196fb0c9447628264491a925b022914838b6c3b60b488ef449da4e6aaa4c5e` (verified).
-- **Working tree:** worktree `/home/user/wt/dg6-be-e`, branch `dg6/be-e`, base `HEAD` `1c061ab8b9dae8ae5fce31dd261299024d014f56`. The changes are **uncommitted**, as the assignment requires.
-- **Time:** started `Mon Oct 26 19:59:21 UTC 2026`; finished: see §0 (the last `date -u`).
+- **Invocation:** run `DG6-T-DG6-BE-E-backend-workflow-engineer-20261026T195909Z-e2d8bc34`, session `e2d8bc34-6dea-4668-af9b-9a1fb856ecbf`. That run was stopped by a container restart, and its record is kept as `…-orphaned` (D-198).
+- **Continuation (T-DG6-BE-EB):** run `DG6-T-DG6-BE-EB-backend-workflow-engineer-20261026T213401Z-bd01601b`, session `bd01601b-88f7-4d3e-9e0f-17780dd34e96`. Assignment `docs/delivery/assignments/DG6/T-DG6-BE-EB.md`, sha256 `606049be3558e620f672ff4391da256c42be32c41da6fa773a1da4d882991fb0` (verified). **Everything marked [EB] in this file was changed or re-run in the continuation.**
+- **Assignment (original):** `docs/delivery/assignments/DG6/T-DG6-BE-E.md`, sha256 `f4196fb0c9447628264491a925b022914838b6c3b60b488ef449da4e6aaa4c5e` (verified by the original run).
+- **Working tree:** worktree `/home/user/wt/dg6-be-e`, branch `dg6/be-e`. The original run's work is in the orchestrator's salvage commit `5a9887f` (WIP) on top of base `1c061ab8b9dae8ae5fce31dd261299024d014f56`. [EB] The continuation's changes are **uncommitted** on top of `5a9887f`, as the assignment requires.
+- **Time:** the original run started `Mon Oct 26 19:59:21 UTC 2026`. [EB] The continuation started `Mon Oct 26 21:44:09 UTC 2026`; its end is in §0.
 - **Two gate systems.** Nothing here reads or writes DG0–DG7. Reading the audit trail or the rate-limit matrix approves nothing. No agent, seed or test grants a G1–G6 business, Finance or IT approval. All test data is synthetic.
 
-## 0. Checks actually run (final tree; logs in `T-DG6-BE-E-evidence/`)
+## 0. Checks actually run ([EB]; logs in `T-DG6-BE-E-evidence/eb-*.log`)
 
-CHECKS_TABLE_PLACEHOLDER
+[EB] Every command below was run by the continuation in `/home/user/wt/dg6-be-e`. Environment: Node 24.21.0 (`/opt/nvm/versions/node/v24.21.0/bin`), offline; harness ports 23850–23899 only. Each exit code is the `EXIT=` line its log ends with. No `.claude/.cc-writes` directory existed in the source folders.
+
+**Tree states.**
+- **T0** is the salvage commit `5a9887f` as found.
+- **T1** is T0 plus the two continuation test-file changes (§2 [EB]), the final tree.
+- The T1 change touches only `apps/api/test/support/harness.ts` and `apps/api/test/integration/admin/security.test.ts`. Neither file is in the include globs of any `pnpm test` project (`unit-node`: `apps/*/src/**`, `packages/*/src/**`, `tests/qa/unit/**`; `unit-web`; `unit-formula-nocodegen`). That is why the two `pnpm test` runs on T0 stand for T1. The static checks were re-run on T1.
+
+| # | Command | Tree | Exit | Result | Log |
+|---|---|---|---|---|---|
+| 0 | `node tools/gates/validate.mjs --historical --stage DG5` (at the start) | T0 | 0 | `PASS gate DG5 (historical)` | — (output quoted here) |
+| 1a | `pnpm -r typecheck` | T1 | 0 | every package `Done` | `eb-typecheck.log` |
+| 1b | `pnpm -r build` | T0 | 0 | every package `Done` | `eb-build.log` |
+| 1c | `pnpm lint` (`eslint . --max-warnings=0`) | T1 | 0 | no output | `eb-lint.log` |
+| 1d | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | T1 (re-run at the end) | 0 | "All matched files use Prettier code style!" | `eb-prettier.log` |
+| 1e | `pnpm openapi:lint` | T0 | 0 | `PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 876 operations` | `eb-openapi-lint.log` |
+| 2a | `env -u LANG -u LC_ALL -u LC_CTYPE pnpm test` (locale unset) | T0 | 0 | unit-node **154 files / 2413 passed**; unit-web **94 / 1746 passed**; unit-formula-nocodegen **3 / 259 passed, 2 skipped** (the existing `fuzz.test.ts` skips) | `eb-test-locale-unset.log` |
+| 2b | `env -u LANG -u LC_CTYPE LC_ALL=C.UTF-8 pnpm test` | T0 | 0 | the same counts in all three invocations | `eb-test-c-utf8.log` |
+| 3a | `QA_PG_PORT=23850 MTH_PORT_POOL=23851-23899 tests/qa/support/with-pg.sh pnpm test:integration` (run 1) | T0 at the start; T1 for every file loaded after the fix at about 22:47 (mixed) | **1** | **324 files: 323 passed, 1 failed (`media-types.test.ts`); 3131 passed, 4 failed, 1 skipped, 1 todo.** The 4 failures are the defect of §4.7: `429 rate_limited` from the default upload budget (lines 343–351). The skip is the existing one in `governance/presentation.test.ts`; the todo is the BE-B pending test (§4.1). Duration 3308 s | `eb-test-integration.log` |
+| 3b | the same command on `QA_PG_PORT=23860 MTH_PORT_POOL=23861-23899` (run 2) | T1 | **1** | **Crashed, not a test failure.** After 10 files passed (0 failed), Vitest's fork worker channel closed: `Error: Channel closed … ERR_IPC_CHANNEL_CLOSED` (tinypool), at 22:55. It ran beside run 1 and a concurrent `pnpm -r typecheck` + `pnpm lint` on a 4-CPU, 16 GB, no-swap host. The child was most likely killed for memory; that is not confirmed from inside the sandbox | `eb-test-integration-run2-crashed.log` |
+| 3c | `…/with-pg.sh npx vitest run --project integration` with `media-types`, `admin/security`, `audit/audit-events` and `contract/contract` (targeted, on 23860) | T1 | 0 | **4 files passed; 144 passed, 1 todo.** `media-types` 21/21 (the 4 failures of 3a pass) | `eb-test-integration-targeted.log` |
+| 3d | `QA_PG_PORT=23860 MTH_PORT_POOL=23861-23899 tests/qa/support/with-pg.sh pnpm test:integration` (run 3, the acceptance run) | T1 | **0** | **324 files passed (324); 3135 passed, 1 skipped, 1 todo (3137); 0 failed.** `media-types` 21/21; `admin/security` 8/8; `audit/audit-events` 14 + 1 todo; `contract` 101/101. The skip is the existing one in `governance/presentation.test.ts`. 23:01:19–23:49:11 UTC, duration 2868 s. It ran beside run 1 until about 23:20, and no flaky or retried test appears in its log | `eb-test-integration-run3.log` |
+| 4 | `node tools/gates/validate.mjs --historical --stage DG5` (at the end) | T1 | 0 | `PASS gate DG5 (historical)` | `eb-validate-dg5-end.log` |
+
+**Pinned counts in `contract.test.ts`:** no change. 101 tests passed in 3a, 3c and 3d; 876 operations.
+
+**Time:** the continuation started `Mon Oct 26 21:44:09 UTC 2026` and ended `Mon Oct 26 23:51:08 UTC 2026` (the last `date -u`; about 2 h 10 min, so past the 2-hour limit. The extra time went to the full integration run on the fixed tree, which this assignment requires).
 
 ## 1. Behaviour delivered, per requirement row
 
@@ -98,9 +124,10 @@ The suite that covers those six clauses one by one is **BE-E2** (§E/F.8, after 
 | `packages/shared/src/schemas/security.ts` | zod mirrors `rateLimitMatrix`, `rateLimitClass` |
 | `packages/shared/src/schemas/audit-events.ts` | zod mirrors `globalAuditEvent`, `globalAuditEventPage`, `auditEventListQuery` |
 | `apps/api/src/modules/platform/secrets.test.ts` | new unit suite |
-| `apps/api/test/integration/admin/security.test.ts` | new integration suite |
+| `apps/api/test/integration/admin/security.test.ts` | new integration suite. **[EB]** This file's API starts with distinct class budgets (`CLASS_BUDGETS`: 301/1201/201/6001/101). The matrix test now expects those values, so it still proves each class reports its own configured value |
 | `apps/api/test/integration/audit/audit-events.test.ts` | new integration suite |
 | `apps/api/test/support/p6-pending-be-e.ts` | emptied (all 3 routed) |
+| `apps/api/test/support/harness.ts` | **[EB]** `testConfig` raises the five class budgets to 100000, as it already does for `RATE_LIMIT_PER_MINUTE` and `AUTH_RATE_LIMIT_PER_MINUTE` (see §4.7). This shared test-support file is outside §E/F.7's file list; it is disclosed here for the orchestrator |
 | `apps/api/test/integration/contract/p6-exercises-be-e.ts` | the three operations, with their mirrors and refusals |
 | `docs/delivery/handbacks/DG6/T-DG6-BE-E-*` | this handback and its logs |
 
@@ -142,6 +169,22 @@ The suite that covers those six clauses one by one is **BE-E2** (§E/F.8, after 
 5. **`listAuditEvents` 403 vs 404.** An unknown organization is 404, which the contract declares. An existing organization in which the caller holds `audit_event.read` at no scope is 403. `getAuditEvent` declares no 403, so out of scope is 404.
 6. **The `export` class is configured but no operation is wired to it.** ADR-0052 §4 assigns it to the export start operations (ADR-0046), which already exist in `reporting/exports/**`. That file is outside BE-E's ownership, and §E/F.13 names BE-E's only route-file line, the upload one. The owner adds `...rateLimitClass("export")` (or `rateLimitClass: "export"`) to those routes, plus the ids in `RATE_LIMIT_CLASSES`. The class-pin test then enforces it. `search`, `assistant`, `webhook` and the import upload are wired by their owners (ADR-0052 §4).
 
+7. **[EB] A defect in the original run, found and fixed in the continuation.** The default `upload` budget (30 per minute per user) throttled an existing DG2 suite.
+   - **What failed:** `apps/api/test/integration/media-types.test.ts` uploads more than 30 times a minute as one user. In the first continuation integration run, 4 of its 21 tests got `429 rate_limited` instead of 400/200 (log `eb-test-integration.log`, lines 343–351).
+   - **Why:** the shared `testConfig` lifts only the global and auth limits for functional suites; it left the new class budgets at their production defaults.
+   - **The fix:** the same lift for the five class variables in `harness.ts`. The defaults stay pinned by `loadConfig` in `security.test.ts` ("defaults to ADR-0052 §4"). The 429 behaviour stays tested with budgets of 1 (class) and 2 (global).
+   - **Production defaults are unchanged.**
+   - **e2e:** the e2e stacks (`apps/web/e2e/support/with-stack.sh`, `e2e/support/{with-demo-stack,qa-stack}.sh`, `deploy/scripts/ci-e2e-stack.mjs`) do not set the class variables, so they run with the defaults. I found two upload call sites in the e2e specs (`p2-journeys.spec.ts`, `session-end.spec.ts`), far below 30 a minute, so I did not edit those files (they are not mine). **The e2e suite was not run in this task.**
+
+8. **[EB] Review of the original run's work.** I re-read the salvaged diff (`git diff 1c061ab 5a9887f`) against ADR-0052 §4, §5, §8 and p6-work-split §E/F.7.
+   - **Found and fixed:** the harness defect in item 7. I found no other defect in BE-E's scope.
+   - **Its prior evidence was not clean.** The original `test-locale-unset.log` ends `EXIT=1`. The cause was a Vitest infrastructure error, `[vitest-worker]: Timeout calling "onTaskUpdate"` (an RPC timeout under load), not a failed assertion. Its `test-c-utf8.log` stops before the end of the run. Its integration run never happened: there is no integration log.
+   - Those original logs (`build.log`, `env-example-check.log`, `lint.log`, `openapi-lint.log`, `prettier.log`, `test-*.log`, `typecheck.log`) are kept unchanged as the original run's record. **Every result in §0 comes from the `eb-*.log` files of this continuation.**
+   - **Deviations I checked and kept, each disclosed above:**
+     - The class limiter uses `createRateLimit` rather than a per-route `config.rateLimit` (§4.2). ADR-0052 §4's literal mechanism would replace the global limit, not add to it.
+     - Redaction uses the fail-closed interim until BE-B lands (§4.1).
+     - No worker `SecretProvider` line yet (§5).
+
 ## 5. Contract, schema or dependency needs (for the orchestrator)
 
 - **None blocking.** No contract change, no migration, no dependency.
@@ -165,3 +208,6 @@ The suite that covers those six clauses one by one is **BE-E2** (§E/F.8, after 
 - **Merge notes:**
   - `evidence/routes.ts`: BE-E changed only the `uploadConfig` object (lines 475–479). If BE-D lands first, keep its upload lines and re-add `rateLimitClass: "upload"` (§E/F.13: "if BE-E runs before BE-D, BE-D keeps that line").
   - `server.ts` is BE-A's file. My hunks are listed in §4.3.
+  - **[EB]** `apps/api/test/support/harness.ts` is shared. My only hunk is the five class-budget lines in `testConfig` (§4.7). If another task edits `testConfig`, keep both.
+  - **[EB]** The continuation's two test-file changes are uncommitted on top of the salvage commit `5a9887f`. Squash or merge them together with it.
+- **[EB] Every later task that wires a class** (`search`, `assistant`, `webhook`, `export`, the import upload) must check that its own suites stay under the class budget with the harness's 100000. Any suite that builds its own config with `loadConfig` instead of `testConfig` gets the production defaults (30/120/20/600/10).

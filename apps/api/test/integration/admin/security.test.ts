@@ -25,6 +25,14 @@ import {
 import { ifm, setupP2World } from "../../support/p2-fixtures.ts";
 
 const URL_ = "/api/v1/admin/security/rate-limits";
+/** One distinct budget per class (high enough never to throttle this file's own requests). */
+const CLASS_BUDGETS = {
+  UPLOAD_RATE_LIMIT_PER_MINUTE: "301",
+  SEARCH_RATE_LIMIT_PER_MINUTE: "1201",
+  ASSISTANT_RATE_LIMIT_PER_MINUTE: "201",
+  WEBHOOK_RATE_LIMIT_PER_MINUTE: "6001",
+  EXPORT_RATE_LIMIT_PER_MINUTE: "101",
+};
 let api: TestApi;
 let w: World;
 let admin: Session;
@@ -34,7 +42,8 @@ let nobody: Session;
 let officeB: Session;
 
 beforeAll(async () => {
-  api = await startApi();
+  // Distinct class budgets, so the matrix test proves each class reports its own configured value.
+  api = await startApi({ env: CLASS_BUDGETS });
   w = await seedWorld(api.db);
   admin = await signIn(api.app, w.admin.subject);
   auditor = await signIn(api.app, w.auditor.subject);
@@ -48,7 +57,8 @@ describe("getSecurityRateLimits", () => {
   it("ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4)", async () => {
     const res = await call(api.app, "GET", `${URL_}?organizationId=${w.orgA.id}`, { session: admin });
     expect(res.status).toBe(200);
-    // The harness sets the global and auth budgets to 100000; the class budgets are the ADR-0052 §4 defaults.
+    // Global and auth are the harness's 100000; the class budgets are this file's CLASS_BUDGETS. The ADR-0052 §4 defaults
+    // are pinned in "class budgets are configuration" below, and the 429s with budgets of 1 and 2 in the last describe.
     expect(res.body).toEqual({
       classes: [
         {
@@ -68,35 +78,35 @@ describe("getSecurityRateLimits", () => {
         {
           name: "upload",
           variable: "UPLOAD_RATE_LIMIT_PER_MINUTE",
-          perMinute: 30,
+          perMinute: 301,
           keyedBy: "user_or_ip",
           operationIds: ["uploadEvidenceContent"],
         },
         {
           name: "search",
           variable: "SEARCH_RATE_LIMIT_PER_MINUTE",
-          perMinute: 120,
+          perMinute: 1201,
           keyedBy: "user_or_ip",
           operationIds: [],
         },
         {
           name: "assistant",
           variable: "ASSISTANT_RATE_LIMIT_PER_MINUTE",
-          perMinute: 20,
+          perMinute: 201,
           keyedBy: "user_or_ip",
           operationIds: [],
         },
         {
           name: "webhook",
           variable: "WEBHOOK_RATE_LIMIT_PER_MINUTE",
-          perMinute: 600,
+          perMinute: 6001,
           keyedBy: "endpoint_key",
           operationIds: [],
         },
         {
           name: "export",
           variable: "EXPORT_RATE_LIMIT_PER_MINUTE",
-          perMinute: 10,
+          perMinute: 101,
           keyedBy: "user_or_ip",
           operationIds: [],
         },

@@ -48,6 +48,13 @@ export function testConfig(env: Record<string, string> = {}): AppConfig {
     AUTH_MODE: "dev",
     RATE_LIMIT_PER_MINUTE: "100000",
     AUTH_RATE_LIMIT_PER_MINUTE: "100000",
+    // P6 (T-DG6-BE-E; ADR-0052 §4): the rate-limit class budgets, raised like the two above so functional suites that
+    // upload many files a minute are not throttled; the defaults and the 429s are tested in admin/security.test.ts.
+    UPLOAD_RATE_LIMIT_PER_MINUTE: "100000",
+    SEARCH_RATE_LIMIT_PER_MINUTE: "100000",
+    ASSISTANT_RATE_LIMIT_PER_MINUTE: "100000",
+    WEBHOOK_RATE_LIMIT_PER_MINUTE: "100000",
+    EXPORT_RATE_LIMIT_PER_MINUTE: "100000",
     EVIDENCE_STORAGE_PATH: testEvidenceDir(),
     ...env,
   });
