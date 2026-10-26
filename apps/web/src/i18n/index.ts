@@ -120,6 +120,7 @@ import enLaunchHealthP5 from "./en/launchHealthP5.json" with { type: "json" };
 import arPlaybookP5 from "./ar/playbookP5.json" with { type: "json" };
 import enPlaybookP5 from "./en/playbookP5.json" with { type: "json" };
 // P6 slice E (T-DG6-FE-A; ADR-0051 §2): the restricted-records label of totals (`access.includesRestrictedRecords`).
+// All Arabic of the P6 blocks (here, nav, problems, myWork) is provisional: see ./provisional-ar-p6.ts (JSON has no comments).
 import arAccess from "./ar/access.json" with { type: "json" };
 import enAccess from "./en/access.json" with { type: "json" };
 

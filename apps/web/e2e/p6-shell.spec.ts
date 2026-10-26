@@ -7,8 +7,8 @@
 // users).
 //
 // Budget (F-DG5-145/146/151; p6-work-split §2 rules 13 and 15): the default 30 s per test is kept. Measured loaded worst
-// cases are in docs/delivery/handbacks/DG6/T-DG6-FE-A-evidence/e2e-p6-shell.log (the per-test durations of the run under
-// a parallel CPU load); each is well under half of 30 s, so the default is at least 2x the loaded worst case.
+// cases are in docs/delivery/handbacks/DG6/T-DG6-FE-A-evidence/e2e-p6-shell.log (4.6 s, under a parallel typecheck) and
+// fe-ab-e2e-p6-shell.log (4.4 s, under a parallel prettier --check of the repository); 30 s is more than 6x either.
 import { expect, test } from "@playwright/test";
 import { expectAccessible, langOf, shot, signIn, tr, trackRequests } from "./support/ui.ts";
 

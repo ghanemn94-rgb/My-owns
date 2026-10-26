@@ -5,7 +5,24 @@
 - **Invocation:** `DG6-T-DG6-FE-A-frontend-ux-engineer-20261026T195929Z-0d48f532`, session `0d48f532-4500-45e2-b080-0aff2b2d9705`.
 - **Base:** branch `dg6/fe-a`, `HEAD` `1c061ab8b9dae8ae5fce31dd261299024d014f56`. The changes are left uncommitted, as instructed.
 - **Scope:** p6-work-split §E/F.12 and §J/C.13 (the FE-A bullets) and the FE-A row of p6-plan §5.1, limited to slices E, F, J and C. Those are the slices with a contract at this revision.
-- **Time:** started 2026-10-26 19:59:45 UTC; end time is in `end-of-run.log`.
+- **Time:** started 2026-10-26 19:59:45 UTC. The run was stopped by a container restart (D-198) before it recorded an end time; no `end-of-run.log` was written.
+
+## Continuation T-DG6-FE-AB (D-198): read this first
+
+- **Assignment:** `docs/delivery/assignments/DG6/T-DG6-FE-AB.md` (sha256 `392bd4fa9a6f6e01f04881925c122af115c5f66ee54675115136a97d7216f6eb`, verified at start).
+- **Invocation:** `DG6-T-DG6-FE-AB-frontend-ux-engineer-20261026T213421Z-0bf23010`, session `0bf23010-6737-4b24-9a78-10277bd809af`.
+- **Base:** branch `dg6/fe-a`, `HEAD` `eecd4ad74d0104ee000a548bdc2af8945ddef02f` (the orchestrator's WIP commit of T-DG6-FE-A on top of `1c061ab`). The continuation's changes are left **uncommitted**.
+- **Time:** `date -u` at start: 2026-10-26 21:44:11 UTC; at end: see §3.2.
+- **What I did:**
+  1. I reviewed the WIP critically against §E/F.12, §J/C.13, the FE-A row of p6-plan §5.1 and `docs/api/openapi.yaml`. I re-derived the parameters, responses and enums of all 30 operations from the contract. The client (`api/p6.ts`) matches:
+     - every required `organizationId` and `transformationId` gates its hook's `enabled`;
+     - the paged lists use cursors;
+     - the closed sets equal the contract enums (`SensitiveRecordType`, `UploadType`, `inlinePreviewTypes`, `NotificationChannelKind`, `WorkerHeartbeatStatus`);
+     - the deep-link token pattern equals the `DeepLinkToken` parameter;
+     - `safeInternalPath` matches `DeepLinkResolution.linkPath` (`^/[^/\\]`, at most 500 characters).
+  2. **I found and fixed one gap.** §E/F.12 requires the Arabic texts to be "provisional and labelled so in the catalogue comments". The WIP labelled them only in a test-file header, and that header wrongly implied that the ADR-0053/0054 Arabic was not provisional (both ADRs title their Arabic column "Arabic (provisional)"). JSON cannot carry comments, so the label is now data beside the catalogues: `i18n/provisional-ar-p6.ts`, pointed to from `i18n/index.ts`. A new test binds it to the catalogue and to the ADR tables. See §1 (rows marked **[FE-AB]**) and §2 "Arabic".
+  3. I re-swept the en catalogues for texts P6 makes untrue and added one item to recheck (§6, **[FE-AB]**).
+  4. **I ran every acceptance check myself** (§3, rows marked **[FE-AB]**). The orphaned run's logs are kept unchanged as provenance. Its `integration.log` is **truncated**: it stops inside `request-io.test.ts` with no summary or exit code, because the restart cut it off. Its row 9 was therefore never a result, and my row replaces it.
 
 ## 0. Preceding gate
 
@@ -24,8 +41,10 @@
 | `apps/web/src/i18n/{en,ar}/access.json` (new) and `apps/web/src/i18n/index.ts` (2 imports, 2 catalogue lines) | The new `access` namespace for `access.includesRestrictedRecords` ("Includes restricted records" / "يشمل سجلات مقيدة"). See §6.1. |
 | `apps/web/src/i18n/{en,ar}/myWork.json` (1 key each) | `myWork.message.inbox__restricted`. This is where the inbox renderer (`pages/my-work/messages.ts`) looks up the messageKey `inbox.restricted`. See §6.1. |
 | `apps/web/src/app/p6-shell.test.tsx` (new) | Unit tests for the nav entries, the placeholder routes (en/ar), the 30-operation contract parity (method and path), path encoding, key scoping and `safeInternalPath`/token format. |
-| `apps/web/src/i18n/problems-p6.test.ts` (new) | Unit tests over the refusal tables of ADR-0051 to ADR-0054, read from the ADR files (including indented and "job error" rows): en equals the ADR's English, ar equals the ADR's Arabic where given, no raw placeholder. Also the prose codes, `evidence.too_large`, and the two restricted texts through their real renderers. |
-| `apps/web/e2e/p6-shell.spec.ts` (new) | e2e on the real stack, en and ar:<br>- the 7 entries for `dev.admin`;<br>- each placeholder: heading, "Not available yet", `aria-current`, `dir`, axe (no serious or critical violation), screenshot, no P6 API request;<br>- `/l/:token` placeholder without a request to `/api/v1/links/`.<br>The budget statement is in the header (§3). |
+| `apps/web/src/i18n/problems-p6.test.ts` (new) | Unit tests over the refusal tables of ADR-0051 to ADR-0054, read from the ADR files (including indented and "job error" rows): en equals the ADR's English, ar equals the ADR's Arabic where given, no raw placeholder. Also the prose codes, `evidence.too_large`, and the two restricted texts through their real renderers.<br>**[FE-AB]** One added test, "labels every Arabic text of the P6 blocks provisional". Every entry of `P6_PROVISIONAL_ARABIC` must exist in the ar catalogue as Arabic. Every P6 refusal code (and its `_detail`) must be listed, as `"adr"` exactly when the ADR gives the Arabic, otherwise as `"fe-a"`. So must the prose codes and the 7 × 2 nav entries. The header was corrected: all P6 Arabic is provisional. |
+| `apps/web/src/i18n/provisional-ar-p6.ts` (new, **[FE-AB]**) | The provisional-Arabic label that §E/F.12 asks for "in the catalogue comments": `P6_PROVISIONAL_ARABIC`, the catalogue path of every Arabic text the P6 shell added, with its source. `"adr"` is the ADR's own provisional Arabic (ADR-0053 §2, ADR-0054 §4). `"fe-a"` is Arabic written by FE-A (ADR-0051/0052 give English only; the restricted texts; the nav and placeholder texts). |
+| `apps/web/src/i18n/index.ts` (**[FE-AB]**, 1 comment line) | Points from the catalogue registration to `provisional-ar-p6.ts`. |
+| `apps/web/e2e/p6-shell.spec.ts` (new) | e2e on the real stack, en and ar:<br>- the 7 entries for `dev.admin`;<br>- each placeholder: heading, "Not available yet", `aria-current`, `dir`, axe (no serious or critical violation), screenshot, no P6 API request;<br>- `/l/:token` placeholder without a request to `/api/v1/links/`.<br>The budget statement is in the header (§3).<br>**[FE-AB]** Header comment only: it now cites both loaded measurements (4.6 s and 4.4 s). |
 | `docs/delivery/handbacks/DG6/T-DG6-FE-A-*` | This handback and its evidence. |
 
 No file under `tools/gates/**`, `tools/agents/**`, `.claude/**`, `docs/source/**`, reviews, gates, `stages.json`, `findings.json` or `trading_agent/` was touched.
@@ -63,9 +82,15 @@ Every P6 route shows "Not available yet" / "غير متاح بعد". It loads no
 
 ### Arabic
 
-The Arabic for ADR-0053/0054 codes is the ADRs' own provisional Arabic, used verbatim and asserted by the test. The Arabic for the ADR-0051/0052 codes, the two restricted texts (as ADR-0051 gives them) and all nav and placeholder texts is **provisional**, awaiting a Mobily language review. JSON cannot carry comments, so the "provisional" label lives in the header of `problems-p6.test.ts`, which lists exactly which Arabic is provisional.
+**[FE-AB, corrected]** **All** Arabic added by the P6 shell is **provisional** and awaits a Mobily language review. That includes the ADR-0053/0054 Arabic, which is used verbatim and asserted by the test, because both ADRs label their Arabic column "(provisional)". The rest was written by FE-A: the Arabic for the ADR-0051/0052 codes, the two restricted texts and all nav and placeholder texts.
+
+JSON cannot carry comments, so the label is `apps/web/src/i18n/provisional-ar-p6.ts`, and `i18n/index.ts` points to it. The test "labels every Arabic text of the P6 blocks provisional" fails if a P6 key is missing from it, or if the recorded source (ADR or FE-A) disagrees with the ADR tables. When a reviewed translation lands, its entry is removed in the same change.
 
 ## 3. Checks actually run (logs in `T-DG6-FE-A-evidence/`)
+
+### 3.1 The orphaned run's checks (T-DG6-FE-A; kept as provenance, superseded by §3.2)
+
+These rows are the orphaned run's own report. Its tree differs from the final one by the **[FE-AB]** changes, and its last checks were not confirmed before the restart, so §3.2 is the result of record. Row 9 never produced a result: its log ends mid-file, with no summary and no exit code.
 
 Node 24.21.0, offline. Harness ports: PostgreSQL 23900, API 23901, pool 23902–23949. Empty `.claude/.cc-writes` directories in source folders were removed before testing.
 
@@ -79,7 +104,7 @@ Node 24.21.0, offline. Harness ports: PostgreSQL 23900, API 23901, pool 23902–
 | 6 | `pnpm openapi:lint` | 0 | PASS, OpenAPI 3.1.1, 876 operations (unchanged) | `openapi-lint.log` |
 | 7 | `pnpm test`, locale unset (`env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE`; the shell had `LC_CTYPE=C.UTF-8`) | 0 | unit-node 153 files / **2398 passed**; unit-web 96 files / **1767 passed**; unit-formula-nocodegen 3 files / **259 passed, 2 skipped** | `test-locale-unset.log` |
 | 8 | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | 0 | identical: 2398; 1767; 259 + 2 skipped | `test-c-utf8.log` |
-| 9 | `QA_PG_PORT=23900 MTH_PORT_POOL=23901-23949 tests/qa/support/with-pg.sh pnpm test:integration` | TBD | TBD | `integration.log` |
+| 9 | `QA_PG_PORT=23900 MTH_PORT_POOL=23901-23949 tests/qa/support/with-pg.sh pnpm test:integration` | none (cut off by the restart) | **no result**: the log is truncated (see §3.2 row 9) | `integration.log` |
 | 10 | `E2E_PG_PORT=23900 E2E_API_PORT=23901 MTH_PORT_POOL=23902-23949 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p6-shell.spec.ts apps/web/e2e/p5-shell.spec.ts --workers=1` | 0 | **42 passed** (P6: 9 tests × en/ar = 18; P5 shell regression: 12 × 2 = 24) | `e2e-p6-shell.log` |
 
 **About rows 7 and 8.**
@@ -90,6 +115,38 @@ Node 24.21.0, offline. Harness ports: PostgreSQL 23900, API 23901, pool 23902–
 - The last minute of row 8 (unit-formula-nocodegen) overlapped the start of row 9.
 
 **e2e budget (F-DG5-145/146/151).** The e2e (row 10) ran while `pnpm -r typecheck` (row 2) ran in parallel on the same host, as a CPU load. The slowest P6 test under that load took **4.6 s** (`/l/:token`, ar); the slowest Administration placeholder took 3.8 s. The default 30 s budget is kept: that is more than 6× the loaded worst case, so it meets "at least 2×".
+
+### 3.2 [FE-AB] Checks run in this continuation (the result of record)
+
+Final tree: `eecd4ad` plus the **[FE-AB]** changes. Node 24.21.0, offline. Ports: PostgreSQL 23900, API 23901, pool 23901/23902–23949. Before testing, I removed the empty `.claude/.cc-writes` directories (and their empty `.claude` parents) under `apps/web/`, `apps/web/src/` and `apps/web/src/i18n/{,en/}`. My tool writes had created them.
+
+| # | Command | Exit | Result | Log (`T-DG6-FE-A-evidence/`) |
+|---|---|---|---|---|
+| 1 | `node tools/gates/validate.mjs --historical --stage DG5` | **0** | `PASS gate DG5 (historical)` | `fe-ab-validate-historical-DG5.txt` |
+| 2 | `pnpm -r typecheck` | **0** | all packages | `fe-ab-typecheck.log` |
+| 3 | `pnpm -r build` | **0** | all packages | `fe-ab-build.log` |
+| 4 | `pnpm lint` | **0** | `eslint . --max-warnings=0`, clean | `fe-ab-lint.log` |
+| 5 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | **0** | "All matched files use Prettier code style!". Rerun after the last edit to this handback. | `fe-ab-prettier.log` |
+| 6 | `pnpm openapi:lint` | **0** | PASS, OpenAPI 3.1.1, **876** operations (unchanged) | `fe-ab-openapi-lint.log` |
+| 7 | `env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE pnpm test` | **0** | unit-node 153 files / **2398** passed; unit-web 96 files / **1768** passed; unit-formula-nocodegen 3 files / **259** passed, 2 skipped | `fe-ab-test-locale-unset.log` |
+| 8 | `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | **0** | identical: 2398; 1768; 259 + 2 skipped | `fe-ab-test-c-utf8.log` |
+| 9 | `QA_PG_PORT=23900 MTH_PORT_POOL=23901-23949 tests/qa/support/with-pg.sh pnpm test:integration` | **0** | **322 files; 3113 passed, 1 skipped (3114)**; ran 22:27 to 23:22:49 UTC | `fe-ab-integration.log` |
+| 10 | `E2E_SCREENSHOT_DIR=…/screenshots-fe-ab E2E_PG_PORT=23900 E2E_API_PORT=23901 MTH_PORT_POOL=23902-23949 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p6-shell.spec.ts --workers=1` | **0** | **18 passed** (9 tests × en/ar) in 1.3 min | `fe-ab-e2e-p6-shell.log` |
+
+**Disclosures:**
+
+- **Unit-web is 1768**, one more than the orphaned run's 1767. The extra test is the provisional-label test.
+- **The skipped tests:**
+  - The 2 skips are the existing `it.skipIf(NOCODEGEN)` cases in `packages/shared/src/formula/fuzz.test.ts`.
+  - The integration skip is the existing `it.runIf(hasMeetingPackAssembler)` / `it.runIf(!…)` pair in `apps/api/test/integration/governance/presentation.test.ts` (DG5): exactly one branch runs, by design.
+  - None of these is mine.
+- **No failure, retry or timeout.** The only "retry" matches in the logs are test names. Rows 7–9 ran sequentially, each alone.
+- **Pinned counts:** `contract.test.ts` still pins 876 operations, and FE-A changes no operation, media type or rate-limit floor. Delta: none.
+- **e2e budget.** Row 10 ran with the repository-wide prettier check (row 5) in parallel as CPU load, during its first part. The slowest tests took **4.4 s**: `/l/:token` (en) and the Administration entries list (en). The spec keeps the default 30 s, more than 6× that worst case, and its header now cites this log as well. I did not rerun the P5 shell regression spec (`p5-shell.spec.ts`), because FE-AB changes no rendered UI.
+- **Screenshots** (fresh, this run): `T-DG6-FE-A-evidence/screenshots-fe-ab/{en,ar}/p6-admin-nav.png` and `p6-placeholder-{audit,security,sensitiveGrants,operations,identity,storage,notifications,deep-link}.png`, 18 in total. I inspected two:
+  - `ar/p6-placeholder-sensitiveGrants.png`: RTL, the nav on the right with the active entry marked, "غير متاح بعد", and the provisional wordmark "مؤقت".
+  - `en/p6-admin-nav.png`: the seven entries under Administration.
+- **Time:** `date -u` at the end is in `fe-ab-end.txt`. It was **2026-10-26 23:26:48 UTC**, 103 minutes after the 21:44:11 start. Typecheck (row 2) ran after the last code change. The only later edit is a comment in the e2e spec, which the final lint and prettier runs (rows 4 and 5, rerun at the end) cover.
 
 ### Interaction checks run in the e2e (en and ar)
 
@@ -142,6 +199,10 @@ That is 9 per language, 18 in total. I inspected `ar/p6-placeholder-operations.p
 - **`evidence.upload.hint`** (en "Up to 25 MB." / ar "حتى 25 ميغابايت.") in `i18n/{en,ar}/evidence.json`, and the hard-coded `MAX_UPLOAD_BYTES = 25 MiB` in `pages/evidence/EvidencePage.tsx`. These become untrue when BE-D ships the policy. **Not FE-A's files: listed for FE-B or the evidence-page owner.** The hint should show the effective policy (`useUploadPolicy`: types and `maxBytes`), and the local pre-check should use the policy's `maxBytes`.
 - **`admin.plannedSections`** (`admin.json`) lists the configuration screens "available in this release". It is still true today, because no P6 screen is delivered yet. FE-B must add the P6 screens to it when they ship.
 - The sweep of all en catalogues for planned, later and not-available texts mentioning audit, security, storage, identity, notifications, email, uploads, sensitivity, links or operations found nothing else. `nav.portfolioPlanned` (the cross-portfolio view) belongs to slice H.
+- **[FE-AB] Re-sweep.** I grepped every en catalogue for planned, not available, not yet, later or future release, coming soon, P6, e-mail, 25 MB, in-app, channel, messaging, preview, sensitive and restricted. It confirms the items above and adds one item to recheck. It is not untrue today:
+  - **`workflowsP5.digestHint`** ("Non-urgent notifications are collected into one in-app digest.", `i18n/{en,ar}/workflowsP5.json`, not FE-A's file).
+  - ADR-0054 §3 item 6 fans channel notifications out "when released", respecting the P5 digest policy. When BE-I2 ships email fan-out, the digest may also go to email, and "in-app" alone would then understate it.
+  - **For the owner of the notification-preferences screen (FE-B or BE-I2's FE counterpart):** recheck it then.
 
 ### 6.1 Two files beyond the FE-A list, disclosed
 
@@ -163,7 +224,8 @@ FE-A has no separable second half in §E/F.12 or §J/C.13.
 
    These need a later FE-A run (FE-A2) once each ARCH section exists. Nothing was guessed ahead of a contract.
 2. **The FE-B screens** behind all 16 placeholder routes, including the sensitivity panel, the evidence preview and the restricted-records label component.
-3. **The items in §5** (server navigation catalogue, web `STRUCTURAL` mirror, problem `params`) and **§6** (evidence upload hint, `admin.plannedSections`).
+3. **The items in §5** (server navigation catalogue, web `STRUCTURAL` mirror, problem `params`) and **§6** (evidence upload hint, `admin.plannedSections`, and **[FE-AB]** the `workflowsP5.digestHint` recheck).
+4. **[FE-AB]** A Mobily language review of every Arabic text listed in `i18n/provisional-ar-p6.ts`. Until then they stay labelled provisional.
 
 ## 8. Merge instructions
 

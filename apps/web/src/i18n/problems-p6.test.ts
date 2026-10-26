@@ -9,8 +9,10 @@
 //    the problem renders the ADR sentence without that clause (never a raw placeholder), and the `<key>_detail` text is
 //    the ADR sentence with the value, for a screen that knows it (the upload policy, the chosen file);
 //  - the Arabic text is Arabic and differs from the English. ADR-0053 §2 and ADR-0054 §4 give the Arabic: it is used
-//    exactly. The Arabic of ADR-0051, ADR-0052 and of `access.includesRestrictedRecords` / `inbox.restricted` is
-//    PROVISIONAL (the ADRs label it so; D-196 item 5) and awaits a Mobily language review.
+//    exactly. ALL the Arabic of the P6 blocks is PROVISIONAL and awaits a Mobily language review: the ADR-0053/0054
+//    Arabic (the ADRs label it so), and the Arabic of ADR-0051, ADR-0052, `access.includesRestrictedRecords`,
+//    `inbox.restricted` (D-196 item 5) and the nav texts (written by FE-A). The label is i18n/provisional-ar-p6.ts,
+//    which a test below binds to the catalogue and to the ADR tables.
 // Shared codes in the tables (`invalid_transition`, `not_found`, `forbidden`) keep their existing generic texts.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -18,6 +20,7 @@ import { describe, expect, it } from "vitest";
 import { problemText } from "../lib/problem.ts";
 import { renderMessage } from "../pages/my-work/messages.ts";
 import { catalogues, createI18n } from "./index.ts";
+import { P6_PROVISIONAL_ARABIC } from "./provisional-ar-p6.ts";
 
 function repoRoot(): string {
   for (let dir = process.cwd(); ; dir = dirname(dir)) {
@@ -150,6 +153,37 @@ describe("P6 slice E, F, J and C problem keys", () => {
     expect(renderMessage(t, locale, "inbox.restricted", {})).toBe(
       locale === "en" ? "You no longer have access to this item." : "لم تعد لديك صلاحية الوصول إلى هذا العنصر.",
     );
+  });
+
+  it("labels every Arabic text of the P6 blocks provisional (provisional-ar-p6.ts), bound to the ADR tables", () => {
+    const ar = catalogues.ar as unknown as Record<string, unknown>;
+    /** The value at "ns.a.b" in the ar catalogues (undefined when absent). */
+    const at = (path: string): unknown =>
+      path
+        .replace(/\.$/, "")
+        .split(".")
+        .reduce<unknown>((o, k) => (o && typeof o === "object" ? (o as Record<string, unknown>)[k] : undefined), ar);
+    // Every listed key exists and is Arabic (a prefix entry is a non-empty object).
+    for (const path of Object.keys(P6_PROVISIONAL_ARABIC)) {
+      const v = at(path);
+      if (path.endsWith(".")) expect(v && typeof v === "object" && Object.keys(v).length > 0, path).toBe(true);
+      else expect(typeof v === "string" && /[؀-ۿ]/.test(v), path).toBe(true);
+    }
+    // Every P6 refusal code (and its `_detail`) is listed; "adr" exactly when the ADR gives the Arabic.
+    const listed = (key: string) => P6_PROVISIONAL_ARABIC[`problems.${key}`];
+    for (const [code, text] of refusals) {
+      if (SHARED.has(code)) continue;
+      const k = flatKey(code);
+      expect(listed(k), code).toBe(text.ar !== null ? "adr" : "fe-a");
+      if (problems("ar")[`${k}_detail`] !== undefined) expect(listed(`${k}_detail`), `${code}_detail`).toBe("fe-a");
+    }
+    for (const code of ["deep_link.forbidden", "evidence.parent_forbidden", "evidence.preview_unavailable"])
+      expect(listed(flatKey(code)), code).toBe("fe-a");
+    // The seven Administration entries (nav.sub and nav.contents.admin) are listed.
+    for (const id of ["audit", "security", "sensitiveGrants", "operations", "identity", "storage", "notifications"]) {
+      expect(P6_PROVISIONAL_ARABIC[`nav.sub.${id}`], id).toBe("fe-a");
+      expect(P6_PROVISIONAL_ARABIC[`nav.contents.admin.${id}`], id).toBe("fe-a");
+    }
   });
 
   it("no P6 problem text names an engineering delivery gate (DG0–DG7) or calls an adapter live", () => {
