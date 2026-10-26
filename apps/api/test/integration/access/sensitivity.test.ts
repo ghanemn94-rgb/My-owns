@@ -418,4 +418,35 @@ describe("commit-time re-authorization", () => {
       .execute();
     expect(rows).toHaveLength(0);
   });
+
+  // Continuation T-DG6-BE-BB: the third mutation, revoke, under the same commit-time rule.
+  it("a grant right revoked between load and commit: the revoke is 403 and nothing is written", async () => {
+    const to = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, to.id, "TO", { type: "transformation", id: b.transformationId }, w.orgA.id);
+    const session = await signIn(api.app, to.subject);
+    const grantee = await createUser(api.db, w.orgA.id);
+    const created = await createGrant(office, grantBody(grantee.id));
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const id: string = created.body.id;
+    const res = await afterIdentity(
+      api,
+      to.id,
+      () =>
+        call(api.app, "POST", `${GRANTS}/${id}/revoke`, {
+          session,
+          headers: ifm(1),
+          body: { reason: "Synthetic need ended" },
+          contract: false,
+        }),
+      () => revokeAll(api, w.grantor.id, to.id),
+    );
+    expect(res.status).toBe(403);
+    const row = await api.db
+      .selectFrom("sensitive_record_grant")
+      .select(["status", "version"])
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow();
+    expect([row.status, row.version]).toEqual(["active", 1]);
+    expect((await auditOf(api.db, id)).map((e) => e.action)).toEqual(["sensitive_record_grant.granted"]);
+  });
 });

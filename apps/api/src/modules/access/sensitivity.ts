@@ -448,6 +448,8 @@ const listQuery = z.strictObject({
 const grantParams = z.strictObject({ grantId: uuid });
 
 async function createGrant(tx: Tx, request: FastifyRequest, body: z.infer<typeof grantCreateBody>, reason: string) {
+  // The sensitiveRecordGrant lock first, then the commit-time re-authorization on reloaded grants (rule 4, ADR-0051 §6).
+  await lockRecord(tx, body.recordType, body.recordId);
   const fresh = await refreshPrincipal(tx, request);
   const me = fresh.userId!;
   const target = await transformationTarget(tx, body.transformationId);
@@ -463,7 +465,6 @@ async function createGrant(tx: Tx, request: FastifyRequest, body: z.infer<typeof
     .where("status", "=", "active")
     .executeTakeFirst();
   if (!grantee) throw sensitivityRefusals.granteeNotInOrganization();
-  await lockRecord(tx, rec.recordType, rec.id);
   const existing = await tx
     .selectFrom("sensitive_record_grant")
     .select("id")
@@ -552,14 +553,15 @@ export function registerSensitivityRoutes(app: FastifyInstance, { db }: ModuleDe
       const reason = checkedReason(body.reason);
       const expected = ifMatchOrZero(request);
       const saved = await db.transaction().execute(async (tx) => {
+        // Locks first (the sensitiveRecordGrant key and the flag row), then the commit-time re-authorization (rule 4, ADR-0051 §6).
+        await lockRecord(tx, params.recordType, params.recordId);
+        const current = await findFlag(tx, params.recordType, params.recordId, true);
         const fresh = await refreshPrincipal(tx, request);
         const me = fresh.userId!;
         const target = await transformationTarget(tx, params.transformationId);
         const rec = await loadSensitiveRecord(tx, params.recordType, params.recordId, params.transformationId);
         await atCommit(() => requireManage(tx, fresh, target, rec));
         if (!rec) throw problems.notFound();
-        await lockRecord(tx, rec.recordType, rec.id);
-        const current = await findFlag(tx, rec.recordType, rec.id, true);
         const currentVersion = current?.version ?? 0;
         if (currentVersion !== expected) throw problems.versionConflict(currentVersion);
         const action = body.isSensitive ? "record_sensitivity.marked" : "record_sensitivity.unmarked";
@@ -706,14 +708,16 @@ export function registerSensitivityRoutes(app: FastifyInstance, { db }: ModuleDe
       const reason = checkedReason(body.reason);
       const expected = requireIfMatch(request);
       const row = await db.transaction().execute(async (tx) => {
-        const fresh = await refreshPrincipal(tx, request);
-        const me = fresh.userId!;
+        // The grant's record never changes (sensitive_record_grant_immutable), so its lock key is known before the lock.
         const current = await findGrant(tx, grantId);
         if (!current) throw problems.notFound();
-        const target = await transformationTarget(tx, current.transformation_id);
-        await atCommit(() => requireManage(tx, fresh, target, null));
+        // Locks first (the sensitiveRecordGrant key and the grant row), then the commit-time re-authorization (rule 4, ADR-0051 §6).
         await lockRecord(tx, current.record_type as SensitiveRecordType, current.record_id);
         const locked = (await findGrant(tx, grantId, true))!;
+        const fresh = await refreshPrincipal(tx, request);
+        const me = fresh.userId!;
+        const target = await transformationTarget(tx, locked.transformation_id);
+        await atCommit(() => requireManage(tx, fresh, target, null));
         if (locked.version !== expected) throw problems.versionConflict(locked.version);
         if (locked.status !== "active") throw sensitivityRefusals.notActive();
         await tx
