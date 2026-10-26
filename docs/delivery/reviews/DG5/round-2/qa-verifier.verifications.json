@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG5-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on the frozen candidate sha256:55a411ae… (source 660f40c; fix T-DG5-BE-RG3, apps/worker/src/reports/export-runner.ts:379-381 now prints DEFAULT_PRODUCT_NAMES[language] at branding version 0; packages/reporting/src/labels.ts DEFAULT_PRODUCT_NAMES equals the shell's i18n common.brand.productName and the API's DEFAULT_PRODUCT_NAME_EN/_AR, which labels.test.ts asserts and which I read). (1) My round-1 reproduction, repeated: tests/qa alone with the A15 matrix dumping its files at version 0 (04b, 31 files, 336/336), then my revised inspection zz-qa-dg5r2-inspect-samples.test.ts over all 62 PDF/DOCX/XLSX/PPTX files (11-inspect-samples.log): every one of the 31 Arabic files prints 'منصة موبايلي للتحوّل' and never 'Mobily Transformation Hub'; every one of the 31 English files the reverse; the header of each PDF/DOCX/PPTX is the name of its language (a PDF's first visual line, read right to left in Arabic); problems=0. (2) On the REAL STACK: the demo stack (built API, PostgreSQL, seed-demo, branding version 0 confirmed by GET /api/v1/branding) plus the BUILT worker process (node apps/worker/dist/main.js), exports requested over HTTP by the synthetic roaming.user.tl, rendered by the worker, downloaded: Arabic charter DOCX and roadmap PPTX headed by the Arabic name (the PPTX after the REQ-PB-089 demo label), the Arabic register PDF draws it and prints no English name; English files the English name (21-f140-real-stack.log, unset; 23-f140-xmlchars-real-stack-cutf8.log, C.UTF-8, en and ar projects: all pass). (3) MUTANT that reverts the fix (DEFAULT_PRODUCT_NAMES.en in every language, in a hard-link copy of the clone): the candidate's branding.test.ts 'version 0: an Arabic export's header carries «منصة موبايلي للتحوّل»' FAILS ('ar docx header: expected Mobily Transformation Hub to be منصة موبايلي للتحوّل') and my inspection flags all 31 Arabic files (no Arabic name, English name printed) and none of the English files (20-f140-mutant.log); on the real stack with the mutated worker dist the probe fails with exactly the six Arabic-file problems (21-f140-real-stack-MUTANT.log). So the fix is what makes the difference and a regression is caught. Observation, not a defect: the A15 matrix suite itself passed under the mutant (30/30 with branding.test.ts), so the guard is the implementer's branding.test.ts plus labels.test.ts, not tests/qa. Two of my probe attempts failed by my own error and are kept and labelled (21-*-attempt1-PROBE-ERROR: a demo PPTX title slide draws the demo label first; 11-inspect-samples-attempt1-PROBE-ERROR: a PDF's first text piece is a lone glyph, not the first line).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/11-inspect-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04b-integration-tests-qa-only.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/20-f140-mutant.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack-MUTANT.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/23-f140-xmlchars-real-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run1.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run2.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/unit/zz-qa-dg5r2-inspect-samples.test.ts",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-f140-real-stack.spec.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-2/scripts/f140-real-stack.sh"
+      ]
+    }
+  ]
+}

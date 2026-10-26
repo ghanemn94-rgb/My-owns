@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 2,
+  "candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce",
+  "source_commit": "660f40c7d141b6fb73c145e0ee7a053ceb5905de",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-RG2-QA-R2-qa-verifier-20261026T003405Z-e008198e",
+    "session_id": "e008198e-84ed-4786-ab56-888191360a39"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "In this run qa-verifier wrote no product implementation in the DG5 scope and changed no candidate file. The implementer roles listed wrote the product (apps/**, packages/**, migrations, ADRs), including the T-DG5-BE-RG3 repair under review. Earlier qa-verifier authoring tasks (T-DG5-QA-A to F2) wrote the acceptance suites under tests/qa/** and e2e/** before the freeze. They are tests, not implementation, and I judged them here as a reviewer: I read them against their clauses, re-ran them and probed beyond them. My own tests stay outside the candidate, under docs/delivery/test-evidence/DG5/qa/tests/round-2/. I formed this verdict without reading any other reviewer's round-2 record. Two run-record commits by the other reviewers landed during my run; I did not open them. Task id note: the invocation names T-DG5-RG2-QA-R2 and the assignment text names T-DG5-REV-QA-R5. I used the invocation_reference verbatim."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-2/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-037",
+    "REQ-S01-002", "REQ-S01-003", "REQ-S01-004", "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010",
+    "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026",
+    "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009", "REQ-S13-010",
+    "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004",
+    "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021",
+    "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R2-00-candidate",
+      "procedure": "Confirm the frozen candidate at the start and at the end of the review: on a complete (not shallow) clone at the source commit 660f40c and at the freeze commit 7a02e7d, and in the repository working tree. Confirm that no file outside docs/delivery differs between source and freeze, and list the product diff since round 1.",
+      "command": "git clone /home/user/My-owns $TMPDIR/review && git checkout 660f40c && node tools/gates/candidate.mjs --stage DG5; git checkout 7a02e7d && node tools/gates/candidate.mjs --stage DG5; (working tree) node tools/gates/candidate.mjs --stage DG5; git diff --name-only 660f40c 7a02e7d -- . ':!docs/delivery'; git diff --name-only 2fe8f85 660f40c -- . ':!docs/delivery'",
+      "environment": "Complete clone $TMPDIR/review; Node 24.21.0; repository working tree at HEAD 7a02e7d (start, 00:3xZ) and c3031e6 (end, 04:11Z).",
+      "expected": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce, 2207 files, every time; not shallow; 0 product files differ between source and freeze.",
+      "actual": "Run this round. Start: the clone at 660f40c, the clone at 7a02e7d and the working tree each printed sha256:55a411ae…24ce, files 2207, EXIT 0. 0 files outside docs/delivery differ between 660f40c and 7a02e7d. Since round 1 (2fe8f85), 14 product files differ, all part of the T-DG5-BE-RG3 repair: the reporting writers, xml-chars, ooxml-read, labels DEFAULT_PRODUCT_NAMES, export-runner.ts, their tests and the ADR-0046 amendment. requirements.csv, tests/** and e2e/** are unchanged since round 1. End (04:11Z): the clone (HEAD 7a02e7d, shallow=false, 0 status lines) and the working tree (HEAD c3031e6) printed the same id and 2207 files. The two commits after the freeze (550d3bd, c3031e6) are the other reviewers' auto-committed run records, with 0 files outside docs/delivery. I did not open their records.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/00-candidate.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/env.txt"
+      ]
+    },
+    {
+      "id": "QA-R2-01-static",
+      "procedure": "Run the seven static checks on the pristine clone after an offline install from a copy of the pre-installed pnpm store.",
+      "command": "pnpm install --offline --frozen-lockfile; pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "$TMPDIR/review at 7a02e7d; Node 24.21.0; pnpm 10.33.0; offline; locale LC_CTYPE=C.UTF-8 (shell default).",
+      "expected": "Each exits 0; 0 lint warnings; OpenAPI valid; no CDN reference; Prettier clean; contrast AA pairs pass.",
+      "actual": "Run this round. All 7 exited 0. build EXIT 0, with Vite's advisory 'Some chunks are larger than 500 kB'. typecheck EXIT 0. lint EXIT 0 (--max-warnings=0). openapi:lint 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations'. no-cdn 'PASS no-cdn: scanned apps, packages'. contrast '50 pairs meet WCAG AA; 3 prohibited pairs fail as documented' (by design). format:check: the first run (EXIT 0) overlapped the minutes when my probe spec was copied into the clone, so it is labelled attempt1-OVERLAP; the re-run on the clean tree printed 'All matched files use Prettier code style!', EXIT 0. Install: two 'Failed to create bin … mth-db' warnings before the build; a second offline install after the build linked it, EXIT 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/00-install.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-r-build.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm--r-typecheck.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-lint.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-openapi-lint.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-check-no-cdn.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-format-check.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-format-check-attempt1-OVERLAP.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/01-pnpm-check-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-R2-02-unit",
+      "procedure": "Run pnpm test (unit-node, unit-web, unit-formula-nocodegen) on Node 22 and Node 24, each with the locale unset and with LANG=LC_ALL=C.UTF-8. Scan every log for failures, unhandled errors, skips and stderr.",
+      "command": "env -u LC_CTYPE -u LANG -u LC_ALL pnpm test; LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test (PATH with /opt/node22/bin, then /opt/nvm/versions/node/v24.21.0/bin)",
+      "environment": "$TMPDIR/review; Node 22.22.2 and 24.21.0; 4 cores, 1-minute load up to 25.6 (three reviews at once).",
+      "expected": "Each of the four runs exits 0 with 0 failed tests and 0 unhandled errors.",
+      "actual": "Run this round. node22-C, node24-unset and node24-C each passed with EXIT 0: unit-node 2366/2366 (147 files; +16 tests since round 1, from labels.test.ts and xml-chars.test.ts), unit-web 1746/1746, nocodegen 259 passed + 2 skipped by design (fuzz.test.ts it.skipIf(NOCODEGEN)). node22-unset attempt 1 EXITED 1 with every test passing (2366/1746/259+2). Vitest reported 1 unhandled error, '[vitest-worker]: Timeout calling \"onTaskUpdate\"'. That is the runner's internal RPC timing out at load 25.6; no test failed. Re-run alone: same counts, EXIT 0. Both logs are kept. Each final log holds 18 stderr blocks, all from passing tests: 10 percentKpi.test.tsx and 2 kpiUnit.test.tsx (React duplicate-key warning on fixtures), 4 extension-fields.test.tsx and 1 extension-hosts-twelve.test.tsx (mocks without payload fields fall into React Router's error boundary; the asserted strip is still found), 1 branding.test.ts (Ajv 'unknown format date-time ignored'). No ×/FAIL line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/02-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/02-unit-node22-unset-attempt1-VITEST-RPC-TIMEOUT.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/02-unit-node22-C.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/02-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/02-unit-node24-C.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md"
+      ]
+    },
+    {
+      "id": "QA-R2-03-integration-twice",
+      "procedure": "Run the full integration suite twice, each on its own disposable PostgreSQL: migrations 0001-0097 and contract/contract.test.ts. Check the migration set and the p5-pending-*.ts lists.",
+      "command": "QA_PG_PORT=26601 tests/qa/support/with-pg.sh pnpm test:integration (locale unset); QA_PG_PORT=26602 LANG=LC_ALL=C.UTF-8 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "$TMPDIR/review; Node 24.21.0; PostgreSQL 16.13, disposable UTF8/C cluster per run; MTH_PORT_POOL=26600-26699.",
+      "expected": "Both runs exit 0 with 0 failed; 89 migrations applied (0001-0097, with the eight retired ids absent); contract test passes; every p5-pending list is empty.",
+      "actual": "Run this round. INT1 (unset, 00:57-02:09Z): 321 files, 3087 passed + 1 skipped, EXIT 0. INT2 (C.UTF-8, 02:09-03:04Z): same counts, EXIT 0. Each run applied 89 migrations to a fresh database: 0001_identity_access to 0097_p5_config_review_contributors; 0066, 0067, 0073, 0077, 0078, 0079, 0083 and 0084 are retired by design (p5-work-split.md shared rule 16). contract.test.ts passed 83/83 in both runs. openapi:lint counts 846 operations. Every leaf p5-pending-*.ts list is [] and the arch lists only spread them. The 1 skip is by design (governance/presentation.test.ts it.runIf(!hasMeetingPackAssembler); its counterpart passes). The error, timeout and 408 lines are stdout from passing fault-injection tests: connection-hygiene SWEEP 408, request-io F-DG2-412 BE17 R6a-e/R8/db-econnreset, BE18 Q7 idp_unavailable. The two new F-DG5-140 branding tests and exports-xml-chars.test.ts passed in both runs. Attempt 1 of INT1 was killed by my own harness error (nohup in a sandboxed call) before any result; its log is kept as attempt1-ABORTED-harness.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run1.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run2.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run1-attempt1-ABORTED-harness.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-pending-lists.txt"
+      ]
+    },
+    {
+      "id": "QA-R2-04-tests-qa-and-dlv037",
+      "procedure": "Run tests/qa on its own (integration and unit), verbose, with the A15 matrix dumping its files. Count the A06, A07, A15 and A16 tests per file for REQ-DLV-037 on this frozen candidate. The suites are unchanged since round 1, where I read each key test against its clause; confirm that the counts and names hold.",
+      "command": "QA_PG_PORT=26670 QA_A15_DUMP=$TMPDIR/a15dump tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration --reporter=verbose; npx vitest run --project unit-node tests/qa/unit --reporter=verbose",
+      "environment": "$TMPDIR/review; Node 24.21.0; disposable PostgreSQL; locale unset.",
+      "expected": "tests/qa integration and unit all pass; the A06, A07, A15 and A16 suites pass with their counts recorded.",
+      "actual": "Run this round. tests/qa/integration: 31 files, 336/336, EXIT 0. tests/qa/unit: 22/22, EXIT 0. REQ-DLV-037 counts on this candidate: a06 27/27; a07 12/12; a15 34/34 (demo outputs 7, every definition 5, selected records and injection 7, snapshots and packs 15); a16 30/30 (health check 13, launch plan 11, S16-021 entities 6). Root e2e per setting (en+ar): a06 4, a07 2, a15 2, a16 4, all passed in both settings (04d). The A15 matrix wrote 62 PDF/DOCX/XLSX/PPTX files (plus CSV) for my inspection (QA-R2-05).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/04b-integration-tests-qa-only.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04c-unit-tests-qa-only.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04d-dlv037-counts.txt"
+      ]
+    },
+    {
+      "id": "QA-R2-05-dlv037-sample-inspection",
+      "procedure": "Inspect the exported PDF, DOCX, XLSX and PPTX samples in both languages with my own checks (zz-qa-dg5r2-inspect-samples.test.ts, using the suite's file reader). Checks: Arabic files right to left and English left to right; the B0004 statement in the file's language; the shipped product name in the file's language (and never the other language's); the PDF/DOCX/PPTX header equal to that name; no official-PMI or certification claim; no DG0-DG7; a printed text sample per file. Keep 8 samples.",
+      "command": "cp …/tests/round-2/unit/zz-qa-dg5r2-inspect-samples.test.ts tests/qa/unit/ && QA_A15_DUMP=$TMPDIR/a15dump npx vitest run --project unit-node tests/qa/unit/zz-qa-dg5r2-inspect-samples.test.ts",
+      "environment": "$TMPDIR/review (test copied in only for this run, then removed); Node 24.21.0; branding version 0 (the A15 suite publishes none).",
+      "expected": "62 files (PDF 12+12, DOCX 8+8, XLSX 6+6, PPTX 5+5), 0 problems.",
+      "actual": "Run this round. 62 files: pdf 12/12, docx 8/8, xlsx 6/6, pptx 5/5 (ar/en). problems=0, EXIT 0. Every Arabic file is RTL and every English file LTR. Each file has B0004 in its language. Each Arabic file prints 'منصة موبايلي للتحوّل' and never the English name, and each English file the reverse. Each PDF/DOCX/PPTX header (for a PDF, the first visual line read right to left) is its language's name. 0 claims, 0 DG0-DG7. Attempt 1 failed by my probe error: an Arabic PDF's first text piece is a lone glyph, not the first line. It is kept as 11-inspect-samples-attempt1-PROBE-ERROR; the name checks there were already clean. Eight samples are kept in samples/. Limitation: no PDF rasteriser is installed, so PDF inspection is text-level. Screens were inspected visually in screenshots.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/11-inspect-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/11-inspect-samples-attempt1-PROBE-ERROR.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/unit/zz-qa-dg5r2-inspect-samples.test.ts",
+        "docs/delivery/test-evidence/DG5/qa/round-2/samples/charter-52d0ad.ar.pdf",
+        "docs/delivery/test-evidence/DG5/qa/round-2/samples/charter-52d0ad.en.pdf",
+        "docs/delivery/test-evidence/DG5/qa/round-2/samples/charter-52d0ad.ar.docx",
+        "docs/delivery/test-evidence/DG5/qa/round-2/samples/executive_pack-47e45a.ar.pptx",
+        "docs/delivery/test-evidence/DG5/qa/round-2/samples/registers-047032.ar.xlsx"
+      ]
+    },
+    {
+      "id": "QA-R2-06-e2e-product",
+      "procedure": "Run every product journey (apps/web/e2e) on the real stack with --workers=1, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8. axe serious/critical = 0 is asserted inside the specs. Re-run any failed spec alone and report both runs.",
+      "command": "E2E_SCREENSHOT_DIR=$TMPDIR/shots-… apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1 --project=chromium-en --project=chromium-ar",
+      "environment": "$TMPDIR/review; with-stack.sh (disposable PostgreSQL, migrate, seed-dev, built API + SPA, AUTH_MODE=dev); pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers); Node 24.21.0; 1-minute load up to 25.5.",
+      "expected": "470 tests pass in each setting (or failures explained, with a passing re-run alone).",
+      "actual": "Run this round. C.UTF-8: 470/470 in 1.2 h, EXIT 0. Unset: 462 passed, 3 failed, 5 did not run, EXIT 1. Each failure was 'Test timeout of 30000ms exceeded' at load up to 25.5, with no assertion failed: p3-seams.spec.ts:38 [en] 33.8 s (inside axe's page.evaluate), p4-benefits.spec.ts:454 '8. Auditor read-only …' [en] 30.2 s (at context.close), p4-gates-closure.spec.ts:372 '6. Modular G3 …' [en] 30.0 s (at browserContext.newPage). The 5 that did not run are their serial followers. Re-run of the three spec files alone, both projects: 42/42, EXIT 0. The three tests took 19.8, 27.4 and 14.0 s in en, and 17.3, 21.0 and 12.7 s in ar. These are timing observations, not defects: the same class the history branch carried to DG6 as F-DG5-145/146. p4-benefits 8 at 27.4 s alone is close to its budget. Each log has three 'npm warn Unknown project config' lines, with no effect. My first attempt of the unset run was killed by my harness error before any result (attempt1-ABORTED-harness).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset-rerun-failed-specs.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset-attempt1-ABORTED-harness.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset-samples.log"
+      ]
+    },
+    {
+      "id": "QA-R2-07-e2e-root-acceptance",
+      "procedure": "Run the root acceptance specs by explicit paths, --workers=1, chromium-en and chromium-ar, locale unset and C.UTF-8, with E2E_SCREENSHOT_DIR writable: a03, a04, a06, a07, a08-a09, a13, a15, a16, a20 and a22 on with-stack.sh; a02-* and a21 on e2e/support/with-demo-stack.sh.",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test e2e/a03-… e2e/a04-… e2e/a06-… e2e/a07-… e2e/a08-a09-… e2e/a13-… e2e/a15-… e2e/a16-… e2e/a20-… e2e/a22-… --workers=1 --project=chromium-en --project=chromium-ar; e2e/support/with-demo-stack.sh npx playwright test e2e/a02-demo-labels… e2e/a02-demo-users-walkthrough… e2e/a02-guided-walkthrough… e2e/a21-no-ai-operation… --workers=1 (same projects)",
+      "environment": "$TMPDIR/review; real stacks (production-initialized with-stack; demo-initialized with-demo-stack, AUTH_MODE=dev, roaming.user.* via the dev sign-in per D-165); pre-installed Chromium; Node 24.21.0.",
+      "expected": "All pass in both projects and both settings.",
+      "actual": "Run this round. with-stack root specs: 30/30 unset (9.4 m) and 30/30 C.UTF-8 (7.9 m). Demo specs: 12/12 unset and 12/12 C.UTF-8. All EXIT 0. The only non-test lines are three 'npm warn Unknown project config' lines per log. The A21 'AI disabled' is the shipped configuration: no AI or notification adapter ships in P5 (D-142 Q11, D-165).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/screens/ar-qa-r2-unset-a07-reissue-v2-target-120.png"
+      ]
+    },
+    {
+      "id": "QA-R2-08-aud-390-200-p5",
+      "procedure": "My probe zz-qa-dg5r2-aud-p5.spec.ts, carried unchanged from round 1. As the synthetic auditor dev.auditor it visits 42 P5 screens (reader, About, procedures, launch plan, health check, Studio and its sub-screens, coverage, automation, jobs, approval routes, branding, environment, reports, exports, presentation, evidence register, owner updates and the transformation-level P5 screens). On each: an h1 renders; no write request is sent; no enabled write control is offered; axe finds 0 serious/critical; no page-level horizontal overflow at 390 px or at 200 % text.",
+      "command": "with-stack.sh npx playwright test e2e/zz-qa-dg5r2-aud-p5.spec.ts --workers=1 --project=chromium-en --project=chromium-ar (unset and C.UTF-8)",
+      "environment": "$TMPDIR/review (probe copied into e2e/ for its run only); with-stack.sh; pre-installed Chromium.",
+      "expected": "84/84 (42 screens x 2 projects) in each setting.",
+      "actual": "Run this round. 84/84 unset (4.3 m) and 84/84 C.UTF-8 (4.5 m), EXIT 0. Every screen line reads writeControls=0, axeSerious=0, 390=390/390, 200%=1280/1280, writes=0, problems=[]. In addition, the candidate's own p5-reflow-axe, p5-*-reflow and p5-table-regions-axe specs passed in E2E-P; for example 'P5 reflow/axe ar: 31 screens, 0 problem(s)'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/08-probe-aud-p5-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/08-probe-aud-p5-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-aud-p5.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R2-09-pb093-studio-ui",
+      "procedure": "My probe zz-qa-dg5r2-studio-weights.spec.ts tests REQ-PB-093 literally in the UI. A synthetic ADM_METHOD admin creates a scoring-defaults draft totalling 95 %, runs the checks, submits for review, the office approves and publish is clicked (expect refusal). Then 30/20/20/15/15 with new Feasibility texts is published the same way. A transformation created afterwards and one created before are opened on their prioritization screens. Each project runs on its own fresh stack.",
+      "command": "with-stack.sh npx playwright test e2e/zz-qa-dg5r2-studio-weights.spec.ts --workers=1 --project=chromium-{en,ar} (unset and C.UTF-8)",
+      "environment": "$TMPDIR/review; with-stack.sh; pre-installed Chromium.",
+      "expected": "1/1 per project and setting: 95 % refused at publish; 30/20/20/15/15 reaches only the new transformation; the existing one keeps 25/25/20/15/15 and its pin.",
+      "actual": "Run this round. en 1/1 and ar 1/1 in both settings, EXIT 0. Publishing the 95 % draft shows 'يجب أن يبلغ مجموع الأوزان الافتراضية 100% بالضبط، موزّعة على ما بين 2 و6 من المعايير.' (ar; the English text in en) and the draft is discarded. 30/20/20/15/15 is published in the UI. The existing transformation keeps weight set v1 (25.00/25.00/20.00/15.00/15.00) and its old pin; the new one is pinned to the new defaults.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/07-probe-pb093-en-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/07-probe-pb093-ar-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/07-probe-pb093-en-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/07-probe-pb093-ar-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/screens/ar-qa-r2-unset-pb093-new-transformation-weights.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/screens/en-qa-r2-unset-pb093-95-publish-refused.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-studio-weights.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R2-10-demo-probes",
+      "procedure": "My probe zz-qa-dg5r2-demo.spec.ts on the demo stack, for clauses the register says are covered only partly. D1 REQ-PB-090: the RENDERED traceability view. D2 REQ-S21-001: the seeded pending approval opened from roaming.user.bo's My Work. D3 REQ-PB-087: the Day-90 screen. D4 REQ-S18-001: the synthetic banner on 29 P5 screens.",
+      "command": "e2e/support/with-demo-stack.sh npx playwright test e2e/zz-qa-dg5r2-demo.spec.ts --workers=1 --project=chromium-en --project=chromium-ar (unset and C.UTF-8)",
+      "environment": "$TMPDIR/review; with-demo-stack.sh (seed-demo, MTH_ENV=demo, AUTH_MODE=dev); pre-installed Chromium.",
+      "expected": "8/8 in each setting.",
+      "actual": "Run this round. 8/8 unset and 8/8 C.UTF-8, EXIT 0. D1: the chain-1 columns diagnostic_finding → tom_gap → initiative → outcome_kpi → benefit appear at positions [0,1,2,7,8], in order. D2: the approval opened from the inbox shows the synthetic label, in Arabic in ar (screen kept). D3: 6 questions verbatim, status open, 0/6. D4: 29 screens, 0 problems.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/10-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/10-probe-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/screens/ar-qa-r2-unset-d2-inbox-approval.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/screens/en-qa-r2-unset-d1-traceability-chain1.png",
+        "docs/delivery/test-evidence/DG5/qa/round-2/screens/ar-qa-r2-unset-d3-day90.png",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-demo.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R2-11-exec-pack-provisional",
+      "procedure": "My integration probe zz-qa-dg5r2-exec-pack-provisional.test.ts for REQ-S13-008 on a GENERATED EXECUTIVE PACK. Seed the real synthetic demo dataset, generate executive_pack for the 2026-08 period, check the snapshot's value headlines, export PDF in en and ar, and find the pending figure next to its label.",
+      "command": "QA_PG_PORT=26641 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-qa-dg5r2-exec-pack-provisional.test.ts",
+      "environment": "$TMPDIR/review (probe copied in for its run only, after INT2); disposable PostgreSQL.",
+      "expected": "3/3.",
+      "actual": "Run this round. 3/3, EXIT 0. The snapshot's submitted revenue uplift SAR 99,000 is 'validation: provisional'. The en PDF prints 'SAR 99,000' next to 'Provisional'; the ar PDF prints '99,000 SAR' next to 'مؤقت'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/06-probe-exec-pack.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/integration/zz-qa-dg5r2-exec-pack-provisional.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R2-12-static-clause-probes",
+      "procedure": "Clause checks without a dedicated QA test. (a) REQ-S05-006: each of the twelve extension record types has a create and a read operation in openapi.yaml, and the contract test exercises each with a success. (b) REQ-S08-019: recompute the ADR-0047 §5 NPV fixture with an independent decimal oracle. (c) Confirm in INT1 and INT2 that the implementer tests the register cites, where no QA suite re-tests a clause, passed.",
+      "command": "python3 (PyYAML) over docs/api/openapi.yaml; python3 decimal oracle; grep of INT1/INT2",
+      "environment": "$TMPDIR/review; Python 3.",
+      "expected": "12/12 types with create and read; NPV -21.04 (beginning) / -19.12 (end); the cited implementer tests pass.",
+      "actual": "Run this round. (a) 12/12 types have create and read operations. procedure_definition is created as a Studio draft (PUT /api/v1/admin/procedure-definitions/{versionId}/{procedureCode}); lesson and control are read through their lists. contract.test.ts passed 83/83 in INT1 and INT2. (b) The oracle gives -21.036814… → -21.04 and -19.124376… → -19.12, ROI 0.2, payback 3, equal to metrics.test.ts, which passed in all four unit runs. (c) The implementer tests the register cites all passed in INT1 and INT2: entity groups S16-012/015, evidence-register, notification-delivery, automation-failures, branding, navigation, form-schemas/records, gate-conditions, approval-routes, formula-preview, financial-metrics, owner-updates, playbook-blocks, reader-search-provenance, ui-strings, export-templates, demo-roaming, demo, demo-traceability-chains and source-coverage.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/14-s05-006-twelve-types.txt",
+        "docs/delivery/test-evidence/DG5/qa/round-2/13-npv-oracle.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run1.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run2.log"
+      ]
+    },
+    {
+      "id": "QA-R2-13-register-and-notes",
+      "procedure": "For each of the 78 DG5-final rows, test the acceptance text literally against this round's evidence and judge every partial-coverage disclosure in the notes. The register is byte-identical to round 1; each judgement was re-checked against round-2 runs.",
+      "command": "python3 csv extraction of requirements.csv (final_gate = DG5); 15-requirements-matrix.md",
+      "environment": "Repository working tree (read-only) and this round's logs.",
+      "expected": "Every row is verifiable with evidence from this round; every disclosure is acceptable or closed by my probes.",
+      "actual": "Run this round. 78/78 rows are verified with this round's evidence (matrix). The disclosures I judged acceptable: Arabic B0004 awaiting linguistic review; the analyst's default template-question mapping; no single test creating all twelve types; entity groups and notification/evidence/automation-failure clauses covered by implementer tests; the production retry policy exercised with a bounded QA policy on the same code path; the residuals for AI and adapters. My probes close these, on this candidate: 'Day-90 screen only in a component test' (D3), 'traceability by API only' (D1), 'PB-093 UI path not driven' (P-PB093), 'executive pack not staged' (P-EXEC) and 'label on an inbox-opened approval' (D2). REQ-S01-002: my round-1 F-DG5-140 is verified closed (QA-R2-14).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/15-requirements-matrix.md"
+      ]
+    },
+    {
+      "id": "QA-R2-14-f-dg5-140-verification",
+      "procedure": "Verify F-DG5-140 adversarially on this candidate. (1) Repeat my round-1 reproduction: the A15 dump at version 0 plus the inspection. (2) A real-stack probe: the demo stack plus the BUILT worker process; HTTP export requests by roaming.user.tl in ar and en; inspect the downloaded charter DOCX, roadmap PPTX and register PDF. (3) A mutant that reverts the fix (DEFAULT_PRODUCT_NAMES.en in every language, in a hard-link copy): run branding.test.ts, the A15 matrix with dump and my inspection; and on the real stack with the mutated worker dist.",
+      "command": "20: with-pg.sh npx vitest run --project integration apps/api/test/integration/branding/branding.test.ts tests/qa/integration/a15-outputs-every-definition.test.ts (+ inspection) in $TMPDIR/review-mut; 21: e2e/support/with-demo-stack.sh bash e2e/zz-qa-f140-real-stack.sh e2e/zz-qa-dg5r2-f140-real-stack.spec.ts (fixed and mutant); 23: the same in C.UTF-8, both projects",
+      "environment": "$TMPDIR/review and $TMPDIR/review-mut (only export-runner.ts/.js replaced); demo stack + node apps/worker/dist/main.js; GET /api/v1/branding versionNo 0.",
+      "expected": "Fixed: every Arabic export carries the Arabic name and never the English one, and the reverse for English. Mutant: the candidate's guard and my probes fail.",
+      "actual": "Run this round. Fixed build: inspection 62/62 clean; real stack 1/1 unset (21) and 2/2 C.UTF-8 (23). The charter.ar.docx header is 'منصة موبايلي للتحوّل', the roadmap.ar.pptx header the same after the demo label, and registers.ar.pdf draws the Arabic name with no English line; English files carry 'Mobily Transformation Hub'. Mutant (EXIT 1 by design): branding.test.ts 'version 0: an Arabic export's header carries «منصة موبايلي للتحوّل»' fails at 'ar docx header: expected Mobily Transformation Hub'. My inspection reports 87 problems, all on the 31 Arabic files and 0 on English files. The real-stack probe reports exactly 6 problems, all Arabic. The A15 matrix itself passed under the mutant, so it is not a guard for this behaviour (observation). Probe errors, kept and labelled: the 21 attempt-1 PPTX header rule did not skip the demo label. Result: CLOSED_VERIFIED (qa-verifier.verifications.json).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/20-f140-mutant.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack-MUTANT.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack-attempt1-PROBE-ERROR.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack-MUTANT-attempt1-PROBE-ERROR.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/23-f140-xmlchars-real-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/11-inspect-samples.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/scripts/f140-real-stack.sh",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-f140-real-stack.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R2-15-regression-be-rg3-arabic-xml",
+      "procedure": "A QA-side regression check of the round-1 → round-2 diff (F-DG5-100, xmlSafe in every OOXML writer) with ARABIC user text on the real stack. The demo TL renames the transformation to an Arabic name holding U+000B and adds an Arabic RAID risk holding U+0001/U+000B. Export the charter DOCX, the roadmap PPTX and the register XLSX in ar and en through the real worker. Check that each job succeeds, every XML part is well-formed, the Arabic text is kept with U+FFFD and no raw control character remains.",
+      "command": "e2e/support/with-demo-stack.sh bash e2e/zz-qa-f140-real-stack.sh e2e/zz-qa-dg5r2-xmlchars-real-stack.spec.ts --project=chromium-en (unset); with chromium-ar too in C.UTF-8 (23)",
+      "environment": "$TMPDIR/review; demo stack + built worker.",
+      "expected": "6 files: succeeded, malformed=[], Arabic text kept with U+FFFD, no raw control, Arabic product name in the Arabic files.",
+      "actual": "Run this round. Unset 1/1 and C.UTF-8 2/2, EXIT 0. All 6 files succeeded with malformed=[], the text was kept with U+FFFD, raw control=false, and the Arabic files had arName=true. Attempt 1 (PROBE-ERROR, kept): my reader missed XLSX inline <t> strings. The XLSX was well-formed (malformed=[]) even then.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/22-xmlchars-ar-real-stack.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/22-xmlchars-ar-real-stack-attempt1-PROBE-ERROR.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/23-f140-xmlchars-real-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG5/qa/tests/round-2/e2e/zz-qa-dg5r2-xmlchars-real-stack.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-R2-16-validators",
+      "procedure": "Run the gate validators the assignment names in the repository working tree.",
+      "command": "node tools/gates/validate.mjs --register DG5; --pipeline; --historical --stage DG4; --historical --stage DG3; --historical --stage DG2; --historical --stage DG1",
+      "environment": "Repository working tree (HEAD 7a02e7d; 550d3bd for the DG1 run, an auto-committed run record of another reviewer); Node 24.21.0.",
+      "expected": "All six exit 0.",
+      "actual": "Run this round. 6/6 EXIT 0 (register DG5 01:12Z, pipeline 01:12-01:26Z, DG4/DG3/DG2/DG1 historical 01:26-01:31Z).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/09-validate.log"
+      ]
+    },
+    {
+      "id": "QA-R2-17-environmental-residuals",
+      "procedure": "Record the assigned environmental residuals on the offline and configuration surface.",
+      "environment": "Offline sandbox; no network, no live registry, no live CI, no Keycloak or demo IdP, no AI or notification adapter.",
+      "expected": "Each residual is recorded as PASS on the offline/config surface, with its residual noted (per the assignment), never as BLOCKED.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057): offline frozen-lockfile install from the local store, EXIT 0. Residual: no live registry. Live CI (REQ-DLV-025 A24, D-058): the pipeline validator passes (--pipeline EXIT 0). Residual: no live CI run. Keycloak and a real demo IdP (D-049; ADR-0050 §1 devops item): the dev-mode binding of D-165 is the test path used by every demo e2e run here. AI and external notification adapters: none ships in P5 (D-142 Q11); the A21 'disabled' is the shipped configuration (D-165), and A21 passed in both settings.",
+      "exit_status": null,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/qa/round-2/00-install.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/09-validate.log",
+        "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-demo-unset.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md",
+    "docs/delivery/test-evidence/DG5/qa/round-2/env.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-2/15-requirements-matrix.md",
+    "docs/delivery/test-evidence/DG5/qa/round-2/00-candidate.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run1.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/04-integration-run2.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/04b-integration-tests-qa-only.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/04d-dlv037-counts.txt",
+    "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/05-e2e-product-unset-rerun-failed-specs.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/11-inspect-samples.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/20-f140-mutant.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/21-f140-real-stack-MUTANT.log",
+    "docs/delivery/test-evidence/DG5/qa/round-2/09-validate.log",
+    "docs/delivery/reviews/DG5/round-2/qa-verifier.verifications.json",
+    "docs/delivery/reviews/DG5/round-2/qa-verifier.md"
+  ],
+  "reviewed_at": "2026-10-26T04:20:00Z",
+  "summary": "PASS. F-DG5-140 is CLOSED_VERIFIED: version-0 Arabic exports now carry the Arabic product name. I confirmed this on the real stack with the built worker, in all 62 A15 samples, and against a mutant that reverts the fix (caught by branding.test.ts and by my probes). All 78 DG5 requirements are verified on this frozen candidate with this round's evidence. Static 7/7. Unit, 4 runs: 2366/1746/259+2 each (Node 22 unset after one Vitest RPC-timeout attempt). Integration twice: 321 files, 3087 + 1 skipped by design. tests/qa 336/336 and 22/22. e2e product: C.UTF-8 470/470; unset 462 + 3 load timeouts that pass alone (42/42). Root specs 30/30 and demo specs 12/12 in both settings. Probes: AUD 84/84 x2, PB-093 UI 4/4, demo 8/8 x2, exec pack 3/3, Arabic XML characters on the real stack. Validators 6/6. No new finding.",
+  "narrative": "docs/delivery/reviews/DG5/round-2/qa-verifier.md"
+}
