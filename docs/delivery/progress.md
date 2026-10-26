@@ -61,3 +61,7 @@ None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 
 
 **Corrected re-gate round 1 on candidate `ff3bc2c4`: domain, code-security and qa all PASS.** code-security raised **F-DG5-100** (Medium, not mandatory: DOCX and PPTX exports are not well-formed XML 1.0 when accepted user text holds a C0 control character, and the job still reports succeeded); qa raised **F-DG5-140** (Low: at branding version 0 the Arabic export header prints the English product name). domain raised none.
 **Decision:** a Medium finding cannot be accepted, so both are repaired in **T-DG5-BE-RG3** (backend), recorded with `import-findings --fix` and the full merge commit, followed by a full merged-tree verification including e2e in both locale settings, a re-freeze, round 2 with all three reviewers, and the release audit per D-140 option 1. D-191 is copied into `decisions.md` only after the gate is decided.
+
+## D-191 follow-up (2026-10-26): merged-tree verification of 7bb7d93
+
+`docs/delivery/test-evidence/DG5/orchestrator-D-191/verify-rg3-7bb7d93/`: `--historical --stage DG4`, install, typecheck, build, lint, format, openapi lint, contrast, unit (locale unset and C.UTF-8) and integration exit 0; web e2e 470/470 with the locale unset and 470/470 with C.UTF-8; root 32/32; demo 10/10. DG5 is re-frozen for corrected re-gate round 2; from this freeze no candidate file changes until the gate is decided.
