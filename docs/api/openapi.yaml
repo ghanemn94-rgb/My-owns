@@ -370,6 +370,10 @@ tags:
     description: The deployment environment, the isolated and resettable demo environment and the guided walkthrough; demo data is synthetic (P5, ADR-0050).
   - name: security
     description: The upload allow-list and size limit, and the rate-limit matrix (P6, ADR-0052).
+  - name: operations
+    description: Operational exceptions, the worker heartbeat and the service identities of jobs and connectors (P6, ADR-0053).
+  - name: platform-admin
+    description: Identity, evidence storage and notification channels in Administration (P6, ADR-0054).
 security:
   - sessionCookie: []
 paths:
@@ -22306,6 +22310,412 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/operations/exceptions:
+    get:
+      tags: [operations]
+      operationId: listOperationalExceptions
+      summary: "Operational exceptions, newest occurrence first (operations.read; ADM_TECH, TO, KDS, TD, AUD). An organization-scope holder sees the organization's exceptions and the platform ones; a transformation-scope holder sees only exceptions linked to a KPI of that transformation. Default status filter: open and acknowledged. ADR-0053 §2, §9; REQ-S12-019."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - { name: status, in: query, required: false, schema: { type: array, items: { $ref: "#/components/schemas/OperationalExceptionStatus" } }, style: form, explode: true }
+        - { name: sourceKind, in: query, required: false, schema: { $ref: "#/components/schemas/OperationalExceptionSourceKind" } }
+        - { name: failureClass, in: query, required: false, schema: { $ref: "#/components/schemas/OperationalExceptionFailureClass" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalExceptionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/operations/exceptions/{exceptionId}:
+    parameters:
+      - $ref: "#/components/parameters/OperationalExceptionId"
+    get:
+      tags: [operations]
+      operationId: getOperationalException
+      summary: "One operational exception with its event history and the KPIs it makes stale (each with its DG4 freshness label and last known value; a KPI the caller cannot read is counted in hiddenKpiCount, never named). ADR-0053 §2."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalExceptionDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/operations/exceptions/{exceptionId}/acknowledge:
+    parameters:
+      - $ref: "#/components/parameters/OperationalExceptionId"
+    post:
+      tags: [operations]
+      operationId: acknowledgeOperationalException
+      summary: "Acknowledge an open exception with an optional note (operations.acknowledge; ADM_TECH, KDS). Audit operational_exception.acknowledged. 409 operations.exception_not_open. ADR-0053 §2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OperationalExceptionAcknowledge" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalExceptionDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/operations/exceptions/{exceptionId}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/OperationalExceptionId"
+    post:
+      tags: [operations]
+      operationId: resolveOperationalException
+      summary: "Resolve an open or acknowledged exception with a note (operations.acknowledge; ADM_TECH, KDS). Resolving never changes a KPI value or its freshness label. Audit operational_exception.resolved. 409 operations.exception_resolved. ADR-0053 §2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OperationalExceptionResolve" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationalExceptionDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/operations/heartbeat:
+    get:
+      tags: [operations]
+      operationId: getWorkerHeartbeat
+      summary: "The worker heartbeat: alive when the newest beat is at most 90 s old, stale when older, unknown when no worker ever beat (never shown as alive). operations.read. ADR-0053 §6."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkerHeartbeatStatus" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/service-identities:
+    get:
+      tags: [operations]
+      operationId: listServiceIdentities
+      summary: "The service identities of jobs and connectors, by code (operations.read). ADR-0053 §1; REQ-S16-029."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - { name: subjectKind, in: query, required: false, schema: { type: string, enum: [job, connector] } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceIdentityPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/service-identities/{serviceIdentityId}:
+    parameters:
+      - $ref: "#/components/parameters/ServiceIdentityId"
+    get:
+      tags: [operations]
+      operationId: getServiceIdentity
+      summary: "One service identity: its declaration (permission ceiling, scope, sensitive access) and its current grant. operations.read. ADR-0053 §1."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceIdentity" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [operations]
+      operationId: putServiceIdentity
+      summary: "Narrow or restore the granted permissions within the declaration, with a reason (service_identity.configure; ADM_TECH). Audit service_identity.grant_changed. 422 service_identity.grant_exceeds_declaration. ADR-0053 §1."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServiceIdentityUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServiceIdentity" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/identity:
+    get:
+      tags: [platform-admin]
+      operationId: getIdentitySettings
+      summary: "The effective identity-provider settings, read-only (identity.read; ADM_TECH, ADM_ACCESS, AUD): issuer, client id, scopes, the accepted audience and claim mapping, and where the SAML broker is documented. Never the client secret. ADR-0054 §1; REQ-S16-007."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdentitySettings" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/storage:
+    get:
+      tags: [platform-admin]
+      operationId: getStorageSetting
+      summary: "The effective evidence-storage setting (storage.configure or operations.read): the driver, its source (environment default or saved setting) and, for s3, the endpoint, bucket and credential REFERENCES (never values). ETag 0 when no setting was saved. Evidence is never served from a public URL in either mode. ADR-0054 §2; REQ-S16-006."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETagOrZero" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageSetting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [platform-admin]
+      operationId: putStorageSetting
+      summary: "Save the storage setting with a reason; If-Match 0 creates it (storage.configure; ADM_TECH). New uploads use the saved driver; earlier files stay readable from the store that holds them. Audit storage_setting.changed. 422 storage.s3_incomplete, storage.secret_ref_invalid, storage.test_required. ADR-0054 §2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StorageSettingUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageSetting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/storage/test:
+    post:
+      tags: [platform-admin]
+      operationId: testStorageSetting
+      summary: "Test a candidate or the saved storage setting outside any transaction: write, read back, checksum and delete a probe object, and check that an unauthenticated read is refused (storage.configure; ADM_TECH). Audit storage_setting.tested. Never returns a URL. ADR-0054 §2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StorageTestRequest" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageTestResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/notification-channels:
+    get:
+      tags: [platform-admin]
+      operationId: listNotificationChannels
+      summary: "The two notification channels of an organization (email, enterprise_messaging), configured or not; the in-app inbox is always on and is not listed. notification_channel.configure or operations.read. ADR-0054 §3; REQ-S12-023."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationChannelPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/notification-channels/{channelKind}:
+    parameters:
+      - $ref: "#/components/parameters/ChannelKindPath"
+      - $ref: "#/components/parameters/OrganizationIdQuery"
+    get:
+      tags: [platform-admin]
+      operationId: getNotificationChannel
+      summary: "One channel; ETag 0 when it was never configured (then it is disabled). ADR-0054 §3."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETagOrZero" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationChannel" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [platform-admin]
+      operationId: putNotificationChannel
+      summary: "Configure, enable or disable a channel with a reason; If-Match 0 creates it (notification_channel.configure; ADM_TECH). SMTP credentials are SecretRefs. enterprise_messaging cannot be enabled (no adapter ships). Audit notification_channel.changed. 422 notification_channel.email_incomplete, notification_channel.adapter_unavailable. ADR-0054 §3."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationChannelUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationChannel" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/notification-channels/{channelKind}/test:
+    parameters:
+      - $ref: "#/components/parameters/ChannelKindPath"
+      - $ref: "#/components/parameters/OrganizationIdQuery"
+    post:
+      tags: [platform-admin]
+      operationId: testNotificationChannel
+      summary: "Send one test message to the caller's own address through the saved channel, outside any transaction (notification_channel.configure; ADM_TECH). Audit notification_channel.tested. 422 notification_channel.not_configured, notification_channel.no_recipient_address. ADR-0054 §3."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationChannelTestRequest" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationChannelTestResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/notification-deliveries:
+    get:
+      tags: [platform-admin]
+      operationId: listNotificationDeliveries
+      summary: "External channel deliveries, newest first (notification_channel.configure or operations.read). Never the message text or the recipient address. ADR-0054 §3."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - { name: status, in: query, required: false, schema: { type: string, enum: [pending, sent, failed, skipped] } }
+        - { name: channelKind, in: query, required: false, schema: { $ref: "#/components/schemas/NotificationChannelKind" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationDeliveryPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -23902,6 +24312,21 @@ components:
       in: path
       required: true
       schema: { $ref: "#/components/schemas/Uuid" }
+    OperationalExceptionId:
+      name: exceptionId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ServiceIdentityId:
+      name: serviceIdentityId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ChannelKindPath:
+      name: channelKind
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/NotificationChannelKind" }
   headers:
     X-Request-Id:
       description: Request correlation ID (echoed from a valid inbound header or generated), also in every log line and audit event.
@@ -26884,6 +27309,12 @@ components:
         - audit_event.read
         - upload_policy.configure
         - security.read
+        - operations.read
+        - operations.acknowledge
+        - service_identity.configure
+        - identity.read
+        - storage.configure
+        - notification_channel.configure
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -37883,4 +38314,356 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/GlobalAuditEvent" } }
+        nextCursor: { type: [string, "null"] }
+    OperationalExceptionStatus:
+      type: string
+      enum: [open, acknowledged, resolved]
+    OperationalExceptionSourceKind:
+      type: string
+      enum: [job, connector, data_freshness, worker]
+    OperationalExceptionFailureClass:
+      type: string
+      enum: [job_failed, connector_run_failed, connector_unreachable, connector_credentials_rejected, data_stale, heartbeat_missed]
+    OperationalException:
+      type: object
+      required: [id, organizationId, sourceKind, sourceCode, failureClass, dedupKey, status, occurrenceCount, firstOccurredAt, lastOccurredAt, lastErrorCode, lastErrorMessage, serviceIdentityId, acknowledgedAt, acknowledgedBy, acknowledgeNote, resolvedAt, resolvedBy, resolution, resolutionNote, linkedKpiCount, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/NullableUuid" }
+        sourceKind: { $ref: "#/components/schemas/OperationalExceptionSourceKind" }
+        sourceCode: { type: string, maxLength: 200 }
+        failureClass: { $ref: "#/components/schemas/OperationalExceptionFailureClass" }
+        dedupKey: { type: string }
+        status: { $ref: "#/components/schemas/OperationalExceptionStatus" }
+        occurrenceCount: { type: integer, minimum: 1 }
+        firstOccurredAt: { $ref: "#/components/schemas/Timestamp" }
+        lastOccurredAt: { $ref: "#/components/schemas/Timestamp" }
+        lastErrorCode: { type: string, maxLength: 100 }
+        lastErrorMessage: { type: string, maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4)." }
+        serviceIdentityId: { $ref: "#/components/schemas/NullableUuid" }
+        acknowledgedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        acknowledgedBy: { $ref: "#/components/schemas/NullableUuid" }
+        acknowledgeNote: { type: [string, "null"], maxLength: 1000 }
+        resolvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        resolvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        resolution: { type: [string, "null"], enum: [manual, recovered, null] }
+        resolutionNote: { type: [string, "null"], maxLength: 1000 }
+        linkedKpiCount: { type: integer, minimum: 0 }
+        version: { type: integer, minimum: 1 }
+    OperationalExceptionDetail:
+      type: object
+      required: [id, organizationId, sourceKind, sourceCode, failureClass, dedupKey, status, occurrenceCount, firstOccurredAt, lastOccurredAt, lastErrorCode, lastErrorMessage, serviceIdentityId, acknowledgedAt, acknowledgedBy, acknowledgeNote, resolvedAt, resolvedBy, resolution, resolutionNote, linkedKpiCount, version, linkedKpis, hiddenKpiCount, events]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/NullableUuid" }
+        sourceKind: { $ref: "#/components/schemas/OperationalExceptionSourceKind" }
+        sourceCode: { type: string, maxLength: 200 }
+        failureClass: { $ref: "#/components/schemas/OperationalExceptionFailureClass" }
+        dedupKey: { type: string }
+        status: { $ref: "#/components/schemas/OperationalExceptionStatus" }
+        occurrenceCount: { type: integer, minimum: 1 }
+        firstOccurredAt: { $ref: "#/components/schemas/Timestamp" }
+        lastOccurredAt: { $ref: "#/components/schemas/Timestamp" }
+        lastErrorCode: { type: string, maxLength: 100 }
+        lastErrorMessage: { type: string, maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4)." }
+        serviceIdentityId: { $ref: "#/components/schemas/NullableUuid" }
+        acknowledgedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        acknowledgedBy: { $ref: "#/components/schemas/NullableUuid" }
+        acknowledgeNote: { type: [string, "null"], maxLength: 1000 }
+        resolvedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        resolvedBy: { $ref: "#/components/schemas/NullableUuid" }
+        resolution: { type: [string, "null"], enum: [manual, recovered, null] }
+        resolutionNote: { type: [string, "null"], maxLength: 1000 }
+        linkedKpiCount: { type: integer, minimum: 0 }
+        version: { type: integer, minimum: 1 }
+        linkedKpis:
+          type: array
+          items:
+            type: object
+            required: [kpiDefinitionId, transformationId, name, unitKind, freshness, lastValue, lastValueAt]
+            additionalProperties: false
+            properties:
+              kpiDefinitionId: { $ref: "#/components/schemas/Uuid" }
+              transformationId: { $ref: "#/components/schemas/Uuid" }
+              name: { type: string }
+              unitKind: { type: string, enum: [currency, percentage, count, ratio, duration, score, other] }
+              freshness: { type: string, enum: [fresh, stale, unknown], description: "The DG4 freshness label (ADR-0028); never computed here." }
+              lastValue: { type: [string, "null"], pattern: "^-?[0-9]+(\\.[0-9]+)?$", description: "Last known accepted value as a decimal string; null = Unknown (never 0)." }
+              lastValueAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        hiddenKpiCount: { type: integer, minimum: 0 }
+        events:
+          type: array
+          items:
+            type: object
+            required: [recordVersion, eventKind, status, occurrenceCount, errorCode, actorUserId, note, occurredAt]
+            additionalProperties: false
+            properties:
+              recordVersion: { type: integer, minimum: 1 }
+              eventKind: { type: string, enum: [opened, recurred, acknowledged, resolved, updated] }
+              status: { $ref: "#/components/schemas/OperationalExceptionStatus" }
+              occurrenceCount: { type: integer, minimum: 1 }
+              errorCode: { type: string }
+              actorUserId: { $ref: "#/components/schemas/NullableUuid" }
+              note: { type: [string, "null"] }
+              occurredAt: { $ref: "#/components/schemas/Timestamp" }
+    OperationalExceptionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/OperationalException" } }
+        nextCursor: { type: [string, "null"] }
+    OperationalExceptionAcknowledge:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note: { type: [string, "null"], minLength: 3, maxLength: 1000 }
+    OperationalExceptionResolve:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 3, maxLength: 1000 }
+    WorkerHeartbeatStatus:
+      type: object
+      required: [status, checkedAt, staleAfterSeconds, newestBeatAt, instances]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [alive, stale, unknown] }
+        checkedAt: { $ref: "#/components/schemas/Timestamp" }
+        staleAfterSeconds: { type: integer, minimum: 1 }
+        newestBeatAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        instances:
+          type: array
+          items:
+            type: object
+            required: [instanceKey, appVersion, startedAt, lastBeatAt, beatCount, queueCount, status]
+            additionalProperties: false
+            properties:
+              instanceKey: { type: string }
+              appVersion: { type: string }
+              startedAt: { $ref: "#/components/schemas/Timestamp" }
+              lastBeatAt: { $ref: "#/components/schemas/Timestamp" }
+              beatCount: { type: string, pattern: "^[0-9]+$" }
+              queueCount: { type: integer, minimum: 0 }
+              status: { type: string, enum: [alive, stale] }
+    ServiceIdentity:
+      type: object
+      required: [id, code, subjectKind, queueName, connectorId, scopeLevel, organizationId, declaredPermissionCodes, grantedPermissionCodes, sensitiveAccess, labelEn, labelAr, reason, version, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^(job|connector):" }
+        subjectKind: { type: string, enum: [job, connector] }
+        queueName: { type: [string, "null"] }
+        connectorId: { $ref: "#/components/schemas/NullableUuid" }
+        scopeLevel: { type: string, enum: [platform, organization] }
+        organizationId: { $ref: "#/components/schemas/NullableUuid" }
+        declaredPermissionCodes: { type: array, items: { $ref: "#/components/schemas/PermissionCode" } }
+        grantedPermissionCodes: { type: array, items: { $ref: "#/components/schemas/PermissionCode" } }
+        sensitiveAccess: { type: string, enum: [none, aggregate_only] }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        reason: { type: string }
+        version: { type: integer, minimum: 1 }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    ServiceIdentityPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ServiceIdentity" } }
+        nextCursor: { type: [string, "null"] }
+    ServiceIdentityUpdate:
+      type: object
+      required: [grantedPermissionCodes, reason]
+      additionalProperties: false
+      properties:
+        grantedPermissionCodes: { type: array, maxItems: 40, uniqueItems: true, items: { $ref: "#/components/schemas/PermissionCode" } }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    IdentitySettings:
+      type: object
+      required: [authMode, issuer, clientId, clientSecretConfigured, scopes, expectedAudience, pkceMethod, claimMapping, samlBrokerDocument]
+      additionalProperties: false
+      properties:
+        authMode: { type: string, enum: [oidc, dev] }
+        issuer: { type: [string, "null"], description: "The one accepted issuer (exact match); a token from any other issuer or realm is refused." }
+        clientId: { type: [string, "null"] }
+        clientSecretConfigured: { type: boolean }
+        scopes: { type: array, items: { type: string } }
+        expectedAudience: { type: [string, "null"], description: "Equals clientId; an ID token whose aud does not contain it is refused." }
+        pkceMethod: { type: [string, "null"], enum: [S256, null] }
+        claimMapping:
+          type: object
+          required: [subject, email, displayName]
+          additionalProperties: false
+          properties:
+            subject: { type: string, enum: [sub] }
+            email: { type: string, enum: [email] }
+            displayName: { type: string, enum: [name] }
+        samlBrokerDocument: { type: string, description: "Repository path of the SAML broker document (docs/operations/identity-saml-broker.md)." }
+    SecretRef:
+      type: object
+      required: [provider, name]
+      additionalProperties: false
+      description: "A reference to a secret held by a SecretProvider (ADR-0052 §5); never the secret value."
+      properties:
+        provider: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
+        name: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_./-]{0,127}$" }
+    StorageS3Input:
+      type: object
+      required: [endpoint, region, bucket, keyPrefix, forcePathStyle, accessKeyRef, secretKeyRef]
+      additionalProperties: false
+      properties:
+        endpoint: { type: string, maxLength: 300, pattern: "^https?://" }
+        region: { type: string, pattern: "^[a-z0-9][a-z0-9-]{0,62}$" }
+        bucket: { type: string, pattern: "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$" }
+        keyPrefix: { type: [string, "null"], pattern: "^[a-z0-9][a-z0-9_/-]{0,99}$" }
+        forcePathStyle: { type: boolean }
+        accessKeyRef: { $ref: "#/components/schemas/SecretRef" }
+        secretKeyRef: { $ref: "#/components/schemas/SecretRef" }
+    StorageSetting:
+      type: object
+      required: [driver, source, s3, publicUrls, reason, version, updatedAt]
+      additionalProperties: false
+      properties:
+        driver: { type: string, enum: [filesystem, s3] }
+        source: { type: string, enum: [environment, setting] }
+        s3:
+          oneOf:
+            - $ref: "#/components/schemas/StorageS3Input"
+            - { type: "null" }
+        publicUrls: { type: boolean, enum: [false], description: "Always false: bytes are proxied by the API in both modes (ADR-0010 §2, D-195 Q2)." }
+        reason: { type: [string, "null"] }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+    StorageSettingUpdate:
+      type: object
+      required: [driver, s3, reason]
+      additionalProperties: false
+      properties:
+        driver: { type: string, enum: [filesystem, s3] }
+        s3:
+          oneOf:
+            - $ref: "#/components/schemas/StorageS3Input"
+            - { type: "null" }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    StorageTestRequest:
+      type: object
+      required: [candidate]
+      additionalProperties: false
+      properties:
+        candidate:
+          description: "Null tests the saved (or environment) setting."
+          oneOf:
+            - $ref: "#/components/schemas/StorageS3Input"
+            - { type: "null" }
+    StorageTestResult:
+      type: object
+      required: [outcome, driver, checks, errorCode, durationMs, testedAt]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [passed, failed] }
+        driver: { type: string, enum: [filesystem, s3] }
+        checks:
+          type: array
+          items:
+            type: object
+            required: [name, outcome]
+            additionalProperties: false
+            properties:
+              name: { type: string, enum: [write, read_back, checksum, delete, anonymous_read_refused] }
+              outcome: { type: string, enum: [passed, failed, skipped] }
+        errorCode: { type: [string, "null"] }
+        durationMs: { type: integer, minimum: 0 }
+        testedAt: { $ref: "#/components/schemas/Timestamp" }
+    NotificationChannelKind:
+      type: string
+      enum: [email, enterprise_messaging]
+    SmtpInput:
+      type: object
+      required: [host, port, security, usernameRef, passwordRef, fromAddress]
+      additionalProperties: false
+      properties:
+        host: { type: string, maxLength: 253 }
+        port: { type: integer, minimum: 1, maximum: 65535 }
+        security: { type: string, enum: [starttls, tls, none] }
+        usernameRef: { oneOf: [{ $ref: "#/components/schemas/SecretRef" }, { type: "null" }] }
+        passwordRef: { oneOf: [{ $ref: "#/components/schemas/SecretRef" }, { type: "null" }] }
+        fromAddress: { type: string, maxLength: 254 }
+    NotificationChannel:
+      type: object
+      required: [organizationId, channelKind, configured, enabled, adapterAvailable, smtp, reason, version, updatedAt]
+      additionalProperties: false
+      properties:
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        channelKind: { $ref: "#/components/schemas/NotificationChannelKind" }
+        configured: { type: boolean }
+        enabled: { type: boolean }
+        adapterAvailable: { type: boolean, description: "False for enterprise_messaging in P6 (port only)." }
+        smtp:
+          oneOf:
+            - $ref: "#/components/schemas/SmtpInput"
+            - { type: "null" }
+        reason: { type: [string, "null"] }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+    NotificationChannelPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/NotificationChannel" } }
+        nextCursor: { type: [string, "null"] }
+    NotificationChannelUpdate:
+      type: object
+      required: [enabled, smtp, reason]
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean }
+        smtp:
+          oneOf:
+            - $ref: "#/components/schemas/SmtpInput"
+            - { type: "null" }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    NotificationChannelTestRequest:
+      type: object
+      required: [recipient]
+      additionalProperties: false
+      properties:
+        recipient: { type: string, enum: [self] }
+    NotificationChannelTestResult:
+      type: object
+      required: [outcome, channelKind, errorCode, testedAt]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [sent, failed] }
+        channelKind: { $ref: "#/components/schemas/NotificationChannelKind" }
+        errorCode: { type: [string, "null"] }
+        testedAt: { $ref: "#/components/schemas/Timestamp" }
+    NotificationDelivery:
+      type: object
+      required: [id, notificationId, channelKind, status, attempts, lastAttemptAt, sentAt, skipReason, errorCode, createdAt, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        notificationId: { $ref: "#/components/schemas/Uuid" }
+        channelKind: { $ref: "#/components/schemas/NotificationChannelKind" }
+        status: { type: string, enum: [pending, sent, failed, skipped] }
+        attempts: { type: integer, minimum: 0, maximum: 20 }
+        lastAttemptAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        sentAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        skipReason: { type: [string, "null"], enum: [no_address, recipient_restricted, channel_disabled, recipient_disabled, null] }
+        errorCode: { type: [string, "null"] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        version: { type: integer, minimum: 1 }
+    NotificationDeliveryPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/NotificationDelivery" } }
         nextCursor: { type: [string, "null"] }

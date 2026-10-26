@@ -126,6 +126,14 @@ export const ADVISORY_LOCK_CLASSES = {
   sensitiveRecordGrant: 730300,
   /** Issuing the deep-link token of one inbox notification (tasks deep links: lazy issue for a notification written without one; set-once is also held by the 0098 trigger inbox_notification_deep_link_guard, which takes the same lock, and the unique index inbox_notification_link_token_key). Key: "<notificationId>". */
   deepLinkIssue: 730301,
+  // P6 block of T-DG6-ARCH-02 (730305-730309; p6-plan §4, ADR-0053 §8, ADR-0054 §6). 730308-730309 are RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** Opening or recurring the operational exception of one source and failure class (operations: the worker failure hook, the connector run, the freshness scan and the heartbeat watch; one active row per key is also held by the unique index operational_exception_one_active_key). Key: "<organizationId or 'platform'>:<dedupKey>". */
+  operationalExceptionUpsert: 730305,
+  /** One channel delivery of one notification (tasks channels: the fan-out handler's claim before a send and the state change after it; once per notification and channel is also held by notification_delivery_once_key). Key: "<notificationId>:<channelKind>". */
+  channelDelivery: 730306,
+  /** The evidence-storage setting and its connection test (evidence storage: a setting change and a test never interleave). One class-wide key: "storage". */
+  storageSetting: 730307,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

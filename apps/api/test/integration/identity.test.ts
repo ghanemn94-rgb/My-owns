@@ -138,7 +138,8 @@ describe("GET /api/v1/me", () => {
         // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
         // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057) + P5 slice A defaults (0064) + P5 slices B/C defaults (0070),
         // + P5 slices G/H defaults (0087: health_check.assess, launch_plan.edit)
-        // + P6 slices E/F defaults (0100: sensitive_record.grant, sensitive_record.read), sorted.
+        // + P6 slices E/F defaults (0100: sensitive_record.grant, sensitive_record.read)
+        // + P6 slices J/C defaults (0103: operations.read), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -185,6 +186,7 @@ describe("GET /api/v1/me", () => {
           "methodology.read",
           "methodology.review",
           "notification.preferences",
+          "operations.read",
           "organization.read",
           "performance_area.manage",
           "phase_step.manage",

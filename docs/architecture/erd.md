@@ -1969,6 +1969,41 @@ erDiagram
 | Checked file type (S13-011) | `evidence_content.detected_type` | `evidence_content.id` | `uploaded_by` | evidence upload | — | no (append-only revisions) | evidence |
 | Audit event (S16-032) | `audit_event` (unchanged, `0003`) | `id`; `seq` unique | `actor_user_id` | every mutation | — | `prior_version`/`new_version` of the record | audit |
 
+## 1u. P6 slices J and C: service identities, operational exceptions, worker heartbeat, storage setting, notification channels and deliveries (migrations 0101–0103; T-DG6-ARCH-02; ADR-0053, ADR-0054)
+
+Six new mutable tables carry the P2 guards. Five are audited (`_row_guard`, deferred `_audit_required`): `service_identity`, `operational_exception`, `storage_setting`, `notification_channel` and `notification_delivery`. `worker_heartbeat` has the row guard (version step) and is **not** audited (telemetry, ADR-0053 §6). Four append-only histories are written only by SECURITY DEFINER triggers (`service_identity_change`, `operational_exception_event`, `storage_setting_change`, `notification_channel_change`), and `operational_exception_kpi` is an append-only link table. `evidence_content` gains `storage_driver` (default `filesystem`). `0103` adds six permission codes. The column lists are in `data-dictionary.md` ("P6 tables, slices J and C").
+
+```mermaid
+erDiagram
+    organization |o--o{ service_identity : "connector identities (job identities: platform scope)"
+    service_identity ||--o{ service_identity_change : "one history row per version"
+    organization |o--o{ operational_exception : "NULL organization = platform (worker, platform jobs)"
+    service_identity |o--o{ operational_exception : "identity the failing run acted as"
+    operational_failure |o--o{ operational_exception : "latest failure-queue row (jobs)"
+    operational_exception ||--o{ operational_exception_event : "one event per version"
+    operational_exception ||--o{ operational_exception_kpi : "KPIs it makes stale"
+    kpi_definition ||--o{ operational_exception_kpi : "same organization and transformation (trigger)"
+    storage_setting ||--o{ storage_setting_change : "one history row per version (singleton)"
+    evidence ||--o{ evidence_content : "storage_driver: the store holding the bytes"
+    organization ||--o{ notification_channel : "at most one per channel kind"
+    notification_channel ||--o{ notification_channel_change : "one history row per version"
+    inbox_notification ||--o{ notification_delivery : "at most one per channel kind (idempotency)"
+```
+
+`service_identity.connector_id` has no foreign key yet: ADR-0055's migration adds it when `connector` exists. `worker_heartbeat` has no relationship (one row per worker process).
+
+### 1u.1 P6 entity register (slices J and C) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Service identity (S16-029) | `service_identity` (+ `service_identity_change`) | `id`; `code` unique | `created_by` (NULL for migration rows) | migrations (jobs), connector creation, `service_identity.configure` (grant only) | — | yes (history append-only) | operations |
+| Operational exception (S12-019) | `operational_exception` (+ `operational_exception_event`, `operational_exception_kpi`) | `id`; one active per `(organization_id, dedup_key)` | — (system-raised) | worker, connector runs, freshness scan, heartbeat watch; `operations.acknowledge` | `status` (open, acknowledged, resolved) | yes (events append-only) | operations |
+| Worker heartbeat (A22) | `worker_heartbeat` | `id`; `instance_key` unique | — | worker | — | yes (not audited) | operations |
+| Storage setting (S16-006) | `storage_setting` (+ `storage_setting_change`) | `id`; singleton | `created_by` | `storage.configure` | — | yes (history append-only) | evidence (admin) |
+| Store of a file (S16-006) | `evidence_content.storage_driver` | `evidence_content.id` | `uploaded_by` | evidence upload | — | no (append-only revisions) | evidence |
+| Notification channel (S12-023) | `notification_channel` (+ `notification_channel_change`) | `id`; `(organization_id, channel_kind)` unique | `created_by` | `notification_channel.configure` | `enabled` | yes (history append-only) | tasks (channels) |
+| Notification delivery (S12-023) | `notification_delivery` | `id`; `(inbox_notification_id, channel_kind)` unique | — (system) | worker fan-out | `status` (pending, sent, failed, skipped) | yes | tasks (channels) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

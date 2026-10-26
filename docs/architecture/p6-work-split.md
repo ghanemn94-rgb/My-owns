@@ -154,3 +154,132 @@ BE-A → BE-B → BE-B2 → BE-C → BE-C2 and BE-D (BE-D after BE-C on `evidenc
 5. **Histories are written by triggers.** `record_sensitivity_change` and `upload_policy_change` are never inserted by the application (mth_app has SELECT only; probe RS15).
 6. **Technical admins.** `sensitive_record.grant`/`.read` are structural (BE-B's `rules.ts` line); `audit_event.read` is not, so an ADM's organization-level assignment covers organization-level audit events only.
 7. **Pending lists.** Remove your operation ids from your own `p6-pending-<task>.ts` in the same change that routes and exercises them; the aggregates are frozen.
+
+## §J/C. Slices J (operations and service identities) and C (identity, storage, notification channels) — T-DG6-ARCH-02
+
+The §2 shared rules apply unchanged. For slices J and C, rule 17's "slice ADR tables" are ADR-0053 §2 (refusal table) and ADR-0054 §4; rule 16's pending files are the ones named below.
+
+### J/C.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md`, `ADR-0054-p6-identity-storage-notification-channels.md` | Binding design, with the refusal codes and English texts |
+| Migrations | `packages/db/migrations/0101_p6_operations_service_identities.sql`, `0102_p6_storage_notification_channels.sql`, `0103_p6_operations_channels_permissions.sql` | Applied on a fresh PostgreSQL 16.13 and over a P5-populated database (0001–0097, then 0098–0103); 81/81 guard probes PASS (`docs/delivery/handbacks/DG6/T-DG6-ARCH-02-evidence/probe-output.txt`) |
+| Kysely types, catalogue and seed pins | `packages/db/src/schema.ts` (11 tables; `evidence_content.storage_driver`), `packages/db/test/integration/catalogue.test.ts` (30 triggers, 6 mutable tables, 11 privilege pins), `packages/db/src/seed.test.ts` (0103 block; the free-id example is now 0104) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P6_OPERATIONS_CHANNELS_PERMISSIONS`, `P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS`, in `P6_PERMISSIONS`; 6 codes) | Equals `0103` |
+| Lock classes | `platform/advisory-locks.ts` (`operationalExceptionUpsert` 730305, `channelDelivery` 730306, `storageSetting` 730307; 730308–730309 reserved), ADR-0016 §6 | Registry test updated (44 classes) |
+| Contract | `docs/api/openapi.yaml` 1.5.0-p6: 17 operations (new tags `operations`, `platform-admin`); the `PermissionCode` enum gains the 6 codes | `pnpm openapi:lint` PASS (876 operations); no earlier line changed |
+| Contract-test seams | `apps/api/test/support/p6-pending-arch-02.ts` (slice aggregate; frozen), `p6-pending-be-g.ts` (1), `p6-pending-be-h2.ts` (3), `p6-pending-be-i.ts` (4), `p6-pending-be-i2.ts` (1), `p6-pending-be-j.ts` (3), `p6-pending-be-k.ts` (5); one import line in `p6-pending.ts`; `contract.test.ts` count 876; `p6-operations.ts` (+17 ids) | Green |
+| ERD §1u, data dictionary "P6 tables, slices J and C", permissions matrix §25 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+p6-plan §5.1's BE-J, BE-K, BE-H and BE-I are split (BE-J/J2/J3, BE-K/K2, BE-H/H2, BE-I/I2) so each fits 60–75 minutes. The split adds no file outside the plan's boundaries.
+
+### J/C.1 BE-J — service identities: declarations, seed, worker scope twin, admin routes (backend-workflow-engineer; after BE-A, BE-B)
+
+- **Files:** `apps/api/src/modules/access/service-identities.ts` (load, `putServiceIdentity` service), the `admin/service-identities` route lines in `apps/api/src/modules/operations/routes.ts` (BE-K creates the file; BE-J adds its three routes in a named block), the identity-declaration lines in `apps/worker/src/kit.ts` (`defineJob`, `servicePrincipal`, `requireServiceRead`) and `apps/worker/src/schedules.ts`, new `apps/worker/src/service-scope.ts` (the `ReadScope` twin), the seed migration (next id at merge, D-196: one `service_identity` row per queue of `apps/worker/src/queues/**`, with its audit event, actor `system`, source `migration`), `apps/worker/src/service-identities.test.ts` (declarations = seeded rows), `apps/api/test/integration/operations/service-identity-scope.test.ts`, `apps/api/test/support/p6-exercises-be-j.ts`, `p6-pending-be-j.ts`.
+- **Operations:** `listServiceIdentities`, `getServiceIdentity`, `putServiceIdentity`.
+- **Consumes:** ADR-0053 §1, §9; ADR-0051 §1 (`readScopeFor`, the parity fixture).
+- **Tests:** the out-of-scope proof of ADR-0053 §1 (two organizations: 0 rows of B admitted, `service_identity.out_of_scope` on a direct read); the worker-twin parity against the API `ReadScope`; `putServiceIdentity` (narrow, restore, 422 `service_identity.grant_exceeds_declaration`, 422 `service_identity.reason_required`, 409/428, AUD 403, audit `service_identity.grant_changed`); a missing identity fails the run with `service_identity.missing`.
+
+### J/C.2 BE-J2 and BE-J3 — handlers read through their service principal (backend-workflow-engineer; after BE-J)
+
+- **Files:** BE-J2: `apps/worker/src/handlers/{kpi,benefits,raid,portfolio,gates,approvals,escalations,launch,adoption}.ts`. BE-J3: `apps/worker/src/handlers/{access,automation,branding,demo,digests,meetings,platform,procedures,reports,sustainment}.ts` and `apps/worker/src/reports/**` read lines. One parity regression test per touched handler next to it (DG4/DG5 output identical on the DG5 fixture; the P5 R2 rule).
+- **Consumes:** BE-J's `servicePrincipal`/`requireServiceRead`; ADR-0053 §1 (`aggregate_only` only for aggregates).
+- **No operation.** A handler that needs a code its declaration lacks reports it in the handback; the declaration changes only by a new migration.
+
+### J/C.3 BE-K — operational exceptions, routes, the failure hook, the heartbeat route and watch (backend-workflow-engineer; after BE-A, BE-J)
+
+- **Files:** `apps/api/src/modules/operations/{exceptions.ts,heartbeat.ts,routes.ts,index.ts}` (BE-A creates the module stub), the failure-hook lines in `apps/worker/src/kit.ts` (after BE-J's lines: open or recur under lock 730305, after the `operational_failure` write; `recovered` on success), the J/C P6 mappings in `apps/api/src/modules/platform/db-errors.ts` (after BE-A): `operational_exception_transition` → 409 `operations.exception_not_open`; `operational_exception_resolved_final` → 409 `operations.exception_resolved`; `service_identity_grant_within_declaration`, `service_identity_permission_category` → 422 `service_identity.grant_exceeds_declaration`; `storage_setting_s3_complete` → 422 `storage.s3_incomplete`; `storage_setting_access_key_ref`, `storage_setting_secret_key_ref`, `notification_channel_username_ref`, `notification_channel_password_ref` → 422 `storage.secret_ref_invalid`; `notification_channel_email_complete`, `notification_channel_credentials_pair` → 422 `notification_channel.email_incomplete`; `notification_channel_no_messaging_adapter` → 422 `notification_channel.adapter_unavailable`; `storage_setting_singleton_key`, `notification_channel_kind_key` → 409 version conflict. Plus `apps/api/test/integration/operations/exceptions.test.ts`, `p6-exercises-be-k.ts`, `p6-pending-be-k.ts`.
+- **Operations:** `listOperationalExceptions`, `getOperationalException`, `acknowledgeOperationalException`, `resolveOperationalException`, `getWorkerHeartbeat`.
+- **Consumes:** ADR-0053 §2, §6, §9; DO-D's heartbeat writer (the route reads the table; the watch runs in the API process every 60 s).
+- **Tests:** one failing job key fails 3 times → exactly one active exception with `occurrence_count` 3; a replay of the same `processed_message` key creates nothing; recovery resolves `recovered`; acknowledge/resolve with every refusal, 409/428, AUD 403, the scope rule (transformation-scope KDS sees only linked exceptions; an exception outside scope is 404); heartbeat `unknown` with no row, `stale` after 90 s, `alive`.
+
+### J/C.4 BE-K2 — catalogue triggers, starter 16 version 2, the freshness scan, KPI links, error alerts (backend-workflow-engineer; after BE-K)
+
+- **Files:** the triggers/starter migration (next id at merge: `connector.run_failed`, `data.stale`, starter 16 version 2), `apps/worker/src/handlers/operations.ts` (BE-A's stub: the `kpi.freshness_scan` job reading DG4 freshness through its service principal and the BE-K raise/resolve service twin), `apps/worker/src/queues/operations.ts`, the alert lines (log line + in-app notification of ADM ADR-0053 §6) in `apps/worker/src/handlers/operations.ts`, `apps/worker/src/handlers/operations.test.ts`.
+- **Consumes:** ADR-0053 §2 (links), §3, §6; ADR-0044 starter rules; ADR-0028 freshness (read only, unchanged).
+- **Tests:** a KPI whose last accepted actual is older than `staleAfterDays` → one `data_stale` exception linked to it, the KPI still showing Stale with its last value and date (unchanged DG4 response); fresh again → `recovered`; the trigger catalogue lists the two new triggers; starter 16 version 1 is unchanged history; one alert per open, none per recurrence.
+
+### J/C.5 DO-D — redaction, the post-suite log scan, heartbeat writer, alert sink, monitoring document (devops-engineer; after BE-J; before BE-K's heartbeat tests)
+
+- **Files:** the redaction lines in `apps/api/src/server.ts` and `apps/worker/src/main.ts`, `packages/config/src/load.ts` (the redaction set fed by `SecretProvider`, BE-E's interface), the heartbeat writer in `apps/worker/src/main.ts` (`WORKER_HEARTBEAT_SECONDS`, default 30), `deploy/scripts/log-scan.mjs` + `deploy/scripts/tests/log-scan.test.mjs` (negative fixture), the CI step after the integration suite in `deploy/ci/ci.yml` (after DO-A's job lines), `docs/operations/monitoring.md`.
+- **Consumes:** ADR-0053 §4, §5, §6; ADR-0052 §5.
+- **Tests:** a log line containing each redaction class is censored (unit, per class); the scan fails on the fixture and passes on a clean run; the scan runs on the integration-suite logs with canary secrets set and prints PASS.
+
+### J/C.6 BE-G — issuer and audience rejection, Administration > Identity (backend-workflow-engineer; after BE-A)
+
+- **Files:** the issuer/audience lines in `apps/api/src/modules/identity/oidc.ts`, `apps/api/test/support/fake-idp.ts` (a second issuer `mth-other` with its own key), `apps/api/test/integration/identity/other-realm.test.ts`, `apps/api/src/modules/admin/identity.ts` and its registration line, `p6-exercises-be-g.ts`, `p6-pending-be-g.ts`.
+- **Operation:** `getIdentitySettings`.
+- **Consumes:** ADR-0054 §1.
+- **Tests:** the three rejection cases (other issuer, other audience, other key) → `/login?error=token_invalid`, one `session.login_failed`, no session; the settings response never contains the client secret (a canary value is absent from the body); AUD reads it; a holder without `identity.read` gets 403.
+
+### J/C.7 DO-B — Keycloak realms, image, e2e login, SAML broker document (devops-engineer; after ARCH-02)
+
+- **Files:** `deploy/keycloak/realm-mth-other.json` (SYNTHETIC), the `test-idp` profile lines in `deploy/compose/compose.yaml`, the `keycloak` entry of `deploy/images.lock.json` (through `pin-images.mjs --resolve keycloak` when the orchestrator runs it; never a hand-written digest), `e2e/support/keycloak-login.ts`, `e2e/identity/keycloak-login.spec.ts`, `docs/operations/identity-saml-broker.md`.
+- **Consumes:** ADR-0054 §1 (registry decision; the 26.4 → 26.8.1 recommendation).
+- **Proof:** the e2e logs in through `mth-test` and is refused with a `mth-other` token where a container runtime exists. Where none exists (this sandbox: no Docker daemon) it is reported **BLOCKED** with the reason, and BE-G's integration test carries the cross-realm proof.
+
+### J/C.8 BE-H — fake S3, the contract suite, the S3 adapter (backend-workflow-engineer; after BE-A, BE-E)
+
+- **Files:** `apps/api/src/modules/evidence/stores/{filesystem,s3,contract}.ts` (filesystem moved without behaviour change; the existing evidence tests stay green unchanged), the interface lines of `evidence/store.ts`, `apps/api/test/support/fake-s3.ts` (SigV4-verifying), `apps/api/test/integration/evidence/store-contract.test.ts` (the suite × 2 adapters).
+- **Consumes:** ADR-0054 §2; ADR-0052 §5 `SecretProvider` for the keys. **Dependency:** Option A (`@aws-sdk/client-s3@3.1156.0`) only after the orchestrator decides; otherwise Option B (in-house SigV4). Start with the fake and the suite in either case.
+- **Tests:** every contract case of ADR-0054 §2, for both adapters; no URL returned anywhere; anonymous read refused.
+
+### J/C.9 BE-H2 — driver selection, `storage_driver`, Administration > Storage, the export-file store (backend-workflow-engineer; after BE-H and BE-D)
+
+- **Files:** the driver-selection lines of `evidence/store.ts` (setting row, else environment; reads by `evidence_content.storage_driver`), the upload line in `evidence/routes.ts` that writes `storage_driver` (after BE-D), `apps/api/src/modules/admin/storage.ts` and its registration line, the export-file storage port lines in `packages/reporting/src/storage.ts`, the stale DG2 comment in `store.ts` (F-DG4-160), `apps/api/test/integration/admin/storage.test.ts`, `p6-exercises-be-h2.ts`, `p6-pending-be-h2.ts`.
+- **Operations:** `getStorageSetting`, `putStorageSetting`, `testStorageSetting`.
+- **Tests:** with no row, behaviour equals DG5 (filesystem); after an s3 setting a new upload lands in the fake S3 with `storage_driver = 's3'` and an earlier filesystem file is still downloadable; `putStorageSetting` without a passing test → 422 `storage.test_required`; every refusal of ADR-0054 §4; the test route never returns a URL or key; AUD 403 on PUT and test; the download response never redirects to the store (A12: no public URL).
+
+### J/C.10 BE-I — the channel port, the SMTP adapter, fake SMTP, Administration > Notifications (backend-workflow-engineer; after BE-A, BE-E)
+
+- **Files:** `apps/api/src/modules/tasks/channels/{port,email,render}.ts` and the worker twins `apps/worker/src/channels/{port,email,render}.ts` (ADR-0002 rule 5; parity test on rendering), `apps/api/test/support/fake-smtp.ts`, `apps/api/test/integration/tasks/email-adapter-contract.test.ts`, `apps/api/src/modules/admin/notification-channels.ts` and its registration line, `p6-exercises-be-i.ts`, `p6-pending-be-i.ts`.
+- **Operations:** `listNotificationChannels`, `getNotificationChannel`, `putNotificationChannel`, `testNotificationChannel`.
+- **Consumes:** ADR-0054 §3, §4; ADR-0051 §3 (`inbox.restricted`, deep-link URL). **Dependency:** `nodemailer@10.2.1` only after the orchestrator provisions it (D-195 Q7); otherwise the in-house client.
+- **Tests:** the adapter against the fake (plain, STARTTLS where the fake offers it, AUTH refused, a connection dropped mid-DATA → retryable failure); a restricted recipient gets the `inbox.restricted` text and no `messageParams` value; enterprise messaging cannot be enabled (422); `none` security refused in production; AUD 403 on PUT and test.
+
+### J/C.11 BE-I2 — fan-out after commit, exactly once; A21; the deliveries list (backend-workflow-engineer; after BE-I)
+
+- **Files:** the `inbox_notification.created` outbox line in `apps/api/src/modules/tasks/service.ts` and in `createWorkItemOnce` (`apps/worker/src/kit.ts`, after BE-K's lines), the fan-out line in `tasks/notification-policy.ts`, `apps/worker/src/handlers/notifications.ts` and `apps/worker/src/queues/notifications.ts` (BE-A's stubs), the deliveries route in `admin/notification-channels.ts` (after BE-I), `apps/worker/src/handlers/notifications.test.ts`, `apps/api/test/integration/tasks/channel-fanout.test.ts`, `p6-exercises-be-i2.ts`, `p6-pending-be-i2.ts`.
+- **Operation:** `listNotificationDeliveries`.
+- **Tests:** no channel row → no delivery row and every DG4/DG5 notification test unchanged (A21); with email enabled, one notification → one `sent` delivery and one message at the fake; a relay replay and a handler retry create no second delivery and send no second message; a send failure never rolls back the producing workflow; a held (quiet-hours) notification fans out only when released.
+
+### J/C.12 DO-C — storage and notification documents, environment residual rows (devops-engineer; after ARCH-02)
+
+- **Files:** `docs/operations/storage.md` (S3-compatible configuration with references; the licence-verified store for IT tests; MinIO not bundled), `docs/operations/notifications.md` (SMTP setting, "in-app always", what IT configures), the residual rows in `docs/delivery/environment.md` for the live IdP, the object store, SMTP and SAML.
+- No compose profile is needed for the fakes: both are in-process (D-195 Q6/Q7).
+
+### J/C.13 FE work for slices J and C (frontend-ux-engineer)
+
+- **FE-A (shell):** the i18n keys of every code in ADR-0053 §2 and ADR-0054 §4 (en; ar labelled provisional) in `apps/web/src/i18n/{en,ar}/problems.json`, the nav entries Administration > Operations, Identity, Storage, Notifications, and the API client entries for the 17 operations.
+- **FE-B:** `pages/admin/{operations,service-identities,identity,storage,notification-channels}/**` as ADR-0053 §7 and ADR-0054 §1–§3 describe. Stale and Unknown are never 0 or green; the heartbeat `unknown` is never "alive"; credential fields take a provider and a name, never a value; AUD sees read-only pages.
+
+### J/C.14 Migrations left and their order
+
+The architect used 0101–0103. Implementer migrations take the next id above the highest shipped file at merge time (D-196), in this order of need: **BE-J** (service-identity seed rows), then **BE-K2** (the two triggers and starter 16 version 2). ARCH-03's migration adds the foreign key `service_identity.connector_id → connector (id)`.
+
+### J/C.15 Integration order
+
+BE-A → BE-J → (BE-J2, BE-J3 in parallel; disjoint handler files) and BE-K → BE-K2; DO-D after BE-J (its heartbeat writer before BE-K's heartbeat tests). BE-A → BE-G; DO-B and DO-C any time after ARCH-02. BE-A, BE-E → BE-H → BE-H2 (after BE-D on `evidence/routes.ts`); BE-A, BE-E → BE-I → BE-I2. FE-A after BE-A; FE-B after BE-G, BE-H2, BE-I, BE-K. `apps/worker/src/kit.ts` is edited in order BE-J → BE-K → BE-I2; `admin/notification-channels.ts` BE-I → BE-I2; `operations/routes.ts` BE-K (creates) → BE-J's block.
+
+### J/C.16 Requirement → owner
+
+| Requirement | Delivered by the architect | Implementer owner(s) | Proof |
+|---|---|---|---|
+| REQ-S12-019 | `0101` exceptions and links, `0103`; ADR-0053 §2, §3, §6; probe OE/OEK | BE-K, BE-K2, BE-J (failure on scope), FE-B; ARCH-03/BE-L raise the connector classes | A17/A22: a failing test connector → one exception, the KPI Stale with its last value and date (QA-A/QA-E) |
+| REQ-S16-029 | `0101` identities, `0103`; ADR-0053 §1, §4, §5; probe SI | BE-J, BE-J2, BE-J3, DO-D | A12/A22: the out-of-scope test; the post-suite log scan PASS |
+| REQ-S12-023 | `0102` channels and deliveries, `0103`; ADR-0054 §3; probe NC/ND | BE-I, BE-I2, FE-B | A21: no channel → all workflows complete, notifications in the inbox; adapter contract test against the fake SMTP |
+| REQ-S16-006 | `0102` setting and `storage_driver`, `0103`; ADR-0054 §2; probe ST | BE-H, BE-H2, DO-C, FE-B | contract suite passes for both adapters; A12: no public URL |
+| REQ-S16-007 | ADR-0054 §1; `0103` (`identity.read`) | BE-G, DO-B, FE-B | the other-realm integration test; the Keycloak e2e or a disclosed BLOCKED residual |
+
+### J/C.17 What the implementers must know
+
+1. **A service identity's declaration is written by migrations only.** The API can change `granted_permission_codes` and `reason` and nothing else (column privileges; probe SI12). A job never reads with more than its grant.
+2. **The worker cannot import `access/read-scope.ts`.** Use the twin `apps/worker/src/service-scope.ts` and keep its parity test green.
+3. **Exceptions are one per source and failure class while active.** Always take lock 730305 and update-or-insert. Never insert blindly: the unique index is the backstop, not the logic. A resolved exception is final; a new failure opens a new one.
+4. **No KPI value or freshness rule changes in this slice.** Exceptions link KPIs; the KPI panel stays DG4's.
+5. **Redact before you store.** `last_error_message` goes through ADR-0053 §4's redactor before it is written.
+6. **No URL ever leaves the API for evidence**, in either storage mode. No pre-signed URL, no ACL, no redirect.
+7. **Credentials are `SecretRef`s** (`{provider, name}`), never values, in the database, in API bodies and in the UI.
+8. **In-app first, channels after commit.** A channel failure never blocks or rolls back a workflow. With no channel row, nothing is written.
+9. **Not live:** the corporate IdP, the brokered SAML path, an IT object store, SMTP and enterprise messaging are residuals with ports, fakes and contract tests (§2 rule 14).

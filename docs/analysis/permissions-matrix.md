@@ -990,3 +990,42 @@ Legend as in 8.3. **G** = grant/revoke, **M** = mark/unmark, **Rp** = read throu
 - **AUD (read-only auditor):** every slice E/F mutation returns **403** for AUD and writes nothing: mark or unmark sensitivity, grant, revoke, change the upload policy. AUD reads the flags, the grant list, the upload policy, the rate-limit matrix and the audit list in its scope. AUD is not admitted to a sensitive record's content by its role alone; a TO can grant it (ADR-0051 §2).
 - **Technical administrators:** ADM_ACCESS marks and grants by record id without `transformation.read` (it sees a record title only where ADR-0051 §2 admits it); ADM_TECH changes the upload policy. Neither is a business approval. Audit events of a sensitive record the caller is not admitted to show `changes` and `reason` as null (`redacted: true`).
 - **SoD:** nobody grants to themselves (`sensitive_record_grant_not_self`). No slice E/F operation approves anything.
+
+## 25. P6 implementation, slices J and C (DG6): operational exceptions, the worker heartbeat, service identities, identity settings, evidence storage and notification channels
+
+- **Task:** T-DG6-ARCH-02 (solution-architect), 2026-10-26. **Sources:** ADR-0053 §1, §2, §6, §9; ADR-0054 §1, §2, §3, §5; master prompt M0239, M0241, M0311, M0312, M0330; REQ-S12-019 "An exception is shown to admins and data owners", REQ-S12-023 "configure-channels:ADM", REQ-S16-006, REQ-S16-007 and REQ-S16-029 "configure:ADM(IT)".
+- **Seed:** `0103_p6_operations_channels_permissions.sql`, equal to `P6_OPERATIONS_CHANNELS_PERMISSIONS` / `P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM04). A service identity can hold only `read` and `write` codes, never `configure`, `business_approval` or `finance_validation` (`service_identity_guard`, probes SI03–SI05). Acknowledging an operational exception or saving a storage or channel setting is an operational action, never a G1–G6 business approval.
+
+### 25.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `operations.read` | read | Administration > Operations: operational exceptions (organization scope: the organization's and the platform's; transformation scope: those linked to a KPI of that transformation), the worker heartbeat and the service identities; also the GETs of Administration > Storage and > Notifications | ADM_TECH, TO, KDS, TD, AUD |
+| `operations.acknowledge` | write | Acknowledge or resolve an operational exception (with a note) | ADM_TECH, KDS |
+| `service_identity.configure` | configure | Narrow or restore the permissions granted to a job's or connector's service identity, within its declaration | ADM_TECH |
+| `identity.read` | read | Administration > Identity (read-only; never the client secret) | ADM_TECH, ADM_ACCESS, AUD |
+| `storage.configure` | configure | Read, change and test the installation's evidence-storage setting (organization-level assignment required) | ADM_TECH |
+| `notification_channel.configure` | configure | Read, change and test the organization's email and enterprise-messaging channels; read the delivery list | ADM_TECH |
+
+Reused codes: the in-app inbox (`/me/inbox`) is unchanged (any signed-in user, own notifications); a linked KPI in an exception detail is shown only when the caller can read it (`transformation.read` in its scope), else it is counted in `hiddenKpiCount`.
+
+### 25.2 Per-entity rights in P6 (slices J and C)
+
+Legend as in 8.3. **A** = acknowledge/resolve, **E** = edit (PUT), **T** = run a test, "sys" = written only by the system (worker, connector run, freshness scan, heartbeat watch).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Operational exception (`operational_exception`, events, KPI links) | — | — | — | — | — | V | V A | V | — | — | V | — | V A | — |
+| Worker heartbeat (`worker_heartbeat`) | — | — | — | — | — | V | V | V | — | — | V | — | V | — |
+| Service identity (`service_identity`) | — | — | — | — | — | V | V | V | — | — | V | — | V E | — |
+| Identity settings (configuration; not stored) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Storage setting (`storage_setting`) | — | — | — | — | — | V | V | V | — | — | V | — | V E T | — |
+| Notification channel (`notification_channel`) | — | — | — | — | — | V | V | V | — | — | V | — | V E T | — |
+| Notification delivery (`notification_delivery`) | — | — | — | — | — | V | V | V | — | — | V | — | V | — |
+| In-app notification (`inbox_notification`, unchanged) | own | own | own | own | own | own | own | own | own | own | own | own | own | own |
+
+- **System writers:** exceptions are opened, recurred and auto-resolved (`recovered`) by "sys" with actor `service`; deliveries are written by the worker fan-out. No role creates either directly (D-195 Q12).
+- **AUD (read-only auditor):** every slice J/C mutation returns **403** for AUD and writes nothing: acknowledge, resolve, change a service identity's grant, save or test storage, save or test a channel. AUD reads every page above.
+- **Technical administrators:** ADM_TECH configures service identities, storage and channels and acknowledges exceptions; ADM_ACCESS reads the identity settings. Neither gains any business approval.
+- **SoD:** no slice J/C operation approves anything. A service identity cannot approve anything (invariant 1 of ADR-0053 §1).

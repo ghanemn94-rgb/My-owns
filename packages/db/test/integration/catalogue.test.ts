@@ -878,6 +878,49 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0101-0102: the P6 slice J/C guards are attached (deferred audit, state machines, trigger-written histories, append-only links, an unaudited heartbeat)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('notification_channel', 'notification_channel_change', 'notification_delivery', 'operational_exception', 'operational_exception_event', 'operational_exception_kpi', 'service_identity', 'service_identity_change', 'storage_setting', 'storage_setting_change', 'worker_heartbeat')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["notification_channel", "notification_channel_audit_required", true, true],
+      ["notification_channel", "notification_channel_history", false, false],
+      ["notification_channel", "notification_channel_row_guard", false, false],
+      ["notification_channel_change", "notification_channel_change_append_only", false, false],
+      ["notification_channel_change", "notification_channel_change_append_only_truncate", false, false],
+      ["notification_delivery", "notification_delivery_audit_required", true, true],
+      ["notification_delivery", "notification_delivery_guard", false, false],
+      ["notification_delivery", "notification_delivery_row_guard", false, false],
+      ["operational_exception", "operational_exception_audit_required", true, true],
+      ["operational_exception", "operational_exception_guard", false, false],
+      ["operational_exception", "operational_exception_history", false, false],
+      ["operational_exception", "operational_exception_row_guard", false, false],
+      ["operational_exception_event", "operational_exception_event_append_only", false, false],
+      ["operational_exception_event", "operational_exception_event_append_only_truncate", false, false],
+      ["operational_exception_kpi", "operational_exception_kpi_append_only", false, false],
+      ["operational_exception_kpi", "operational_exception_kpi_append_only_truncate", false, false],
+      ["operational_exception_kpi", "operational_exception_kpi_guard", false, false],
+      ["service_identity", "service_identity_audit_required", true, true],
+      ["service_identity", "service_identity_guard", false, false],
+      ["service_identity", "service_identity_history", false, false],
+      ["service_identity", "service_identity_row_guard", false, false],
+      ["service_identity_change", "service_identity_change_append_only", false, false],
+      ["service_identity_change", "service_identity_change_append_only_truncate", false, false],
+      ["storage_setting", "storage_setting_audit_required", true, true],
+      ["storage_setting", "storage_setting_history", false, false],
+      ["storage_setting", "storage_setting_row_guard", false, false],
+      ["storage_setting_change", "storage_setting_change_append_only", false, false],
+      ["storage_setting_change", "storage_setting_change_append_only_truncate", false, false],
+      ["worker_heartbeat", "worker_heartbeat_guard", false, false],
+      ["worker_heartbeat", "worker_heartbeat_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
@@ -1145,6 +1188,14 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "record_sensitivity",
       "sensitive_record_grant",
       "upload_policy",
+      // P6 slices J and C (0101-0102, T-DG6-ARCH-02; ADR-0053, ADR-0054). The histories carry record_version;
+      // worker_heartbeat is version-stepped but not audited (telemetry).
+      "service_identity",
+      "operational_exception",
+      "worker_heartbeat",
+      "storage_setting",
+      "notification_channel",
+      "notification_delivery",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1502,6 +1553,19 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       sensitive_record_grant: SIU,
       upload_policy: SIU,
       upload_policy_change: "SELECT",
+      // P6 slices J and C (0101-0102): still no DELETE anywhere. service_identity has table-level INSERT and SELECT and a
+      // COLUMN-level UPDATE of the grant only (not listed in role_table_grants; probe SI12). Histories: SELECT only.
+      service_identity: "INSERT,SELECT",
+      service_identity_change: "SELECT",
+      operational_exception: SIU,
+      operational_exception_event: "SELECT",
+      operational_exception_kpi: "INSERT,SELECT",
+      worker_heartbeat: SIU,
+      storage_setting: SIU,
+      storage_setting_change: "SELECT",
+      notification_channel: SIU,
+      notification_channel_change: "SELECT",
+      notification_delivery: SIU,
     });
   });
 

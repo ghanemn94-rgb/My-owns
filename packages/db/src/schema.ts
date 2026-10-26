@@ -499,6 +499,8 @@ export interface EvidenceContentTable {
   uploaded_at: TimestampDefault;
   // P6 (0099; ADR-0052 §1, REQ-S13-011): the type the magic-byte check found; NULL for files stored before P6.
   detected_type: string | null;
+  // P6 (0102; ADR-0054 §2, REQ-S16-006): which store holds the bytes; every row stored before P6 is 'filesystem'.
+  storage_driver: Generated<string>;
 }
 
 export interface EvidenceLinkTable {
@@ -6364,6 +6366,224 @@ export type SensitiveRecordGrantRow = Selectable<SensitiveRecordGrantTable>;
 export type UploadPolicyRow = Selectable<UploadPolicyTable>;
 export type UploadPolicyChangeRow = Selectable<UploadPolicyChangeTable>;
 
+// ---------------------------------------------------------------------------------------------------------------
+// P6 slices J and C (0101-0102, T-DG6-ARCH-02; ADR-0053, ADR-0054). Each *_change / *_event table is append-only and
+// written by a trigger; operational_exception_kpi is append-only; worker_heartbeat is telemetry (not audited).
+
+export interface ServiceIdentityTable {
+  id: string;
+  code: string;
+  subject_kind: string;
+  queue_name: string | null;
+  connector_id: string | null;
+  scope_level: string;
+  organization_id: string | null;
+  declared_permission_codes: string[];
+  granted_permission_codes: string[];
+  sensitive_access: Generated<string>;
+  label_en: string;
+  label_ar: string;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ServiceIdentityChangeTable {
+  id: string;
+  service_identity_id: string;
+  record_version: number;
+  declared_permission_codes: string[];
+  granted_permission_codes: string[];
+  sensitive_access: string;
+  reason: string;
+  changed_by: string | null;
+  changed_at: Timestamp;
+}
+
+export interface OperationalExceptionTable {
+  id: string;
+  organization_id: string | null;
+  source_kind: string;
+  source_code: string;
+  failure_class: string;
+  dedup_key: string;
+  service_identity_id: string | null;
+  operational_failure_id: string | null;
+  status: Generated<string>;
+  occurrence_count: Generated<number>;
+  first_occurred_at: Timestamp;
+  last_occurred_at: Timestamp;
+  last_error_code: string;
+  last_error_message: string;
+  acknowledged_at: Timestamp | null;
+  acknowledged_by: string | null;
+  acknowledge_note: string | null;
+  resolved_at: Timestamp | null;
+  resolved_by: string | null;
+  resolution: string | null;
+  resolution_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface OperationalExceptionEventTable {
+  id: string;
+  operational_exception_id: string;
+  record_version: number;
+  event_kind: string;
+  status: string;
+  occurrence_count: number;
+  error_code: string;
+  actor_user_id: string | null;
+  note: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface OperationalExceptionKpiTable {
+  id: string;
+  operational_exception_id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  linked_at: TimestampDefault;
+}
+
+export interface WorkerHeartbeatTable {
+  id: string;
+  instance_key: string;
+  app_version: string;
+  started_at: Timestamp;
+  last_beat_at: Timestamp;
+  beat_count: ColumnType<string, string | number | undefined, string | number>;
+  queue_count: number;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface StorageSettingTable {
+  id: string;
+  singleton: Generated<boolean>;
+  driver: string;
+  s3_endpoint: string | null;
+  s3_region: string | null;
+  s3_bucket: string | null;
+  s3_key_prefix: string | null;
+  s3_force_path_style: Generated<boolean>;
+  s3_access_key_ref: NullableJson;
+  s3_secret_key_ref: NullableJson;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface StorageSettingChangeTable {
+  id: string;
+  storage_setting_id: string;
+  record_version: number;
+  driver: string;
+  s3_endpoint: string | null;
+  s3_region: string | null;
+  s3_bucket: string | null;
+  s3_key_prefix: string | null;
+  s3_force_path_style: boolean;
+  s3_access_key_ref: NullableJson;
+  s3_secret_key_ref: NullableJson;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface NotificationChannelTable {
+  id: string;
+  organization_id: string;
+  channel_kind: string;
+  enabled: Generated<boolean>;
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_security: string | null;
+  smtp_username_ref: NullableJson;
+  smtp_password_ref: NullableJson;
+  from_address: string | null;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface NotificationChannelChangeTable {
+  id: string;
+  notification_channel_id: string;
+  organization_id: string;
+  record_version: number;
+  channel_kind: string;
+  enabled: boolean;
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_security: string | null;
+  smtp_username_ref: NullableJson;
+  smtp_password_ref: NullableJson;
+  from_address: string | null;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface NotificationDeliveryTable {
+  id: string;
+  organization_id: string;
+  inbox_notification_id: string;
+  channel_kind: string;
+  status: Generated<string>;
+  attempts: Generated<number>;
+  last_attempt_at: Timestamp | null;
+  sent_at: Timestamp | null;
+  skip_reason: string | null;
+  error_code: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface Database {
+  service_identity: ServiceIdentityTable;
+  service_identity_change: ServiceIdentityChangeTable;
+  operational_exception: OperationalExceptionTable;
+  operational_exception_event: OperationalExceptionEventTable;
+  operational_exception_kpi: OperationalExceptionKpiTable;
+  worker_heartbeat: WorkerHeartbeatTable;
+  storage_setting: StorageSettingTable;
+  storage_setting_change: StorageSettingChangeTable;
+  notification_channel: NotificationChannelTable;
+  notification_channel_change: NotificationChannelChangeTable;
+  notification_delivery: NotificationDeliveryTable;
+}
+
+export type ServiceIdentityRow = Selectable<ServiceIdentityTable>;
+export type ServiceIdentityChangeRow = Selectable<ServiceIdentityChangeTable>;
+export type OperationalExceptionRow = Selectable<OperationalExceptionTable>;
+export type OperationalExceptionEventRow = Selectable<OperationalExceptionEventTable>;
+export type OperationalExceptionKpiRow = Selectable<OperationalExceptionKpiTable>;
+export type WorkerHeartbeatRow = Selectable<WorkerHeartbeatTable>;
+export type StorageSettingRow = Selectable<StorageSettingTable>;
+export type StorageSettingChangeRow = Selectable<StorageSettingChangeTable>;
+export type NotificationChannelRow = Selectable<NotificationChannelTable>;
+export type NotificationChannelChangeRow = Selectable<NotificationChannelChangeTable>;
+export type NotificationDeliveryRow = Selectable<NotificationDeliveryTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -6793,6 +7013,7 @@ export const SCHEMA_COLUMNS = {
     "uploaded_by",
     "uploaded_at",
     "detected_type",
+    "storage_driver",
   ],
   evidence_link: [
     "id",
@@ -11690,6 +11911,183 @@ export const SCHEMA_COLUMNS = {
     "reason",
     "changed_by",
     "changed_at",
+  ],
+  service_identity: [
+    "id",
+    "code",
+    "subject_kind",
+    "queue_name",
+    "connector_id",
+    "scope_level",
+    "organization_id",
+    "declared_permission_codes",
+    "granted_permission_codes",
+    "sensitive_access",
+    "label_en",
+    "label_ar",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  service_identity_change: [
+    "id",
+    "service_identity_id",
+    "record_version",
+    "declared_permission_codes",
+    "granted_permission_codes",
+    "sensitive_access",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  operational_exception: [
+    "id",
+    "organization_id",
+    "source_kind",
+    "source_code",
+    "failure_class",
+    "dedup_key",
+    "service_identity_id",
+    "operational_failure_id",
+    "status",
+    "occurrence_count",
+    "first_occurred_at",
+    "last_occurred_at",
+    "last_error_code",
+    "last_error_message",
+    "acknowledged_at",
+    "acknowledged_by",
+    "acknowledge_note",
+    "resolved_at",
+    "resolved_by",
+    "resolution",
+    "resolution_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  operational_exception_event: [
+    "id",
+    "operational_exception_id",
+    "record_version",
+    "event_kind",
+    "status",
+    "occurrence_count",
+    "error_code",
+    "actor_user_id",
+    "note",
+    "occurred_at",
+  ],
+  operational_exception_kpi: [
+    "id",
+    "operational_exception_id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "linked_at",
+  ],
+  worker_heartbeat: [
+    "id",
+    "instance_key",
+    "app_version",
+    "started_at",
+    "last_beat_at",
+    "beat_count",
+    "queue_count",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  storage_setting: [
+    "id",
+    "singleton",
+    "driver",
+    "s3_endpoint",
+    "s3_region",
+    "s3_bucket",
+    "s3_key_prefix",
+    "s3_force_path_style",
+    "s3_access_key_ref",
+    "s3_secret_key_ref",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  storage_setting_change: [
+    "id",
+    "storage_setting_id",
+    "record_version",
+    "driver",
+    "s3_endpoint",
+    "s3_region",
+    "s3_bucket",
+    "s3_key_prefix",
+    "s3_force_path_style",
+    "s3_access_key_ref",
+    "s3_secret_key_ref",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  notification_channel: [
+    "id",
+    "organization_id",
+    "channel_kind",
+    "enabled",
+    "smtp_host",
+    "smtp_port",
+    "smtp_security",
+    "smtp_username_ref",
+    "smtp_password_ref",
+    "from_address",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  notification_channel_change: [
+    "id",
+    "notification_channel_id",
+    "organization_id",
+    "record_version",
+    "channel_kind",
+    "enabled",
+    "smtp_host",
+    "smtp_port",
+    "smtp_security",
+    "smtp_username_ref",
+    "smtp_password_ref",
+    "from_address",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  notification_delivery: [
+    "id",
+    "organization_id",
+    "inbox_notification_id",
+    "channel_kind",
+    "status",
+    "attempts",
+    "last_attempt_at",
+    "sent_at",
+    "skip_reason",
+    "error_code",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
