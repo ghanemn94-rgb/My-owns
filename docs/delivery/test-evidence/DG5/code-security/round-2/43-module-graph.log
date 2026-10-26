@@ -1,0 +1,27 @@
+# 43 module graph  2026-10-26T00:58:11Z  node=v24.21.0  commit=7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+$ reporting imports workflows or admin (expect none)
+apps/api/src/modules/reporting/reporting.test.ts:89:      expect(plant(`import { PRODUCT_GATES } from "../workflows/index.ts";`)).toContain(
+grep exit=0 (1 = none)
+$ worker imports API code (expect none)
+grep exit=1 (1 = none)
+$ WorkflowsReadPort wiring
+apps/api/src/modules/reporting/workspace-header.ts:5://  2. gateReadiness   the gate of the current phase with its LIVE readiness, read through WorkflowsReadPort
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:21:// WorkflowsReadPort carries the readiness summary and, since T-DG5-KBE-D4, the effective approver), so such a pack
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:26:// through the WorkflowsReadPort (a pinned methodology's default role), and the stored value only when it cannot be read.
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:179:  // it was routed to); without one, the EFFECTIVE approver through the WorkflowsReadPort (workflows' routing rule, so a
+apps/api/src/modules/reporting/ports.ts:3:// `WorkflowsReadPort`, which the composition root (server.ts) wires to `workflows/gate-readiness-read.ts` with one line
+apps/api/src/modules/reporting/ports.ts:9:export interface WorkflowsReadPort {
+apps/api/src/modules/reporting/ports.ts:24:const UNWIRED: WorkflowsReadPort = Object.freeze({ gateReadiness: async () => null, gateApprover: async () => null });
+apps/api/src/modules/reporting/ports.ts:26:let port: WorkflowsReadPort = UNWIRED;
+apps/api/src/modules/reporting/ports.ts:29:export function setWorkflowsReadPort(p: WorkflowsReadPort): void {
+apps/api/src/modules/reporting/ports.ts:34:export function workflowsReadPort(): WorkflowsReadPort {
+$ import cycles among apps/api/src/modules/* (module-level graph, relative imports, non-test files)
+modules=25 value-import edges=118
+reporting -> access,adoption,audit,benefits,kpi,methodology,platform,portfolio,sustainment,tasks,transformations
+no module-level value-import cycle
+$ web: lazy routes and no cycle (madge not installed; the router is read instead)
+171
+$ eager page imports in the router (expect none)
+6:import { LoginPage } from "../pages/LoginPage.tsx";
+grep exit=0 (1 = none)
+exit=0

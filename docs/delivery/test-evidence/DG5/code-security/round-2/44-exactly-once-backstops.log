@@ -1,0 +1,72 @@
+# 44 exactly-once backstops and the advisory-lock registry  2026-10-26T00:57:03Z  node=v24.21.0  commit=7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+$ unique backstops in the P5 migrations
+packages/db/migrations/0062_p5_config_versions.sql:367:-- per subject and content (dedupe_key UNIQUE; a replay inserts nothing).
+packages/db/migrations/0062_p5_config_versions.sql:381:  dedupe_key          text NOT NULL CONSTRAINT revision_proposal_dedupe_key UNIQUE CHECK (char_length(dedupe_key) BETWEEN 1 AND 200),
+packages/db/migrations/0069_p5_procedures.sql:408:-- launch_key (UNIQUE) makes an automation-triggered launch exactly once (slice E rule actions; p5-work-split §2.10).
+packages/db/migrations/0069_p5_procedures.sql:421:  launch_key              text NULL CONSTRAINT procedure_instance_launch_key UNIQUE CHECK (launch_key IS NULL OR char_length(launch_key) BETWEEN 1 AND 200),
+packages/db/migrations/0074_p5_automation_engine.sql:408:  CONSTRAINT automation_execution_once_key UNIQUE (automation_rule_version_id, trigger_key),
+packages/db/migrations/0074_p5_automation_engine.sql:457:-- `<rule code>:<trigger key>:<action ordinal>`; the partial UNIQUE makes a second effective outcome for the same key
+packages/db/migrations/0074_p5_automation_engine.sql:473:  CONSTRAINT automation_action_result_attempt_key UNIQUE (automation_execution_id, attempt_no, ordinal),
+packages/db/migrations/0074_p5_automation_engine.sql:477:CREATE UNIQUE INDEX automation_action_result_effect_once_key ON automation_action_result (idempotency_key)
+packages/db/migrations/0074_p5_automation_engine.sql:571:CREATE UNIQUE INDEX operational_failure_one_open_key ON operational_failure (source, queue_name, idempotency_key)
+packages/db/migrations/0075_p5_starters_routes_policies.sql:116:  CONSTRAINT approval_route_step_no_key UNIQUE (approval_id, round_no, step_no),
+packages/db/migrations/0075_p5_starters_routes_policies.sql:206:  CONSTRAINT gate_condition_closure_once_key UNIQUE (gate_decision_condition_id)
+packages/db/migrations/0075_p5_starters_routes_policies.sql:218:  CONSTRAINT gate_condition_escalation_once_key UNIQUE (gate_decision_condition_id)
+packages/db/migrations/0075_p5_starters_routes_policies.sql:282:  CONSTRAINT notification_policy_organization_key UNIQUE (organization_id),
+packages/db/migrations/0075_p5_starters_routes_policies.sql:304:  CONSTRAINT notification_preference_user_key UNIQUE (user_id),
+packages/db/migrations/0075_p5_starters_routes_policies.sql:330:-- notification_digest: one digest per user and window (lock 730261; UNIQUE backstop). Append-only.
+packages/db/migrations/0075_p5_starters_routes_policies.sql:341:  CONSTRAINT notification_digest_window_key UNIQUE (recipient_user_id, window_start),
+packages/db/migrations/0075_p5_starters_routes_policies.sql:405:  CONSTRAINT meeting_cutoff_pack_once_key UNIQUE (meeting_id),
+packages/db/migrations/0075_p5_starters_routes_policies.sql:480:  CONSTRAINT dependency_slip_once_key UNIQUE (dependency_id, slip_key),
+packages/db/migrations/0081_p5_export_jobs.sql:24:  storage_key       text NULL CONSTRAINT export_job_storage_key_key UNIQUE CHECK (storage_key IS NULL OR storage_key ~ '^exports/[A-Za-z0-9/_.-]{1,190}$'),
+packages/db/migrations/0081_p5_export_jobs.sql:43:  CONSTRAINT export_job_idempotency_key UNIQUE (requested_by, idempotency_key),
+packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:295:-- UNIQUE (trigger_kind, trigger_record_id, trigger_slot) and the idempotency key 'kpi_restatement:<id>' are the
+packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:347:-- for reissue once per restatement (append-only; UNIQUE is the exactly-once backstop of the worker). The snapshot is
+packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:361:  CONSTRAINT kpi_restatement_reissue_offer_key UNIQUE (restatement_id, snapshot_id)
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:25:  ordinal          smallint NOT NULL CONSTRAINT launch_window_ordinal_key UNIQUE CHECK (ordinal BETWEEN 1 AND 3),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:56:  ordinal            smallint NOT NULL CONSTRAINT launch_template_item_ordinal_key UNIQUE CHECK (ordinal BETWEEN 1 AND 99),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:108:  ordinal               smallint NOT NULL CONSTRAINT day_ninety_question_ordinal_key UNIQUE CHECK (ordinal BETWEEN 1 AND 6),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:111:  source_ref            text NOT NULL CONSTRAINT day_ninety_question_source_ref_key UNIQUE CHECK (source_ref ~ '^B01(3[6-9]|4[01])$'),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:131:                      CONSTRAINT launch_plan_transformation_key UNIQUE,
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:135:  idempotency_key   text NOT NULL CONSTRAINT launch_plan_idempotency_key UNIQUE,
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:142:  CONSTRAINT launch_plan_transformation_id_id_key UNIQUE (transformation_id, id),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:197:  CONSTRAINT launch_task_transformation_id_id_key UNIQUE (transformation_id, id),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:200:  CONSTRAINT launch_task_ordinal_key UNIQUE (plan_id, ordinal),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:201:  CONSTRAINT launch_task_template_key UNIQUE (plan_id, template_item_code),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:290:CREATE UNIQUE INDEX launch_task_predecessor_active_key ON launch_task_predecessor (task_id, predecessor_task_id)
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:338:  plan_id           uuid NOT NULL CONSTRAINT day_ninety_test_plan_key UNIQUE,
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:349:  CONSTRAINT day_ninety_test_transformation_id_id_key UNIQUE (transformation_id, id),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:395:  CONSTRAINT day_ninety_response_key UNIQUE (test_id, question_code)
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:703:  CONSTRAINT health_assessment_transformation_id_id_key UNIQUE (transformation_id, id),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:704:  CONSTRAINT health_assessment_sequence_key UNIQUE (transformation_id, sequence_no),
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:714:CREATE UNIQUE INDEX health_assessment_one_draft_key ON health_assessment (transformation_id) WHERE status = 'draft';
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:829:  CONSTRAINT health_assessment_answer_key UNIQUE (assessment_id, question_code)
+packages/db/migrations/0086_p5_launch_plans_health_checks.sql:879:  CONSTRAINT health_assessment_action_rank_key UNIQUE (assessment_id, rank)
+$ the P5 lock classes (730250+) in advisory-locks.ts
+80:  // P5 block of T-DG5-ARCH-01 (730250-730253; p5-plan §4, ADR-0039 §11, ADR-0040 §4). 730253 is RESERVED for this
+83:  configDraft: 730250,
+85:  configPublish: 730251,
+87:  methodologyMigration: 730252,
+88:  // P5 block of T-DG5-ARCH-02 (730254-730257; p5-plan §4, ADR-0041 §8, ADR-0042 §7). 730255-730257 are RESERVED for this
+92:  procedureInstanceStep: 730254,
+93:  // P5 block of T-DG5-ARCH-03 (730258-730262; p5-plan §4, ADR-0043 §7, ADR-0044 §6). 730262 is RESERVED for this block:
+96:  automationRuleExecution: 730258,
+98:  failureRepair: 730259,
+100:  approvalRouteStep: 730260,
+102:  digestWindow: 730261,
+103:  // P5 block of T-DG5-ARCH-04 (730263-730265; p5-plan §4, ADR-0045 §7, ADR-0046 §5). 730265 is RESERVED for this block:
+106:  reportSnapshotIssue: 730263,
+108:  exportJob: 730264,
+109:  // P5 block of T-DG5-ARCH-05 (730266-730269; p5-plan §4, ADR-0047 §7, ADR-0048 §8). 730269 is RESERVED for this block:
+112:  kpiRestatement: 730266,
+114:  launchPlan: 730267,
+116:  healthAssessmentSubmit: 730268,
+117:  // P5 block of T-DG5-ARCH-06 (730270-730272; p5-plan §4, ADR-0049 §8, ADR-0050 §6). 730272 is RESERVED for this block:
+120:  brandingPublish: 730270,
+122:  demoReset: 730271,
+$ duplicate lock class numbers across the API and worker registries (expect none within one registry)
+-- apps/api/src/modules/platform/advisory-locks.ts
+-- apps/worker/src/reports/export-runner.ts
+$ the migrations directory: ids 0062-0097 present, forward-only (no gap other than the retired ids pinned by seed.test.ts)
+0062 0063 0064 0065 0068 0069 0070 0071 0072 0074 0075 0076 0080 0081 0082 0085 0086 0087 0088 0089 0090 0091 0092 0093 0094 0095 0096 0097 
+exit=0

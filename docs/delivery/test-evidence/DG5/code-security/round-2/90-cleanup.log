@@ -1,0 +1,23 @@
+# 90 head check and cleanup  2026-10-26T03:29:37Z
+$ git -C /home/user/My-owns rev-parse HEAD (expect 7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234, the freeze commit)
+550d3bd247b4769033bed6b48af2d82bd8ecfa50
+$ node tools/gates/candidate.mjs --stage DG5 (repository tree, end of review)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+$ working copy: git status --porcelain (expect empty: probes copied in were removed, mutants restored)
+0
+$ untracked in the working copy (build output and node_modules are gitignored; expect none)
+$ rm -rf $TMPDIR/rv $TMPDIR/pstore $TMPDIR/mut $TMPDIR/checks.run.sh $TMPDIR/mutants-e2e.run.sh
+rm exit=0
+-home-user-My-owns
+bash-edit-diff
+be-r2-scan-VAmvkI
+be-r2-scan-VoHchb
+cache-break-state-2c88c5f6-2bf4-49bc-a7e0-8ed12883d003.json
+cfg-7NTNZr
+cfg-GrVDqR
+cfg-RS3SBG
+cfg-dv1U5l
+cfg-fRfmPT
+$ leftover disposable PostgreSQL work dirs (qa-pg.*; with-pg.sh removes its own)
+0

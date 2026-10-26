@@ -1,0 +1,46 @@
+# 46-ooxml-control-char-e2e  started 2026-10-26T01:15:41Z  node=v22.22.2  LANG=<unset> LC_ALL=<unset>  load=20.24 19.58 14.54  commit=7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts
+port-policy: PostgreSQL listening on port 26572 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.jgxu5z/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvokf67b_07535b36 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+REPRO rename status 200; stored name "International Roaming\u000bprogramme\u0001(pasted)\u001f"
+
+stdout | tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+REPRO raid status 201; stored description "Supplier\fdelay\brisk (pasted)"
+
+ ❯ |integration| tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts (1 test | 1 failed) 20305ms
+   × F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged 3176ms
+     → charter.pptx.en create {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This output cannot be exported in that format.","code":"export.format_not_offered","requestId":"01a175c8-2251-75cc-ac06-bf5e669ca037"}: expected 422 to be 202 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+AssertionError: charter.pptx.en create {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"This output cannot be exported in that format.","code":"export.format_not_offered","requestId":"01a175c8-2251-75cc-ac06-bf5e669ca037"}: expected 422 to be 202 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 202[39m
+[31m+ 422[39m
+
+ ❯ tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts:101:97
+     99|           const key = `${code}.${format}.${language}`;
+    100|           const created = await call<Body>(api.app, "POST", "/api/v1/e…
+    101|           expect(created.status, `${key} create ${JSON.stringify(creat…
+       |                                                                                                 ^
+    102|           const outcome = await runWorker(api, created.body.id);
+    103|           const job = (await call<Body>(api.app, "GET", `/api/v1/expor…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  01:15:50
+   Duration  63.51s (transform 11.51s, setup 0ms, collect 30.89s, tests 20.31s, environment 0ms, prepare 427ms)
+
+exit=1  finished 2026-10-26T01:16:59Z  load=25.54 21.34 15.57

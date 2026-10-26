@@ -1,0 +1,44 @@
+# 46c F-DG5-100 renderer mutants (attempt 2; attempt 1 had no rsync, see .attempt1-no-rsync.log)  2026-10-26T00:59:30Z  node=v24.21.0  base=7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+# Each mutant is a copy of packages/reporting (src, tar without node_modules/dist; node_modules symlinked) in $TMPDIR/mut with one change; the probe imports packages/reporting/src/index.ts there.
+
+## M0: the unmutated copy (control: the copy mechanism itself)
+RESULT(src): all 24 renders are well-formed XML 1.0 with U+FFFD
+probe exit=0 (expect 0)
+
+## M1: docx.ts and pptx.ts reverted to the round-1 source 2fe8f85 (the pre-fix writers; xml-chars.ts and the xlsx check stay)
+xmlSafe occurrences after revert: /var/tmp/mth-run.jgxu5z/claude-0/mut/packages/reporting/src/docx.ts:0
+xmlSafe occurrences after revert: /var/tmp/mth-run.jgxu5z/claude-0/mut/packages/reporting/src/pptx.ts:0
+docx/en/name: FAIL 12327 bytes; forbidden: word/document.xml: raw U+0001 at 3089 | word/document.xml: raw U+0002 at 3090 | word/document.xml: raw U+0003 at 3091 | word/document.xml: raw U+0004 at 3092; U+FFFD present: true; harmless text intact: true
+pptx/en/name: FAIL 25130 bytes; forbidden: docProps/core.xml: raw U+0001 at 418 | docProps/core.xml: raw U+0002 at 419 | docProps/core.xml: raw U+0003 at 420 | docProps/core.xml: raw U+0004 at 421; U+FFFD present: true; harmless text intact: true
+xlsx/en/name: PASS 4045 bytes; forbidden: none; U+FFFD present: true; harmless text intact: true
+docx/en/code: FAIL 12328 bytes; forbidden: word/document.xml: raw U+0001 at 3089 | word/document.xml: raw U+0002 at 3090 | word/document.xml: raw U+0003 at 3091 | word/document.xml: raw U+0004 at 3092; U+FFFD present: true; harmless text intact: true
+pptx/en/code: FAIL 25133 bytes; forbidden: docProps/core.xml: raw U+0001 at 372 | docProps/core.xml: raw U+0002 at 373 | docProps/core.xml: raw U+0003 at 374 | docProps/core.xml: raw U+0004 at 375; U+FFFD present: true; harmless text intact: true
+xlsx/en/code: PASS 4044 bytes; forbidden: none; U+FFFD present: true; harmless text intact: true
+docx/en/cell: FAIL 12270 bytes; forbidden: word/document.xml: raw U+0001 at 3089 | word/document.xml: raw U+0002 at 3090 | word/document.xml: raw U+0003 at 3091 | word/document.xml: raw U+0004 at 3092; U+FFFD present: true; harmless text intact: true
+pptx/en/cell: FAIL 25069 bytes; forbidden: ppt/slides/slide2.xml: raw U+0001 at 9211 | ppt/slides/slide2.xml: raw U+0002 at 9212 | ppt/slides/slide2.xml: raw U+0003 at 9213 | ppt/slides/slide2.xml: raw U+0004 at 9214; U+FFFD present: true; harmless text intact: true
+xlsx/en/cell: PASS 4041 bytes; forbidden: none; U+FFFD present: true; harmless text intact: true
+docx/en/product: FAIL 12315 bytes; forbidden: word/document.xml: raw U+0001 at 2701 | word/document.xml: raw U+0002 at 2702 | word/document.xml: raw U+0003 at 2703 | word/document.xml: raw U+0004 at 2704; U+FFFD present: true; harmless text intact: true
+pptx/en/product: FAIL 25166 bytes; forbidden: docProps/app.xml: raw U+0001 at 1269 | docProps/app.xml: raw U+0002 at 1270 | docProps/app.xml: raw U+0003 at 1271 | docProps/app.xml: raw U+0004 at 1272; U+FFFD present: true; harmless text intact: true
+xlsx/en/product: PASS 4039 bytes; forbidden: none; U+FFFD present: true; harmless text intact: true
+RESULT(src): 16 of 24 renders FAIL
+probe exit=1 (expect 1: mutant killed)
+
+## M2: only the DOCX run text loses xmlSafe (docx.ts 'text: xmlSafe(t)' -> 'text: t'); the package check (assertWellFormedChars) stays
+mutated lines: 1
+docx/en/name: FAIL render threw RenderError: the package part word/document.xml is not well-formed XML 1.0
+pptx/en/name: PASS 24997 bytes; forbidden: none; U+FFFD present: true; harmless text intact: true
+docx/en/code: FAIL render threw RenderError: the package part word/document.xml is not well-formed XML 1.0
+docx/en/cell: FAIL render threw RenderError: the package part word/document.xml is not well-formed XML 1.0
+docx/en/product: FAIL render threw RenderError: the package part word/document.xml is not well-formed XML 1.0
+RESULT(src): 8 of 24 renders FAIL
+probe exit=1 (expect 1: the DOCX renders throw RenderError = the backstop; never a stored file)
+
+## M3: both layers off (xmlSafe returns its input; hasInvalidXmlChar returns false)
+mutation applied
+docx/en/name: FAIL 12327 bytes; forbidden: word/document.xml: raw U+0001 at 3089 | word/document.xml: raw U+0002 at 3090 | word/document.xml: raw U+0003 at 3091 | word/document.xml: raw U+0004 at 3092; U+FFFD present: true; harmless text intact: true
+pptx/en/name: FAIL 25129 bytes; forbidden: docProps/core.xml: raw U+0001 at 418 | docProps/core.xml: raw U+0002 at 419 | docProps/core.xml: raw U+0003 at 420 | docProps/core.xml: raw U+0004 at 421; U+FFFD present: true; harmless text intact: true
+xlsx/en/name: FAIL 4085 bytes; forbidden: xl/worksheets/sheet1.xml: raw U+0001 at 913 | xl/worksheets/sheet1.xml: raw U+0002 at 914 | xl/worksheets/sheet1.xml: raw U+0003 at 915 | xl/worksheets/sheet1.xml: raw U+0004 at 916; U+FFFD present: true; harmless text intact: true
+RESULT(src): 24 of 24 renders FAIL
+probe exit=1 (expect 1: mutant killed)
+
+cleanup: $TMPDIR/mut removed

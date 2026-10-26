@@ -1,0 +1,42 @@
+# 01 candidate identity  2026-10-26T00:44:31Z  node=v24.21.0
+$ git rev-parse HEAD (repository)
+7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+$ git log --oneline -2
+7a02e7d DG5 corrected re-gate frozen for review round 2: candidate 55a411ae (2207 files, source 660f40c); REVIEWING; round-2 assignments
+660f40c DG5 corrected re-gate: verification of 7bb7d93 green (e2e 470/470 x2); evidence and progress note
+$ git diff --stat 660f40c HEAD
+ .../DG5/round-2/code-security-reviewer.md          |   143 +
+ .../assignments/DG5/round-2/domain-reviewer.md     |   167 +
+ .../assignments/DG5/round-2/qa-verifier.md         |   125 +
+ .../candidates/DG5/55a411ae9f4e8747.manifest.json  | 11053 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 11510 insertions(+), 5 deletions(-)
+$ git diff --name-only 660f40c HEAD | grep -v ^docs/delivery/   (expect nothing)
+grep exit=1 (1 = no non-delivery file)
+$ node tools/gates/candidate.mjs --stage DG5   (repository tree)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+
+$ git clone -q /home/user/My-owns $TMPDIR/full   (full object copy)
+clone exit=0
+false
+ls: cannot access '/var/tmp/mth-run.jgxu5z/claude-0/full/.git/objects/info/alternates': No such file or directory
+$ (clone) git checkout 7a02e7d; candidate.mjs
+7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+0
+$ (clone) git checkout 660f40c; candidate.mjs
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+$ manifest file
+{'stage_id': 'DG5', 'candidate_id': 'sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce', 'hash_algorithm': 'mth-candidate-v2', 'source_commit': '660f40c7d141b6fb73c145e0ee7a053ceb5905de', 'frozen_at': '2026-10-26T00:26:36Z', 'spec': 2, 'meta_excluded': 'see tools/gates/lib/candidate.mjs META_EXCLUDES', 'entries': 2207}
+
+# Working copy for the build/test checks (2026-10-26T00:51:34Z). The full clone above (4.6 GB) was removed after the identity check: the shared scratch disk
+# dropped to 835 MB free (three concurrent reviews share it). The working copy is a --shared (alternates, not shallow) sparse clone that
+# omits only docs/delivery/{test-evidence,handbacks,runs}, which the DG5 manifest excludes; the candidate ID is recomputed there.
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv; git sparse-checkout set --no-cone ...; git checkout 7a02e7d
+7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+false
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0

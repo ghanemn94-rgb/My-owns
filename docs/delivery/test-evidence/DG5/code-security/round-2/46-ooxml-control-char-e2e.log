@@ -1,0 +1,48 @@
+# 46-ooxml-control-char-e2e  started 2026-10-26T01:17:23Z  node=v22.22.2  LANG=<unset> LC_ALL=<unset>  load=25.75 21.65 15.79  commit=7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts
+port-policy: PostgreSQL listening on port 26572 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.4 /var/tmp/mth-run.jgxu5z/claude-0/rv
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvokhc3e_240c3af6 (server_encoding UTF8); applied 89 migrations to a fresh database
+stdout | tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+REPRO rename status 200; stored name "International Roaming\u000bprogramme\u0001(pasted)\u001f"
+
+stdout | tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+REPRO raid status 201; stored description "Supplier\fdelay\brisk (pasted)"
+
+stdout | tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+REPRO results: {
+ "charter.docx.en": "PASS job succeeded, 14713 bytes (= fileSizeBytes 14713), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "charter.docx.ar": "PASS job succeeded, 15746 bytes (= fileSizeBytes 15746), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "charter.pptx.en": "n/a (422 export.format_not_offered)",
+ "charter.pptx.ar": "n/a (422 export.format_not_offered)",
+ "charter.xlsx.en": "n/a (422 export.format_not_offered)",
+ "charter.xlsx.ar": "n/a (422 export.format_not_offered)",
+ "roadmap.docx.en": "n/a (422 export.format_not_offered)",
+ "roadmap.docx.ar": "n/a (422 export.format_not_offered)",
+ "roadmap.pptx.en": "PASS job succeeded, 38514 bytes (= fileSizeBytes 38514), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "roadmap.pptx.ar": "PASS job succeeded, 40030 bytes (= fileSizeBytes 40030), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "roadmap.xlsx.en": "PASS job succeeded, 8058 bytes (= fileSizeBytes 8058), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "roadmap.xlsx.ar": "PASS job succeeded, 8889 bytes (= fileSizeBytes 8889), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "registers.docx.en": "n/a (422 export.format_not_offered)",
+ "registers.docx.ar": "n/a (422 export.format_not_offered)",
+ "registers.pptx.en": "n/a (422 export.format_not_offered)",
+ "registers.pptx.ar": "n/a (422 export.format_not_offered)",
+ "registers.xlsx.en": "PASS job succeeded, 4837 bytes (= fileSizeBytes 4837), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true",
+ "registers.xlsx.ar": "PASS job succeeded, 5331 bytes (= fileSizeBytes 5331), independent scan: none; malformedParts: none; U+FFFD present: true; name with U+FFFD: true"
+}
+
+stdout | tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts > F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged
+REPRO stored name after exports "International Roaming\u000bprogramme\u0001(pasted)\u001f"
+
+ ✓ |integration| tests/qa/integration/zz-sec-rg2r2-ooxml-control-char.test.ts (1 test) 22370ms
+   ✓ F-DG5-100 re-verification: C0 characters in accepted user text -> DOCX / PPTX / XLSX exports > every job succeeds and every XML part is well-formed XML 1.0 (U+FFFD in place); stored text unchanged  6314ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  01:17:31
+   Duration  62.43s (transform 11.11s, setup 0ms, collect 27.79s, tests 22.37s, environment 0ms, prepare 194ms)
+
+exit=0  finished 2026-10-26T01:18:39Z  load=24.33 22.08 16.43

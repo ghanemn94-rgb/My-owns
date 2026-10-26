@@ -1,0 +1,24 @@
+# 48 environmental residuals (offline/config surface)  2026-10-26T01:43:16Z  commit=7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234
+$ AI / external notification client libraries imported by product code (expect none; D-142 Q11)
+grep exit=1 (1 = none)
+$ notification delivery channels in the shipped schema (in-app only)
+$ AI configuration shipped disabled (A21; D-165): config keys mentioning AI
+(end)
+$ IdP: OIDC mode needs an external issuer (Keycloak, D-049); the dev-mode binding (D-165) is the tested path
+40:  AUTH_MODE: {
+47:  OIDC_ISSUER_URL: {
+175:/** Allowed AUTH_MODE values; `dev` must be rejected at startup when NODE_ENV=production (ADR-0005). */
+176:export const AUTH_MODES = ["oidc", "dev"] as const;
+181:export type AuthMode = (typeof AUTH_MODES)[number];
+$ registry / CI: install is offline --frozen-lockfile from the local store (05-install.log); no live registry or CI run here (D-057, D-058)
+Lockfile is up to date, resolution step is skipped
+Done in 2.5s using pnpm v10.33.0
+exit=0  finished 2026-10-26T00:51:49Z  load=3.87 3.47 2.76
+
+$ (addendum) notification channels declared in the shared schemas and migrations (expect in-app only)
+$ (addendum) any AI configuration key in @mth/config ENV_VARS (expect none: no AI adapter ships, so AI is off by absence)
+0
+$ (addendum 2) outbound delivery code in the worker and API (fetch/http(s).request/smtp; expect none outside the OIDC client)
+grep done
+$ the notify executor: in-app only
+4:// <ordinal>:<recipient>`); a replay finds it and records `existing`. In-app only (D-142 Q11). Planned by the twin of
