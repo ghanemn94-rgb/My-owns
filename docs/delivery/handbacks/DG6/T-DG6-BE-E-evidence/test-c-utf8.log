@@ -1,0 +1,180 @@
+
+> mobily-transformation-hub@0.1.0 test /home/user/wt/dg6-be-e
+> s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+
+
+ RUN  v3.2.4 /home/user/wt/dg6-be-e
+
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 36805ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  4159ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  4241ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  18092ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  8949ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  931ms
+ ✓ |unit-node| packages/reporting/src/pdf/pdf.test.ts (13 tests) 57814ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > has a right-to-left base direction: /Lang (ar-SA), /Direction /R2L, right-aligned text, mirrored tables  5781ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > embeds IBM Plex Sans Arabic (every font is an embedded subset of it, with its TrueType program)  6243ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > identifiers and numbers keep their left-to-right order inside Arabic text (text extraction)  5162ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a multi-word Arabic phrase reads right to left, word by word (the leftmost word is the last one)  6124ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > the glyph-run check: the drawn Arabic word uses GSUB's joined forms, not the isolated forms  3854ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a provisional value prints مؤقت, an Unknown value prints غير معروف and no number, never 0  4787ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a generated snapshot carries مسودة — ليس تقريراً صادراً on every page  5159ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > is left to right: /Lang (en-GB), no R2L preference, left-aligned text, IBM Plex Sans embedded  2819ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > prints Provisional under a pending value, Unknown with no number, and the legend  1701ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > a generated snapshot carries 'Draft — not an issued report'; an issued one its version and no Draft line  4451ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > prints every row of a long register once, repeats the table header on each page, and numbers the pages  8750ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > an empty table prints its empty line; progress is reported per section; an invalid document is refused  1291ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > render() dispatches every export format, PDF included  1570ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 80893ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048)  367ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  41450ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  4066ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  2815ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  5887ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  22512ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1750ms
+ ✓ |unit-node| packages/reporting/src/provenance-illustrative.test.ts (24 tests) 38460ms
+   ✓ XLSX: the B0004 statement on every sheet, a plain inline string (F-DG5-qa-c-1) > no statement given: nothing is printed in its place  495ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF en: in the header and on every page  4883ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > DOCX en: in the body's header block and in the page header (every page)  566ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PPTX en: on every slide  1058ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF ar: in the header and on every page  8686ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > DOCX ar: in the body's header block and in the page header (every page)  310ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PPTX ar: on every slide  464ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > production (no `synthetic` member): no format prints the label in any language  13137ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > production: the DOCX has no page header part referenced  459ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > the label is translated (no missing label key in either language)  7722ms
+ ✓ |unit-node| packages/shared/src/finance/metrics.test.ts (21 tests) 16575ms
+   ✓ properties (seeded) > NPV equals the precision-200 oracle rounded once half-up to 2 decimals (both timings)  5992ms
+   ✓ properties (seeded) > end_of_period NPV = beginning_of_period NPV / (1 + r), before rounding  4685ms
+   ✓ properties (seeded) > a conventional set (outflows only at t = 0, beginning of period) has an NPV that never rises with the rate  4450ms
+   ✓ properties (seeded) > ROI equals the precision-200 oracle rounded half-up to 6 decimals; payback equals an integer (BigInt) oracle  1362ms
+ ✓ |unit-node| packages/shared/src/notifications/delivery.test.ts (15 tests) 13481ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > urgent is always delivered at once; a held notification is never released before it was created  4699ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > a release is outside quiet hours, on a working day when the policy says so, and at a digest time when one is on  6688ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > delivered at once only when no rule applies at that instant  1820ms
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 5492ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  2211ms
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  942ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  1325ms
+   ✓ DOCX and PPTX > DOCX: the header line in the body, the footer line and B0004 in the page footer  645ms
+   ✓ DOCX and PPTX > PPTX: the header, the footer and B0004 on the closing 'About this file' slide  356ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 6296ms
+   ✓ workflows module (P2) > registers its routes, each declaring access; every mutation declares a write permission  663ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  5585ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (44 tests) 7684ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  7440ms
+ ✓ |unit-node| packages/shared/src/time/cron-next.test.ts (9 tests) 10289ms
+   ✓ nextCronRun (ADR-0043 §6) > property: for each seeded cron and zone, the result is the FIRST matching whole minute strictly after now  7276ms
+   ✓ nextCronRun (ADR-0043 §6) > lists, ranges, steps, n/step, Sunday as 0 or 7, and the day-of-month OR day-of-week rule  657ms
+   ✓ nextCronRun (ADR-0043 §6) > never a guessed time: no match in 366 days, an invalid cron or an unknown zone is null  1591ms
+   ✓ nextCronRun (ADR-0043 §6) > 29 February is found within the 366-day window from a leap-year eve  749ms
+ ✓ |unit-node| packages/shared/src/kpi/property.test.ts (11 tests) 3271ms
+   ✓ measures > higher- and lower-is-better shortfalls are exact negatives; deviation follows the sign  346ms
+   ✓ RAG > relative mode is scale-invariant: scaling actual and expected by k > 0 keeps the RAG  839ms
+   ✓ changes > pp = (x₁ − x₀) × 100 exactly, and relative × |x₀| = x₁ − x₀ (to precision 80)  452ms
+   ✓ trajectory > linear expected values lie between the neighbouring points; step values are point values  382ms
+   ✓ storage rounding > rounds once half-up: |stored − exact| ≤ 0.0000005 and the record is honest  319ms
+ ✓ |unit-node| packages/shared/src/forms/property.test.ts (6 tests) 2587ms
+   ✓ property: no float on any path > number values round-trip exactly through validation and JSON (3000 cases, seed 389297)  729ms
+   ✓ property: no float on any path > currency amounts round-trip exactly, e.g. 1500000.10 SAR (3000 cases)  739ms
+   ✓ property: percentages are stored as fractions > "p%" and typed "p" store p / 100; the API fraction stores itself (3000 cases)  524ms
+ ✓ |unit-node| packages/reporting/src/xml-chars.test.ts (13 tests) 1720ms
+   ✓ F-DG5-100: DOCX, PPTX and XLSX parts parse as XML 1.0 with control characters in user text > pptx (en): every XML part is well-formed; the text is kept with U+FFFD in place  363ms
+   ✓ F-DG5-100: DOCX, PPTX and XLSX parts parse as XML 1.0 with control characters in user text > the DOCX and PPTX renderers keep the core properties (title, subject, creator) well-formed too  594ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 5087ms
+   ✓ reporting module (P1 scaffold, D-048) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  4824ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 7917ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  3783ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  1694ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  912ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  1402ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 7322ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  7027ms
+ ✓ |unit-node| packages/shared/src/health/scoring.test.ts (29 tests) 2184ms
+   ✓ properties (seeded, 2,000 generated answer sets per scheme) > v1: incomplete -> null; complete -> 0 <= score <= max, the reference formula, the highest band <= score  1136ms
+   ✓ properties (seeded, 2,000 generated answer sets per scheme) > percent with partial and N/A: incomplete -> null; complete -> 0 <= score <= max, the reference formula, the highest band <= score  674ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 2670ms
+   ✓ evidence module (P2) > its declared boundary holds  1517ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/areas.test.ts (35 tests) 1959ms
+   ✓ combine (ADR-0037 §3 precedence) > property: Unknown or Stale inputs never combine to green, and the result is one of the inputs' ranks (2000 seeded sets)  700ms
+   ✓ Value on the profit-and-cash basis (ADR-0037 amendment N3; F-DG4-123, D-119) > property: per currency and basis, the decimal sum of the basis's contributing lines equals its headline (300 seeded sets)  1028ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 726ms
+ ✓ |unit-node| tests/qa/unit/a05-calc-units.test.ts (15 tests) 88ms
+ ✓ |unit-node| packages/reporting/src/pptx.test.ts (5 tests) 2846ms
+   ✓ renderPptx: a gate pack contains each criterion of the gate (REQ-S13-005) > en: every criterion with its labels and state, over several slides with the header repeated  854ms
+   ✓ renderPptx: direction and labels (REQ-S13-009, REQ-S13-008) > English: left to right, IBM Plex Sans, slide numbers and the Draft line on every slide  353ms
+   ✓ renderPptx: direction and labels (REQ-S13-009, REQ-S13-008) > a provisional value prints Provisional and مؤقت  1182ms
+ ✓ |unit-node| packages/shared/src/adoption/measures.test.ts (24 tests) 2418ms
+   ✓ properties (seeded) > never 0 for an empty denominator: Unknown with value null exactly when the denominator is 0  1575ms
+   ✓ properties (seeded) > the numerator never exceeds the denominator, and the result does not depend on record order  316ms
+ ✓ |unit-node| packages/config/src/load.test.ts (33 tests) 1444ms
+ ✓ |unit-node| packages/reporting/src/layout/layout.test.ts (11 tests) 1523ms
+   ✓ layoutText (bidi-js levels, visual order, fonts) > Arabic base direction: identifiers and numbers keep their left-to-right order; Arabic reads right to left  346ms
+   ✓ layoutText (bidi-js levels, visual order, fonts) > breaks lines at spaces within the width, in logical order (the first Arabic word on the first line)  823ms
+stderr | apps/api/src/modules/admin/branding.test.ts > version 0 defaults and the zod mirrors (REQ-S01-002) > each mirror accepts what its contract component accepts and rejects an extra member
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (12 tests) 549ms
+   ✓ version 0 defaults and the zod mirrors (REQ-S01-002) > each mirror accepts what its contract component accepts and rejects an extra member  352ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 227ms
+ ✓ |unit-node| packages/reporting/src/docx.test.ts (4 tests) 1583ms
+   ✓ renderDocx > English is left to right; every row, Provisional, Unknown (no number) and the Draft line are printed  713ms
+   ✓ renderDocx > Arabic prints مؤقت and the Arabic Draft line  368ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts (36 tests) 1759ms
+   ✓ property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation > stored value, 2-digit display and 0–100 view all match for 3125 combinations  1697ms
+ ✓ |unit-node| packages/shared/src/reports/content-labels.test.ts (5 tests) 1558ms
+   ✓ REPORT_CONTENT_LABELS > has the same keys in English and Arabic, each a non-empty trimmed text  1150ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 906ms
+   ✓ registerInFlightTracking > wraps every route handler registered after it: async handlers are tracked until their cleanup ran; results are unchanged  486ms
+ ✓ |unit-node| apps/worker/src/handlers/demo.test.ts (2 tests) 276ms
+ ✓ |unit-node| packages/shared/src/forms/validate.test.ts (103 tests) 131ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts (12 tests) 1111ms
+   ✓ F-DG4-126: a validated-gap ratio per basis and currency; the Value RAG is the worst of them (N4 item 1) > property: the RAG is combine(every basis line), each line is its own basis's exact gap, never a cross-basis sum (500 seeded sets)  943ms
+ ✓ |unit-node| apps/api/src/modules/automation/outbox-registry.test.ts (5 tests) 69ms
+ ✓ |unit-node| tests/qa/unit/a22-s21-001-text-scan.test.ts (7 tests) 684ms
+   ✓ REQ-S21-001: a text scan of UI strings and export templates finds no DG0-DG7 references > UI strings: no web catalogue string (en, ar) names an engineering gate  343ms
+ ✓ |unit-node| packages/reporting/src/csv.test.ts (12 tests) 709ms
+ ✓ |unit-node| apps/api/src/modules/tasks/tasks.test.ts (5 tests) 121ms
+ ✓ |unit-node| packages/shared/src/kpi/purity.test.ts (14 tests) 55ms
+ ✓ |unit-node| packages/db/src/seed.test.ts (59 tests) 695ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/provisional.test.ts (22 tests) 183ms
+ ✓ |unit-node| packages/reporting/src/xlsx/xlsx.test.ts (11 tests) 2000ms
+   ✓ renderXlsx > user text starting like a formula is an inline string with quotePrefix, never a formula (REQ-S13-006)  503ms
+   ✓ renderXlsx > Unknown is an empty cell with status Unknown, never 0; then the total is not a formula  384ms
+ ✓ |unit-node| packages/reporting/src/injection.test.ts (4 tests) 189ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 704ms
+   ✓ invalid characters (U+0000): SQLSTATE mapping and the central request check (F-DG2-231) > a deeply nested body is scanned without recursion (no stack overflow)  610ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 235ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (21 tests) 133ms
+ ✓ |unit-node| packages/shared/src/schemas/report.test.ts (6 tests) 35ms
+ ✓ |unit-node| packages/shared/src/kpi/a05.test.ts (17 tests) 131ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-c2.test.ts (9 tests) 29ms
+ ✓ |unit-node| apps/api/src/modules/benefits/benefits.test.ts (2 tests) 159ms
+ ✓ |unit-node| apps/api/src/modules/benefits/totals.test.ts (15 tests) 94ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 412ms
+   ✓ /readyz database encoding > is ready on UTF8 and asks for the encoding only once per process  304ms
+ ✓ |unit-node| apps/api/src/modules/adoption/adoption.test.ts (2 tests) 99ms
+ ✓ |unit-node| apps/api/src/modules/procedures/definitions.test.ts (8 tests) 174ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 94ms
+ ✓ |unit-node| apps/api/src/modules/integrations/integrations.test.ts (2 tests) 107ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 1117ms
+   ✓ registerMediaTypeEnforcement > refuses an undeclared media type with 400 validation.content_type before any parser runs  606ms
+ ✓ |unit-node| apps/api/src/modules/sustainment/sustainment.test.ts (2 tests) 187ms
+ ✓ |unit-node| apps/api/src/modules/benefits/register-rules.test.ts (45 tests) 111ms
+ ✓ |unit-node| apps/api/src/modules/automation/samples.test.ts (4 tests) 65ms
+ ✓ |unit-node| apps/api/src/modules/automation/content.test.ts (8 tests) 48ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts (22 tests) 129ms
+ ✓ |unit-node| packages/reporting/src/storage.test.ts (4 tests) 137ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 189ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts (140 tests) 604ms
+   ✓ grammar table (ADR-0024 §6 EBNF) > rejects "'a'" with formula.syntax at offset 0  342ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 675ms
+ ✓ |unit-node| apps/api/src/modules/launch/launch.test.ts (2 tests) 73ms

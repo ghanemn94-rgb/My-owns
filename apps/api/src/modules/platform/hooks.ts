@@ -4,9 +4,18 @@
 //      the server refuses to start;
 //   2. at RESPONSE time: a successful response from a route that declares a business permission must have consulted
 //      the policy function at least once (request.authz.decisions > 0), otherwise the response is replaced by a 500.
+import type { BudgetedRateLimitClass, RateLimitClassBudgets } from "@mth/config";
 import { isPoolCheckoutTimeout } from "@mth/db";
 import type { Permission } from "@mth/shared";
-import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from "fastify";
+import type {
+  FastifyError,
+  FastifyInstance,
+  FastifyReply,
+  FastifyRequest,
+  onRequestAsyncHookHandler,
+  preHandlerAsyncHookHandler,
+} from "fastify";
+import type {} from "@fastify/rate-limit";
 import { v7 as uuidv7 } from "uuid";
 import { mapDatabaseGuardError } from "./db-errors.ts";
 import { consumesOf, undeclaredMediaTypeProblem, type RouteConsumesSource } from "./media-types.ts";
@@ -29,6 +38,8 @@ declare module "fastify" {
      * input itself in the form its contract declares (the OIDC callback answers with a redirect, never a problem).
      */
     invalidCharacters?: "route";
+    /** P6 (ADR-0052 §4): the route's rate-limit class, applied in addition to the global limit (`rateLimitClass`). */
+    rateLimitClass?: BudgetedRateLimitClass;
   }
   interface FastifyRequest {
     authz: AuthzTracker;
@@ -234,5 +245,93 @@ export function registerNotFoundHandler(app: FastifyInstance, options: NotFoundO
       return (reply as unknown as { sendFile(name: string): FastifyReply }).sendFile("index.html");
     }
     return sendProblem(reply, request, problems.notFound());
+  });
+}
+
+// ------------------------------------------------------------------------------------------------ rate-limit classes
+// P6 (T-DG6-BE-E; ADR-0052 §4; REQ-S16-030 "rate limiting"). The global limit and its key are unchanged; a route in a
+// class gets a second limiter with the class's own budget and store, run after the global one, so whichever is reached
+// first answers 429 rate_limited with Retry-After. A route joins a class with one config line:
+//   { config: { access: ..., ...rateLimitClass("upload") } }
+// The classes whose operations do not exist yet (search, assistant, webhook, the import upload) are joined by their
+// owner tasks with the same line, adding the operation id to RATE_LIMIT_CLASSES below; export start operations are
+// joined by the owner of reporting/exports (handback of T-DG6-BE-E). The auth class is the identity routes' own
+// per-route limit (ADR-0007 §5b), unchanged.
+
+/** How a class's counter is keyed (the RateLimitMatrix `keyedBy` of the contract). */
+export type RateLimitKey = "user_or_ip" | "ip" | "endpoint_key";
+
+export interface RateLimitClassSpec {
+  readonly name: "global" | "auth" | BudgetedRateLimitClass;
+  readonly variable: string;
+  readonly keyedBy: RateLimitKey;
+  /**
+   * The operations wired to the class. `global` lists none: it is every operation without a class. A test pins this
+   * list to the routes that declare the class (apps/api/test/integration/admin/security.test.ts).
+   */
+  readonly operationIds: readonly string[];
+}
+
+/** The ADR-0052 §4 matrix, in its table order (the read model of getSecurityRateLimits). */
+export const RATE_LIMIT_CLASSES: readonly RateLimitClassSpec[] = [
+  { name: "global", variable: "RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+  {
+    name: "auth",
+    variable: "AUTH_RATE_LIMIT_PER_MINUTE",
+    keyedBy: "ip",
+    operationIds: ["startOidcLogin", "completeOidcLogin", "devLogin"],
+  },
+  {
+    name: "upload",
+    variable: "UPLOAD_RATE_LIMIT_PER_MINUTE",
+    keyedBy: "user_or_ip",
+    operationIds: ["uploadEvidenceContent"],
+  },
+  { name: "search", variable: "SEARCH_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+  { name: "assistant", variable: "ASSISTANT_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+  { name: "webhook", variable: "WEBHOOK_RATE_LIMIT_PER_MINUTE", keyedBy: "endpoint_key", operationIds: [] },
+  { name: "export", variable: "EXPORT_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+];
+
+/** The route-config fragment that puts a route in a rate-limit class (spread into `config`). */
+export function rateLimitClass(name: BudgetedRateLimitClass): { readonly rateLimitClass: BudgetedRateLimitClass } {
+  return { rateLimitClass: name };
+}
+
+/**
+ * Installs the class limiters. Call once, after @fastify/rate-limit is registered and before any route: each route
+ * whose config names a class gets an onRequest hook after the global limiter's. `userOrIpKey` is the global limiter's
+ * key generator (the validated session's user, else the client IP).
+ */
+export function registerRateLimitClasses(
+  app: FastifyInstance,
+  budgets: RateLimitClassBudgets,
+  userOrIpKey: (request: FastifyRequest) => string,
+): void {
+  const keyOf = (keyedBy: RateLimitKey) =>
+    keyedBy === "endpoint_key"
+      ? (request: FastifyRequest) => `ek:${String((request.params as { endpointKey?: unknown }).endpointKey ?? "")}`
+      : keyedBy === "ip"
+        ? (request: FastifyRequest) => `ip:${request.ip}`
+        : userOrIpKey;
+  const budgetOf = new Map<string, number>(Object.entries(budgets));
+  const limiters = new Map<string, ReturnType<FastifyInstance["createRateLimit"]>>();
+  for (const spec of RATE_LIMIT_CLASSES) {
+    const max = budgetOf.get(spec.name);
+    if (max === undefined) continue; // global and auth: the plugin's own limits
+    limiters.set(spec.name, app.createRateLimit({ max, timeWindow: "1 minute", keyGenerator: keyOf(spec.keyedBy) }));
+  }
+  app.addHook("onRoute", (route) => {
+    const name = route.config?.rateLimitClass;
+    if (name === undefined) return;
+    const limiter = limiters.get(name);
+    if (limiter === undefined) throw new Error(`route ${route.url} names an unknown rate-limit class "${name}"`);
+    const hook: onRequestAsyncHookHandler = async (request, reply) => {
+      const result = await limiter(request);
+      if (result.isAllowed || !result.isExceeded) return;
+      reply.header("retry-after", result.ttlInSeconds);
+      throw problems.rateLimited();
+    };
+    route.onRequest = [...(route.onRequest === undefined ? [] : [route.onRequest].flat()), hook];
   });
 }
