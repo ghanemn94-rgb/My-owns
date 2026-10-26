@@ -63,3 +63,7 @@ None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 
 ## D-192 follow-up (2026-10-26): the first decision run BLOCKED on a findings.json mirror
 
 `T-DG5-RG2-AUDIT-D` (round 4) BLOCKED on one record condition: `findings.json` had no `acceptance` object for F-DG5-120 and 121 (`import-findings.mjs` sets the status but not this mirror; for F-DG4-148 it was added by hand). The orchestrator added both objects in the F-DG4-148 shape; the `accepted_by` errors are gone from `validate --stage DG5`. A second decision run `T-DG5-RG2-AUDIT-D2` (round 5, same candidate) writes the gate.
+
+## D-198 (2026-10-26): W3 stopped by a container restart
+
+All four W3 runs (ARCH-03, BE-B, BE-E, FE-A) were stopped by a container restart. Their run folders are kept as `*-orphaned`; ARCH-03's partial work is the WIP commit `d206925` (its handback still had PENDING placeholders); BE-B, BE-E and FE-A had written their handbacks, but their final checks are unconfirmed, and their work is WIP-committed on their branches. Continuation runs T-DG6-{ARCH-03,BE-B,BE-E,FE-A}B review the WIP, finish and run every acceptance check. Recorded in `decisions.md` with the next merge.
