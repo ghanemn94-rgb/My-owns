@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 2,
+  "candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce",
+  "source_commit": "660f40c7d141b6fb73c145e0ee7a053ceb5905de",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-RG2-SEC-R2-code-security-reviewer-20261026T003346Z-2c88c5f6",
+    "session_id": "2c88c5f6-2bf4-49bc-a7e0-8ed12883d003"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 2c88c5f6 (invocation task T-DG5-RG2-SEC-R2; the assignment file names the task T-DG5-REV-SEC-R5; it is the same assignment, whose sha256 43602848…2c33 I verified). I authored no implementation in the DG5 scope.\n\nAuthorship:\n- the P5 product is by solution-architect, backend-workflow-engineer, kpi-benefits-engineer, frontend-ux-engineer and transformation-analyst (docs/delivery/handbacks/DG5/);\n- the acceptance suites are by qa-verifier;\n- the round-2 delta is T-DG5-BE-RG3 (backend-workflow-engineer: F-DG5-100 and F-DG5-140), the ADR-0046 amendment and D-191 by the delivery-orchestrator.\n\nF-DG5-100 is my own round-1 finding; I verify it here as its originating reviewer and did not author its fix.\n\nMy only writes are evidence under docs/delivery/test-evidence/DG5/code-security/round-2/ and my round-2 review files. Every build, test, probe and mutant ran in a disposable --shared clone under $TMPDIR, removed at the end (90-cleanup.log).\n\nI formed this verdict before reading any other reviewer's record for this round. The domain reviewer's record was auto-committed to the repository during my run (47b-head-moved.log); I did not open it."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-2/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-093",
+    "REQ-S01-002",
+    "REQ-S03-007",
+    "REQ-S04-011",
+    "REQ-S05-001",
+    "REQ-S05-002",
+    "REQ-S05-006",
+    "REQ-S06-001",
+    "REQ-S06-002",
+    "REQ-S06-004",
+    "REQ-S06-005",
+    "REQ-S06-006",
+    "REQ-S06-007",
+    "REQ-S06-008",
+    "REQ-S06-009",
+    "REQ-S06-010",
+    "REQ-S07-016",
+    "REQ-S08-005",
+    "REQ-S10-013",
+    "REQ-S10-015",
+    "REQ-S12-001",
+    "REQ-S12-002",
+    "REQ-S12-003",
+    "REQ-S12-004",
+    "REQ-S12-012",
+    "REQ-S12-015",
+    "REQ-S12-020",
+    "REQ-S12-021",
+    "REQ-S12-022",
+    "REQ-S12-025",
+    "REQ-S12-026",
+    "REQ-S13-005",
+    "REQ-S13-006",
+    "REQ-S13-007",
+    "REQ-S13-010",
+    "REQ-S15-004",
+    "REQ-S16-010",
+    "REQ-S16-012",
+    "REQ-S16-015",
+    "REQ-S16-021",
+    "REQ-S18-001",
+    "REQ-S18-003"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R2-00-candidate-identity",
+      "procedure": "Recompute the candidate ID in the repository tree and in a complete clone. The clone is a full object copy, not shallow and with no alternates, checked out at the freeze commit 7a02e7d and at the source commit 660f40c. Confirm that the freeze commit differs from the source commit only in docs/delivery records. Then recompute it in the --shared sparse working copy used for the runs.",
+      "command": "git rev-parse HEAD; git diff --name-only 660f40c 7a02e7d | grep -v ^docs/delivery/; node tools/gates/candidate.mjs --stage DG5; git clone /home/user/My-owns $TMPDIR/full && git checkout 7a02e7d && node tools/gates/candidate.mjs --stage DG5 && git checkout 660f40c && node tools/gates/candidate.mjs --stage DG5",
+      "environment": "Node 24.21.0; repository HEAD 7a02e7d8ed8e8dc3eb4c98a49b1a10e5f11d5234 at the start; full clone (is-shallow false, no alternates); working copy $TMPDIR/rv = git clone --shared, sparse without docs/delivery/{test-evidence,handbacks,runs}",
+      "expected": "sha256:55a411ae…a3a24ce over 2207 files in every tree; the freeze commit adds only delivery records.",
+      "actual": "Every tree gives candidate_id sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce over 2207 files, exit 0: the repository at 7a02e7d, the full clone at 7a02e7d and at 660f40c, and the sparse working copy. The manifest 55a411ae9f4e8747.manifest.json names source_commit 660f40c and 2207 entries.\n\n- HEAD 7a02e7d is the round-2 freeze commit. Its parent chain contains the source 660f40c. The only files between them are the three round-2 assignments, the manifest and stages.json; the grep for non-delivery files exits 1 (none). So git rev-parse HEAD equals the freeze commit of the candidate named in the assignment, and the recomputed ID matches.\n- The full clone (4.6 GB) was removed after the check, because the shared scratch disk fell to 835 MB free with three concurrent reviews.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/01-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-01-install",
+      "procedure": "Install the dependencies offline from the lockfile into the disposable working copy, from a private copy of the local pnpm store, because the sandbox's node_modules is read-only.",
+      "command": "pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pstore/v10",
+      "environment": "Node 24.21.0, pnpm 10.33.0, $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0; lockfile up to date; nothing downloaded",
+      "actual": "exit 0: 'Lockfile is up to date, resolution step is skipped', 'Done in 2.5s'.\n\nThe four 'WARN Failed to create bin … mth-db … ENOENT packages/db/dist/cli.js' lines come from installing before @mth/db/dist existed; pnpm -r build creates it. No test uses that .bin link: a22-operational-readiness spawns packages/db/dist/cli.js directly, and the integration suite (which includes a22) passed.\n\nBecause this install gives a writable node_modules, Vitest's --configLoader runner workaround was not needed. I still passed it to my own probe runs, where it is harmless. I ran no root e2e spec, so the A06/A07 E2E_SCREENSHOT_DIR note does not apply; the browser journeys are the qa reviewer's scope.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/05-install.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/checks.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-02-build",
+      "procedure": "Build every workspace package.",
+      "command": "pnpm -r build",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0",
+      "actual": "exit 0; every package reports 'build: Done'.\n\nThe only notice is Vite's '(!) Some chunks are larger than 500 kB after minification': the entry chunk index-*.js is 1,586.63 kB (429.00 kB gzip), the same as round 1. That is a performance observation for DG6, not a security defect.\n\nThe background wrapper of the static step (10-15-static-wrapper.log) ended 'syntax error near line 78', exit 2, AFTER all six static steps had logged exit=0. I had appended two probe steps to checks.sh while bash was still reading it (bash reads a script incrementally). From then on every run used a frozen copy ($TMPDIR/checks.run.sh). No product check failed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-010"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/10-build.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/10-15-static-wrapper.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-03-typecheck",
+      "procedure": "Type-check every workspace package.",
+      "command": "pnpm -r typecheck",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0",
+      "actual": "exit 0; every package reports 'typecheck: Done'; no diagnostics.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/11-typecheck.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-04-lint",
+      "procedure": "Lint the repository with zero warnings allowed.",
+      "command": "pnpm lint (eslint . --max-warnings=0)",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0",
+      "actual": "exit 0; no findings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/12-lint.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-05-format",
+      "procedure": "Prettier check of every matched file.",
+      "command": "pnpm format:check",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0",
+      "actual": "exit 0: 'All matched files use Prettier code style!'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/13-format-check.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-06-openapi-lint",
+      "procedure": "Lint the OpenAPI contract.",
+      "command": "pnpm openapi:lint",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0; 846 operations",
+      "actual": "exit 0: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 846 operations'. grep -c operationId gives 846 too (42-contract-pending.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/14-openapi-lint.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/42-contract-pending.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-07-no-cdn",
+      "procedure": "Scan apps and packages for public CDN or builder-hosted runtime references.",
+      "command": "pnpm check:no-cdn",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "exit 0",
+      "actual": "exit 0: 'PASS no-cdn: scanned apps, packages'. The round-2 delta adds no dependency: package.json files and pnpm-lock.yaml are unchanged between 2fe8f85 and 660f40c (49-secrets-scan.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S15-004"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/15-no-cdn.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/49-secrets-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-08-validators",
+      "procedure": "Run the gate validator against each approved gate (historical), the DG5 register rules and the pipeline, in the repository tree, which holds the run records.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4 | DG3 | DG2 | DG1; --register DG5; --pipeline",
+      "environment": "Node 24.21.0; repository tree at HEAD 7a02e7d",
+      "expected": "every invocation exit 0",
+      "actual": "Each invocation exits 0:\n- 'PASS gate DG4 (historical)', and the same for DG3, DG2 and DG1;\n- 'PASS register rules at DG5';\n- 'PASS pipeline (active stage: DG5 REVIEWING)'.\n\nThe pipeline step outlived the 10-minute foreground limit and finished in the background; the log holds its complete output and exit status.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/16-validators.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-09-unit-node22",
+      "procedure": "Run the full unit suite on Node 22 with LANG and LC_ALL unset: the unit-node, unit-web and unit-formula-nocodegen projects. Because the first run ended with a vitest harness error, re-run the affected project (unit-node) alone and report both runs.",
+      "command": "pnpm test; then npx vitest run --project unit-node",
+      "environment": "Node 22.22.2; LANG/LC_ALL unset; $TMPDIR/rv at 7a02e7d; machine load 16-25 on 4 CPUs (three concurrent reviews)",
+      "expected": "every test passes and each project exits 0; the 2 skips are by design",
+      "actual": "Run 1 (20-unit-node22.log), wrapper exit=1.\n- unit-node: 147 files, 2366 tests, all passed, but 'Errors 1 error': one unhandled 'Error: [vitest-worker]: Timeout calling \"onTaskUpdate\"' (vitest's worker-to-main RPC, rpc.-pEldfrD.js:53) at load ~25. No test failed or timed out; the error is in Vitest's own reporting channel. It alone made this project, and so the wrapper, exit 1.\n- unit-web: 94 files, 1746 tests passed.\n- nocodegen: 3 files, 259 passed and 2 skipped. The skips are it.skipIf(NOCODEGEN) by design (fuzz.test.ts).\n\nRun 2, unit-node alone (20b-unit-node22-rerun-unit-node.log): 147 files, 2366 tests passed, no error, exit 0.\n\nUnder this load I do not treat run 1 as a pass. The re-run is the clean evidence for unit-node; the other two projects were clean in run 1.\n\nstderr (18 blocks in run 1; the same five sources as round 1, all fixtures or notices, none a product defect):\n- ajv 'unknown format date-time/uuid ignored' notices (branding.test.ts);\n- extension-fields.test.tsx T12/T14: the mocks omit the contract-required `deliverables`, so the page falls to React Router's error boundary after the asserted header strip has rendered;\n- a missing-key warning on a list in extension-hosts-twelve.test.tsx;\n- duplicate React keys in kpiUnit.test.tsx and percentKpi.test.tsx, whose fixtures reuse one KPI id.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S05-001",
+        "REQ-S06-005",
+        "REQ-S08-005",
+        "REQ-S13-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/20-unit-node22.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/20b-unit-node22-rerun-unit-node.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/drive.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-10-unit-node24",
+      "procedure": "Run the full unit suite on Node 24 with LANG and LC_ALL unset.",
+      "command": "pnpm test",
+      "environment": "Node 24.21.0; LANG/LC_ALL unset; $TMPDIR/rv at 7a02e7d",
+      "expected": "every test passes; exit 0",
+      "actual": "exit 0, with no unhandled error.\n- unit-node: 147 files, 2366 tests passed.\n- unit-web: 94 files, 1746 tests passed.\n- nocodegen: 3 files, 259 passed and 2 skipped (by design, as on Node 22).\n\nThe 18 stderr blocks come from the same five fixture or notice sources listed in SEC-R2-09.\n\nCompared with round 1, unit-node has 2 more files and 16 more tests: BE-RG3's xml-chars.test.ts and labels.test.ts additions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/21-unit-node24.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-11-integration-lang-unset",
+      "procedure": "Run the integration project, including contract/contract.test.ts and migrations 0001→0097, on a disposable PostgreSQL 16 cluster (tests/qa/support/with-pg.sh, UTF8 and C locale) with LANG and LC_ALL unset.",
+      "command": "QA_PG_PORT=26510 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "Node 22.22.2; LANG/LC_ALL unset; PostgreSQL 16.13 on port 26510 (first attempt); $TMPDIR/rv at 7a02e7d",
+      "expected": "every file passes; exit 0; contract test included; 89 migrations applied (0001-0097 minus the 8 retired P5 ids)",
+      "actual": "exit 0: Test Files 321 passed (321); Tests 3087 passed, 1 skipped (3088). 'applied 89 migrations to a fresh database'. contract/contract.test.ts passed 83 tests. reporting/exports-xml-chars.test.ts, the new BE-RG3 test, passed.\n\n- The one skip is governance/presentation.test.ts:170, an it.runIf(!hasMeetingPackAssembler) branch skipped by design because the assembler is wired; its complement :211 ran.\n- No stderr block, unhandled error, timeout, EADDRINUSE or ENOSPC line appears.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-093",
+        "REQ-S01-002",
+        "REQ-S03-007",
+        "REQ-S04-011",
+        "REQ-S05-001",
+        "REQ-S05-002",
+        "REQ-S05-006",
+        "REQ-S06-001",
+        "REQ-S06-002",
+        "REQ-S06-004",
+        "REQ-S06-005",
+        "REQ-S06-006",
+        "REQ-S06-007",
+        "REQ-S06-008",
+        "REQ-S06-009",
+        "REQ-S06-010",
+        "REQ-S07-016",
+        "REQ-S08-005",
+        "REQ-S10-013",
+        "REQ-S10-015",
+        "REQ-S12-001",
+        "REQ-S12-002",
+        "REQ-S12-003",
+        "REQ-S12-004",
+        "REQ-S12-012",
+        "REQ-S12-015",
+        "REQ-S12-020",
+        "REQ-S12-021",
+        "REQ-S12-022",
+        "REQ-S12-025",
+        "REQ-S12-026",
+        "REQ-S13-005",
+        "REQ-S13-006",
+        "REQ-S13-007",
+        "REQ-S13-010",
+        "REQ-S15-004",
+        "REQ-S16-010",
+        "REQ-S16-012",
+        "REQ-S16-015",
+        "REQ-S16-021",
+        "REQ-S18-001",
+        "REQ-S18-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/30-integration-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-12-integration-lang-c-utf8",
+      "procedure": "Run the same integration project again on a fresh disposable cluster with LANG=C.UTF-8.",
+      "command": "LANG=C.UTF-8 QA_PG_PORT=26530 tests/qa/support/with-pg.sh pnpm test:integration",
+      "environment": "Node 22.22.2; LANG=C.UTF-8, LC_ALL unset; PostgreSQL 16.13 on port 26530; $TMPDIR/rv at 7a02e7d",
+      "expected": "every file passes; exit 0",
+      "actual": "exit 0: Test Files 321 passed (321); Tests 3087 passed, 1 skipped (3088). 89 migrations applied; contract.test.ts passed 83 tests.\n\n- The skip is the same by-design runIf branch (presentation.test.ts:170).\n- No stderr block, unhandled error, timeout, EADDRINUSE or ENOSPC line appears.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-005",
+        "REQ-S13-006",
+        "REQ-S16-012",
+        "REQ-S16-015",
+        "REQ-S16-021"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/31-integration-lang-c-utf8.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-13-F-DG5-100-verification",
+      "procedure": "Verify my round-1 finding F-DG5-100 adversarially:\n- read the BE-RG3 diff and trace every text sink of the DOCX and PPTX writers;\n- re-run my round-1 reproduction, extended, end to end on the real API and worker export runner with a demo-seeded disposable PostgreSQL;\n- run a renderer-level probe of every forbidden code point in four positions, both languages and three formats, from dist and src;\n- kill mutants that revert the fix, at the renderer and end to end.",
+      "command": "checks.sh ooxml2 (QA_PG_PORT=26572); checks.sh ooxml2-render; the 46c mutants (an inline script; its log records each step); mutants-e2e.sh (QA_PG_PORT=26580/26584)",
+      "environment": "Node 22.22.2 (e2e) and 24.21.0 (renderer, with Node type stripping for src); PostgreSQL 16.13; $TMPDIR/rv at 7a02e7d; mutants in $TMPDIR/mut, or in rv with git checkout restore",
+      "expected": "On the candidate: every OOXML export succeeds and is well-formed XML 1.0, with U+FFFD in place and stored text unchanged. Each mutant is killed: the pre-fix writers store a succeeded job with raw characters; with the package check alone, the job fails with export.render_failed.",
+      "actual": "Candidate: fixed.\n- End to end (46-ooxml-control-char-e2e.log), exit 0. The name with U+000B, U+0001 and U+001F is accepted (200) and the RAID description with U+000C and U+0008 is accepted (201). Exported: charter DOCX en/ar, roadmap PPTX en/ar, roadmap XLSX en/ar and RAID register XLSX en/ar.\n  - Every job succeeded, and bytes = fileSizeBytes.\n  - The independent scanner and malformedParts both report 'none'.\n  - U+FFFD is present and the name prints 'International Roaming\\uFFFDprogramme\\uFFFD(pasted)'. The stored name is unchanged.\n- Renderer level (46b): 24/24 renders well-formed from dist and from src (exit 0), and harmless text is intact.\n\nMutants: every one killed.\n- Renderer (46c). M0, the control copy, passes 24/24. M1 (2fe8f85 writers) fails 16/24, with raw U+0001.. in word/document.xml, docProps/core.xml, app.xml and slide2.xml. M2 (no xmlSafe on the DOCX runs) gives 8 RenderErrors. M3 (both layers off) fails 24/24.\n- End to end (46d). M1: charter.docx and roadmap.pptx report succeeded, with raw U+000B, U+0001 and U+001F in docProps/core.xml. That is the round-1 defect, reproduced. M2: both charter.docx jobs failed with export.render_failed and the download answered 422. Files were restored; git status is clean.\n\nNon-zero exits, all explained:\n- the e2e probe's attempt 1 (attempt1-format-not-offered.log): my probe asked for charter PPTX, which the charter does not offer (422 export.format_not_offered), so it failed before any file was checked. The fixed probe records offered formats only and requires each OOXML format in each language at least once;\n- the 46c attempt 1 (attempt1-no-rsync.log): rsync is not installed, so no mutant was built, and its M0 control failed and flagged it. Attempt 2 copies with tar;\n- the mutant probes exit 1 by design, with exactly the failing assertions listed above.\n\nVerdict: F-DG5-100 is CLOSED (verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S13-005",
+        "REQ-S13-006"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46-ooxml-control-char-e2e.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46-ooxml-control-char-e2e.attempt1-format-not-offered.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46b-ooxml-control-chars-renderer.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46c-ooxml-renderer-mutants.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46c-ooxml-renderer-mutants.attempt1-no-rsync.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/46d-ooxml-e2e-mutants.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-rg2r2-ooxml-control-char.test.ts",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/ooxml-control-chars-v2.mjs",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/mutants-e2e.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-14-p5-role-sweep-and-db-probes",
+      "procedure": "My round-1 sweep probe, unchanged, run on this candidate on a disposable database migrated 0001→0097 and seeded with the real synthetic demo dataset.\n- AUD: every one of the 194 P5 operations; then a valid-body pass on the 400/404 operations.\n- ADM_ACCESS + ADM_TECH (ADM-only): every write, then every read checked for disclosure of the demo transformation id, and the navigation.\n- Database probes: the gate_instance triggers after 0094, every public trigger, the applied migration ids, and 0096 Rule A.\n- Export access: a reader who is not the requester.",
+      "command": "QA_PG_PORT=26550 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/zz-sec-rg2-p5-role-sweep.test.ts",
+      "environment": "Node 22.22.2; PostgreSQL 16.13; MTH_ENV=demo scratch database; $TMPDIR/rv at 7a02e7d",
+      "expected": "No 2xx write for AUD or ADM-only, and no table changes. ADM-only discloses nothing transformation-scoped. Every trigger is enabled after 0094. 0096 refuses every transition but the adoption. A non-requester gets 404 on an export.",
+      "actual": "9/9 tests passed, exit 0.\n\nWrites, 90 P5 writes per role, 0 succeeded and 'tables changed: []' for both:\n- AUD: 403 ×71, 400 ×11, 404 ×8.\n- ADM-only: 403 ×41, 404 ×35, 400 ×13, and one 409. The 409 is requestDemoReset 'demo_reset.not_configured': ADM_TECH holds demo.reset by design (ADR-0050 §6); the deployment has no admin URL; nothing was written.\n\nAUD valid-body pass:\n- 13 of 16 answer 403. The other three: decideKpiRestatement 404 (no restatement exists); putHealthCheckAnswer 400 (the probe's placeholder question code); previewFormula 200 (a stateless preview).\n- No table changed.\n\nReads and navigation:\n- ADM-only, 104 GETs: none discloses the demo transformation id, and neither do the ADR-0043 §8 operational reads.\n- ADM-only navigation lists no transformation item.\n\nDatabase probes:\n- gate_instance_{approver_allowed, audit_required, row_guard} tgenabled 'O', and 'public triggers NOT enabled: []'.\n- schema_migration is 0001-0097 minus the 8 retired ids, in order.\n- 0096: T→T′, T→NULL, and NULL→T without a completed capture_intake output link are all refused with procedure_step_instance_identity_immutable.\n\nExport access: the requester GET is 200. AUD can read the transformation but gets 404 on GET export and on download, and lists [] items. ADM gets 404.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S03-007",
+        "REQ-S06-006",
+        "REQ-S06-010",
+        "REQ-S12-003",
+        "REQ-S12-026",
+        "REQ-S13-005",
+        "REQ-S18-001",
+        "REQ-S18-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/45-p5-role-sweep.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-rg2-p5-role-sweep.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R2-15-outbox-registry",
+      "procedure": "Cross-check the BUILT outbox registry (OUTBOX_EVENT_SCHEMAS) against the BUILT worker queue map (QUEUES_FOR_EVENT) and against every event type the product sources write to outbox_event. Then read relay.ts for how an unregistered type is handled.",
+      "command": "node docs/delivery/test-evidence/DG5/code-security/round-2/repro/outbox-registry.mjs (scans.sh outbox)",
+      "environment": "Node 24.21.0; $TMPDIR/rv after pnpm -r build",
+      "expected": "every enqueued type registered; every registered type queued; no stall on an unregistered type",
+      "actual": "RESULT: PASS, exit 0. The 26 registered types equal the 26 queue-map types.\n\n- The scanner's '(1) enqueued but NOT registered: [report_snapshot.issued]' is a static match only: snapshots.ts:579-580 writes that event only when outboxPayloadSchema(...) is non-null, so today it is never written (D-QA-F2-1 holds).\n- relay.ts:52-125: a row that fails (no queue or no schema) records attempts and last_error and ends the round. After maxPublishAttempts (10) it is excluded, so later events are delayed by at most 10 polls and never stalled.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S12-020",
+        "REQ-S12-021"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/40-outbox-registry.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/repro/outbox-registry.mjs",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/scans.sh"
+      ]
+    },
+    {
+      "id": "SEC-R2-16-contract-pending-media-types",
+      "procedure": "List every p5-pending-*.ts file and check that each exported list is empty or only spreads other lists. Count the contract's operations. Find any non-JSON consumes declaration, and the platform's media-type enforcement.",
+      "command": "scans.sh contract",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "43 lists, all effectively empty, including P5_PENDING_TESTS_BE_O; 846 operations; consumes pinned",
+      "actual": "43 p5-pending files.\n- 37 exported arrays are literally empty, including P5_PENDING_TESTS_BE_O (p5-pending-be-o.ts:16).\n- The six flagged NON-EMPTY (p5-pending-arch-01 … -06) are aggregates whose only elements are spreads of the per-task lists (for example `[...P5_PENDING_KBE_E, ...P5_PENDING_KBE_E2, …]`), so they are empty too. No list names a pending operation or test.\n\nContract: 846 operationIds.\n\nMedia types:\n- The only non-JSON consumes is evidence upload's ['application/octet-stream'] (evidence/routes.ts:473, DG2).\n- Every route without its own consumes defaults to application/json (media-types.ts:30, server.ts:292), and the central preParsing hook refuses an undeclared type (hooks.ts:116; media-types.ts:200).\n- The other 'consumes:' grep lines are parameter types (migrations.ts:945, gate-exceptions.ts:715), not declarations.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-010"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/42-contract-pending.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-17-module-graph",
+      "procedure": "Check the module graph:\n- grep: reporting imports neither workflows nor admin; the worker imports no API code; WorkflowsReadPort wiring;\n- a module-level graph of the value imports among the 25 apps/api modules, searched for cycles;\n- the router's lazy routes.",
+      "command": "scans.sh graph",
+      "environment": "Node 24.21.0; $TMPDIR/rv at 7a02e7d",
+      "expected": "no forbidden import; acyclic; lazy routes",
+      "actual": "The graph is clean.\n- Reporting → workflows/admin: the only grep hit is reporting.test.ts:89, a test that plants `import … from \"../workflows/index.ts\"` as a STRING to assert the guard refuses it. That is not an import.\n- Worker → API: none (grep exit 1).\n- WorkflowsReadPort is declared in reporting/ports.ts, unwired by default (UNWIRED fails closed), and set from server.ts.\n- 25 modules, 118 value-import edges, 'no module-level value-import cycle'. The reporting edges: access, adoption, audit, benefits, kpi, methodology, platform, portfolio, sustainment, tasks, transformations (no workflows, no admin).\n- Web: apps/web/src/app/router.tsx has 171 lazyPage( routes. The one eager page import is LoginPage (router.tsx:6), which predates P5 (present at e70ac02, DG1).\n\nThe first scans.sh graph run used the wrong router path (apps/web/src/router.tsx; 'No such file'). The log is the corrected re-run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/43-module-graph.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-18-exactly-once-backstops",
+      "procedure": "Find the unique backstops in the P5 migrations for executions, effects, failures, digests, cut-off packs, exports, reminders, reissues, launch plans and Day-90 tests. List the P5 advisory-lock classes 730250+ and check them for duplicates. List the migration ids 0062-0097.",
+      "command": "scans.sh locks",
+      "environment": "$TMPDIR/rv at 7a02e7d",
+      "expected": "backstops present; lock classes unique; contiguous ids except the retired ones",
+      "actual": "Every backstop is present and nothing is duplicated.\n- The unique backstops are listed in the log: execution trigger key, action effects, the one-open-failure index, digests, cut-off packs, export idempotency and storage keys, reissue offers, launch plans and Day-90 tests.\n- Lock classes 730250-730272 are in platform/advisory-locks.ts, with no duplicate in the API registry or in the worker file that names them.\n- Migrations present: 0062-0065, 0068-0072, 0074-0076, 0080-0082, 0085-0097. The eight absent ids (0066, 0067, 0073, 0077-0079, 0083, 0084) are the retired P5 ids (D-185). The integration run applies exactly 89 migrations, and the sweep shows the order. packages/db/src/migrate.test.ts pins the out-of-order refusal for a later build that fills a gap.\n- Replay of the same event is exercised by the A13 suites in both integration runs (REQ-S12-021).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S12-020",
+        "REQ-S12-021",
+        "REQ-S12-004",
+        "REQ-S12-015"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/44-exactly-once-backstops.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/30-integration-lang-unset.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-19-commit-time-authorization",
+      "procedure": "Scan every API file the P5 diff touches that registers a write route, and flag those that name no commit-time helper. Trace each flag by hand in the full files.",
+      "command": "scans.sh committime; then reading the flagged files",
+      "environment": "$TMPDIR/rv at 7a02e7d",
+      "expected": "every P5 write re-checks authorization on reloaded grants inside its transaction",
+      "actual": "48 files ok and 11 flagged; every flag is traced.\n- automation/dry-run.ts and versions.ts: loadRuleForWrite → configurer → refreshPrincipal inside the write transaction (rules.ts:108-113, 135-158).\n- forms/bulk.ts, custom-values.ts and drafts.ts: requireRecordWrite → refreshPrincipal in the transaction (record-types.ts:100-112).\n- kpi/formula-preview.ts: stateless; the sweep shows AUD 200 with no table change.\n- methodology/routes.ts, reporting/exports/routes.ts and reporting/reports/routes.ts delegate to files that reload the principal (jobs.ts:346-349; snapshots.ts requireWriteAtCommit).\n- sustainment/handovers.ts and transformations/routes.ts: P5 adds only in-transaction calls (recordRequestExecution, runTransformationInitializers) inside DG3/DG2 writes that already have their commit-time check.\n\nAlso read in full:\n- the KPI restatement writes and decision (openWrite atCommit, If-Match, one audit event; self-decision and technical-admin refusal; kpi_restatement.approve held by business roles only, 0087);\n- the methodology migration decision (migrations.ts:673-735: requester and submitter refused; the approve right is SP-only, 0064:24);\n- the approval-route step decision (approval-routes.ts:515-600: commit-time approval.decide, step capacity, requester exclusion, one step per person, If-Match, stale-subject check under the subject lock);\n- adopted procedure steps (steps.ts:497-536: organization first, then T, each on the refreshed principal).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-010",
+        "REQ-S07-016",
+        "REQ-S10-015",
+        "REQ-S06-002",
+        "REQ-S06-008"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/47-commit-time-scan.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/50-source-review.md"
+      ]
+    },
+    {
+      "id": "SEC-R2-20-source-review",
+      "procedure": "Direct source review:\n- the round-1 → round-2 delta (git diff 2fe8f85..660f40c), in full;\n- a fresh targeted pass over the P5 diff (e70ac02..660f40c): automation identity and recipients (API and worker twins), rule scope, Day-90 suggestions, 0096, 0094, Studio invariants (0062), demo isolation and reset, export create/replay/download, decimals, formula injection, condition evaluation, outbox relay, web URL sinks.",
+      "command": "git diff 2fe8f85..660f40c; git diff e70ac02..660f40c -- apps packages (the paths in 50-source-review.md)",
+      "environment": "$TMPDIR/rv at 7a02e7d",
+      "expected": "no defect",
+      "actual": "No new defect; details in 50-source-review.md.\n\nAutomation:\n- Recipients are only active readers of the target. The worker SQL (actions/common.ts readersOf) equals the API grantApplies rule. Reserved scope types grant nothing.\n- Admin rules are confined to the caller's configurable organization (rules.ts:245-266).\n- Starter dry runs plan only starter_handler, so there is no cross-organization recipient disclosure.\n\nDemo isolation:\n- The dev-issuer binding needs AUTH_MODE=dev and a non-production NODE_ENV (guard.ts:125-130). AUTH_MODE=dev with NODE_ENV=production is refused at startup (load.ts:197).\n- Demo reset is guarded at the API, the worker (handlers/demo.ts:96-99) and the database marker (reset.ts:78-87). deployment_environment is SELECT-only for mth_app (0090:35).\n\nInjection and decimals:\n- Formula injection uses = + - @ TAB CR in CSV and XLSX; decimals are never prefixed.\n- Conditions are a fixed operator set on decimal.js. There is no eval, new Function or vm.\n- The float scan finds only integers (rubric levels, byte sizes).\n\nWeb:\n- The only data-built src/href are the server-constant logo URL and the CSV link built from ids. No dangerouslySetInnerHTML.\n\nMigrations:\n- 0094 disables two guards for one backfill statement inside the migration transaction and re-enables them; all triggers are enabled afterwards (sweep). I accept it as the one-off ADR-0039 C2 exception.\n- 0062: stable keys and fixed sets are protected at the database (methodology_element_fixed_sets, methodology_element_identity_fixed).\n\nObservations (not defects):\n- Starter settings and the Studio configuration are platform-wide by design (ADR-0043 §1/§8, ADR-0044 §1; config_version has no organization_id).\n- The forms CSV keeps its own copy of the six triggers.\n\nThe requirement-note disclosures (PB-093 UI split; S12-020/021 and S18-003 DG6 re-runs) are acceptable from the security view.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S06-004",
+        "REQ-S06-006",
+        "REQ-S06-007",
+        "REQ-S06-009",
+        "REQ-S12-001",
+        "REQ-S12-002",
+        "REQ-S12-003",
+        "REQ-S12-012",
+        "REQ-S12-022",
+        "REQ-S12-025",
+        "REQ-S12-026",
+        "REQ-S13-006",
+        "REQ-S13-007",
+        "REQ-S13-010",
+        "REQ-S15-004",
+        "REQ-S01-002",
+        "REQ-S18-001",
+        "REQ-S18-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/50-source-review.md"
+      ]
+    },
+    {
+      "id": "SEC-R2-21-secrets-scan",
+      "procedure": "Scan the P5 diff for credential-shaped assignments, key/cert/env files and runtime external URLs. Check that the round-2 delta adds no dependency.",
+      "command": "scans.sh secrets",
+      "environment": "$TMPDIR/rv at 7a02e7d",
+      "expected": "no secret; no runtime external endpoint",
+      "actual": "No secret and no runtime external endpoint.\n\n- Credential-shaped grep: exit 0, but its only two matches are token names, not secrets: `PRIMARY_TOKEN = \"brand.primary\"` and `SECONDARY_TOKEN = \"brand.deep\"`.\n- Key/cert/env files: none (grep exit 1).\n- External URLs in product code. None is fetched at runtime:\n  - test strings `http://x` (formula-injection fixtures, URL parsing);\n  - the synthetic `https://demo-idp.mth.invalid/...` issuer (the .invalid TLD by design);\n  - the PMI/Brightline reference links in the 0092 source-inventory text, which are citation text shown to users, not a dependency.\n- package.json and pnpm-lock.yaml are unchanged since round 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/49-secrets-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-22-environment-residuals",
+      "procedure": "Record the environmental residuals on the offline/config surface (assignment list): live registry (D-057), live CI (D-058), Keycloak and a real demo IdP (D-049; ADR-0050 §1), and the AI and external notification adapters (D-142 Q11; D-165).",
+      "command": "the greps in 48-environment-residuals.log",
+      "environment": "$TMPDIR/rv at 7a02e7d; no network",
+      "expected": "PASS on the offline/config surface, with the residuals noted",
+      "actual": "PASS on the offline/config surface.\n- No AI or notification client library is imported, @mth/config declares no AI_* key (0), and no outbound fetch, http.request or SMTP code exists in apps/api or apps/worker. The notify executor is in-app only (notify.ts:4). A21's 'disabled' is the shipped configuration.\n- AUTH_MODE is oidc|dev and OIDC_ISSUER_URL is configuration (Keycloak and a real demo IdP are devops items, D-049). The dev-mode binding of D-165 is the tested path (the sweep and integration run with it).\n- The install is offline --frozen-lockfile from the local store, and no live CI run happens here.\n\nResiduals carried as the assignment lists them: REQ-DLV-042 AC-1 live registry (D-057), REQ-DLV-025 A24 live CI (D-058), Keycloak/IdP (D-049).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/48-environment-residuals.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-23-head-moved",
+      "procedure": "At the end of the review, re-check the repository HEAD and the candidate ID.",
+      "command": "git log 7a02e7d..HEAD; git diff --name-only 7a02e7d..HEAD | grep -v ^docs/delivery/; node tools/gates/candidate.mjs --stage DG5",
+      "environment": "repository tree; Node 24.21.0",
+      "expected": "the candidate is unchanged",
+      "actual": "HEAD moved from 7a02e7d to 550d3bd during my run. That commit is 'Claude run: DG5-T-DG5-RG2-DOM-R2-domain-reviewer… (review evidence, auto-committed by run-agent.sh)' at 01:30Z, adding only the domain reviewer's round-2 record and run files under docs/delivery; no file outside docs/delivery changes (grep exit 1).\n\nThe candidate ID at HEAD is still sha256:55a411ae…a3a24ce over 2207 files. All my runs used the working copy at 7a02e7d. I did not open the domain reviewer's record.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/47b-head-moved.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-24-cleanup",
+      "procedure": "Confirm the disposable working copy is clean (probes removed, mutants restored), then remove every disposable copy.",
+      "command": "git -C $TMPDIR/rv status --porcelain; rm -rf $TMPDIR/rv $TMPDIR/pstore $TMPDIR/mut",
+      "environment": "$TMPDIR",
+      "expected": "clean, then removed",
+      "actual": "The working copy reported 0 changed or untracked paths before removal. The rm exit was 0, and no qa-pg.* cluster directory was left. The other $TMPDIR entries listed in the log (be-r2-scan-*, cfg-*) are the runner's and harness files, not mine.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/code-security/round-2/90-cleanup.log",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/drive-wrapper.log"
+      ]
+    },
+    {
+      "id": "SEC-R2-25-requirements",
+      "procedure": "For each of the 42 assigned requirements, read the binding acceptance text and the notes in requirements.csv, and map them to the checks above.",
+      "command": "python3 csv read of docs/delivery/requirements.csv (req_id, acceptance, notes)",
+      "environment": "repository tree",
+      "expected": "every requirement verifiable with evidence from this round",
+      "actual": "All 42 are IMPLEMENTED with final_gate DG5, and every acceptance criterion maps to evidence produced in this round:\n- the A-suite integration journeys in both locale runs (SEC-R2-11/12): A01, A02, A05-A09, A11-A16, A20 and A22;\n- the role sweep (S03-007 navigation, S06-006 and S06-010 separation, S12-003 identity, S12-026 human-only, S13-005 export access, S18-001 and S18-003 demo/production);\n- the F-DG5-100 verification (S13-005 outputs, S13-006 injection rule unchanged);\n- the source review (S06-004/006/007/009 Studio invariants, S12-* automation, S13-007 snapshot immutability, S13-010 evidence, S15-004 and S01-002 branding);\n- the unit runs (S05-001, S06-005, S08-005, S13-006).\n\nThe notes' partial-coverage disclosures are acceptable: REQ-PB-093's exact 30/20/20/15/15 entry is a component test rather than a browser journey; REQ-S12-020/021 carry an A13 re-run to DG6; REQ-S18-003's A22 is at DG6, with its DG5 parts covered.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-PB-093",
+        "REQ-S12-020",
+        "REQ-S12-021",
+        "REQ-S18-003"
+      ],
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG5/code-security/round-2/50-source-review.md"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/code-security/round-2/01-candidate-identity.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/05-install.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/10-build.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/10-15-static-wrapper.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/11-typecheck.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/12-lint.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/13-format-check.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/14-openapi-lint.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/15-no-cdn.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/16-validators.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/20-unit-node22.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/20b-unit-node22-rerun-unit-node.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/21-unit-node24.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/30-integration-lang-unset.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/31-integration-lang-c-utf8.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/40-outbox-registry.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/42-contract-pending.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/43-module-graph.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/44-exactly-once-backstops.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/45-p5-role-sweep.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/46-ooxml-control-char-e2e.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/46-ooxml-control-char-e2e.attempt1-format-not-offered.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/46b-ooxml-control-chars-renderer.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/46c-ooxml-renderer-mutants.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/46c-ooxml-renderer-mutants.attempt1-no-rsync.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/46d-ooxml-e2e-mutants.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/47-commit-time-scan.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/47b-head-moved.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/48-environment-residuals.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/49-secrets-scan.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/50-source-review.md",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/90-cleanup.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/drive-wrapper.log",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/checks.sh",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/scans.sh",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/drive.sh",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/mutants-e2e.sh",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-rg2r2-ooxml-control-char.test.ts",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/ooxml-control-chars-v2.mjs",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/zz-sec-rg2-p5-role-sweep.test.ts",
+    "docs/delivery/test-evidence/DG5/code-security/round-2/repro/outbox-registry.mjs",
+    "docs/delivery/reviews/DG5/round-2/code-security-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-10-26T03:40:00Z",
+  "summary": "PASS, with no new findings. F-DG5-100 is verified CLOSED. The candidate ID sha256:55a411ae… (2207 files, source 660f40c) is confirmed on a complete clone, and HEAD 7a02e7d is its freeze commit.\n\nF-DG5-100 (BE-RG3):\n- Every DOCX and PPTX text sink goes through xmlSafe, and every OOXML package is checked before it is stored.\n- End to end, a transformation name and a RAID description holding C0 characters export as well-formed DOCX, PPTX and XLSX in en and ar, with U+FFFD in place and the stored text unchanged.\n- At the renderer, all forbidden code points in four positions pass 24/24.\n- Every mutant is killed. The pre-fix writers store a succeeded job with raw characters. With the package check alone, the job fails with export.render_failed and nothing is stored.\n\nAll required checks ran and passed:\n- build, typecheck, lint, format, openapi (846 operations) and no-cdn;\n- pnpm test on Node 22 and Node 24 (2366 + 1746 + 259 tests, 2 skips by design);\n- integration twice on a disposable PostgreSQL 16, with LANG unset and with C.UTF-8 (321/321 files, 3087 passed, 1 skip by design, 89 migrations 0001→0097, contract.test.ts 83 tests);\n- validate --historical DG4/DG3/DG2/DG1, --register DG5 and --pipeline.\n\nMy own probes on this candidate:\n- For AUD and ADM-only, 0 of the 90 P5 writes per role succeeded and no table changed. ADM-only discloses nothing transformation-scoped. Export downloads are requester-only (404).\n- 0096 Rule A refuses every other transition, and every trigger is enabled after 0094.\n- The outbox, the lock registry, the commit-time scan, the module graph, the contract and secrets scans are clean.\n\nDisclosed and explained:\n- One vitest worker-RPC timeout ('onTaskUpdate') at load ~25 in the Node 22 unit-node project; no test failed, and a re-run of that project is clean.\n- The static wrapper's exit 2, from my editing a script mid-read; all six steps exit 0.\n- Two of my own probe attempts (an unoffered format; no rsync).\n- The fixture-only unit stderr.\n- HEAD moved during the run by the domain reviewer's auto-commit, delivery files only; the candidate is unchanged."
+}
