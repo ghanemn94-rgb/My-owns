@@ -1,0 +1,22 @@
+// The operations the P6 contract adds (docs/api/openapi.yaml 1.5.0-p6 onward), one block per architecture task. Frozen
+// per block (solution-architect); each later ARCH task appends its own block. Used to keep the P2-scoped generated sweeps
+// (aud-write-deny.test.ts, kpi-aud-write-deny.test.ts) on their P2 scope, as p3-, p4- and p5-operations.ts do; the P6
+// slices add their own AUD tests once their operations are routed (docs/architecture/p6-work-split.md §2 rule 7).
+
+export const P6_OPERATION_IDS: ReadonlySet<string> = new Set([
+  // T-DG6-ARCH-01: slices E and F (13 operations; ADR-0051, ADR-0052). Spelled out so the set does not shrink as the
+  // pending lists empty.
+  "getRecordSensitivity",
+  "putRecordSensitivity",
+  "listSensitiveGrants",
+  "createSensitiveGrant",
+  "getSensitiveGrant",
+  "revokeSensitiveGrant",
+  "resolveDeepLink",
+  "previewEvidenceContent",
+  "getUploadPolicy",
+  "putUploadPolicy",
+  "getSecurityRateLimits",
+  "listAuditEvents",
+  "getAuditEvent",
+]);

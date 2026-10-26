@@ -847,6 +847,37 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0098-0099: the P6 slice E/F guards are attached (deferred audit, record references, set-once deep links, trigger-written histories)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname IN ('record_sensitivity', 'record_sensitivity_change', 'sensitive_record_grant',
+         'upload_policy', 'upload_policy_change') OR t.tgname = 'inbox_notification_deep_link_guard')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["inbox_notification", "inbox_notification_deep_link_guard", false, false],
+      ["record_sensitivity", "record_sensitivity_audit_required", true, true],
+      ["record_sensitivity", "record_sensitivity_guard", false, false],
+      ["record_sensitivity", "record_sensitivity_history", false, false],
+      ["record_sensitivity", "record_sensitivity_record_ref", false, false],
+      ["record_sensitivity", "record_sensitivity_row_guard", false, false],
+      ["record_sensitivity_change", "record_sensitivity_change_append_only", false, false],
+      ["record_sensitivity_change", "record_sensitivity_change_append_only_truncate", false, false],
+      ["sensitive_record_grant", "sensitive_record_grant_audit_required", true, true],
+      ["sensitive_record_grant", "sensitive_record_grant_guard", false, false],
+      ["sensitive_record_grant", "sensitive_record_grant_record_ref", false, false],
+      ["sensitive_record_grant", "sensitive_record_grant_row_guard", false, false],
+      ["upload_policy", "upload_policy_audit_required", true, true],
+      ["upload_policy", "upload_policy_history", false, false],
+      ["upload_policy", "upload_policy_row_guard", false, false],
+      ["upload_policy_change", "upload_policy_change_append_only", false, false],
+      ["upload_policy_change", "upload_policy_change_append_only_truncate", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
@@ -1110,6 +1141,10 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "launch_task_predecessor",
       // P5 slices I and J (0089-0090, T-DG5-ARCH-06; ADR-0049, ADR-0050): the branding head row only.
       "branding_setting",
+      // P6 slices E and F (0098-0099, T-DG6-ARCH-01; ADR-0051, ADR-0052). The two histories carry record_version.
+      "record_sensitivity",
+      "sensitive_record_grant",
+      "upload_policy",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1460,6 +1495,13 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       playbook_block_link: "SELECT",
       source_foundation: "SELECT",
       walkthrough_step: "SELECT",
+      // P6 slices E and F (0098-0100): still no DELETE anywhere; the sensitivity flag, grants and upload policy are
+      // updated in place with If-Match; their histories are written only by SECURITY DEFINER triggers (SELECT only).
+      record_sensitivity: SIU,
+      record_sensitivity_change: "SELECT",
+      sensitive_record_grant: SIU,
+      upload_policy: SIU,
+      upload_policy_change: "SELECT",
     });
   });
 

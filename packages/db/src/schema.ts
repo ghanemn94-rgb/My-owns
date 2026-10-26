@@ -497,6 +497,8 @@ export interface EvidenceContentTable {
   file_name: string;
   uploaded_by: string;
   uploaded_at: TimestampDefault;
+  // P6 (0099; ADR-0052 §1, REQ-S13-011): the type the magic-byte check found; NULL for files stored before P6.
+  detected_type: string | null;
 }
 
 export interface EvidenceLinkTable {
@@ -1947,6 +1949,10 @@ export interface InboxNotificationTable extends Stamps {
   deliver_after: NullableTimestamp;
   digest_id: string | null;
   is_digest: Generated<boolean>;
+  // P6 (0098; ADR-0051 §3, REQ-S12-024): the opaque deep-link token and the record it points to; each set once.
+  link_token: string | null;
+  target_record_type: string | null;
+  target_record_id: string | null;
 }
 
 export interface AccessGroupTable extends Stamps {
@@ -6268,6 +6274,96 @@ export interface Database {
 export type MethodologyVersionContributorRow = Selectable<MethodologyVersionContributorTable>;
 export type AutomationRuleVersionContributorRow = Selectable<AutomationRuleVersionContributorTable>;
 
+// ---- P6 slices E and F (migrations 0098-0100; T-DG6-ARCH-01; ADR-0051, ADR-0052): sensitive records and their explicit
+// grants, the organization upload policy, and the append-only histories written by database triggers. The deep-link
+// columns of inbox_notification and the detected type of evidence_content are on their P2/P4 interfaces above.
+export interface RecordSensitivityTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  is_sensitive: boolean;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface RecordSensitivityChangeTable {
+  id: string;
+  record_sensitivity_id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  record_version: number;
+  is_sensitive: boolean;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface SensitiveRecordGrantTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  grantee_user_id: string;
+  reason: string;
+  status: Generated<string>;
+  revoked_at: NullableTimestamp;
+  revoked_by: string | null;
+  revoke_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface UploadPolicyTable {
+  id: string;
+  organization_id: string;
+  allowed_types: string[];
+  max_bytes: ColumnType<string, string | number, string | number>;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface UploadPolicyChangeTable {
+  id: string;
+  upload_policy_id: string;
+  organization_id: string;
+  record_version: number;
+  allowed_types: string[];
+  max_bytes: string;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface Database {
+  record_sensitivity: RecordSensitivityTable;
+  record_sensitivity_change: RecordSensitivityChangeTable;
+  sensitive_record_grant: SensitiveRecordGrantTable;
+  upload_policy: UploadPolicyTable;
+  upload_policy_change: UploadPolicyChangeTable;
+}
+
+export type RecordSensitivityRow = Selectable<RecordSensitivityTable>;
+export type RecordSensitivityChangeRow = Selectable<RecordSensitivityChangeTable>;
+export type SensitiveRecordGrantRow = Selectable<SensitiveRecordGrantTable>;
+export type UploadPolicyRow = Selectable<UploadPolicyTable>;
+export type UploadPolicyChangeRow = Selectable<UploadPolicyChangeTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -6696,6 +6792,7 @@ export const SCHEMA_COLUMNS = {
     "file_name",
     "uploaded_by",
     "uploaded_at",
+    "detected_type",
   ],
   evidence_link: [
     "id",
@@ -8069,6 +8166,9 @@ export const SCHEMA_COLUMNS = {
     "deliver_after",
     "digest_id",
     "is_digest",
+    "link_token",
+    "target_record_type",
+    "target_record_id",
     "version",
     "created_at",
     "updated_at",
@@ -11523,6 +11623,74 @@ export const SCHEMA_COLUMNS = {
   walkthrough_step: ["code", "ordinal", "title_en", "title_ar", "area_code", "completion_rule", "source_ref"],
   methodology_version_contributor: ["methodology_version_id", "user_id", "first_written_at"],
   automation_rule_version_contributor: ["automation_rule_version_id", "user_id", "first_written_at"],
+  record_sensitivity: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "is_sensitive",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  record_sensitivity_change: [
+    "id",
+    "record_sensitivity_id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "record_version",
+    "is_sensitive",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  sensitive_record_grant: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "grantee_user_id",
+    "reason",
+    "status",
+    "revoked_at",
+    "revoked_by",
+    "revoke_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  upload_policy: [
+    "id",
+    "organization_id",
+    "allowed_types",
+    "max_bytes",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  upload_policy_change: [
+    "id",
+    "upload_policy_id",
+    "organization_id",
+    "record_version",
+    "allowed_types",
+    "max_bytes",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

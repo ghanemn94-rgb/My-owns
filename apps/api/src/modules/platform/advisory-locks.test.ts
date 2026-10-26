@@ -27,6 +27,8 @@ const MIGRATION_CONSTANTS: ReadonlyMap<string, number> = new Map([
   ["launch_plan_lock_class", ADVISORY_LOCK_CLASSES.launchPlan],
   ["health_assessment_lock_class", ADVISORY_LOCK_CLASSES.healthAssessmentSubmit],
   ["branding_publish_lock_class", ADVISORY_LOCK_CLASSES.brandingPublish],
+  ["sensitive_grant_lock_class", ADVISORY_LOCK_CLASSES.sensitiveRecordGrant],
+  ["deep_link_issue_lock_class", ADVISORY_LOCK_CLASSES.deepLinkIssue],
 ]);
 
 function walk(dir: string): string[] {
@@ -37,7 +39,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the twenty-eight classes, each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block; 730255-730257 for the T-DG5-ARCH-02 block)", () => {
+  it("lists the forty-one classes (twenty-eight before P5), each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block; 730255-730257 for the T-DG5-ARCH-02 block; 730302-730304 for the T-DG6-ARCH-01 block)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -78,6 +80,8 @@ describe("advisory-lock class registry", () => {
       healthAssessmentSubmit: 730268,
       brandingPublish: 730270,
       demoReset: 730271,
+      sensitiveRecordGrant: 730300,
+      deepLinkIssue: 730301,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);
@@ -101,8 +105,9 @@ describe("advisory-lock class registry", () => {
   it("no module source outside the registry spells a class number (they import ADVISORY_LOCK_CLASSES)", () => {
     const offenders = walk(MODULES)
       .filter((f) => /\.[cm]?[jt]sx?$/.test(f) && !f.endsWith("advisory-locks.ts") && !f.endsWith(".test.ts"))
-      // 730219-730299: the P1-P3 classes, every P4 block (p4-plan §4) and the P5 blocks (p5-plan §4, from 730250).
-      .filter((f) => /\b7302(19|[2-9][0-9])\b/.test(readFileSync(f, "utf8")))
+      // 730219-730299: the P1-P3 classes, every P4 block (p4-plan §4) and the P5 blocks (p5-plan §4, from 730250);
+      // 730300-730339: the P6 blocks (p6-plan §4; T-DG6-ARCH-01).
+      .filter((f) => /\b7302(19|[2-9][0-9])\b|\b7303[0-3][0-9]\b/.test(readFileSync(f, "utf8")))
       .map((f) => relative(MODULES, f));
     expect(offenders).toEqual([]);
   });

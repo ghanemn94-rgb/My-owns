@@ -305,6 +305,28 @@ export const P5_READER_DEMO_PERMISSIONS = {
   "demo.reset": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P6 slices E and F (seeded by 0100; ADR-0051 §7, ADR-0052 §9; T-DG6-ARCH-01). A configurable starting point, not a
+ * Mobily-approved access policy. sensitive_record.grant marks a benefit, business case or evidence item sensitive and
+ * grants or revokes explicit access (REQ-S10-002 "grant:TO,ADM (access admin)"); sensitive_record.read reads the flags
+ * and the grant list, never the record itself; audit_event.read is Administration > Audit and /api/v1/audit-events
+ * (REQ-S16-032 "view:AUD,ADM(scoped)"); upload_policy.configure changes the upload allow-list and size limit;
+ * security.read reads the upload policy and the rate-limit matrix. No code is a business_approval or
+ * finance_validation code; AUD gets read codes only.
+ */
+export const P6_ACCESS_HARDENING_PERMISSIONS = {
+  "sensitive_record.grant": "configure",
+  "sensitive_record.read": "read",
+  "audit_event.read": "read",
+  "upload_policy.configure": "configure",
+  "security.read": "read",
+} as const satisfies Record<string, PermissionCategory>;
+
+/** Every P6 permission block (each P6 architecture task appends its block here and to PERMISSIONS). */
+export const P6_PERMISSIONS = {
+  ...P6_ACCESS_HARDENING_PERMISSIONS,
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -323,6 +345,7 @@ export const PERMISSIONS = {
   ...P5_REPORTING_PERMISSIONS,
   ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
   ...P5_READER_DEMO_PERMISSIONS,
+  ...P6_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -758,6 +781,29 @@ export const P5_READER_DEMO_ROLE_PERMISSIONS = {
   ADM_METHOD: [],
 } as const satisfies Record<string, readonly (keyof typeof P5_READER_DEMO_PERMISSIONS)[]>;
 
+/**
+ * P6 slices E and F role defaults (seeded by 0100; ADR-0051 §7, ADR-0052 §9). TO and ADM_ACCESS grant; TO, AUD and
+ * ADM_ACCESS read the sensitivity metadata; AUD, ADM_TECH and ADM_ACCESS read the global audit list (a technical admin's
+ * organization-level assignment does not inherit downward, so it sees organization-level events only: ADR-0052 §8);
+ * ADM_TECH configures uploads; ADM_TECH and AUD read the security settings.
+ */
+export const P6_ACCESS_HARDENING_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: [],
+  BO: [],
+  WL: [],
+  FIN: [],
+  TO: ["sensitive_record.grant", "sensitive_record.read"],
+  KDS: [],
+  TD: [],
+  CM: [],
+  SEC: [],
+  AUD: ["sensitive_record.read", "audit_event.read", "security.read"],
+  ADM_TECH: ["audit_event.read", "upload_policy.configure", "security.read"],
+  ADM_ACCESS: ["sensitive_record.grant", "sensitive_record.read", "audit_event.read"],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P6_ACCESS_HARDENING_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -890,6 +936,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TO,
       ...P5_REPORTING_ROLE_PERMISSIONS.TO,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TO,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -964,6 +1011,7 @@ export const ROLES = {
       ...P5_STUDIO_ROLE_PERMISSIONS.AUD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.AUD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.AUD,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -981,6 +1029,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_READER_DEMO_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -997,6 +1046,7 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {

@@ -9,17 +9,19 @@ import { P2_PENDING_KPI_OPERATIONS } from "./p2-pending-kpi.ts";
 import { P3_PENDING_OPERATIONS } from "./p3-pending.ts";
 import { P4_PENDING_OPERATIONS } from "./p4-pending.ts";
 import { P5_PENDING_OPERATIONS } from "./p5-pending.ts";
+import { P6_PENDING_OPERATIONS } from "./p6-pending.ts";
 
 // Empty since T-DG2-BE: every backend operation is routed and exercised in contract/p2-exercises.ts.
 const P2_PENDING_BACKEND_OPERATIONS: readonly string[] = [];
 
 // T-DG3-ARCH-01: the P3 contract-first operations (p3-pending.ts) use the same mechanism; the set keeps its name so
 // every existing consumer applies the rule to P3 too. T-DG4-ARCH-01: the P4 lists (p4-pending.ts) join the same set.
-// T-DG5-ARCH-01: the P5 lists (p5-pending.ts) join it too.
+// T-DG5-ARCH-01: the P5 lists (p5-pending.ts) join it too. T-DG6-ARCH-01: the P6 lists (p6-pending.ts) join it too.
 export const P2_PENDING_OPERATIONS: ReadonlySet<string> = new Set([
   ...P2_PENDING_BACKEND_OPERATIONS,
   ...P2_PENDING_KPI_OPERATIONS,
   ...P3_PENDING_OPERATIONS,
   ...P4_PENDING_OPERATIONS,
   ...P5_PENDING_OPERATIONS,
+  ...P6_PENDING_OPERATIONS,
 ]);

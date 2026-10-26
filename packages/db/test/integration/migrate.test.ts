@@ -13,6 +13,10 @@ import {
 } from "../../src/migrate.ts";
 import { createScratchDatabase, dropScratchDatabase, roleUrl, testDatabase } from "../helpers.ts";
 
+// T-DG6-ARCH-01: the id after the highest shipped migration. These tests used the fixed ids 0098/0099 as "a new id",
+// which P6 now ships (0098-0100), so the new file's id is derived from the shipped files instead.
+const NEXT_ID = String(Number(listMigrationFiles().at(-1)!.name.slice(0, 4)) + 1).padStart(4, "0");
+
 const { adminUrl } = testDatabase();
 const scratch: string[] = [];
 const dirs: string[] = [];
@@ -93,12 +97,14 @@ describe("mth-db migrate on a fresh database", () => {
 
   it("applies a new forward migration atomically: a failing file leaves no trace", async () => {
     const dir = copyMigrations();
-    writeFileSync(join(dir, "0099_broken.sql"), "CREATE TABLE should_not_exist (id int);\nSELECT 1/0;\n");
-    await expect(migrate(owner, { dir })).rejects.toThrow(/0099_broken.sql failed/);
+    const broken = `${NEXT_ID}_broken.sql`;
+    writeFileSync(join(dir, broken), "CREATE TABLE should_not_exist (id int);\nSELECT 1/0;\n");
+    await expect(migrate(owner, { dir })).rejects.toThrow(`${broken} failed`);
     const c = new pg.Client({ connectionString: owner });
     await c.connect();
     const { rows } = await c.query(
-      "SELECT to_regclass('should_not_exist') AS t, (SELECT count(*) FROM schema_migration WHERE name = '0099_broken.sql')::int AS n",
+      "SELECT to_regclass('should_not_exist') AS t, (SELECT count(*) FROM schema_migration WHERE name = $1)::int AS n",
+      [broken],
     );
     await c.end();
     expect(rows[0]).toEqual({ t: null, n: 0 });
@@ -132,7 +138,8 @@ describe("mth-db migrate refuses a pending id below the highest applied id (F-DG
     try {
       const { rows } = await c.query(
         `SELECT to_regclass('gap_should_not_exist')::text AS table,
-                (SELECT count(*) FROM schema_migration WHERE name LIKE '0066_%' OR name LIKE '0098_%')::int AS recorded`,
+                (SELECT count(*) FROM schema_migration WHERE name LIKE '0066_%' OR name = $1)::int AS recorded`,
+        [`${NEXT_ID}_p6_forward.sql`],
       );
       return rows[0] as { table: string | null; recorded: number };
     } finally {
@@ -144,7 +151,7 @@ describe("mth-db migrate refuses a pending id below the highest applied id (F-DG
     const dir = copyMigrations();
     writeFileSync(join(dir, "0066_p6_example.sql"), "CREATE TABLE gap_should_not_exist (id int);\n");
     // A valid forward file in the same build is not applied either: the run refuses before the first file.
-    writeFileSync(join(dir, "0098_p6_forward.sql"), "SELECT 1;\n");
+    writeFileSync(join(dir, `${NEXT_ID}_p6_forward.sql`), "SELECT 1;\n");
     const highest = listMigrationFiles().at(-1)!.name;
     const logged: string[] = [];
     const err = await migrate(owner, { dir, log: (l) => logged.push(l) }).catch((e: unknown) => e);
@@ -161,8 +168,8 @@ describe("mth-db migrate refuses a pending id below the highest applied id (F-DG
 
   it("positive: a new id above the highest applied is applied", async () => {
     const dir = copyMigrations();
-    writeFileSync(join(dir, "0098_p6_forward.sql"), "SELECT 1;\n");
-    expect(await migrate(owner, { dir })).toEqual(["0098_p6_forward.sql"]);
+    writeFileSync(join(dir, `${NEXT_ID}_p6_forward.sql`), "SELECT 1;\n");
+    expect(await migrate(owner, { dir })).toEqual([`${NEXT_ID}_p6_forward.sql`]);
     expect(await statusOf(owner, dir)).toMatchObject({ upToDate: true, outOfOrderPending: [] });
   });
 });

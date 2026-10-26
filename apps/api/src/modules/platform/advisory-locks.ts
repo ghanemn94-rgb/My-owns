@@ -120,6 +120,12 @@ export const ADVISORY_LOCK_CLASSES = {
   brandingPublish: 730270,
   /** The demo seed or reset of a demo deployment (demo CLI and worker; a SESSION lock on the maintenance database "postgres", because the reset drops and re-creates the demo database). One class-wide key: "demo". */
   demoReset: 730271,
+  // P6 block of T-DG6-ARCH-01 (730300-730304; p6-plan §4, ADR-0051 §6). 730302-730304 are RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** One sensitive record's flag and explicit grants (access sensitivity: mark/unmark, grant, revoke; at most one active grant per record and grantee is also held by the unique index sensitive_record_grant_one_active_key; taken by the 0098 triggers record_sensitivity_guard and sensitive_record_grant_guard). Key: "<recordType>:<recordId>". */
+  sensitiveRecordGrant: 730300,
+  /** Issuing the deep-link token of one inbox notification (tasks deep links: lazy issue for a notification written without one; set-once is also held by the 0098 trigger inbox_notification_deep_link_guard, which takes the same lock, and the unique index inbox_notification_link_token_key). Key: "<notificationId>". */
+  deepLinkIssue: 730301,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

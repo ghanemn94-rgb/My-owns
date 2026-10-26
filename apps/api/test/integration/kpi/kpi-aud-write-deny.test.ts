@@ -9,6 +9,7 @@ import { operations } from "../../support/contract.ts";
 import { auditOfRequest, call, seedWorld, startApi, type TestApi } from "../../support/harness.ts";
 import { P4_OPERATION_IDS } from "../../support/p4-operations.ts";
 import { P5_OPERATION_IDS } from "../../support/p5-operations.ts";
+import { P6_OPERATION_IDS } from "../../support/p6-operations.ts";
 import { ifMatch, seedKpiWorld, type KpiWorld } from "./fixtures.ts";
 
 let api: TestApi;
@@ -25,7 +26,8 @@ const kpiMutations = operations.filter(
     o.method !== "GET" &&
     KPI_PATH.test(o.path) &&
     !P4_OPERATION_IDS.has(o.operationId) &&
-    !P5_OPERATION_IDS.has(o.operationId),
+    !P5_OPERATION_IDS.has(o.operationId) &&
+    !P6_OPERATION_IDS.has(o.operationId),
 );
 
 /** A valid body for every kpi mutation (so the 403 is the authorization decision, not a 400). */

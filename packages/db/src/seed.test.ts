@@ -37,6 +37,8 @@ import {
   P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS,
   P5_READER_DEMO_PERMISSIONS,
   P5_READER_DEMO_ROLE_PERMISSIONS,
+  P6_ACCESS_HARDENING_PERMISSIONS,
+  P6_ACCESS_HARDENING_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from "@mth/shared";
@@ -72,6 +74,7 @@ const sqlP5KpiLaunchHealth = readFileSync(
   "utf8",
 );
 const sqlP5ReaderDemo = readFileSync(`${defaultMigrationsDir()}/0091_p5_reader_branding_demo_permissions.sql`, "utf8");
+const sqlP6AccessHardening = readFileSync(`${defaultMigrationsDir()}/0100_p6_access_hardening_permissions.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -89,6 +92,7 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P5_REPORTING_PERMISSIONS),
   ...Object.keys(P5_KPI_LAUNCH_HEALTH_PERMISSIONS),
   ...Object.keys(P5_READER_DEMO_PERMISSIONS),
+  ...Object.keys(P6_ACCESS_HARDENING_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -176,6 +180,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P5_REPORTING_PERMISSIONS,
       ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
       ...P5_READER_DEMO_PERMISSIONS,
+      ...P6_ACCESS_HARDENING_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -752,6 +757,46 @@ describe("0091 seed equals the P5 part of permissions.ts (slices I and J)", () =
   });
 });
 
+describe("0100 seed equals the P6 part of permissions.ts (slices E and F)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6AccessHardening).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P6_ACCESS_HARDENING_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_ACCESS_HARDENING_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6AccessHardening).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_ACCESS_HARDENING_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_ACCESS_HARDENING_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; the grant right is TO and ADM_ACCESS only; AUD gets read codes only", () => {
+    for (const c of Object.values(P6_ACCESS_HARDENING_PERMISSIONS as Record<string, string>))
+      expect(["read", "configure"]).toContain(c);
+    const granters = Object.entries(P6_ACCESS_HARDENING_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("sensitive_record.grant"))
+      .map(([r]) => r);
+    expect(granters).toEqual(["TO", "ADM_ACCESS"]);
+    for (const p of P6_ACCESS_HARDENING_ROLE_PERMISSIONS.AUD) expect(P6_ACCESS_HARDENING_PERMISSIONS[p]).toBe("read");
+  });
+});
+
 /**
  * F-DG5-100: the P5 ids its stage left unused (planned gaps of the p5-plan §4 ranges, D-142). They are permanently
  * unused: a file in a gap would run at its lexical position on a fresh database but last on an upgraded one (the
@@ -764,13 +809,15 @@ const P5_RETIRED_MIGRATION_IDS = [66, 67, 73, 77, 78, 79, 83, 84] as const;
 function numberingViolations(files: readonly { id: number; name: string }[]): string[] {
   const out: string[] = [];
   // D-089: 0058-0061 were the DG4 repair ids. P5 (p5-plan §4, D-142) used ids 0062-0097 with planned gaps, and
-  // 0094-0099 are held by the orchestrator for P5 repairs, so ids from 0058 may have gaps but stay at most 0099. Ids
-  // below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses anything else).
+  // 0094-0099 were held by the orchestrator for P5 repairs. P6 (p6-plan §4, D-195) gives the six architecture tasks
+  // the ranges 0098-0127 and holds 0128-0133 for repairs, so ids from 0058 may have gaps but stay at most 0133
+  // (T-DG6-ARCH-01). Ids below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses
+  // anything else).
   const REPAIR_FIRST = 58;
-  const REPAIR_LAST = 99;
+  const REPAIR_LAST = 133;
   const planned = files.filter((f) => f.id < REPAIR_FIRST).map((f) => f.id);
   if (planned.some((id, i) => id !== i + 1)) out.push(`ids below ${REPAIR_FIRST} are not contiguous from 0001`);
-  for (const f of files.filter((f) => f.id > REPAIR_LAST)) out.push(`${f.name}: above 0099`);
+  for (const f of files.filter((f) => f.id > REPAIR_LAST)) out.push(`${f.name}: above 0133`);
   // F-DG5-100: the eight P5 gaps are never filled, by any later stage or repair.
   for (const f of files.filter((f) => (P5_RETIRED_MIGRATION_IDS as readonly number[]).includes(f.id)))
     out.push(`${f.name}: id ${String(f.id).padStart(4, "0")} is a retired P5 gap (F-DG5-100)`);
@@ -801,6 +848,10 @@ describe("migration files", () => {
         `${name}: id ${String(id).padStart(4, "0")} is a retired P5 gap (F-DG5-100)`,
       ]);
     }
-    expect(numberingViolations([...files, { id: 98, name: "0098_p5_repair.sql" }])).toEqual([]);
+    // T-DG6-ARCH-01: a free id of a P6 range is accepted; an id above the P6 repair block (0133) is not.
+    expect(numberingViolations([...files, { id: 101, name: "0101_p6_example.sql" }])).toEqual([]);
+    expect(numberingViolations([...files, { id: 134, name: "0134_p7_example.sql" }])).toEqual([
+      "0134_p7_example.sql: above 0133",
+    ]);
   });
 });

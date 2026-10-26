@@ -1937,6 +1937,38 @@ erDiagram
 
 The column lists, the 20 triggers and the functions are in the data dictionary, section "P5 repair migration 0097 and the round-1 repairs (DG5)".
 
+## 1t. P6 slices E and F: sensitive records and grants, deep-link tokens, upload policy and detected content types (migrations 0098–0100; T-DG6-ARCH-01; ADR-0051, ADR-0052)
+
+Three new mutable tables carry the P2 guards (`_row_guard`, deferred `_audit_required`): `record_sensitivity`, `sensitive_record_grant` and `upload_policy`. Two append-only histories (`record_sensitivity_change`, `upload_policy_change`) are written only by `SECURITY DEFINER` triggers; mth_app reads them. `inbox_notification` (DG4) gains three nullable, set-once deep-link columns, and `evidence_content` (DG2) one nullable `detected_type`. No mth_app DELETE grant on any of them. `0100` adds permission rows only. The data dictionary ("P6 tables, slices E and F") lists every column, constraint, index and trigger.
+
+```mermaid
+erDiagram
+    transformation ||--o{ record_sensitivity : "flags of its records"
+    benefit |o--o| record_sensitivity : "record_type = benefit (checked by trigger)"
+    business_case |o--o| record_sensitivity : "record_type = business_case (checked by trigger)"
+    evidence |o--o| record_sensitivity : "record_type = evidence (checked by trigger)"
+    record_sensitivity ||--o{ record_sensitivity_change : "one history row per version"
+    transformation ||--o{ sensitive_record_grant : "grants on its records"
+    app_user ||--o{ sensitive_record_grant : "grantee (at most one active per record)"
+    organization ||--o| upload_policy : "narrowed policy (none = default)"
+    upload_policy ||--o{ upload_policy_change : "one history row per version"
+    evidence ||--o{ evidence_content : "detected_type (P6 uploads), NULL before P6"
+    inbox_notification }o--o| benefit : "target_record_* (set once, no FK)"
+```
+
+`record_sensitivity (record_type, record_id)` and `sensitive_record_grant (record_type, record_id)` are polymorphic references to `benefit`, `business_case` or `evidence` in the same transformation, checked by `p6_sensitive_record_ref_guard()` (no FK, because the target table varies). `inbox_notification.target_record_*` is an informational pointer used only to re-authorize (ADR-0051 §3); it has no FK and may name any record type. The link token is an opaque identifier, not a credential.
+
+### 1t.1 P6 entity register (slices E and F) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Record sensitivity (S10-002) | `record_sensitivity` (+ `record_sensitivity_change`) | `id`; `(record_type, record_id)` unique | `created_by` | `sensitive_record.grant` | `is_sensitive` | yes (history append-only) | access |
+| Sensitive-record grant (S10-002) | `sensitive_record_grant` | `id`; one active per `(record_type, record_id, grantee_user_id)` | `created_by` (granter), `grantee_user_id` | `sensitive_record.grant` | `status` (active, revoked) | yes | access |
+| Deep link (S12-024) | `inbox_notification.link_token`, `target_record_type`, `target_record_id` | `inbox_notification.id`; `link_token` unique | `recipient_user_id` | API (lazy issue, lock 730301) | — (set once) | the notification's | tasks |
+| Upload policy (S13-011) | `upload_policy` (+ `upload_policy_change`) | `id`; `organization_id` unique | `created_by` | `upload_policy.configure` | — | yes (history append-only) | evidence (admin) |
+| Checked file type (S13-011) | `evidence_content.detected_type` | `evidence_content.id` | `uploaded_by` | evidence upload | — | no (append-only revisions) | evidence |
+| Audit event (S16-032) | `audit_event` (unchanged, `0003`) | `id`; `seq` unique | `actor_user_id` | every mutation | — | `prior_version`/`new_version` of the record | audit |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

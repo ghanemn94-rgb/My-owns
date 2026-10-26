@@ -953,3 +953,40 @@ C = create; U = update; P = publish; Rv = review; Rs = request reset; own = the 
 - **AUD (read-only auditor):** every slice I/J mutation returns **403** for AUD and writes nothing: `putBrandingSettings`, `requestDemoReset`, and every Studio write to the reader namespaces. AUD reads the session-level entities. In `GET /me/navigation` AUD sees Administration read-only, because it holds `user.read` and `access.read` (the DG1 `ADMIN_PERMISSIONS` rule; ADR-0049 §9).
 - **Administration visibility (REQ-S03-007):** the Administration area is shown to holders of at least one of `methodology.publish`, `methodology.review`, `config_review_policy.configure`, `automation.configure`, `job.read`, `organization.manage`, `business_unit.manage`, `user.read`, `user.manage`, `access.read`, `access.assign`, `branding.configure` or `demo.reset`. A Workstream Lead holds none of them and does not see it.
 - **Technical administrators:** ADM_TECH configures branding and resets the demo database. Neither is a business approval, and neither changes a transformation's records outside the demo database.
+
+## 24. P6 implementation, slices E and F (DG6): sensitive records and explicit grants, deep links, evidence preview and upload policy, the rate-limit view and the global audit list
+
+- **Task:** T-DG6-ARCH-01 (solution-architect), 2026-10-26. **Sources:** ADR-0051 §2, §3, §4, §7; ADR-0052 §1, §2, §4, §8, §10; master prompt M0188, M0241, M0255, M0330, M0331; REQ-S10-002 "grant:TO,ADM (access admin)", REQ-S16-032 "view:AUD,ADM(scoped); modify:none", REQ-S16-023 "delete-finalized:none".
+- **Seed:** `0100_p6_access_hardening_permissions.sql`, equal to `P6_ACCESS_HARDENING_PERMISSIONS` / `P6_ACCESS_HARDENING_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role. A sensitive-record grant is an access decision, never a G1–G6 business approval. Nobody modifies or deletes audit data (append-only for every role, including the owner).
+
+### 24.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `sensitive_record.grant` | configure | Mark a benefit, business case or evidence item sensitive or not, and grant or revoke one user's explicit access to it. Structural (applies from an organization-level assignment, like `access.assign`) | TO, ADM_ACCESS |
+| `sensitive_record.read` | read | Read which records are sensitive and the grant list (metadata only, never the record) | TO, AUD, ADM_ACCESS |
+| `audit_event.read` | read | Administration > Audit and `GET /audit-events`, within the assigned scope (a technical admin's organization-level assignment covers organization-level events only) | AUD, ADM_TECH, ADM_ACCESS |
+| `upload_policy.configure` | configure | Narrow the allowed upload types and the size limit of the organization | ADM_TECH |
+| `security.read` | read | Read the upload policy and the rate-limit matrix (Administration > Security) | ADM_TECH, AUD |
+
+Reused codes: reading a record's sensitivity flag needs the record's own read; resolving a deep link needs a session and the target's read (re-checked on every call); previewing evidence uses the download rule (ADR-0051 §4: `transformation.read`, plus admission to a sensitive item or sensitive parent).
+
+### 24.2 Per-entity rights in P6 (slices E and F)
+
+Legend as in 8.3. **G** = grant/revoke, **M** = mark/unmark, **Rp** = read through the record, "session" = any signed-in user. A sensitive record itself is readable only by the parties of ADR-0051 §2 (active grantee, named party, holder of `sensitive_record.grant` at its scope).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Sensitivity flag (`record_sensitivity`) | Rp | Rp | Rp | Rp | Rp | V M | Rp | Rp | Rp | Rp | V | — | — | V M |
+| Sensitive-record grant (`sensitive_record_grant`) | — | — | — | — | — | V G | — | — | — | — | V | — | — | V G |
+| Sensitive benefit, business case or evidence (content) | party/grant | party/grant | party/grant | party/grant | party/grant | V (holds grant right) | party/grant | party/grant | party/grant | party/grant | grant only | — | — | — (no `transformation.read`) |
+| Deep link (`inbox_notification.link_token`; `GET /links/{token}`) | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read |
+| Evidence preview (`GET …/evidence/{id}/preview`) | as download | as download | as download | as download | as download | as download | as download | as download | as download | as download | as download (read-only) | — | — | — |
+| Upload policy (`upload_policy`) | — | — | — | — | — | — | — | — | — | — | V | — | V E | — |
+| Rate-limit matrix (configuration; not stored) | — | — | — | — | — | — | — | — | — | — | V | — | V | — |
+| Global audit list (`audit_event`; `GET /audit-events`) | — | — | — | — | — | — | — | — | — | — | V (scope) | — | V (org-level; assigned transformations) | V (org-level; assigned transformations) |
+
+- **AUD (read-only auditor):** every slice E/F mutation returns **403** for AUD and writes nothing: mark or unmark sensitivity, grant, revoke, change the upload policy. AUD reads the flags, the grant list, the upload policy, the rate-limit matrix and the audit list in its scope. AUD is not admitted to a sensitive record's content by its role alone; a TO can grant it (ADR-0051 §2).
+- **Technical administrators:** ADM_ACCESS marks and grants by record id without `transformation.read` (it sees a record title only where ADR-0051 §2 admits it); ADM_TECH changes the upload policy. Neither is a business approval. Audit events of a sensitive record the caller is not admitted to show `changes` and `reason` as null (`redacted: true`).
+- **SoD:** nobody grants to themselves (`sensitive_record_grant_not_self`). No slice E/F operation approves anything.

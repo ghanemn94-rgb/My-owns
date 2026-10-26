@@ -1048,8 +1048,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 39 P5 operations of slices D and E (T-DG5-ARCH-03; pending in p5-pending-be-h/h2/i/i2/j/k/l/l2.ts)
     // + 26 P5 operations of slice F (T-DG5-ARCH-04; pending in p5-pending-kbe-c/kbe-d/be-m/be-o.ts)
     // + 38 P5 operations of slices G and H (T-DG5-ARCH-05; pending in p5-pending-kbe-e/kbe-e2/kbe-f/be-p/be-p2/kbe-g/kbe-g2.ts)
-    // + 19 P5 operations of slices I and J (T-DG5-ARCH-06; pending in p5-pending-be-q/q2/r/r2/s/t2.ts).
+    // + 19 P5 operations of slices I and J (T-DG5-ARCH-06; pending in p5-pending-be-q/q2/r/r2/s/t2.ts)
+    // + 13 P6 operations of slices E and F (T-DG6-ARCH-01; pending in p6-pending-be-b/c/d/e.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(846);
+    expect(operations).toHaveLength(859);
   });
 });
