@@ -65,5 +65,9 @@ export {
   type RoutedParty,
 } from "./role-mappings.ts";
 export { actsFor, delegatorsOf } from "./delegations.ts";
+// P6 slice E (T-DG6-BE-A stubs; ADR-0051 §1, §2): the ReadScope port (BE-B fills read-scope.ts; everything it exports
+// is re-exported here, so later slices import it from access) and the sensitivity routes, registered by server.ts.
+export * from "./read-scope.ts";
+export { registerSensitivityRoutes } from "./sensitivity.ts";
 // REQ-S10-003 (D-094; T-DG4-BE-B2): the technical-admin-only 403 on gate and Finance approval endpoints.
 export { isTechnicalAdminOnly, TECHNICAL_ADMIN_ROLES, technicalAdminRefusal } from "./technical-admin.ts";

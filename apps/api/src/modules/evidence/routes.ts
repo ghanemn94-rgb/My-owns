@@ -72,6 +72,7 @@ import {
   type LooseRow,
   type RegisterSpec,
 } from "../transformations/index.ts";
+import { registerEvidencePreviewRoutes } from "./preview.ts"; // P6 BE-D (stub by T-DG6-BE-A; ADR-0052 §2)
 import { registerEvidenceRegisterRoutes } from "./register.ts";
 import { toEvidence, toEvidenceLink } from "./repository.ts";
 import {
@@ -423,6 +424,7 @@ export function registerEvidenceModule(
   registerReviewRoute(app, db);
   registerLinkRoutes(app, db);
   registerEvidenceRegisterRoutes(app, db); // T-DG5-BE-O (ADR-0045 §8): the evidence register and versions
+  registerEvidencePreviewRoutes(app, db, store); // P6 BE-D (ADR-0052 §2): the safe inline preview
   return EVIDENCE_MODULE;
 }
 

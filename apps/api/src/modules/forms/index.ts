@@ -3,6 +3,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerFormRoutes } from "./routes.ts";
+import { registerRecordCompareRoutes } from "./compare.ts"; // P6 BE-Q (stub by T-DG6-BE-A)
 
 // T-DG5-BE-D (ADR-0041 §4): the forms pin of a new transformation, registered as a TransformationInitializer in server.ts.
 export { pinNewTransformationToForms } from "./pin-initializer.ts";
@@ -14,7 +15,7 @@ export { setFormBulkUpdaters, type FormBulkUpdaters } from "./bulk.ts";
  * created them as stubs; p5-plan §5.1). The module reports "scaffold" until a route exists, then "active".
  */
 export function registerFormsModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
-  const routes = [...registerFormRoutes(app, deps)];
+  const routes = [...registerFormRoutes(app, deps), ...registerRecordCompareRoutes(app, deps)];
   return Object.freeze({
     module: "forms",
     status: routes.length > 0 ? "active" : "scaffold",

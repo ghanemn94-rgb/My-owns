@@ -149,6 +149,25 @@ import { exerciseP5BeROperations, P5_MIRRORS_BE_R } from "./p5-exercises-be-r.ts
 import { exerciseP5BeR2Operations, P5_MIRRORS_BE_R2 } from "./p5-exercises-be-r2.ts"; // T-DG5-BE-R2
 import { exerciseP5BeSOperations, P5_MIRRORS_BE_S } from "./p5-exercises-be-s.ts";
 import { exerciseP5BeT2Operations, P5_MIRRORS_BE_T2 } from "./p5-exercises-be-t2.ts"; // T-DG5-BE-T2
+// P6 seams (p6-work-split §2 rule 16; T-DG6-BE-A): one stub per P6 API task, filled by its owner.
+import { exerciseP6BeBOperations, P6_MIRRORS_BE_B } from "./p6-exercises-be-b.ts";
+import { exerciseP6BeCOperations, P6_MIRRORS_BE_C } from "./p6-exercises-be-c.ts";
+import { exerciseP6BeDOperations, P6_MIRRORS_BE_D } from "./p6-exercises-be-d.ts";
+import { exerciseP6BeEOperations, P6_MIRRORS_BE_E } from "./p6-exercises-be-e.ts";
+import { exerciseP6BeGOperations, P6_MIRRORS_BE_G } from "./p6-exercises-be-g.ts";
+import { exerciseP6BeHOperations, P6_MIRRORS_BE_H } from "./p6-exercises-be-h.ts";
+import { exerciseP6BeIOperations, P6_MIRRORS_BE_I } from "./p6-exercises-be-i.ts";
+import { exerciseP6BeJOperations, P6_MIRRORS_BE_J } from "./p6-exercises-be-j.ts";
+import { exerciseP6BeKOperations, P6_MIRRORS_BE_K } from "./p6-exercises-be-k.ts";
+import { exerciseP6BeLOperations, P6_MIRRORS_BE_L } from "./p6-exercises-be-l.ts";
+import { exerciseP6BeMOperations, P6_MIRRORS_BE_M } from "./p6-exercises-be-m.ts";
+import { exerciseP6KbeAOperations, P6_MIRRORS_KBE_A } from "./p6-exercises-kbe-a.ts";
+import { exerciseP6BeNOperations, P6_MIRRORS_BE_N } from "./p6-exercises-be-n.ts";
+import { exerciseP6BeOOperations, P6_MIRRORS_BE_O } from "./p6-exercises-be-o.ts";
+import { exerciseP6BePOperations, P6_MIRRORS_BE_P } from "./p6-exercises-be-p.ts";
+import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts";
+import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
+import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -371,6 +390,25 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_R2, // T-DG5-BE-R2
   ...P5_MIRRORS_BE_S,
   ...P5_MIRRORS_BE_T2, // T-DG5-BE-T2
+  // P6 operations: each task's mirrors come from its own seam file (p6-work-split §2 rule 16).
+  ...P6_MIRRORS_BE_B,
+  ...P6_MIRRORS_BE_C,
+  ...P6_MIRRORS_BE_D,
+  ...P6_MIRRORS_BE_E,
+  ...P6_MIRRORS_BE_G,
+  ...P6_MIRRORS_BE_H,
+  ...P6_MIRRORS_BE_I,
+  ...P6_MIRRORS_BE_J,
+  ...P6_MIRRORS_BE_K,
+  ...P6_MIRRORS_BE_L,
+  ...P6_MIRRORS_BE_M,
+  ...P6_MIRRORS_KBE_A,
+  ...P6_MIRRORS_BE_N,
+  ...P6_MIRRORS_BE_O,
+  ...P6_MIRRORS_BE_P,
+  ...P6_MIRRORS_BE_Q,
+  ...P6_MIRRORS_BE_T,
+  ...P6_MIRRORS_BE_U,
 };
 
 let api: TestApi;
@@ -819,6 +857,62 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P5 BE-T2 operations (p5-exercises-be-t2.ts)", async () => {
     await exerciseP5BeT2Operations(p3());
   }); // T-DG5-BE-T2
+
+  // P6 seams (p6-work-split §2 rule 16; T-DG6-BE-A): each task's routed operations, through the same validating client.
+  it("P6 BE-B operations (p6-exercises-be-b.ts)", async () => {
+    await exerciseP6BeBOperations(p3());
+  });
+  it("P6 BE-C operations (p6-exercises-be-c.ts)", async () => {
+    await exerciseP6BeCOperations(p3());
+  });
+  it("P6 BE-D operations (p6-exercises-be-d.ts)", async () => {
+    await exerciseP6BeDOperations(p3());
+  });
+  it("P6 BE-E operations (p6-exercises-be-e.ts)", async () => {
+    await exerciseP6BeEOperations(p3());
+  });
+  it("P6 BE-G operations (p6-exercises-be-g.ts)", async () => {
+    await exerciseP6BeGOperations(p3());
+  });
+  it("P6 BE-H operations (p6-exercises-be-h.ts)", async () => {
+    await exerciseP6BeHOperations(p3());
+  });
+  it("P6 BE-I operations (p6-exercises-be-i.ts)", async () => {
+    await exerciseP6BeIOperations(p3());
+  });
+  it("P6 BE-J operations (p6-exercises-be-j.ts)", async () => {
+    await exerciseP6BeJOperations(p3());
+  });
+  it("P6 BE-K operations (p6-exercises-be-k.ts)", async () => {
+    await exerciseP6BeKOperations(p3());
+  });
+  it("P6 BE-L operations (p6-exercises-be-l.ts)", async () => {
+    await exerciseP6BeLOperations(p3());
+  });
+  it("P6 BE-M operations (p6-exercises-be-m.ts)", async () => {
+    await exerciseP6BeMOperations(p3());
+  });
+  it("P6 KBE-A operations (p6-exercises-kbe-a.ts)", async () => {
+    await exerciseP6KbeAOperations(p3());
+  });
+  it("P6 BE-N operations (p6-exercises-be-n.ts)", async () => {
+    await exerciseP6BeNOperations(p3());
+  });
+  it("P6 BE-O operations (p6-exercises-be-o.ts)", async () => {
+    await exerciseP6BeOOperations(p3());
+  });
+  it("P6 BE-P operations (p6-exercises-be-p.ts)", async () => {
+    await exerciseP6BePOperations(p3());
+  });
+  it("P6 BE-Q operations (p6-exercises-be-q.ts)", async () => {
+    await exerciseP6BeQOperations(p3());
+  });
+  it("P6 BE-T operations (p6-exercises-be-t.ts)", async () => {
+    await exerciseP6BeTOperations(p3());
+  });
+  it("P6 BE-U operations (p6-exercises-be-u.ts)", async () => {
+    await exerciseP6BeUOperations(p3());
+  });
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {

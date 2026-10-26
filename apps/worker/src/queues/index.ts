@@ -17,6 +17,11 @@ import { PROCEDURES_EVENT_QUEUES, PROCEDURES_QUEUES } from "./procedures.ts";
 import { REPORTS_EVENT_QUEUES, REPORTS_QUEUES } from "./reports.ts";
 import { LAUNCH_EVENT_QUEUES, LAUNCH_QUEUES } from "./launch.ts";
 import { DEMO_EVENT_QUEUES, DEMO_QUEUES } from "./demo.ts";
+// P6 domains (T-DG6-BE-A stubs; p6-plan §5.3): one import per new domain, each owned by its task.
+import { INTEGRATIONS_EVENT_QUEUES, INTEGRATIONS_QUEUES } from "./integrations.ts";
+import { SEARCH_EVENT_QUEUES, SEARCH_QUEUES } from "./search.ts";
+import { NOTIFICATIONS_EVENT_QUEUES, NOTIFICATIONS_QUEUES } from "./notifications.ts";
+import { OPERATIONS_EVENT_QUEUES, OPERATIONS_QUEUES } from "./operations.ts";
 import { PORTFOLIO_EVENT_QUEUES, PORTFOLIO_QUEUES } from "./portfolio.ts"; // T-DG5-BE-J (ADR-0044 §7, §8)
 import { DIGESTS_QUEUES } from "./digests.ts"; // T-DG5-BE-L (ADR-0044 §5, §8)
 import { JOBS_EVENT_QUEUES, JOBS_QUEUES } from "./jobs.ts"; // T-DG5-BE-I2 (ADR-0043 §6): run now
@@ -64,6 +69,10 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...DIGESTS_QUEUES, // T-DG5-BE-L
   ...JOBS_QUEUES,
   ...BRANDING_QUEUES, // T-DG5-BE-R
+  ...INTEGRATIONS_QUEUES, // P6 (T-DG6-BE-A stub)
+  ...SEARCH_QUEUES, // P6 (T-DG6-BE-A stub)
+  ...NOTIFICATIONS_QUEUES, // P6 (T-DG6-BE-A stub)
+  ...OPERATIONS_QUEUES, // P6 (T-DG6-BE-A stub)
 ];
 
 /**
@@ -92,6 +101,10 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   DEMO_EVENT_QUEUES,
   JOBS_EVENT_QUEUES,
   BRANDING_EVENT_QUEUES, // T-DG5-BE-R
+  INTEGRATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
+  SEARCH_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
+  NOTIFICATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
+  OPERATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
 ];
 
 /** Merges the domain maps into event type -> the list of its queues, in registration order, each queue once. */

@@ -23,9 +23,25 @@ import type { AppConfig } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
 import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
-import { registerAccessP2Routes, registerAccessP4Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
+import {
+  registerAccessP2Routes,
+  registerAccessP4Routes,
+  registerDeniedMutationAudit,
+  registerSensitivityRoutes,
+} from "./modules/access/index.ts";
 import { colorTokens, deriveDarkerShade, tokenSource, tokensAreProvisional } from "@mth/design-tokens";
-import { registerAdminRoutes, registerBrandingRoutes, registerEnvironmentRoutes } from "./modules/admin/index.ts";
+import {
+  registerAdminRoutes,
+  registerBrandingRoutes,
+  registerEnvironmentRoutes,
+  registerIdentityAdminRoutes,
+  registerNotificationChannelRoutes,
+  registerSecurityRoutes,
+  registerServiceIdentityRoutes,
+  registerStorageAdminRoutes,
+  registerUploadPolicyRoutes,
+} from "./modules/admin/index.ts";
+import { registerAuditRoutes } from "./modules/audit/index.ts";
 import {
   RateLimitSubjects,
   registerIdentity,
@@ -49,6 +65,11 @@ import { registerLaunchModule } from "./modules/launch/index.ts";
 import { launchPlanGenerator } from "./modules/launch/port.ts";
 import { registerLaunchPlanPort } from "./modules/automation/ports/launch-plan.ts";
 import { registerProceduresModule, wireProcedureApprovals } from "./modules/procedures/index.ts";
+// P6 modules (p6-plan §3 seam 21; T-DG6-BE-A): each registers its route files (stubs until their owners fill them).
+import { registerAssistantModule } from "./modules/assistant/index.ts";
+import { registerIntegrationsModule } from "./modules/integrations/index.ts";
+import { registerOperationsModule } from "./modules/operations/index.ts";
+import { registerSearchModule } from "./modules/search/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule, updateStakeholderGroup } from "./modules/adoption/index.ts";
 import { registerBenefitsModule, updateBenefitRecord } from "./modules/benefits/index.ts";
@@ -66,6 +87,7 @@ import {
 import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
+  createSecretProviderRegistry,
   createJsonBodyParser,
   DEFAULT_CONSUMES,
   DEFAULT_REQUEST_TIMEOUT_MS,
@@ -83,6 +105,7 @@ import {
   restrictParserTo,
   type InFlight,
   type ModuleRegistration,
+  type SecretProviderRegistry,
   type SecurityHeaders,
 } from "./modules/platform/index.ts";
 import { registerReportingModule } from "./modules/reporting/index.ts";
@@ -214,6 +237,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   routes: readonly RouteRecord[];
   modules: readonly ModuleRegistration[];
   inFlight: InFlight;
+  /** P6 (ADR-0052 §5): the SecretProvider registry of this process (BE-E registers the env and file providers). */
+  secrets: SecretProviderRegistry;
 }> {
   const { config, pool } = options;
   if (!config.appBaseUrl) throw new Error("APP_BASE_URL is required by the API");
@@ -359,6 +384,17 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerJobOperationRoutes(app, deps);
   registerNavigationRoutes(app, deps);
   registerEnvironmentRoutes(app, deps);
+  // P6 (T-DG6-BE-A stubs; p6-plan §5.1, p6-work-split §E/F.1): the route files outside the four P6 modules that the
+  // composition root registers. Each owner fills its own file; these lines do not change, except that BE-E fills the
+  // members of the audit routes' access port on its line (audit cannot import access: ADR-0002 rule 5).
+  registerSensitivityRoutes(app, deps); // BE-B: record sensitivity and sensitive-record grants (ADR-0051 §2)
+  registerUploadPolicyRoutes(app, deps); // BE-D: the upload policy (ADR-0052 §1)
+  registerSecurityRoutes(app, deps); // BE-E: the security view, rate-limit classes (ADR-0052 §4)
+  registerAuditRoutes(app, deps, {}); // BE-E: the global audit API (ADR-0052 §8)
+  registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
+  registerStorageAdminRoutes(app, deps); // BE-H: Administration > Storage (slice C)
+  registerNotificationChannelRoutes(app, deps); // BE-I: Administration > Notifications (slice C)
+  registerServiceIdentityRoutes(app, deps); // BE-J: Administration > Service identities (slice J)
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
   // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
   const gateFacts: GateFactsProvider = {
@@ -443,6 +479,21 @@ export async function buildServer(options: ServerOptions): Promise<{
   const automationActions = createAutomationActionRegistry();
   for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)
   setAutomationActionRegistry(automationActions);
+  // P6 wiring points (p6-plan §2, §5.1, §5.3; p6-work-split §E/F.1; T-DG6-BE-A).
+  //  - SecretProvider (ADR-0052 §5): the registry of this process. BE-E registers the built-in `env` and `file`
+  //    providers on the line below it (`secrets.register(...)`); an IT-supplied adapter is registered the same way. The
+  //    worker's composition (apps/worker/src/main.ts) gets its own registry when a job first needs a secret.
+  //  - ReadScope (ADR-0051 §1): BE-B's `readScopeFor` in access/read-scope.ts, re-exported by access/index.ts. Modules
+  //    import it from access directly (every P6 module depends on access); nothing is wired here. The worker's job
+  //    identities (ADR-0053, BE-J) receive it through the job kit, not through this file.
+  //  - ImportTargetRegistry (p6-plan §2; ARCH-03 defines it in integrations, BE-M creates it): the registry line goes
+  //    below this block, and each domain adds one registration line below it (KBE-A: kpi's import target first), so
+  //    integrations imports no domain module (the AutomationActionRegistry pattern above).
+  //  - NotificationChannel (ARCH-02; BE-I, tasks/channels/**): the channel registry line goes below this block (the
+  //    in-app channel first, then the email adapter when configured); fan-out runs in the worker after commit.
+  //  - ModelProvider (ARCH-05; BE-T, assistant/provider.ts): the provider line goes below this block (the local test
+  //    adapter, or the HTTP adapter when configured); with nothing configured the assistant stays disabled.
+  const secrets = createSecretProviderRegistry();
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
@@ -471,6 +522,11 @@ export async function buildServer(options: ServerOptions): Promise<{
     registerAutomationModule(app, deps),
     registerLaunchModule(app, deps),
     registerHealthModule(app, deps),
+    // P6 modules (p6-plan §3 seam 21): each reports "scaffold" until a route exists.
+    registerIntegrationsModule(app, deps),
+    registerSearchModule(app, deps),
+    registerAssistantModule(app, deps),
+    registerOperationsModule(app, deps),
   ];
 
   if (webRoot) {
@@ -478,5 +534,5 @@ export async function buildServer(options: ServerOptions): Promise<{
   }
 
   await app.ready();
-  return { app, db, routes, modules, inFlight };
+  return { app, db, routes, modules, inFlight, secrets };
 }

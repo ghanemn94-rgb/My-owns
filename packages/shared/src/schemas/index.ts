@@ -166,3 +166,9 @@ export * from "./export-jobs.ts";
 export * from "./presentation.ts";
 // P5 slice F (T-DG5-FE-E; D-159 e; ADR-0045 §8): the evidence register and versions mirrors (promoted likewise).
 export * from "./evidence-register.ts";
+// P6 slices E and F (T-DG6-BE-A stubs; p6-work-split §E/F.1): one barrel line per mirror file, each filled by its owner.
+export * from "./sensitivity.ts"; // BE-B (ADR-0051 §2)
+export * from "./deep-links.ts"; // BE-C (ADR-0051 §3)
+export * from "./uploads.ts"; // BE-D (ADR-0052 §1, §2)
+export * from "./security.ts"; // BE-E (ADR-0052 §4)
+export * from "./audit-events.ts"; // BE-E (ADR-0052 §8)

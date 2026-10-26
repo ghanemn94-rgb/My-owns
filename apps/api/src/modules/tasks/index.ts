@@ -14,6 +14,7 @@ import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerTaskRoutes } from "./routes.ts";
 import { registerNotificationPolicyRoutes } from "./notification-policy.ts"; // P5 BE-L (stub by T-DG5-BE-A)
+import { registerDeepLinkRoutes } from "./deep-links.ts"; // P6 BE-C (stub by T-DG6-BE-A; ADR-0051 §3)
 
 export {
   closeWorkItemsOfSubject,
@@ -34,6 +35,10 @@ export { loadOpenWorkItems, type OpenWorkItemFact } from "./dashboard-facts.ts";
 
 /** Wiring hook called by the composition root (server.ts). */
 export function registerTasksModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
-  const routes = [...registerTaskRoutes(app, deps), ...registerNotificationPolicyRoutes(app, deps)];
+  const routes = [
+    ...registerTaskRoutes(app, deps),
+    ...registerNotificationPolicyRoutes(app, deps),
+    ...registerDeepLinkRoutes(app, deps), // P6 BE-C
+  ];
   return Object.freeze({ module: "tasks", status: "active", deliversIn: "P4", routes: Object.freeze(routes) });
 }

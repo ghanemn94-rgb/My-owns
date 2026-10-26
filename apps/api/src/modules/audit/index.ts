@@ -86,3 +86,7 @@ export async function listTransformationAudit(
     })),
   };
 }
+
+// P6 (T-DG6-BE-A stub; ADR-0052 §8): the global audit API routes (BE-E), registered by server.ts with the injected
+// access port (audit cannot import access; see routes.ts).
+export { registerAuditRoutes, type AuditRouteAccess } from "./routes.ts";

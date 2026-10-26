@@ -42,6 +42,7 @@ import { registerScheduleNetworkRoutes } from "./schedule-network.ts";
 import { registerStructureRoutes } from "./structure.ts";
 import { registerOwnerUpdateRoutes } from "./updates.ts"; // P5 KBE-D (stub by T-DG5-BE-A)
 import { registerDependencySlipRoutes } from "./dependency-slips.ts"; // P5 T-DG5-BE-J (ADR-0044 §7)
+import { registerDeliverableConfirmationRoutes } from "./deliverable-confirmation.ts"; // P6 BE-O (stub by T-DG6-BE-A)
 
 export { loadPortfolioGateFacts } from "./gate-facts.ts";
 // P5 KBE-D (ADR-0045 §6): the executive pack reads the submitted owner updates of a period through this service.
@@ -107,6 +108,8 @@ export function registerPortfolioModule(app: FastifyInstance, deps: ModuleDeps):
     ...registerStructureRoutes(app, deps),
     // P5 KBE-D: structured owner updates (S09-011).
     ...registerOwnerUpdateRoutes(app, deps),
+    // P6 BE-O: the external-change confirmation of a deliverable (S01-005).
+    ...registerDeliverableConfirmationRoutes(app, deps),
   ];
   return Object.freeze({ module: "portfolio", status: "active", deliversIn: "P3", routes: Object.freeze(routes) });
 }
