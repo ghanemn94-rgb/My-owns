@@ -1,0 +1,50 @@
+## clone at 660f40c7d141b6fb73c145e0ee7a053ceb5905de
+## DG0-DG7 in user-facing i18n catalogues (expect none)
+apps/web/src/i18n/index.ts:23:// P3 (DG3) namespaces: one per page area, each owned by its FE task (p3-work-split §4).
+apps/web/src/i18n/index.ts:49:// P4 slices I and C namespaces (T-DG4-FE-A).
+apps/web/src/i18n/index.ts:64:// P4 slice A namespace (T-DG4-FE-B): the KPI engine screens (pages/kpi).
+apps/web/src/i18n/index.ts:77:// P4 slice J namespace (T-DG4-FE-G): dashboards, Executive Overview, workspace header, My Work sections.
+apps/web/src/i18n/index.ts:80:// P4 slice E execution panels on the initiative page (T-DG4-FE-D2): budget lines, execution, schedule network.
+apps/web/src/i18n/index.ts:83:// P4 slice G closure namespace (T-DG4-FE-F): status model, closure and transition decisions (pages/closure).
+apps/web/src/i18n/index.ts:86:// P4 slice H change control and phase workspace namespaces (T-DG4-FE-F2): pages/change-requests, pages/phases.
+apps/web/src/i18n/index.ts:91:// P4 slice K and the RAG policy (T-DG4-FE-G2).
+apps/web/src/i18n/index.ts:101:// P5 slice A namespace (T-DG5-FE-B): the Playbook Studio, methodology-migration and source-coverage screens.
+apps/web/src/i18n/index.ts:104:// P5 slice B namespace (T-DG5-FE-C): the form builder and the common form framework (ADR-0041).
+grep-exit-done
+## 'certified' / 'official PMI' claims in i18n (en)
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with c
+## Studio / approval disclaimers (not a business approval)
+apps/web/src/i18n/en/prioritization.json:49:      "source_default": "(source default, configured starting point, not a business approval)",
+apps/web/src/i18n/en/prioritization.json:51:      "studio_default": "(Studio default weights published in Playbook Studio, configured starting point, not a business approval)"
+apps/web/src/i18n/en/team.json:3:  "intro": "The people named for this transformation's roles, each with the role's accountability. Assigning a team role is an access change recorded in the audit trai
+apps/web/src/i18n/en/workflowsP5.json:424:    "reviewIntro": "A configuration review by someone other than the author. It is not a business approval.",
+apps/web/src/i18n/en/playbookP5.json:128:    "approvalLabel": "Synthetic demonstration - approves nothing real",
+apps/web/src/i18n/en/playbookP5.json:134:    "rules": "Branding is configuration, not a business approval. The colours stay provisional until you record the reference of a brand approval you hold; #00
+apps/web/src/i18n/en/playbookP5.json:201:    "demoBody": "Every record and number here is an illustrative example, not Mobily actual performance, and every approval approves nothing real.",
+apps/web/src/i18n/en/studio.json:2:  "configurationNote": "Playbook Studio changes configuration only. Publishing a version is not a business approval and grants no approval rights; existing transform
+## demo labels
+apps/web/src/i18n/en/auth.json:22:    "username": "Synthetic user name",
+apps/web/src/i18n/en/playbookP5.json:126:    "banner": "Illustrative example — synthetic. Not Mobily actual performance.",
+apps/web/src/i18n/en/playbookP5.json:127:    "recordBadge": "Illustrative example — synthetic",
+apps/web/src/i18n/en/playbookP5.json:128:    "approvalLabel": "Synthetic demonstration - approves nothing real",
+apps/web/src/i18n/en/playbookP5.json:216:    "clock": "Synthetic clock",
+apps/web/src/i18n/en/workflowsP5.json:437:    "payloadHint": "The event's fields, as the trigger sends them. Synthetic data only.",
+packages/reporting/src/labels.ts:44:    "export.illustrative": "Illustrative example — synthetic",
+## G6 -> DG7 coupling in code (expect none)
+apps/web/src/pages/change-requests/Impact.tsx:4:// submission, snapshot or decision (G1-G6 are business approvals; nothing here touches DG0-DG7). An item the caller
+apps/web/src/pages/change-requests/api.ts:7:// by T11 (ADR-0036 §4). Nothing here approves anything, and nothing touches the engineering gates DG0-DG7.
+apps/web/src/pages/change-requests/ChangeRequestsPage.tsx:8://    approvals inside the product, never the engineering gates DG0-DG7.
+apps/web/src/pages/closure/ClosurePage.tsx:12://    (never DG0-DG7). Only the requester submits again (round 2 after a return) or withdraws while it is in approval;
+apps/web/src/pages/form-builder/FormSchemaPage.tsx:8:// approval and never DG0-DG7.
+apps/web/src/pages/form-builder/FormBuilderPage.tsx:5:// A form schema is configuration, not a business approval (G1-G6) and never an engineering gate (DG0-DG7).
+apps/web/src/pages/bau/HandoverPage.tsx:7://    offers the actions to the receiving owner only, and labels the acceptance a business approval (never DG0-DG7).
+apps/web/src/pages/bau/ui.tsx:6://  - Acceptance of a BAU handover is a business approval inside the product, never an engineering gate (DG0-DG7).
+apps/web/src/pages/bau/ui.tsx:127:/** "Business approval" note (S-7): the receiving owner's acceptance, never DG0-DG7. */
+apps/web/src/pages/finance-validation/FinanceValidationPages.tsx:3:// (DG0-DG7) and no agent or demo record grants a real one.
+(end)
+## provisional brand token
+apps/web/src/pages/branding/api.ts:5:// approval reference only records the admin's own brand approval, and #0078FF stays provisional until one is recorded.
+4:    "provisional": "Provisional",
+5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+129:    "brandTitle": "Provisional branding",

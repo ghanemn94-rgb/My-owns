@@ -1,0 +1,230 @@
+## clone at 660f40c7d141b6fb73c145e0ee7a053ceb5905de
+## F-DG5-120: elementLabel definition and all uses
+apps/web/src/pages/studio/ElementsSection.tsx:32:  elementLabel,
+apps/web/src/pages/studio/ElementsSection.tsx:372:                  const label = elementLabel(e, locale);
+apps/web/src/pages/studio/api.ts:138:export function elementLabel(
+--- api.ts elementLabel/displayValue bodies
+138:export function elementLabel(
+139-  e: Pick<ConfigElement, "attributes" | "catalogueAttributes" | "stableKey">,
+140-  locale: "ar" | "en",
+141-): string {
+142-  const mine = attrText(e, locale === "ar" ? "labelAr" : "labelEn");
+143-  if (mine) return mine;
+144-  const other = attrText(e, locale === "ar" ? "labelEn" : "labelAr");
+145-  return other || e.stableKey;
+146-}
+147-
+148-/** A value of a diff row or an attribute, as short readable text ("—" is never used for a missing value). */
+149-export function displayValue(value: unknown): string | null {
+150-  if (value === undefined || value === null) return null;
+149:export function displayValue(value: unknown): string | null {
+150-  if (value === undefined || value === null) return null;
+151-  if (typeof value === "string") return value;
+152-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+153-  // T-DG5-FE-G2: a list of codes (an approver route's ordered roles, a layout's sections) reads in order, "BO · SP".
+154-  if (Array.isArray(value) && value.every((x) => typeof x === "string" || typeof x === "number"))
+155-    return value.length === 0 ? null : value.map(String).join(" · ");
+156-  return JSON.stringify(value);
+157-}
+158-
+159-/** The role-code pattern the Studio accepts for an approver (ADR-0039 §2 `roleCodeRef`). */
+160-export const ROLE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,31}$/;
+161-
+162-/** The decimal sum of weight strings with two decimals, computed in hundredths (never floats). Null if any is invalid. */
+163-export function weightTotal(weights: readonly string[]): string | null {
+--- migration 0062 scoring_weight seed
+packages/db/migrations/0062_p5_config_versions.sql
+134:         SELECT 1 FROM methodology_element e WHERE e.methodology_version_id = NEW.id AND e.element_type = 'scoring_weight'
+261:                           'report_layout', 'source_element', 'scoring_weight', 'scoring_rubric')),
+304:    WHEN 'scoring_defaults' THEN ARRAY['scoring_weight', 'scoring_rubric']
+318:     OR (NEW.element_type IN ('scoring_weight', 'scoring_rubric') AND NOT NEW.stable_key = ANY (ARRAY[
+323:  IF NEW.element_type = 'scoring_weight' AND NOT (jsonb_typeof(NEW.attributes->'weightPercent') = 'string'
+467:  ('01920005-0002-7000-8000-000000000001', '01920005-0000-7000-8000-000000000001', 'scoring_weight', 'strategic_fit', 'source', 1,
+468:   '{"weightPercent": "25.00", "sourceLabelEn": "Strategic fit", "labelAr": "الملاءمة الاستراتيجية", "sourceRef": "B0076"}'),
+469:  ('01920005-0002-7000-8000-000000000002', '01920005-0000-7000-8000-000000000001', 'scoring_weight', 'financial_value', 'source', 2,
+470:   '{"weightPercent": "25.00", "sourceLabelEn": "Financial value", "labelAr": "القيمة المالية", "sourceRef": "B0076"}'),
+471:  ('01920005-0002-7000-8000-000000000003', '01920005-0000-7000-8000-000000000001', 'scoring_weight', 'customer_impact', 'source', 3,
+472:   '{"weightPercent": "20.00", "sourceLabelEn": "Customer impact", "labelAr": "الأثر على العملاء", "sourceRef": "B0076"}'),
+473:  ('01920005-0002-7000-8000-000000000004', '01920005-0000-7000-8000-000000000001', 'scoring_weight', 'feasibility', 'source', 4,
+474:   '{"weightPercent": "15.00", "sourceLabelEn": "Feasibility", "labelAr": "قابلية التنفيذ", "sourceRef": "B0076"}'),
+475:  ('01920005-0002-7000-8000-000000000005', '01920005-0000-7000-8000-000000000001', 'scoring_weight', 'time_to_value', 'source', 5,
+476:   '{"weightPercent": "15.00", "sourceLabelEn": "Time-to-value", "labelAr": "سرعة تحقيق القيمة", "sourceRef": "B0076"}'),
+--- server use of label attributes in scoring/ranking/gate/publish
+apps/api/src/modules/reporting/reports/definitions.ts
+apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts
+apps/api/src/modules/methodology/config-resolver.ts
+apps/api/src/modules/methodology/source-links.ts
+apps/api/src/modules/methodology/compatibility.ts
+apps/api/src/modules/methodology/routes.ts
+apps/api/src/modules/methodology/migration-plan.ts
+apps/api/src/modules/methodology/element-profiles.ts
+apps/api/src/modules/methodology/repository.ts
+apps/api/src/modules/governance/raci.ts
+apps/api/src/modules/automation/catalogue.ts
+apps/api/src/modules/access/role-mappings.ts
+apps/api/src/modules/workflows/criteria.ts
+apps/api/src/modules/workflows/approval-routes.ts
+apps/api/src/modules/workflows/dependency-types.ts
+apps/api/src/modules/workflows/gates.ts
+apps/api/src/modules/portfolio/capacity.ts
+apps/api/src/modules/health/schemes.ts
+apps/api/src/modules/procedures/definitions.ts
+apps/api/src/modules/procedures/steps.ts
+apps/api/src/modules/procedures/coverage.ts
+apps/api/src/modules/procedures/instances.ts
+apps/api/src/modules/procedures/provider.ts
+apps/api/src/modules/forms/schema-reads.ts
+apps/api/src/modules/forms/provider.ts
+apps/api/src/modules/forms/export.ts
+apps/api/src/modules/launch/template.ts
+## scoring_weight consumers in api (non-test)
+apps/api/src/modules/methodology/publish.ts:102:    .where("element_type", "=", "scoring_weight")
+apps/api/src/modules/methodology/providers/scoring-defaults-kind.ts:10://    of `scoring_weight_set` records touched is exactly 0 (a computed count, not an Unknown).
+apps/api/src/modules/methodology/providers/scoring-defaults-kind.ts:38:    .where("element_type", "=", "scoring_weight")
+apps/api/src/modules/methodology/providers/scoring-defaults-kind.ts:102:      recordType: "scoring_weight_set",
+apps/api/src/modules/methodology/scoring-defaults.ts:118:      .where("element_type", "in", ["scoring_weight", "scoring_rubric"])
+apps/api/src/modules/methodology/scoring-defaults.ts:135:    if (r.element_type === "scoring_weight") {
+apps/api/src/modules/methodology/scoring-defaults.ts:210:    const w = await loadElementRow(tx, current.id, "scoring_weight", code);
+apps/api/src/modules/methodology/scoring-defaults.ts:215:      const prepared = await prepareElementPut(tx, current, "scoring_weight", code, { attributes, ordinal });
+apps/api/src/modules/methodology/scoring-defaults.ts:217:        out.push({ type: "scoring_weight", stableKey: code, existing: w, attributes: prepared.attributes, ordinal });
+apps/api/src/modules/methodology/scoring-defaults.ts:219:      out.push({ type: "scoring_weight", stableKey: code, existing: w, attributes: null, ordinal: w.ordinal });
+apps/api/src/modules/methodology/invariants.ts:48:const SCORING_TYPES: ReadonlySet<string> = new Set(["scoring_weight", "scoring_rubric"]);
+apps/api/src/modules/platform/db-errors.ts:18://   scoring_weight_set_total                 -> 422 prioritization.weights_total, "Weights must total 100% (got N%)"
+apps/api/src/modules/platform/db-errors.ts:3452:  if (constraint === "scoring_weight_set_total") {
+apps/api/src/modules/portfolio/rankings.ts:98:    .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/gate-facts.ts:149:    .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/scores.ts:98:    .selectFrom("scoring_weight")
+apps/api/src/modules/portfolio/scores.ts:114:    .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:13:// deferred DB trigger `scoring_weight_set_total` is the last line of defence. Approving a set is a BUSINESS approval
+apps/api/src/modules/portfolio/prioritization.ts:157:    .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:183:    .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:190:    .insertInto("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:204:    .insertInto("scoring_weight")
+apps/api/src/modules/portfolio/prioritization.ts:219:    action: "scoring_weight_set.create",
+apps/api/src/modules/portfolio/prioritization.ts:220:    recordType: "scoring_weight_set",
+apps/api/src/modules/portfolio/prioritization.ts:252:    .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:260:      .updateTable("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:267:      action: "scoring_weight_set.supersede",
+apps/api/src/modules/portfolio/prioritization.ts:268:      recordType: "scoring_weight_set",
+apps/api/src/modules/portfolio/prioritization.ts:279:    .updateTable("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:317:    action: "scoring_weight_set.approve",
+apps/api/src/modules/portfolio/prioritization.ts:318:    recordType: "scoring_weight_set",
+apps/api/src/modules/portfolio/prioritization.ts:348:    .updateTable("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:355:    action: "scoring_weight_set.withdraw",
+apps/api/src/modules/portfolio/prioritization.ts:356:    recordType: "scoring_weight_set",
+apps/api/src/modules/portfolio/prioritization.ts:518:      .selectFrom("scoring_weight_set")
+apps/api/src/modules/portfolio/prioritization.ts:545:      .selectFrom("scoring_weight_set")
+packages/db/src/schema.ts:3926:  scoring_weight_set: ScoringWeightSetTable;
+packages/db/src/schema.ts:3927:  scoring_weight: ScoringWeightTable;
+packages/db/src/schema.ts:7566:  scoring_weight_set: [
+packages/db/src/schema.ts:7584:  scoring_weight: [
+packages/db/src/demo/coverage.ts:58:          AND EXISTS (SELECT 1 FROM scoring_weight_set w WHERE w.transformation_id = s.transformation_id AND w.status = 'active')`,
+packages/db/src/demo/data/roaming-gates.ts:643:      SELECT id::text AS id, version_no AS "versionNo" FROM scoring_weight_set
+packages/db/src/demo/data/roaming.ts:493:  await ctx.insert("scoring_weight_set", "roaming.t06.weight_set", {
+packages/db/src/demo/data/roaming.ts:507:    await ctx.insert("scoring_weight", `roaming.t06.weight.${code}`, {
+packages/shared/src/schemas/studio.ts:44:  "scoring_weight",
+packages/shared/src/schemas/studio.ts:159:  scoring_weight: z.strictObject({
+packages/shared/src/schemas/studio.ts:217:  scoring_defaults: ["scoring_weight", "scoring_rubric"],
+## does any consumer of scoring_weight read a label attribute?
+apps/api/src/modules/methodology/publish.ts label-refs=0
+apps/api/src/modules/methodology/providers/scoring-defaults-kind.ts label-refs=0
+apps/api/src/modules/methodology/scoring-defaults.ts label-refs=0
+apps/api/src/modules/methodology/invariants.ts label-refs=0
+apps/api/src/modules/platform/db-errors.ts label-refs=0
+apps/api/src/modules/portfolio/rankings.ts label-refs=0
+apps/api/src/modules/portfolio/gate-facts.ts label-refs=0
+apps/api/src/modules/portfolio/scores.ts label-refs=0
+apps/api/src/modules/portfolio/prioritization.ts label-refs=0
+packages/db/src/schema.ts label-refs=0
+packages/db/src/demo/coverage.ts label-refs=0
+packages/db/src/demo/data/roaming-gates.ts label-refs=0
+packages/db/src/demo/data/roaming.ts label-refs=0
+packages/shared/src/schemas/studio.ts label-refs=4
+## web: how prioritization screens name criteria
+apps/web/src/pages/prioritization/Rankings.tsx:36:          .map((x) => t(`prioritization.criterion.${x}`, { defaultValue: x }))
+apps/web/src/pages/prioritization/Scorecard.tsx:196:                criterion: t(`prioritization.criterion.${w.criterionCode}`),
+apps/web/src/pages/prioritization/Scorecard.tsx:237:                  .map((c) => t(`prioritization.criterion.${c}`))
+apps/web/src/pages/prioritization/Scorecard.tsx:264:            recordLabel={t(`prioritization.criterion.${s.criterionCode}`)}
+apps/web/src/pages/prioritization/WeightSets.tsx:131:                                  {t(`prioritization.criterion.${w.criterionCode}`)}:{" "}
+apps/web/src/pages/prioritization/WeightSets.tsx:350:                {t("prioritization.weights.include", { criterion: t(`prioritization.criterion.${c}`) })}
+apps/web/src/pages/prioritization/WeightSets.tsx:354:                  label={t("prioritization.weights.weightFor", { criterion: t(`prioritization.criterion.${c}`) })}
+apps/web/src/pages/prioritization/WeightSets.tsx:484:            {t(`prioritization.criterion.${w.criterionCode}`)}:{" "}
+apps/web/src/pages/studio/ScoringDefaultsPage.tsx:226:              label={t(`studio.criterion.${c}`)}
+apps/web/src/pages/studio/ScoringDefaultsPage.tsx:273:            <legend>{t(`studio.criterion.${c}`)}</legend>
+apps/web/src/pages/studio/ScoringDefaultsPage.tsx:278:              aria-label={t("common.table.scrollRegion", { caption: t(`studio.criterion.${c}`) })}
+apps/web/src/pages/studio/ScoringDefaultsPage.tsx:281:                <caption className="visually-hidden">{t(`studio.criterion.${c}`)}</caption>
+## en i18n criterion names
+apps/web/src/i18n/en/prioritization.json:10:    "strategic_fit": "Strategic fit",
+apps/web/src/i18n/en/prioritization.json:14:    "time_to_value": "Time-to-value",
+apps/web/src/i18n/en/transformations.json:766:      "strategic_fit": "Strategic fit",
+apps/web/src/i18n/en/transformations.json:770:      "time_to_value": "Time-to-value",
+apps/web/src/i18n/en/studio.json:313:    "strategic_fit": "Strategic fit",
+apps/web/src/i18n/en/studio.json:317:    "time_to_value": "Time to value",
+apps/web/src/i18n/ar/prioritization.json:10:    "strategic_fit": "الملاءمة الاستراتيجية",
+apps/web/src/i18n/ar/prioritization.json:14:    "time_to_value": "الوقت اللازم لتحقيق القيمة",
+apps/web/src/i18n/ar/transformations.json:766:      "strategic_fit": "الملاءمة الاستراتيجية",
+apps/web/src/i18n/ar/transformations.json:770:      "time_to_value": "الوقت اللازم لتحقيق القيمة",
+9:  "criterion": {
+10-    "strategic_fit": "Strategic fit",
+11-    "financial_value": "Financial value",
+12-    "customer_impact": "Customer impact",
+13-    "feasibility": "Feasibility",
+14-    "time_to_value": "Time-to-value",
+15-    "risk_compliance": "Risk / compliance"
+
+## F-DG5-121: 'overridden' flag origin
+212:      overridden: row !== undefined,
+232:      overridden: true,
+--- ElementsSection change column
+2:// (catalogue overridden by the version's rows), filtered by element type, with the edit, add and remove dialogs of an
+391:                              <ProvenanceBadge provenance={profile.provenance} overridden={profile.overridden} />
+403:                          : e.overridden
+404:                            ? t("studio.elements.overridden")
+--- en/ar strings
+apps/web/src/i18n/en/studio.json:146:    "overridden": "Changed",
+apps/web/src/i18n/ar/studio.json:146:    "overridden": "معدّل",
+--- scoring-defaults editor writes all weights?
+  readonly type: ConfigElementType;
+  readonly stableKey: string;
+  readonly existing: ElementRow | undefined;
+  /** null = remove (removed = true). */
+  readonly attributes: Record<string, unknown> | null;
+  readonly ordinal: number | null;
+}
+
+/** The element rows a put changes (rows that would not change are left out). */
+async function plannedWrites(tx: Tx, current: MethodologyVersionRow, body: ScoringDefaultsPut): Promise<RowWrite[]> {
+  const out: RowWrite[] = [];
+  const weightBy = new Map(body.weights.map((w) => [w.criterionCode, w.weightPercent]));
+  const rubricBy = new Map(body.rubrics.map((r) => [r.criterionCode, r.levels]));
+  for (const code of SCORING_DEFAULT_CRITERIA) {
+    // Weights: the body is the full set.
+    const w = await loadElementRow(tx, current.id, "scoring_weight", code);
+    const wanted = weightBy.get(code);
+    if (wanted !== undefined) {
+      const attributes = { ...asRecord(w?.attributes), weightPercent: new Decimal(wanted).toFixed(2) };
+      const ordinal = w?.ordinal ?? canonicalIndex(code) + 1;
+      const prepared = await prepareElementPut(tx, current, "scoring_weight", code, { attributes, ordinal });
+      if (w === undefined || w.removed || w.ordinal !== ordinal || !sameJson(w.attributes, prepared.attributes))
+        out.push({ type: "scoring_weight", stableKey: code, existing: w, attributes: prepared.attributes, ordinal });
+    } else if (w !== undefined && !w.removed) {
+      out.push({ type: "scoring_weight", stableKey: code, existing: w, attributes: null, ordinal: w.ordinal });
+    }
+    // Rubrics: a listed rubric's levels are replaced; an unlisted one is unchanged.
+    const levels = rubricBy.get(code);
+    if (levels !== undefined) {
+      const r = await loadElementRow(tx, current.id, "scoring_rubric", code);
+      const attributes = { ...asRecord(r?.attributes), levels: levels.map((l) => ({ ...l })) };
+--- diff computed from resolved values
+apps/api/src/modules/methodology/diff.ts
+1:// The side-by-side diff of two versions of one configuration (ADR-0039 §5; REQ-S06-007; p5-work-split §A.2;
+2:// T-DG5-BE-B). Per (elementType, stableKey) of the kind's element types, the RESOLVED elements (catalogue overridden
+3:// by each version's rows, config-resolver.ts) are compared: `added` (present in `to`, absent or removed in `from`),
+4:// `removed` (the reverse), `changed` (field-level from/to of the resolved attributes, plus `ordinal`). The kind's
+5:// provider adds the rows of its own tables (ADR-0041's added form fields). Titles and definitions are compared as
+6:// content, never by hash (a seeded hash is opaque; ADR-0039 §1). Read-only.
+20:  /** The same changes in the provider-hook shape (resolved attributes before and after). */
+--- web diff renderer uses displayValue
+apps/web/src/pages/studio/VersionPage.tsx:26:  displayValue,
+apps/web/src/pages/studio/VersionPage.tsx:502:                        <TextCell value={displayValue(f.from)} />
+apps/web/src/pages/studio/VersionPage.tsx:505:                        <TextCell value={displayValue(f.to)} />

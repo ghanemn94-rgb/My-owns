@@ -1,0 +1,84 @@
+## assignment hash
+105e3e5224c6fe4e26b9d4ecd74f07c03ffe91c9abfdba833515204700553b2f  /home/user/My-owns/docs/delivery/assignments/DG5/round-3/release-auditor.md
+## clone HEAD
+5df7ea660d9e0d8ff69ce64fc4375911233c1aec
+shallow=false
+## candidate --ref 660f40c (clone)
+{"stage":"DG5","source":"660f40c7d141b6fb73c145e0ee7a053ceb5905de","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+## candidate working tree (clone HEAD)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+## candidate working tree (repository)
+{"stage":"DG5","source":"working-tree","candidate_id":"sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce","files":2207}
+exit=0
+## manifest
+{'stage_id': 'DG5', 'candidate_id': 'sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce', 'hash_algorithm': 'mth-candidate-v2', 'source_commit': '660f40c7d141b6fb73c145e0ee7a053ceb5905de', 'frozen_at': '2026-10-26T00:26:36Z', 'spec': 2, 'meta_excluded': 'see tools/gates/lib/candidate.mjs META_EXCLUDES', 'entries': 2207}
+## files changed 660f40c..HEAD (top dirs)
+      6 docs/delivery/assignments
+      1 docs/delivery/candidates
+      1 docs/delivery/findings.json
+      1 docs/delivery/progress.md
+      9 docs/delivery/reviews
+     24 docs/delivery/runs
+      1 docs/delivery/stages.json
+    281 docs/delivery/test-evidence
+## decisions.md diff since freeze
+(empty = unchanged)
+7bb7d93 DG5 corrected re-gate: BE-RG3 merged and recorded (F-DG5-100, 140 FIXED_PENDING_VERIFICATION); ADR-0046 amendment; D-191
+## stages.json DG5
+[{"id": "DG5", "stage": "P5", "name": "Configuration automation and outputs", "state": "VERIFYING", "depends_on": ["DG4"], "implementation_owners": ["backend-workflow-engineer", "frontend-ux-engineer", "kpi-benefits-engineer"], "candidate_spec": {"include": ["**"], "exclude": ["trading_agent/**"]}, "candidate": {"candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce", "source_commit": "660f40c7d141b6fb73c145e0ee7a053ceb5905de", "frozen_at": "2026-10-26T00:26:36Z", "manifest_path": "docs/delivery/candidates/DG5/55a411ae9f4e8747.manifest.json"}, "review_rounds": [{"round": 1, "candidate_id": "sha256:ff3bc2c42889d232a84658da7ff850117a8c0c1ba1de6b4c8e32bcc30dae1008", "frozen_at": "2026-10-25T15:47:56Z", "source_commit": "2fe8f853e54ef7ab7b88527f11633c0c3542edd6", "records": {"domain-reviewer": "docs/delivery/reviews/DG5/round-1/domain-reviewer.json", "code-security-reviewer": "docs/delivery/reviews/DG5/round-1/code-security-reviewer.json", "qa-verifier": "docs/delivery/reviews/DG5/round-1/qa-verifier.json"}, "note": "DG5 corrected clean re-gate round 1 (D-190) on candidate ff3bc2c4 (2203 files, source 2fe8f85): the final P5 product of 5a7c189 on 601d7d2 with every implementer run record. All three reviewers run full reviews; then the release audit (D-140 option 1)."}, {"round": 2, "candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce", "frozen_at": "2026-10-26T00:26:36Z", "source_commit": "660f40c7d141b6fb73c145
+## META_EXCLUDES
+9:export const META_EXCLUDES = [
+10-  "docs/delivery/reviews/**",
+11-  "docs/delivery/gates/**",
+12-  "docs/delivery/test-evidence/**",
+13-  "docs/delivery/runs/**",
+14-  "docs/delivery/candidates/**",
+15-  "docs/delivery/handbacks/**",
+16-  "docs/delivery/assignments/**",
+17-  "docs/delivery/findings.json",
+18-  "docs/delivery/progress.md",
+19-  "docs/delivery/stages.json",
+20-];
+21-
+22-// The only candidate spec the gates accept (decision D-005). Narrowing it requires a reviewed change to this file.
+23-export const APPROVED_SPEC = { include: ["**"], exclude: ["trading_agent/**"] };
+24-
+25-export function specPolicyErrors(spec) {
+26-  const errors = [];
+27-  if (!spec || JSON.stringify(spec.include) !== JSON.stringify(APPROVED_SPEC.include)) errors.push(`include must be ${JSON.stringify(APPROVED_SPEC.include)}`);
+28-  if (!spec || JSON.stringify(spec.exclude) !== JSON.stringify(APPROVED_SPEC.exclude)) errors.push(`exclude must be ${JSON.stringify(APPROVED_SPEC.exclude)} (D-005)`);
+29-  return errors;
+30-}
+31-
+32-export function globToRegExp(glob) {
+33-  let re = "";
+34-  for (let i = 0; i < glob.length; i++) {
+## all changed paths 660f40c..HEAD (non test-evidence/runs)
+A	docs/delivery/assignments/DG5/round-2/code-security-reviewer.md
+A	docs/delivery/assignments/DG5/round-2/domain-reviewer.md
+A	docs/delivery/assignments/DG5/round-2/qa-verifier.md
+A	docs/delivery/assignments/DG5/round-3/domain-reviewer.md
+A	docs/delivery/assignments/DG5/round-3/release-auditor.md
+A	docs/delivery/assignments/DG5/round-4/release-auditor.md
+A	docs/delivery/candidates/DG5/55a411ae9f4e8747.manifest.json
+M	docs/delivery/findings.json
+M	docs/delivery/progress.md
+A	docs/delivery/reviews/DG5/round-2/code-security-reviewer.json
+A	docs/delivery/reviews/DG5/round-2/code-security-reviewer.verifications.json
+A	docs/delivery/reviews/DG5/round-2/domain-reviewer.findings.json
+A	docs/delivery/reviews/DG5/round-2/domain-reviewer.json
+A	docs/delivery/reviews/DG5/round-2/qa-verifier.json
+A	docs/delivery/reviews/DG5/round-2/qa-verifier.md
+A	docs/delivery/reviews/DG5/round-2/qa-verifier.verifications.json
+A	docs/delivery/reviews/DG5/round-3/domain-reviewer.json
+A	docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json
+M	docs/delivery/stages.json
+## any deletions/modifications in changed set
+M	docs/delivery/findings.json
+M	docs/delivery/progress.md
+M	docs/delivery/stages.json
+## validate --historical --stage DG4
+PASS gate DG4 (historical)
+exit=0
