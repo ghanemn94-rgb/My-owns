@@ -1,0 +1,65 @@
+++ git checkout -q 660f40c7d141b6fb73c145e0ee7a053ceb5905de
+++ git rev-parse HEAD
+660f40c7d141b6fb73c145e0ee7a053ceb5905de
+++ sed -n 136,158p apps/web/src/pages/studio/api.ts
+
+/** The element's label in the reader's language, falling back to the other language, then to its stable key. */
+export function elementLabel(
+  e: Pick<ConfigElement, "attributes" | "catalogueAttributes" | "stableKey">,
+  locale: "ar" | "en",
+): string {
+  const mine = attrText(e, locale === "ar" ? "labelAr" : "labelEn");
+  if (mine) return mine;
+  const other = attrText(e, locale === "ar" ? "labelEn" : "labelAr");
+  return other || e.stableKey;
+}
+
+/** A value of a diff row or an attribute, as short readable text ("—" is never used for a missing value). */
+export function displayValue(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  // T-DG5-FE-G2: a list of codes (an approver route's ordered roles, a layout's sections) reads in order, "BO · SP".
+  if (Array.isArray(value) && value.every((x) => typeof x === "string" || typeof x === "number"))
+    return value.length === 0 ? null : value.map(String).join(" · ");
+  return JSON.stringify(value);
+}
+
+++ grep -rn 'elementLabel(' apps/web/src '--include=*.ts' '--include=*.tsx'
+++ grep -v 'function elementLabel'
+apps/web/src/pages/studio/ElementsSection.tsx:372:                  const label = elementLabel(e, locale);
+++ ls packages/db/migrations/0062_p5_config_versions.sql 'apps/*/migrations/0062*'
+packages/db/migrations/0062_p5_config_versions.sql
++++ git ls-files
++++ grep -E '/0062[^/]*\.(sql|ts)$'
++++ head -3
+++ f=packages/db/migrations/0062_p5_config_versions.sql
+++ echo packages/db/migrations/0062_p5_config_versions.sql
+packages/db/migrations/0062_p5_config_versions.sql
+++ grep -noE '"?(labelEn|sourceLabelEn|labelAr)"?' packages/db/migrations/0062_p5_config_versions.sql
+++ sort
+++ uniq -c
+++ head
+      1 468:"labelAr"
+      1 468:"sourceLabelEn"
+      1 470:"labelAr"
+      1 470:"sourceLabelEn"
+      1 472:"labelAr"
+      1 472:"sourceLabelEn"
+      1 474:"labelAr"
+      1 474:"sourceLabelEn"
+      1 476:"labelAr"
+      1 476:"sourceLabelEn"
+++ head
++++ git ls-files
++++ grep config-resolver.ts
+++ grep -rn overridden apps/api/src/modules/methodology/config-resolver.ts
+212:      overridden: row !== undefined,
+232:      overridden: true,
+++ head
++++ git ls-files
++++ grep -E 'methodology/diff.ts$'
+++ grep -n resolveElements apps/api/src/modules/methodology/diff.ts
+9:import { resolveElements, type ResolvedElement } from "./config-resolver.ts";
+62:      resolveElements(db, from.id, type, { includeRemoved: true }),
+63:      resolveElements(db, to.id, type, { includeRemoved: true }),

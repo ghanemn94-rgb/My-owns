@@ -1,0 +1,17 @@
+## earlier BLOCKED audits: blocking conditions (verbatim, truncated to 400 chars each)
+### ac68d1b:docs/delivery/reviews/DG5/round-8/release-auditor.json
+   B1. None of the 18 CLOSED_VERIFIED DG5 findings (F-DG5-100, 101, 102, 120 to 124, 140 to 149) has a fix_revision. None went through import-findings --fix / FIXED_PENDING_VERIFICATION. rules.mjs:742 rejects each, and assignment item 4 requires an ancestor fix_revision.
+   B2. The closures of F-DG5-120 and F-DG5-122 (domain round 3) and F-DG5-123 (domain round 4) rest on schema-invalid review records (short source_commit 'bbd6294' and 'fb9c221'). F-DG5-120's latest usable verification is round 2's FAIL/OPEN.
+   B3. checkReviewRounds rejects those two domain records.
+   B4. A write-once breach: reviews/DG5/round-4/code-security-reviewer.verifications.json was deleted in the salvage commit b6c03d7 and re-committed with different content (05305ba).
+   B1 and B2 need fix revisions recorded and the affected closures re-verified by non-owner specialists in a valid round. B3 and B4 touch immutable history and need a user decision (D-056/D-136 precedent). The round-9 decision run must not write APPROVED until the validator's finding and review-round rules pass. I wrote no gate record.
+  nonPASS checks: ['AUD-R8-04-findings', 'AUD-R8-12-validate-stage-DG5']
+### 5a7c189:docs/delivery/reviews/DG5/round-4/release-auditor.json
+   B1 (the old B1/D-136 class, recurring): commit 8fbdc7a added the D-189 row to docs/delivery/decisions.md after the freeze. That file is in the candidate, not in META_EXCLUDES. So the working tree hashes to sha256:ec9b3d94…, and current-mode gate validation fails with 'candidate: current content hashes to … ec9b3d94…, approval covers … d8d83181…; changed: ~docs/delivery/decisions.md'. The assignment'
+   B2 (the old B4 class, recurring at larger scale): the re-gate commit 270ebbf deletes 540 committed files (90 run dirs: 41 backend, 14 frontend, 14 KPI, 10 architect, 3 analyst and 8 qa authoring runs) under the write-once path docs/delivery/runs/DG5 that its parent 601d7d2 holds. The validator reports 1620 write-once errors. D-184's statement that 'implementer runs … are carried unchanged' is false.
+   B3 (a consequence of B1): round-4 qa-verifier.json, the qa record the gate is to cite, contains FAIL check QA-RG4-00b. That check is qa's correct report of B1, and the validator rejects a cited review with a FAIL check. After B1 is fixed, qa needs a clean acceptance record on the same candidate (or another basis the validator accepts).
+  nonPASS checks: ['AUD-RG4-01-clone-identity', 'AUD-RG4-03-mock-gate-validation', 'AUD-RG4-04-regate-method-and-write-once', 'AUD-RG4-06-verdicts-and-basis', 'AUD-RG4-09-incidents-decisions']
+### 152da6e:docs/delivery/reviews/DG5/round-4/release-auditor.json
+   B1 (findings.json acceptance mirror). F-DG5-120 and F-DG5-121 are ACCEPTED_OBSERVATION, and both accepting sidecars exist (domain R3, release-auditor R3). But findings.json has no 'acceptance' object for either finding. tools/gates/lib/rules.mjs:584 requires acceptance.accepted_by to equal the accepting roles [domain-reviewer, release-auditor]; F-DG4-148 carries one, with rationale, owner and accept
+   B1 to B4 or D-190 B1 to B3 recurs.
+  nonPASS checks: ['AUD-RG2-D-04-findings', 'AUD-RG2-D-13-validate-stage-with-gate']

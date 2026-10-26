@@ -1,0 +1,51 @@
+++ git rev-parse HEAD
+660f40c7d141b6fb73c145e0ee7a053ceb5905de
+++ grep -rnoE '\bDG[0-7]\b' apps/web/src/i18n '--include=*.json'
+++ wc -l
+0
+++ grep -rniE 'certified|official PMI|PMI standard|PMI-certified' apps/web/src/i18n
+++ cut -c1-220
+apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+apps/web/src/i18n/en/common.json:133:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It
+++ grep -rnE 'approves nothing real|Illustrative example|not a business approval' apps/web/src/i18n/en
+++ cut -c1-220
+++ head -8
+apps/web/src/i18n/en/prioritization.json:49:      "source_default": "(source default, configured starting point, not a business approval)",
+apps/web/src/i18n/en/prioritization.json:51:      "studio_default": "(Studio default weights published in Playbook Studio, configured starting point, not a business approval)"
+apps/web/src/i18n/en/team.json:3:  "intro": "The people named for this transformation's roles, each with the role's accountability. Assigning a team role is an access change recorded in the audit trail. It is not a busin
+apps/web/src/i18n/en/workflowsP5.json:424:    "reviewIntro": "A configuration review by someone other than the author. It is not a business approval.",
+apps/web/src/i18n/en/playbookP5.json:126:    "banner": "Illustrative example — synthetic. Not Mobily actual performance.",
+apps/web/src/i18n/en/playbookP5.json:127:    "recordBadge": "Illustrative example — synthetic",
+apps/web/src/i18n/en/playbookP5.json:128:    "approvalLabel": "Synthetic demonstration - approves nothing real",
+apps/web/src/i18n/en/playbookP5.json:129:    "illustrative": "Illustrative example only. Replace assumptions with validated company data."
+++ grep -rniE provisional apps/web/src/i18n/en
+++ cut -c1-220
+++ head -5
+apps/web/src/i18n/en/dashboards.json:227:    "arProvisional": "Arabic labels are provisional. Source:",
+apps/web/src/i18n/en/dashboards.json:491:    "arProvisional": "Arabic basis labels are provisional until a native Arabic reviewer confirms them.",
+apps/web/src/i18n/en/phasesP4.json:7:  "arProvisional": "Arabic phase and step texts are a provisional translation of the English source text.",
+apps/web/src/i18n/en/roadmap.json:14:    "provisionalAr": "Provisional Arabic translation of the source text; the English source text is shown below each wave name.",
+apps/web/src/i18n/en/closureP4.json:5:  "arProvisional": "Provisional Arabic translation of the status labels.",
+++ grep -rn 0078FF apps/web/src '--include=*.json' '--include=*.ts' '--include=*.tsx' '--include=*.css'
+++ head -6
+++ cut -c1-200
+apps/web/src/pages/branding/BrandingPage.tsx:8://    "provisional" without one (#0078FF is provisional, not a verified Mobily colour);
+apps/web/src/pages/branding/api.ts:5:// approval reference only records the admin's own brand approval, and #0078FF stays provisional until one is recorded.
+apps/web/src/pages/playbook/feg.test.tsx:204:    const ok = { ...d, primaryColour: "#0078FF", reportHeaderEn: "" };
+apps/web/src/pages/playbook/feg.test.tsx:209:      primaryColour: "#0078FF",
+apps/web/src/pages/playbook/feg.test.tsx:396:  primaryColour: "#0078FF",
+apps/web/src/pages/playbook/feg.test.tsx:491:      primaryColour: "#0078FF",
+++ grep -rn DG7 apps packages '--include=*.ts' '--include=*.tsx'
+++ grep -v node_modules
+++ head -10
+++ cut -c1-220
+apps/web/src/components/form-framework/form-framework.test.tsx:3:// data; a draft, a comment or an attachment approves nothing (no G1-G6 business approval, never DG0-DG7).
+apps/web/src/components/form-framework/extension-fields.test.tsx:3:// SYNTHETIC data; nothing here grants or records a G1-G6 business approval, and no DG0-DG7 label is shown.
+apps/web/src/components/form-framework/extension-hosts-twelve.test.tsx:3:// nothing here grants or records a G1-G6 business approval, and no DG0-DG7 label is shown.
+apps/web/src/components/form-framework/extension-hosts.test.tsx:3:// SYNTHETIC data; nothing here grants or records a G1-G6 business approval, and no DG0-DG7 label is shown.
+apps/web/src/pages/change-requests/Impact.tsx:4:// submission, snapshot or decision (G1-G6 are business approvals; nothing here touches DG0-DG7). An item the caller
+apps/web/src/pages/change-requests/api.ts:7:// by T11 (ADR-0036 §4). Nothing here approves anything, and nothing touches the engineering gates DG0-DG7.
+apps/web/src/pages/change-requests/change-requests.test.tsx:3:// change request is decided in a business approval inside the product, never an engineering gate (DG0-DG7).
+apps/web/src/pages/change-requests/ChangeRequestsPage.tsx:8://    approvals inside the product, never the engineering gates DG0-DG7.
+apps/web/src/pages/closure/ClosurePage.tsx:12://    (never DG0-DG7). Only the requester submits again (round 2 after a return) or withdraws while it is in approval;
+apps/web/src/pages/closure/closure.test.tsx:3:// SYNTHETIC data; a transition decision is decided through a business approval inside the product, never DG0-DG7.
