@@ -123,7 +123,16 @@ describe("module composition (D-048, P2)", () => {
         "automation",
         "launch",
         "health",
+        // P6 (T-DG6-BE-A; p6-plan §3 seam 21): route-free scaffolds until their owners fill them.
+        "integrations",
+        "search",
+        "assistant",
+        "operations",
       ]);
+      for (const m of ["integrations", "search", "assistant", "operations"]) {
+        const reg = modules.find((x) => x.module === m);
+        expect(reg).toMatchObject({ status: reg!.routes.length > 0 ? "active" : "scaffold", deliversIn: "P6" });
+      }
       // A P5 module is a scaffold until its first route file is filled, then active (T-DG5-BE-H: automation routes
       // its rules, versions and catalogue; the others stay scaffolds until their owners fill them).
       for (const m of ["forms", "procedures", "automation", "launch", "health"]) {

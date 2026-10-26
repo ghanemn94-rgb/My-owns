@@ -3330,6 +3330,70 @@ export function mapP5BrandingError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P6 slices E and F (T-DG6-BE-A; p6-work-split §E/F.1, exact; ADR-0051 §2, ADR-0052 §1): the 0098/0099 guards.
+ *   sensitive_record_grant_one_active_key                   -> 409 sensitive_grant.duplicate
+ *   sensitive_record_grant_not_self                         -> 422 sensitive_grant.not_self
+ *   sensitive_record_grant_transition                       -> 422 invalid_transition ("Only an active grant can be revoked.")
+ *   record_sensitivity_record_ref, sensitive_record_grant_record_ref -> 404 not_found (the record does not exist in the
+ *                                                              transformation; existence is not disclosed)
+ *   record_sensitivity_record_key, upload_policy_organization_key -> 409 version_conflict (a concurrent If-Match "0"
+ *                                                              create of the same row)
+ *   upload_policy_allowed_types, upload_policy_max_bytes    -> 400 validation
+ *   inbox_notification_deep_link_once, inbox_notification_link_token_key, evidence_content_detected_type,
+ *   evidence_content_detected_media_type                    -> 500: no business code ("unmapped"); the API never sends
+ *     values that violate them (BE-C and BE-D prove it). They are named here only because the generic SQLSTATE
+ *     fallbacks would otherwise answer 422 validation.constraint (23514) or 409 duplicate (23505) for them.
+ */
+export function mapP6AccessHardeningError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "sensitive_record_grant_one_active_key":
+      return problems.duplicate(
+        "sensitive_grant.duplicate",
+        "This person already has an active grant for this record.",
+      );
+    case "sensitive_record_grant_not_self":
+      return problems.businessRule("sensitive_grant.not_self", "You cannot grant access to yourself.");
+    case "sensitive_record_grant_transition":
+      return problems.invalidTransition("Only an active grant can be revoked.");
+    case "record_sensitivity_record_ref":
+    case "sensitive_record_grant_record_ref":
+      return problems.notFound();
+    case "record_sensitivity_record_key":
+    case "upload_policy_organization_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "upload_policy_allowed_types":
+      return problems.validation([
+        {
+          pointer: "/allowedTypes",
+          code: "validation.upload_policy_allowed_types",
+          message: "Choose one or more of the allowed file types.",
+        },
+      ]);
+    case "upload_policy_max_bytes":
+      return problems.validation([
+        {
+          pointer: "/maxBytes",
+          code: "validation.upload_policy_max_bytes",
+          message: "The size limit must be between 1 and 26214400 bytes.",
+        },
+      ]);
+    case "inbox_notification_deep_link_once":
+    case "inbox_notification_link_token_key":
+    case "evidence_content_detected_type":
+    case "evidence_content_detected_media_type":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3369,6 +3433,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5DemoEnvironment !== null) return p5DemoEnvironment;
   const p5Branding = mapP5BrandingError(error); // P5 slice I (T-DG5-BE-R; ADR-0049 §8, §11)
   if (p5Branding !== null) return p5Branding;
+  const p6AccessHardening = mapP6AccessHardeningError(error); // P6 slices E/F (T-DG6-BE-A; ADR-0051 §2, ADR-0052 §1)
+  if (p6AccessHardening !== null) return p6AccessHardening;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

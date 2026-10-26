@@ -120,3 +120,12 @@ export {
   type BenefitFormulaVersionChange,
   type MaterialChangePort,
 } from "./material-change.ts";
+// P6 (T-DG6-BE-A wiring point; ADR-0052 §5): the SecretProvider port and registry. BE-E adds the env and file providers.
+export {
+  BUILT_IN_SECRET_PROVIDER_IDS,
+  createSecretProviderRegistry,
+  type SecretProvider,
+  type SecretProviderRegistry,
+  type SecretRef,
+  type SecretValue,
+} from "./secrets.ts";

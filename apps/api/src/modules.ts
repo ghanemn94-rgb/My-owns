@@ -185,6 +185,33 @@ export const API_MODULES = {
     responsibility: "The 25-question health check, scoring schemes and assessments (P5 slice H)",
     dependsOn: ["platform", "audit", "access", "organization", "transformations", "methodology", "tasks"],
   },
+  // P6 modules (p6-plan §2, §3 seam 21; T-DG6-BE-A). Each reads business records for a principal through access's
+  // ReadScope (ADR-0051 §1); access imports none of them, and no P1-P5 module imports a P6 module.
+  integrations: {
+    responsibility:
+      "Connectors, integration runs, test adapters, imports (staging, validation, commit), webhooks and outbound writes (P6 slices A-B)",
+    // No domain module: each domain registers its import target into the ImportTargetRegistry at composition
+    // (server.ts; kpi first, KBE-A), the AutomationActionRegistry pattern (p6-plan §2). methodology: imports validate
+    // custom fields against the pinned form schema through ConfigResolver (seam 24). jobs: the outbox for runs and
+    // sends after commit; tasks: work items for failures and reviews.
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "methodology", "jobs", "tasks"],
+  },
+  search: {
+    responsibility: "The global scoped search, its index, saved views and help topics (P6 slice H)",
+    dependsOn: ["platform", "audit", "access", "organization", "transformations"],
+  },
+  assistant: {
+    responsibility:
+      "The optional AI assistant: settings, the ModelProvider port, retrieval, citations and guardrails (P6 slice D)",
+    // Reads only through search and access's ReadScope, and imports no module that writes business records: no write
+    // path by construction (REQ-S17-008; p6-plan §2).
+    dependsOn: ["platform", "audit", "access", "search"],
+  },
+  operations: {
+    responsibility: "Operational exceptions of failed jobs and connector runs, and their acknowledgement (P6 slice J)",
+    // A failed run reaches operations through the outbox (an event, p6-plan §2), so integrations never imports it.
+    dependsOn: ["platform", "audit", "access", "organization", "transformations", "jobs", "tasks"],
+  },
 } as const satisfies Record<string, { responsibility: string; dependsOn: readonly string[] }>;
 
 export type ApiModule = keyof typeof API_MODULES;
@@ -227,13 +254,20 @@ export const P4_MODULES: readonly ApiModule[] = ["tasks", "governance", "raid", 
  */
 export const P5_MODULES: readonly ApiModule[] = ["forms", "procedures", "automation", "launch", "health"];
 
-/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4 + P5). */
+/**
+ * Modules added in P6 (p6-plan §3 seam 21; p6-work-split §E/F.1 BE-A): each with a public index.ts and its own test
+ * suite. BE-A creates them with stub route files; the owning tasks fill them (p6-plan §5.1).
+ */
+export const P6_MODULES: readonly ApiModule[] = ["integrations", "search", "assistant", "operations"];
+
+/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4 + P5 + P6). */
 export const IMPLEMENTED_MODULES: readonly ApiModule[] = [
   ...P1_MODULES,
   ...P2_MODULES,
   ...P3_MODULES,
   ...P4_MODULES,
   ...P5_MODULES,
+  ...P6_MODULES,
 ];
 
 /** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
@@ -245,9 +279,11 @@ export const SECTION16_MODULES = {
   workflows: ["workflows", "procedures", "automation"],
   // P4 (p4-plan §3 seam 19): the benefit engine joins the KPI engine under "formulas/KPI". P5: health-check scoring.
   "formulas/KPI": ["kpi", "benefits", "health"],
-  reporting: ["reporting"],
-  // P5: the form builder is administration (Playbook Studio's form_schema kind, ADR-0041).
-  admin: ["admin", "forms"],
+  // P6 (p6-plan §3 seam 21): global search and the assistant are read paths over the records.
+  reporting: ["reporting", "search", "assistant"],
+  // P5: the form builder is administration (Playbook Studio's form_schema kind, ADR-0041). P6: integrations and
+  // operational exceptions are administered (Administration > Integrations, Operations).
+  admin: ["admin", "forms", "integrations", "operations"],
 } as const satisfies Record<string, readonly ApiModule[]>;
 
 /** P1 scaffolds: they exist, but deliver behaviour in a later stage and register no routes in P1 (D-048). */
