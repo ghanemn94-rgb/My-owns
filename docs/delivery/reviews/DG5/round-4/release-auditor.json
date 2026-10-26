@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 4,
+  "candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce",
+  "source_commit": "660f40c7d141b6fb73c145e0ee7a053ceb5905de",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb",
+    "session_id": "47f2e9eb-3101-4548-913f-2bc2ddbbe672"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor authored no DG5 implementation, test, register row, ADR, repair, delivery decision, re-gate commit, finding fix or findings.json entry. That includes T-DG5-BE-RG3 (backend-workflow-engineer), the ADR-0046 amendment and D-184 to D-192 (delivery-orchestrator) and the re-gate commit 2fe8f85. qa-verifier is listed among the authors only for its pre-freeze acceptance suites (tests/qa, e2e), which the protocol allows. This is part 2 of 2 of the audit (D-140 option 1), the decision run; my part-1 record (round 3, session 69bfb4f2) is the detailed basis. I re-ran every item myself in a new complete, non-shallow git clone under my private $TMPDIR (no worktree, D-082), with the repository read-only. I read the specialist records as objects of the audit, not as a substitute for my own checks. I wrote only this record, my evidence under docs/delivery/test-evidence/DG5/audit/round-4/ and docs/delivery/gates/DG5.json (decision BLOCKED)."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-4/release-auditor.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093",
+    "REQ-DLV-037",
+    "REQ-S01-002", "REQ-S01-003", "REQ-S01-004", "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008", "REQ-S06-009", "REQ-S06-010",
+    "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020", "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026",
+    "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007", "REQ-S13-008", "REQ-S13-009", "REQ-S13-010",
+    "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004", "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021",
+    "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004", "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-RG2-D-01-clone-identity",
+      "procedure": "Verify the assignment hash. Make a new complete git clone (not a worktree) under $TMPDIR and check that it is not shallow and passes a connectivity fsck. Recompute the candidate with --ref 660f40c, on the clone's working tree at HEAD and on the repository's working tree. Read the manifest and stages.json DG5. Confirm that 660f40c..HEAD changes only meta-excluded records and that decisions.md is unchanged since the freeze. Run validate --historical --stage DG4.",
+      "command": "sha256sum <assignment>; git clone /home/user/My-owns $TMPDIR/c; git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG5 --ref 660f40c7d141b6fb73c145e0ee7a053ceb5905de; node tools/gates/candidate.mjs --stage DG5 (clone, repository); git diff --name-status 660f40c HEAD; git log -- docs/delivery/decisions.md; node tools/gates/validate.mjs --historical --stage DG4",
+      "environment": "Repository /home/user/My-owns at HEAD 2dd357a; clone $TMPDIR/c (non-shallow); Node from the sandbox PATH; no network.",
+      "expected": "Assignment sha256 ef30c2a5...ca0f; candidate sha256:55a411ae...3a24ce with 2207 files in all three computations; post-freeze changes meta-excluded only; decisions.md unchanged since 660f40c; DG4 historical PASS.",
+      "actual": "The assignment hash matches. The clone is shallow=false; fsck exit 0. All three computations give sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce with 2207 files. The manifest records source_commit 660f40c7d141b6fb73c145e0ee7a053ceb5905de, frozen_at 2026-10-26T00:26:36Z and 2207 entries, matching stages.json. 660f40c..HEAD adds files under assignments, candidates, reviews, runs and test-evidence (DG5) and modifies findings.json, progress.md and stages.json; all of these are meta-excluded. decisions.md last changed in 7bb7d93, an ancestor of 660f40c, and has not changed since the freeze. 'PASS gate DG4 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/01-clone-identity.log"]
+    },
+    {
+      "id": "AUD-RG2-D-02-independence-provenance",
+      "procedure": "For every DG5 reviewer and auditor run, read meta.json and check: exit 0, success, is_error false, process and bash sandbox, sha256(sandbox.json) == meta.process_sandbox_sha256, external_config_changed, deleted and discarded empty, and no tool write outside the role's areas. For each gate record, check invocation_reference against the meta, role, session against the result session, record and sidecar sha256 against meta.tool_authored, the assignment sha and distinct sessions. Check that no reviewer role appears among the DG5 implementation runs.",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/prov.py",
+      "environment": "Repository at 2dd357a, read-only.",
+      "expected": "Every review run is real, successful and sandboxed, with a matching sandbox.json and no external config change. The gate records are bound to distinct runs, and no reviewer implemented DG5.",
+      "actual": "16 completed DG5 reviewer and auditor runs (qa authoring A to F2, RG2 DOM R1 to R3, SEC R1 and R2, QA R1 and R2, AUDIT-V): all have exit 0, success, is_error false, both sandboxes, a matching sandbox sha, external_config_changed [], deleted [], discarded [] and no out-of-area write. 0 problems. Only two folders have no meta: this in-flight run and the orphaned implementer folder FE-AB2, which is kept for provenance. Gate records code-security R2 (2c88c5f6), qa R2 (e008198e), domain R3 (71395da3), plus domain R2 (70461a6e) and my R3 (69bfb4f2): each invocation_reference equals its meta, the role matches, the session equals the result session, and the record and every sidecar equal tool_authored. Each assignment sha matches. All 5 sessions are distinct. Implementation runs are by solution-architect, backend-workflow-engineer, kpi-benefits-engineer, frontend-ux-engineer and transformation-analyst only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/02-provenance.log", "docs/delivery/test-evidence/DG5/audit/round-4/scripts/prov.py"]
+    },
+    {
+      "id": "AUD-RG2-D-03-verdicts-basis",
+      "procedure": "Read the three gate records and domain's round-2 full review. Check verdict PASS, the same candidate_id, a full 40-hex source_commit in every DG5 review record on this branch and no non-PASS check. Judge whether domain's round-3 acceptance record, cited together with round-2 code-security and qa, is a sound basis (D-192, as D-183 and D-189).",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/prov.py (gate-record section)",
+      "environment": "Repository at 2dd357a.",
+      "expected": "Three PASS records on 55a411ae with full source_commits, all checks PASS, sound basis.",
+      "actual": "code-security R2: PASS, 26/26 checks PASS. qa R2: PASS, 18/18. domain R3: PASS, 6/6. domain R2 (full): PASS, 16/16. All are on sha256:55a411ae... with source_commit 660f40c7d141b6fb73c145e0ee7a053ceb5905de. All 8 DG5 review records on this branch carry a full 40-hex source_commit (old B2/B3 do not recur), and no gate record has a FAIL or BLOCKED check (D-190 B3 does not recur). The basis is sound. Round 3 reviewed the identical candidate (check 01), its scope was only domain's own two Low findings, and domain's full round-2 review is itself PASS on this candidate with 78/78 requirements. This follows the D-183 and D-189 pattern.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/02-provenance.log", "docs/delivery/reviews/DG5/round-2/code-security-reviewer.json", "docs/delivery/reviews/DG5/round-2/qa-verifier.json", "docs/delivery/reviews/DG5/round-3/domain-reviewer.json", "docs/delivery/reviews/DG5/round-2/domain-reviewer.json"]
+    },
+    {
+      "id": "AUD-RG2-D-04-findings",
+      "procedure": "List every DG5 finding in findings.json: status, severity, mandatory flag, owner against verifier, and for CLOSED_VERIFIED a full 40-hex fix_revision that is an ancestor of 660f40c. Check that findings.json mirrors the latest sidecar entries: status, verification and, for acceptances, the acceptance.accepted_by roles that the validator requires (rules.mjs:584, as F-DG4-148 has). Re-judge F-DG5-120 and 121 by re-inspecting the code at 660f40c.",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/find.py plus sidecar mirror; git merge-base --is-ancestor; grep elementLabel/displayValue (studio/api.ts), migration 0062, config-resolver.ts overridden, methodology/diff.ts resolveElements; node tools/gates/validate.mjs --stage DG5 with the gate present",
+      "environment": "Clone $TMPDIR/c at 2dd357a (findings) and at 660f40c (code); repository.",
+      "expected": "Every DG5 finding is terminal; findings.json mirrors the sidecars, including acceptance.accepted_by = [domain-reviewer, release-auditor] for F-DG5-120 and 121; 0 unresolved Critical/High or mandatory findings.",
+      "actual": "Substance holds. There are 4 DG5 findings. F-DG5-100 (Medium, not mandatory) is CLOSED_VERIFIED by code-security-reviewer, its reporter (owner backend-workflow-engineer), with fix_revision 32fc1ce25960a3e3b9069551886e443b4824f1da: full 40-hex and an ancestor of 660f40c. F-DG5-140 (Low) is CLOSED_VERIFIED by qa-verifier, its reporter, with the same full ancestor fix_revision. F-DG5-120 and F-DG5-121 (Low, not mandatory, owner frontend-ux-engineer) have status ACCEPTED_OBSERVATION. Their latest sidecar entries (domain R3 and my R3) both read PASS / ACCEPTED_OBSERVATION. My judgement is unchanged on re-inspection. F-120: elementLabel reads only labelEn/labelAr; 0062 seeds sourceLabelEn and labelAr but no labelEn; the single caller is ElementsSection.tsx:372. It is an admin-only English fallback. F-121: overridden = row !== undefined (config-resolver.ts:212), while diffVersions compares the resolveElements output of both versions (diff.ts:52-63), so the change list is accurate. Both defects are presentation only. 0 unresolved Critical/High, 0 unresolved mandatory, 0 non-terminal. RECORD DEFECT: neither F-DG5-120 nor F-DG5-121 in findings.json has an 'acceptance' object (rationale, owner, accepted_by). The validator therefore reports 'findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)' for both (see check 13). findings.json does not fully mirror the sidecars, so this item fails. Cosmetic observation O-R4-2: their history holds the domain round-3 entry twice, because the round-3 import replayed domain's sidecar.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/03-findings.log", "docs/delivery/test-evidence/DG5/audit/round-4/04-f120-f121-inspection.log", "docs/delivery/test-evidence/DG5/audit/round-4/11-post-verification-changes.log", "docs/delivery/test-evidence/DG5/audit/round-4/13-validate-stage-DG5-final-and-dry-run.log", "docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json", "docs/delivery/reviews/DG5/round-3/release-auditor.verifications.json", "docs/delivery/reviews/DG5/round-2/code-security-reviewer.verifications.json", "docs/delivery/reviews/DG5/round-2/qa-verifier.verifications.json"]
+    },
+    {
+      "id": "AUD-RG2-D-05-write-once",
+      "procedure": "Search every commit of 601d7d2..HEAD, plain and with -m --full-history, for D/M/R/T under docs/delivery/reviews/DG5 or docs/delivery/runs/DG5. Run the stage validator.",
+      "command": "git log [-m --full-history] --name-status --diff-filter=DMRT 601d7d2..HEAD -- docs/delivery/reviews/DG5 docs/delivery/runs/DG5; node tools/gates/validate.mjs --stage DG5",
+      "environment": "Clone $TMPDIR/c at 2dd357a; repository.",
+      "expected": "0 entries; no write-once error from the validator.",
+      "actual": "0 entries in both forms. Neither the validator run without a gate file nor the run with my draft gate (check 13) reports a write-once error. The old B4 and D-190 B2 do not recur.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/05-writeonce-regate.log", "docs/delivery/test-evidence/DG5/audit/round-4/12-validators.log", "docs/delivery/test-evidence/DG5/audit/round-4/13-validate-stage-DG5-final-and-dry-run.log"]
+    },
+    {
+      "id": "AUD-RG2-D-06-regate-method",
+      "procedure": "Compare 2fe8f85 with 5a7c189 outside docs/delivery. Compare runs/DG5 blob by blob across 601d7d2, 2fe8f85 and HEAD. Check that each run folder 2fe8f85 added is byte-identical to ac68d1b or 5a7c189 and is not a review run. Group what 5a7c189 holds under docs/delivery that 2fe8f85 lacks. Check findings.json and stages.json against the base and decisions.md for removed lines. Judge the result against D-056.",
+      "command": "git diff --name-only 5a7c189 2fe8f85 -- . ':!docs/delivery'; python3 over git ls-tree -r; comm -23; git rev-parse <rev>:path",
+      "environment": "Clone $TMPDIR/c (full history).",
+      "expected": "Product unchanged; base runs only added to; exclusions only DG5 review artefacts.",
+      "actual": "0 files differ outside docs/delivery. runs/DG5: base 540, 2fe8f85 689, HEAD 743. 0 base files are missing or changed at 2fe8f85 or HEAD, and 0 2fe8f85 files are missing or changed at HEAD. 2fe8f85 added 25 run folders, all implementer runs (ARCH, BE, FE, including the orphaned FE-AB2), each byte-identical to ac68d1b or 5a7c189; none is a review run. Excluded from 5a7c189: assignments/DG5/round-1..5, three earlier candidate manifests, reviews/DG5/round-1..4, the 11 RG-* reviewer and audit runs, and test-evidence/DG5/{code-security,domain,qa}/round-1..4 and qa/tests. All of it is reviewer or audit material. findings.json and stages.json are identical to 601d7d2, and decisions.md lost no line. This is D-056 path C, done exactly; the method is sound. (The log's first folder count of 1 used a wrong path index; the corrected listing of 25 follows in the same log.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/05-writeonce-regate.log"]
+    },
+    {
+      "id": "AUD-RG2-D-07-incidents-orchestrator-decisions",
+      "procedure": "Read every .rc file and the e2e totals of orchestrator-D-191/verify-rg3-7bb7d93. Check that 32fc1ce is an ancestor of 7bb7d93 and that 7bb7d93..660f40c changes no product file. Review the product delta 2fe8f85..660f40c and look for orphan or salvage material. Review the orchestrator's changes since my verification run and the earlier BLOCKED audit records. Judge D-190, D-191 and D-192.",
+      "command": "cat verify-rg3-7bb7d93/*.rc; grep totals e2e-*.log; git diff --name-only 7bb7d93 660f40c; git diff --stat 2fe8f85 660f40c -- . ':!docs/delivery'; git diff --name-status d5f97a1 HEAD; git show ac68d1b:.../round-8/release-auditor.json; git show 5a7c189:.../round-4/release-auditor.json",
+      "environment": "Clone $TMPDIR/c; repository at 2dd357a.",
+      "expected": "15/15 rc files at 0, e2e 470/470 twice, the verified tree is the frozen product, no undisclosed salvage, and sound decisions.",
+      "actual": "All 15 rc files are 0 and e2e reports '470 passed' twice. 32fc1ce is an ancestor of 7bb7d93. 7bb7d93..660f40c changes only progress.md and test-evidence. The product delta since 2fe8f85 is 14 files: the BE-RG3 reporting fixes and the ADR-0046 amendment. There is no orphan or salvage material on this branch. Since my verification run the orchestrator changed only findings.json (my sidecar imported, but without an acceptance object; see check 04), progress.md (round-3 O1 corrected) and stages.json (round-4 entry), and committed my round-3 evidence. The two earlier BLOCKED audits are both verdict BLOCKED: ac68d1b round 8, and the first re-gate's, which is at 5a7c189:docs/delivery/reviews/DG5/round-4/release-auditor.json, not at the round-3 path the assignment names (O-R4-3). D-190 correctly diagnosed and corrected B1 to B3, D-191 rightly refused to accept a Medium, and D-192 follows D-183 and D-189. All three are sound.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/06-incidents-d191.log", "docs/delivery/test-evidence/DG5/audit/round-4/11-post-verification-changes.log", "docs/delivery/test-evidence/DG5/orchestrator-D-191/verify-rg3-7bb7d93/e2e-unset.log", "docs/delivery/test-evidence/DG5/orchestrator-D-191/verify-rg3-7bb7d93/e2e-cutf8.log"]
+    },
+    {
+      "id": "AUD-RG2-D-08-requirements",
+      "procedure": "Extract the assignment's 78 IDs and compare them with the requirements.csv rows (req_id) whose final_gate is DG5. Check each ID is in qa's requirements_checked AND in domain R3's or code-security's. Run validate --register DG5.",
+      "command": "python3 over requirements.csv and the three records; node tools/gates/validate.mjs --register DG5",
+      "environment": "Repository at 2dd357a.",
+      "expected": "78 = 78, all covered, register PASS.",
+      "actual": "78 unique IDs, identical to the register's 78 final_gate=DG5 rows, all IMPLEMENTED. Coverage: qa 78/78, domain R3 78/78, code-security 42. Every ID meets 'qa AND (domain OR code-security)'. 'PASS register rules at DG5', exit 0. (A first comparison read a non-existent 'id' column; re-run on req_id: True.)",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-037"],
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/07-requirements.log"]
+    },
+    {
+      "id": "AUD-RG2-D-09-decisions",
+      "procedure": "Parse the decisions.md rows D-141 to D-191: presence, 6 cells, non-empty decision and rationale. Read D-192 in progress.md. Quote verbatim.",
+      "command": "python3 parser over docs/delivery/decisions.md; grep D-192 docs/delivery/progress.md",
+      "environment": "Clone $TMPDIR/c at 2dd357a.",
+      "expected": "51/51 rows present with rationale; D-192 recorded.",
+      "actual": "D-141 to D-191: 51/51 present, each with 6 cells, a 716-7653 character decision and a non-empty rationale/evidence cell. D-184: 'DG5 is re-gated on a clean base (the D-056 path C precedent). The final P5 product is carried unchanged; DG5's review history stays on the old branch.' D-190: 'The release audit's verification run on the first re-gate branch (`T-DG5-RG-AUDIT-V`, candidate `d8d83181`) confirmed the substance (78/78 requirements, ten closures with full fix revisions, F-DG5-145 and 146 accepted by qa and the auditor) but BLOCKED on three record defects, all the orchestrator's.' D-191: 'First recorded in `progress.md` while `decisions.md` was frozen (D-190); copied here before the next freeze, because the candidate is re-frozen after this repair anyway.' D-192 (progress.md): 'Decision (as D-183 and D-189): every finding must be terminal before the gate. A fix would need a re-freeze, a full verification and a full round 3 (about 7–8 h); acceptance needs a short domain run and the auditor.'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/09-decisions.log"]
+    },
+    {
+      "id": "AUD-RG2-D-10-evidence-honesty",
+      "procedure": "For every log cited by the four specialist records, grep for 'N failed', non-zero exit/EXIT, 'Timed out'/'Test timeout', flaky, ELIFECYCLE, 'Command failed' and ERR!. Confirm that each hit's file is named in the record or narrative, and read the explanation for every genuine failure. Check that every evidence entry exists.",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/hon.py; python3 context extraction (08-evidence-honesty-scan.log)",
+      "environment": "Repository at 2dd357a.",
+      "expected": "Every non-zero exit, failure and timeout is disclosed and explained, and every evidence path exists.",
+      "actual": "Evidence entries 43, 78, 30 and 79, none missing. Every hit's file is named in its record or narrative, and each genuine failure is explained. code-security: 20-unit-node22 exit 1 (Vitest onTaskUpdate RPC timeout, no failed test); the static wrapper's 'syntax error' (script edited while bash read it, after all steps exited 0); e2e probe attempt 1 (format not offered); 46c attempt 1 (no rsync); mutant exits by design. qa: the 02 RPC-timeout attempt; the 05 e2e unset run (3 'Test timeout of 30000ms' under load, specs re-run green, C.UTF-8 470/470); the PROBE-ERROR attempts; F-140 mutants by design. All are in the record and RUN-NOTES.md. domain: probe-prod-en-run1 failed on two soft assertions of its own probe, explained in R2 and R3. The other hits are passing test titles or 'grep exit=1 (1 = none)'. Nothing is undisclosed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/08-evidence-honesty-scan.log", "docs/delivery/test-evidence/DG5/audit/round-4/scripts/hon.py", "docs/delivery/test-evidence/DG5/qa/round-2/RUN-NOTES.md"]
+    },
+    {
+      "id": "AUD-RG2-D-11-product-vs-engineering-gates",
+      "procedure": "In the clone at 660f40c, grep the i18n catalogues for DG0 to DG7 and for certification or official-PMI claims. Grep the not-a-business-approval, synthetic and provisional labels and #0078FF. Grep the code for DG7.",
+      "command": "grep -rnoE '\\bDG[0-7]\\b' apps/web/src/i18n --include=*.json; grep -rniE 'certified|official PMI|PMI standard' apps/web/src/i18n/en; grep approves nothing real|Illustrative example|not a business approval; grep provisional, 0078FF; grep -rn DG7 apps packages",
+      "environment": "Clone $TMPDIR/c at 660f40c.",
+      "expected": "No user-facing DG label and no certification claim. Approvals are labelled not real, demo data is synthetic and labelled, and #0078FF is provisional.",
+      "actual": "DG0 to DG7 occurs 0 times in the catalogues. In code it appears only in comments stating that G1 to G6 never touch DG0 to DG7. The PMI wording is 'not an official PMI standard' and 'a practical synthesis inspired by PMI...', with the matching Arabic negation. 'not a business approval' and 'Illustrative example — synthetic. Not Mobily actual performance.' are present. '#0078FF is a provisional colour, not a verified Mobily colour'. Nothing grants a real business, Finance or IT approval, and product G6 does not imply DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-PB-001", "REQ-PB-089", "REQ-S18-001"],
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/10-product-vs-engineering-gates.log"]
+    },
+    {
+      "id": "AUD-RG2-D-12-validators-before-records",
+      "procedure": "Before writing my records, run validate --stage DG5, --historical for DG3 to DG0 (DG4 is in check 01) and --pipeline.",
+      "command": "node tools/gates/validate.mjs --stage DG5; node tools/gates/validate.mjs --historical --stage DG3|DG2|DG1|DG0; node tools/gates/validate.mjs --pipeline",
+      "environment": "Repository at 2dd357a, before my round-4 records.",
+      "expected": "Historical and pipeline exit 0; --stage DG5 reports only the gate file not yet written.",
+      "actual": "Historical DG3, DG2, DG1 and DG0: PASS, exit 0. 'PASS pipeline (active stage: DG5 VERIFYING)', exit 0. --stage DG5: exit 1 with exactly 1 problem, 'gate DG5: file not found (docs/delivery/gates/DG5.json)'. Without a gate file the validator stops at this problem and does not reach the finding-acceptance rules. That is why neither this run nor my round-3 verification run could see the defect in check 13 at that point.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/12-validators.log"]
+    },
+    {
+      "id": "AUD-RG2-D-13-validate-stage-with-gate",
+      "procedure": "After writing my record and a draft APPROVED gate, run validate --stage DG5 in the repository. Then run it in my disposable clone at 2dd357a with my draft records copied in: (A) with findings.json as committed; (B) with an acceptance object {accepted_by: [domain-reviewer, release-auditor]} added to F-DG5-120 and 121 in the clone only, to isolate every remaining error.",
+      "command": "node tools/gates/validate.mjs --stage DG5 (repository; clone A; clone B)",
+      "environment": "Repository at 2dd357a with my round-4 record and draft gate; disposable clone $TMPDIR/c (findings.json restored afterwards).",
+      "expected": "Only errors that concern my own in-flight run_id DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb.",
+      "actual": "Repository and clone A: exit 1 with 3 problems. (1) 'review release-auditor (.../round-4/release-auditor.json) invocation: file not found (docs/delivery/runs/DG5/DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb/meta.json)': my own in-flight run, acceptable. (2) 'finding F-DG5-120 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)'. (3) The same for F-DG5-121. Problems 2 and 3 do NOT concern my run. They come from findings.json, which has no acceptance object for either finding (F-DG4-148 carries one: rationale, owner, accepted_by). Clone B: exit 1 with only problem (1). So the acceptance mirror is the only defect besides my in-flight meta. Under the assignment's rule, any other error means BLOCKED.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/13-validate-stage-DG5-final-and-dry-run.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "BLOCKED",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/audit/round-4/01-clone-identity.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/02-provenance.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/03-findings.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/04-f120-f121-inspection.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/05-writeonce-regate.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/06-incidents-d191.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/07-requirements.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/08-evidence-honesty-scan.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/09-decisions.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/10-product-vs-engineering-gates.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/11-post-verification-changes.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/12-validators.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/13-validate-stage-DG5-final-and-dry-run.log",
+    "docs/delivery/test-evidence/DG5/audit/round-4/scripts/prov.py",
+    "docs/delivery/test-evidence/DG5/audit/round-4/scripts/find.py",
+    "docs/delivery/test-evidence/DG5/audit/round-4/scripts/hon.py",
+    "docs/delivery/reviews/DG5/round-3/release-auditor.json",
+    "docs/delivery/reviews/DG5/round-3/release-auditor.verifications.json"
+  ],
+  "reviewed_at": "2026-10-26T05:15:00Z",
+  "summary": "Audit part 2 of 2 (decision run): BLOCKED on candidate sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce (2207 files, source 660f40c7d141b6fb73c145e0ee7a053ceb5905de). The gate fails on one record-integrity condition. It belongs to the orchestrator, and I cannot waive it.\n\nB1 (findings.json acceptance mirror). F-DG5-120 and F-DG5-121 are ACCEPTED_OBSERVATION, and both accepting sidecars exist (domain R3, release-auditor R3). But findings.json has no 'acceptance' object for either finding. tools/gates/lib/rules.mjs:584 requires acceptance.accepted_by to equal the accepting roles [domain-reviewer, release-auditor]; F-DG4-148 carries one, with rationale, owner and accepted_by. So validate --stage DG5 reports 'findings.json accepted_by does not mirror the accepting sidecars' for both findings. That error is not about my in-flight run, and the assignment requires BLOCKED for any such error. Cause: import-findings.mjs updates status, verification and history but does not write acceptance. The validator could not show the gap earlier, because without a gate file it stops at 'file not found' (my round-3 run and check 12 here). Remedy: the orchestrator adds acceptance {rationale, owner: frontend-ux-engineer, accepted_by: [domain-reviewer, release-auditor]} to both findings. findings.json is meta-excluded, so the candidate stays 55a411ae. Then a new decision run on the same candidate. My dry run in a clone (check 13, B) shows that after this fix the only remaining error is my own in-flight meta. For future verification runs: run validate --stage with a draft gate in a disposable clone, so these rules execute before the decision run.\n\nEverything else holds, re-confirmed in a new complete clone: identity three ways; 16/16 review runs successful, sandboxed and bound to their records, with distinct sessions; three PASS records with full source_commits and no non-PASS checks, and the D-192 basis sound. F-DG5-100 and 140 are CLOSED_VERIFIED by non-owners at the full ancestor 32fc1ce. F-DG5-120 and 121 are accepted on substance by domain and me (Low, non-mandatory, presentation only). 0 unresolved Critical/High and 0 unresolved mandatory findings. Write-once holds, the re-gate method is exact (D-056), and D-191's verification passes (15/15, e2e 470/470 x2). Requirements 78/78, decisions D-141 to D-192, evidence honesty and the G1-G6/DG0-DG7 separation all hold. None of round-8 B1 to B4 or D-190 B1 to B3 recurs.\n\nNon-blocking observations (owner delivery-orchestrator):\n- O-R4-1: the assignment says 'Round 5 is a record-only round' and calls 'your round-4 record' my basis, but the record round is 4 and my basis is round 3. I followed the Records section.\n- O-R4-2: the F-DG5-120 and 121 history repeats the domain round-3 entry; make the import idempotent.\n- O-R4-3: the assignment cites the first re-gate's BLOCKED audit at 5a7c189:.../round-3/release-auditor.json; it is at .../round-4/.\n- Round-3 O2 carried: the round-2 and round-3 assignment files carry 'T-DG5-REV-*-R5' task IDs."
+}
