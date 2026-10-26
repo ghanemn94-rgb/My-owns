@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG5-120",
+      "stage_id": "DG5",
+      "requirement": "REQ-PB-093",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Studio Elements table shows the five scoring-weight labels in Arabic on the English page",
+      "reproduction": "Production-initialized stack (apps/web/e2e/support/with-stack.sh) at 660f40c. Sign in in English as a methodology administrator (ADM_METHOD) and open Administration > Playbook Studio > any 'T06 default weights and scoring rubric' version (published v1, or a draft created from it). In the Elements section, choose the element type 'Scoring weight'. Probe: docs/delivery/test-evidence/DG5/domain/round-2/dom-r2-prod.spec.ts (P3b, P3), chromium-en.",
+      "expected": "On the English (LTR) page the Label column shows the English label of each criterion ('Strategic fit', 'Financial value', 'Customer impact', 'Feasibility', 'Time-to-value', the B0076 names), as every other user-facing string is shown in the page language (CLAUDE.md: Arabic RTL and English LTR for every user-facing string).",
+      "actual": "The Label column shows the Arabic labels (الملاءمة الاستراتيجية, القيمة المالية, الأثر على العملاء, قابلية التنفيذ, سرعة تحقيق القيمة) on the English page. Cause: migration 0062 seeds the scoring_weight attributes as {sourceLabelEn, labelAr} with no labelEn, and apps/web/src/pages/studio/api.ts elementLabel() reads only labelEn/labelAr, so in English it falls back to labelAr. The Arabic page is correct. The stable key (strategic_fit, ...) and B0076 are shown beside the label, so the row is still identifiable; no data, calculation or approval is affected. The Edit dialog of these rows would likewise offer an empty 'Label (English)'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-published.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3b-95-publish-refused.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-published.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run2-p3-p5.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-26T01:22:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 2 (T-DG5-RG2-DOM-R2) on candidate sha256:55a411ae...; Low, cosmetic (wrong-language label on one Studio table), not blocking. Fix: let elementLabel fall back to sourceLabelEn in English (or seed labelEn)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG5-121",
+      "stage_id": "DG5",
+      "requirement": "REQ-S06-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Scoring-defaults version page: 'Changed' shown for unchanged weights, and the rubric diff is raw JSON",
+      "reproduction": "Production-initialized stack at 660f40c, en or ar. As ADM_METHOD, create a scoring-defaults draft from v1, change only some weights (e.g. 25/20/20/15/15, or 30/20/20/15/15) and one Feasibility descriptor in the editor, save, and open the version page (screens/en/dom-p3b-95-publish-refused.png, screens/en/dom-p3-published.png, screens/ar/dom-p3-published.png).",
+      "expected": "The Elements table's 'Change in this version' column agrees with the side-by-side diff (only the criteria whose value changed read 'Changed'), and the diff of a rubric shows readable before/after descriptors, as the Studio's other diffs do.",
+      "actual": "All five weights read 'Changed' (studio.elements.overridden), although the side-by-side diff correctly lists only financial_value (95 % draft) or strategic_fit and financial_value (30/20 version): the editor writes every weight row into the version, and the column shows 'row overridden', not 'value changed'. The rubric row of the diff prints the whole levels array as raw JSON ([{\"score\":1,\"descriptorAr\":null,...}]). The diff itself is correct and lists the change (REQ-S06-007's 'the diff lists the added field' is met); publish, immutability and pins are unaffected. Presentation only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-published.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3b-95-publish-refused.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-published.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG5/round-2/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-10-26T01:22:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG5 round 2 (T-DG5-RG2-DOM-R2) on candidate sha256:55a411ae...; Low, presentation only, not blocking."
+        }
+      ]
+    }
+  ]
+}

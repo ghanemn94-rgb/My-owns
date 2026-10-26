@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG5",
+  "round": 2,
+  "candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce",
+  "source_commit": "660f40c7d141b6fb73c145e0ee7a053ceb5905de",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG5-T-DG5-RG2-DOM-R2-domain-reviewer-20261026T003326Z-70461a6e",
+    "session_id": "70461a6e-506a-4c27-9a78-023eb766c2c8"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG5 implementation, test, register row, ADR, repair or delivery decision in the reviewed candidate, including T-DG5-BE-RG3 (F-DG5-100/140 repairs) and D-190/D-191. I formed this verdict only from my own runs in this session (T-DG5-RG2-DOM-R2; the assignment file names the task T-DG5-REV-DOM-R5, the invocation names T-DG5-RG2-DOM-R2: the same assignment, sha256 ed101187...ba397e verified). I reused my own round-1 probe specs from this branch as a starting point and corrected their design faults; I did not open any other reviewer's round-1 or round-2 record, sidecar or evidence. Every command that built or ran code used a complete, non-shallow disposable clone under $TMPDIR (1448 commits) checked out at the source 660f40c, with node_modules linked read-only from the repository and the per-package workspace links copied so that @mth/* resolve to the clone's packages. All product data cited is SYNTHETIC (seed-dev users, users created by my probes, and the illustrative International Roaming demo, B0144). No in-product Studio review, G1-G6 decision or Finance validation in my runs approves anything real, and none relates to DG0-DG7; product G6 never implies DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG5/round-2/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089",
+    "REQ-PB-090", "REQ-PB-091", "REQ-PB-092", "REQ-PB-093", "REQ-DLV-037", "REQ-S01-002", "REQ-S01-003", "REQ-S01-004",
+    "REQ-S02-001", "REQ-S02-004", "REQ-S03-007", "REQ-S03-010", "REQ-S04-011", "REQ-S05-001", "REQ-S05-002", "REQ-S05-006",
+    "REQ-S06-001", "REQ-S06-002", "REQ-S06-003", "REQ-S06-004", "REQ-S06-005", "REQ-S06-006", "REQ-S06-007", "REQ-S06-008",
+    "REQ-S06-009", "REQ-S06-010", "REQ-S07-016", "REQ-S08-005", "REQ-S08-019", "REQ-S09-011", "REQ-S10-013", "REQ-S10-015",
+    "REQ-S12-001", "REQ-S12-002", "REQ-S12-003", "REQ-S12-004", "REQ-S12-012", "REQ-S12-015", "REQ-S12-018", "REQ-S12-020",
+    "REQ-S12-021", "REQ-S12-022", "REQ-S12-025", "REQ-S12-026", "REQ-S13-004", "REQ-S13-005", "REQ-S13-006", "REQ-S13-007",
+    "REQ-S13-008", "REQ-S13-009", "REQ-S13-010", "REQ-S14-001", "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004",
+    "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021", "REQ-S18-001", "REQ-S18-002", "REQ-S18-003", "REQ-S18-004",
+    "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R2-00-candidate",
+      "procedure": "Verify the frozen candidate on the repository and on a complete, non-shallow disposable clone at the source commit; confirm commits after the source touch only docs/delivery; confirm the product equals 5a7c189 up to the round-1 source and list the round-1 -> round-2 product diff.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG5 (repo, and clone at 660f40c and at 7a02e7d); git diff --name-only 660f40c HEAD; git diff --stat 5a7c189 2fe8f85 -- . ':!docs/delivery'; git diff --stat 2fe8f85 660f40c -- . ':!docs/delivery'",
+      "environment": "Repository /home/user/My-owns at HEAD 7a02e7d (freeze commit); clone $TMPDIR/review-dg5 (non-shallow, 1448 commits); Node 24.21.0.",
+      "expected": "candidate_id sha256:55a411ae...a3c24ce with 2207 files everywhere; 660f40c..HEAD changes only docs/delivery; 5a7c189..2fe8f85 empty outside docs/delivery.",
+      "actual": "All three computations print candidate_id sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce, files 2207, exit 0. HEAD is the freeze commit 7a02e7d, not the source 660f40c; that is expected: 660f40c..7a02e7d adds only the three round-2 assignments, the candidate manifest and stages.json, which the candidate ID excludes. The clone is not shallow. 5a7c189..2fe8f85 is empty outside docs/delivery. 2fe8f85..660f40c changes 14 product files, all the BE-RG3 repairs (export-runner version-0 product name per export language, F-DG5-140; the XML 1.0 character rule xml-chars.ts in DOCX/PPTX/XLSX, F-DG5-100) and their tests. The 'Already up to date.' line in the log is git stash pop output from setting aside the untracked node_modules link while recomputing; not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/candidate-verify.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-01-validators",
+      "procedure": "Run the historical validators of the four approved gates and the DG5 register rules.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG4|DG3|DG2|DG1; node tools/gates/validate.mjs --register DG5",
+      "environment": "Repository /home/user/My-owns at 7a02e7d; Node 24.21.0.",
+      "expected": "PASS for each, exit 0.",
+      "actual": "'PASS gate DG4 (historical)', 'PASS gate DG3 (historical)', 'PASS gate DG2 (historical)', 'PASS gate DG1 (historical)', 'PASS register rules at DG5'; all five exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG4.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/validate-register-DG5.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-02-build",
+      "procedure": "Build every workspace package in the clone.",
+      "command": "pnpm -r build",
+      "environment": "Clone at 660f40c; Node 24.21.0; pnpm 10.33.0. pnpm install --offline could not run (the pnpm store under HOME is read-only: EROFS on its project symlink), so the root node_modules is a link to the repository's read-only node_modules and each package's node_modules (relative pnpm links) is copied, so @mth/* resolve to the clone's own packages.",
+      "expected": "Every package builds; exit 0.",
+      "actual": "All packages built, exit 0. The only warning is Vite's chunk-size advisory for apps/web ('Adjust chunk size limit ... build.chunkSizeWarningLimit'), a bundle-size note, not an error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-03-integration-batch-1",
+      "procedure": "The DG5 acceptance suites (A02/A21, A06, A07, A13, A15, A16, A22) and the domain-relevant implementer integration tests, including the round-2 exports-xml-chars test, on a disposable PostgreSQL.",
+      "command": "bash docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.sh",
+      "environment": "Clone at 660f40c; tests/qa/support/with-pg.sh (disposable PostgreSQL, UTF8/C) on port 26410, pool 26411-26449; vitest --configLoader runner (read-only node_modules); three reviews in parallel.",
+      "expected": "All files and tests pass with no skip, retry or timeout.",
+      "actual": "Test Files 32 passed (32); Tests 363 passed (363); exit 0; 491 s. Included: B0004 verbatim and every B0158-B0162 element custom_extension; the four questions and one tag on each of 16 templates; the 165 blocks; the ten procedures launched and completed (Rule A) with adopted-step authorization; Rule B forecasts and one work item per affected owner; dependency.slipped through the real relay; 30/20/20/15/15 only for new transformations and 95 %/105 % refused; the G2 re-approval in the migration preview; the restatement and reissue v2; B0004 and the illustrative label in every PDF/DOCX/XLSX/PPTX/CSV in en and ar; formula injection neutralized with a system SUM kept; the 25 questions, bands and incomplete handling; reset-twice checksum and production refusals; the three B0147 lines; and the XML 1.0 character rule in exports. The only non-test lines are three npm CLI warnings about unknown .npmrc keys (strict-peer-dependencies, auto-install-peers, link-workspace-packages): config notices, not results. No skip, retry or timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-04-integration-batch-2",
+      "procedure": "The remaining DG5 rows' integration suites: form framework, records, schemas and bulk registers; procedure definitions and instances; Studio checks; automation failures, durable automation, job idempotency and re-runs; notification delivery (quiet hours, digest, urgent); evidence register; the S16 entity groups; gate-condition escalation; worker starters; paged exports and SUM totals on the demo data; restatement decisions; demo isolation and the D-165 dev binding.",
+      "command": "bash docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration-2.sh",
+      "environment": "Clone at 660f40c; disposable PostgreSQL on port 26430, pool 26431-26449; vitest --configLoader runner.",
+      "expected": "All files and tests pass with no skip, retry or timeout.",
+      "actual": "Test Files 24 passed (24); Tests 223 passed (223); exit 0. Only the same three npm config warnings appear as non-test lines. No skip, retry or timeout.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration-2.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration-2.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-05-root-e2e-both-stacks",
+      "procedure": "Root acceptance e2e: on a demo-initialized stack the A02 walkthrough with the demo role users, the A02 demo labels and A21; on a production-initialized stack A06, A07, A15, A16, the slip-impact screens and the reader/branding/demo spec; chromium-en and chromium-ar.",
+      "command": "bash docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.sh",
+      "environment": "Clone at 660f40c, built; Playwright with the pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, never installed); ports 26480-26483, pool 26484-26499; --workers=1; E2E_SCREENSHOT_DIR and QA_EVIDENCE_DIR set to writable $TMPDIR paths (the A06/A07 specs' default screenshot path is read-only in the sandbox); three reviews in parallel.",
+      "expected": "All pass, no failure, retry, flaky or timeout.",
+      "actual": "Demo stack: 10 passed (5.3 m), exit 0: the twelve walkthrough steps performed in the UI by roaming.user.* on a new transformation with their records verified (en, ar); the banner, record badge and form/dialog-header badge, 'Synthetic demonstration - approves nothing real' on demo G-approvals and the Finance queue, and the label in a worker-generated export; A21 with no AI/export/e-mail channel. Production stack: 22 passed (7.2 m), exit 0: A06 (field, rule and approver changed in the UI; T13 field entered), A07 (issued register keeps 100, reissue v2 120), A15 (filtered RAID register, export queued), A16 (25 questions, 'Incomplete (24/25)', 17 -> '16-20', plan from 2026-10-01), the slip impact screens, About/B0004, reader search, B0031 <-> T01, gate-review Launch, and brand name/colour with the prohibited-claim refusal. 32/32; no failure, skip, retry, flaky or timeout. Non-test lines: the npm config warnings only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-06-text-scans-and-reporting-units",
+      "procedure": "Provenance/claim and DG0-DG7 text scans of UI strings and export templates; health and prioritization scoring units; the round-2 reporting units (version-0 product names, XML character rule); branding integration (name and colour reach shell and next report).",
+      "command": "bash docs/delivery/test-evidence/DG5/domain/round-2/text-scans.sh",
+      "environment": "Clone at 660f40c; unit-node project; integration on a disposable PostgreSQL (port 26415).",
+      "expected": "All pass.",
+      "actual": "unit-node: 6 files, 165 tests passed, exit 0 (a22-s21-001-text-scan, text-scan, health scoring, scoring, labels, xml-chars). Integration: 3 files, 57 tests passed, exit 0 (export-templates and ui-strings scans in en and ar, branding.test.ts including the Arabic version-0 product name in an Arabic export header). Non-test lines: npm config warnings only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/text-scans.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-2/text-scans.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-07-provenance-reader-about-nav-branding",
+      "procedure": "My own UI probe on a fresh production-initialized stack per language (P1, P2): reader and About text against the playbook blocks read from docs/source/playbook.md; the four questions; the custom-extension badge; the Realize note; a claim regex; navigation per role from GET /me/navigation and rendered; nav colour; Branding screen and wordmark. EN and AR screenshots.",
+      "command": "POOL=26452-26459 PGP=26460 APIP=26461 EXTRA=--project=chromium-en bash docs/delivery/test-evidence/DG5/domain/round-2/run-probe.sh prod dom-r2-prod.spec.ts; POOL=26462-26469 PGP=26462 APIP=26463 EXTRA=--project=chromium-ar bash .../run-probe.sh prod dom-r2-prod.spec.ts",
+      "environment": "Clone at 660f40c; apps/web/e2e/support/with-stack.sh (migrate + seed-dev, production database, AUTH_MODE=dev); chromium-en and chromium-ar on separate fresh stacks.",
+      "expected": "B0004 verbatim on reader and About; B0016's four questions verbatim; badge shown; B0124 Realize alignment text without status claim; no official-PMI/certification claim except disclaimers; TO 14 areas, ADM_TECH 3, TL without Administration; nav colour derived from brand.primary; default name 'Mobily Transformation Hub' with a provisional wordmark and #0078FF provisional.",
+      "actual": "P1 and P2 pass in en and ar (probe-prod-en-run1.log, probe-prod-ar-run1.log). readerHasB0004 and aboutHasB0004 true in both; the four questions true; 'aligns with PMI Benefits Realization Management logic' on the Realize view. The claim regex matched nothing on the reader; on About it matched 'معتمد من PMI' (ar). I read the catalogues: common.json methodBody is a negation in both languages ('It is not an official PMI standard, and this product is not certified by PMI or any other body.' / '... وهذا المنتج غير معتمد من PMI أو من أي جهة أخرى.'): a disclaimer, not a claim. Navigation: dev.office 14 areas in M0100-M0113 order including administration; dev.admin (ADM_ACCESS+ADM_TECH, no transformation.read) 3 (my_work, playbook_procedures, administration); dev.lead without administration; rendered 14 and 3. Nav background rgb(0,113,241) = #0071F1, the contrast-checked shade of the provisional #0078FF. Wordmark 'Mobily Transformation Hub / Provisional / Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.' (ar 'منصة موبايلي للتحوّل / مؤقت / ...'); Branding shows #0078FF as provisional. Judgement of D-163 (a): ACCEPTED: REQ-S03-007 says inaccessible areas are hidden server-side, the server derives them from held permissions, and the 14-area acceptance holds for a role-union user (navigation.test.ts passed in DOM-R2-03); a technical administrator without business read seeing three areas is the correct consequence, and the Transformation Office needs Administration for the Studio review.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/dom-r2-prod.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/run-probe.sh",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-ar-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p1-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p1-reader.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p1-reader-realize.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p1-reader-realize.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p1-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p1-about.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p2-nav-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p2-nav-office.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p2-branding.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p2-branding.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-08-studio-pipeline-scoring-defaults-ui",
+      "procedure": "My own UI drive of REQ-PB-093 end to end in the Studio, as a new ADM_METHOD user, in en and in ar on separate fresh stacks: P3b, a 95 % draft (25/20/20/15/15) through save, preview, compatibility, review by the Transformation Office and publish (must be refused), then discard; P3, 30/20/20/15/15 plus a Feasibility score-1 descriptor through save, side-by-side diff, preview, compatibility, review, publish; then immutability, an existing vs a new transformation, and separation (TL Studio write; ADM_METHOD business read).",
+      "command": "run-probe.sh prod dom-r2-prod.spec.ts (en run1, all; en run2 '-g P3|P5' after fixing my probe; ar run1, all)",
+      "environment": "Clone at 660f40c; production-initialized stacks (with-stack.sh); one fresh stack per run.",
+      "expected": "95 % refused 422 config_version.weights_total with the message shown and the version left a draft; 30/20/20/15/15 publishes only after preview and review; a published version cannot be edited; a transformation created afterwards takes 30/20/20/15/15 and the new rubric, the earlier one keeps 25/25/20/15/15 and the old rubric; TL gets 403 on Studio writes; the methodology admin cannot read the business record.",
+      "actual": "en and ar: 95 % preview pass, compatibility warn, review approved, publish 422 config_version.weights_total, 'Default weights must total exactly 100% over 2 to 6 criteria.' shown on the page (ar text shown in ar); finalStatus draft (draftStage approved), then discarded. 30/20/20/15/15: diff shown, checks pass/warn, review approved by TO in the UI, published (immutable banner). PUT of a well-formed scoring-defaults body to the published version -> 409 config_version.not_editable. Existing transformation: weights 25.00/25.00/20.00/15.00/15.00, Feasibility level 1 descriptor null. New transformation: 30.00/20.00/20.00/15.00/15.00 (decimal strings) and my descriptor; the prioritization page of the new one shows 30%. TL Studio draft POST 403. ADM_METHOD GET of the transformation 404 (not found to it: no transformation.read). The Studio element table of the methodology version shows 16 custom-extension badges (en, ar); the Studio home itself shows none (studioBadge false), which is fine because the badges belong to element rows. FAILURES IN MY LOGS, all from my probe and explained: en run1 P3 failed on two soft assertions: (1) my PUT used a body shape the endpoint rejects (400 validation /weights expected array), so it did not test immutability; (2) I expected 403 for ADM_METHOD reading a transformation and the API answers 404 (a not-found answer to a user without read permission, equally a refusal). Playwright then printed 'Internal error: step id not found: fixture@162', a reporter message after the soft failure. Every substantive fact in that run already held. I corrected the probe and re-ran: en run2 P3b, P3, P5 3 passed exit 0; ar run1 6 passed exit 0. The background wrapper that chained en run2 and ar run1 reported exit 1, while both runs' own logs end '### exit=0' with all tests passed; I could not attribute that wrapper status to any test. Two presentation defects on this page are raised as Low findings: F-DG5-120 (the English Elements table shows the scoring weights' Arabic labels) and F-DG5-121 ('Changed' for unchanged weights; the rubric diff as raw JSON). They are not blocking: the diff, review, publish refusal, immutability and pins are correct.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/dom-r2-prod.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run2-p3-p5.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-ar-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3b-95-publish-refused.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3b-95-publish-refused.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3b-methodology-version-elements.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3b-methodology-version-elements.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-weights-30.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-weights-30.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-diff.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-diff.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-review-approved.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-review-approved.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-published.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-published.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-after-prioritization.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-after-prioritization.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-before-prioritization.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-before-prioritization.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-09-health-launch-day90",
+      "procedure": "As a new Transformation Lead (P4): a health assessment with 24 answers, then the 25th; the screen against B0150 verbatim; a launch plan from 2026-10-01; the Day-90 test against B0136-B0141 verbatim; en and ar.",
+      "command": "run-probe.sh prod dom-r2-prod.spec.ts (P4, en run1 and ar run1)",
+      "environment": "Clone at 660f40c; production-initialized stacks.",
+      "expected": "24/25: incomplete, score and band null, shown as incomplete; 25 answers with 10 Yes: score 10, band 10-15 with B0152 text; plan dated from the start date with B0134 content; Day-90 questions verbatim; Yes=1/No=0.",
+      "actual": "en and ar: 25 questions rendered, none missing verbatim (en). At 24/25 score null, band null, completion {24, 25, false}, 'Incomplete (24/25)' shown. At 25: score '10', band 10-15 'Execution risk is material; strengthen direction, TOM, governance or benefits.' (en page true; the ar page shows textAr, so my English-text test is false there by design; see screenshot). Plan 201: 33 tasks, templateRef B0134, startDate 2026-10-01. Day-90: six of six verbatim in en; ar shows the Arabic texts (false by design for an English match). P4 passed in both languages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-ar-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p4-health-incomplete.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p4-health-incomplete.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p4-health-10.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p4-health-10.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p4-launch-plan.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p4-launch-plan.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p4-day90.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p4-day90.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-10-human-only-actions-and-question-tags",
+      "procedure": "P5: as a new ADM_METHOD user, create automation rules whose action is approve_gate, attest_finance_value, decide_investment (must be refused) and a valid create_task (must be accepted); open the T01, charter, Define (T02-T05), T15 and T16 screens as the Transformation Office and read the question tags; en and ar.",
+      "command": "run-probe.sh prod dom-r2-prod.spec.ts (P5; en run2, ar run1)",
+      "environment": "Clone at 660f40c; production-initialized stacks.",
+      "expected": "Human-only actions refused with automation_rule.human_only_action; a valid machine action accepted; one guiding-question tag per deliverable header.",
+      "actual": "en and ar: the three human-only actions -> 422 automation_rule.human_only_action, 'Approvals, investment decisions and Finance attestations are human decisions and cannot be automated.'; create_task with {assigneeRole: TL, messageKey: automation.message.follow_up} -> 201, so the refusal is specific, not blanket (in en run1 my guessed parameters gave 422 action_parameters_invalid; corrected). Tags: Diagnose (T01) why_change; Define what_different; RAID (T15) and executive decisions (T16) how_execute; one tag each; the charter page shows none, as it is not one of the numbered templates T01-T16. P5 passed in en and ar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run2-p3-p5.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-ar-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p5-automation.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p5-automation.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p5-form-t01.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p5-form-t01.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p5-form-t15.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p5-form-t15.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p5-forms.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p5-forms.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-11-demo-roaming-labels-traceability-walkthrough",
+      "procedure": "My own probe on a demo-initialized stack (D1-D3), as the demo role users through the D-165 dev sign-in: the roaming transformation and charter against B0145 (read from the playbook), G1-G3 and the approval label, traceability against the three B0147 chains, the walkthrough, the TOM design, the BO inbox approval, the Finance queue and the environment screen; en and ar.",
+      "command": "POOL=26472-26479 PGP=26470 APIP=26471 bash docs/delivery/test-evidence/DG5/domain/round-2/run-probe.sh demo dom-r2-demo.spec.ts",
+      "environment": "Clone at 660f40c; e2e/support/with-demo-stack.sh (seed-demo, MTH_ENV=demo, AUTH_MODE=dev); chromium-en and chromium-ar.",
+      "expected": "North Star verbatim; the B0145 elements; one banner and the record badge per record view; 'Synthetic demonstration - approves nothing real' on demo G-approvals; the three B0147 chains readable; twelve walkthrough steps; no DG0-DG7 text.",
+      "actual": "6 passed (2.3 m), exit 0. North Star verbatim on overview and charter (en, ar). Charter holds Case for change, North Star, Outcomes, Initiatives, Governance, Benefits; 'TOM focus' is not on the charter but on the TOM design page (tomFocusOnDesign true), where it belongs. G1, G2, G3, the BO inbox approval detail and the Finance queue show the approval label in en and ar. Traceability: all 15 B0147 labels render (graph 31 nodes / 38 edges); focusing 'Low activation' shows chain 1's five labels. The walkthrough lists '0 of 12 steps done' with steps 1-12 (the 14 ol>li counted include the 2 breadcrumb items; see screenshot). Banner 'Illustrative example — synthetic. Not Mobily actual performance.' on every screen. GET /admin/environment answers 403 to the demo TL (admin-only read): correct. No error line other than that recorded 403 fact and the npm config warnings. The literal one-line chain is asserted on the getTraceability response the view renders (demo-traceability-chains.test.ts in DOM-R2-03), as REQ-PB-090 discloses; accepted.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/dom-r2-demo.spec.ts",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-run1.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-transformation.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-transformation.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-charter.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-charter.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-gate-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-gate-G1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-traceability-chain1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-traceability-chain1.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-walkthrough.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-walkthrough.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-approval-detail.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-approval-detail.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-demo-finance-queue.png",
+        "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-demo-finance-queue.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-12-operating-logic-code-reading",
+      "procedure": "Read in the clone: Rule B (apps/api/src/modules/portfolio/schedule.ts forwardFinishes) against M0232; Rule A's guard (packages/db/migrations/0096); the D-165 dev binding (packages/db/src/demo/guard.ts demoDevIssuerBindingAllowed); the provisional rules (apps/api/src/modules/reporting/reports/provisional.ts) and the executive pack; the round-2 export diff (labels.ts DEFAULT_PRODUCT_NAMES, xml-chars.ts).",
+      "command": "sed/grep reads in $TMPDIR/review-dg5 at 660f40c (no command output is a result; the behaviour is proven by DOM-R2-03/04).",
+      "environment": "Clone at 660f40c.",
+      "expected": "Defined scheduling logic with Unknown for missing input; Rule A limited to the one NULL->T transition; dev binding only outside production with AUTH_MODE=dev; forecast/submitted never shown as validated; exports' change does not alter source texts.",
+      "actual": "Rule B is a finish-to-start forward pass: shift = max(0, latest predecessor forward finish - planned start), result = own finish + shift; transitive; any missing date -> null (Unknown, never 0); a revisit -> Unknown; nothing stored except the slip's evidence. Judgement: meets M0232 'recompute forecast impacts using defined scheduling logic'; not overwriting owners' forecasts is right (RAG from the trajectory; no history rewrite). Rule A: 0096 lets transformation_id change only from NULL, for a pending step, with no other column changed, of an active organization-scope new_transformation_intake instance, to the transformation linked as the output of that instance's completed capture_intake step; everything else stays immutable. D-165: the binding requires NODE_ENV != production and AUTH_MODE=dev; seed-demo is refused in production (A22I in DOM-R2-03, demo.test.ts and demo-dev-binding.test.ts in DOM-R2-04). Provisional: submitted/forecast/measured benefit values are provisional, only validated/sustained are validated, planned is n/a; forecast is never shown as validated value. Round-2 diff: the version-0 name in the export language ('منصة موبايلي للتحوّل' in ar) and the replacement of XML-illegal control characters in user text by U+FFFD; B0004 and the labels are unaffected.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration-2.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/candidate-verify.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-13-decisions-judged",
+      "procedure": "Judge D-163 (a), D-164 (a)-(k), D-165's accepted observations, D-166 Rules A and B, D-167's clarification and D-168's roaming wording point, against the playbook, the master prompt and my runs.",
+      "command": "Reading of docs/delivery/decisions.md and the code in the clone; the runs of DOM-R2-03 to DOM-R2-11.",
+      "environment": "Repository at 7a02e7d; clone at 660f40c.",
+      "expected": "Each accepted or raised as a finding.",
+      "actual": "All ACCEPTED. D-163 (a): DOM-R2-07. D-164: (a) one run-time approver rule for display, routing and authorization; (b) the approver_configured flag and its audited one-off backfill; (c) the gate pack names the effective approver; (d) samplePayload; (e) the environment port; (f) the test edit; (g) KPI target as a decimal in its unit; (h) benefit totals by reference, so they cannot drift (no double counting); (i) #0071F1 stays a provisional token derived at 4.53:1; the Studio badge reflects the published profiles (stated limitation); (j) T06 through Form tools; (k) the message from served settings. D-165: QA-F P-1 (two queue entries for one failed execution; retry duplicates nothing) Low observation; P-2 (attempts count executions) follows ADR-0043; P-3 (snapshot note naming DG0-DG7 is API-only data, a disclaimer, rendered nowhere; the scans pass, DOM-R2-06); QA-E O-3 (no AI/notification adapter ships, so 'disabled' is the shipped state; A21 passes); QA-B O-1 (a closed period shows the KPI's current final target beside its stored evaluation, whose RAG, actual and version are unchanged: a definition attribute, not a history rewrite) Low; O-2 (rollback contentSha256 differs from the seed hash while content is equal: metadata only). D-165's dev-mode demo sign-in: DOM-R2-12. D-166 Rule A, D-167's clarification (adopted steps act with T's authorization, the only reading under which T's Lead can complete them; adopted-step-authorization and a02 pass) and Rule B: DOM-R2-12. D-168: chain outcome statements share their KPI text; the B0147 line reads exactly as B0147: demo wording, accepted.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/text-scans.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-14-register-disclosures",
+      "procedure": "Read the acceptance and notes of the 78 DG5 rows (requirements.csv, final_gate = DG5) and judge each partial-coverage disclosure against my own evidence.",
+      "command": "python3 csv dump of docs/delivery/requirements.csv filtered on final_gate = DG5",
+      "environment": "Repository at 7a02e7d.",
+      "expected": "No row overstates delivery; every disclosed partial clause is acceptable or covered by my runs.",
+      "actual": "78 rows, all IMPLEMENTED. REQ-PB-093's disclosed UI gap (30/20/20/15/15 not driven end to end in the browser) is closed by my own drive in en and ar (DOM-R2-08). REQ-PB-090: rendered chains (DOM-R2-11) plus the literal line on the API the view renders: acceptable. REQ-S13-008: the provisional label is proven on the benefits-register PDF; an executive-pack PDF with a pending value is not staged, but the executive pack takes its labels from the same provisional.ts rules (unit-tested: submitted and forecast are provisional): acceptable, worth an explicit test at DG6. REQ-S14-003: moving a scheme pin is not exercised; refusal and keep-v1 are proven. REQ-S12-020: the production retry policy is not run end to end; bounded retries and kill/restart are proven. REQ-S12-026: starters 4, 13, 15 run in implementer integration tests through the real engine (worker starters.test.ts passed in DOM-R2-04). REQ-S05-006: the twelve creates rely on their DG2-DG4 operations. REQ-PB-001: B0004 is verbatim English; the Arabic rendering awaits linguistic review and Arabic strings are marked provisional. REQ-S13-004 lists ten outputs; the product offers twelve definitions (A15 e2e), a superset. Several notes still say 'the merged-tree verification of 8c68a47 is still to come': stale wording superseded by my runs on this candidate. No row claims official PMI status, Mobily branding or a business approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/validate-register-DG5.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.log",
+        "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-ar-run1.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-15-environmental-residuals",
+      "procedure": "Record the environmental residuals named in the assignment on their offline/config surface.",
+      "environment": "Sandbox with no network access; clone at 660f40c.",
+      "expected": "PASS on the offline/config surface, residual noted.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058): not reachable here and not DG5 rows. Keycloak and a real demo IdP (D-049; ADR-0050 §1 devops item): the demo users signed in through the D-165 dev-mode binding on a demo database (DOM-R2-05, DOM-R2-11), which is the defined test path. AI and external notification adapters: none ships in P5 (D-142 Q11); A21 passes with the shipped 'disabled' configuration (DOM-R2-05).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG5-120",
+    "F-DG5-121"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG5/domain/round-2/candidate-verify.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/build.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.sh",
+    "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration-2.sh",
+    "docs/delivery/test-evidence/DG5/domain/round-2/targeted-integration-2.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.sh",
+    "docs/delivery/test-evidence/DG5/domain/round-2/root-e2e.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/text-scans.sh",
+    "docs/delivery/test-evidence/DG5/domain/round-2/text-scans.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/run-probe.sh",
+    "docs/delivery/test-evidence/DG5/domain/round-2/dom-r2-prod.spec.ts",
+    "docs/delivery/test-evidence/DG5/domain/round-2/dom-r2-demo.spec.ts",
+    "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run1.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run2-p3-p5.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-ar-run1.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/probe-demo-run1.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+    "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG4.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG3.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG2.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/validate-historical-DG1.log",
+    "docs/delivery/test-evidence/DG5/domain/round-2/validate-register-DG5.log"
+  ],
+  "reviewed_at": "2026-10-26T01:25:00Z",
+  "summary": "PASS on candidate 55a411ae (2207 files, source 660f40c), with two new Low, non-mandatory, non-blocking findings (F-DG5-120, F-DG5-121: Studio scoring-defaults presentation). The candidate was verified on a complete clone; the product equals 5a7c189 plus the 14 BE-RG3 files. My own runs: 56 integration files / 586 tests, 32/32 root e2e on the demo and production stacks in en and ar, 222 text-scan/scoring/reporting tests, and my own EN/AR UI probes on fresh stacks (12/12 production after correcting two probe-design faults, 6/6 demo) with screenshots. Source fidelity holds: B0004, B0016, B0124, B0136-B0141, B0145, B0147, B0150 and B0152 are verbatim, and the only PMI texts are disclaimers. The operating rules hold: Studio publish needs preview, review and the 100 % rule; published versions are immutable (409); pins hold until a migration; 30/20/20/15/15 reaches only new transformations; human-only actions are refused while valid actions are accepted; forecast and submitted values are provisional, never validated; demo isolation and labels are in place; restatements keep issued reports. All named decisions are accepted."
+}
