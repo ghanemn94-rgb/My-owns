@@ -15,6 +15,11 @@
 // a workspace tab, a screen of the product, or a P5 screen that is not available yet. The P5 screens of FE-B…FE-G are
 // nav sub-entries and routes registered up front (P5_SUBPAGES here, P5_PLANNED_ROUTES in app/router.tsx); each shows an
 // honest "not available yet" placeholder until its owning task replaces the route element.
+// Since P6 (T-DG6-FE-A; p6-plan §5.1 row FE-A; p6-work-split §E/F.12, §J/C.13): the Administration screens of slices
+// E, F, J and C (Audit, Security, Sensitive grants, Operations, Identity, Storage, Notifications) are sub-entries
+// registered up front (P6_SUBPAGES here, P6_PLANNED_ROUTES in app/router.tsx), each with an honest "not available yet"
+// placeholder until FE-B replaces the route element. Which areas a caller sees is still decided by the server
+// (GET /me/navigation, ADR-0049 §9); `requiresAny` is a UI hint for the sub-entries only.
 import type { Permission } from "@mth/shared";
 import { ADMIN_PERMISSIONS } from "../auth/permissions.ts";
 
@@ -92,6 +97,24 @@ export interface NavArea {
   readonly moreWorkspaceTabs?: readonly AreaWorkspaceTab[];
 }
 
+/**
+ * The read permissions of the P6 Administration screens (0100, 0103; ADR-0051 §7, ADR-0052 §10, ADR-0053 §9, ADR-0054
+ * §5). A UI hint only (the server decides). At the seeded defaults AUD reads Audit, Security, Sensitive grants,
+ * Operations and Identity; TO reads Sensitive grants and Operations; KDS and TD read Operations.
+ */
+export const P6_ADMIN_READ_PERMISSIONS: readonly Permission[] = [
+  "audit_event.read",
+  "security.read",
+  "upload_policy.configure",
+  "sensitive_record.read",
+  "sensitive_record.grant",
+  "operations.read",
+  "service_identity.configure",
+  "identity.read",
+  "storage.configure",
+  "notification_channel.configure",
+];
+
 export const NAV_AREAS: readonly NavArea[] = [
   { id: "myWork", path: "/my-work", availability: "available" },
   // T-DG4-FE-G: the Executive Overview (the executive dashboard, ADR-0037 §8) is a working screen.
@@ -152,7 +175,7 @@ export const NAV_AREAS: readonly NavArea[] = [
     id: "admin",
     path: "/admin",
     availability: "available",
-    requiresAny: [...ADMIN_PERMISSIONS, "methodology.configure", "methodology.publish"],
+    requiresAny: [...ADMIN_PERMISSIONS, "methodology.configure", "methodology.publish", ...P6_ADMIN_READ_PERMISSIONS],
   },
 ];
 
@@ -199,7 +222,9 @@ export interface NavSubPage {
     | "evidenceRegister"
     | "ownerUpdates"
     // T-DG5-FE-F: the health check scoring schemes (REQ-S14-003; Administration > Playbook Studio > Health check scoring).
-    | "healthSchemes";
+    | "healthSchemes"
+    // T-DG6-FE-A: the P6 Administration screens of FE-B (P6_SUBPAGES), "not available yet" until FE-B builds them.
+    | P6SubPageId;
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -207,6 +232,8 @@ export interface NavSubPage {
   readonly requiresAny?: readonly Permission[];
   /** T-DG5-FE-A: a P5 screen registered up front; its route shows the "not available yet" placeholder of this feature. */
   readonly p5Feature?: P5SubPageId;
+  /** T-DG6-FE-A: a P6 screen registered up front; its route shows the "not available yet" placeholder of this feature. */
+  readonly p6Feature?: P6SubPageId;
 }
 
 /** The P5 navigation sub-entries (p5-plan §1.1, §5.1; D-144 item 1). Each id is also its placeholder's feature id. */
@@ -294,6 +321,86 @@ export const P5_SUBPAGES: readonly (NavSubPage & { readonly p5Feature: P5SubPage
   { id: "demo", p5Feature: "demo", owner: "FE-G", area: "admin", path: "/admin/demo" },
 ];
 
+/** The P6 navigation sub-entries (p6-work-split §E/F.12, §J/C.13). Each id is also its placeholder's feature id. */
+export type P6SubPageId =
+  | "audit"
+  | "security"
+  | "sensitiveGrants"
+  | "operations"
+  | "identity"
+  | "storage"
+  | "notifications";
+
+/**
+ * T-DG6-FE-A: the P6 Administration sub-entries, with the FE task that replaces each placeholder (p6-plan §5.1 row
+ * FE-B). `requiresAny` is a UI hint (the server decides and answers 403/404). Security covers the upload policy and the
+ * rate-limit matrix (ADR-0052 §1, §4); Operations covers operational exceptions, the worker heartbeat and the service
+ * identities (ADR-0053 §7). Labels say "Operations", never an engineering delivery gate.
+ */
+export const P6_SUBPAGES: readonly (NavSubPage & { readonly p6Feature: P6SubPageId; readonly owner: string })[] = [
+  // slice F (ADR-0052 §8): the global audit view, read-only for everyone.
+  {
+    id: "audit",
+    p6Feature: "audit",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/audit",
+    requiresAny: ["audit_event.read"],
+  },
+  // slice F (ADR-0052 §1, §4): the upload policy and the rate-limit classes.
+  {
+    id: "security",
+    p6Feature: "security",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/security",
+    requiresAny: ["security.read", "upload_policy.configure"],
+  },
+  // slice E (ADR-0051 §2): explicit grants to sensitive records.
+  {
+    id: "sensitiveGrants",
+    p6Feature: "sensitiveGrants",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/sensitive-grants",
+    requiresAny: ["sensitive_record.read", "sensitive_record.grant"],
+  },
+  // slice J (ADR-0053 §7): operational exceptions, the worker heartbeat and the service identities.
+  {
+    id: "operations",
+    p6Feature: "operations",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/operations",
+    requiresAny: ["operations.read", "service_identity.configure"],
+  },
+  // slice C (ADR-0054 §1-§3): identity (never the client secret), evidence storage, notification channels.
+  {
+    id: "identity",
+    p6Feature: "identity",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/identity",
+    requiresAny: ["identity.read"],
+  },
+  {
+    id: "storage",
+    p6Feature: "storage",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/storage",
+    requiresAny: ["storage.configure"],
+  },
+  {
+    id: "notifications",
+    p6Feature: "notifications",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/notification-channels",
+    requiresAny: ["notification_channel.configure"],
+  },
+];
+
 export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "myWorkItems", area: "myWork", path: "/my-work" },
   { id: "approvals", area: "myWork", path: "/my-work/approvals" },
@@ -345,6 +452,8 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "ownerUpdates", area: "initiatives", path: "/initiatives-roadmaps/updates" },
   // T-DG5-FE-F: Administration > Health check scoring (REQ-S14-003), beside the Studio entries (methodology.read).
   { id: "healthSchemes", area: "admin", path: "/admin/health-schemes", requiresAny: ["methodology.read"] },
+  // T-DG6-FE-A: the P6 Administration screens, appended after the P5 entries.
+  ...P6_SUBPAGES,
 ];
 
 /**

@@ -70,6 +70,9 @@ const AreaEntryPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) =
 const AreaLandingPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaLandingPage));
 const NotFoundPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.NotFoundPage));
 const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P4BeingBuiltPage));
+const P6NotAvailablePage = lazyPage(() =>
+  import("../components/P6NotAvailablePage.tsx").then((m) => m.P6NotAvailablePage),
+);
 const ApprovalDetailPage = lazyPage(() =>
   import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalDetailPage),
 );
@@ -455,9 +458,48 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  */
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
 
+/**
+ * The P6 screens of slices E, F, J and C (p6-plan §5.1 row FE-B; p6-work-split §E/F.12, §J/C.13), registered up front by
+ * T-DG6-FE-A. Each shows the "not available yet" placeholder (components/P6NotAvailablePage.tsx, `nav.p6.<feature>.*`)
+ * until FE-B replaces the element through an orchestrator merge and removes the entry here (F-DG4-160). The detail
+ * paths are registered too, so a link written by the backend (an operational-exception alert, ADR-0053 §6; a forwarded
+ * deep link, ADR-0051 §3) never leads to "page not found". `/l/:token` is the deep-link landing: it needs a session
+ * (RequireSession returns to it after sign-in) and re-authorizes on the server; the token is never a credential.
+ * The later P6 slices (A, B, D, G, H, I, K) append their routes here when their contracts exist.
+ */
+export const P6_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
+  // slice F (ADR-0052 §8): Administration > Audit, read-only.
+  { path: "admin/audit", feature: "audit", owner: "FE-B" },
+  { path: "admin/audit/:auditEventId", feature: "auditEvent", owner: "FE-B" },
+  // slice F (ADR-0052 §1, §4): Administration > Security (rate limits) and the upload policy.
+  { path: "admin/security", feature: "security", owner: "FE-B" },
+  { path: "admin/upload-policy", feature: "uploadPolicy", owner: "FE-B" },
+  // slice E (ADR-0051 §2): sensitive-record grants.
+  { path: "admin/sensitive-grants", feature: "sensitiveGrants", owner: "FE-B" },
+  { path: "admin/sensitive-grants/:grantId", feature: "sensitiveGrant", owner: "FE-B" },
+  // slice E (ADR-0051 §3): the deep-link landing.
+  { path: "l/:token", feature: "deepLink", owner: "FE-B" },
+  // slice J (ADR-0053 §7): operations and service identities.
+  { path: "admin/operations", feature: "operations", owner: "FE-B" },
+  { path: "admin/operations/exceptions/:exceptionId", feature: "operationalException", owner: "FE-B" },
+  { path: "admin/service-identities", feature: "serviceIdentities", owner: "FE-B" },
+  { path: "admin/service-identities/:serviceIdentityId", feature: "serviceIdentity", owner: "FE-B" },
+  // slice C (ADR-0054 §1-§3): identity, storage, notification channels and deliveries.
+  { path: "admin/identity", feature: "identity", owner: "FE-B" },
+  { path: "admin/storage", feature: "storage", owner: "FE-B" },
+  { path: "admin/notification-channels", feature: "notifications", owner: "FE-B" },
+  { path: "admin/notification-channels/:channelKind", feature: "notificationChannel", owner: "FE-B" },
+  { path: "admin/notification-deliveries", feature: "notificationDeliveries", owner: "FE-B" },
+];
+
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
   element: <P4BeingBuiltPage feature={r.feature} />,
+}));
+
+const p6PlannedRoutes: RouteObject[] = P6_PLANNED_ROUTES.map((r) => ({
+  path: r.path,
+  element: <P6NotAvailablePage feature={r.feature} />,
 }));
 
 export const routes: RouteObject[] = [
@@ -682,6 +724,7 @@ export const routes: RouteObject[] = [
       { path: "admin/demo", element: <EnvironmentPage /> },
       { path: "walkthrough", element: <WalkthroughPage /> },
       ...p4PlannedRoutes,
+      ...p6PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,
       { path: "*", element: <NotFoundPage /> },
