@@ -149,6 +149,14 @@ export const EVIDENCE_LINK_SOURCES: readonly {
     active: "status <> 'withdrawn'",
     evidenceArray: "materials_evidence_ids",
   },
+  // DG6 external-change confirmation (0106; ADR-0055 §6): a deliverable confirmed by reviewed evidence links it. An
+  // unconfirmed or connector-confirmed row carries no evidence_id (deliverable_external_change_source_shape).
+  {
+    via: "deliverable_external_change",
+    recordType: "deliverable",
+    recordIdColumn: "deliverable_id",
+    active: "confirmation_status = 'confirmed'",
+  },
 ];
 
 /** The active links of the transformation's evidence, as one derived table (evidence_id, record_type, record_id, via). */

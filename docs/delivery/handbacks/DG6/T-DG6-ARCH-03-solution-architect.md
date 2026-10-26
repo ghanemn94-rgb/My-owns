@@ -4,11 +4,14 @@
 - **Assignment:** `docs/delivery/assignments/DG6/T-DG6-ARCH-03.md`, sha256 `5bc98c11f18a4a7fd7728d0b91f7645b74da1a5f29dfc13e59cc23719ed4beab` (verified with `sha256sum` at the start).
 - **Base:** branch `claude/mobily-transformation-platform-dg5-regate2`, `HEAD` `1c061ab8b9dae8ae5fce31dd261299024d014f56`. Nothing committed (the orchestrator commits).
 - **Start:** `date -u` → `Mon Oct 26 19:58:41 UTC 2026`. **End:** see §8.
+- **Continuation (T-DG6-ARCH-03B, D-198).** The first run was stopped by a container restart; the orchestrator salvaged its work as WIP commit `d206925`. This handback was completed in place by the continuation run `{"kind":"claude-code-cli-session","run_id":"DG6-T-DG6-ARCH-03B-solution-architect-20261026T213321Z-ab5648ce","session_id":"ab5648ce-d655-4c92-a67a-d4fbfb00f74a"}`, assignment `docs/delivery/assignments/DG6/T-DG6-ARCH-03B.md` (sha256 `4e097c83f9c50e8ccdec722d9c0fdcb42992cd256a70dee87b86d61e4cd38df1`, verified with `sha256sum`), at `HEAD` `80e1a024e8310a567f23489faec851704fecf634`. Continuation start: `date -u` → `Mon Oct 26 21:44:12 UTC 2026`. Every acceptance check was re-run by the continuation; its logs carry the prefix `03b-` in the evidence folder. Text changed by the continuation is marked **[03B]**. The continuation reviewed the first run's work and re-ran every check. It changed exactly two repository files besides this handback, both to repair the one failure the full integration suite found (§4.4): `apps/api/src/modules/evidence/register.ts` (one entry) and ADR-0055 §6 (one amendment paragraph). It changed no migration and no contract. It raised one new point (§5 item 7) and withdrew one incorrect claim of the first run (§5 item 6).
 - **Two gate systems.** Nothing here reads or writes DG0–DG7 records. No business, Finance or IT approval was granted. Confirming an external change, committing an import or executing an outbound write is not a G1–G6 approval. Product G6 never implies DG7.
 
 ## 1. Preceding gate
 
 `node tools/gates/validate.mjs --historical --stage DG5` (Node 24.21.0), run first, before any write: `PASS gate DG5 (historical)`, exit 0 (`T-DG6-ARCH-03-evidence/00-start-validate-dg5.log`, which also records `date -u` and `HEAD`). It was run again at the end (§8).
+
+**[03B]** The continuation ran it before any write. Its first invocation piped the output through `tail`, so the `EXIT=0` it printed was `tail`'s exit code, not the validator's. I therefore re-ran it with the validator's own exit code captured, still before any write: `PASS gate DG5 (historical)`, `EXIT=0` at `HEAD` `80e1a02` (`03b-00-start-validate-dg5.log`, 21:54:43 UTC).
 
 ## 2. Deliverables
 
@@ -104,6 +107,8 @@ No requirement is complete yet: every row needs its implementer work. This is an
 
 **Disclosed earlier run:** `probe-output-run1-before-0105-message-edit.txt` (also 110/110, exit 0) ran before I changed one RAISE message in `0105` ("timestamp window" → "time window"), because `seed.test.ts` forbids the word `timestamp` outside comments. The constraint names were unchanged; the final run above is on the final migration text.
 
+**[03B] Re-run by the continuation.** First, `sha256sum packages/db/migrations/010[4-7]*.sql` gave exactly the four hashes in `migration-sha256.txt`, so the migrations are unchanged since the probe above. Then `QA_PG_PORT=23711 MTH_PORT_POOL=23712-23719 tests/qa/support/with-pg.sh node --conditions=@mth/source docs/delivery/handbacks/DG6/T-DG6-ARCH-03-evidence/probe.ts` → **110/110 PASS, exit 0** (`03b-probe-output.txt`). The same groups ran: G00–G05 (the fresh-database apply of 0001 → 0107, and 0098–0107 applied over a 0001–0097 database with data) and every guard listed above.
+
 ### 4.2 Static checks
 
 | Command | Exit | Log |
@@ -114,16 +119,33 @@ No requirement is complete yet: every row needs its implementer work. This is an
 | `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | 0 | `format.log` ("All matched files use Prettier code style!") |
 | `pnpm openapi:lint` | 0 | `openapi-lint.log` (910 operations) |
 
+**[03B]** The continuation re-ran all five on the final tree. Every one exited 0: `03b-typecheck.log`, `03b-build.log`, `03b-lint.log`, `03b-format.log` ("All matched files use Prettier code style!") and `03b-openapi-lint.log` (`PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 910 operations`). Each log ends with the command's own `EXIT=` line.
+
 ### 4.3 Unit tests
 
-PENDING-UNIT
+**[03B]** Run by the continuation on the final tree (`HEAD` `80e1a02` plus no source change), Node 24.21.0:
+
+| Command | Locale | Result | Exit | Log |
+|---|---|---|---|---|
+| `env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE pnpm test` | unset | unit-node 153 files / 2401 tests passed; unit-web 94 files / 1746 tests passed; unit-formula-nocodegen 3 files / 259 passed, 2 skipped | 0 | `03b-unit-locale-unset.log` (21:55:55 → 22:08:57 UTC) |
+| `LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test` | `C.UTF-8` | identical counts: 153/2401, 94/1746, 3/259 + 2 skipped | 0 | `03b-unit-c-utf8.log` (22:08:57 → 22:22:24 UTC) |
+
+The 2 skipped tests are in `packages/shared/src/formula/fuzz.test.ts`, which was not changed here.
+
+**Disclosure of the first run's unit logs.** `unit-locale-unset.log` (first run) holds a complete run with the same counts and `EXIT=0`. `unit-c-utf8.log` (first run) is **truncated** at 263 lines, with no summary and no exit line: the container restart stopped it mid-run. It is kept only for provenance and is not evidence of a pass. The `03b-` logs above are the evidence.
 
 ### 4.4 Integration tests
 
 - **Targeted run 1** (`QA_PG_PORT=23721 … catalogue, migrate, contract, identity, aud-write-deny`): **exit 1, 282 passed, 1 failed** (`integration-targeted-run1.log`). The failure: ADR-0007 §5b derivation `receiveWebhook 403`. I had declared a `webhookSignature` security scheme on the operation, so the derivation (which treats only `security: []` as public) expected the CSRF 403. Fix: `security: []` and the scheme removed (net: the contract equals the generator's output, §2.4).
 - **Targeted run 2** (`QA_PG_PORT=23731 …`, same files): **exit 1, 282 passed, 1 failed** (`integration-targeted-run2.log`): the pinned set of public operations lacked `receiveWebhook`. Fix: the pin gains it (§2.4).
 - **Disclosure:** before run 1, a first attempt was started with a shell `&` and was killed when its shell exited; its log was empty (no test ran). I deleted that empty file and ran the suite properly as run 1.
-- **Full suite:** PENDING-FULL
+- **Full suite [03B]:** `QA_PG_PORT=23721 MTH_PORT_POOL=23722-23749 tests/qa/support/with-pg.sh pnpm test:integration` (fresh database, 99 migrations applied), 22:22:34 → 23:18:52 UTC, duration 3362.75 s → **exit 1: 322 files (321 passed, 1 failed); 3115 tests (3113 passed, 1 failed, 1 skipped)** (`03b-integration-full.log`).
+  - **The failure** was in this slice's scope: `apps/api/test/integration/evidence/evidence-register.test.ts` › "every table that references an evidence item is a link source or a stated exclusion (catalogue)" → `expected [ 'deliverable_external_change' ] to deeply equal []`. `0106` adds the foreign key `deliverable_external_change_evidence_fkey` to `evidence`, and the first run had not registered the table with the DG5 evidence register (REQ-S13-010).
+  - **Repair:** I added `deliverable_external_change` to `EVIDENCE_LINK_SOURCES` in `apps/api/src/modules/evidence/register.ts` (record type `deliverable`, id `deliverable_id`, active iff `confirmation_status = 'confirmed'`) and amended ADR-0055 §6 to match. I did not add an exclusion: a confirmation by reviewed evidence is a link of the deliverable to that evidence.
+  - **Re-verification after the repair:** `QA_PG_PORT=23741 MTH_PORT_POOL=23742-23749 tests/qa/support/with-pg.sh pnpm exec vitest run --project integration apps/api/test/integration/evidence/ packages/db/test/integration/catalogue.test.ts apps/api/test/integration/contract/contract.test.ts` → **3 files, 142 tests passed, exit 0** (`03b-integration-targeted-after-fix.log`). The evidence unit tests (`vitest run --project unit-node apps/api/src/modules/evidence`) gave 1 file, 13 tests, exit 0 (`03b-unit-evidence-after-fix.log`). `pnpm -r typecheck`, `pnpm lint`, `pnpm -r build` and the full Prettier check each exited 0 after the repair (`03b-*-after-fix.log`).
+  - **Not run:** the full integration suite was **not** re-run after the one-entry repair. A full run takes about 56 minutes, which would exceed the 2-hour limit. Every other file in that run passed, and the repair only adds one entry to a constant read by the evidence register, so I expect the full suite to pass, but that is not demonstrated. **The orchestrator should run the full suite after merge** (Merge instructions).
+  - **Pinned counts:** the operation count 876 → 910 and the public-operation pin (+`receiveWebhook`) from §2.4 hold (contract.test.ts passed). No other pinned count changed.
+  - **First run's partial log:** `integration-full-run1.log` (673 lines, started 20:48:20 UTC per `integration-full-run1.start`) has no summary and no exit line, because the container restart stopped it. It is provenance only.
 
 ## 5. Raised to the orchestrator (decisions needed; nothing decided by me)
 
@@ -132,7 +154,11 @@ PENDING-UNIT
 3. **`outbound_write.execute` default holder:** TD only (REQ-S17-006 "explicitly granted role only"); implied by no other code. Confirm or name another role.
 4. **A confirmed external change is final.** If the verified evidence behind it is later rejected or archived, the confirmation does not revert (ADR-0055 §6). A revocation path would be a new operation and state; I did not add one. Decide whether it is needed for DG6.
 5. **Shared-file merges with the W3 worktrees (BE-B, BE-E, FE-A):** I changed `contract.test.ts` (count and public pin), `p6-pending.ts` (one import line), `p6-operations.ts`, `identity.test.ts` (TO's pinned list +4 codes), `catalogue.test.ts`, `seed.test.ts`, `permissions.ts`, `schema.ts`, `advisory-locks.ts`. Expect small textual conflicts if a W3 task touched the same pins; keep both sides.
-6. **Not mine to fix, noticed:** `data-dictionary.md` contains the ARCH-02 section "P6 functions (0101, 0102)" twice (identical text at its end). Left untouched.
+6. **[03B] Withdrawn.** The first run reported that `data-dictionary.md` contains the ARCH-02 section "P6 functions (0101, 0102)" twice. That is not true. `grep -n "P6 functions"` finds it once (line 13021), both at the base `1c061ab` and now, and its bullets are not repeated. There is nothing to fix.
+7. **[03B] Path placement differs from the assignment's area names.** The assignment names the areas `imports` and `outbound-writes`, and REQ-S17-002/003 name `/api/v1/imports` and `/api/v1/webhooks`. The contract places 6 import operations under `/api/v1/transformations/{transformationId}/imports…` and 4 outbound-write operations under `/api/v1/transformations/{transformationId}/outbound-writes…`. Templates (`/api/v1/import-templates`), the webhook receiver (`/api/v1/webhooks/{endpointKey}`) and the admin areas follow the names exactly.
+   - **Why:** this matches the transformation-scoped resources of DG2–DG5. Every import and every outbound write belongs to one transformation, so `ReadScope` and the DG2 non-disclosure 404 come from the path parameter, as they do for KPI actuals.
+   - **Also:** the deliverable confirmation adds the path `/api/v1/deliverables/{deliverableId}/external-change` (`putDeliverableExternalChange`, flag or withdraw) beside `/confirmation` (get, post).
+   - Neither ADR states the placement explicitly. I did not change it. The contract is not yet gate-approved, and no implementer of this slice has started. Decide whether to keep it (my recommendation) or flatten it; flattening is a contract and pending-list change before BE-M2 and BE-N2 start.
 
 ## 6. DG1–DG5 artifacts changed, and why (D-195: additive changes)
 
@@ -144,6 +170,8 @@ PENDING-UNIT
 | `apps/api/test/integration/identity.test.ts` | TO's pinned permission list + `connector.read`, `external_change.flag`, `import.read`, `outbound_write.read` | The `0107` role defaults. |
 | `packages/db/src/schema.ts`, `catalogue.test.ts`, `seed.test.ts`, `packages/shared/src/permissions.ts`, `advisory-locks.ts` (+ test), ADR-0016 §6 | as §2.2 | Mirror `0104`–`0107`; registry rule. |
 | `apps/api/test/support/p6-pending.ts`, `p6-operations.ts` | one import; +34 ids | The pending seam. |
+| `apps/api/src/modules/evidence/register.ts` (DG5, REQ-S13-010) **[03B]** | `EVIDENCE_LINK_SOURCES` + `deliverable_external_change` (one entry) | `0106` references `evidence`; the DG5 catalogue rule requires every referencing table to be a link source or a stated exclusion (§4.4). Additive under D-195: until BE-O writes a confirmation, no row exists, so the register's output is as at DG5. |
+| `docs/architecture/adr/ADR-0055-…md` §6 **[03B]** | dated amendment paragraph "Evidence register" | States the entry above. |
 | `docs/architecture/erd.md` | §1v appended; §2.12 rows FormSchemaVersion, Job, Notification, IntegrationRun corrected | The rows named tables that do not exist (`form_schema_version`, `notification`); REQ-S16-022 needs the ERD to name the real tables. Documentation only. |
 | `docs/architecture/data-dictionary.md`, `docs/analysis/permissions-matrix.md`, `docs/architecture/p6-work-split.md` | appended B/A sections | Deliverables 4 and 6. |
 
@@ -155,9 +183,30 @@ Untracked dot-files at the repository top level (`.bashrc`, `.gitconfig`, `.idea
 
 In `p6-work-split.md` §B/A.13 and §2. The main points: credentials are references resolved outside transactions; no remote I/O inside a transaction; imports go through the DG4 submission path and never accept a value; cells are text and decimals stay strings; Unknown is null and never 0 or green; an outbound write is done only on a confirmed response and an external change is confirmed only by verified evidence or a confirmed connector result; one 401 for every webhook authentication failure; exactly-once keys and locks everywhere; nothing is ever called "live".
 
+**[03B]** Further points:
+- **BE-O:** `deliverable_external_change` is already an evidence-register link source. Do not add it again, and keep the DG5 catalogue test green.
+- **BE-M2 and BE-N2:** the import and outbound-write routes are transformation-scoped paths (§5 item 7) unless the orchestrator decides otherwise before you start.
+- **Every implementer of this slice:** a full integration run takes about 56 minutes on this host (322 files). Plan targeted runs during work and one full run per handback.
+
 ## 8. End
 
-PENDING-END
+**[03B]**
+
+- **End of the first run:** never reached. The container restart stopped it, and no end `date -u` exists for it.
+- **End validation:** `node tools/gates/validate.mjs --historical --stage DG5` at the end of the continuation gave `PASS gate DG5 (historical)`, `EXIT=0`, at `HEAD` `80e1a02`, 23:28:58 UTC (`03b-end-validate-dg5.log`).
+- **Continuation end:** `date -u` → `Mon Oct 26 23:30:07 UTC 2026`. Start was 21:44:12 UTC, so it took about 1 h 46 min.
+- **Commits:** nothing committed (the orchestrator commits).
+- **Files changed by the continuation** (uncommitted on top of `80e1a02`):
+  - `apps/api/src/modules/evidence/register.ts`;
+  - `docs/architecture/adr/ADR-0055-p6-connector-framework-runs-outbound-writes-external-change.md`;
+  - `docs/architecture/p6-work-split.md` (one row in §B/A.0);
+  - this handback;
+  - new `03b-*` logs in `T-DG6-ARCH-03-evidence/`.
+- **Remaining for a continuation or the orchestrator:**
+  1. One full `pnpm test:integration` run after the repair (§4.4: not run for time).
+  2. The decisions in §5, items 1–5 and 7.
+
+No requirement in scope is complete. Every row still needs its implementer work (§3).
 
 ### Merge instructions
 
