@@ -472,7 +472,11 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
   //      and the audit event; the object is finalised (atomic rename, local I/O only) as the last step before COMMIT,
   //      as before BE17, so a committed content row never points at a missing object.
   //   Any failure after phase 2 started discards the temporary and the final object.
-  const uploadConfig = { access: { permission: "evidence.create" }, consumes: [OCTET_STREAM_MEDIA_TYPE] } as const;
+  const uploadConfig = {
+    access: { permission: "evidence.create" },
+    consumes: [OCTET_STREAM_MEDIA_TYPE],
+    rateLimitClass: "upload",
+  } as const; // P6 BE-E: ADR-0052 §4 upload class
   app.post(`${ITEM}/content`, { config: uploadConfig }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
     const { organizationId, fileName, body } = await db.transaction().execute(async (tx) => {

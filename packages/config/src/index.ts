@@ -127,6 +127,54 @@ export const ENV_VARS = {
     default: "20",
     usedBy: ["api"],
   },
+  // P6 slice F (T-DG6-BE-E; ADR-0052 §4): the rate-limit classes, each applied IN ADDITION to the global limit to the
+  // operations of its class (whichever is reached first answers 429 rate_limited with Retry-After). Keyed like the
+  // global limit (the validated session's user, else the client IP), except the webhook class (the endpoint key).
+  UPLOAD_RATE_LIMIT_PER_MINUTE: {
+    description: "Evidence and import uploads per minute per session/IP (rate-limit class upload; ADR-0052 §4)",
+    required: false,
+    secret: false,
+    default: "30",
+    usedBy: ["api"],
+  },
+  SEARCH_RATE_LIMIT_PER_MINUTE: {
+    description: "Global search requests per minute per session/IP (rate-limit class search; ADR-0052 §4)",
+    required: false,
+    secret: false,
+    default: "120",
+    usedBy: ["api"],
+  },
+  ASSISTANT_RATE_LIMIT_PER_MINUTE: {
+    description: "Assistant messages per minute per session/IP (rate-limit class assistant; ADR-0052 §4)",
+    required: false,
+    secret: false,
+    default: "20",
+    usedBy: ["api"],
+  },
+  WEBHOOK_RATE_LIMIT_PER_MINUTE: {
+    description: "Webhook deliveries per minute per endpoint key (rate-limit class webhook; ADR-0052 §4)",
+    required: false,
+    secret: false,
+    default: "600",
+    usedBy: ["api"],
+  },
+  EXPORT_RATE_LIMIT_PER_MINUTE: {
+    description: "Export starts per minute per session/IP (rate-limit class export; ADR-0052 §4)",
+    required: false,
+    secret: false,
+    default: "10",
+    usedBy: ["api"],
+  },
+  // P6 slice F (T-DG6-BE-E; ADR-0052 §5): the directory the built-in `file` SecretProvider reads (a container secret
+  // mount). Unset: the `file` provider resolves nothing and the installation behaves exactly as DG5.
+  SECRETS_DIR: {
+    description:
+      "Directory of secret files read by the built-in file SecretProvider (one file per secret name, e.g. a " +
+      "container secret mount). Optional; unset means the file provider is not configured",
+    required: false,
+    secret: false,
+    usedBy: ["api", "worker"],
+  },
   LOG_LEVEL: {
     description: "fatal | error | warn | info | debug",
     required: false,
@@ -200,4 +248,11 @@ export {
   NODE_ENVS,
   type AppConfig,
   type Service,
+} from "./load.ts";
+// P6 (T-DG6-BE-E; ADR-0052 §4, §5): the rate-limit class budgets and the `env` SecretProvider's read.
+export {
+  RATE_LIMIT_CLASS_VARIABLES,
+  readSecretVariable,
+  type BudgetedRateLimitClass,
+  type RateLimitClassBudgets,
 } from "./load.ts";

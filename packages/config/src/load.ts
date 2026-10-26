@@ -45,6 +45,10 @@ export interface AppConfig {
   readonly defaultTimezone: string;
   readonly defaultCurrency: string;
   readonly rateLimit: { readonly perMinute: number; readonly authPerMinute: number };
+  /** P6 (ADR-0052 §4): the per-minute budget of each rate-limit class, applied in addition to the global limit. */
+  readonly rateLimitClasses: RateLimitClassBudgets;
+  /** P6 (ADR-0052 §5): the directory of the built-in `file` SecretProvider, or null when unset. */
+  readonly secretsDir: string | null;
   readonly logLevel: (typeof LOG_LEVELS)[number];
   readonly trustProxy: readonly string[];
   /**
@@ -57,6 +61,17 @@ export interface AppConfig {
   /** Worker-only settings (F-DG4-128). Always present; defaulted when unset. */
   readonly worker: { readonly superviseIntervalSeconds: number };
 }
+
+/** The rate-limit classes of ADR-0052 §4 that have their own budget (global and auth are `rateLimit`). */
+export const RATE_LIMIT_CLASS_VARIABLES = {
+  upload: "UPLOAD_RATE_LIMIT_PER_MINUTE",
+  search: "SEARCH_RATE_LIMIT_PER_MINUTE",
+  assistant: "ASSISTANT_RATE_LIMIT_PER_MINUTE",
+  webhook: "WEBHOOK_RATE_LIMIT_PER_MINUTE",
+  export: "EXPORT_RATE_LIMIT_PER_MINUTE",
+} as const satisfies Record<string, EnvVarName>;
+export type BudgetedRateLimitClass = keyof typeof RATE_LIMIT_CLASS_VARIABLES;
+export type RateLimitClassBudgets = { readonly [K in BudgetedRateLimitClass]: number };
 
 type Env = Readonly<Record<string, string | undefined>>;
 
@@ -88,6 +103,18 @@ function readRaw(env: Env, name: EnvVarName, problems: string[]): string | undef
     }
   }
   return hasDirect ? direct : undefined;
+}
+
+/**
+ * ADR-0052 §5: the built-in `env` SecretProvider's read, exactly the ADR-0011 rule above: `NAME` or `NAME_FILE`
+ * (never both), empty strings unset. Returns undefined when neither is set; throws a ConfigError that names the
+ * variable, never the value, when both are set or the file cannot be read.
+ */
+export function readSecretVariable(name: string, env: Env = process.env): string | undefined {
+  const problems: string[] = [];
+  const value = readRaw(env, name as EnvVarName, problems);
+  if (problems.length > 0) throw new ConfigError(problems);
+  return value;
 }
 
 function isRequiredFor(name: EnvVarName, service: Service): boolean {
@@ -164,6 +191,10 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
   const defaultCurrency = field("DEFAULT_CURRENCY", z.string().regex(/^[A-Z]{3}$/, "must be an ISO 4217 code"));
   const perMinute = field("RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
   const authPerMinute = field("AUTH_RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
+  const classBudgets = Object.fromEntries(
+    Object.entries(RATE_LIMIT_CLASS_VARIABLES).map(([cls, name]) => [cls, field(name, positiveInt(1_000_000))]),
+  ) as { [K in BudgetedRateLimitClass]: number | undefined };
+  const secretsDir = field("SECRETS_DIR", z.string().min(1));
   const logLevel = field("LOG_LEVEL", z.enum(LOG_LEVELS));
   const superviseIntervalSeconds = field(
     "WORKER_SUPERVISE_INTERVAL_SECONDS",
@@ -244,6 +275,8 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     defaultTimezone: defaultTimezone!,
     defaultCurrency: defaultCurrency!,
     rateLimit: { perMinute: perMinute!, authPerMinute: authPerMinute! },
+    rateLimitClasses: Object.freeze({ ...classBudgets }) as RateLimitClassBudgets,
+    secretsDir: secretsDir ?? null,
     logLevel: logLevel!,
     trustProxy,
     worker: { superviseIntervalSeconds: superviseIntervalSeconds! },

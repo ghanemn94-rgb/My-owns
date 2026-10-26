@@ -48,6 +48,14 @@ export {
   type RawBodyState,
   type RouteAccess,
 } from "./hooks.ts";
+// P6 (T-DG6-BE-E; ADR-0052 §4): the rate-limit classes.
+export {
+  RATE_LIMIT_CLASSES,
+  rateLimitClass,
+  registerRateLimitClasses,
+  type RateLimitClassSpec,
+  type RateLimitKey,
+} from "./hooks.ts";
 export {
   BAD_URL_DETAIL,
   clientErrorProblem,
@@ -120,10 +128,16 @@ export {
   type BenefitFormulaVersionChange,
   type MaterialChangePort,
 } from "./material-change.ts";
-// P6 (T-DG6-BE-A wiring point; ADR-0052 §5): the SecretProvider port and registry. BE-E adds the env and file providers.
+// P6 (ADR-0052 §5): the SecretProvider port and registry (T-DG6-BE-A) and the built-in env and file providers (BE-E).
 export {
   BUILT_IN_SECRET_PROVIDER_IDS,
   createSecretProviderRegistry,
+  envSecretProvider,
+  fileSecretProvider,
+  registerBuiltInSecretProviders,
+  SECRET_PLACEHOLDER,
+  secretValue,
+  SecretProviderError,
   type SecretProvider,
   type SecretProviderRegistry,
   type SecretRef,

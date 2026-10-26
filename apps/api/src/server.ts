@@ -24,10 +24,13 @@ import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/
 import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
 import {
+  principalOf,
   registerAccessP2Routes,
   registerAccessP4Routes,
   registerDeniedMutationAudit,
   registerSensitivityRoutes,
+  resolveTarget,
+  scopeFilter,
 } from "./modules/access/index.ts";
 import { colorTokens, deriveDarkerShade, tokenSource, tokensAreProvisional } from "@mth/design-tokens";
 import {
@@ -41,7 +44,7 @@ import {
   registerStorageAdminRoutes,
   registerUploadPolicyRoutes,
 } from "./modules/admin/index.ts";
-import { registerAuditRoutes } from "./modules/audit/index.ts";
+import { registerAuditRoutes, sensitiveRecordsRedactedForEveryone } from "./modules/audit/index.ts";
 import {
   RateLimitSubjects,
   registerIdentity,
@@ -89,6 +92,8 @@ import {
   createFrameworkErrorHandler,
   createSecretProviderRegistry,
   createJsonBodyParser,
+  registerBuiltInSecretProviders,
+  registerRateLimitClasses,
   DEFAULT_CONSUMES,
   DEFAULT_REQUEST_TIMEOUT_MS,
   DEFAULT_SHUTDOWN_GRACE_MS,
@@ -229,6 +234,8 @@ export interface RouteRecord {
   readonly access: unknown;
   /** The request media types the route accepts (F-DG2-320). */
   readonly consumes: readonly string[];
+  /** P6 (ADR-0052 §4): the route's rate-limit class, or null (the global limit only). */
+  readonly rateLimitClass: string | null;
 }
 
 export async function buildServer(options: ServerOptions): Promise<{
@@ -315,6 +322,7 @@ export async function buildServer(options: ServerOptions): Promise<{
         url: r.url,
         access: r.config?.access,
         consumes: r.config?.consumes ?? DEFAULT_CONSUMES,
+        rateLimitClass: r.config?.rateLimitClass ?? null,
       });
   });
 
@@ -335,6 +343,11 @@ export async function buildServer(options: ServerOptions): Promise<{
   // live session (within the idle timeout) maps to the authenticated subject; everything else - no cookie, forged,
   // expired or revoked - is keyed by the client IP, so rotating fake cookies cannot open fresh buckets.
   const rateLimitSubjects = new RateLimitSubjects(config.session.idleMinutes * 60_000);
+  const rateLimitKey = (request: FastifyRequest) => {
+    const token = request.cookies?.[cookieName];
+    const subject = token ? rateLimitSubjects.subjectOf(token) : null;
+    return subject ? `u:${subject}` : `ip:${request.ip}`;
+  };
   await app.register(rateLimit, {
     global: true,
     max: config.rateLimit.perMinute,
@@ -342,11 +355,7 @@ export async function buildServer(options: ServerOptions): Promise<{
     // Keyed by the authenticated subject (user id) of a validated session, or else the client IP (TRUST_PROXY decides
     // which X-Forwarded-For hops count). Decided without a database lookup, so floods are refused before any query.
     // In-process store (ADR-0007 T-3); a PostgreSQL store comes with multi-instance P6.
-    keyGenerator: (request: FastifyRequest) => {
-      const token = request.cookies?.[cookieName];
-      const subject = token ? rateLimitSubjects.subjectOf(token) : null;
-      return subject ? `u:${subject}` : `ip:${request.ip}`;
-    },
+    keyGenerator: rateLimitKey,
     allowList: (request: FastifyRequest) => request.url === "/healthz" || request.url === "/readyz",
     errorResponseBuilder: () => problems.rateLimited(),
   });
@@ -355,6 +364,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   // documented form; same key, store and limit). Its 429, like the unmatched 404 itself, belongs to no operation and is
   // outside the contract by design (ADR-0007 §5b).
   registerNotFoundHandler(app, { spaFallback: webRoot !== null, preHandler: app.rateLimit() });
+  // P6 (T-DG6-BE-E; ADR-0052 §4): the rate-limit classes, each in addition to the global limit, same key.
+  registerRateLimitClasses(app, config.rateLimitClasses, rateLimitKey);
 
   registerDeniedMutationAudit(app, db);
   registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
@@ -390,7 +401,22 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerSensitivityRoutes(app, deps); // BE-B: record sensitivity and sensitive-record grants (ADR-0051 §2)
   registerUploadPolicyRoutes(app, deps); // BE-D: the upload policy (ADR-0052 §1)
   registerSecurityRoutes(app, deps); // BE-E: the security view, rate-limit classes (ADR-0052 §4)
-  registerAuditRoutes(app, deps, {}); // BE-E: the global audit API (ADR-0052 §8)
+  registerAuditRoutes(app, deps, {
+    // BE-E: the global audit API (ADR-0052 §8). The access port (D-197 item 5): audit_event.read per ADR-0006, and the
+    // ADR-0051 §2 redaction. MERGE NOTE: when T-DG6-BE-B's sensitivity clause lands, restrictedRecords uses it instead
+    // of the fail-closed interim (which redacts every sensitive record's events for everyone).
+    organizationAccess: async (request, organizationId) => {
+      const principal = principalOf(request);
+      principal.tracker.decisions += 1;
+      if (!(await resolveTarget(db, { type: "organization", id: organizationId }))) return "not_found";
+      const holds = principal.grants.some(
+        (g) => g.organizationId === organizationId && g.permissions.has("audit_event.read"),
+      );
+      return holds ? "allowed" : "forbidden";
+    },
+    readFilter: (request, cols) => scopeFilter(principalOf(request), "audit_event.read", cols),
+    restrictedRecords: sensitiveRecordsRedactedForEveryone(db),
+  });
   registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
   registerStorageAdminRoutes(app, deps); // BE-H: Administration > Storage (slice C)
   registerNotificationChannelRoutes(app, deps); // BE-I: Administration > Notifications (slice C)
@@ -494,6 +520,7 @@ export async function buildServer(options: ServerOptions): Promise<{
   //  - ModelProvider (ARCH-05; BE-T, assistant/provider.ts): the provider line goes below this block (the local test
   //    adapter, or the HTTP adapter when configured); with nothing configured the assistant stays disabled.
   const secrets = createSecretProviderRegistry();
+  registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir }); // BE-E: env and file (ADR-0052 §5)
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
