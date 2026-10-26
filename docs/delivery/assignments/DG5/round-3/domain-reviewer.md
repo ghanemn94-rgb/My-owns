@@ -1,0 +1,95 @@
+# DG5 gate review: domain-reviewer (round 3, corrected clean re-gate: acceptance round)
+
+Task ID: `T-DG5-REV-DOM-R5`. You are the independent domain reviewer of the frozen **DG5** candidate (P5 "Configuration automation and outputs"). You did not implement any DG5 requirement and are read-only to the implementation.
+
+## Candidate
+
+- **candidate_id:** `sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce`. Verify it with `node tools/gates/candidate.mjs --stage DG5` (2207 files) on a **complete clone**. If the clone is incomplete, the review is BLOCKED.
+- **manifest:** `docs/delivery/candidates/DG5/55a411ae9f4e8747.manifest.json`.
+- **source_commit:** `660f40c7d141b6fb73c145e0ee7a053ceb5905de` (record this full 40-character id in your record's `source_commit`).
+- **Node:** 24.21.0 at `/opt/nvm/versions/node/v24.21.0/bin`; 22.22.2 at `/opt/node22/bin`.
+- **Browser:** pre-installed Chromium (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). Never run `playwright install`.
+- **Ports:** use ports below 32768; the harnesses retry on collision. **Your ranges are 26400–26499.** The other two reviewers run at the same time on other ranges.
+- **Previous gates:** DG4, DG3, DG2 and DG1 are APPROVED. `node tools/gates/validate.mjs --historical --stage DG4` must pass, and so must `--historical --stage DG3`, `DG2` and `DG1`.
+- **Design and delivery context:**
+  - `docs/architecture/p5-plan.md` and `docs/architecture/p5-work-split.md`;
+  - `docs/architecture/adr/ADR-0039` … `ADR-0050`, with their dated amendments (T-DG5-ARCH-R1 to R6), which win where they differ from the original text; the DG1–DG4 ADRs they extend;
+  - `docs/delivery/decisions.md` D-141 to D-191 (the build and repair waves: D-155 to D-183; the first re-gate: D-184 to D-189; this corrected re-gate: D-190, D-191);
+  - the P5 implementer handbacks in `docs/delivery/handbacks/DG5/`;
+  - the QA authoring handbacks in `docs/delivery/test-evidence/DG5/qa/T-DG5-QA-{A,C,D,B,E,F,E2,F2}-authoring/`;
+  - the orchestrator's merged-tree verifications in `docs/delivery/test-evidence/DG5/orchestrator-D-*/` and the merged-tree verification named in D-182 (`orchestrator-D-182/verify-ab2-45287b4/`, including `repro-health.log`).
+- **The binding acceptance texts** are in `docs/delivery/requirements.csv` (`acceptance`, for the 78 rows with `final_gate` = DG5). Test them literally. The DG5 rows are IMPLEMENTED with evidence (`validate.mjs --register DG5` PASS). Their `notes` disclose every clause covered only partly; judge whether each such disclosure is acceptable.
+- **Product gates G1–G6 are business approvals inside the product.** They never imply or relate to the engineering gates DG0–DG7. Product G6 never implies DG7.
+- **The confined sandbox** gives you a read-only `node_modules`. Vitest's config loader then needs `--configLoader runner`; the A06 and A07 root specs need `E2E_SCREENSHOT_DIR` pointed at a writable path. Use them, and say so. Run anything that builds or writes in a disposable clone under `$TMPDIR`.
+- **The demo database:** `e2e/support/with-demo-stack.sh` starts a demo-initialized stack (`AUTH_MODE=dev`), where the demo role users `roaming.user.*` sign in through the dev sign-in (D-165). The production-initialized stack is `apps/web/e2e/support/with-stack.sh`.
+- **Machine load.** The three reviews run at the same time, so the load is high. A long e2e journey can cross its 30 s limit under load. If a test times out, re-run that spec alone and report both runs. Never treat a timeout as a pass, and never hide one.
+
+## Round 3: an acceptance round on the SAME candidate (D-192, in `docs/delivery/progress.md`)
+
+- **Read D-192 verbatim** (in `docs/delivery/progress.md`; `decisions.md` is frozen in the candidate until the gate is decided). Round 3 reviews the same candidate as round 2 (`55a411ae`; nothing changed). Round 2's records are in `docs/delivery/reviews/DG5/round-2/`: code-security PASS, qa PASS, your own PASS (`domain-reviewer.json`, with its evidence under `docs/delivery/test-evidence/DG5/domain/round-2/`).
+- **Confirm the candidate** on a complete clone (start and end), and that it is the one your round-2 record reviewed.
+- **Your task:** judge, independently and adversarially, each of your two open Low, non-mandatory findings:
+  - **F-DG5-120:** the Studio Elements table shows the five scoring-weight labels in Arabic on the English page.
+  - **F-DG5-121:** the scoring-defaults version page shows 'Changed' for unchanged weights, and the rubric diff is raw JSON.
+  For each, either accept it as an observation (Low, not mandatory, presentation only, no data or authorization effect, not breaking a DG5 acceptance text, safe to carry to DG6) or keep it open. You may reproduce or inspect as needed, and cite your round-2 evidence for this same candidate (say so explicitly in each check); you need not re-run the full suites. Never accept a finding you consider blocking.
+- **Write** `docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json` = `{ "verifications": [ {finding_id, result, status_after, note, evidence[]} ] }`: an accepted finding `result: "PASS", status_after: "ACCEPTED_OBSERVATION"` with the rationale and the DG6 follow-up in `note`; one you keep open `result: "FAIL", status_after: "OPEN"` with why.
+- **Evidence:** under `docs/delivery/test-evidence/DG5/domain/round-3/`. Never touch product code.
+
+## Requirements to check (record EXACTLY these, 78)
+
+`REQ-PB-001`, `REQ-PB-002`, `REQ-PB-011`, `REQ-PB-077`, `REQ-PB-086`, `REQ-PB-087`, `REQ-PB-088`, `REQ-PB-089`, `REQ-PB-090`, `REQ-PB-091`, `REQ-PB-092`, `REQ-PB-093`, `REQ-DLV-037`, `REQ-S01-002`, `REQ-S01-003`, `REQ-S01-004`, `REQ-S02-001`, `REQ-S02-004`, `REQ-S03-007`, `REQ-S03-010`, `REQ-S04-011`, `REQ-S05-001`, `REQ-S05-002`, `REQ-S05-006`, `REQ-S06-001`, `REQ-S06-002`, `REQ-S06-003`, `REQ-S06-004`, `REQ-S06-005`, `REQ-S06-006`, `REQ-S06-007`, `REQ-S06-008`, `REQ-S06-009`, `REQ-S06-010`, `REQ-S07-016`, `REQ-S08-005`, `REQ-S08-019`, `REQ-S09-011`, `REQ-S10-013`, `REQ-S10-015`, `REQ-S12-001`, `REQ-S12-002`, `REQ-S12-003`, `REQ-S12-004`, `REQ-S12-012`, `REQ-S12-015`, `REQ-S12-018`, `REQ-S12-020`, `REQ-S12-021`, `REQ-S12-022`, `REQ-S12-025`, `REQ-S12-026`, `REQ-S13-004`, `REQ-S13-005`, `REQ-S13-006`, `REQ-S13-007`, `REQ-S13-008`, `REQ-S13-009`, `REQ-S13-010`, `REQ-S14-001`, `REQ-S14-002`, `REQ-S14-003`, `REQ-S14-004`, `REQ-S15-004`, `REQ-S16-010`, `REQ-S16-012`, `REQ-S16-015`, `REQ-S16-021`, `REQ-S18-001`, `REQ-S18-002`, `REQ-S18-003`, `REQ-S18-004`, `REQ-S20-002`, `REQ-S20-006`, `REQ-S20-007`, `REQ-S20-015`, `REQ-S20-016`, `REQ-S21-001`.
+
+## Evidence honesty (DG2 round-10 audit condition 1, binding)
+
+- In your record, report every non-zero exit, failed suite, hook timeout, skipped or flaky test, or error line that appears in any log you cite. Explain each one, whatever its cause, in the check's `actual`.
+- A check whose evidence holds an unexplained failure cannot be PASS.
+- A probe that exits non-zero "by design" must say exactly which assertions failed and why.
+
+## Environmental residuals: NOT BLOCKED gate checks
+
+Record each of these as PASS on the offline/config surface, and note the residual. A BLOCKED check fails the gate round.
+- Live registry: REQ-DLV-042 AC-1, D-057.
+- Live CI: REQ-DLV-025 A24, D-058.
+- Keycloak and a real demo IdP: D-049; the demo deployment's IdP is a devops item (ADR-0050 §1); the dev-mode binding of D-165 is the test path.
+- AI and external notification adapters: none ships in P5 (D-142 Q11); A21's "disabled" is the shipped configuration (D-165).
+
+## Record format (MANDATORY)
+
+Write `docs/delivery/reviews/DG5/round-3/domain-reviewer.json` with these fields:
+
+- `assignment` = exactly `docs/delivery/assignments/DG5/round-3/domain-reviewer.md` (bare path);
+- `candidate_id` as above;
+- `reviewer_role: domain-reviewer`, `round: 3`, `stage_id: DG5`;
+- `checks_run[]`, each `{id, environment, procedure, expected, actual, exit_status (int), result (PASS|FAIL|BLOCKED), evidence[]}`;
+- `requirements_checked[]`: exactly the ids listed above;
+- `findings[]`: only the ids of NEW findings (strings);
+- `verdict`: PASS only if all four hold:
+  - every requirement you check is verifiable with evidence;
+  - every failure in the logs you cite is disclosed and explained;
+  - nothing Critical, High or mandatory is unresolved;
+  - you raised no finding you consider blocking.
+
+Mirror the field set of `docs/delivery/reviews/DG4/round-10/domain-reviewer.json`.
+
+## Finding record format: STRICT (use YOUR id range only)
+
+- **Your id range for any NEW finding:** **F-DG5-122 to F-DG5-139**, used in order. Never use another id. The other reviewers have their own ranges.
+- **The sidecar.** If you raise findings, write `docs/delivery/reviews/DG5/round-3/domain-reviewer.findings.json` = `{ "schema_version": 1, "findings": [ ... ] }`. If you raise none, set `findings: []` and write no sidecar.
+- **Each finding object has EXACTLY these keys, and no others.** `locations` is NOT allowed:
+  - `id`;
+  - `stage_id` ("DG5");
+  - `requirement`;
+  - `severity` (Critical|High|Medium|Low);
+  - `mandatory_violation` (bool);
+  - `title`, `reproduction`, `expected`, `actual`;
+  - `evidence` (array of repository paths);
+  - `reported_by` ("domain-reviewer");
+  - `reported_in` ("docs/delivery/reviews/DG5/round-3/domain-reviewer.json");
+  - `owner` (an implementer role: backend-workflow-engineer | kpi-benefits-engineer | frontend-ux-engineer | solution-architect | transformation-analyst | devops-engineer);
+  - `status` ("OPEN");
+  - `history` (`[{at, status:"OPEN", note}]`).
+
+**Severity guidance.**
+- **High or mandatory** is a broken acceptance criterion, a security or authorization hole, a wrong financial result, or a business approval that can be fabricated or bypassed.
+- **Low** is cosmetic, or a documentation drift with no behavioural effect.
+- Be precise. An observation you do not consider a defect belongs in a check's `actual`, not in a finding.
