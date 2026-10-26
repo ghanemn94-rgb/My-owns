@@ -13777,28 +13777,34 @@
           "at": "2026-10-26T04:33:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-10-26T04:33:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-10-26T04:50:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 3: PASS"
         }
       ],
       "verification": {
-        "by_role": "domain-reviewer",
+        "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG5-T-DG5-RG2-DOM-R3-domain-reviewer-20261026T042141Z-71395da3",
-          "session_id": "71395da3-77e2-41c4-a888-f283f24c3c5a"
+          "run_id": "DG5-T-DG5-RG2-AUDIT-V-release-auditor-20261026T043444Z-69bfb4f2",
+          "session_id": "69bfb4f2-4e26-495a-be56-116552866d86"
         },
-        "at": "2026-10-26T04:33:00Z",
+        "at": "2026-10-26T04:50:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG5/domain/round-3/f120-f121-code-inspection.log",
-          "docs/delivery/test-evidence/DG5/domain/round-3/candidate-verify-start.log",
-          "docs/delivery/test-evidence/DG5/domain/round-3/candidate-verify-end.log",
-          "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+          "docs/delivery/test-evidence/DG5/audit/round-3/04-f120-f121-inspection.log",
           "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-published.png",
-          "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-published.png",
-          "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-after-prioritization.png",
-          "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run2-p3-p5.log"
+          "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+          "docs/delivery/test-evidence/DG5/domain/round-3/f120-f121-code-inspection.log"
         ],
-        "note": "Judged adversarially on the same frozen candidate sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce (source 660f40c, re-verified on a complete clone at the start and end of this run). The defect is real and stays as described in round 2: migration 0062 seeds the five scoring_weight elements with sourceLabelEn + labelAr and no labelEn, and apps/web/src/pages/studio/api.ts elementLabel() reads only labelEn/labelAr, so on the English page the Studio Elements table falls back to the Arabic labels. Fresh code inspection in my clone (f120-f121-code-inspection.log) shows how far it reaches. elementLabel is used ONLY by apps/web/src/pages/studio/ElementsSection.tsx, the administrator's Elements table. The scoring-defaults editor names criteria through i18n studio.criterion.* (English 'Strategic fit' and the others). Every transformation-facing screen (WeightSets, Scorecard, Rankings) names them through prioritization.criterion.<code>, and my round-2 screenshot of the same candidate (screens/en/dom-p3-after-prioritization.png) shows 'Strategic fit: 30% ... Time-to-value: 15%' in English. No server scoring, ranking, gate-facts or publish code reads any of these label attributes (grep exit 1). The stable key and B0076 sit beside each label, so the row is identifiable. No weight value, calculation, pin, review, publish refusal, authorization or approval is affected, and the Arabic page is correct. No DG5 acceptance text names this table's label language: REQ-PB-093's A06/A07 clauses (30/20/20/15/15 in the UI, new transformations only, 95 % refused) passed in my round-2 runs on this candidate (DOM-R2-08). It is therefore Low, non-mandatory, presentation only, and admin-only. It is accepted as an observation for DG5, NOT closed as fixed. DG6 follow-up (owner frontend-ux-engineer): make elementLabel use sourceLabelEn in English when there is no labelEn, or seed labelEn through a new migration (never edit 0062). Prefill 'Label (English)' in the Edit dialog the same way. Add a component test that the English Elements table shows 'Strategic fit' for strategic_fit. While there, align studio.criterion.time_to_value ('Time to value') with B0076's 'Time-to-value', which prioritization.json already uses (cosmetic, same page family)."
+        "note": "Independently judged by release-auditor (T-DG5-RG2-AUDIT-V, session 69bfb4f2) on candidate sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce (source 660f40c7d141b6fb73c145e0ee7a053ceb5905de), in my own complete clone. I confirmed the defect: migration 0062 seeds the five scoring_weight elements with sourceLabelEn and labelAr but no labelEn, and apps/web/src/pages/studio/api.ts elementLabel() (lines 138-146) reads only labelEn/labelAr, so the English Studio Elements table falls back to Arabic. I also saw it in domain's round-2 screenshot screens/en/dom-p3-published.png. Reach: elementLabel has exactly one caller (studio/ElementsSection.tsx:372, the methodology administrator's Elements table). None of the 13 server files that consume scoring_weight (publish, scoring-defaults, invariants, rankings, scores, gate-facts, prioritization, the demo seed) reads a label attribute; only the shared zod schema validates them. The scoring-defaults editor names criteria through studio.criterion.*, and every transformation-facing screen (WeightSets, Scorecard, Rankings) names them through prioritization.criterion.* in both languages. The stable key and B0076 are shown beside the label, so each row stays identifiable. There is no data, calculation, pin, authorization, approval or export effect, and no DG5 acceptance clause names this label. It is Low and non-mandatory. The bilingual-string rule is met everywhere a user acts on the weights. This is an admin-only fallback of the same class as the D-079 labelEn limitation, which the DG3 audit carried to DG6 (REQ-S15-007/009). Accepted as an observation for DG5, not closed as fixed. DG6 follow-up (owner frontend-ux-engineer): elementLabel falls back to sourceLabelEn in English, or labelEn is seeded by a new migration (never edit 0062). Prefill 'Label (English)' in the Edit dialog the same way. Add a component test that the English table shows 'Strategic fit' for strategic_fit. Align studio.criterion.time_to_value ('Time to value') with B0076 'Time-to-value'."
       }
     },
     {
@@ -13831,28 +13837,34 @@
           "at": "2026-10-26T04:33:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-10-26T04:33:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-10-26T04:50:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 3: PASS"
         }
       ],
       "verification": {
-        "by_role": "domain-reviewer",
+        "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG5-T-DG5-RG2-DOM-R3-domain-reviewer-20261026T042141Z-71395da3",
-          "session_id": "71395da3-77e2-41c4-a888-f283f24c3c5a"
+          "run_id": "DG5-T-DG5-RG2-AUDIT-V-release-auditor-20261026T043444Z-69bfb4f2",
+          "session_id": "69bfb4f2-4e26-495a-be56-116552866d86"
         },
-        "at": "2026-10-26T04:33:00Z",
+        "at": "2026-10-26T04:50:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG5/domain/round-3/f120-f121-code-inspection.log",
-          "docs/delivery/test-evidence/DG5/domain/round-3/candidate-verify-start.log",
-          "docs/delivery/test-evidence/DG5/domain/round-3/candidate-verify-end.log",
-          "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+          "docs/delivery/test-evidence/DG5/audit/round-3/04-f120-f121-inspection.log",
           "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3-published.png",
-          "docs/delivery/test-evidence/DG5/domain/round-2/screens/ar/dom-p3-published.png",
-          "docs/delivery/test-evidence/DG5/domain/round-2/screens/en/dom-p3b-95-publish-refused.png",
-          "docs/delivery/test-evidence/DG5/domain/round-2/probe-prod-en-run2-p3-p5.log"
+          "docs/delivery/test-evidence/DG5/domain/round-2/findings-evidence.md",
+          "docs/delivery/test-evidence/DG5/domain/round-3/f120-f121-code-inspection.log"
         ],
-        "note": "Judged adversarially on the same frozen candidate sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce (source 660f40c, complete clone verified at the start and end). Both halves are confirmed and explained by the code (f120-f121-code-inspection.log). (1) The Elements table's 'Change in this version' column renders studio.elements.overridden ('Changed' / 'معدّل') whenever the config element is 'overridden'. In config-resolver.ts that flag means the version holds its own row for the element, not that the value differs from the base version. The scoring-defaults editor sends the full weight set, so every weight gets an own row, and all five read 'Changed'. The column label is therefore misleading. (2) displayValue() in studio/api.ts prints non-scalar values (a rubric's levels array) as JSON.stringify, which shows raw JSON in the diff. Why it is not blocking: the side-by-side 'Differences from the base version' is computed from resolved values (diff.ts) and is correct. In my round-2 screenshots of this candidate it lists only strategic_fit 25.00 -> 30.00, financial_value 25.00 -> 20.00 and the feasibility rubric, whose changed descriptor text is legible inside the JSON. The Compatibility check lists the same three elements. A Studio reviewer therefore has an accurate, complete change list, and the misleading column cannot hide or invent a change in a way that changes what gets published. REQ-S06-007's acceptance (publish without review refused, published version 409, 'the diff lists the added field') and REQ-S06-008/REQ-PB-093 passed in my round-2 runs on this candidate (DOM-R2-03, DOM-R2-05, DOM-R2-08). No data, calculation, pin, immutability, authorization or approval effect. It is Low, non-mandatory and presentation only. It is accepted as an observation for DG5, NOT closed as fixed. DG6 follow-up (owner frontend-ux-engineer, with backend-workflow-engineer if the API must expose it): make the column show 'Changed' only when the resolved value differs from the base version (or relabel the flag, e.g. 'Set in this version'). Render rubric levels in the diff as readable per-score before/after descriptors in both languages, never raw JSON. Add tests for both (en and ar)."
+        "note": "Independently judged by release-auditor (T-DG5-RG2-AUDIT-V, session 69bfb4f2) on candidate sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce (source 660f40c7d141b6fb73c145e0ee7a053ceb5905de), in my own complete clone. Both halves are confirmed. (1) In config-resolver.ts:212 the flag is 'overridden: row !== undefined', meaning the version holds its own row. ElementsSection.tsx:403-404 renders that flag as studio.elements.overridden ('Changed' / 'معدّل'), so the column reports 'has an own row', not 'value differs'. In screens/en/dom-p3-published.png all five weights read 'Changed', although only strategic_fit and financial_value changed. (2) displayValue() (studio/api.ts:149-157) JSON-stringifies non-scalar values, so VersionPage.tsx:502/505 prints the rubric levels array as raw JSON. Why this is not blocking: diff.ts compares the RESOLVED elements of both versions, and in the same screenshot the side-by-side 'Differences from the base version' lists exactly strategic_fit 25.00->30.00, financial_value 25.00->20.00 and the feasibility rubric, whose new descriptor is legible. The Compatibility check names the same three elements. A Studio reviewer therefore has an accurate, complete change list, and the misleading column can neither hide nor invent a published change. Review, publish refusal, immutability and pins are unaffected, and REQ-S06-007's acceptance ('the diff lists the added field') is met. It is Low, non-mandatory and presentation only. Accepted as an observation for DG5, not closed as fixed. DG6 follow-up (owner frontend-ux-engineer; backend-workflow-engineer if the API must expose a value-changed flag): show 'Changed' only when the resolved value differs from the base version (or relabel the flag, e.g. 'Set in this version'). Render rubric levels as readable per-score before/after descriptors in en and ar, never raw JSON. Add en and ar tests for both."
       }
     }
   ]
