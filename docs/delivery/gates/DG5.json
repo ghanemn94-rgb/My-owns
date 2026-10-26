@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "stage_id": "DG5",
-  "decision": "BLOCKED",
+  "decision": "APPROVED",
   "candidate_id": "sha256:55a411ae9f4e87473478988f3d9909752a934a547ba40acc1479f2b2bc3a24ce",
   "source_commit": "660f40c7d141b6fb73c145e0ee7a053ceb5905de",
   "manifest_path": "docs/delivery/candidates/DG5/55a411ae9f4e8747.manifest.json",
@@ -11,7 +11,7 @@
     "code-security-reviewer": "docs/delivery/reviews/DG5/round-2/code-security-reviewer.json",
     "qa-verifier": "docs/delivery/reviews/DG5/round-2/qa-verifier.json"
   },
-  "release_audit": "docs/delivery/reviews/DG5/round-4/release-auditor.json",
+  "release_audit": "docs/delivery/reviews/DG5/round-5/release-auditor.json",
   "requirements": {
     "final_gate_ids": [
       "REQ-PB-001", "REQ-PB-002", "REQ-PB-011", "REQ-PB-077", "REQ-PB-086", "REQ-PB-087", "REQ-PB-088", "REQ-PB-089", "REQ-PB-090", "REQ-PB-091",
@@ -23,26 +23,26 @@
       "REQ-S14-002", "REQ-S14-003", "REQ-S14-004", "REQ-S15-004", "REQ-S16-010", "REQ-S16-012", "REQ-S16-015", "REQ-S16-021", "REQ-S18-001", "REQ-S18-002",
       "REQ-S18-003", "REQ-S18-004", "REQ-S20-002", "REQ-S20-006", "REQ-S20-007", "REQ-S20-015", "REQ-S20-016", "REQ-S21-001"
     ],
-    "notes": "All 78 register rows with final_gate DG5 are IMPLEMENTED and match the assignment list exactly. qa-verifier (round 2) checked all 78. Each is also in domain-reviewer's list (round 3: 78; round 2 full review: 78), and 42 are in code-security-reviewer's. validate --register DG5 PASS. The requirements condition holds; the gate is blocked only by the findings-record condition below."
+    "notes": "All 78 register rows with final_gate DG5 are IMPLEMENTED and match the assignment list exactly. qa-verifier (round 2) checked all 78. Each is also in domain-reviewer's list (round 3: 78; round-2 full review: 78), and 42 are in code-security-reviewer's. No ID fails 'qa AND (domain OR code-security)'. validate --register DG5 PASS."
   },
   "tests": [
     {
       "name": "Complete-clone check and candidate recomputation (clone --ref 660f40c, clone working tree at HEAD, repository working tree); post-freeze diff meta-only; decisions.md untouched since the freeze; DG4 historical",
       "command": "git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG5 [--ref 660f40c7d141b6fb73c145e0ee7a053ceb5905de]; node tools/gates/validate.mjs --historical --stage DG4",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/01-clone-identity.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/01-clone-identity.log"]
     },
     {
       "name": "Gates DG3, DG2, DG1, DG0 historical; pipeline; DG5 register rules",
       "command": "node tools/gates/validate.mjs --historical --stage DG3 / DG2 / DG1 / DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --register DG5",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/12-validators.log", "docs/delivery/test-evidence/DG5/audit/round-4/07-requirements.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/12-validators.log", "docs/delivery/test-evidence/DG5/audit/round-5/07-requirements.log"]
     },
     {
-      "name": "Specialist provenance and independence (distinct, successful, sandboxed runs bound to their records and sidecars); D-082 across all 16 DG5 review and audit runs",
-      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/prov.py",
+      "name": "Specialist provenance and independence (distinct, successful, sandboxed runs bound to their records and sidecars); D-082 across all 17 DG5 review and audit runs",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-5/scripts/prov.py",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/02-provenance.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/02-provenance.log"]
     },
     {
       "name": "Three PASS verdicts on 55a411ae (code-security R2, qa R2, domain R3 acceptance round with its R2 full review), all checks PASS, full 40-hex source_commits; D-192 basis sound",
@@ -51,58 +51,56 @@
       "evidence": ["docs/delivery/reviews/DG5/round-3/domain-reviewer.json", "docs/delivery/reviews/DG5/round-2/domain-reviewer.json", "docs/delivery/reviews/DG5/round-2/code-security-reviewer.json", "docs/delivery/reviews/DG5/round-2/qa-verifier.json"]
     },
     {
-      "name": "4 DG5 findings terminal on substance (F-DG5-100 and 140 CLOSED_VERIFIED by non-owner reporters at full ancestor 32fc1ce; F-DG5-120 and 121 accepted by domain-reviewer and release-auditor sidecars; 0 unresolved Critical/High or mandatory), BUT findings.json lacks the acceptance.accepted_by mirror for F-DG5-120 and 121",
-      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/find.py; code inspection at 660f40c; node tools/gates/validate.mjs --stage DG5",
-      "result": "FAIL",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/03-findings.log", "docs/delivery/test-evidence/DG5/audit/round-4/04-f120-f121-inspection.log", "docs/delivery/test-evidence/DG5/audit/round-4/13-validate-stage-DG5-final-and-dry-run.log"]
+      "name": "4 DG5 findings terminal: F-DG5-100 and 140 CLOSED_VERIFIED by non-owner reporters at the full ancestor 32fc1ce; F-DG5-120 and 121 ACCEPTED_OBSERVATION by domain-reviewer and release-auditor, mirrored in findings.json with acceptance.accepted_by (round-4 B1 resolved); 0 unresolved Critical/High or mandatory",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-5/scripts/find.py; python3 docs/delivery/test-evidence/DG5/audit/round-5/scripts/accept.py; code inspection at 660f40c",
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/03-findings.log", "docs/delivery/test-evidence/DG5/audit/round-5/04-f120-f121-inspection.log", "docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json", "docs/delivery/reviews/DG5/round-3/release-auditor.verifications.json"]
     },
     {
       "name": "Write-once (no D/M/R/T under reviews/DG5 or runs/DG5 in 601d7d2..HEAD) and the re-gate method (2fe8f85 = 5a7c189 product; 540 base run files kept; only review artefacts excluded; D-056 path C)",
-      "command": "git log [-m --full-history] --diff-filter=DMRT; git diff 5a7c189 2fe8f85 -- . ':!docs/delivery'; ls-tree blob comparison",
+      "command": "git log [-m --full-history] --diff-filter=DMRT 601d7d2..HEAD -- reviews/DG5 runs/DG5; git ls-tree comparisons",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/05-writeonce-regate.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/05-writeonce-regate.log"]
     },
     {
-      "name": "Incidents and orchestrator decisions: D-191 verification of 7bb7d93 (15/15 rc 0, e2e 470/470 x2), product delta limited to BE-RG3 and the ADR-0046 amendment, no salvage; D-190, D-191, D-192 sound",
-      "command": "cat verify-rg3-7bb7d93/*.rc; git diff 7bb7d93 660f40c; git diff d5f97a1 HEAD",
+      "name": "Incidents and orchestrator decisions: D-190, D-191 (BE-RG3, ADR-0046 amendment, verification of 7bb7d93: 15/15 rc 0, e2e 470/470 x2), D-192 and its follow-up; earlier BLOCKED audits' conditions (round-8 B1-B4, D-190 B1-B3, round-4 B1) do not recur",
+      "command": "cat verify-rg3-7bb7d93/*.rc; grep passed e2e-*.log; git diff 7bb7d93 660f40c; git diff d5f97a1 HEAD; git show of the earlier audit records",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/06-incidents-d191.log", "docs/delivery/test-evidence/DG5/audit/round-4/11-post-verification-changes.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/06-incidents-d191.log", "docs/delivery/test-evidence/DG5/audit/round-5/06b-earlier-blocked-audits.log"]
     },
     {
-      "name": "Decisions D-141 to D-191 recorded with rationale; D-192 in progress.md",
-      "command": "python3 parser over docs/delivery/decisions.md; grep progress.md",
+      "name": "Decisions D-141 to D-191 recorded with rationale; D-192 and its follow-up in progress.md",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-5/scripts/dec.py",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/09-decisions.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/09-decisions.log"]
     },
     {
-      "name": "Evidence honesty: every cited evidence entry (43 + 78 + 30 + 79) exists; every non-zero exit, failure and timeout in the cited logs disclosed and explained",
-      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-4/scripts/hon.py",
+      "name": "Evidence honesty: all cited paths exist (43, 78, 30, 79); every log hit disclosed and explained",
+      "command": "python3 docs/delivery/test-evidence/DG5/audit/round-5/scripts/hon.py",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/08-evidence-honesty-scan.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/08-evidence-honesty-scan.log"]
     },
     {
       "name": "Product gates G1-G6 separate from engineering gates DG0-DG7; no certification or official claims; demo data synthetic and labelled; #0078FF provisional",
       "command": "grep at 660f40c",
       "result": "PASS",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/10-product-vs-engineering-gates.log"]
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/10-product-vs-engineering-gates.log"]
     },
     {
-      "name": "Stage validation of DG5 with the gate present: besides this in-flight run's missing meta.json, two errors 'findings.json accepted_by does not mirror the accepting sidecars' (F-DG5-120, F-DG5-121); clone dry run shows they are the only other errors",
+      "name": "Stage validation of DG5 with this gate: only the one problem that stems from this in-flight audit run (its meta.json)",
       "command": "node tools/gates/validate.mjs --stage DG5",
-      "result": "FAIL",
-      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-4/13-validate-stage-DG5-final-and-dry-run.log"]
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG5/audit/round-5/13-validate-stage-DG5-final.log"]
     }
   ],
-  "blocking_conditions": [
-    "B1 (findings.json does not mirror the acceptances; record integrity, owner delivery-orchestrator): F-DG5-120 and F-DG5-121 have status ACCEPTED_OBSERVATION and both accepting sidecars exist (docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json and release-auditor.verifications.json). But findings.json has no 'acceptance' object for either finding. tools/gates/lib/rules.mjs:584 requires acceptance.accepted_by to equal the accepting roles, and validate --stage DG5 reports 'finding F-DG5-120 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)' and the same for F-DG5-121. These errors do not concern this in-flight run. Remedy: add to each finding an acceptance object {rationale, owner: 'frontend-ux-engineer', accepted_by: ['domain-reviewer', 'release-auditor']}, in the F-DG4-148 shape. findings.json is meta-excluded, so the candidate stays sha256:55a411ae.... Then run a new decision run on the same candidate. A dry run in my clone with exactly that addition leaves only the in-flight run's meta error (13-validate-stage-DG5-final-and-dry-run.log, section B)."
-  ],
+  "blocking_conditions": [],
   "accepted_observations": ["F-DG5-120", "F-DG5-121"],
-  "decided_at": "2026-10-26T05:16:00Z",
+  "decided_at": "2026-10-26T05:35:00Z",
   "decided_by": "release-auditor",
   "invocation_reference": {
     "kind": "claude-code-cli-session",
-    "run_id": "DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb",
-    "session_id": "47f2e9eb-3101-4548-913f-2bc2ddbbe672"
+    "run_id": "DG5-T-DG5-RG2-AUDIT-D2-release-auditor-20261026T051713Z-3a8349cd",
+    "session_id": "3a8349cd-44f3-4c7e-b756-2f3571a7eec0"
   },
-  "notes": "DG5 is an engineering delivery gate only. It grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. Product G6 never implies DG7. All demo data in the evidence is synthetic.\n\nBLOCKED on B1 only, a findings.json record defect. Every other condition holds on its own evidence: identity, independence and provenance, three PASS reviews on the same candidate, 78/78 requirements, closures by non-owners with full ancestor fix revisions, 0 unresolved Critical/High or mandatory findings, write-once, the re-gate method, the D-191 verification, decisions, evidence honesty and the G1-G6/DG0-DG7 separation. None of the round-8 B1-B4 or D-190 B1-B3 defects recurs.\n\nF-DG5-120 and F-DG5-121 (Low, not mandatory) are accepted on substance by domain-reviewer (round 3) and by the release-auditor (round 3 sidecar). Owner: frontend-ux-engineer; the DG6 fix items are recorded in both sidecars. They are listed in accepted_observations because both accepting sidecars exist. The gate still cannot pass until findings.json mirrors those acceptances (B1).\n\nNon-blocking orchestrator observations: O-R4-1, the assignment wording ('Round 5', 'round-4 record' as basis); O-R4-2, a duplicated domain round-3 history entry for F-DG5-120 and 121; O-R4-3, the assignment's path for the first re-gate audit (it is round-4 at 5a7c189, not round-3); and round-3 O2, the 'T-DG5-REV-*-R5' task IDs.\n\nNo majority, score or deadline was used."
+  "notes": "DG5 is an engineering delivery gate only. It grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. Product G6 never implies DG7. The demo data and approvals in the evidence are synthetic and labelled as such.\n\nThis record replaces the round-4 BLOCKED decision. Its single condition, B1 (no findings.json acceptance mirror for F-DG5-120 and 121), was repaired by the orchestrator in a1bdbea, which changes only meta-excluded records, so the candidate is unchanged.\n\nF-DG5-120 and F-DG5-121 (Low, non-mandatory, presentation only in the Playbook Studio scoring-weight screens) are accepted as observations by domain-reviewer (their reporter, round 3) and by the release-auditor (round 3, re-confirmed in rounds 4 and 5). Owner: frontend-ux-engineer, as a DG6 fix item. The fix direction is recorded in both sidecars and findings.json.\n\nUntil the runner writes this run's meta.json, validate --stage DG5 reports exactly one problem, which concerns this in-flight run (AUD-RG2-D2-13). The orchestrator also needs to set the stage state from the stages.json record.\n\nCosmetic record observations O-R5-1 to O-R5-3 are listed in the audit record; owner delivery-orchestrator. Every audit condition holds, as listed in tests, and each was checked on its own evidence. No majority, score or deadline was used."
 }
