@@ -1,0 +1,124 @@
+# domain-reviewer DG5 round 3: code inspection for F-DG5-120 / F-DG5-121 in the disposable clone at 660f40c7d141b6fb73c145e0ee7a053ceb5905de (2026-10-26T04:31:31Z)
+
+## F-DG5-120: where elementLabel (labelEn/labelAr fallback) is used (non-test web sources)
+apps/web/src/pages/studio/ElementsSection.tsx:32:  elementLabel,
+apps/web/src/pages/studio/ElementsSection.tsx:372:                  const label = elementLabel(e, locale);
+apps/web/src/pages/studio/api.ts:138:export function elementLabel(
+
+## api.ts elementLabel + displayValue
+
+/** The element's label in the reader's language, falling back to the other language, then to its stable key. */
+export function elementLabel(
+  e: Pick<ConfigElement, "attributes" | "catalogueAttributes" | "stableKey">,
+  locale: "ar" | "en",
+): string {
+  const mine = attrText(e, locale === "ar" ? "labelAr" : "labelEn");
+  if (mine) return mine;
+  const other = attrText(e, locale === "ar" ? "labelEn" : "labelAr");
+  return other || e.stableKey;
+}
+
+/** A value of a diff row or an attribute, as short readable text ("—" is never used for a missing value). */
+export function displayValue(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  // T-DG5-FE-G2: a list of codes (an approver route's ordered roles, a layout's sections) reads in order, "BO · SP".
+  if (Array.isArray(value) && value.every((x) => typeof x === "string" || typeof x === "number"))
+    return value.length === 0 ? null : value.map(String).join(" · ");
+  return JSON.stringify(value);
+}
+
+## migration 0062 seeds scoring_weight with sourceLabelEn + labelAr (no labelEn)
+468:   '{"weightPercent": "25.00", "sourceLabelEn": "Strategic fit", "labelAr": "الملاءمة الاستراتيجية", "sourceRef": "B0076"}'),
+470:   '{"weightPercent": "25.00", "sourceLabelEn": "Financial value", "labelAr": "القيمة المالية", "sourceRef": "B0076"}'),
+472:   '{"weightPercent": "20.00", "sourceLabelEn": "Customer impact", "labelAr": "الأثر على العملاء", "sourceRef": "B0076"}'),
+474:   '{"weightPercent": "15.00", "sourceLabelEn": "Feasibility", "labelAr": "قابلية التنفيذ", "sourceRef": "B0076"}'),
+476:   '{"weightPercent": "15.00", "sourceLabelEn": "Time-to-value", "labelAr": "سرعة تحقيق القيمة", "sourceRef": "B0076"}'),
+
+## Scoring-defaults editor uses i18n criterion names (studio.criterion.*), not elementLabel
+226:              label={t(`studio.criterion.${c}`)}
+273:            <legend>{t(`studio.criterion.${c}`)}</legend>
+278:              aria-label={t("common.table.scrollRegion", { caption: t(`studio.criterion.${c}`) })}
+281:                <caption className="visually-hidden">{t(`studio.criterion.${c}`)}</caption>
+298:                                criterion: t(`studio.criterion.${c}`),
+
+## en i18n studio.criterion + prioritization.criterion
+312:  "criterion": {
+313-    "strategic_fit": "Strategic fit",
+314-    "financial_value": "Financial value",
+315-    "customer_impact": "Customer impact",
+316-    "feasibility": "Feasibility",
+317-    "time_to_value": "Time to value",
+318-    "risk_compliance": "Risk and compliance"
+9-  "criterion": {
+10:    "strategic_fit": "Strategic fit",
+11-    "financial_value": "Financial value",
+12-    "customer_impact": "Customer impact",
+13-    "feasibility": "Feasibility",
+14-    "time_to_value": "Time-to-value",
+15-    "risk_compliance": "Risk / compliance"
+16-  },
+
+## Transformation-facing weight sets label criteria through i18n (prioritization.criterion.<code>)
+apps/web/src/pages/prioritization/Rankings.tsx:36:          .map((x) => t(`prioritization.criterion.${x}`, { defaultValue: x }))
+apps/web/src/pages/prioritization/Scorecard.tsx:196:                criterion: t(`prioritization.criterion.${w.criterionCode}`),
+apps/web/src/pages/prioritization/Scorecard.tsx:237:                  .map((c) => t(`prioritization.criterion.${c}`))
+apps/web/src/pages/prioritization/Scorecard.tsx:264:            recordLabel={t(`prioritization.criterion.${s.criterionCode}`)}
+apps/web/src/pages/prioritization/WeightSets.tsx:131:                                  {t(`prioritization.criterion.${w.criterionCode}`)}:{" "}
+apps/web/src/pages/prioritization/WeightSets.tsx:350:                {t("prioritization.weights.include", { criterion: t(`prioritization.criterion.${c}`) })}
+apps/web/src/pages/prioritization/WeightSets.tsx:354:                  label={t("prioritization.weights.weightFor", { criterion: t(`prioritization.criterion.${c}`) })}
+apps/web/src/pages/prioritization/WeightSets.tsx:484:            {t(`prioritization.criterion.${w.criterionCode}`)}:{" "}
+
+## Server: no scoring logic reads labelAr/labelEn/sourceLabelEn of scoring elements (expect no output)
+grep exit=1 (1 = no match, expected)
+
+## F-DG5-121: 'Change in this version' column = config element 'overridden' (the version holds its own row), not 'value differs from base'
+212:      overridden: row !== undefined,
+232:      overridden: true,
+401:                        {e.removed
+402-                          ? t("studio.elements.removed")
+403-                          : e.overridden
+404-                            ? t("studio.elements.overridden")
+405-                            : e.origin === "admin"
+406-                              ? t("studio.elements.added")
+407-                              : t("studio.elements.unchanged")}
+408-                      </td>
+409-                      {editable ? (
+--
+411:                          {!e.removed ? (
+412-                            <>
+apps/web/src/i18n/en/studio.json:146:    "overridden": "Changed",
+apps/web/src/i18n/ar/studio.json:146:    "overridden": "معدّل",
+
+## The editor writes every weight of the full set (body is the full set) as the version's own row
+/** The element rows a put changes (rows that would not change are left out). */
+async function plannedWrites(tx: Tx, current: MethodologyVersionRow, body: ScoringDefaultsPut): Promise<RowWrite[]> {
+  const out: RowWrite[] = [];
+  const weightBy = new Map(body.weights.map((w) => [w.criterionCode, w.weightPercent]));
+  const rubricBy = new Map(body.rubrics.map((r) => [r.criterionCode, r.levels]));
+  for (const code of SCORING_DEFAULT_CRITERIA) {
+    // Weights: the body is the full set.
+    const w = await loadElementRow(tx, current.id, "scoring_weight", code);
+    const wanted = weightBy.get(code);
+    if (wanted !== undefined) {
+      const attributes = { ...asRecord(w?.attributes), weightPercent: new Decimal(wanted).toFixed(2) };
+      const ordinal = w?.ordinal ?? canonicalIndex(code) + 1;
+      const prepared = await prepareElementPut(tx, current, "scoring_weight", code, { attributes, ordinal });
+      if (w === undefined || w.removed || w.ordinal !== ordinal || !sameJson(w.attributes, prepared.attributes))
+        out.push({ type: "scoring_weight", stableKey: code, existing: w, attributes: prepared.attributes, ordinal });
+    } else if (w !== undefined && !w.removed) {
+
+## The base-vs-version diff is computed from resolved values (diff.ts header)
+// The side-by-side diff of two versions of one configuration (ADR-0039 §5; REQ-S06-007; p5-work-split §A.2;
+// T-DG5-BE-B). Per (elementType, stableKey) of the kind's element types, the RESOLVED elements (catalogue overridden
+// by each version's rows, config-resolver.ts) are compared: `added` (present in `to`, absent or removed in `from`),
+// `removed` (the reverse), `changed` (field-level from/to of the resolved attributes, plus `ordinal`). The kind's
+// provider adds the rows of its own tables (ADR-0041's added form fields). Titles and definitions are compared as
+// content, never by hash (a seeded hash is opaque; ADR-0039 §1). Read-only.
+import type { DbOrTx } from "@mth/db";
+import { configKind, type ConfigDiffEntry, type ConfigElementType } from "@mth/shared/schemas";
+import { resolveElements, type ResolvedElement } from "./config-resolver.ts";
+import { canonicalContentJson } from "./content-hash.ts";
+import type { MethodologyVersionRow } from "./drafts.ts";
+import { configKindProvider, type ConfigElementChange } from "./kinds.ts";
