@@ -1,0 +1,74 @@
+D-141..D-191 present 51 /51 missing []
+header: ['| ID | Date | Decided by | Decision | Rationale / evidence | Reopen if |', '| D-053 | 2026-10-01 | delivery-orchestrator | **DG1 round-7 repairs (both DG1 round-6 findings Low/non-mandatory): close the concrete native-loader route and formally STATE+ACCEPT the irreducible residual of the module lint, so the denylist does not churn a finding per round.** (1) **F-DG1-127 (code-security): two loader routes outside `LOADER_BUILTINS`.** A1 `node:sqlite` `DatabaseSync(...,{allowExtension:true}).loadExtension(so)` loads a native shared object — the same class as the `process.dlopen` route closed by F-DG1-125. A2 runtime code GENERATION then a dynamic import of a literal same-module path (`writeFileSync(new URL("./gen.mjs",…)); await import("./gen.mjs")`) — the specifier is a legal own-module path and the bytes exist only at runtime, so the lint never sees them. **Fix (T-DG1-BE8):** add `sqlite`/`node:sqlite` to `LOADER_BUILTINS` (a module never needs SQLite — persistence is `@mth/db`/PostgreSQL, ADR-0003; zero imports in src), closing A1 (self-check A1 added). A2 and the general class are **documented and ACCEPTED as stated residuals** in the testkit header, NOT chased: (a) the pre-existing runtime-data-flow residual; (b) runtime code-generation-then-import (node:fs deliberately not banned — tests and future modules legitimately read files; a write-API-only ban is brittle); (c) the loader/eval denylist is ENUMERATED and cannot be proven exhaustive over every host capability (a future Node built-in, `WebAssembly` instantiation) — **known native loaders are closed as found** (`process.dlopen` F-DG1-125, `node:sqlite` F-DG1-127). Rationale: this lint is static defence-in-depth for the ADR-0002 module boundaries, enforced against human-reviewed code that runs with a read-only production source tree — **not** a runtime security boundary; the residuals are accepted, not syntactically closable. (2) **F-DG1-212 (qa): the REQ-DLV-042 cited installer acceptance log was the pre-F-DG1-126 13-case run.** Regenerated `docs/delivery/test-evidence/DG1/orchestrator/install-sandbox-acceptance.log` against the post-fix installer: AC-1..AC-10, 14 passed, 0 failed, exit 0. | DG1 round 6: all three reviewers PASS on candidate `sha256:a7b46fbc…`; the only open items were these two Low/non-mandatory findings. CLAUDE.md (a control\'s stated guarantee must hold; evidence must match the frozen candidate). **Evidence:** `architecture.test.ts` 78/78 incl. self-check A1 + the real module-tree check; `@mth/api` typecheck/eslint/prettier clean; the regenerated 14/14 installer log; the round-7 freeze + its three PASS reviews + auditor. | A reviewer demonstrates a native/loader route that a module could reach and that is NOT a stated residual (then it is closed like sqlite); or a module legitimately needs `node:fs`/`node:sqlite` (then the ban/residual is revisited). |']
+D-141: cells=6 lens=[5, 10, 21, 1759, 111, 192]
+D-142: cells=6 lens=[5, 10, 21, 5261, 118, 112]
+D-143: cells=6 lens=[5, 10, 21, 2062, 124, 83]
+D-144: cells=6 lens=[5, 10, 21, 3473, 117, 114]
+D-145: cells=6 lens=[5, 10, 21, 2933, 67, 112]
+D-146: cells=6 lens=[5, 10, 21, 4298, 88, 120]
+D-147: cells=6 lens=[5, 10, 21, 1218, 80, 83]
+D-148: cells=6 lens=[5, 10, 21, 2792, 111, 93]
+D-149: cells=6 lens=[5, 10, 21, 3142, 67, 88]
+D-150: cells=6 lens=[5, 10, 21, 1527, 67, 40]
+D-151: cells=6 lens=[5, 10, 21, 756, 80, 84]
+D-152: cells=6 lens=[5, 10, 21, 1404, 67, 40]
+D-153: cells=6 lens=[5, 10, 21, 1655, 113, 115]
+D-154: cells=6 lens=[5, 10, 21, 891, 119, 84]
+D-155: cells=6 lens=[5, 10, 21, 5430, 178, 228]
+D-156: cells=6 lens=[5, 10, 21, 4656, 128, 139]
+D-157: cells=6 lens=[5, 10, 21, 3494, 132, 169]
+D-158: cells=6 lens=[5, 10, 21, 1060, 105, 110]
+D-159: cells=6 lens=[5, 10, 21, 3715, 112, 138]
+D-160: cells=6 lens=[5, 10, 21, 2541, 77, 113]
+D-161: cells=6 lens=[5, 10, 21, 2716, 77, 119]
+D-162: cells=6 lens=[5, 10, 21, 3014, 77, 102]
+D-163: cells=6 lens=[5, 10, 21, 5025, 132, 113]
+D-164: cells=6 lens=[5, 10, 21, 6276, 78, 81]
+D-165: cells=6 lens=[5, 10, 21, 5566, 78, 146]
+D-166: cells=6 lens=[5, 10, 21, 7134, 78, 131]
+D-167: cells=6 lens=[5, 10, 21, 3419, 78, 132]
+D-168: cells=6 lens=[5, 10, 21, 3471, 63, 78]
+D-169: cells=6 lens=[5, 10, 21, 7171, 283, 137]
+D-170: cells=6 lens=[5, 10, 21, 5810, 192, 142]
+D-171: cells=6 lens=[5, 10, 21, 7653, 218, 120]
+D-172: cells=6 lens=[5, 10, 21, 5165, 135, 122]
+D-173: cells=6 lens=[5, 10, 21, 4919, 176, 118]
+D-174: cells=6 lens=[5, 10, 21, 6791, 154, 180]
+D-175: cells=6 lens=[5, 10, 21, 6661, 176, 118]
+D-176: cells=6 lens=[5, 10, 75, 2867, 108, 97]
+D-177: cells=6 lens=[5, 10, 21, 1893, 101, 83]
+D-178: cells=6 lens=[5, 10, 21, 2624, 63, 1]
+D-179: cells=6 lens=[5, 10, 21, 1551, 68, 1]
+D-180: cells=6 lens=[5, 10, 21, 1392, 37, 1]
+D-181: cells=6 lens=[5, 10, 21, 2079, 87, 1]
+D-182: cells=6 lens=[5, 10, 21, 1623, 54, 1]
+D-183: cells=6 lens=[5, 10, 21, 1853, 37, 1]
+D-184: cells=6 lens=[5, 10, 56, 2149, 67, 67]
+D-185: cells=6 lens=[5, 10, 21, 1381, 37, 1]
+D-186: cells=6 lens=[5, 10, 65, 1119, 54, 63]
+D-187: cells=6 lens=[5, 10, 21, 1041, 37, 1]
+D-188: cells=6 lens=[5, 10, 21, 716, 54, 1]
+D-189: cells=6 lens=[5, 10, 21, 1499, 37, 1]
+D-190: cells=6 lens=[5, 10, 60, 2342, 89, 1]
+D-191: cells=6 lens=[5, 10, 21, 1028, 37, 1]
+
+## D-184 verbatim (first 700 chars):
+| D-184 | 2026-10-23 | delivery-orchestrator (clean re-gate chosen by the user) | **DG5 is re-gated on a clean base (the D-056 path C precedent). The final P5 product is carried unchanged; DG5's review history stays on the old branch.**<br>**Why.** The round-8 release audit (`T-DG5-AUDIT-V`) confirmed the substance (identity, independence, 78/78 requirements, the three acceptances) but BLOCKED on four record defects, all the orchestrator's: B1, the 18 CLOSED_VERIFIED DG5 findings carry no `fix_revision`; B2/B3, the round-3 and round-4 domain records carry an abbreviated `source_commit` (`bbd6294`, `fb9c221`) copied from the orchestrator's assignments, so they are schema-invalid and the closu
+
+## D-190 verbatim (first 700 chars):
+| D-190 | 2026-10-25 | delivery-orchestrator (corrected re-gate chosen by the user) | **The release audit's verification run on the first re-gate branch (`T-DG5-RG-AUDIT-V`, candidate `d8d83181`) confirmed the substance (78/78 requirements, ten closures with full fix revisions, F-DG5-145 and 146 accepted by qa and the auditor) but BLOCKED on three record defects, all the orchestrator's. DG5 is re-gated again, correctly, on branch `claude/mobily-transformation-platform-dg5-regate2`.**<br>- **B2 (write-once):** the re-gate commit `270ebbf` deleted all 540 run-record files that the base `601d7d2` holds under `docs/delivery/runs/DG5`. Cause: the exclusion command took `cut -d/ -f1-4` of each pat
+
+## D-191 verbatim (first 700 chars):
+| D-191 | 2026-10-25 | delivery-orchestrator | **Corrected re-gate round 1 on candidate `ff3bc2c4`: domain, code-security and qa all PASS; F-DG5-100 (Medium, not mandatory: DOCX/PPTX not well-formed XML 1.0 with a C0 control character in user text, job still succeeded) and F-DG5-140 (Low: Arabic export header shows the English product name at branding version 0). Both repaired by T-DG5-BE-RG3 and recorded with `import-findings --fix` and the full merge commit.**<br>- First recorded in `progress.md` while `decisions.md` was frozen (D-190); copied here before the next freeze, because the candidate is re-frozen after this repair anyway.<br>- Orchestrator docs-only edit: the ADR-0046 amendment (
+
+## progress.md D-192 occurrences: 5
+>>   - **Reviews:** round 2 code-security PASS and qa PASS; round 3 domain PASS (an acceptance round on the same candidate, D-192). F-DG5-100 and 140 are CLOSED_VERIFIED; F-DG5-120 and 121 are ACCEPTED_OBSERVATION by domain and the release-auditor (DG6 carry-forward).
+
+>>   - **Note on D-191:** the D-191 note below said the row would be copied into `decisions.md` only after the gate; it was in fact copied before the `660f40c` freeze (the candidate was re-frozen after the BE-RG3 repair), as `decisions.md` shows. D-192 stays in this file until the gate is decided.
+
+>> - **Next action:** the decision run `T-DG5-RG2-AUDIT-D` (round 4, same candidate) writes `docs/delivery/gates/DG5.json`; then D-192 and the gate outcome are copied into `decisions.md`.
+
+>> ## D-192 (2026-10-26, delivery-orchestrator; recorded here because decisions.md is frozen in the candidate until the gate is decided)
+
+>> **Decision (as D-183 and D-189):** every finding must be terminal before the gate. A fix would need a re-freeze, a full verification and a full round 3 (about 7–8 h); acceptance needs a short domain run and the auditor. So **round 3 runs on the same candidate `55a411ae`** with one task, **T-DG5-RG2-DOM-R3**: domain judges each finding and accepts it as an observation or keeps it open (then it is fixed). Both are carried to DG6 as fix items. The gate cites round 2's code-security and qa records and round 3's domain record. Then the release audit per D-140 option 1: verification run `T-DG5-RG2-AUDIT-V` (round 3), import, decision run `T-DG5-RG2-AUDIT-D` (round 4, same candidate). D-192 is copied into `decisions.md` only after the gate is decided.
+

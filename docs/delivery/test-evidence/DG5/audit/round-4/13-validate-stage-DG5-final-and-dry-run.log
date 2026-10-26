@@ -1,0 +1,31 @@
+## DRY RUN in disposable clone /var/tmp/mth-run.7TqfDk/claude-0/c (HEAD 2dd357a + my draft round-4 record and gate)
+### A: findings.json as committed
+FAIL gate DG5 (current) (3 problems)
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json) invocation: file not found (docs/delivery/runs/DG5/DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb/meta.json)
+  - finding F-DG5-120 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)
+  - finding F-DG5-121 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)
+exit=1
+### B: hypothetical - acceptance{accepted_by:[domain-reviewer, release-auditor]} added to F-DG5-120/121 in the clone only
+FAIL gate DG5 (current) (1 problem)
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json) invocation: file not found (docs/delivery/runs/DG5/DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb/meta.json)
+exit=1
+## 2026-10-26T05:09:25Z repository: node tools/gates/validate.mjs --stage DG5 (after my APPROVED draft gate)
+FAIL gate DG5 (current) (3 problems)
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json) invocation: file not found (docs/delivery/runs/DG5/DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb/meta.json)
+  - finding F-DG5-120 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)
+  - finding F-DG5-121 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)
+exit=1
+
+## 2026-10-26T05:13:54Z repository: node tools/gates/validate.mjs --stage DG5 (after the final BLOCKED gate and record)
+FAIL gate DG5 (current) (10 problems)
+  - gate DG5: decision is BLOCKED
+  - gate DG5: blocking conditions recorded: B1 (findings.json does not mirror the acceptances; record integrity, owner delivery-orchestrator): F-DG5-120 and F-DG5-121 have status ACCEPTED_OBSERVATION and both accepting sidecars exist (docs/delivery/reviews/DG5/round-3/domain-reviewer.verifications.json and release-auditor.verifications.json). But findings.json has no 'acceptance' object for either finding. tools/gates/lib/rules.mjs:584 requires acceptance.accepted_by to equal the accepting roles, and validate --stage DG5 reports 'finding F-DG5-120 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)' and the same for F-DG5-121. These errors do not concern this in-flight run. Remedy: add to each finding an acceptance object {rationale, owner: 'frontend-ux-engineer', accepted_by: ['domain-reviewer', 'release-auditor']}, in the F-DG4-148 shape. findings.json is meta-excluded, so the candidate stays sha256:55a411ae.... Then run a new decision run on the same candidate. A dry run in my clone with exactly that addition leaves only the in-flight run's meta error (13-validate-stage-DG5-final-and-dry-run.log, section B).
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json): verdict is BLOCKED
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json): check AUD-RG2-D-04-findings is FAIL
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json): check AUD-RG2-D-13-validate-stage-with-gate is FAIL
+  - review release-auditor (docs/delivery/reviews/DG5/round-4/release-auditor.json) invocation: file not found (docs/delivery/runs/DG5/DG5-T-DG5-RG2-AUDIT-D-release-auditor-20261026T045200Z-47f2e9eb/meta.json)
+  - gate DG5: test '4 DG5 findings terminal on substance (F-DG5-100 and 140 CLOSED_VERIFIED by non-owner reporters at full ancestor 32fc1ce; F-DG5-120 and 121 accepted by domain-reviewer and release-auditor sidecars; 0 unresolved Critical/High or mandatory), BUT findings.json lacks the acceptance.accepted_by mirror for F-DG5-120 and 121' is FAIL
+  - gate DG5: test 'Stage validation of DG5 with the gate present: besides this in-flight run's missing meta.json, two errors 'findings.json accepted_by does not mirror the accepting sidecars' (F-DG5-120, F-DG5-121); clone dry run shows they are the only other errors' is FAIL
+  - finding F-DG5-120 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)
+  - finding F-DG5-121 (Low): findings.json accepted_by does not mirror the accepting sidecars (domain-reviewer, release-auditor)
+exit=1

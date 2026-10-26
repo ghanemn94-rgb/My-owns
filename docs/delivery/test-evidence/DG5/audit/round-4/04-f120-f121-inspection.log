@@ -1,0 +1,66 @@
+## clone at 660f40c7d141b6fb73c145e0ee7a053ceb5905de
+## F-120 elementLabel
+apps/web/src/pages/studio/ElementsSection.tsx:32:  elementLabel,
+apps/web/src/pages/studio/ElementsSection.tsx:372:                  const label = elementLabel(e, locale);
+apps/web/src/pages/studio/api.ts:138:export function elementLabel(
+
+/** The element's label in the reader's language, falling back to the other language, then to its stable key. */
+export function elementLabel(
+  e: Pick<ConfigElement, "attributes" | "catalogueAttributes" | "stableKey">,
+  locale: "ar" | "en",
+): string {
+  const mine = attrText(e, locale === "ar" ? "labelAr" : "labelEn");
+  if (mine) return mine;
+  const other = attrText(e, locale === "ar" ? "labelEn" : "labelAr");
+  return other || e.stableKey;
+}
+
+/** A value of a diff row or an attribute, as short readable text ("—" is never used for a missing value). */
+export function displayValue(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  // T-DG5-FE-G2: a list of codes (an approver route's ordered roles, a layout's sections) reads in order, "BO · SP".
+  if (Array.isArray(value) && value.every((x) => typeof x === "string" || typeof x === "number"))
+    return value.length === 0 ? null : value.map(String).join(" · ");
+  return JSON.stringify(value);
+}
+
+## migration 0062 scoring_weight labels
+packages/db/migrations/0062_p5_config_versions.sql
+packages/db/migrations/0062_p5_config_versions.sql
+319:           'strategic_fit', 'financial_value', 'customer_impact', 'feasibility', 'time_to_value', 'risk_compliance'])) THEN
+467:  ('01920005-0002-7000-8000-000000000001', '01920005-0000-7000-8000-000000000001', 'scoring_weight', 'strategic_fit', 'source', 1,
+468:   '{"weightPercent": "25.00", "sourceLabelEn": "Strategic fit", "labelAr": "الملاءمة الاستراتيجية", "sourceRef": "B0076"}'),
+470:   '{"weightPercent": "25.00", "sourceLabelEn": "Financial value", "labelAr": "القيمة المالية", "sourceRef": "B0076"}'),
+472:   '{"weightPercent": "20.00", "sourceLabelEn": "Customer impact", "labelAr": "الأثر على العملاء", "sourceRef": "B0076"}'),
+474:   '{"weightPercent": "15.00", "sourceLabelEn": "Feasibility", "labelAr": "قابلية التنفيذ", "sourceRef": "B0076"}'),
+476:   '{"weightPercent": "15.00", "sourceLabelEn": "Time-to-value", "labelAr": "سرعة تحقيق القيمة", "sourceRef": "B0076"}'),
+477:  ('01920005-0003-7000-8000-000000000001', '01920005-0000-7000-8000-000000000001', 'scoring_rubric', 'strategic_fit', 'source', 1,
+## F-121 overridden flag
+apps/api/src/modules/reporting/dashboards/areas.ts:66:  readonly overridden: boolean;
+apps/api/src/modules/reporting/dashboards/areas.ts:313:    flags: o.kpis.length === 0 ? ["no_kpi"] : o.kpis.some((k) => k.status.overridden) ? ["override_in_force"] : [],
+apps/api/src/modules/reporting/dashboards/areas.ts:809:    flags: i.status.overridden ? ["override_in_force"] : [],
+apps/api/src/modules/reporting/dashboards/engine.ts:204:    overridden: false,
+apps/api/src/modules/reporting/dashboards/engine.ts:698:          flags: [`calculated_${k.status.calculatedRag}`, ...(k.status.overridden ? ["override_in_force"] : [])],
+2:// (catalogue overridden by the version's rows), filtered by element type, with the edit, add and remove dialogs of an
+391:                              <ProvenanceBadge provenance={profile.provenance} overridden={profile.overridden} />
+403:                          : e.overridden
+404:                            ? t("studio.elements.overridden")
+## diff.ts compares resolved
+## config-resolver overridden
+apps/api/src/modules/methodology/config-resolver.ts
+212:      overridden: row !== undefined,
+232:      overridden: true,
+## diff module
+
+## diff source files
+apps/api/src/modules/methodology/diff.ts
+3:// by each version's rows, config-resolver.ts) are compared: `added` (present in `to`, absent or removed in `from`),
+4:// `removed` (the reverse), `changed` (field-level from/to of the resolved attributes, plus `ordinal`). The kind's
+9:import { resolveElements, type ResolvedElement } from "./config-resolver.ts";
+20:  /** The same changes in the provider-hook shape (resolved attributes before and after). */
+52:export async function diffVersions(
+62:      resolveElements(db, from.id, type, { includeRemoved: true }),
+63:      resolveElements(db, to.id, type, { includeRemoved: true }),
+110:export function changedTypes(changes: readonly ConfigElementChange[]): ConfigElementType[] {
