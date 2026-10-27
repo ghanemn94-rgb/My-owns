@@ -43,7 +43,24 @@ const CONTENTS: readonly [string, readonly string[]][] = [
   ["bau_improvement", ["handovers", "controls", "lessons", "improvementBacklog"]],
   [
     "administration",
-    ["methodology", "forms", "workflows", "automation", "organization", "access", "branding", "environment"],
+    [
+      "methodology",
+      "forms",
+      "workflows",
+      "automation",
+      "organization",
+      "access",
+      "branding",
+      "environment",
+      // P6 (D-198; T-DG6-BE-B2): the Administration items of slices E, F, J and C.
+      "audit",
+      "security",
+      "sensitiveGrants",
+      "operations",
+      "identity",
+      "storage",
+      "notifications",
+    ],
   ],
 ];
 
@@ -113,9 +130,22 @@ describe("REQ-S03-007: the 14 areas and their contents", () => {
 
   it("TO sees Administration for the Studio review page; AUD sees it read-only (access only)", async () => {
     const office = await nav(w.office.subject); // TO @ organization A
-    expect(office.areas.find((a) => a.code === "administration")?.items.map((i) => i.code)).toEqual(["methodology"]);
+    // P6 (D-198; T-DG6-BE-B2): TO also holds sensitive_record.grant/read (0100) and operations.read (0103).
+    expect(office.areas.find((a) => a.code === "administration")?.items.map((i) => i.code)).toEqual([
+      "methodology",
+      "sensitiveGrants",
+      "operations",
+    ]);
     const auditor = await nav(w.auditor.subject); // AUD @ organization A
-    expect(auditor.areas.find((a) => a.code === "administration")?.items.map((i) => i.code)).toEqual(["access"]);
+    // P6 (D-198): AUD also reads audit events, security, sensitive grants, operations and identity (read-only).
+    expect(auditor.areas.find((a) => a.code === "administration")?.items.map((i) => i.code)).toEqual([
+      "access",
+      "audit",
+      "security",
+      "sensitiveGrants",
+      "operations",
+      "identity",
+    ]);
   });
 
   it("a user without any grant sees only the session items (My Work; the playbook's source and guidance)", async () => {

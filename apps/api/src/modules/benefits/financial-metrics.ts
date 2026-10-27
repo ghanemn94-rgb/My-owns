@@ -57,8 +57,10 @@ import { z } from "zod";
 import {
   auditContextOf,
   principalOf,
+  readScopeFor,
   refreshPrincipal,
   requireAction,
+  requireSensitiveRead,
   requireTransformationRead,
   targetFor,
 } from "../access/index.ts";
@@ -406,7 +408,15 @@ const listQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 async function readCase(db: DbOrTx, request: FastifyRequest, id: string): Promise<BusinessCaseRow> {
   const row = await db.selectFrom("business_case").selectAll().where("id", "=", id).executeTakeFirst();
   if (!row) throw problems.notFound();
-  await requireTransformationRead(db, principalOf(request), row.transformation_id);
+  const principal = principalOf(request);
+  const target = await requireTransformationRead(db, principal, row.transformation_id);
+  // P6 (ADR-0051 §2; T-DG6-BE-B2): a sensitive business case the caller is not admitted to is 404 here too.
+  await requireSensitiveRead(db, principal, "business_case", row.id, target, [
+    row.benefit_owner_user_id,
+    row.initiative_owner_user_id,
+    row.finance_validator_user_id,
+    row.created_by,
+  ]);
   return row;
 }
 
@@ -582,10 +592,30 @@ export function registerFinancialMetricRoutes(app: FastifyInstance, { db }: Modu
   app.get(TRANSFORMATION_METRICS_PATH, { config: read }, async (request) => {
     const { transformationId } = parse(transformationParams, request.params, "params");
     const query = parseQuery(listQuery, request.query);
-    await requireTransformationRead(db, principalOf(request), transformationId);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, transformationId);
     const hash = filterHash({ table: "financial_metrics", transformationId });
     const after = decodeCursor(query.cursor, hash, 1);
-    let q = db.selectFrom("business_case").selectAll().where("transformation_id", "=", transformationId);
+    // P6 (ADR-0051 §1; T-DG6-BE-B2): one item per case, so a case the caller is not admitted to is absent.
+    const scope = await readScopeFor(db, principal, "transformation.read");
+    let q = db
+      .selectFrom("business_case")
+      .selectAll()
+      .where("transformation_id", "=", transformationId)
+      .where(
+        scope.predicate({
+          recordType: "business_case",
+          recordId: sql.ref("business_case.id"),
+          organizationId: sql.ref("business_case.organization_id"),
+          transformationId: sql.ref("business_case.transformation_id"),
+          partyUserIds: [
+            sql.ref("business_case.benefit_owner_user_id"),
+            sql.ref("business_case.initiative_owner_user_id"),
+            sql.ref("business_case.finance_validator_user_id"),
+            sql.ref("business_case.created_by"),
+          ],
+        }),
+      );
     if (after) q = q.where("id", ">", String(after[0]));
     const rows = await q
       .orderBy("id")

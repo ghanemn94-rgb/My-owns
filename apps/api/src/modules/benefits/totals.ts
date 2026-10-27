@@ -44,8 +44,15 @@ import {
 } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { organizationsWith, principalOf, requireTransformationRead, scopeFilter } from "../access/index.ts";
+import {
+  organizationsWith,
+  principalOf,
+  requireTransformationRead,
+  scopeFilter,
+  type Principal,
+} from "../access/index.ts";
 import { parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
+import { restrictedField, restrictionOf, type Restriction } from "./restricted.ts";
 import { money4 } from "./values.ts";
 
 // ------------------------------------------------------------------------------------------------ the pure core
@@ -89,6 +96,11 @@ export interface TotalsResult {
   readonly currencies: BenefitTotalsCurrency[];
   readonly nonFinancialCount: number;
   readonly excluded: { benefitId: string; code: string; reason: BenefitExclusionReason }[];
+  /**
+   * P6 (T-DG6-BE-B2; ADR-0051 §2): the records whose values the totals include (benefits, and the business cases of the
+   * investment lines), set by `totalsOf` so a route can label restricted records; never part of a response body.
+   */
+  readonly sourceIds?: { readonly benefits: readonly string[]; readonly businessCases: readonly string[] };
 }
 
 /**
@@ -277,19 +289,24 @@ async function loadCostLines(
   db: DbOrTx,
   transformationIds: readonly string[],
   initiativeId: string | null,
-): Promise<TotalsCostLine[]> {
+): Promise<(TotalsCostLine & { readonly businessCaseId: string })[]> {
   if (transformationIds.length === 0) return [];
   let q = db
     .selectFrom("business_case_line as l")
     .innerJoin("business_case as c", "c.id", "l.business_case_id")
-    .select(["l.amount", "l.currency", "l.value_basis"])
+    .select(["l.amount", "l.currency", "l.value_basis", "c.id as business_case_id"])
     .where("l.transformation_id", "in", [...transformationIds])
     .where("l.line_kind", "=", "investment")
     .where("l.status", "=", "active")
     .where("c.status", "<>", "archived");
   if (initiativeId !== null) q = q.where("c.level", "=", "initiative").where("c.initiative_id", "=", initiativeId);
   const rows = await q.execute();
-  return rows.map((r) => ({ amount: r.amount, currency: r.currency.trim(), valueBasis: r.value_basis }));
+  return rows.map((r) => ({
+    amount: r.amount,
+    currency: r.currency.trim(),
+    valueBasis: r.value_basis,
+    businessCaseId: r.business_case_id,
+  }));
 }
 
 /** The totals of a set of transformations (or one initiative's allocated view). */
@@ -316,7 +333,42 @@ export async function totalsOf(
     benefits.map((b) => b.id),
   );
   const costLines = await loadCostLines(db, transformationIds, initiativeId);
-  return computeTotals({ benefits, lines, costLines });
+  const totals = computeTotals({
+    benefits,
+    lines,
+    costLines: costLines.map(({ amount, currency, valueBasis }) => ({ amount, currency, valueBasis })),
+  });
+  return {
+    ...totals,
+    sourceIds: {
+      benefits: benefits.map((b) => b.id),
+      businessCases: [...new Set(costLines.map((l) => l.businessCaseId))],
+    },
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ restricted records
+
+/**
+ * P6 (T-DG6-BE-B2; ADR-0051 §2; D-195 Q3): the restricted-records outcome of one totals response. The figures are the
+ * same for every reader; a restricted benefit is dropped from `excluded` (its id and code are never shown), and the
+ * field is added only when an included benefit or business case is sensitive (DG4 bytes unchanged otherwise).
+ */
+async function restrictedTotals(
+  db: DbOrTx,
+  principal: Principal,
+  t: TotalsResult,
+): Promise<{ excluded: TotalsResult["excluded"]; field: { includesRestrictedRecords?: boolean } }> {
+  const benefits = await restrictionOf(db, principal, "benefit", t.sourceIds?.benefits ?? []);
+  const cases = await restrictionOf(db, principal, "business_case", t.sourceIds?.businessCases ?? []);
+  const both: Restriction = {
+    anySensitive: benefits.anySensitive || cases.anySensitive,
+    restricted: new Set([...benefits.restricted, ...cases.restricted]),
+  };
+  return {
+    excluded: t.excluded.filter((e) => !benefits.restricted.has(e.benefitId)),
+    field: restrictedField(both),
+  };
 }
 
 // ------------------------------------------------------------------------------------------------ routes
@@ -330,7 +382,8 @@ export function registerBenefitTotalRoutes(app: FastifyInstance, { db }: ModuleD
   app.get(TOTALS, { config: read }, async (request): Promise<BenefitTotals> => {
     const { transformationId } = parse(z.strictObject({ transformationId: z.uuid() }), request.params, "params");
     const query = parseQuery(benefitTotalsQuery, request.query);
-    await requireTransformationRead(db, principalOf(request), transformationId);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, transformationId);
     const initiativeId = query.initiativeId ?? null;
     if (initiativeId !== null) {
       const ini = await db
@@ -342,6 +395,7 @@ export function registerBenefitTotalRoutes(app: FastifyInstance, { db }: ModuleD
       if (!ini) throw problems.notFound();
     }
     const t = await totalsOf(db, [transformationId], initiativeId);
+    const r = await restrictedTotals(db, principal, t);
     return {
       scope: initiativeId === null ? "transformation" : "initiative",
       scopeId: initiativeId ?? transformationId,
@@ -349,8 +403,9 @@ export function registerBenefitTotalRoutes(app: FastifyInstance, { db }: ModuleD
       transformationIds: [transformationId],
       currencies: t.currencies,
       nonFinancialCount: t.nonFinancialCount,
-      excluded: t.excluded,
+      excluded: r.excluded,
       computedAt: new Date().toISOString(),
+      ...r.field,
     };
   });
 
@@ -377,6 +432,7 @@ export function registerBenefitTotalRoutes(app: FastifyInstance, { db }: ModuleD
         .execute();
       const ids = rows.map((r) => r.id);
       const t = await totalsOf(db, ids, null);
+      const r = await restrictedTotals(db, principal, t);
       return {
         scope: "organization",
         scopeId: organizationId,
@@ -384,8 +440,9 @@ export function registerBenefitTotalRoutes(app: FastifyInstance, { db }: ModuleD
         transformationIds: ids,
         currencies: t.currencies,
         nonFinancialCount: t.nonFinancialCount,
-        excluded: t.excluded,
+        excluded: r.excluded,
         computedAt: new Date().toISOString(),
+        ...r.field,
       };
     },
   );

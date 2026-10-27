@@ -72,6 +72,23 @@ export const DELIVERED_P5_SCREENS: ReadonlySet<P5Screen> = new Set<P5Screen>([
   "demo",
 ]);
 
+/**
+ * The P6 Administration screens (D-198; the web's P6_SUBPAGES ids, `apps/web/src/app/nav.ts`). Each is the web's
+ * "not available yet" placeholder until T-DG6-FE-B replaces it, so an item that opens one is `planned` until the
+ * screen joins DELIVERED_P6_SCREENS (F-DG4-160: the FE task adds it in the same change that ships the screen).
+ */
+export type P6Screen =
+  | "audit"
+  | "security"
+  | "sensitiveGrants"
+  | "operations"
+  | "identity"
+  | "storage"
+  | "notifications";
+
+/** The delivered P6 screens: none yet at this release (FE-B adds each one with its screen). */
+export const DELIVERED_P6_SCREENS: ReadonlySet<P6Screen> = new Set<P6Screen>([]);
+
 /** "session": every signed-in user; otherwise the caller must hold ANY of the codes in at least one scope. */
 export type ItemAccess = "session" | readonly Permission[];
 
@@ -81,6 +98,8 @@ export interface NavigationItemDefinition {
   readonly access: ItemAccess;
   /** The P5 screen this item opens, when it is one (decides `availability`). */
   readonly screen?: P5Screen;
+  /** The P6 screen this item opens, when it is one (decides `availability`; D-198). */
+  readonly p6Screen?: P6Screen;
 }
 
 export interface NavigationAreaDefinition {
@@ -243,6 +262,34 @@ export const NAVIGATION_AREAS: readonly NavigationAreaDefinition[] = [
       { code: "access", path: "/admin/users", access: ["user.read", "user.manage", "access.read", "access.assign"] },
       { code: "branding", path: "/admin/branding", access: ["branding.configure"], screen: "branding" },
       { code: "environment", path: "/admin/demo", access: ["demo.reset"], screen: "demo" },
+      // P6 (D-198; T-DG6-BE-B2): the Administration items of slices E, F, J and C, labelled nav.contents.admin.<code>.
+      { code: "audit", path: "/admin/audit", access: ["audit_event.read"], p6Screen: "audit" },
+      {
+        code: "security",
+        path: "/admin/security",
+        access: ["security.read", "upload_policy.configure"],
+        p6Screen: "security",
+      },
+      {
+        code: "sensitiveGrants",
+        path: "/admin/sensitive-grants",
+        access: ["sensitive_record.read", "sensitive_record.grant"],
+        p6Screen: "sensitiveGrants",
+      },
+      {
+        code: "operations",
+        path: "/admin/operations",
+        access: ["operations.read", "service_identity.configure"],
+        p6Screen: "operations",
+      },
+      { code: "identity", path: "/admin/identity", access: ["identity.read"], p6Screen: "identity" },
+      { code: "storage", path: "/admin/storage", access: ["storage.configure"], p6Screen: "storage" },
+      {
+        code: "notifications",
+        path: "/admin/notification-channels",
+        access: ["notification_channel.configure"],
+        p6Screen: "notifications",
+      },
     ],
   },
 ];
@@ -281,6 +328,7 @@ function visible(principal: Principal, access: ItemAccess): boolean {
 export function navigationFor(
   principal: Principal,
   delivered: ReadonlySet<P5Screen> = DELIVERED_P5_SCREENS,
+  deliveredP6: ReadonlySet<P6Screen> = DELIVERED_P6_SCREENS,
 ): Navigation {
   const areas: NavigationArea[] = [];
   for (const area of NAVIGATION_AREAS) {
@@ -291,7 +339,11 @@ export function navigationFor(
         code: item.code,
         labelKey: itemLabelKey(area, item),
         path: item.path,
-        availability: item.screen === undefined || delivered.has(item.screen) ? "working" : "planned",
+        availability:
+          (item.screen === undefined || delivered.has(item.screen)) &&
+          (item.p6Screen === undefined || deliveredP6.has(item.p6Screen))
+            ? "working"
+            : "planned",
       });
     }
     if (items.length === 0) continue;

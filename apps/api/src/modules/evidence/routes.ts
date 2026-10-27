@@ -33,7 +33,9 @@ import { z } from "zod";
 import {
   denialOf,
   principalOf,
+  readScopeFor,
   requireRecordWrite,
+  requireSensitiveRead,
   requireTransformationRead,
   type ResolvedTarget,
   type WriteRule,
@@ -419,13 +421,81 @@ export function registerEvidenceModule(
     void (app.hasDecorator("inFlight") ? app.inFlight.track(sweep) : sweep);
   });
 
-  registerRegister(app, db, evidenceRegister);
+  // P6 (T-DG6-BE-B2; ADR-0051 §1, §2): the metadata list and GET are registered below with the sensitivity clause; the
+  // register kit keeps create, update and archive.
+  registerRegister(app, db, { ...evidenceRegister, ops: { list: false, get: false } });
+  registerEvidenceMetadataReads(app, db);
   registerContentRoutes(app, db, store);
   registerReviewRoute(app, db);
   registerLinkRoutes(app, db);
   registerEvidenceRegisterRoutes(app, db); // T-DG5-BE-O (ADR-0045 §8): the evidence register and versions
   registerEvidencePreviewRoutes(app, db, store); // P6 BE-D (ADR-0052 §2): the safe inline preview
   return EVIDENCE_MODULE;
+}
+
+// ------------------------------------------------------------------------------------------------ metadata reads (P6)
+
+const metadataListQuery = z.strictObject({
+  includeArchived: z.stringbool().default(false),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
+
+/**
+ * GET /transformations/{id}/evidence and GET .../evidence/{evidenceId} (T-DG6-BE-B2; ADR-0051 §1, §2; REQ-S10-002):
+ * the register kit's list and GET, unchanged for every non-sensitive item (same query, cursor, order and body), plus
+ * the sensitivity clause: the list drops a sensitive item the caller is not admitted to (`ReadScope.predicate`), and
+ * its GET is 404 like any unreadable record (`requireSensitiveRead`). The named parties of evidence are its owner and
+ * its creator. Evidence of a sensitive parent record is ADR-0051 §4 (BE-C).
+ */
+function registerEvidenceMetadataReads(app: FastifyInstance, db: Db): void {
+  const read = { access: { permission: "transformation.read" as const } };
+
+  app.get(`${T}/evidence`, { config: read }, async (request) => {
+    const { transformationId } = parse(tParams, request.params, "params");
+    const query = parseQuery(metadataListQuery, request.query);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, transformationId);
+    const scope = await readScopeFor(db, principal, "transformation.read");
+    const hash = filterHash({ includeArchived: query.includeArchived, parent: null });
+    const after = decodeCursor(query.cursor, hash, 1);
+    let q = db
+      .selectFrom("evidence")
+      .selectAll()
+      .where("transformation_id", "=", transformationId)
+      .where(
+        scope.predicate({
+          recordType: "evidence",
+          recordId: sql.ref("evidence.id"),
+          organizationId: sql.ref("evidence.organization_id"),
+          transformationId: sql.ref("evidence.transformation_id"),
+          partyUserIds: [sql.ref("evidence.owner_user_id"), sql.ref("evidence.created_by")],
+        }),
+      );
+    if (!query.includeArchived) q = q.where("status", "<>", "archived");
+    if (after) q = q.where("id", ">", String(after[0]));
+    const rows = await q
+      .orderBy("id")
+      .limit(query.limit + 1)
+      .execute();
+    const page = paginate(rows, query.limit, (r) => [r.id], hash);
+    return { items: page.items.map((r) => toEvidence(r)), nextCursor: page.nextCursor };
+  });
+
+  app.get(ITEM, { config: read }, async (request, reply) => {
+    const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
+    const principal = principalOf(request);
+    const target = await requireTransformationRead(db, principal, transformationId);
+    const row = await db
+      .selectFrom("evidence")
+      .selectAll()
+      .where("id", "=", evidenceId)
+      .where("transformation_id", "=", transformationId)
+      .executeTakeFirst();
+    if (!row) throw problems.notFound();
+    await requireSensitiveRead(db, principal, "evidence", row.id, target, [row.owner_user_id, row.created_by]);
+    return sendVersioned(reply, 200, toEvidence(row));
+  });
 }
 
 function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStore): void {

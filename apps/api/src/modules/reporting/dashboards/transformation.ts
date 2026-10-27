@@ -10,6 +10,7 @@ import { principalOf } from "../../access/index.ts";
 import { parse, parseQuery, type ModuleDeps } from "../../platform/index.ts";
 import { computeAreas, loadAreaDefinitions, loadDashboardContext, presentAreas, readOnly } from "./engine.ts";
 import { appliedFilters, resolveFilters, transformationFilterQuery } from "./filters.ts";
+import { dashboardRestriction, withoutRestrictedItems } from "./restricted.ts";
 import { readableTransformation } from "./scope.ts";
 
 export const TRANSFORMATION_DASHBOARD = "/api/v1/transformations/:transformationId/dashboard";
@@ -23,7 +24,8 @@ export function registerTransformationDashboardRoutes(app: FastifyInstance, { db
       const { transformationId } = parse(tParams, request.params, "params");
       const query = parseQuery(transformationFilterQuery, request.query);
       return readOnly(db, async (tx) => {
-        const t = await readableTransformation(tx, principalOf(request), transformationId);
+        const principal = principalOf(request);
+        const t = await readableTransformation(tx, principal, transformationId);
         const filters = await resolveFilters(tx, {
           organizationId: t.organizationId,
           transformationIds: [t.id],
@@ -31,10 +33,18 @@ export function registerTransformationDashboardRoutes(app: FastifyInstance, { db
           periodId: query.periodId,
         });
         const ctx = await loadDashboardContext(tx, [t], filters);
-        const areas = presentAreas(ctx, computeAreas(ctx.facts, ctx.clock, ctx.policy), await loadAreaDefinitions(tx), {
-          drillTransformationIds: [t.id],
-          workstream: false,
-        });
+        // P6 (T-DG6-BE-B2; ADR-0051 §2): same figures for every reader; restricted records are not listed.
+        const restriction = await dashboardRestriction(tx, principal, ctx.facts);
+        const presented = presentAreas(
+          ctx,
+          computeAreas(ctx.facts, ctx.clock, ctx.policy),
+          await loadAreaDefinitions(tx),
+          {
+            drillTransformationIds: [t.id],
+            workstream: false,
+          },
+        );
+        const areas = withoutRestrictedItems(presented, restriction);
         return {
           transformationId: t.id,
           generatedAt: ctx.generatedAt,
@@ -42,6 +52,7 @@ export function registerTransformationDashboardRoutes(app: FastifyInstance, { db
           timezone: filters.timezone,
           appliedFilters: appliedFilters(filters),
           areas,
+          ...restriction.field,
         };
       });
     },

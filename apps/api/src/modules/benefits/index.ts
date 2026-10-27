@@ -29,3 +29,6 @@ export { updateBenefitRecord } from "./register.ts";
 // T-DG5-KBE-D4 (D-164 h; KBE-D3 handback §6): the totals engine (ADR-0030 §7), read by reference by reporting's
 // registers assembler (the benefits-register totals block), so the report never restates the counting rules.
 export { computeTotals, totalsOf, type TotalsBenefit, type TotalsResult, type TotalsValueLine } from "./totals.ts";
+// P6 (T-DG6-BE-B2; ADR-0051 §2): the restricted-records check of the aggregates that include benefit or business-case
+// values (benefit totals here; the dashboards in reporting).
+export { markedSensitiveIds, NO_RESTRICTION, restrictedField, restrictionOf, type Restriction } from "./restricted.ts";
