@@ -15,7 +15,7 @@
 // Separation of duties (F-DG2-140, REQ-S13-012): nobody verifies content they supplied. The content author is kept in
 // evidence.content_authored_by by the 0019 trigger, which also refuses such a review (the last line of defence).
 import { diffFields, sql, type Db, type EvidenceRow, type Tx } from "@mth/db";
-import type { Permission } from "@mth/shared";
+import { PROBLEM_TYPES, type Permission } from "@mth/shared";
 import {
   evidenceCreate,
   evidenceLinkCreate,
@@ -422,15 +422,122 @@ export function registerEvidenceModule(
   });
 
   // P6 (T-DG6-BE-B2; ADR-0051 §1, §2): the metadata list and GET are registered below with the sensitivity clause; the
-  // register kit keeps create, update and archive.
-  registerRegister(app, db, { ...evidenceRegister, ops: { list: false, get: false } });
+  // register kit keeps create and update. P6 (T-DG6-BE-F2; ADR-0052 §9.1): archive is registered below with the
+  // finalized-evidence rule, which needs the write transaction (the kit's `archive.refuse` is synchronous).
+  registerRegister(app, db, { ...evidenceRegister, ops: { list: false, get: false, archive: false } });
   registerEvidenceMetadataReads(app, db);
+  registerEvidenceArchiveRoute(app, db);
   registerContentRoutes(app, db, store);
   registerReviewRoute(app, db);
   registerLinkRoutes(app, db);
   registerEvidenceRegisterRoutes(app, db); // T-DG5-BE-O (ADR-0045 §8): the evidence register and versions
   registerEvidencePreviewRoutes(app, db, store); // P6 BE-D (ADR-0052 §2): the safe inline preview
   return EVIDENCE_MODULE;
+}
+
+// ------------------------------------------------------------------------------------------------ finalized evidence (P6)
+
+/**
+ * REQ-S16-023 "protect finalized records and evidence from destructive deletion" (ADR-0052 §9.1; D-199, T-DG6-BE-F2):
+ * evidence that supports an approved gate decision is finalized. 409 `evidence.finalized` refuses archiving the item
+ * and removing the link that the approved submission's evidence snapshot cites. Nothing is written.
+ */
+export const evidenceFinalized = () =>
+  new HttpProblem({
+    status: 409,
+    type: PROBLEM_TYPES.invalidTransition,
+    code: "evidence.finalized",
+    title: "Finalized evidence",
+    detail: "This evidence supports an approved gate decision and cannot be archived or unlinked.",
+  });
+
+/**
+ * True when the evidence snapshot of a gate submission of this transformation that holds an `approved` gate decision
+ * cites the item (`evidence[].evidenceId`). With `record` (`<recordType>:<recordId>`, a link's target), only that
+ * citation counts, so the item's other links stay removable.
+ *
+ * The citing submissions are read FOR SHARE first. A concurrent decision on one of them (gate_decision_guard locks its
+ * submission FOR UPDATE) waits for this transaction, or this read waits for that decision's commit. The decision is
+ * then read in its own statement, which sees that commit (READ COMMITTED), so an archive or unlink never misses an
+ * approval committed before it. (An archive that commits while the submission is still pending is allowed, as before:
+ * the rule protects evidence of an approved decision; the decide path does not re-check evidence status.) The gate
+ * paths never lock evidence rows, so the order evidence, then submission, cannot deadlock with them.
+ */
+export async function supportsApprovedGateDecision(
+  tx: Tx,
+  transformationId: string,
+  cited: { readonly evidenceId: string; readonly record?: string },
+): Promise<boolean> {
+  const containment = JSON.stringify({ evidence: [cited] });
+  const citing = await tx
+    .selectFrom("gate_submission")
+    .select("id")
+    .where("transformation_id", "=", transformationId)
+    .where(sql<boolean>`snapshot @> ${containment}::jsonb`)
+    .forShare()
+    .execute();
+  if (citing.length === 0) return false;
+  const approved = await tx
+    .selectFrom("gate_decision")
+    .select("id")
+    .where(
+      "gate_submission_id",
+      "in",
+      citing.map((s) => s.id),
+    )
+    .where("outcome", "=", "approved")
+    .executeTakeFirst();
+  return approved !== undefined;
+}
+
+/**
+ * archiveEvidence: the register kit's archive (same access, order of checks, write, audit event and body), plus the
+ * finalized rule after the version and archived checks: 404 -> 403 -> 400 (reason) -> 428/409 (If-Match) -> 422
+ * (archived) -> 409 `evidence.finalized`.
+ */
+function registerEvidenceArchiveRoute(app: FastifyInstance, db: Db): void {
+  app.post(`${ITEM}/archive`, { config: { access: { permission: "evidence.create" } } }, async (request, reply) => {
+    const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
+    const row = await db.transaction().execute(async (tx) => {
+      await requireTransformationRead(tx, principalOf(request), transformationId);
+      const ctx = await openWrite(
+        tx,
+        request,
+        transformationId,
+        ARCHIVE,
+        await ownershipOf(tx, transformationId, evidenceId),
+      );
+      const { reason } = parseBody(reasonRequest, request.body);
+      const current = await lockEvidence(tx, request, transformationId, evidenceId);
+      if (await supportsApprovedGateDecision(tx, transformationId, { evidenceId })) throw evidenceFinalized();
+      const updated = await tx
+        .updateTable("evidence")
+        .set({
+          status: "archived",
+          archived_at: sql<Date>`now()`,
+          archived_by: ctx.userId,
+          archive_reason: reason,
+          ...bumpStamps(ctx.userId),
+        })
+        .where("id", "=", current.id)
+        .where("version", "=", current.version)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+      await record(tx, ctx.audit, {
+        action: "evidence.archive",
+        recordType: "evidence",
+        recordId: current.id,
+        organizationId: ctx.organizationId,
+        transformationId,
+        priorVersion: current.version,
+        newVersion: updated.version,
+        reason,
+        changes: { status: { from: current.status ?? null, to: "archived" } },
+      });
+      return updated;
+    });
+    return sendVersioned(reply, 200, toEvidence(row));
+  });
 }
 
 // ------------------------------------------------------------------------------------------------ metadata reads (P6)
@@ -844,6 +951,14 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
         if (current.version !== expected) throw problems.versionConflict(current.version);
         if (current.status === "removed")
           throw problems.businessRule("evidence_link.already_removed", "The link is already removed.");
+        // P6 (T-DG6-BE-F2; ADR-0052 §9.1): the link an approved gate submission's evidence snapshot cites is final.
+        if (
+          await supportsApprovedGateDecision(tx, transformationId, {
+            evidenceId: current.evidence_id,
+            record: `${current.record_type}:${current.record_id}`,
+          })
+        )
+          throw evidenceFinalized();
         const updated = await tx
           .updateTable("evidence_link")
           .set({

@@ -230,6 +230,11 @@ export const transformationDashboard = z.strictObject({
   timezone: z.string(),
   appliedFilters: dashboardFilters,
   areas: sixAreas,
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type TransformationDashboard = z.infer<typeof transformationDashboard>;
 
@@ -255,6 +260,11 @@ export const workstreamDashboard = z.strictObject({
   businessDate,
   appliedFilters: dashboardFilters,
   areas: sixAreas,
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type WorkstreamDashboard = z.infer<typeof workstreamDashboard>;
 
@@ -317,6 +327,11 @@ export const dashboardDrilldown = z.strictObject({
     .string()
     .regex(/^[A-Z]{3}$/)
     .nullable(),
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
 
@@ -453,6 +468,11 @@ export const financeDashboard = z.strictObject({
   pendingValidationCount: z.number().int().min(0),
   nonFinancialCount: z.number().int().min(0),
   transformations: z.array(dashboardTransformationRow),
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type FinanceDashboard = z.infer<typeof financeDashboard>;
 

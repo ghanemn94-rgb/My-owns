@@ -359,6 +359,11 @@ export const benefitTotals = z.strictObject({
   nonFinancialCount: z.number().int().min(0),
   excluded: z.array(z.strictObject({ benefitId: uuid, code: z.string(), reason: benefitExclusionReason })),
   computedAt: timestamp,
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type BenefitTotals = z.infer<typeof benefitTotals>;
 

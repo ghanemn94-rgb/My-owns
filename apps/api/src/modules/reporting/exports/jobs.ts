@@ -230,9 +230,22 @@ export async function includesRestrictedSources(
   return false;
 }
 
+/**
+ * The export's own refusal code (D-199, T-DG6-BE-F2), replacing the generic `forbidden`: 403
+ * `export.includes_restricted_records` with the D-199 English text (Arabic in the web catalogue, provisional).
+ */
+export const includesRestrictedRecordsRefusal = () =>
+  new HttpProblem({
+    status: 403,
+    type: PROBLEM_TYPES.forbidden,
+    code: "export.includes_restricted_records",
+    title: "Forbidden",
+    detail: "This report includes records you cannot see, so it cannot be exported for you.",
+  });
+
 /** 403 when the snapshot includes a record the requester is not admitted to (see includesRestrictedSources). */
 async function requireUnrestrictedSelection(db: DbOrTx, principal: Principal, snapshotId: string): Promise<void> {
-  if (await includesRestrictedSources(db, principal, snapshotId)) throw problems.forbidden();
+  if (await includesRestrictedSources(db, principal, snapshotId)) throw includesRestrictedRecordsRefusal();
 }
 
 // ------------------------------------------------------------------------------------------------ create
