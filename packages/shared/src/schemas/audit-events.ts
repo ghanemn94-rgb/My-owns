@@ -6,7 +6,9 @@ import { cursorQuery, page, timestamp, uuid } from "./common.ts";
 
 export const AUDIT_EVENT_SOURCES = ["api", "worker", "cli", "migration"] as const;
 
-const auditChanges = z.record(z.string(), z.strictObject({ from: z.unknown(), to: z.unknown() })).nullable();
+const auditChanges = z
+  .record(z.string(), z.strictObject({ from: z.unknown().optional(), to: z.unknown().optional() }))
+  .nullable();
 
 export const globalAuditEvent = z.strictObject({
   id: uuid,

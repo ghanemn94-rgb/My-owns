@@ -21,7 +21,7 @@ import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import type { AppConfig } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
-import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
+import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
 import {
   principalOf,
@@ -277,7 +277,8 @@ export async function buildServer(options: ServerOptions): Promise<{
             },
           },
     genReqId,
-    requestIdLogLabel: "requestId",
+    // T-DG6-DO-A2: fastify 5.12 deprecates the top-level `requestIdLogLabel` (FSTDEP024); same label, same log lines.
+    logController: new LogController({ requestIdLogLabel: "requestId" }),
     bodyLimit: JSON_BODY_LIMIT_BYTES,
     trustProxy: config.trustProxy.length > 0 ? [...config.trustProxy] : false,
     // F-DG2-290: strict percent-decoding; an undecodable component is refused by the central preHandler check.

@@ -19,6 +19,8 @@ export const auditEvent = z.strictObject({
   newVersion: z.number().int().min(1).nullable(),
   reason: z.string().nullable(),
   requestId: z.string().nullable(),
-  changes: z.record(z.string(), z.strictObject({ from: z.unknown(), to: z.unknown() })).nullable(),
+  changes: z
+    .record(z.string(), z.strictObject({ from: z.unknown().optional(), to: z.unknown().optional() }))
+    .nullable(),
 });
 export type AuditEvent = z.infer<typeof auditEvent>;

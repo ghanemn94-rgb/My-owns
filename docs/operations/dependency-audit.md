@@ -72,5 +72,7 @@ control has a waiver list.
 ## Recorded runs
 
 The DG6 runs, with their dates, results and the tested lockfile hash, are in
-`docs/delivery/handbacks/DG6/T-DG6-DO-A-devops-engineer.md` and its evidence folder. That record is engineering
+`docs/delivery/handbacks/DG6/T-DG6-DO-A-devops-engineer.md` (the first audit: 20 High on shipped packages) and
+`docs/delivery/handbacks/DG6/T-DG6-DO-A2-devops-engineer.md` (after the D-199 upgrades: no High or Critical on shipped
+packages, live and offline), with their evidence folders. That record is engineering
 evidence. It is not a Mobily IT security approval.

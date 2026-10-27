@@ -99,7 +99,7 @@ export type MethodologyMigrationCreate = z.infer<typeof methodologyMigrationCrea
  */
 export const methodologyMigrationPreviewRequest = z.strictObject({
   inputs: z
-    .array(z.strictObject({ stableKey: z.string().min(1).max(96), value: z.unknown() }))
+    .array(z.strictObject({ stableKey: z.string().min(1).max(96), value: z.unknown().optional() }))
     .max(200)
     .refine((a) => new Set(a.map((i) => i.stableKey)).size === a.length, "validation.unique_items"),
 });

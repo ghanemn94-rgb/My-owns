@@ -28,8 +28,12 @@ refuses it. `LICENSE_FILE_OVERRIDES` in `lib/lockfile.mjs` may name the licence 
 states. Each entry is pinned to that file's SHA-256, so a changed or missing file reverts to `NOASSERTION`. At DG6 the
 only entry is `png-js@1.1.0` (a `pdfkit` dependency): MIT, from its LICENSE ("Copyright (c) 2017 Devon Govett").
 
-State at DG6 (T-DG6-DO-A; lockfile sha256 `d7e795c9…711895`): 465 packages (158 runtime, 15 bundled, 292
-development), 4 container images, 0 shipped packages without a licence id. Correcting the runtime closure moved the
+State at DG6 after T-DG6-DO-A2 (D-199 upgrades; lockfile sha256 `4dd7e22d…64ba65`): 483 packages (171 runtime, 15
+bundled, 297 development), 4 container images, 0 shipped packages without a licence id. New shipped trees:
+`@aws-sdk/client-s3@3.1156.0` (Apache-2.0, with its `@aws-sdk/*` and `@smithy/*` dependencies, all Apache-2.0, and
+`bowser`, MIT) and `nodemailer@10.2.1` (MIT-0). `image-size` (2.0.4) and `tinypool` (2.2.0) are pinned by root
+`pnpm.overrides` because no patched 1.x line exists. Earlier state (T-DG6-DO-A; lockfile sha256 `d7e795c9…711895`):
+465 packages (158 runtime, 15 bundled, 292 development), 4 container images, 0 shipped packages without a licence id. Correcting the runtime closure moved the
 `packages/reporting` tree (`pdfkit`, `docx`, `pptxgenjs`, `jszip`, `image-size`, ...) from `development` to
 `runtime`. Earlier inventories had under-reported the shipped set, although the image did ship those packages. The
 same SBOM feeds the offline dependency audit (`docs/operations/dependency-audit.md`).
