@@ -1,0 +1,84 @@
+port-policy: PostgreSQL listening on port 23830 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg6-be-c
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvq88ngx_38e93ad3 (server_encoding UTF8); applied 102 migrations to a fresh database
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 and changes nothing
+[integrity-sweep] removeEvidenceLink on approved-G1 evidence: 200 undefined
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 and changes nothing
+[integrity-sweep] archiveEvidence on approved-G1 evidence: 200 undefined
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one
+[integrity-sweep] P6 tables: 32; *_id columns: 84; foreign-key columns: 128; record_ref-guarded tables: record_sensitivity, sensitive_record_grant; unguarded: deliverable_external_change_event.evidence_id, deliverable_external_change_event.outbound_write_id, import_row_commit.target_record_id, record_sensitivity_change.record_id
+[integrity-sweep] P6 tables with a nullable organization_id: operational_exception, service_identity
+
+ ❯ |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts (19 tests | 1 failed) 4505ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > the approved G1 decision's submission snapshot holds the evidence item 44ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > an approved gate decision: the contract has no delete operation, and mth_app cannot DELETE it (42501) 21ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 and changes nothing 72ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 and changes nothing 70ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: the contract has no DELETE for evidence, and mth_app cannot DELETE evidence rows (42501) 4ms
+   × REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app 7ms
+     → expected [ 'retireDependencyType', …(1) ] to deeply equal [ 'retireDependencyType' ]
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > P6 sensitive grant: revoked -> revoked (revoke again) is 422; the grant keeps version 2 and its two audit events 264ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG1 transformation: active -> closed by a status edit is 422; nothing written 215ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG2 diagnostic finding: confirmed -> archived by a status edit is 422; nothing written 92ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG3 T08 dependency: resolved -> at_risk is 422; nothing written 232ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG4 stakeholder champion: removed -> removed (remove again) is 422; nothing written 287ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > P6 sensitive_record_grant_one_active_key: a second active grant is 409 sensitive_grant.duplicate; nothing written 158ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > P6 record_sensitivity_record_key: a second create with If-Match "0" is 409 version_conflict; nothing written 74ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG1 organization_code_key: a second organization with the same code is 409; nothing written 69ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG5 automation_rule code key: a second rule with the same code is 409 automation_rule.code_taken; nothing written 119ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG4 stakeholder_champion active key: the same person twice is 409 stakeholder_champion.exists; nothing written 126ms
+   ✓ REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one 35ms
+   ✓ REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > a dangling record reference through the API: a grant on a missing record is 404 not_found; nothing written 92ms
+   ✓ REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > a missing owner is refused by the database: a sensitive grant without its grantee fails NOT NULL as mth_app 68ms
+stdout | apps/api/test/integration/access/read-scope-parity.test.ts > ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair
+[read-scope-parity] readers=55 records=18 pairs=990 admitted=116 view-by-GET=495 view-by-record-decision=495 mismatches=0
+
+ ✓ |integration| apps/api/test/integration/access/read-scope-parity.test.ts (2 tests) 5356ms
+   ✓ ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair  3489ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 2420ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > lists every record to the workstream member, and no aggregate carries includesRestrictedRecords  318ms
+ ✓ |integration| apps/api/test/integration/evidence/evidence-register.test.ts (9 tests) 1659ms
+ ✓ |integration| apps/api/test/integration/approvals/reminders.test.ts (7 tests) 1760ms
+   ✓ approval_overdue: the escalation timer's reminders (ADR-0026 §6 step 3) > a group assignee: the group's current approvers get the reminder, a non-approver member does not  450ms
+ ✓ |integration| apps/api/test/integration/evidence/ownership-transfer.test.ts (5 tests) 1109ms
+ ✓ |integration| apps/api/test/integration/automation/automation-notify-delivery.test.ts (2 tests) 620ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts (5 tests) 1356ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app
+AssertionError: expected [ 'retireDependencyType', …(1) ] to deeply equal [ 'retireDependencyType' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "retireDependencyType",[22m
+[31m+   "deleteSavedView",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/hardening/integrity-sweep.test.ts:195:21
+    193|     const deletes = operations.filter((o) => o.method === "DELETE").ma…
+    194|     // At HEAD the contract's only DELETE is retireDependencyType (a c…
+    195|     expect(deletes).toEqual(["retireDependencyType"]);
+       |                     ^
+    196|     const granted = await api.owner.query<{ table_name: string }>(
+    197|       `SELECT table_name FROM information_schema.role_table_grants
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 63 passed (64)
+   Start at  05:10:23
+   Duration  55.94s (transform 6.42s, setup 0ms, collect 32.32s, tests 18.79s, environment 0ms, prepare 80ms)
+
+EXIT=1

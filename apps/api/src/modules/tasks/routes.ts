@@ -6,6 +6,8 @@
 //   GET  /me/inbox                          the caller's reminders, newest first, with the unread count
 //   POST /me/inbox/{notificationId}/read    mark one of the caller's reminders read, once (If-Match; others: 404).
 //                                           422 inbox.already_read
+// P6 (T-DG6-BE-C; ADR-0051 §3): GET /me/inbox redacts, at read time, the message of an item whose target the recipient
+// can no longer read (`inbox.restricted`, params {}); deep-links.ts holds the rule and the resolver.
 // Reads need a session and no permission: an item is visible to its assignee only. The two actions are bodiless
 // (no config.consumes, the activateKpiDefinition precedent); each re-resolves the session inside its transaction
 // (commit-time authorisation: 401 when the session ended), checks If-Match (428/409), and writes its audit event in
@@ -16,6 +18,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { auditContextOf, organizationsWith, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
+import { readableTargets } from "./deep-links.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -62,6 +65,9 @@ export const taskRefusals = {
     ),
   alreadyRead: () => problems.businessRule("inbox.already_read", "This reminder is already marked as read."),
 } as const;
+
+/** The redacted message of an inbox item whose target the recipient can no longer read (ADR-0051 §3). */
+export const INBOX_RESTRICTED = { messageKey: "inbox.restricted", messageParams: {} } as const;
 
 const paramsOf = (value: unknown) =>
   (value !== null && typeof value === "object" ? value : {}) as WorkItem["messageParams"];
@@ -315,7 +321,14 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .where("delivery_state", "=", "delivered") // T-DG5-BE-L: the unread count of the listed rows
       .where("read_at", "is", null)
       .executeTakeFirstOrThrow();
-    return { items: page.items.map(toInboxNotification), nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
+    // P6 (T-DG6-BE-C; ADR-0051 §3; REQ-S12-024): read-time redaction. An item whose target the recipient cannot read
+    // now is returned with messageKey `inbox.restricted` and messageParams {}; ids, link, read state and version are
+    // unchanged and the stored row is never modified (access restored = text restored).
+    const readable = await readableTargets(db, principalOf(request), page.items);
+    const items = page.items.map((r, i) =>
+      readable.at(i) === true ? toInboxNotification(r) : { ...toInboxNotification(r), ...INBOX_RESTRICTED },
+    );
+    return { items, nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
   });
 
   app.post(READ, { config: session }, async (request, reply) => {

@@ -145,7 +145,8 @@ describe("module composition (D-048, P2)", () => {
       // P4: tasks routes the five My Work and inbox operations; the other P4 modules are route-free until filled.
       // T-DG5-BE-L: + the five P5 notification operations (preferences, policy, own digest; ADR-0044 §5).
       expect(modules.find((m) => m.module === "tasks")).toMatchObject({ status: "active", deliversIn: "P4" });
-      expect(modules.find((m) => m.module === "tasks")!.routes).toHaveLength(10);
+      // T-DG6-BE-C (ADR-0051 §3): + resolveDeepLink (tasks/deep-links.ts).
+      expect(modules.find((m) => m.module === "tasks")!.routes).toHaveLength(11);
       // P3 (T-DG3-BE-A): the portfolio module is active and registers routes (readiness, hierarchy, dispensations).
       expect(modules.find((m) => m.module === "portfolio")).toMatchObject({ status: "active", deliversIn: "P3" });
       expect(modules.find((m) => m.module === "portfolio")!.routes.length).toBeGreaterThan(0);

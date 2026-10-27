@@ -2,7 +2,8 @@
 //   /transformations/{id}/evidence                      list, create (evidence.create)
 //   /transformations/{id}/evidence/{evidenceId}         get, update (evidence.create, own rows only), archive (own rows,
 //                                                       or evidence.review)
-//   .../evidence/{evidenceId}/content                   download (transformation.read) / upload a revision (own rows)
+//   .../evidence/{evidenceId}/content                   download (transformation.read and ADR-0051 §4, access.ts) /
+//                                                       upload a revision (own rows)
 //   .../evidence/{evidenceId}/review                    verify or reject (evidence.review; never the creator, the
 //                                                       content author or the uploader of the current revision)
 //   /transformations/{id}/evidence-links                list, create (evidence.create + edit rights on the record)
@@ -35,7 +36,6 @@ import {
   principalOf,
   readScopeFor,
   requireRecordWrite,
-  requireSensitiveRead,
   requireTransformationRead,
   type ResolvedTarget,
   type WriteRule,
@@ -74,6 +74,12 @@ import {
   type LooseRow,
   type RegisterSpec,
 } from "../transformations/index.ts";
+import {
+  evidenceParentForbidden,
+  evidenceParentsAdmittedSql,
+  evidenceReadDecision,
+  requireEvidenceRead,
+} from "./access.ts"; // P6 BE-C (ADR-0051 §4)
 import { registerEvidencePreviewRoutes } from "./preview.ts"; // P6 BE-D (stub by T-DG6-BE-A; ADR-0052 §2)
 import { registerEvidenceRegisterRoutes } from "./register.ts";
 import { toEvidence, toEvidenceLink } from "./repository.ts";
@@ -446,7 +452,8 @@ const metadataListQuery = z.strictObject({
  * the register kit's list and GET, unchanged for every non-sensitive item (same query, cursor, order and body), plus
  * the sensitivity clause: the list drops a sensitive item the caller is not admitted to (`ReadScope.predicate`), and
  * its GET is 404 like any unreadable record (`requireSensitiveRead`). The named parties of evidence are its owner and
- * its creator. Evidence of a sensitive parent record is ADR-0051 §4 (BE-C).
+ * its creator. Evidence of a sensitive parent record (ADR-0051 §4, T-DG6-BE-C): omitted from the list, 403
+ * evidence.parent_forbidden on the GET (evidence/access.ts).
  */
 function registerEvidenceMetadataReads(app: FastifyInstance, db: Db): void {
   const read = { access: { permission: "transformation.read" as const } };
@@ -471,7 +478,8 @@ function registerEvidenceMetadataReads(app: FastifyInstance, db: Db): void {
           transformationId: sql.ref("evidence.transformation_id"),
           partyUserIds: [sql.ref("evidence.owner_user_id"), sql.ref("evidence.created_by")],
         }),
-      );
+      )
+      .where(await evidenceParentsAdmittedSql(db, principal, sql.ref("evidence.id"))); // P6 BE-C: ADR-0051 §4 rule 3
     if (!query.includeArchived) q = q.where("status", "<>", "archived");
     if (after) q = q.where("id", ">", String(after[0]));
     const rows = await q
@@ -485,15 +493,19 @@ function registerEvidenceMetadataReads(app: FastifyInstance, db: Db): void {
   app.get(ITEM, { config: read }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
     const principal = principalOf(request);
-    const target = await requireTransformationRead(db, principal, transformationId);
-    const row = await db
-      .selectFrom("evidence")
-      .selectAll()
-      .where("id", "=", evidenceId)
-      .where("transformation_id", "=", transformationId)
-      .executeTakeFirst();
-    if (!row) throw problems.notFound();
-    await requireSensitiveRead(db, principal, "evidence", row.id, target, [row.owner_user_id, row.created_by]);
+    // P6 (T-DG6-BE-C; ADR-0051 §4): the one evidence decision. A sensitive item itself stays 404 (§2, BE-B2); a
+    // sensitive parent the caller is not admitted to is 403 evidence.parent_forbidden, as on the download.
+    const { target, row, refusal } = await evidenceReadDecision(db, principal, transformationId, evidenceId);
+    if (refusal === "item")
+      throw problems
+        .notFound()
+        .withDenial({ ...denialOf("transformation.read", target), recordType: "evidence", recordId: row.id });
+    if (refusal === "parent")
+      throw evidenceParentForbidden().withDenial({
+        ...denialOf("transformation.read", target),
+        recordType: "evidence",
+        recordId: row.id,
+      });
     return sendVersioned(reply, 200, toEvidence(row));
   });
 }
@@ -501,7 +513,9 @@ function registerEvidenceMetadataReads(app: FastifyInstance, db: Db): void {
 function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStore): void {
   app.get(`${ITEM}/content`, { config: { access: { permission: "transformation.read" } } }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
-    await requireTransformationRead(db, principalOf(request), transformationId);
+    // P6 (T-DG6-BE-C; ADR-0051 §4): the item's and its parents' authorization; 404 out of scope, 403
+    // evidence.parent_forbidden for an in-scope caller not admitted to a sensitive item or sensitive parent.
+    await requireEvidenceRead(db, principalOf(request), transformationId, evidenceId);
     const content = await db
       .selectFrom("evidence as e")
       .innerJoin("evidence_content as c", (j) =>

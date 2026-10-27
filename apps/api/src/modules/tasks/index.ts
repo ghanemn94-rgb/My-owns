@@ -27,7 +27,15 @@ export {
   type WorkItemReassignResult,
   type WorkItemSourceRef,
 } from "./service.ts";
-export { SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
+export { INBOX_RESTRICTED, SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
+// P6 BE-C (ADR-0051 §3): the lazy deep-link issue the channel fan-out (ADR-0054) calls, and the target rule.
+export {
+  deepLinkTarget,
+  issueDeepLink,
+  readableTargets,
+  type DeepLinkTarget,
+  type IssuedDeepLink,
+} from "./deep-links.ts";
 // T-DG4-BE-R3 (BE-F2 handback §8 item 1; ADR-0032 amendment G1 item 5).
 export { followMeetingActionWorkItem, MEETING_ACTION_TASK, type FollowedAction } from "./meeting-action-follow.ts";
 // T-DG4-KBE-G2 (ADR-0037 §1 item 2, §7, §9): the open work items of one user, read-only (My Work, the header).
