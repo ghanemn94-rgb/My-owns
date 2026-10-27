@@ -91,6 +91,27 @@ export interface ContractResponse {
 /** Operations and statuses exercised in this test file (per worker), for coverage assertions. */
 export const exercised = new Map<string, Set<number>>();
 
+/**
+ * T-DG6-BE-F (ADR-0052 §7, REQ-S16-027): one entry per response that `assertContract` VALIDATED in this test file
+ * (status declared, body against its schema, media type equal to the declared one, a problem body also against
+ * `Problem`). `response-validation.test.ts` reads it after the contract suite to find every operation that returned no
+ * validated response. Entries are appended only after every check passed; a failed check throws before it.
+ */
+export interface ValidatedResponse {
+  readonly operationId: string;
+  readonly status: number;
+  /** The response media type without parameters; "" for a body-less response. */
+  readonly mediaType: string;
+  /** For a problem body: its `type` and `code`; otherwise null. */
+  readonly problemType: string | null;
+  readonly problemCode: string | null;
+  /** For a problem body with `errors[]`: the pointer of each entry (undefined when an entry has none); otherwise null. */
+  readonly errorPointers: readonly (string | undefined)[] | null;
+  /** For a 2xx JSON object body: whether it carries the own key `nextCursor`; otherwise null. */
+  readonly hasNextCursor: boolean | null;
+}
+export const validatedResponses: ValidatedResponse[] = [];
+
 /** Throws a descriptive error when the response breaks the contract. Returns the matched operation. */
 export function assertContract(method: string, url: string, res: ContractResponse): Operation {
   const op = findOperation(method, url);
@@ -106,6 +127,7 @@ export function assertContract(method: string, url: string, res: ContractRespons
   const mediaType = String(res.headers["content-type"] ?? "")
     .split(";")[0]!
     .trim();
+  let parsed: unknown = undefined; // T-DG6-BE-F: the validated JSON body, for the ledger below
   if (content) {
     const media = content[mediaType];
     if (!media)
@@ -121,6 +143,18 @@ export function assertContract(method: string, url: string, res: ContractRespons
         `contract: ${op.operationId} ${res.statusCode} body violates the schema: ${ajv.errorsText(validate.errors)}\n${res.body.slice(0, 500)}`,
       );
     }
+    // T-DG6-BE-F (ADR-0052 §7): every problem body (application/problem+json) is a `Problem` whose `status` is the
+    // response status, whatever the operation's own declaration says. A declared non-problem error body (getReadiness
+    // 503: the Readiness JSON) is validated against its own schema above only.
+    if (res.statusCode >= 400 && mediaType === "application/problem+json") {
+      const problemCheck = validatorFor("component:Problem", { $ref: "#/components/schemas/Problem" });
+      if (!problemCheck(body) || (body as Json)["status"] !== res.statusCode) {
+        throw new Error(
+          `contract: ${op.operationId} ${res.statusCode} error body is not a Problem with status ${res.statusCode}: ${ajv.errorsText(problemCheck.errors)}\n${res.body.slice(0, 300)}`,
+        );
+      }
+    }
+    if (isJson) parsed = body;
   } else if (res.body !== "") {
     throw new Error(
       `contract: ${op.operationId} ${res.statusCode} declares no body but returned one: ${res.body.slice(0, 200)}`,
@@ -145,8 +179,27 @@ export function assertContract(method: string, url: string, res: ContractRespons
   const seen = exercised.get(op.operationId) ?? new Set<number>();
   seen.add(res.statusCode);
   exercised.set(op.operationId, seen);
+  // T-DG6-BE-F (ADR-0052 §7): record (operationId, status) of the validated response.
+  const object = parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Json) : null;
+  const isProblem = res.statusCode >= 400 && object !== null;
+  validatedResponses.push({
+    operationId: op.operationId,
+    status: res.statusCode,
+    mediaType,
+    problemType: isProblem ? String(object["type"]) : null,
+    problemCode: isProblem ? String(object["code"]) : null,
+    errorPointers:
+      isProblem && Array.isArray(object["errors"])
+        ? (object["errors"] as Json[]).map((e) => (typeof e["pointer"] === "string" ? e["pointer"] : undefined))
+        : null,
+    hasNextCursor:
+      res.statusCode >= 200 && res.statusCode < 300 && object !== null ? Object.hasOwn(object, "nextCursor") : null,
+  });
   return op;
 }
+
+/** T-DG6-BE-F: operationId -> the first JSON request body the server accepted (2xx) in this test file. */
+export const acceptedRequestBodies = new Map<string, unknown>();
 
 /**
  * Lockstep check for request schemas: a body the server ACCEPTED (2xx) must also be valid under the operation's
@@ -168,6 +221,9 @@ export function assertAcceptedRequest(method: string, url: string, status: numbe
       `contract: ${op.operationId} accepted a request body the contract rejects: ${ajv.errorsText(validate.errors)}\n${JSON.stringify(body).slice(0, 300)}`,
     );
   }
+  // T-DG6-BE-F (ADR-0052 §7): the first contract-valid body the server accepted per operation, which the auditor sweep
+  // of response-validation.test.ts replays so that a route's validation passes and its authorization answers.
+  if (!acceptedRequestBodies.has(op.operationId)) acceptedRequestBodies.set(op.operationId, structuredClone(body));
 }
 
 /** Validate a value against a named component schema (e.g. "Transformation"). */
