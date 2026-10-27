@@ -1,0 +1,25 @@
+$ node deploy/scripts/generate-env-example.mjs --check
+OK: .env.example lists exactly the 30 ENV_VARS names, none with a value
+EXIT=0
+$ node licenses/generate-sbom.mjs --check
+OK: packages=465 runtime=158 bundled=15 development=292 containers=4 shipped-without-licence-id=0 lockfile-sha256=d7e795c9c805c6f0ad958c18e8b37dcdc9a37febe66115cf41f9bdecf5711895
+EXIT=0
+$ node deploy/scripts/check-ci-needs.mjs deploy/ci/ci.yml
+OK: deploy/ci/ci.yml: 6 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  verify <- delivery-gates
+  dependency-audit <- delivery-gates
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e, dependency-audit
+EXIT=0
+$ node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs
+✔ C13 CI images job: resolve --missing, then --apply, then --check, in that order (0.382957ms)
+ℹ tests 59
+ℹ suites 0
+ℹ pass 59
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6147.984682
+EXIT=0

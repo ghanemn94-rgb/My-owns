@@ -7,7 +7,8 @@
 | `THIRD-PARTY-NOTICES.md` (in the image at `/app/licenses/`, not committed) | `node licenses/collect-notices.mjs --out DIR` | Full LICENSE/NOTICE/COPYING/OFL texts of every **shipped** package (scopes `runtime` + `bundled`); packages that ship no licence file are listed explicitly                                                                              |
 
 Scopes: `runtime` means the package is shipped as `node_modules` in the `mth-app` image (reachable from the
-production dependencies of api, worker, config, db and shared). `bundled` means it is compiled into the web bundle
+production dependencies of api, worker, config, db and shared, and of every workspace package they link in production,
+such as `packages/reporting`; `linkedImporters` in `lib/lockfile.mjs`, the same closure `assemble-runtime.sh` ships). `bundled` means it is compiled into the web bundle
 (reachable only from `apps/web` production dependencies; also present in the image's store). `development` means
 build, lint and test tooling, never shipped.
 
@@ -21,3 +22,14 @@ State at P1 (lockfile sha256 `3c94b771…c8306`): 422 packages (112 runtime, 17 
 licences: MIT 102, ISC 11, BlueOak-1.0.0 8, BSD-3-Clause 4, OFL-1.1 2 (IBM Plex fonts), Apache-2.0 1,
 (MIT OR CC0-1.0) 1. Three shipped packages carry no licence file (`abstract-logging`, `pg-types`, `pgpass`; all MIT by
 package.json). This inventory is engineering evidence, not a legal or procurement approval.
+
+**Licence-file overrides.** A shipped package whose `package.json` declares no licence is `NOASSERTION`, and `--check`
+refuses it. `LICENSE_FILE_OVERRIDES` in `lib/lockfile.mjs` may name the licence that the package's own LICENSE file
+states. Each entry is pinned to that file's SHA-256, so a changed or missing file reverts to `NOASSERTION`. At DG6 the
+only entry is `png-js@1.1.0` (a `pdfkit` dependency): MIT, from its LICENSE ("Copyright (c) 2017 Devon Govett").
+
+State at DG6 (T-DG6-DO-A; lockfile sha256 `d7e795c9…711895`): 465 packages (158 runtime, 15 bundled, 292
+development), 4 container images, 0 shipped packages without a licence id. Correcting the runtime closure moved the
+`packages/reporting` tree (`pdfkit`, `docx`, `pptxgenjs`, `jszip`, `image-size`, ...) from `development` to
+`runtime`. Earlier inventories had under-reported the shipped set, although the image did ship those packages. The
+same SBOM feeds the offline dependency audit (`docs/operations/dependency-audit.md`).

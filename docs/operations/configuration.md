@@ -29,6 +29,54 @@ configuration at startup and exit 78 with a message that names the variable, nev
   `mth_app` is used by `api` and `worker` and has DML only: it can only insert and read `audit_event` and cannot run
   DDL. Deployment creates both roles and the database (`db-init/10-mth-roles.sh` for Compose; IT's DBA in production).
 
+### Secret providers (P6; ADR-0052 §5)
+
+Settings that need a secret (connector credentials, SMTP, an assistant endpoint) store a **reference** to it,
+`{ provider, name }`, never the value. The reference is resolved at use through a `SecretProvider`. A resolved value
+prints as `[secret]` in `String()`, `JSON.stringify` and log lines.
+
+| Provider | Reads | Configuration |
+|---|---|---|
+| `env` (default) | the variable `NAME`, or the file named by `NAME_FILE`, exactly as the secrets rule above (both set is refused, naming the variable only) | none |
+| `file` | the file `NAME` directly inside `SECRETS_DIR` (a container secret mount, for example `/run/secrets`); one trailing newline is removed, as for `NAME_FILE` | `SECRETS_DIR` |
+
+- `SECRETS_DIR` is **optional** (no default). Unset means the `file` provider is not configured: resolving a
+  `file` reference then fails with a configuration error that names the secret, never a value. A missing file under
+  a configured `SECRETS_DIR` resolves as "not set".
+- The `file` provider accepts only a plain file name (`A–Z a–z 0–9 _ . -`, first character alphanumeric, at most 128
+  characters): no path separators, no `..`, no leading dot.
+- With no P6 variable set, the installation behaves as in DG5.
+- **Current wiring:** the API registers both built-in providers at start (`apps/api/src/server.ts`). The worker's
+  registration is a planned P6 item (D-198, owner of slice J); until it lands, `SECRETS_DIR` has no effect in the
+  worker process even though the catalogue lists the worker as a reader.
+- **Another store** (for example Mobily IT's vault) is plugged in by registering an IT-supplied adapter at
+  composition (`server.ts`, `apps/worker/src/main.ts`). The product ships no vault adapter and claims no vault
+  integration.
+
+### Rate-limit classes (P6; ADR-0052 §4)
+
+Every API operation is subject to the global limit. A few operations are in a **class** with its own budget,
+applied **in addition to** the global limit: whichever is reached first answers `429 rate_limited` with
+`Retry-After`. Each budget is a positive integer per minute (range 1–1,000,000). An invalid value stops the API at
+start with exit 78 and names the variable. The API read model `GET /api/v1/admin/security/rate-limits`
+(`security.read`) returns the effective budgets and the operations in each class, with no counters, client IPs or
+user ids. The Administration > Security page that displays it is a planned P6 item (frontend), not yet in this tree.
+
+| Class | Variable | Default per minute | Keyed by | Operations wired at this release |
+|---|---|---|---|---|
+| global | `RATE_LIMIT_PER_MINUTE` | 300 | user, else client IP | every operation without a class |
+| auth | `AUTH_RATE_LIMIT_PER_MINUTE` | 20 | client IP | `startOidcLogin`, `completeOidcLogin`, `devLogin` |
+| upload | `UPLOAD_RATE_LIMIT_PER_MINUTE` | 30 | user, else client IP | `uploadEvidenceContent` (the import upload joins when it ships) |
+| search | `SEARCH_RATE_LIMIT_PER_MINUTE` | 120 | user, else client IP | none yet (global search, a planned P6 item) |
+| assistant | `ASSISTANT_RATE_LIMIT_PER_MINUTE` | 20 | user, else client IP | none yet (assistant messages, a planned P6 item) |
+| webhook | `WEBHOOK_RATE_LIMIT_PER_MINUTE` | 600 | webhook endpoint key | none yet (webhook receivers, a planned P6 item) |
+| export | `EXPORT_RATE_LIMIT_PER_MINUTE` | 10 | user, else client IP | none yet (export starts join through their owner) |
+
+The "operations wired" column describes this tree. The authoritative list is the running API's
+`getSecurityRateLimits` response, which a test pins to the routes that declare each class
+(`apps/api/test/integration/admin/security.test.ts`). Behind a reverse proxy, set `TRUST_PROXY` so that "client IP"
+means the real client and not the proxy.
+
 ## Compose-level settings (`deploy/compose/compose.yaml`)
 
 These are interpolation variables, not application variables:
