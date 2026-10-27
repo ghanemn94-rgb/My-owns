@@ -300,7 +300,8 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
     // F-DG2-180 (T-DG2-BE8)
     "\ufe0f\u034f\ufe0f",
     "\u180b\u180b\u180b",
-    "\u{E0100}\u{E0100}",
+    // T-DG6-DO-A2: three code points (zod \u2265 4.6 counts `min` in code points; two would now be too_small only, below).
+    "\u{E0100}\u{E0100}\u{E0100}",
     "\u0001\u0001\u0001",
     // "\ud800\ud800\ud800" moved: since F-DG2-260 a lone surrogate is validation.invalid_character, not blank.
     "\u17b4\u17b5\u180f",
@@ -326,6 +327,9 @@ describe("name and reason: one blank rule (F-DG2-160, T-DG2-BE7)", () => {
   it("a value too short for min after trimming gets too_small only, even when it is invisible", () => {
     expect(issues(reason.safeParse("\u200f"))).toEqual([["", "too_small"]]);
     expect(issues(reason.safeParse(" \u2060\u2060 "))).toEqual([["", "too_small"]]);
+    // T-DG6-DO-A2 (zod \u2265 4.6): two supplementary code points are four UTF-16 units but two characters, so too_small.
+    expect(issues(reason.safeParse("\u{E0100}\u{E0100}"))).toEqual([["", "too_small"]]);
+    expect(issues(name.safeParse("\u{E0100}\u{E0100}"))).toEqual([["", BLANK_TEXT_CODE]]);
   });
 
   it("visible text is accepted and trimmed as before, including Arabic with an RLM", () => {

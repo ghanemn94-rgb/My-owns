@@ -122,7 +122,8 @@ async function interfaceLanguage(db: DbOrTx, principal: Principal): Promise<"en"
 const SEARCH = "/api/v1/methodology/search";
 const searchQuery = z.strictObject({
   // q is checked by searchTerm (the §11 code), not by zod: a missing, repeated or out-of-range q is one refusal.
-  q: z.unknown(),
+  // T-DG6-DO-A2: `.optional()` keeps a missing q for searchTerm (zod >= 4.6 makes a bare z.unknown() key required).
+  q: z.unknown().optional(),
   lang: z.enum(["en", "ar"]).optional(),
   phase: z.enum(PHASE_CODES).optional(),
   transformationId: uuid.optional(),

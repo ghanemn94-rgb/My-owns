@@ -169,7 +169,7 @@ export const KPI_VERSION_CHANGE_FIELDS = [
 ] as const;
 
 const KPI_CHANGE_KEYS: ReadonlySet<string> = new Set<string>([...KPI_VERSION_CHANGE_FIELDS, "effectiveFrom"]);
-const fromTo = z.strictObject({ from: z.unknown(), to: z.unknown() });
+const fromTo = z.strictObject({ from: z.unknown().optional(), to: z.unknown().optional() });
 /** `{ field: { from, to } }` over the KPI-version fields, plus an optional `effectiveFrom` business date. */
 const kpiVersionChange = z.record(z.string(), z.unknown()).superRefine((v, ctx) => {
   for (const [k, x] of Object.entries(v)) {
