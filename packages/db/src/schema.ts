@@ -6938,6 +6938,127 @@ export type ImportRowCommitRow = Selectable<ImportRowCommitTable>;
 export type DeliverableExternalChangeRow = Selectable<DeliverableExternalChangeTable>;
 export type DeliverableExternalChangeEventRow = Selectable<DeliverableExternalChangeEventTable>;
 
+// ---- P6 slices H and G (0108; T-DG6-ARCH-04; ADR-0057, ADR-0058). Generated from the migrated catalogue
+// (docs/delivery/handbacks/DG6/T-DG6-ARCH-04-evidence/gen-dictionary.ts). bigint columns are strings (pg returns int8 as text).
+
+export interface SearchDocumentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  record_version: number;
+  code: string | null;
+  title: string;
+  summary: string | null;
+  record_status: string | null;
+  is_archived: Generated<boolean>;
+  source_audit_seq: string;
+  search_en: GeneratedTsvector;
+  search_ar: GeneratedTsvector;
+  search_simple: GeneratedTsvector;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface SearchIndexStateTable {
+  id: string;
+  record_type: string;
+  status: Generated<string>;
+  last_audit_seq: Generated<string>;
+  last_incremental_at: NullableTimestamp;
+  reindex_started_at: NullableTimestamp;
+  reindex_finished_at: NullableTimestamp;
+  documents_count: number | null;
+  last_error_code: string | null;
+  last_error_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface SavedViewTable {
+  id: string;
+  organization_id: string;
+  owner_user_id: string;
+  list_key: string;
+  transformation_id: string | null;
+  name: string;
+  visibility: Generated<string>;
+  columns: Json;
+  filters: JsonDefault;
+  sort: JsonDefault;
+  is_default: Generated<boolean>;
+  shared_at: NullableTimestamp;
+  shared_by: string | null;
+  status: Generated<string>;
+  deleted_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface SavedViewEventTable {
+  id: string;
+  saved_view_id: string;
+  record_version: number;
+  name: string;
+  visibility: string;
+  columns: Json;
+  filters: Json;
+  sort: Json;
+  is_default: boolean;
+  status: string;
+  actor_user_id: string;
+  occurred_at: Timestamp;
+}
+
+export interface HelpTopicTable {
+  id: string;
+  topic_key: string;
+  screen_key: string;
+  ordinal: number;
+  title_en: string;
+  title_ar: string;
+  body_en: string;
+  body_ar: string;
+  arabic_provisional: boolean;
+  source_refs: string[];
+  created_at: TimestampDefault;
+}
+
+export interface LoadDatasetMarkerTable {
+  singleton: Generated<boolean>;
+  dataset_code: string;
+  generator_version: string;
+  random_seed: string;
+  transformations: number;
+  initiatives: number;
+  kpi_actuals: number;
+  audit_events: number;
+  users: number;
+  generated_at: TimestampDefault;
+}
+
+export interface Database {
+  search_document: SearchDocumentTable;
+  search_index_state: SearchIndexStateTable;
+  saved_view: SavedViewTable;
+  saved_view_event: SavedViewEventTable;
+  help_topic: HelpTopicTable;
+  load_dataset_marker: LoadDatasetMarkerTable;
+}
+
+export type SearchDocumentRow = Selectable<SearchDocumentTable>;
+export type SearchIndexStateRow = Selectable<SearchIndexStateTable>;
+export type SavedViewRow = Selectable<SavedViewTable>;
+export type SavedViewEventRow = Selectable<SavedViewEventTable>;
+export type HelpTopicRow = Selectable<HelpTopicTable>;
+export type LoadDatasetMarkerRow = Selectable<LoadDatasetMarkerTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -12741,6 +12862,102 @@ export const SCHEMA_COLUMNS = {
     "source_reference",
     "actor_user_id",
     "occurred_at",
+  ],
+  search_document: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "record_version",
+    "code",
+    "title",
+    "summary",
+    "record_status",
+    "is_archived",
+    "source_audit_seq",
+    "search_en",
+    "search_ar",
+    "search_simple",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  search_index_state: [
+    "id",
+    "record_type",
+    "status",
+    "last_audit_seq",
+    "last_incremental_at",
+    "reindex_started_at",
+    "reindex_finished_at",
+    "documents_count",
+    "last_error_code",
+    "last_error_at",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  saved_view: [
+    "id",
+    "organization_id",
+    "owner_user_id",
+    "list_key",
+    "transformation_id",
+    "name",
+    "visibility",
+    "columns",
+    "filters",
+    "sort",
+    "is_default",
+    "shared_at",
+    "shared_by",
+    "status",
+    "deleted_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  saved_view_event: [
+    "id",
+    "saved_view_id",
+    "record_version",
+    "name",
+    "visibility",
+    "columns",
+    "filters",
+    "sort",
+    "is_default",
+    "status",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  help_topic: [
+    "id",
+    "topic_key",
+    "screen_key",
+    "ordinal",
+    "title_en",
+    "title_ar",
+    "body_en",
+    "body_ar",
+    "arabic_provisional",
+    "source_refs",
+    "created_at",
+  ],
+  load_dataset_marker: [
+    "singleton",
+    "dataset_code",
+    "generator_version",
+    "random_seed",
+    "transformations",
+    "initiatives",
+    "kpi_actuals",
+    "audit_events",
+    "users",
+    "generated_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

@@ -983,6 +983,32 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0108: the P6 slice H/G guards are attached (deferred audit on saved views, monotonic derived index rows, trigger-written history, append-only load marker)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('help_topic', 'load_dataset_marker', 'saved_view', 'saved_view_event', 'search_document', 'search_index_state')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["load_dataset_marker", "load_dataset_marker_append_only", false, false],
+      ["load_dataset_marker", "load_dataset_marker_append_only_truncate", false, false],
+      ["load_dataset_marker", "load_dataset_marker_guard", false, false],
+      ["saved_view", "saved_view_audit_required", true, true],
+      ["saved_view", "saved_view_guard", false, false],
+      ["saved_view", "saved_view_history", false, false],
+      ["saved_view", "saved_view_row_guard", false, false],
+      ["saved_view_event", "saved_view_event_append_only", false, false],
+      ["saved_view_event", "saved_view_event_append_only_truncate", false, false],
+      ["search_document", "search_document_guard", false, false],
+      ["search_document", "search_document_row_guard", false, false],
+      ["search_index_state", "search_index_state_guard", false, false],
+      ["search_index_state", "search_index_state_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
@@ -1266,6 +1292,11 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "webhook_endpoint",
       "import_batch",
       "deliverable_external_change",
+      // P6 slices H and G (0108, T-DG6-ARCH-04; ADR-0057). saved_view is audited and its history carries record_version;
+      // search_document and search_index_state are version-stepped but not audited (a derived index and its telemetry).
+      "search_document",
+      "search_index_state",
+      "saved_view",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1655,6 +1686,15 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       import_row_commit: "INSERT,SELECT",
       deliverable_external_change: SIU,
       deliverable_external_change_event: "SELECT",
+      // P6 slices H and G (0108, T-DG6-ARCH-04; ADR-0057, ADR-0058): the derived search index is also deletable by the
+      // index job; the index states are seeded (no INSERT); saved views are soft-deleted (no DELETE); help topics and the
+      // load marker are read-only to the application; histories SELECT only.
+      search_document: "DELETE,INSERT,SELECT,UPDATE",
+      search_index_state: "SELECT,UPDATE",
+      saved_view: SIU,
+      saved_view_event: "SELECT",
+      help_topic: "SELECT",
+      load_dataset_marker: "SELECT",
     });
   });
 

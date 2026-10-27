@@ -1,0 +1,78 @@
+port-policy: PostgreSQL listening on port 23711 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 102 (0001_identity_access.sql .. 0110_p6_register_filter_indexes.sql)
+PASS  G00 slice H/G migrations 0108-0110 present directly above 0107 (D-196); nothing above 0110  -- ids >= 98: 98,99,100,101,102,103,104,105,106,107,108,109,110
+PASS  G01 fresh database: 0001..last apply  -- applied 102: 0107_p6_integrations_permissions.sql, 0108_p6_search_saved_views_help.sql, 0109_p6_search_productivity_permissions.sql, 0110_p6_register_filter_indexes.sql
+PASS  G02 P5 database populated (0001-0097; 2 transformations, one instantiated by the DG3 function; 12 initiatives; 3 users)  -- applied 89; {"i":12,"t":2,"u":3}
+PASS  G03 P6 (0098..last, including slice H/G 0108-0110) over the P5 database apply  -- applied 13: 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql, 0101_p6_operations_service_identities.sql, 0102_p6_storage_notification_channels.sql, 0103_p6_operations_channels_permissions.sql, 0104_p6_connectors_runs_outbound
+PASS  G04 the upgrade leaves existing rows as they were (initiatives and transformations byte-identical, audit count unchanged); no document, view or marker; 12 index states at sequence 0 with an Unknown count; 11 help topics  -- identical; {"docs":0,"views":0,"states":12,"fresh_states":12,"topics":11,"markers":0}
+PASS  G05 the 11 named indexes of 0108 and 0110 exist  -- audit_event_feed_idx,initiative_code_sort_idx,initiative_lead_idx,initiative_name_sort_idx,initiative_owner_idx,initiative_planned_end_sort_idx,search_document_ar_idx,search_document_en_idx,search_document_simple_idx,transformation_code_sort_idx,transformation_updated_sort_idx
+PASS  S01 the english, arabic and simple text search configurations exist on this server  -- arabic,english,simple; server_version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
+PASS  SD01 the index job writes a document without an audit event (derived row, not audited)  -- committed
+PASS  S02 stemmed English ('initiative tower' finds 'initiatives ... towers'), Arabic ('تحسين') and code ('ini-02', simple) queries each find their document  -- en 1, ar 1, code 1; to_tsvector('arabic','مبادرات تحسين') = 'تحسين':2 'مبادرا':1
+PASS  SD02 a document update that does not step the version by 1 is refused  -- 23514 search_document_version_step search_document: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  SD03 a newer feed event updates the document (version +1, newer audit sequence and record version)  -- committed
+PASS  SD04 a document never goes back to an older audit sequence (a replayed feed event)  -- 23514 search_document_monotonic search_document: a document never goes back to an older audit sequence or record version
+PASS  SD05 a document never goes back to an older record version  -- 23514 search_document_monotonic search_document: a document never goes back to an older audit sequence or record version
+PASS  SD06 the indexed record of a document never changes  -- 23514 search_document_identity_fixed search_document: the indexed record never changes
+PASS  SD07 one document per record  -- 23505 search_document_record_key duplicate key value violates unique constraint "search_document_record_key"
+PASS  SD08 only the 12 indexed record types  -- 23514 search_document_record_type new row for relation "search_document" violates check constraint "search_document_record_type"
+PASS  SD09 a transformation document is its own transformation  -- 23514 search_document_transformation_self new row for relation "search_document" violates check constraint "search_document_transformation_self"
+PASS  SD10 the document's organization equals its transformation's (p2_row_guard)  -- 23514 search_document_organization_matches search_document: organization_id must equal the transformation's organization
+PASS  SD11 the index job removes the document of a removed record (DELETE granted)  -- deleted
+PASS  SD12 a document title is never empty  -- 23514 search_document_title_check new row for relation "search_document" violates check constraint "search_document_title_check"
+PASS  IS01 the feed advances the consumed audit sequence (version +1, no audit event: telemetry)  -- committed
+PASS  IS02 the consumed audit sequence never goes back outside a reindex  -- 23514 search_index_state_monotonic search_index_state: the consumed audit sequence goes back only to 0 when a full reindex starts
+PASS  IS03 a full reindex starts by resetting the sequence to 0 with status reindexing and a start time  -- committed
+PASS  IS04 a failed state carries its error code and time  -- 23514 search_index_state_failed_coded new row for relation "search_index_state" violates check constraint "search_index_state_failed_coded"
+PASS  IS05 a non-stepping version is refused  -- 23514 search_index_state_version_step search_index_state: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  IS06 mth_app cannot add an index state (seeded set of 12; INSERT not granted)  -- 42501 permission denied for table search_index_state
+PASS  SV01 create a personal view (columns, filters, sort) with its audit event  -- committed
+PASS  SV02 the history row is written by the trigger at version 1  -- {"n":1,"v":1,"s":"active"}
+PASS  SV03 a view without its audit event fails at COMMIT  -- 23000 saved_view_audit_required no audit_event for saved_view 01990000-0000-7000-8000-00000000010e at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  SV04 a non-stepping version is refused  -- 23514 saved_view_version_step saved_view: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  SV05 columns: an empty list is refused  -- 23514 saved_view_columns_valid new row for relation "saved_view" violates check constraint "saved_view_columns_valid"
+PASS  SV06 columns: a repeated column is refused  -- 23514 saved_view_columns_valid new row for relation "saved_view" violates check constraint "saved_view_columns_valid"
+PASS  SV07 filters: a number value is refused (values are strings)  -- 23514 saved_view_filters_valid new row for relation "saved_view" violates check constraint "saved_view_filters_valid"
+PASS  SV08 filters: more than 20 values in one filter are refused  -- 23514 saved_view_filters_valid new row for relation "saved_view" violates check constraint "saved_view_filters_valid"
+PASS  SV09 sort: more than 3 keys are refused  -- 23514 saved_view_sort_valid new row for relation "saved_view" violates check constraint "saved_view_sort_valid"
+PASS  SV10 sort: a direction other than asc/desc is refused  -- 23514 saved_view_sort_valid new row for relation "saved_view" violates check constraint "saved_view_sort_valid"
+PASS  SV11 one active view per owner, list, transformation and case-insensitive name  -- 23505 saved_view_name_key duplicate key value violates unique constraint "saved_view_name_key"
+PASS  SV12 one default view per owner, list and transformation  -- 23505 saved_view_one_default_key duplicate key value violates unique constraint "saved_view_one_default_key"
+PASS  SV13 only the owner changes a view  -- 23514 saved_view_owner_only saved_view: only the owner changes a view
+PASS  SV14 the owner never changes  -- 23514 saved_view_identity_fixed saved_view: owner, list and transformation never change
+PASS  SV15 sharing needs both the share time and the sharer  -- 23514 saved_view_shared_shape new row for relation "saved_view" violates check constraint "saved_view_shared_shape"
+PASS  SV16 only the owner shares a view  -- 23514 saved_view_owner_only saved_view: only the owner shares a view
+PASS  SV17 the owner shares the view (version +1, audited)  -- committed
+PASS  SV18 the transformations list is cross-transformation (no transformation id)  -- 23514 saved_view_cross_transformation_lists new row for relation "saved_view" violates check constraint "saved_view_cross_transformation_lists"
+PASS  SV19 a list outside the 12 is refused  -- 23514 saved_view_list_key_check new row for relation "saved_view" violates check constraint "saved_view_list_key_check"
+PASS  SV20 a view of another organization's transformation is refused  -- 23514 saved_view_organization_matches saved_view: the transformation belongs to the view's organization
+PASS  SV21 a view in another organization than its owner's is refused  -- 23514 saved_view_organization_matches saved_view: the view belongs to its owner's organization
+PASS  SV22 a view starts active  -- 23514 saved_view_transition saved_view: a view starts active
+PASS  SV23 a deleted view is never the default  -- 23514 saved_view_deleted_not_default new row for relation "saved_view" violates check constraint "saved_view_deleted_not_default"
+PASS  SV24 the owner deletes the view (not default any more, deleted time set, audited)  -- committed
+PASS  SV25 a deleted view never changes  -- 23514 saved_view_final saved_view: a deleted view never changes
+PASS  SV26 after deletion the name is free again for the owner  -- committed
+PASS  SV27 the history holds every version of the view (create, share, delete)  -- 1:personal:active,2:shared:active,3:shared:deleted
+PASS  SV28 the history is append-only (UPDATE refused, even for the owner role)  -- 42501 saved_view_event is append-only: UPDATE is not allowed
+PASS  SV29 the history is append-only (DELETE refused, even for the owner role)  -- 42501 saved_view_event is append-only: DELETE is not allowed
+PASS  SV30 mth_app cannot delete a view row (soft delete only; DELETE not granted)  -- 42501 permission denied for table saved_view
+PASS  HT01 11 help topics on 5 screens, every Arabic title and body labelled provisional; no PMI or certification claim  -- {"n":11,"labelled":11,"screens":5,"no_claim":true}
+PASS  HT02 the drafts topic uses the exact label 'Draft - not submitted' (REQ-S15-011)  -- A form you have started is kept on the server as your draft, so it survives a reload or a closed browser. A draft is lab
+PASS  HT03 mth_app cannot change help topics (SELECT only)  -- 42501 permission denied for table help_topic
+PASS  HT04 a source reference outside M/B/REQ anchors is refused  -- 23514 help_topic_source_refs_check new row for relation "help_topic" violates check constraint "help_topic_source_refs_check"
+PASS  LM01 the load marker is refused in a database that already has users and transformations  -- 23514 load_dataset_marker_empty_database load_dataset_marker: the load dataset is generated only into an empty database without a production or demo marker
+PASS  LM02 mth_app cannot write the load marker (SELECT only)  -- 42501 permission denied for table load_dataset_marker
+PASS  LM03 the generator writes the marker into an empty freshly migrated database  -- committed
+PASS  LM04 at most one marker  -- 23505 load_dataset_marker_pkey duplicate key value violates unique constraint "load_dataset_marker_pkey"
+PASS  LM05 the marker is append-only (UPDATE refused)  -- 42501 load_dataset_marker is append-only: UPDATE is not allowed
+PASS  LM06 the marker is append-only (DELETE refused)  -- 42501 load_dataset_marker is append-only: DELETE is not allowed
+PASS  LM07 the load marker is refused in an empty database that carries a production marker  -- 23514 load_dataset_marker_empty_database load_dataset_marker: the load dataset is generated only into an empty database without a production or demo marker
+        0109 seed: saved_view.manage(write)=ADM_ACCESS,ADM_METHOD,ADM_TECH,BO,CM,FIN,KDS,SEC,SP,TD,TL,TO,WL; saved_view.share(write)=BO,KDS,TD,TL,TO,WL
+PASS  PM01 0109 seeds 2 write codes, none business_approval or finance_validation  -- 2 codes
+PASS  PM02 saved_view.manage is held by the 13 roles other than AUD  -- ADM_ACCESS,ADM_METHOD,ADM_TECH,BO,CM,FIN,KDS,SEC,SP,TD,TL,TO,WL
+PASS  PM03 saved_view.share is held by exactly BO, KDS, TD, TL, TO, WL  -- BO,KDS,TD,TL,TO,WL
+PASS  PM04 the technical-admin trigger still refuses a business-approval code for ADM_TECH (REQ-S10-003)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission gate.decide (separation of duties)
+
+71/71 PASS
+exit=0

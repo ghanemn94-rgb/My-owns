@@ -72,4 +72,17 @@ export const P6_OPERATION_IDS: ReadonlySet<string> = new Set([
   "getDeliverableConfirmation",
   "putDeliverableExternalChange",
   "confirmDeliverableExternalChange",
+  // T-DG6-ARCH-04: slices H and G (12 operations; ADR-0057, ADR-0058).
+  "searchRecords",
+  "getSearchIndexStatus",
+  "listSavedViews",
+  "createSavedView",
+  "getSavedView",
+  "putSavedView",
+  "deleteSavedView",
+  "shareSavedView",
+  "listMyFormDrafts",
+  "compareFormRecordVersions",
+  "listHelpTopics",
+  "getHelpTopic",
 ]);

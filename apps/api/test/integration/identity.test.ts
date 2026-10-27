@@ -140,7 +140,8 @@ describe("GET /api/v1/me", () => {
         // + P5 slices G/H defaults (0087: health_check.assess, launch_plan.edit)
         // + P6 slices E/F defaults (0100: sensitive_record.grant, sensitive_record.read)
         // + P6 slices J/C defaults (0103: operations.read)
-        // + P6 slices B/A defaults (0107: connector.read, external_change.flag, import.read, outbound_write.read), sorted.
+        // + P6 slices B/A defaults (0107: connector.read, external_change.flag, import.read, outbound_write.read)
+        // + P6 slices H/G defaults (0109: saved_view.manage, saved_view.share), sorted.
         permissions: [
           "action.edit",
           "approval.request",
@@ -212,6 +213,8 @@ describe("GET /api/v1/me", () => {
           "roadmap.edit",
           "role.read",
           "role_mapping.assign",
+          "saved_view.manage",
+          "saved_view.share",
           "sensitive_record.grant",
           "sensitive_record.read",
           "team.assign",

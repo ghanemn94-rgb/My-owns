@@ -397,3 +397,115 @@ No requirement of this section is complete yet: each needs its implementer work.
 7. **One 401 for webhooks.** Every authentication failure of `receiveWebhook` gives the same code and text; the reason goes only to the redacted log.
 8. **Exactly once.** Every run, receipt and write has its unique key and lock; a replay returns the existing record and creates nothing.
 9. **Nothing is "live".** The test adapter and the local fake source are the only exercised sources; the UI says "Not verified" until a test passes and never "connected to Mobily".
+
+## §H/G. Slices H (search, tables and productivity) and G (performance and asynchronous exports) — T-DG6-ARCH-04
+
+The §2 shared rules apply unchanged. For slices H and G, rule 17's "slice ADR tables" are ADR-0057 §10 (refusal codes and texts), §9 (the stale and conflict state texts) and the 11 help topics of `0108`; rule 16's pending files are the ones named below. Rule 14 needs no residual here: every component of H and G runs in the sandbox (PostgreSQL text search, the worker, the Node load harness); the load figures are sandbox measurements, never production capacity (ADR-0058 §5).
+
+### H/G.0 Already delivered by the architect (do not re-create)
+
+| Artifact | Path | Status |
+|---|---|---|
+| ADRs | `docs/architecture/adr/ADR-0057-p6-search-saved-views-filters-drafts-compare-bulk-help.md`, `ADR-0058-p6-performance-load-dataset-workload-p95-index-plan-async-export.md` | Binding design, with the refusal codes and texts, the indexed columns per type, the workload and the p95 method |
+| Migrations | `packages/db/migrations/0108_p6_search_saved_views_help.sql`, `0109_p6_search_productivity_permissions.sql`, `0110_p6_register_filter_indexes.sql` | Applied on a fresh PostgreSQL 16.13 and over a P5-populated database (0001–0097, then 0098–0110); 71/71 guard probes PASS (`docs/delivery/handbacks/DG6/T-DG6-ARCH-04-evidence/probe-output.txt`) |
+| Kysely types, catalogue and seed pins | `packages/db/src/schema.ts` (6 tables, generated from the catalogue), `packages/db/test/integration/catalogue.test.ts` (test "0108: the P6 slice H/G guards are attached": 13 triggers; 3 version-stepped tables; 6 privilege pins), `packages/db/src/seed.test.ts` (0109 block; the free-id example is now 0111) | Pinned |
+| Permissions | `packages/shared/src/permissions.ts` (`P6_SEARCH_PERMISSIONS`, `P6_SEARCH_ROLE_PERMISSIONS`, in `P6_PERMISSIONS`; 2 codes); `apps/api/test/integration/identity.test.ts` (TO's pinned list + the 2 codes) | Equals `0109` |
+| Lock classes | `platform/advisory-locks.ts` (`searchReindex` 730318, `savedViewShare` 730319; 730320–730322 reserved), ADR-0016 §6 | Registry test updated (51 classes) |
+| Contract | `docs/api/openapi.yaml` 1.5.0-p6: 12 operations (new tag `search`), optional query parameters on 11 routed list operations (ADR-0057 §5), the `PermissionCode` enum gains the 2 codes | `pnpm openapi:lint` PASS (922 operations); no earlier line removed |
+| Contract-test seams | `apps/api/test/support/p6-pending-arch-04.ts` (slice aggregate; frozen), `p6-pending-be-p.ts` (2), `p6-pending-be-q.ts` (6), `p6-pending-be-q2.ts` (4); one import line in `p6-pending.ts`; `contract.test.ts` count 922; `p6-operations.ts` (+12 ids) | Green |
+| ERD §1w, data dictionary "P6 tables, slices H and G", permissions matrix §27 | `docs/architecture/erd.md`, `data-dictionary.md`, `docs/analysis/permissions-matrix.md` | Dictionary generated from the catalogue |
+
+p6-plan §5.1's BE-P, BE-Q and FE-D are split (BE-P/P2, BE-Q/Q2, FE-D/D2) so each fits 60–75 minutes. The split adds no file outside the plan's boundaries. A split task appends to its parent's contract-exercise seam file (`p6-exercises-be-p.ts`, `p6-exercises-be-q.ts`; created by BE-A), after the parent. BE-R adds parameters to routed operations, so it has no pending list; it extends the existing exercises of those operations in its own test file.
+
+### H/G.1 BE-P — the search index: documents, the feed and reindex jobs, the service identity (backend-workflow-engineer; after ARCH-04, BE-B, BE-J)
+
+- **Files:** `apps/api/src/modules/search/documents.ts` (the per-type document builders of ADR-0057 §1, exactly the columns of its table, through the shared `truncateText`; `upsertDocument` and `deleteDocument` honouring `search_document_monotonic`), `apps/worker/src/handlers/search.ts` and `apps/worker/src/queues/search.ts` (BE-A's stubs: `search.index_feed` and `search.reindex` per ADR-0057 §2, each record type under lock 730318, batches of 500, no remote I/O), one migration (next id at merge, D-196) seeding the two `job_schedule` rows (`search.index_feed` cron `* * * * *`, `search.reindex` cron `30 2 * * 0`, `owner_module` `search`, en/ar descriptions, each with its migration audit event as `0028` does) and the two job service identities with the ADR-0057 §2 sensitive-read exception (ADR-0053 §1 rows), the `apps/worker/src/schedules.ts` declaration lines for the two codes (after BE-J's), `apps/worker/test/search-index.test.ts`, `apps/api/test/integration/search/index-feed.test.ts`.
+- **Operations:** none (BE-P2 routes them).
+- **Consumes:** ADR-0057 §1, §2, §10; ADR-0053 §1 (service identities, per-job scope test); ADR-0016 §6 (730318).
+- **Tests:** a write to each of the 12 types appears as a document after one feed run, with the §1 columns only (a test that no money, rate or KPI column value appears in any document); an archive sets `is_archived`; a removed record's document is deleted; replaying the same batch changes nothing (row hashes identical); two concurrent feed runs of one type serialize (lock); a reindex rebuilds exactly the current rows and leaves `last_audit_seq` at its start sequence; a failure sets `failed` with its code and the next run recovers; the job identity reads nothing outside its declared scope (ADR-0053 Q13 test); A13 hook for QA-C: a worker killed mid-batch re-runs the batch with no duplicate and no gap.
+
+### H/G.2 BE-P2 — the search query, its routes and the parity test (backend-workflow-engineer; after BE-P)
+
+- **Files:** `apps/api/src/modules/search/query.ts` (ADR-0057 §3: the three-configuration match, the integer relevance keyset, the per-type `ReadScope.predicate` with the live named-party join for benefit, business case and evidence, `indexedThrough` and `stale`), `search/routes.ts` (BE-A's stub: `searchRecords` with rate-limit class `search` via BE-E's `rateLimitClass`, `getSearchIndexStatus` with `operations.read`), the search mappings in `platform/db-errors.ts` (none needed for reads; `search.query_too_short` is a 400 problem raised in `query.ts`), `apps/api/test/integration/search/search.test.ts`, `apps/api/test/integration/search/search-parity.test.ts`, `p6-pending-be-p.ts` (empty it), its block in `p6-exercises-be-p.ts`.
+- **Operations (2):** `searchRecords`, `getSearchIndexStatus`.
+- **Consumes:** ADR-0057 §3, §10; ADR-0051 §1–§2 (`ReadScope`, the sensitive types and named parties); ADR-0052 §2 (free text, strict UTF-8 query parsing), §4 (class `search`, 120 per minute).
+- **Tests:** the A12 assertion (a user scoped to transformation X searching a term present in X and Y gets only X's hits); the parity test (for each of the 12 types and every reader of BE-B's parity fixture: a hit iff the record's GET returns 200, including a sensitive benefit with and without a grant and as a named party); a grant revoked after indexing hides the hit on the next request; English stemming, the Arabic query, a code query; `q` of 1 character → 400 `search.query_too_short`; `stale` true while a type is `reindexing` or the feed is > 120 s behind; every requested type `failed` → 503 `search.index_unavailable`; the cursor is bound to `q` and filters (a foreign cursor → 400); AUD gets its scoped hits; rate limit 429.
+
+### H/G.3 BE-Q — saved views and the list registry (backend-workflow-engineer; after BE-P2)
+
+- **Files:** `packages/shared/src/saved-views.ts` (the list registry of ADR-0057 §4: per `list_key` the column keys, filter keys with their value format, sort keys; for the 11 API lists exactly the parameters of ADR-0057 §5; exported for API and web; one `packages/shared/package.json` `exports` entry requested through the handback if a new subpath is needed, §5.3), `apps/api/src/modules/search/saved-views.ts` (BE-A's stub: the 6 operations; default switching in one transaction; share under lock 730319 with `saved_view.share` re-checked at commit), the saved-view mappings in `platform/db-errors.ts` (after BE-O's block): `saved_view_name_key` → 409 `saved_view.name_taken`; `saved_view_final` → 409 `saved_view.deleted`; `saved_view_owner_only` → 403 `saved_view.not_owner`; `saved_view_columns_valid`, `saved_view_filters_valid`, `saved_view_sort_valid` → 400 (the API validates first; the database is the backstop); `saved_view_one_default_key` → 409 `saved_view.default_conflict` (a concurrent default switch); `saved_view_organization_matches`, `saved_view_cross_transformation_lists` → 404 (the transformation is not the caller's), plus `apps/api/test/integration/search/saved-views.test.ts`, `p6-pending-be-q.ts`, its block in `p6-exercises-be-q.ts`.
+- **Operations (6):** `listSavedViews`, `createSavedView`, `getSavedView`, `putSavedView`, `deleteSavedView`, `shareSavedView`.
+- **Consumes:** ADR-0057 §4, §10; ADR-0016 §6 (730319); `0108`, `0109`.
+- **Tests:** create, put, delete and share each write exactly one audit event and step the version; If-Match 409/428; another user of the organization reads a shared view and gets 404 for a personal one; a user of another organization gets 404 for both; only the owner changes (403 `saved_view.not_owner`); share without `saved_view.share` → 403, unshare allowed; AUD: list and get 200, every write 403; unknown column, filter or sort key → 422 `saved_view.unknown_key` with the key; duplicate name (case-insensitive) → 409; setting a default clears the previous one; a shared view of a transformation the reader cannot read is not listed; the registry equals the §5 parameters (a test reading the contract).
+
+### H/G.4 BE-Q2 — draft recovery list, version comparison, help topics (backend-workflow-engineer; after BE-Q)
+
+- **Files:** `apps/api/src/modules/forms/drafts.ts` (the `listMyFormDrafts` route lines only; the P5 routes unchanged), `forms/compare.ts` (BE-A's stub: `compareFormRecordVersions` per ADR-0057 §7, folding audit `changes` per field, the values rule, `recorded: false` for a version step without a diff of a shown field), `search/help-topics.ts` (BE-A's stub: `listHelpTopics`, `getHelpTopic` from `help_topic`), a static test `apps/api/src/modules/forms/form-draft-readers.test.ts` (no module other than `forms/drafts.ts` selects from `form_draft`; ADR-0057 §6), `apps/api/test/integration/forms/compare.test.ts`, `apps/api/test/integration/forms/my-drafts.test.ts`, `apps/api/test/integration/search/help-topics.test.ts`, `p6-pending-be-q2.ts`, its block in `p6-exercises-be-q.ts` (after BE-Q).
+- **Operations (4):** `listMyFormDrafts`, `compareFormRecordVersions`, `listHelpTopics`, `getHelpTopic`.
+- **Consumes:** ADR-0057 §6, §7, §9, §10; ADR-0041 §5 (P5 drafts and history, unchanged); `0108` help seeds.
+- **Tests:** my drafts across two transformations, newest first; a draft of a transformation whose assignment was revoked is left out and still stored unchanged; comparison of versions 1 → 3 of an initiative folds two PATCHes; an editor sees values, a plain reader `valuesWithheld: true` and no values, an auditor with `audit.read` sees values; `toVersion` ≤ `fromVersion` or above current → 422 `form_record.compare_versions_invalid`; a sensitive record without admission → 404; help topics in en and ar with `arabicProvisional` true, filtered by `screenKey`; unknown topic → 404.
+- **Bulk (ADR-0057 §8):** BE-Q2 adds the A14 API test of the DG5 bulk response (three items, one stale → 409 `form_record.bulk_conflict` naming only the stale item; all three versions unchanged) to `apps/api/test/integration/forms/bulk-conflict-p6.test.ts`; `forms/bulk.ts` is **not** changed unless the orchestrator adopts the per-record option raised in the ARCH-04 handback.
+
+### H/G.5 BE-R — server-side filters and sorts on register lists (backend-workflow-engineer; after BE-Q)
+
+- **Files:** the list-query lines of `apps/api/src/modules/portfolio/initiatives.ts` (`q`, `executiveOwnerUserId`, `workstreamLeadUserId`, `sort` with the keyset cursor; `filterHash` over every filter and the sort), the list-query lines of `apps/api/src/modules/transformations/routes.ts` (`listTransformations` `sort`), the `listQuery`, list route and `RegisterSpec.searchColumns` / `sortColumns` lines of `transformations/register-kit.ts` and the two new spec fields in the 9 specs of `transformations/registers.ts` (declared columns only), `apps/api/test/integration/portfolio/initiatives-filters.test.ts` (the 1,000-initiative test), `apps/api/test/integration/transformations/register-filters.test.ts`.
+- **Operations:** none new; the 11 routed list operations gain their ADR-0057 §5 parameters (already in the contract).
+- **Consumes:** ADR-0057 §5; `0110` indexes; ADR-0007 (cursor binding).
+- **Tests:** every parameter absent → the response is byte-identical to the pre-P6 response for the same data (a golden comparison per operation); on 1,000 initiatives in one transformation: each sort key both ways pages through all 1,000 with no duplicate and no gap, `q` and the owner filters return exactly the matching set, a cursor from another filter → 400; an unknown `sort` → 400 at `/query/sort`; nulls last ascending; the query plan for `sort=code` uses `initiative_code_sort_idx` (EXPLAIN in the test log, not asserted on timing).
+
+### H/G.6 FE work for slice H (frontend-ux-engineer)
+
+- **FE-A** (shell, already planned): the API client functions and query keys for the 12 operations and the new list parameters; the global search box slot and the breadcrumb slot; the `i18n/{en,ar}/problems.json` H codes of ADR-0057 §10 (Arabic labelled provisional).
+- **FE-D** (after FE-A, BE-R): `pages/search/**` (results with recordType filters, the stale banner, the empty state distinct from the stale state), `components/saved-views/**` (pick, save, rename, set default, delete, share for holders of `saved_view.share`; AUD sees and applies only), `components/filter-chips/**`, the saved-view lines in `components/DataTable.tsx` (columns from the active view; the old per-browser choice read once as the initial unsaved state), `components/breadcrumbs/**`, `components/help/**` (the help panel for the page's `screenKey`). The 1,000-initiative register e2e (sort, filter, page, hide a column; budget measured, rule 13).
+- **FE-D2** (after FE-D, BE-Q2): `components/draft-recovery/**` (autosave through the P5 draft routes, restore or discard, the "Draft - not submitted" badge, the cross-transformation "Your drafts" list), `components/compare/**` and the compare-and-reapply lines in `components/useVersionedSave.ts` (ADR-0057 §7 three-way flow), `components/inline-edit/**` (one PATCH per cell with If-Match; the conflict state in the row), the stale and conflict states in `components/States.tsx` with the six-state component test (en and ar), the e2e "a draft survives a browser reload" and the A14 compare-and-reapply e2e (two sessions edit one initiative; the second gets 409, compares, reapplies; the first change intact).
+
+### H/G.7 DO-E — the load dataset generator and load sessions (devops-engineer; after ARCH-04)
+
+- **Files:** `deploy/load/generate.mjs` (ADR-0058 §2: profiles `default` and `register-1000`; deterministic; the marker first; through the database guards), `deploy/load/sessions.mjs` (ADR-0058 §4, through `createSession`), `deploy/load/README.md`, the `MTH_ENV=load` lines in `packages/config/src/{index,load}.ts` (value, the NODE_ENV and AUTH_MODE rule, the two start-up refusals with their texts) and their config tests, the refusal lines in `packages/db/src/cli.ts` (`bootstrap`, `seed-demo` on a load database) with tests, the `load` compose profile in `deploy/compose/compose.yaml` (off by default), `deploy/load/generate.test.mjs` (two runs with one seed → identical row hashes).
+- **Consumes:** ADR-0058 §2, §4, §8; `0108` (`load_dataset_marker`); ADR-0050 §1 (markers); ADR-0005 (sessions).
+
+### H/G.8 DO-F — the workload harness and the first run (devops-engineer; after DO-E, BE-P2, BE-R)
+
+- **Files:** `deploy/load/workload.mjs` (ADR-0058 §3, §6: 100 virtual users, the mix, deterministic think time, integer-microsecond samples, nearest-rank p95), `deploy/load/report.mjs` (the report: infrastructure statement of §5, dataset counts from the marker, workload, per-class p50/p95/p99/max/count/errors for each of 3 repetitions), the first run and the draft report under `docs/delivery/test-evidence/DG6/load/` (`run-1/`), with `EXPLAIN (ANALYZE, BUFFERS)` for each operation whose p95 misses.
+
+### H/G.9 BE-S — index and query fixes, the full-scale export proof (backend-workflow-engineer; after DO-F)
+
+- **Files:** one index migration (next id at merge) and query fixes named by DO-F's report, each in its owning file's named lines with a before/after measurement; `deploy/load/export-proof.mjs` (a script run against the load database, outside the vitest projects so `pnpm test:integration` never needs the load dataset; it exits non-zero on any failed assertion) (ADR-0058 §7: `LOAD-T01` live-selection export in xlsx and csv; 50 concurrent exports; job id within 2 s; percent non-decreasing to 100; requester 200, another same-scope user 404, AUD 404). A cap reached (`EXPORT_MAX_BYTES`) is reported as a reopen candidate, not changed.
+
+### H/G.10 DO-G — the final load run and report (devops-engineer; after BE-S, on the frozen tree)
+
+- **Files:** `docs/delivery/test-evidence/DG6/load/final/` (3 repetitions, the report per ADR-0058 §5–§6, every class compared with its target, each miss listed for a Medium, non-mandatory finding per D-195 Q9), the export proof output.
+
+### H/G.11 Migrations left and their order
+
+The architect shipped `0108`–`0110` directly above `0107` (D-196). The implementer migrations of this section take the next id above the highest shipped file **at merge time** (rule 18, D-196), in this order: BE-P's job schedules and job identities; BE-S's indexes (only those DO-F's evidence names). No other H/G task needs a migration; a schema change found necessary goes to the orchestrator first.
+
+### H/G.12 Integration order
+
+ARCH-04 → BE-P → BE-P2 → BE-Q → BE-Q2 → BE-R → FE-D → FE-D2 → QA-B (A12 search) and QA-C (A14). In parallel: DO-E → (BE-P2, BE-R) → DO-F → BE-S → DO-G → QA-E. `platform/db-errors.ts` gets BE-Q's block after BE-O's; `apps/worker/src/schedules.ts` gets BE-P's lines after BE-J's; `p6-exercises-be-p.ts` is edited by BE-P2 only (BE-P has no operation); `p6-exercises-be-q.ts` by BE-Q, then BE-Q2.
+
+### H/G.13 Requirement → owner
+
+| Requirement | Architect delivered | Implementer owner(s) | Proof |
+|---|---|---|---|
+| REQ-S15-010 | `0108`, `0109`, `0110`; ADR-0057 §1–§10; probes S, SD, IS, SV, HT; contract (12 operations, list parameters) | BE-P, BE-P2 (search), BE-Q (saved views), BE-Q2 (drafts list, compare, help, bulk A14 test), BE-R (filters), FE-D, FE-D2 | BE-P2 A12 and parity tests; BE-Q2 bulk test; FE-D2 draft-reload e2e; QA-B (A12), QA-C (A14) |
+| REQ-S15-011 | ADR-0057 §6, §9 (six states, "Draft - not submitted", drafts never counted); help topic `records.drafts` | FE-D2 (states, badge), BE-Q2 (the `form_draft` readers test) | six-state component test; QA-C/QA-D |
+| REQ-S15-013 | ADR-0057 §4, §5; `0110` indexes; contract parameters | BE-R, BE-Q (views hold columns), FE-D (table, chips, views) | BE-R 1,000-initiative API test; FE-D e2e; QA-D (A20) |
+| REQ-S16-026 | ADR-0057 §7, §8 | FE-D2 (compare and reapply, inline edit), BE-Q2 (compare route) | FE-D2 A14 e2e; QA-C |
+| REQ-S20-029 | ADR-0058 §1–§6, §8–§10; `0108` (`load_dataset_marker`), `0110`; probe LM | DO-E, DO-F, BE-S, DO-G | the report in `docs/delivery/test-evidence/DG6/load/`; QA-E |
+| REQ-S20-030 | ADR-0058 §7 | BE-S (proof), DO-G (final run) | BE-S export test on the load database; QA-E |
+
+No requirement of this section is complete yet: each needs its implementer work.
+
+### H/G.14 What the implementers must know
+
+1. **Permission is decided at query time.** The search index stores no permission; every hit passes `ReadScope` for its record type's own read permission on every request. Never filter at index time, never cache a scope across requests.
+2. **No values in the index.** The document builders read exactly the ADR-0057 §1 columns; no money, rate, FTE, KPI or score value is indexed, so a hit never discloses an individual value of a sensitive record.
+3. **The audit trail is the feed.** Do not add outbox emits to DG1–DG5 write paths for search; read `audit_event` by `seq`. Upserts are monotonic; a replay creates nothing.
+4. **A view grants nothing.** Applying a saved view only sets list parameters; the list's own read rules decide what is returned. Only the owner changes a view; sharing is re-checked at commit.
+5. **One draft model.** Use the P5 `form_draft` routes; nothing outside `forms/drafts.ts` reads drafts, so a draft is never counted. The badge text is exactly "Draft - not submitted".
+6. **Compare and reapply keeps the first change.** Reapply sends only the fields the user changed, with If-Match of the current version; fields only the other user changed are never sent.
+7. **Absent parameters change nothing.** Every new list parameter is optional; without it the response is byte-identical to DG5's.
+8. **Comparison values follow the DG5 rule.** Values only for the record type's editors and `audit.read` holders; other readers get field names (the DG5 rule in `forms/history.ts`).
+9. **Load figures are what they are.** Never tune the workload, dataset or infrastructure after a run to turn a miss into a pass; each miss is a Medium, non-mandatory finding; the report says the sandbox host is not Mobily production infrastructure.
+10. **The load dataset is not the demo.** `deploy/load/**` imports nothing from the demo seed and writes only into an empty, unmarked database; load sessions exist only with `MTH_ENV=load`.

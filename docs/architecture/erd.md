@@ -2058,6 +2058,33 @@ erDiagram
 | Import row (S17-002) | `import_row` | `id`; `(import_batch_id, row_number)` unique; one valid row per `(import_batch_id, duplicate_key)` | — (the batch's) | staging; commit (`commit_status` only) | `validation_status`, `commit_status` | no (covered by the batch's audit) | integrations (imports) |
 | Lineage (S17-002) | `import_row_commit` | `id`; `import_row_id` unique | — (the batch's committer) | commit | — | no (append-only) | integrations (imports) |
 
+## 1w. P6 slices H and G: the derived search index and its state, saved views, the help catalogue and the load-dataset marker (migrations 0108–0110; T-DG6-ARCH-04; ADR-0057, ADR-0058)
+
+One new mutable table carries the full P2 guards and is audited (`_row_guard`, deferred `_audit_required`): `saved_view`, with its append-only history `saved_view_event` written only by the SECURITY DEFINER trigger `saved_view_history`. Two tables are version-stepped by `p2_row_guard` but **not audited**, because they are derived or telemetry (the `worker_heartbeat` precedent): `search_document` (one rebuildable document per indexed record, written only by the search index job; monotonic by `search_document_guard`) and `search_index_state` (12 seeded rows; `search_index_state_guard`). `help_topic` is a seeded catalogue, read-only to the application. `load_dataset_marker` is an append-only singleton written once into an empty load database. `0109` adds two permission codes; `0110` adds eight indexes (no table change). The column lists are in `data-dictionary.md` ("P6 tables, slices H and G").
+
+```mermaid
+erDiagram
+    organization ||--o{ search_document : "scope key (copied, immutable)"
+    transformation ||--o{ search_document : "scope key; a transformation document is its own"
+    search_document }o--|| search_index_state : "record_type (12 types; logical link, no FK)"
+    organization ||--o{ saved_view : "the owner's organization"
+    app_user ||--o{ saved_view : "owner = created_by; only the owner changes"
+    transformation |o--o{ saved_view : "optional: the view's transformation"
+    saved_view ||--o{ saved_view_event : "one history row per version"
+```
+
+`search_document.record_id` has no declared foreign key: the indexed record is polymorphic by `record_type` (12 tables). The document is a derived copy; the index job deletes it when its record no longer exists, and permission is decided at query time through `ReadScope` (ADR-0057 §3), never from the document. `help_topic` and `load_dataset_marker` reference no other table.
+
+### 1w.1 P6 entity register (slices H and G) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Search document (S15-010, S10-004) | `search_document` | `id`; `(record_type, record_id)` unique | — (derived) | worker search handlers (service identity) | `is_archived` (copied from the record) | yes, stepped; not audited | search |
+| Search index state (S15-010) | `search_index_state` | `id`; `record_type` unique | — | worker search handlers | `status` (idle, reindexing, failed) | yes, stepped; not audited | search |
+| Saved view (S15-010, S15-013) | `saved_view` (+ `saved_view_event`) | `id`; one active `(owner, list, transformation, lower(name))`; one default per `(owner, list, transformation)` | `owner_user_id` (= `created_by`) | the owner (`saved_view.manage`; share: `saved_view.share`) | `status` (active, deleted); `visibility` (personal, shared) | yes (history append-only) | search |
+| Help topic (S15-010) | `help_topic` | `id`; `topic_key` unique; `(screen_key, ordinal)` unique | — | migrations only | — | no (read-only catalogue) | search |
+| Load-dataset marker (S20-029) | `load_dataset_marker` | `singleton` | — | `deploy/load/generate.mjs` (mth_owner) | — | no (append-only) | none (deploy/load) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

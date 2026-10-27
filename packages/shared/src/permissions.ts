@@ -368,11 +368,23 @@ export const P6_INTEGRATIONS_PERMISSIONS = {
   "external_change.confirm": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P6 slices H and G permissions (seeded by 0109; T-DG6-ARCH-04; ADR-0057 §9). saved_view.manage: create, change, set as
+ * default and delete one's OWN saved list views; saved_view.share: share one's own view with the organization. Search,
+ * help topics and one's own drafts need no new code (search admits exactly what the record views admit, through
+ * ReadScope). No business_approval or finance_validation code; AUD gets neither (it applies shared views read-only).
+ */
+export const P6_SEARCH_PERMISSIONS = {
+  "saved_view.manage": "write",
+  "saved_view.share": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
 /** Every P6 permission block (each P6 architecture task appends its block here and to PERMISSIONS). */
 export const P6_PERMISSIONS = {
   ...P6_ACCESS_HARDENING_PERMISSIONS,
   ...P6_OPERATIONS_CHANNELS_PERMISSIONS,
   ...P6_INTEGRATIONS_PERMISSIONS,
+  ...P6_SEARCH_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 
 export const PERMISSIONS = {
@@ -905,6 +917,27 @@ export const P6_INTEGRATIONS_ROLE_PERMISSIONS = {
   ADM_METHOD: [],
 } as const satisfies Record<string, readonly (keyof typeof P6_INTEGRATIONS_PERMISSIONS)[]>;
 
+/**
+ * P6 slices H and G role defaults (seeded by 0109; ADR-0057 §9): every role except AUD manages its own saved views;
+ * TL, BO, WL, TO, KDS and TD may also share them with their organization.
+ */
+export const P6_SEARCH_ROLE_PERMISSIONS = {
+  SP: ["saved_view.manage"],
+  TL: ["saved_view.manage", "saved_view.share"],
+  BO: ["saved_view.manage", "saved_view.share"],
+  WL: ["saved_view.manage", "saved_view.share"],
+  FIN: ["saved_view.manage"],
+  TO: ["saved_view.manage", "saved_view.share"],
+  KDS: ["saved_view.manage", "saved_view.share"],
+  TD: ["saved_view.manage", "saved_view.share"],
+  CM: ["saved_view.manage"],
+  SEC: ["saved_view.manage"],
+  AUD: [],
+  ADM_TECH: ["saved_view.manage"],
+  ADM_ACCESS: ["saved_view.manage"],
+  ADM_METHOD: ["saved_view.manage"],
+} as const satisfies Record<string, readonly (keyof typeof P6_SEARCH_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -924,6 +957,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SP,
       ...P5_REPORTING_ROLE_PERMISSIONS.SP,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SP,
+      ...P6_SEARCH_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -951,6 +985,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.TL,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TL,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TL,
+      ...P6_SEARCH_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -974,6 +1009,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.BO,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.BO,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.BO,
+      ...P6_SEARCH_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -995,6 +1031,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.WL,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.WL,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.WL,
+      ...P6_SEARCH_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -1015,6 +1052,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.FIN,
       ...P5_REPORTING_ROLE_PERMISSIONS.FIN,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.FIN,
+      ...P6_SEARCH_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -1043,6 +1081,7 @@ export const ROLES = {
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TO,
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.TO,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TO,
+      ...P6_SEARCH_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -1064,6 +1103,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.KDS,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.KDS,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.KDS,
+      ...P6_SEARCH_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -1080,6 +1120,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TD,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TD,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TD,
+      ...P6_SEARCH_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -1093,6 +1134,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.CM,
       ...P5_REPORTING_ROLE_PERMISSIONS.CM,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.CM,
+      ...P6_SEARCH_ROLE_PERMISSIONS.CM,
     ],
   },
   SEC: {
@@ -1107,6 +1149,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SEC,
       ...P5_REPORTING_ROLE_PERMISSIONS.SEC,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SEC,
+      ...P6_SEARCH_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {
@@ -1124,6 +1167,7 @@ export const ROLES = {
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.AUD,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.AUD,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD,
+      ...P6_SEARCH_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -1144,6 +1188,7 @@ export const ROLES = {
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_SEARCH_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -1162,6 +1207,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_SEARCH_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {
@@ -1176,6 +1222,7 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P6_SEARCH_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

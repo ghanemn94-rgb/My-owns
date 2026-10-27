@@ -1074,3 +1074,42 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **E** here also c
 - **AUD (read-only auditor):** every slice B/A mutation returns **403** for AUD and writes nothing: create, change, enable, disable, test or run a connector; change mappings; create, rotate or disable a webhook; upload, commit or cancel an import; execute or re-check an outbound write; flag, withdraw or confirm an external change. AUD reads every row above.
 - **Technical administrators:** ADM_TECH configures, tests and runs connectors and configures webhooks; it holds no import, outbound-write or external-change right and gains no business approval. ADM_ACCESS and ADM_METHOD get nothing here.
 - **SoD:** outbound writes are executed by TD by default, not by the administrator who configured the connector. External changes are confirmed only by reviewed evidence (verified by someone other than its creator, `evidence_verified_rule`) or a confirmed connector result; task completion and the DG3 acceptance never confirm one.
+
+## 27. P6 implementation, slices H and G (DG6): global search, saved views, draft recovery, record comparison, help topics and the load run
+
+- **Task:** T-DG6-ARCH-04 (solution-architect), 2026-10-27. **Sources:** ADR-0057 §3, §4, §6, §7, §9, §10; ADR-0058 §4, §9; master prompt M0303, M0304, M0329, M0398; REQ-S15-010 "per underlying record permissions", REQ-S15-011 "view:scoped", REQ-S15-013 "view:scoped", REQ-S20-029 "run:devops-engineer; verify:qa-verifier", REQ-S20-030 "request:scoped users; download:requester with same scope".
+- **Seed:** `0109_p6_search_productivity_permissions.sql`, equal to `P6_SEARCH_PERMISSIONS` / `P6_SEARCH_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** neither code is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM04). Searching, saving or sharing a view, recovering a draft, comparing versions and reading help approve nothing (no G1–G6 business approval). No separation-of-duties rule applies.
+- **AUD stays read-only:** AUD searches (in its scope), lists and applies the saved views shared in its organization, and reads help topics; it holds neither code, so every saved-view write answers 403 for AUD (probe PM02; BE-Q's AUD test).
+
+### 27.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `saved_view.manage` | write | Create, change, set as default and delete one's **own** saved list views; stop sharing one's own view | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, ADM_TECH, ADM_ACCESS, ADM_METHOD (every role except AUD) |
+| `saved_view.share` | write | Share one's own view with one's organization (re-checked at commit time) | TL, BO, WL, TO, KDS, TD |
+
+Reused codes: the read permission of each record type's own view, through `ReadScope` with sensitivity (`searchRecords`, ADR-0057 §3); `transformation.read` (`listMyFormDrafts` per draft, `compareFormRecordVersions`); each form record type's `write_permission_code` or `audit.read` (comparison **values**, ADR-0057 §7); `operations.read` (`getSearchIndexStatus`); `job.repair` (a reindex through `runJobNow`); the P5 form-draft rules (unchanged). `listHelpTopics` and `getHelpTopic` need only a session.
+
+### 27.2 Per-entity rights in P6 (slices H and G)
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **S** = share or unshare one's own view, **D** = delete one's own view, **A** = apply a view to a list (read), "sys" = written only by the system (search worker; load generator).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Search document (`search_document`, sys) | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ |
+| Search index state (`search_index_state`, sys) | — | — | — | — | — | V² | V² | V² | — | — | V² | — | V² (reindex: `job.repair`) | — |
+| Saved view, own (`saved_view`, `saved_view_event`) | C V E D | C V E D S | C V E D S | C V E D S | C V E D | C V E D S | C V E D S | C V E D S | C V E D | C V E D | — | C V E D | C V E D | C V E D |
+| Saved view shared in the organization | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A |
+| Own form drafts across transformations (`form_draft`, P5) | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ |
+| Version comparison (audit trail) | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ |
+| Help topic (`help_topic`) | V | V | V | V | V | V | V | V | V | V | V | V | V | V |
+| Load-dataset marker (`load_dataset_marker`, sys) | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+
+1. A search hit only for a record whose own view the user may open (scope, record permission, sensitivity grant or named party; ADR-0051, ADR-0057 §3). A role with no transformation scope sees no hit.
+2. Holders of `operations.read` as seeded by `0103` (ADR-0053; matrix §25.1: ADM_TECH, TO, KDS, TD, AUD).
+3. Only one's own drafts, and only in transformations one can still read; creating and changing drafts keeps the P5 rule (the record type's write permission), so AUD has none to list.
+4. Field names for every reader of the record; values only with the record type's write permission or `audit.read` in scope (ADR-0057 §7).
+
+- **Scope:** saved views belong to the owner's organization; a shared view of a transformation the reader cannot read is not listed for that reader. A view never widens what a list returns.
+- **The load run (REQ-S20-029, REQ-S20-030):** load sessions exist only in a database holding `load_dataset_marker` with `MTH_ENV=load` (ADR-0058 §4); load users act through their seeded scoped assignments; an export file downloads only for its requester (others, including AUD, 404; ADR-0046, ADR-0058 §7).

@@ -146,6 +146,13 @@ export const ADVISORY_LOCK_CLASSES = {
   outboundWrite: 730313,
   /** One deliverable's external-change flag and confirmation (portfolio: flag, withdraw and confirm by evidence or connector result never interleave; one row per deliverable is also held by deliverable_external_change_deliverable_key). Key: "<deliverableId>". */
   deliverableConfirmation: 730314,
+  // P6 block of T-DG6-ARCH-04 (730318-730322; p6-plan §4, ADR-0057 §10). 730320-730322 are RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it (730320 "draft upsert" stays
+  // unallocated: the P5 unique index form_draft_open_record_key already serializes drafts and P6 adds no draft write).
+  /** One indexed record type's full reindex and incremental feed run (search worker handlers: a reindex and a feed batch of the same record type never interleave; the consumed sequence never goes back except to 0 at a reindex start, also held by the 0108 trigger search_index_state_guard). Key: "<recordType>". */
+  searchReindex: 730318,
+  /** One saved view's share and unshare (search saved views: the share decision re-checks saved_view.share at commit time and never interleaves with the owner's edit or delete; the shared shape is also held by saved_view_shared_shape and the 0108 trigger saved_view_guard). Key: "<savedViewId>". */
+  savedViewShare: 730319,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

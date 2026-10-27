@@ -374,6 +374,8 @@ tags:
     description: Operational exceptions, the worker heartbeat and the service identities of jobs and connectors (P6, ADR-0053).
   - name: platform-admin
     description: Identity, evidence storage and notification channels in Administration (P6, ADR-0054).
+  - name: search
+    description: Global scoped search, saved views and contextual help (P6, ADR-0057).
   - name: integrations
     description: Connectors, integration runs, webhooks and guarded outbound writes (P6, ADR-0055, ADR-0056 §7).
   - name: imports
@@ -1031,6 +1033,7 @@ paths:
             type: string
             enum: ["updatedAt:desc", "updatedAt:asc", "name:asc", "name:desc", "code:asc", "code:desc"]
             default: "updatedAt:desc"
+        - { name: sort, in: query, required: false, description: "Absent: today's order (ADR-0057 §5).", schema: { type: string, enum: [-updatedAt, updatedAt, code, -code] } }
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -1195,6 +1198,8 @@ paths:
       summary: "List (transformations module; transformation.read). Strategic guardrails: non-negotiables (B0035, REQ-PB-037). G2 needs at least one active guardrail."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -1329,6 +1334,8 @@ paths:
       summary: "List (transformations module; transformation.read). Outcome tree under the North Star (B0048). The API warns (`warnings[]` on the charter) when the charter does not hold 3-5 top outcomes (REQ-PB-035); the good outcome test (B0051) is evaluated per outcome (`goodOutcomeTest`)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -2028,6 +2035,8 @@ paths:
       summary: "List (transformations module; transformation.read). T01 Current-State Diagnostic row (B0031, REQ-PB-026). Six rows (one per seeded dimension) exist from transformation creation and cannot be archived. Confidence is H/M/L; impact is SAR (`impactAmount` + `impactCurrency`) or a KPI (`impactKpiDefinitionId`) or text."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -2162,6 +2171,8 @@ paths:
       summary: "List (transformations module; transformation.read). Diagnostic finding in one of the six workstreams, classified symptom / root cause / opportunity / observation (REQ-S04-003, REQ-S16-013)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -2296,6 +2307,8 @@ paths:
       summary: "List (transformations module; transformation.read). An output attached to one of the six Diagnose workstreams, as a linked record and/or evidence (REQ-PB-023)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -2430,6 +2443,8 @@ paths:
       summary: "List (transformations module; transformation.read). T03 TOM Gap Matrix row (B0058, REQ-PB-039): a row without a TOM dimension is rejected; `designDecisionId` links to T04."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -2564,6 +2579,8 @@ paths:
       summary: "List (transformations module; transformation.read). Capability heatmap entry: current vs target level (1-5) and build/buy/partner need (REQ-PB-024)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -2698,6 +2715,8 @@ paths:
       summary: "List (transformations module; transformation.read). Journey or process map, current or future state, with steps (actors, handoffs, systems, controls), cycle time and failure demand (REQ-PB-025)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -3721,6 +3740,8 @@ paths:
       operationId: listJourneyPainPoints
       summary: "Pain points of a journey."
       parameters:
+        - $ref: "#/components/parameters/RegisterQuery"
+        - $ref: "#/components/parameters/RegisterSort"
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -4634,6 +4655,10 @@ paths:
         - { name: transformationId, in: query, required: true, schema: { $ref: "#/components/schemas/Uuid" } }
         - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/InitiativeStatus" } }
         - { name: waveId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - $ref: "#/components/parameters/RegisterQuery"
+        - { name: executiveOwnerUserId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: workstreamLeadUserId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: sort, in: query, required: false, description: "Absent: -updatedAt (today's order). Keyset (sort value, id); nulls last ascending (ADR-0057 §5).", schema: { type: string, enum: [-updatedAt, updatedAt, code, -code, name, -name, plannedEnd, -plannedEnd] } }
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -23657,6 +23682,289 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/search:
+    get:
+      tags: [search]
+      operationId: searchRecords
+      summary: "Global search over 12 record types (transformations, initiatives, KPIs, benefits, RAID entries, dependencies, decisions, deliverables, evidence, business cases, lessons, change requests) in English, Arabic and codes. Returns only records the caller may read: each hit passes ReadScope for the read permission of its record's own view, with sensitivity (ADR-0051), at query time. Ranked by relevance; no money or KPI value is indexed. `stale` is true when the index is behind or rebuilding. Rate-limit class `search`. 400 search.query_too_short; 503 search.index_unavailable. ADR-0057 §3; REQ-S15-010, REQ-S10-004."
+      parameters:
+        - { name: q, in: query, required: true, description: "2-200 characters after trimming (shared free-text rules).", schema: { type: string, minLength: 1, maxLength: 200 } }
+        - name: recordType
+          in: query
+          required: false
+          description: Repeatable; any of the given record types (default all 12).
+          style: form
+          explode: true
+          schema: { type: array, maxItems: 12, items: { $ref: "#/components/schemas/SearchRecordType" } }
+        - { name: transformationId, in: query, required: false, description: "Only this transformation (a transformation the caller cannot read gives an empty page).", schema: { $ref: "#/components/schemas/Uuid" } }
+        - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SearchResultPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503":
+          description: "search.index_unavailable: every requested record type's index failed."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /api/v1/admin/search/index:
+    get:
+      tags: [search]
+      operationId: getSearchIndexStatus
+      summary: "The search index state per record type: status (idle, reindexing, failed), consumed audit sequence, last incremental run, last full reindex, document count (null = Unknown) and last error code; no record data (operations.read; ADR-0053). A reindex is started with runJobNow for job code search.reindex (job.repair). ADR-0057 §2."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SearchIndexStatus" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/saved-views:
+    get:
+      tags: [search]
+      operationId: listSavedViews
+      summary: "The caller's active saved views of one list plus the active views shared in the caller's organization (signed in; AUD reads and applies). A shared view of a transformation the caller cannot read is not listed. Owner's views first, then shared, each by name. ADR-0057 §4; REQ-S15-013."
+      parameters:
+        - { name: listKey, in: query, required: true, schema: { $ref: "#/components/schemas/SavedViewListKey" } }
+        - { name: transformationId, in: query, required: false, description: "Views of this transformation and views for any transformation (transformationId null).", schema: { $ref: "#/components/schemas/Uuid" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedViewPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [search]
+      operationId: createSavedView
+      summary: "Save a personal view of a list: columns, filters and sort, optionally as the default (saved_view.manage; every role except AUD). Keys are checked against the list registry. Setting isDefault clears the owner's previous default for the list. Audit saved_view.created. 404 transformation not readable; 409 saved_view.name_taken; 422 saved_view.unknown_key. ADR-0057 §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SavedViewCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/saved-views/{savedViewId}:
+    parameters:
+      - $ref: "#/components/parameters/SavedViewId"
+    get:
+      tags: [search]
+      operationId: getSavedView
+      summary: "One saved view: the owner's own, or any view shared in the caller's organization (others 404). ADR-0057 §4."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [search]
+      operationId: putSavedView
+      summary: "Change the name, columns, filters, sort and default flag of one's own view (saved_view.manage; owner only, else 403 saved_view.not_owner). Audit saved_view.updated. 409 saved_view.name_taken, saved_view.deleted; 422 saved_view.unknown_key. ADR-0057 §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SavedViewUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    delete:
+      tags: [search]
+      operationId: deleteSavedView
+      summary: "Delete one's own view (soft: status deleted, final; saved_view.manage; owner only). Returns the deleted view. Audit saved_view.deleted. 409 saved_view.deleted. ADR-0057 §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "Deleted."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/saved-views/{savedViewId}/share:
+    parameters:
+      - $ref: "#/components/parameters/SavedViewId"
+    post:
+      tags: [search]
+      operationId: shareSavedView
+      summary: "Share one's own view with the organization (shared true: saved_view.share re-checked at commit; TL, BO, WL, TO, KDS, TD) or stop sharing it (shared false: owner only). A shared view grants no data. Lock 730319. Audit saved_view.shared / saved_view.unshared. ADR-0057 §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SavedViewShare" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavedView" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/me/form-drafts:
+    get:
+      tags: [forms]
+      operationId: listMyFormDrafts
+      summary: "The caller's open form drafts across transformations, newest first, for draft recovery (signed in; own drafts only). Drafts in a transformation the caller can no longer read are left out and not changed. A draft is 'Draft - not submitted' and never counted in any total. ADR-0057 §6; REQ-S15-010, REQ-S15-011."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyFormDraftPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/compare:
+    parameters:
+      - $ref: "#/components/parameters/TransformationId"
+      - $ref: "#/components/parameters/FormRecordTypePath"
+      - $ref: "#/components/parameters/FormRecordIdPath"
+    get:
+      tags: [forms]
+      operationId: compareFormRecordVersions
+      summary: "The fields that differ between two versions of a record, folded from the audit trail (transformation.read). Values only for a caller holding the record type's write permission or audit.read in scope; other readers get valuesWithheld true and field names only. A field without a recorded diff is recorded false (Unknown). 422 form_record.compare_versions_invalid. ADR-0057 §7; REQ-S15-010."
+      parameters:
+        - { name: fromVersion, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: toVersion, in: query, required: true, schema: { type: integer, minimum: 2 } }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FormRecordComparison" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+  /api/v1/help-topics:
+    get:
+      tags: [search]
+      operationId: listHelpTopics
+      summary: "Contextual help topics in English and Arabic (the Arabic labelled provisional), optionally for one screen, by screen and ordinal (signed in; read-only catalogue). ADR-0057 §9; REQ-S15-010."
+      parameters:
+        - { name: screenKey, in: query, required: false, schema: { type: string, pattern: "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$", maxLength: 80 } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HelpTopicPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/help-topics/{topicKey}:
+    parameters:
+      - $ref: "#/components/parameters/HelpTopicKey"
+    get:
+      tags: [search]
+      operationId: getHelpTopic
+      summary: "One help topic (signed in). ADR-0057 §9."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HelpTopic" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -25303,6 +25611,28 @@ components:
       in: path
       required: true
       schema: { $ref: "#/components/schemas/Uuid" }
+    SavedViewId:
+      name: savedViewId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    HelpTopicKey:
+      name: topicKey
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$", maxLength: 80 }
+    RegisterQuery:
+      name: q
+      in: query
+      required: false
+      description: "Case-insensitive substring over the list's declared text columns (ADR-0057 §5). Absent: no text filter."
+      schema: { type: string, minLength: 1, maxLength: 200 }
+    RegisterSort:
+      name: sort
+      in: query
+      required: false
+      description: "A sort key the list declares, optionally prefixed '-' for descending (ADR-0057 §5); an unknown key is 400 at /query/sort. Absent: today's order."
+      schema: { type: string, pattern: "^-?[a-z][A-Za-z]{0,39}$" }
   headers:
     X-Request-Id:
       description: Request correlation ID (echoed from a valid inbound header or generated), also in every log line and audit event.
@@ -28302,6 +28632,8 @@ components:
         - outbound_write.execute
         - external_change.flag
         - external_change.confirm
+        - saved_view.manage
+        - saved_view.share
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -40249,3 +40581,210 @@ components:
       properties:
         evidenceId: { $ref: "#/components/schemas/Uuid" }
         note: { type: [string, "null"], minLength: 3, maxLength: 2000 }
+    SearchRecordType:
+      type: string
+      enum: [transformation, initiative, kpi_definition, benefit, raid_entry, dependency, decision, deliverable, evidence, business_case, lesson, change_request]
+    SearchHit:
+      type: object
+      required: [recordType, recordId, recordVersion, transformationId, transformationCode, transformationName, code, title, summary, recordStatus, isArchived]
+      additionalProperties: false
+      properties:
+        recordType: { $ref: "#/components/schemas/SearchRecordType" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordVersion: { type: integer, minimum: 1 }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        transformationCode: { type: string }
+        transformationName: { type: string }
+        code: { type: [string, "null"], maxLength: 40 }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        summary: { type: [string, "null"], maxLength: 1000, description: "Plain text, no markup." }
+        recordStatus: { type: [string, "null"] }
+        isArchived: { type: boolean }
+    SearchResultPage:
+      type: object
+      required: [items, nextCursor, indexedThrough, stale]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/SearchHit" } }
+        nextCursor: { type: [string, "null"] }
+        indexedThrough: { $ref: "#/components/schemas/NullableTimestamp" }
+        stale: { type: boolean, description: "true when a requested type is reindexing or failed, or the index is more than 120 s behind (ADR-0057 §2)." }
+    SearchIndexStatus:
+      type: object
+      required: [types]
+      additionalProperties: false
+      properties:
+        types:
+          type: array
+          items:
+            type: object
+            required: [recordType, status, lastAuditSeq, lastIncrementalAt, reindexStartedAt, reindexFinishedAt, documentsCount, lastErrorCode, lastErrorAt, version]
+            additionalProperties: false
+            properties:
+              recordType: { $ref: "#/components/schemas/SearchRecordType" }
+              status: { type: string, enum: [idle, reindexing, failed] }
+              lastAuditSeq: { type: string, pattern: "^[0-9]{1,19}$", description: "A bigint as a decimal string." }
+              lastIncrementalAt: { $ref: "#/components/schemas/NullableTimestamp" }
+              reindexStartedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+              reindexFinishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+              documentsCount: { type: [integer, "null"], minimum: 0, description: "null = Unknown (never 0 by default)." }
+              lastErrorCode: { type: [string, "null"] }
+              lastErrorAt: { $ref: "#/components/schemas/NullableTimestamp" }
+              version: { type: integer, minimum: 1 }
+    SavedViewListKey:
+      type: string
+      enum: [transformations, initiatives, strategic_guardrails, outcomes, diagnostic_items, diagnostic_findings, workstream_outputs, tom_gaps, capability_heatmap, journeys, journey_pain_points, search]
+    SavedViewColumns:
+      type: array
+      minItems: 1
+      maxItems: 50
+      uniqueItems: true
+      items: { type: string, pattern: "^[a-z][A-Za-z0-9]{0,63}$" }
+    SavedViewFilters:
+      type: object
+      maxProperties: 20
+      description: "Filter key -> a string (1-200) or 1-20 strings; decimals and dates travel as strings (ADR-0057 §4, §11)."
+      propertyNames: { pattern: "^[a-z][A-Za-z0-9]{0,63}$" }
+      additionalProperties:
+        oneOf:
+          - { type: string, minLength: 1, maxLength: 200 }
+          - { type: array, minItems: 1, maxItems: 20, items: { type: string, minLength: 1, maxLength: 200 } }
+    SavedViewSort:
+      type: array
+      maxItems: 3
+      items:
+        type: object
+        required: [key, direction]
+        additionalProperties: false
+        properties:
+          key: { type: string, pattern: "^[a-z][A-Za-z0-9]{0,63}$" }
+          direction: { type: string, enum: [asc, desc] }
+    SavedView:
+      type: object
+      required: [id, organizationId, ownerUserId, ownerDisplayName, isOwner, listKey, transformationId, name, visibility, columns, filters, sort, isDefault, sharedAt, sharedBy, status, deletedAt, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        ownerDisplayName: { type: string }
+        isOwner: { type: boolean }
+        listKey: { $ref: "#/components/schemas/SavedViewListKey" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        visibility: { type: string, enum: [personal, shared] }
+        columns: { $ref: "#/components/schemas/SavedViewColumns" }
+        filters: { $ref: "#/components/schemas/SavedViewFilters" }
+        sort: { $ref: "#/components/schemas/SavedViewSort" }
+        isDefault: { type: boolean }
+        sharedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        sharedBy: { $ref: "#/components/schemas/NullableUuid" }
+        status: { type: string, enum: [active, deleted] }
+        deletedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    SavedViewPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/SavedView" } }
+        nextCursor: { type: [string, "null"] }
+    SavedViewCreate:
+      type: object
+      required: [listKey, name, columns]
+      additionalProperties: false
+      properties:
+        listKey: { $ref: "#/components/schemas/SavedViewListKey" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        columns: { $ref: "#/components/schemas/SavedViewColumns" }
+        filters: { $ref: "#/components/schemas/SavedViewFilters" }
+        sort: { $ref: "#/components/schemas/SavedViewSort" }
+        isDefault: { type: boolean, default: false }
+    SavedViewUpdate:
+      type: object
+      required: [name, columns, filters, sort, isDefault]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        columns: { $ref: "#/components/schemas/SavedViewColumns" }
+        filters: { $ref: "#/components/schemas/SavedViewFilters" }
+        sort: { $ref: "#/components/schemas/SavedViewSort" }
+        isDefault: { type: boolean }
+    SavedViewShare:
+      type: object
+      required: [shared]
+      additionalProperties: false
+      properties:
+        shared: { type: boolean }
+    MyFormDraft:
+      type: object
+      required: [id, transformationId, transformationCode, transformationName, recordType, recordId, baseRecordVersion, baseChanged, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        transformationCode: { type: string }
+        transformationName: { type: string }
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        baseRecordVersion: { type: ["integer", "null"], minimum: 1 }
+        baseChanged: { type: boolean }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    MyFormDraftPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MyFormDraft" } }
+        nextCursor: { type: [string, "null"] }
+    FormRecordComparison:
+      type: object
+      required: [transformationId, recordType, recordId, fromVersion, toVersion, currentVersion, valuesWithheld, fields]
+      additionalProperties: false
+      properties:
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        fromVersion: { type: integer, minimum: 1 }
+        toVersion: { type: integer, minimum: 2 }
+        currentVersion: { type: integer, minimum: 1 }
+        valuesWithheld: { type: boolean, description: "true: the caller holds neither the record type's write permission nor audit.read; no from/to values are returned." }
+        fields:
+          type: array
+          items:
+            type: object
+            required: [fieldKey, labelEn, labelAr, recorded]
+            additionalProperties: false
+            properties:
+              fieldKey: { type: string }
+              labelEn: { type: string }
+              labelAr: { type: string }
+              recorded: { type: boolean, description: "false: a write changed the record without a recorded diff for this field (Unknown)." }
+              from: { type: [string, number, boolean, array, object, "null"], description: "Absent when valuesWithheld or not recorded. Decimals are strings." }
+              to: { type: [string, number, boolean, array, object, "null"], description: "Absent when valuesWithheld or not recorded. Decimals are strings." }
+    HelpTopic:
+      type: object
+      required: [topicKey, screenKey, ordinal, titleEn, titleAr, bodyEn, bodyAr, arabicProvisional, sourceRefs]
+      additionalProperties: false
+      properties:
+        topicKey: { type: string }
+        screenKey: { type: string }
+        ordinal: { type: integer, minimum: 1 }
+        titleEn: { type: string }
+        titleAr: { type: string }
+        bodyEn: { type: string }
+        bodyAr: { type: string }
+        arabicProvisional: { type: boolean }
+        sourceRefs: { type: array, minItems: 1, items: { type: string, pattern: "^(M0[0-9]{3}|B0[0-9]{3}|REQ-S[0-9]{2}-[0-9]{3})$" } }
+    HelpTopicPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/HelpTopic" } }
+        nextCursor: { type: [string, "null"] }
