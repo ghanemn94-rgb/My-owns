@@ -380,6 +380,8 @@ tags:
     description: Connectors, integration runs, webhooks and guarded outbound writes (P6, ADR-0055, ADR-0056 §7).
   - name: imports
     description: Staged CSV/XLSX imports, row-level validation, commit with lineage and templates (P6, ADR-0056).
+  - name: assistant
+    description: The optional in-app assistant, off by default; read-only retrieval with citations and labelled suggestions (P6, ADR-0059).
 security:
   - sessionCookie: []
 paths:
@@ -23965,6 +23967,241 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/assistant:
+    get:
+      tags: [assistant]
+      operationId: getAssistantSetting
+      summary: "The optional assistant's setting (assistant.configure or operations.read; AUD reads). No saved row means the assistant is OFF (configured false, enabled false, ETag 0): a fresh install has AI disabled. Credential REFERENCES only, never values. telemetryEnabled is always false: the installation contains no telemetry or analytics client. ADR-0059 §3; REQ-S17-009."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETagOrZero" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantSetting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [assistant]
+      operationId: putAssistantSetting
+      summary: "Save the assistant's provider, endpoint, API style, model, credential reference, company authorization reference and limits with a reason; If-Match 0 creates the row DISABLED (assistant.configure; ADM_TECH; re-checked at commit under advisory lock 730323). Never enables. While enabled, the provider, endpoint, API style, model, credential reference and authorization reference cannot change. Audit assistant_setting.changed (changed field names, reason). 422 assistant.locked_while_enabled, assistant.endpoint_invalid, assistant.credential_ref_invalid, assistant.test_adapter_not_allowed, assistant.insecure_endpoint, admin.reason_required. ADR-0059 §3."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatchOrZero"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantSettingUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantSetting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/assistant/enable:
+    post:
+      tags: [assistant]
+      operationId: enableAssistant
+      summary: "Turn the assistant on (assistant.configure; ADM_TECH; re-checked at commit under advisory lock 730323). Needs a saved setting with a provider and a company authorization reference and, for http_endpoint, the endpoint, API style and model. The product records the authorization reference as entered; it does not verify it with IT. Stamps enabledAt/enabledBy. Audit assistant_setting.enabled (reason, authorization reference; never a credential). 404 no setting saved; 422 assistant.enable_incomplete, assistant.already_enabled, assistant.test_adapter_not_allowed, assistant.insecure_endpoint, admin.reason_required. ADR-0059 §3; REQ-S17-009."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantToggle" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantSetting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/assistant/disable:
+    post:
+      tags: [assistant]
+      operationId: disableAssistant
+      summary: "Turn the assistant off (assistant.configure; ADM_TECH; re-checked at commit under advisory lock 730323). From the commit on, no message is sent to a model. Audit assistant_setting.disabled (reason). 404 no setting saved; 422 assistant.already_disabled, admin.reason_required. ADR-0059 §3."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantToggle" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantSetting" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/assistant/conversations:
+    get:
+      tags: [assistant]
+      operationId: listAssistantConversations
+      summary: "The caller's own assistant conversations, most recently changed first (updatedAt descending, then id descending), optionally only those focused on one transformation (assistant.use; every role except AUD). Others' conversations are never listed. Works whether the assistant is on or off. ADR-0059 §9."
+      parameters:
+        - { name: transformationId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantConversationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [assistant]
+      operationId: createAssistantConversation
+      summary: "Start an empty conversation of one's own, optionally focused on a transformation the caller can read (assistant.use; every role except AUD). Version 1, no message. Audit assistant_conversation.created. 404 transformation not readable; 422 assistant.disabled. ADR-0059 §9."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantConversationCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantConversation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/assistant/conversations/{conversationId}:
+    parameters:
+      - $ref: "#/components/parameters/AssistantConversationId"
+    get:
+      tags: [assistant]
+      operationId: getAssistantConversation
+      summary: "One of the caller's own conversations with all its messages (at most 100) and suggestions (assistant.use; owner only, others 404). Every citation is re-checked through ReadScope for the caller at read time: an answer or suggestion citing a record the caller can no longer read is returned with content null and contentWithheld true, and that citation with readable false. Every assistant output carries label assistant_suggestion: a suggestion, never an approved fact. ADR-0059 §1, §9; REQ-S17-007."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantConversationDetail" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/assistant/conversations/{conversationId}/messages:
+    parameters:
+      - $ref: "#/components/parameters/AssistantConversationId"
+    post:
+      tags: [assistant]
+      operationId: postAssistantMessage
+      summary: "Ask the assistant (assistant.use; owner only, others 404; If-Match = the conversation; rate-limit class assistant). Appends the prompt, then, outside any transaction, applies the refused-intent rule, retrieves only records the caller may read (search and ReadScope) and playbook passages, and calls the configured provider only when something was retrieved; then appends one reply (answer with citations, refusal, no_sources, unavailable) and its suggestions. Writes nothing outside the assistant tables. Audit assistant_conversation.message_posted, .reply_recorded, assistant_suggestion.created. 409 assistant.reply_pending or version conflict; 422 assistant.disabled, assistant.conversation_full. ADR-0059 §4-§9; REQ-S17-007, REQ-S17-008, REQ-S17-011."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantMessageCreate" }
+      responses:
+        "201":
+          description: "Created: the prompt and the reply."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantMessagePostResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/assistant/suggestions/{suggestionId}/to-draft:
+    parameters:
+      - $ref: "#/components/parameters/AssistantSuggestionId"
+    post:
+      tags: [assistant]
+      operationId: takeAssistantSuggestionToDraft
+      summary: "Mark one's own charter or decision-brief suggestion as taken and return a form-draft prefill (assistant.use plus the target's write permission: charter.edit for charter, executive_decision.create for T16, re-checked at commit; transformation.read, else 404; If-Match = the suggestion). Writes nothing outside assistant_suggestion: the caller then creates the draft with createFormDraft, and a human edits, saves and submits the record. Audit assistant_suggestion.taken_to_draft. 422 assistant.suggestion_not_draftable, assistant.suggestion_already_taken. ADR-0059 §6; REQ-S17-008."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantTakeToDraftResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -25613,6 +25850,16 @@ components:
       schema: { $ref: "#/components/schemas/Uuid" }
     SavedViewId:
       name: savedViewId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssistantConversationId:
+      name: conversationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    AssistantSuggestionId:
+      name: suggestionId
       in: path
       required: true
       schema: { $ref: "#/components/schemas/Uuid" }
@@ -28634,6 +28881,8 @@ components:
         - external_change.confirm
         - saved_view.manage
         - saved_view.share
+        - assistant.use
+        - assistant.configure
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -40788,3 +41037,178 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/HelpTopic" } }
         nextCursor: { type: [string, "null"] }
+    AssistantProviderKind:
+      type: string
+      enum: [http_endpoint, test_adapter]
+    AssistantSetting:
+      type: object
+      description: "The installation-wide assistant setting (ADR-0059 §3). configured false (no saved row) means OFF; every field is then its default and version 0."
+      required: [configured, enabled, providerKind, endpointUrl, apiStyle, modelName, credentialRef, authorizationReference, requestTimeoutMs, maxOutputTokens, maxContextRecords, enabledAt, enabledBy, telemetryEnabled, reason, version, updatedAt]
+      additionalProperties: false
+      properties:
+        configured: { type: boolean }
+        enabled: { type: boolean }
+        providerKind: { oneOf: [{ $ref: "#/components/schemas/AssistantProviderKind" }, { type: "null" }] }
+        endpointUrl: { type: [string, "null"], maxLength: 2048 }
+        apiStyle: { type: [string, "null"], enum: [openai_chat_completions, null], description: "The wire format of a JSON chat-completions request; names no vendor or service." }
+        modelName: { type: [string, "null"], maxLength: 200 }
+        credentialRef: { oneOf: [{ $ref: "#/components/schemas/SecretRef" }, { type: "null" }] }
+        authorizationReference: { type: [string, "null"], maxLength: 200, description: "The company authorization the administrator entered (for example an IT approval ticket). Recorded as entered; the product does not verify it." }
+        requestTimeoutMs: { type: integer, minimum: 1000, maximum: 120000 }
+        maxOutputTokens: { type: integer, minimum: 64, maximum: 8192 }
+        maxContextRecords: { type: integer, minimum: 1, maximum: 20 }
+        enabledAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        enabledBy: { $ref: "#/components/schemas/NullableUuid" }
+        telemetryEnabled: { type: boolean, const: false, description: "Always false: the installation contains no telemetry or analytics client, and no setting turns one on." }
+        reason: { type: [string, "null"] }
+        version: { type: integer, minimum: 0 }
+        updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+    AssistantSettingUpdate:
+      type: object
+      required: [providerKind, endpointUrl, apiStyle, modelName, credentialRef, authorizationReference, requestTimeoutMs, maxOutputTokens, maxContextRecords, reason]
+      additionalProperties: false
+      properties:
+        providerKind: { oneOf: [{ $ref: "#/components/schemas/AssistantProviderKind" }, { type: "null" }] }
+        endpointUrl: { type: [string, "null"], maxLength: 2048 }
+        apiStyle: { type: [string, "null"], enum: [openai_chat_completions, null] }
+        modelName: { type: [string, "null"], pattern: "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$" }
+        credentialRef: { oneOf: [{ $ref: "#/components/schemas/SecretRef" }, { type: "null" }] }
+        authorizationReference: { type: [string, "null"], minLength: 3, maxLength: 200 }
+        requestTimeoutMs: { type: integer, minimum: 1000, maximum: 120000 }
+        maxOutputTokens: { type: integer, minimum: 64, maximum: 8192 }
+        maxContextRecords: { type: integer, minimum: 1, maximum: 20 }
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    AssistantToggle:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, minLength: 3, maxLength: 1000 }
+    AssistantRecordCitation:
+      type: object
+      required: [source, recordType, recordId, recordVersion, readable]
+      additionalProperties: false
+      properties:
+        source: { type: string, const: record }
+        recordType: { $ref: "#/components/schemas/SearchRecordType" }
+        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordVersion: { type: integer, minimum: 1 }
+        readable: { type: boolean, description: "Re-checked through ReadScope for the caller at read time." }
+    AssistantPlaybookCitation:
+      type: object
+      required: [source, blockRef, playbookVersion]
+      additionalProperties: false
+      properties:
+        source: { type: string, const: playbook }
+        blockRef: { type: string, pattern: "^B0[0-9]{3}$" }
+        playbookVersion: { type: string, const: "1.0" }
+    AssistantCitation:
+      oneOf:
+        - $ref: "#/components/schemas/AssistantRecordCitation"
+        - $ref: "#/components/schemas/AssistantPlaybookCitation"
+    AssistantConversation:
+      type: object
+      required: [id, organizationId, ownerUserId, transformationId, title, messageCount, awaitingReply, lastMessageAt, version, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        ownerUserId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        messageCount: { type: integer, minimum: 0, maximum: 100 }
+        awaitingReply: { type: boolean }
+        lastMessageAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+    AssistantConversationCreate:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        transformationId: { $ref: "#/components/schemas/NullableUuid" }
+    AssistantConversationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AssistantConversation" } }
+        nextCursor: { type: [string, "null"] }
+    AssistantMessage:
+      type: object
+      required: [id, conversationId, seq, author, label, replyKind, refusalCode, errorCode, content, contentWithheld, citations, providerKind, modelName, settingVersion, latencyMs, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        conversationId: { $ref: "#/components/schemas/Uuid" }
+        seq: { type: integer, minimum: 1, maximum: 100 }
+        author: { type: string, enum: [user, assistant] }
+        label: { type: string, enum: [user_prompt, assistant_suggestion], description: "assistant_suggestion on every assistant reply: rendered 'Suggestion from the assistant - not an approved fact'." }
+        replyKind: { type: [string, "null"], enum: [answer, refusal, no_sources, unavailable, interrupted, null] }
+        refusalCode: { type: [string, "null"], enum: [assistant.refused.approval, assistant.refused.benefit_validation, assistant.refused.value_change, assistant.refused.evidence, null] }
+        errorCode: { type: [string, "null"], enum: [assistant.provider_timeout, assistant.provider_unreachable, assistant.provider_error, assistant.provider_response_invalid, null] }
+        content: { type: [string, "null"], maxLength: 8000, description: "Plain text, no markup. Null for refusal, no_sources, unavailable and interrupted replies, and when withheld." }
+        contentWithheld: { type: boolean }
+        citations: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/AssistantCitation" } }
+        providerKind: { oneOf: [{ $ref: "#/components/schemas/AssistantProviderKind" }, { type: "null" }] }
+        modelName: { type: [string, "null"] }
+        settingVersion: { type: [integer, "null"], minimum: 1 }
+        latencyMs: { type: [integer, "null"], minimum: 0 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    AssistantSuggestion:
+      type: object
+      required: [id, conversationId, messageId, transformationId, ordinal, kind, label, targetRecordType, fields, textContent, contentWithheld, citations, status, takenAt, version, createdAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        conversationId: { $ref: "#/components/schemas/Uuid" }
+        messageId: { $ref: "#/components/schemas/Uuid" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        ordinal: { type: integer, minimum: 1, maximum: 5 }
+        kind: { type: string, enum: [charter_draft, decision_brief_draft, recovery_action, missing_evidence] }
+        label: { type: string, const: assistant_suggestion }
+        targetRecordType: { type: [string, "null"], enum: [charter, T16, null] }
+        fields:
+          type: [object, "null"]
+          description: "Text fields of the charter or the T16 decision brief only (ADR-0059 §6); never a money, rate, FTE, KPI, date, owner or option field."
+          additionalProperties: { type: string, minLength: 1, maxLength: 4000 }
+        textContent: { type: [string, "null"], maxLength: 4000 }
+        contentWithheld: { type: boolean }
+        citations: { type: array, minItems: 1, maxItems: 20, items: { $ref: "#/components/schemas/AssistantCitation" } }
+        status: { type: string, enum: [proposed, taken_to_draft] }
+        takenAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+    AssistantConversationDetail:
+      type: object
+      required: [conversation, messages, suggestions]
+      additionalProperties: false
+      properties:
+        conversation: { $ref: "#/components/schemas/AssistantConversation" }
+        messages: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/AssistantMessage" } }
+        suggestions: { type: array, items: { $ref: "#/components/schemas/AssistantSuggestion" } }
+    AssistantMessageCreate:
+      type: object
+      required: [content]
+      additionalProperties: false
+      properties:
+        content: { type: string, minLength: 1, maxLength: 4000 }
+    AssistantMessagePostResult:
+      type: object
+      required: [conversation, userMessage, reply, suggestions]
+      additionalProperties: false
+      properties:
+        conversation: { $ref: "#/components/schemas/AssistantConversation" }
+        userMessage: { $ref: "#/components/schemas/AssistantMessage" }
+        reply: { $ref: "#/components/schemas/AssistantMessage" }
+        suggestions: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/AssistantSuggestion" } }
+    AssistantTakeToDraftResult:
+      type: object
+      required: [suggestion, transformationId, draft]
+      additionalProperties: false
+      properties:
+        suggestion: { $ref: "#/components/schemas/AssistantSuggestion" }
+        transformationId: { $ref: "#/components/schemas/Uuid" }
+        draft: { $ref: "#/components/schemas/FormDraftCreate" }

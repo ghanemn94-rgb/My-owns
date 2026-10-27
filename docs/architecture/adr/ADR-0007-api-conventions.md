@@ -41,6 +41,38 @@
    - Responses are `{ items, nextCursor }`, with a stable sort that always ends with `id`.
    - Offset pagination is not offered: it is unstable under concurrent inserts and slow on large audit tables.
    - Table UIs page with next/previous cursors and keep their sort and filter chips.
+
+   **4a. Amendment (DG6, T-DG6-ARCH-05, 2026-10-27; D-199): bounded collections, named one by one.**
+   - **Rule.** A `list*` operation may return `{ items }` without `nextCursor` only when it is named in the table below, with a bound that the database or the code enforces and that is at most 250 items. Every other list operation is `{ items, nextCursor }` as above. A new unpaginated list needs a new amendment row; `UNPAGINATED_LISTS_AT_HEAD` in `apps/api/test/integration/contract/response-validation.test.ts` pins the set, so it can only shrink.
+   - **Evidence.** Rows 1–15 and 16–19: the T-DG6-ARCH-05 probe (`docs/delivery/handbacks/DG6/T-DG6-ARCH-05-evidence/probe-output.txt`, LB01–LB06). Row counts, privileges and keys of every row: `list-bounds-inspect.txt` in the same folder (every migration applied to an empty PostgreSQL 16.13 database, 2026-10-27). "No INSERT" means the application role `mth_app` holds no INSERT privilege on the table, so only a migration can add a row.
+   - **The 21 exempt bounded collections:**
+
+     | # | Operation | Bound (items per response) | Why the bound holds |
+     |---|---|---|---|
+     | 1 | `listPermissions` | 185 | `permission`: no INSERT for `mth_app`; 185 rows after `0112` |
+     | 2 | `listRoles` | 14 | `role`: no INSERT; 14 rows |
+     | 3 | `listRoleAccountabilities` | 14 | `role_accountability`: no INSERT; 14 rows |
+     | 4 | `listPhases` | 6 | `phase_definition`: no INSERT; 6 rows |
+     | 5 | `listGuidingQuestions` | 4 | `guiding_question`: no INSERT; 4 rows |
+     | 6 | `listDecisionRightTemplates` | 4 | `decision_right_template`: no INSERT; 4 rows |
+     | 7 | `listGovernanceParties` | 18 | `governance_party`: no INSERT; 18 rows |
+     | 8 | `listAdoptionIndicatorTemplates` | 8 | `adoption_indicator_template`: no INSERT; 8 rows |
+     | 9 | `listBenefitFormulaExamples` | 2 | `benefit_formula_example`: no INSERT; 2 rows |
+     | 10 | `listFormRecordTypes` | 33 | `form_record_type`: no INSERT; 33 rows |
+     | 11 | `listReportDefinitions` | 12 | `report_definition`: no INSERT; 12 rows |
+     | 12 | `listConfigReviewPolicies` | 7 | `config_review_policy`: no INSERT; `UNIQUE (config_kind)`; 7 rows |
+     | 13 | `listJobOperations` | 16 | one entry per `job_schedule` row: no INSERT; `UNIQUE (code)`; 16 rows |
+     | 14 | `listHealthCheckQuestions` | 25 | the `source_element` rows of set `health_question` (B0152): 25, fixed by migration |
+     | 15 | `listMethodologyElements` | 56 | one entry per `methodology_element_profile` row: no INSERT (`0089` grants SELECT only); 56 rows |
+     | 16 | `listGates` | 6 per transformation | `gate_instance` `UNIQUE (transformation_id, gate_code)` over the 6 `gate_definition` rows (no INSERT) |
+     | 17 | `listGovernanceMatrices` | 2 per transformation | `governance_matrix` `UNIQUE (transformation_id, kind)`, `kind IN ('decision_rights', 'raci')` |
+     | 18 | `listTransformationConfigPins` | 6 per transformation | `transformation_config_pin` `UNIQUE (transformation_id, kind)` over a CHECK of 6 kinds |
+     | 19 | `listGateSubmissionCriteria` | 32 per submission | `gate_submission_criterion` `UNIQUE (gate_submission_id, criterion_key)`, and `criterion_key` references `gate_criterion_definition (key)`: 32 rows, no INSERT. (The submission code writes only the gate's own criteria, at most 8 per gate; the database bound stated here is the 32.) |
+     | 20 | `listMethodologyBlockLinks` | 64 per block | the block's seeded `playbook_block_link` rows (no INSERT; at most 14 per block) plus the version's `linksAdded` for that block: one `block.<Bxxxx>` element per version (`UNIQUE (methodology_version_id, element_type, stable_key)`), whose `linksAdded` array the `0089` guard `methodology_element_reader_block` caps at 50 |
+     | 21 | `listImportTemplates` | 1 in P6 | one entry per import target registered in code (ADR-0056 §9: `kpi_actual.v1` only); a new target is a code change with its own ADR row |
+
+   - **The 17 lists that are not bounded, named for pagination in a later task** (`docs/architecture/p6-work-split.md` §D.5, task T-DG6-BE-V). Each grows with user data and no constraint caps it: `listApprovalRoutes` (one per routed approval type and per routed procedure of a published version; procedure definitions are not capped), `listBenefitFormulaVersions` (`UNIQUE (formula_id, version_no)`, no cap), `listBusinessCaseLines`, `listDeliverables`, `listDependencyTypes` (`mth_app` may INSERT custom types), `listHealthCheckSchemes` (one per published version, which grows with every publish), `listInitiativeDecisionLinks`, `listInitiativeGapLinks`, `listInitiativeOutcomeContributions`, `listKpiRestatementReissueOffers` (`UNIQUE (restatement_id, snapshot_id)`, as many as the snapshots), `listMilestones`, `listReportSnapshotVersions`, `listResourceRoles`, `listRoadmapWaves`, `listTemplateSourceLinks` (bounded by 8,252 = the seeded links plus 50 added links on each of 165 blocks, over the 250 limit), `listTomWorkshopParticipants`, `listWeightSets`. Until that task ships they stay in `UNPAGINATED_LISTS_AT_HEAD` and return every item; adding `nextCursor` is additive (D-196 item 4) and removes them from the pin.
+   - This amendment changes no operation, schema or response. The P6 list operations of slice D (`listAssistantConversations`) are cursor-paginated.
 5. **Validation:** **zod 4.1.12** (MIT) [UNVERIFIED], shared between API and web. The API validates body, query and params before the handler runs. Unknown properties are rejected (strict objects). Strings are trimmed where the schema says so.
 
    **5a. Amendment (DG2, T-DG2-ARCH-02, 2026-10-06): every operation that validates input declares 400.**

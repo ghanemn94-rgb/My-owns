@@ -117,7 +117,8 @@ export interface SecretValue { reveal(): string; toString(): "[secret]"; toJSON(
 
 - **CI job** `dependency-audit` in `deploy/ci/ci.yml` (owner DO-A): `pnpm audit --audit-level high --prod` against the configured registry, gated like the other jobs; a High or Critical advisory on a production dependency fails the job. It runs where CI has network.
 - **Offline check** `deploy/scripts/dep-audit.mjs` (DO-A): compares the SBOM (`licenses/**`) with a **dated advisory snapshot** committed as `deploy/advisories/snapshot-<yyyy-mm-dd>.json`, recording its source and retrieval date; it fails on a matching High/Critical advisory and prints the snapshot age. It runs in `pnpm test` (no network).
-- **In this sandbox the live audit is BLOCKED** (no registry advisory service: D-057/D-058 class) and is reported so; the offline check is never described as the live audit.
+- ~~**In this sandbox the live audit is BLOCKED** (no registry advisory service: D-057/D-058 class) and is reported so; the offline check is never described as the live audit.~~
+  - **Amendment (DG6, T-DG6-ARCH-05, 2026-10-27; D-199): the sentence above is struck.** In the DG6 build sandbox the live audit is **not** BLOCKED: T-DG6-DO-A ran `pnpm audit --audit-level high --prod` through the build environment's egress proxy (with `registry.npmjs.org` allowed for that one command and npm's `noproxy` setting overridden), exit 1, 20 High advisories on shipped packages (`docs/delivery/handbacks/DG6/T-DG6-DO-A-devops-engineer.md` §0; `T-DG6-DO-A-evidence/pnpm-audit-live-prod.txt`, 2026-10-27). D-199 decided to upgrade them (T-DG6-DO-A2). **Where a network has no route to the registry's advisory service** (a disconnected installation, a CI runner without egress), the live audit is reported **BLOCKED** with that reason, never PASS; the offline snapshot check still runs and is never described as the live audit.
 
 ### 7. Response validation of every operation (REQ-S16-027)
 
@@ -126,6 +127,8 @@ export interface SecretValue { reveal(): string; toString(): "[secret]"; toJSON(
 - fails when any operation outside the pending aggregate has **no** validated response, and lists it;
 - asserts the three acceptance clauses literally: a sample invalid input per module returns the uniform 400 body (`type urn:mth:problem:validation`, `code`, `errors[]` with JSON pointers); an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record); responses carry pagination (`nextCursor`) on every list operation.
 A defect found in another owner's route is reported in BE-F's handback, not fixed by BE-F (p6-plan §5.1).
+
+**Amendment (DG6, T-DG6-ARCH-05, 2026-10-27; D-199): "pagination (`nextCursor`) on every list operation" applies to every list operation except the bounded collections that ADR-0007 §4a names one by one, each with its bound and the reason it holds (21 operations).** The 17 unbounded lists that ADR-0007 §4a also names stay in `UNPAGINATED_LISTS_AT_HEAD` until T-DG6-BE-V (`p6-work-split.md` §D.5) paginates them; the test's pin is the enforcement (a new unpaginated list fails, a paginated one must leave the pin). After T-DG6-BE-V the pin equals the 21 names of ADR-0007 §4a.
 
 ### 8. Global audit API and Administration > Audit (REQ-S16-032)
 

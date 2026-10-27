@@ -1113,3 +1113,33 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **S** = share or 
 
 - **Scope:** saved views belong to the owner's organization; a shared view of a transformation the reader cannot read is not listed for that reader. A view never widens what a list returns.
 - **The load run (REQ-S20-029, REQ-S20-030):** load sessions exist only in a database holding `load_dataset_marker` with `MTH_ENV=load` (ADR-0058 §4); load users act through their seeded scoped assignments; an export file downloads only for its requester (others, including AUD, 404; ADR-0046, ADR-0058 §7).
+
+## 28. P6 implementation, slice D (DG6): the optional assistant
+
+- **Task:** T-DG6-ARCH-05 (solution-architect), completed by its continuation T-DG6-ARCH-05B, 2026-10-27. **Sources:** ADR-0059 §3, §6, §9, §10; master prompt M0336, M0337, M0188; REQ-S17-009 "configure:ADM(IT-authorized)", REQ-S17-007 "use:signed-in users when enabled".
+- **Seed:** `0112_p6_assistant_permissions.sql`, equal to `P6_ASSISTANT_PERMISSIONS` / `P6_ASSISTANT_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** neither code is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM04). The assistant approves, validates, certifies and submits nothing (ADR-0059 §7, §8): it has no path to a G1–G6 business approval, a Finance validation or an IT approval. No separation-of-duties rule applies, because nothing here approves.
+- **IT authorization:** `assistant.configure` lets ADM_TECH enter the company's authorization reference and turn the assistant on. The product records the reference as entered and does not verify it with IT; holding the code is not itself an IT approval.
+- **AUD stays read-only:** AUD reads the assistant setting (through `operations.read`, `0103`), so it can see that AI is off and who turned it on; it holds neither code, so every assistant write, including starting a conversation, answers 403 for AUD (probe PM02; BE-T's AUD test). Whether AUD should also use the assistant read-only is an open question for the orchestrator (ADR-0059 Alternatives 5).
+
+### 28.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `assistant.use` | write | Start one's **own** assistant conversations, ask questions, read one's own conversations, and take one's own charter or decision-brief suggestion to a draft prefill (plus the target's own write permission) | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, ADM_TECH, ADM_ACCESS, ADM_METHOD (every role except AUD) |
+| `assistant.configure` | configure | Read and change the assistant setting; turn the assistant on (with an endpoint and an authorization reference) or off; re-checked at commit time under lock 730323 | ADM_TECH |
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **On** = turn the assistant on or off, **Q** = ask a question (post a message), **T** = take one's own suggestion to a draft prefill.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Assistant setting (`assistant_setting`, `assistant_setting_change`) | — | — | — | — | — | V¹ | V¹ | V¹ | — | — | V¹ | — | C V E On | — |
+| Own assistant conversation and its messages (`assistant_conversation`, `assistant_message`) | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | — | C V Q | C V Q | C V Q |
+| Own assistant suggestion (`assistant_suggestion`) | V T² | V T² | V T² | V T² | V T² | V T² | V T² | V T² | V T² | V T² | — | V T² | V T² | V T² |
+| Records retrieved for an answer (search documents, plain-text evidence excerpts) | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | — | V³ | V³ | V³ |
+
+1. Holders of `operations.read` as seeded by `0103` (matrix §25.1: ADM_TECH, TO, KDS, TD, AUD).
+2. Only for a `charter_draft` (needs `charter.edit`) or `decision_brief_draft` (needs `executive_decision.create`) suggestion, in a transformation the user can read; advice suggestions cannot be taken. Taking a suggestion writes only the suggestion; the human creates, saves and submits the draft through the P5 form-draft operations with the record type's own permission.
+3. Only records the user may open through their own view (scope, record permission, sensitivity grant or named party; ADR-0051, ADR-0057 §3), re-checked through `ReadScope` when a stored conversation is read; evidence text only with the evidence download authorization (ADR-0051 §4). `assistant.use` grants no record access.
+
+- **Scope:** a conversation belongs to its owner; nobody else, including administrators, lists or reads it through the API (others 404). The setting is installation-wide.

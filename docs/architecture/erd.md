@@ -2085,6 +2085,34 @@ erDiagram
 | Help topic (S15-010) | `help_topic` | `id`; `topic_key` unique; `(screen_key, ordinal)` unique | — | migrations only | — | no (read-only catalogue) | search |
 | Load-dataset marker (S20-029) | `load_dataset_marker` | `singleton` | — | `deploy/load/generate.mjs` (mth_owner) | — | no (append-only) | none (deploy/load) |
 
+## 1x. P6 slice D: the optional assistant: its setting and history, conversations, messages and suggestions (migrations 0111–0112; T-DG6-ARCH-05, completed by T-DG6-ARCH-05B; ADR-0059)
+
+Three new mutable tables carry the full P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `assistant_setting` (at most one row, `assistant_setting_singleton_key`; **no row is seeded, and no row means the assistant is off**), with its append-only history `assistant_setting_change` written only by the SECURITY DEFINER trigger `assistant_setting_history`; `assistant_conversation` (one user's own conversation; every UPDATE appends exactly one message, `assistant_conversation_guard`, and the deferred trigger `assistant_conversation_messages_match` checks at COMMIT that `message_count` equals the number of messages); and `assistant_suggestion` (`proposed` → `taken_to_draft`, final; content immutable). `assistant_message` is append-only (no UPDATE or DELETE grant; `p2_append_only`), covered by its conversation's audit event. No table here is referenced by any DG1–DG5 table, and no trigger here writes outside these five tables. `0112` adds two permission codes and fourteen role links. The column lists are in `data-dictionary.md` ("P6 tables, slice D").
+
+```mermaid
+erDiagram
+    app_user |o--o| assistant_setting : "enabled_by (stamped when enabled)"
+    assistant_setting ||--o{ assistant_setting_change : "one history row per version"
+    organization ||--o{ assistant_conversation : "the owner's organization"
+    app_user ||--o{ assistant_conversation : "owner = created_by; only the owner changes"
+    transformation |o--o{ assistant_conversation : "optional focus"
+    assistant_conversation ||--o{ assistant_message : "seq 1..100, append-only"
+    assistant_message ||--o{ assistant_suggestion : "(conversation_id, message_id); an answer only; ordinal 1..5"
+    assistant_conversation ||--o{ assistant_suggestion : "the conversation's transformation and owner"
+    transformation ||--o{ assistant_suggestion : "= the conversation's focus"
+```
+
+Citations (`assistant_message.citations`, `assistant_suggestion.citations`) are JSON arrays of record ids and versions or playbook block references, checked by `p6_assistant_citations_valid`; they declare no foreign key, because the cited record is polymorphic by `recordType` (the 12 search record types, as `search_document`) and a citation records the version that was read, which may later change. Whether the owner may still read a cited record is decided at read time through `ReadScope` (ADR-0059 §9), never from the citation.
+
+### 1x.1 P6 entity register (slice D) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Assistant setting (S17-009) | `assistant_setting` (+ `assistant_setting_change`) | `id`; `singleton` unique (at most one row) | — (installation-wide) | ADM_TECH (`assistant.configure`; lock 730323) | `enabled` (false → true → false) | yes (history append-only) | assistant |
+| Assistant conversation (S17-007) | `assistant_conversation` | `id` | `owner_user_id` (= `created_by`) | the owner (`assistant.use`) | `awaiting_reply` | yes, one step per message | assistant |
+| Assistant message (S17-007, S17-008, S17-011) | `assistant_message` | `id`; `(conversation_id, seq)` unique | `created_by` (the conversation's owner) | the owner's requests (`assistant.use`) | `reply_kind` (answer, refusal, no_sources, unavailable, interrupted) | no (append-only; the conversation's version covers it) | assistant |
+| Assistant suggestion (S17-007, S17-008) | `assistant_suggestion` | `id`; `(message_id, ordinal)` unique | `owner_user_id` (= `created_by`) | the owner (`assistant.use`; to draft: plus the target's write permission) | `status` (proposed, taken_to_draft) | yes | assistant |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

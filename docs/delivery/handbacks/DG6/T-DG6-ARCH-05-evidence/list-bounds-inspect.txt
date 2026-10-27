@@ -1,0 +1,63 @@
+port-policy: PostgreSQL listening on port 23710 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+approval_route_step: mth_app INSERT=true rows_after_migrations=0
+   unique: approval_route_step_no_key UNIQUE (approval_id, round_no, step_no)
+   unique idx: -
+benefit_formula_version: mth_app INSERT=true rows_after_migrations=0
+   unique: benefit_formula_version_no_key UNIQUE (formula_id, version_no) | benefit_formula_version_transformation_id_id_key UNIQUE (transformation_id, id)
+   unique idx: -
+business_case_line: mth_app INSERT=true rows_after_migrations=0
+   unique: -
+   unique idx: business_case_line_one_formula_key CREATE UNIQUE INDEX business_case_line_one_formula_key ON public.business_case_line USING btree (benefit_formula_id) WHERE ((status = 'active'::text) AND (benefit_formula_id IS NOT NULL))
+deliverable: mth_app INSERT=true rows_after_migrations=0
+   unique: deliverable_transformation_id_id_key UNIQUE (transformation_id, id)
+   unique idx: -
+dependency_type: mth_app INSERT=true rows_after_migrations=5
+   unique: dependency_type_code_key UNIQUE (code)
+   unique idx: -
+health_check_scheme: (no such table)
+import_template: (no such table)
+initiative_decision_link: mth_app INSERT=true rows_after_migrations=0
+   unique: -
+   unique idx: initiative_decision_link_active_key CREATE UNIQUE INDEX initiative_decision_link_active_key ON public.initiative_decision_link USING btree (initiative_id, decision_id) WHERE (status = 'active'::text)
+initiative_gap_link: mth_app INSERT=true rows_after_migrations=0
+   unique: -
+   unique idx: initiative_gap_link_tom_gap_active_key CREATE UNIQUE INDEX initiative_gap_link_tom_gap_active_key ON public.initiative_gap_link USING btree (initiative_id, tom_gap_id) WHERE ((status = 'active'::text) AND (tom_gap_id IS NOT NULL)) | initiative_gap_link_finding_active_key CREATE UNIQUE INDEX initiative_gap_link_finding_active_key ON public.initiative_gap_link USING btree (initiative_id, diagnostic_finding_id) WHERE ((status = 'active'::text) AND (diagnostic_finding_id IS NOT NULL))
+initiative_outcome_contribution: mth_app INSERT=true rows_after_migrations=0
+   unique: -
+   unique idx: -
+kpi_restatement_reissue_offer: mth_app INSERT=true rows_after_migrations=0
+   unique: kpi_restatement_reissue_offer_key UNIQUE (restatement_id, snapshot_id)
+   unique idx: -
+playbook_block_link: mth_app INSERT=false rows_after_migrations=240
+   unique: playbook_block_link_ordinal_key UNIQUE (block_ref, ordinal)
+   unique idx: -
+methodology_element: mth_app INSERT=true rows_after_migrations=17
+   unique: methodology_element_key UNIQUE (methodology_version_id, element_type, stable_key)
+   unique idx: -
+milestone: mth_app INSERT=true rows_after_migrations=0
+   unique: milestone_transformation_id_id_key UNIQUE (transformation_id, id)
+   unique idx: -
+report_snapshot_version: mth_app INSERT=true rows_after_migrations=0
+   unique: report_snapshot_version_key UNIQUE (snapshot_id, version_kind, reference_key)
+   unique idx: -
+resource_role: mth_app INSERT=true rows_after_migrations=0
+   unique: resource_role_code_key UNIQUE (transformation_id, code) | resource_role_transformation_id_id_key UNIQUE (transformation_id, id)
+   unique idx: -
+roadmap_wave: mth_app INSERT=true rows_after_migrations=0
+   unique: roadmap_wave_code_key UNIQUE (transformation_id, code) | roadmap_wave_transformation_id_id_key UNIQUE (transformation_id, id)
+   unique idx: -
+tom_workshop_participant: mth_app INSERT=true rows_after_migrations=0
+   unique: -
+   unique idx: tom_workshop_participant_active_key CREATE UNIQUE INDEX tom_workshop_participant_active_key ON public.tom_workshop_participant USING btree (workshop_id, user_id) WHERE (status = 'active'::text)
+scoring_weight_set: mth_app INSERT=true rows_after_migrations=0
+   unique: scoring_weight_set_id_version_no_key UNIQUE (id, version_no) | scoring_weight_set_transformation_id_id_key UNIQUE (transformation_id, id) | scoring_weight_set_version_no_key UNIQUE (transformation_id, version_no)
+   unique idx: scoring_weight_set_one_active_key CREATE UNIQUE INDEX scoring_weight_set_one_active_key ON public.scoring_weight_set USING btree (transformation_id) WHERE (status = 'active'::text)
+job_schedule: mth_app INSERT=false rows_after_migrations=16
+   unique: job_schedule_code_key UNIQUE (code)
+   unique idx: -
+config_review_policy: mth_app INSERT=false rows_after_migrations=7
+   unique: config_review_policy_kind_key UNIQUE (config_kind)
+   unique idx: -
+extra: {"profiles":56,"profile_ins":false,"max_links_per_block":14,"max_seeded_links_per_template":2,"blocks":165,"element_key":"UNIQUE (methodology_version_id, element_type, stable_key)"}
+catalogue rows (mth_app has no INSERT unless marked): permission=185 role=14 role_accountability=14 phase_definition=6 guiding_question=4 decision_right_template=4 governance_party=18 adoption_indicator_template=8 benefit_formula_example=2 form_record_type=33 report_definition=12 config_review_policy=7 job_schedule=16 methodology_element_profile=56 source_element[health_question]=25

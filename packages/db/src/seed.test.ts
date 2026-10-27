@@ -952,9 +952,9 @@ describe("0109 seed equals the P6 part of permissions.ts (slices H and G)", () =
 
 describe("0112 seed equals the P6 part of permissions.ts (slice D, the assistant)", () => {
   it("permission rows", () => {
-    const rows = [...section("INSERT INTO permission", sqlP6Assistant).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm)].map(
-      (m) => [m[1], m[2]],
-    );
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6Assistant).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
     expect(Object.fromEntries(rows)).toEqual(P6_ASSISTANT_PERMISSIONS);
     expect(rows).toHaveLength(Object.keys(P6_ASSISTANT_PERMISSIONS).length);
   });
