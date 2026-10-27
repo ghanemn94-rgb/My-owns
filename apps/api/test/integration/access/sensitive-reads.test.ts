@@ -13,8 +13,9 @@
 //   - an export of the benefits register (portfolio report) by a user without admission is refused (403) at the
 //     request, so it never contains a row of the sensitive benefit; an admitted user exports it; nothing is written for
 //     the refused request.
-// The calls whose response carries `includesRestrictedRecords` skip the contract assertion (`contract: false`): the
-// optional property is BE-B2's contract addition (handback §6), merged into docs/api/openapi.yaml by the orchestrator.
+// Every call is validated against docs/api/openapi.yaml, including the responses that carry the optional
+// `includesRestrictedRecords` (BE-B2's contract addition, added to the contract and its zod mirrors by T-DG6-BE-F2,
+// D-199). The refused export answers its own code, 403 `export.includes_restricted_records` (D-199).
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { financialBody, insertInitiative, seedBenefitWorld, type BenefitWorld } from "../benefits/fixtures.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
@@ -53,8 +54,7 @@ const ok = (res: Res<Body>, status = 200) => {
   expect(res.status, JSON.stringify(res.body)).toBe(status);
   return res.body as Body;
 };
-const get = (s: Session, url: string, contract = true) =>
-  call<Body>(api.app, "GET", url, { session: s, ...(contract ? {} : { contract: false }) });
+const get = (s: Session, url: string) => call<Body>(api.app, "GET", url, { session: s });
 const mark = async (type: string, id: string) =>
   ok(
     await call<Body>(api.app, "PUT", `${b.base}/records/${type}/${id}/sensitivity`, {
@@ -64,16 +64,23 @@ const mark = async (type: string, id: string) =>
     }),
   );
 const ids = (page: Body) => (page.items as { id: string }[]).map((i) => i.id);
-const totals = (s: Session) => get(s, `${b.base}/benefit-totals`, false);
-const dashboard = (s: Session) => get(s, `${b.base}/dashboard`, false);
+const totals = (s: Session) => get(s, `${b.base}/benefit-totals`);
+const dashboard = (s: Session) => get(s, `${b.base}/dashboard`);
 const finance = (s: Session) =>
-  get(s, `/api/v1/dashboards/finance?organizationId=${b.organizationId}&transformationId=${b.transformationId}`, false);
+  get(s, `/api/v1/dashboards/finance?organizationId=${b.organizationId}&transformationId=${b.transformationId}`);
 const drill = (s: Session, extra = "") =>
   get(
     s,
     `/api/v1/dashboard-drilldown?metric=value.planned&organizationId=${b.organizationId}&transformationId=${b.transformationId}${extra}`,
-    false,
   );
+/** D-199: the export refusal's own code and text (no longer the generic `forbidden`). */
+const expectRestrictedExportRefusal = (res: Res<Body>) =>
+  expect([res.status, res.body.type, res.body.code, res.body.detail], JSON.stringify(res.body)).toEqual([
+    403,
+    "urn:mth:problem:forbidden",
+    "export.includes_restricted_records",
+    "This report includes records you cannot see, so it cannot be exported for you.",
+  ]);
 const registersExport = (s: Session) =>
   call<Body>(api.app, "POST", "/api/v1/exports", {
     session: s,
@@ -362,7 +369,7 @@ describe("REQ-S10-004: export selection through the ReadScope", () => {
   it("the member's export of the benefits register is 403 and writes nothing; the owner exports it", async () => {
     const before = await exportJobsOf(member.userId);
     const res = await registersExport(member);
-    expect([res.status, res.body.code]).toEqual([403, "forbidden"]);
+    expectRestrictedExportRefusal(res);
     expect(await exportJobsOf(member.userId)).toEqual(before);
     ok(await registersExport(b.s.bo), 202);
   });
@@ -391,6 +398,6 @@ describe("REQ-S10-004: export selection through the ReadScope", () => {
       session: member,
       body: { snapshotId: job.snapshotId, format: "csv", language: "en" },
     });
-    expect([res.status, res.body.code]).toEqual([403, "forbidden"]);
+    expectRestrictedExportRefusal(res);
   });
 });

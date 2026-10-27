@@ -36,9 +36,13 @@ import {
 } from "../../support/harness.ts";
 import { extraUser, insertInitiative, seedBenefitWorld } from "../benefits/fixtures.ts";
 import {
+  coverWithException,
+  decideGate,
+  missingKeys,
   passGatesNatively,
   plusDays,
   seedNativeGateWorld,
+  submitGate,
   type NativeGateWorld,
 } from "../../../../../tests/qa/support/gates-native.ts";
 
@@ -142,28 +146,39 @@ describe("REQ-S16-023 part 1: finalized records cannot be destructively deleted 
     expect(still).toEqual([{ outcome: "approved" }]);
   });
 
-  // KNOWN DEFECT at HEAD (reported in the T-DG6-BE-F handback, owner of evidence/routes.ts): removeEvidenceLink on the
-  // link that made the item evidence of an approved gate decision answers 200 and removes it (ADR-0052 §9.1 expects
-  // 409). `it.fails` runs the real call on every run and turns red the day the route refuses with 409.
-  it.fails("its evidence: removing the evidence link returns 409 and changes nothing", async () => {
+  // T-DG6-BE-F2 (D-199; ADR-0052 §9.1): the two removal operations the contract offers on evidence refuse evidence
+  // that supports an approved gate decision with 409 `evidence.finalized` and write nothing. (They were `it.fails`
+  // defect pins at T-DG6-BE-F, reported as 200; the failing-before output is in the T-DG6-BE-F2 handback evidence.)
+  const FINALIZED = "This evidence supports an approved gate decision and cannot be archived or unlinked.";
+  const expectFinalized = (res: Res<Body>) => {
+    expectProblem(res, 409, "invalid-transition", "evidence.finalized");
+    expect(res.body.detail).toBe(FINALIZED);
+  };
+  const linkOf = async (id: string) => {
     const links = await call<Body>(api.app, "GET", `${g.base}/evidence-links?recordType=diagnostic_item`, {
       session: g.tl.session,
     });
-    const link = (links.body.items as Body[]).find((l) => l.id === linkId);
+    expect(links.status, JSON.stringify(links.body)).toBe(200);
+    return (links.body.items as Body[]).find((l) => l.id === id);
+  };
+
+  it("its evidence: removing the evidence link returns 409 evidence.finalized and changes nothing", async () => {
+    const link = await linkOf(linkId);
+    const auditBefore = await auditOf(api.db, linkId);
     const res = await call<Body>(api.app, "POST", `${g.base}/evidence-links/${linkId}/remove`, {
       session: g.tl.session,
       headers: ifm(link.version),
       body: { reason: "Synthetic attempt to unlink approved gate evidence" },
     });
     console.info(`[integrity-sweep] removeEvidenceLink on approved-G1 evidence: ${res.status} ${res.body?.code}`);
-    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expectFinalized(res);
+    expect(await auditFor(api, res)).toEqual([]);
+    const after = await linkOf(linkId);
+    expect([after.status, after.version]).toEqual([link.status, link.version]);
+    expect(await auditOf(api.db, linkId)).toEqual(auditBefore);
   });
 
-  // KNOWN DEFECT at HEAD (reported in the T-DG6-BE-F handback, owner of evidence/routes.ts): archiveEvidence on the
-  // evidence of an approved gate decision answers 200 and archives it (ADR-0052 §9.1 expects 409, row unchanged). The
-  // submission snapshot itself stays immutable (gate_submission_freeze). `it.fails` runs the real call on every run and
-  // turns red the day the route refuses with 409, so the pin is removed with the fix (never a silent skip).
-  it.fails("its evidence: archiving the evidence item returns 409 and changes nothing", async () => {
+  it("its evidence: archiving the evidence item returns 409 evidence.finalized and changes nothing", async () => {
     const before = await call<Body>(api.app, "GET", `${g.base}/evidence/${evidenceId}`, { session: g.tl.session });
     const auditBefore = await auditOf(api.db, evidenceId);
     const res = await call<Body>(api.app, "POST", `${g.base}/evidence/${evidenceId}/archive`, {
@@ -172,10 +187,105 @@ describe("REQ-S16-023 part 1: finalized records cannot be destructively deleted 
       body: { reason: "Synthetic attempt to remove approved gate evidence" },
     });
     console.info(`[integrity-sweep] archiveEvidence on approved-G1 evidence: ${res.status} ${res.body?.code}`);
-    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expectFinalized(res);
+    expect(await auditFor(api, res)).toEqual([]);
     const after = await call<Body>(api.app, "GET", `${g.base}/evidence/${evidenceId}`, { session: g.tl.session });
     expect([after.body.status, after.body.version]).toEqual([before.body.status, before.body.version]);
     expect(await auditOf(api.db, evidenceId)).toEqual(auditBefore);
+  });
+
+  it("its evidence: authorization comes first (the auditor gets 403 forbidden, an outsider 404), never 409", async () => {
+    const before = await call<Body>(api.app, "GET", `${g.base}/evidence/${evidenceId}`, { session: g.tl.session });
+    const link = await linkOf(linkId);
+    const reason = { reason: "Synthetic unauthorized attempt" };
+    const archiveAs = (session: Session) =>
+      call<Body>(api.app, "POST", `${g.base}/evidence/${evidenceId}/archive`, {
+        session,
+        headers: ifm(before.body.version),
+        body: reason,
+      });
+    const unlinkAs = (session: Session) =>
+      call<Body>(api.app, "POST", `${g.base}/evidence-links/${linkId}/remove`, {
+        session,
+        headers: ifm(link.version),
+        body: reason,
+      });
+    for (const res of [await archiveAs(g.auditor.session), await unlinkAs(g.auditor.session)])
+      expectProblem(res, 403, "forbidden", "forbidden");
+    for (const res of [await archiveAs(g.outsider.session), await unlinkAs(g.outsider.session)])
+      expectProblem(res, 404, "not-found", "not_found");
+    const after = await call<Body>(api.app, "GET", `${g.base}/evidence/${evidenceId}`, { session: g.tl.session });
+    expect([after.body.status, after.body.version]).toEqual(["active", before.body.version]);
+  });
+
+  it("its evidence: a stale If-Match is still 409 version_conflict (the version check precedes the rule)", async () => {
+    const before = await call<Body>(api.app, "GET", `${g.base}/evidence/${evidenceId}`, { session: g.tl.session });
+    const res = await call<Body>(api.app, "POST", `${g.base}/evidence/${evidenceId}/archive`, {
+      session: g.tl.session,
+      headers: ifm(before.body.version + 7),
+      body: { reason: "Synthetic stale attempt" },
+    });
+    expectProblem(res, 409, "version-conflict", "version_conflict");
+  });
+
+  it("its evidence: a link of the same item that the approved snapshot does not cite is removed normally (200)", async () => {
+    const items = await call<Body>(api.app, "GET", `${g.base}/diagnostic-items?limit=2`, { session: g.tl.session });
+    const otherItem = (items.body.items as Body[])[1].id as string;
+    const extra = await call<Body>(api.app, "POST", `${g.base}/evidence-links`, {
+      session: g.tl.session,
+      body: { evidenceId, recordType: "diagnostic_item", recordId: otherItem },
+    });
+    expect(extra.status, JSON.stringify(extra.body)).toBe(201);
+    const res = await call<Body>(api.app, "POST", `${g.base}/evidence-links/${extra.body.id}/remove`, {
+      session: g.tl.session,
+      headers: ifm(extra.body.version),
+      body: { reason: "Synthetic link added after the approval" },
+    });
+    expect([res.status, res.body.status], JSON.stringify(res.body)).toEqual([200, "removed"]);
+    expect((await auditFor(api, res)).length).toBe(1);
+  });
+
+  it("evidence cited only by a submission without an approved decision (rejected) is archived and unlinked normally", async () => {
+    const r = await seedNativeGateWorld(api, w, "S16-023-rejected");
+    const items = await call<Body>(api.app, "GET", `${r.base}/diagnostic-items?limit=1`, { session: r.tl.session });
+    const itemId = items.body.items[0].id as string;
+    const ev = await call<Body>(api.app, "POST", `${r.base}/evidence`, {
+      session: r.tl.session,
+      body: { kind: "note", title: "Synthetic G1 evidence (rejected)", ownerUserId: r.tl.id, noteBody: "Synthetic." },
+    });
+    expect(ev.status, JSON.stringify(ev.body)).toBe(201);
+    const link = await call<Body>(api.app, "POST", `${r.base}/evidence-links`, {
+      session: r.tl.session,
+      body: { evidenceId: ev.body.id, recordType: "diagnostic_item", recordId: itemId },
+    });
+    expect(link.status, JSON.stringify(link.body)).toBe(201);
+    const expiresOn = plusDays(new Date().toISOString().slice(0, 10), 60);
+    for (const key of await missingKeys(api, r, "G1")) await coverWithException(api, r, "G1", key, expiresOn);
+    const sub = await submitGate(api, r, "G1");
+    expect(sub.status, JSON.stringify(sub.body)).toBe(201);
+    expect(JSON.stringify(sub.body)).toContain(ev.body.id);
+    const decided = await decideGate(api, r, "G1", r.sp.session, {
+      submissionNo: sub.body.submissionNo,
+      outcome: "rejected",
+      rationale: "Synthetic QA rejection; approves nothing real.",
+    });
+    expect(decided.status, JSON.stringify(decided.body)).toBe(201);
+    const unlinked = await call<Body>(api.app, "POST", `${r.base}/evidence-links/${link.body.id}/remove`, {
+      session: r.tl.session,
+      headers: ifm(link.body.version),
+      body: { reason: "Synthetic unlink after a rejection" },
+    });
+    expect([unlinked.status, unlinked.body.status], JSON.stringify(unlinked.body)).toEqual([200, "removed"]);
+    const archived = await call<Body>(api.app, "POST", `${r.base}/evidence/${ev.body.id}/archive`, {
+      session: r.tl.session,
+      headers: ifm(ev.body.version),
+      body: { reason: "Synthetic archive after a rejection" },
+    });
+    expect([archived.status, archived.body.status], JSON.stringify(archived.body)).toEqual([200, "archived"]);
+    const audit = await auditFor(api, archived);
+    expect(audit.map((a: Body) => [a.action, a.prior_version, a.new_version])).toEqual([
+      ["evidence.archive", ev.body.version, ev.body.version + 1],
+    ]);
   });
 
   it("its evidence: the contract has no DELETE for evidence, and mth_app cannot DELETE evidence rows (42501)", async () => {
@@ -191,8 +301,9 @@ describe("REQ-S16-023 part 1: finalized records cannot be destructively deleted 
 
   it("every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app", async () => {
     const deletes = operations.filter((o) => o.method === "DELETE").map((o) => o.operationId);
-    // At HEAD the contract's only DELETE is retireDependencyType (a catalogue retirement, not a finalized record).
-    expect(deletes).toEqual(["retireDependencyType"]);
+    // retireDependencyType (a catalogue retirement) and deleteSavedView (ADR-0057 §4: a soft delete of one's own saved
+    // view, status `deleted`; saved_view grants mth_app no DELETE). Neither is a finalized record.
+    expect([...deletes].sort()).toEqual(["deleteSavedView", "retireDependencyType"]);
     const granted = await api.owner.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.role_table_grants
         WHERE grantee = 'mth_app' AND privilege_type = 'DELETE' AND table_schema = 'public' ORDER BY table_name`,

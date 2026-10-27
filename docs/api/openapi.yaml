@@ -1206,7 +1206,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StrategicGuardrailPage" }
@@ -1342,7 +1342,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/OutcomePage" }
@@ -2043,7 +2043,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DiagnosticItemPage" }
@@ -2179,7 +2179,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DiagnosticFindingPage" }
@@ -2315,7 +2315,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WorkstreamOutputPage" }
@@ -2451,7 +2451,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomGapPage" }
@@ -2587,7 +2587,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CapabilityHeatmapEntryPage" }
@@ -2723,7 +2723,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Page, newest change first (`updatedAt` desc, `id` desc).
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/JourneyPage" }
@@ -3748,7 +3748,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "Page."
+          description: "Page, in `id` ascending order (the register kit's order; `sort` absent)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/JourneyPainPointPage" }
@@ -35386,6 +35386,7 @@ components:
               code: { type: string }
               reason: { type: string, enum: [archived, parent_rollup, group_counted_member_not_named, group_member_not_counted, overlap_duplicate] }
         computedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, description: "Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords)" }
     BenefitRegisterPage:
       type: object
       required: [items, nextCursor]
@@ -38567,6 +38568,7 @@ components:
         timezone: { type: string }
         appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
         areas: { type: array, items: { $ref: "#/components/schemas/T10Area" }, minItems: 6, maxItems: 6 }
+        includesRestrictedRecords: { type: boolean, description: "Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords)" }
     ExecutiveOverview:
       type: object
       required: [organizationId, generatedAt, businessDate, appliedFilters, transformationCount, areas, transformations]
@@ -38592,6 +38594,7 @@ components:
         businessDate: { $ref: "#/components/schemas/BusinessDate" }
         appliedFilters: { $ref: "#/components/schemas/DashboardFilters" }
         areas: { type: array, items: { $ref: "#/components/schemas/T10Area" }, minItems: 6, maxItems: 6 }
+        includesRestrictedRecords: { type: boolean, description: "Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords)" }
     FinanceValueLine:
       type: object
       required: [valueClass, state, currency, total, drilldownHref]
@@ -38620,6 +38623,7 @@ components:
         pendingValidationCount: { type: integer, minimum: 0 }
         nonFinancialCount: { type: integer, minimum: 0 }
         transformations: { type: array, items: { $ref: "#/components/schemas/DashboardTransformationRow" } }
+        includesRestrictedRecords: { type: boolean, description: "Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords)" }
     AdoptionIndicatorRow:
       type: object
       required: [kpiDefinitionId, templateKey, targetKind, targetId, rag, value, drilldownHref]
@@ -38701,6 +38705,7 @@ components:
         nextCursor: { type: [string, "null"] }
         headlineBasis: { oneOf: [{ $ref: "#/components/schemas/HeadlineBasis" }, { type: "null" }], description: "The basis of the classes summed (ADR-0037 amendments N3 and N4): profit_and_cash for a value-state metric or value.gap without valueClass, and with valueClass margin_uplift, cash_saving or working_capital_release; top_line with revenue_uplift; non_cash with avoided_cost; profit_and_cash for portfolio.initiatives (the basis of its items' values); null with non_financial_valued and for every other metric." }
         currency: { type: [string, "null"], pattern: '^[A-Z]{3}$', description: "ADR-0037 amendment N4 item 3: the currency query parameter, echoed; null when the request named none. Required since the API emits it (T-DG4-KBE-R7)." }
+        includesRestrictedRecords: { type: boolean, description: "Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords)" }
     MyWorkItem:
       type: object
       required: [section, source, recordType, recordId, kind, code, label, messageKey, messageParams, transformationId, href, dueDate, overdue]
