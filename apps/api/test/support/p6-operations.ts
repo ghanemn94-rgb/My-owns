@@ -85,4 +85,14 @@ export const P6_OPERATION_IDS: ReadonlySet<string> = new Set([
   "compareFormRecordVersions",
   "listHelpTopics",
   "getHelpTopic",
+  // T-DG6-ARCH-05: slice D (9 operations; ADR-0059). Appended by the orchestrator at the W5 merge (D-201).
+  "getAssistantSetting",
+  "putAssistantSetting",
+  "enableAssistant",
+  "disableAssistant",
+  "listAssistantConversations",
+  "createAssistantConversation",
+  "getAssistantConversation",
+  "postAssistantMessage",
+  "takeAssistantSuggestionToDraft",
 ]);
