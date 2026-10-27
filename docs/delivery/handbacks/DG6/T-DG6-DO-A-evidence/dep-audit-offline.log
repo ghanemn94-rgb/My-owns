@@ -1,0 +1,47 @@
+Tue Oct 27 01:22:41 UTC 2026
+$ node deploy/scripts/dep-audit.mjs
+snapshot: deploy/advisories/snapshot-2026-10-27.json; source: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+snapshot retrieved 2026-10-27T01:12:11.669Z; age 0 day(s)
+this is the OFFLINE snapshot check, not the live registry audit (CI job dependency-audit)
+High/Critical advisories on shipped components (20):
+  HIGH     @fastify/static@8.2.0 (runtime) in "<=10.1.0": @fastify/static vulnerable to route guard bypass via path traversal https://github.com/advisories/GHSA-83w8-p2f5-377r
+  HIGH     fastify@5.6.1 (runtime) in "<5.7.2": Fastify's Content-Type header tab character allows body validation bypass https://github.com/advisories/GHSA-jx2c-rxcm-jvmq
+  HIGH     fastify@5.6.1 (runtime) in ">=5.3.2 <=5.8.4": Fastify has a Body Schema Validation Bypass via Leading Space in Content-Type Header https://github.com/advisories/GHSA-247c-9743-5963
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request body replacement via an async validation result collision https://github.com/advisories/GHSA-667r-xxjv-c9mm
+  HIGH     fastify@5.6.1 (runtime) in ">=4.0.0 <5.12.2": fastify vulnerable to authentication bypass via malformed URLs reaching encapsulated not-found handlers https://github.com/advisories/GHSA-p68q-wchp-6fh7
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request validation bypass via skipped boolean false schemas https://github.com/advisories/GHSA-hwr6-493r-vm6h
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to header validation bypass via incomplete schema case normalization https://github.com/advisories/GHSA-9q9j-q6p8-xq58
+  HIGH     image-size@1.2.1 (runtime) in ">=1.2.0 <=2.0.2": image-size: JXL and HEIF parsers allow denial of service through infinite loops https://github.com/advisories/GHSA-5p2g-fcmc-qvqq
+  HIGH     image-size@1.2.1 (runtime) in ">=0.6.3 <=2.0.2": image-size: ICNS parser allows denial of service through an infinite loop https://github.com/advisories/GHSA-w3rx-r6r6-pgpr
+  HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <=0.28.11": SQL Injection via unsanitized JSON path keys when ignoring/silencing compilation errors or using `Kysely<any>`. https://github.com/advisories/GHSA-wmrf-hv6w-mr66
+  HIGH     kysely@0.28.7 (runtime) in "<=0.28.13": Kysely has a MySQL SQL Injection via Insufficient Backslash Escaping in `sql.lit(string)` usage or similar methods that append string literal values into the compiled SQL strings https://github.com/advisories/GHSA-8cpq-38p9-67gx
+  HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <0.28.17": Kysely: JSON-path traversal injection via unsanitized path-leg metacharacters in `JSONPathBuilder.key()` / `.at()` https://github.com/advisories/GHSA-pv5w-4p9q-p3v2
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.11.0": React Router vulnerable to XSS via Open Redirects https://github.com/advisories/GHSA-2w69-qvjg-hvjx
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.14.1": React Router's vendored turbo-stream v2 allows arbitrary constructor invocation via TYPE_ERROR deserialization leading to Unauth RCE https://github.com/advisories/GHSA-49rj-9fvp-4h2h
+  HIGH     react-router@7.9.0 (bundled) in ">=7.7.0 <7.13.2": React Router vulnerable to XSS in unstable RSC redirect handling via javascript: redirect targets https://github.com/advisories/GHSA-8646-j5j9-6r62
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.15.0": React Router vulnerable to DoS via unbounded path expansion in __manifest endpoint https://github.com/advisories/GHSA-8x6r-g9mw-2r78
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.14.0": React Router vulnerable to Denial of Service via reflected user input in single-fetch https://github.com/advisories/GHSA-rxv8-25v2-qmq8
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.18.0": React Router: Unauthenticated Denial of Service via Inefficient Route Matching https://github.com/advisories/GHSA-chx6-hx7r-mcp5
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.12.0": React Router SSR XSS in ScrollRestoration https://github.com/advisories/GHSA-8v8x-cx79-35w7
+  HIGH     zod@4.1.12 (runtime) in "<4.6.6": Zod can exhaust memory while validating oversized constrained collections https://github.com/advisories/GHSA-mrhx-c7xc-m3w5
+not failing (development-only or below High): 40 {"moderate/runtime":12,"moderate/development":9,"low/runtime":5,"moderate/bundled":6,"critical/development":3,"high/development":4,"low/development":1}
+FAIL: 20 High/Critical match(es) on shipped components, 0 shipped component(s) not covered
+EXIT=1
+
+$ node deploy/scripts/dep-audit.mjs --sbom deploy/scripts/tests/fixtures/dep-audit/sbom.json --snapshot deploy/scripts/tests/fixtures/dep-audit/snapshot-negative.json
+snapshot: deploy/scripts/tests/fixtures/dep-audit/snapshot-negative.json; source: fixture://synthetic
+snapshot retrieved 2026-10-01T00:00:00.000Z; age 26 day(s)
+this is the OFFLINE snapshot check, not the live registry audit (CI job dependency-audit)
+High/Critical advisories on shipped components (2):
+  HIGH     fixture-runtime@1.2.0 (runtime) in ">=1.0.0 <1.2.1": SYNTHETIC high advisory matching the shipped version
+  CRITICAL @fixture/bundled@2.0.0-rc.1 (bundled) in "<2.0.0 || 2.0.0-rc.1": SYNTHETIC critical advisory matching a bundled pre-release
+FAIL: 2 High/Critical match(es) on shipped components, 0 shipped component(s) not covered
+EXIT=1
+
+$ ... --snapshot snapshot-clean.json
+snapshot: deploy/scripts/tests/fixtures/dep-audit/snapshot-clean.json; source: fixture://synthetic
+snapshot retrieved 2026-10-01T00:00:00.000Z; age 26 day(s)
+this is the OFFLINE snapshot check, not the live registry audit (CI job dependency-audit)
+not failing (development-only or below High): 2 {"moderate/runtime":1,"critical/development":1}
+PASS: no High/Critical advisory in the snapshot matches a shipped component
+EXIT=0
