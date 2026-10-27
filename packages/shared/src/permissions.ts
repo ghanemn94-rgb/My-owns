@@ -379,12 +379,24 @@ export const P6_SEARCH_PERMISSIONS = {
   "saved_view.share": "write",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P6 slice D (seeded by 0112; ADR-0059 §9): the optional assistant. `assistant.use` opens one's own conversations and
+ * takes one's own draft suggestions to a draft prefill (retrieval admits exactly what the caller's record-view
+ * permissions admit, through ReadScope); `assistant.configure` reads and changes the assistant setting and turns it on
+ * or off. Neither is an approval: the assistant approves, validates, certifies and changes nothing (REQ-S17-008).
+ */
+export const P6_ASSISTANT_PERMISSIONS = {
+  "assistant.use": "write",
+  "assistant.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
 /** Every P6 permission block (each P6 architecture task appends its block here and to PERMISSIONS). */
 export const P6_PERMISSIONS = {
   ...P6_ACCESS_HARDENING_PERMISSIONS,
   ...P6_OPERATIONS_CHANNELS_PERMISSIONS,
   ...P6_INTEGRATIONS_PERMISSIONS,
   ...P6_SEARCH_PERMISSIONS,
+  ...P6_ASSISTANT_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 
 export const PERMISSIONS = {
@@ -938,6 +950,28 @@ export const P6_SEARCH_ROLE_PERMISSIONS = {
   ADM_METHOD: ["saved_view.manage"],
 } as const satisfies Record<string, readonly (keyof typeof P6_SEARCH_PERMISSIONS)[]>;
 
+/**
+ * P6 slice D role defaults (seeded by 0112; ADR-0059 §9): every role except AUD uses the assistant (AUD stays read-only:
+ * a conversation is a write of the caller's own rows, the saved_view.manage precedent); ADM_TECH alone configures it.
+ * Reading the setting is also open to operations.read holders (0103), AUD included.
+ */
+export const P6_ASSISTANT_ROLE_PERMISSIONS = {
+  SP: ["assistant.use"],
+  TL: ["assistant.use"],
+  BO: ["assistant.use"],
+  WL: ["assistant.use"],
+  FIN: ["assistant.use"],
+  TO: ["assistant.use"],
+  KDS: ["assistant.use"],
+  TD: ["assistant.use"],
+  CM: ["assistant.use"],
+  SEC: ["assistant.use"],
+  AUD: [],
+  ADM_TECH: ["assistant.use", "assistant.configure"],
+  ADM_ACCESS: ["assistant.use"],
+  ADM_METHOD: ["assistant.use"],
+} as const satisfies Record<string, readonly (keyof typeof P6_ASSISTANT_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -958,6 +992,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.SP,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SP,
       ...P6_SEARCH_ROLE_PERMISSIONS.SP,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -986,6 +1021,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TL,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TL,
       ...P6_SEARCH_ROLE_PERMISSIONS.TL,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -1010,6 +1046,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.BO,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.BO,
       ...P6_SEARCH_ROLE_PERMISSIONS.BO,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -1032,6 +1069,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.WL,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.WL,
       ...P6_SEARCH_ROLE_PERMISSIONS.WL,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -1053,6 +1091,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.FIN,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.FIN,
       ...P6_SEARCH_ROLE_PERMISSIONS.FIN,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -1082,6 +1121,7 @@ export const ROLES = {
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.TO,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TO,
       ...P6_SEARCH_ROLE_PERMISSIONS.TO,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -1104,6 +1144,7 @@ export const ROLES = {
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.KDS,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.KDS,
       ...P6_SEARCH_ROLE_PERMISSIONS.KDS,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -1121,6 +1162,7 @@ export const ROLES = {
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TD,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TD,
       ...P6_SEARCH_ROLE_PERMISSIONS.TD,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -1135,6 +1177,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.CM,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.CM,
       ...P6_SEARCH_ROLE_PERMISSIONS.CM,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.CM,
     ],
   },
   SEC: {
@@ -1150,6 +1193,7 @@ export const ROLES = {
       ...P5_REPORTING_ROLE_PERMISSIONS.SEC,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SEC,
       ...P6_SEARCH_ROLE_PERMISSIONS.SEC,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {
@@ -1168,6 +1212,7 @@ export const ROLES = {
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.AUD,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD,
       ...P6_SEARCH_ROLE_PERMISSIONS.AUD,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -1189,6 +1234,7 @@ export const ROLES = {
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -1208,6 +1254,7 @@ export const ROLES = {
       ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {
@@ -1223,6 +1270,7 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.ADM_METHOD,
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

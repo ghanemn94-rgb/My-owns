@@ -39,7 +39,7 @@ function walk(dir: string): string[] {
 }
 
 describe("advisory-lock class registry", () => {
-  it("lists the fifty-one classes (twenty-eight before P5), each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block; 730255-730257 for the T-DG5-ARCH-02 block; 730302-730304 for the T-DG6-ARCH-01 block; 730308-730309 for the T-DG6-ARCH-02 block; 730315-730317 for the T-DG6-ARCH-03 block; 730320-730322 for the T-DG6-ARCH-04 block)", () => {
+  it("lists the fifty-two classes (twenty-eight before P5), each a distinct int4 (730227, 730231, 730235, 730237, 730241, 730245 and 730248 stay reserved for their P4 blocks; 730253 for the T-DG5-ARCH-01 block; 730255-730257 for the T-DG5-ARCH-02 block; 730302-730304 for the T-DG6-ARCH-01 block; 730308-730309 for the T-DG6-ARCH-02 block; 730315-730317 for the T-DG6-ARCH-03 block; 730320-730322 for the T-DG6-ARCH-04 block; 730324-730325 for the T-DG6-ARCH-05 block)", () => {
     expect(ADVISORY_LOCK_CLASSES).toEqual({
       businessUnitHierarchy: 730219,
       outcomeTree: 730220,
@@ -92,6 +92,7 @@ describe("advisory-lock class registry", () => {
       deliverableConfirmation: 730314,
       searchReindex: 730318,
       savedViewShare: 730319,
+      assistantSetting: 730323,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);

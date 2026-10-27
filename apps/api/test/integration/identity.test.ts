@@ -141,11 +141,13 @@ describe("GET /api/v1/me", () => {
         // + P6 slices E/F defaults (0100: sensitive_record.grant, sensitive_record.read)
         // + P6 slices J/C defaults (0103: operations.read)
         // + P6 slices B/A defaults (0107: connector.read, external_change.flag, import.read, outbound_write.read)
-        // + P6 slices H/G defaults (0109: saved_view.manage, saved_view.share), sorted.
+        // + P6 slices H/G defaults (0109: saved_view.manage, saved_view.share)
+        // + P6 slice D defaults (0112: assistant.use), sorted.
         permissions: [
           "action.edit",
           "approval.request",
           "assessment.respond",
+          "assistant.use",
           "audit.read",
           "automation.read",
           "automation.review",

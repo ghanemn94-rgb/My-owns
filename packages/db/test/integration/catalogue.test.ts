@@ -1009,6 +1009,36 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0111: the P6 slice D guards are attached (deferred audit on the setting, conversations and suggestions; the message count checked at COMMIT; trigger-written setting history; append-only messages)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('assistant_setting', 'assistant_setting_change', 'assistant_conversation', 'assistant_message', 'assistant_suggestion')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["assistant_conversation", "assistant_conversation_audit_required", true, true],
+      ["assistant_conversation", "assistant_conversation_guard", false, false],
+      ["assistant_conversation", "assistant_conversation_messages_match", true, true],
+      ["assistant_conversation", "assistant_conversation_row_guard", false, false],
+      ["assistant_message", "assistant_message_append_only", false, false],
+      ["assistant_message", "assistant_message_append_only_truncate", false, false],
+      ["assistant_message", "assistant_message_counted", true, true],
+      ["assistant_message", "assistant_message_guard", false, false],
+      ["assistant_setting", "assistant_setting_audit_required", true, true],
+      ["assistant_setting", "assistant_setting_guard", false, false],
+      ["assistant_setting", "assistant_setting_history", false, false],
+      ["assistant_setting", "assistant_setting_row_guard", false, false],
+      ["assistant_setting_change", "assistant_setting_change_append_only", false, false],
+      ["assistant_setting_change", "assistant_setting_change_append_only_truncate", false, false],
+      ["assistant_suggestion", "assistant_suggestion_audit_required", true, true],
+      ["assistant_suggestion", "assistant_suggestion_guard", false, false],
+      ["assistant_suggestion", "assistant_suggestion_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
@@ -1297,6 +1327,11 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "search_document",
       "search_index_state",
       "saved_view",
+      // P6 slice D (0111, T-DG6-ARCH-05; ADR-0059). All three audited; the setting history carries record_version;
+      // assistant_message is append-only and numbered by seq (no version column).
+      "assistant_setting",
+      "assistant_conversation",
+      "assistant_suggestion",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1695,6 +1730,13 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       saved_view_event: "SELECT",
       help_topic: "SELECT",
       load_dataset_marker: "SELECT",
+      // P6 slice D (0111, T-DG6-ARCH-05; ADR-0059): no DELETE anywhere; messages are append-only (INSERT and SELECT);
+      // the setting history is SELECT only (trigger-written).
+      assistant_setting: SIU,
+      assistant_setting_change: "SELECT",
+      assistant_conversation: SIU,
+      assistant_message: "INSERT,SELECT",
+      assistant_suggestion: SIU,
     });
   });
 

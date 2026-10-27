@@ -1,0 +1,8 @@
+# T-DG6-ARCH-05 telemetry search, Tue Oct 27 03:49:47 UTC 2026 at HEAD af13bd6168e3a77485d95133f0a9ada7f0783735
+$ grep -rliE "sentry|posthog|mixpanel|segment\.io|google-analytics|gtag|datadog|newrelic|opentelemetry|applicationinsights|amplitude|telemetry" --include=package.json apps packages
+EXIT=1 (1 = no match)
+$ grep -ciE "^  /?(@sentry|posthog|mixpanel|@datadog|newrelic|@opentelemetry|applicationinsights|amplitude|@segment)" pnpm-lock.yaml
+0
+EXIT=1 (1 = no match)
+$ grep -rlE "gtag\(|googletagmanager|analytics\.js|navigator\.sendBeacon" apps/web/src apps/web/index.html
+EXIT=1 (1 = no match)

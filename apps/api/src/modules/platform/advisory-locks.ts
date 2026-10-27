@@ -153,6 +153,10 @@ export const ADVISORY_LOCK_CLASSES = {
   searchReindex: 730318,
   /** One saved view's share and unshare (search saved views: the share decision re-checks saved_view.share at commit time and never interleaves with the owner's edit or delete; the shared shape is also held by saved_view_shared_shape and the 0108 trigger saved_view_guard). Key: "<savedViewId>". */
   savedViewShare: 730319,
+  // P6 block of T-DG6-ARCH-05 (730323-730325; p6-plan §4, ADR-0059 §10). 730324-730325 are RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** The assistant setting (assistant settings: a put, an enable and a disable never interleave, and the enable re-checks assistant.configure and the completeness of the setting at commit time; one row is also held by assistant_setting_singleton_key and the locked-while-enabled rule by the 0111 trigger assistant_setting_guard). One class-wide key: "assistant". */
+  assistantSetting: 730323,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

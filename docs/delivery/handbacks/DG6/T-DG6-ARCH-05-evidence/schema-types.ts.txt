@@ -1,0 +1,215 @@
+export interface AssistantSettingTable {
+  id: string;
+  singleton: Generated<boolean>;
+  enabled: Generated<boolean>;
+  provider_kind: string | null;
+  endpoint_url: string | null;
+  api_style: string | null;
+  model_name: string | null;
+  credential_ref: NullableJson;
+  authorization_reference: string | null;
+  request_timeout_ms: Generated<number>;
+  max_output_tokens: Generated<number>;
+  max_context_records: Generated<number>;
+  enabled_at: NullableTimestamp;
+  enabled_by: string | null;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AssistantSettingChangeTable {
+  id: string;
+  assistant_setting_id: string;
+  record_version: number;
+  enabled: boolean;
+  provider_kind: string | null;
+  endpoint_url: string | null;
+  api_style: string | null;
+  model_name: string | null;
+  credential_ref: NullableJson;
+  authorization_reference: string | null;
+  request_timeout_ms: number;
+  max_output_tokens: number;
+  max_context_records: number;
+  enabled_at: NullableTimestamp;
+  enabled_by: string | null;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface AssistantConversationTable {
+  id: string;
+  organization_id: string;
+  owner_user_id: string;
+  transformation_id: string | null;
+  title: string;
+  message_count: Generated<number>;
+  awaiting_reply: Generated<boolean>;
+  awaiting_since: NullableTimestamp;
+  last_message_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AssistantMessageTable {
+  id: string;
+  conversation_id: string;
+  organization_id: string;
+  seq: number;
+  author: string;
+  reply_kind: string | null;
+  refusal_code: string | null;
+  error_code: string | null;
+  content: string | null;
+  citations: JsonDefault;
+  provider_kind: string | null;
+  model_name: string | null;
+  setting_version: number | null;
+  latency_ms: number | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface AssistantSuggestionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  conversation_id: string;
+  message_id: string;
+  owner_user_id: string;
+  ordinal: number;
+  kind: string;
+  target_record_type: string | null;
+  fields: NullableJson;
+  text_content: string | null;
+  citations: Json;
+  status: Generated<string>;
+  taken_at: NullableTimestamp;
+  taken_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface Database {
+  assistant_setting: AssistantSettingTable;
+  assistant_setting_change: AssistantSettingChangeTable;
+  assistant_conversation: AssistantConversationTable;
+  assistant_message: AssistantMessageTable;
+  assistant_suggestion: AssistantSuggestionTable;
+}
+
+export type AssistantSettingRow = Selectable<AssistantSettingTable>;
+export type AssistantSettingChangeRow = Selectable<AssistantSettingChangeTable>;
+export type AssistantConversationRow = Selectable<AssistantConversationTable>;
+export type AssistantMessageRow = Selectable<AssistantMessageTable>;
+export type AssistantSuggestionRow = Selectable<AssistantSuggestionTable>;
+// ---- SCHEMA_COLUMNS entries
+  assistant_setting: [
+    "id",
+    "singleton",
+    "enabled",
+    "provider_kind",
+    "endpoint_url",
+    "api_style",
+    "model_name",
+    "credential_ref",
+    "authorization_reference",
+    "request_timeout_ms",
+    "max_output_tokens",
+    "max_context_records",
+    "enabled_at",
+    "enabled_by",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assistant_setting_change: [
+    "id",
+    "assistant_setting_id",
+    "record_version",
+    "enabled",
+    "provider_kind",
+    "endpoint_url",
+    "api_style",
+    "model_name",
+    "credential_ref",
+    "authorization_reference",
+    "request_timeout_ms",
+    "max_output_tokens",
+    "max_context_records",
+    "enabled_at",
+    "enabled_by",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  assistant_conversation: [
+    "id",
+    "organization_id",
+    "owner_user_id",
+    "transformation_id",
+    "title",
+    "message_count",
+    "awaiting_reply",
+    "awaiting_since",
+    "last_message_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assistant_message: [
+    "id",
+    "conversation_id",
+    "organization_id",
+    "seq",
+    "author",
+    "reply_kind",
+    "refusal_code",
+    "error_code",
+    "content",
+    "citations",
+    "provider_kind",
+    "model_name",
+    "setting_version",
+    "latency_ms",
+    "created_at",
+    "created_by",
+  ],
+  assistant_suggestion: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "conversation_id",
+    "message_id",
+    "owner_user_id",
+    "ordinal",
+    "kind",
+    "target_record_type",
+    "fields",
+    "text_content",
+    "citations",
+    "status",
+    "taken_at",
+    "taken_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
