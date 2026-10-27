@@ -20,6 +20,7 @@ import {
   readOnly,
 } from "./engine.ts";
 import { appliedFilters, dashboardRefusal, resolveFilters, transformationFilterQuery } from "./filters.ts";
+import { dashboardRestriction, withoutRestrictedItems } from "./restricted.ts";
 import { readableTransformation } from "./scope.ts";
 
 export const WORKSTREAM_DASHBOARD = "/api/v1/transformations/:transformationId/workstreams/:workstreamId/dashboard";
@@ -33,7 +34,8 @@ export function registerWorkstreamDashboardRoutes(app: FastifyInstance, { db }: 
       const { transformationId, workstreamId } = parse(wsParams, request.params, "params");
       const query = parseQuery(transformationFilterQuery, request.query);
       return readOnly(db, async (tx) => {
-        const t = await readableTransformation(tx, principalOf(request), transformationId);
+        const principal = principalOf(request);
+        const t = await readableTransformation(tx, principal, transformationId);
         const ws = await loadWorkstreamFacts(tx, t.id, workstreamId);
         if (!ws) throw problems.notFound();
         if (ws.status === "archived") throw dashboardRefusal("dashboard.workstream_archived", "");
@@ -45,12 +47,15 @@ export function registerWorkstreamDashboardRoutes(app: FastifyInstance, { db }: 
         });
         const ctx = await loadDashboardContext(tx, [t], filters);
         const narrowed = { ...ctx, facts: factsOfWorkstream(ctx.facts, ws.initiativeIds) };
-        const areas = presentAreas(
+        // P6 (T-DG6-BE-B2; ADR-0051 §2): same figures for every reader; restricted records are not listed.
+        const restriction = await dashboardRestriction(tx, principal, narrowed.facts);
+        const presented = presentAreas(
           narrowed,
           computeAreas(narrowed.facts, ctx.clock, ctx.policy),
           await loadAreaDefinitions(tx),
           { drillTransformationIds: [t.id], workstream: true },
         );
+        const areas = withoutRestrictedItems(presented, restriction);
         return {
           workstreamId: ws.workstreamId,
           transformationId: t.id,
@@ -60,6 +65,7 @@ export function registerWorkstreamDashboardRoutes(app: FastifyInstance, { db }: 
           businessDate: filters.businessDate,
           appliedFilters: appliedFilters(filters),
           areas,
+          ...restriction.field,
         };
       });
     },

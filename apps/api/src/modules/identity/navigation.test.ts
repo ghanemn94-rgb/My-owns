@@ -8,10 +8,12 @@ import { describe, expect, it } from "vitest";
 import type { Principal } from "../access/index.ts";
 import {
   DELIVERED_P5_SCREENS,
+  DELIVERED_P6_SCREENS,
   NAVIGATION_AREAS,
   navigationFor,
   type NavigationAreaCode,
   type P5Screen,
+  type P6Screen,
 } from "./navigation.ts";
 
 const principal = (permissions: readonly Permission[]): Principal => ({
@@ -65,8 +67,36 @@ const TABLE: readonly [NavigationAreaCode, string, readonly string[]][] = [
   [
     "administration",
     "admin",
-    ["methodology", "forms", "workflows", "automation", "organization", "access", "branding", "environment"],
+    [
+      "methodology",
+      "forms",
+      "workflows",
+      "automation",
+      "organization",
+      "access",
+      "branding",
+      "environment",
+      // P6 (D-198; T-DG6-BE-B2)
+      "audit",
+      "security",
+      "sensitiveGrants",
+      "operations",
+      "identity",
+      "storage",
+      "notifications",
+    ],
   ],
+];
+
+/** The P6 Administration items (D-198) with their codes; each is visible to a caller holding any ONE of them. */
+const P6_ADMIN_ITEMS: readonly [string, string, readonly Permission[]][] = [
+  ["audit", "/admin/audit", ["audit_event.read"]],
+  ["security", "/admin/security", ["security.read", "upload_policy.configure"]],
+  ["sensitiveGrants", "/admin/sensitive-grants", ["sensitive_record.read", "sensitive_record.grant"]],
+  ["operations", "/admin/operations", ["operations.read", "service_identity.configure"]],
+  ["identity", "/admin/identity", ["identity.read"]],
+  ["storage", "/admin/storage", ["storage.configure"]],
+  ["notifications", "/admin/notification-channels", ["notification_channel.configure"]],
 ];
 
 /** The ADR-0049 §9 Administration codes (row 14). */
@@ -84,6 +114,7 @@ const ADMIN_CODES: readonly Permission[] = [
   "access.assign",
   "branding.configure",
   "demo.reset",
+  ...P6_ADMIN_ITEMS.flatMap(([, , codes]) => codes),
 ];
 
 describe("the ADR-0049 §9 table as data", () => {
@@ -115,9 +146,29 @@ describe("visibility from held permissions (REQ-S03-007)", () => {
 
   it("TO sees Administration for the Studio review page; AUD sees it read-only through user.read/access.read", () => {
     const to = navigationFor(ofRoles("TO")).areas.find((a) => a.code === "administration");
-    expect(to?.items.map((i) => i.code)).toEqual(["methodology"]);
+    // P6 (D-198): TO also holds sensitive_record.grant/read and operations.read (0100, 0103).
+    expect(to?.items.map((i) => i.code)).toEqual(["methodology", "sensitiveGrants", "operations"]);
     const aud = navigationFor(ofRoles("AUD")).areas.find((a) => a.code === "administration");
-    expect(aud?.items.map((i) => i.code)).toEqual(["access"]);
+    // P6 (D-198): AUD also reads audit events, security, sensitive grants, operations and identity.
+    expect(aud?.items.map((i) => i.code)).toEqual([
+      "access",
+      "audit",
+      "security",
+      "sensitiveGrants",
+      "operations",
+      "identity",
+    ]);
+  });
+
+  it("P6 (D-198): a caller holding only one P6 Administration code sees Administration with exactly that item", () => {
+    for (const [code, path, codes] of P6_ADMIN_ITEMS)
+      for (const permission of codes) {
+        const nav = navigationFor(principal([permission]));
+        const admin = nav.areas.find((a) => a.code === "administration");
+        expect(admin?.items, permission).toEqual([
+          { code, labelKey: `nav.contents.admin.${code}`, path, availability: "planned" },
+        ]);
+      }
   });
 
   it("ADM_TECH, ADM_ACCESS and ADM_METHOD each see Administration", () => {
@@ -151,7 +202,9 @@ describe("availability (F-DG4-160)", () => {
   it("is planned only for items whose P5 screen is not delivered; every P5 screen is delivered", () => {
     const nav = navigationFor(ofRoles(...ROLE_CODES));
     const planned = nav.areas.flatMap((a) => a.items.filter((i) => i.availability === "planned").map((i) => i.code));
-    expect(planned).toEqual([]);
+    // P6 (D-198): the P6 Administration screens are FE-B's placeholders until delivered, so their items are planned.
+    expect(planned).toEqual(P6_ADMIN_ITEMS.map(([code]) => code));
+    expect([...DELIVERED_P6_SCREENS]).toEqual([]);
     expect([...DELIVERED_P5_SCREENS].sort()).toEqual(
       [
         "automation",
@@ -174,6 +227,15 @@ describe("availability (F-DG4-160)", () => {
     const delivered = new Set<P5Screen>([...without, "branding"]);
     const admin = navigationFor(ofRoles("ADM_TECH"), delivered).areas.find((a) => a.code === "administration")!;
     expect(admin.items.find((i) => i.code === "branding")?.availability).toBe("working");
+  });
+
+  it("P6 (D-198): flips a P6 item to working when its screen joins the delivered P6 list", () => {
+    const admin = (delivered: ReadonlySet<P6Screen>) =>
+      navigationFor(principal(["audit_event.read"]), DELIVERED_P5_SCREENS, delivered).areas.find(
+        (a) => a.code === "administration",
+      )!;
+    expect(admin(new Set()).items.map((i) => i.availability)).toEqual(["planned"]);
+    expect(admin(new Set<P6Screen>(["audit"])).items.map((i) => i.availability)).toEqual(["working"]);
   });
 });
 

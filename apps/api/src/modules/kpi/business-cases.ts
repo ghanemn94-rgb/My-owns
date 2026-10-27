@@ -41,7 +41,15 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { authorize, denialOf, holdsAnywhere, principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  authorize,
+  denialOf,
+  holdsAnywhere,
+  principalOf,
+  readScopeFor,
+  requireSensitiveRead,
+  requireTransformationRead,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -311,7 +319,16 @@ export function parseCaseId(params: unknown): string {
 export async function readCase(db: DbOrTx, request: FastifyRequest, id: string): Promise<BusinessCaseRow> {
   const row = await db.selectFrom("business_case").selectAll().where("id", "=", id).executeTakeFirst();
   if (!row) throw problems.notFound();
-  await requireTransformationRead(db, principalOf(request), row.transformation_id);
+  const principal = principalOf(request);
+  const target = await requireTransformationRead(db, principal, row.transformation_id);
+  // P6 (ADR-0051 §1, §2; T-DG6-BE-B2): a sensitive business case the caller is not admitted to is 404, like any
+  // unreadable record; this covers the case GET, its totals and its line reads.
+  await requireSensitiveRead(db, principal, "business_case", row.id, target, [
+    row.benefit_owner_user_id,
+    row.initiative_owner_user_id,
+    row.finance_validator_user_id,
+    row.created_by,
+  ]);
   return row;
 }
 
@@ -665,7 +682,10 @@ export function registerBusinessCaseRoutes(app: FastifyInstance, { db }: ModuleD
 
   app.get(BUSINESS_CASES, { config: read }, async (request) => {
     const query = parseQuery(listQuery, request.query);
-    await requireTransformationRead(db, principalOf(request), query.transformationId);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, query.transformationId);
+    // P6 (ADR-0051 §1; T-DG6-BE-B2): the ReadScope drops a sensitive case the caller is not admitted to.
+    const scope = await readScopeFor(db, principal, "transformation.read");
     const hash = filterHash({
       table: "business_case",
       transformationId: query.transformationId,
@@ -673,7 +693,24 @@ export function registerBusinessCaseRoutes(app: FastifyInstance, { db }: ModuleD
       includeArchived: query.includeArchived,
     });
     const after = decodeCursor(query.cursor, hash, 2);
-    let q = db.selectFrom("business_case").selectAll().where("transformation_id", "=", query.transformationId);
+    let q = db
+      .selectFrom("business_case")
+      .selectAll()
+      .where("transformation_id", "=", query.transformationId)
+      .where(
+        scope.predicate({
+          recordType: "business_case",
+          recordId: sql.ref("business_case.id"),
+          organizationId: sql.ref("business_case.organization_id"),
+          transformationId: sql.ref("business_case.transformation_id"),
+          partyUserIds: [
+            sql.ref("business_case.benefit_owner_user_id"),
+            sql.ref("business_case.initiative_owner_user_id"),
+            sql.ref("business_case.finance_validator_user_id"),
+            sql.ref("business_case.created_by"),
+          ],
+        }),
+      );
     if (query.level !== undefined) q = q.where("level", "=", query.level);
     if (!query.includeArchived) q = q.where("status", "<>", "archived");
     if (after)

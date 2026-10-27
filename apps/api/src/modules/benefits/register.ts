@@ -52,7 +52,15 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
-import { denialOf, holdsAnywhere, principalOf, requireTransformationRead, resolveTarget } from "../access/index.ts";
+import {
+  denialOf,
+  holdsAnywhere,
+  principalOf,
+  readScopeFor,
+  requireSensitiveRead,
+  requireTransformationRead,
+  resolveTarget,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -162,7 +170,8 @@ export async function readBenefitRow(
   transformationId: string,
   benefitId: string,
 ): Promise<BenefitRow> {
-  await requireTransformationRead(db, principalOf(request), transformationId);
+  const principal = principalOf(request);
+  const target = await requireTransformationRead(db, principal, transformationId);
   const row = await db
     .selectFrom("benefit")
     .selectAll()
@@ -170,6 +179,13 @@ export async function readBenefitRow(
     .where("transformation_id", "=", transformationId)
     .executeTakeFirst();
   if (!row) throw problems.notFound();
+  // P6 (ADR-0051 §1, §2; T-DG6-BE-B2): a sensitive benefit the caller is not admitted to is 404, like any unreadable
+  // record; this covers the benefit GET and every benefit sub-resource read that loads its benefit here.
+  await requireSensitiveRead(db, principal, "benefit", row.id, target, [
+    row.owner_user_id,
+    row.finance_validator_user_id,
+    row.created_by,
+  ]);
   return row;
 }
 
@@ -1093,10 +1109,29 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
   app.get(BENEFITS, { config: read }, async (request) => {
     const transformationId = parseTransformationParam(request.params);
     const query = parseQuery(listQuery, request.query);
-    await requireTransformationRead(db, principalOf(request), transformationId);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, transformationId);
     const hash = filterHash({ table: "benefit", transformationId, step: query.lifecycleStep, status: query.status });
     const after = decodeCursor(query.cursor, hash, 1);
-    let q = db.selectFrom("benefit").selectAll().where("transformation_id", "=", transformationId);
+    // P6 (ADR-0051 §1; T-DG6-BE-B2): the ReadScope drops a sensitive benefit the caller is not admitted to.
+    const scope = await readScopeFor(db, principal, "transformation.read");
+    let q = db
+      .selectFrom("benefit")
+      .selectAll()
+      .where("transformation_id", "=", transformationId)
+      .where(
+        scope.predicate({
+          recordType: "benefit",
+          recordId: sql.ref("benefit.id"),
+          organizationId: sql.ref("benefit.organization_id"),
+          transformationId: sql.ref("benefit.transformation_id"),
+          partyUserIds: [
+            sql.ref("benefit.owner_user_id"),
+            sql.ref("benefit.finance_validator_user_id"),
+            sql.ref("benefit.created_by"),
+          ],
+        }),
+      );
     q = q.where("status", "=", query.status ?? "active");
     if (query.lifecycleStep !== undefined) q = q.where("lifecycle_step", "=", query.lifecycleStep);
     if (after) q = q.where("id", ">", String(after[0]));

@@ -44,6 +44,7 @@ import {
   type Principal,
 } from "../../access/index.ts";
 import { record } from "../../audit/index.ts";
+import { restrictionOf } from "../../benefits/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
   cursorSchema,
@@ -182,6 +183,56 @@ async function ownJob(db: DbOrTx, principal: Principal, jobId: string, lock = fa
   if (row === undefined) throw problems.notFound();
   if (!(await canRead(db, principal, row.transformation_id))) throw problems.notFound();
   return row;
+}
+
+// ------------------------------------------------------------------------------------------------ export selection (P6)
+
+/**
+ * The export selection's sensitivity boundary (T-DG6-BE-B2; ADR-0051 §1, §2; REQ-S10-002, REQ-S10-004): the
+ * requester's ReadScope applied to the records the snapshot was assembled from (`report_snapshot_source`). The worker
+ * renders the snapshot's stored content unchanged (never re-assembled, ADR-0046 §2), so a snapshot that includes a
+ * sensitive benefit, business case or evidence item the requester is not admitted to (or a business-case line or a
+ * benefit measurement of one) is never exported for that requester: 403, at the request, again at commit time and
+ * again at download. A snapshot with no sensitive source exports exactly as in DG5.
+ */
+export async function includesRestrictedSources(
+  db: DbOrTx,
+  principal: Principal,
+  snapshotId: string,
+): Promise<boolean> {
+  const sources = await db
+    .selectFrom("report_snapshot_source")
+    .select(["record_type", "record_id"])
+    .where("snapshot_id", "=", snapshotId)
+    .where("record_type", "in", ["benefit", "business_case", "evidence", "business_case_line", "benefit_measurement"])
+    .execute();
+  if (sources.length === 0) return false;
+  const idsOf = (type: string) => [...new Set(sources.filter((r) => r.record_type === type).map((r) => r.record_id))];
+  const lineIds = idsOf("business_case_line");
+  const measurementIds = idsOf("benefit_measurement");
+  const lineCases =
+    lineIds.length === 0
+      ? []
+      : await db.selectFrom("business_case_line").select("business_case_id").where("id", "in", lineIds).execute();
+  const measurementBenefits =
+    measurementIds.length === 0
+      ? []
+      : await db.selectFrom("benefit_measurement").select("benefit_id").where("id", "in", measurementIds).execute();
+  const benefits = [...idsOf("benefit"), ...measurementBenefits.map((m) => m.benefit_id)];
+  const cases = [...idsOf("business_case"), ...lineCases.map((l) => l.business_case_id)];
+  for (const [type, ids] of [
+    ["benefit", benefits],
+    ["business_case", cases],
+    ["evidence", idsOf("evidence")],
+  ] as const) {
+    if ((await restrictionOf(db, principal, type, ids)).restricted.size > 0) return true;
+  }
+  return false;
+}
+
+/** 403 when the snapshot includes a record the requester is not admitted to (see includesRestrictedSources). */
+async function requireUnrestrictedSelection(db: DbOrTx, principal: Principal, snapshotId: string): Promise<void> {
+  if (await includesRestrictedSources(db, principal, snapshotId)) throw problems.forbidden();
 }
 
 // ------------------------------------------------------------------------------------------------ create
@@ -340,6 +391,7 @@ export async function createExport(
     });
     snapshotId = generated.id;
   }
+  await requireUnrestrictedSelection(db, principal, snapshotId);
 
   return db.transaction().execute(async (tx) => {
     // Commit-time re-authorization: the grants are reloaded inside the write transaction (shared rule 4).
@@ -347,6 +399,7 @@ export async function createExport(
     try {
       await requireReportPermission(tx, fresh, transformationId, "export.create");
       if (body.report !== undefined) await requireReportPermission(tx, fresh, transformationId, "report.generate");
+      await requireUnrestrictedSelection(tx, fresh, snapshotId);
     } catch (err) {
       throw commitTimeDenial(err);
     }
@@ -461,7 +514,10 @@ export async function getExport(db: Db, request: FastifyRequest, jobId: string):
 
 /** GET /exports/{id}/download: the stored file's metadata, after the access re-check and the state checks. */
 export async function downloadableExport(db: Db, request: FastifyRequest, jobId: string) {
-  const row = await ownJob(db, principalOf(request), jobId);
+  const principal = principalOf(request);
+  const row = await ownJob(db, principal, jobId);
+  // P6 (T-DG6-BE-B2): a grant revoked or a record marked since the request still keeps the file from this requester.
+  await requireUnrestrictedSelection(db, principal, row.snapshot_id);
   if (row.status === "failed") throw exportRefusals.failed();
   if (row.status !== "succeeded" || row.storage_key === null) throw exportRefusals.notReady();
   return {
