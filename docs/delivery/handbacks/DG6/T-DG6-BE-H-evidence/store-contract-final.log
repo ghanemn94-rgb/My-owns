@@ -1,0 +1,23 @@
+$ QA_PG_PORT=23855 MTH_PORT_POOL=23856-23859 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/evidence/store-contract.test.ts
+Wed Oct 28 20:14:10 UTC 2026
+port-policy: PostgreSQL listening on port 23855 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-h
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvsjyxo8_9da52833 (server_encoding UTF8); applied 104 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/evidence/store-contract.test.ts (39 tests) 6233ms
+   ✓ EvidenceStore contract: filesystem (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  552ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  1345ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > enforces maxBytes after a multipart part was already stored, and leaves nothing behind  556ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > writes a body up to 8 MiB with one PutObject to <key>.part, then CopyObject + DeleteObject on finalise  483ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > uses multipart upload above 8 MiB, buffering one part at a time  1198ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > aborts the multipart upload when the body fails after a part was stored  348ms
+
+ Test Files  1 passed (1)
+      Tests  39 passed (39)
+   Start at  20:14:17
+   Duration  28.71s (transform 3.20s, setup 0ms, collect 5.10s, tests 6.23s, environment 0ms, prepare 371ms)
+
+Wed Oct 28 20:14:49 UTC 2026
+EXIT=0
