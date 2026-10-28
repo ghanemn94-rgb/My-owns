@@ -1,0 +1,8 @@
+Filesystem adapter move without behaviour change (T-DG6-BE-H; ADR-0054 §2).
+Procedure: from `git show HEAD:apps/api/src/modules/evidence/store.ts` (HEAD 80464fa), the TEMPORARY_NAME/KEY_DEPTH
+declarations and the text from `const KEY = /^…` up to `/** The configured store;` (KEY + class
+FilesystemEvidenceStore) were extracted and diffed against apps/api/src/modules/evidence/stores/filesystem.ts from
+line 19 on (after its new header comment and import block).
+Result of `diff`: no output, exit 0 -> IDENTICAL.
+The existing evidence unit tests (apps/api/src/modules/evidence/evidence.test.ts) are unchanged and import the class
+through the re-export in store.ts.
