@@ -1039,6 +1039,27 @@ describe("schema.ts matches the migrated database", () => {
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
 
+  it("0113: the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('branding_contrast_report', 'branding_contrast_pair')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["branding_contrast_pair", "branding_contrast_pair_append_only", false, false],
+      ["branding_contrast_pair", "branding_contrast_pair_append_only_truncate", false, false],
+      ["branding_contrast_pair", "branding_contrast_pair_report_complete", true, true],
+      ["branding_contrast_report", "branding_contrast_report_append_only", false, false],
+      ["branding_contrast_report", "branding_contrast_report_append_only_truncate", false, false],
+      ["branding_contrast_report", "branding_contrast_report_audit_required", true, true],
+      ["branding_contrast_report", "branding_contrast_report_pairs_complete", true, true],
+      ["branding_contrast_report", "branding_contrast_report_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
   it("0097: the contributor tables are append-only and every content table of a draft records its writers (D-170)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
@@ -1737,6 +1758,9 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       assistant_conversation: SIU,
       assistant_message: "INSERT,SELECT",
       assistant_suggestion: SIU,
+      // P6 slice I (0113; T-DG6-ARCH-06, ADR-0061 §2): the contrast report of a published branding version, append-only.
+      branding_contrast_report: "INSERT,SELECT",
+      branding_contrast_pair: "INSERT,SELECT",
     });
   });
 

@@ -7179,6 +7179,45 @@ export type AssistantConversationRow = Selectable<AssistantConversationTable>;
 export type AssistantMessageRow = Selectable<AssistantMessageTable>;
 export type AssistantSuggestionRow = Selectable<AssistantSuggestionTable>;
 
+// ------------------------------------------------------------------------------------------------ P6 slice I (0113)
+// The contrast report of a published branding version (T-DG6-ARCH-06; ADR-0061 §1). Both tables are append-only.
+
+export interface BrandingContrastReportTable {
+  id: string;
+  organization_id: string;
+  branding_version_no: number;
+  rules: string;
+  token_source_sha256: string;
+  pair_count: number;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BrandingContrastPairTable {
+  id: string;
+  report_id: string;
+  ordinal: number;
+  fg_token: string;
+  bg_token: string;
+  use: string;
+  fg_hex: string;
+  bg_hex: string;
+  /** numeric(4,2), rounded down (floor2); a decimal string. */
+  ratio: string;
+  /** numeric(2,1): 4.5 for text, 3.0 for large-text and ui; a decimal string. */
+  threshold: string;
+  usage_note: string;
+  created_at: TimestampDefault;
+}
+
+export interface Database {
+  branding_contrast_report: BrandingContrastReportTable;
+  branding_contrast_pair: BrandingContrastPairTable;
+}
+
+export type BrandingContrastReportRow = Selectable<BrandingContrastReportTable>;
+export type BrandingContrastPairRow = Selectable<BrandingContrastPairTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -13176,6 +13215,30 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+  ],
+  branding_contrast_report: [
+    "id",
+    "organization_id",
+    "branding_version_no",
+    "rules",
+    "token_source_sha256",
+    "pair_count",
+    "created_at",
+    "created_by",
+  ],
+  branding_contrast_pair: [
+    "id",
+    "report_id",
+    "ordinal",
+    "fg_token",
+    "bg_token",
+    "use",
+    "fg_hex",
+    "bg_hex",
+    "ratio",
+    "threshold",
+    "usage_note",
+    "created_at",
   ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 

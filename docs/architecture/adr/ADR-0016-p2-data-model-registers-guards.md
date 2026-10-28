@@ -178,6 +178,7 @@ This is the **one registry** of the transaction-scoped advisory-lock classes. AD
 | 730320–730322 | — | reserved for the T-DG6-ARCH-04 block (p6-plan §4); not allocated (730320 "draft upsert" is not needed: P5 `form_draft_open_record_key` serializes drafts and P6 adds no draft write) | — | — |
 | 730323 | `assistantSetting` (assistant) | the assistant setting: put, enable and disable never interleave; the enable re-checks `assistant.configure` and the setting's completeness at commit time | `assistant` (one class-wide key) | API (BE-T, `putAssistantSetting`, `enableAssistant`, `disableAssistant`); one row is also held by `assistant_setting_singleton_key`, and the locked-while-enabled rule by the trigger `assistant_setting_guard` (0111; ADR-0059 §10) |
 | 730324–730325 | — | reserved for the T-DG6-ARCH-05 block (p6-plan §4); not allocated (a conversation needs no lock: its If-Match version step and the trigger `assistant_conversation_guard` serialize posts) | — | — |
+| 730326–730327 | — | reserved for the T-DG6-ARCH-06 block (p6-plan §4); not allocated (the branding contrast report of ADR-0061 §1 is written in the publish transaction under `brandingPublish` 730270, the organization id) | — | — |
 
 Rules:
 

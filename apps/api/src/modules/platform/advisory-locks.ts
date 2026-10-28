@@ -157,6 +157,8 @@ export const ADVISORY_LOCK_CLASSES = {
   // never allocated to another block, and listed here only once a resource uses it.
   /** The assistant setting (assistant settings: a put, an enable and a disable never interleave, and the enable re-checks assistant.configure and the completeness of the setting at commit time; one row is also held by assistant_setting_singleton_key and the locked-while-enabled rule by the 0111 trigger assistant_setting_guard). One class-wide key: "assistant". */
   assistantSetting: 730323,
+  // P6 block of T-DG6-ARCH-06 (730326-730327; p6-plan §4, ADR-0061 §10). Both are RESERVED for this block and not
+  // allocated: the branding contrast report is written by the publish transaction under brandingPublish (730270).
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;
