@@ -63,6 +63,8 @@ import { pinNewTransformationToForms, registerFormsModule, setFormBulkUpdaters }
 // T-DG5-BE-H (ADR-0043 §2): the AutomationActionRegistry port and the action descriptors of their owning modules.
 import { createAutomationActionRegistry, setAutomationActionRegistry } from "./modules/automation/registry.ts";
 import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
+import { createEmailChannel } from "./modules/tasks/channels/email.ts"; // BE-I (ADR-0054 §3)
+import { renderTestMessage } from "./modules/tasks/channels/render.ts"; // BE-I (ADR-0054 §3)
 import { registerHealthCheckSchemeProvider, registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
 import { launchPlanGenerator } from "./modules/launch/port.ts";
@@ -420,7 +422,12 @@ export async function buildServer(options: ServerOptions): Promise<{
   });
   registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
   registerStorageAdminRoutes(app, deps); // BE-H: Administration > Storage (slice C)
-  registerNotificationChannelRoutes(app, deps); // BE-I: Administration > Notifications (slice C)
+  // BE-I: Administration > Notifications (slice C). admin may not import tasks, so the email adapter and the test
+  // renderer of tasks/channels/** are injected here; the SecretProvider registry (created below) is read at request time.
+  registerNotificationChannelRoutes(app, deps, {
+    secrets: () => secrets,
+    channels: { createEmailChannel, renderTestMessage },
+  });
   registerServiceIdentityRoutes(app, deps); // BE-J: Administration > Service identities (slice J)
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
   // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
