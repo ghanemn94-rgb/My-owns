@@ -597,3 +597,101 @@ No requirement of this section is complete yet: each needs its implementer work.
 6. **Honest status (rule 14).** The HTTP adapter is tested against the local fake only; the live IT endpoint and any real model's behaviour are residuals, never called live.
 7. **Exact texts.** Refusal codes and English texts are ADR-0059 §8 and §10 verbatim; a new code goes in the handback with its proposed text (rule 17).
 8. **AUD** reads the setting and gets 403 on every assistant write; whether AUD may use the assistant is an open orchestrator question (ADR-0059 Alternatives 5).
+
+## §I/K. Slices I (UX, accessibility and bilingual hardening) and K (the DG5 carry-forward) — T-DG6-ARCH-06
+
+Read with ADR-0061 (every section number below is ADR-0061's unless named otherwise), ADR-0009, ADR-0049 §8–§12 and the shared rules of §2. Slice I hardens screens other slices build, so most of its work lands late (W11–W14); the contrast rule (BE-W) and the carry-forward (FE-G) have no dependency on them and land early.
+
+### I/K.0 Already delivered by the architect (do not re-create)
+
+- **ADR-0061** (§1 contrast rule for runtime branding, §2 entity, §3 greyscale cue test, §4 1440 px and 360 px rules, §5 contract, §6 refusal codes, §7 keyboard, axe scope and localized problems, §8 explanation-panel inventory, §9 slice K acceptance texts, §10 authorization). ADR-0062 stays reserved.
+- **Migration** `0113_p6_branding_contrast_reports.sql` (2 append-only tables `branding_contrast_report`, `branding_contrast_pair`; 1 trigger function; no row seeded; no permission). Probe: `docs/delivery/handbacks/DG6/T-DG6-ARCH-06-evidence/probe-output.txt` (42/42).
+- **Types and pins:** `packages/db/src/schema.ts` (the two tables), `packages/db/test/integration/catalogue.test.ts` ("0113", eight triggers), `packages/db/src/seed.test.ts` (free-id example 0114).
+- **Advisory locks:** none new; 730326–730327 reserved (`platform/advisory-locks.ts` comment, ADR-0016 §6 row).
+- **Contract:** 1 operation `getBrandingVersionContrast` (schema `BrandingContrastReport`), the `putBrandingSettings` summary gains `.contrast_insufficient`; pending in `apps/api/test/support/p6-pending-be-w.ts`, aggregated by `p6-pending-arch-06.ts` (the `p6-pending.ts` aggregate is now frozen, p6-plan §5.3); `contract.test.ts` pins 932 operations.
+- **Docs:** ERD §1y, data dictionary "P6 tables, slice I", permissions matrix §29.
+- **No `explanations/{kind}/{id}` operation:** the §8 inventory found every input already readable.
+
+### I/K.1 BE-W — the branding contrast rule, the stored report, the contrast route (backend-workflow-engineer; any wave after ARCH-06; about 70 minutes)
+
+- **Files:** `packages/design-tokens/src/branding-contrast.ts` (new: `checkBrandingContrast(primary, secondary, source?)` of §1.1, pure; the pointer rule of §6 as `contrastPointer(pair)`), its one export line in `packages/design-tokens/src/index.ts`, `packages/design-tokens/src/branding-contrast.test.ts` (the seeds give exactly the build-time 50 pairs and ratios; #FFD700 fails exactly the two `brand.primary` pairs; #6FA8DC as secondary fails the `brand.deep` text pairs; a prohibited pair passing is not a failure); `apps/api/src/modules/admin/branding.ts` named lines (the `BrandingTokenSource` gains `checkBrandingContrast` and `tokenSourceSha256`; the refusal `brandingRefusals.contrastInsufficient(errors)` after `checkBrandingRules()` and before the transaction; in `publishBranding` after the version insert: the report, its pairs in declared order and the audit event `branding_contrast_report.recorded`; the route `getBrandingVersionContrast`), `admin/branding-port.ts` (the read of a stored report), the shared zod mirror `brandingContrastReport` in `packages/shared/src/schemas/branding.ts` (named lines), the constraint mappings in `platform/db-errors.ts` (its own block: `branding_contrast_pair_passes` and `branding_contrast_report_pairs_complete` → 422 `branding.contrast_insufficient`; `branding_version_contrast_required` → 500 with the generic internal problem, because the API always writes the report), the **requirement migration** (`branding_version_contrast_required`, ADR-0061 §2; the next id above the highest shipped file at merge time, rule 18, asked of the orchestrator) with its probe in the handback, `apps/api/test/integration/branding/contrast.test.ts`, `p6-pending-be-w.ts` (empty it), `apps/api/test/integration/contract/p6-exercises-be-w.ts`.
+- **Wiring line (orchestrator merge):** the `checkBrandingContrast` and `tokenSourceSha256` members of the `BrandingTokenSource` passed in `apps/api/src/server.ts` (the SHA-256 of the bytes of `tokens.json` read at start-up).
+- **Operations (1 new, 1 extended):** `getBrandingVersionContrast`; `putBrandingSettings` (the refusal and the report).
+- **Consumes:** ADR-0061 §1, §2, §5, §6, §10; ADR-0049 §8, §11, §12 (publish transaction, lock 730270, codes); ADR-0009 §3 (derivation); ADR-0004 (audit); ADR-0007 (`errors` items, ETag).
+- **Tests:** a failing primary and a failing secondary each answer 422 `branding.contrast_insufficient` with one `errors` item per failing pair (pointer, code `branding.contrast_pair_below_threshold`, message exactly `"<fg> / <bg> | <use> | <ratio>:1 < <threshold>:1"`), and write nothing (version, head, report, pair and audit counts unchanged); the ADR-0049 §11 codes keep their order (an invalid colour is still `.colour_invalid`); the seeds publish with one report of 50 pairs and the audit events of the version, the head and the report; the report's `tokenSourceSha256` equals the file's SHA-256; `getBrandingVersionContrast` answers `recorded` for it, `not_recorded` (with failing pairs listed) for a version inserted before the requirement migration (a fixture), 404 for an unknown version and for another organization's version, 403 for AUD and for a transformation lead; AUD reads the `branding_contrast_report.recorded` event through `/audit-events`; If-Match 428/409 and the commit-time `branding.configure` re-check are unchanged (one test each, rule 4); the requirement migration's probe (a version without a report fails at COMMIT; earlier versions untouched).
+- **Strings (requested through the handback, FE-A's append-only merge):** `problems.branding__contrast_insufficient` and `problems.branding__contrast_pair_below_threshold`, en and ar exactly as ADR-0061 §6 (Arabic provisional, listed in `i18n/provisional-ar-p6.ts`).
+
+### I/K.2 KBE-B — explanation view models (kpi-benefits-engineer; after ARCH-06; about 60 minutes)
+
+The p6-plan row said "the explanation inputs ARCH-06 finds missing (benefit realized value first)". ADR-0061 §8 finds **no missing input**. KBE-B therefore builds the decimal-safe view models the panels display, so the web never computes a business number.
+
+- **Files:** `packages/shared/src/explain/{weighted-score,benefit-realized,financial-metrics,health-score,index}.ts` (pure; decimal.js; each takes the operation responses of §8 and returns the panel's rows and message parameters: E1 one contribution per criterion `score × weight ÷ 100` as decimal strings and their sum equal to `result.weightedScore`; E2 the validated, sustained and pending lines with their periods and the three totals kept apart, never added; E4 the per-period net and discount factor rows; E5 the answered, applicable and point counts), `packages/shared/src/explain/explain.test.ts`, one export line in `packages/shared/src/calc.ts`.
+- **Consumes:** ADR-0061 §8 (the table, the decimal and Unknown rules), ADR-0022 §2 (weighted score), ADR-0030 §6 (T14 Realized), ADR-0047 §5, ADR-0048 §5–§6. The formula engine (`packages/shared/src/formula/**`) is not touched (rule 9).
+- **Tests:** E1's contributions sum exactly to the server's `weightedScore` for the 25/25/20/15/15 default and for two other weight sets; an incomplete score gives no contributions and lists the missing criteria; E2 never adds validated, sustained and pending, and a line without an amount makes its total Unknown, never 0; E4 reproduces `computeFinancialMetrics` for its fixtures (no second NPV implementation: the view model calls the shared functions); E5 gives no score while any question is unanswered. **Report in the handback** any difference between the E4/E5 words of ADR-0061 §8 and the code; do not change the code.
+
+### I/K.3 FE-F — explanation panels, status cues, catalogue completeness (frontend-ux-engineer; after FE-D, FE-E, KBE-B, BE-W; about 75 minutes)
+
+- **Files:** `apps/web/src/components/explanation/**` (one panel component: inputs table, formula in words, period, version; Unknown and incomplete states; a disclosure button with an accessible name), the panel mounts on the named lines of `pages/prioritization/Scorecard.tsx` (E1, and the `status-chip` at line 230 gains its icon), `pages/benefits/BenefitPage.tsx` (E2), the financial metrics display (E4) and `pages/health-check/HealthCheckPage.tsx` (E5), `apps/web/src/i18n/{en,ar}/explanations.json` (new namespace; Arabic provisional), `components/Badges.test.tsx` (§3 item 1), `packages/design-tokens/src/status-tokens.test.ts` (no status token is or references a blue token), `apps/web/src/i18n/problems-all.test.ts` (§7.3), the Branding Settings lines in `pages/branding/**` (the refusal's failing pairs listed, each token pair and ratio in an LTR isolate; a "Contrast report" view of the selected version through `getBrandingVersionContrast`; a version marked `not_recorded` with failing pairs shows the warning "The current colours fail the contrast rules; publish corrected colours." en/ar).
+- **Consumes:** ADR-0061 §1.4, §3, §6, §7.3, §8; KBE-B's view models; BE-W's operation.
+- **Tests:** component tests of each panel in en and ar (the E1 and E2 panels are the acceptance's: their words appear in both languages); Unknown is never rendered as 0 or green; AUD sees panels read-only; one form-level alert on Branding Settings; axe on the components (vitest-axe as used by the existing component tests, if present; otherwise covered by QA-D).
+
+### I/K.4 FE-F2 — 1440 px home and executive regions, 360 px flows, keyboard walkthrough, the axe-scope test (frontend-ux-engineer; after FE-F; about 75 minutes)
+
+- **Files:** the named region lines of `pages/my-work/**` and `pages/executive-overview/**` (regions "decisions", "outcomes", "next actions" with accessible names, above the fold at 1440 × 900, §4.1), the 360 px fixes in the approval, gate, KPI actual and KPI review pages (named lines, §4.2), the keyboard fixes in `pages/walkthrough/**` and any control it reaches (§7.1), `apps/web/src/app/axe-scope.test.ts` (§7.2: every route added to `router.tsx` in P6 is in `e2e/support/p6-axe-screens.ts`), its own regression specs `apps/web/e2e/p6-layout-1440.spec.ts`, `p6-flows-360.spec.ts`, `p6-walkthrough-keyboard.spec.ts` (each with a measured budget, rule 15).
+- **Consumes:** ADR-0061 §4, §7.1, §7.2. Existing data only: a region shows what the page already loads, or its designed empty state.
+- **Order with QA-D:** QA-D owns `e2e/support/p6-axe-screens.ts`; FE-F2's scope test imports it. If QA-D has not created it yet, FE-F2 creates it as a list QA-D extends (the file then moves to QA-D's ownership; recorded in both handbacks).
+
+### I/K.5 FE-G — the DG5 carry-forward (frontend-ux-engineer; W8; after ARCH-06; about 75 minutes)
+
+- **Files:** `pages/studio/api.ts` (`elementLabel()`) and the rubric diff in `pages/studio/**` (named lines), the `fetchAllPages` callers of the executive-overview filter and the organization Finance queue (named lines) and `apps/web/src/api/` `fetchAllPages` itself only if the notice needs its page count (FE-A's file; orchestrator merge), `pages/traceability/**` (the note), the e2e budget sweep over `apps/web/e2e/**` (budgets and the two named waits only).
+- **Acceptance:** ADR-0061 §9, verbatim. Each finding is verified by a non-author reviewer in a DG6 round; FE-G never closes its own finding.
+- **Measurements:** the handback lists every spec's loaded worst case from the full e2e run on the merged tree, the budgets set (≥ 2x where above 15 s) and the splits.
+
+### I/K.6 QA-D (qa-verifier; W14; the plan's row; slice I's parts)
+
+`e2e/**` files for ADR-0061 §4.1 (1440 px, en and ar, home and executive), §4.2 (360 px and 768 px: gate decision, approval request, KPI actual submit and accept, en and ar), §7.1 (keyboard-only walkthrough, en and ar), §7.2 (axe on the P6 routes and the key flows, with the §3 item 2 chip rule and the §3 item 3 greyscale screenshots), §7.3 (a real API validation error rendered in each language; Arabic XLSX and CSV exports keeping `KPI-001` and `12.5%`), §8 (the infrastructure-term scan on non-admin screens, and a forced 500), and `e2e/support/p6-axe-screens.ts`. Each spec states its budget from a loaded measurement.
+
+### I/K.7 Migrations left and their order
+
+The architect shipped `0113` directly above `0112` (D-196). **One implementer migration is planned:** BE-W's `branding_version_contrast_required` requirement, at the next id above the highest shipped file when BE-W merges (rule 18). No other slice I or K task needs a migration.
+
+### I/K.8 Integration order
+
+ARCH-06 → BE-W and KBE-B (independent, any order) → FE-F (needs both, plus FE-D and FE-E so the panels and chips land on finished screens) → FE-F2 → QA-D. FE-G is independent and lands early (W8) so the budget sweep stabilises the suite before the P6 specs. `admin/branding.ts` is edited only by BE-W in P6. `apps/api/src/server.ts` gets BE-W's one `BrandingTokenSource` line (orchestrator merge). `i18n/{en,ar}/problems.json` get BE-W's two keys through FE-A's append-only merge.
+
+### I/K.9 File ownership (no overlap)
+
+| Task | Owns |
+|---|---|
+| BE-W | `packages/design-tokens/src/branding-contrast.ts` (+ test), one export line in `packages/design-tokens/src/index.ts`, `admin/branding.ts` and `admin/branding-port.ts` (named lines), `brandingContrastReport` in `packages/shared/src/schemas/branding.ts`, its block in `platform/db-errors.ts`, its requirement migration, `apps/api/test/integration/branding/contrast.test.ts`, `p6-pending-be-w.ts`, `p6-exercises-be-w.ts` |
+| KBE-B | `packages/shared/src/explain/**`, one export line in `packages/shared/src/calc.ts` |
+| FE-F | `apps/web/src/components/explanation/**`, `apps/web/src/i18n/{en,ar}/explanations.json`, `components/Badges.test.tsx`, `packages/design-tokens/src/status-tokens.test.ts`, `apps/web/src/i18n/problems-all.test.ts`, the named lines of `pages/prioritization/Scorecard.tsx`, `pages/benefits/BenefitPage.tsx`, the financial-metrics display, `pages/health-check/HealthCheckPage.tsx`, `pages/branding/**` |
+| FE-F2 | the named lines of `pages/my-work/**`, `pages/executive-overview/**`, the approval, gate, KPI actual, KPI review and walkthrough pages; `apps/web/src/app/axe-scope.test.ts`; `apps/web/e2e/p6-{layout-1440,flows-360,walkthrough-keyboard}.spec.ts` |
+| FE-G | the named lines of `pages/studio/**`, `pages/traceability/**`, the two `fetchAllPages` callers; budget and wait lines of `apps/web/e2e/**` |
+| QA-D | the slice I files under `e2e/**`, `e2e/support/p6-axe-screens.ts` |
+| Orchestrator | the `BrandingTokenSource` line in `apps/api/src/server.ts`; the `problems.json` merge |
+
+### I/K.10 Requirement → owner
+
+| Requirement | Architect delivered | Implementer owner(s) | Proof |
+|---|---|---|---|
+| REQ-S15-001 | ADR-0061 §4.1 | FE-F2 (regions at 1440 px) | QA-D (A20 1440 px en/ar, bounding boxes and computed styles) |
+| REQ-S15-003 | ADR-0061 §1–§3, §6; `0113` (a stored pair always passes; probes CP, CR, RL); contract (`getBrandingVersionContrast`) | BE-W (refusal, report, route), FE-F (chips, status tokens, Branding Settings) | BE-W tests; `check:contrast` in CI; FE-F component tests; QA-D (chip rule, greyscale screenshots) |
+| REQ-S15-007 | ADR-0061 §6, §7.3 | FE-F (`problems-all.test.ts`), BE-W (two keys) | FE-F test; QA-D (API error shown in each language; Arabic export keeps `KPI-001` and `12.5%`) |
+| REQ-S15-009 | ADR-0061 §4.2 | FE-F2 (360 px fixes) | QA-D (A20 360 px gate decision and KPI actual, en and ar) |
+| REQ-S15-012 | ADR-0061 §3, §7.1, §7.2 | FE-F2 (keyboard, scope test), FE-F (chip icons) | QA-D (axe on the P6 routes and key flows; keyboard-only walkthrough, en and ar) |
+| REQ-S15-014 | ADR-0061 §8 (inventory; no API gap) | KBE-B (view models), FE-F (panels E1, E2, E4, E5) | FE-F component tests en/ar; QA-D (A05/A20 panels; the term scan on non-admin screens) |
+| (slice K) F-DG5-120, 121, 125, 145, 146, 150, 151 | ADR-0061 §9 | FE-G | a non-author reviewer in a DG6 round |
+
+No requirement of this section is complete yet: each needs its implementer work and QA-D.
+
+### I/K.11 What the implementers must know
+
+1. **Only declared pairs decide at runtime.** The prohibited pairs are a build-time documentation check; never refuse a publish because a prohibited pair passes (ADR-0061 §1.1, Alternatives 4).
+2. **Check before the transaction, store inside it.** The contrast evaluation is pure and runs before the publish transaction; the report, its pairs and their audit event are written in the transaction, under the existing lock 730270 (rule 4: no remote I/O, none here).
+3. **Existing branding is never rewritten.** A version published before P6 keeps its colours and gets no backfilled report; it is shown as `not_recorded`.
+4. **Exact texts.** The codes, English texts and the field-error message format are ADR-0061 §6 verbatim; Arabic is provisional and labelled so (rule 17).
+5. **No business number in the web.** Explanation panels display the server's decimals and KBE-B's view models; nothing is recomputed in a component; Unknown, incomplete and n/a are never 0 or green (rule 5).
+6. **Infrastructure terms stay in Administration** (ADR-0061 §8 list): a non-admin screen never shows a stack trace, a database, framework or host name; a 500 shows the generic error with the request id only.
+7. **Measured budgets** for every new spec (rule 15); FE-G's sweep comes first.
+8. **"Business approval", never DG0–DG7**, in every label of the 360 px gate flow.

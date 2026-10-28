@@ -2113,6 +2113,24 @@ Citations (`assistant_message.citations`, `assistant_suggestion.citations`) are 
 | Assistant message (S17-007, S17-008, S17-011) | `assistant_message` | `id`; `(conversation_id, seq)` unique | `created_by` (the conversation's owner) | the owner's requests (`assistant.use`) | `reply_kind` (answer, refusal, no_sources, unavailable, interrupted) | no (append-only; the conversation's version covers it) | assistant |
 | Assistant suggestion (S17-007, S17-008) | `assistant_suggestion` | `id`; `(message_id, ordinal)` unique | `owner_user_id` (= `created_by`) | the owner (`assistant.use`; to draft: plus the target's write permission) | `status` (proposed, taken_to_draft) | yes | assistant |
 
+## 1y. P6 slice I: the contrast report of a published branding version (migration 0113; T-DG6-ARCH-06; ADR-0061)
+
+Two new append-only tables, written only by the branding publish (`putBrandingSettings`) in the transaction that inserts the branding version, under the existing lock `brandingPublish` 730270: `branding_contrast_report` (at most one per branding version, `branding_contrast_report_version_key`; a composite foreign key to `branding_version (organization_id, version_no)`, so a report names an existing version of its own organization; audited by record id, deferred `_audit_required`; the deferred trigger `branding_contrast_report_pairs_complete` checks at COMMIT that it has exactly `pair_count` pairs numbered 1..`pair_count`) and `branding_contrast_pair` (one evaluated token pair; `CHECK (ratio >= threshold)`, so a stored pair always passes). Neither table is referenced by any DG1–DG5 table, and `0113` changes no existing table: a branding version published before P6 has no report. The rule that every new branding version has a report ships with BE-W's API change (ADR-0061 §2). The column lists are in `data-dictionary.md` ("P6 tables, slice I").
+
+```mermaid
+erDiagram
+    organization ||--o{ branding_contrast_report : "the version's organization"
+    branding_version ||--o| branding_contrast_report : "(organization_id, version_no) = (organization_id, branding_version_no); at most one"
+    app_user ||--o{ branding_contrast_report : "created_by (the publishing administrator)"
+    branding_contrast_report ||--|{ branding_contrast_pair : "exactly pair_count pairs, ordinal 1..pair_count, append-only"
+```
+
+### 1y.1 P6 entity register (slice I) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Branding contrast report (S15-003) | `branding_contrast_report` (+ `branding_contrast_pair`) | `id`; `(organization_id, branding_version_no)` unique; `(report_id, ordinal)` unique | `created_by` | ADM_TECH through the branding publish (`branding.configure`; lock 730270) | none (immutable; `recorded` / `not_recorded` is derived at read time) | no (append-only) | admin (branding) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

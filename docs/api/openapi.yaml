@@ -21900,7 +21900,7 @@ paths:
     put:
       tags: [branding]
       operationId: putBrandingSettings
-      summary: "Save and publish a new branding version (complete settings; If-Match the head version, \"0\" for the first save). Screens and report/export templates read it at render time; issued outputs never change (branding.configure; ADM_TECH; REQ-S15-004, REQ-S01-002). 422 branding.prohibited_claim, .engineering_gate_reference, .logo_invalid, .colour_invalid, .font_unavailable, .text_pair_required."
+      summary: "Save and publish a new branding version (complete settings; If-Match the head version, \"0\" for the first save). Screens and report/export templates read it at render time; issued outputs never change (branding.configure; ADM_TECH; REQ-S15-004, REQ-S01-002). 422 branding.prohibited_claim, .engineering_gate_reference, .logo_invalid, .colour_invalid, .font_unavailable, .text_pair_required, .contrast_insufficient (P6, ADR-0061 §1: a declared token pair below its WCAG AA threshold with these colours; one errors item per failing pair, code branding.contrast_pair_below_threshold; nothing is published)."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -21957,6 +21957,26 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BrandingVersion" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/branding/versions/{versionNo}/contrast:
+    parameters:
+      - $ref: "#/components/parameters/BrandingVersionNo"
+    get:
+      tags: [branding]
+      operationId: getBrandingVersionContrast
+      summary: "The WCAG 2.x AA contrast report of one branding version (P6, ADR-0061 §1, §5; REQ-S15-003): every declared token pair with the version's two colours and the re-derived shades, its ratio (rounded down) and threshold. recorded = the report stored when the version was published (no failing pair, a database rule); not_recorded = a version published before the P6 rule, evaluated at read time, which may list failing pairs. Read only (branding.configure; AUD reads the report's audit event through /audit-events)."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandingContrastReport" }
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -26290,6 +26310,36 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/BrandingVersion" } }
         nextCursor: { type: [string, "null"] }
+    BrandingContrastReport:
+      type: object
+      description: "ADR-0061 §1, §5. One report; its pairs array is bounded by the declared pairs of the token source (at most 500, branding_contrast_report.pair_count). Ratios are display measurements, rounded down to two decimals (floor2), as decimal strings."
+      required: [versionNo, status, rules, tokenSourceSha256, recordedAt, pairCount, failingCount, pairs]
+      additionalProperties: false
+      properties:
+        versionNo: { type: integer, minimum: 1 }
+        status: { type: string, enum: [recorded, not_recorded], description: "recorded: stored with the version at publish (failingCount is 0). not_recorded: published before the P6 rule; evaluated at read time." }
+        rules: { type: string, enum: [wcag2x-aa-v1], description: "WCAG 2.x AA: text 4.5:1, large-text 3:1, ui 3:1 (non-text contrast). WCAG thresholds are an implementation assumption for 'adequate contrast' (REQ-S15-003 note)." }
+        tokenSourceSha256: { type: [string, "null"], pattern: "^[0-9a-f]{64}$", description: "SHA-256 of the token source the stored report was computed from; null when not_recorded." }
+        recordedAt: { $ref: "#/components/schemas/NullableTimestamp" }
+        pairCount: { type: integer, minimum: 1, maximum: 500 }
+        failingCount: { type: integer, minimum: 0 }
+        pairs:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            required: [ordinal, fg, bg, use, fgHex, bgHex, ratio, threshold, pass]
+            additionalProperties: false
+            properties:
+              ordinal: { type: integer, minimum: 1 }
+              fg: { type: string, pattern: "^[a-z]+(\\.[a-z0-9-]+)+$", maxLength: 80 }
+              bg: { type: string, pattern: "^[a-z]+(\\.[a-z0-9-]+)+$", maxLength: 80 }
+              use: { type: string, enum: [text, large-text, ui] }
+              fgHex: { type: string, pattern: "^#[0-9A-F]{6}$" }
+              bgHex: { type: string, pattern: "^#[0-9A-F]{6}$" }
+              ratio: { $ref: "#/components/schemas/Decimal" }
+              threshold: { $ref: "#/components/schemas/Decimal" }
+              pass: { type: boolean }
     EnvironmentInfo:
       type: object
       description: "synthetic is true exactly in a demo database: every record and number there is an illustrative example, not Mobily actual performance, and every approval approves nothing real."

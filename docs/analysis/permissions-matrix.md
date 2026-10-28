@@ -1143,3 +1143,23 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **On** = turn the
 3. Only records the user may open through their own view (scope, record permission, sensitivity grant or named party; ADR-0051, ADR-0057 §3), re-checked through `ReadScope` when a stored conversation is read; evidence text only with the evidence download authorization (ADR-0051 §4). `assistant.use` grants no record access.
 
 - **Scope:** a conversation belongs to its owner; nobody else, including administrators, lists or reads it through the API (others 404). The setting is installation-wide.
+
+## 29. P6 implementation, slices I and K (DG6): the branding contrast report and the explanation panels
+
+- **Task:** T-DG6-ARCH-06 (solution-architect), 2026-10-28. **Sources:** ADR-0061 §1, §5, §8, §10; master prompt M0300, M0301, M0304; REQ-S15-003 "view:all", REQ-S15-014 "view:scoped; view-technical:ADM".
+- **Seed:** none. Slice I adds **no permission code** and changes no role default (`packages/shared/src/permissions.ts` unchanged; `0113` seeds nothing). Slice K adds no permission.
+- **Separation:** nothing in slices I and K approves, validates or certifies; branding is configuration, never a business approval. The 0001 trigger still refuses any business-approval code for a technical-admin role (REQ-S10-003). No separation-of-duties rule applies.
+- **AUD stays read-only:** AUD holds no `branding.configure` (the P5 decision, §23) and gets 403 on `getBrandingVersionContrast` and on `putBrandingSettings`; an AUD assigned at the organization reads every contrast report of that organization through the global audit list (`/api/v1/audit-events`, `audit_event.read`, §24; the event has no transformation, so it targets the organization, ADR-0052 §8), where the `branding_contrast_report.recorded` event carries the report's after-state. AUD writes nothing. AUD sees the explanation panels of every value it can already read, read-only.
+
+### 29.1 Rights per entity
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **P** = created only by the branding publish.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Branding contrast report and its pairs (`branding_contrast_report`, `branding_contrast_pair`) | — | — | — | — | — | — | — | — | — | — | V¹ | — | V P² | — |
+| Explanation panel of a calculated value (no table; built from the value's own read operations, ADR-0061 §8) | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ |
+
+1. Through `/api/v1/audit-events` only (the event's after-state), not through `getBrandingVersionContrast`.
+2. `branding.configure` (seeded by `0091`): `getBrandingVersionContrast`; the report is written by `putBrandingSettings` in the publish transaction, never by its own operation, and is immutable.
+3. Exactly where the caller can read the value itself (scope, record permission, sensitivity grant; ADR-0051): the weighted score (`getInitiativeScores`), the benefit realized value (`getBenefitValues`, `getBenefit`), the KPI status (`getKpiStatus`), the financial metrics (`getBusinessCaseCashFlows` and the metrics), the health check (`getHealthCheck`) and the dashboard drill-downs. A panel adds no data the caller cannot already read. Technical details (token names, hashes, infrastructure terms) appear only on Administration screens (REQ-S15-014 "view-technical:ADM").

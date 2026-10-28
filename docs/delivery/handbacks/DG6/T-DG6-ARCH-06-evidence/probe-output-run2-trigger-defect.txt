@@ -1,0 +1,47 @@
+port-policy: PostgreSQL listening on port 23700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 105 (0001_identity_access.sql .. 0113_p6_branding_contrast_reports.sql)
+PASS  G00 slice I migration 0113 present directly above 0112 (D-196); nothing above 0113  -- ids >= 98: 98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113
+PASS  G01 fresh database: 0001..last apply  -- applied 105: 0110_p6_register_filter_indexes.sql, 0111_p6_assistant.sql, 0112_p6_assistant_permissions.sql, 0113_p6_branding_contrast_reports.sql
+PASS  G01b a fresh install has no contrast report, no pair and no branding version (0113 seeds nothing)  -- {"r":0,"p":0,"v":0}
+PASS  G02 P5 database populated (0001-0097; 2 transformations, one instantiated by the DG3 function with its gates; 12 initiatives; 3 users; 1 branding version and its head)  -- applied 89; {"i":12,"t":2,"u":3,"g":6,"bv":1}
+PASS  G03 P6 (0098..last, including slice I 0113) over the P5 database apply  -- applied 16: 0111_p6_assistant.sql, 0112_p6_assistant_permissions.sql, 0113_p6_branding_contrast_reports.sql
+PASS  G04 the upgrade leaves existing rows as they were (initiatives, transformations, gate instances, the branding version and head byte-identical, audit count unchanged); no report is backfilled for the P5 version  -- identical; {"reports":0,"pairs":0}
+PASS  BV01 a new branding version without a contrast report still commits (0113 adds no requirement on branding_version; that rule ships with BE-W)  -- committed
+PASS  RL01 the provisional seeds (#0078FF, #003B73) pass every declared pair at runtime (checkContrast over the branded source)  -- 50 pairs, 0 failing
+PASS  RL02 #FFD700 as primary fails named pairs (brand.primary as a ui accent and as large text): the publish would be refused  -- brand.primary on surface.card (ui) 1.4:1 < 3:1; brand.primary on surface.page (large-text) 1.31:1 < 3:1
+PASS  RL03 a light secondary (#6FA8DC as brand.deep) fails the text pairs that use brand.deep (headings, selected navigation item, header start, info banner, phase stepper)  -- brand.deep on surface.page (text) 2.37:1; brand.deep on surface.card (text) 2.52:1; nav.selected-text on nav.selected-background (text) 2.52:1; text.inverse on header.gradient-start (text) 2.52:1; brand.deep on surface.selected (text) 2.21:1; feedback.info.fg on feedback.info.bg (text) 2.21:1; text.
+PASS  RL04 the derived shades re-derived from #FFD700 keep every action, link, focus and navigation pair passing (the ADR-0009 §3 derivation)  -- text.inverse/action.primary 4.79, text.inverse/action.primary-hover 7, action.primary/surface.card 4.79, action.primary/surface.page 4.5, focus.ring/surface.card 4.79, focus.ring/surface.page 4.5, nav.text/nav.background 4.52, nav.text/nav.background 4.52, nav.text-muted/nav.background 4.52
+PASS  CR01 missing audit fails at COMMIT (branding_contrast_report_audit_required)  -- 23000 branding_contrast_report_audit_required no audit_event for branding_contrast_report 01990000-0000-7000-8000-000000000104 at version - (ADR-0004: every mutation writes its audit event in the same transaction)
+FAIL  CR02 a report without pairs fails at COMMIT (branding_contrast_report_pairs_complete)  -- 42703 record "new" has no field "report_id"
+FAIL  CR03 a report with fewer pairs than pair_count fails at COMMIT  -- 42703 record "new" has no field "report_id"
+FAIL  CR04 ordinals with a gap (1, 2, 4 for pair_count 3) fail at COMMIT  -- 42703 record "new" has no field "report_id"
+FAIL  CR05 a report with exactly pair_count passing pairs and its audit event commits  -- 42703 record "new" has no field "report_id"
+FAIL  CR06 a pair added later to a committed report fails at COMMIT (branding_contrast_pair_report_complete)  -- 23503 branding_contrast_pair_report_id_fkey insert or update on table "branding_contrast_pair" violates foreign key constraint "branding_contrast_pair_report_id_fkey"
+FAIL  CR07 a second report for the same branding version (branding_contrast_report_version_key)  -- 42703 record "new" has no field "report_id"
+PASS  CR08 a report for a branding version that does not exist (branding_contrast_report_version_fkey)  -- 23503 branding_contrast_report_version_fkey insert or update on table "branding_contrast_report" violates foreign key constraint "branding_contrast_report_version_fkey"
+PASS  CR09 a report naming another organization's version number (no such version there; composite foreign key)  -- 23503 branding_contrast_report_version_fkey insert or update on table "branding_contrast_report" violates foreign key constraint "branding_contrast_report_version_fkey"
+PASS  CR10 a rule set outside the closed set  -- 23514 branding_contrast_report_rules_check new row for relation "branding_contrast_report" violates check constraint "branding_contrast_report_rules_check"
+PASS  CR11 a token-source hash that is not 64 lower-case hex characters  -- 23514 branding_contrast_report_token_source_sha256_check new row for relation "branding_contrast_report" violates check constraint "branding_contrast_report_token_source_sha256_check"
+PASS  CP01 a failing pair cannot be stored (white small text on #0078FF, 4.09:1 < 4.5:1; branding_contrast_pair_passes)  -- 23514 branding_contrast_pair_passes new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_passes"
+PASS  CP02 a ui pair below 3:1 cannot be stored (2.99 < 3.0)  -- 23514 branding_contrast_pair_passes new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_passes"
+PASS  CP03 a threshold that does not match the use (text at 3.0)  -- 23514 branding_contrast_pair_threshold_for_use new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_threshold_for_use"
+PASS  CP04 large-text at 4.5 does not match the use either  -- 23514 branding_contrast_pair_threshold_for_use new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_threshold_for_use"
+FAIL  CP05 a use outside the closed set  -- 23514 branding_contrast_pair_threshold_for_use new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_threshold_for_use"
+PASS  CP06 a lower-case colour  -- 23514 branding_contrast_pair_fg_hex_check new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_fg_hex_check"
+PASS  CP07 a ratio above 21  -- 23514 branding_contrast_pair_ratio_check new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_ratio_check"
+PASS  CP08 a token name that is not a dotted lower-case token  -- 23514 branding_contrast_pair_bg_token_check new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_bg_token_check"
+PASS  CP09 the same pair and use twice in one report (branding_contrast_pair_pair_key)  -- 23505 branding_contrast_pair_pair_key duplicate key value violates unique constraint "branding_contrast_pair_pair_key"
+PASS  CP10 a ratio with more than two decimals is rounded by numeric(4,2), so 4.495 is stored as 4.50 only if it is >= 4.5; the API stores floor2 (4.49) and 4.49 is refused  -- 23514 branding_contrast_pair_passes new row for relation "branding_contrast_pair" violates check constraint "branding_contrast_pair_passes"
+FAIL  RL05 the real runtime report of the provisional seeds (50 pairs from checkContrast, ratios floor2) is stored with version 3 and its audit events  -- 42703 record "new" has no field "report_id"
+FAIL  RL06 the #FFD700 report cannot be stored: its first failing pair is refused by branding_contrast_pair_passes  -- 23514 branding_version_step branding_version: version 4 of organization 01990000-0000-7000-8000-000000000001 is not the next version
+PASS  AO01 mth_app cannot UPDATE a report (no grant)  -- 42501 permission denied for table branding_contrast_report
+PASS  AO02 mth_app cannot DELETE a pair (no grant)  -- 42501 permission denied for table branding_contrast_pair
+FAIL  AO03 even the owner cannot UPDATE a report (p2_append_only)  -- committed, but the guard should have refused it
+FAIL  AO04 even the owner cannot UPDATE a pair's ratio (p2_append_only)  -- committed, but the guard should have refused it
+FAIL  AO05 even the owner cannot DELETE a report (p2_append_only)  -- committed, but the guard should have refused it
+PASS  AO06 even the owner cannot TRUNCATE the pairs (p2_append_only, statement level)  -- 42501 branding_contrast_pair is append-only: TRUNCATE is not allowed
+FAIL  INV01 after every probe: 2 reports (CR05, RL05), their pairs, and no stored pair below its threshold  -- {"reports":0,"pairs":0,"failing":0}
+PASS  INV02 mth_app holds SELECT and INSERT only on both tables  -- {"ru":false,"rd":false,"pu":false,"pd":false,"pi":true}
+29/42 PASS
+EXIT=1
