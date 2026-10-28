@@ -15,7 +15,7 @@
 // business approval. Retries and the failure queue are ADR-0008 §4's (5 attempts, then ops.failed).
 import { createHash } from "node:crypto";
 import { insertAuditEvent, sql, type AuditActor, type Db, type DbOrTx, type Tx } from "@mth/db";
-import { DEFAULTS } from "@mth/shared";
+import { DEFAULTS, type Permission } from "@mth/shared";
 import {
   decideDelivery,
   hhmm,
@@ -25,6 +25,15 @@ import {
   type DeliverySettings,
   type DigestMode,
 } from "@mth/shared/schemas";
+// T-DG6-BE-J (ADR-0053 §1): the job identity declarations and the service principal.
+import type { JobAttempt, JobHandler } from "./handlers/spec.ts";
+import {
+  isServiceIdentityError,
+  ServiceIdentityMissing,
+  ServiceScopeViolation,
+  type SensitiveAccess,
+  type ServicePrincipal,
+} from "./service-scope.ts";
 
 /**
  * A UUIDv7 (ADR-0003) from the database's mth_uuid_v7() (0010; EXECUTE granted to mth_app). The API generates its ids
@@ -594,7 +603,7 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
           job_data: JSON.stringify(
             job.data !== null && typeof job.data === "object" && !Array.isArray(job.data) ? job.data : {},
           ),
-          error_code: RETRIES_EXHAUSTED_CODE,
+          error_code: failureCodeOf(job.error), // T-DG6-BE-J: service_identity.* (ADR-0053 §1), else retries exhausted
           error_message: message,
           attempts,
           first_failed_at: sql<Date>`now()`,
@@ -623,6 +632,7 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
           status: "open",
           attempts: Math.min(100, current.attempts + attempts),
           last_failed_at: sql<Date>`now()`,
+          error_code: failureCodeOf(job.error), // T-DG6-BE-J (ADR-0053 §1)
           error_message: message,
           job_id: job.jobId,
           version: current.version + 1,
@@ -854,4 +864,303 @@ async function insertOutboxRow(
       idempotency_key: e.idempotencyKey,
     })
     .execute();
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Service identities of the job queues (ADR-0053 §1; REQ-S16-029; D-195 Q13; T-DG6-BE-J). Every queue of
+// apps/worker/src/queues/** declares ONE identity here: the read codes its DG4/DG5 handler already needs (the narrowest
+// set; never a configure, business-approval or Finance-validation code, which the 0101 guard refuses anyway), platform
+// scope (the job iterates organizations and builds one principal per organization), and whether sensitive records may
+// enter its aggregates (`aggregate_only`) or not at all (`none`). Migration 0113 seeds the same rows (one per queue,
+// audited, actor system, source migration); service-identities.test.ts requires the two to be equal. A queue added
+// later declares its identity in the same change and seeds it in a new migration. Administrators can only narrow or
+// restore the GRANT (putServiceIdentity); the declaration changes only through a migration.
+// At run time a job loads its row (`servicePrincipal`, or the context `defineJob` passes): a missing row fails the run
+// with `service_identity.missing`; a read outside the grant or the organization fails it with
+// `service_identity.out_of_scope` (`requireServiceRead`, service-scope.ts). The failure-queue row carries that code.
+export {
+  isServiceIdentityError,
+  requireServiceRead,
+  serviceReadScopeFor,
+  ServiceIdentityError,
+  ServiceIdentityMissing,
+  ServiceScopeViolation,
+  SERVICE_IDENTITY_MISSING,
+  SERVICE_IDENTITY_OUT_OF_SCOPE,
+  type ServicePrincipal,
+  type ServiceReadRow,
+  type ServiceReadScope,
+  type ServiceReadScopeColumns,
+  type ServiceReadUse,
+} from "./service-scope.ts";
+
+/** The failure-queue error code of a job error: the service-identity code, else retries exhausted. */
+function failureCodeOf(err: unknown): string {
+  return isServiceIdentityError(err) ? err.code : RETRIES_EXHAUSTED_CODE;
+}
+
+/** What a job identity declares (ADR-0053 §1 `defineJob({ queue, identity: { permissions, scope, sensitiveAccess } })`). */
+export interface JobIdentitySpec {
+  readonly permissions: readonly Permission[];
+  readonly scope: "platform";
+  readonly sensitiveAccess: SensitiveAccess;
+}
+
+export interface JobIdentityDeclaration extends JobIdentitySpec {
+  readonly queue: string;
+  readonly labelEn: string;
+  /** Arabic label (provisional wording, like every P6 Arabic text until reviewed). */
+  readonly labelAr: string;
+}
+
+const TR = "transformation.read" as const;
+const declare = (
+  queue: string,
+  permissions: readonly Permission[],
+  labelEn: string,
+  labelAr: string,
+  sensitiveAccess: SensitiveAccess = "none",
+): JobIdentityDeclaration =>
+  Object.freeze({
+    queue,
+    permissions: Object.freeze([...permissions]),
+    scope: "platform",
+    sensitiveAccess,
+    labelEn,
+    labelAr,
+  });
+
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision). */
+export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
+  declare(
+    "adoption.indicator_evaluated",
+    [TR, "user.read"],
+    "Job: adoption indicator evaluation",
+    "مهمة: تقييم مؤشرات التبني",
+  ),
+  declare(
+    "approval.escalation_scan",
+    [TR, "access.read"],
+    "Job: approval escalation scan",
+    "مهمة: فحص تصعيد الاعتمادات",
+  ),
+  declare(
+    "automation.evaluate",
+    [TR, "automation.read"],
+    "Job: automation rule evaluation",
+    "مهمة: تقييم قواعد الأتمتة",
+  ),
+  declare(
+    "automation.failure_retry",
+    ["automation.read", "job.read"],
+    "Job: failure-queue retry",
+    "مهمة: إعادة محاولة قائمة الإخفاقات",
+  ),
+  declare("automation.job_failed", ["job.read"], "Job: job failure recording", "مهمة: تسجيل إخفاق المهام"),
+  declare("automation.tick_daily", [TR, "automation.read"], "Job: daily automation tick", "مهمة: دورة الأتمتة اليومية"),
+  declare(
+    "automation.tick_hourly",
+    [TR, "automation.read"],
+    "Job: hourly automation tick",
+    "مهمة: دورة الأتمتة كل ساعة",
+  ),
+  declare(
+    "benefits.finance_queue",
+    [TR, "access.read"],
+    "Job: Finance validation queue routing",
+    "مهمة: توجيه قائمة التحقق المالي",
+  ),
+  declare(
+    "benefits.recalculate_pending",
+    [TR],
+    "Job: benefit recalculation",
+    "مهمة: إعادة حساب المنافع",
+    "aggregate_only",
+  ),
+  declare(
+    "benefits.value_decided",
+    [TR],
+    "Job: benefit value decision follow-up",
+    "مهمة: متابعة قرار قيمة المنفعة",
+    "aggregate_only",
+  ),
+  declare("branding.published", ["organization.read"], "Job: branding publication", "مهمة: نشر الهوية البصرية"),
+  declare("delegation.expiry_sweep", ["access.read"], "Job: delegation expiry sweep", "مهمة: إنهاء التفويضات المنتهية"),
+  declare("demo.reset", ["organization.read", TR], "Job: demo environment reset", "مهمة: إعادة ضبط بيئة العرض"),
+  declare(
+    "gate.condition_escalation_scan",
+    [TR, "access.read"],
+    "Job: gate condition escalation scan",
+    "مهمة: فحص تصعيد شروط البوابات",
+  ),
+  declare("gate.exception_expiry_scan", [TR], "Job: gate exception expiry scan", "مهمة: فحص انتهاء استثناءات البوابات"),
+  declare("gates.decided", [TR], "Job: gate decision follow-up", "مهمة: متابعة قرار البوابة"),
+  declare("gates.submitted", [TR, "access.read"], "Job: gate submission routing", "مهمة: توجيه تقديم البوابة"),
+  declare("governance.blocker_escalation", [TR, "access.read"], "Job: blocker escalation", "مهمة: تصعيد العوائق"),
+  declare(
+    "governance.blocker_escalation_scan",
+    [TR, "access.read"],
+    "Job: blocker escalation scan",
+    "مهمة: فحص تصعيد العوائق",
+  ),
+  declare("governance.decision_sla_scan", [TR, "access.read"], "Job: decision SLA scan", "مهمة: فحص مهل القرارات"),
+  declare(
+    "governance.meeting_cutoff_scan",
+    [TR, "access.read"],
+    "Job: meeting cut-off scan",
+    "مهمة: فحص مواعيد إقفال الاجتماعات",
+  ),
+  declare("governance.meeting_series_generate", [TR], "Job: meeting series generation", "مهمة: إنشاء سلاسل الاجتماعات"),
+  declare("job_schedule.updated", ["job.read"], "Job: schedule re-registration", "مهمة: إعادة تسجيل الجداول"),
+  declare("jobs.run_now", ["job.read"], "Job: run-now dispatch", "مهمة: تشغيل المهمة الآن"),
+  declare("kpi.recalculate", [TR], "Job: KPI recalculation", "مهمة: إعادة حساب مؤشرات الأداء"),
+  declare("kpi.reporting_period_open", [TR], "Job: reporting period opening", "مهمة: فتح فترة التقارير"),
+  declare("launch.day_ninety_tests", [TR], "Job: day-90 tests", "مهمة: اختبارات اليوم التسعين"),
+  declare("maintenance.purge_expired", [], "Job: expired session purge", "مهمة: حذف الجلسات المنتهية"),
+  declare("notification.digest", ["user.read"], "Job: notification digest", "مهمة: ملخص الإشعارات"),
+  declare("ops.failed", [], "Queue: failed jobs (dead letter)", "قائمة: المهام المخفقة"),
+  declare("portfolio.dependency_slip", [TR], "Job: dependency slip follow-up", "مهمة: متابعة تأخر الاعتماديات"),
+  declare(
+    "raid.corrective_adoption",
+    [TR, "user.read"],
+    "Job: corrective action for adoption",
+    "مهمة: إجراء تصحيحي للتبني",
+  ),
+  declare(
+    "raid.corrective_benefit",
+    [TR, "user.read"],
+    "Job: corrective action for a benefit",
+    "مهمة: إجراء تصحيحي لمنفعة",
+  ),
+  declare(
+    "raid.corrective_control",
+    [TR, "user.read"],
+    "Job: corrective action for a control",
+    "مهمة: إجراء تصحيحي لضابط",
+  ),
+  declare(
+    "raid.corrective_kpi",
+    [TR, "user.read"],
+    "Job: corrective action for a KPI",
+    "مهمة: إجراء تصحيحي لمؤشر أداء",
+  ),
+  declare("reports.export", [TR], "Job: report export", "مهمة: تصدير التقارير"),
+  declare("reports.owner_update_tasks", [TR], "Job: owner update tasks", "مهمة: مهام تحديث المالكين"),
+  declare("sustainment.control_check_scan", [TR], "Job: control check scan", "مهمة: فحص فحوص الضوابط"),
+  declare("sustainment.review_scan", [TR], "Job: performance review scan", "مهمة: فحص مراجعات الأداء"),
+  declare(
+    "transformation.created",
+    [TR, "access.read", "methodology.read"],
+    "Job: new transformation set-up",
+    "مهمة: إعداد تحول جديد",
+  ),
+]);
+
+const JOB_IDENTITY_BY_QUEUE: ReadonlyMap<string, JobIdentityDeclaration> = new Map(
+  JOB_SERVICE_IDENTITIES.map((d) => [d.queue, d]),
+);
+
+/** The declaration of a queue's identity, or undefined when the queue declares none. */
+export function jobIdentityDeclaration(queue: string): JobIdentityDeclaration | undefined {
+  return JOB_IDENTITY_BY_QUEUE.get(queue);
+}
+
+/** The `service_identity.code` of a job queue. */
+export const jobIdentityCode = (queue: string): string => `job:${queue}`;
+
+/** A loaded `service_identity` row (what a run needs). */
+export interface LoadedServiceIdentity {
+  readonly id: string;
+  readonly code: string;
+  readonly scopeLevel: "platform" | "organization";
+  readonly organizationId: string | null;
+  readonly grantedPermissionCodes: readonly string[];
+  readonly sensitiveAccess: SensitiveAccess;
+}
+
+/** Loads a service identity by code; a missing row throws ServiceIdentityMissing (`service_identity.missing`). */
+export async function loadServiceIdentity(db: DbOrTx, code: string): Promise<LoadedServiceIdentity> {
+  const row = await db
+    .selectFrom("service_identity")
+    .select(["id", "code", "scope_level", "organization_id", "granted_permission_codes", "sensitive_access"])
+    .where("code", "=", code)
+    .executeTakeFirst();
+  if (row === undefined) throw new ServiceIdentityMissing();
+  return {
+    id: row.id,
+    code: row.code,
+    scopeLevel: row.scope_level as "platform" | "organization",
+    organizationId: row.organization_id,
+    grantedPermissionCodes: Object.freeze([...row.granted_permission_codes]),
+    sensitiveAccess: row.sensitive_access as SensitiveAccess,
+  };
+}
+
+/**
+ * The principal of a loaded identity for one organization. A platform identity acts in any organization (one principal
+ * per organization); an organization identity (a connector) only in its own, otherwise `service_identity.out_of_scope`.
+ */
+export function principalOfIdentity(identity: LoadedServiceIdentity, organizationId: string): ServicePrincipal {
+  if (identity.scopeLevel === "organization" && identity.organizationId !== organizationId)
+    throw new ServiceScopeViolation();
+  return Object.freeze({
+    kind: "service",
+    identityId: identity.id,
+    code: identity.code,
+    organizationId,
+    permissions: new Set(identity.grantedPermissionCodes),
+    sensitiveAccess: identity.sensitiveAccess,
+  });
+}
+
+/** ADR-0053 §1 `servicePrincipal`: loads the queue's identity row and builds its principal for `organizationId`. */
+export async function servicePrincipal(db: DbOrTx, queue: string, organizationId: string): Promise<ServicePrincipal> {
+  return principalOfIdentity(await loadServiceIdentity(db, jobIdentityCode(queue)), organizationId);
+}
+
+/** What `defineJob` passes to a handler: its loaded identity and a principal per organization. */
+export interface JobRunContext {
+  readonly identity: LoadedServiceIdentity;
+  principal(organizationId: string): ServicePrincipal;
+}
+
+export interface JobDefinition {
+  readonly queue: string;
+  /** Optional restatement of the queue's declaration at the definition site; it must equal JOB_SERVICE_IDENTITIES. */
+  readonly identity?: JobIdentitySpec;
+  readonly handle: (
+    db: Db,
+    data: unknown,
+    jobId: string,
+    attempt: JobAttempt | undefined,
+    run: JobRunContext,
+  ) => Promise<unknown>;
+}
+
+const sameSpec = (a: JobIdentitySpec, b: JobIdentitySpec): boolean =>
+  a.scope === b.scope &&
+  a.sensitiveAccess === b.sensitiveAccess &&
+  a.permissions.length === b.permissions.length &&
+  [...a.permissions].sort().every((p, i) => p === [...b.permissions].sort()[i]);
+
+/**
+ * ADR-0053 §1 `defineJob`: a job handler whose run starts by loading its service identity. A queue without a
+ * declaration is a programming error at definition time; a declaration restated here that differs from the registry is
+ * one too. At run time a missing identity row fails the run with `service_identity.missing` before the handler runs.
+ */
+export function defineJob(def: JobDefinition): JobHandler {
+  const declared = jobIdentityDeclaration(def.queue);
+  if (declared === undefined) throw new Error(`defineJob: queue ${def.queue} declares no service identity`);
+  if (def.identity !== undefined && !sameSpec(def.identity, declared))
+    throw new Error(`defineJob: the identity of ${def.queue} differs from its declaration in JOB_SERVICE_IDENTITIES`);
+  return Object.freeze({
+    queue: def.queue,
+    handle: async (db: Db, data: unknown, jobId: string, attempt?: JobAttempt) => {
+      const identity = await loadServiceIdentity(db, jobIdentityCode(def.queue));
+      return def.handle(db, data, jobId, attempt, {
+        identity,
+        principal: (organizationId) => principalOfIdentity(identity, organizationId),
+      });
+    },
+  });
 }

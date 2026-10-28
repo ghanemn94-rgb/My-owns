@@ -81,3 +81,5 @@ export {
 } from "./sensitivity.ts";
 // REQ-S10-003 (D-094; T-DG4-BE-B2): the technical-admin-only 403 on gate and Finance approval endpoints.
 export { isTechnicalAdminOnly, TECHNICAL_ADMIN_ROLES, technicalAdminRefusal } from "./technical-admin.ts";
+// P6 slice J (T-DG6-BE-J; ADR-0053 §1): service identities (load, read gate, the grant change); routes in admin.
+export * from "./service-identities.ts";

@@ -4,6 +4,8 @@ import { ConfigError, loadConfig } from "@mth/config";
 import { createDb, createPool } from "@mth/db";
 import { createBoss } from "./queues/index.ts";
 import { startWorker } from "./worker.ts";
+// D-198 (ADR-0052 §5; T-DG6-BE-J): the worker's SecretProvider registry, the twin of the API's.
+import { createSecretProviderRegistry, registerBuiltInSecretProviders } from "./secrets.ts";
 
 async function main(): Promise<void> {
   let config;
@@ -16,6 +18,10 @@ async function main(): Promise<void> {
     }
     throw err;
   }
+  // D-198 (ADR-0052 §5): the built-in providers (env, file). No worker job resolves a secret yet (BE-I and BE-L are the
+  // first); a value is never logged, only the provider ids.
+  const secrets = createSecretProviderRegistry();
+  registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir });
   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
   const db = createDb(pool);
   // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
@@ -33,6 +39,7 @@ async function main(): Promise<void> {
       msg: "mth-worker started",
       timeZone: config.defaultTimezone,
       superviseIntervalSeconds: config.worker.superviseIntervalSeconds,
+      secretProviders: secrets.ids(),
     }),
   );
 
