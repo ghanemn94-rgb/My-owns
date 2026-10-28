@@ -1,6 +1,6 @@
 // Service identities (ADR-0053 §1; REQ-S16-029 "a job's identity cannot read records outside its scope"; D-195 Q13;
 // T-DG6-BE-J), against the run's disposable PostgreSQL:
-//  1. the seed (0113): one job identity per queue, each with its audit event;
+//  1. the seed (0114): one job identity per queue, each with its audit event;
 //  2. the out-of-scope proof: two organizations; for every job identity that reads business records, its scoped reads
 //     for organization A admit no row of organization B (the predicate selects 0 rows of B) and requireServiceRead of
 //     an organization-B record throws `service_identity.out_of_scope`; sensitive records stay out of per-record reads
@@ -193,7 +193,7 @@ afterAll(async () => {
   await api?.close();
 });
 
-describe("the 0113 seed (ADR-0053 §1)", () => {
+describe("the 0114 seed (ADR-0053 §1)", () => {
   it("has one platform job identity per declaration, granted = declared, each with its audit event", async () => {
     const rows = await api.db.selectFrom("service_identity").selectAll().where("subject_kind", "=", "job").execute();
     const byCode = new Map(rows.map((r) => [r.code, r]));

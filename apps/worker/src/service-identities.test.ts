@@ -1,4 +1,4 @@
-// T-DG6-BE-J (ADR-0053 §1; REQ-S16-029): the job identity declarations in kit.ts equal the rows migration 0113 seeds
+// T-DG6-BE-J (ADR-0053 §1; REQ-S16-029): the job identity declarations in kit.ts equal the rows migration 0114 seeds
 // (the seed.test.ts pattern: the SQL is read as text, no database), every queue of apps/worker/src/queues/** declares
 // exactly one identity, and every declared code is a read or write permission (never configure, business_approval
 // or finance_validation: a service identity never approves anything). Also the pure parts of service-scope.ts and
@@ -23,7 +23,7 @@ import {
 import { RUN_NOW_QUEUE } from "./job-runs.ts";
 import { DOMAIN_QUEUES, QUEUES } from "./queues/index.ts";
 
-const MIGRATION = new URL("../../../packages/db/migrations/0113_p6_job_service_identities.sql", import.meta.url);
+const MIGRATION = new URL("../../../packages/db/migrations/0114_p6_job_service_identities.sql", import.meta.url);
 const CATEGORY: ReadonlyMap<string, string> = new Map(Object.entries(PERMISSIONS));
 
 interface SeededRow {
@@ -35,7 +35,7 @@ interface SeededRow {
   readonly ar: string;
 }
 
-/** The VALUES rows of the p6_job_identity table in 0113, parsed from the SQL text. */
+/** The VALUES rows of the p6_job_identity table in 0114, parsed from the SQL text. */
 function seededRows(): SeededRow[] {
   const sql = readFileSync(MIGRATION, "utf8");
   const values = sql.slice(
@@ -58,7 +58,7 @@ function seededRows(): SeededRow[] {
 }
 
 const identity = (over: Partial<LoadedServiceIdentity> = {}): LoadedServiceIdentity => ({
-  id: "01920006-0113-7000-8000-0000000000ff",
+  id: "01920006-0114-7000-8000-0000000000ff",
   code: "job:kpi.recalculate",
   scopeLevel: "platform",
   organizationId: null,
@@ -82,7 +82,7 @@ describe("job service identities (ADR-0053 §1)", () => {
     expect(declared).toHaveLength(40);
   });
 
-  it("migration 0113 seeds exactly the declarations (code, queue, codes, sensitive access, labels)", () => {
+  it("migration 0114 seeds exactly the declarations (code, queue, codes, sensitive access, labels)", () => {
     const seeded = seededRows();
     expect(seeded).toHaveLength(JOB_SERVICE_IDENTITIES.length);
     const byQueue = new Map(seeded.map((r) => [r.queue, r]));
@@ -134,8 +134,8 @@ describe("job service identities (ADR-0053 §1)", () => {
   });
 
   it("a platform identity acts per organization; an organization identity only in its own", () => {
-    const orgA = "01920006-0113-7000-8000-00000000000a";
-    const orgB = "01920006-0113-7000-8000-00000000000b";
+    const orgA = "01920006-0114-7000-8000-00000000000a";
+    const orgB = "01920006-0114-7000-8000-00000000000b";
     const p = principalOfIdentity(identity(), orgA);
     expect(p).toMatchObject({ kind: "service", code: "job:kpi.recalculate", organizationId: orgA });
     expect([...p.permissions]).toEqual(["transformation.read"]);

@@ -3,7 +3,7 @@
 //
 // What the application may change (0101 column privileges and service_identity_declaration_fixed): the GRANT
 // (granted_permission_codes) and its reason, nothing else. The declaration (declared_permission_codes, scope,
-// subject, sensitive access, labels) is written by migrations (jobs, 0113) or by a connector's creation (ADR-0055),
+// subject, sensitive access, labels) is written by migrations (jobs, 0114) or by a connector's creation (ADR-0055),
 // and the grant can only be narrowed or restored within it (422 `service_identity.grant_exceeds_declaration`).
 //
 // Authorization (0103; permissions matrix §25):

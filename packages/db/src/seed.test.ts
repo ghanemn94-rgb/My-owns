@@ -1047,8 +1047,8 @@ describe("migration files", () => {
     // T-DG6-ARCH-01: a free id of a P6 range is accepted; an id above the P6 repair block (0133) is not.
     // T-DG6-ARCH-02: 0101 is now shipped, so the free-id example was 0104; T-DG6-ARCH-03 shipped 0104-0107, so it was
     // 0108; T-DG6-ARCH-04 shipped 0108-0110, so it was 0111; T-DG6-ARCH-05 shipped 0111-0112, so it was 0113;
-    // T-DG6-ARCH-06 shipped 0113, so it is 0114.
-    expect(numberingViolations([...files, { id: 114, name: "0114_p6_example.sql" }])).toEqual([]);
+    // T-DG6-ARCH-06 shipped 0113, so it was 0114; T-DG6-BE-J shipped 0114 (renumbered at the W6 merge), so it is 0115.
+    expect(numberingViolations([...files, { id: 115, name: "0115_p6_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 134, name: "0134_p7_example.sql" }])).toEqual([
       "0134_p7_example.sql: above 0133",
     ]);

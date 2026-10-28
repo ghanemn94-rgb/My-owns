@@ -871,7 +871,7 @@ async function insertOutboxRow(
 // apps/worker/src/queues/** declares ONE identity here: the read codes its DG4/DG5 handler already needs (the narrowest
 // set; never a configure, business-approval or Finance-validation code, which the 0101 guard refuses anyway), platform
 // scope (the job iterates organizations and builds one principal per organization), and whether sensitive records may
-// enter its aggregates (`aggregate_only`) or not at all (`none`). Migration 0113 seeds the same rows (one per queue,
+// enter its aggregates (`aggregate_only`) or not at all (`none`). Migration 0114 seeds the same rows (one per queue,
 // audited, actor system, source migration); service-identities.test.ts requires the two to be equal. A queue added
 // later declares its identity in the same change and seeds it in a new migration. Administrators can only narrow or
 // restore the GRANT (putServiceIdentity); the declaration changes only through a migration.
