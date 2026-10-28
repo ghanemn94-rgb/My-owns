@@ -95,4 +95,6 @@ export const P6_OPERATION_IDS: ReadonlySet<string> = new Set([
   "getAssistantConversation",
   "postAssistantMessage",
   "takeAssistantSuggestionToDraft",
+  // T-DG6-ARCH-06: slices I and K (1 operation; ADR-0061). Appended by the orchestrator at the W6 merge (D-201).
+  "getBrandingVersionContrast",
 ]);

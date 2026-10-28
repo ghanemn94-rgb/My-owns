@@ -1062,8 +1062,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // listHealthChecks and getHealthCheck are GETs, submitHealthCheck is bodiless). T-DG5-BE-R: + putBrandingSettings
     // (1 JSON body). T-DG5-BE-E3, T-DG5-KBE-H: none. Sum (D-160): 386 + 4 (KBE-G2) + 1 (BE-R) = 391.
     // T-DG6-BE-B: + putRecordSensitivity, createSensitiveGrant, revokeSensitiveGrant (3 JSON bodies; the other three
-    // are GETs). 391 + 3 = 394 (the orchestrator reconciles the parallel W3 deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([394, 393, 1]);
+    // are GETs). 391 + 3 = 394 (the orchestrator reconciles the parallel W3 deltas at merge). W6 merge (D-201): T-DG6-BE-H
+    // + 2 JSON bodies (storage), T-DG6-BE-J + putServiceIdentity (1 JSON body); ARCH-06 and BE-I none. 394 + 3 = 397.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([397, 396, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
