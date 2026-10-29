@@ -18,13 +18,15 @@ export const AUTOMATION_QUEUES: readonly QueueSpec[] = [
   { name: "automation.job_failed" },
 ];
 
-/** The admin-selectable event triggers of 0074 and 0075 (automation_trigger), each fed to the engine. */
+/** The admin-selectable event triggers of 0074, 0075 and 0116 (automation_trigger), each fed to the engine. */
 export const AUTOMATION_EVENT_TRIGGERS = [
   "adoption.check_failed",
   "benefit.evidence_submitted",
   "benefit.variance_evaluated",
   "blocker_status.recorded",
+  "connector.run_failed", // T-DG6-BE-K2 (0116; ADR-0053 §3)
   "control_check.failed",
+  "data.stale", // T-DG6-BE-K2 (0116; ADR-0053 §3)
   "dependency.slipped",
   "gate.decided",
   "gate.submitted",

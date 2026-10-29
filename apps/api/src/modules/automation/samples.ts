@@ -168,6 +168,17 @@ const SAMPLES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
     transformationId: T,
     slipDays: 5,
   },
+  // T-DG6-BE-K2 (ADR-0053 §3; 0116): the two operations triggers' v1 payloads are registered, so each serves a sample.
+  "data.stale": {
+    kpiId: id(70),
+    transformationId: T,
+    dataAsOf: "2026-01-04",
+    staleAfterDays: 45,
+  },
+  "connector.run_failed": {
+    connectorId: id(71),
+    failureClass: "connector_run_failed",
+  },
 };
 
 /**

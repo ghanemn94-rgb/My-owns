@@ -173,6 +173,32 @@ export type ExportJobRequestedV1 = z.infer<typeof exportJobRequestedV1>;
 export const demoResetRequestedV1 = z.strictObject({ requestedBy: uuid, latestRunNo: z.number().int().min(0) });
 export type DemoResetRequestedV1 = z.infer<typeof demoResetRequestedV1>;
 
+/**
+ * P6 slice J (T-DG6-BE-K2; ADR-0053 §2, §3): a KPI's DG4 freshness became `stale` (ADR-0028 read-time rule, unchanged).
+ * Written by the worker's kpi.freshness_scan once per stale episode, key `data.stale:<kpiId>:<dataAsOf>`; consumers
+ * operations.exception_raise (starter 16 version 2: the `data_stale` operational exception, linked to the KPI) and
+ * automation.evaluate (admin rules; condition field `kpiId`). `dataAsOf` is the business date of the last accepted
+ * data; nothing here writes or clears a KPI value. Approves nothing.
+ */
+export const dataStaleV1 = z.strictObject({
+  kpiId: uuid,
+  transformationId: uuid,
+  dataAsOf: z.iso.date(),
+  staleAfterDays: z.number().int().min(1).max(3650),
+});
+export type DataStaleV1 = z.infer<typeof dataStaleV1>;
+
+/**
+ * P6 slice J/B (T-DG6-BE-K2 registers it; ADR-0053 §3; ADR-0055): a connector run failed. Emitted by the connector run
+ * (slice B) on failure; consumer automation.evaluate (admin rules; condition fields `connectorId`, `failureClass`).
+ * The connector's operational exception itself is raised by the run (ADR-0053 §2). Approves nothing.
+ */
+export const connectorRunFailedV1 = z.strictObject({
+  connectorId: uuid,
+  failureClass: z.enum(["connector_run_failed", "connector_unreachable", "connector_credentials_rejected"]),
+});
+export type ConnectorRunFailedV1 = z.infer<typeof connectorRunFailedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -216,6 +242,10 @@ export const OUTBOX_EVENT_SCHEMAS = {
   // T-DG5-BE-J (ADR-0044 §7, §8), registered by T-DG5-BE-T5 (D-167): a critical dependency slipped; consumers
   // portfolio.dependency_slip (starter 9, REQ-S12-012) and automation.evaluate (apps/worker queues/portfolio.ts, automation.ts).
   "dependency.slipped": { 1: dependencySlippedV1 },
+  // T-DG6-BE-K2 (ADR-0053 §3): consumers operations.exception_raise and automation.evaluate (apps/worker queues).
+  "data.stale": { 1: dataStaleV1 },
+  // T-DG6-BE-K2 (ADR-0053 §3), emitted by slice B's connector run: consumer automation.evaluate.
+  "connector.run_failed": { 1: connectorRunFailedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

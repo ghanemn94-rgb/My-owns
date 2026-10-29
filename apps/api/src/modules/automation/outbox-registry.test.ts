@@ -42,6 +42,7 @@ const ENQUEUED: Readonly<Record<string, string>> = {
   "branding.published": "api admin/branding.ts",
   "dependency.slipped": "api portfolio/slip-events.ts (starter 9; registered by T-DG5-BE-T5)",
   "report_snapshot.issued": "api reporting/reports/snapshots.ts (written ONLY once registered; guarded, see below)",
+  "data.stale": "worker handlers/operations.ts (kpi.freshness_scan; T-DG6-BE-K2, ADR-0053 §3)",
 };
 
 /**
@@ -69,6 +70,7 @@ const OUTBOX_WRITE_SITES: Readonly<Record<string, number>> = {
   "apps/worker/src/handlers/adoption.ts": 1,
   "apps/worker/src/handlers/benefits.ts": 1,
   "apps/worker/src/handlers/kpi.ts": 1,
+  "apps/worker/src/handlers/operations.ts": 1, // T-DG6-BE-K2: data.stale
   "apps/worker/src/kit.ts": 1,
 };
 

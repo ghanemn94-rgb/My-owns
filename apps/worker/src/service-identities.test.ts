@@ -33,6 +33,11 @@ const MIGRATIONS = [
     url: new URL("../../../packages/db/migrations/0115_p6_search_index_jobs.sql", import.meta.url),
     table: "p6_search_job_identity",
   },
+  // T-DG6-BE-K2: the three operations jobs (0116).
+  {
+    url: new URL("../../../packages/db/migrations/0116_p6_operations_triggers_freshness.sql", import.meta.url),
+    table: "p6_operations_job_identity",
+  },
 ] as const;
 const CATEGORY: ReadonlyMap<string, string> = new Map(Object.entries(PERMISSIONS));
 
@@ -91,7 +96,7 @@ describe("job service identities (ADR-0053 §1)", () => {
     const declared = JOB_SERVICE_IDENTITIES.map((d) => d.queue);
     expect(new Set(declared).size).toBe(declared.length);
     expect([...declared].sort()).toEqual([...queues].sort());
-    expect(declared).toHaveLength(42); // 40 (T-DG6-BE-J) + the two search jobs (T-DG6-BE-P)
+    expect(declared).toHaveLength(45); // 40 (T-DG6-BE-J) + the two search jobs (T-DG6-BE-P) + three operations jobs (T-DG6-BE-K2)
   });
 
   it("migrations 0114 and 0115 seed exactly the declarations (code, queue, codes, sensitive access, labels)", () => {
