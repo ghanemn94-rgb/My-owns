@@ -3,6 +3,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerIntegrationRoutes } from "./routes.ts";
+import { startConnectorRunWatch } from "./runs.ts";
 
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG6-BE-A
@@ -10,6 +11,18 @@ import { registerIntegrationRoutes } from "./routes.ts";
  */
 export function registerIntegrationsModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
   const routes = [...registerIntegrationRoutes(app, deps)];
+  // T-DG6-BE-L2 (ADR-0055 §2): the API process executes the due connector runs every 10 s (runs.ts; the BE-K heartbeat
+  // watch precedent). Not started by a route-only instance (`{} as ModuleDeps`), nor under NODE_ENV=test, where the
+  // suites call `connectorRunWatchStep` themselves so no run executes behind a test's back.
+  if (deps.db !== undefined && deps.config?.nodeEnv !== "test") {
+    let watch: { stop(): Promise<void> } | null = null;
+    app.addHook("onReady", async () => {
+      watch = startConnectorRunWatch(deps.db, app.log);
+    });
+    app.addHook("onClose", async () => {
+      await watch?.stop();
+    });
+  }
   return Object.freeze({
     module: "integrations",
     status: routes.length > 0 ? "active" : "scaffold",

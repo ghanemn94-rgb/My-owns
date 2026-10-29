@@ -13,6 +13,7 @@ import {
   setConnectorAdapters,
   type ConnectorAdapter,
 } from "../../../src/modules/integrations/adapters/port.ts";
+import { executeIntegrationRun } from "../../../src/modules/integrations/runs.ts";
 import { signIn, uniq, type P6ExerciseContext } from "../../support/harness.ts";
 
 const decimal = z.string().regex(/^-?[0-9]{1,18}(\.[0-9]{1,6})?$/);
@@ -122,6 +123,38 @@ const connectorMappings = z.strictObject({
   ),
 });
 
+// T-DG6-BE-L2 (ADR-0055 §2, §4): the run list and the run detail (IntegrationRunPage, IntegrationRunDetail).
+const integrationRunPage = z.strictObject({ items: z.array(integrationRun), nextCursor: z.string().nullable() });
+const integrationRunDetail = z.strictObject({
+  run: integrationRun,
+  retriedByRunId: z.uuid().nullable(),
+  events: z.array(
+    z.strictObject({
+      recordVersion: z.number().int().min(1),
+      status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+      rowsRead: z.number().int().min(0).nullable(),
+      rowsStaged: z.number().int().min(0).nullable(),
+      rowsCommitted: z.number().int().min(0).nullable(),
+      rowsRejected: z.number().int().min(0).nullable(),
+      rowsDuplicate: z.number().int().min(0).nullable(),
+      errorCount: z.number().int().min(0).nullable(),
+      errorCode: z.string().nullable(),
+      occurredAt: z.string(),
+    }),
+  ),
+  actionableError: z
+    .strictObject({
+      runId: z.uuid(),
+      triggerKind: z.enum(["schedule", "manual", "retry", "test", "webhook"]),
+      attemptNo: z.number().int().min(1),
+      finishedAt: z.string(),
+      errorCode: z.string(),
+      params: z.record(z.string(), z.string()),
+      fallbacks: z.array(z.enum(["kpi_form", "import_file"])),
+    })
+    .nullable(),
+});
+
 export const P6_MIRRORS_BE_L: Readonly<Record<string, z.ZodType>> = {
   listConnectors: connectorPage,
   createConnector: connector,
@@ -132,6 +165,11 @@ export const P6_MIRRORS_BE_L: Readonly<Record<string, z.ZodType>> = {
   testConnector: integrationRun,
   getConnectorMappings: connectorMappings,
   putConnectorMappings: connectorMappings,
+  // T-DG6-BE-L2
+  listIntegrationRuns: integrationRunPage,
+  runConnector: integrationRun,
+  getIntegrationRun: integrationRunDetail,
+  retryIntegrationRun: integrationRun,
 };
 
 /** The seam's test double of the adapter port: healthy returns two text rows; stopped throws connector.stopped. */
@@ -364,15 +402,21 @@ export async function exerciseP6BeLOperations(ctx: P6ExerciseContext): Promise<v
   } finally {
     setConnectorAdapters(previous);
   }
-  // … and with no pull adapter registered (this process before BE-L2), a test is 422 connector.adapter_unavailable.
+  // … and with no pull adapter registered, a test is 422 connector.adapter_unavailable. Since T-DG6-BE-L2 the process
+  // registers the local test adapter and http_pull at start, so the seam empties the registry for this check only.
   const noAdapter = await mirrored("POST", L, {
     session: admin,
     body: { ...createBody, code: `${code}-n` },
   });
   expect(noAdapter.status).toBe(201);
-  const unavailable = await mirrored("POST", `${L}/${noAdapter.body.id}/test`, { session: admin, body: {} });
-  expect(unavailable.status).toBe(422);
-  expect(unavailable.body.code).toBe("connector.adapter_unavailable");
+  const registered = setConnectorAdapters(createConnectorAdapterRegistry());
+  try {
+    const unavailable = await mirrored("POST", `${L}/${noAdapter.body.id}/test`, { session: admin, body: {} });
+    expect(unavailable.status).toBe(422);
+    expect(unavailable.body.code).toBe("connector.adapter_unavailable");
+  } finally {
+    setConnectorAdapters(registered);
+  }
 
   // disableConnector: 200 (the queued run is cancelled); 400; 401; 403 (AUD); 404; 409; 422 (already disabled); 428.
   const dis = `${one}/disable`;
@@ -389,4 +433,120 @@ export async function exerciseP6BeLOperations(ctx: P6ExerciseContext): Promise<v
   expect(disabled.status).toBe(200);
   expect(disabled.body.status).toBe("disabled");
   expect((await mirrored("POST", dis, { session: admin, body: reason, headers: ifm(5) })).status).toBe(422);
+
+  await exerciseP6BeL2Operations(ctx);
+}
+
+// ------------------------------------------------------------------------------------------------ BE-L2: runs
+// T-DG6-BE-L2 (ADR-0055 §2-§4, §9): the four run operations, each with its success and every declared refusal it can
+// reach, through the validating client. The run executes with the real local test adapter (mode failing, so the
+// retry operations have a failed run) through the run engine, as the API's run watch would.
+async function exerciseP6BeL2Operations(ctx: P6ExerciseContext): Promise<void> {
+  const { api, world: w, mirrored } = ctx;
+  const admin = await signIn(api.app, w.admin.subject); // ADM_TECH @ A: connector.read + configure + run
+  const auditor = await signIn(api.app, w.auditor.subject); // AUD @ A: connector.read only
+  const nobody = await signIn(api.app, w.nobody.subject);
+  const missing = crypto.randomUUID();
+  const L = "/api/v1/admin/connectors";
+  const config = (retryMaxAttempts: number) => ({
+    sourceSystemId: "synthetic.contract-runs",
+    endpointUrl: null,
+    credentialRefs: {},
+    fieldMappings: [],
+    targetTransformationId: null,
+    cadence: "manual",
+    retryMaxAttempts,
+    retryBackoffSeconds: 60,
+    commitMode: "manual",
+    commitOnBehalfOf: null,
+    outboundActions: [],
+    reconciliationRule: "row_count",
+    adapterSettings: { mode: "failing" },
+    reason: "Synthetic contract exercise of the runs.",
+  });
+  const created = await mirrored("POST", L, {
+    session: admin,
+    body: {
+      organizationId: w.orgA.id,
+      code: uniq("ce-runs-").toLowerCase(),
+      nameEn: "Synthetic contract run connector",
+      nameAr: "موصل تشغيل اصطناعي",
+      adapterKind: "test_adapter",
+      targetKind: "none",
+      config: config(0),
+    },
+  });
+  expect(created.status).toBe(201);
+  const id = created.body.id as string;
+  const runs = `${L}/${id}/runs`;
+  // runConnector before enabling: 409 connector.disabled.
+  const off = await mirrored("POST", runs, { session: admin, body: {} });
+  expect(off.status).toBe(409);
+  expect(off.body.code).toBe("connector.disabled");
+  expect(
+    (await mirrored("POST", `${L}/${id}/enable`, { session: admin, body: { reason: null }, headers: ifm(1) })).status,
+  ).toBe(200);
+
+  // runConnector: 202; 200 (same Idempotency-Key); 400; 401; 403 (AUD); 404; 409 (a run is active).
+  const key = uniq("ce-key-");
+  const queued = await mirrored("POST", runs, { session: admin, body: {}, headers: { "idempotency-key": key } });
+  expect(queued.status).toBe(202);
+  expect(queued.body).toMatchObject({ status: "queued", rowsRead: null });
+  const replay = await mirrored("POST", runs, { session: admin, body: {}, headers: { "idempotency-key": key } });
+  expect(replay.status).toBe(200);
+  expect(replay.body.id).toBe(queued.body.id);
+  expect((await mirrored("POST", runs, { session: admin, body: { x: 1 } })).status).toBe(400);
+  expect((await mirrored("POST", runs, { body: {} })).status).toBe(401);
+  expect((await mirrored("POST", runs, { session: auditor, body: {} })).status).toBe(403);
+  expect((await mirrored("POST", `${L}/${missing}/runs`, { session: admin, body: {} })).status).toBe(404);
+  const active = await mirrored("POST", runs, { session: admin, body: {} });
+  expect(active.status).toBe(409);
+  expect(active.body.code).toBe("connector.run_active");
+
+  // The run executes (outside any request) and fails: the test adapter is in mode failing.
+  const runId = queued.body.id as string;
+  const executed = await executeIntegrationRun(api.db, runId);
+  expect(executed.outcome).toBe("failed");
+
+  // listIntegrationRuns: 200 (AUD); 400; 401; 404 (missing; outsider).
+  const list = await mirrored("GET", `${runs}?limit=5`, { session: auditor });
+  expect(list.status).toBe(200);
+  expect(list.body.items.map((r: { id: string }) => r.id)).toEqual([runId]);
+  expect((await mirrored("GET", `${runs}?status=done`, { session: admin })).status).toBe(400);
+  expect((await mirrored("GET", runs)).status).toBe(401);
+  expect((await mirrored("GET", `${L}/${missing}/runs`, { session: admin })).status).toBe(404);
+  expect((await mirrored("GET", runs, { session: nobody })).status).toBe(404);
+
+  // getIntegrationRun: 200 (the actionable error); 400; 401; 404.
+  const one = `${runs}/${runId}`;
+  const detail = await mirrored("GET", one, { session: auditor });
+  expect(detail.status).toBe(200);
+  expect(detail.headers["etag"]).toBe('"3"');
+  expect(detail.body.actionableError).toMatchObject({ errorCode: "connector.source_unavailable" });
+  expect((await mirrored("GET", `${runs}/x`, { session: admin })).status).toBe(400);
+  expect((await mirrored("GET", one)).status).toBe(401);
+  expect((await mirrored("GET", `${runs}/${missing}`, { session: admin })).status).toBe(404);
+
+  // retryIntegrationRun: 422 (limit 1 attempt with retryMaxAttempts 0); 202 after raising the bound; 409 (once);
+  // 400; 401; 403 (AUD); 404.
+  const retry = `${one}/retry`;
+  const limited = await mirrored("POST", retry, { session: admin, body: {} });
+  expect(limited.status).toBe(422);
+  expect(limited.body.code).toBe("integration_run.retry_limit_reached");
+  const put = await mirrored("PUT", `${L}/${id}`, {
+    session: admin,
+    body: { nameEn: "Synthetic contract run connector", nameAr: "موصل تشغيل اصطناعي", config: config(1) },
+    headers: ifm(2),
+  });
+  expect(put.status).toBe(200);
+  expect((await mirrored("POST", retry, { session: admin, body: { x: 1 } })).status).toBe(400);
+  expect((await mirrored("POST", retry, { body: {} })).status).toBe(401);
+  expect((await mirrored("POST", retry, { session: auditor, body: {} })).status).toBe(403);
+  expect((await mirrored("POST", `${runs}/${missing}/retry`, { session: admin, body: {} })).status).toBe(404);
+  const retried = await mirrored("POST", retry, { session: admin, body: {} });
+  expect(retried.status).toBe(202);
+  expect(retried.body).toMatchObject({ triggerKind: "retry", attemptNo: 2, retryOfRunId: runId, status: "queued" });
+  const again = await mirrored("POST", retry, { session: admin, body: {} });
+  expect(again.status).toBe(409);
+  expect(again.body.code).toBe("integration_run.not_retryable");
 }

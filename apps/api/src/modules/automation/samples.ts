@@ -168,6 +168,16 @@ const SAMPLES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
     transformationId: T,
     slipDays: 5,
   },
+  // T-DG6-BE-L2 (ADR-0055 §2, ADR-0053 §3): `connector.run_failed` v1 is registered (the trigger is BE-K2's catalogue row).
+  "connector.run_failed": {
+    connectorId: id(70),
+    connectorCode: "synthetic-kpi-source",
+    runId: id(71),
+    serviceIdentityId: id(72),
+    failureClass: "connector_unreachable",
+    errorCode: "connector.source_unavailable",
+    errorMessage: "The source system did not respond.",
+  },
 };
 
 /**

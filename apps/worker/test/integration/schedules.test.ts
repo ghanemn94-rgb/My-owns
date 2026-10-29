@@ -35,6 +35,8 @@ const P5_REPORT_JOBS = ["reports.owner_update_tasks"];
 const P5_LAUNCH_JOBS = ["launch.day_ninety_tests"];
 // T-DG6-BE-P (0115; ADR-0057 §2): the search index feed and the weekly reindex; this test passes no search handler.
 const P6_SEARCH_JOBS = ["search.index_feed", "search.reindex"];
+// T-DG6-BE-L2 (0116; ADR-0055 §2): the connector cadence job; this test passes no integrations handler.
+const P6_CONNECTOR_JOBS = ["integrations.connector_run"];
 // The rows are listed by code (ORDER BY code; ASCII codes, so the default sort is the same order).
 const unhandledOf = (...codes: string[]) => [...codes].sort();
 const GOVERNANCE_JOBS = [
@@ -120,6 +122,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...P5_REPORT_JOBS,
         ...P5_LAUNCH_JOBS,
         ...P6_SEARCH_JOBS,
+        ...P6_CONNECTOR_JOBS,
       ),
     });
     const s = await schedules();
@@ -148,6 +151,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...P5_REPORT_JOBS,
         ...P5_LAUNCH_JOBS,
         ...P6_SEARCH_JOBS,
+        ...P6_CONNECTOR_JOBS,
       ),
     });
     const s = await schedules();

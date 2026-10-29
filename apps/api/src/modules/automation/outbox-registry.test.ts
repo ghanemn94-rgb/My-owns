@@ -42,6 +42,9 @@ const ENQUEUED: Readonly<Record<string, string>> = {
   "branding.published": "api admin/branding.ts",
   "dependency.slipped": "api portfolio/slip-events.ts (starter 9; registered by T-DG5-BE-T5)",
   "report_snapshot.issued": "api reporting/reports/snapshots.ts (written ONLY once registered; guarded, see below)",
+  // T-DG6-BE-L2 (ADR-0055 §2, ADR-0053 §2-§3): a connector run's last failure and its recovery.
+  "connector.run_failed": "api integrations/runs.ts",
+  "connector.run_recovered": "api integrations/runs.ts",
 };
 
 /**
