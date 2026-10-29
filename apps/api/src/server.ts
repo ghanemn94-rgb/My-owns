@@ -78,6 +78,7 @@ import { registerIntegrationsModule } from "./modules/integrations/index.ts";
 // T-DG6-BE-M (ADR-0056 §1): the ImportTargetRegistry port; the connector mappings read the template columns from it.
 import { createImportTargetRegistry, setImportTargetRegistry } from "./modules/integrations/imports/targets.ts";
 import { setConnectorTargetColumnsSource } from "./modules/integrations/connectors.ts";
+import { createKpiActualImportTarget } from "./modules/kpi/import-target.ts";
 import { registerOperationsModule } from "./modules/operations/index.ts";
 import { registerSearchModule } from "./modules/search/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
@@ -536,6 +537,7 @@ export async function buildServer(options: ServerOptions): Promise<{
   const importTargets = createImportTargetRegistry();
   setImportTargetRegistry(importTargets);
   setConnectorTargetColumnsSource((kind) => importTargets.columnsOf(kind));
+  importTargets.register(createKpiActualImportTarget()); // T-DG6-KBE-A: kpi_actual.v1 (ADR-0056 §4-§6, §9)
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
