@@ -299,7 +299,12 @@ function Assessment({
   const answers = new Map(a.answers.map((x) => [x.questionCode, x]));
   return (
     <>
-      <section className="card" aria-labelledby="assessment-facts" data-assessment-status={a.status}>
+      <section
+        className="card"
+        aria-labelledby="assessment-facts"
+        data-assessment-status={a.status}
+        data-assessment-version={a.version /* T-DG6-FE-G (F-DG5-151): the e2e waits for the saved version */}
+      >
         <h2 id="assessment-facts" className="card__title">
           {t("launchHealthP5.health.assessmentNo", { n: a.sequenceNo })} <StatusOf status={a.status} />{" "}
           <CompletionChip {...a.completion} />

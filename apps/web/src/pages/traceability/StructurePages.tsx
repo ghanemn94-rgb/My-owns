@@ -764,14 +764,21 @@ export function PortfolioDetailPage() {
               {adding ? (
                 <P4FormDialog
                   title={t("traceability.portfolios.addTransformation")}
-                  description={t("traceability.portfolios.onePortfolio")}
+                  description={
+                    readable.data?.complete === false
+                      ? `${t("traceability.portfolios.onePortfolio")} ${t("common.table.listIncomplete", { n: readable.data.items.length })}`
+                      : t("traceability.portfolios.onePortfolio")
+                  }
                   fields={[
                     {
                       name: "transformationId",
                       label: t("traceability.portfolios.transformation"),
                       kind: "select",
                       required: true,
-                      options: (readable.data ?? []).map((x) => ({ value: x.id, label: `${x.code} · ${x.name}` })),
+                      options: (readable.data?.items ?? []).map((x) => ({
+                        value: x.id,
+                        label: `${x.code} · ${x.name}`,
+                      })),
                     },
                   ]}
                   submitLabel={t("traceability.portfolios.addSubmit")}

@@ -101,21 +101,38 @@ export function useOrganization(id: string | undefined) {
   });
 }
 
-/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
-export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+/** The page cap of `fetchAllPages`/`fetchPages`: 20 pages of 100 (2,000 items). */
+export const ALL_PAGES_MAX_PAGES = 20;
+
+/** Every page up to the cap, and whether the list is complete (false: the server had more after the cap). */
+export interface AllPages<T> {
+  readonly items: T[];
+  readonly complete: boolean;
+}
+
+/**
+ * Fetches every page of a list up to the cap and says whether it stopped there with more to read (F-DG5-125,
+ * ADR-0061 §9): a caller that shows the list states "This list is incomplete" instead of stopping silently.
+ */
+export async function fetchPages<T>(path: string, query: Record<string, string> = {}): Promise<AllPages<T>> {
   const out: T[] = [];
   let cursor: string | null = null;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < ALL_PAGES_MAX_PAGES; i++) {
     const page: Page<T> = await api.get<Page<T>>(path, {
       ...query,
       limit: PAGINATION.maxLimit,
       ...(cursor ? { cursor } : {}),
     });
     out.push(...page.items);
-    if (!page.nextCursor) break;
+    if (!page.nextCursor) return { items: out, complete: true };
     cursor = page.nextCursor;
   }
-  return out;
+  return { items: out, complete: false };
+}
+
+/** Fetches every page of a small catalogue (organizations, business units): bounded to 20 pages of 100. */
+export async function fetchAllPages<T>(path: string, query: Record<string, string> = {}): Promise<T[]> {
+  return (await fetchPages<T>(path, query)).items;
 }
 
 export function useBusinessUnits(orgId: string | undefined) {

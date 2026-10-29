@@ -155,7 +155,9 @@ export function FinanceValidationPage() {
   usePageTitle(t("benefitsP4.finance.orgTitle"));
   const [status, setStatus] = useState("queued");
   const transformations = useReadableTransformations();
-  const trs = (transformations.data ?? []).filter((x) => x.archivedAt === null);
+  const trs = (transformations.data?.items ?? []).filter((x) => x.archivedAt === null);
+  // F-DG5-125 (ADR-0061 §9): when the page cap stopped the read, the queue says it covers only the first N.
+  const incomplete = transformations.data?.complete === false;
   const queues = useQueries({
     queries: trs.map((tr) => ({
       queryKey: [...p4Keys.financeQueue(me.organization.id), tr.id, status],
@@ -188,6 +190,11 @@ export function FinanceValidationPage() {
       <FinanceValidationNote body={t("benefitsP4.finance.labelNote")} />
       <Section id="finance-queue" title={t("benefitsP4.finance.queueTitle")} intro={t("benefitsP4.finance.queueIntro")}>
         <StatusFilter id="org-finance-status" value={status} onChange={setStatus} />
+        {incomplete ? (
+          <p className="banner banner--warning" role="note" data-state="list-incomplete">
+            <Icon name="alert" /> {t("common.table.listIncomplete", { n: transformations.data?.items.length ?? 0 })}
+          </p>
+        ) : null}
         <QueryState query={transformations}>
           {() =>
             pending ? (

@@ -1,0 +1,56 @@
+Thu Oct 29 16:34:31 UTC 2026
+cmd: (apps/web) npx vitest run src/pages/traceability/traceability.test.tsx src/pages/transformations/transformations.test.tsx; (root) npx vitest run --project unit-node packages/reporting/src/branding-layout.test.ts
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 26016ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  3258ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  519ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  772ms
+   ✓ after create (F-DG1-004) > treats a 403 for the just-created record the same way  761ms
+   ✓ truly out-of-scope records keep the correct localized message > 404 without a just-created record: 'Not found' (en) / 'غير موجود' (ar), nothing disclosed  491ms
+   ✓ truly out-of-scope records keep the correct localized message > router state for a different id does not turn a 404 into the created message  400ms
+   ✓ audit trail changes (F-DG1-005) > English: field and value labels, not raw keys or enum codes  1212ms
+   ✓ audit trail changes (F-DG1-005) > Arabic: the same changes with Arabic labels in the RTL layout  958ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option  891ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > ar: the rendered status select for an active record has no Closed option  304ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > English: localized action, fields, role, user and scope; nothing raw or marked untranslated  1470ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > Arabic (RTL): the same event with Arabic labels and the glossary role name  762ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  748ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  3301ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  3903ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  2883ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  1101ms
+ ✓ |unit-web| src/pages/traceability/traceability.test.tsx (32 tests) 35560ms
+   ✓ Traceability (en) > graph: clickable nodes, orphan flags, allocation totals, unseen links counted; orphan report  2154ms
+   ✓ Traceability (en) > impact of a KPI definition: affected benefit (value affected), dashboards and areas, hidden count  956ms
+   ✓ Traceability (en) > allocation set: 100 % total, 0 % unallocated; a 110 % share is refused with the translated message  1169ms
+   ✓ Traceability (en) > creates a trace link with its statement and a decimal share  1401ms
+   ✓ Traceability (en) > read-only users get no write control  678ms
+   ✓ Traceability (ar) > graph: clickable nodes, orphan flags, allocation totals, unseen links counted; orphan report  447ms
+   ✓ Traceability (ar) > impact of a KPI definition: affected benefit (value affected), dashboards and areas, hidden count  661ms
+   ✓ Traceability (ar) > allocation set: 100 % total, 0 % unallocated; a 110 % share is refused with the translated message  994ms
+   ✓ Traceability (ar) > creates a trace link with its statement and a decimal share  1119ms
+   ✓ Traceability (ar) > read-only users get no write control  745ms
+   ✓ Modular entry (en) > missing links with the waiver in force; G2 Inherited, never Approved; inherited records labelled  1013ms
+   ✓ Modular entry (en) > records an inherited evidence item and withdraws one with If-Match  1031ms
+   ✓ Modular entry (ar) > missing links with the waiver in force; G2 Inherited, never Approved; inherited records labelled  945ms
+   ✓ Modular entry (ar) > records an inherited evidence item and withdraws one with If-Match  1201ms
+   ✓ Portfolios and workstreams (en) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal  2120ms
+   ✓ Portfolios and workstreams (en) > portfolio: placing a transformation already in a portfolio shows the translated refusal  923ms
+   ✓ Portfolios and workstreams (en) > portfolios list is read-only without portfolio.manage  462ms
+   ✓ Portfolios and workstreams (ar) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal  3990ms
+   ✓ Portfolios and workstreams (ar) > portfolio: placing a transformation already in a portfolio shows the translated refusal  676ms
+   ✓ RAG policy and transformation chip (en) > first save of the default policy sends If-Match "0"; a stale save says nothing was saved  1171ms
+   ✓ RAG policy and transformation chip (en) > an invalid ratio is caught before sending; a threshold-order refusal is translated  556ms
+   ✓ RAG policy and transformation chip (en) > the transformation chip is repeatable, offers readable transformations and sends each id  1077ms
+   ✓ RAG policy and transformation chip (ar) > first save of the default policy sends If-Match "0"; a stale save says nothing was saved  543ms
+   ✓ RAG policy and transformation chip (ar) > the transformation chip is repeatable, offers readable transformations and sends each id  428ms
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+exit=0
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 2621ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  1219ms
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  463ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  367ms
+   ✓ DOCX and PPTX > PPTX: the header, the footer and B0004 on the closing 'About this file' slide  318ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+exit=0

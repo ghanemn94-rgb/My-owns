@@ -134,15 +134,21 @@ export function attrText(e: Pick<ConfigElement, "attributes" | "catalogueAttribu
   return typeof cat === "string" ? cat : "";
 }
 
-/** The element's label in the reader's language, falling back to the other language, then to its stable key. */
+/**
+ * The element's label in the reader's language, falling back to the other language, then to its stable key
+ * (F-DG5-120, ADR-0061 §9). English: `labelEn`, then the seeded `sourceLabelEn` (the `0062` v1 rows carry only
+ * `sourceLabelEn` and `labelAr`), and only then `labelAr`. Arabic: `labelAr` first, then `labelEn`, then `sourceLabelEn`.
+ */
 export function elementLabel(
   e: Pick<ConfigElement, "attributes" | "catalogueAttributes" | "stableKey">,
   locale: "ar" | "en",
 ): string {
-  const mine = attrText(e, locale === "ar" ? "labelAr" : "labelEn");
-  if (mine) return mine;
-  const other = attrText(e, locale === "ar" ? "labelEn" : "labelAr");
-  return other || e.stableKey;
+  const order = locale === "ar" ? ["labelAr", "labelEn", "sourceLabelEn"] : ["labelEn", "sourceLabelEn", "labelAr"];
+  for (const name of order) {
+    const text = attrText(e, name);
+    if (text) return text;
+  }
+  return e.stableKey;
 }
 
 /** A value of a diff row or an attribute, as short readable text ("—" is never used for a missing value). */
@@ -154,6 +160,56 @@ export function displayValue(value: unknown): string | null {
   if (Array.isArray(value) && value.every((x) => typeof x === "string" || typeof x === "number"))
     return value.length === 0 ? null : value.map(String).join(" · ");
   return JSON.stringify(value);
+}
+
+/** One level of a scoring rubric (ADR-0039 §2 `scoring_rubric.levels`): a 1-5 score and its two descriptors. */
+export interface RubricLevel {
+  readonly score: number;
+  readonly descriptorEn: string | null;
+  readonly descriptorAr: string | null;
+}
+
+/** A rubric level whose descriptors differ from the base version's: before (null: absent) and after. */
+export interface RubricLevelChange {
+  readonly score: number;
+  readonly from: RubricLevel | null;
+  readonly to: RubricLevel | null;
+}
+
+function rubricLevels(value: unknown): RubricLevel[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) return null;
+  const out: RubricLevel[] = [];
+  for (const x of value) {
+    if (!x || typeof x !== "object") return null;
+    const o = x as Record<string, unknown>;
+    const text = (v: unknown) => (typeof v === "string" ? v : v === null || v === undefined ? null : undefined);
+    const en = text(o["descriptorEn"]);
+    const ar = text(o["descriptorAr"]);
+    if (typeof o["score"] !== "number" || en === undefined || ar === undefined) return null;
+    out.push({ score: o["score"], descriptorEn: en, descriptorAr: ar });
+  }
+  return out;
+}
+
+/**
+ * The levels of a rubric diff field that changed (F-DG5-121, ADR-0061 §9): "changed" means the level's value differs
+ * from the base version's, so an unchanged level is not listed. Null when either side is not a list of rubric levels
+ * (the caller then shows the value as it is).
+ */
+export function rubricLevelChanges(from: unknown, to: unknown): RubricLevelChange[] | null {
+  const before = rubricLevels(from);
+  const after = rubricLevels(to);
+  if (before === null || after === null) return null;
+  const scores = [...new Set([...before, ...after].map((l) => l.score))].sort((a, b) => a - b);
+  const changes: RubricLevelChange[] = [];
+  for (const score of scores) {
+    const b = before.find((l) => l.score === score) ?? null;
+    const a = after.find((l) => l.score === score) ?? null;
+    if (b && a && b.descriptorEn === a.descriptorEn && b.descriptorAr === a.descriptorAr) continue;
+    changes.push({ score, from: b, to: a });
+  }
+  return changes;
 }
 
 /** The role-code pattern the Studio accepts for an approver (ADR-0039 §2 `roleCodeRef`). */

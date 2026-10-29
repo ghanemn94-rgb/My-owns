@@ -105,13 +105,14 @@ function TraceabilityBody() {
         </div>
         {root ? (
           <p className="small" role="note" data-root={`${root.type}:${root.id}`}>
-            {t("traceability.graph.rooted", {
-              type: nodeTypeText(t, root.type),
-              name:
+            <RootedNote
+              type={nodeTypeText(t, root.type)}
+              name={
                 whole.data?.nodes.find((n) => n.recordId === root.id)?.label ??
                 whole.data?.nodes.find((n) => n.recordId === root.id)?.code ??
-                "…",
-            })}
+                "…"
+              }
+            />
           </p>
         ) : null}
         <QueryState query={graph}>{(g) => <TraceGraphView graph={g} />}</QueryState>
@@ -120,6 +121,28 @@ function TraceabilityBody() {
       <ImpactPanel graph={whole.data ?? null} />
       <AllocationPanel graph={whole.data ?? null} />
       <TraceLinksPanel graph={whole.data ?? null} />
+    </>
+  );
+}
+
+/** Stands for the record name while the translated note is split around it (a private-use character). */
+const NAME_SLOT = "\uE000";
+
+/**
+ * "Showing the links of <record>" with the record name inside `.record-name` (F-DG5-150, ADR-0061 §9): the name is user
+ * text that can hold an unbroken token, so it wraps anywhere and never makes the page scroll sideways. The sentence
+ * comes from the catalogue in the page language; only the name is wrapped.
+ */
+export function RootedNote({ type, name }: { type: string; name: string }) {
+  const { t } = useTranslation();
+  const [before, ...rest] = t("traceability.graph.rooted", { type, name: NAME_SLOT }).split(NAME_SLOT);
+  return (
+    <>
+      {before}
+      <span className="record-name" data-rooted-name>
+        {name}
+      </span>
+      {rest.join(name)}
     </>
   );
 }
