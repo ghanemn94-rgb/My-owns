@@ -3394,6 +3394,128 @@ export function mapP6AccessHardeningError(error: PgErrorLike): HttpProblem | nul
   }
 }
 
+/**
+ * P6 slices B and A (T-DG6-BE-L; p6-work-split §B/A.1, exact; ADR-0055 §9, ADR-0056 §9): the 0104-0106 guards. The
+ * API checks each rule before it writes, so these are the race and last-line answers.
+ *   connector_organization_code_key                                    -> 409 connector.code_taken
+ *   connector_config_version_credential_refs, _no_secret_settings      -> 422 connector.secret_value_refused
+ *   connector_config_version_field_mappings                            -> 422 connector.mappings_invalid
+ *   connector_config_version_adapter_shape, _outbound_test_only,
+ *     connector_config_version_adapter_settings_check (the 4 KiB size) -> 422 connector.adapter_settings_invalid
+ *   connector_config_version_target_shape                              -> 422 connector.target_invalid
+ *   integration_run_one_active                                         -> 409 connector.run_active
+ *   integration_run_one_retry_key, integration_run_retry_chain         -> 409 integration_run.not_retryable
+ *   outbound_write_idempotency_key                                     -> 409 outbound_write.idempotency_key_reused
+ *   outbound_write_action_allowed                                      -> 422 outbound_write.action_not_allowed
+ *   outbound_write_final, outbound_write_transition                    -> 409 outbound_write.final
+ *   deliverable_external_change_final                                  -> 409 external_change.already_confirmed
+ *   deliverable_external_change_evidence_verified                      -> 422 external_change.evidence_not_verified
+ *   webhook_endpoint_connector_kind                                    -> 422 webhook.connector_not_webhook
+ *   webhook_endpoint_final                                             -> 409 webhook.endpoint_disabled
+ *   webhook_receipt_delivery_key                                       -> 409 webhook.delivery_id_reused
+ *   import_batch_transition, import_batch_final                        -> 409 import.not_staged
+ *   import_batch_counts_match_rows                                     -> 500 (a defect, never a user error)
+ * The texts are ADR-0055 §9's and ADR-0056 §9's, English verbatim (the webhook and import ones as ADR-0056 states them).
+ */
+const IMPORT_NOT_STAGED = "Only a staged import can be committed or cancelled.";
+const WEBHOOK_DELIVERY_ID_REUSED = "This delivery id was already used with a different body.";
+const WEBHOOK_ENDPOINT_DISABLED = "This webhook endpoint is disabled.";
+/** Not in ADR-0056 §9's table (the contract names the code only); proposed in the T-DG6-BE-L handback. */
+const WEBHOOK_CONNECTOR_NOT_WEBHOOK = "A webhook endpoint can be created only for a webhook connector.";
+const sliceBaConflict = (code: string, detail: string): HttpProblem =>
+  new HttpProblem({ status: 409, type: PROBLEM_TYPES.invalidTransition, code, title: "Conflict", detail });
+const sliceBaRule = (code: string, detail: string, pointer = ""): HttpProblem =>
+  new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.validation,
+    code,
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer, code, message: detail }],
+  });
+
+export function mapP6IntegrationsError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "connector_organization_code_key":
+      return problems.duplicate(
+        "connector.code_taken",
+        "A connector with this code already exists in this organization.",
+      );
+    case "connector_config_version_credential_refs":
+    case "connector_config_version_no_secret_settings":
+      return sliceBaRule(
+        "connector.secret_value_refused",
+        "Credentials are stored only as references to a secret that IT holds. Enter a secret reference, not the secret itself.",
+        "/config/credentialRefs",
+      );
+    case "connector_config_version_field_mappings":
+      return sliceBaRule(
+        "connector.mappings_invalid",
+        "The field mappings are invalid: name each target field once, and give every source column a name.",
+        "/config/fieldMappings",
+      );
+    case "connector_config_version_adapter_shape":
+    case "connector_config_version_outbound_test_only":
+    case "connector_config_version_adapter_settings_check":
+      return sliceBaRule(
+        "connector.adapter_settings_invalid",
+        "These settings do not fit this connector type.",
+        "/config/adapterSettings",
+      );
+    case "connector_config_version_target_shape":
+      return sliceBaRule(
+        "connector.target_invalid",
+        "Choose a transformation of this organization as the import target.",
+        "/config/targetTransformationId",
+      );
+    case "integration_run_one_active":
+      return sliceBaConflict(
+        "connector.run_active",
+        "A run of this connector is already queued or running. Wait for it to finish.",
+      );
+    case "integration_run_one_retry_key":
+    case "integration_run_retry_chain":
+      return sliceBaConflict("integration_run.not_retryable", "Only a failed run can be retried, and only once.");
+    case "outbound_write_idempotency_key":
+      return problems.duplicate(
+        "outbound_write.idempotency_key_reused",
+        "This idempotency key was already used for a different request.",
+      );
+    case "outbound_write_action_allowed":
+      return sliceBaRule(
+        "outbound_write.action_not_allowed",
+        "The connector's current configuration does not allow this action.",
+      );
+    case "outbound_write_final":
+    case "outbound_write_transition":
+      return sliceBaConflict("outbound_write.final", "This write is already confirmed or failed and cannot change.");
+    case "deliverable_external_change_final":
+      return sliceBaConflict(
+        "external_change.already_confirmed",
+        "This external change is already confirmed. A confirmation never changes.",
+      );
+    case "deliverable_external_change_evidence_verified":
+      return sliceBaRule(
+        "external_change.evidence_not_verified",
+        "Only reviewed (verified) evidence confirms an external change. A filename-only link never does.",
+        "/evidenceId",
+      );
+    case "webhook_endpoint_connector_kind":
+      return sliceBaRule("webhook.connector_not_webhook", WEBHOOK_CONNECTOR_NOT_WEBHOOK, "/connectorId");
+    case "webhook_endpoint_final":
+      return sliceBaConflict("webhook.endpoint_disabled", WEBHOOK_ENDPOINT_DISABLED);
+    case "webhook_receipt_delivery_key":
+      return problems.duplicate("webhook.delivery_id_reused", WEBHOOK_DELIVERY_ID_REUSED);
+    case "import_batch_transition":
+    case "import_batch_final":
+      return sliceBaConflict("import.not_staged", IMPORT_NOT_STAGED);
+    case "import_batch_counts_match_rows":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3435,6 +3557,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Branding !== null) return p5Branding;
   const p6AccessHardening = mapP6AccessHardeningError(error); // P6 slices E/F (T-DG6-BE-A; ADR-0051 §2, ADR-0052 §1)
   if (p6AccessHardening !== null) return p6AccessHardening;
+  const p6Integrations = mapP6IntegrationsError(error); // P6 slices B/A (T-DG6-BE-L; ADR-0055 §9, ADR-0056 §9)
+  if (p6Integrations !== null) return p6Integrations;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
