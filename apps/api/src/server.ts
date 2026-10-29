@@ -73,6 +73,9 @@ import { registerProceduresModule, wireProcedureApprovals } from "./modules/proc
 // P6 modules (p6-plan §3 seam 21; T-DG6-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAssistantModule } from "./modules/assistant/index.ts";
 import { registerIntegrationsModule } from "./modules/integrations/index.ts";
+// T-DG6-BE-M (ADR-0056 §1): the ImportTargetRegistry port; the connector mappings read the template columns from it.
+import { createImportTargetRegistry, setImportTargetRegistry } from "./modules/integrations/imports/targets.ts";
+import { setConnectorTargetColumnsSource } from "./modules/integrations/connectors.ts";
 import { registerOperationsModule } from "./modules/operations/index.ts";
 import { registerSearchModule } from "./modules/search/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
@@ -529,6 +532,11 @@ export async function buildServer(options: ServerOptions): Promise<{
   //    adapter, or the HTTP adapter when configured); with nothing configured the assistant stays disabled.
   const secrets = createSecretProviderRegistry();
   registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir }); // BE-E: env and file (ADR-0052 §5)
+  // T-DG6-BE-M: the ImportTargetRegistry line; each import target's owner adds one registration line below it
+  // (KBE-A: kpi_actual.v1). The connector mappings' target columns come from the registered templates (ADR-0056 §9).
+  const importTargets = createImportTargetRegistry();
+  setImportTargetRegistry(importTargets);
+  setConnectorTargetColumnsSource((kind) => importTargets.columnsOf(kind));
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed

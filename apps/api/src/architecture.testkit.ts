@@ -157,7 +157,19 @@ const SHARED_ALLOWED = new Set([
  * wasi, v8, net, http, https, dgram, async_hooks, ...): those routes were closed one by one by F-DG1-109/117/125/127/128
  * and are now denied by default. Network I/O belongs to the composition root, not module source.
  */
-const SAFE_NODE_BUILTINS: ReadonlySet<string> = new Set(["crypto", "fs", "fs/promises", "os", "path", "url", "util"]);
+const SAFE_NODE_BUILTINS: ReadonlySet<string> = new Set([
+  "crypto",
+  "fs",
+  "fs/promises",
+  "os",
+  "path",
+  "url",
+  "util",
+  // P6 (ADR-0056 §3; p6-work-split §B/A.3 "no dependency; node:zlib for the ZIP entries"; T-DG6-BE-M): the XLSX import
+  // parser's raw inflate and CRC-32. zlib's members compress, decompress and checksum only: none loads, evaluates or
+  // executes code, opens a debugger or loads a native object (the F-DG1-130 criteria above).
+  "zlib",
+]);
 /**
  * Rule 5 (F-DG1-132/133): allow-listed built-ins that carry a rule-1-banned member (node:crypto -> setEngine) may be
  * imported through NAMED imports only, so their namespace/default object never becomes an enumerable value. The bare
