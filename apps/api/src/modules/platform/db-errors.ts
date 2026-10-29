@@ -3394,6 +3394,83 @@ export function mapP6AccessHardeningError(error: PgErrorLike): HttpProblem | nul
   }
 }
 
+/**
+ * P6 slices J and C (T-DG6-BE-K; p6-work-split §J/C.3, exact; ADR-0053 §2, ADR-0054 §4): the 0101/0102 guards.
+ *   operational_exception_transition                      -> 409 operations.exception_not_open
+ *   operational_exception_resolved_final                  -> 409 operations.exception_resolved
+ *   service_identity_grant_within_declaration, service_identity_permission_category
+ *                                                         -> 422 service_identity.grant_exceeds_declaration
+ *   storage_setting_s3_complete                           -> 422 storage.s3_incomplete
+ *   storage_setting_access_key_ref, storage_setting_secret_key_ref, notification_channel_username_ref,
+ *   notification_channel_password_ref                     -> 422 storage.secret_ref_invalid
+ *   notification_channel_email_complete, notification_channel_credentials_pair
+ *                                                         -> 422 notification_channel.email_incomplete
+ *   notification_channel_no_messaging_adapter             -> 422 notification_channel.adapter_unavailable
+ *   storage_setting_singleton_key, notification_channel_kind_key -> 409 version_conflict (a concurrent create)
+ * The services refuse first with the same codes; these are the database's last line.
+ */
+export function mapP6OperationsChannelsError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "operational_exception_transition":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "operations.exception_not_open",
+        title: "Invalid transition",
+        detail: "Only an open operational exception can be acknowledged.",
+      });
+    case "operational_exception_resolved_final":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "operations.exception_resolved",
+        title: "Invalid transition",
+        detail: "This operational exception is already resolved.",
+      });
+    case "service_identity_grant_within_declaration":
+    case "service_identity_permission_category":
+      return problems.businessRule(
+        "service_identity.grant_exceeds_declaration",
+        "A service identity can be granted only permissions that its job or connector declares.",
+      );
+    case "storage_setting_s3_complete":
+      return problems.businessRule(
+        "storage.s3_incomplete",
+        "The object store needs an endpoint, a region, a bucket and both credential references.",
+      );
+    case "storage_setting_access_key_ref":
+    case "storage_setting_secret_key_ref":
+    case "notification_channel_username_ref":
+    case "notification_channel_password_ref":
+      return problems.businessRule(
+        "storage.secret_ref_invalid",
+        "A credential must be a reference to a secret (provider and name), never the secret itself.",
+      );
+    case "notification_channel_email_complete":
+    case "notification_channel_credentials_pair":
+      return problems.businessRule(
+        "notification_channel.email_incomplete",
+        "Email needs an SMTP host, a port, a security mode and a sender address.",
+      );
+    case "notification_channel_no_messaging_adapter":
+      return problems.businessRule(
+        "notification_channel.adapter_unavailable",
+        "No adapter is installed for this channel. In-app notifications continue to work.",
+      );
+    case "storage_setting_singleton_key":
+    case "notification_channel_kind_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3435,6 +3512,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5Branding !== null) return p5Branding;
   const p6AccessHardening = mapP6AccessHardeningError(error); // P6 slices E/F (T-DG6-BE-A; ADR-0051 §2, ADR-0052 §1)
   if (p6AccessHardening !== null) return p6AccessHardening;
+  const p6OperationsChannels = mapP6OperationsChannelsError(error); // P6 slices J/C (T-DG6-BE-K; ADR-0053 §2, ADR-0054 §4)
+  if (p6OperationsChannels !== null) return p6OperationsChannels;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
