@@ -94,6 +94,8 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   GATES_EVENT_QUEUES,
   // T-DG5-BE-J: the domain consumer of dependency.slipped comes before the engine (D-102 order: domain, then engine).
   PORTFOLIO_EVENT_QUEUES,
+  // T-DG6-BE-K2: the domain consumer of data.stale (operations.exception_raise) also comes before the engine (D-102).
+  OPERATIONS_EVENT_QUEUES,
   AUTOMATION_EVENT_QUEUES,
   PROCEDURES_EVENT_QUEUES,
   REPORTS_EVENT_QUEUES,
@@ -104,7 +106,6 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   INTEGRATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
   SEARCH_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
   NOTIFICATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
-  OPERATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
 ];
 
 /** Merges the domain maps into event type -> the list of its queues, in registration order, each queue once. */

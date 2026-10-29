@@ -1161,8 +1161,9 @@ async function recoverJobException(db: Db, job: Pick<FailedJob, "queue" | "jobId
 // scope (the job iterates organizations and builds one principal per organization), and whether sensitive records may
 // enter its aggregates (`aggregate_only`) or not at all (`none`). Migration 0114 seeds the same rows (one per queue,
 // audited, actor system, source migration); service-identities.test.ts requires the two to be equal. A queue added
-// later declares its identity in the same change and seeds it in a new migration. Administrators can only narrow or
-// restore the GRANT (putServiceIdentity); the declaration changes only through a migration.
+// later declares its identity in the same change and seeds it in a new migration (0115 the search jobs, 0116 the connector jobs, 0117 the
+// operations jobs). Administrators can only narrow or restore the GRANT (putServiceIdentity); the declaration changes
+// only through a migration.
 // At run time a job loads its row (`servicePrincipal`, or the context `defineJob` passes): a missing row fails the run
 // with `service_identity.missing`; a read outside the grant or the organization fails it with
 // `service_identity.out_of_scope` (`requireServiceRead`, service-scope.ts). The failure-queue row carries that code.
@@ -1218,7 +1219,7 @@ const declare = (
     labelAr,
   });
 
-/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's). */
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 45 with T-DG6-BE-K2's). */
 export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
   declare(
     "adoption.indicator_evaluated",
@@ -1310,11 +1311,30 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
   ),
   declare("job_schedule.updated", ["job.read"], "Job: schedule re-registration", "مهمة: إعادة تسجيل الجداول"),
   declare("jobs.run_now", ["job.read"], "Job: run-now dispatch", "مهمة: تشغيل المهمة الآن"),
+  // T-DG6-BE-K2 (ADR-0053 §2, §6; 0116): the freshness scan, the data.stale consumer and the alert sweep.
+  declare(
+    "kpi.freshness_scan",
+    [TR, "operations.read"],
+    "Job: KPI data freshness scan",
+    "مهمة: فحص حداثة بيانات مؤشرات الأداء",
+  ),
   declare("kpi.recalculate", [TR], "Job: KPI recalculation", "مهمة: إعادة حساب مؤشرات الأداء"),
   declare("kpi.reporting_period_open", [TR], "Job: reporting period opening", "مهمة: فتح فترة التقارير"),
   declare("launch.day_ninety_tests", [TR], "Job: day-90 tests", "مهمة: اختبارات اليوم التسعين"),
   declare("maintenance.purge_expired", [], "Job: expired session purge", "مهمة: حذف الجلسات المنتهية"),
   declare("notification.digest", ["user.read"], "Job: notification digest", "مهمة: ملخص الإشعارات"),
+  declare(
+    "operations.exception_alerts",
+    ["operations.read", "access.read"],
+    "Job: operational exception alerts",
+    "مهمة: تنبيهات الاستثناءات التشغيلية",
+  ),
+  declare(
+    "operations.exception_raise",
+    [TR, "operations.read"],
+    "Job: operational exception from stale data",
+    "مهمة: استثناء تشغيلي من بيانات متقادمة",
+  ),
   declare("ops.failed", [], "Queue: failed jobs (dead letter)", "قائمة: المهام المخفقة"),
   declare("portfolio.dependency_slip", [TR], "Job: dependency slip follow-up", "مهمة: متابعة تأخر الاعتماديات"),
   declare(

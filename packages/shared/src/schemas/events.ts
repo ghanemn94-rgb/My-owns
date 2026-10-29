@@ -202,6 +202,21 @@ export const connectorRunRecoveredV1 = z.strictObject({
 });
 export type ConnectorRunRecoveredV1 = z.infer<typeof connectorRunRecoveredV1>;
 
+/**
+ * P6 slice J (T-DG6-BE-K2; ADR-0053 §2, §3): a KPI's DG4 freshness became `stale` (ADR-0028 read-time rule, unchanged).
+ * Written by the worker's kpi.freshness_scan once per stale episode, key `data.stale:<kpiId>:<dataAsOf>`; consumers
+ * operations.exception_raise (starter 16 version 2: the `data_stale` operational exception, linked to the KPI) and
+ * automation.evaluate (admin rules; condition field `kpiId`). `dataAsOf` is the business date of the last accepted
+ * data; nothing here writes or clears a KPI value. Approves nothing.
+ */
+export const dataStaleV1 = z.strictObject({
+  kpiId: uuid,
+  transformationId: uuid,
+  dataAsOf: z.iso.date(),
+  staleAfterDays: z.number().int().min(1).max(3650),
+});
+export type DataStaleV1 = z.infer<typeof dataStaleV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -249,6 +264,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   // integrations.connector_exception (apps/worker queues/integrations.ts).
   "connector.run_failed": { 1: connectorRunFailedV1 },
   "connector.run_recovered": { 1: connectorRunRecoveredV1 },
+  // T-DG6-BE-K2 (ADR-0053 §3): consumers operations.exception_raise and automation.evaluate (apps/worker queues).
+  "data.stale": { 1: dataStaleV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

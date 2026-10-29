@@ -178,6 +178,13 @@ const SAMPLES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
     errorCode: "connector.source_unavailable",
     errorMessage: "The source system did not respond.",
   },
+  // T-DG6-BE-K2 (ADR-0053 §3; 0117): the data.stale v1 payload is registered, so it serves a sample.
+  "data.stale": {
+    kpiId: id(73),
+    transformationId: T,
+    dataAsOf: "2026-01-04",
+    staleAfterDays: 45,
+  },
 };
 
 /**
