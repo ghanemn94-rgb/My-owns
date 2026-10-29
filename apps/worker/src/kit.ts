@@ -1218,7 +1218,7 @@ const declare = (
     labelAr,
   });
 
-/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision). */
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's). */
 export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
   declare(
     "adoption.indicator_evaluated",
@@ -1334,6 +1334,10 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
   ),
   declare("reports.export", [TR], "Job: report export", "مهمة: تصدير التقارير"),
   declare("reports.owner_update_tasks", [TR], "Job: owner update tasks", "مهمة: مهام تحديث المالكين"),
+  // T-DG6-BE-P (ADR-0057 §2; 0115): the search index jobs. `none` here; their one declared exception (they read the
+  // ADR-0057 §1 indexed columns of sensitive records, never a value column) is enforced in search/documents.ts.
+  declare("search.index_feed", [TR], "Job: search index feed", "مهمة: تحديث فهرس البحث"),
+  declare("search.reindex", [TR], "Job: search reindex", "مهمة: إعادة بناء فهرس البحث"),
   declare("sustainment.control_check_scan", [TR], "Job: control check scan", "مهمة: فحص فحوص الضوابط"),
   declare("sustainment.review_scan", [TR], "Job: performance review scan", "مهمة: فحص مراجعات الأداء"),
   declare(

@@ -23,7 +23,17 @@ import {
 import { RUN_NOW_QUEUE } from "./job-runs.ts";
 import { DOMAIN_QUEUES, QUEUES } from "./queues/index.ts";
 
-const MIGRATION = new URL("../../../packages/db/migrations/0114_p6_job_service_identities.sql", import.meta.url);
+/** The migrations that seed job identities, each with its VALUES table (T-DG6-BE-P added 0115, the search jobs). */
+const MIGRATIONS = [
+  {
+    url: new URL("../../../packages/db/migrations/0114_p6_job_service_identities.sql", import.meta.url),
+    table: "p6_job_identity",
+  },
+  {
+    url: new URL("../../../packages/db/migrations/0115_p6_search_index_jobs.sql", import.meta.url),
+    table: "p6_search_job_identity",
+  },
+] as const;
 const CATEGORY: ReadonlyMap<string, string> = new Map(Object.entries(PERMISSIONS));
 
 interface SeededRow {
@@ -35,13 +45,15 @@ interface SeededRow {
   readonly ar: string;
 }
 
-/** The VALUES rows of the p6_job_identity table in 0114, parsed from the SQL text. */
+/** The VALUES rows of the identity tables of 0114 and 0115, parsed from the SQL text. */
 function seededRows(): SeededRow[] {
-  const sql = readFileSync(MIGRATION, "utf8");
-  const values = sql.slice(
-    sql.indexOf("INSERT INTO p6_job_identity VALUES"),
-    sql.indexOf("INSERT INTO service_identity"),
-  );
+  return MIGRATIONS.flatMap((m) => seededRowsOf(readFileSync(m.url, "utf8"), m.table));
+}
+
+function seededRowsOf(sql: string, table: string): SeededRow[] {
+  const start = sql.indexOf(`INSERT INTO ${table} VALUES`);
+  expect(start, table).toBeGreaterThanOrEqual(0);
+  const values = sql.slice(start, sql.indexOf("INSERT INTO service_identity", start));
   const row =
     /\('([0-9a-f-]{36})', '([^']+)', '([^']+)', (?:ARRAY\[([^\]]*)\]::text\[\]|'\{\}'::text\[\]), '([a-z_]+)', '((?:[^']|'')+)', '((?:[^']|'')+)'\)/g;
   const out: SeededRow[] = [];
@@ -79,10 +91,10 @@ describe("job service identities (ADR-0053 §1)", () => {
     const declared = JOB_SERVICE_IDENTITIES.map((d) => d.queue);
     expect(new Set(declared).size).toBe(declared.length);
     expect([...declared].sort()).toEqual([...queues].sort());
-    expect(declared).toHaveLength(40);
+    expect(declared).toHaveLength(42); // 40 (T-DG6-BE-J) + the two search jobs (T-DG6-BE-P)
   });
 
-  it("migration 0114 seeds exactly the declarations (code, queue, codes, sensitive access, labels)", () => {
+  it("migrations 0114 and 0115 seed exactly the declarations (code, queue, codes, sensitive access, labels)", () => {
     const seeded = seededRows();
     expect(seeded).toHaveLength(JOB_SERVICE_IDENTITIES.length);
     const byQueue = new Map(seeded.map((r) => [r.queue, r]));
