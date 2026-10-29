@@ -8,8 +8,16 @@
 //    make `loadConfig` throw a ConfigError. Entry points print its message and exit non-zero.
 //  - Error messages name the variable, never the value (secrets must not reach logs).
 import { readFileSync } from "node:fs";
+import { formatWithOptions } from "node:util";
 import { z } from "zod";
-import { AUTH_MODES, ENV_VARS, MTH_ENVS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+import {
+  AUTH_MODES,
+  ENV_VARS,
+  HEARTBEAT_INTERVAL_SECONDS,
+  MTH_ENVS,
+  SUPERVISE_INTERVAL_SECONDS,
+  type EnvVarName,
+} from "./index.ts";
 
 export type Service = "api" | "worker" | "db-cli";
 
@@ -59,7 +67,11 @@ export interface AppConfig {
   /** The demo reset's admin URL (ADR-0050 §6), or null. A secret: never logged. */
   readonly demoAdminDatabaseUrl: string | null;
   /** Worker-only settings (F-DG4-128). Always present; defaulted when unset. */
-  readonly worker: { readonly superviseIntervalSeconds: number };
+  readonly worker: {
+    readonly superviseIntervalSeconds: number;
+    /** P6 (ADR-0053 §6; T-DG6-DO-D): the worker_heartbeat cadence, WORKER_HEARTBEAT_SECONDS (default 30). */
+    readonly heartbeatSeconds: number;
+  };
 }
 
 /** The rate-limit classes of ADR-0052 §4 that have their own budget (global and auth are `rateLimit`). */
@@ -200,6 +212,10 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     "WORKER_SUPERVISE_INTERVAL_SECONDS",
     z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
   );
+  const heartbeatSeconds = field(
+    "WORKER_HEARTBEAT_SECONDS",
+    z.coerce.number().int().min(HEARTBEAT_INTERVAL_SECONDS.min).max(HEARTBEAT_INTERVAL_SECONDS.max),
+  );
   const mthEnvSet = field("MTH_ENV", z.enum(MTH_ENVS));
   const demoAdminDatabaseUrl = field(
     "MTH_DEMO_ADMIN_DATABASE_URL",
@@ -259,6 +275,8 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
   }
 
   if (problems.length > 0) throw new ConfigError(problems);
+  // ADR-0053 §4 (T-DG6-DO-D): the secrets and the storage path just read join the process-wide log redaction set.
+  registerConfigRedaction(env, storagePath);
 
   return Object.freeze({
     service,
@@ -279,7 +297,7 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     secretsDir: secretsDir ?? null,
     logLevel: logLevel!,
     trustProxy,
-    worker: { superviseIntervalSeconds: superviseIntervalSeconds! },
+    worker: { superviseIntervalSeconds: superviseIntervalSeconds!, heartbeatSeconds: heartbeatSeconds! },
     mthEnv: mthEnv!,
     demoAdminDatabaseUrl: demoAdminDatabaseUrl ?? null,
   });
@@ -305,4 +323,220 @@ export function isLoopbackHost(url: URL): boolean {
 export function secureOriginAllowed(appBaseUrl: URL, nodeEnv: string): boolean {
   if (nodeEnv !== "production") return true;
   return appBaseUrl.protocol === "https:" || isLoopbackHost(appBaseUrl);
+}
+
+// ------------------------------------------------------------------------------------------------ log redaction
+// P6 (ADR-0053 §4; REQ-S16-029 "never expose secrets or private evidence URLs … in logs"; T-DG6-DO-D). One
+// process-wide redaction set, applied to every API log line (pino `hooks.streamWrite`, server.ts) and every worker
+// console line (installConsoleRedaction, apps/worker/src/main.ts):
+//   1. secrets: every value resolved through a SecretProvider (withSecretRedaction wraps the registry) and every
+//      secret variable loadConfig reads (with the password of a postgres URL) is replaced by "[secret]";
+//   2. storage: the fields storageKey, storage_key, key, Key, Bucket, bucket, endpoint and s3_* are censored by path
+//      ("[redacted]", at any depth); a URL whose host is a registered object-store endpoint becomes "[storage-url]"; an
+//      absolute path under EVIDENCE_STORAGE_PATH becomes "[storage-path]"; the X-Amz-Signature, X-Amz-Credential and
+//      X-Amz-Security-Token query parameters are removed;
+//   3. tokens: the deep-link token segment (/links/<token> -> /links/[token]) and the OIDC code, state, id_token,
+//      access_token and refresh_token parameters; bearer tokens, JWTs, private-key blocks and AWS access-key ids too.
+// The header paths (authorization, cookie, x-csrf-token, set-cookie, x-mth-signature) stay pino `redact` paths
+// (REDACTED_LOG_PATHS). Request and response bodies are never logged.
+
+export const SECRET_CENSOR = "[secret]";
+export const PATH_CENSOR = "[redacted]";
+export const STORAGE_URL_CENSOR = "[storage-url]";
+export const STORAGE_PATH_CENSOR = "[storage-path]";
+
+/** The pino `redact` paths of the API logger (ADR-0053 §4 item 3: the DG1 four plus the webhook signature). */
+export const REDACTED_LOG_PATHS: readonly string[] = [
+  "req.headers.authorization",
+  "req.headers.cookie",
+  'req.headers["x-csrf-token"]',
+  'res.headers["set-cookie"]',
+  'req.headers["x-mth-signature"]',
+];
+
+/** The object keys censored by path at any depth (ADR-0053 §4 item 2), plus every key starting with `s3_`. */
+export const REDACTED_LOG_KEYS: ReadonlySet<string> = new Set([
+  "storageKey",
+  "storage_key",
+  "key",
+  "Key",
+  "Bucket",
+  "bucket",
+  "endpoint",
+]);
+
+/** A secret shorter than this is not registered: replacing a 1–3 character string would censor ordinary text. */
+export const MIN_REDACTED_SECRET_LENGTH = 4;
+
+const redactedSecrets = new Set<string>();
+let secretsByLength: string[] = [];
+const storageHosts = new Set<string>();
+const storagePaths = new Set<string>();
+
+function addSecretForm(value: string): void {
+  if (value.length < MIN_REDACTED_SECRET_LENGTH || redactedSecrets.has(value)) return;
+  redactedSecrets.add(value);
+  secretsByLength = [...redactedSecrets].sort((a, b) => b.length - a.length);
+}
+
+/**
+ * Registers a secret value: its occurrences in any later log line print "[secret]". The JSON-escaped and
+ * percent-encoded forms are registered too, so the value is also found inside a serialized string or a URL.
+ */
+export function registerRedactedSecret(value: string): void {
+  if (typeof value !== "string") return;
+  addSecretForm(value);
+  addSecretForm(JSON.stringify(value).slice(1, -1));
+  addSecretForm(encodeURIComponent(value));
+}
+
+/** Registers an object-store endpoint (ADR-0054 §2): any URL on its host (and port) prints "[storage-url]". */
+export function registerRedactedStorageEndpoint(endpoint: string | URL): void {
+  let url: URL;
+  try {
+    url = typeof endpoint === "string" ? new URL(endpoint) : endpoint;
+  } catch {
+    return;
+  }
+  if (url.host !== "") storageHosts.add(url.host.toLowerCase());
+}
+
+/** Registers a private storage directory (EVIDENCE_STORAGE_PATH): any absolute path under it prints "[storage-path]". */
+export function registerRedactedStoragePath(path: string): void {
+  const trimmed = path.replace(/\/+$/, "");
+  if (trimmed.startsWith("/") && trimmed.length > 1) storagePaths.add(trimmed);
+}
+
+/** Empties the redaction set (unit tests only; a running process never forgets a secret). */
+export function clearLogRedactionForTests(): void {
+  redactedSecrets.clear();
+  secretsByLength = [];
+  storageHosts.clear();
+  storagePaths.clear();
+}
+
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const TOKEN_RULES: readonly (readonly [RegExp, string])[] = [
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g, SECRET_CENSOR],
+  [/\bAKIA[0-9A-Z]{16}\b/g, SECRET_CENSOR],
+  [/\bBearer\s+[A-Za-z0-9._~+/-]+=*/g, `Bearer ${SECRET_CENSOR}`],
+  [/\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]*)?/g, SECRET_CENSOR],
+  [/\/links\/[A-Za-z0-9_-]{16,}/g, "/links/[token]"],
+  [/([?&](?:code|state|id_token|access_token|refresh_token)=)[^&\s"'#\\]*/g, `$1${PATH_CENSOR}`],
+];
+
+/** Removes the X-Amz-Signature, X-Amz-Credential and X-Amz-Security-Token query parameters (ADR-0053 §4 item 2). */
+function removeAmzParameters(text: string): string {
+  if (!/X-Amz-/i.test(text)) return text;
+  // Only inside the URL-like token that carries the parameter, so ordinary text around it is untouched.
+  return text.replace(/[^\s"'<>\\]*X-Amz-[^\s"'<>\\]*/gi, (token) =>
+    token
+      .replace(/([?&])X-Amz-(?:Signature|Credential|Security-Token)=[^&#]*/gi, "$1")
+      .replace(/([?&])&+/g, "$1")
+      .replace(/[?&]+(?=$|#)/, ""),
+  );
+}
+
+/** The text-level redaction of ADR-0053 §4 (secrets, storage URLs and paths, tokens). Idempotent. */
+export function redactText(text: string): string {
+  let out = text;
+  for (const secret of secretsByLength) if (out.includes(secret)) out = out.split(secret).join(SECRET_CENSOR);
+  for (const host of storageHosts)
+    out = out.replace(
+      new RegExp(`\\b[a-z][a-z0-9+.-]*://${escapeRegExp(host)}(?![A-Za-z0-9.-])[^\\s"'<>\\\\]*`, "gi"),
+      STORAGE_URL_CENSOR,
+    );
+  for (const dir of storagePaths)
+    out = out.replace(new RegExp(`${escapeRegExp(dir)}(?=[/"'\\s\\\\]|$)[^\\s"'<>\\\\]*`, "g"), STORAGE_PATH_CENSOR);
+  out = removeAmzParameters(out);
+  for (const [pattern, replacement] of TOKEN_RULES) out = out.replace(pattern, replacement);
+  return out;
+}
+
+const isRedactedKey = (key: string): boolean => REDACTED_LOG_KEYS.has(key) || key.startsWith("s3_");
+
+function censorKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(censorKeys);
+  if (value === null || typeof value !== "object") return value;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value)) out[k] = isRedactedKey(k) ? PATH_CENSOR : censorKeys(v);
+  return out;
+}
+
+const REDACTED_KEY_IN_JSON = /"(?:storageKey|storage_key|key|Key|Bucket|bucket|endpoint|s3_[^"]*)"\s*:/;
+
+/**
+ * One log line, redacted: the censored keys by path (when the line is a JSON object that has one), then the text rules.
+ * A line that is not JSON gets the text rules only. The trailing newline is kept.
+ */
+export function redactLogLine(line: string): string {
+  let out = line;
+  if (REDACTED_KEY_IN_JSON.test(out)) {
+    const newline = out.endsWith("\n") ? "\n" : "";
+    try {
+      out = JSON.stringify(censorKeys(JSON.parse(out))) + newline;
+    } catch {
+      // Not one JSON document: the text rules below still apply.
+    }
+  }
+  return redactText(out);
+}
+
+interface RedactableSecretValue {
+  reveal(): string;
+}
+interface RedactableSecretProvider {
+  readonly id: string;
+  get(name: string): Promise<RedactableSecretValue | undefined>;
+}
+
+/**
+ * ADR-0053 §4 item 1: wraps a SecretProvider registry (ADR-0052 §5) so every provider registered on it adds each value
+ * it resolves to the redaction set before returning it. The registry object is returned (same identity).
+ */
+export function withSecretRedaction<R extends { register(provider: RedactableSecretProvider): void }>(registry: R): R {
+  const register = registry.register.bind(registry);
+  registry.register = (provider: RedactableSecretProvider) => {
+    const wrapped: RedactableSecretProvider = Object.assign(Object.create(provider) as RedactableSecretProvider, {
+      async get(name: string) {
+        const value = await provider.get(name);
+        if (value !== undefined) registerRedactedSecret(value.reveal());
+        return value;
+      },
+    });
+    register(wrapped);
+  };
+  return registry;
+}
+
+type ConsoleMethod = "log" | "info" | "warn" | "error" | "debug";
+
+/** The worker's line sink (it logs through console): every console line is redacted before it is written. */
+export function installConsoleRedaction(target: Pick<Console, ConsoleMethod> = console): void {
+  for (const method of ["log", "info", "warn", "error", "debug"] as const) {
+    const original = target[method].bind(target);
+    target[method] = (...args: unknown[]) => original(redactLogLine(formatWithOptions({ colors: false }, ...args)));
+  }
+}
+
+/** Registers the secrets and the storage path loadConfig read (ADR-0053 §4 items 1 and 2). */
+function registerConfigRedaction(env: Env, storagePath: string | undefined): void {
+  for (const name of secretVariableNames()) {
+    let value: string | undefined;
+    try {
+      value = readRaw(env, name, []);
+    } catch {
+      value = undefined;
+    }
+    if (value === undefined) continue;
+    registerRedactedSecret(value);
+    try {
+      const url = new URL(value);
+      if (url.password !== "") registerRedactedSecret(decodeURIComponent(url.password));
+    } catch {
+      // Not a URL: the whole value is registered above.
+    }
+  }
+  if (storagePath !== undefined) registerRedactedStoragePath(storagePath);
 }

@@ -13,7 +13,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { readdirSync } from "node:fs";
 import { connect, createServer, type Server, type Socket } from "node:net";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import {
@@ -358,7 +358,16 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
         headers: { cookie: p.auditor.session.cookie },
       });
       const files = storedFilesOf(f.id);
-      out.push({ size, status: res?.status, rows: rows.length, sha: rows[0]?.sha256 === sha256(content), files });
+      // T-DG6-DO-D (ADR-0053 §5): the diagnostic prints file names only; an absolute evidence-store path in the suite
+      // output fails the post-suite log scan.
+      const fileNames = files.map((x) => basename(x));
+      out.push({
+        size,
+        status: res?.status,
+        rows: rows.length,
+        sha: rows[0]?.sha256 === sha256(content),
+        files: fileNames,
+      });
       expect(res?.status).toBe(200);
       expect(JSON.parse(res!.body)).toMatchObject({ version: f.version + 1 });
       expect(rows).toHaveLength(1);

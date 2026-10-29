@@ -4,7 +4,7 @@
 //
 // Reusable by qa-verifier suites (tests/qa/integration/**): import { startApi, seedWorld, signIn } from here.
 import { randomBytes } from "node:crypto";
-import { mkdtempSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig, type AppConfig } from "@mth/config";
@@ -60,6 +60,20 @@ export function testConfig(env: Record<string, string> = {}): AppConfig {
   });
 }
 
+/**
+ * T-DG6-DO-D (ADR-0053 §5): with MTH_TEST_LOG_DIR set (the CI integration job and the post-suite log scan), every API
+ * this process starts without its own logStream writes its log lines, as composed by server.ts (redaction included),
+ * to `<dir>/api-<pid>.log`, which deploy/scripts/log-scan.mjs scans after the suite. Unset (the default): no logger,
+ * exactly as before.
+ */
+function runLogFile(): ServerOptions["logStream"] | undefined {
+  const dir = process.env["MTH_TEST_LOG_DIR"];
+  if (dir === undefined || dir === "") return undefined;
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `api-${process.pid}.log`);
+  return { write: (line: string) => appendFileSync(file, line) };
+}
+
 export async function startApi(
   options: {
     env?: Record<string, string>;
@@ -84,11 +98,12 @@ export async function startApi(
     options.database ? { DATABASE_URL: roleUrl(adminUrl, options.database, "mth_app"), ...options.env } : options.env,
   );
   const pool = createPool(config.databaseUrl!, { max: 5, applicationName: "api-test", ...options.pool });
+  const logStream = options.logStream ?? runLogFile();
   const { app, db, routes } = await buildServer({
     config,
     pool,
-    logger: options.logStream !== undefined,
-    ...(options.logStream !== undefined ? { logStream: options.logStream } : {}),
+    logger: logStream !== undefined,
+    ...(logStream !== undefined ? { logStream } : {}),
     webRoot: null,
     ...options.server,
     ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),

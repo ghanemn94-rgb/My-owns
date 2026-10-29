@@ -20,6 +20,8 @@ import helmet, { type FastifyHelmetOptions } from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import type { AppConfig } from "@mth/config";
+// ADR-0053 §4 (T-DG6-DO-D): the log redaction set and its line redactor.
+import { REDACTED_LOG_PATHS, redactLogLine, withSecretRedaction } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
 import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
@@ -268,15 +270,11 @@ export async function buildServer(options: ServerOptions): Promise<{
         : {
             level: config.logLevel,
             ...(options.logStream ? { stream: options.logStream } : {}),
-            redact: {
-              paths: [
-                "req.headers.authorization",
-                "req.headers.cookie",
-                'req.headers["x-csrf-token"]',
-                'res.headers["set-cookie"]',
-              ],
-              censor: "[redacted]",
-            },
+            // ADR-0053 §4 (T-DG6-DO-D): the header paths (the DG1 four plus x-mth-signature) are censored by pino;
+            // every serialized line then passes the process-wide redaction set (SecretProvider values, configuration
+            // secrets, storage keys, URLs and paths, link tokens, OIDC parameters) before it is written.
+            redact: { paths: [...REDACTED_LOG_PATHS], censor: "[redacted]" },
+            hooks: { streamWrite: redactLogLine },
           },
     genReqId,
     // T-DG6-DO-A2: fastify 5.12 deprecates the top-level `requestIdLogLabel` (FSTDEP024); same label, same log lines.
@@ -527,7 +525,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   //    in-app channel first, then the email adapter when configured); fan-out runs in the worker after commit.
   //  - ModelProvider (ARCH-05; BE-T, assistant/provider.ts): the provider line goes below this block (the local test
   //    adapter, or the HTTP adapter when configured); with nothing configured the assistant stays disabled.
-  const secrets = createSecretProviderRegistry();
+  // ADR-0053 §4 item 1 (DO-D): every value a registered provider resolves joins the log redaction set.
+  const secrets = withSecretRedaction(createSecretProviderRegistry());
   registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir }); // BE-E: env and file (ADR-0052 §5)
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),

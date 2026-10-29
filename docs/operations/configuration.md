@@ -46,9 +46,9 @@ prints as `[secret]` in `String()`, `JSON.stringify` and log lines.
 - The `file` provider accepts only a plain file name (`A–Z a–z 0–9 _ . -`, first character alphanumeric, at most 128
   characters): no path separators, no `..`, no leading dot.
 - With no P6 variable set, the installation behaves as in DG5.
-- **Current wiring:** the API registers both built-in providers at start (`apps/api/src/server.ts`). The worker's
-  registration is a planned P6 item (D-198, owner of slice J); until it lands, `SECRETS_DIR` has no effect in the
-  worker process even though the catalogue lists the worker as a reader.
+- **Current wiring:** the API (`apps/api/src/server.ts`) and the worker (`apps/worker/src/main.ts`, D-198) both
+  register the two built-in providers at start. Every value a provider resolves joins the log redaction set
+  (ADR-0053 §4; [monitoring.md](monitoring.md) §4.1).
 - **Another store** (for example Mobily IT's vault) is plugged in by registering an IT-supplied adapter at
   composition (`server.ts`, `apps/worker/src/main.ts`). The product ships no vault adapter and claims no vault
   integration.
