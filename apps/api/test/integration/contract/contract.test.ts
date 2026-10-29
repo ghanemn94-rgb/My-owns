@@ -1066,8 +1066,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 2 JSON bodies (storage), T-DG6-BE-J + putServiceIdentity (1 JSON body); ARCH-06 and BE-I none. 394 + 3 = 397.
     // T-DG6-BE-L: + createConnector, putConnector, enableConnector, disableConnector, testConnector,
     // putConnectorMappings (6 JSON bodies; listConnectors, getConnector, getConnectorMappings are GETs). 397 + 6 = 403
-    // (the orchestrator reconciles the parallel W7 deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([403, 402, 1]);
+    // (the orchestrator reconciles the parallel W7 deltas at merge). W7 merge: T-DG6-BE-K + acknowledge and resolve an
+    // operational exception (2 JSON bodies). 403 + 2 = 405.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([405, 404, 1]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
