@@ -10,6 +10,8 @@
 //   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
 //                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
 // bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
+// ADR-0058 §2 (T-DG6-DO-E): bootstrap and seed-demo also refuse (exit 3, nothing changed) on a database that holds the
+// synthetic load dataset (a load_dataset_marker row, written by deploy/load/generate.mjs).
 //
 // There is no `down`: recovery is backup/restore plus a new corrective migration (ADR-0003).
 // Every command first requires a UTF8 database (encoding.ts, T-DG2-BE9): on any other encoding it prints
@@ -23,6 +25,18 @@ import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
 import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
 import { createDb, createPool } from "./pool.ts";
+
+/** ADR-0058 §2: the refusal of bootstrap and seed-demo on a load database (exact text). */
+export const LOAD_DATASET_CLI_REFUSAL =
+  "This database holds the synthetic load dataset; it cannot be bootstrapped or seeded as a demo.";
+
+/** Whether the database holds the load dataset's marker (false on a database migrated below 0108). */
+async function holdsLoadDataset(pool: ReturnType<typeof createPool>): Promise<boolean> {
+  const table = await pool.query<{ t: string | null }>("SELECT to_regclass('public.load_dataset_marker')::text AS t");
+  if (table.rows[0]?.t === null || table.rows[0]?.t === undefined) return false;
+  const marker = await pool.query<{ present: boolean }>("SELECT EXISTS (SELECT 1 FROM load_dataset_marker) AS present");
+  return marker.rows[0]?.present === true;
+}
 
 const USAGE = `usage:
   mth-db migrate
@@ -78,6 +92,11 @@ async function main(argv: string[]): Promise<number> {
   try {
     // Same connection path as the work below; refuses before any read or write (migrate checks inside migrate()).
     await assertUtf8Database(pool);
+    // ADR-0058 §2: a load database never receives a production or demo marker through the CLI.
+    if ((command === "bootstrap" || command === "seed-demo") && (await holdsLoadDataset(pool))) {
+      console.error(`mth-db ${command}: refused: ${LOAD_DATASET_CLI_REFUSAL}`);
+      return 3;
+    }
     if (command === "status") {
       const client = await pool.connect();
       try {

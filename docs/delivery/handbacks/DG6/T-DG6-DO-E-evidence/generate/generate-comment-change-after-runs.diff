@@ -1,0 +1,17 @@
+--- /var/tmp/mth-run.ohXGgd/claude-0/generate.at-runs.mjs	2026-10-29 16:30:14.005583176 +0000
++++ deploy/load/generate.mjs	2026-10-29 16:30:14.110273989 +0000
+@@ -1006,10 +1006,10 @@
+ 
+     // 3. Version steps until audit_event holds exactly the marker's count: initiatives, KPI definitions, benefits, in
+     // rounds; each step one UPDATE (version + 1) and its audit event with the prior and new version.
+-    // Fresh statistics inside this transaction (ANALYZE counts the transaction's own new rows): the guard triggers'
+-    // lookups (immediate ones below, and the deferred *_audit_required and consistency checks at COMMIT) are planned
+-    // against tables that grew from empty to their full size in this transaction. With the pre-load statistics the
+-    // planner picks sequential scans of audit_event for ~130,000 deferred checks, and the commit takes many minutes.
++    // Current statistics inside this transaction (ANALYZE counts the transaction's own new rows), so the guard triggers'
++    // lookups (the immediate ones below and the deferred checks at COMMIT) are planned against the tables' real sizes.
++    // The COMMIT still dominates the run time: the deferred p2_audit_required compares record_type with a `name` value
++    // and walks the whole audit_event_record_idx per check (measured; deploy/load/README.md "Measured here").
+     await client.query("ANALYZE");
+     const have = Number((await client.query("SELECT count(*) AS n FROM audit_event")).rows[0].n);
+     // One event is kept for the search.reindex request of step 4 when its schedule exists.
