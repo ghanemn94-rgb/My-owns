@@ -287,7 +287,7 @@ export const RATE_LIMIT_CLASSES: readonly RateLimitClassSpec[] = [
     keyedBy: "user_or_ip",
     operationIds: ["uploadEvidenceContent"],
   },
-  { name: "search", variable: "SEARCH_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+  { name: "search", variable: "SEARCH_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: ["searchRecords"] },
   { name: "assistant", variable: "ASSISTANT_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
   { name: "webhook", variable: "WEBHOOK_RATE_LIMIT_PER_MINUTE", keyedBy: "endpoint_key", operationIds: [] },
   { name: "export", variable: "EXPORT_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
