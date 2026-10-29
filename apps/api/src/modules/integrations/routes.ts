@@ -14,6 +14,7 @@ import {
   paginate,
   parse,
   parseBody,
+  idempotencyKeySchema,
   parseQuery,
   requireIfMatch,
   sendVersioned,
@@ -47,6 +48,16 @@ import {
   type ConnectorTargetKind,
 } from "./connectors.ts";
 import type { ConnectorAdapterKind } from "./adapters/port.ts";
+import {
+  CONNECTOR_RUN,
+  findRunOf,
+  installDefaultConnectorAdapters,
+  listRuns,
+  queueManualRetry,
+  queueManualRun,
+  requireConnectorRun,
+  toIntegrationRunDetail,
+} from "./runs.ts";
 
 const JSON_BODY = ["application/json"] as const;
 
@@ -249,9 +260,94 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
   ];
 }
 
+// ------------------------------------------------------------------------------------------------ BE-L2: runs
+// T-DG6-BE-L2 (ADR-0055 §2-§4, §9; REQ-S17-001, REQ-S16-022, REQ-S17-005):
+//   GET  /api/v1/admin/connectors/{connectorId}/runs                    listIntegrationRuns  (connector.read)
+//   POST /api/v1/admin/connectors/{connectorId}/runs                    runConnector         (connector.run; Idempotency-Key)
+//   GET  /api/v1/admin/connectors/{connectorId}/runs/{runId}            getIntegrationRun    (connector.read)
+//   POST /api/v1/admin/connectors/{connectorId}/runs/{runId}/retry      retryIntegrationRun  (connector.run)
+// No If-Match on the two POSTs: each creates a new run (ADR-0055 §9); the one-active-run rule, the run's unique key and
+// the retry-once key are the concurrency control. Order: 400 body/header, 404 read gate, 403 run gate, then the
+// transaction (the connectorRun lock, commit-time re-check, replay, 409/422 state refusals, the run and its audit event). The run
+// itself executes after the commit, outside any request transaction (runs.ts, the run watch).
+
+const RUNS = `${CONNECTOR}/runs`;
+const RUN = `${RUNS}/:runId`;
+const RUN_RETRY = `${RUN}/retry`;
+
+const runParams = z.strictObject({ connectorId: uuid, runId: uuid });
+const runListQuery = z.strictObject({
+  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]).optional(),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
+const runRequest = z.strictObject({});
+const idempotencyHeader = z.object({ "idempotency-key": idempotencyKeySchema.optional() }).passthrough();
+
+function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
+  // The adapters this process ships (the local test adapter and http_pull); a test that swapped the registry keeps it.
+  installDefaultConnectorAdapters();
+
+  // listIntegrationRuns: newest first (cursor over queued_at, id).
+  app.get(RUNS, { config: { access: { permission: CONNECTOR_READ } } }, async (request) => {
+    const { connectorId } = parse(connectorParams, request.params, "params");
+    const query = parseQuery(runListQuery, request.query);
+    await visibleConnector(db, principalOf(request), connectorId);
+    const { cursor, limit, ...filters } = query;
+    const hash = filterHash(filters);
+    const after = decodeCursor(cursor, hash, 2);
+    const rows = await listRuns(db, connectorId, {
+      ...(query.status ? { status: query.status } : {}),
+      after: after ? [String(after[0]), String(after[1])] : null,
+      limit,
+    });
+    const page = paginate(rows, limit, (r) => [r.queued_at.toISOString(), r.id], hash);
+    return { items: page.items.map(toIntegrationRun), nextCursor: page.nextCursor };
+  });
+
+  // runConnector: 202 with the queued run; 200 with the existing run for the same Idempotency-Key.
+  app.post(RUNS, { config: { access: { permission: CONNECTOR_RUN }, consumes: JSON_BODY } }, async (request, reply) => {
+    const { connectorId } = parse(connectorParams, request.params, "params");
+    parseQuery(noQuery, request.query);
+    parseBody(runRequest, request.body);
+    const key = parse(idempotencyHeader, request.headers, "header")["idempotency-key"];
+    await requireConnectorRun(db, principalOf(request), connectorId);
+    const { run, replay } = await queueManualRun(db, request, connectorId, key);
+    return reply.code(replay ? 200 : 202).send(toIntegrationRun(run));
+  });
+
+  // getIntegrationRun: 404 when the connector is unreadable or the run belongs to another connector.
+  app.get(RUN, { config: { access: { permission: CONNECTOR_READ } } }, async (request, reply) => {
+    const { connectorId, runId } = parse(runParams, request.params, "params");
+    parseQuery(noQuery, request.query);
+    const connector = await visibleConnector(db, principalOf(request), connectorId);
+    const run = await findRunOf(db, connectorId, runId);
+    reply.header("ETag", etag(run.version));
+    return toIntegrationRunDetail(db, connector, run);
+  });
+
+  // retryIntegrationRun: 202 with the queued retry.
+  app.post(
+    RUN_RETRY,
+    { config: { access: { permission: CONNECTOR_RUN }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { connectorId, runId } = parse(runParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      parseBody(runRequest, request.body);
+      await requireConnectorRun(db, principalOf(request), connectorId);
+      await findRunOf(db, connectorId, runId);
+      const run = await queueManualRetry(db, request, connectorId, runId);
+      return reply.code(202).send(toIntegrationRun(run));
+    },
+  );
+
+  return [`GET ${RUNS}`, `POST ${RUNS}`, `GET ${RUN}`, `POST ${RUN_RETRY}`];
+}
+
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerIntegrationRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
   return [
     ...registerConnectorRoutes(app, deps), // BE-L: connectors, configuration versions, mappings, test
+    ...registerRunRoutes(app, deps), // BE-L2: integration runs and retries
   ];
 }

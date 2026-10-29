@@ -16,6 +16,8 @@ const NOT_TRIGGERS = new Set([
   "demo.reset_requested",
   "kpi_restatement.approved",
   "branding.published",
+  // T-DG6-BE-L2: the recovery of a connector (consumed by integrations.connector_exception only; no catalogue trigger).
+  "connector.run_recovered",
 ]);
 
 describe("automation samples (D-164 d)", () => {

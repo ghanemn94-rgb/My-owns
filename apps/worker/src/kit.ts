@@ -1299,6 +1299,15 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
     "مهمة: فحص مواعيد إقفال الاجتماعات",
   ),
   declare("governance.meeting_series_generate", [TR], "Job: meeting series generation", "مهمة: إنشاء سلاسل الاجتماعات"),
+  // T-DG6-BE-L2 (ADR-0055 §2; ADR-0053 §1-§2; 0116): the connector cadence slots (reads connectors) and the connector
+  // exception consumer (reads nothing; writes the operational exception of a failed or recovered connector run).
+  declare("integrations.connector_exception", [], "Job: connector run exceptions", "مهمة: استثناءات تشغيل الموصلات"),
+  declare(
+    "integrations.connector_run",
+    ["connector.read"],
+    "Job: connector cadence schedule",
+    "مهمة: جدول تشغيل الموصلات",
+  ),
   declare("job_schedule.updated", ["job.read"], "Job: schedule re-registration", "مهمة: إعادة تسجيل الجداول"),
   declare("jobs.run_now", ["job.read"], "Job: run-now dispatch", "مهمة: تشغيل المهمة الآن"),
   declare("kpi.recalculate", [TR], "Job: KPI recalculation", "مهمة: إعادة حساب مؤشرات الأداء"),
