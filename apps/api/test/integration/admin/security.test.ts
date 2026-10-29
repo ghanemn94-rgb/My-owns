@@ -87,7 +87,7 @@ describe("getSecurityRateLimits", () => {
           variable: "SEARCH_RATE_LIMIT_PER_MINUTE",
           perMinute: 1201,
           keyedBy: "user_or_ip",
-          operationIds: [],
+          operationIds: ["searchRecords"], // T-DG6-BE-P2
         },
         {
           name: "assistant",
@@ -190,6 +190,8 @@ describe("the routes in each class are the operations the matrix lists", () => {
     const declared = new Map<string, string[]>();
     for (const r of api.routes) {
       if (r.rateLimitClass === null) continue;
+      // T-DG6-BE-P2: Fastify's generated HEAD twin of a GET route (searchRecords) shares its config and its limiter.
+      if (r.method === "HEAD") continue;
       const op = findOperation(r.method, r.url);
       expect(op, `${r.method} ${r.url}`).toBeDefined();
       declared.set(r.rateLimitClass, [...(declared.get(r.rateLimitClass) ?? []), op!.operationId]);
