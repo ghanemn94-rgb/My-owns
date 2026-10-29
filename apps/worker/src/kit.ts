@@ -500,7 +500,7 @@ export function failureRetryJobId(failureId: string, retryCount: number): string
 }
 
 function messageOf(err: unknown): string {
-  const m = err instanceof Error ? err.message : String(err);
+  const m = redactErrorText(err instanceof Error ? err.message : String(err)); // T-DG6-BE-K (ADR-0053 §4 item 4)
   const s = m.trim().length > 0 ? m : "error";
   return s.length > 2000 ? s.slice(0, 2000) : s;
 }
@@ -656,6 +656,9 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
       });
       result = { failureId: current.id, outcome: reopen ? "reopened" : "updated" };
     }
+    // T-DG6-BE-K (ADR-0053 §2): the job's operational exception, in the same transaction, once per failed job (a replay
+    // of the same pg-boss job id finds its ledger row and recurs nothing).
+    await raiseJobException(tx, actor, job, id.organizationId, result.failureId, message);
     // ADR-0043 §7: the internal job.failed event (starter 16, M0239), only when the job names an organization (an
     // outbox row needs one) and never for the consumer of job.failed itself (no failure loop).
     if (id.organizationId !== null && job.queue !== JOB_FAILED_QUEUE)
@@ -671,8 +674,20 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
   });
 }
 
-/** A job succeeded: the `retrying` failure of its key (or whose retry sent this job id) is resolved. */
+/**
+ * A job succeeded: the `retrying` failure of its key (or whose retry sent this job id) is resolved, and (T-DG6-BE-K,
+ * ADR-0053 §2) the active `job_failed` exception of its queue and organization is resolved `recovered`.
+ */
 export async function settleRetriedJob(
+  db: Db,
+  job: Pick<FailedJob, "queue" | "jobId" | "data" | "createdOn">,
+): Promise<string | null> {
+  const settled = await settleRetriedFailure(db, job);
+  await recoverJobException(db, job);
+  return settled;
+}
+
+async function settleRetriedFailure(
   db: Db,
   job: Pick<FailedJob, "queue" | "jobId" | "data" | "createdOn">,
 ): Promise<string | null> {
@@ -864,6 +879,279 @@ async function insertOutboxRow(
       idempotency_key: e.idempotencyKey,
     })
     .execute();
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Operational exceptions (ADR-0053 §2, §4, §8; REQ-S12-019; p6-work-split §J/C.3; T-DG6-BE-K). The worker twin of
+// apps/api/src/modules/operations/exceptions.ts `raiseOperationalException` / `recoverOperationalException` (ADR-0002
+// rule 5: the worker imports no API code; apps/api/test/integration/operations/exceptions.test.ts compares the rows the
+// two write). One ACTIVE exception per (organization, source kind, source code, failure class): lock 730305 on
+// "<organizationId or 'platform'>:<dedupKey>", then recur the active row or insert a new one, with one audit event, in
+// the transaction of the failure it reports. A resolved exception is final; a new failure opens a new one.
+//  - raiseJobException: called by captureJobFailure after the operational_failure write (the LAST attempt failed).
+//    The processed_message ledger (consumer `operations.job_failed`, key `<queue>:<pg-boss job id>`) makes a replay of
+//    the same failed job a no-op.
+//  - recoverJobException: called on every success (settleRetriedJob): the queue's active exception for the job's
+//    organization (NULL for a scheduled job) is resolved `recovered`, with no user.
+// The in-app alert on opening (ADR-0053 §6) is BE-K2's; `raiseOperationalExceptionTwin` returns `opened` for it.
+/** ADR-0016 §6 / apps/api platform/advisory-locks.ts `operationalExceptionUpsert` (the worker imports no API code). */
+export const OPERATIONAL_EXCEPTION_LOCK = 730305;
+export const JOB_EXCEPTION_LEDGER = "operations.job_failed";
+
+export interface ExceptionKey {
+  readonly organizationId: string | null;
+  readonly sourceKind: "job" | "connector" | "data_freshness" | "worker";
+  readonly sourceCode: string;
+  readonly failureClass:
+    | "job_failed"
+    | "connector_run_failed"
+    | "connector_unreachable"
+    | "connector_credentials_rejected"
+    | "data_stale"
+    | "heartbeat_missed";
+}
+
+export interface RaiseExceptionTwinInput extends ExceptionKey {
+  readonly errorCode: string;
+  /** Redacted here before it is stored (ADR-0053 §4 item 4). */
+  readonly errorMessage: string;
+  readonly serviceIdentityId?: string | null;
+  readonly operationalFailureId?: string | null;
+  readonly kpiLinks?: readonly { readonly kpiDefinitionId: string; readonly transformationId: string }[];
+}
+
+export interface RaiseTwinResult {
+  readonly exceptionId: string;
+  readonly outcome: "opened" | "recurred";
+}
+
+/**
+ * ADR-0053 §4: the redaction applied to an error text before it is stored in operational_exception.last_error_message
+ * and operational_failure.error_message. It removes private keys, access-key ids, AWS signature parameters, bearer
+ * tokens, JWTs, the deep-link token segment, URL credentials and the OIDC code/state/token parameters. The process-wide
+ * set of SecretProvider values is DO-D's (packages/config, ADR-0053 §4 item 1) and applies to log lines.
+ */
+export function redactErrorText(text: string): string {
+  return text
+    .replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g, "[secret]")
+    .replace(/\bAKIA[0-9A-Z]{16}\b/g, "[secret]")
+    .replace(/(X-Amz-(?:Signature|Credential|Security-Token))=[^&\s"']*/gi, "$1=[secret]")
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/g, "Bearer [secret]")
+    .replace(/\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]*)?/g, "[secret]")
+    .replace(/\/links\/[A-Za-z0-9_-]{20,}/g, "/links/[token]")
+    .replace(/(\b[a-z][a-z0-9+.-]*:\/\/)[^\s/@:]+:[^\s/@]+@/gi, "$1[secret]@")
+    .replace(/([?&](?:code|state|id_token|access_token|refresh_token|password|secret)=)[^&\s"']*/gi, "$1[secret]");
+}
+
+const exceptionDedupKey = (k: ExceptionKey): string => `${k.sourceKind}:${k.sourceCode}:${k.failureClass}`;
+
+async function lockException(tx: Tx, k: ExceptionKey): Promise<string> {
+  const dedupKey = exceptionDedupKey(k);
+  await sql`SELECT pg_advisory_xact_lock(${OPERATIONAL_EXCEPTION_LOCK}::integer, hashtext(${`${k.organizationId ?? "platform"}:${dedupKey}`}::text))`.execute(
+    tx,
+  );
+  return dedupKey;
+}
+
+async function activeExceptionOf(tx: Tx, organizationId: string | null, dedupKey: string) {
+  return tx
+    .selectFrom("operational_exception")
+    .selectAll()
+    .where(sql<boolean>`organization_id IS NOT DISTINCT FROM ${organizationId}::uuid`)
+    .where("dedup_key", "=", dedupKey)
+    .where("status", "in", ["open", "acknowledged"])
+    .forUpdate()
+    .executeTakeFirst();
+}
+
+/** The twin of the API's raiseOperationalException (same rows, same audit actions; actor `actor`). */
+export async function raiseOperationalExceptionTwin(
+  tx: Tx,
+  actor: AuditActor,
+  input: RaiseExceptionTwinInput,
+): Promise<RaiseTwinResult> {
+  const dedupKey = await lockException(tx, input);
+  const redacted = redactErrorText(input.errorMessage);
+  const message = (redacted.trim().length > 0 ? redacted : "error").slice(0, 2000);
+  const current = await activeExceptionOf(tx, input.organizationId, dedupKey);
+  let result: RaiseTwinResult;
+  if (current === undefined) {
+    const id = await uuidv7(tx);
+    const row = await tx
+      .insertInto("operational_exception")
+      .values({
+        id,
+        organization_id: input.organizationId,
+        source_kind: input.sourceKind,
+        source_code: input.sourceCode,
+        failure_class: input.failureClass,
+        dedup_key: dedupKey,
+        service_identity_id: input.serviceIdentityId ?? null,
+        operational_failure_id: input.operationalFailureId ?? null,
+        first_occurred_at: sql<Date>`now()`,
+        last_occurred_at: sql<Date>`now()`,
+        last_error_code: input.errorCode,
+        last_error_message: message,
+        created_by: actor.actorUserId,
+        updated_by: actor.actorUserId,
+      })
+      .returning(["id", "version"])
+      .executeTakeFirstOrThrow();
+    await insertAuditEvent(tx, actor, {
+      action: "operational_exception.opened",
+      recordType: "operational_exception",
+      recordId: row.id,
+      organizationId: input.organizationId,
+      newVersion: row.version,
+      changes: {
+        dedup_key: { from: null, to: dedupKey },
+        status: { from: null, to: "open" },
+        last_error_code: { from: null, to: input.errorCode },
+        ...(input.kpiLinks && input.kpiLinks.length > 0
+          ? { kpi_definition_ids: { from: null, to: input.kpiLinks.map((k) => k.kpiDefinitionId) } }
+          : {}),
+      },
+    });
+    result = { exceptionId: row.id, outcome: "opened" };
+  } else {
+    const updated = await tx
+      .updateTable("operational_exception")
+      .set({
+        occurrence_count: current.occurrence_count + 1,
+        last_occurred_at: sql<Date>`greatest(now(), ${current.last_occurred_at}::timestamptz)`,
+        last_error_code: input.errorCode,
+        last_error_message: message,
+        ...(input.operationalFailureId ? { operational_failure_id: input.operationalFailureId } : {}),
+        version: current.version + 1,
+        updated_at: sql<Date>`now()`,
+        updated_by: actor.actorUserId,
+      })
+      .where("id", "=", current.id)
+      .where("version", "=", current.version)
+      .returning("version")
+      .executeTakeFirstOrThrow();
+    await insertAuditEvent(tx, actor, {
+      action: "operational_exception.recurred",
+      recordType: "operational_exception",
+      recordId: current.id,
+      organizationId: current.organization_id,
+      priorVersion: current.version,
+      newVersion: updated.version,
+      changes: {
+        occurrence_count: { from: current.occurrence_count, to: current.occurrence_count + 1 },
+        last_error_code: { from: current.last_error_code, to: input.errorCode },
+      },
+    });
+    result = { exceptionId: current.id, outcome: "recurred" };
+  }
+  if (input.organizationId !== null)
+    for (const k of input.kpiLinks ?? [])
+      await tx
+        .insertInto("operational_exception_kpi")
+        .values({
+          id: await uuidv7(tx),
+          operational_exception_id: result.exceptionId,
+          organization_id: input.organizationId,
+          transformation_id: k.transformationId,
+          kpi_definition_id: k.kpiDefinitionId,
+        })
+        .onConflict((oc) => oc.columns(["operational_exception_id", "kpi_definition_id"]).doNothing())
+        .execute();
+  return result;
+}
+
+/** The twin of the API's recoverOperationalException: the active exception, if any, resolved `recovered`. */
+export async function recoverOperationalExceptionTwin(
+  tx: Tx,
+  actor: AuditActor,
+  key: ExceptionKey,
+): Promise<string | null> {
+  const dedupKey = await lockException(tx, key);
+  const current = await activeExceptionOf(tx, key.organizationId, dedupKey);
+  if (current === undefined) return null;
+  const updated = await tx
+    .updateTable("operational_exception")
+    .set({
+      status: "resolved",
+      resolved_at: sql<Date>`now()`,
+      resolution: "recovered",
+      version: current.version + 1,
+      updated_at: sql<Date>`now()`,
+      updated_by: null,
+    })
+    .where("id", "=", current.id)
+    .where("version", "=", current.version)
+    .returning("version")
+    .executeTakeFirstOrThrow();
+  await insertAuditEvent(tx, actor, {
+    action: "operational_exception.resolved",
+    recordType: "operational_exception",
+    recordId: current.id,
+    organizationId: current.organization_id,
+    priorVersion: current.version,
+    newVersion: updated.version,
+    changes: { status: { from: current.status, to: "resolved" }, resolution: { from: null, to: "recovered" } },
+  });
+  return current.id;
+}
+
+const jobExceptionKey = (queue: string, organizationId: string | null): ExceptionKey => ({
+  organizationId,
+  sourceKind: "job",
+  sourceCode: queue,
+  failureClass: "job_failed",
+});
+
+/** The failure hook: open or recur the queue's `job_failed` exception, once per failed pg-boss job. */
+async function raiseJobException(
+  tx: Tx,
+  actor: AuditActor,
+  job: FailedJob,
+  organizationId: string | null,
+  failureId: string,
+  message: string,
+): Promise<RaiseTwinResult | null> {
+  const ledger = await tx
+    .insertInto("processed_message")
+    .values({
+      consumer: JOB_EXCEPTION_LEDGER,
+      idempotency_key: `${job.queue}:${job.jobId}`.slice(0, 200),
+      outcome: "done",
+    })
+    .onConflict((oc) => oc.doNothing())
+    .returning("consumer")
+    .executeTakeFirst();
+  if (!ledger) return null;
+  const identity = await tx
+    .selectFrom("service_identity")
+    .select("id")
+    .where("code", "=", jobIdentityCode(job.queue))
+    .executeTakeFirst();
+  return raiseOperationalExceptionTwin(tx, actor, {
+    ...jobExceptionKey(job.queue, organizationId),
+    errorCode: failureCodeOf(job.error),
+    errorMessage: message,
+    serviceIdentityId: identity?.id ?? null,
+    operationalFailureId: failureId,
+  });
+}
+
+/** Recovery on success: only when the queue has an active `job_failed` exception (one indexed read otherwise). */
+async function recoverJobException(db: Db, job: Pick<FailedJob, "queue" | "jobId" | "data" | "createdOn">) {
+  const active = await db
+    .selectFrom("operational_exception")
+    .select("id")
+    .where("dedup_key", "=", `job:${job.queue}:job_failed`)
+    .where("status", "in", ["open", "acknowledged"])
+    .limit(1)
+    .executeTakeFirst();
+  if (active === undefined) return null;
+  const id = await jobIdentity(db, job);
+  return db
+    .transaction()
+    .execute((tx) =>
+      recoverOperationalExceptionTwin(tx, jobActor(job.jobId), jobExceptionKey(job.queue, id.organizationId)),
+    );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
