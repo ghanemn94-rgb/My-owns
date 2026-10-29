@@ -198,14 +198,14 @@ test("Health check: Incomplete (24/25) with no band, 17 / 25 in band 16-20, the 
     await page
       .getByLabel(tr(lang, "launchHealthP5.health.actionText", { n }), { exact: true })
       .fill(`Synthetic action ${n}`);
-  // Wait for the save AND the reload of the assessment (its version steps), so Submit sends the current If-Match.
+  // Wait for the save, then for the SAVED version of the assessment to appear on screen (F-DG5-151, ADR-0061 §9; not
+  // for any GET, which an earlier read could answer), so Submit sends the current If-Match.
   const saved = page.waitForResponse((r) => r.request().method() === "PUT" && /\/actions$/.test(r.url()));
-  const reloaded = page.waitForResponse(
-    (r) => r.request().method() === "GET" && new RegExp(`/health-checks/${aid}$`).test(r.url()),
-  );
   await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.saveActions"), exact: true }).click();
-  expect((await saved).status()).toBe(200);
-  await reloaded;
+  const savedResponse = await saved;
+  expect(savedResponse.status()).toBe(200);
+  const { version: savedVersion } = (await savedResponse.json()) as { version: number };
+  await expect(page.locator(`[data-assessment-version='${savedVersion}']`)).toBeVisible();
   await expect(page.locator("[data-form='health-actions'] [role='alert']")).toHaveCount(0);
   await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.submit"), exact: true }).click();
   await expect(page.locator("[data-assessment-status='submitted']")).toBeVisible();

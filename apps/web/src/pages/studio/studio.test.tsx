@@ -554,3 +554,178 @@ describe("Source coverage", () => {
     expect(orderedSets(r).at(-1)!.setCode).toBe("zzz");
   });
 });
+
+// ------------------------------------------------------------------------------------------------ DG5 carry-forward
+// T-DG6-FE-G (ADR-0061 §9). F-DG5-120: the English Elements table shows the English label of a 0062-seeded element
+// (only `sourceLabelEn` and `labelAr`), the Arabic page the Arabic label. F-DG5-121: in the rubric diff "Changed" means
+// "the value differs from the base version" (a legend says so in en and ar); a changed level reads as its score and
+// descriptors, never raw JSON. SYNTHETIC data.
+describe("DG5 carry-forward: Studio labels and the rubric diff (F-DG5-120, F-DG5-121)", () => {
+  const V0 = "01920000-0000-7000-b000-000000000010";
+  const defaultsVersion = version({ configKind: "scoring_defaults", key: "t06", basedOnVersionId: V0 });
+  /** A 0062-seeded scoring weight: `sourceLabelEn` and `labelAr`, no `labelEn` (the F-DG5-120 shape). */
+  const weight = (stableKey: string, en: string, arText: string, weightPercent: string) => ({
+    elementType: "scoring_weight",
+    stableKey,
+    origin: "source",
+    removed: false,
+    ordinal: 1,
+    sourceRef: "B0076",
+    catalogueAttributes: {},
+    attributes: { weightPercent, sourceLabelEn: en, labelAr: arText, sourceRef: "B0076" },
+    overridden: true,
+  });
+  const strategicFit = weight("strategic_fit", "Strategic fit", "الملاءمة الاستراتيجية", "30.00");
+  const feasibility = weight("feasibility", "Feasibility", "قابلية التنفيذ", "15.00");
+  const levels = (feasibility3: string | null) =>
+    [1, 2, 3, 4, 5].map((score) => ({
+      score,
+      descriptorEn: score === 3 ? feasibility3 : score === 1 ? "Not feasible" : null,
+      descriptorAr: score === 1 ? "غير قابل للتنفيذ" : null,
+    }));
+  const handlers = () => [
+    route("GET", new RegExp(`/methodology-versions/${V2}$`), () => ({ status: 200, body: defaultsVersion })),
+    route("GET", /\/check-runs/, () => page([])),
+    route("GET", /\/elements/, () => page([strategicFit, feasibility])),
+    route("GET", /\/diff/, () => ({
+      status: 200,
+      body: {
+        fromVersionId: V0,
+        toVersionId: V2,
+        titleChanged: false,
+        definitionChanged: false,
+        entries: [
+          {
+            elementType: "scoring_weight",
+            stableKey: "strategic_fit",
+            change: "changed",
+            fields: [{ field: "weightPercent", from: "25.00", to: "30.00" }],
+          },
+          {
+            elementType: "scoring_rubric",
+            stableKey: "feasibility",
+            change: "changed",
+            fields: [{ field: "levels", from: levels(null), to: levels("Feasible with planned resources") }],
+          },
+        ],
+      },
+    })),
+    route("GET", /\/affected-records/, () => ({ status: 200, body: { versionId: V2, transformations: [] } })),
+    route("GET", /\/reviews(\?|$)/, () => page([])),
+  ];
+
+  it("elementLabel: English reads labelEn, then sourceLabelEn, and only then labelAr; Arabic reads labelAr first", async () => {
+    const { elementLabel } = await import("./api.ts");
+    const seeded = { stableKey: "strategic_fit", catalogueAttributes: {}, attributes: strategicFit.attributes };
+    expect(elementLabel(seeded, "en")).toBe("Strategic fit");
+    expect(elementLabel(seeded, "ar")).toBe("الملاءمة الاستراتيجية");
+    const both = { ...seeded, attributes: { ...strategicFit.attributes, labelEn: "Strategic alignment" } };
+    expect(elementLabel(both, "en")).toBe("Strategic alignment");
+    const arOnly = { stableKey: "k", catalogueAttributes: {}, attributes: { labelAr: "نص" } };
+    expect(elementLabel(arOnly, "en")).toBe("نص");
+    const enOnly = { stableKey: "k", catalogueAttributes: {}, attributes: { sourceLabelEn: "Text" } };
+    expect(elementLabel(enOnly, "ar")).toBe("Text");
+    expect(elementLabel({ stableKey: "k", catalogueAttributes: {}, attributes: {} }, "en")).toBe("k");
+  });
+
+  it.each(LOCALES)(
+    "%s: the Elements table shows the label of the page language; the rubric diff marks exactly one level Changed, readable, with the legend",
+    async (locale) => {
+      const s = locale === "en" ? en : ar;
+      mockApi(meRoute(AUD, locale), ...handlers());
+      renderApp(`/admin/studio/versions/${V2}`, { i18n: createI18n(locale) });
+      const elements = await waitFor(() => {
+        const el = document.querySelector<HTMLElement>("[data-table='elements']");
+        expect(el).not.toBeNull();
+        return el!;
+      });
+      const row = (key: string) => elements.querySelector<HTMLElement>(`[data-element='scoring_weight:${key}']`)!;
+      await waitFor(() => expect(row("strategic_fit")).not.toBeNull());
+      // F-DG5-120: the label of the page language, never the other language when its own exists.
+      expect(row("strategic_fit").textContent).toContain(locale === "en" ? "Strategic fit" : "الملاءمة الاستراتيجية");
+      expect(row("strategic_fit").textContent).not.toContain(
+        locale === "en" ? "الملاءمة الاستراتيجية" : "Strategic fit",
+      );
+      expect(row("feasibility").textContent).toContain(locale === "en" ? "Feasibility" : "قابلية التنفيذ");
+      // F-DG5-121: the Elements change column agrees with the diff ("Changed" only where the value differs).
+      await waitFor(() =>
+        expect(row("strategic_fit").querySelector("[data-element-change]")!.textContent).toBe(s.diff.kind.changed),
+      );
+      expect(row("feasibility").querySelector("[data-element-change]")!.textContent).toBe(s.elements.unchanged);
+
+      const diff = await screen.findByRole("table", { name: s.diff.caption });
+      const rubricRows = diff.querySelectorAll("tr[data-rubric-level]");
+      expect(rubricRows).toHaveLength(1); // level 3 changed; levels 1, 2, 4, 5 are unchanged and not listed
+      expect(rubricRows[0]!.getAttribute("data-rubric-level")).toBe("3");
+      // Exactly one "Changed" marker for the rubric (the weight's own row is the other changed element).
+      const rubricMarkers = within(diff)
+        .getAllByText(s.diff.kind.changed)
+        .filter((c) => c.closest("tr")!.textContent!.includes("feasibility"));
+      expect(rubricMarkers).toHaveLength(1);
+      expect(rubricRows[0]!.textContent).toContain(s.defaults.noDescriptor); // before: no descriptor defined
+      expect(rubricRows[0]!.textContent).toContain("Feasible with planned resources"); // after
+      expect(rubricRows[0]!.textContent).toContain(locale === "en" ? "Score 3" : "الدرجة 3");
+      // Never raw JSON in the rendered diff.
+      expect(diff.textContent).not.toMatch(/[{"]/);
+      // The legend says what "Changed" means, in the page language.
+      expect(screen.getAllByText(s.diff.changedLegend).length).toBeGreaterThanOrEqual(1);
+      expect(s.diff.changedLegend).toBe(
+        locale === "en"
+          ? "Changed: the value differs from the base version."
+          : "معدّل: القيمة تختلف عن قيمتها في الإصدار الأساس.",
+      );
+    },
+  );
+
+  it('one changed and one unchanged level give exactly one Changed marker and no { or " in the rendered diff', async () => {
+    const two = (b: string) => [
+      { score: 1, descriptorEn: "Low", descriptorAr: "منخفض" },
+      { score: 2, descriptorEn: b, descriptorAr: "متوسط" },
+    ];
+    mockApi(
+      meRoute(AUD),
+      route("GET", /\/diff/, () => ({
+        status: 200,
+        body: {
+          fromVersionId: V0,
+          toVersionId: V2,
+          titleChanged: false,
+          definitionChanged: false,
+          entries: [
+            {
+              elementType: "scoring_rubric",
+              stableKey: "feasibility",
+              change: "changed",
+              fields: [{ field: "levels", from: two("Medium"), to: two("Moderate") }],
+            },
+          ],
+        },
+      })),
+      ...handlers(),
+    );
+    renderApp(`/admin/studio/versions/${V2}`, { i18n: createI18n("en") });
+    const diff = await screen.findByRole("table", { name: en.diff.caption });
+    expect(within(diff).getAllByText(en.diff.kind.changed)).toHaveLength(1);
+    expect(diff.textContent).not.toMatch(/[{"]/);
+    const levelRow = diff.querySelector("tr[data-rubric-level='2']")!;
+    expect(levelRow.textContent).toContain("Medium");
+    expect(levelRow.textContent).toContain("Moderate");
+    expect(diff.querySelector("tr[data-rubric-level='1']")).toBeNull();
+  });
+
+  it("a version without a base reads Set in this version for its rows, never Changed", async () => {
+    const first = { ...defaultsVersion, basedOnVersionId: null };
+    mockApi(
+      meRoute(AUD),
+      route("GET", new RegExp(`/methodology-versions/${V2}$`), () => ({ status: 200, body: first })),
+      ...handlers(),
+    );
+    renderApp(`/admin/studio/versions/${V2}`, { i18n: createI18n("en") });
+    const cell = await waitFor(() => {
+      const c = document.querySelector("[data-element='scoring_weight:strategic_fit'] [data-element-change]");
+      expect(c).not.toBeNull();
+      return c!;
+    });
+    expect(cell.textContent).toBe(en.elements.setInVersion);
+  });
+});

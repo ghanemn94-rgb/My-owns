@@ -35,7 +35,7 @@ import type {
 } from "@mth/shared/schemas";
 import { api } from "../../api/client.ts";
 import { p4Keys } from "../../api/p4.ts";
-import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
+import { fetchAllPages, fetchPages, shouldRetry } from "../../api/queries.ts";
 
 export type {
   AllocationSet,
@@ -326,12 +326,15 @@ export function usePortfolioTransformations(orgId: string, id: string, includeRe
   });
 }
 
-/** The transformations the caller may read in the organization (DG1 `listTransformations`, scope-filtered). */
+/**
+ * The transformations the caller may read in the organization (DG1 `listTransformations`, scope-filtered), with
+ * `complete: false` when the page cap stopped the read (F-DG5-125: the screen then says the list is incomplete).
+ */
 export function useReadableTransformations(orgId: string, enabled = true) {
   return useQuery({
     queryKey: orgKey(orgId, "readable-transformations"),
     queryFn: () =>
-      fetchAllPages<{ id: string; code: string; name: string; businessUnitId: string | null }>(
+      fetchPages<{ id: string; code: string; name: string; businessUnitId: string | null }>(
         tracePaths.transformations,
         { organizationId: orgId, sort: "code:asc" },
       ),

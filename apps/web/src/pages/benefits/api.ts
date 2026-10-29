@@ -31,7 +31,7 @@ import type {
 } from "@mth/shared/schemas";
 import { api } from "../../api/client.ts";
 import { p4Keys } from "../../api/p4.ts";
-import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
+import { fetchAllPages, fetchPages, shouldRetry } from "../../api/queries.ts";
 import type { Evidence, Initiative, Transformation } from "../../api/types.ts";
 
 /**
@@ -307,11 +307,14 @@ export function useBenefitEvidenceOptions(tid: string, enabled = true) {
   });
 }
 
-/** The transformations the caller can read (the organization-wide Finance queue lists each one's queue). */
+/**
+ * The transformations the caller can read (the organization-wide Finance queue lists each one's queue), with
+ * `complete: false` when the page cap stopped the read (F-DG5-125: the queue then says the list is incomplete).
+ */
 export function useReadableTransformations() {
   return useQuery({
     queryKey: [...p4Keys.all, "finance-queue", "transformations"],
-    queryFn: () => fetchAllPages<Transformation>(`${v1}/transformations`),
+    queryFn: () => fetchPages<Transformation>(`${v1}/transformations`),
     ...opts,
   });
 }

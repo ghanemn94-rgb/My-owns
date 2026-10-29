@@ -26,6 +26,7 @@ import {
   displayValue,
   isEditableDraft,
   isOpenDraft,
+  rubricLevelChanges,
   useAffectedRecords,
   useCheckRuns,
   useReviews,
@@ -33,6 +34,7 @@ import {
   versionState,
   type ConfigCheckKind,
   type ConfigVersion,
+  type RubricLevel,
 } from "./api.ts";
 import { ElementsSection } from "./ElementsSection.tsx";
 import { CheckChip, ConfigurationNote, VersionStateChip, useActionRunner } from "./ui.tsx";
@@ -466,53 +468,120 @@ function DiffSection({ version }: { version: ConfigVersion }) {
         empty={<EmptyState title={t("studio.diff.empty")} />}
       >
         {(d) => (
-          <div
-            className="table-wrap"
-            tabIndex={0}
-            role="region"
-            aria-label={t("common.table.scrollRegion", { caption: t("studio.diff.caption") })}
-          >
-            <table className="table" data-table="diff">
-              <caption>{t("studio.diff.caption")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t("studio.diff.element")}</th>
-                  <th scope="col">{t("studio.diff.change")}</th>
-                  <th scope="col">{t("studio.diff.field")}</th>
-                  <th scope="col">{t("studio.diff.before")}</th>
-                  <th scope="col">{t("studio.diff.after")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.entries.flatMap((e) => {
-                  const rows = e.fields.length > 0 ? e.fields : [{ field: "", from: undefined, to: undefined }];
-                  return rows.map((f, i) => (
-                    <tr key={`${e.elementType}/${e.stableKey}/${f.field}/${i}`} data-diff={e.change}>
+          <>
+            {/* F-DG5-121 (ADR-0061 §9): the legend of the "Changed" marker, in the page language. */}
+            <p className="small muted" data-legend="changed">
+              {t("studio.diff.changedLegend")}
+            </p>
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label={t("common.table.scrollRegion", { caption: t("studio.diff.caption") })}
+            >
+              <table className="table" data-table="diff">
+                <caption>{t("studio.diff.caption")}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t("studio.diff.element")}</th>
+                    <th scope="col">{t("studio.diff.change")}</th>
+                    <th scope="col">{t("studio.diff.field")}</th>
+                    <th scope="col">{t("studio.diff.before")}</th>
+                    <th scope="col">{t("studio.diff.after")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.entries.flatMap((e) => {
+                    const rows = e.fields.length > 0 ? e.fields : [{ field: "", from: undefined, to: undefined }];
+                    const element = (
                       <th scope="row">
                         {t(`studio.elementType.${e.elementType}`, { defaultValue: e.elementType })}{" "}
                         <bdi dir="ltr" className="code">
                           {e.stableKey}
                         </bdi>
                       </th>
-                      <td>{t(`studio.diff.kind.${e.change}`)}</td>
-                      <td>
-                        <bdi dir="ltr">{f.field}</bdi>
-                      </td>
-                      <td>
-                        <TextCell value={displayValue(f.from)} />
-                      </td>
-                      <td>
-                        <TextCell value={displayValue(f.to)} />
-                      </td>
-                    </tr>
-                  ));
-                })}
-              </tbody>
-            </table>
-          </div>
+                    );
+                    return rows.flatMap((f, i) => {
+                      // F-DG5-121: a rubric's levels read level by level (score and descriptors), never as raw JSON;
+                      // only the levels whose value differs from the base version are listed, each marked once.
+                      const levels =
+                        e.elementType === "scoring_rubric" && f.field === "levels"
+                          ? rubricLevelChanges(f.from, f.to)
+                          : null;
+                      if (levels)
+                        return levels.map((l) => (
+                          <tr
+                            key={`${e.elementType}/${e.stableKey}/levels/${l.score}`}
+                            data-diff={e.change}
+                            data-rubric-level={l.score}
+                          >
+                            {element}
+                            <td>{t(`studio.diff.kind.${l.from && l.to ? "changed" : l.to ? "added" : "removed"}`)}</td>
+                            <td>{t("studio.diff.level", { score: l.score })}</td>
+                            <td>
+                              <RubricLevelText level={l.from} />
+                            </td>
+                            <td>
+                              <RubricLevelText level={l.to} />
+                            </td>
+                          </tr>
+                        ));
+                      return [
+                        <tr key={`${e.elementType}/${e.stableKey}/${f.field}/${i}`} data-diff={e.change}>
+                          {element}
+                          <td>{t(`studio.diff.kind.${e.change}`)}</td>
+                          <td>
+                            <bdi dir="ltr">{f.field}</bdi>
+                          </td>
+                          <td>
+                            <TextCell value={displayValue(f.from)} />
+                          </td>
+                          <td>
+                            <TextCell value={displayValue(f.to)} />
+                          </td>
+                        </tr>,
+                      ];
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </QueryState>
     </Section>
+  );
+}
+
+/** One rubric level as readable text: its score label and both descriptors ("No descriptor defined" when null). */
+function RubricLevelText({ level }: { level: RubricLevel | null }) {
+  const { t } = useTranslation();
+  if (!level) return <span className="muted">{t("studio.diff.levelAbsent")}</span>;
+  const none = t("studio.defaults.noDescriptor");
+  return (
+    <span className="block">
+      <strong className="block">{t("studio.diff.level", { score: level.score })}</strong>
+      <span className="block">
+        <span className="muted">{t("studio.defaults.descriptorEn")}: </span>
+        {level.descriptorEn === null ? (
+          <span className="muted">{none}</span>
+        ) : (
+          <span dir="ltr" lang="en">
+            {level.descriptorEn}
+          </span>
+        )}
+      </span>
+      <span className="block">
+        <span className="muted">{t("studio.defaults.descriptorAr")}: </span>
+        {level.descriptorAr === null ? (
+          <span className="muted">{none}</span>
+        ) : (
+          <span dir="rtl" lang="ar">
+            {level.descriptorAr}
+          </span>
+        )}
+      </span>
+    </span>
   );
 }
 
