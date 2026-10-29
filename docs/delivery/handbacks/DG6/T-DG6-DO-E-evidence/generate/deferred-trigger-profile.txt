@@ -1,0 +1,14 @@
+port-policy: PostgreSQL listening on port 24605 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 107 migration(s)
+mth-load generate: [103.3 s] audit events: 100000
+mth-load generate: [104.7 s] plan: Bitmap Heap Scan on audit_event a  (cost=4.46..20.18 rows=1 width=4) |   Recheck Cond: ((record_type = 'initiative'::text) AND (record_id = '00000000-0000-0000-0000-000000000000'::uuid)) |   Filter: (new_version = 3) |   ->  Bitmap Index Scan on audit_event_record_idx  (cost=0.00..4.46 rows=4 width=0) |         Index Cond: ((record_type = 'initiative'::text) AND (record_id = '00000000-0000-0000-0000-000000000000'::uuid))
+mth-load generate: [721.2 s] deferred triggers fired in 616.502 s
+mth-load generate: [721.2 s] fn p2_audit_required calls=99333 total=605916 ms self=605916 ms
+mth-load generate: [721.2 s] fn kpi_actual_consistency calls=13013 total=5111 ms self=5111 ms
+mth-load generate: [721.2 s] fn transformation_raci_one_accountable calls=2100 total=923 ms self=923 ms
+mth-load generate: [721.2 s] fn scoring_weight_set_total calls=300 total=62 ms self=62 ms
+mth-load generate: [721.2 s] fn decision_ask_options calls=500 total=27 ms self=27 ms
+mth-load generate: failed: column "n_live_tup" does not exist
+
+[exited with code 0]

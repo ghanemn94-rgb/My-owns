@@ -1,0 +1,116 @@
+== docker compose config --services 
+db
+migrate
+api
+worker
+exit=0
+== docker compose config --services --profile load
+db
+migrate
+load-generate
+load-sessions
+worker
+api
+exit=0
+  load-generate:
+    profiles:
+      - load
+    restart: 'no'
+    cap_drop:
+      - ALL
+    command:
+      - --profile
+      - default
+    entrypoint:
+      - node
+      - /app/deploy/load/generate.mjs
+    environment:
+      DATABASE_OWNER_URL_FILE: /run/secrets/database_owner_url
+      MTH_ENV: load
+      NODE_ENV: production
+    image: mth-app:local
+    logging:
+      driver: json-file
+      options:
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    pull_policy: never
+    read_only: true
+    secrets:
+      - source: database_owner_url
+        target: /run/secrets/database_owner_url
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: /home/user/wt/dg6-do-e/deploy/load
+        target: /app/deploy/load
+        read_only: true
+        bind: {}
+    depends_on:
+      db:
+        condition: service_healthy
+        required: true
+      migrate:
+        condition: service_completed_successfully
+        required: true
+  load-sessions:
+    profiles:
+      - load
+    restart: 'no'
+    cap_drop:
+      - ALL
+    command:
+      - --duration-minutes
+      - "60"
+    entrypoint:
+      - node
+      - /app/deploy/load/sessions.mjs
+    environment:
+      APP_BASE_URL: http://localhost:3000
+      AUTH_MODE: oidc
+      DATABASE_URL_FILE: /run/secrets/database_url
+      MTH_ENV: load
+      NODE_ENV: production
+      OIDC_CLIENT_ID: mth-hub
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      OIDC_ISSUER_URL: https://keycloak:8443/realms/mth-test
+      TMPDIR: /load-out
+    image: mth-app:local
+    logging:
+      driver: json-file
+      options:
+        max-file: "5"
+        max-size: 10m
+    networks:
+      default: null
+    pull_policy: never
+    read_only: true
+    secrets:
+      - source: database_url
+        target: /run/secrets/database_url
+      - source: oidc_client_secret
+        target: /run/secrets/oidc_client_secret
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: /home/user/wt/dg6-do-e/deploy/load
+        target: /app/deploy/load
+        read_only: true
+        bind: {}
+      - type: bind
+        source: /tmp/mth-load
+        target: /load-out
+        bind: {}
+    depends_on:
+      db:
+        condition: service_healthy
+        required: true
+  migrate:
