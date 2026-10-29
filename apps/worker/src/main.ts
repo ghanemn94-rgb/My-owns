@@ -1,11 +1,43 @@
 // Worker process entry point: `node dist/main.js`. A separate OS process from the API that shares only PostgreSQL
 // (ADR-0002). Connects as mth_app; pg-boss starts with migrate=false and refuses to run on a missing/outdated schema.
-import { ConfigError, loadConfig } from "@mth/config";
+import { readFileSync } from "node:fs";
+import { ConfigError, installConsoleRedaction, loadConfig, withSecretRedaction } from "@mth/config";
 import { createDb, createPool } from "@mth/db";
 import { createBoss } from "./queues/index.ts";
 import { startWorker } from "./worker.ts";
+// T-DG6-DO-D (ADR-0053 §6): the worker_heartbeat writer and the queue count it reports.
+import { DOMAIN_HANDLERS } from "./handlers/index.ts";
+import { startHeartbeat } from "./heartbeat.ts";
+import { FAILURE_RETRY_QUEUE } from "./kit.ts";
+import { RUN_NOW_QUEUE } from "./job-runs.ts";
+import { QUEUES } from "./queues/index.ts";
 // D-198 (ADR-0052 §5; T-DG6-BE-J): the worker's SecretProvider registry, the twin of the API's.
 import { createSecretProviderRegistry, registerBuiltInSecretProviders } from "./secrets.ts";
+
+// ADR-0053 §4 (T-DG6-DO-D): the worker logs through console; every console line passes the process-wide redaction set
+// (configuration secrets, SecretProvider values, storage keys, URLs and paths, tokens) before it is written. Installed
+// first, so even a start-up failure line is redacted.
+installConsoleRedaction();
+
+/** The worker's version (its package.json, one level above both src/ and dist/). */
+function appVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version?: unknown };
+    return typeof pkg.version === "string" && pkg.version !== "" ? pkg.version : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+/** The queues this process serves (fixed queues, domain handlers, the retry and run-now dispatchers). */
+function queueCount(): number {
+  return new Set<string>([
+    ...Object.values(QUEUES),
+    ...DOMAIN_HANDLERS.map((h) => h.queue),
+    FAILURE_RETRY_QUEUE,
+    RUN_NOW_QUEUE,
+  ]).size;
+}
 
 async function main(): Promise<void> {
   let config;
@@ -20,7 +52,8 @@ async function main(): Promise<void> {
   }
   // D-198 (ADR-0052 §5): the built-in providers (env, file). No worker job resolves a secret yet (BE-I and BE-L are the
   // first); a value is never logged, only the provider ids.
-  const secrets = createSecretProviderRegistry();
+  // ADR-0053 §4 item 1 (T-DG6-DO-D): every value a registered provider resolves joins the log redaction set.
+  const secrets = withSecretRedaction(createSecretProviderRegistry());
   registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir });
   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
   const db = createDb(pool);
@@ -33,12 +66,21 @@ async function main(): Promise<void> {
   });
   await boss.start();
   const worker = await startWorker({ db, boss, timeZone: config.defaultTimezone });
+  // ADR-0053 §6 (T-DG6-DO-D): one worker_heartbeat row per process, moved forward every WORKER_HEARTBEAT_SECONDS.
+  const heartbeat = startHeartbeat({
+    db,
+    intervalSeconds: config.worker.heartbeatSeconds,
+    appVersion: appVersion(),
+    queueCount: queueCount(),
+  });
   console.log(
     JSON.stringify({
       level: "info",
       msg: "mth-worker started",
       timeZone: config.defaultTimezone,
       superviseIntervalSeconds: config.worker.superviseIntervalSeconds,
+      heartbeatSeconds: config.worker.heartbeatSeconds,
+      instanceKey: heartbeat.instanceKey,
       secretProviders: secrets.ids(),
     }),
   );
@@ -46,6 +88,7 @@ async function main(): Promise<void> {
   const shutdown = async (signal: string) => {
     stopping = true;
     console.log(JSON.stringify({ level: "info", msg: "mth-worker shutting down", signal }));
+    await heartbeat.stop();
     await worker.stop();
     await boss.stop({ graceful: true, wait: true, timeout: 20_000 });
     await db.destroy();

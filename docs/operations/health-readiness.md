@@ -37,11 +37,15 @@ while `/readyz` is 200.
 
 ## Logs
 
-- API: pino JSON lines on stdout. Credentials are redacted (`authorization`, `cookie`, `set-cookie`), and every
-  request carries a request ID. The worker writes JSON lines on stdout.
+- API: pino JSON lines on stdout, and every request carries a request ID. The worker writes JSON lines on stdout.
+  Both apply the P6 redaction list (secrets, storage keys, URLs and paths, header and URL tokens; ADR-0053 §4) before
+  a line is written. See [monitoring.md](monitoring.md) §4.
+- The worker heartbeat, operational exceptions, the alert lines (`"alert":true`) and the post-suite log scan are
+  described in [monitoring.md](monitoring.md).
 - Compose keeps container logs with the `json-file` driver, rotated at 10 MB × 5 files per container. Production log
-  shipping and monitoring belong to the production deployment guide (§19 item 8, later stage).
-- Metrics endpoints are not part of P1.
+  shipping and alert routing are Mobily IT's ([monitoring.md](monitoring.md) §6). The rest of the production
+  deployment guide is a later-stage item (§19 item 8).
+- The product has no metrics endpoint.
 
 ## Shutdown and connection limits (T-DG2-BE16)
 

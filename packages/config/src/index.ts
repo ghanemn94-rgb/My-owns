@@ -191,6 +191,16 @@ export const ENV_VARS = {
     default: "60",
     usedBy: ["worker"],
   },
+  // P6 slice J (T-DG6-DO-D; ADR-0053 §6): the worker heartbeat cadence.
+  WORKER_HEARTBEAT_SECONDS: {
+    description:
+      "Seconds between two worker_heartbeat beats of a worker process (ADR-0053 §6). Integer 1-30: the API reports a " +
+      "worker stale when its newest beat is older than 90 s (three default intervals)",
+    required: false,
+    secret: false,
+    default: "30",
+    usedBy: ["worker"],
+  },
   // P5 slice J (T-DG5-BE-S; ADR-0050 §1, §6; D-142 Q7).
   MTH_ENV: {
     description:
@@ -237,6 +247,13 @@ export type AuthMode = (typeof AUTH_MODES)[number];
  */
 export const SUPERVISE_INTERVAL_SECONDS = { min: 1, max: 600, default: 60 } as const;
 
+/**
+ * The worker heartbeat cadence (ADR-0053 §6; T-DG6-DO-D). The API's status rule is fixed: alive while the newest beat
+ * is at most 90 s old. The maximum, 30 s, keeps at least three beats inside that window, so a healthy worker is never
+ * reported stale because of its configuration.
+ */
+export const HEARTBEAT_INTERVAL_SECONDS = { min: 1, max: 30, default: 30 } as const;
+
 // Validated loader over the catalogue above (T-DG1-BE).
 export {
   ConfigError,
@@ -255,4 +272,22 @@ export {
   readSecretVariable,
   type BudgetedRateLimitClass,
   type RateLimitClassBudgets,
+} from "./load.ts";
+// P6 (T-DG6-DO-D; ADR-0053 §4): the process-wide log redaction set and its line redactor.
+export {
+  clearLogRedactionForTests,
+  installConsoleRedaction,
+  MIN_REDACTED_SECRET_LENGTH,
+  PATH_CENSOR,
+  REDACTED_LOG_KEYS,
+  REDACTED_LOG_PATHS,
+  redactLogLine,
+  redactText,
+  registerRedactedSecret,
+  registerRedactedStorageEndpoint,
+  registerRedactedStoragePath,
+  SECRET_CENSOR,
+  STORAGE_PATH_CENSOR,
+  STORAGE_URL_CENSOR,
+  withSecretRedaction,
 } from "./load.ts";

@@ -324,7 +324,9 @@ describe("F-DG2-460 defence in depth: the start-up sweep of stale temporaries", 
       expect(after).toEqual([fresh, finalOld, finalNew, notAKey, shallow].sort());
       expect(after).not.toContain(stale);
       expect(removals).toHaveLength(1);
-      expect(removals[0]).toMatchObject({ level: 30, key: stale.replace(/ \(\d+ B\)$/, ""), sizeBytes: secret.length });
+      // T-DG6-DO-D (ADR-0053 §4 item 2): the storage key is censored by path in every log line (`key` -> "[redacted]").
+      expect(removals[0]).toMatchObject({ level: 30, key: "[redacted]", sizeBytes: secret.length });
+      expect(api.output()).not.toContain(stale.replace(/ \(\d+ B\)$/, ""));
       expect(Number(removals[0]!["ageMs"])).toBeGreaterThan(3600_000);
       expect(summary).toMatchObject({ level: 30, removed: 1, keptFresh: 1, olderThanMs: 3600_000 });
       expect(api.output()).not.toContain(secret);

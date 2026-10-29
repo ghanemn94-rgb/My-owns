@@ -2,7 +2,14 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ConfigError, isLoopbackHost, loadConfig, secureOriginAllowed, SUPERVISE_INTERVAL_SECONDS } from "./index.ts";
+import {
+  ConfigError,
+  HEARTBEAT_INTERVAL_SECONDS,
+  isLoopbackHost,
+  loadConfig,
+  secureOriginAllowed,
+  SUPERVISE_INTERVAL_SECONDS,
+} from "./index.ts";
 
 const base = {
   NODE_ENV: "test",
@@ -39,9 +46,10 @@ describe("loadConfig", () => {
 
     it("defaults to the 60 s cadence pg-boss documents when unset or empty", () => {
       expect(SUPERVISE_INTERVAL_SECONDS).toEqual({ min: 1, max: 600, default: 60 });
-      expect(loadConfig("worker", worker).worker).toEqual({ superviseIntervalSeconds: 60 });
+      expect(loadConfig("worker", worker).worker).toEqual({ superviseIntervalSeconds: 60, heartbeatSeconds: 30 });
       expect(loadConfig("worker", { ...worker, WORKER_SUPERVISE_INTERVAL_SECONDS: "" }).worker).toEqual({
         superviseIntervalSeconds: 60,
+        heartbeatSeconds: 30,
       });
     });
 
@@ -65,6 +73,23 @@ describe("loadConfig", () => {
         expect(problems[0]).toMatch(/^WORKER_SUPERVISE_INTERVAL_SECONDS is invalid/);
       },
     );
+  });
+
+  describe("WORKER_HEARTBEAT_SECONDS (ADR-0053 §6; T-DG6-DO-D)", () => {
+    const worker = { NODE_ENV: "test", DATABASE_URL: base.DATABASE_URL };
+
+    it("defaults to 30 s and accepts 1-30", () => {
+      expect(HEARTBEAT_INTERVAL_SECONDS).toEqual({ min: 1, max: 30, default: 30 });
+      expect(loadConfig("worker", worker).worker.heartbeatSeconds).toBe(30);
+      expect(loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: "1" }).worker.heartbeatSeconds).toBe(1);
+      expect(loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: "15" }).worker.heartbeatSeconds).toBe(15);
+    });
+
+    it.each(["0", "31", "90", "1.5", "abc"])("refuses %s, naming the variable", (value) => {
+      const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: value }));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^WORKER_HEARTBEAT_SECONDS is invalid/);
+    });
   });
 
   it("refuses AUTH_MODE=dev with NODE_ENV=production (ADR-0005)", () => {

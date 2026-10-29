@@ -16,6 +16,7 @@ preparation. They are written for Mobily IT and for the delivery team's reviewer
 | [clean-start.md](clean-start.md) | One-command clean start with Docker Compose (A); container-free clean start (B); first organization bootstrap; smoke test; measured timings |
 | [health-readiness.md](health-readiness.md) | `/healthz`, `/readyz`, container health checks, `mth health`, exit codes, logs, shutdown and connection limits |
 | [configuration.md](configuration.md) | Environment template (`.env.example`), secrets as `<NAME>_FILE`, secret providers and `SECRETS_DIR`, rate-limit classes, corporate IdP vs the Keycloak **test** realm, storage |
+| [monitoring.md](monitoring.md) | Worker heartbeat, operational exceptions, the alert lines IT routes, structured logs and the redaction list, the post-suite log scan (P6) |
 | [dependency-audit.md](dependency-audit.md) | The live `pnpm audit` CI job and the offline SBOM check against a dated advisory snapshot; refreshing the snapshot; restricted networks (P6) |
 | [restricted-network.md](restricted-network.md) | Building and running with no outbound internet: mirrors, image list, build-time CA, the no-egress Compose variant |
 
@@ -28,7 +29,7 @@ Where things live:
 | `deploy/compose/db-init/10-mth-roles.sh` | First-start creation of roles `mth_owner`/`mth_app` and database `mth` (ADR-0003) |
 | `deploy/keycloak/realm-mth-test.json` | Keycloak **test** realm: synthetic users, placeholders instead of credentials |
 | `deploy/images.lock.json`, `deploy/scripts/pin-images.mjs` | Container images and their digest pins |
-| `deploy/scripts/` | `init-secrets.sh`, `build-image.sh`, `verify-stack.sh`, `clean-start-local.sh`, `smoke.mjs`, `assemble-runtime.sh`, `ensure-docker.sh`, `generate-env-example.mjs`, `check-ci-needs.mjs`, `ci-e2e-stack.mjs`, `dep-audit.mjs` |
+| `deploy/scripts/` | `init-secrets.sh`, `build-image.sh`, `verify-stack.sh`, `clean-start-local.sh`, `smoke.mjs`, `assemble-runtime.sh`, `ensure-docker.sh`, `generate-env-example.mjs`, `check-ci-needs.mjs`, `ci-e2e-stack.mjs`, `dep-audit.mjs`, `log-scan.mjs` |
 | `deploy/advisories/` | Dated advisory snapshots for the offline dependency check (`snapshot-<yyyy-mm-dd>.json`, with source and retrieval date) |
 | `.env.example` | Generated from `packages/config/src/index.ts` `ENV_VARS`: names only, no values |
 | `licenses/` | SBOM (CycloneDX 1.6) and licence inventory generated from `pnpm-lock.yaml`; third-party notice collection |

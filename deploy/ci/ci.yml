@@ -107,13 +107,22 @@ jobs:
         image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 # devops-engineer: pin by digest (ADR-0003/ADR-0011)
         env:
           POSTGRES_USER: mth_ci_admin
-          POSTGRES_PASSWORD: ci-only-not-a-secret
+          # T-DG6-DO-D (ADR-0053 §5): the database password is a canary; every role URL of the suite carries it, and the
+          # post-suite log scan fails if it appears in any log line. CI-only, not a secret.
+          POSTGRES_PASSWORD: mth-canary-ci-db-password
           POSTGRES_DB: postgres
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U mth_ci_admin" --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      TEST_DATABASE_ADMIN_URL: postgres://mth_ci_admin:ci-only-not-a-secret@localhost:5432/postgres
+      TEST_DATABASE_ADMIN_URL: postgres://mth_ci_admin:mth-canary-ci-db-password@localhost:5432/postgres
+      # T-DG6-DO-D (ADR-0053 §5): the API log lines of the suite (apps/api/test/support/harness.ts) and its output go
+      # here; the canaries below are the values the scan looks for (each prefixed mth-canary-; CI-only, not secrets).
+      MTH_TEST_LOG_DIR: ${{ runner.temp }}/mth-test-logs
+      MTH_CANARY_OIDC_CLIENT_SECRET: mth-canary-ci-oidc-client-secret
+      S3_ACCESS_KEY_ID: mth-canary-ci-s3-access-key
+      S3_SECRET_ACCESS_KEY: mth-canary-ci-s3-secret-key
+      SMTP_PASSWORD: mth-canary-ci-smtp-password
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -130,7 +139,17 @@ jobs:
       - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
         run: deploy/scripts/ci-install-deps.sh
       - run: pnpm -r build
-      - run: pnpm test:integration
+      - name: Integration suite (its API log lines and output are kept for the post-suite log scan)
+        run: |
+          mkdir -p "$MTH_TEST_LOG_DIR"
+          pnpm test:integration 2>&1 | tee "$MTH_TEST_LOG_DIR/integration-output.log"
+      # T-DG6-DO-D (ADR-0053 §5; REQ-S16-029 A12/A22): no canary secret, key pattern, signed-URL parameter, link token,
+      # object-store host or evidence path in any log line of the suite. Runs even when the suite failed.
+      - name: Post-suite log scan (secrets, storage keys and URLs; self-test first)
+        if: ${{ !cancelled() }}
+        run: |
+          node --test deploy/scripts/tests/log-scan.test.mjs
+          node deploy/scripts/log-scan.mjs --require-canaries --storage-path "${TMPDIR:-/tmp}/mth-evidence-it-" "$MTH_TEST_LOG_DIR"
 
   e2e:
     needs: verify
@@ -203,7 +222,7 @@ jobs:
       - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
         run: deploy/scripts/ci-install-deps.sh
       - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
-        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs
+        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs
       - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
         run: node deploy/scripts/check-ci-needs.mjs
       - name: .env.example equals the ENV_VARS catalogue (names only, no values)
