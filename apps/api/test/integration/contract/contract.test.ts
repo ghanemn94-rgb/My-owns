@@ -156,7 +156,6 @@ import { exerciseP6BeDOperations, P6_MIRRORS_BE_D } from "./p6-exercises-be-d.ts
 import { exerciseP6BeEOperations, P6_MIRRORS_BE_E } from "./p6-exercises-be-e.ts";
 import { exerciseP6BeGOperations, P6_MIRRORS_BE_G } from "./p6-exercises-be-g.ts";
 import { exerciseP6BeHOperations, P6_MIRRORS_BE_H } from "./p6-exercises-be-h.ts";
-import { exerciseP6BeH2Operations, P6_MIRRORS_BE_H2 } from "./p6-exercises-be-h2.ts";
 import { exerciseP6BeIOperations, P6_MIRRORS_BE_I } from "./p6-exercises-be-i.ts";
 import { exerciseP6BeJOperations, P6_MIRRORS_BE_J } from "./p6-exercises-be-j.ts";
 import { exerciseP6BeKOperations, P6_MIRRORS_BE_K } from "./p6-exercises-be-k.ts";
@@ -398,7 +397,6 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_E,
   ...P6_MIRRORS_BE_G,
   ...P6_MIRRORS_BE_H,
-  ...P6_MIRRORS_BE_H2,
   ...P6_MIRRORS_BE_I,
   ...P6_MIRRORS_BE_J,
   ...P6_MIRRORS_BE_K,
@@ -879,9 +877,6 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P6 BE-H operations (p6-exercises-be-h.ts)", async () => {
     await exerciseP6BeHOperations(p3());
   });
-  it("P6 BE-H2 operations (p6-exercises-be-h2.ts)", async () => {
-    await exerciseP6BeH2Operations(p3());
-  });
   it("P6 BE-I operations (p6-exercises-be-i.ts)", async () => {
     await exerciseP6BeIOperations(p3());
   });
@@ -1079,9 +1074,19 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // bodies), commitImport, cancelImport (2 JSON bodies; the five other import operations are GETs). 407 + 3 = 410;
     // JSON 406 + 2 = 408. W10 merge: T-DG6-BE-D + putUploadPolicy (1 JSON body; getUploadPolicy and previewEvidenceContent
     // are GETs): 410 + 1 = 411; JSON 408 + 1 = 409.
-    // T-DG6-BE-H2: + putStorageSetting, testStorageSetting (2 JSON bodies; getStorageSetting is a GET). 411 + 2 = 413;
-    // JSON 409 + 2 = 411 (the orchestrator reconciles the parallel deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([413, 411, 1]);
+    // JSON 406 + 2 = 408 (the orchestrator reconciles the parallel W10 deltas at merge).
+    // T-DG6-BE-N: + createWebhookEndpoint, rotateWebhookSecret, disableWebhookEndpoint, receiveWebhook (4 JSON bodies;
+    // listWebhookEndpoints and getWebhookEndpoint are GETs). 410 + 4 = 414; JSON 408 + 4 = 412 (the orchestrator
+    // reconciles the parallel deltas at merge).
+    // T-DG6-BE-Q: + createSavedView, putSavedView, shareSavedView (3 JSON bodies; listSavedViews and getSavedView are
+    // GETs, deleteSavedView is bodiless). 410 + 3 = 413; JSON 408 + 3 = 411 (the orchestrator reconciles the parallel
+    // deltas at merge).
+    // T-DG6-BE-T: + putAssistantSetting, enableAssistant, disableAssistant, createAssistantConversation,
+    // postAssistantMessage (5 JSON bodies; the three other assistant operations are GETs). 410 + 5 = 415; JSON 408 + 5
+    // = 413 (the orchestrator reconciles the parallel deltas at merge).
+    // W10/W11 merge (orchestrator, measured on the merged tree): BE-N, BE-Q and BE-T add 12 JSON bodies. 411 + 12 = 423;
+    // JSON 409 + 12 = 421.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([423, 421, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);

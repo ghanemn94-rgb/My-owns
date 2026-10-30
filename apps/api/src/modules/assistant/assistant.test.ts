@@ -11,10 +11,26 @@ describe("assistant module (P6)", () => {
   it("registers through its hook and reports its registration", async () => {
     const app = Fastify({ logger: false });
     try {
-      const registration = registerAssistantModule(app, {} as ModuleDeps);
+      // Registration touches no database; the setting routes read only config.nodeEnv at registration.
+      const registration = registerAssistantModule(app, {
+        db: {},
+        config: { nodeEnv: "test" },
+      } as unknown as ModuleDeps);
       expect(registration.module).toBe("assistant");
       expect(registration.deliversIn).toBe("P6");
       expect(registration.status).toBe(registration.routes.length > 0 ? "active" : "scaffold");
+      // T-DG6-BE-T: the eight setting and conversation routes (ADR-0059 §3, §9); BE-U adds the to-draft route.
+      expect(registration.status).toBe("active");
+      expect([...registration.routes].sort()).toEqual([
+        "GET /api/v1/admin/assistant",
+        "GET /api/v1/assistant/conversations",
+        "GET /api/v1/assistant/conversations/:conversationId",
+        "POST /api/v1/admin/assistant/disable",
+        "POST /api/v1/admin/assistant/enable",
+        "POST /api/v1/assistant/conversations",
+        "POST /api/v1/assistant/conversations/:conversationId/messages",
+        "PUT /api/v1/admin/assistant",
+      ]);
     } finally {
       await app.close();
     }
