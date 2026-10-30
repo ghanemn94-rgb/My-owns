@@ -23521,9 +23521,21 @@ paths:
         - { name: X-MTH-Webhook-Signature, in: header, required: true, schema: { type: string, pattern: "^v1=[0-9a-f]{64}$" } }
       requestBody:
         required: true
+        description: "The signed JSON body (ADR-0056 §7; T-DG6-BE-X2). `templateVersion` names an import template (`kpi_actual.v1`; the columns of listImportTemplates). Each item is one source row keyed by the template's column keys exactly as the template lists them (snake_case, the CSV/XLSX header keys), unless the connector's field mappings rename them (then the keys are the mappings' `source` names). For `kpi_actual.v1` the keys are: `kpi_id`, `scope_kind` (transformation | business_unit | initiative), `scope_id`, `period_label` and `data_as_of` (YYYY-MM-DD), all required in the body; and optionally `source_record_id`, `kpi_name` (ignored), `value`, `numerator`, `denominator`, `milestone_achieved` (true | false), `achieved_on` (YYYY-MM-DD), `currency`, `missing_reason` and `comment`. The keys of all items together are checked as a header row: a key that is not a template column (for example the camelCase `kpiId`), or a required key that no item carries, refuses the whole body with 400 webhook.payload_invalid (pointer /items, cause import.header_mismatch); a required key missing from only some items is a row reason of those rows. Every value is a JSON string or null; a decimal is a string with a dot separator (`12.5`, never `12,5` or a JSON number); a JSON number is staged as the row reason import.row.value_not_decimal, never coerced. Other row-level problems are staged with their reasons (ADR-0056 §5) and do not refuse the body."
         content:
           application/json:
             schema: { $ref: "#/components/schemas/WebhookDelivery" }
+            example:
+              templateVersion: kpi_actual.v1
+              items:
+                - source_record_id: SYN-0001
+                  kpi_id: 0192aaaa-0000-7000-8000-000000000001
+                  scope_kind: transformation
+                  scope_id: 0192bbbb-0000-7000-8000-000000000001
+                  period_label: "2026-09"
+                  value: "12.5"
+                  data_as_of: "2026-09-30"
+                  comment: null
       responses:
         "202":
           description: "Accepted and staged."

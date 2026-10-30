@@ -97,6 +97,7 @@ import { createImportTargetRegistry, setImportTargetRegistry } from "./modules/i
 import { setConnectorTargetColumnsSource } from "./modules/integrations/connectors.ts";
 import { createKpiActualImportTarget } from "./modules/kpi/import-target.ts";
 import { setOutboundConfirmationPort } from "./modules/integrations/outbound.ts"; // BE-O (ADR-0055 §6)
+import { setConnectorSecretProviders } from "./modules/integrations/secret-refs.ts"; // BE-X2 (ADR-0052 §5)
 import { requireEvidenceRead } from "./modules/evidence/access.ts"; // BE-O (ADR-0051 §4 read decision)
 import {
   recordConnectorConfirmation,
@@ -580,6 +581,9 @@ export async function buildServer(options: ServerOptions): Promise<{
   // ADR-0053 §4 item 1 (DO-D): every value a registered provider resolves joins the log redaction set.
   const secrets = withSecretRedaction(createSecretProviderRegistry());
   registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir }); // BE-E: env and file (ADR-0052 §5)
+  // T-DG6-BE-X2 (F-DG6-QA-A-1): the integrations module resolves connector credentials and webhook signing secrets
+  // through this process's registry (secret-refs.ts); without this line every reference is unresolvable.
+  setConnectorSecretProviders(secrets);
   // T-DG6-BE-M: the ImportTargetRegistry line; each import target's owner adds one registration line below it
   // (KBE-A: kpi_actual.v1). The connector mappings' target columns come from the registered templates (ADR-0056 §9).
   const importTargets = createImportTargetRegistry();

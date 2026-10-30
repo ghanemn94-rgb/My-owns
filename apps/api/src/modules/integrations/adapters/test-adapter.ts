@@ -113,6 +113,18 @@ function fixtureOf(config: ConnectorAdapterConfig): { rows: Record<string, strin
   return { rows: out, controlColumn: column };
 }
 
+/**
+ * The source rows the test adapter's fixture defines, whatever its mode (T-DG6-BE-X2: the KPIs a failing or stopped run
+ * of it feeds, ADR-0053 §2). An unreadable fixture defines none. Reads no network and changes nothing.
+ */
+export function testAdapterFixtureRows(config: ConnectorAdapterConfig): Record<string, string>[] {
+  try {
+    return fixtureOf(config).rows;
+  } catch {
+    return [];
+  }
+}
+
 /** `TEST-` and the first 12 hex digits of the key's SHA-256: the same key always gives the same reference. */
 export function testExternalReference(idempotencyKey: string): string {
   return `TEST-${createHash("sha256").update(idempotencyKey, "utf8").digest("hex").slice(0, 12)}`;
