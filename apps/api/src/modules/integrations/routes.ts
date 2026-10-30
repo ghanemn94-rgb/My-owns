@@ -17,6 +17,7 @@ import {
   idempotencyKeySchema,
   parseQuery,
   problems,
+  rateLimitClass,
   requireIfMatch,
   restrictParserTo,
   sendVersioned,
@@ -77,6 +78,24 @@ import {
 import { templateCsv, templateFileName, templateRows, templateXlsx, toImportTemplate } from "./imports/templates.ts";
 import { importTargetRegistry, CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE } from "./imports/targets.ts";
 import { importRefusals, IMPORT_LIMITS } from "./imports/validate.ts";
+import {
+  checkSecretRef,
+  createEndpoint,
+  disableEndpoint,
+  lastReceipts,
+  listEndpoints,
+  receiveWebhook,
+  requireWebhookConfigure,
+  rotateSecret,
+  visibleEndpoint,
+  WEBHOOK_CONFIGURE,
+  WEBHOOK_LIMITS,
+  webhookCreate,
+  webhookDisable,
+  webhookRefusals,
+  webhookRotate,
+  toWebhookEndpoint,
+} from "./webhooks.ts";
 
 const JSON_BODY = ["application/json"] as const;
 
@@ -612,11 +631,192 @@ function registerImportRoutes(app: FastifyInstance, { db }: ModuleDeps): string[
   ];
 }
 
+// ------------------------------------------------------------------------------------------------ BE-N: webhooks
+// T-DG6-BE-N (ADR-0056 §7-§9; REQ-S17-003):
+//   GET  /api/v1/admin/webhooks                                  listWebhookEndpoints    (connector.read)
+//   POST /api/v1/admin/webhooks                                  createWebhookEndpoint   (webhook.configure)
+//   GET  /api/v1/admin/webhooks/{webhookId}                      getWebhookEndpoint      (connector.read)
+//   POST /api/v1/admin/webhooks/{webhookId}/rotate-secret        rotateWebhookSecret     (webhook.configure; If-Match)
+//   POST /api/v1/admin/webhooks/{webhookId}/disable              disableWebhookEndpoint  (webhook.configure; If-Match)
+//   POST /api/v1/webhooks/{endpointKey}                          receiveWebhook          (public: the signature;
+//                                                                                         CSRF-exempt; rate-limit
+//                                                                                         class "webhook")
+// Order in every admin mutation: 400 body, 404 read gate, 403 configure gate, 422 business rules, 428/400 If-Match,
+// then the transaction (row lock, commit-time re-check, 409 disabled and version, the change and its audit event).
+// receiveWebhook's body parser (an encapsulated context: this route only) collects the raw bytes, refusing more than
+// 1 MiB with 413 webhook.payload_too_large while reading; the signature is verified over those bytes before the body
+// is decoded (strict UTF-8) and parsed by the platform's JSON parser (webhooks.ts).
+
+const WEBHOOKS = "/api/v1/admin/webhooks";
+const WEBHOOK = `${WEBHOOKS}/:webhookId`;
+const WEBHOOK_ROTATE = `${WEBHOOK}/rotate-secret`;
+const WEBHOOK_DISABLE = `${WEBHOOK}/disable`;
+const WEBHOOK_RECEIVE = "/api/v1/webhooks/:endpointKey";
+
+const webhookParams = z.strictObject({ webhookId: uuid });
+const webhookListQuery = z.strictObject({ organizationId: uuid, cursor: cursorSchema, limit: limitSchema });
+
+/** The receiving route's parser: the raw bytes, 413 webhook.payload_too_large above 1 MiB (declared or actual). */
+const webhookBodyParser = restrictParserTo<RawRequestDefaultExpression>(
+  "application/json",
+  (request, payload, done) => {
+    const declared = Number(request.headers["content-length"] ?? "0");
+    if (Number.isFinite(declared) && declared > WEBHOOK_LIMITS.bodyBytes) {
+      done(webhookRefusals.payloadTooLarge());
+      return;
+    }
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let settled = false;
+    const settle = (err: Error | null, value?: Buffer) => {
+      if (settled) return;
+      settled = true;
+      payload.removeListener("data", onData);
+      done(err, value);
+    };
+    const onData = (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > WEBHOOK_LIMITS.bodyBytes) {
+        // The rest of the body is never read: the connection is closed after the response (connection hygiene).
+        payload.pause();
+        settle(webhookRefusals.payloadTooLarge());
+        return;
+      }
+      chunks.push(chunk);
+    };
+    payload.on("data", onData);
+    payload.once("end", () => settle(null, Buffer.concat(chunks, size)));
+    payload.once("error", (err) => settle(err));
+  },
+);
+
+function registerWebhookRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
+  // listWebhookEndpoints: newest first (cursor over created_at, id).
+  app.get(WEBHOOKS, { config: { access: { permission: CONNECTOR_READ } } }, async (request) => {
+    const query = parseQuery(webhookListQuery, request.query);
+    const { cursor, limit, ...filters } = query;
+    const hash = filterHash(filters);
+    const after = decodeCursor(cursor, hash, 2);
+    const rows = await listEndpoints(db, principalOf(request), {
+      organizationId: query.organizationId,
+      after: after ? [String(after[0]), String(after[1])] : null,
+      limit,
+    });
+    const page = paginate(rows, limit, (r) => [r.created_at.toISOString(), r.id], hash);
+    const last = await lastReceipts(
+      db,
+      page.items.map((r) => r.id),
+    );
+    return { items: page.items.map((r) => toWebhookEndpoint(r, last.get(r.id) ?? null)), nextCursor: page.nextCursor };
+  });
+
+  // createWebhookEndpoint: 201 with Location and ETag "1".
+  app.post(
+    WEBHOOKS,
+    { config: { access: { permission: WEBHOOK_CONFIGURE }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      parseQuery(noQuery, request.query);
+      const body = parseBody(webhookCreate, request.body);
+      const row = await createEndpoint(db, request, body);
+      return sendVersioned(reply, 201, toWebhookEndpoint(row, null), `${WEBHOOKS}/${row.id}`);
+    },
+  );
+
+  // getWebhookEndpoint: 404 when missing or its connector is unreadable.
+  app.get(WEBHOOK, { config: { access: { permission: CONNECTOR_READ } } }, async (request, reply) => {
+    const { webhookId } = parse(webhookParams, request.params, "params");
+    parseQuery(noQuery, request.query);
+    const row = await visibleEndpoint(db, principalOf(request), webhookId);
+    const last = await lastReceipts(db, [row.id]);
+    return sendVersioned(reply, 200, toWebhookEndpoint(row, last.get(row.id) ?? null));
+  });
+
+  // rotateWebhookSecret: the new reference current, the old one previous for graceHours.
+  app.post(
+    WEBHOOK_ROTATE,
+    { config: { access: { permission: WEBHOOK_CONFIGURE }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { webhookId } = parse(webhookParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      const body = parseBody(webhookRotate, request.body);
+      const principal = principalOf(request);
+      const current = await visibleEndpoint(db, principal, webhookId);
+      await requireWebhookConfigure(db, principal, current.organization_id);
+      if (body.graceHours < 1 || body.graceHours > 168) throw webhookRefusals.graceInvalid();
+      const ref = checkSecretRef(body.signingSecretRef, "/signingSecretRef");
+      const expected = requireIfMatch(request);
+      const row = await rotateSecret(db, request, webhookId, expected, {
+        signingSecretRef: ref,
+        graceHours: body.graceHours,
+        reason: body.reason,
+      });
+      const last = await lastReceipts(db, [row.id]);
+      return sendVersioned(reply, 200, toWebhookEndpoint(row, last.get(row.id) ?? null));
+    },
+  );
+
+  // disableWebhookEndpoint: final.
+  app.post(
+    WEBHOOK_DISABLE,
+    { config: { access: { permission: WEBHOOK_CONFIGURE }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { webhookId } = parse(webhookParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      const { reason } = parseBody(webhookDisable, request.body);
+      const principal = principalOf(request);
+      const current = await visibleEndpoint(db, principal, webhookId);
+      await requireWebhookConfigure(db, principal, current.organization_id);
+      const expected = requireIfMatch(request);
+      const row = await disableEndpoint(db, request, webhookId, expected, reason);
+      const last = await lastReceipts(db, [row.id]);
+      return sendVersioned(reply, 200, toWebhookEndpoint(row, last.get(row.id) ?? null));
+    },
+  );
+
+  // receiveWebhook: 202 accepted and staged; 200 replay. In its own context so its JSON parser keeps the raw bytes.
+  const parseJsonText = app.getDefaultJsonParser("error", "error");
+  void app.register(async (child) => {
+    child.removeContentTypeParser("application/json");
+    child.addContentTypeParser("application/json", webhookBodyParser);
+    child.post(
+      WEBHOOK_RECEIVE,
+      { config: { access: { public: true }, consumes: JSON_BODY, ...rateLimitClass("webhook") } },
+      async (request, reply) => {
+        const endpointKey = String((request.params as { endpointKey?: unknown }).endpointKey ?? "");
+        parseQuery(noQuery, request.query);
+        const body = request.body instanceof Uint8Array ? request.body : new Uint8Array(0);
+        const result = await receiveWebhook(db, {
+          endpointKey,
+          headers: request.headers,
+          body,
+          parseJson: (text) =>
+            new Promise((resolve, reject) =>
+              parseJsonText(request, text, (err, value) => (err ? reject(err) : resolve(value))),
+            ),
+          requestId: request.id,
+          log: request.log,
+        });
+        return reply.code(result.replay ? 200 : 202).send(result);
+      },
+    );
+  });
+
+  return [
+    `GET ${WEBHOOKS}`,
+    `POST ${WEBHOOKS}`,
+    `GET ${WEBHOOK}`,
+    `POST ${WEBHOOK_ROTATE}`,
+    `POST ${WEBHOOK_DISABLE}`,
+    `POST ${WEBHOOK_RECEIVE}`,
+  ];
+}
+
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerIntegrationRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
   return [
     ...registerConnectorRoutes(app, deps), // BE-L: connectors, configuration versions, mappings, test
     ...registerRunRoutes(app, deps), // BE-L2: integration runs and retries
     ...registerImportRoutes(app, deps), // BE-M2: imports (upload, staged rows, commit, cancel) and templates
+    ...registerWebhookRoutes(app, deps), // BE-N: webhook endpoints and the signed receiving route
   ];
 }
