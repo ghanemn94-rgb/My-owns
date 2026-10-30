@@ -55,7 +55,21 @@ import {
 } from "./repository.ts";
 
 const idParams = z.strictObject({ transformationId: uuid });
-const listQuery = z.strictObject({ ...transformationListQuery.shape, cursor: cursorSchema, limit: limitSchema });
+/**
+ * ADR-0057 §5 (T-DG6-BE-R): `sort` also takes -updatedAt, updatedAt, code, -code. The DG1 values (updatedAt:desc, ...)
+ * stay accepted with their DG1 meaning, and the default stays updatedAt:desc, so an absent `sort` keeps today's order
+ * and cursor. Anything else is 400 at /query/sort.
+ */
+const P6_TRANSFORMATION_SORTS = ["-updatedAt", "updatedAt", "code", "-code"] as const;
+const transformationSort = z
+  .enum([...transformationListQuery.shape.sort.unwrap().options, ...P6_TRANSFORMATION_SORTS])
+  .default("updatedAt:desc");
+const listQuery = z.strictObject({
+  ...transformationListQuery.shape,
+  sort: transformationSort,
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
 const auditQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 
 /**
@@ -87,7 +101,18 @@ const SORTS: ReadonlyMap<string, SortSpec> = new Map<string, SortSpec>([
   ["name:desc", { col: "t.name", dir: "desc" }],
   ["code:asc", { col: "t.code", dir: "asc" }],
   ["code:desc", { col: "t.code", dir: "desc" }],
+  // ADR-0057 §5 spellings (the cursor stays bound to the spelling sent: filterHash covers `sort`).
+  ["-updatedAt", { col: "t.updated_at", dir: "desc" }],
+  ["updatedAt", { col: "t.updated_at", dir: "asc" }],
+  ["code", { col: "t.code", dir: "asc" }],
+  ["-code", { col: "t.code", dir: "desc" }],
 ]);
+
+/** An ISO instant (millisecond part) that the calendar accepts as written (2026-02-31 is refused, not rolled over). */
+function isRoundTripInstant(iso: string): boolean {
+  const time = Date.parse(iso);
+  return !Number.isNaN(time) && new Date(time).toISOString() === iso;
+}
 
 export function registerTransformationRoutes(app: FastifyInstance, { db }: ModuleDeps): void {
   registerTransformationP2Routes(app, db);
@@ -129,6 +154,21 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
       q = q.where((eb) => eb.or([eb("t.code", "ilike", like), eb("t.name", "ilike", like)]));
     }
     if (after) {
+      // A hand-made cursor of the right filters must not reach the casts below with another shape (400, not 500).
+      const [keyValue, keyId] = after;
+      const shapeOk =
+        typeof keyValue === "string" &&
+        typeof keyId === "string" &&
+        uuid.safeParse(keyId).success &&
+        (sort.col !== "t.updated_at" ||
+          (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(keyValue) &&
+            isRoundTripInstant(keyValue.slice(0, 23) + "Z")));
+      if (!shapeOk)
+        throw problems.badRequest(
+          "validation.cursor",
+          "The cursor is invalid or belongs to other filters.",
+          "/query/cursor",
+        );
       const op = sort.dir === "desc" ? sql.raw("<") : sql.raw(">");
       const value = sort.col === "t.updated_at" ? sql`${String(after[0])}::timestamptz` : sql`${String(after[0])}`;
       q = q.where(sql<boolean>`(${sql.ref(sort.col)}, t.id) ${op} (${value}, ${String(after[1])}::uuid)`);

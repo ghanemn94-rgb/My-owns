@@ -136,6 +136,38 @@ export interface RegisterSpecBase<Row extends RegisterRow> {
    * action's work item follows the DG2 `/actions` PATCH). Absent: nothing more is written.
    */
   readonly afterUpdate?: (before: Row, after: Row, ctx: WriteContext) => Promise<void>;
+  /**
+   * P6 (ADR-0057 §5, T-DG6-BE-R): the text columns the list's `q` matches (case-insensitive substring, any column).
+   * Absent: the list offers no `q` (a `q` is then an unknown query field, 400).
+   */
+  readonly searchColumns?: readonly string[];
+  /**
+   * P6 (ADR-0057 §5): the sort keys the list offers (`sort=<key>` ascending, `sort=-<key>` descending) with their column
+   * and kind; build with `registerSortColumns`. Absent: the list offers no `sort`. With `sort` absent the order stays
+   * `id` ascending.
+   */
+  readonly sortColumns?: ReadonlyMap<string, RegisterSortColumn>;
+}
+
+/** One sortable column of a register list: how its keyset value travels in the cursor and is read back. */
+export interface RegisterSortColumn {
+  readonly column: string;
+  readonly kind: "text" | "integer" | "timestamp" | "uuid";
+}
+
+/**
+ * The sort keys of a register list: its own keys plus `status`, `createdAt` and `updatedAt`, which every register row
+ * has (ADR-0016 §3; the saved-view registry's REGISTER_SORT_TAIL in @mth/shared).
+ */
+export function registerSortColumns(
+  own: ReadonlyArray<readonly [key: string, column: string, kind: RegisterSortColumn["kind"]]>,
+): ReadonlyMap<string, RegisterSortColumn> {
+  const tail = [
+    ["status", "status", "text"],
+    ["createdAt", "created_at", "timestamp"],
+    ["updatedAt", "updated_at", "timestamp"],
+  ] as const;
+  return new Map([...own, ...tail].map(([key, column, kind]) => [key, { column, kind }] as const));
 }
 
 const listQuery = z.strictObject({
@@ -143,6 +175,75 @@ const listQuery = z.strictObject({
   cursor: cursorSchema,
   limit: limitSchema,
 });
+
+/** The list query of a spec: the DG2 parameters, plus `q` and `sort` where the spec declares them (ADR-0057 §5). */
+interface RegisterListQuery {
+  readonly includeArchived: boolean;
+  readonly cursor?: string | undefined;
+  readonly limit: number;
+  readonly q?: string | undefined;
+  readonly sort?: string | undefined;
+}
+function registerListQuery(
+  spec: Pick<RegisterSpecBase<RegisterRow>, "searchColumns" | "sortColumns">,
+): z.ZodType<RegisterListQuery> {
+  const sortValues = spec.sortColumns ? [...spec.sortColumns.keys()].flatMap((k) => [k, `-${k}`]) : [];
+  // A list that declares neither keeps the DG2 strict schema: `q` or `sort` there is an unknown field (400).
+  const q = z.string().min(1).max(200).optional();
+  const sort = z.enum((sortValues.length > 0 ? sortValues : ["-"]) as [string, ...string[]]).optional();
+  if (spec.searchColumns && sortValues.length > 0) return listQuery.extend({ q, sort });
+  if (spec.searchColumns) return listQuery.extend({ q });
+  if (sortValues.length > 0) return listQuery.extend({ sort });
+  return listQuery;
+}
+
+const UUID_TEXT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TIMESTAMP_KEY = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
+const invalidCursor = () =>
+  problems.badRequest("validation.cursor", "The cursor is invalid or belongs to other filters.", "/query/cursor");
+
+/** The sort key of a row as it travels in the cursor (timestamps to the microsecond; integers as numbers). */
+function sortKeyExpr(col: RegisterSortColumn) {
+  if (col.kind === "timestamp")
+    return sql<string>`to_char(${sql.ref(col.column)} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+  if (col.kind === "uuid") return sql<string | null>`${sql.ref(col.column)}::text`;
+  return sql<string | number | null>`${sql.ref(col.column)}`;
+}
+
+/** A keyset value as the database reads it; another shape is a 400 (a hand-made cursor never reaches a cast). */
+function keysetValue(col: RegisterSortColumn, value: string | number | null) {
+  if (value === null) return null;
+  if (col.kind === "integer") {
+    if (typeof value !== "number" || !Number.isSafeInteger(value)) throw invalidCursor();
+    return sql`${value}::integer`;
+  }
+  if (typeof value !== "string") throw invalidCursor();
+  if (col.kind === "text") return sql`${value}::text`;
+  if (col.kind === "uuid") {
+    if (!UUID_TEXT.test(value)) throw invalidCursor();
+    return sql`${value}::uuid`;
+  }
+  const iso = `${value.slice(0, 23)}Z`;
+  const time = Date.parse(iso);
+  if (!TIMESTAMP_KEY.test(value) || Number.isNaN(time) || new Date(time).toISOString() !== iso) throw invalidCursor();
+  return sql`${value}::timestamptz`;
+}
+
+/** Rows after the keyset (value, id) in the order `column dir NULLS LAST|FIRST, id dir` (ADR-0057 §5). */
+function afterKeyset(col: RegisterSortColumn, dir: "asc" | "desc", after: readonly (string | number | null)[]) {
+  const [rawValue, rawId] = after;
+  if (typeof rawId !== "string" || !UUID_TEXT.test(rawId)) throw invalidCursor();
+  const c = sql.ref(col.column);
+  const id = sql`${rawId}::uuid`;
+  const value = keysetValue(col, rawValue ?? null);
+  if (dir === "asc")
+    return value === null
+      ? sql<boolean>`(${c} IS NULL AND id > ${id})`
+      : sql<boolean>`((${c}, id) > (${value}, ${id}) OR ${c} IS NULL)`;
+  return value === null
+    ? sql<boolean>`((${c} IS NULL AND id < ${id}) OR ${c} IS NOT NULL)`
+    : sql<boolean>`((${c}, id) < (${value}, ${id}))`;
+}
 const uuidParam = z.uuid();
 
 /**
@@ -397,22 +498,52 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
   };
 
   if (ops.list) {
+    const specListQuery = registerListQuery(spec);
     routes.push(`GET ${spec.path}`);
     app.get(spec.path, { config: readAccess }, async (request) => {
       const params = paramsOf(request, parentParams);
       const transformationId = params.get("transformationId")!;
-      const query = parseQuery(listQuery, request.query);
+      const query = parseQuery(specListQuery, request.query);
       await requireTransformationRead(db, principalOf(request), transformationId);
       await checkParent(db, transformationId, params);
+      // `q` and `sort` bind the cursor too; absent, they are left out, so the DG2 hash and cursor are unchanged.
       const hash = filterHash({
         includeArchived: query.includeArchived,
         parent: spec.parent ? params.get(spec.parent.param) : null,
+        q: query.q,
+        sort: query.sort,
       });
-      const after = decodeCursor(query.cursor, hash, 1);
+      const sortKey = query.sort === undefined ? undefined : query.sort.replace(/^-/, "");
+      const sortCol = sortKey === undefined ? undefined : spec.sortColumns?.get(sortKey);
+      const after = decodeCursor(query.cursor, hash, sortCol ? 2 : 1);
       let q = loose(db).selectFrom(spec.table).selectAll().where("transformation_id", "=", transformationId);
       if (spec.parent) q = q.where(spec.parent.column, "=", params.get(spec.parent.param)!);
       if (spec.archive !== false && spec.archive !== undefined && !query.includeArchived)
         q = q.where("status", "<>", "archived");
+      if (query.q !== undefined && spec.searchColumns) {
+        const like = `%${query.q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+        const columns = spec.searchColumns;
+        q = q.where((eb) => eb.or(columns.map((column) => eb(column, "ilike", like))));
+      }
+      if (sortCol) {
+        const dir = query.sort!.startsWith("-") ? "desc" : "asc";
+        let sq = q.select(sortKeyExpr(sortCol).as("sort_key"));
+        if (after) sq = sq.where(afterKeyset(sortCol, dir, after));
+        const nulls = sql.raw(dir === "asc" ? "NULLS LAST" : "NULLS FIRST");
+        const sorted = await sq
+          .orderBy(sql`${sql.ref(sortCol.column)} ${sql.raw(dir)} ${nulls}`)
+          .orderBy("id", dir)
+          .limit(query.limit + 1)
+          .execute();
+        const page = paginate(
+          sorted,
+          query.limit,
+          (r) => [r["sort_key"] as string | number | null, String(r["id"])],
+          hash,
+        );
+        const rows = page.items.map(({ sort_key: _k, ...row }) => row) as unknown as Row[];
+        return { items: await render(db, rows), nextCursor: page.nextCursor };
+      }
       if (after) q = q.where("id", ">", String(after[0]));
       const rows = (await q
         .orderBy("id")

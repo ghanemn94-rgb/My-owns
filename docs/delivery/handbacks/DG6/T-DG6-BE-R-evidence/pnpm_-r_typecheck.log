@@ -1,0 +1,24 @@
+Scope: 8 of 9 workspace projects
+packages/design-tokens typecheck$ tsc -p tsconfig.json
+packages/shared typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck: Done
+packages/shared typecheck: Done
+apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+packages/config typecheck$ tsc -p tsconfig.json
+packages/reporting typecheck$ tsc -p tsconfig.json
+packages/config typecheck: Done
+packages/reporting typecheck: Done
+apps/web typecheck: Done
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: test/integration/transformations/register-filters.test.ts(173,28): error TS2322: Type 'RegisterSpec<{ id: string; description: string | null; status: string; version: number; created_at: Date; updated_at: Date; created_by: string; updated_by: string; organization_id: string; ... 11 more ...; causal_chain: string | null; }, { ...; }>' is not assignable to type 'RegisterSpec<{ id: string; title: string; status: string; version: number; created_at: Date; updated_at: Date; created_by: string; updated_by: string; organization_id: string; archived_at: Date | null; ... 5 more ...; statement: string; }, { ...; }> | { ...; }'.
+apps/api typecheck:   Type 'RegisterSpecBase<{ id: string; description: string | null; status: string; version: number; created_at: Date; updated_at: Date; created_by: string; updated_by: string; organization_id: string; ... 11 more ...; causal_chain: string | null; }> & { ...; }' is not assignable to type 'RegisterSpec<{ id: string; title: string; status: string; version: number; created_at: Date; updated_at: Date; created_by: string; updated_by: string; organization_id: string; archived_at: Date | null; ... 5 more ...; statement: string; }, { ...; }> | { ...; }'.
+apps/api typecheck:     Type 'RegisterSpecBase<{ id: string; description: string | null; status: string; version: number; created_at: Date; updated_at: Date; created_by: string; updated_by: string; organization_id: string; ... 11 more ...; causal_chain: string | null; }> & { ...; }' is not assignable to type '{ [k: string]: unknown; }'.
+apps/api typecheck:       Index signature for type 'string' is missing in type 'RegisterSpecBase<{ id: string; description: string | null; status: string; version: number; created_at: Date; updated_at: Date; created_by: string; updated_by: string; organization_id: string; ... 11 more ...; causal_chain: string | null; }> & { ...; }'.
+apps/api typecheck: Failed
+/home/user/wt/dg6-be-r/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/api@0.1.0 typecheck: `tsc -p tsconfig.json`
+Exit status 2
