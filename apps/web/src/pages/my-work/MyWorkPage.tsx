@@ -31,6 +31,7 @@ import { formatDateTime } from "../../lib/format.ts";
 import { renderMessage } from "./messages.ts";
 import { DueDate, FormAlert } from "./p4ui.tsx";
 import { MyWorkSections } from "../dashboards/MyWorkSections.tsx";
+import { MyWorkHomeRegions } from "./HomeRegions.tsx";
 
 /**
  * The pending state of the My Work sections: a plain busy note, not the shared role="status" LoadingState. My Work is
@@ -74,6 +75,8 @@ export function MyWorkPage() {
         ) : null}
       </nav>
       {!canReadTransformations ? <p className="muted">{t("common.myWork.noBusinessAccess")}</p> : null}
+      {/* T-DG6-FE-F2 (REQ-S15-001; ADR-0061 §4.1): key decisions, key outcomes and next actions above the fold. */}
+      <MyWorkHomeRegions />
       {/* T-DG4-FE-G (REQ-S03-008): the sections of getMyWork and the upcoming deadlines. */}
       <MyWorkSections />
       <WorkItemsSection />
