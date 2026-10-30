@@ -1,0 +1,58 @@
+# mutation 04-no-connector-exception (2026-10-30T20:29:27Z)
+# file: apps/worker/src/handlers/integrations.ts
+# sandbox: /var/tmp/mth-run.ETmgrL/claude-0/mutq (minimal copy of the tree at HEAD 772bda86b3f71cb9f61d087d3934bbc5a9e23449; product source untouched in the worktree)
+mutated apps/worker/src/handlers/integrations.ts: '  const envelope = outboxEnvelope.parse(data);\n  const actor = jobActor(jobId);' -> '  const envelope = outboxEnvelope.parse(data);\n  if (envelope.eventType === "connector.run_failed") return { outcome: "duplicate", exceptionIds: [] }; // QA MUTATION\n  const actor = jobActor(jobId);'
+# diff:
+--- /home/user/wt/dg6-qa-a/apps/worker/src/handlers/integrations.ts	2026-10-30 19:52:13.400116057 +0000
++++ /var/tmp/mth-run.ETmgrL/claude-0/mutq/apps/worker/src/handlers/integrations.ts	2026-10-30 20:29:27.975076505 +0000
+@@ -193,6 +193,7 @@
+   jobId: string,
+ ): Promise<ConnectorExceptionOutcome> {
+   const envelope = outboxEnvelope.parse(data);
++  if (envelope.eventType === "connector.run_failed") return { outcome: "duplicate", exceptionIds: [] }; // QA MUTATION
+   const actor = jobActor(jobId);
+   const r = await runOnce(db, CONNECTOR_EXCEPTION_QUEUE, envelope.idempotencyKey, async (tx) => {
+     if (envelope.eventType === "connector.run_failed") {
+# command: QA_PG_PORT=26370 MTH_PORT_POOL=26371-26399 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/a17-import-and-integration.test.ts -t "stopped connector"
+port-policy: PostgreSQL listening on port 26370 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ETmgrL/claude-0/mutq
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvfe766_8c88b6e9 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests | 1 failed | 9 skipped) 33955ms
+   ↓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)
+   ↓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)
+   ↓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing
+   ↓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)
+   ↓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > unsigned, wrongly signed, tampered and stale deliveries: 401 webhook.unauthenticated and nothing stored
+   ↓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing
+   ↓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons
+   ↓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0
+   ↓ failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+   × stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports 30012ms
+     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:685:3
+    683| 
+    684| describe("stopped connector (REQ-S17-005, A17): actionable error, one …
+    685|   it("the connector page shows which run failed, why and the fallbacks…
+       |   ^
+    686|     const c = await enabledConnector(api, admin, {
+    687|       organizationId: w.orgA.id,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  20:29:30
+   Duration  49.25s (transform 5.70s, setup 0ms, collect 10.63s, tests 33.96s, environment 0ms, prepare 60ms)
+
+EXIT=1
