@@ -1084,7 +1084,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG6-BE-T: + putAssistantSetting, enableAssistant, disableAssistant, createAssistantConversation,
     // postAssistantMessage (5 JSON bodies; the three other assistant operations are GETs). 410 + 5 = 415; JSON 408 + 5
     // = 413 (the orchestrator reconciles the parallel deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([411, 409, 1]);
+    // W10/W11 merge (orchestrator, measured on the merged tree): BE-N, BE-Q and BE-T add 12 JSON bodies. 411 + 12 = 423;
+    // JSON 409 + 12 = 421.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([423, 421, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);
