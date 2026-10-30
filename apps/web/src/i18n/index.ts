@@ -127,6 +127,10 @@ import enAccess from "./en/access.json" with { type: "json" };
 // provisional (components/assistant/provisional-ar.ts; ADR-0059 §1, §8, §10).
 import arAssistant from "./ar/assistant.json" with { type: "json" };
 import enAssistant from "./en/assistant.json" with { type: "json" };
+// P6 slices E, F, J and C screens (T-DG6-FE-B): Administration > Audit, Security, Sensitive grants, Operations, Identity,
+// Storage, Notifications; the sensitivity panel, the evidence preview and the deep-link landing. Arabic provisional.
+import arAdminP6 from "./ar/adminP6.json" with { type: "json" };
+import enAdminP6 from "./en/adminP6.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -181,6 +185,7 @@ export const catalogues = {
     playbookP5: arPlaybookP5,
     access: arAccess,
     assistant: arAssistant,
+    adminP6: arAdminP6,
   },
   en: {
     common: enCommon,
@@ -233,6 +238,7 @@ export const catalogues = {
     playbookP5: enPlaybookP5,
     access: enAccess,
     assistant: enAssistant,
+    adminP6: enAdminP6,
   },
 } as const;
 

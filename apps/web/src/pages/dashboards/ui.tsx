@@ -45,6 +45,7 @@ import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatP
 import { formatKpiValue, reasonText as kpiReasonText, times100 } from "../kpi/ui.tsx";
 import { useBusinessUnitTransformations, useDashboardPeriods, useDrilldown, type DashboardQuery } from "./api.ts";
 import { useReadableTransformations } from "../traceability/api.ts";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 /** The page namespace (its `problem.*` texts are read before `problems.*`). */
 export const NS = ["dashboards"] as const;
@@ -940,6 +941,7 @@ export function DrilldownPanel({
         <QueryState query={query}>
           {(d) => (
             <>
+              <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
               <dl className="details details--compact">
                 <div>
                   <dt>{t("dashboards.drill.value")}</dt>

@@ -35,6 +35,7 @@ import { FinanceStateChip, FinanceValidationDialog } from "./finance.tsx";
 import { caseFieldMessage, FormAlert, splitProblem } from "./formKit.tsx";
 // T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
 import { RecordExtensionTools } from "../../components/form-framework/index.ts";
+import { SensitivityPanel } from "../../components/sensitivity/SensitivityPanel.tsx";
 
 export function BusinessCasePage() {
   const { t } = useTranslation();
@@ -78,6 +79,7 @@ function CaseBody({ bc }: { bc: BusinessCase }) {
   return (
     <div data-business-case={bc.code}>
       <SectionNav sections={sections} />
+      <SensitivityPanel tid={ws.tid} recordType="business_case" recordId={bc.id} />
       <Section id="summary" title={t("businessCases.summaryTitle")}>
         <RecordExtensionTools
           recordType="business_case"

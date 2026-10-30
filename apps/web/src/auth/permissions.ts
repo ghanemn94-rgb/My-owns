@@ -15,6 +15,10 @@ const STRUCTURAL = new Set<Permission>([
   "role.read",
   "access.read",
   "access.assign",
+  // P6 slice E (T-DG6-FE-B; ADR-0051 §7; mirrors access/rules.ts STRUCTURAL_PERMISSIONS): an organization-level
+  // assignment of these two codes covers the organization's transformations (never transformation.read).
+  "sensitive_record.grant",
+  "sensitive_record.read",
 ]);
 
 export interface PermissionTarget {

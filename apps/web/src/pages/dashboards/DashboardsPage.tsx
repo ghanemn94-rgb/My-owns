@@ -43,6 +43,7 @@ import {
   useFilterState,
   useOrgQuery,
 } from "./ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 export const DASHBOARD_KINDS = [
   "executive",
@@ -353,6 +354,7 @@ export function FinanceDashboardPage() {
             const investment = d.headlines.filter((h) => h.metric === "value.investment");
             return (
               <>
+                <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
                 <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
                 <Section id="finance-headlines" title={t("dashboards.finance.headlines")}>
                   <HeadlineList

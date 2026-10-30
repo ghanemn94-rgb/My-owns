@@ -11,7 +11,8 @@
 // A key ending in "." stands for every key below that prefix. When a reviewed translation replaces a text, remove its
 // entry here in the same change.
 
-export type ProvisionalArabicSource = "adr" | "fe-a";
+//  - "fe-b": the Arabic of the T-DG6-FE-B screens (the whole `adminP6` namespace), written by T-DG6-FE-B.
+export type ProvisionalArabicSource = "adr" | "fe-a" | "fe-b";
 
 /** Catalogue path (namespace.key, with "__" for "." inside a problem code) -> where the provisional Arabic comes from. */
 export const P6_PROVISIONAL_ARABIC: Readonly<Record<string, ProvisionalArabicSource>> = {
@@ -67,4 +68,6 @@ export const P6_PROVISIONAL_ARABIC: Readonly<Record<string, ProvisionalArabicSou
   "nav.contents.admin.storage": "fe-a",
   "nav.contents.admin.notifications": "fe-a",
   "nav.p6.": "fe-a",
+  // adminP6.json (T-DG6-FE-B): every text of the slice E, F, J and C screens
+  "adminP6.": "fe-b",
 };

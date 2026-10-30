@@ -1,8 +1,10 @@
 // T-DG6-FE-A (p6-plan §5.1 row FE-A; p6-work-split §E/F.12, §J/C.13): the P6 shell seams of slices E, F, J and C, in
 // English LTR and Arabic RTL, against a scripted API (SYNTHETIC data).
 //  - The Administration entries Audit, Security (upload policy, rate limits), Sensitive grants, Operations, Identity,
-//    Storage and Notifications are nav sub-entries; every FE-B screen (and the deep-link landing /l/:token) has a route
-//    with an honest "not available yet" placeholder that loads no data (F-DG4-160).
+//    Storage and Notifications are nav sub-entries; every FE-B screen (and the deep-link landing /l/:token) has a route.
+//    T-DG6-FE-B replaced the "not available yet" placeholders with the screens, so P6_PLANNED_ROUTES is an empty seam
+//    again and no placeholder is left (F-DG4-160); the screens themselves are tested in
+//    pages/admin/security/p6-admin-screens.test.tsx.
 //  - The 30 request paths equal the contract's (docs/api/openapi.yaml 1.5.0-p6), method included; the P6 query keys
 //    are scoped so a refresh touches only its area.
 //  - A resolved deep link navigates only inside the app (`safeInternalPath`); a malformed token is never sent.
@@ -72,9 +74,9 @@ describe("P6 navigation entries and route placeholders (slices E, F, J, C)", () 
       expect(NAV_SUBPAGES, s.id).toContain(s);
       expect(s.requiresAny?.length, s.id).toBeGreaterThan(0);
       for (const p of s.requiresAny ?? []) expect(P6_ADMIN_READ_PERMISSIONS, `${s.id} ${p}`).toContain(p);
-      // Each entry opens a registered placeholder route.
+      // Each entry opens a registered route (T-DG6-FE-B: the screen, no longer a placeholder).
       expect(
-        P6_PLANNED_ROUTES.map((r) => `/${r.path}`),
+        shellChildren().map((r) => `/${r.path}`),
         s.id,
       ).toContain(s.path);
       for (const locale of LOCALES) {
@@ -91,43 +93,40 @@ describe("P6 navigation entries and route placeholders (slices E, F, J, C)", () 
     for (const p of P6_ADMIN_READ_PERMISSIONS) expect(admin.requiresAny, p).toContain(p);
   });
 
-  it("registers every FE-B screen and /l/:token as a route with a placeholder text in en and ar", () => {
-    expect(P6_PLANNED_ROUTES.map((r) => r.path).sort()).toEqual(
-      [
-        "admin/audit",
-        "admin/audit/:auditEventId",
-        "admin/security",
-        "admin/upload-policy",
-        "admin/sensitive-grants",
-        "admin/sensitive-grants/:grantId",
-        "l/:token",
-        "admin/operations",
-        "admin/operations/exceptions/:exceptionId",
-        "admin/service-identities",
-        "admin/service-identities/:serviceIdentityId",
-        "admin/identity",
-        "admin/storage",
-        "admin/notification-channels",
-        "admin/notification-channels/:channelKind",
-        "admin/notification-deliveries",
-      ].sort(),
-    );
+  it("registers every FE-B screen and /l/:token as a route, with its title and summary in en and ar", () => {
+    const FEB_ROUTES: readonly (readonly [string, string])[] = [
+      ["admin/audit", "audit"],
+      ["admin/audit/:auditEventId", "auditEvent"],
+      ["admin/security", "security"],
+      ["admin/upload-policy", "uploadPolicy"],
+      ["admin/sensitive-grants", "sensitiveGrants"],
+      ["admin/sensitive-grants/:grantId", "sensitiveGrant"],
+      ["l/:token", "deepLink"],
+      ["admin/operations", "operations"],
+      ["admin/operations/exceptions/:exceptionId", "operationalException"],
+      ["admin/service-identities", "serviceIdentities"],
+      ["admin/service-identities/:serviceIdentityId", "serviceIdentity"],
+      ["admin/identity", "identity"],
+      ["admin/storage", "storage"],
+      ["admin/notification-channels", "notifications"],
+      ["admin/notification-channels/:channelKind", "notificationChannel"],
+      ["admin/notification-deliveries", "notificationDeliveries"],
+    ];
+    // T-DG6-FE-B: the placeholder seam is empty again; every screen is a real route.
+    expect(P6_PLANNED_ROUTES).toEqual([]);
     const registered = shellChildren().map((r) => r.path);
-    for (const r of P6_PLANNED_ROUTES) {
-      expect(registered, r.path).toContain(r.path);
-      expect(r.owner, r.path).toBe("FE-B");
+    for (const [path, feature] of FEB_ROUTES) {
+      expect(registered, path).toContain(path);
       for (const field of ["title", "summary"] as const) {
-        const en = p6Text("en", r.feature, field);
-        const ar = p6Text("ar", r.feature, field);
-        expect(en, `en ${r.feature}.${field}`).toBeTruthy();
-        expect(ar, `ar ${r.feature}.${field}`).toMatch(/[؀-ۿ]/);
+        const en = p6Text("en", feature, field);
+        const ar = p6Text("ar", feature, field);
+        expect(en, `en ${feature}.${field}`).toBeTruthy();
+        expect(ar, `ar ${feature}.${field}`).toMatch(/[؀-ۿ]/);
         expect(ar).not.toBe(en);
       }
     }
-    // The placeholder routes come before the catch-all, so none of them is "page not found".
-    expect(registered.indexOf("*")).toBeGreaterThan(
-      Math.max(...P6_PLANNED_ROUTES.map((r) => registered.indexOf(r.path))),
-    );
+    // The routes come before the catch-all, so none of them is "page not found".
+    expect(registered.indexOf("*")).toBeGreaterThan(Math.max(...FEB_ROUTES.map(([p]) => registered.indexOf(p))));
   });
 
   it("no placeholder text claims the screen works, names an engineering delivery gate or calls anything live", () => {
@@ -140,37 +139,31 @@ describe("P6 navigation entries and route placeholders (slices E, F, J, C)", () 
     expect(p6Text("en", "identity", "summary")).toContain("never shown");
   });
 
-  it.each(LOCALES)(
-    "%s: an Administration placeholder states it is not available yet and loads no data",
-    async (locale) => {
-      const { requests } = mockApi(
-        meRoute(
-          makeMe(orgGrants(["organization.read", "organization.manage", "audit_event.read"]), {
-            preferredLocale: locale,
-          }),
-        ),
-      );
-      renderApp("/admin/audit", { i18n: createI18n(locale) });
-      const t = catalogues[locale].nav as unknown as { p6: { audit: { title: string }; notAvailableTitle: string } };
-      expect(await screen.findByRole("heading", { level: 1, name: t.p6.audit.title })).toBeTruthy();
-      expect(screen.getByText(t.p6.notAvailableTitle)).toBeTruthy();
-      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
-      expect(document.querySelector("[data-p6-feature='audit']")).toBeTruthy();
-      expect(requests.some((r) => r.url.includes("/audit-events"))).toBe(false);
-    },
-  );
+  it.each(LOCALES)("%s: /admin/audit is the audit screen, not a placeholder", async (locale) => {
+    const { requests } = mockApi(
+      meRoute(
+        makeMe(orgGrants(["organization.read", "organization.manage", "audit_event.read"]), {
+          preferredLocale: locale,
+        }),
+      ),
+    );
+    renderApp("/admin/audit", { i18n: createI18n(locale) });
+    const t = catalogues[locale].nav as unknown as { p6: { audit: { title: string }; notAvailableTitle: string } };
+    expect(await screen.findByRole("heading", { level: 1, name: t.p6.audit.title })).toBeTruthy();
+    expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    expect(document.querySelector("[data-p6-feature='audit']")).toBeNull();
+    expect(screen.queryByText(t.p6.notAvailableTitle)).toBeNull();
+    await waitFor(() => expect(requests.some((r) => r.url.includes("/api/v1/audit-events?"))).toBe(true));
+  });
 
-  it.each(LOCALES)(
-    "%s: /l/:token shows the deep-link placeholder after sign-in and sends nothing to /links",
-    async (locale) => {
-      const { requests } = mockApi(meRoute(makeMe(orgGrants(["organization.read"]), { preferredLocale: locale })));
-      renderApp(`/l/${TOKEN}`, { i18n: createI18n(locale) });
-      expect(
-        await screen.findByRole("heading", { level: 1, name: p6Text(locale, "deepLink", "title") as string }),
-      ).toBeTruthy();
-      expect(requests.some((r) => r.url.includes("/api/v1/links/"))).toBe(false);
-    },
-  );
+  it.each(LOCALES)("%s: /l/:token resolves the link after sign-in (the server re-authorizes)", async (locale) => {
+    const { requests } = mockApi(meRoute(makeMe(orgGrants(["organization.read"]), { preferredLocale: locale })));
+    renderApp(`/l/${TOKEN}`, { i18n: createI18n(locale) });
+    expect(
+      await screen.findByRole("heading", { level: 1, name: p6Text(locale, "deepLink", "title") as string }),
+    ).toBeTruthy();
+    await waitFor(() => expect(requests.some((r) => r.url.endsWith(`/api/v1/links/${TOKEN}`))).toBe(true));
+  });
 
   it("Administration lists the P6 entries for their holders only (a UI hint; the server decides)", async () => {
     // ADM_TECH-like synthetic grants: every P6 Administration permission plus an organization administration one.
