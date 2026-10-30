@@ -1074,6 +1074,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // bodies), commitImport, cancelImport (2 JSON bodies; the five other import operations are GETs). 407 + 3 = 410;
     // JSON 406 + 2 = 408. W10 merge: T-DG6-BE-D + putUploadPolicy (1 JSON body; getUploadPolicy and previewEvidenceContent
     // are GETs): 410 + 1 = 411; JSON 408 + 1 = 409.
+    // JSON 406 + 2 = 408 (the orchestrator reconciles the parallel W10 deltas at merge).
+    // T-DG6-BE-N: + createWebhookEndpoint, rotateWebhookSecret, disableWebhookEndpoint, receiveWebhook (4 JSON bodies;
+    // listWebhookEndpoints and getWebhookEndpoint are GETs). 410 + 4 = 414; JSON 408 + 4 = 412 (the orchestrator
+    // reconciles the parallel deltas at merge).
     expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([411, 409, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,

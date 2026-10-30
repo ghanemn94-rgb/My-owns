@@ -32,7 +32,13 @@ describe("route registration", () => {
       .filter((r) => (r.access as { public?: boolean }).public)
       .map((r) => r.key)
       .sort();
-    expect(publicRoutes).toEqual(["GET /healthz", "GET /readyz", "POST /api/v1/auth/dev-login"]);
+    // T-DG6-BE-N (ADR-0056 §7): + the signed webhook receiver, session-less and authenticated by its signature only.
+    expect(publicRoutes).toEqual([
+      "GET /healthz",
+      "GET /readyz",
+      "POST /api/v1/auth/dev-login",
+      "POST /api/v1/webhooks/:endpointKey",
+    ]);
   });
 
   it("registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely", async () => {
