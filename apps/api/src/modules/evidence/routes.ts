@@ -80,11 +80,18 @@ import {
   evidenceReadDecision,
   requireEvidenceRead,
 } from "./access.ts"; // P6 BE-C (ADR-0051 §4)
-import { registerEvidencePreviewRoutes } from "./preview.ts"; // P6 BE-D (stub by T-DG6-BE-A; ADR-0052 §2)
+import {
+  ContentInspector,
+  decideUpload,
+  effectiveUploadPolicy,
+  inspectedBody,
+  mediaTypeOf,
+  tooLarge,
+} from "./content-policy.ts"; // P6 BE-D (ADR-0052 §1)
+import { registerEvidencePreviewRoutes } from "./preview.ts"; // P6 BE-D (ADR-0052 §2)
 import { registerEvidenceRegisterRoutes } from "./register.ts";
 import { toEvidence, toEvidenceLink } from "./repository.ts";
 import {
-  EVIDENCE_MAX_BYTES,
   EvidenceStoreUnavailable,
   EvidenceTooLarge,
   evidenceStoreFor,
@@ -236,6 +243,8 @@ export const EVIDENCE_MODULE_ROUTES = [
   // T-DG5-BE-O (ADR-0045 §8; REQ-S13-010): the evidence register and the versions list (register.ts).
   `GET ${T}/evidence-register`,
   `GET ${ITEM}/versions`,
+  // T-DG6-BE-D (ADR-0052 §2; REQ-S13-011): the safe inline preview (preview.ts).
+  `GET ${ITEM}/preview`,
 ] as const;
 
 export const EVIDENCE_MODULE: ModuleRegistration = Object.freeze({
@@ -275,14 +284,8 @@ export function decodeFileName(raw: string | undefined): string | undefined {
 }
 
 function storeProblem(err: unknown): HttpProblem | null {
-  if (err instanceof EvidenceTooLarge)
-    return new HttpProblem({
-      status: 413,
-      type: "urn:mth:problem:validation",
-      code: "evidence.too_large",
-      title: "Content too large",
-      detail: `Evidence content is limited to ${err.maxBytes} bytes per revision.`,
-    });
+  // P6 (T-DG6-BE-D; ADR-0052 §1; D-198): the DG2 code and text, `maxBytes` now the policy's limit, sent as params.
+  if (err instanceof EvidenceTooLarge) return tooLarge(err.maxBytes);
   if (err instanceof EvidenceStoreUnavailable) return problems.unavailable();
   return null;
 }
@@ -670,7 +673,7 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
   } as const; // P6 BE-E: ADR-0052 §4 upload class
   app.post(`${ITEM}/content`, { config: uploadConfig }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
-    const { organizationId, fileName, body } = await db.transaction().execute(async (tx) => {
+    const { organizationId, fileName, body, maxBytes } = await db.transaction().execute(async (tx) => {
       // Replacing the stored content is an edit: only the item's creator or named owner (F-DG2-140).
       await requireTransformationRead(tx, principalOf(request), transformationId);
       const seen = await tx
@@ -706,7 +709,9 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
         throw problems.badRequest("validation.body_required", "Send the file bytes as application/octet-stream.");
       // F-DG2-320 (defence in depth): only the raw request byte stream is ever stored, never a parsed value.
       if (!isRawByteBody(body)) throw undeclaredMediaTypeProblem(uploadConfig.consumes);
-      return { organizationId: ctx.organizationId, fileName, body };
+      // P6 (T-DG6-BE-D; ADR-0052 §1): the organization's effective policy sets the size limit enforced while streaming.
+      const { maxBytes } = await effectiveUploadPolicy(tx, ctx.organizationId);
+      return { organizationId: ctx.organizationId, fileName, body, maxBytes };
     });
 
     const contentId = uuidv7();
@@ -714,7 +719,11 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
     try {
       // Phase 2: no connection, no transaction. An incomplete body (client abort, requestTimeout) is mapped centrally
       // (platform/hooks.ts isIncompleteBodyError): 400 validation.malformed_request, below error level.
-      const stored = await store.receive(key, body, EVIDENCE_MAX_BYTES);
+      // P6 (T-DG6-BE-D; ADR-0052 §1): the inspector sees exactly the bytes the store hashes and size-checks; the type is
+      // decided only after the store accepted the size (detection after the size check), never from Content-Type.
+      const inspector = new ContentInspector();
+      const stored = await store.receive(key, inspectedBody(body, inspector), maxBytes);
+      const detection = inspector.finish();
       const row = await db.transaction().execute(async (tx) => {
         const ctx = await openWrite(
           tx,
@@ -727,6 +736,10 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
         const current = await checkEvidenceVersion(tx, request, transformationId, evidenceId, true);
         if (current.kind !== "file")
           throw ruleProblem("evidence.not_a_file", "Only file evidence has stored content.", "");
+        // P6 (T-DG6-BE-D; ADR-0052 §1): the allow-list decision against the policy as it stands at commit time (a
+        // policy narrowed while the body streamed applies); 413/422 here store nothing (the temporary is discarded).
+        const policy = await effectiveUploadPolicy(tx, ctx.organizationId);
+        const detectedType = decideUpload(fileName, detection, stored.size, policy);
         const last = await tx
           .selectFrom("evidence_content")
           .select((eb) => eb.fn.max<number>("revision").as("n"))
@@ -744,7 +757,8 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             storage_key: stored.key,
             sha256: stored.sha256,
             size_bytes: String(stored.size),
-            content_type: "application/octet-stream",
+            content_type: mediaTypeOf(detectedType), // P6: the canonical media type (0099 detected_media_type)
+            detected_type: detectedType,
             file_name: fileName,
             uploaded_by: ctx.userId,
           })
@@ -768,6 +782,7 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             ...(diffFields(current, updated, ["current_content_id", "file_name", "review_status"]) ?? {}),
             contentRevision: { from: revision - 1 || null, to: revision },
             contentSize: { from: null, to: stored.size },
+            contentType: { from: null, to: detectedType },
           },
         });
         await store.finalise(key);

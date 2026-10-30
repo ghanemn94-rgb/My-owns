@@ -32,6 +32,12 @@ import {
 } from "../support/harness.ts";
 import { setupP2World, type P2World } from "../support/p2-fixtures.ts";
 
+/**
+ * T-DG6-BE-D (ADR-0052 §1): uploads pass the allow-list by magic bytes plus extension, so a synthetic binary body is a
+ * PDF (`%PDF-` then random bytes, exactly `n` bytes, n >= 5) named `.pdf`; every byte after the signature stays random.
+ */
+const pdfBytes = (n: number): Buffer => Buffer.concat([Buffer.from("%PDF-", "latin1"), randomBytes(n - 5)]);
+
 const MiB = 1024 * 1024;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const sha256 = (b: Buffer) => createHash("sha256").update(b).digest("hex");
@@ -145,7 +151,7 @@ async function startUpload(
     `Origin: ${APP_ORIGIN}`,
     `X-CSRF-Token: ${session.csrf}`,
     `If-Match: "${f.version}"`,
-    "X-File-Name: synthetic.bin",
+    "X-File-Name: synthetic.pdf",
     "Content-Type: application/octet-stream",
     `Content-Length: ${bytes.length}`,
   ].join("\r\n");
@@ -225,7 +231,7 @@ describe("F-DG2-440: an upload is authorised again at commit time (session re-re
     try {
       const f = await newFile(p.contributor.session, p.contributor.id, "Synthetic Q1 revoked grant");
       const since = (await sql<{ t: Date }>`select now() t`.execute(base.db)).rows[0]!.t;
-      const u = await startUpload(port, p.contributor.session, f, randomBytes(MiB), 64 * 1024);
+      const u = await startUpload(port, p.contributor.session, f, pdfBytes(MiB), 64 * 1024);
       await sleep(400);
       const during = await stateOf(f);
       const revoked = await api.owner.query(
@@ -265,7 +271,7 @@ describe("F-DG2-440: an upload is authorised again at commit time (session re-re
     try {
       const f = await newFile(p.lead.session, p.lead.id, "Synthetic Q1b logout");
       const session = await signIn(base.app, leadSubject);
-      const u = await startUpload(port, session, f, randomBytes(MiB), 64 * 1024);
+      const u = await startUpload(port, session, f, pdfBytes(MiB), 64 * 1024);
       await sleep(400);
       const out = await call(base.app, "POST", "/api/v1/auth/logout", { session });
       const me = await call(base.app, "GET", "/api/v1/me", { session });
@@ -294,7 +300,7 @@ describe("F-DG2-440: an upload is authorised again at commit time (session re-re
       try {
         const f = await newFile(p.lead.session, p.lead.id, `Synthetic ${expiry} expiry`);
         const session = await signIn(base.app, leadSubject);
-        const u = await startUpload(port, session, f, randomBytes(MiB), 64 * 1024);
+        const u = await startUpload(port, session, f, pdfBytes(MiB), 64 * 1024);
         await sleep(400);
         // The session's expiry passes while the body streams (as a shortened idle timeout / lifetime would make it).
         const column = expiry === "idle" ? "idle_expires_at" : "absolute_expires_at";
@@ -324,7 +330,7 @@ describe("F-DG2-440: an upload is authorised again at commit time (session re-re
     const port = await listening(api);
     try {
       const f = await newFile(p.contributor.session, p.contributor.id, "Synthetic disabled user");
-      const u = await startUpload(port, p.contributor.session, f, randomBytes(MiB), 64 * 1024);
+      const u = await startUpload(port, p.contributor.session, f, pdfBytes(MiB), 64 * 1024);
       await sleep(400);
       await api.owner.query(`update app_user set status = 'disabled' where id = $1`, [p.contributor.id]);
       try {
@@ -346,7 +352,7 @@ describe("F-DG2-440: an upload is authorised again at commit time (session re-re
     const port = await listening(api);
     try {
       const f = await newFile(p.contributor.session, p.contributor.id, "Synthetic normal upload");
-      const bytes = randomBytes(MiB);
+      const bytes = pdfBytes(MiB);
       const u = await startUpload(port, p.contributor.session, f, bytes, 64 * 1024);
       await sleep(300);
       const r = await u.finish();
@@ -367,7 +373,7 @@ describe("F-DG2-440: an upload is authorised again at commit time (session re-re
     const port = await listening(api);
     try {
       const f = await newFile(p.contributor.session, p.contributor.id, "Synthetic re-granted");
-      const u = await startUpload(port, p.contributor.session, f, randomBytes(MiB), 64 * 1024);
+      const u = await startUpload(port, p.contributor.session, f, pdfBytes(MiB), 64 * 1024);
       await sleep(300);
       await api.owner.query(
         `update scoped_assignment set revoked_at = now(), revoked_by = $1, revoke_reason = 'synthetic re-grant' where user_id = $2 and revoked_at is null`,
