@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+cd /home/user/wt/dg6-do-f
+E=docs/delivery/handbacks/DG6/T-DG6-DO-FB-evidence/node24
+mkdir -p $E
+S=$E/checks-summary.txt
+echo "== node $(node --version) at $(command -v node); pnpm $(pnpm --version) ($(date -u +%FT%TZ))" >> $S
+run() { name=$1; shift; echo "== $name: $* ($(date -u +%FT%TZ))" >> $S; st=$(date +%s); "$@" > $E/$name.log 2>&1; rc=$?; echo "$name exit=$rc wall=$(( $(date +%s)-st ))s" >> $S; }
+run typecheck pnpm -r typecheck
+run lint pnpm lint
+run openapi-lint pnpm openapi:lint
+run harness-node-test node --test deploy/load/harness.node-test.mjs
+echo "== part A done $(date -u +%FT%TZ)" >> $S
