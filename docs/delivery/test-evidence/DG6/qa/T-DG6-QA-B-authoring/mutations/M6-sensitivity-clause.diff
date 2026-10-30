@@ -1,0 +1,13 @@
+diff --git a/home/user/wt/dg6-qa-b/apps/api/src/modules/access/read-scope.ts b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/access/read-scope.ts
+index caa0689..f08261a 100644
+--- a/home/user/wt/dg6-qa-b/apps/api/src/modules/access/read-scope.ts
++++ b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/access/read-scope.ts
+@@ -147,7 +147,7 @@ export function sensitivityClauseSql(
+   cols: ReadScopeColumns,
+ ): Expression<SqlBool> {
+   const type = cols.recordType;
+-  if (type === null) return sql<SqlBool>`TRUE`;
++  if (type === null || true) return sql<SqlBool>`TRUE`;
+   const grantedIds = [...granted].filter((k) => k.startsWith(`${type}:`)).map((k) => k.slice(type.length + 1));
+   const parts: Expression<SqlBool>[] = [
+     sql<SqlBool>`NOT EXISTS (SELECT 1 FROM record_sensitivity rs_s WHERE rs_s.record_type = ${type} AND rs_s.record_id = ${cols.recordId} AND rs_s.is_sensitive)`,

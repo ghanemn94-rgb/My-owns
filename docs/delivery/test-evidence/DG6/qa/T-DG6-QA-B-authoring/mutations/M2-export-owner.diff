@@ -1,0 +1,13 @@
+diff --git a/home/user/wt/dg6-qa-b/apps/api/src/modules/reporting/exports/jobs.ts b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/reporting/exports/jobs.ts
+index 1b66a7f..103368a 100644
+--- a/home/user/wt/dg6-qa-b/apps/api/src/modules/reporting/exports/jobs.ts
++++ b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/reporting/exports/jobs.ts
+@@ -177,7 +177,7 @@ async function canRead(db: DbOrTx, principal: Principal, transformationId: strin
+ /** The requester's own job that the requester can still read; anything else is 404 (ADR-0046 §5). */
+ async function ownJob(db: DbOrTx, principal: Principal, jobId: string, lock = false): Promise<JobRow> {
+   const userId = requesterOf(principal);
+-  let q = db.selectFrom("export_job").selectAll().where("id", "=", jobId).where("requested_by", "=", userId);
++  void userId; let q = db.selectFrom("export_job").selectAll().where("id", "=", jobId);
+   if (lock) q = q.forUpdate();
+   const row = await q.executeTakeFirst();
+   if (row === undefined) throw problems.notFound();

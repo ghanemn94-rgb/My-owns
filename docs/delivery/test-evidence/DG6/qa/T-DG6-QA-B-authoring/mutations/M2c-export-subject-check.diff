@@ -1,0 +1,13 @@
+diff --git a/home/user/wt/dg6-qa-b/apps/api/src/modules/reporting/reports/snapshots.ts b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/reporting/reports/snapshots.ts
+index 4059afd..b2d33ff 100644
+--- a/home/user/wt/dg6-qa-b/apps/api/src/modules/reporting/reports/snapshots.ts
++++ b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/reporting/reports/snapshots.ts
+@@ -91,7 +91,7 @@ export async function requireReportPermission(
+ ): Promise<ResolvedTarget> {
+   const d = await authorize(db, principal, permission, { type: "transformation", id: transformationId });
+   if (d.target === null) throw problems.notFound();
+-  if (d.allowed) return d.target;
++  if (d.allowed || permission !== "transformation.read") return d.target;
+   const visible =
+     permission !== "transformation.read" && (await authorize(db, principal, "transformation.read", d.target)).allowed;
+   if (!visible) throw problems.notFound().withDenial(denialOf(permission, d.target));
