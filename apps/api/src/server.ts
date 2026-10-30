@@ -13,7 +13,9 @@
 //      stricter on auth), then the not-found handler, which the limiter meters too;
 //   3. the failed-authorization audit hook, health routes, identity (authentication + CSRF hook), then the modules;
 //   4. the built SPA, when present, from the same origin (no CDN).
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import cookie from "@fastify/cookie";
 import helmet, { type FastifyHelmetOptions } from "@fastify/helmet";
@@ -34,7 +36,14 @@ import {
   resolveTarget,
   scopeFilter,
 } from "./modules/access/index.ts";
-import { colorTokens, deriveDarkerShade, tokenSource, tokensAreProvisional } from "@mth/design-tokens";
+import {
+  checkBrandingContrast,
+  colorTokens,
+  contrastPointer,
+  deriveDarkerShade,
+  tokenSource,
+  tokensAreProvisional,
+} from "@mth/design-tokens";
 import {
   registerAdminRoutes,
   registerBrandingRoutes,
@@ -401,7 +410,18 @@ export async function buildServer(options: ServerOptions): Promise<{
   // re-derives the ADR-0009 §3 shades from the same single token source at read time.
   registerBrandingRoutes(
     app,
-    { colorTokens, tokensAreProvisional, derived: tokenSource.derived, deriveDarkerShade },
+    {
+      colorTokens,
+      tokensAreProvisional,
+      derived: tokenSource.derived,
+      deriveDarkerShade,
+      // T-DG6-BE-W (ADR-0061 §1): the runtime contrast rule and the SHA-256 of the tokens.json bytes read at start-up.
+      checkBrandingContrast: (primary, secondary) =>
+        checkBrandingContrast(primary, secondary).map((p) => ({ ...p, pointer: contrastPointer(p) })),
+      tokenSourceSha256: createHash("sha256")
+        .update(readFileSync(createRequire(import.meta.url).resolve("@mth/design-tokens/tokens.json")))
+        .digest("hex"),
+    },
     deps,
   );
   // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs) and the BE-B access

@@ -6,6 +6,7 @@ import tokens from "./tokens.json" with { type: "json" };
 import { AA_THRESHOLD, contrastRatio, deriveDarkerShade, floor2, type PairUse } from "./contrast.ts";
 
 export * from "./contrast.ts";
+export * from "./branding-contrast.ts";
 
 export type ColorTokenName = keyof typeof tokens.color;
 

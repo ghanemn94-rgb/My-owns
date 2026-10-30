@@ -820,6 +820,8 @@ describe("schema.ts matches the migrated database", () => {
       ["branding_version", "branding_version_append_only", false, false],
       ["branding_version", "branding_version_append_only_truncate", false, false],
       ["branding_version", "branding_version_audit_required", true, true],
+      // 0119 (T-DG6-BE-W; ADR-0061 §2): a version inserted after it has its contrast report at COMMIT.
+      ["branding_version", "branding_version_contrast_required", true, true],
       ["branding_version", "branding_version_guard", false, false],
       ["branding_version", "branding_version_row_guard", false, false],
       ["demo_dataset_run", "demo_dataset_run_append_only", false, false],

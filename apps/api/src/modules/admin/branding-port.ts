@@ -166,3 +166,66 @@ export function createBrandingReadPort(defaults: BrandingDefaults): BrandingRead
     },
   };
 }
+
+// ------------------------------------------------------------------------------------------------ contrast report
+// P6 slice I (T-DG6-BE-W; ADR-0061 §1.3, §2, §5): the read of a version's stored contrast report (0113). A version
+// published before the P6 rule (0119) has none; the route then evaluates it at read time and marks it not_recorded.
+
+/** One stored pair, as the database returns it (ratio and threshold are numeric, read as decimal strings). */
+export interface StoredContrastPair {
+  readonly ordinal: number;
+  readonly fg: string;
+  readonly bg: string;
+  readonly use: "text" | "large-text" | "ui";
+  readonly fgHex: string;
+  readonly bgHex: string;
+  readonly ratio: string;
+  readonly threshold: string;
+}
+
+export interface StoredContrastReport {
+  readonly id: string;
+  readonly rules: string;
+  readonly tokenSourceSha256: string;
+  readonly pairCount: number;
+  readonly createdAt: Date;
+  readonly pairs: readonly StoredContrastPair[];
+}
+
+/** The stored report of `versionNo` in `organizationId`, its pairs by ordinal; null when none was recorded. */
+export async function readContrastReport(
+  db: DbOrTx,
+  organizationId: string,
+  versionNo: number,
+): Promise<StoredContrastReport | null> {
+  const report = await db
+    .selectFrom("branding_contrast_report")
+    .select(["id", "rules", "token_source_sha256", "pair_count", "created_at"])
+    .where("organization_id", "=", organizationId)
+    .where("branding_version_no", "=", versionNo)
+    .executeTakeFirst();
+  if (report === undefined) return null;
+  const pairs = await db
+    .selectFrom("branding_contrast_pair")
+    .select(["ordinal", "fg_token", "bg_token", "use", "fg_hex", "bg_hex", "ratio", "threshold"])
+    .where("report_id", "=", report.id)
+    .orderBy("ordinal")
+    .execute();
+  return {
+    id: report.id,
+    rules: report.rules,
+    tokenSourceSha256: report.token_source_sha256,
+    pairCount: report.pair_count,
+    createdAt: report.created_at,
+    pairs: pairs.map((p) => ({
+      ordinal: p.ordinal,
+      fg: p.fg_token,
+      bg: p.bg_token,
+      use: p.use as StoredContrastPair["use"],
+      fgHex: p.fg_hex,
+      bgHex: p.bg_hex,
+      ratio: String(p.ratio),
+      threshold: String(p.threshold),
+    })),
+  };
+}
