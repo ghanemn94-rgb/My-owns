@@ -1,0 +1,30 @@
+port-policy: PostgreSQL listening on port 26400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvevblh_0a2c0592 (server_encoding UTF8); applied 113 migrations to a fresh database
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a12-p6-scope-isolation.test.ts [ tests/qa/integration/a12-p6-scope-isolation.test.ts ]
+Error: Cannot find package '@mth/db' imported from '/home/user/wt/dg6-qa-b/tests/qa/integration/a12-p6-scope-isolation.test.ts'
+ ❯ tests/qa/integration/a12-p6-scope-isolation.test.ts:29:1
+     27| // adapter, no network). The fixtures only build data; every assertion…
+     28| // SYNTHETIC; a fixture approval is a synthetic in-product approval of…
+     29| import { sql } from "@mth/db";
+       | ^
+     30| import { afterAll, beforeAll, describe, expect, it } from "vitest";
+     31| import { testAdapter } from "../../../apps/api/src/modules/assistant/p…
+
+Caused by: Error: Failed to load url @mth/db (resolved id: @mth/db) in /home/user/wt/dg6-qa-b/tests/qa/integration/a12-p6-scope-isolation.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  20:14:49
+   Duration  6.44s (transform 127ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 157ms)
+
