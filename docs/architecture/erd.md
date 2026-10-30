@@ -2131,6 +2131,10 @@ erDiagram
 |---|---|---|---|---|---|---|---|
 | Branding contrast report (S15-003) | `branding_contrast_report` (+ `branding_contrast_pair`) | `id`; `(organization_id, branding_version_no)` unique; `(report_id, ordinal)` unique | `created_by` | ADM_TECH through the branding publish (`branding.configure`; lock 730270) | none (immutable; `recorded` / `not_recorded` is derived at read time) | no (append-only) | admin (branding) |
 
+## 1z. P6 implementer migrations 0114–0121: no new entity
+
+Recorded by T-DG6-ARCH-07 (2026-10-30). The implementer migrations of DG6 add no table, column or relationship, so the diagrams above are unchanged. They seed job service identities and schedules (`0114_p6_job_service_identities.sql`, `0115_p6_search_index_jobs.sql`, `0116_p6_connector_run_jobs.sql`, `0121_p6_notification_fanout_jobs.sql`). They also seed the operations triggers and starter 16 version 2 (`0117_p6_operations_triggers_freshness.sql`), and add or replace guards on existing tables (`0118_p6_evidence_content_detected_type_required.sql` on `evidence_content`, `0119_p6_branding_version_contrast_required.sql` on `branding_version`, `0120_p6_audit_required_index_use.sql` for `p2_audit_required()`). The data dictionary section "P6 implementer migrations (0114–0121, DG6)" lists the rows and functions. The ids are the shipped file names after the merge renumbering of D-196 item 2 (BE-J 0113 → 0114, BE-K2 0116 → 0117, BE-S 0119 → 0120, BE-I2 0120 → 0121).
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

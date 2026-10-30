@@ -1089,7 +1089,7 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **E** here also c
 | `saved_view.manage` | write | Create, change, set as default and delete one's **own** saved list views; stop sharing one's own view | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, ADM_TECH, ADM_ACCESS, ADM_METHOD (every role except AUD) |
 | `saved_view.share` | write | Share one's own view with one's organization (re-checked at commit time) | TL, BO, WL, TO, KDS, TD |
 
-Reused codes: the read permission of each record type's own view, through `ReadScope` with sensitivity (`searchRecords`, ADR-0057 §3); `transformation.read` (`listMyFormDrafts` per draft, `compareFormRecordVersions`); each form record type's `write_permission_code` or `audit.read` (comparison **values**, ADR-0057 §7); `operations.read` (`getSearchIndexStatus`); `job.repair` (a reindex through `runJobNow`); the P5 form-draft rules (unchanged). `listHelpTopics` and `getHelpTopic` need only a session.
+Reused codes: the read permission of each record type's own view, through `ReadScope` with sensitivity (`searchRecords`, ADR-0057 §3); `transformation.read` (`listMyFormDrafts` per draft, `compareFormRecordVersions`); `audit.read` (comparison **values**, ADR-0057 §7; D-199 item 6: an editor of the record type gets field names only); `operations.read` (`getSearchIndexStatus`); `job.repair` (a reindex through `runJobNow`); the P5 form-draft rules (unchanged). `listHelpTopics` and `getHelpTopic` need only a session.
 
 ### 27.2 Per-entity rights in P6 (slices H and G)
 

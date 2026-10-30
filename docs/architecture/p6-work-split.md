@@ -30,6 +30,20 @@ Each slice section lists: what the architect already delivered (do not re-create
 16. **Contract seams.** Each task removes its operations from its own `p6-pending-<task>.ts` in the same change that routes them, and exercises each through the validating client in its own `p6-exercises-<task>.ts` (success and every declared refusal it can reach). The pinned counts in `contract.test.ts` (operation count, media types, rate-limit floor, CSRF-exempt webhook routes) are reconciled by the orchestrator from the handbacks (D-079 precedent): report your deltas.
 17. **Exact refusals.** Problem codes and English texts are exactly those in the slice ADR tables (slice E: ADR-0051 §2–§4; slice F: ADR-0052 §1, §2). A code you need that is not there goes in your handback with its proposed text.
 18. **Migrations.** Forward-only; a merged migration is never edited. The eight retired P5 ids (0066, 0067, 0073, 0077, 0078, 0079, 0083, 0084) are never filled. `packages/db/src/seed.test.ts` accepts ids up to 0133 (p6-plan §4: ranges 0098–0127, repairs 0128–0133). **The migration runner refuses a pending file whose id is not above the highest applied id (ADR-0003; F-DG5-100).** A number left in a slice range is therefore usable only while no higher id has shipped; once a later ARCH task's migration is merged, the lower free numbers of earlier ranges are permanently unused. An implementer who needs a migration asks the orchestrator for the id at merge time (see §E/F.9).
+    **Shipped implementer migrations (`ls packages/db/migrations`, recorded 2026-10-30 by T-DG6-ARCH-07; the orchestrator renumbered at merge, D-196 item 2, D-201):**
+
+    | File | Task | Content | Renumbered |
+    | --- | --- | --- | --- |
+    | `0114_p6_job_service_identities.sql` | BE-J | one service identity per job queue (ADR-0053 §1) | 0113 → 0114 |
+    | `0115_p6_search_index_jobs.sql` | BE-P | the two search index job schedules and identities (ADR-0057 §2) | — |
+    | `0116_p6_connector_run_jobs.sql` | BE-L2 | `integrations.connector_run` schedule; `integrations.connector_run` and `integrations.connector_exception` identities (ADR-0055 §2) | — |
+    | `0117_p6_operations_triggers_freshness.sql` | BE-K2 | the `connector.run_failed` and `data.stale` triggers, starter 16 version 2, `kpi.freshness_scan`, `operations.exception_alerts`; `automation_rule_version_guard()` replaced (ADR-0053 §2, §3, §6) | 0116 → 0117 |
+    | `0118_p6_evidence_content_detected_type_required.sql` | BE-D | trigger `evidence_content_detected_type_required` (ADR-0052 §1) | — |
+    | `0119_p6_branding_version_contrast_required.sql` | BE-W | deferred trigger `branding_version_contrast_required` (ADR-0061 §2) | — |
+    | `0120_p6_audit_required_index_use.sql` | BE-S | `p2_audit_required()` uses `audit_event_record_idx` again (ADR-0058 §6) | 0119 → 0120 |
+    | `0121_p6_notification_fanout_jobs.sql` | BE-I2 | `notifications.delivery_sweep` schedule; `notifications.fanout` and `notifications.delivery_sweep` identities (ADR-0054 §3) | 0120 → 0121 |
+
+    The next free id is `0122`. No id in 0098–0121 is skipped.
 19. **No dependency, secret or CDN.** A dependency you need goes in your handback with its official documentation, support window and licence (D-195). No secret in the repository; no public CDN.
 20. **Clones, not worktrees.** Never run `git worktree add`; use a `git clone` under `$TMPDIR` (D-082).
 
@@ -108,7 +122,7 @@ The p6-plan §5.1 BE-A list. For slices E and F specifically:
 
 ### E/F.9 Migrations left in the range and their order
 
-The range is 0098–0103; the architect used 0098–0100. **0101–0103 are usable only while no migration above 0103 has been merged** (§2 rule 18). T-DG6-ARCH-02 (W2) is planned to merge 0104+ before BE-D (W5), so in the planned order 0101–0103 become permanently unused. BE-D's optional migration ("a new `evidence_content` row needs `detected_type`") therefore takes **the id the orchestrator allocates at merge time** (the next id above the highest shipped id, from the repair block 0128–0133 or as the orchestrator decides). Without it, the rule is enforced by the API and BE-D's tests only, and the handback says so. No other E/F migration is planned.
+The range is 0098–0103; the architect used 0098–0100. **0101–0103 are usable only while no migration above 0103 has been merged** (§2 rule 18). T-DG6-ARCH-02 (W2) is planned to merge 0104+ before BE-D (W5), so in the planned order 0101–0103 become permanently unused. BE-D's optional migration ("a new `evidence_content` row needs `detected_type`") therefore takes **the id the orchestrator allocates at merge time** (the next id above the highest shipped id, from the repair block 0128–0133 or as the orchestrator decides). Without it, the rule is enforced by the API and BE-D's tests only, and the handback says so. No other E/F migration is planned. **Shipped:** `0118_p6_evidence_content_detected_type_required.sql` (§2 rule 18 table).
 
 ### E/F.10 BE-F — response validation of every operation and the S16-023 integrity sweep (backend-workflow-engineer; W4; after BE-A)
 
@@ -256,7 +270,7 @@ p6-plan §5.1's BE-J, BE-K, BE-H and BE-I are split (BE-J/J2/J3, BE-K/K2, BE-H/H
 
 ### J/C.14 Migrations left and their order
 
-The architect used 0101–0103. Implementer migrations take the next id above the highest shipped file at merge time (D-196), in this order of need: **BE-J** (service-identity seed rows), then **BE-K2** (the two triggers and starter 16 version 2). ARCH-03's migration adds the foreign key `service_identity.connector_id → connector (id)`.
+The architect used 0101–0103. Implementer migrations take the next id above the highest shipped file at merge time (D-196), in this order of need: **BE-J** (service-identity seed rows), then **BE-K2** (the two triggers and starter 16 version 2). **Shipped:** `0114_p6_job_service_identities.sql` (BE-J), `0117_p6_operations_triggers_freshness.sql` (BE-K2) and, for BE-I2's fan-out jobs, `0121_p6_notification_fanout_jobs.sql` (§2 rule 18 table). ARCH-03's migration adds the foreign key `service_identity.connector_id → connector (id)`.
 
 ### J/C.15 Integration order
 
@@ -366,7 +380,7 @@ p6-plan §5.1's BE-L, BE-M and BE-N are split (BE-L/L2, BE-M/M2 with KBE-A betwe
 
 ### B/A.10 Migrations left and their order
 
-The architect shipped `0104`–`0107` directly above `0103` (D-196). The implementer migrations of this section take the next id above the highest shipped file **at merge time** (rule 18, D-196), in this order: BE-L's demo connector seed (if it is a migration rather than a demo-seed file), BE-L2's job identity for `integrations.connector_run`. No other B/A task needs a migration; a schema change found necessary goes to the orchestrator first.
+The architect shipped `0104`–`0107` directly above `0103` (D-196). The implementer migrations of this section take the next id above the highest shipped file **at merge time** (rule 18, D-196), in this order: BE-L's demo connector seed (if it is a migration rather than a demo-seed file), BE-L2's job identity for `integrations.connector_run`. **Shipped:** `0116_p6_connector_run_jobs.sql` (BE-L2: the schedule and the `integrations.connector_run` and `integrations.connector_exception` identities). BE-L's demo connector is not a migration. No other B/A task needs a migration; a schema change found necessary goes to the orchestrator first.
 
 ### B/A.11 Integration order
 
@@ -478,7 +492,7 @@ p6-plan §5.1's BE-P, BE-Q and FE-D are split (BE-P/P2, BE-Q/Q2, FE-D/D2) so eac
 
 ### H/G.11 Migrations left and their order
 
-The architect shipped `0108`–`0110` directly above `0107` (D-196). The implementer migrations of this section take the next id above the highest shipped file **at merge time** (rule 18, D-196), in this order: BE-P's job schedules and job identities; BE-S's indexes (only those DO-F's evidence names). No other H/G task needs a migration; a schema change found necessary goes to the orchestrator first.
+The architect shipped `0108`–`0110` directly above `0107` (D-196). The implementer migrations of this section take the next id above the highest shipped file **at merge time** (rule 18, D-196), in this order: BE-P's job schedules and job identities; BE-S's indexes (only those DO-F's evidence names). **Shipped:** `0115_p6_search_index_jobs.sql` (BE-P) and `0120_p6_audit_required_index_use.sql` (BE-S: a query fix, no new index). No other H/G task needs a migration; a schema change found necessary goes to the orchestrator first.
 
 ### H/G.12 Integration order
 
@@ -653,7 +667,7 @@ The p6-plan row said "the explanation inputs ARCH-06 finds missing (benefit real
 
 ### I/K.7 Migrations left and their order
 
-The architect shipped `0113` directly above `0112` (D-196). **One implementer migration is planned:** BE-W's `branding_version_contrast_required` requirement, at the next id above the highest shipped file when BE-W merges (rule 18). No other slice I or K task needs a migration.
+The architect shipped `0113` directly above `0112` (D-196). **One implementer migration is planned:** BE-W's `branding_version_contrast_required` requirement, at the next id above the highest shipped file when BE-W merges (rule 18). Shipped as `0119_p6_branding_version_contrast_required.sql` (rule 18 table). No other slice I or K task needs a migration.
 
 ### I/K.8 Integration order
 

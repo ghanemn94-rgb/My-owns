@@ -68,7 +68,7 @@ interface ImportTarget {
 | Data rows (both) | ≤ 5,000 (also a DB CHECK) | 422 `import.too_many_rows` |
 | Columns | ≤ 50; header row required (row 1) | 422 `import.header_mismatch` |
 | Cell length | ≤ 4,000 characters | row reason `import.row.text_too_long` |
-| CSV encoding | UTF-8 (an optional BOM is removed); RFC 4180 quoting; comma separator | 422 `import.csv_not_utf8` |
+| CSV encoding | UTF-8 (an optional BOM is removed); RFC 4180 quoting; comma separator | 422 `import.csv_not_utf8`; a quoted field that is not closed correctly: 422 `import.csv_malformed` (T-DG6-BE-M) |
 | XLSX container | ZIP; ≤ 100 entries; each entry ≤ 20 MiB uncompressed; total ≤ 50 MiB uncompressed; each entry's ratio ≤ 100:1; no `xl/vbaProject.bin`, no `xl/externalLinks/*`; first worksheet only | 422 `import.xlsx_unsafe` |
 | Media type | `text/csv` or `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, checked against the content (CSV: valid UTF-8 text; XLSX: the ZIP signature and `[Content_Types].xml`) | 415 `import.unsupported_media_type` |
 
@@ -114,6 +114,11 @@ Decimal values: `^-?[0-9]{1,18}(\.[0-9]{1,6})?$` (a dot separator, no thousands 
 | `import.row.duplicate_in_batch` | "Duplicate of row {firstRow}: the same KPI, scope and period." |
 | `import.row.duplicate_committed` | "An actual for this KPI, scope and period already exists ({status})." |
 
+**Row reasons added after this table was pinned (T-DG6-ARCH-07, 2026-10-30).** The named tasks proposed them under rule 17, and the shipped targets emit them. The web test pins the 18 rows above, so they are listed here. Their en/ar texts are in `i18n/{en,ar}/imports.json` (Arabic provisional):
+- `import.row.source_record_id_too_long`: "The source record id is longer than 200 characters." (`import_row.source_record_id` ≤ 200; T-DG6-BE-M)
+- `import.row.text_length`: "{field} must be 1 to {max} characters of visible text." (the DG4 bounds: `missing_reason` 1–1,000 and `comment` 1–4,000, with no blank text; T-DG6-KBE-A)
+- `import.row.reviewer_unavailable`: "Nobody can review actuals of KPI {value} yet: map its reviewer role to a person who may accept actuals." (the DG4 review-route refusals `routing.role_unmapped` / `routing.assignee_not_approver`, caught at staging so that the row never fails the whole commit; T-DG6-KBE-A)
+
 The staged view lists every row with its status and reasons; invalid and duplicate rows are isolated (never committed) and stay visible after the commit.
 
 ### 6. Commit of valid rows only, through the target, with lineage (REQ-S17-002)
@@ -135,7 +140,8 @@ The staged view lists every row with its status and reasons; invalid and duplica
 **Signature scheme (documented in OpenAPI `receiveWebhook`):**
 - Headers: `X-MTH-Webhook-Timestamp` (Unix seconds), `X-MTH-Webhook-Delivery` (the sender's delivery id, `^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$`), `X-MTH-Webhook-Signature: v1=<64 lowercase hex>`.
 - `signature = HMAC-SHA256(secret, "<timestamp>.<deliveryId>.<raw body bytes>")`, compared in constant time (`crypto.timingSafeEqual`) against the current secret, and against the previous secret while `now ≤ previous_valid_until`. The secret is resolved by `SecretProvider` from the reference before any transaction.
-- Body: `application/json`, ≤ 1 MiB, strict UTF-8: `{"templateVersion": "kpi_actual.v1", "items": [{"sourceRecordId": "…", "kpiId": "…", "scopeKind": "…", "scopeId": "…", "periodLabel": "…", "value": "12.5", …}]}`; every value a JSON **string** (a JSON number is the row reason `import.row.value_not_decimal`), at most 5,000 items.
+- Body: `application/json`, ≤ 1 MiB, strict UTF-8: `{"templateVersion": "kpi_actual.v1", "items": [{"source_record_id": "…", "kpi_id": "…", "scope_kind": "…", "scope_id": "…", "period_label": "…", "value": "12.5", "data_as_of": "YYYY-MM-DD", …}]}`; every value a JSON **string** or null (a JSON number is the row reason `import.row.value_not_decimal`), at most 5,000 items.
+- **Item keys** are the template's column keys as `listImportTemplates` lists them (the CSV/XLSX header keys, snake_case), or the connector's field-mapping `source` names when mappings are configured. The keys of all items together are checked as a header row: a key that is not a column, or a required column that no item carries, refuses the body with 400 `webhook.payload_invalid` (cause `import.header_mismatch`). *(Corrected by T-DG6-ARCH-07 from T-DG6-BE-X2 §2 / F-DG6-QA-A-3: the earlier camelCase example did not match the shipped route or the template; the OpenAPI `receiveWebhook` request body documents the same keys.)*
 
 **Handling (BE-N, `integrations/webhooks.ts`; route `POST /api/v1/webhooks/{endpointKey}`, no session, CSRF-exempt by signature, its own rate-limit class):**
 1. Refuse with **401 `webhook.unauthenticated`** (one code and one text for every case, so a caller learns nothing about which check failed; the case is logged, redacted, and counted) when: the endpoint key is unknown or disabled; a header is missing or malformed; `|now − timestamp| > tolerance_seconds`; or no secret matches. **An unsigned webhook is rejected** (acceptance). Rejected requests store no row.
@@ -152,7 +158,7 @@ The staged view lists every row with its status and reasons; invalid and duplica
 
 ### 9. Templates, authorization, refusal codes
 
-**Templates (REQ-S17-003 "CSV/XLSX templates are downloadable"):** `listImportTemplates` returns `kpi_actual.v1` with its columns (key, en and ar labels, required, kind, example) and media types; `downloadImportTemplate` (`?format=csv|xlsx&transformationId=`) returns the file built with the P5 writers (`packages/reporting/src/{csv.ts,xlsx}`), prefilled with one row per active KPI of the transformation the caller can read (KPI id and name, empty values), headers in English with the Arabic label row as a comment line only in XLSX (CSV keeps one header row). Columns of `kpi_actual.v1`: `source_record_id`, `kpi_id`, `kpi_name` (informational, ignored on import), `scope_kind`, `scope_id`, `period_label`, `value`, `numerator`, `denominator`, `milestone_achieved`, `achieved_on`, `currency`, `missing_reason`, `data_as_of`, `comment`.
+**Templates (REQ-S17-003 "CSV/XLSX templates are downloadable"):** `listImportTemplates` returns `kpi_actual.v1` with its columns (key, en and ar labels, required, kind, example) and media types; `downloadImportTemplate` (`?format=csv|xlsx&transformationId=`) returns the file built with the P5 writers (`packages/reporting/src/{csv.ts,xlsx}`), prefilled with one row per active KPI of the transformation the caller can read (KPI id and name, empty values), headers in English (CSV keeps one header row). **XLSX Arabic labels (amended 2026-10-30, T-DG6-ARCH-07; T-DG6-BE-M2 §5 item 4):** the engine reads row 1 of the first worksheet as the header and every later row as data, so a second label row there would be imported as a data row. The template therefore keeps the first worksheet as the import table and lists each column's en and ar labels in a second, right-to-left worksheet, "Column labels". **Writers:** the API may import only `@mth/reporting/storage` (ADR-0046 §1), so `integrations/imports/templates.ts` applies the P5 writers' rules itself (RFC 4180, BOM, CRLF, inline strings, the apostrophe / `quotePrefix` for formula-like text), as `forms/export.ts` does. No new dependency. Columns of `kpi_actual.v1`: `source_record_id`, `kpi_id`, `kpi_name` (informational, ignored on import), `scope_kind`, `scope_id`, `period_label`, `value`, `numerator`, `denominator`, `milestone_achieved`, `achieved_on`, `currency`, `missing_reason`, `data_as_of`, `comment`.
 
 **Authorization (`0107`; permissions matrix §26):** `import.read` (KDS, BO, TO, AUD: list, get, rows, lineage, templates), `import.create` (KDS: upload), `import.commit` (KDS: commit, cancel; plus `kpi_actual.submit` at commit), `webhook.configure` (ADM_TECH). Every read is scoped by the batch's transformation through `ReadScope`; AUD reads only and every mutation answers 403 for AUD. The technical administrators configure webhooks but hold no import right (REQ-S10-003: no business-record write). `receiveWebhook` is authorized by signature only; its writes act as the connector's service identity (ADR-0053 §1). The register's "import:KDS,ADM" is met for ADM by connector and webhook configuration; the orchestrator may grant `import.*` to another role by a later seed if the business asks (raised in the handback).
 
@@ -176,6 +182,12 @@ The staged view lists every row with its status and reasons; invalid and duplica
 | `webhook.payload_too_large` | 413 | "The webhook body is larger than 1 MiB." |
 | `webhook.endpoint_disabled` | 409 | "This webhook endpoint is disabled." (admin routes only; the receiving route answers 401) |
 | `webhook.grace_invalid` | 422 | "The grace period must be between 1 and 168 hours." |
+
+**Codes added after this table was pinned (T-DG6-ARCH-07, 2026-10-30).** The web catalogue tests read the rows above verbatim and pin their number, so later codes are listed here instead of as rows. Folding them into the table is for the owner of those tests. Each code below is emitted by the shipped API, and its en/ar texts are in the web catalogue (Arabic provisional):
+- `import.csv_malformed` (422): "The CSV file is not valid CSV: a quoted field is not closed correctly." A broken RFC 4180 quote (T-DG6-BE-M).
+- `import.form_schema_changed` (409): "The form schema of this transformation changed while the file was checked. Upload the file again." The `import_batch_form_schema_pinned` trigger fires when the pin moves between validation and staging (T-DG6-BE-M). **Contract gap:** `createImport` declares no 409 at this revision; that is routed to the orchestrator.
+- `webhook.connector_not_webhook` (422): "A webhook endpoint can be created only for a webhook connector." Answered by `createWebhookEndpoint` (T-DG6-BE-L, BE-N).
+
 
 ### 10. Decimal and Unknown semantics
 

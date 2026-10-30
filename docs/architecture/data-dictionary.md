@@ -14240,3 +14240,18 @@ Written by T-DG6-ARCH-06 (ADR-0061 §1–§2, the contrast report of a published
 ## P6 functions (0113)
 
 - `branding_contrast_report_pairs_complete()` (deferred constraint trigger function, on both tables): at COMMIT a report has exactly `pair_count` pairs, numbered 1..`pair_count`; fired by the report INSERT and by every pair INSERT.
+
+# P6 implementer migrations (0114–0121, DG6): no new table
+
+Recorded by T-DG6-ARCH-07 (2026-10-30) from the shipped files (`ls packages/db/migrations`). The orchestrator renumbered four of them at merge (D-196 item 2, D-201): BE-J 0113 → 0114, BE-K2 0116 → 0117, BE-S 0119 → 0120 and BE-I2 0120 → 0121. None of these migrations adds or alters a table or a column, so no table section above changes. They add seed rows (each with its audit event), and functions or triggers on existing tables:
+
+| File | Task | Rows seeded | Functions and triggers |
+| --- | --- | --- | --- |
+| `0114_p6_job_service_identities.sql` | BE-J | 40 `service_identity` rows, `job:<queue>`, one per queue of `apps/worker/src/queues/**` (`apps/worker/src/kit.ts` `JOB_SERVICE_IDENTITIES`; `aggregate_only` for the two benefit recalculations, `none` otherwise) | none |
+| `0115_p6_search_index_jobs.sql` | BE-P | `job_schedule` and `service_identity` rows for `search.index_feed` and `search.reindex` (`sensitive_access = 'none'`; the declared exception of ADR-0057 §2 is in `reason`) | none |
+| `0116_p6_connector_run_jobs.sql` | BE-L2 | `job_schedule` `integrations.connector_run` (every minute); identities `job:integrations.connector_run` (`connector.read`) and `job:integrations.connector_exception` (no code) | none |
+| `0117_p6_operations_triggers_freshness.sql` | BE-K2 | `automation_trigger` rows `connector.run_failed` and `data.stale`; starter 16 `automation_rule_version` 2 (`{job.failed, connector.run_failed, data.stale}`); `job_schedule` `kpi.freshness_scan` (hourly) and `operations.exception_alerts` (every minute); their identities | `automation_rule_version_guard()` replaced (0074): a migration may seed a starter version whose trigger set extends version 1's; an application insert that changes a starter's triggers is still refused (`automation_rule_version_starter_fixed`) |
+| `0118_p6_evidence_content_detected_type_required.sql` | BE-D | none | `evidence_content_detected_type_required()` and its BEFORE INSERT trigger on `evidence_content`: a new row needs `detected_type` (ADR-0052 §1) |
+| `0119_p6_branding_version_contrast_required.sql` | BE-W | none | `branding_version_contrast_required()` and its deferred constraint trigger AFTER INSERT on `branding_version`: at COMMIT a new version has its `branding_contrast_report` (ADR-0061 §2) |
+| `0120_p6_audit_required_index_use.sql` | BE-S | none | `p2_audit_required()` replaced: the deferred audit check uses `audit_event_record_idx` again (ADR-0058 §6); its behaviour is unchanged |
+| `0121_p6_notification_fanout_jobs.sql` | BE-I2 | `job_schedule` `notifications.delivery_sweep` (every minute); identities `job:notifications.fanout` and `job:notifications.delivery_sweep` (read codes only) | none |
