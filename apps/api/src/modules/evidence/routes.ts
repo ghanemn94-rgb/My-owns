@@ -95,6 +95,9 @@ import {
   EvidenceStoreUnavailable,
   EvidenceTooLarge,
   evidenceStoreFor,
+  finalisesLocally,
+  settleUpload,
+  storageDriverOf,
   STALE_TEMPORARY_AGE_MS,
   type EvidenceStore,
 } from "./store.ts";
@@ -724,6 +727,11 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
       const inspector = new ContentInspector();
       const stored = await store.receive(key, inspectedBody(body, inspector), maxBytes);
       const detection = inspector.finish();
+      // P6 (T-DG6-BE-H2; §2 rule 4): an object-store finalise (copy + delete) is remote I/O, so it runs here, before
+      // the transaction; the filesystem rename stays the last local step inside it (T-DG2-BE17). Either way a committed
+      // content row never points at a missing object, and a failure below discards both objects.
+      const localFinalise = finalisesLocally(store, key);
+      if (!localFinalise) await store.finalise(key);
       const row = await db.transaction().execute(async (tx) => {
         const ctx = await openWrite(
           tx,
@@ -761,6 +769,8 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             detected_type: detectedType,
             file_name: fileName,
             uploaded_by: ctx.userId,
+            // P6 (T-DG6-BE-H2; ADR-0054 §2): the driver that wrote the bytes; every read opens the store it names.
+            storage_driver: storageDriverOf(store, key),
           })
           .execute();
         const updated = await tx
@@ -785,9 +795,10 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             contentType: { from: null, to: detectedType },
           },
         });
-        await store.finalise(key);
+        if (localFinalise) await store.finalise(key);
         return updated;
       });
+      settleUpload(store, key);
       return sendVersioned(reply, 200, toEvidence(row));
     } catch (err) {
       await store.discardUncommitted(key).catch(() => undefined);

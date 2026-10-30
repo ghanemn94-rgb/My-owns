@@ -1,0 +1,47 @@
+port-policy: PostgreSQL listening on port 25350 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-h2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvuh50il_58565169 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/admin/storage.test.ts (13 tests | 1 failed) 7630ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > with no row the behaviour equals DG5: filesystem from the environment, ETag "0", uploads stay filesystem 193ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > AUD reads through operations.read; a user with neither code gets 403; AUD gets 403 on PUT and test 46ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > storage.configure below organization scope does not admit it (installation-wide setting) 30ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > putStorageSetting s3 without a passing test is 422 storage.test_required; nothing is written 16ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > the ADR-0054 §4 refusals: s3_incomplete, secret_ref_invalid (a value, an unknown provider), reason_required 87ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > the test never returns a URL, endpoint, key or credential, leaves nothing behind, and is audited 154ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > a store that serves anonymous reads fails the test, and those values cannot be saved 76ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > wrong credentials fail the write check (failed outcome, no save admitted) 31ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > a grant revoked while the PUT waits is 403 at commit time and nothing is written 113ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > after a passing test the s3 setting saves (audited, history); a new upload lands in the fake S3 181ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > A12: both files download through the API (proxied bytes, attachment), never a redirect or a store URL 48ms
+   ✓ REQ-S16-006: driver selection, Administration > Storage > switching back to filesystem: new uploads are filesystem, the s3 file stays readable (no test needed) 120ms
+   × REQ-S16-006: driver selection, Administration > Storage > an unreachable object store is the DG2 503 unavailable for its files: no fallback, no URL (runs last) 162ms
+     → contract: downloadEvidenceContent does not declare status 503 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:unavailable","title":"Service unavailable","status":503,"code":"unavailable","requestId":"01a18b13-6e58-7221-8e90-6fa31610ca32"}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/admin/storage.test.ts > REQ-S16-006: driver selection, Administration > Storage > an unreachable object store is the DG2 503 unavailable for its files: no fallback, no URL (runs last)
+Error: contract: downloadEvidenceContent does not declare status 503 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:unavailable","title":"Service unavailable","status":503,"code":"unavailable","requestId":"01a18b13-6e58-7221-8e90-6fa31610ca32"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/admin/storage.test.ts:376:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  04:30:35
+   Duration  34.19s (transform 9.68s, setup 0ms, collect 19.28s, tests 7.63s, environment 0ms, prepare 146ms)
+

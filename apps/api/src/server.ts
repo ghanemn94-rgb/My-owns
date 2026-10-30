@@ -55,6 +55,14 @@ import {
   type OidcService,
 } from "./modules/identity/index.ts";
 import { registerEvidenceModule } from "./modules/evidence/index.ts";
+// BE-H2 (ADR-0054 §2): the driver-selecting evidence store and the storage test's target and setting reads, wired here
+// (the composition root) and injected into admin/storage.ts, which may not import evidence.
+import {
+  loadEffectiveStorage,
+  s3SettingsKey,
+  SelectingEvidenceStore,
+  storageTestTarget,
+} from "./modules/evidence/store.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
@@ -423,7 +431,21 @@ export async function buildServer(options: ServerOptions): Promise<{
     restrictedRecords: sensitiveRecordsRedactedForEveryone(db),
   });
   registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
-  registerStorageAdminRoutes(app, deps); // BE-H: Administration > Storage (slice C)
+  // BE-H2: Administration > Storage (slice C). admin may not import evidence, so the setting read and the storage test's
+  // target are injected; the evidence module's store selects the driver per upload and per content row (ADR-0054 §2).
+  const evidenceStore = new SelectingEvidenceStore({
+    db,
+    environment: config.evidenceStorage,
+    secrets: () => secrets,
+  });
+  registerStorageAdminRoutes(app, deps, {
+    secrets: () => secrets,
+    storage: {
+      load: (d) => loadEffectiveStorage(d, config.evidenceStorage),
+      settingsKey: s3SettingsKey,
+      testTarget: (driver, s3) => storageTestTarget(driver, s3, config.evidenceStorage, secrets),
+    },
+  });
   // BE-I: Administration > Notifications (slice C). admin may not import tasks, so the email adapter and the test
   // renderer of tasks/channels/** are injected here; the SecretProvider registry (created below) is read at request time.
   registerNotificationChannelRoutes(app, deps, {
@@ -551,7 +573,7 @@ export async function buildServer(options: ServerOptions): Promise<{
     }),
     registerReportingModule(app, deps),
     registerMethodologyModule(app, deps, { configResolver }),
-    registerEvidenceModule(app, deps),
+    registerEvidenceModule(app, deps, evidenceStore), // BE-H2: the driver-selecting store above
     registerPortfolioModule(app, deps),
     // P4 modules (p4-plan §2 seam 19): tasks is active (BE-A); the others report "scaffold" until a route exists.
     registerTasksModule(app, deps),
