@@ -3236,6 +3236,7 @@ paths:
     get:
       tags: [evidence]
       operationId: getEvidence
+      summary: "Read one evidence item (transformation.read). 404 when out of scope or when the item itself is sensitive and the caller is not admitted; 403 evidence.parent_forbidden for an in-scope caller not admitted to a sensitive parent record (ADR-0051 §2, §4; D-196 point 1)."
       responses:
         "200":
           description: The record.
@@ -3246,6 +3247,7 @@ paths:
               schema: { $ref: "#/components/schemas/Evidence" }
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
     patch:
@@ -4434,7 +4436,7 @@ paths:
     get:
       tags: [evidence]
       operationId: downloadEvidenceContent
-      summary: "Download the current stored content of a file evidence item (transformation.read)."
+      summary: "Download the current stored content of a file evidence item (transformation.read). 404 when the caller cannot read the transformation or the item is out of scope; 403 evidence.parent_forbidden for an in-scope caller not admitted to a sensitive item or a sensitive parent record (ADR-0051 §4; D-196 point 1; REQ-S13-013)."
       responses:
         "200":
           description: The file bytes (Content-Disposition attachment; never rendered inline).
@@ -4443,6 +4445,7 @@ paths:
               schema: { type: string, contentMediaType: application/octet-stream }
         "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
     post:
