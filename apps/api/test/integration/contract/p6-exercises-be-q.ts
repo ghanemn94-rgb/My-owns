@@ -9,7 +9,7 @@
 import { expect } from "vitest";
 import { z } from "zod";
 import { ifm } from "../../support/p2-fixtures.ts";
-import { signIn, uniq, type P6ExerciseContext } from "../../support/harness.ts";
+import { createTransformationRow, signIn, uniq, type P6ExerciseContext } from "../../support/harness.ts";
 
 const ts = z.iso.datetime({ offset: true });
 const key = z.string().regex(/^[a-z][A-Za-z0-9]{0,63}$/);
@@ -58,6 +58,7 @@ export const P6_MIRRORS_BE_Q: Readonly<Record<string, z.ZodType>> = {
   putSavedView: savedView,
   deleteSavedView: savedView,
   shareSavedView: savedView,
+  ...p6MirrorsBeQ2(), // T-DG6-BE-Q2's four operations (its block below)
 };
 
 export async function exerciseP6BeQOperations(ctx: P6ExerciseContext): Promise<void> {
@@ -189,4 +190,146 @@ export async function exerciseP6BeQOperations(ctx: P6ExerciseContext): Promise<v
   expect([again.status, again.body.code]).toEqual([409, "saved_view.deleted"]);
   const putDeleted = await mirrored("PUT", `${V}/${id}`, { session: office, body: update, headers: ifm(5) });
   expect([putDeleted.status, putDeleted.body.code]).toEqual([409, "saved_view.deleted"]);
+
+  await exerciseP6BeQ2Operations(ctx); // T-DG6-BE-Q2's block, after BE-Q's (p6-work-split §H/G.12)
+}
+
+// ------------------------------------------------------------------------------------------------ T-DG6-BE-Q2
+// T-DG6-BE-Q2 (p6-work-split §H/G.4) routes listMyFormDrafts, compareFormRecordVersions, listHelpTopics and getHelpTopic
+// and exercises each here through `ctx.mirrored`: success and every declared refusal it can reach on the shared run
+// database. Not reached here, on purpose: 403 on the four reads (each needs only a signed-in user, or
+// transformation.read where a caller without it gets the ADR-0006 404; only a service principal is refused 403, and no
+// session can be one) and the 429 (the contract's live rate-limit sweep). No shared zod mirror of these bodies exists in
+// packages/shared/src/schemas; the mirrors restate the contract schemas (MyFormDraftPage, FormRecordComparison,
+// HelpTopicPage, HelpTopic). The mirrors are built in a hoisted function so BE-Q's map above can include them.
+// All records are SYNTHETIC; nothing here grants a business approval or touches DG0-DG7.
+
+function p6MirrorsBeQ2(): Record<string, z.ZodType> {
+  const ts = z.iso.datetime({ offset: true });
+  const recordType = z.string().regex(/^(T[0-9]{2}|[a-z][a-z_]*)$/);
+  const myFormDraft = z.strictObject({
+    id: z.uuid(),
+    transformationId: z.uuid(),
+    transformationCode: z.string(),
+    transformationName: z.string(),
+    recordType,
+    recordId: z.uuid().nullable(),
+    baseRecordVersion: z.number().int().min(1).nullable(),
+    baseChanged: z.boolean(),
+    version: z.number().int().min(1),
+    createdAt: ts,
+    updatedAt: ts,
+  });
+  const value = z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.unknown()),
+    z.record(z.string(), z.unknown()),
+    z.null(),
+  ]);
+  const comparison = z.strictObject({
+    transformationId: z.uuid(),
+    recordType,
+    recordId: z.uuid(),
+    fromVersion: z.number().int().min(1),
+    toVersion: z.number().int().min(2),
+    currentVersion: z.number().int().min(1),
+    valuesWithheld: z.boolean(),
+    fields: z.array(
+      z.strictObject({
+        fieldKey: z.string(),
+        labelEn: z.string(),
+        labelAr: z.string(),
+        recorded: z.boolean(),
+        from: value.optional(),
+        to: value.optional(),
+      }),
+    ),
+  });
+  const helpTopic = z.strictObject({
+    topicKey: z.string(),
+    screenKey: z.string(),
+    ordinal: z.number().int().min(1),
+    titleEn: z.string(),
+    titleAr: z.string(),
+    bodyEn: z.string(),
+    bodyAr: z.string(),
+    arabicProvisional: z.boolean(),
+    sourceRefs: z.array(z.string().regex(/^(M0[0-9]{3}|B0[0-9]{3}|REQ-S[0-9]{2}-[0-9]{3})$/)).min(1),
+  });
+  return {
+    listMyFormDrafts: z.strictObject({ items: z.array(myFormDraft), nextCursor: z.string().nullable() }),
+    compareFormRecordVersions: comparison,
+    listHelpTopics: z.strictObject({ items: z.array(helpTopic), nextCursor: z.string().nullable() }),
+    getHelpTopic: helpTopic,
+  };
+}
+
+export async function exerciseP6BeQ2Operations(ctx: P6ExerciseContext): Promise<void> {
+  const { world: w, mirrored } = ctx;
+  const app = ctx.api.app;
+  const office = await signIn(app, w.office.subject); // TO @ A: initiative.edit and audit.read
+  const auditor = await signIn(app, w.auditor.subject); // AUD @ A: reads, audit.read, writes nothing
+  const officeB = await signIn(app, w.officeB.subject); // another organization
+  const t = await createTransformationRow(ctx.api.db, w.orgA.id, w.a1, w.office.id);
+
+  // A synthetic initiative at version 2 (created, then one PATCH) for the comparison.
+  const ini = await mirrored("POST", "/api/v1/initiatives", {
+    session: office,
+    body: { transformationId: t, name: uniq("Synthetic BE-Q2 contract initiative "), objective: "Synthetic v1" },
+  });
+  expect(ini.status).toBe(201);
+  const patched = await mirrored("PATCH", `/api/v1/initiatives/${ini.body.id}`, {
+    session: office,
+    body: { objective: "Synthetic v2" },
+    headers: ifm(1),
+  });
+  expect(patched.status).toBe(200);
+
+  // compareFormRecordVersions: 200 (values for audit.read); 400 (schema bound); 401; 404 (another organization);
+  // 422 form_record.compare_versions_invalid.
+  const C = `/api/v1/transformations/${t}/form-records/T05/${ini.body.id}/compare`;
+  const cmp = await mirrored("GET", `${C}?fromVersion=1&toVersion=2`, { session: auditor });
+  expect([cmp.status, cmp.body.valuesWithheld, cmp.body.currentVersion]).toEqual([200, false, 2]);
+  expect(cmp.body.fields).toEqual([
+    expect.objectContaining({ fieldKey: "objective", from: "Synthetic v1", to: "Synthetic v2" }),
+  ]);
+  expect((await mirrored("GET", `${C}?fromVersion=1&toVersion=1`, { session: auditor })).status).toBe(400);
+  expect((await mirrored("GET", `${C}?fromVersion=1&toVersion=2`)).status).toBe(401);
+  expect((await mirrored("GET", `${C}?fromVersion=1&toVersion=2`, { session: officeB })).status).toBe(404);
+  const invalid = await mirrored("GET", `${C}?fromVersion=1&toVersion=3`, { session: office });
+  expect([invalid.status, invalid.body.code]).toEqual([422, "form_record.compare_versions_invalid"]);
+
+  // listMyFormDrafts: 200 (the caller's open draft, newest first); 400 (unknown parameter; foreign cursor); 401.
+  const draft = await mirrored("POST", `/api/v1/transformations/${t}/form-drafts`, {
+    session: office,
+    body: { recordType: "T05", payload: { name: "Synthetic contract draft" } },
+  });
+  expect(draft.status).toBe(201);
+  const mine = await mirrored("GET", "/api/v1/me/form-drafts?limit=100", { session: office });
+  expect(mine.status).toBe(200);
+  expect(mine.body.items[0]).toMatchObject({ id: draft.body.id, transformationId: t, recordType: "T05" });
+  expect((await mirrored("GET", "/api/v1/me/form-drafts?status=open", { session: office })).status).toBe(400);
+  expect((await mirrored("GET", "/api/v1/me/form-drafts?cursor=bm90LWEtY3Vyc29y", { session: office })).status).toBe(
+    400,
+  );
+  expect((await mirrored("GET", "/api/v1/me/form-drafts")).status).toBe(401);
+  const audList = await mirrored("GET", "/api/v1/me/form-drafts", { session: auditor });
+  expect([audList.status, audList.body.items]).toEqual([200, []]);
+
+  // listHelpTopics: 200 (all; one screen); 400; 401. getHelpTopic: 200; 400; 401; 404.
+  const H = "/api/v1/help-topics";
+  const all = await mirrored("GET", `${H}?limit=100`, { session: auditor });
+  expect([all.status, all.body.items.length]).toEqual([200, 11]);
+  const screen = await mirrored("GET", `${H}?screenKey=search`, { session: officeB });
+  expect(screen.status).toBe(200);
+  expect(screen.body.items.every((x: { screenKey: string }) => x.screenKey === "search")).toBe(true);
+  expect((await mirrored("GET", `${H}?screenKey=Bad-Key`, { session: office })).status).toBe(400);
+  expect((await mirrored("GET", H)).status).toBe(401);
+  const topic = await mirrored("GET", `${H}/search.global`, { session: office });
+  expect([topic.status, topic.body.topicKey, topic.body.arabicProvisional]).toEqual([200, "search.global", true]);
+  expect((await mirrored("GET", `${H}/Bad-Key`, { session: office })).status).toBe(400);
+  expect((await mirrored("GET", `${H}/search.global`)).status).toBe(401);
+  expect((await mirrored("GET", `${H}/no.such.topic`, { session: office })).status).toBe(404);
 }
