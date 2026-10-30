@@ -57,6 +57,11 @@ export const STARTER_RULE_BY_QUEUE: Readonly<Record<string, string>> = {
   "sustainment.review_scan": "starter.bau_handover_accepted",
   "sustainment.control_check_scan": "starter.bau_handover_accepted",
   "automation.job_failed": "starter.job_failed",
+  // T-DG6-BE-K2S (ADR-0053 §2, §3; 0117): starter 16 version 2 names connector.run_failed, and its action (open or
+  // recur the connector's exception) IS BE-L2's consumer, so each final failure is one execution of the starter and the
+  // exception has exactly one opener (the engine never runs a starter). connector.run_recovered, on the same queue, is
+  // not a trigger of the starter and runs unrecorded. The data.stale consumer is wrapped in handlers/operations.ts.
+  "integrations.connector_exception": "starter.job_failed",
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

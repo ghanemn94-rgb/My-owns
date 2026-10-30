@@ -96,6 +96,9 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   PORTFOLIO_EVENT_QUEUES,
   // T-DG6-BE-K2: the domain consumer of data.stale (operations.exception_raise) also comes before the engine (D-102).
   OPERATIONS_EVENT_QUEUES,
+  // T-DG6-BE-K2S: the domain consumer of connector.run_failed (integrations.connector_exception, BE-L2; ADR-0055 §2,
+  // ADR-0053 §2) comes before the engine too (D-102 order: domain, then engine); the event feeds both.
+  INTEGRATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
   AUTOMATION_EVENT_QUEUES,
   PROCEDURES_EVENT_QUEUES,
   REPORTS_EVENT_QUEUES,
@@ -103,7 +106,6 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   DEMO_EVENT_QUEUES,
   JOBS_EVENT_QUEUES,
   BRANDING_EVENT_QUEUES, // T-DG5-BE-R
-  INTEGRATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
   SEARCH_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
   NOTIFICATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
 ];
