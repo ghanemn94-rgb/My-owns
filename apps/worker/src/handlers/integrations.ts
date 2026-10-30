@@ -11,7 +11,8 @@
 // the run's unique key per connector is the backstop). The run is executed by the API's run watch.
 //
 // integrations.connector_exception (outbox consumer): `connector.run_failed` (the LAST failure of a run chain, written in
-// the run's failing transaction) opens or recurs the connector's operational exception of its failure class, and
+// the run's failing transaction) opens or recurs the connector's operational exception of its failure class, linked to
+// the KPIs the event names (the KPIs the run feeds, computed by the API; T-DG6-BE-X2), and
 // `connector.run_recovered` resolves the connector's active exceptions `recovered` (ADR-0053 §2), each with the BE-K kit
 // twin under lock 730305, once per outbox event (processed_message ledger).
 import { insertAuditEvent, sql, type Db, type Tx } from "@mth/db";
@@ -205,6 +206,9 @@ export async function handleConnectorException(
         errorCode: p.errorCode,
         errorMessage: p.errorMessage,
         serviceIdentityId: p.serviceIdentityId,
+        // T-DG6-BE-X2 (F-DG6-QA-A-2; ADR-0053 §2): the KPIs the failing run feeds, as the API computed them in the run's
+        // failing transaction (this job's identity reads no business record).
+        kpiLinks: p.kpiLinks ?? [],
       });
       return { outcome: "raised" as const, exceptionIds: [raised.exceptionId] };
     }

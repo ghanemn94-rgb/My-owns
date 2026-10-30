@@ -55,7 +55,7 @@ import {
   type ConnectorErrorCode,
   type ConnectorFetchResult,
 } from "./adapters/port.ts";
-import { controlTotal, DECIMAL_TEXT, testAdapter } from "./adapters/test-adapter.ts";
+import { controlTotal, DECIMAL_TEXT, testAdapter, testAdapterFixtureRows } from "./adapters/test-adapter.ts";
 import {
   adapterConfigOf,
   connectorRefusals,
@@ -505,6 +505,71 @@ export function mapRows(
   });
 }
 
+// ------------------------------------------------------------------------------------------------ the KPIs a run feeds
+
+/** The column of the kpi_actual.v1 template that names the KPI (ADR-0056 §9; kpi/import-target.ts). */
+export const KPI_ID_COLUMN = "kpi_id";
+/** At most this many KPI links per failure event (the event schema's bound). */
+export const MAX_RUN_KPI_LINKS = 100;
+/** The connector's newest staged batches whose rows name the KPIs it fed before (bounded read). */
+const FED_HISTORY_BATCHES = 10;
+const UUID_TEXT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export interface RunKpiLink {
+  readonly kpiDefinitionId: string;
+  readonly transformationId: string;
+}
+
+/**
+ * The KPIs a run of this connector feeds (T-DG6-BE-X2, F-DG6-QA-A-2; ADR-0053 §2 "connector classes: the KPIs the
+ * connector's mappings feed", ADR-0055 §1-§3), for the operational exception of its last failure. Only a `kpi_actual`
+ * connector with a target transformation feeds KPIs. The candidates are the KPI column (after the connector's field
+ * mappings, `mapRows`) of
+ *   - the rows its source defines without a network call (the test adapter's fixture, whatever its mode), and
+ *   - the rows the connector staged before (its newest batches: run or webhook), which is what a failing `http_pull`
+ *     source fed when it last answered;
+ * kept only when the KPI is a non-archived definition of the connector's organization in its TARGET transformation (a
+ * row naming any other KPI is a row reason at staging, never fed). Read-only; no remote I/O. Ordered by KPI id.
+ */
+export async function kpisFedBy(
+  db: DbOrTx,
+  connector: ConnectorRow,
+  config: ConnectorConfigRow,
+): Promise<RunKpiLink[]> {
+  if (connector.target_kind !== "kpi_actual" || config.target_transformation_id === null) return [];
+  const candidates = new Set<string>();
+  if (connector.adapter_kind === "test_adapter") {
+    const rows = testAdapterFixtureRows(adapterConfigOf(connector, config));
+    for (const row of mapRows(rows, config.field_mappings as FieldMapping[])) {
+      const kpi = new Map(Object.entries(row)).get(KPI_ID_COLUMN);
+      if (kpi !== undefined) candidates.add(kpi.trim());
+    }
+  }
+  const staged = await sql<{ kpi: string | null }>`
+    SELECT DISTINCT coalesce(r.normalized ->> ${KPI_ID_COLUMN}, r.raw ->> ${KPI_ID_COLUMN}) AS kpi
+      FROM import_row r
+     WHERE r.import_batch_id IN (
+             SELECT b.id FROM import_batch b
+              WHERE b.connector_id = ${connector.id}::uuid
+                AND b.transformation_id = ${config.target_transformation_id}::uuid
+              ORDER BY b.created_at DESC, b.id DESC
+              LIMIT ${FED_HISTORY_BATCHES})`.execute(db);
+  for (const r of staged.rows) if (r.kpi !== null) candidates.add(r.kpi.trim());
+  const ids = [...candidates].filter((c) => UUID_TEXT.test(c)).map((c) => c.toLowerCase());
+  if (ids.length === 0) return [];
+  const defs = await db
+    .selectFrom("kpi_definition")
+    .select(["id", "transformation_id"])
+    .where("id", "in", ids)
+    .where("organization_id", "=", connector.organization_id)
+    .where("transformation_id", "=", config.target_transformation_id)
+    .where("archived_at", "is", null)
+    .orderBy("id")
+    .limit(MAX_RUN_KPI_LINKS)
+    .execute();
+  return defs.map((d) => ({ kpiDefinitionId: d.id, transformationId: d.transformation_id }));
+}
+
 // ------------------------------------------------------------------------------------------------ the run engine
 
 /** The redacted-by-construction message of a failed run: the code's "why" text and its parameters (as BE-L's test). */
@@ -944,6 +1009,7 @@ async function fail(
         failureClass: failureClassOf(code),
         errorCode: code,
         errorMessage: message,
+        kpiLinks: await kpisFedBy(tx, connector, config), // T-DG6-BE-X2 (ADR-0053 §2)
       },
       idempotencyKey: `connector.run_failed:${run.id}`,
     });

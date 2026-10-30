@@ -193,6 +193,16 @@ export const connectorRunFailedV1 = z.strictObject({
     .regex(/^[a-z][a-z0-9_.]*$/)
     .max(100),
   errorMessage: z.string().min(1).max(2000),
+  /**
+   * T-DG6-BE-X2 (F-DG6-QA-A-2; ADR-0053 §2 "connector classes: the KPIs the connector's mappings feed", ADR-0055): the
+   * KPIs of the connector's import target that the failing run feeds, computed by the API in the run's failing
+   * transaction, so the consumer (whose job identity reads no business record) links them to the exception. Optional:
+   * an event written before this field existed links none.
+   */
+  kpiLinks: z
+    .array(z.strictObject({ kpiDefinitionId: uuid, transformationId: uuid }))
+    .max(100)
+    .optional(),
 });
 export type ConnectorRunFailedV1 = z.infer<typeof connectorRunFailedV1>;
 export const connectorRunRecoveredV1 = z.strictObject({
