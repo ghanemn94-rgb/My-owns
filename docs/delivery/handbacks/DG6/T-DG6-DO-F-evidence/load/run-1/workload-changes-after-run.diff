@@ -1,0 +1,141 @@
+--- deploy/load/workload.mjs (run-1, sha256 c138c217…)	2026-10-30 08:19:49.019882303 +0000
++++ deploy/load/workload.mjs	2026-10-30 08:53:04.700391330 +0000
+@@ -26,6 +26,8 @@
+ //      integer microseconds), loadavg.csv, setup.json (targets and setup outcomes, no credentials) and run.json (the
+ //      window, the counts). Statistics (nearest-rank p50/p95/p99, max, count, errors) are computed by report.mjs from
+ //      the samples, never here, so one implementation produces every figure.
++//   --only op1,op2 restricts every user to those operations: the diagnostic pass that captures the EXPLAIN plans of an
++//      operation whose p95 missed (T-DG6-DO-F). It is never used for a measured repetition.
+ //
+ // Outcomes: "ok" (the operation's success status), "conflict" (409 on an update; counted separately, expected 0 by the
+ // partitioning), "error" (any 5xx, any other 4xx including 429, or a network failure). Nothing is retried while
+@@ -62,7 +64,11 @@
+ export const TEMPLATES = Object.freeze({
+   getMe: { cls: "read", method: "GET", path: "/api/v1/me" },
+   getMyNavigation: { cls: "read", method: "GET", path: "/api/v1/me/navigation" },
+-  listTransformations: { cls: "read", method: "GET", path: "/api/v1/transformations?sort={code|-code|updatedAt|-updatedAt}" },
++  listTransformations: {
++    cls: "read",
++    method: "GET",
++    path: "/api/v1/transformations?sort={code|-code|updatedAt|-updatedAt}",
++  },
+   getTransformation: { cls: "read", method: "GET", path: "/api/v1/transformations/{transformationId}" },
+   listInitiatives: {
+     cls: "read",
+@@ -195,9 +201,7 @@
+         `SELECT code, subject_type, needs_reporting_period, formats FROM report_definition ORDER BY ordinal`,
+       )
+     ).rows;
+-    const names = (
+-      await client.query(`SELECT name FROM initiative ORDER BY code LIMIT 400`)
+-    ).rows.map((r) => r.name);
++    const names = (await client.query(`SELECT name FROM initiative ORDER BY code LIMIT 400`)).rows.map((r) => r.name);
+     await client.query("COMMIT");
+     return { marker, assignments, initiatives, workstreams, transformations, reportDefs, names };
+   } finally {
+@@ -218,7 +222,12 @@
+ 
+ /** Builds the per-user plan: transformations, the update partition, workstreams. Deterministic. */
+ export function buildPlan(sessions, d) {
+-  const byUser = new Map(sessions.map((s, i) => [s.userId, { index: i, session: s, transformations: [], editable: new Set(), exportable: new Set() }]));
++  const byUser = new Map(
++    sessions.map((s, i) => [
++      s.userId,
++      { index: i, session: s, transformations: [], editable: new Set(), exportable: new Set() },
++    ]),
++  );
+   for (const a of d.assignments) {
+     const u = byUser.get(a.user_id);
+     if (!u) continue;
+@@ -297,7 +306,11 @@
+   if (body !== undefined) h["content-type"] = "application/json";
+   if (ifMatch !== undefined) h["if-match"] = ifMatch;
+   if (idempotencyKey !== undefined) h["idempotency-key"] = idempotencyKey;
+-  const res = await fetch(base + path, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
++  const res = await fetch(base + path, {
++    method,
++    headers: h,
++    body: body === undefined ? undefined : JSON.stringify(body),
++  });
+   const buf = Buffer.from(await res.arrayBuffer());
+   return { status: res.status, etag: res.headers.get("etag"), buf };
+ }
+@@ -373,7 +386,10 @@
+     case "getMyNavigation":
+       return { method: "GET", path: "/api/v1/me/navigation" };
+     case "listTransformations":
+-      return { method: "GET", path: `/api/v1/transformations?sort=${pick(rng, ["code", "-code", "updatedAt", "-updatedAt"])}` };
++      return {
++        method: "GET",
++        path: `/api/v1/transformations?sort=${pick(rng, ["code", "-code", "updatedAt", "-updatedAt"])}`,
++      };
+     case "getTransformation":
+       return { method: "GET", path: `/api/v1/transformations/${pick(rng, u.transformations)}` };
+     case "listInitiatives": {
+@@ -384,7 +400,8 @@
+       const t = pick(rng, u.transformations);
+       const v = rng() % 3;
+       let base = `/api/v1/initiatives?transformationId=${t}&limit=50`;
+-      if (v === 0) base += `&sort=${pick(rng, ["code", "-code", "name", "-name", "plannedEnd", "-plannedEnd", "updatedAt", "-updatedAt"])}`;
++      if (v === 0)
++        base += `&sort=${pick(rng, ["code", "-code", "name", "-name", "plannedEnd", "-plannedEnd", "updatedAt", "-updatedAt"])}`;
+       else if (v === 1) base += `&q=${encodeURIComponent(pick(rng, ctx.terms))}`;
+       else {
+         const owners = u.owners.filter((o) => o.t === t);
+@@ -480,7 +497,12 @@
+ async function runUser(base, u, session, st, ctx, samples) {
+   const rng = userRng(ctx.seed, ctx.repetition, u.index);
+   const ops = operationsFor(u, st);
+-  const available = new Set(Object.entries(ops).filter(([, l]) => l.length > 0).map(([c]) => c));
++  if (ctx.only) for (const c of Object.keys(ops)) ops[c] = ops[c].filter((op) => ctx.only.includes(op));
++  const available = new Set(
++    Object.entries(ops)
++      .filter(([, l]) => l.length > 0)
++      .map(([c]) => c),
++  );
+   // Stagger the start deterministically over the first think interval.
+   await sleep(rng() % 3000);
+   while (performance.now() < ctx.endAt) {
+@@ -522,7 +544,9 @@
+ function sampleLoad(rows, t0, everyMs = 5000) {
+   const take = () => {
+     const [a, b, c] = loadavg();
+-    rows.push(`${new Date().toISOString()},${Math.round(performance.now() - t0)},${a.toFixed(2)},${b.toFixed(2)},${c.toFixed(2)}`);
++    rows.push(
++      `${new Date().toISOString()},${Math.round(performance.now() - t0)},${a.toFixed(2)},${b.toFixed(2)},${c.toFixed(2)}`,
++    );
+   };
+   take();
+   const timer = setInterval(take, everyMs);
+@@ -580,6 +604,7 @@
+   const ctx = {
+     seed: opts.seed,
+     repetition: opts.repetition,
++    only: opts.only ?? null,
+     terms,
+     steadyAt: t0 + opts.warmupS * 1000,
+     endAt: t0 + (opts.warmupS + opts.steadyS) * 1000,
+@@ -593,6 +618,7 @@
+   const run = {
+     workloadVersion: WORKLOAD_VERSION,
+     repetition: opts.repetition,
++    only: opts.only ?? null,
+     seed: opts.seed,
+     users: plan.length,
+     baseUrl: opts.baseUrl,
+@@ -625,6 +651,7 @@
+       seed: { type: "string", default: String(DEFAULT_SEED) },
+       repetition: { type: "string", default: "1" },
+       users: { type: "string", default: "100" },
++      only: { type: "string" },
+     },
+     strict: true,
+   });
+@@ -647,6 +674,7 @@
+     seed: int(values.seed, "seed"),
+     repetition: int(values.repetition, "repetition"),
+     users: int(values.users, "users"),
++    only: values.only ? values.only.split(",") : null,
+     dbUrl,
+   });
+   console.log(

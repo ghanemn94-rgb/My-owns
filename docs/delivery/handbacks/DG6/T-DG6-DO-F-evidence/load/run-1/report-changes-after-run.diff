@@ -1,0 +1,194 @@
+--- deploy/load/report.mjs (run-1, sha256 35bb1dc7…)	2026-10-30 08:50:35.509707795 +0000
++++ deploy/load/report.mjs	2026-10-30 08:55:06.112965577 +0000
+@@ -5,7 +5,8 @@
+ //     MTH_LOAD_DB_URL=postgres://…/mth node deploy/load/report.mjs capture-infra --out <run-dir>/infrastructure.json \
+ //       [--pgdata <dir>] [--api-processes 1] [--api-pool 20] [--worker-processes 1] [--worker-pool 5]
+ //   Write the report from a run directory holding infrastructure.json and rep-1/, rep-2/, rep-3/ (workload.mjs output):
+-//     node deploy/load/report.mjs report --run <run-dir> [--title "…"]   → <run-dir>/report.md and summary.json
++//     node deploy/load/report.mjs report --run <run-dir> [--title "…"] [--notes <markdown file>]
++//       → <run-dir>/report.md and summary.json (the notes, the run's disclosures, are embedded verbatim)
+ //
+ // Statistics: latencies are integer microseconds; p50, p95 and p99 are nearest-rank samples on the sorted integers
+ // (rank = ceil(p/100 × n), computed in integer arithmetic), never interpolated. The class result compared with its
+@@ -100,7 +101,14 @@
+       )
+     ).rows[0];
+     const search = (await client.query(`SELECT record_type, status FROM search_index_state ORDER BY record_type`)).rows;
+-    pg = { version, nonDefaultSettings: settings, databaseSize: size, marker, countsAtCapture: counts, searchIndex: search };
++    pg = {
++      version,
++      nonDefaultSettings: settings,
++      databaseSize: size,
++      marker,
++      countsAtCapture: counts,
++      searchIndex: search,
++    };
+   } finally {
+     await client.end();
+   }
+@@ -122,7 +130,7 @@
+ 
+ // ------------------------------------------------------------------------------------------------------------ report
+ 
+-export function buildReport(runDir, title) {
++export function buildReport(runDir, title, notes = null) {
+   const infra = JSON.parse(readFileSync(join(runDir, "infrastructure.json"), "utf8"));
+   const reps = readdirSync(runDir)
+     .filter((n) => /^rep-\d+$/.test(n) && existsSync(join(runDir, n, "samples.csv.gz")))
+@@ -133,14 +141,29 @@
+     const samples = readSamples(join(dir, "samples.csv.gz")).filter((s) => s.phase === "steady");
+     const loadRows = readFileSync(join(dir, "loadavg.csv"), "utf8").trim().split("\n").slice(1);
+     const load1 = loadRows.map((l) => Number(l.split(",")[2]));
+-    return { name: r, run, samples, load: { samples: load1.length, min: Math.min(...load1), max: Math.max(...load1), mean: load1.reduce((s, x) => s + x, 0) / (load1.length || 1) } };
++    return {
++      name: r,
++      run,
++      samples,
++      load: {
++        samples: load1.length,
++        min: Math.min(...load1),
++        max: Math.max(...load1),
++        mean: load1.reduce((s, x) => s + x, 0) / (load1.length || 1),
++      },
++    };
+   });
+   const groups = REPORT_GROUPS.map((g) => {
+     const perRep = repData.map((r) => summarize(r.samples.filter((s) => g.classes.includes(s.cls))));
+     const p95s = perRep.map((s) => s.p95);
+     const measured = p95s.length > 0 && p95s.every((p) => p !== null);
+     const worst = measured ? Math.max(...p95s) : null;
+-    return { ...g, perRep, worstP95: worst, verdict: !measured ? "not measured" : worst <= g.targetMs * 1000 ? "within target" : "MISS" };
++    return {
++      ...g,
++      perRep,
++      worstP95: worst,
++      verdict: !measured ? "not measured" : worst <= g.targetMs * 1000 ? "within target" : "MISS",
++    };
+   });
+   const operations = [...new Set(repData.flatMap((r) => r.samples.map((s) => s.operation)))].sort();
+   const perOperation = operations.map((op) => ({
+@@ -164,7 +187,14 @@
+     title,
+     workloadVersion: WORKLOAD_VERSION,
+     repetitions: repData.map((r) => ({ name: r.name, ...r.run, load1: r.load })),
+-    groups: groups.map((g) => ({ key: g.key, label: g.label, targetMs: g.targetMs, worstP95Micros: g.worstP95, verdict: g.verdict, perRep: g.perRep })),
++    groups: groups.map((g) => ({
++      key: g.key,
++      label: g.label,
++      targetMs: g.targetMs,
++      worstP95Micros: g.worstP95,
++      verdict: g.verdict,
++      perRep: g.perRep,
++    })),
+     perOperation,
+     nonOkByRepOperationStatus: statusCounts,
+     achievedShares,
+@@ -184,35 +214,52 @@
+   L.push("| Class | Target p95 | " + repData.map((r) => `${r.name} p95`).join(" | ") + " | Highest p95 | Result |");
+   L.push("| --- | --- | " + repData.map(() => "---").join(" | ") + " | --- | --- |");
+   for (const g of groups)
+-    L.push(`| ${g.label} | ${g.targetMs / 1000} s | ${g.perRep.map((s) => ms(s.p95)).join(" | ")} | ${ms(g.worstP95)} | ${g.verdict} |`);
++    L.push(
++      `| ${g.label} | ${g.targetMs / 1000} s | ${g.perRep.map((s) => ms(s.p95)).join(" | ")} | ${ms(g.worstP95)} | ${g.verdict} |`,
++    );
+   L.push("");
+   L.push("Per repetition (p50 / p95 / p99 / max in ms; count; errors; 409 conflicts):", "");
+   L.push("| Class | Repetition | p50 | p95 | p99 | max | count | errors | conflicts |");
+   L.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+   for (const g of groups)
+     g.perRep.forEach((s, i) =>
+-      L.push(`| ${g.label} | ${repData[i].name} | ${ms(s.p50)} | ${ms(s.p95)} | ${ms(s.p99)} | ${ms(s.max)} | ${s.count} | ${s.errors} | ${s.conflicts} |`),
++      L.push(
++        `| ${g.label} | ${repData[i].name} | ${ms(s.p50)} | ${ms(s.p95)} | ${ms(s.p99)} | ${ms(s.max)} | ${s.count} | ${s.errors} | ${s.conflicts} |`,
++      ),
+     );
+   L.push("");
+   const misses = groups.filter((g) => g.verdict === "MISS" && g.key !== "read+search");
+-  L.push("## 2. Misses against the targets (each a Medium, non-mandatory finding candidate; ADR-0058 §1, D-195 Q9)", "");
++  L.push(
++    "## 2. Misses against the targets (each a Medium, non-mandatory finding candidate; ADR-0058 §1, D-195 Q9)",
++    "",
++  );
+   if (misses.length === 0) L.push("None of the five ADR-0058 §3 classes missed its target in any repetition.");
+-  for (const g of misses)
+-    L.push(`- **${g.label}**: highest p95 ${ms(g.worstP95)} ms against ${g.targetMs / 1000} s.`);
++  for (const g of misses) L.push(`- **${g.label}**: highest p95 ${ms(g.worstP95)} ms against ${g.targetMs / 1000} s.`);
+   const comb = groups.find((g) => g.key === "read+search");
+-  if (comb?.verdict === "MISS") L.push(`- (Combined) ordinary read incl. search: highest p95 ${ms(comb.worstP95)} ms against 2 s.`);
++  if (comb?.verdict === "MISS")
++    L.push(`- (Combined) ordinary read incl. search: highest p95 ${ms(comb.worstP95)} ms against 2 s.`);
+   L.push("");
+   L.push("## 3. Per operation (steady state; ms)", "");
+   L.push("| Operation | Class | " + repData.map((r) => `${r.name} p95 (n, err)`).join(" | ") + " |");
+   L.push("| --- | --- | " + repData.map(() => "---").join(" | ") + " |");
+   for (const o of perOperation)
+-    L.push(`| \`${o.operation}\` | ${o.cls} | ${o.perRep.map((s) => `${ms(s.p95)} (${s.count}, ${s.errors})`).join(" | ")} |`);
++    L.push(
++      `| \`${o.operation}\` | ${o.cls} | ${o.perRep.map((s) => `${ms(s.p95)} (${s.count}, ${s.errors})`).join(" | ")} |`,
++    );
+   L.push("");
++  const unmeasured = Object.keys(TEMPLATES).filter((op) => !operations.includes(op));
++  L.push(
++    "Operations of the ADR-0058 §3 mix with no steady-state sample (**not measured**, never 0; the reason is in the run notes): " +
++      (unmeasured.length ? unmeasured.map((op) => `\`${op}\``).join(", ") : "none") +
++      ".",
++    "",
++  );
+   L.push("Non-success responses (repetition, operation, HTTP status; 0 = network failure): ", "");
+   const nonOk = Object.entries(statusCounts).sort();
+   if (nonOk.length === 0) L.push("- none");
+   for (const [k, n] of nonOk) L.push(`- ${k}: ${n}`);
+   L.push("");
++  if (notes) L.push("## Run notes (disclosures)", "", notes.trim(), "");
+   L.push("## 4. The dataset", "");
+   L.push("Profile `default` of `deploy/load/generate.mjs` (ADR-0058 §2). The marker row:", "");
+   L.push("```json", JSON.stringify(infra.postgres.marker, null, 2), "```", "");
+@@ -231,7 +278,13 @@
+   );
+   L.push("| Class | Planned % | Achieved % | Requests |", "| --- | --- | --- | --- |");
+   for (const s of achievedShares) L.push(`| ${s.key} | ${s.planned} | ${s.achieved ?? "—"} | ${s.n} |`);
+-  L.push("", "Request templates:", "", "| Operation | Class | Method | Path | Body |", "| --- | --- | --- | --- | --- |");
++  L.push(
++    "",
++    "Request templates:",
++    "",
++    "| Operation | Class | Method | Path | Body |",
++    "| --- | --- | --- | --- | --- |",
++  );
+   for (const [op, t] of Object.entries(TEMPLATES))
+     L.push(`| \`${op}\` | ${t.cls} | ${t.method} | \`${t.path}\` | ${t.body ? `\`${t.body}\`` : "—"} |`);
+   L.push("");
+@@ -260,7 +313,10 @@
+     "",
+     "| Repetition | Started | Ended | Samples | min | mean | max |",
+     "| --- | --- | --- | --- | --- | --- | --- |",
+-    ...repData.map((r) => `| ${r.name} | ${r.run.started} | ${r.run.ended} | ${r.load.samples} | ${r.load.min.toFixed(2)} | ${r.load.mean.toFixed(2)} | ${r.load.max.toFixed(2)} |`),
++    ...repData.map(
++      (r) =>
++        `| ${r.name} | ${r.run.started} | ${r.run.ended} | ${r.load.samples} | ${r.load.min.toFixed(2)} | ${r.load.mean.toFixed(2)} | ${r.load.max.toFixed(2)} |`,
++    ),
+     "",
+     `**${infra.statement}**`,
+     "",
+@@ -301,14 +357,19 @@
+   if (mode === "report") {
+     const { values } = parseArgs({
+       args: rest,
+-      options: { run: { type: "string" }, title: { type: "string", default: "Load run report (draft)" } },
++      options: {
++        run: { type: "string" },
++        title: { type: "string", default: "Load run report (draft)" },
++        notes: { type: "string" },
++      },
+       strict: true,
+     });
+     if (!values.run) {
+       console.error("mth-load report: report needs --run <dir>");
+       return 64;
+     }
+-    const { markdown, summary } = buildReport(values.run, values.title);
++    const notes = values.notes ? readFileSync(values.notes, "utf8") : null;
++    const { markdown, summary } = buildReport(values.run, values.title, notes);
+     writeFileSync(join(values.run, "report.md"), markdown);
+     writeFileSync(join(values.run, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
+     for (const g of summary.groups) console.log(`${g.label}: highest p95 ${ms(g.worstP95Micros)} ms (${g.verdict})`);
