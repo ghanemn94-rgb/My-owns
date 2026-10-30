@@ -1,6 +1,6 @@
 // P6 contract exercises of BE-N (p6-plan §5.1, p6-work-split §2 rule 16, §B/A.6). T-DG6-BE-N routes the six webhook
 // operations (ADR-0056 §7-§9) and exercises each here through `ctx.mirrored` (success and every declared refusal it can
-// reach); its split task T-DG6-BE-N2 appends the outbound-write operations after this block. The mirrors restate the
+// reach); its split task T-DG6-BE-N2 appends the outbound-write operations after this block (ADR-0055 §5, §9). The mirrors restate the
 // contract schemas of the JSON success bodies (no shared zod mirror exists for webhooks in packages/shared).
 //
 // receiveWebhook is signed over its exact bytes, so its body is sent raw with the client's request-body check off
@@ -14,7 +14,15 @@ import { setConnectorSecretProviders } from "../../../src/modules/integrations/s
 import { webhookSignature } from "../../../src/modules/integrations/webhooks.ts";
 import { createSecretProviderRegistry, secretValue } from "../../../src/modules/platform/index.ts";
 import { assertAcceptedRequest, assertContract } from "../../support/contract.ts";
-import { signIn, uniq, type P6ExerciseContext } from "../../support/harness.ts";
+import {
+  createTransformationRow,
+  createUser,
+  grant,
+  signIn,
+  uniq,
+  type P6ExerciseContext,
+} from "../../support/harness.ts";
+import { insertDeliverable, insertInitiative, type BenefitWorld } from "../benefits/fixtures.ts";
 import { seedKpiWorld } from "../kpi/fixtures.ts";
 
 // ------------------------------------------------------------------------------------------------ T-DG6-BE-N mirrors
@@ -58,6 +66,11 @@ export const P6_MIRRORS_BE_N: Readonly<Record<string, z.ZodType>> = {
   rotateWebhookSecret: webhookEndpoint,
   disableWebhookEndpoint: webhookEndpoint,
   receiveWebhook: receiptResult,
+  // T-DG6-BE-N2
+  listOutboundWrites: z.lazy(() => outboundWritePage),
+  executeOutboundWrite: z.lazy(() => outboundWrite),
+  getOutboundWrite: z.lazy(() => outboundWriteDetail),
+  confirmOutboundWrite: z.lazy(() => outboundWriteDetail),
 };
 
 const SECRET = "whsec-SYNTHETIC-contract-3b9e";
@@ -73,6 +86,7 @@ export async function exerciseP6BeNOperations(ctx: P6ExerciseContext): Promise<v
   } finally {
     setConnectorSecretProviders(previous);
   }
+  await exerciseOutboundWrites(ctx); // T-DG6-BE-N2
 }
 
 async function exerciseWebhooks(ctx: P6ExerciseContext): Promise<void> {
@@ -269,4 +283,187 @@ async function exerciseWebhooks(ctx: P6ExerciseContext): Promise<void> {
   expect([disabled.status, disabled.body.status]).toEqual([200, "disabled"]);
   const again = await mirrored("POST", D, { session: admin, headers: { "if-match": '"3"' }, body: reason });
   expect([again.status, again.body.code]).toEqual([409, "webhook.endpoint_disabled"]);
+}
+
+// ------------------------------------------------------------------------------------------------ T-DG6-BE-N2
+// The four outbound-write operations (ADR-0055 §5, §9; REQ-S17-006) against a synthetic test-adapter connector, the
+// only downstream in this release (nothing is "live"). The mirrors restate the contract schemas OutboundWrite,
+// OutboundWriteDetail and OutboundWritePage (no shared zod mirror exists for them in packages/shared).
+
+const outboundStatus = z.enum(["requested", "pending_confirmation", "confirmed", "failed"]);
+const outboundWrite = z.strictObject({
+  id: z.uuid(),
+  transformationId: z.uuid(),
+  connectorId: z.uuid(),
+  configVersionNo: z.number().int().min(1),
+  actionCode: z.enum(["deliverable_status_push"]),
+  deliverableId: z.uuid(),
+  idempotencyKey: z.string(),
+  payload: z.record(z.string(), z.unknown()),
+  payloadSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  status: outboundStatus,
+  attemptCount: z.number().int().min(0).max(10),
+  lastAttemptAt: z.string().nullable(),
+  externalReference: z.string().max(200).nullable(),
+  confirmedAt: z.string().nullable(),
+  failureCode: z.string().nullable(),
+  failureMessage: z.string().nullable(),
+  requestedBy: z.uuid(),
+  createdAt: z.string(),
+  version: z.number().int().min(1),
+});
+const outboundWriteDetail = z.strictObject({
+  write: outboundWrite,
+  events: z.array(
+    z.strictObject({
+      recordVersion: z.number().int().min(1),
+      status: outboundStatus,
+      attemptCount: z.number().int().min(0),
+      externalReference: z.string().nullable(),
+      failureCode: z.string().nullable(),
+      actorUserId: z.uuid().nullable(),
+      occurredAt: z.string(),
+    }),
+  ),
+});
+const outboundWritePage = z.strictObject({ items: z.array(outboundWrite), nextCursor: z.string().nullable() });
+
+async function exerciseOutboundWrites(ctx: P6ExerciseContext): Promise<void> {
+  const { api, world: w, mirrored } = ctx;
+  const admin = await signIn(api.app, w.admin.subject); // ADM_TECH @ A: configures the connector; no outbound code
+  const auditor = await signIn(api.app, w.auditor.subject); // AUD @ A: outbound_write.read only
+  const outsider = await signIn(api.app, w.officeB.subject); // TO @ B
+  const missing = crypto.randomUUID();
+  const transformationId = await createTransformationRow(api.db, w.orgA.id, w.a1, w.office.id);
+  const scope = { type: "transformation" as const, id: transformationId };
+  const tl = await createUser(api.db, w.orgA.id);
+  await grant(api.db, w.grantor.id, tl.id, "TL", scope, w.orgA.id);
+  const lead = await signIn(api.app, tl.subject); // TL @ the transformation: no outbound_write code
+  const tdUser = await createUser(api.db, w.orgA.id);
+  await grant(api.db, w.grantor.id, tdUser.id, "TD", scope, w.orgA.id);
+  const td = await signIn(api.app, tdUser.subject); // TD: outbound_write.read + outbound_write.execute
+  const fixture = { organizationId: w.orgA.id, transformationId, users: { tl } } as unknown as BenefitWorld;
+  const deliverableId = await insertDeliverable(api.db, fixture, await insertInitiative(api.db, fixture));
+
+  const testConnector = async (adapterSettings: Record<string, string>, outboundActions: string[], enable = true) => {
+    const created = await mirrored("POST", "/api/v1/admin/connectors", {
+      session: admin,
+      body: {
+        organizationId: w.orgA.id,
+        code: uniq("co-").toLowerCase(),
+        nameEn: "Synthetic contract downstream",
+        nameAr: "نظام لاحق اصطناعي",
+        adapterKind: "test_adapter",
+        targetKind: "none",
+        config: {
+          sourceSystemId: "synthetic.contract-downstream",
+          endpointUrl: null,
+          credentialRefs: {},
+          fieldMappings: [],
+          targetTransformationId: null,
+          cadence: "manual",
+          retryMaxAttempts: 0,
+          retryBackoffSeconds: 60,
+          commitMode: "manual",
+          commitOnBehalfOf: null,
+          outboundActions,
+          reconciliationRule: "none",
+          adapterSettings,
+          reason: "Synthetic contract exercise.",
+        },
+      },
+    });
+    expect(created.status).toBe(201);
+    if (enable) {
+      const enabled = await mirrored("POST", `/api/v1/admin/connectors/${created.body.id}/enable`, {
+        session: admin,
+        headers: { "if-match": '"1"' },
+        body: { reason: null },
+      });
+      expect(enabled.status).toBe(200);
+    }
+    return created.body.id as string;
+  };
+  const healthy = await testConnector({ mode: "healthy" }, ["deliverable_status_push"]);
+  const never = await testConnector({ mode: "healthy", confirm: "never" }, ["deliverable_status_push"]);
+  const noAction = await testConnector({ mode: "healthy" }, []);
+  const disabled = await testConnector({ mode: "healthy" }, ["deliverable_status_push"], false);
+
+  const L = `/api/v1/transformations/${transformationId}/outbound-writes`;
+  const body = (
+    connectorId: string,
+    idempotencyKey: string,
+    payload: Record<string, unknown> = { status: "done" },
+  ) => ({
+    connectorId,
+    actionCode: "deliverable_status_push",
+    deliverableId,
+    idempotencyKey,
+    payload,
+  });
+
+  // executeOutboundWrite: 201; 200 (replay); 400; 401; 403 (AUD); 404 (unknown deliverable); 409 (key reused;
+  // connector disabled); 422 (action not allowed).
+  const created = await mirrored("POST", L, { session: td, body: body(healthy, "contract-key-0001") });
+  expect([created.status, created.body.status]).toEqual([201, "confirmed"]);
+  expect(created.headers["location"]).toBe(`${L}/${created.body.id}`);
+  const replay = await mirrored("POST", L, { session: td, body: body(healthy, "contract-key-0001") });
+  expect([replay.status, replay.body.id]).toEqual([200, created.body.id]);
+  expect((await mirrored("POST", L, { session: td, body: body(healthy, "short") })).status).toBe(400);
+  expect((await mirrored("POST", L, { body: body(healthy, "contract-key-0002") })).status).toBe(401);
+  expect((await mirrored("POST", L, { session: auditor, body: body(healthy, "contract-key-0002") })).status).toBe(403);
+  expect(
+    (
+      await mirrored("POST", L, {
+        session: td,
+        body: { ...body(healthy, "contract-key-0002"), deliverableId: missing },
+      })
+    ).status,
+  ).toBe(404);
+  const reused = await mirrored("POST", L, { session: td, body: body(healthy, "contract-key-0001", { status: "x" }) });
+  expect([reused.status, reused.body.code]).toEqual([409, "outbound_write.idempotency_key_reused"]);
+  const off = await mirrored("POST", L, { session: td, body: body(disabled, "contract-key-0003") });
+  expect([off.status, off.body.code]).toEqual([409, "connector.disabled"]);
+  const refused = await mirrored("POST", L, { session: td, body: body(noAction, "contract-key-0004") });
+  expect([refused.status, refused.body.code]).toEqual([422, "outbound_write.action_not_allowed"]);
+  const pending = await mirrored("POST", L, { session: td, body: body(never, "contract-key-0005") });
+  expect([pending.status, pending.body.status]).toEqual([201, "pending_confirmation"]);
+
+  // listOutboundWrites: 200; 400; 401; 403 (TL: no outbound_write.read); 404 (outsider; unknown transformation).
+  const list = await mirrored("GET", `${L}?limit=10&deliverableId=${deliverableId}`, { session: auditor });
+  expect(list.status).toBe(200);
+  expect(list.body.items.map((x: { id: string }) => x.id)).toEqual([pending.body.id, created.body.id]);
+  expect((await mirrored("GET", `${L}?status=done`, { session: td })).status).toBe(400);
+  expect((await mirrored("GET", L)).status).toBe(401);
+  expect((await mirrored("GET", L, { session: lead })).status).toBe(403);
+  expect((await mirrored("GET", L, { session: outsider })).status).toBe(404);
+  expect((await mirrored("GET", `/api/v1/transformations/${missing}/outbound-writes`, { session: td })).status).toBe(
+    404,
+  );
+
+  // getOutboundWrite: 200; 400; 401; 403 (TL); 404.
+  const one = `${L}/${created.body.id}`;
+  const got = await mirrored("GET", one, { session: auditor });
+  expect([got.status, got.body.write.status, got.body.events.length]).toEqual([200, "confirmed", 2]);
+  expect((await mirrored("GET", `${L}/not-a-uuid`, { session: td })).status).toBe(400);
+  expect((await mirrored("GET", one)).status).toBe(401);
+  expect((await mirrored("GET", one, { session: lead })).status).toBe(403);
+  expect((await mirrored("GET", `${L}/${missing}`, { session: td })).status).toBe(404);
+
+  // confirmOutboundWrite: 200; 400; 401; 403 (AUD); 404; 409 (final; stale); 428. (422: none reachable: the body is
+  // empty and the outcome is the adapter's.)
+  const C = `${L}/${pending.body.id}/confirm`;
+  const ifm2 = { "if-match": '"2"' };
+  const confirmed = await mirrored("POST", C, { session: td, headers: ifm2, body: {} });
+  expect([confirmed.status, confirmed.body.write.status]).toEqual([200, "pending_confirmation"]);
+  expect((await mirrored("POST", C, { session: td, headers: ifm2, body: [] })).status).toBe(400);
+  expect((await mirrored("POST", C, { headers: ifm2, body: {} })).status).toBe(401);
+  expect((await mirrored("POST", C, { session: auditor, headers: ifm2, body: {} })).status).toBe(403);
+  expect((await mirrored("POST", `${L}/${missing}/confirm`, { session: td, headers: ifm2, body: {} })).status).toBe(
+    404,
+  );
+  const final = await mirrored("POST", `${one}/confirm`, { session: td, headers: ifm2, body: {} });
+  expect([final.status, final.body.code]).toEqual([409, "outbound_write.final"]);
+  expect((await mirrored("POST", C, { session: td, headers: { "if-match": '"7"' }, body: {} })).status).toBe(409);
+  expect((await mirrored("POST", C, { session: td, body: {} })).status).toBe(428);
 }
