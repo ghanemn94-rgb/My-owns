@@ -1098,7 +1098,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // Merge (orchestrator, measured): BE-N2 and BE-H2B together: 423 + 4 = 427; JSON 421 + 4 = 425.
     // T-DG6-BE-O: + putDeliverableExternalChange, confirmDeliverableExternalChange (2 JSON bodies;
     // getDeliverableConfirmation is a GET). 425 + 2 = 427; JSON 423 + 2 = 425 (reconciled at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([427, 425, 1]);
+    // Merge (orchestrator, measured): BE-O, BE-E2 and BE-U together: 427 + 2 = 429; JSON 425 + 2 = 427.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([429, 427, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);
