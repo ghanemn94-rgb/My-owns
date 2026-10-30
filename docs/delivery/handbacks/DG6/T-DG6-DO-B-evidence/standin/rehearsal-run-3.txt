@@ -1,0 +1,25 @@
+Fri Oct 30 18:48:04 UTC 2026
+port-policy: PostgreSQL listening on port 26251 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+  "bootstrapped": true,
+  "adminUserId": "01a18e24-26c3-733d-82ac-f8e8cc1976a7",
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+idp:    http://127.0.0.1:26262/realms/mth-test
+load before: 16.81 17.96 16.56
+
+Running 4 tests using 1 worker
+
+  ✓  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:40:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (4.5s)
+  ✓  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:60:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (3.3s)
+  ✓  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:40:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (3.0s)
+  ✓  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:60:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (2.4s)
+
+  4 passed (20.1s)
+playwright exit=0 wall=23403 ms; load after: 18.78 18.32 16.70
+---- audit and identities (database mth_dob_rehearse)
+user_identity http://127.0.0.1:26262/realms/mth-test 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+audit session.create 2
+audit session.login_failed 2
+session_rows 2
+exit=0
