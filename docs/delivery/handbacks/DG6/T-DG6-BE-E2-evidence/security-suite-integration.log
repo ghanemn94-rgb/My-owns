@@ -1,0 +1,109 @@
+port-policy: PostgreSQL listening on port 25402 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-e2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvur19ya_f38cc7d3 (server_encoding UTF8); applied 110 migrations to a fresh database
+stdout | apps/api/test/integration/security/csrf.test.ts > CSRF (REQ-S16-030; ADR-0052 §4) > one mutation per module: no Origin, a foreign Origin, no token or a wrong token -> 403 csrf; correct -> not csrf
+PASS REQ-S16-030 CSRF: 109 modules (contract tags), one mutation each, x 4 refusals -> 403 csrf; correct Origin and token -> not csrf
+  sample: access:createSensitiveGrant, actions:updateActionRegisterItem, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, agenda-items:createAgendaItem, approval-routes:decideApprovalRouteStep, approvals:decideApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, attendance:recordMeetingAttendance, auth:logout, automation:dismissAutomationFailure, bau-handovers:createBauHandover, benefit-allocations:replaceBenefitAllocations, benefit-formulas:createBenefitFormula, benefit-groups:createBenefitGroup, benefit-measurements:updateBenefitMeasurement, benefit-overlaps:createBenefitOverlap, benefit-scenarios:updateBenefitScenarioValue, benefit-valuation-methods:createBenefitValuationMethod, benefits:removeBenefitEnabler, branding:putBrandingSettings, budget-lines:updateBudgetLine, business-cases:createBusinessCase, calendar:updateBusinessCalendar, capacity:createCapacity, change-requests:putChangeControlPolicy, charter:updateCharter, closure:closeInitiative, control-checks:recordControlCheck, controls:createControl, corrective-actions:createCorrectiveActionRule, dashboards:putDashboardRagPolicy, data-quality:resolveDataQualityFinding, day-90-tests:completeDayNinetyTest, decision-rights:createDecisionRight, decisions:createDecision, delegations:createDelegation, dependencies:createT08Dependency, design:createCapabilityHeatmapEntry, diagnose:createDiagnosticFinding, direction:setNorthStar, environment:requestDemoReset, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, finance-validations:amendFinanceValidation, financial-metrics:putFinancialMetricAssumptions, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-conditions:closeGateCondition, gate-exceptions:createGateException, gates:configureGateApprover, groups:updateGroup, health-checks:createHealthCheck, imports:createImport, improvement-items:createImprovementItem, integrations:createConnector, jobs:updateJobSchedule, kpi:createBaseline, kpi-actuals:acceptKpiActual, kpi-restatements:createKpiRestatement, kpi-versions:createKpiRagThreshold, launch-plans:updateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology:updateTomDimensionLabels, methodology-migrations:createMethodologyMigration, minutes:updateMeetingMinutes, modular-entry:createInheritedRecord, notifications:putNotificationPolicy, operations:acknowledgeOperationalException, organizations:updateBusinessUnit, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, phases:updatePhaseStep, platform-admin:putNotificationChannel, portfolio:updateDeliverable, portfolios:createPortfolio, prioritization:createInitiativeScore, procedures:putProcedureDefinition, raci:submitGovernanceMatrix, rag-overrides:createRagOverride, raid:createRaidEntry, report-snapshots:discardReportSnapshot, reporting-periods:createReportingPeriod, reports:generateReportSnapshot, risk-dispositions:createRiskDisposition, roadmap:updateMilestone, role-mappings:createRoleMapping, scale:createScaleTransition, schedule-network:updateInitiativeSchedule, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createChampionConstraint, status-model:setInitiativeAdoptionStatus, studio:updateConfigReviewPolicy, target-trajectories:createTargetTrajectory, tasks:markInboxNotificationRead, traceability:setOutcomeContributionAllocation, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream
+
+ ✓ |integration| apps/api/test/integration/security/csrf.test.ts (3 tests) 19707ms
+   ✓ CSRF (REQ-S16-030; ADR-0052 §4) > one mutation per module: no Origin, a foreign Origin, no token or a wrong token -> 403 csrf; correct -> not csrf  17092ms
+stdout | apps/api/test/integration/security/rate-limits.test.ts > rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > clause summary
+PASS REQ-S16-030 rate limiting: 6 classes (global, auth, upload, search, assistant, webhook) at budget 1 -> second call 429 rate_limited with Retry-After; export: no operation wired yet (todo)
+
+ ✓ |integration| apps/api/test/integration/security/rate-limits.test.ts (9 tests | 1 skipped) 6270ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > global (RATE_LIMIT_PER_MINUTE=1, getMe): the second call is 429 rate_limited with Retry-After  1079ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > auth (AUTH_RATE_LIMIT_PER_MINUTE=1, devLogin): the second call is 429 rate_limited with Retry-After  1307ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, uploadEvidenceContent): the second call is 429 rate_limited with Retry-After  1675ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > search (SEARCH_RATE_LIMIT_PER_MINUTE=1, searchRecords): the second call is 429 rate_limited with Retry-After  880ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > assistant (ASSISTANT_RATE_LIMIT_PER_MINUTE=1, postAssistantMessage): the second call is 429 rate_limited with Retry-After  743ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > webhook (WEBHOOK_RATE_LIMIT_PER_MINUTE=1, receiveWebhook): the second call is 429 rate_limited with Retry-After  560ms
+stdout | apps/api/test/integration/security/sql-injection.test.ts > SQL injection (REQ-S16-030; ADR-0052 §11) > every free-text query parameter of the list and search operations: never 500, no extra rows
+  listUsers?q "' OR 1=1 --": 200, 0 row(s)
+  listUsers?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listUsers?q "1) OR (1=1": 200, 0 row(s)
+  listTransformations?q "' OR 1=1 --": 200, 1 row(s)
+  listTransformations?q "'; DROP TABLE audit_event; --": 200, 1 row(s)
+  listTransformations?q "1) OR (1=1": 200, 1 row(s)
+  listStrategicGuardrails?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listStrategicGuardrails?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listStrategicGuardrails?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listOutcomes?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listOutcomes?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listOutcomes?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listDiagnosticItems?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listDiagnosticItems?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listDiagnosticItems?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listDiagnosticFindings?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listDiagnosticFindings?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listDiagnosticFindings?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listWorkstreamOutputs?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listWorkstreamOutputs?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listWorkstreamOutputs?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listTomGaps?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listTomGaps?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listTomGaps?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listCapabilityHeatmapEntries?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listCapabilityHeatmapEntries?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listCapabilityHeatmapEntries?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listJourneies?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listJourneies?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listJourneies?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listJourneyPainPoints?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listJourneyPainPoints?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listJourneyPainPoints?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  listInitiatives?q "' OR 1=1 --": 400 validation, like a plain value (not served yet)
+  listInitiatives?q "'; DROP TABLE audit_event; --": 400 validation, like a plain value (not served yet)
+  listInitiatives?q "1) OR (1=1": 400 validation, like a plain value (not served yet)
+  searchLessons?q "' OR 1=1 --": 200, 0 row(s)
+  searchLessons?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchLessons?q "1) OR (1=1": 200, 0 row(s)
+  searchLessons?tag "' OR 1=1 --": 200, 0 row(s)
+  searchLessons?tag "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchLessons?tag "1) OR (1=1": 200, 0 row(s)
+  searchMethodology?q "' OR 1=1 --": 200, 0 row(s)
+  searchMethodology?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchMethodology?q "1) OR (1=1": 200, 14 row(s)
+  searchRecords?q "' OR 1=1 --": 200, 0 row(s)
+  searchRecords?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchRecords?q "1) OR (1=1": 200, 0 row(s)
+  operations: listUsers(q), listTransformations(q), listStrategicGuardrails(q), listOutcomes(q), listDiagnosticItems(q), listDiagnosticFindings(q), listWorkstreamOutputs(q), listTomGaps(q), listCapabilityHeatmapEntries(q), listJourneies(q), listJourneyPainPoints(q), listInitiatives(q), searchLessons(q,tag), searchMethodology(q), searchRecords(q); 48 probes
+  declared but not served yet (400 validation for any value): listStrategicGuardrails?q, listOutcomes?q, listDiagnosticItems?q, listDiagnosticFindings?q, listWorkstreamOutputs?q, listTomGaps?q, listCapabilityHeatmapEntries?q, listJourneies?q, listJourneyPainPoints?q, listInitiatives?q
+
+stdout | apps/api/test/integration/security/sql-injection.test.ts > SQL injection (REQ-S16-030; ADR-0052 §11) > clause summary
+PASS REQ-S16-030 SQL injection: 3 payloads in every free-text list/search query parameter and a body field: no 500, no extra rows, stored as text
+
+ ✓ |integration| apps/api/test/integration/security/sql-injection.test.ts (4 tests) 6417ms
+   ✓ SQL injection (REQ-S16-030; ADR-0052 §11) > free-text body fields store each payload as text; a served text filter matches it literally  1133ms
+   ✓ SQL injection (REQ-S16-030; ADR-0052 §11) > every free-text query parameter of the list and search operations: never 500, no extra rows  2547ms
+stdout | apps/api/test/integration/security/xss.test.ts > XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > clause summary: every surface passed
+PASS REQ-S16-030 XSS in rich text: 6 payloads x 4 surfaces round-trip byte-identical
+
+ ✓ |integration| apps/api/test/integration/security/xss.test.ts (5 tests) 6339ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (a) a P5 rich_text form field stores and returns each payload verbatim  1074ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (b) the T03 gap text stores and returns each payload verbatim  345ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (c) an evidence note body stores and returns each payload verbatim  346ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (d) an inbox-visible title (a meeting action's) reaches its owner's inbox verbatim  810ms
+stdout | apps/api/test/integration/security/uploads.test.ts > disallowed upload type (REQ-S16-030; ADR-0052 §1) > clause summary
+PASS REQ-S16-030 disallowed upload type: .exe -> 422 type_not_allowed; renamed .exe -> 422 type_mismatch
+
+stdout | apps/api/test/integration/security/uploads.test.ts > oversized upload (REQ-S16-030; ADR-0052 §1) > clause summary
+PASS REQ-S16-030 oversized upload: policy limit + 1 byte -> 413 evidence.too_large (default and narrowed)
+
+ ✓ |integration| apps/api/test/integration/security/uploads.test.ts (6 tests) 4472ms
+   ✓ disallowed upload type (REQ-S16-030; ADR-0052 §1) > an .exe is 422 evidence.type_not_allowed (also in upper case)  584ms
+   ✓ disallowed upload type (REQ-S16-030; ADR-0052 §1) > an .exe renamed .pdf is 422 evidence.type_mismatch (its bytes do not start %PDF-)  418ms
+   ✓ oversized upload (REQ-S16-030; ADR-0052 §1) > the default policy: 26214400 + 1 bytes is 413 evidence.too_large  2005ms
+   ✓ oversized upload (REQ-S16-030; ADR-0052 §1) > an IT-narrowed policy (1024 bytes): 1025 bytes is 413, exactly 1024 bytes is accepted  342ms
+
+ Test Files  5 passed (5)
+      Tests  26 passed | 1 todo (27)
+   Start at  09:07:36
+   Duration  129.85s (transform 17.26s, setup 0ms, collect 66.74s, tests 43.20s, environment 0ms, prepare 135ms)
+
+exit 0

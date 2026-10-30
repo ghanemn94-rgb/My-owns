@@ -1,0 +1,51 @@
+port-policy: PostgreSQL listening on port 25402 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-e2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvupwr2f_376abadd (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts (14 tests | 1 failed) 15167ms
+   × the event-to-queue registry (D-102) > kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue 36ms
+     → connector.run_failed: expected 'integrations.connector_exception' to be 'automation.evaluate' // Object.is equality
+   ✓ the event-to-queue registry (D-102) > job ids: the event id for one queue; distinct, deterministic UUIDs per (event, queue) for several 2ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  1328ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > all or none: when one queue's send fails, no job and no mark commit, and the failure is recorded 258ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > an event type with no queue is a recorded relay failure; a single-queue event keeps job id = event id 177ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > red or amber and adverse: one intervention per link, scope and period, one adoption.check_failed each  393ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > green / favourable creates none 120ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > green / within creates none 121ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > unknown / unknown creates none 66ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > stale / unknown creates none 73ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > not_computable / unknown creates none 75ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > a removed link gets no intervention; two active links get one each  315ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > no active user in the owner chain: owner NULL (unassigned) and no work item; no calendar: due date NULL 180ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > refuses an event that does not match its evaluation (programming error, nothing written) 90ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts > the event-to-queue registry (D-102) > kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue
+AssertionError: connector.run_failed: expected 'integrations.connector_exception' to be 'automation.evaluate' // Object.is equality
+
+Expected: [32m"automation.evaluate"[39m
+Received: [31m"integrations.connector_exception"[39m
+
+ ❯ apps/worker/test/integration/adoption-below-trajectory.test.ts:305:42
+    303|       if (AUTOMATION_EVENT_QUEUES[eventType] === AUTOMATION_EVALUATE) {
+    304|         // At most one domain consumer, then the engine (an event with…
+    305|         expect(queues.at(-1), eventType).toBe(AUTOMATION_EVALUATE);
+       |                                          ^
+    306|         expect(queues.length, eventType).toBeLessThanOrEqual(2);
+    307|       } else expect(queues, eventType).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  08:36:06
+   Duration  45.41s (transform 6.89s, setup 0ms, collect 11.64s, tests 15.17s, environment 0ms, prepare 163ms)
+
+exit 1
