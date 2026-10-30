@@ -41,6 +41,7 @@ import {
   useBenefitOverlaps,
   useBenefitPlanValue,
   useBenefitValues,
+  useBenefitRegister,
   useInitiativeOptions,
   type Benefit,
   type BenefitAllocations,
@@ -74,6 +75,8 @@ import {
   sharePercent,
 } from "./ui.tsx";
 import { SensitivityPanel } from "../../components/sensitivity/SensitivityPanel.tsx";
+// T-DG6-FE-F (ADR-0061 §8 E2): the realized-value explanation panel.
+import { BenefitRealizedExplanation } from "../../components/explanation/index.ts";
 
 export function BenefitPage() {
   const { t } = useTranslation();
@@ -857,6 +860,11 @@ function Values({ b }: { b: Benefit }) {
   const { t } = useTranslation();
   const ws = useWorkspace();
   const values = useBenefitValues(ws.tid, b.id);
+  // T-DG6-FE-F (ADR-0061 §8 E2): a non-financial benefit's realized value is the latest accepted actual of its agreed
+  // KPI, which only the register row carries (`realized.kpiActual`; getBenefit has no `realized`). Read only for a
+  // non-financial benefit, from the register query the register page shares (same key).
+  const register = useBenefitRegister(b.valueClass === "non_financial" ? ws.tid : "");
+  const kpiActual = register.data?.find((r) => r.id === b.id)?.realized.kpiActual ?? null;
   const canEdit = ws.can("benefit.edit") && b.status === "active";
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -874,7 +882,13 @@ function Values({ b }: { b: Benefit }) {
       }
     >
       <QueryState query={values}>
-        {(v) => <ValuesTable v={v} b={b} {...(canEdit ? { onEdit: setEditing } : {})} />}
+        {(v) => (
+          <>
+            <ValuesTable v={v} b={b} {...(canEdit ? { onEdit: setEditing } : {})} />
+            {/* T-DG6-FE-F (ADR-0061 §8 E2; REQ-S15-014): how the realized value is calculated, from these values. */}
+            <BenefitRealizedExplanation values={v} kpiActual={kpiActual} />
+          </>
+        )}
       </QueryState>
       {adding ? <PlanValueDialog b={b} onClose={() => setAdding(false)} /> : null}
       {editing ? <EditPlanValue planValueId={editing} onClose={() => setEditing(null)} /> : null}

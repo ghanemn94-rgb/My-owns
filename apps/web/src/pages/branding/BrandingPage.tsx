@@ -11,6 +11,12 @@
 //  - the server's refusals are shown by their code (branding.colour_invalid, .logo_invalid, .font_unavailable,
 //    .text_pair_required, .prohibited_claim, .engineering_gate_reference); 409 shows the conflict and re-applies.
 // Branding is configuration, not a business approval. Needs branding.configure (ADM_TECH); others get the 403 state.
+// T-DG6-FE-F (ADR-0061 §1, §5, §6, §7.3; REQ-S15-003, REQ-S15-007): a publish below the contrast rule is refused with
+// 422 branding.contrast_insufficient; the one form-level alert lists each failing pair (the translated pair code and the
+// language-neutral "<fg> / <bg> | <use> | <ratio>:1 < <threshold>:1" inside an LTR isolate), and the colour field the
+// pair resolves through shows the pair code. The "Contrast report" section reads getBrandingVersionContrast for the
+// selected version (the current one by default); a version published before the rule (`not_recorded`) whose colours
+// fail shows the warning to publish corrected colours.
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,10 +45,13 @@ import {
   brandingPaths,
   contrastRatio,
   HEX_COLOUR,
+  useBrandingContrast,
   useBrandingSettings,
   useBrandingVersions,
+  type BrandingContrastReport,
   type BrandingSettings,
 } from "./api.ts";
+import { problemText } from "../../lib/problem.ts";
 
 const NS = ["playbookP5"] as const;
 const WHITE = "#FFFFFF";
@@ -154,7 +163,7 @@ export function BrandingPage() {
         <>
           <CurrentSummary s={settings.data} />
           <SettingsForm s={settings.data} />
-          <VersionsSection />
+          <VersionsAndContrast current={settings.data.source === "default" ? null : settings.data.versionNo} />
         </>
       )}
     </div>
@@ -288,6 +297,20 @@ function SettingsForm({ s }: { s: BrandingSettings }) {
       await qc.invalidateQueries({ queryKey: brandingKeys.all });
     } catch (e) {
       if (action.stale(e)) return;
+      const pairs = contrastFailures(e);
+      if (pairs.length > 0) {
+        const fieldErrs: Errors = {};
+        for (const f of pairs) {
+          const k =
+            f.pointer === "/primaryColour"
+              ? "primaryColour"
+              : f.pointer === "/secondaryColour"
+                ? "secondaryColour"
+                : null;
+          if (k) fieldErrs[k] = "branding__contrast_pair_below_threshold";
+        }
+        setErrors(fieldErrs);
+      }
       if (e instanceof ApiError && e.status === 409) {
         const current = await api.get<BrandingSettings>(brandingPaths.settings).catch(() => null);
         if (action.stale()) return;
@@ -334,7 +357,7 @@ function SettingsForm({ s }: { s: BrandingSettings }) {
   return (
     <Section id="settings" title={t("playbookP5.branding.settings")} intro={t("playbookP5.branding.settingsIntro")}>
       <form className="form" noValidate onSubmit={onSubmit} data-form="branding">
-        <FormAlert error={error} namespaces={NS} />
+        <FormAlert error={error} namespaces={NS} extra={<ContrastFailureList error={error} />} />
         {conflict ? (
           <ConflictPanel
             yourVersion={baseVersion}
@@ -635,7 +658,165 @@ function SettingsForm({ s }: { s: BrandingSettings }) {
   );
 }
 
-function VersionsSection() {
+/** The failing pairs of a 422 branding.contrast_insufficient (ADR-0061 §6 `errors` items), in declared order. */
+export function contrastFailures(error: unknown): readonly { pointer: string; message: string }[] {
+  if (!(error instanceof ApiError) || error.code !== "branding.contrast_insufficient") return [];
+  return error.fieldErrors
+    .filter((f) => f.code === "branding.contrast_pair_below_threshold")
+    .map((f) => ({ pointer: f.pointer, message: f.message ?? "" }));
+}
+
+/** Inside the one form-level alert: each failing pair, its translated code and the token pair and ratio as LTR data. */
+export function ContrastFailureList({ error }: { error: unknown }) {
+  const { t } = useTranslation();
+  const pairs = contrastFailures(error);
+  if (pairs.length === 0) return null;
+  const pairText = problemText(t, "branding.contrast_pair_below_threshold");
+  return (
+    <div data-contrast-failures={pairs.length}>
+      <p className="small">
+        <strong>{t("explanations.contrast.failingPairs")}</strong>
+      </p>
+      <ul className="plain-list">
+        {pairs.map((p, i) => (
+          <li key={i} data-contrast-failure={p.pointer}>
+            {pairText}{" "}
+            <bdi dir="ltr" className="code">
+              {p.message}
+            </bdi>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function VersionsAndContrast({ current }: { current: number | null }) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const shown = selected ?? current;
+  return (
+    <>
+      <VersionsSection selected={shown} onSelect={setSelected} />
+      <ContrastReportSection versionNo={shown} />
+    </>
+  );
+}
+
+function PassChip({ pass }: { pass: boolean }) {
+  const { t } = useTranslation();
+  return pass ? (
+    <span className="lifecycle-chip" data-pass="yes">
+      <Icon name="check" /> {t("explanations.contrast.pass")}
+    </span>
+  ) : (
+    <span className="status-chip status-chip--off-track" data-health="off_track" data-pass="no">
+      <Icon name="cross" /> {t("explanations.contrast.fail")}
+    </span>
+  );
+}
+
+/** ADR-0061 §5: the contrast report of one published version (getBrandingVersionContrast). */
+function ContrastReportSection({ versionNo }: { versionNo: number | null }) {
+  const { t } = useTranslation();
+  const report = useBrandingContrast(versionNo);
+  return (
+    <Section id="contrast-report" title={t("explanations.contrast.title")} intro={t("explanations.contrast.intro")}>
+      {versionNo === null ? (
+        <EmptyState title={t("playbookP5.branding.noVersions")} body={t("playbookP5.branding.noVersionsBody")} />
+      ) : (
+        <QueryState query={report}>{(r) => <ContrastReport r={r} />}</QueryState>
+      )}
+    </Section>
+  );
+}
+
+export function ContrastReport({ r }: { r: BrandingContrastReport }) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const failing = r.status === "not_recorded" && r.failingCount > 0;
+  return (
+    <div data-contrast-report={r.versionNo} data-contrast-status={r.status} data-failing={r.failingCount}>
+      <dl className="workspace-header__grid">
+        <dt>{t("explanations.contrast.version")}</dt>
+        <dd>{t("playbookP5.branding.versionN", { n: r.versionNo })}</dd>
+        <dt>{t("explanations.contrast.result")}</dt>
+        <dd>
+          {r.status === "recorded" ? t("explanations.contrast.recorded") : t("explanations.contrast.notRecorded")}
+          {r.recordedAt ? (
+            <> · {t("explanations.contrast.recordedAt", { at: formatDateTime(r.recordedAt, locale) })}</>
+          ) : null}
+        </dd>
+        <dt>{t("explanations.contrast.summary", { count: r.pairCount, failing: r.failingCount })}</dt>
+        <dd>
+          {r.failingCount > 0 ? (
+            <PassChip pass={false} />
+          ) : (
+            <>
+              <PassChip pass /> {t("explanations.contrast.allPass")}
+            </>
+          )}
+        </dd>
+        {r.tokenSourceSha256 ? (
+          <>
+            <dt>{t("explanations.contrast.sha")}</dt>
+            <dd>
+              <bdi dir="ltr" className="code small">
+                {r.tokenSourceSha256}
+              </bdi>
+            </dd>
+          </>
+        ) : null}
+      </dl>
+      {failing ? (
+        <p className="banner banner--warning" role="status" data-state="contrast-failing">
+          <Icon name="alert" /> {t("explanations.contrast.failing")}
+        </p>
+      ) : null}
+      <div className="table-wrap" tabIndex={0} role="region" aria-label={t("explanations.contrast.title")}>
+        <table className="table table--compact" data-table="branding-contrast">
+          <caption className="visually-hidden">{t("explanations.contrast.title")}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t("explanations.contrast.pair")}</th>
+              <th scope="col">{t("explanations.contrast.use")}</th>
+              <th scope="col">{t("explanations.contrast.colours")}</th>
+              <th scope="col">{t("explanations.contrast.ratio")}</th>
+              <th scope="col">{t("explanations.contrast.threshold")}</th>
+              <th scope="col">{t("explanations.contrast.result")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {r.pairs.map((p) => (
+              <tr key={p.ordinal} data-pair={`${p.fg}/${p.bg}/${p.use}`} data-pass={p.pass ? "yes" : "no"}>
+                <th scope="row">
+                  <bdi dir="ltr" className="code">
+                    {p.fg} / {p.bg}
+                  </bdi>
+                </th>
+                <td>{t(`explanations.contrast.useKind.${p.use}`)}</td>
+                <td>
+                  <Swatch hex={p.fgHex} /> <bdi dir="ltr">{p.fgHex}</bdi> · <Swatch hex={p.bgHex} />{" "}
+                  <bdi dir="ltr">{p.bgHex}</bdi>
+                </td>
+                <td>
+                  <bdi dir="ltr">{p.ratio}:1</bdi>
+                </td>
+                <td>
+                  <bdi dir="ltr">{p.threshold}:1</bdi>
+                </td>
+                <td>
+                  <PassChip pass={p.pass} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function VersionsSection({ selected, onSelect }: { selected: number | null; onSelect: (n: number) => void }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const [cursors, setCursors] = useState<string[]>([]);
@@ -662,6 +843,7 @@ function VersionsSection() {
                     <th scope="col">{t("playbookP5.branding.field.colourApprovalReference")}</th>
                     <th scope="col">{t("playbookP5.branding.field.changeNote")}</th>
                     <th scope="col">{t("playbookP5.branding.created")}</th>
+                    <th scope="col">{t("explanations.contrast.title")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -677,6 +859,21 @@ function VersionsSection() {
                       <td>{v.colourApprovalReference ?? <span className="muted">—</span>}</td>
                       <td>{v.changeNote ?? <span className="muted">—</span>}</td>
                       <td>{formatDateTime(v.createdAt, locale)}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="button button--small button--secondary"
+                          aria-pressed={selected === v.versionNo}
+                          data-action="show-contrast"
+                          onClick={() => onSelect(v.versionNo)}
+                        >
+                          {t("explanations.contrast.show")}
+                          <span className="visually-hidden">
+                            {" "}
+                            {t("playbookP5.branding.versionN", { n: v.versionNo })}
+                          </span>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

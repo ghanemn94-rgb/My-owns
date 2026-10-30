@@ -1,0 +1,139 @@
+{
+  "panel": {
+    "show": "Explain the {{value}}",
+    "hide": "Hide the explanation of the {{value}}",
+    "title": "How the {{value}} is calculated",
+    "formula": "Formula in words",
+    "inputs": "Inputs",
+    "period": "Period",
+    "version": "Version",
+    "state": {
+      "complete": "Calculated",
+      "incomplete": "Incomplete",
+      "unknown": "Unknown",
+      "notComputable": "Not computable",
+      "disabled": "Not shown"
+    },
+    "readOnly": "This explanation shows the stored values that produced the result. It changes nothing.",
+    "noPeriod": "No dated values yet",
+    "range": "{{from}} to {{to}}",
+    "notCalculated": "Not calculated yet"
+  },
+  "reason": {
+    "explain__weight_set_missing": "The weight set used for this score is not available, so its inputs cannot be shown.",
+    "explain__weight_set_version_mismatch": "The score was calculated with a different weight set version than the one shown; reload the page to see its inputs.",
+    "explain__inputs_inconsistent": "The stored inputs do not reproduce the stored result; the breakdown is not shown. Reload the page; if it persists, report it.",
+    "explain__revision_mismatch": "The metrics were calculated on a different cash-flow revision than the one shown; reload the page to see their inputs.",
+    "explain__currency_mismatch": "The cash flows and the metrics use different currencies; the breakdown is not shown.",
+    "explain__scheme_missing": "The scoring scheme of this assessment is not available, so its inputs cannot be shown.",
+    "explain__scheme_version_mismatch": "The assessment was scored with a different scheme version than the one loaded; reload the page."
+  },
+  "weightedScore": {
+    "value": "weighted score",
+    "formula": "Weighted score = the sum of each criterion's score (1 to 5) multiplied by its weight, divided by 100. The 0–100 view = (weighted score − 1) ÷ 4 × 100. A missing score makes it incomplete; it is never counted as 0.",
+    "criterion": "Criterion",
+    "score": "Score (1–5)",
+    "weight": "Weight",
+    "contribution": "Score × weight ÷ 100",
+    "sum": "Sum (weighted score)",
+    "display100": "0–100 view",
+    "noScore": "No score",
+    "incomplete": "Incomplete: no score yet for {{criteria}}. The weighted score is not calculated until every criterion has a score.",
+    "version": "Weight set version {{n}}",
+    "computedAt": "Calculated {{at}}"
+  },
+  "benefitRealized": {
+    "value": "realized value",
+    "formula": "Validated = the sum of the amounts of this benefit's validated measurements. Sustained and pending (awaiting Finance validation) are summed separately and never added to it. A forecast or a scenario is never realized value.",
+    "formulaNonFinancial": "This benefit has no monetary value: its realized value is the latest accepted actual of its agreed KPI.",
+    "group": {
+      "validated": "Validated (realized value)",
+      "sustained": "Sustained (summed separately)",
+      "pending": "Pending Finance validation (not realized)"
+    },
+    "periodCol": "Period",
+    "amount": "Amount",
+    "basis": "Basis",
+    "basisKind": {
+      "validated": "Validated",
+      "provisional": "Provisional"
+    },
+    "total": "Total of {{count}} lines",
+    "noLines": "No value yet",
+    "kpiActual": "Latest accepted KPI actual",
+    "currency": "Currency: {{currency}}"
+  },
+  "financialMetrics": {
+    "value": "NPV, ROI and payback",
+    "formulaNpv": "NPV = the sum, over the periods, of (inflow − outflow) divided by (1 + discount rate) raised to the period number (counted from 0 for beginning-of-period timing and from 1 for end-of-period timing). Without a discount rate there is no NPV.",
+    "formulaRoi": "ROI = (total inflows − total outflows) ÷ total outflows, undiscounted; not computable without outflows.",
+    "formulaPayback": "Payback = the first period at which the cumulative undiscounted net is back at or above zero after having been negative; 'not reached' when that never happens.",
+    "periodCol": "Period",
+    "outflow": "Outflow",
+    "inflow": "Inflow",
+    "net": "Net",
+    "exponent": "Power of (1 + rate)",
+    "factor": "Discount factor",
+    "discountedNet": "Discounted net",
+    "cumulative": "Cumulative net",
+    "paybackRow": "Payback period",
+    "noRate": "No discount rate",
+    "totals": "Total inflows {{inflow}}; total outflows {{outflow}}",
+    "npvExact": "NPV before rounding: {{value}}",
+    "revision": "Cash-flow revision {{n}}",
+    "periods": "{{count}} periods",
+    "disabled": "The optional financial metrics are turned off, so there is nothing to explain.",
+    "incomplete": {
+      "assumptions_missing": "Incomplete: the methodology assumptions are not recorded, so no metric is calculated.",
+      "cash_flows_missing": "Incomplete: this business case has no cash flows, so no metric is calculated."
+    },
+    "formulaNotes": "Also: payback is 'not computable' when there are no outflows or the cumulative net is never negative (nothing to pay back). NPV is calculated exactly and rounded once to 2 decimals; ROI is a fraction shown as a percentage; periods are numbered from 0, as in the cash-flow table. A value too large to store is not shown."
+  },
+  "healthScore": {
+    "value": "health check score",
+    "formula": "Score = the points of the answers under the scheme version's scoring basis (scheme 1: Yes = 1, No = 0, so the number of Yes out of 25; a percent-of-applicable scheme: the points as a percentage of the applicable questions). The band is the scheme's range that contains the score. While any question is unanswered there is no score and no band (incomplete, never 0). The scoring scheme is an implementation assumption.",
+    "response": "Response",
+    "count": "Answers",
+    "credit": "Points each",
+    "points": "Points",
+    "notApplicable": "Not counted",
+    "answered": "{{answered}} of {{total}} questions answered",
+    "applicable": "{{applicable}} applicable questions",
+    "pointsTotal": "Points: {{points}}",
+    "score": "Score: {{score}} of {{max}}",
+    "band": "Band: {{range}}",
+    "incomplete": "Incomplete: {{count}} questions are unanswered, so there is no score and no band.",
+    "notComputable": "Not computable: every answer is not applicable, so there is no score.",
+    "scheme": "Scheme version {{n}}",
+    "assessmentDate": "Assessment date {{date}}",
+    "assumption": "The scoring scheme is an implementation assumption, not a playbook rule.",
+    "formulaNotes": "Also: a scheme may give partial credit (for example Partly = 0.5); a Not applicable answer earns no points and is not counted as applicable. The score is rounded to 2 decimals. When every answer is Not applicable there is no score (not computable)."
+  },
+  "contrast": {
+    "title": "Contrast report",
+    "intro": "The contrast check of every declared text and control colour pair of a published version (WCAG 2.x AA: 4.5:1 for text, 3:1 for large text and controls).",
+    "version": "Version",
+    "show": "Show the contrast report",
+    "recorded": "Recorded when the version was published",
+    "notRecorded": "Not recorded: this version was published before the contrast rule and is evaluated now",
+    "failing": "The current colours fail the contrast rules; publish corrected colours.",
+    "allPass": "Every declared pair meets its threshold.",
+    "summary": "{{count}} pairs checked; {{failing}} below threshold",
+    "pair": "Colour pair",
+    "use": "Use",
+    "useKind": {
+      "text": "Text",
+      "large-text": "Large text",
+      "ui": "Control"
+    },
+    "colours": "Colours",
+    "ratio": "Ratio",
+    "threshold": "Threshold",
+    "result": "Result",
+    "pass": "Passes",
+    "fail": "Below threshold",
+    "sha": "Token source SHA-256",
+    "recordedAt": "Recorded {{at}}",
+    "failingPairs": "Failing colour pairs"
+  }
+}

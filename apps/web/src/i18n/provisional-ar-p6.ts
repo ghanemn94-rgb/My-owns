@@ -12,7 +12,9 @@
 // entry here in the same change.
 
 //  - "fe-b": the Arabic of the T-DG6-FE-B screens (the whole `adminP6` namespace), written by T-DG6-FE-B.
-export type ProvisionalArabicSource = "adr" | "fe-a" | "fe-b";
+//  - "fe-f": the Arabic written by T-DG6-FE-F (p6-work-split §I/K.3): the `explanations` namespace (ADR-0061 §8 gives
+//    English only) and the problem texts that `problems-all.test.ts` found missing (the English is the API's detail).
+export type ProvisionalArabicSource = "adr" | "fe-a" | "fe-b" | "fe-f";
 
 /** Catalogue path (namespace.key, with "__" for "." inside a problem code) -> where the provisional Arabic comes from. */
 export const P6_PROVISIONAL_ARABIC: Readonly<Record<string, ProvisionalArabicSource>> = {
@@ -70,4 +72,20 @@ export const P6_PROVISIONAL_ARABIC: Readonly<Record<string, ProvisionalArabicSou
   "nav.p6.": "fe-a",
   // adminP6.json (T-DG6-FE-B): every text of the slice E, F, J and C screens
   "adminP6.": "fe-b",
+  // problems.json, slice I (ADR-0061 §6: Arabic given, labelled provisional by the ADR; BE-W's two codes)
+  "problems.branding__contrast_insufficient": "adr",
+  "problems.branding__contrast_pair_below_threshold": "adr",
+  // problems.json: codes the API emits that had no text (T-DG6-FE-F, problems-all.test.ts; ADR-0061 §7.3)
+  "problems.evidence__reviewer_is_author": "fe-f",
+  "problems.health_scheme__definition_invalid": "fe-f",
+  "problems.assistant__test_adapter_shape": "fe-f",
+  "problems.validation__weight_percent": "fe-f",
+  "problems.validation__validation__reference": "fe-f",
+  "problems.validation__upload_policy_allowed_types": "fe-f",
+  "problems.validation__upload_policy_max_bytes": "fe-f",
+  "problems.validation__idempotency_key": "fe-f",
+  "problems.validation__transformation_not_allowed": "fe-f",
+  "problems.gate__out_of_sequence": "fe-f",
+  // explanations.json (T-DG6-FE-F): the explanation panels of ADR-0061 §8 (E1, E2, E4, E5) and the contrast report
+  "explanations.": "fe-f",
 };

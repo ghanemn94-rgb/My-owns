@@ -25,6 +25,9 @@ import { formatBusinessDate, formatDecimal } from "../../lib/format.ts";
 import { ReadOnlyNote } from "../my-work/p4ui.tsx";
 import { useTransformationTarget } from "../transformations/common.tsx";
 import { Chip } from "../automation/ui.tsx";
+// T-DG6-FE-F (ADR-0061 §3 item 2, §8 E5; REQ-S15-012, REQ-S15-014): chip icons and the score explanation.
+import { Icon } from "../../components/Icon.tsx";
+import { HealthScoreExplanation } from "../../components/explanation/index.ts";
 import {
   CompletionChip,
   Notice,
@@ -62,7 +65,8 @@ export function ScoreText({ score, max }: { score: string | null; max: string | 
   const locale = useLocale();
   if (score === null)
     return (
-      <span className="status-chip status-chip--unknown" data-score="none">
+      <span className="status-chip status-chip--unknown" data-health="unknown" data-score="none">
+        <Icon name="question" />
         {t("launchHealthP5.health.noScore")}
       </span>
     );
@@ -81,7 +85,8 @@ export function BandText({ band }: { band: HealthCheckSummary["band"] }) {
   const locale = useLocale();
   if (!band)
     return (
-      <span className="status-chip status-chip--unknown" data-band="none">
+      <span className="status-chip status-chip--unknown" data-health="unknown" data-band="none">
+        <Icon name="question" />
         {t("launchHealthP5.health.noBand")}
       </span>
     );
@@ -330,6 +335,15 @@ function Assessment({
         {!a.completion.complete ? (
           <Notice state="incomplete">{t("launchHealthP5.health.incompleteNote")}</Notice>
         ) : null}
+        <HealthScoreExplanation
+          check={a}
+          scheme={scheme.versionId === a.schemeVersionId ? scheme : null}
+          responseLabel={(key) => {
+            const opt = scheme.responses.find((r) => r.key === key);
+            const own = opt ? (locale === "ar" ? opt.labelAr : opt.labelEn) : null;
+            return own ?? t(`launchHealthP5.health.response.${key}`);
+          }}
+        />
       </section>
       <Section
         id="questions"
