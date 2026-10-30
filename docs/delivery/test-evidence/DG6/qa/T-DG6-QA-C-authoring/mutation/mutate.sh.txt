@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# qa-verifier T-DG6-QA-C mutation checks. Each mutant: a private copy of the tree under $TMPDIR, one product line
+# changed by sed (verified), one acceptance test file run against it. Expected: the test FAILS (non-zero exit).
+set -u
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+BASE=$TMPDIR/mut
+OUT=$1
+run_mutant() {
+  local id=$1 port=$2 file=$3 pattern=$4 replacement=$5 test=$6
+  local dir=$TMPDIR/mut-$id
+  rm -rf "$dir"; cp -a "$BASE" "$dir"
+  local before after
+  before=$(grep -cF -- "$pattern" "$dir/$file")
+  python3 - "$dir/$file" "$pattern" "$replacement" <<'PY'
+import sys
+p, a, b = sys.argv[1:4]
+s = open(p).read()
+open(p, "w").write(s.replace(a, b))
+PY
+  after=$(grep -cF -- "$pattern" "$dir/$file")
+  {
+    echo "=== $id: $file"
+    echo "pattern occurrences before=$before after=$after"
+    echo "replace: $pattern"
+    echo "with:    $replacement"
+    echo "diff:"; diff <(cat "$BASE/$file") "$dir/$file"
+  } > "$OUT/$id.log"
+  ( cd "$dir" && QA_PG_PORT=$port MTH_PORT_POOL=$((port+1))-$((port+4)) timeout 560 tests/qa/support/with-pg.sh \
+      pnpm vitest run --configLoader runner --project integration "$test" ) >> "$OUT/$id.log" 2>&1
+  echo "MUTANT-TEST-EXIT=$?" >> "$OUT/$id.log"
+  rm -rf "$dir"
+}
+run_mutant M0a-control-none 26485 apps/api/src/modules/forms/bulk.ts "QA_NO_SUCH_PATTERN_X" "unused" tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts &
+run_mutant M0b-control-none 26490 apps/worker/src/handlers/search.ts "QA_NO_SUCH_PATTERN_X" "unused" tests/qa/integration/a13-p6-reindex-kill-restart.test.ts &
+run_mutant M1-reindex-not-marked 26450 apps/worker/src/handlers/search.ts 'status: "reindexing",' 'status: "idle",' tests/qa/integration/a13-p6-reindex-kill-restart.test.ts &
+run_mutant M2-no-stale-recovery 26455 apps/api/src/modules/integrations/runs.ts "OR (r.status = 'running' AND r.started_at <" "OR (false AND r.started_at <" tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts &
+run_mutant M3-commit-replay-allowed 26460 apps/api/src/modules/integrations/imports/commit.ts 'if (locked.status !== "staged") throw importBatchRefusals.notStaged();' 'if (false) throw importBatchRefusals.notStaged();' tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts &
+run_mutant M4-sent-without-send 26465 apps/worker/src/handlers/notifications.ts 'result = await adapter!.send(message, user!.email!);' 'result = { ok: true } as ChannelSendResult; void message;' tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts &
+run_mutant M5-bulk-ignores-stale 26470 apps/api/src/modules/forms/bulk.ts 'if (current !== item.version) stale.push(' 'if (false) stale.push(' tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts &
+run_mutant M6-patch-ignores-if-match 26475 apps/api/src/modules/portfolio/repository.ts 'if (current.version !== expected) throw problems.versionConflict(current.version);' 'if (false) throw problems.versionConflict(current.version);' tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts &
+wait
+echo ALL-MUTANTS-DONE

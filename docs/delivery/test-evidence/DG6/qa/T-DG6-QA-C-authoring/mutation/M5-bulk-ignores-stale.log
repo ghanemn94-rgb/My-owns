@@ -1,0 +1,72 @@
+=== M5-bulk-ignores-stale: apps/api/src/modules/forms/bulk.ts
+pattern occurrences before=1 after=0
+replace: if (current !== item.version) stale.push(
+with:    if (false) stale.push(
+diff:
+238c238
+<     if (current !== item.version) stale.push({ index, recordId: item.recordId, currentVersion: current });
+---
+>     if (false) stale.push({ index, recordId: item.recordId, currentVersion: current });
+port-policy: PostgreSQL listening on port 26470 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.C0myCF/claude-0/mut-M5-bulk-ignores-stale
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvg9ho0_be923379 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts (6 tests | 2 failed) 7049ms
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > first save 200 (v2); the second, on v1, 409 version-conflict with currentVersion 2; nothing of it is written  796ms
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > compare v1->v2 names what the other user changed; values only for audit.read, withheld for an editor  372ms
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > reapply (only my changes, If-Match = current) succeeds as v3 and keeps the other user's change  661ms
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > two simultaneous saves on the same version: exactly one 200, the other 409; the loser's text is not stored  316ms
+   × REQ-S15-010 (A14): a bulk update touching stale records reports a conflict for those records only > four items, two stale (first and last): one error per stale item at its pointer, nothing saved 1255ms
+     → expected 'version_conflict' to be 'form_record.bulk_conflict' // Object.is equality
+   × REQ-S15-010 (A14): a bulk update touching stale records reports a conflict for those records only > a bulk racing a single edit of one of its records: either the bulk is refused for that record, or the edit is 746ms
+     → expected [ 409, 'version_conflict' ] to deeply equal [ 409, 'form_record.bulk_conflict' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts > REQ-S15-010 (A14): a bulk update touching stale records reports a conflict for those records only > four items, two stale (first and last): one error per stale item at its pointer, nothing saved
+AssertionError: expected 'version_conflict' to be 'form_record.bulk_conflict' // Object.is equality
+
+Expected: [32m"[7mform_record.bulk[27m_conflict"[39m
+Received: [31m"[7mversion[27m_conflict"[39m
+
+ ❯ tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts:207:28
+    205|     });
+    206|     expectProblem(bulk, 409, VERSION_CONFLICT);
+    207|     expect(bulk.body.code).toBe("form_record.bulk_conflict");
+       |                            ^
+    208|     const errors = bulk.body.errors as Loose[];
+    209|     expect(errors.map((e) => e.pointer).sort(), "exactly the two stale…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts > REQ-S15-010 (A14): a bulk update touching stale records reports a conflict for those records only > a bulk racing a single edit of one of its records: either the bulk is refused for that record, or the edit is
+AssertionError: expected [ 409, 'version_conflict' ] to deeply equal [ 409, 'form_record.bulk_conflict' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    409,[22m
+[32m-   "form_record.bulk_conflict",[39m
+[31m+   "version_conflict",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts:267:45
+    265|     } else {
+    266|       expect(single.status).toBe(200);
+    267|       expect([bulk.status, bulk.body.code]).toEqual([409, "form_record…
+       |                                             ^
+    268|       expect((bulk.body.errors as Loose[]).map((e) => e.pointer)).toEq…
+    269|       expect(rows.map((r) => r.version)).toEqual([1, 2, 1]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  20:53:49
+   Duration  73.40s (transform 23.91s, setup 0ms, collect 49.12s, tests 7.05s, environment 0ms, prepare 1.07s)
+
+MUTANT-TEST-EXIT=1
