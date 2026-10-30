@@ -12,6 +12,7 @@ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { Section } from "../../components/Section.tsx";
 import { LoadingState, QueryState } from "../../components/States.tsx";
 import { useExecutiveOverview } from "../dashboards/api.ts";
+import { ExecutiveHomeRegions } from "./ExecutiveRegions.tsx";
 import {
   AreaGrid,
   BlockedFilterNote,
@@ -42,6 +43,17 @@ export function ExecutiveOverviewPage() {
           <Link className="button button--secondary" to="/dashboards">
             {t("dashboards.overview.allDashboards")}
           </Link>
+        }
+      />
+      {/* T-DG6-FE-F2 (REQ-S15-001; ADR-0061 §4.1): key decisions, key outcomes and next actions above the fold. */}
+      <ExecutiveHomeRegions
+        data={org.blocked ? undefined : query.data}
+        state={
+          org.blocked || (query.isError && !query.data)
+            ? "unavailable"
+            : org.loading || query.isPending
+              ? "loading"
+              : null
         }
       />
       <FilterBar state={state} set={set} clear={clear} applied={query.data?.appliedFilters ?? null} orgWide />

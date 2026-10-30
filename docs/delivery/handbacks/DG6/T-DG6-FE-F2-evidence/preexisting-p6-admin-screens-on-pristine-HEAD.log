@@ -1,0 +1,47 @@
+pristine clone of HEAD ee20f5eccaaa4e4a0c5dbc1c354ad621ba3d8bd1 (no FE-F2 change); dependencies symlinked
+
+ RUN  v3.2.7 /var/tmp/mth-run.TdGZTD/claude-0/pristine/apps/web
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed) 14461ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 364ms
+     → expected <input id="_r_30_" …(9)></input> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input id="_r_30_" …(9)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-invalid="false"
+  class="global-search__input"
+  data-global-search="true"
+  enterkeyhint="search"
+  id="_r_30_"
+  inputmode="search"
+  maxlength="200"
+  placeholder="Search records"
+  type="text"
+  value=""
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:461:55
+    459|     expect(await screen.findByText("Configured (never shown)")).toBeTr…
+    460|     expect(screen.getByText("https://idp.example.invalid/realms/mth-te…
+    461|     expect(document.querySelector("input, textarea")).toBeNull();
+       |                                                       ^
+    462|   });
+    463| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 passed (33)
+   Start at  21:47:28
+   Duration  22.81s (transform 606.51s, setup 270ms, collect 6.87s, tests 14.46s, environment 654ms, prepare 136ms)
+
+exit 1
