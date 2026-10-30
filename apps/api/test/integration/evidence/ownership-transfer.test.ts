@@ -116,16 +116,12 @@ beforeAll(async () => {
 afterAll(() => api.close());
 
 /**
- * CONTRACT NEED (T-DG6-BE-C handback §5): ADR-0051 §4 and D-196 point 1 give the download and the metadata GET a 403
- * `evidence.parent_forbidden`, but openapi.yaml 1.5.0-p6 declares no 403 on downloadEvidenceContent or getEvidence.
- * Until the orchestrator adds it, the calls that may answer 403 skip the OpenAPI assertion (`contract: false`); every
- * 200 and 404 here is still asserted against the contract.
+ * ADR-0051 §4 and D-196 point 1 give the download and the metadata GET a 403 `evidence.parent_forbidden`; the contract
+ * declares it on downloadEvidenceContent and getEvidence (T-DG6-BE-X1, F-DG6-QA-B-1), so every response here, the 403s
+ * included, is asserted against the OpenAPI document.
  */
-const outsideContract = { contract: false } as const;
-const download = (session: Session, maybe403 = false) =>
-  send("GET", CONTENT(), { session, ...(maybe403 ? outsideContract : {}) });
-const getItem = (session: Session, maybe403 = false) =>
-  send("GET", ITEM(), { session, ...(maybe403 ? outsideContract : {}) });
+const download = (session: Session) => send("GET", CONTENT(), { session });
+const getItem = (session: Session) => send("GET", ITEM(), { session });
 const listIds = async (session: Session) => {
   const res = await send("GET", `${s.b.base}/evidence?limit=100`, { session });
   expect(res.status, JSON.stringify(res.body)).toBe(200);
@@ -188,8 +184,8 @@ describe("REQ-S13-013: evidence after a BAU handover (ADR-0051 §4 (a)-(e))", ()
   it("(e) sensitive evidence: the new owner is refused with 403 until granted; the WL (named party) reads it", async () => {
     await mark("evidence", evidenceId, true, 0);
     try {
-      expectParentForbidden(await download(newOwner.session, true));
-      expectParentForbidden(await download(s.b.s.auditor, true)); // AUD admits nothing by itself
+      expectParentForbidden(await download(newOwner.session));
+      expectParentForbidden(await download(s.b.s.auditor)); // AUD admits nothing by itself
       // The metadata GET keeps the §2 404 for a sensitive item itself; the list omits it.
       expect((await getItem(newOwner.session)).status).toBe(404);
       expect(await listIds(newOwner.session)).not.toContain(evidenceId);
@@ -199,7 +195,7 @@ describe("REQ-S13-013: evidence after a BAU handover (ADR-0051 §4 (a)-(e))", ()
       expect((await download(newOwner.session)).status).toBe(200);
       expect((await getItem(newOwner.session)).status).toBe(200);
       await revoke(g);
-      expectParentForbidden(await download(newOwner.session, true));
+      expectParentForbidden(await download(newOwner.session));
       // Out of scope stays 404 whatever the sensitivity (non-disclosure).
       expect((await download(stranger)).status).toBe(404);
     } finally {
@@ -212,8 +208,8 @@ describe("REQ-S13-013: evidence after a BAU handover (ADR-0051 §4 (a)-(e))", ()
     await mark("benefit", benefitId, true, 0);
     try {
       // The new owner reads the transformation but is no party of the benefit (owner: the BO) and holds no grant.
-      expectParentForbidden(await download(newOwner.session, true));
-      expectParentForbidden(await getItem(newOwner.session, true));
+      expectParentForbidden(await download(newOwner.session));
+      expectParentForbidden(await getItem(newOwner.session));
       expect(await listIds(newOwner.session)).not.toContain(evidenceId);
       // The benefit's owner (named party) still reads the evidence; so does the TO.
       expect((await download(s.b.s.bo)).status).toBe(200);
@@ -224,7 +220,7 @@ describe("REQ-S13-013: evidence after a BAU handover (ADR-0051 §4 (a)-(e))", ()
       expect((await download(newOwner.session)).status).toBe(200);
       expect(await listIds(newOwner.session)).toContain(evidenceId);
       await revoke(g);
-      expectParentForbidden(await download(newOwner.session, true));
+      expectParentForbidden(await download(newOwner.session));
     } finally {
       await mark("benefit", benefitId, false, 1);
     }
@@ -252,7 +248,7 @@ describe("REQ-S13-013: evidence after a BAU handover (ADR-0051 §4 (a)-(e))", ()
       .executeTakeFirstOrThrow();
     const { token } = await issueDeepLink(api.db, note.id, WORKER);
     const statuses = async () => [
-      (await download(newOwner.session, true)).status,
+      (await download(newOwner.session)).status,
       (await send("GET", `/api/v1/links/${token}`, { session: newOwner.session })).status,
     ];
     expect(await statuses()).toEqual([200, 200]);
