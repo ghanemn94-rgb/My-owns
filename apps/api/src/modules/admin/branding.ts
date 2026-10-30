@@ -6,6 +6,7 @@
 //   PUT  /admin/branding                     putBrandingSettings   (branding.configure; If-Match the head, "0" first)
 //   GET  /admin/branding/versions            listBrandingVersions  (branding.configure; newest first)
 //   GET  /admin/branding/versions/{no}       getBrandingVersion    (branding.configure)
+//   GET  /admin/branding/versions/{no}/contrast getBrandingVersionContrast (branding.configure; P6, ADR-0061 §5)
 //
 // At DG1 the token set was read-only. Since P5 it is editable through Branding Settings: every save publishes a new
 // immutable branding version, and the token route merges the current version's two colours into the static token set
@@ -19,6 +20,13 @@
 // steps it), each with its audit event, and writes one outbox event `branding.published`. No remote I/O inside the
 // transaction.
 //
+// P6 contrast rule (T-DG6-BE-W; ADR-0061 §1, §2, §6; REQ-S15-003): after checkBrandingRules() and BEFORE the
+// transaction, the publish evaluates every declared token pair with the request's two colours (the injected
+// `checkBrandingContrast`, pure) and answers 422 branding.contrast_insufficient with one `errors` item per failing pair
+// when any is below its threshold; nothing is written. Inside the transaction, after the version insert, it writes the
+// version's branding_contrast_report, its pairs in declared order and the audit event branding_contrast_report.recorded
+// (0119 requires the report at COMMIT). Only the declared pairs decide; the prohibited pairs are a build-time check.
+//
 // #0078FF is a provisional brand token, not a verified Mobily colour; colours count as approved only with the approval
 // reference an admin records, and nothing here claims official brand compliance or approves anything. Branding is
 // configuration, never a business approval, and nothing here reads or writes the engineering delivery gates.
@@ -29,12 +37,14 @@ import {
   BRANDING_FONT_ARABIC,
   BRANDING_FONT_LATIN,
   branding as brandingSchema,
+  brandingContrastReport,
   brandingSettings,
   brandingTokens,
   brandingVersion,
   brandingVersionPage,
   freeText,
   type Branding,
+  type BrandingContrastReport,
   type BrandingSettings,
   type BrandingTokens,
   type BrandingVersion,
@@ -67,6 +77,7 @@ import {
   BRANDING_LOGO_URL,
   BRANDING_VERSION_COLUMNS,
   createBrandingReadPort,
+  readContrastReport,
   type BrandingReadPort,
   type CurrentBranding,
 } from "./branding-port.ts";
@@ -77,6 +88,7 @@ const LOGO = "/api/v1/branding/logo";
 const SETTINGS = "/api/v1/admin/branding";
 const VERSIONS = "/api/v1/admin/branding/versions";
 const VERSION = "/api/v1/admin/branding/versions/:versionNo";
+const VERSION_CONTRAST = "/api/v1/admin/branding/versions/:versionNo/contrast";
 const CONFIGURE: Permission = "branding.configure";
 const JSON_BODY = ["application/json"] as const;
 export const BRANDING_PUBLISHED_EVENT = "branding.published";
@@ -95,6 +107,35 @@ export interface BrandingTokenSource {
    */
   readonly derived?: Readonly<Record<string, unknown>>;
   readonly deriveDarkerShade?: (base: string, against: readonly string[], target: number) => string;
+  /**
+   * P6 (ADR-0061 §1.1): every declared contrast pair evaluated with the two branding colours, in declared order, each
+   * with the field its failure is reported on (`@mth/design-tokens` checkBrandingContrast + contrastPointer). Required
+   * when the routes are registered with `deps`: the publish never runs without the contrast rule.
+   */
+  readonly checkBrandingContrast?: (primary: string, secondary: string) => readonly BrandingContrastResult[];
+  /** P6 (ADR-0061 §1.3): the SHA-256 (lower-case hex) of the bytes of the tokens.json the server loaded. */
+  readonly tokenSourceSha256?: string;
+}
+
+/** One evaluated declared pair (the structural view of `@mth/design-tokens` PairResult plus its pointer). */
+export interface BrandingContrastResult {
+  readonly fg: string;
+  readonly bg: string;
+  readonly use: "text" | "large-text" | "ui";
+  readonly note: string;
+  readonly fgHex: string;
+  readonly bgHex: string;
+  /** Rounded down to two decimals (floor2). */
+  readonly ratio: number;
+  readonly threshold: number;
+  readonly pass: boolean;
+  readonly pointer: "/primaryColour" | "/secondaryColour";
+}
+
+/** The contrast members a publish needs (checked once, at registration). */
+interface ContrastRule {
+  readonly check: (primary: string, secondary: string) => readonly BrandingContrastResult[];
+  readonly tokenSourceSha256: string;
 }
 
 interface DerivedSpec {
@@ -152,6 +193,31 @@ export function toBrandingTokens(
 }
 
 // ------------------------------------------------------------------------------------------------ refusals
+/** ADR-0061 §6, verbatim (the same text as platform/db-errors.ts BRANDING_CONTRAST_INSUFFICIENT_DETAIL; a test pins both). */
+export const BRANDING_CONTRAST_INSUFFICIENT_TEXT =
+  "These colours do not meet the contrast rules: at least one text or control combination is below 4.5:1 (3:1 for large text and controls). Nothing was published.";
+/** The stored `numeric(4,2)` ratio text (already rounded down), e.g. "1.40". */
+const ratioText = (ratio: number): string => ratio.toFixed(2);
+/** The stored `numeric(2,1)` threshold text: "4.5" or "3.0". */
+const thresholdText = (threshold: number): string => threshold.toFixed(1);
+/** The closed rule set of a stored report (0113). */
+export const BRANDING_CONTRAST_RULES = "wcag2x-aa-v1";
+export const BRANDING_CONTRAST_REPORT_RECORDED = "branding_contrast_report.recorded";
+
+/**
+ * ADR-0061 §1.2: every declared pair with the request's colours; 422 branding.contrast_insufficient when any fails.
+ * Runs after checkBrandingRules() (so both colours are valid upper-case #RRGGBB) and before the transaction. Returns
+ * the evaluated pairs, which the transaction stores as the version's report.
+ */
+export function checkBrandingContrastRule(
+  rule: Pick<ContrastRule, "check">,
+  body: Pick<BrandingSettingsPutBody, "primaryColour" | "secondaryColour">,
+): readonly BrandingContrastResult[] {
+  const pairs = rule.check(body.primaryColour, body.secondaryColour);
+  const failing = pairs.filter((p) => !p.pass);
+  if (failing.length > 0) throw brandingRefusals.contrastInsufficient(failing);
+  return pairs;
+}
 /** ADR-0049 §11 (exact English texts). */
 export const brandingRefusals = {
   prohibitedClaim: () =>
@@ -181,6 +247,20 @@ export const brandingRefusals = {
       "branding.text_pair_required",
       "Enter the report header and footer in both English and Arabic, or leave both empty.",
     ),
+  /** ADR-0061 §6 (exact English; the field-error message is language-neutral data). */
+  contrastInsufficient: (failing: readonly BrandingContrastResult[]) =>
+    new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "branding.contrast_insufficient",
+      title: "Business rule violated",
+      detail: BRANDING_CONTRAST_INSUFFICIENT_TEXT,
+      errors: failing.map((p) => ({
+        pointer: p.pointer,
+        code: "branding.contrast_pair_below_threshold",
+        message: `${p.fg} / ${p.bg} | ${p.use} | ${ratioText(p.ratio)}:1 < ${thresholdText(p.threshold)}:1`,
+      })),
+    }),
   logoNotFound: () =>
     new HttpProblem({
       status: 404,
@@ -365,7 +445,8 @@ function stale(current: number): HttpProblem {
 // ------------------------------------------------------------------------------------------------ publish
 /**
  * Saves `body` as branding version n+1 of the actor's organization and makes it current (see the header). The caller
- * has checked the body's shape and the §11 rules; the text rules are the database's. Returns the new current branding.
+ * has checked the body's shape, the §11 rules and the contrast rule (`contrast.pairs` are the evaluated declared pairs,
+ * all passing); the text rules are the database's. Returns the new current branding.
  */
 export async function publishBranding(
   tx: Tx,
@@ -374,6 +455,7 @@ export async function publishBranding(
   actor: { userId: string; organizationId: string },
   expected: number,
   body: BrandingSettingsPutBody,
+  contrast: { readonly pairs: readonly BrandingContrastResult[]; readonly tokenSourceSha256: string },
 ): Promise<CurrentBranding> {
   const org = actor.organizationId;
   await sql`SELECT pg_advisory_xact_lock(${ADVISORY_LOCK_CLASSES.brandingPublish}::int, hashtext(${org}::text))`.execute(
@@ -454,6 +536,7 @@ export async function publishBranding(
     reason: body.changeNote ?? null,
     changes: { version_no: { from: current, to: next }, ...Object.fromEntries(changed) },
   });
+  await recordContrastReport(tx, ctx, actor, next, contrast);
 
   let headId: string;
   if (head === undefined) {
@@ -499,6 +582,68 @@ export async function publishBranding(
   return port.current(tx, org);
 }
 
+/**
+ * ADR-0061 §1.3: the version's contrast report, its pairs in declared order (ordinal 1..n) and the audit event
+ * branding_contrast_report.recorded (record id, no version; the after-state of §1.3). Written in the publish
+ * transaction, under the brandingPublish lock the caller holds; 0113 refuses a failing pair, 0119 a version without it.
+ * The audit diff names the token-source digest `design_source_sha256`: audit field names may not contain "token" or
+ * "hash" (@mth/db FORBIDDEN_FIELDS).
+ */
+async function recordContrastReport(
+  tx: Tx,
+  ctx: ReturnType<typeof auditContextOf>,
+  actor: { userId: string; organizationId: string },
+  versionNo: number,
+  contrast: { readonly pairs: readonly BrandingContrastResult[]; readonly tokenSourceSha256: string },
+): Promise<string> {
+  const reportId = uuidv7();
+  await tx
+    .insertInto("branding_contrast_report")
+    .values({
+      id: reportId,
+      organization_id: actor.organizationId,
+      branding_version_no: versionNo,
+      rules: BRANDING_CONTRAST_RULES,
+      token_source_sha256: contrast.tokenSourceSha256,
+      pair_count: contrast.pairs.length,
+      created_by: actor.userId,
+    })
+    .execute();
+  await tx
+    .insertInto("branding_contrast_pair")
+    .values(
+      contrast.pairs.map((p, i) => ({
+        id: uuidv7(),
+        report_id: reportId,
+        ordinal: i + 1,
+        fg_token: p.fg,
+        bg_token: p.bg,
+        use: p.use,
+        fg_hex: p.fgHex,
+        bg_hex: p.bgHex,
+        ratio: ratioText(p.ratio),
+        threshold: thresholdText(p.threshold),
+        usage_note: p.note,
+      })),
+    )
+    .execute();
+  const lowest = contrast.pairs.reduce((min, p) => (p.ratio < min ? p.ratio : min), Number.POSITIVE_INFINITY);
+  await record(tx, ctx, {
+    action: BRANDING_CONTRAST_REPORT_RECORDED,
+    recordType: "branding_contrast_report",
+    recordId: reportId,
+    organizationId: actor.organizationId,
+    changes: {
+      branding_version_no: { from: null, to: versionNo },
+      rules: { from: null, to: BRANDING_CONTRAST_RULES },
+      design_source_sha256: { from: null, to: contrast.tokenSourceSha256 },
+      pair_count: { from: null, to: contrast.pairs.length },
+      lowest_ratio: { from: null, to: ratioText(lowest) },
+    },
+  });
+  return reportId;
+}
+
 // ------------------------------------------------------------------------------------------------ routes
 const noQuery = z.strictObject({});
 const versionParams = z.strictObject({ versionNo: z.coerce.number().int().min(1).max(2_147_483_647) });
@@ -522,6 +667,7 @@ export function registerBrandingRoutes(
   }
   const { db } = deps;
   const port = brandingPortFor(source);
+  const contrast = contrastRuleOf(source);
 
   app.get(TOKENS, { config: { access: { permission: "authenticated" } } }, async (request) => {
     const principal = principalOf(request);
@@ -563,9 +709,14 @@ export function registerBrandingRoutes(
     const expected = ifMatchOrZero(request);
     const body = parseBody(brandingSettingsPutBody, request.body);
     checkBrandingRules(body);
+    // ADR-0061 §1.2: after the §11 rules, before the transaction (pure; the colours are the request's own).
+    const pairs = checkBrandingContrastRule(contrast, body);
     const saved = await db.transaction().execute(async (tx) => {
       const actor = requireConfigure(await refreshPrincipal(tx, request));
-      return publishBranding(tx, port, request, actor, expected, body);
+      return publishBranding(tx, port, request, actor, expected, body, {
+        pairs,
+        tokenSourceSha256: contrast.tokenSourceSha256,
+      });
     });
     const settings = presentSettings(saved);
     reply.header("ETag", etag(settings.version));
@@ -604,6 +755,28 @@ export function registerBrandingRoutes(
     return presentVersion(row);
   });
 
+  // P6 (T-DG6-BE-W; ADR-0061 §5): the version's contrast report; recorded (stored at publish) or not_recorded (a
+  // version published before the P6 rule, evaluated at read time with the same function). ETag of the version.
+  app.get(VERSION_CONTRAST, { config: { access: { permission: CONFIGURE } } }, async (request, reply) => {
+    const { versionNo } = parse(versionParams, request.params, "params");
+    parseQuery(noQuery, request.query);
+    const actor = requireConfigure(principalOf(request));
+    const version = await db
+      .selectFrom("branding_version")
+      .select(["version_no", "primary_colour", "secondary_colour"])
+      .where("organization_id", "=", actor.organizationId)
+      .where("version_no", "=", versionNo)
+      .executeTakeFirst();
+    if (version === undefined) throw problems.notFound();
+    const stored = await readContrastReport(db, actor.organizationId, versionNo);
+    const body =
+      stored === null
+        ? presentEvaluatedContrast(versionNo, contrast.check(version.primary_colour, version.secondary_colour))
+        : presentStoredContrast(versionNo, stored);
+    reply.header("ETag", etag(versionNo));
+    return body;
+  });
+
   return [
     `GET ${TOKENS}`,
     `GET ${CURRENT}`,
@@ -612,7 +785,70 @@ export function registerBrandingRoutes(
     `PUT ${SETTINGS}`,
     `GET ${VERSIONS}`,
     `GET ${VERSION}`,
+    `GET ${VERSION_CONTRAST}`,
   ];
+}
+
+/** The contrast members of the token source; registering the routes without them is a wiring defect (fail closed). */
+function contrastRuleOf(source: BrandingTokenSource): ContrastRule {
+  if (source.checkBrandingContrast === undefined || source.tokenSourceSha256 === undefined)
+    throw new Error("registerBrandingRoutes: the token source needs checkBrandingContrast and tokenSourceSha256");
+  if (!/^[0-9a-f]{64}$/.test(source.tokenSourceSha256))
+    throw new Error("registerBrandingRoutes: tokenSourceSha256 must be 64 lower-case hex digits");
+  return { check: source.checkBrandingContrast, tokenSourceSha256: source.tokenSourceSha256 };
+}
+
+/** A non-negative decimal string with at most two places ("4.5", "12.34") as integer hundredths. */
+function hundredths(decimal: string): number {
+  const m = /^([0-9]+)(?:\.([0-9]{1,2}))?$/.exec(decimal);
+  if (m === null) throw new Error(`not a contrast decimal: ${decimal}`);
+  return Number(m[1]) * 100 + Number((m[2] ?? "").padEnd(2, "0"));
+}
+
+/** A stored report (status recorded; every pair passes by the 0113 rule, so failingCount is 0). */
+function presentStoredContrast(
+  versionNo: number,
+  stored: NonNullable<Awaited<ReturnType<typeof readContrastReport>>>,
+): BrandingContrastReport {
+  // pass is recomputed from the stored decimals, in integer hundredths (no float): never assumed.
+  const pairs = stored.pairs.map((p) => ({ ...p, pass: hundredths(p.ratio) >= hundredths(p.threshold) }));
+  return brandingContrastReport.parse({
+    versionNo,
+    status: "recorded",
+    rules: stored.rules,
+    tokenSourceSha256: stored.tokenSourceSha256,
+    recordedAt: iso(stored.createdAt),
+    pairCount: stored.pairCount,
+    failingCount: pairs.filter((p) => !p.pass).length,
+    pairs,
+  });
+}
+
+/** A version published before the P6 rule, evaluated at read time (status not_recorded; may list failing pairs). */
+function presentEvaluatedContrast(
+  versionNo: number,
+  evaluated: readonly BrandingContrastResult[],
+): BrandingContrastReport {
+  return brandingContrastReport.parse({
+    versionNo,
+    status: "not_recorded",
+    rules: BRANDING_CONTRAST_RULES,
+    tokenSourceSha256: null,
+    recordedAt: null,
+    pairCount: evaluated.length,
+    failingCount: evaluated.filter((p) => !p.pass).length,
+    pairs: evaluated.map((p, i) => ({
+      ordinal: i + 1,
+      fg: p.fg,
+      bg: p.bg,
+      use: p.use,
+      fgHex: p.fgHex,
+      bgHex: p.bgHex,
+      ratio: ratioText(p.ratio),
+      threshold: thresholdText(p.threshold),
+      pass: p.pass,
+    })),
+  });
 }
 
 /** The read port with the token source's version-0 colours (brand.primary, brand.deep). */

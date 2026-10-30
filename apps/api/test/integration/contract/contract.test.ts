@@ -169,6 +169,7 @@ import { exerciseP6BePOperations, P6_MIRRORS_BE_P } from "./p6-exercises-be-p.ts
 import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts";
 import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
 import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
+import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -411,6 +412,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_Q,
   ...P6_MIRRORS_BE_T,
   ...P6_MIRRORS_BE_U,
+  ...P6_MIRRORS_BE_W,
 };
 
 let api: TestApi;
@@ -917,6 +919,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   });
   it("P6 BE-U operations (p6-exercises-be-u.ts)", async () => {
     await exerciseP6BeUOperations(p3());
+  });
+  it("P6 BE-W operations (p6-exercises-be-w.ts)", async () => {
+    await exerciseP6BeWOperations(p3());
   });
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.

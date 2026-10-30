@@ -3724,6 +3724,31 @@ export function mapP6AssistantError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/** ADR-0061 §6 (exact English): the publish refusal of a branding version whose colours fail a declared pair. */
+export const BRANDING_CONTRAST_INSUFFICIENT_DETAIL =
+  "These colours do not meet the contrast rules: at least one text or control combination is below 4.5:1 (3:1 for large text and controls). Nothing was published.";
+
+/**
+ * P6 slice I (T-DG6-BE-W; ADR-0061 §1, §2, §6): the 0113 and 0119 guards of the branding contrast report. The publish
+ * route refuses first (admin/branding.ts, with one `errors` item per failing pair); these are the last-line answers.
+ *   branding_contrast_pair_passes,
+ *   branding_contrast_report_pairs_complete  -> 422 branding.contrast_insufficient (a stored pair always passes; a
+ *                                               report holds exactly its declared pairs)
+ *   branding_version_contrast_required       -> 500, the generic internal problem: the API always writes the report,
+ *                                               so a version without one is a defect, never a user error
+ */
+export function mapP6BrandingContrastError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "branding_contrast_pair_passes":
+    case "branding_contrast_report_pairs_complete":
+      return problems.businessRule("branding.contrast_insufficient", BRANDING_CONTRAST_INSUFFICIENT_DETAIL);
+    case "branding_version_contrast_required":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3773,6 +3798,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p6SavedView !== null) return p6SavedView;
   const p6Assistant = mapP6AssistantError(error); // P6 slice D (T-DG6-BE-T; ADR-0059 §10)
   if (p6Assistant !== null) return p6Assistant;
+  const p6BrandingContrast = mapP6BrandingContrastError(error); // P6 slice I (T-DG6-BE-W; ADR-0061 §2, §6)
+  if (p6BrandingContrast !== null) return p6BrandingContrast;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
