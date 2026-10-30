@@ -13,8 +13,9 @@
 //  - Credentials are SecretRefs ({provider, name}), never values; a string or any other shape is 422
 //    `storage.secret_ref_invalid`, and so is a provider this process has not registered.
 //  - Saving `s3` needs a passing `testStorageSetting` of the same values within the last 15 minutes in this API process
-//    (422 `storage.test_required`). `filesystem` (the environment's own store) needs none.
-//  - The test runs OUTSIDE any transaction, under advisory lock 730307 (a session lock on one connection, so a PUT's
+//    (422 `storage.test_required`). `filesystem` (the environment's own store) needs none, unless the body changes the
+//    s3 values kept with it (they read the earlier s3 files): then those values need a passing test as well.
+//  - The test runs OUTSIDE any transaction, under the `storageSetting` advisory lock class (a session lock on one connection, so a PUT's
 //    transaction lock and a test never interleave): write a probe object, read it back, compare its checksum, check
 //    (s3) that an unauthenticated GET is refused, delete it. Its audit event `storage_setting.tested` holds the outcome
 //    and the check names only. The response never contains a URL, a key, an endpoint or a credential.
@@ -218,21 +219,22 @@ export const storageRefusals = {
 
 /** The s3 values of a body: each credential a SecretRef of a registered provider (422 otherwise). */
 export function checkedS3(input: z.infer<typeof s3Input>, providers: readonly string[], pointer: string): S3Settings {
-  const refs: StorageSecretRef[] = [];
-  for (const field of ["accessKeyRef", "secretKeyRef"] as const) {
-    const ref = storageSecretRef.safeParse(input[field]);
+  const refOf = (value: unknown, field: "accessKeyRef" | "secretKeyRef"): StorageSecretRef => {
+    const ref = storageSecretRef.safeParse(value);
     if (!ref.success || !providers.includes(ref.data.provider))
       throw storageRefusals.secretRefInvalid(`${pointer}/${field}`);
-    refs.push(ref.data);
-  }
+    return ref.data;
+  };
+  const accessKeyRef = refOf(input.accessKeyRef, "accessKeyRef");
+  const secretKeyRef = refOf(input.secretKeyRef, "secretKeyRef");
   return {
     endpoint: input.endpoint,
     region: input.region,
     bucket: input.bucket,
     keyPrefix: input.keyPrefix,
     forcePathStyle: input.forcePathStyle,
-    accessKeyRef: refs[0]!,
-    secretKeyRef: refs[1]!,
+    accessKeyRef,
+    secretKeyRef,
   };
 }
 
@@ -401,7 +403,7 @@ export async function runStorageProbe(
   return { checks: STORAGE_TEST_CHECKS.map((name) => ({ name, outcome: outcomes.get(name)! })), errorCode };
 }
 
-/** Runs `work` holding the 730307 lock as a SESSION lock on one connection: no transaction is open meanwhile. */
+/** Runs `work` holding the `storageSetting` lock as a SESSION lock on one connection: no transaction is open meanwhile. */
 async function underStorageLock<T>(db: Db, work: () => Promise<T>): Promise<T> {
   return db.connection().execute(async (conn) => {
     await sql`SELECT pg_advisory_lock(${ADVISORY_LOCK_CLASSES.storageSetting}::int4, hashtext('storage'))`.execute(
@@ -465,6 +467,17 @@ export function registerStorageAdminRoutes(
       }
       if ((row?.version ?? 0) !== expected) throw versionConflict(row?.version ?? null);
       const before = row ? await options.storage.load(tx) : null;
+      // T-DG6-BE-H2B: s3 values kept with driver filesystem are the ones earlier s3 files are read with, so CHANGING
+      // them needs a passing test too (unchanged values, or none, need none: the filesystem store is the environment's).
+      if (
+        update.driver === "filesystem" &&
+        update.s3 !== null &&
+        (before === null ||
+          before.s3 === null ||
+          options.storage.settingsKey(before.s3) !== options.storage.settingsKey(update.s3)) &&
+        !recentlyPassed(update.s3)
+      )
+        throw storageRefusals.testRequired();
       const me = fresh.userId!;
       const values = {
         driver: update.driver,

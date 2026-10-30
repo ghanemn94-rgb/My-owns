@@ -156,6 +156,7 @@ import { exerciseP6BeDOperations, P6_MIRRORS_BE_D } from "./p6-exercises-be-d.ts
 import { exerciseP6BeEOperations, P6_MIRRORS_BE_E } from "./p6-exercises-be-e.ts";
 import { exerciseP6BeGOperations, P6_MIRRORS_BE_G } from "./p6-exercises-be-g.ts";
 import { exerciseP6BeHOperations, P6_MIRRORS_BE_H } from "./p6-exercises-be-h.ts";
+import { exerciseP6BeH2Operations, P6_MIRRORS_BE_H2 } from "./p6-exercises-be-h2.ts";
 import { exerciseP6BeIOperations, P6_MIRRORS_BE_I } from "./p6-exercises-be-i.ts";
 import { exerciseP6BeJOperations, P6_MIRRORS_BE_J } from "./p6-exercises-be-j.ts";
 import { exerciseP6BeKOperations, P6_MIRRORS_BE_K } from "./p6-exercises-be-k.ts";
@@ -397,6 +398,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_E,
   ...P6_MIRRORS_BE_G,
   ...P6_MIRRORS_BE_H,
+  ...P6_MIRRORS_BE_H2,
   ...P6_MIRRORS_BE_I,
   ...P6_MIRRORS_BE_J,
   ...P6_MIRRORS_BE_K,
@@ -877,6 +879,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P6 BE-H operations (p6-exercises-be-h.ts)", async () => {
     await exerciseP6BeHOperations(p3());
   });
+  it("P6 BE-H2 operations (p6-exercises-be-h2.ts)", async () => {
+    await exerciseP6BeH2Operations(p3());
+  });
   it("P6 BE-I operations (p6-exercises-be-i.ts)", async () => {
     await exerciseP6BeIOperations(p3());
   });
@@ -1086,7 +1091,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // = 413 (the orchestrator reconciles the parallel deltas at merge).
     // W10/W11 merge (orchestrator, measured on the merged tree): BE-N, BE-Q and BE-T add 12 JSON bodies. 411 + 12 = 423;
     // JSON 409 + 12 = 421.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([423, 421, 1]);
+    // T-DG6-BE-H2B (continuing T-DG6-BE-H2): + putStorageSetting, testStorageSetting (2 JSON bodies; getStorageSetting
+    // is a GET). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([425, 423, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);

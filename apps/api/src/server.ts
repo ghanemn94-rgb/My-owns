@@ -54,13 +54,15 @@ import {
   sessionCookieName,
   type OidcService,
 } from "./modules/identity/index.ts";
+import { registerEvidenceModule } from "./modules/evidence/index.ts";
+// BE-H2 (ADR-0054 §2): the driver-selecting evidence store and the storage test's target and setting reads, wired here
+// (the composition root) and injected into admin/storage.ts, which may not import evidence.
 import {
   loadEffectiveStorage,
-  registerEvidenceModule,
   s3SettingsKey,
   SelectingEvidenceStore,
   storageTestTarget,
-} from "./modules/evidence/index.ts";
+} from "./modules/evidence/store.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";

@@ -19,6 +19,7 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { redactText, STORAGE_URL_CENSOR } from "@mth/config";
 import { migrate } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
@@ -232,6 +233,8 @@ describe("REQ-S16-006: driver selection, Administration > Storage", () => {
     for (const leak of [fake.endpoint, "127.0.0.1", "http", BUCKET, "storage-test/", fake.credentials[0]!.accessKeyId])
       expect(text).not.toContain(leak);
     expect(fake.keys(BUCKET)).toEqual([]);
+    // ADR-0053 §4: from now on a URL on the store's host is logged as [storage-url] (the endpoint is registered).
+    expect(redactText(`PUT ${fake.endpoint}/${BUCKET}/hub/x failed`)).toBe(`PUT ${STORAGE_URL_CENSOR} failed`);
     // The anonymous GET the test made was refused by the store (no Authorization header).
     expect(fake.requests.some((r) => r.operation === "Refused" && r.method === "GET")).toBe(true);
     const events = await api.db
@@ -334,6 +337,13 @@ describe("REQ-S16-006: driver selection, Administration > Storage", () => {
   });
 
   it("switching back to filesystem: new uploads are filesystem, the s3 file stays readable (no test needed)", async () => {
+    // Changing the kept s3 values (they read the earlier s3 files) needs a passing test, even with driver filesystem.
+    const changed = await putSetting(
+      { driver: "filesystem", s3: s3Of(fake, { keyPrefix: "untested" }), reason: "Synthetic: changed values" },
+      '"1"',
+    );
+    expect([changed.status, changed.body.code]).toEqual([422, "storage.test_required"]);
+    expect((await settingRow())!.version).toBe(1);
     const res = await putSetting(
       { driver: "filesystem", s3: s3Of(fake), reason: "Synthetic: back to the filesystem" },
       '"1"',
@@ -358,5 +368,25 @@ describe("REQ-S16-006: driver selection, Administration > Storage", () => {
       [2, "filesystem"],
     ]);
     expect((await putSetting({ driver: "filesystem", s3: null, reason: "Synthetic" }, '"1"')).status).toBe(409);
+  });
+
+  it("an unreachable object store is the DG2 503 unavailable for its files: no fallback, no URL (runs last)", async () => {
+    const endpoint = fake.endpoint;
+    await fake.stop();
+    // contract: false for this one call: the DG2 contract of downloadEvidenceContent does not declare the 503 its route
+    // has answered since DG2 for an unavailable store (ADR-0054 §4 keeps it unchanged). Reported to the orchestrator
+    // as a contract need (T-DG6-BE-H2B handback); the problem body is asserted here instead.
+    const res = await call<Body>(api.app, "GET", `${T}/evidence/${s3Item.id}/content`, {
+      session: p.lead.session,
+      contract: false,
+    });
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ code: "unavailable" });
+    expect(JSON.stringify(res.body)).not.toContain(endpoint);
+    expect(res.headers["location"]).toBeUndefined();
+    // The filesystem file is unaffected (each row reads the store that holds it).
+    const fsDownload = await download(fsItem.id);
+    expect(fsDownload.status).toBe(200);
+    expect(bytesOf(fsDownload).equals(fsBytes)).toBe(true);
   });
 });

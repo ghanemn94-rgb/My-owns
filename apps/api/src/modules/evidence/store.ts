@@ -10,6 +10,7 @@
 // driver change affects new uploads only and never strands an earlier file. `s3` chosen through the environment alone
 // (no saved setting with an endpoint, bucket and credential references) makes every s3 content operation 503 (never a
 // silent fallback to another store).
+import { registerRedactedStorageEndpoint } from "@mth/config";
 import type { Db, DbOrTx, StorageSettingTable } from "@mth/db";
 import type { Selectable } from "kysely";
 import type { SecretRef } from "../platform/index.ts";
@@ -203,6 +204,9 @@ export function s3SettingsKey(s3: S3StorageSettings): string {
 
 /** An S3 adapter for these settings, the credentials resolved through the SecretProvider at request time. */
 export function s3EvidenceStoreFor(s3: S3StorageSettings, secrets: SecretResolver): S3EvidenceStore {
+  // T-DG6-BE-H2B (ADR-0053 §4; docs/operations/monitoring.md §6): any URL on the store's host is logged as
+  // "[storage-url]" from now on, for a saved setting and for a tested candidate alike (the set only grows).
+  registerRedactedStorageEndpoint(s3.endpoint);
   return new S3EvidenceStore({
     endpoint: s3.endpoint,
     region: s3.region,
