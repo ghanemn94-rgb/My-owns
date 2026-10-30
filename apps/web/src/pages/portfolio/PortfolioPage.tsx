@@ -8,7 +8,7 @@
 //  - A draft initiative can be created at any time, including before G1 (B0009, ADR-0021 §3).
 //  - The outcome hierarchy is read-only: North Star -> outcome -> KPI -> target -> initiative contribution (B0048).
 //    A missing target value is Unknown, never 0.
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { INITIATIVE_STATUSES, initiativeCreate } from "@mth/shared/schemas";
@@ -21,11 +21,12 @@ import { Unknown } from "../../components/Badges.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
 import { RecordDialog, type FieldSpec } from "../../components/RecordForm.tsx";
-import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
+import { type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section, SectionNav } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
+import { InitiativeRegister } from "./InitiativeRegister.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
-import { formatBusinessDate, formatDecimal } from "../../lib/format.ts";
+import { formatBusinessDate, formatDateTime, formatDecimal } from "../../lib/format.ts";
 import {
   FundingCell,
   InitiativeStatusChip,
@@ -65,15 +66,6 @@ function InitiativeList() {
   const { t } = useTranslation();
   const locale = useLocale();
   const ws = useWorkspace();
-  const statusId = useId();
-  const waveId = useId();
-  const [status, setStatus] = useState("");
-  const [wave, setWave] = useState("");
-  const query: Record<string, string> = {
-    ...(status ? { status } : {}),
-    ...(wave ? { waveId: wave } : {}),
-  };
-  const initiatives = useInitiatives(ws.tid, query);
   const waves = useWaves(ws.tid);
   const ranks = useProposedRanks(ws.tid);
   const { people, byId } = usePeople(ws.tid);
@@ -117,7 +109,8 @@ function InitiativeList() {
       filterText: (i) => statusLabel(t, i),
     },
     {
-      id: "wave",
+      // T-DG6-FE-D: the ids of list-item properties are the saved-view registry keys (waveId, fundingState, …).
+      id: "waveId",
       header: t("portfolio.field.wave"),
       cell: (i) =>
         i.waveId ? (
@@ -165,7 +158,7 @@ function InitiativeList() {
       cell: (i) => <SelectionCell initiative={i} />,
     },
     {
-      id: "funding",
+      id: "fundingState",
       header: t("portfolio.field.funding"),
       cell: (i) => <FundingCell initiative={i} />,
       sortValue: (i) => i.fundingState,
@@ -175,6 +168,17 @@ function InitiativeList() {
       header: t("portfolio.field.warnings"),
       cell: (i) => <WarningList warnings={i.warnings} compact />,
       sortValue: (i) => i.warnings.length,
+    },
+    // T-DG6-FE-D (ADR-0057 §5): the two further server sort keys of listInitiatives, as columns.
+    {
+      id: "plannedEnd",
+      header: t("productivity.register.plannedEnd"),
+      cell: (i) => formatBusinessDate(i.plannedEnd, locale) ?? <span className="muted">{t("common.value.none")}</span>,
+    },
+    {
+      id: "updatedAt",
+      header: t("productivity.register.updatedAt"),
+      cell: (i) => formatDateTime(i.updatedAt, locale),
     },
   ];
 
@@ -213,44 +217,15 @@ function InitiativeList() {
         ) : null
       }
     >
-      <div className="filters" role="group" aria-label={t("portfolio.filter.label")}>
-        <div className="filters__select">
-          <label htmlFor={statusId}>{t("portfolio.filter.status")}</label>
-          <select id={statusId} value={status} onChange={(e) => setStatus(e.target.value)} data-filter="status">
-            <option value="">{t("portfolio.filter.all")}</option>
-            {INITIATIVE_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {t(`portfolio.status.${s}`)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="filters__select">
-          <label htmlFor={waveId}>{t("portfolio.filter.wave")}</label>
-          <select id={waveId} value={wave} onChange={(e) => setWave(e.target.value)} data-filter="wave">
-            <option value="">{t("portfolio.filter.all")}</option>
-            {(waves.data ?? []).map((w) => (
-              <option key={w.id} value={w.id}>
-                {waveName(w, locale) ?? w.code}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <QueryState query={initiatives}>
-        {(list) => (
-          <RegisterTable
-            id="p3-initiatives"
-            caption={t("portfolio.list.title")}
-            rows={list}
-            columns={columns}
-            getRowId={(i) => i.id}
-            emptyTitle={status || wave ? t("portfolio.list.emptyFiltered") : t("portfolio.list.empty")}
-            {...(canEdit ? { emptyBody: t("portfolio.list.emptyBody") } : {})}
-            defaultSort={{ id: "code", dir: "asc" }}
-          />
-        )}
-      </QueryState>
+      {/* T-DG6-FE-D (ADR-0057 §4, §5; REQ-S15-013): server-side sort, filters, paging, chips and saved views. */}
+      <InitiativeRegister
+        tid={ws.tid}
+        caption={t("portfolio.list.title")}
+        columns={columns}
+        waves={waves.data ?? []}
+        people={people}
+        {...(canEdit ? { emptyBody: t("portfolio.list.emptyBody") } : {})}
+      />
       {ext.outcome}
       {creating ? (
         <RecordDialog<Initiative>

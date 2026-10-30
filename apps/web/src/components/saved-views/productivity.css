@@ -1,0 +1,206 @@
+/* P6 slice H screens (T-DG6-FE-D; ADR-0057 §3-§5, §9): saved views, filter chips, contextual help, the search page
+   and the header search box. Design tokens only; logical properties only, so every block mirrors in Arabic RTL.
+   No status colour is used for a view or a chip: their state is a text label (with an icon), never a colour. */
+
+.saved-views {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-2);
+  margin-block-end: var(--mth-space-3);
+}
+.saved-views__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mth-space-2);
+}
+.saved-views__row select {
+  min-inline-size: 12rem;
+  max-inline-size: 100%;
+}
+.saved-views__state,
+.saved-views__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mth-space-2);
+}
+
+.dialog-inline {
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  background: var(--mth-surface-card);
+  padding: var(--mth-space-3);
+  max-inline-size: 32rem;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mth-space-2);
+  margin-block: var(--mth-space-2);
+}
+.filter-chips__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mth-space-1);
+  border: 1px solid var(--mth-border-control);
+  border-radius: 999px;
+  background: var(--mth-surface-selected);
+  color: var(--mth-text-primary);
+  padding-block: 0.15rem;
+  padding-inline: var(--mth-space-3) var(--mth-space-1);
+  font-size: 0.875rem;
+  max-inline-size: 100%;
+}
+.filter-chip__text {
+  overflow-wrap: anywhere;
+}
+.filter-chip__name {
+  font-weight: 600;
+}
+.filter-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mth-text-primary);
+  cursor: pointer;
+}
+.filter-chip__remove:hover {
+  background: var(--mth-surface-card);
+}
+.filter-chip__remove:focus-visible {
+  outline: 2px solid var(--mth-focus-ring);
+  outline-offset: 1px;
+}
+
+.help {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mth-space-2);
+}
+.help__panel {
+  max-inline-size: 40rem;
+  padding: var(--mth-space-3);
+}
+.help__title {
+  margin: 0 0 var(--mth-space-2);
+  font-size: 1.1rem;
+}
+.help__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-3);
+}
+.help__topic-title {
+  margin: 0;
+  font-size: 1rem;
+}
+.help__body {
+  margin-block: var(--mth-space-1);
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-3);
+  margin-block-end: var(--mth-space-3);
+}
+.search-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2);
+}
+.search-form__row input {
+  flex: 1 1 16rem;
+  min-inline-size: 0;
+}
+.search-form__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2) var(--mth-space-4);
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-2) var(--mth-space-3);
+}
+.search-results__list {
+  list-style: none;
+  margin: 0 0 var(--mth-space-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-2);
+}
+.search-hit {
+  padding: var(--mth-space-3);
+}
+.search-hit__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mth-space-2);
+  margin: 0;
+  color: var(--mth-text-secondary);
+}
+.search-hit__title {
+  margin-block: var(--mth-space-1);
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+.search-hit__summary {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.search-hit mark {
+  background: var(--mth-surface-selected);
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.global-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mth-space-1);
+}
+.global-search__input {
+  inline-size: clamp(8rem, 18vw, 16rem);
+  min-block-size: 2rem;
+}
+.global-search__error {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  z-index: 30;
+  background: var(--mth-surface-card);
+  color: var(--mth-feedback-error-fg);
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  padding: var(--mth-space-1) var(--mth-space-2);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+@media (max-width: 40rem) {
+  .global-search__input {
+    inline-size: 7rem;
+  }
+}

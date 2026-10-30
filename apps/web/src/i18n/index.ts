@@ -131,6 +131,10 @@ import enAssistant from "./en/assistant.json" with { type: "json" };
 // Storage, Notifications; the sensitivity panel, the evidence preview and the deep-link landing. Arabic provisional.
 import arAdminP6 from "./ar/adminP6.json" with { type: "json" };
 import enAdminP6 from "./en/adminP6.json" with { type: "json" };
+// P6 slice H (T-DG6-FE-D; ADR-0057): search, saved views, filter chips and contextual help. Its Arabic is provisional
+// (components/saved-views/provisional-ar.ts).
+import arProductivity from "./ar/productivity.json" with { type: "json" };
+import enProductivity from "./en/productivity.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -186,6 +190,7 @@ export const catalogues = {
     access: arAccess,
     assistant: arAssistant,
     adminP6: arAdminP6,
+    productivity: arProductivity,
   },
   en: {
     common: enCommon,
@@ -239,6 +244,7 @@ export const catalogues = {
     access: enAccess,
     assistant: enAssistant,
     adminP6: enAdminP6,
+    productivity: enProductivity,
   },
 } as const;
 
