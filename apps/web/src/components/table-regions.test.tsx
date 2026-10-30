@@ -201,11 +201,9 @@ describe("no bare table wrapper in the web source", () => {
   //  - UserEdit (DG1, the identities of a user): no page-level reflow measurement.
   // GoodOutcomeTest (DG2, Define) left the list in T-DG5-FE-AB1 (F-DG5-149, D-180): its table is in a TableScrollRegion,
   // and p5-record-name-reflow.spec.ts measures Define at 390, 375, 360, 320 px and 200 % text on the real stack.
-  const OUTSIDE_P5_PENDING = [
-    "components/RecordForm.tsx > FormConflict",
-    "components/States.tsx > ConflictPanel",
-    "pages/admin/UsersPage.tsx > UserEdit",
-  ];
+  // T-DG6-FE-D2: FormConflict left the list; it renders components/compare/CompareChanges.tsx, whose compare table is
+  // in a TableScrollRegion.
+  const OUTSIDE_P5_PENDING = ["components/States.tsx > ConflictPanel", "pages/admin/UsersPage.tsx > UserEdit"];
 
   it("every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)", () => {
     const outside: string[] = [];

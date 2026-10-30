@@ -67,6 +67,10 @@ export function MyWorkPage() {
         <Link className="button button--secondary button--small" to="/my-work/delegations">
           <Icon name="dot" /> {t("nav.sub.delegations")}
         </Link>
+        {/* T-DG6-FE-D2 (ADR-0057 §6): the caller's open drafts across transformations. */}
+        <Link className="button button--secondary button--small" to="/my-work/drafts">
+          <Icon name="pencil" /> {t("productivity.drafts.link")}
+        </Link>
         {canReadTransformations ? (
           <Link className="button button--secondary button--small" to="/transformations">
             {t("common.myWork.openTransformations")}

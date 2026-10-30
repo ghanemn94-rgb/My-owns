@@ -208,6 +208,13 @@ describe("Diagnose", () => {
     const conflict = await within(dialog).findByRole("alert");
     expect(conflict.dataset["state"]).toBe("conflict");
     expect(conflict.textContent).toContain("Changed by someone else");
+    // T-DG6-FE-D2 (ADR-0057 §7): the root cause was changed by both, so the user chooses which value to keep; the
+    // current state only they changed is not sent.
+    expect(
+      (within(conflict).getByRole("button", { name: "Re-apply my change on the current version" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    fireEvent.click(within(conflict).getByRole("radio", { name: "Keep mine" }));
     fireEvent.click(within(conflict).getByRole("button", { name: "Re-apply my change on the current version" }));
     await waitFor(() => expect(patches).toBe(2));
     const second = requests.filter((r) => r.method === "PATCH")[1]!;

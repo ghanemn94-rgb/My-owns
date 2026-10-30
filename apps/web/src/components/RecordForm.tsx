@@ -27,6 +27,8 @@ import {
 import { Dialog, Field, issueCode } from "./Form.tsx";
 import { Icon } from "./Icon.tsx";
 import type { Person } from "./People.tsx";
+// T-DG6-FE-D2 (ADR-0057 §7): the 409 panel is the three-way compare and reapply.
+import { CompareChanges } from "./compare/CompareChanges.tsx";
 
 export type FieldKind =
   | "text"
@@ -179,6 +181,11 @@ export interface RecordFormProps<R> {
    * field errors (e.g. ["portfolio"] for `initiative.read_only`); then the shared `problems.*` catalogue as before.
    */
   readonly namespaces?: readonly string[];
+  /**
+   * T-DG6-FE-D2 (ADR-0057 §6): the values of a restored draft, applied over the record's values when the form opens.
+   * The base stays the record as loaded, so only the draft's differences are sent, with If-Match of that record.
+   */
+  readonly initialValues?: Readonly<Partial<FormValues>>;
 }
 
 /** `<ns>.problem.<code>` of the first namespace that translates the code ("a.b" -> "a__b"), or "". */
@@ -206,9 +213,13 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
   const { fields, record } = props;
   const idempotencyKey = useRef(newIdempotencyKey());
   const [base, setBase] = useState(record);
-  const [values, setValues] = useState<FormValues>(() =>
-    formValuesOf(fields, (record as Record<string, unknown> | null) ?? props.defaults ?? null),
-  );
+  const [values, setValues] = useState<FormValues>(() => {
+    const loaded = formValuesOf(fields, (record as Record<string, unknown> | null) ?? props.defaults ?? null);
+    // T-DG6-FE-D2: a restored draft's values (only fields of this form).
+    for (const [k, v] of Object.entries(props.initialValues ?? {}))
+      if (v !== undefined && fields.some((f) => f.name === k)) loaded[k] = v;
+    return loaded;
+  });
   // FE12: field and form-level errors are held as *codes* and translated at render time, so a message that is visible
   // while the user switches language follows the new language. The hook still returns translated `errors`/`unmapped`.
   const [errorCodes, setErrors] = useState<Record<string, string>>({});
@@ -396,13 +407,17 @@ export function useRecordForm<R extends Record<string, unknown>>(props: RecordFo
     base,
     formRef,
     submit: () => send(values, base),
-    reapply: () => {
+    /**
+     * The user's own changes, relative to the version they edited, go on top of the current version. With `keys`
+     * (T-DG6-FE-D2, ADR-0057 §7: my changes plus the conflicts resolved "mine") only those fields are re-applied; a
+     * field only the other user changed is never sent.
+     */
+    reapply: (keys?: readonly string[]) => {
       const latest = conflict?.latest ?? null;
       if (!latest) return;
-      // The user's own changes, relative to the version they edited, go on top of the current version.
       const mine = payloadFor(values, base);
       const merged = { ...formValuesOf(fields, latest as Record<string, unknown>) };
-      for (const f of fields) if (f.name in mine) merged[f.name] = values[f.name]!;
+      for (const f of fields) if (f.name in mine && (!keys || keys.includes(f.name))) merged[f.name] = values[f.name]!;
       setBase(latest);
       setValues(merged);
       setConflict(null);
@@ -612,64 +627,35 @@ function withCurrent(options: FieldOption[], current: string, outsideLabel: stri
   return [...options, { value: current, label: outsideLabel }];
 }
 
-/** Conflict panel of a record form: nothing saved; compare; re-apply or discard. */
+/**
+ * Conflict panel of a record form: nothing saved; the three-way compare (T-DG6-FE-D2, ADR-0057 §7: my changes, their
+ * changes, changed by both with a choice each); reapply sends only my changes on the current version, or discard.
+ */
 export function FormConflict({ form, fields }: { form: FormState; fields: readonly FieldSpec[] }) {
   const { t } = form;
   if (!form.conflict) return null;
   const latest = form.conflict.latest as Record<string, unknown> | null;
-  const latestValues = latest ? formValuesOf(fields, latest) : null;
-  const display = (f: FieldSpec, v: FormValue | undefined) => {
+  const display = (f: FieldSpec, v: unknown) => {
     if (f.kind === "checkbox") return v === true ? t("common.answer.yes") : t("common.answer.no");
     if (f.kind === "tristate")
       return v === "yes" ? t("common.answer.yes") : v === "no" ? t("common.answer.no") : t("common.answer.notAssessed");
     const s = typeof v === "string" ? v : "";
-    if (!s) return t("common.value.none");
+    if (!s) return "";
     return f.options?.find((o) => o.value === s)?.label ?? s;
   };
-  const rows = latestValues ? fields.filter((f) => !same(form.values[f.name], latestValues[f.name])) : [];
+  const editable = fields.filter((f) => !f.readOnly && !f.createOnly);
   return (
-    <section className="banner banner--warning conflict" role="alert" data-state="conflict">
-      <h3 className="conflict__title">
-        <Icon name="alert" /> {t("common.conflict.title")}
-      </h3>
-      <p>
-        {t("common.conflict.body", {
-          yours: form.base?.version ?? t("common.value.unknown"),
-          current: form.conflict.currentVersion ?? t("common.value.unknown"),
-        })}
-      </p>
-      {rows.length > 0 ? (
-        <table className="table table--compact">
-          <caption>{t("common.conflict.compareCaption")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("common.conflict.field")}</th>
-              <th scope="col">{t("common.conflict.mine")}</th>
-              <th scope="col">{t("common.conflict.current")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((f) => (
-              <tr key={f.name}>
-                <th scope="row">{f.label}</th>
-                <td>{display(f, form.values[f.name])}</td>
-                <td>{display(f, latestValues?.[f.name])}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : null}
-      <div className="form__actions">
-        {latest ? (
-          <button type="button" className="button button--primary" onClick={form.reapply} disabled={form.busy}>
-            {t("common.conflict.reapply")}
-          </button>
-        ) : null}
-        <button type="button" className="button button--secondary" onClick={form.discard} disabled={form.busy}>
-          {t("common.conflict.discard")}
-        </button>
-      </div>
-    </section>
+    <CompareChanges
+      fields={editable.map((f) => ({ key: f.name, label: f.label, display: (v) => display(f, v) }))}
+      base={formValuesOf(fields, (form.base as Record<string, unknown> | null) ?? null)}
+      mine={form.values}
+      current={latest ? formValuesOf(fields, latest) : null}
+      yourVersion={form.base?.version ?? null}
+      currentVersion={form.conflict.currentVersion}
+      busy={form.busy}
+      onReapply={(keys) => form.reapply(keys)}
+      onDiscard={form.discard}
+    />
   );
 }
 
