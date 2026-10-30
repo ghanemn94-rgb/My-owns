@@ -1,0 +1,254 @@
+/* The optional assistant panel (T-DG6-FE-E; ADR-0059 §1). Design tokens only, logical properties only, so the panel
+   mirrors in Arabic RTL. Assistant output sits in a visually distinct container: a dashed info-coloured border with
+   its text label, never the record field styling and never a status colour. */
+
+.assistant-launcher {
+  white-space: nowrap;
+}
+
+.assistant-panel {
+  position: fixed;
+  /* Below the header row, so the language switch and sign-out stay reachable while the panel is open. */
+  inset-block-start: 3.5rem;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  z-index: 40;
+  inline-size: min(28rem, 100vw);
+  overflow-y: auto;
+  padding: var(--mth-space-4);
+  background: var(--mth-surface-card);
+  color: var(--mth-text-primary);
+  border-inline-start: 1px solid var(--mth-border-default);
+  box-shadow: var(--mth-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-3);
+}
+
+.assistant-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mth-space-2);
+}
+
+.assistant-panel__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.assistant-panel__title:focus-visible {
+  outline: 3px solid var(--mth-focus-ring);
+  outline-offset: 2px;
+}
+
+.assistant-panel__subtitle {
+  margin-block: var(--mth-space-2);
+  font-size: 1rem;
+}
+
+.assistant-new,
+.assistant-composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-2);
+  align-items: flex-start;
+}
+
+.assistant-new .field,
+.assistant-composer .field {
+  inline-size: 100%;
+}
+
+.assistant-list__items,
+.assistant-messages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-2);
+}
+
+.assistant-list__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  inline-size: 100%;
+  padding: var(--mth-space-2) var(--mth-space-3);
+  background: var(--mth-surface-page);
+  color: var(--mth-text-primary);
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+}
+
+.assistant-list__item:hover {
+  background: var(--mth-surface-selected);
+}
+
+.assistant-list__item:focus-visible,
+.assistant-chip:focus-visible {
+  outline: 3px solid var(--mth-focus-ring);
+  outline-offset: 2px;
+}
+
+.assistant-list__title {
+  font-weight: 600;
+}
+
+.assistant-conversation__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mth-space-1);
+}
+
+.assistant-message--user {
+  align-self: flex-end;
+  max-inline-size: 90%;
+  padding: var(--mth-space-2) var(--mth-space-3);
+  background: var(--mth-surface-page);
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+}
+
+.assistant-message__author {
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  gap: var(--mth-space-2);
+  align-items: center;
+}
+
+/* The labelled container of every assistant output. */
+.assistant-output {
+  padding: var(--mth-space-2) var(--mth-space-3);
+  background: var(--mth-feedback-info-bg);
+  color: var(--mth-text-primary);
+  border: 2px dashed var(--mth-feedback-info-fg);
+  border-radius: var(--mth-radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-2);
+}
+
+.assistant-output__label {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--mth-feedback-info-fg);
+  display: flex;
+  gap: var(--mth-space-1);
+  align-items: center;
+}
+
+.assistant-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.assistant-citations__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.assistant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mth-space-1);
+  padding-block: 2px;
+  padding-inline: var(--mth-space-2);
+  border: 1px solid var(--mth-border-control);
+  border-radius: 999px;
+  background: var(--mth-surface-card);
+  color: var(--mth-text-primary);
+  font-size: 0.875rem;
+}
+
+.assistant-chip--static {
+  color: var(--mth-text-secondary);
+}
+
+.assistant-suggestion {
+  padding: var(--mth-space-2) var(--mth-space-3);
+  background: var(--mth-surface-card);
+  border: 1px solid var(--mth-border-default);
+  border-radius: var(--mth-radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-2);
+}
+
+.assistant-suggestion__title {
+  margin: 0;
+  font-size: 0.95rem;
+  display: flex;
+  gap: var(--mth-space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.assistant-suggestion__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mth-space-2);
+}
+
+.assistant-fields {
+  margin: 0;
+}
+
+.assistant-fields dt {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.assistant-fields dd {
+  margin-inline-start: 0;
+  margin-block-end: var(--mth-space-2);
+}
+
+/* Administration > AI assistant */
+.assistant-admin__facts {
+  display: grid;
+  grid-template-columns: minmax(10rem, max-content) 1fr;
+  gap: var(--mth-space-2) var(--mth-space-4);
+  margin: 0;
+}
+
+.assistant-admin__facts dt {
+  font-weight: 600;
+}
+
+.assistant-admin__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.assistant-admin__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mth-space-3);
+  max-inline-size: 40rem;
+}
+
+.assistant-admin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2);
+}
+
+@media (max-width: 40rem) {
+  .assistant-panel {
+    inset-block-start: 0;
+  }
+
+  .assistant-admin__facts {
+    grid-template-columns: 1fr;
+  }
+}

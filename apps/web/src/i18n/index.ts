@@ -123,6 +123,10 @@ import enPlaybookP5 from "./en/playbookP5.json" with { type: "json" };
 // All Arabic of the P6 blocks (here, nav, problems, myWork) is provisional: see ./provisional-ar-p6.ts (JSON has no comments).
 import arAccess from "./ar/access.json" with { type: "json" };
 import enAccess from "./en/access.json" with { type: "json" };
+// P6 slice D (T-DG6-FE-E; ADR-0059): the optional assistant panel and Administration > AI assistant. Its Arabic is
+// provisional (components/assistant/provisional-ar.ts; ADR-0059 §1, §8, §10).
+import arAssistant from "./ar/assistant.json" with { type: "json" };
+import enAssistant from "./en/assistant.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -176,6 +180,7 @@ export const catalogues = {
     launchHealthP5: arLaunchHealthP5,
     playbookP5: arPlaybookP5,
     access: arAccess,
+    assistant: arAssistant,
   },
   en: {
     common: enCommon,
@@ -227,6 +232,7 @@ export const catalogues = {
     launchHealthP5: enLaunchHealthP5,
     playbookP5: enPlaybookP5,
     access: enAccess,
+    assistant: enAssistant,
   },
 } as const;
 

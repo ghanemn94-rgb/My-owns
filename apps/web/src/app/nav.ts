@@ -224,7 +224,9 @@ export interface NavSubPage {
     // T-DG5-FE-F: the health check scoring schemes (REQ-S14-003; Administration > Playbook Studio > Health check scoring).
     | "healthSchemes"
     // T-DG6-FE-A: the P6 Administration screens of FE-B (P6_SUBPAGES), "not available yet" until FE-B builds them.
-    | P6SubPageId;
+    | P6SubPageId
+    // T-DG6-FE-E: Administration > AI assistant (ADR-0059 §3).
+    | "assistant";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -454,6 +456,13 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "healthSchemes", area: "admin", path: "/admin/health-schemes", requiresAny: ["methodology.read"] },
   // T-DG6-FE-A: the P6 Administration screens, appended after the P5 entries.
   ...P6_SUBPAGES,
+  // T-DG6-FE-E (ADR-0059 §3, §10): Administration > AI assistant; read with assistant.configure or operations.read.
+  {
+    id: "assistant",
+    area: "admin",
+    path: "/admin/assistant",
+    requiresAny: ["assistant.configure", "operations.read"],
+  },
 ];
 
 /**
