@@ -1070,7 +1070,17 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // operational exception (2 JSON bodies). 403 + 2 = 405.
     // T-DG6-BE-L2: + runConnector, retryIntegrationRun (2 JSON bodies; listIntegrationRuns and getIntegrationRun are
     // GETs). 405 + 2 = 407 (the orchestrator reconciles the parallel W9 deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([407, 406, 1]);
+    // T-DG6-BE-M2: + createImport (text/csv and the XLSX media type: the first non-JSON, non-octet-stream request
+    // bodies), commitImport, cancelImport (2 JSON bodies; the five other import operations are GETs). 407 + 3 = 410;
+    // JSON 406 + 2 = 408 (the orchestrator reconciles the parallel W10 deltas at merge).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([410, 408, 1]);
+    expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
+      1, 1,
+    ]);
+    expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "createImport")!)).toEqual([
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/csv",
+    ]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
