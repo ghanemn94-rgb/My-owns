@@ -404,6 +404,19 @@ async function lockSeries(
   );
 }
 
+/**
+ * Rows per multi-row INSERT of a snapshot's children (T-DG6-BE-S). 500 rows of at most 11 columns stay far below
+ * PostgreSQL's 65,535 bind parameters per statement.
+ */
+export const INSERT_BATCH = 500;
+
+/** Splits rows into consecutive chunks of at most INSERT_BATCH, in order (no empty chunk). */
+export function batches<T>(rows: readonly T[], size: number = INSERT_BATCH): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
 /** Inserts a generated snapshot and its captured children; one audit event (the children are covered by it, RC01). */
 async function insertSnapshot(
   tx: Tx,
@@ -446,31 +459,32 @@ async function insertSnapshot(
     .executeTakeFirstOrThrow();
   const base = { organization_id: r.organizationId, transformation_id: r.transformation.id, snapshot_id: id };
   // Sources: one row per record (UNIQUE per snapshot and record; a record used by two sections keeps its first).
+  // Written in multi-row INSERTs of at most INSERT_BATCH rows (T-DG6-BE-S, DO-F run-1: one INSERT per row was the
+  // largest cost of a live-selection createExport); the rows, their ids' order and the triggers they fire are unchanged.
   const seen = new Set<string>();
+  const sourceRows = [];
   for (const s of a.output.sources) {
     const k = `${s.recordType}:${s.recordId}`;
     if (seen.has(k)) continue;
     seen.add(k);
-    await tx
-      .insertInto("report_snapshot_source")
-      .values({
-        ...base,
-        id: uuidv7(),
-        section_key: s.sectionKey,
-        record_type: s.recordType,
-        record_id: s.recordId,
-        record_version: s.recordVersion,
-        record_updated_at:
-          s.recordUpdatedAt === null
-            ? null
-            : s.recordUpdatedAt instanceof Date
-              ? iso(s.recordUpdatedAt)
-              : s.recordUpdatedAt,
-        approval_state: s.approvalState,
-        validation_state: s.validationState,
-      })
-      .execute();
+    sourceRows.push({
+      ...base,
+      id: uuidv7(),
+      section_key: s.sectionKey,
+      record_type: s.recordType,
+      record_id: s.recordId,
+      record_version: s.recordVersion,
+      record_updated_at:
+        s.recordUpdatedAt === null
+          ? null
+          : s.recordUpdatedAt instanceof Date
+            ? iso(s.recordUpdatedAt)
+            : s.recordUpdatedAt,
+      approval_state: s.approvalState,
+      validation_state: s.validationState,
+    });
   }
+  for (const chunk of batches(sourceRows)) await tx.insertInto("report_snapshot_source").values(chunk).execute();
   // Versions: the methodology version always; then the assembler's configuration and calculation versions.
   const versions = [
     {
@@ -482,41 +496,39 @@ async function insertSnapshot(
     ...a.output.versions,
   ];
   const seenVersion = new Set<string>();
+  const versionRows = [];
   for (const v of versions) {
     const k = `${v.versionKind}:${v.referenceKey}`;
     if (seenVersion.has(k)) continue;
     seenVersion.add(k);
-    await tx
-      .insertInto("report_snapshot_version")
-      .values({
-        ...base,
-        id: uuidv7(),
-        version_kind: v.versionKind,
-        reference_id: v.referenceId,
-        reference_key: v.referenceKey,
-        version_label: v.versionLabel,
-      })
-      .execute();
+    versionRows.push({
+      ...base,
+      id: uuidv7(),
+      version_kind: v.versionKind,
+      reference_id: v.referenceId,
+      reference_key: v.referenceKey,
+      version_label: v.versionLabel,
+    });
   }
+  for (const chunk of batches(versionRows)) await tx.insertInto("report_snapshot_version").values(chunk).execute();
   const seenEvidence = new Set<string>();
+  const evidenceRows = [];
   for (const e of a.output.evidence) {
     const k = `${e.sectionKey}:${e.evidenceId}`;
     if (seenEvidence.has(k)) continue;
     seenEvidence.add(k);
-    await tx
-      .insertInto("report_snapshot_evidence")
-      .values({
-        ...base,
-        id: uuidv7(),
-        section_key: e.sectionKey,
-        evidence_id: e.evidenceId,
-        content_id: e.contentId,
-        content_revision: e.contentRevision,
-        content_sha256: e.contentSha256,
-        review_status: e.reviewStatus,
-      })
-      .execute();
+    evidenceRows.push({
+      ...base,
+      id: uuidv7(),
+      section_key: e.sectionKey,
+      evidence_id: e.evidenceId,
+      content_id: e.contentId,
+      content_revision: e.contentRevision,
+      content_sha256: e.contentSha256,
+      review_status: e.reviewStatus,
+    });
   }
+  for (const chunk of batches(evidenceRows)) await tx.insertInto("report_snapshot_evidence").values(chunk).execute();
   await record(tx, auditContextOf(request), {
     action: reissue === null ? "report_snapshot.generate" : "report_snapshot.reissue",
     recordType: "report_snapshot",

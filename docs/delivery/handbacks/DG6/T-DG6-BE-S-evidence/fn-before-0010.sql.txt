@@ -1,0 +1,17 @@
+CREATE OR REPLACE FUNCTION p2_audit_required() RETURNS trigger
+LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+DECLARE
+  n jsonb := to_jsonb(NEW);
+  rid uuid := (n->>'id')::uuid;
+  v integer := (n->>'version')::integer; -- NULL for tables without a version column
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM audit_event a
+    WHERE a.record_type = TG_TABLE_NAME AND a.record_id = rid AND (v IS NULL OR a.new_version = v)
+  ) THEN
+    RAISE EXCEPTION 'no audit_event for % % at version % (ADR-0004: every mutation writes its audit event in the same transaction)',
+      TG_TABLE_NAME, rid, coalesce(v::text, '-')
+      USING ERRCODE = 'integrity_constraint_violation', CONSTRAINT = TG_TABLE_NAME || '_audit_required';
+  END IF;
+  RETURN NULL;
+END $$;
