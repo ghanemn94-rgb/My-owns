@@ -21,6 +21,12 @@ import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { APP_ORIGIN, call, seedWorld, startApi, type TestApi, type World } from "../support/harness.ts";
 import { setupP2World, type P2World } from "../support/p2-fixtures.ts";
 
+/**
+ * T-DG6-BE-D (ADR-0052 §1): uploads pass the allow-list by magic bytes plus extension, so a synthetic binary body is a
+ * PDF (`%PDF-` then random bytes, exactly `n` bytes, n >= 5) named `.pdf`; every byte after the signature stays random.
+ */
+const pdfBytes = (n: number): Buffer => Buffer.concat([Buffer.from("%PDF-", "latin1"), randomBytes(n - 5)]);
+
 const MiB = 1024 * 1024;
 /** main.ts: DEFAULT_SHUTDOWN_GRACE_MS (5 s) + 5 s = the backstop that bounds the whole shutdown. */
 const GRACE_MS = 5_000;
@@ -163,7 +169,7 @@ function uploadHead(evidenceId: string, version: number, length: number): Buffer
     `Origin: ${APP_ORIGIN}`,
     `X-CSRF-Token: ${p.lead.session.csrf}`,
     `If-Match: "${version}"`,
-    "X-File-Name: synthetic-shutdown.bin",
+    "X-File-Name: synthetic-shutdown.pdf",
     "Content-Type: application/octet-stream",
     `Content-Length: ${length}`,
   ];
@@ -192,7 +198,7 @@ describe("F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no
       const f = await newFile("Synthetic stalled upload at SIGTERM");
       const client = await openClient(api.port);
       client.socket.write(uploadHead(f.id, f.version, 10 * MiB));
-      client.socket.write(randomBytes(2 * MiB));
+      client.socket.write(pdfBytes(2 * MiB));
       // The upload is in flight: its temporary object holds the 2 MiB received so far.
       const received = await waitFor(() => filesUnder(store).some((x) => x.endsWith(`.part (${2 * MiB} B)`)), 10_000);
       const during = filesUnder(store);
@@ -226,7 +232,7 @@ describe("F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no
       // ~1.25 MiB/s: the 25 MiB body cannot finish within the 5 s grace, so the server must cut it.
       let sent = 0;
       const pump = (async () => {
-        const piece = randomBytes(64 * 1024);
+        const piece = pdfBytes(64 * 1024);
         while (streaming && !client.closed() && sent + piece.length <= 25 * MiB) {
           client.socket.write(piece);
           sent += piece.length;
@@ -265,7 +271,7 @@ describe("F-DG2-460: SIGTERM with an upload in flight leaves no temporary and no
     try {
       const f = await newFile("Synthetic completed upload before SIGTERM");
       const client = await openClient(api.port);
-      const bytes = randomBytes(MiB);
+      const bytes = pdfBytes(MiB);
       client.socket.write(uploadHead(f.id, f.version, bytes.length));
       client.socket.write(bytes);
       expect(await waitFor(() => client.text().startsWith("HTTP/1.1 "), 10_000)).toBe(true);

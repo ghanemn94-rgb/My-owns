@@ -50,6 +50,11 @@ afterAll(() => api.close());
 
 /** The round-8 repro bytes: "Syn", FF, C3, LF, a CESU-8 lone surrogate (ED A0 80), "A" - not UTF-8. */
 const ILL_FORMED = Buffer.from([0x53, 0x79, 0x6e, 0xff, 0xc3, 0x0a, 0xed, 0xa0, 0x80, 0x41]);
+/**
+ * T-DG6-BE-D (ADR-0052 §1): a stored upload passes the allow-list by magic bytes plus extension, so the byte-exact
+ * octet-stream case sends ILL_FORMED behind a PDF signature, named `.pdf` (still not valid UTF-8 anywhere after it).
+ */
+const ILL_FORMED_PDF = Buffer.concat([Buffer.from("%PDF-", "latin1"), ILL_FORMED]);
 
 type Framing = "content-length" | "chunked";
 const FRAMINGS: readonly Framing[] = ["content-length", "chunked"];
@@ -237,25 +242,25 @@ describe("uploadEvidenceContent accepts only application/octet-stream (F-DG2-320
         "POST",
         `${T}/evidence/${item.id}/content`,
         "application/octet-stream",
-        ILL_FORMED,
+        ILL_FORMED_PDF,
         framing,
         {
           ...ifm(item.version),
-          "x-file-name": "synthetic.bin",
+          "x-file-name": "synthetic.pdf",
         },
       );
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       const rows = await contentRows(item.id);
       expect(rows).toHaveLength(1);
-      expect(rows[0]!.sha256).toBe(createHash("sha256").update(ILL_FORMED).digest("hex"));
-      expect(Number(rows[0]!.size_bytes)).toBe(ILL_FORMED.length);
+      expect(rows[0]!.sha256).toBe(createHash("sha256").update(ILL_FORMED_PDF).digest("hex"));
+      expect(Number(rows[0]!.size_bytes)).toBe(ILL_FORMED_PDF.length);
       const download = await api.app.inject({
         method: "GET",
         url: `${T}/evidence/${item.id}/content`,
         headers: { cookie: p.lead.session.cookie },
       });
       expect(download.statusCode).toBe(200);
-      expect(download.rawPayload.equals(ILL_FORMED)).toBe(true);
+      expect(download.rawPayload.equals(ILL_FORMED_PDF)).toBe(true);
       // Positive control for the "nothing stored" helper used above: the stored object is visible to it.
       expect(storedFilesOf(item.id)).toHaveLength(1);
       // A charset parameter does not change the media type: still stored byte for byte.
@@ -263,13 +268,13 @@ describe("uploadEvidenceContent accepts only application/octet-stream (F-DG2-320
         "POST",
         `${T}/evidence/${item.id}/content`,
         "Application/Octet-Stream; charset=utf-8",
-        ILL_FORMED,
+        ILL_FORMED_PDF,
         framing,
-        { ...ifm(res.body.version), "x-file-name": "synthetic.bin" },
+        { ...ifm(res.body.version), "x-file-name": "synthetic.pdf" },
       );
       expect(again.status, JSON.stringify(again.body)).toBe(200);
       const latest = (await contentRows(item.id)).sort((a, b) => b.revision - a.revision)[0]!;
-      expect(latest.sha256).toBe(createHash("sha256").update(ILL_FORMED).digest("hex"));
+      expect(latest.sha256).toBe(createHash("sha256").update(ILL_FORMED_PDF).digest("hex"));
     }
   });
 
@@ -563,16 +568,16 @@ describe("the media-type check and the parser lookup agree for every spelling (F
         "POST",
         `${T}/evidence/${item.id}/content`,
         "application/octet-stream\t; x=1",
-        ILL_FORMED,
+        ILL_FORMED_PDF,
         framing,
         {
           ...ifm(item.version),
-          "x-file-name": "s11.bin",
+          "x-file-name": "s11.pdf",
         },
       );
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       const rows = await contentRows(item.id);
-      expect(rows.map((r) => r.sha256)).toEqual([sha256(ILL_FORMED)]);
+      expect(rows.map((r) => r.sha256)).toEqual([sha256(ILL_FORMED_PDF)]);
     }
   });
 
@@ -601,22 +606,22 @@ describe("the media-type check and the parser lookup agree for every spelling (F
     for (const ct of OCTET_SPELLINGS)
       for (const framing of FRAMINGS) {
         const item = await newFileEvidence(`Synthetic OWS upload ${framing}`);
-        const res = await rawCall("POST", `${T}/evidence/${item.id}/content`, ct, ILL_FORMED, framing, {
+        const res = await rawCall("POST", `${T}/evidence/${item.id}/content`, ct, ILL_FORMED_PDF, framing, {
           ...ifm(item.version),
-          "x-file-name": "ows.bin",
+          "x-file-name": "ows.pdf",
         });
         expect([ct, framing, res.status], JSON.stringify(res.body)).toEqual([ct, framing, 200]);
         const rows = await contentRows(item.id);
         expect([ct, rows.map((r) => [r.sha256, Number(r.size_bytes)])]).toEqual([
           ct,
-          [[sha256(ILL_FORMED), ILL_FORMED.length]],
+          [[sha256(ILL_FORMED_PDF), ILL_FORMED_PDF.length]],
         ]);
         const download = await api.app.inject({
           method: "GET",
           url: `${T}/evidence/${item.id}/content`,
           headers: { cookie: p.lead.session.cookie },
         });
-        expect(download.rawPayload.equals(ILL_FORMED)).toBe(true);
+        expect(download.rawPayload.equals(ILL_FORMED_PDF)).toBe(true);
       }
   });
 
@@ -705,14 +710,14 @@ describe("on a real socket (T-DG2-BE15B)", () => {
     const up = parseRaw(
       await rawSocket(
         port,
-        rawRequest("POST", `${T}/evidence/${item.id}/content`, ["application/octet-stream\t; x=1"], ILL_FORMED, {
+        rawRequest("POST", `${T}/evidence/${item.id}/content`, ["application/octet-stream\t; x=1"], ILL_FORMED_PDF, {
           "If-Match": ifm(item.version)["if-match"]!,
-          "X-File-Name": "s11.bin",
+          "X-File-Name": "s11.pdf",
         }),
       ),
     );
     expect(up.statuses, JSON.stringify(up.body)).toEqual(["200"]);
-    expect((await contentRows(item.id)).map((r) => r.sha256)).toEqual([sha256(ILL_FORMED)]);
+    expect((await contentRows(item.id)).map((r) => r.sha256)).toEqual([sha256(ILL_FORMED_PDF)]);
     const title = "Synthetic S11 real socket note ملاحظة";
     const note = Buffer.from(JSON.stringify({ ownerUserId: p.lead.id, kind: "note", title, noteBody: "x" }));
     const created = parseRaw(
