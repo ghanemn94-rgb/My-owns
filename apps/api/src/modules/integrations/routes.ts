@@ -96,6 +96,23 @@ import {
   webhookRotate,
   toWebhookEndpoint,
 } from "./webhooks.ts";
+import {
+  checkPayload,
+  confirmOutboundWrite,
+  executeOutboundWrite,
+  findOutboundWrite,
+  listOutboundWrites,
+  OUTBOUND_STATUSES,
+  OUTBOUND_WRITE_EXECUTE,
+  OUTBOUND_WRITE_READ,
+  outboundWriteConfirm,
+  outboundWriteExecute,
+  requireExecuteSubjects,
+  requireOutboundExecute,
+  requireOutboundRead,
+  toOutboundWrite,
+  toOutboundWriteDetail,
+} from "./outbound.ts";
 
 const JSON_BODY = ["application/json"] as const;
 
@@ -811,6 +828,103 @@ function registerWebhookRoutes(app: FastifyInstance, { db }: ModuleDeps): string
   ];
 }
 
+// ------------------------------------------------------------------------------------------------ BE-N2: outbound writes
+// T-DG6-BE-N2 (ADR-0055 §5, §9, §10; REQ-S17-006):
+//   GET  /api/v1/transformations/{transformationId}/outbound-writes                    listOutboundWrites    (outbound_write.read)
+//   POST /api/v1/transformations/{transformationId}/outbound-writes                    executeOutboundWrite  (outbound_write.execute;
+//                                                                                      the idempotency key in the body)
+//   GET  /api/v1/transformations/{transformationId}/outbound-writes/{writeId}          getOutboundWrite      (outbound_write.read)
+//   POST /api/v1/transformations/{transformationId}/outbound-writes/{writeId}/confirm  confirmOutboundWrite  (outbound_write.execute;
+//                                                                                      If-Match)
+// Order in both mutations: 400 body (and the payload rules), 404 read gate, 403 execute gate, 404 subjects (execute) or
+// write (confirm), 428/400 If-Match (confirm), then transaction 1 (the outboundWrite lock, commit-time re-check, replay
+// or 409/422 refusals, or 409 final/version), the adapter call outside any transaction, and transaction 2 (the
+// answer and its audit event). executeOutboundWrite has no If-Match: it creates, and its idempotency key is the
+// concurrency control (ADR-0055 §9).
+
+const OUTBOUND = "/api/v1/transformations/:transformationId/outbound-writes";
+const OUTBOUND_ONE = `${OUTBOUND}/:writeId`;
+const OUTBOUND_CONFIRM = `${OUTBOUND_ONE}/confirm`;
+
+const outboundParams = z.strictObject({ transformationId: uuid, writeId: uuid });
+const outboundListQuery = z.strictObject({
+  status: z.enum(OUTBOUND_STATUSES).optional(),
+  deliverableId: uuid.optional(),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
+
+function registerOutboundRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
+  // listOutboundWrites: newest first (cursor over created_at, id).
+  app.get(OUTBOUND, { config: { access: { permission: OUTBOUND_WRITE_READ } } }, async (request) => {
+    const { transformationId } = parse(transformationParams, request.params, "params");
+    const query = parseQuery(outboundListQuery, request.query);
+    await requireOutboundRead(db, principalOf(request), transformationId);
+    const { cursor, limit, ...filters } = query;
+    const hash = filterHash(filters);
+    const after = decodeCursor(cursor, hash, 2);
+    const rows = await listOutboundWrites(db, transformationId, {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.deliverableId ? { deliverableId: query.deliverableId } : {}),
+      after: after ? [String(after[0]), String(after[1])] : null,
+      limit,
+    });
+    const page = paginate(rows, limit, (r) => [r.created_at.toISOString(), r.id], hash);
+    return { items: page.items.map(toOutboundWrite), nextCursor: page.nextCursor };
+  });
+
+  // executeOutboundWrite: 201 with Location and ETag after the dispatch; 200 with the existing write (replay).
+  app.post(
+    OUTBOUND,
+    { config: { access: { permission: OUTBOUND_WRITE_EXECUTE }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { transformationId } = parse(transformationParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      const body = parseBody(outboundWriteExecute, request.body);
+      checkPayload(body.payload);
+      const target = await requireOutboundExecute(db, principalOf(request), transformationId);
+      await requireExecuteSubjects(db, target, transformationId, body);
+      const { write, replay } = await executeOutboundWrite(db, request, transformationId, body);
+      if (replay) return sendVersioned(reply, 200, toOutboundWrite(write));
+      return sendVersioned(
+        reply,
+        201,
+        toOutboundWrite(write),
+        `${OUTBOUND.replace(":transformationId", transformationId)}/${write.id}`,
+      );
+    },
+  );
+
+  // getOutboundWrite: the write and its status history; 404 when it is not in a transformation the caller can read.
+  app.get(OUTBOUND_ONE, { config: { access: { permission: OUTBOUND_WRITE_READ } } }, async (request, reply) => {
+    const { transformationId, writeId } = parse(outboundParams, request.params, "params");
+    parseQuery(noQuery, request.query);
+    await requireOutboundRead(db, principalOf(request), transformationId);
+    const row = await findOutboundWrite(db, transformationId, writeId);
+    reply.header("ETag", etag(row.version));
+    return toOutboundWriteDetail(db, row);
+  });
+
+  // confirmOutboundWrite: asks the adapter (re-dispatching a `requested` write with its key); no manual confirmation.
+  app.post(
+    OUTBOUND_CONFIRM,
+    { config: { access: { permission: OUTBOUND_WRITE_EXECUTE }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { transformationId, writeId } = parse(outboundParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      parseBody(outboundWriteConfirm, request.body);
+      await requireOutboundExecute(db, principalOf(request), transformationId);
+      await findOutboundWrite(db, transformationId, writeId);
+      const expected = requireIfMatch(request);
+      const row = await confirmOutboundWrite(db, request, transformationId, writeId, expected);
+      reply.header("ETag", etag(row.version));
+      return toOutboundWriteDetail(db, row);
+    },
+  );
+
+  return [`GET ${OUTBOUND}`, `POST ${OUTBOUND}`, `GET ${OUTBOUND_ONE}`, `POST ${OUTBOUND_CONFIRM}`];
+}
+
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerIntegrationRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
   return [
@@ -818,5 +932,6 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: ModuleDeps
     ...registerRunRoutes(app, deps), // BE-L2: integration runs and retries
     ...registerImportRoutes(app, deps), // BE-M2: imports (upload, staged rows, commit, cancel) and templates
     ...registerWebhookRoutes(app, deps), // BE-N: webhook endpoints and the signed receiving route
+    ...registerOutboundRoutes(app, deps), // BE-N2: guarded outbound writes (execute, confirm, list, get)
   ];
 }
