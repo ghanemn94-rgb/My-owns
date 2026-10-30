@@ -1,0 +1,90 @@
+/* Compare and reapply, draft recovery and inline edit (T-DG6-FE-D2; ADR-0057 §6-§9). Design tokens only; logical
+   properties only, so every block mirrors in Arabic RTL. Every state is a text label with an icon, never a colour. */
+
+.compare__choice {
+  border: 1px solid var(--mth-border-control);
+  border-radius: var(--mth-radius);
+  padding-block: var(--mth-space-2);
+  padding-inline: var(--mth-space-3);
+  background: var(--mth-surface-card);
+  min-inline-size: 0;
+}
+.compare__choice legend {
+  font-weight: 600;
+  padding-inline: var(--mth-space-1);
+}
+.compare__option {
+  display: flex;
+  gap: var(--mth-space-2);
+  align-items: flex-start;
+  padding-block: var(--mth-space-1);
+  overflow-wrap: anywhere;
+}
+
+/* "Draft - not submitted": a neutral dashed chip (a draft is never a status colour). */
+.draft-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mth-space-1);
+  padding-block: 0.1rem;
+  padding-inline: var(--mth-space-2);
+  border-radius: 999px;
+  border: 1px dashed var(--mth-border-control);
+  background: var(--mth-surface-card);
+  color: var(--mth-text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.draft-recovery {
+  display: grid;
+  gap: var(--mth-space-2);
+  margin-block-end: var(--mth-space-3);
+}
+.draft-recovery p {
+  margin: 0;
+}
+.draft-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-2);
+  align-items: center;
+  margin-block: var(--mth-space-2) 0;
+}
+
+/* Inline edit: one cell, one PATCH. */
+.inline-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-1);
+  align-items: center;
+  min-inline-size: 0;
+}
+.inline-edit__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mth-space-1);
+  align-items: center;
+}
+.inline-edit__form input {
+  min-inline-size: 10rem;
+  max-inline-size: 100%;
+}
+.inline-edit__state {
+  display: inline-flex;
+  gap: var(--mth-space-1);
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.inline-edit__error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--mth-feedback-error-fg);
+}
+.compare__outcome {
+  display: inline-flex;
+  gap: var(--mth-space-1);
+  align-items: flex-start;
+}

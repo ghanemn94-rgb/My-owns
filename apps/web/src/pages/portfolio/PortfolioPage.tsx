@@ -38,6 +38,8 @@ import {
 } from "./common.tsx";
 // T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
 import { useExtensionCreate } from "../../components/form-framework/index.ts";
+// T-DG6-FE-D2 (ADR-0057 §8): the initiative name is edited inline, one PATCH with If-Match per cell.
+import { InlineEditCell } from "../../components/inline-edit/InlineEditCell.tsx";
 
 export const PORTFOLIO_WRITE = ["initiative.edit", "initiative.launch", "portfolio.select"] as const;
 
@@ -98,7 +100,23 @@ function InitiativeList() {
     {
       id: "name",
       header: t("portfolio.field.name"),
-      cell: (i) => <span className="text-cell">{i.name}</span>,
+      // T-DG6-FE-D2: inline edit for editors of an editable initiative (cancelled and completed are read-only).
+      cell: (i) =>
+        canEdit && i.status !== "cancelled" && i.status !== "completed" ? (
+          <InlineEditCell<Initiative>
+            record={i}
+            field="name"
+            value={i.name}
+            fieldLabel={t("portfolio.field.name")}
+            recordLabel={i.code}
+            url={(r) => `/api/v1/initiatives/${r.id}`}
+            required
+            maxLength={300}
+            onSaved={() => refresh()}
+          />
+        ) : (
+          <span className="text-cell">{i.name}</span>
+        ),
       sortValue: (i) => i.name,
     },
     {

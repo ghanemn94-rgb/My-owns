@@ -412,6 +412,10 @@ const ApprovalRoutePage = lazyPage(() =>
 const GateConditionsPage = lazyPage(() =>
   import("../pages/approval-routes/GateConditionsPage.tsx").then((m) => m.GateConditionsPage),
 );
+// T-DG6-FE-D2 (ADR-0057 §6): "Your drafts", the caller's open drafts across transformations.
+const MyDraftsPage = lazyPage(() =>
+  import("../components/draft-recovery/MyDraftsPage.tsx").then((m) => m.MyDraftsPage),
+);
 const NotificationPreferencesPage = lazyPage(() =>
   import("../pages/notification-preferences/NotificationPreferencesPage.tsx").then(
     (m) => m.NotificationPreferencesPage,
@@ -572,6 +576,7 @@ export const routes: RouteObject[] = [
       { path: "my-work/approvals", element: <ApprovalsPage /> },
       { path: "my-work/approvals/:approvalId", element: <ApprovalDetailPage /> },
       { path: "my-work/delegations", element: <DelegationsPage /> },
+      { path: "my-work/drafts", element: <MyDraftsPage /> }, // T-DG6-FE-D2
       { path: "admin/calendar", element: <CalendarPage /> },
       { path: "admin/jobs", element: <JobsPage /> },
       { path: "governance/groups", element: <GroupsPage /> },
