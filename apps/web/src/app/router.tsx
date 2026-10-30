@@ -65,6 +65,10 @@ const OrganizationsPage = lazyPage(() =>
 );
 const UserDetailPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UserDetailPage));
 const UsersPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UsersPage));
+// T-DG6-FE-E (ADR-0059 §3): Administration > AI assistant.
+const AssistantSettingsPage = lazyPage(() =>
+  import("../pages/admin/assistant/AssistantSettingsPage.tsx").then((m) => m.AssistantSettingsPage),
+);
 const AboutPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AboutPage));
 const AreaEntryPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaEntryPage));
 const AreaLandingPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaLandingPage));
@@ -643,6 +647,7 @@ export const routes: RouteObject[] = [
       { path: "admin/users", element: <UsersPage /> },
       { path: "admin/users/:id", element: <UserDetailPage /> },
       { path: "admin/assignments", element: <AssignmentsPage /> },
+      { path: "admin/assistant", element: <AssistantSettingsPage /> },
       { path: "about", element: <AboutPage /> },
       // P5 slice A (T-DG5-FE-B; p5-plan §5.1; ADR-0039, ADR-0040): the Playbook Studio (versions, the draft editor,
       // checks, review, publish, rollback, T06 scoring defaults, review policies, revision proposals), the source
