@@ -6,6 +6,7 @@
 #
 # Services:  db -> migrate (one-shot) -> api (+ SPA) and worker        (default)
 #            keycloak: TEST IdP with realm mth-test (SYNTHETIC users)  (profile: test-idp)
+#                      + realm mth-other: a foreign issuer the hub must REFUSE (negative e2e; ADR-0054 §1)
 #            smoke: in-network smoke test (login, create, read)        (profile: smoke)
 #            load-generate, load-sessions: the SYNTHETIC load dataset and the load sessions of a load run
 #                                                                       (profile: load; off by default; ADR-0058)
@@ -133,7 +134,8 @@ services:
 
   keycloak:
     profiles: ["test-idp"]
-    image: quay.io/keycloak/keycloak:26.4
+    # Vendor-documented registry (quay.io), pinned by digest through deploy/images.lock.json (ADR-0054 §1, D-197).
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
     restart: unless-stopped
     # Secrets are read from files at start and exported only into Keycloak's own process; the realm file references
     # them as ${...} placeholders, so the repository holds no credential.
@@ -157,6 +159,9 @@ services:
     secrets: [oidc_client_secret, test_idp_user_password, test_idp_admin_password, test_idp_cert, test_idp_key]
     volumes:
       - ../keycloak/realm-mth-test.json:/opt/keycloak/data/import/realm-mth-test.json:ro
+      # SYNTHETIC negative-test realm. The hub is never configured for it: e2e/identity/keycloak-login.spec.ts signs in
+      # there and proves that its authorization response and token are refused (REQ-S16-007).
+      - ../keycloak/realm-mth-other.json:/opt/keycloak/data/import/realm-mth-other.json:ro
     ports: ["${MTH_TEST_IDP_BIND:-127.0.0.1}:${MTH_TEST_IDP_PORT:-8443}:8443"]
     healthcheck:
       # The image has no curl; bash's /dev/tcp proves the HTTPS listener is up. The smoke test additionally waits for

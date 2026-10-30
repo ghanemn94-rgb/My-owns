@@ -1,0 +1,33 @@
+Fri Oct 30 18:08:45 UTC 2026
+$ node deploy/scripts/pin-images.mjs --resolve keycloak
+resolved quay.io/keycloak/keycloak:26.8.1 -> sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+exit=0
+$ node deploy/scripts/pin-images.mjs --apply
+deploy/docker/Dockerfile: node:24-bookworm-slim pinned
+deploy/compose/compose.yaml: postgres:18 pinned
+.github/workflows/ci.yml: postgres:18 pinned
+deploy/ci/ci.yml: postgres:18 pinned
+deploy/compose/compose.yaml: quay.io/keycloak/keycloak:26.8.1 pinned
+.github/workflows/ci.yml: mcr.microsoft.com/playwright:v1.56.1-noble pinned
+deploy/ci/ci.yml: mcr.microsoft.com/playwright:v1.56.1-noble pinned
+exit=0
+$ node deploy/scripts/pin-images.mjs --check
+PINNED     node-runtime (production) node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+PINNED     postgres (production) postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+PINNED     keycloak (test-ci) quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+PINNED     playwright (test-ci) mcr.microsoft.com/playwright:v1.56.1-noble@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+OK: 4 images pinned by digest and referenced consistently
+exit=0
+$ docker buildx imagetools inspect quay.io/keycloak/keycloak:26.8.1 (index + platforms)
+Name:      quay.io/keycloak/keycloak:26.8.1
+MediaType: application/vnd.oci.image.index.v1+json
+Digest:    sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+           
+Manifests: 
+  Name:        quay.io/keycloak/keycloak:26.8.1@sha256:3e1ac632e743660017b1e6bb4c3ffc800fd02c82cdd0db858cd03456a98a8dfc
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/amd64
+               
+  Name:        quay.io/keycloak/keycloak:26.8.1@sha256:f259c5f8fcfd6e7a55d9a2dc020c63ac8fc788e63bf9d9cbab9f1244d119e5f9
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm64

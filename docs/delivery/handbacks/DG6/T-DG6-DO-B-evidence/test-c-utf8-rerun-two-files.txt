@@ -1,0 +1,86 @@
+Fri Oct 30 19:15:16 UTC 2026
+ 19:15:16 up  6:49,  0 user,  load average: 21.82, 24.29, 22.98
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-do-b
+
+ ✓ |unit-web| src/pages/dependencies/slips.test.tsx (8 tests) 4268ms
+   ✓ critical dependency slips on the Dependencies page (en) > names the dependency, the slip in days, the reason and each dependent's forecast finish before -> after  1309ms
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed) 18430ms
+   ✓ Administration > Audit (REQ-S16-032) > en: lists events read-only; a redacted event shows Redacted, never its reason  2088ms
+   ✓ Administration > Audit (REQ-S16-032) > ar: lists events read-only; a redacted event shows Redacted, never its reason  517ms
+   ✓ Administration > Audit (REQ-S16-032) > an invalid filter shows one alert and sends nothing 170ms
+   ✓ Administration > Audit (REQ-S16-032) > the event detail shows the field changes, and Redacted instead of them when redacted  403ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > en: the auditor reads the default policy with no form  477ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > ar: the auditor reads the default policy with no form 114ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a technical admin narrows the policy: If-Match 0 creates it, with the organization query and a reason  841ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a 409 shows the translated conflict and reloads the policy  608ms
+   ✓ Administration > Security (rate limits) > shows each class with its per-minute budget, read-only  730ms
+   ✓ The deep-link landing (REQ-S12-024) > en: a 403 shows only the refusal text, nothing of the target  730ms
+   ✓ The deep-link landing (REQ-S12-024) > ar: a 403 shows only the refusal text, nothing of the target 82ms
+   ✓ The deep-link landing (REQ-S12-024) > a malformed token is never sent 62ms
+   ✓ The deep-link landing (REQ-S12-024) > an authorized link navigates inside the app; an unsafe path is never followed 161ms
+   ✓ Administration > Operations (REQ-S12-019) > en: an unknown heartbeat is Unknown, never Running  395ms
+   ✓ Administration > Operations (REQ-S12-019) > ar: an unknown heartbeat is Unknown, never Running 200ms
+   ✓ Administration > Operations (REQ-S12-019) > sends the two default statuses as repeated query parameters 116ms
+   ✓ Administration > Operations (REQ-S12-019) > a linked KPI without a value is Unknown (never 0) and keeps its label; acknowledge sends If-Match  656ms
+   ✓ Administration > Operations (REQ-S12-019) > a resolved exception is final: no action is offered 187ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 396ms
+     → expected <input id="_r_30_" …(9)></input> to be null
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > storage states no public URL, takes secret references only, and tests before saving  967ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > en: the inbox is always on; enterprise messaging cannot be enabled  788ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > ar: the inbox is always on; enterprise messaging cannot be enabled 213ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > the auditor (operations.read) reads storage read-only: no form, no test, no save 150ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a manager marks the record with a reason and If-Match 0 76ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: a reader without the grant right sees the status only 20ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: a reader without the grant right sees the status only 20ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a record the caller cannot read (404) renders nothing 69ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: the label shows only for includesRestrictedRecords true 11ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: the label shows only for includesRestrictedRecords true 9ms
+   ✓ The safe evidence preview (REQ-S13-011) > a PNG is an <img> of the preview route; never an iframe, object or embed 34ms
+   ✓ The safe evidence preview (REQ-S13-011) > drawing.svg is download-only (no inline content) 68ms
+   ✓ The safe evidence preview (REQ-S13-011) > report.pdf is download-only (no inline content) 39ms
+   ✓ The safe evidence preview (REQ-S13-011) > tool.exe.png.svg is download-only (no inline content) 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input id="_r_30_" …(9)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-invalid="false"
+  class="global-search__input"
+  data-global-search="true"
+  enterkeyhint="search"
+  id="_r_30_"
+  inputmode="search"
+  maxlength="200"
+  placeholder="Search records"
+  type="text"
+  value=""
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:461:55
+    459|     expect(await screen.findByText("Configured (never shown)")).toBeTr…
+    460|     expect(screen.getByText("https://idp.example.invalid/realms/mth-te…
+    461|     expect(document.querySelector("input, textarea")).toBeNull();
+       |                                                       ^
+    462|   });
+    463| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 40 passed (41)
+   Start at  19:15:18
+   Duration  27.60s (transform 520.20s, setup 1.20s, collect 15.53s, tests 22.70s, environment 4.82s, prepare 512ms)
+
+exit=1
+ 19:15:46 up  6:50,  0 user,  load average: 21.88, 24.08, 22.94
