@@ -23934,7 +23934,7 @@ paths:
     get:
       tags: [forms]
       operationId: compareFormRecordVersions
-      summary: "The fields that differ between two versions of a record, folded from the audit trail (transformation.read). Values only for a caller holding the record type's write permission or audit.read in scope; other readers get valuesWithheld true and field names only. A field without a recorded diff is recorded false (Unknown). 422 form_record.compare_versions_invalid. ADR-0057 §7; REQ-S15-010."
+      summary: "The fields that differ between two versions of a record, folded from the audit trail (transformation.read). Values only for a caller holding audit.read in scope (D-199 item 6; the DG5 rule of listFormRecordVersions); every other reader, including an editor of the record type, gets valuesWithheld true and field names only. A field without a recorded diff is recorded false (Unknown). 422 form_record.compare_versions_invalid. ADR-0057 §7; REQ-S15-010."
       parameters:
         - { name: fromVersion, in: query, required: true, schema: { type: integer, minimum: 1 } }
         - { name: toVersion, in: query, required: true, schema: { type: integer, minimum: 2 } }
@@ -41057,7 +41057,7 @@ components:
         fromVersion: { type: integer, minimum: 1 }
         toVersion: { type: integer, minimum: 2 }
         currentVersion: { type: integer, minimum: 1 }
-        valuesWithheld: { type: boolean, description: "true: the caller holds neither the record type's write permission nor audit.read; no from/to values are returned." }
+        valuesWithheld: { type: boolean, description: "true: the caller does not hold audit.read in scope (D-199 item 6); no from/to values are returned." }
         fields:
           type: array
           items:
