@@ -1073,7 +1073,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG6-BE-M2: + createImport (text/csv and the XLSX media type: the first non-JSON, non-octet-stream request
     // bodies), commitImport, cancelImport (2 JSON bodies; the five other import operations are GETs). 407 + 3 = 410;
     // JSON 406 + 2 = 408 (the orchestrator reconciles the parallel W10 deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([410, 408, 1]);
+    // T-DG6-BE-Q: + createSavedView, putSavedView, shareSavedView (3 JSON bodies; listSavedViews and getSavedView are
+    // GETs, deleteSavedView is bodiless). 410 + 3 = 413; JSON 408 + 3 = 411 (the orchestrator reconciles the parallel
+    // deltas at merge).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([413, 411, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);

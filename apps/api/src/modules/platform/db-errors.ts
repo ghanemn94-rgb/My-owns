@@ -3593,6 +3593,60 @@ export function mapP6IntegrationsError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P6 slice H (T-DG6-BE-Q; p6-work-split §H/G.3, exact; ADR-0057 §4, §10): the 0108 saved_view guards. The API checks
+ * each rule before it writes (search/saved-views.ts), so these are the race and last-line answers.
+ *   saved_view_name_key                                           -> 409 saved_view.name_taken
+ *   saved_view_final                                              -> 409 saved_view.deleted
+ *   saved_view_owner_only                                         -> 403 saved_view.not_owner
+ *   saved_view_columns_valid, _filters_valid, _sort_valid          -> 400 (validation at /columns, /filters, /sort)
+ *   saved_view_one_default_key                                    -> 409 saved_view.default_conflict
+ *   saved_view_organization_matches,
+ *     saved_view_cross_transformation_lists                       -> 404 (the transformation is not the caller's)
+ * The texts are ADR-0057 §10's, English verbatim.
+ */
+export function mapP6SavedViewError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "saved_view_name_key":
+      return problems.duplicate("saved_view.name_taken", "You already have a view with this name for this list.");
+    case "saved_view_final":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "saved_view.deleted",
+        title: "Conflict",
+        detail: "This view was deleted.",
+      });
+    case "saved_view_owner_only":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "saved_view.not_owner",
+        title: "Forbidden",
+        detail: "Only the person who created this view can change it.",
+      });
+    case "saved_view_columns_valid":
+      return problems.badRequest("validation.format", "The view's columns are not valid.", "/columns");
+    case "saved_view_filters_valid":
+      return problems.badRequest("validation.format", "The view's filters are not valid.", "/filters");
+    case "saved_view_sort_valid":
+      return problems.badRequest("validation.format", "The view's sort is not valid.", "/sort");
+    case "saved_view_one_default_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "saved_view.default_conflict",
+        title: "Conflict",
+        detail: "Another view was made the default for this list at the same time. Reload the list and try again.",
+      });
+    case "saved_view_organization_matches":
+    case "saved_view_cross_transformation_lists":
+      return problems.notFound();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3638,6 +3692,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p6OperationsChannels !== null) return p6OperationsChannels;
   const p6Integrations = mapP6IntegrationsError(error); // P6 slices B/A (T-DG6-BE-L; ADR-0055 §9, ADR-0056 §9)
   if (p6Integrations !== null) return p6Integrations;
+  const p6SavedView = mapP6SavedViewError(error); // P6 slice H (T-DG6-BE-Q; ADR-0057 §4, §10)
+  if (p6SavedView !== null) return p6SavedView;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
