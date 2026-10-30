@@ -30,6 +30,9 @@ import {
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import {
   assertActiveUsers,
@@ -362,15 +365,23 @@ async function updateWave(tx: Tx, request: FastifyRequest, transformationId: str
 
 const BASE = "/api/v1/transformations/:transformationId/waves";
 const tParams = z.strictObject({ transformationId: z.uuid() });
+const listQuery = z.strictObject({ ...pageQueryFields });
+/** The waves' page sort, as `loadWaves` (T-DG6-BE-V): ordinal, then id. */
+const WAVE_SORT: readonly SortKey[] = [
+  { name: "ordinal", type: "integer" },
+  { name: "id", type: "uuid" },
+];
 const wParams = z.strictObject({ transformationId: z.uuid(), waveId: z.uuid() });
 
 /** Registers the wave routes and returns them as "METHOD /path". */
 export function registerWaveRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
   app.get(BASE, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
-    parseQuery(z.strictObject({}), request.query);
+    const query = parseQuery(listQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return { items: (await loadWaves(db, transformationId)).map(toRoadmapWave) };
+    const q = db.selectFrom("roadmap_wave").selectAll().where("transformation_id", "=", transformationId);
+    const page = await keysetPage(q, WAVE_SORT, query, { list: "waves", transformationId });
+    return { items: page.items.map(toRoadmapWave), nextCursor: page.nextCursor };
   });
 
   app.post(

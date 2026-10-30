@@ -22,6 +22,7 @@ import {
 } from "@mth/shared/schemas";
 import { api, ApiError } from "../../api/client.ts";
 import { useP4Refresh } from "../../api/p4.ts";
+import { fetchAllPages } from "../../api/queries.ts";
 import { Icon } from "../../components/Icon.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section, TextCell } from "../../components/Section.tsx";
@@ -462,10 +463,10 @@ function useLinkVersion(tid: string, target: ShareTarget) {
     queryFn: async () => {
       if (target.linkTable === "trace_link")
         return (await api.get<TraceLink>(tracePaths.link(tid, target.linkId))).version;
-      const list = await api.get<{ items: { id: string; version: number }[] }>(
+      const list = await fetchAllPages<{ id: string; version: number }>(
         `/api/v1/initiatives/${target.fromId}/outcome-contributions`,
       );
-      const row = list.items.find((x) => x.id === target.linkId);
+      const row = list.find((x) => x.id === target.linkId);
       if (!row) throw new Error("contribution not found");
       return row.version;
     },

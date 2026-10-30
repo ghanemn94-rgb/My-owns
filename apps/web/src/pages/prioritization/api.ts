@@ -12,7 +12,7 @@ import type {
 } from "@mth/shared/schemas";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../api/client.ts";
-import { p3Keys, shouldRetry } from "../../api/queries.ts";
+import { fetchAllPages, p3Keys, shouldRetry } from "../../api/queries.ts";
 
 const base = (tid: string) => `/api/v1/transformations/${tid}/prioritization`;
 
@@ -41,7 +41,7 @@ export function usePrioritizationView(tid: string, filters: PrioritizationFilter
 export function useWeightSets(tid: string) {
   return useQuery({
     queryKey: p3Keys.prioritizationPart(tid, "weight-sets"),
-    queryFn: async () => (await api.get<{ items: WeightSet[] }>(`${base(tid)}/weight-sets`)).items,
+    queryFn: () => fetchAllPages<WeightSet>(`${base(tid)}/weight-sets`),
     retry: shouldRetry,
   });
 }

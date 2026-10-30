@@ -20,10 +20,17 @@ export {
   canonicalJson,
   cursorSchema,
   decodeCursor,
+  decodeKeysetCursor,
   encodeCursor,
   filterHash,
+  keysetHash,
+  keysetPage,
   limitSchema,
+  memoryPage,
+  pageQueryFields,
   paginate,
+  type PageRequest,
+  type SortKey,
 } from "./cursor.ts";
 export {
   IDEMPOTENCY_TTL_HOURS,

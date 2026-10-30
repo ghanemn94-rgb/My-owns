@@ -82,21 +82,14 @@ const JSON_POINTER = /^(\/([^~/]|~[01])*)*$/;
 
 /**
  * List operations (operationId `list*`) whose 200 body is not cursor-paginated at HEAD, pinned so the set only shrinks.
- * Every one is a DG1-DG5 operation of another owner returning a bounded `{ items }` collection (a catalogue, the children
- * of one record, or the versions of one record), declared that way in the approved contract. ADR-0007 §4 says list
- * responses are `{ items, nextCursor }`; the deviation is reported in the T-DG6-BE-F handback for the orchestrator, not
- * changed here (p6-plan §5.1: defects in another owner's route are reported, not fixed).
+ * Since T-DG6-BE-V it equals the 21 bounded collections ADR-0007 §4a (D-199) names, each with its stated bound of at
+ * most 250 items; the 17 unbounded lists §4a named for pagination are `{ items, nextCursor }` and left the pin.
  */
 const UNPAGINATED_LISTS_AT_HEAD: readonly string[] = [
   "listAdoptionIndicatorTemplates",
-  "listApprovalRoutes",
   "listBenefitFormulaExamples",
-  "listBenefitFormulaVersions",
-  "listBusinessCaseLines",
   "listConfigReviewPolicies",
   "listDecisionRightTemplates",
-  "listDeliverables",
-  "listDependencyTypes",
   "listFormRecordTypes",
   "listGateSubmissionCriteria",
   "listGates",
@@ -104,28 +97,16 @@ const UNPAGINATED_LISTS_AT_HEAD: readonly string[] = [
   "listGovernanceParties",
   "listGuidingQuestions",
   "listHealthCheckQuestions",
-  "listHealthCheckSchemes",
   "listImportTemplates",
-  "listInitiativeDecisionLinks",
-  "listInitiativeGapLinks",
-  "listInitiativeOutcomeContributions",
   "listJobOperations",
-  "listKpiRestatementReissueOffers",
   "listMethodologyBlockLinks",
   "listMethodologyElements",
-  "listMilestones",
   "listPermissions",
   "listPhases",
   "listReportDefinitions",
-  "listReportSnapshotVersions",
-  "listResourceRoles",
-  "listRoadmapWaves",
   "listRoleAccountabilities",
   "listRoles",
-  "listTemplateSourceLinks",
-  "listTomWorkshopParticipants",
   "listTransformationConfigPins",
-  "listWeightSets",
 ];
 
 /**

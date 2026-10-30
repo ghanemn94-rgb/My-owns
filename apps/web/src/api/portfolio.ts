@@ -3,7 +3,8 @@
 // screens through `api.send` with If-Match (transitions, removals, decisions) or an Idempotency-Key (creates).
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./client.ts";
-import { fetchAllPages, p3Keys, shouldRetry } from "./queries.ts";
+import { PAGINATION } from "@mth/shared";
+import { ALL_PAGES_MAX_PAGES, fetchAllPages, p3Keys, shouldRetry } from "./queries.ts";
 import type {
   DeliverableList,
   GateDispensation,
@@ -39,18 +40,11 @@ export function useInitiative(tid: string, initiativeId: string) {
   });
 }
 
-/** A whole (unpaged) list answer `{ items }`: these endpoints take no cursor or limit (strict query, 400 otherwise). */
-async function getList<T>(path: string): Promise<T[]> {
-  return (await api.get<{ items: T[] }>(path)).items;
-}
-
-function usePart<T>(tid: string, initiativeId: string, part: string, paged = false) {
+/** Every page of one initiative part (each is cursor-paged; ADR-0007 §4, T-DG6-BE-V). */
+function usePart<T>(tid: string, initiativeId: string, part: string) {
   return useQuery({
     queryKey: p3Keys.initiativePart(tid, initiativeId, part),
-    queryFn: () =>
-      paged
-        ? fetchAllPages<T>(`/api/v1/initiatives/${initiativeId}/${part}`)
-        : getList<T>(`/api/v1/initiatives/${initiativeId}/${part}`),
+    queryFn: () => fetchAllPages<T>(`/api/v1/initiatives/${initiativeId}/${part}`),
     enabled: Boolean(initiativeId),
     retry: shouldRetry,
   });
@@ -62,13 +56,29 @@ export const useOutcomeContributions = (tid: string, iid: string) =>
 export const useDecisionLinks = (tid: string, iid: string) =>
   usePart<InitiativeDecisionLink>(tid, iid, "decision-links");
 export const useMilestones = (tid: string, iid: string) => usePart<Milestone>(tid, iid, "milestones");
-export const useSelections = (tid: string, iid: string) => usePart<PortfolioSelection>(tid, iid, "selections", true);
+export const useSelections = (tid: string, iid: string) => usePart<PortfolioSelection>(tid, iid, "selections");
 
-/** Deliverables keep the list answer whole: it carries the 3-7 `countWarning` (a warning, never a block). */
+/**
+ * Every page of the deliverables, kept as one list answer: the 3-7 `countWarning` (a warning, never a block) counts
+ * every active deliverable of the initiative, so the first page's warning stands for the whole list.
+ */
+async function allDeliverables(initiativeId: string): Promise<DeliverableList> {
+  const path = `/api/v1/initiatives/${initiativeId}/deliverables`;
+  const first = await api.get<DeliverableList>(path, { limit: PAGINATION.maxLimit });
+  const items = [...first.items];
+  let cursor = first.nextCursor;
+  for (let i = 1; cursor && i < ALL_PAGES_MAX_PAGES; i++) {
+    const page: DeliverableList = await api.get<DeliverableList>(path, { limit: PAGINATION.maxLimit, cursor });
+    items.push(...page.items);
+    cursor = page.nextCursor;
+  }
+  return { items, nextCursor: cursor ?? null, countWarning: first.countWarning };
+}
+
 export function useDeliverables(tid: string, initiativeId: string) {
   return useQuery({
     queryKey: p3Keys.initiativePart(tid, initiativeId, "deliverables"),
-    queryFn: () => api.get<DeliverableList>(`/api/v1/initiatives/${initiativeId}/deliverables`),
+    queryFn: () => allDeliverables(initiativeId),
     enabled: Boolean(initiativeId),
     retry: shouldRetry,
   });
@@ -78,7 +88,7 @@ export function useDeliverables(tid: string, initiativeId: string) {
 export function useWaves(tid: string) {
   return useQuery({
     queryKey: [...p3Keys.portfolio(tid), "waves"] as const,
-    queryFn: () => getList<RoadmapWave>(`${tBase(tid)}/waves`),
+    queryFn: () => fetchAllPages<RoadmapWave>(`${tBase(tid)}/waves`),
     enabled: Boolean(tid),
     retry: shouldRetry,
   });

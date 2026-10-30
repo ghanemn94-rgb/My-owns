@@ -311,6 +311,7 @@ describe("withdrawal and the admin route list", () => {
           labelAr: "مسار قرار تجريبي",
         },
       ],
+      nextCursor: null, // cursor-paged since T-DG6-BE-V (ADR-0007 §4a)
     });
     expect((await send("GET", "/api/v1/admin/approval-routes", { session: q.auditor.session })).status).toBe(200);
     expect((await send("GET", "/api/v1/admin/approval-routes", { session: q.bo.session })).status).toBe(403);

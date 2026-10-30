@@ -53,5 +53,8 @@ export const healthCheckScheme = z.strictObject({
   publishedAt: timestamp,
 });
 export type HealthCheckScheme = z.infer<typeof healthCheckScheme>;
-export const healthCheckSchemeList = z.strictObject({ items: z.array(healthCheckScheme) });
+export const healthCheckSchemeList = z.strictObject({
+  items: z.array(healthCheckScheme),
+  nextCursor: z.string().nullable(),
+});
 export type HealthCheckSchemeList = z.infer<typeof healthCheckSchemeList>;

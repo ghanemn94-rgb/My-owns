@@ -131,7 +131,10 @@ export const initiativeGapLink = z.strictObject({
   ...stamps,
 });
 export type InitiativeGapLink = z.infer<typeof initiativeGapLink>;
-export const initiativeGapLinkList = z.strictObject({ items: z.array(initiativeGapLink) });
+export const initiativeGapLinkList = z.strictObject({
+  items: z.array(initiativeGapLink),
+  nextCursor: z.string().nullable(),
+});
 /** `targetType` is a pattern-checked string: a TOM record type other than the two allowed is a 422 rule (REQ-PB-040). */
 export const initiativeGapLinkCreate = z.strictObject({
   targetType: z.string().regex(/^[a-z][a-z_]{1,47}$/),
@@ -153,7 +156,10 @@ export const initiativeOutcomeContribution = z.strictObject({
   ...stamps,
 });
 export type InitiativeOutcomeContribution = z.infer<typeof initiativeOutcomeContribution>;
-export const initiativeOutcomeContributionList = z.strictObject({ items: z.array(initiativeOutcomeContribution) });
+export const initiativeOutcomeContributionList = z.strictObject({
+  items: z.array(initiativeOutcomeContribution),
+  nextCursor: z.string().nullable(),
+});
 export const initiativeOutcomeContributionCreate = z.strictObject({
   outcomeId: uuid,
   outcomeKpiId: nullableUuid.optional(),
@@ -172,7 +178,10 @@ export const initiativeDecisionLink = z.strictObject({
   ...stamps,
 });
 export type InitiativeDecisionLink = z.infer<typeof initiativeDecisionLink>;
-export const initiativeDecisionLinkList = z.strictObject({ items: z.array(initiativeDecisionLink) });
+export const initiativeDecisionLinkList = z.strictObject({
+  items: z.array(initiativeDecisionLink),
+  nextCursor: z.string().nullable(),
+});
 export const initiativeDecisionLinkCreate = z.strictObject({ decisionId: uuid });
 export type InitiativeDecisionLinkCreate = z.infer<typeof initiativeDecisionLinkCreate>;
 
@@ -204,7 +213,11 @@ export const deliverable = z.strictObject({
   ...stamps,
 });
 export type Deliverable = z.infer<typeof deliverable>;
-export const deliverableList = z.strictObject({ items: z.array(deliverable), countWarning: warning.nullable() });
+export const deliverableList = z.strictObject({
+  items: z.array(deliverable),
+  nextCursor: z.string().nullable(),
+  countWarning: warning.nullable(),
+});
 const optionalDeliverableFields = z.object(deliverableFields).partial().shape;
 export const deliverableCreate = z.strictObject({ ...optionalDeliverableFields, title: deliverableFields.title });
 export type DeliverableCreate = z.infer<typeof deliverableCreate>;
@@ -236,7 +249,7 @@ export const milestone = z.strictObject({
   ...stamps,
 });
 export type Milestone = z.infer<typeof milestone>;
-export const milestoneList = z.strictObject({ items: z.array(milestone) });
+export const milestoneList = z.strictObject({ items: z.array(milestone), nextCursor: z.string().nullable() });
 export const milestoneCreate = z.strictObject({
   title: freeText(1, 300),
   description: freeText(1, 4000).nullable().optional(),

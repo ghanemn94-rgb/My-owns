@@ -24,7 +24,17 @@ import { uuid } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { authorize, grantApplies, principalOf, type Principal, type ResolvedTarget } from "../access/index.ts";
-import { HttpProblem, parse, parseQuery, type ModuleDeps } from "../platform/index.ts";
+import {
+  decodeKeysetCursor,
+  HttpProblem,
+  keysetHash,
+  keysetPage,
+  pageQueryFields,
+  parse,
+  parseQuery,
+  type ModuleDeps,
+  type SortKey,
+} from "../platform/index.ts";
 import type { ConfigResolver } from "./config-resolver.ts";
 import {
   blockRefParam,
@@ -71,7 +81,8 @@ export const templateSourceLink = z.strictObject({
 export const templateSourceLinkList = z.strictObject({
   templateCode: z.string(),
   methodologyVersion: methodologyVersionRef,
-  items: z.array(templateSourceLink).max(50),
+  items: z.array(templateSourceLink).max(100),
+  nextCursor: z.string().nullable(),
 });
 
 export type MethodologyLink = z.infer<typeof methodologyLink>;
@@ -285,6 +296,12 @@ export async function presentLinks(
 const BLOCK_LINKS = "/api/v1/methodology/blocks/:blockRef/links";
 const TEMPLATE_LINKS = "/api/v1/methodology/templates/:templateCode/source-links";
 const contextQuery = z.strictObject({ transformationId: uuid.optional() });
+const templateLinksQuery = z.strictObject({ transformationId: uuid.optional(), ...pageQueryFields });
+/** The source blocks' page sort (T-DG6-BE-V): playbook order, then the block reference. */
+const SOURCE_BLOCK_SORT: readonly SortKey[] = [
+  { name: "ordinal", type: "integer" },
+  { name: "block_ref", type: "text" },
+];
 const templateParams = z.strictObject({ templateCode: z.string().regex(TEMPLATE_CODE, "validation.pattern") });
 const EXCERPT_LENGTH = 280;
 
@@ -325,7 +342,7 @@ export function registerMethodologySourceLinkRoutes(
 
   app.get(TEMPLATE_LINKS, { config: { access: { permission: "authenticated" } } }, async (request) => {
     const { templateCode } = parse(templateParams, request.params, "params");
-    const query = parseQuery(contextQuery, request.query);
+    const query = parseQuery(templateLinksQuery, request.query);
     const principal = principalOf(request);
     const ctx = await readerContext(db, principal, resolver, query.transformationId);
     const known = await db
@@ -340,20 +357,26 @@ export function registerMethodologySourceLinkRoutes(
       .filter(([, l]) => l.some((x) => x.targetKind === "template" && x.targetKey === templateCode))
       .map(([ref]) => ref)
       .sort();
-    const rows =
+    const filters = { list: "template-source-links", templateCode, version: ctx.version };
+    // No linked block: an empty page, but a cursor is still checked (a foreign or forged one is 400 here too).
+    if (refs.length === 0) decodeKeysetCursor(query.cursor, keysetHash(filters, SOURCE_BLOCK_SORT), SOURCE_BLOCK_SORT);
+    const page =
       refs.length === 0
-        ? []
-        : await db
-            .selectFrom("playbook_block")
-            .select(["block_ref", "ordinal", "phase_code", "text_en", "text_ar"])
-            .where("block_ref", "in", refs)
-            .orderBy("ordinal")
-            .limit(50)
-            .execute();
+        ? { items: [], nextCursor: null }
+        : await keysetPage(
+            db
+              .selectFrom("playbook_block")
+              .select(["block_ref", "ordinal", "phase_code", "text_en", "text_ar"])
+              .where("block_ref", "in", refs),
+            SOURCE_BLOCK_SORT,
+            query,
+            filters,
+          );
     return {
       templateCode,
       methodologyVersion: ctx.version,
-      items: rows.map((r) => ({
+      nextCursor: page.nextCursor,
+      items: page.items.map((r) => ({
         blockRef: r.block_ref,
         ordinal: r.ordinal,
         phaseCode: r.phase_code as (typeof PHASE_CODES)[number] | null,

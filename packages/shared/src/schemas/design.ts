@@ -211,7 +211,10 @@ export const tomWorkshopParticipant = z.strictObject({
 });
 export type TomWorkshopParticipant = z.infer<typeof tomWorkshopParticipant>;
 export const tomWorkshopParticipantCreate = z.strictObject({ userId: uuid, isBusinessOwner: z.boolean().optional() });
-export const tomWorkshopParticipantList = z.strictObject({ items: z.array(tomWorkshopParticipant) });
+export const tomWorkshopParticipantList = z.strictObject({
+  items: z.array(tomWorkshopParticipant),
+  nextCursor: z.string().nullable(),
+});
 
 export const tomWorkshopItem = z.strictObject({
   id: uuid,

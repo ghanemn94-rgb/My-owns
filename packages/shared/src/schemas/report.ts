@@ -473,7 +473,10 @@ export const reportSnapshotVersion = z.strictObject({
   versionLabel: z.string(),
 });
 export type ReportSnapshotVersion = z.infer<typeof reportSnapshotVersion>;
-export const reportSnapshotVersionList = z.strictObject({ items: z.array(reportSnapshotVersion) });
+export const reportSnapshotVersionList = z.strictObject({
+  items: z.array(reportSnapshotVersion),
+  nextCursor: z.string().nullable(),
+});
 
 export const reportSnapshotEvidenceItem = z.strictObject({
   sectionKey: z.string(),

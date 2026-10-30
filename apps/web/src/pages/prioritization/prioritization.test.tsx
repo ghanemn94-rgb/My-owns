@@ -94,7 +94,7 @@ const TEXT = {
 function handlers(over: { weightSets?: unknown[]; history?: unknown[]; overrides?: unknown[] } = {}) {
   return [
     route("GET", new RegExp(`${esc(P)}(\\?.*)?$`), () => ({ status: 200, body: prioritizationView() })),
-    route("GET", new RegExp(`${esc(P)}/weight-sets$`), () => ({
+    route("GET", new RegExp(`${esc(P)}/weight-sets(\\?|$)`), () => ({
       status: 200,
       body: { items: over.weightSets ?? [V1] },
     })),
@@ -213,7 +213,9 @@ describe.each(["en", "ar"] as const)("prioritization (%s)", (locale) => {
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: tx.approveConfirm }));
     expect(await screen.findByText(tx.conflict)).toBeTruthy();
     await waitFor(() =>
-      expect(api.requests.filter((r) => r.method === "GET" && /weight-sets$/.test(r.url)).length).toBeGreaterThan(1),
+      expect(api.requests.filter((r) => r.method === "GET" && /weight-sets(\?|$)/.test(r.url)).length).toBeGreaterThan(
+        1,
+      ),
     );
   });
 
