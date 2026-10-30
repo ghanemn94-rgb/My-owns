@@ -1,0 +1,80 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-c2
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed) 17035ms
+   ✓ Administration > Audit (REQ-S16-032) > en: lists events read-only; a redacted event shows Redacted, never its reason  1397ms
+   ✓ Administration > Audit (REQ-S16-032) > ar: lists events read-only; a redacted event shows Redacted, never its reason  371ms
+   ✓ Administration > Audit (REQ-S16-032) > an invalid filter shows one alert and sends nothing  339ms
+   ✓ Administration > Audit (REQ-S16-032) > the event detail shows the field changes, and Redacted instead of them when redacted  433ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > en: the auditor reads the default policy with no form  406ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > ar: the auditor reads the default policy with no form 125ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a technical admin narrows the policy: If-Match 0 creates it, with the organization query and a reason  756ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a 409 shows the translated conflict and reloads the policy  502ms
+   ✓ Administration > Security (rate limits) > shows each class with its per-minute budget, read-only  586ms
+   ✓ The deep-link landing (REQ-S12-024) > en: a 403 shows only the refusal text, nothing of the target  462ms
+   ✓ The deep-link landing (REQ-S12-024) > ar: a 403 shows only the refusal text, nothing of the target 174ms
+   ✓ The deep-link landing (REQ-S12-024) > a malformed token is never sent 101ms
+   ✓ The deep-link landing (REQ-S12-024) > an authorized link navigates inside the app; an unsafe path is never followed 176ms
+   ✓ Administration > Operations (REQ-S12-019) > en: an unknown heartbeat is Unknown, never Running  481ms
+   ✓ Administration > Operations (REQ-S12-019) > ar: an unknown heartbeat is Unknown, never Running 177ms
+   ✓ Administration > Operations (REQ-S12-019) > sends the two default statuses as repeated query parameters 71ms
+   ✓ Administration > Operations (REQ-S12-019) > a linked KPI without a value is Unknown (never 0) and keeps its label; acknowledge sends If-Match  738ms
+   ✓ Administration > Operations (REQ-S12-019) > a resolved exception is final: no action is offered 244ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 440ms
+     → expected <input id="_r_30_" …(9)></input> to be null
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > storage states no public URL, takes secret references only, and tests before saving  897ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > en: the inbox is always on; enterprise messaging cannot be enabled  762ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > ar: the inbox is always on; enterprise messaging cannot be enabled  364ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > the auditor (operations.read) reads storage read-only: no form, no test, no save 247ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a manager marks the record with a reason and If-Match 0 194ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: a reader without the grant right sees the status only 22ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: a reader without the grant right sees the status only 15ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a record the caller cannot read (404) renders nothing 74ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: the label shows only for includesRestrictedRecords true 17ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: the label shows only for includesRestrictedRecords true 44ms
+   ✓ The safe evidence preview (REQ-S13-011) > a PNG is an <img> of the preview route; never an iframe, object or embed 89ms
+   ✓ The safe evidence preview (REQ-S13-011) > drawing.svg is download-only (no inline content) 131ms
+   ✓ The safe evidence preview (REQ-S13-011) > report.pdf is download-only (no inline content) 186ms
+   ✓ The safe evidence preview (REQ-S13-011) > tool.exe.png.svg is download-only (no inline content) 136ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input id="_r_30_" …(9)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-invalid="false"
+  class="global-search__input"
+  data-global-search="true"
+  enterkeyhint="search"
+  id="_r_30_"
+  inputmode="search"
+  maxlength="200"
+  placeholder="Search records"
+  type="text"
+  value=""
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:461:55
+    459|     expect(await screen.findByText("Configured (never shown)")).toBeTr…
+    460|     expect(screen.getByText("https://idp.example.invalid/realms/mth-te…
+    461|     expect(document.querySelector("input, textarea")).toBeNull();
+       |                                                       ^
+    462|   });
+    463| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 passed (33)
+   Start at  19:00:52
+   Duration  24.58s (transform 585.64s, setup 351ms, collect 5.87s, tests 17.04s, environment 692ms, prepare 168ms)
+
