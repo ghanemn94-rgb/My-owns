@@ -3,7 +3,7 @@
 // sent. The weighted score is READ-ONLY: it is the server's result, shown with 2 decimals, or 'incomplete' with the
 // missing criteria when any score is missing (never a number, never 0). New scores are POSTed; existing ones are
 // PATCHed with If-Match; a 409 shows the conflict notice and reloads.
-import type { InitiativeScore, PrioritizationItem, WeightSet } from "@mth/shared/schemas";
+import type { InitiativeScore, InitiativeScoreSheet, PrioritizationItem, WeightSet } from "@mth/shared/schemas";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../api/client.ts";
@@ -18,6 +18,9 @@ import { ConflictNotice, FormAlert, codeText, isVersionConflict, p3ErrorMessage,
 // T-DG5-FE-C2 (D-163; REQ-S06-004, REQ-PB-011): extension fields through the form framework, and the template header.
 import { RecordExtensionTools } from "../../components/form-framework/index.ts";
 import { TemplateProvenance } from "../../components/provenance-badge/ProvenanceBadge.tsx";
+// T-DG6-FE-F (ADR-0061 §3 item 2, §8 E1; REQ-S15-012, REQ-S15-014): the incomplete chip's icon and the E1 explanation.
+import { Icon } from "../../components/Icon.tsx";
+import { WeightedScoreExplanation } from "../../components/explanation/index.ts";
 
 /** The only accepted inputs, mapped to the contract's integer (no Number()/parseInt on user text). */
 const SCORE_VALUES: Record<string, number> = { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5 };
@@ -69,7 +72,13 @@ function ScoreSheet({ initiativeId, weightSet }: { initiativeId: string; weightS
   return (
     <QueryState query={sheet}>
       {(data) => (
-        <ScoreForm initiativeId={initiativeId} weightSet={weightSet} scores={data.scores} result={data.result} />
+        <ScoreForm
+          initiativeId={initiativeId}
+          weightSet={weightSet}
+          scores={data.scores}
+          result={data.result}
+          sheet={data}
+        />
       )}
     </QueryState>
   );
@@ -80,10 +89,12 @@ function ScoreForm({
   weightSet,
   scores,
   result,
+  sheet,
 }: {
   initiativeId: string;
   weightSet: WeightSet;
   scores: readonly InitiativeScore[];
+  sheet: InitiativeScoreSheet;
   result: {
     completeness: "complete" | "incomplete";
     weightedScore: string | null;
@@ -227,7 +238,10 @@ function ScoreForm({
                 <bdi>{fmt(result.weightedScore, 2, 2)}</bdi>
               </strong>
             ) : (
-              <span className="status-chip status-chip--unknown">{t("prioritization.incomplete")}</span>
+              <span className="status-chip status-chip--unknown" data-health="unknown">
+                <Icon name="question" />
+                {t("prioritization.incomplete")}
+              </span>
             )}
           </output>
           {!complete && result.missingCriteria.length > 0 ? (
@@ -240,6 +254,7 @@ function ScoreForm({
             </p>
           ) : null}
           <p className="field__hint">{t("prioritization.scorecard.readOnly")}</p>
+          <WeightedScoreExplanation sheet={sheet} weightSet={weightSet} />
         </div>
         {editable ? (
           <div className="form__actions">

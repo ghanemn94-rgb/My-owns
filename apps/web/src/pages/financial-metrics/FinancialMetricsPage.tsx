@@ -14,7 +14,9 @@ import { useTransformation } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { canAnywhere, canOn } from "../../auth/permissions.ts";
 import { useMe } from "../../auth/session.tsx";
-import type { IconName } from "../../components/Icon.tsx";
+import { Icon, type IconName } from "../../components/Icon.tsx";
+// T-DG6-FE-F (ADR-0061 §8 E4; REQ-S15-014): the NPV, ROI and payback explanation of the opened business case.
+import { FinancialMetricsExplanation } from "../../components/explanation/index.ts";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { Section } from "../../components/Section.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
@@ -275,7 +277,15 @@ function Metrics({ tid, enabled }: { tid: string; enabled: boolean }) {
               </div>
             )}
           </Section>
-          {selected ? <CashFlows key={selected} tid={tid} caseId={selected} c={byId.get(selected)} /> : null}
+          {selected ? (
+            <CashFlows
+              key={selected}
+              tid={tid}
+              caseId={selected}
+              c={byId.get(selected)}
+              metrics={items.find((m) => m.businessCaseId === selected)}
+            />
+          ) : null}
         </>
       )}
     </QueryState>
@@ -294,7 +304,8 @@ function MetricRow({
   const { t } = useTranslation();
   const locale = useLocale();
   const reason = (r: string | null) => (
-    <span className="status-chip status-chip--unknown status-chip--wrap" data-reason={r ?? ""}>
+    <span className="status-chip status-chip--unknown status-chip--wrap" data-health="unknown" data-reason={r ?? ""}>
+      <Icon name="question" />
       {t(`launchHealthP5.finance.reason.${r ?? "not_shown"}`)}
     </span>
   );
@@ -345,9 +356,28 @@ interface FlowRow {
   inflow: string;
 }
 
-function CashFlows({ tid, caseId, c }: { tid: string; caseId: string; c: BusinessCase | undefined }) {
+function CashFlows({
+  tid,
+  caseId,
+  c,
+  metrics,
+}: {
+  tid: string;
+  caseId: string;
+  c: BusinessCase | undefined;
+  metrics: FinancialMetrics | undefined;
+}) {
   const cf = useCashFlows(caseId);
-  return <QueryState query={cf}>{(d) => <CashFlowEditor key={d.version} tid={tid} cf={d} c={c} />}</QueryState>;
+  return (
+    <QueryState query={cf}>
+      {(d) => (
+        <>
+          <CashFlowEditor key={d.version} tid={tid} cf={d} c={c} />
+          {metrics ? <FinancialMetricsExplanation cashFlows={d} metrics={metrics} /> : null}
+        </>
+      )}
+    </QueryState>
+  );
 }
 
 function CashFlowEditor({ tid, cf, c }: { tid: string; cf: BusinessCaseCashFlows; c: BusinessCase | undefined }) {

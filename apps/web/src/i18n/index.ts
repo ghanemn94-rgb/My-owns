@@ -143,6 +143,10 @@ import arImports from "./ar/imports.json" with { type: "json" };
 import enImports from "./en/imports.json" with { type: "json" };
 import arExternalChange from "./ar/externalChange.json" with { type: "json" };
 import enExternalChange from "./en/externalChange.json" with { type: "json" };
+// P6 slice I (T-DG6-FE-F; ADR-0061 §8): the explanation panels (E1, E2, E4, E5) and the Branding Settings contrast
+// report. Its Arabic is provisional (./provisional-ar-p6.ts, source "fe-f").
+import arExplanations from "./ar/explanations.json" with { type: "json" };
+import enExplanations from "./en/explanations.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -202,6 +206,7 @@ export const catalogues = {
     integrations: arIntegrations,
     imports: arImports,
     externalChange: arExternalChange,
+    explanations: arExplanations,
   },
   en: {
     common: enCommon,
@@ -259,6 +264,7 @@ export const catalogues = {
     integrations: enIntegrations,
     imports: enImports,
     externalChange: enExternalChange,
+    explanations: enExplanations,
   },
 } as const;
 

@@ -1,0 +1,197 @@
+// TEMPORARY visual-evidence capture for T-DG6-FE-F (not a deliverable; removed after the run, kept as .txt in the
+// handback evidence). SYNTHETIC data only; the demo G1 decision approves nothing real.
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { expect, test, type Page } from "@playwright/test";
+import { DEV_USERS, SHOTS, SYN_RETAIL, apiSession, expectAccessible, langOf, signIn, tr, type ApiSession, type Lang } from "./support/ui.ts";
+
+test.describe.configure({ mode: "serial" });
+let tid = "";
+const T = () => `/api/v1/transformations/${tid}`;
+const iniIds: string[] = [];
+
+async function cap(page: Page, lang: Lang, name: string, sel?: string) {
+  mkdirSync(join(SHOTS, lang), { recursive: true });
+  if (sel) {
+    const el = page.locator(sel).first();
+    await el.scrollIntoViewIfNeeded();
+    await el.screenshot({ path: join(SHOTS, lang, `${name}.png`) });
+  } else await page.screenshot({ path: join(SHOTS, lang, `${name}.png`), fullPage: true });
+}
+
+async function completeG1(lead: ApiSession, office: ApiSession) {
+  const base = T();
+  const baseline = await lead.call<{ id: string }>("POST", `${base}/baselines`, {
+    metric: "Synthetic billing error rate", unit: "%", scope: "operational", value: "4.25",
+    source: "Synthetic billing extract", baselineDate: "2026-09-01",
+  });
+  const note = await lead.call<{ id: string; version: number }>("POST", `${base}/evidence`, {
+    kind: "note", title: "Synthetic baseline working paper", ownerUserId: DEV_USERS.lead, noteBody: "Synthetic.",
+  });
+  await lead.call("POST", `${base}/evidence-links`, { evidenceId: note.id, recordType: "baseline", recordId: baseline.id });
+  await office.call("POST", `${base}/evidence/${note.id}/review`,
+    { result: "verified", accessibilityStatus: "accessible", note: "Synthetic check" }, { ifMatch: note.version });
+  const items = await lead.call<{ items: { id: string; version: number }[] }>("GET", `${base}/diagnostic-items?limit=100`);
+  for (const item of items.items)
+    await lead.call("PATCH", `${base}/diagnostic-items/${item.id}`, {
+      currentState: "Synthetic current state", rootCause: "Synthetic root cause", impactText: "Synthetic impact",
+      confidence: "M", baselineId: baseline.id,
+    }, { ifMatch: item.version });
+  const methodology = await lead.call<{ diagnosticWorkstreams: { code: string }[] }>("GET", `${base}/methodology`);
+  await lead.call("POST", `${base}/diagnostic-findings`, {
+    workstreamCode: methodology.diagnosticWorkstreams[0]!.code, kind: "root_cause",
+    statement: "Synthetic: no validation at order entry", status: "confirmed",
+  });
+  await lead.call("POST", `${base}/value-pools`, {
+    name: "Synthetic billing leakage pool", quantificationStatus: "unquantified",
+    unquantifiedReason: "Synthetic: not sized yet", materiality: "material",
+  });
+  await lead.call("POST", `${base}/charter`, {
+    transformationName: "Synthetic FE-F charter", caseForChange: "Synthetic: billing errors",
+    outOfScope: "Synthetic: wholesale billing", inScope: "Synthetic: retail consumer billing",
+    executiveSponsorUserId: DEV_USERS.office, transformationLeadUserId: DEV_USERS.lead, baselineDate: "2026-09-01",
+  });
+}
+
+test("setup", async ({ playwright }, info) => {
+  test.setTimeout(180_000);
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const office = await apiSession(playwright, "dev.office");
+  const admin = await apiSession(playwright, "dev.admin");
+  tid = (await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic FE-F explanations ${lang.toUpperCase()}`, mode: "end_to_end",
+  })).id;
+  await admin.call("POST", "/api/v1/role-assignments", {
+    userId: DEV_USERS.office, roleCode: "SP", scope: { type: "transformation", id: tid }, reason: "Synthetic demo approver",
+  });
+  await completeG1(lead, office);
+  const g1 = await lead.call<{ gate: { version: number } }>("GET", `${T()}/gates/G1`);
+  await lead.call("POST", `${T()}/gates/G1/submissions`, { submissionNote: "Synthetic G1 submission" }, { ifMatch: g1.gate.version });
+  const g1b = await office.call<{ gate: { version: number } }>("GET", `${T()}/gates/G1`);
+  await office.call("POST", `${T()}/gates/G1/decision`, {
+    submissionNo: 1, outcome: "approved", rationale: "Synthetic demo approval.",
+    agreements: { problem: true, baseline: true, materialValuePools: true },
+  }, { ifMatch: g1b.gate.version });
+  const outcome = await lead.call<{ id: string }>("POST", `${T()}/outcomes`, { statement: "Synthetic: billing errors fall." });
+  const kpi = await lead.call<{ id: string }>("POST", `${T()}/kpi-definitions`, {
+    name: "Synthetic billing error rate KPI", unitKind: "count", polarity: "lower_is_better",
+  });
+  const okpi = await lead.call<{ id: string }>("POST", `${T()}/outcome-kpis`, {
+    outcomeId: outcome.id, kpiDefinitionId: kpi.id, targetDate: "2027-12-31",
+  });
+  const scores: Record<string, number>[] = [
+    { strategic_fit: 4, financial_value: 3, customer_impact: 5, feasibility: 2, time_to_value: 3 },
+    { strategic_fit: 4, financial_value: 4, customer_impact: 3, feasibility: 3 },
+  ];
+  for (let n = 0; n < 2; n++) {
+    const i = await lead.call<{ id: string }>("POST", "/api/v1/initiatives", { transformationId: tid, name: `Synthetic initiative ${n + 1}` });
+    iniIds.push(i.id);
+    await lead.call("POST", `/api/v1/initiatives/${i.id}/outcome-contributions`, {
+      outcomeId: outcome.id, outcomeKpiId: okpi.id, contributionStatement: "Synthetic: fewer billing errors.",
+    });
+    const fresh = await lead.call<{ version: number }>("GET", `/api/v1/initiatives/${i.id}`);
+    await lead.call("POST", `/api/v1/initiatives/${i.id}/submit`, {}, { ifMatch: fresh.version });
+    for (const [criterionCode, score] of Object.entries(scores[n]!))
+      await lead.call("POST", `/api/v1/initiatives/${i.id}/scores`, { criterionCode, score });
+  }
+});
+
+test("E1 scorecard", async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const lang = langOf(info);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await signIn(page, lang, "dev.lead");
+  for (const [n, id] of iniIds.entries()) {
+    await page.goto(`/transformations/${tid}/prioritization`);
+    await page.locator("#scorecard-initiative").selectOption(id);
+    const btn = page.getByRole("button", { name: tr(lang, "explanations.panel.show", { value: tr(lang, "explanations.weightedScore.value") }) });
+    await btn.click();
+    await expect(page.locator("[data-explanation='e1-weighted-score'] .explanation__panel")).toBeVisible();
+    await expect(page.locator("[data-explanation='e1-weighted-score'] [data-explanation-formula]")).toContainText(tr(lang, "explanations.weightedScore.formula"));
+    await cap(page, lang, `fe-f-e1-weighted-score-${n === 0 ? "complete" : "incomplete"}`, "[data-explanation='e1-weighted-score']");
+    if (n === 0) await expectAccessible(page, lang, "fe-f-e1");
+  }
+  await cap(page, lang, "fe-f-e1-scorecard-page");
+});
+
+test("E2 benefit", async ({ page, playwright }, info) => {
+  test.setTimeout(120_000);
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const b = await lead.call<{ id: string }>("POST", `${T()}/benefits`, {
+    title: `Synthetic revenue benefit ${lang}`, description: "Synthetic (demo data).", benefitType: "revenue",
+    valueClass: "revenue_uplift", ownerUserId: lead.userId, currency: "SAR", financialStatementLine: "Synthetic revenue line",
+  });
+  await lead.call("POST", `${T()}/benefits/${b.id}/plan-values`, {
+    valueKind: "planned", periodStart: "2027-01-01", periodEnd: "2027-12-31", amount: "1000000.0000", note: "Synthetic planned value.",
+  });
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await signIn(page, lang, "dev.lead");
+  await page.goto(`/transformations/${tid}/benefits/${b.id}`);
+  const btn = page.getByRole("button", { name: tr(lang, "explanations.panel.show", { value: tr(lang, "explanations.benefitRealized.value") }) });
+  await btn.click();
+  const panel = page.locator("[data-explanation='e2-benefit-realized']");
+  await expect(panel.locator("[data-explanation-formula]")).toContainText(tr(lang, "explanations.benefitRealized.formula"));
+  await expect(panel.locator("[data-total='validated']")).toContainText(tr(lang, "explanations.benefitRealized.noLines"));
+  await expectAccessible(page, lang, "fe-f-e2");
+  await cap(page, lang, "fe-f-e2-benefit-realized", "[data-explanation='e2-benefit-realized']");
+});
+
+test("E5 health check", async ({ page, playwright }, info) => {
+  test.setTimeout(180_000);
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await signIn(page, lang, "dev.lead");
+  await page.goto(`/transformations/${tid}/health-check`);
+  await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.start"), exact: true }).click();
+  await expect(page.locator("[data-assessment-status='draft']")).toBeVisible();
+  const list = await lead.call<{ items: { id: string }[] }>("GET", `${T()}/health-checks`);
+  const aid = list.items[0]!.id;
+  for (let i = 1; i <= 25; i++) {
+    const a = await lead.call<{ version: number }>("GET", `${T()}/health-checks/${aid}`);
+    await lead.call("PUT", `${T()}/health-checks/${aid}/answers/q${String(i).padStart(2, "0")}`, { response: i <= 17 ? "yes" : "no" }, { ifMatch: a.version });
+    if (i === 24) {
+      await page.reload();
+      await page.getByRole("button", { name: tr(lang, "explanations.panel.show", { value: tr(lang, "explanations.healthScore.value") }) }).click();
+      await expect(page.locator("[data-explanation='e5-health-score'][data-explanation-state='incomplete']")).toBeVisible();
+      await cap(page, lang, "fe-f-e5-health-incomplete", "[data-explanation='e5-health-score']");
+    }
+  }
+  await page.reload();
+  await page.getByRole("button", { name: tr(lang, "explanations.panel.show", { value: tr(lang, "explanations.healthScore.value") }) }).click();
+  const panel = page.locator("[data-explanation='e5-health-score']");
+  await expect(panel).toHaveAttribute("data-explanation-state", "complete");
+  await expect(panel.locator("[data-fact='band']")).toContainText("16");
+  await expectAccessible(page, lang, "fe-f-e5");
+  await cap(page, lang, "fe-f-e5-health-scored", "[data-explanation='e5-health-score']");
+});
+
+test("Branding contrast", async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const lang = langOf(info);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await signIn(page, lang, "dev.admin");
+  await page.goto("/admin/branding");
+  await expect(page.locator("form[data-form='branding']")).toBeVisible();
+  const reportSection = page.locator("section#contrast-report, #contrast-report").first();
+  await cap(page, lang, "fe-f-branding-contrast-report-initial", "#contrast-report");
+  const primary = page.locator("form[data-form='branding'] input").nth(2);
+  await primary.fill("#FFD700");
+  await page.locator("[data-action='publish-branding']").click();
+  const alert = page.locator("form[data-form='branding'] .banner[role='alert']");
+  await expect(alert).toHaveAttribute("data-problem", "branding.contrast_insufficient");
+  await expect(alert.locator("[data-contrast-failure]").first()).toBeVisible();
+  await expect(page.locator("form[data-form='branding'] .banner[role='alert']")).toHaveCount(1);
+  await expectAccessible(page, lang, "fe-f-branding-refusal");
+  await cap(page, lang, "fe-f-branding-contrast-refusal", "form[data-form='branding']");
+  // A passing colour publishes (synthetic, disposable database) and records its report.
+  await primary.fill(lang === "en" ? "#0066CC" : "#0058B8");
+  await page.locator("[data-action='publish-branding']").click();
+  await expect(page.locator("[data-state='branding-saved']")).toBeVisible();
+  await expect(page.locator("#contrast-report [data-contrast-status='recorded']")).toBeVisible();
+  await expectAccessible(page, lang, "fe-f-branding-report");
+  await cap(page, lang, "fe-f-branding-contrast-report-recorded", "#contrast-report");
+  void reportSection;
+});
