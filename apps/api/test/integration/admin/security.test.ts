@@ -94,7 +94,7 @@ describe("getSecurityRateLimits", () => {
           variable: "ASSISTANT_RATE_LIMIT_PER_MINUTE",
           perMinute: 201,
           keyedBy: "user_or_ip",
-          operationIds: [],
+          operationIds: ["postAssistantMessage"], // T-DG6-BE-T
         },
         {
           name: "webhook",

@@ -300,3 +300,11 @@ export {
   STORAGE_URL_CENSOR,
   withSecretRedaction,
 } from "./load.ts";
+// P6 (T-DG6-BE-T; ADR-0059 §12): the A21 connection log (a test instrument; ignored in production).
+export {
+  CONNECTION_LOG_CHANNELS,
+  CONNECTION_LOG_VARIABLE,
+  installConnectionLog,
+  type ConnectionLogHandle,
+  type ConnectionLogLine,
+} from "./connection-log.ts";

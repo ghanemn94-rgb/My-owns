@@ -1,10 +1,16 @@
-// P6 route-file stub (T-DG6-BE-A; p6-plan §5.1, p6-work-split §E/F.1): assistant settings and messages (slice D; no write tools).
-// Owned and filled by task BE-T. Until then it registers nothing; its registration line already exists, so the
-// owning task edits only this file (and its own tests, pending list and contract exercises).
+// The assistant's routes (ADR-0059 §3, §9, §10; p6-work-split §D.1; T-DG6-BE-T): the setting (Administration > AI
+// assistant) and the conversations. BE-U adds takeAssistantSuggestionToDraft (suggestions.ts) on its own line below.
+// The assistant is OFF unless an administrator saved and enabled a setting; nothing here makes a network call while it
+// is off, and nothing here writes outside the assistant's own tables and their audit events.
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps } from "../platform/index.ts";
+import { registerAssistantConversationRoutes } from "./conversations.ts";
+import { registerAssistantSettingRoutes } from "./settings.ts";
 
-/** Registers this file's routes and returns them as "METHOD /path" (none until BE-T fills it). */
-export function registerAssistantRoutes(_app: FastifyInstance, _deps: ModuleDeps): string[] {
-  return [];
+/** Registers this module's routes and returns them as "METHOD /path". */
+export function registerAssistantRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
+  return [
+    ...registerAssistantSettingRoutes(app, deps), // BE-T: the setting (§3)
+    ...registerAssistantConversationRoutes(app, deps), // BE-T: conversations and messages (§9)
+  ];
 }

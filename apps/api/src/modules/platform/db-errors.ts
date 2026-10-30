@@ -3593,6 +3593,83 @@ export function mapP6IntegrationsError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P6 slice D (T-DG6-BE-T; ADR-0059 §3, §9, §10): the 0111 guards of the assistant tables. The routes refuse first with
+ * the same codes (settings.ts, conversations.ts); these are the race and last-line answers.
+ *   assistant_setting_singleton_key, assistant_conversation_message_step,
+ *   assistant_message_sequence, assistant_message_seq_key            -> 409 version_conflict (a concurrent change)
+ *   assistant_setting_enable_complete                                 -> 422 assistant.enable_incomplete
+ *   assistant_setting_locked_while_enabled                            -> 422 assistant.locked_while_enabled
+ *   assistant_setting_endpoint_url                                    -> 422 assistant.endpoint_invalid
+ *   assistant_setting_credential_ref                                  -> 422 assistant.credential_ref_invalid
+ *   assistant_setting_test_adapter_shape                              -> 422 assistant.test_adapter_shape (proposed in
+ *                                                                        the BE-T handback; not in ADR-0059 §10)
+ *   assistant_conversation_message_count_check                        -> 422 assistant.conversation_full
+ *   assistant_setting_starts_disabled, assistant_setting_enabled_by_actor, assistant_conversation_owner_only,
+ *   assistant_conversation_identity_fixed, assistant_conversation_organization_matches,
+ *   assistant_conversation_messages_match, assistant_message_conversation_matches, assistant_message_user_shape,
+ *   assistant_message_reply_shape, assistant_message_citations_valid  -> 500 (a defect of the API, never a user error)
+ * The texts are ADR-0059 §10's, English verbatim.
+ */
+export function mapP6AssistantError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "assistant_setting_singleton_key":
+    case "assistant_conversation_message_step":
+    case "assistant_message_sequence":
+    case "assistant_message_seq_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "assistant_setting_enable_complete":
+      return problems.businessRule(
+        "assistant.enable_incomplete",
+        "To turn the assistant on, enter the provider, the company authorization reference and, for an HTTP endpoint, the endpoint, the API style and the model.",
+      );
+    case "assistant_setting_locked_while_enabled":
+      return problems.businessRule(
+        "assistant.locked_while_enabled",
+        "Turn the assistant off before changing its provider, endpoint, API style, model, credential or authorization reference.",
+      );
+    case "assistant_setting_endpoint_url":
+      return problems.businessRule(
+        "assistant.endpoint_invalid",
+        "Enter the endpoint as an http or https address without a user name, password, query or fragment.",
+      );
+    case "assistant_setting_credential_ref":
+      return problems.businessRule(
+        "assistant.credential_ref_invalid",
+        "A credential must be a reference to a secret (provider and name), never the secret itself.",
+      );
+    case "assistant_setting_test_adapter_shape":
+      return problems.businessRule(
+        "assistant.test_adapter_shape",
+        "The test adapter takes no endpoint, API style or credential. Clear them, or choose the HTTP endpoint.",
+      );
+    case "assistant_conversation_message_count_check":
+      return problems.businessRule(
+        "assistant.conversation_full",
+        "This conversation has reached 100 messages. Start a new conversation.",
+      );
+    case "assistant_setting_starts_disabled":
+    case "assistant_setting_enabled_by_actor":
+    case "assistant_conversation_owner_only":
+    case "assistant_conversation_identity_fixed":
+    case "assistant_conversation_organization_matches":
+    case "assistant_conversation_messages_match":
+    case "assistant_message_conversation_matches":
+    case "assistant_message_user_shape":
+    case "assistant_message_reply_shape":
+    case "assistant_message_citations_valid":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3638,6 +3715,8 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p6OperationsChannels !== null) return p6OperationsChannels;
   const p6Integrations = mapP6IntegrationsError(error); // P6 slices B/A (T-DG6-BE-L; ADR-0055 §9, ADR-0056 §9)
   if (p6Integrations !== null) return p6Integrations;
+  const p6Assistant = mapP6AssistantError(error); // P6 slice D (T-DG6-BE-T; ADR-0059 §10)
+  if (p6Assistant !== null) return p6Assistant;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,
