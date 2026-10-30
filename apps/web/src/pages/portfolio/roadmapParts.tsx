@@ -17,6 +17,7 @@ import { useDeliverables, useMilestones, useWaves } from "../../api/portfolio.ts
 import { useP3Refresh } from "../../api/queries.ts";
 import type { Deliverable, Initiative, Milestone } from "../../api/types.ts";
 import { useLocale } from "../../app/locale.ts";
+import { ExternalConfirmationPanel } from "../../components/external-confirmation/ExternalConfirmationPanel.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
 import { RecordDialog, type FieldSpec } from "../../components/RecordForm.tsx";
@@ -97,6 +98,13 @@ export function DeliverablesSection({ initiative: i, readOnly }: { initiative: I
                         {formatBusinessDate(x.dueDate, locale) ?? t("common.value.none")} ·{" "}
                         {t(`portfolio.deliverable.acceptance.${x.acceptanceStatus}`)}
                       </span>
+                      {/* T-DG6-FE-C (ADR-0055 §6; REQ-S01-005): the external-change confirmation, beside the DG3 acceptance. */}
+                      <ExternalConfirmationPanel
+                        tid={ws.tid}
+                        deliverableId={x.id}
+                        deliverableTitle={x.title}
+                        readOnly={readOnly}
+                      />
                       {canEdit ? (
                         <span className="toolbar">
                           <button

@@ -226,7 +226,10 @@ export interface NavSubPage {
     // T-DG6-FE-A: the P6 Administration screens of FE-B (P6_SUBPAGES), "not available yet" until FE-B builds them.
     | P6SubPageId
     // T-DG6-FE-E: Administration > AI assistant (ADR-0059 §3).
-    | "assistant";
+    | "assistant"
+    // T-DG6-FE-C: Administration > Integrations (ADR-0055) and Strategy and KPIs > Imports (ADR-0056; D-195 Q1).
+    | "integrations"
+    | "imports";
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -463,6 +466,10 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
     path: "/admin/assistant",
     requiresAny: ["assistant.configure", "operations.read"],
   },
+  // T-DG6-FE-C (ADR-0055 §9, ADR-0056 §9; D-195 Q1): Administration > Integrations (connector.read: ADM_TECH, KDS, TD,
+  // TO, AUD) and Strategy and KPIs > Imports (import.read: KDS, BO, TO, AUD). UI hints only: the server decides.
+  { id: "integrations", area: "admin", path: "/admin/integrations", requiresAny: ["connector.read"] },
+  { id: "imports", area: "strategy", path: "/strategy-kpis/imports", requiresAny: ["import.read"] },
 ];
 
 /**
@@ -511,7 +518,12 @@ export const AREA_CONTENTS: Readonly<Record<LandingAreaId, readonly AreaContentI
     { id: "outcomeTrees", tabs: ["define"] },
     { id: "definitions", tabs: ["kpis"] },
     { id: "targets", tabs: ["define", "kpis"] },
-    { id: "actuals", tabs: ["kpis"] },
+    // T-DG6-FE-C: actuals also arrive by a staged import (ADR-0056; D-195 Q1).
+    {
+      id: "actuals",
+      tabs: ["kpis"],
+      links: [{ path: "/strategy-kpis/imports", labelKey: "nav.sub.imports", requiresAny: ["import.read"] }],
+    },
     { id: "performanceReviews", tabs: ["kpis", "dashboard"] },
   ],
   // M0105: canvas, gaps, capabilities, processes and design decisions.

@@ -127,6 +127,14 @@ import enAccess from "./en/access.json" with { type: "json" };
 // provisional (components/assistant/provisional-ar.ts; ADR-0059 §1, §8, §10).
 import arAssistant from "./ar/assistant.json" with { type: "json" };
 import enAssistant from "./en/assistant.json" with { type: "json" };
+// P6 slices B and A (T-DG6-FE-C; ADR-0055, ADR-0056): Administration > Integrations, Strategy and KPIs > Imports and the
+// deliverable's external-change confirmation. Their Arabic is provisional (pages/integrations/provisional-ar.ts).
+import arIntegrations from "./ar/integrations.json" with { type: "json" };
+import enIntegrations from "./en/integrations.json" with { type: "json" };
+import arImports from "./ar/imports.json" with { type: "json" };
+import enImports from "./en/imports.json" with { type: "json" };
+import arExternalChange from "./ar/externalChange.json" with { type: "json" };
+import enExternalChange from "./en/externalChange.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -181,6 +189,9 @@ export const catalogues = {
     playbookP5: arPlaybookP5,
     access: arAccess,
     assistant: arAssistant,
+    integrations: arIntegrations,
+    imports: arImports,
+    externalChange: arExternalChange,
   },
   en: {
     common: enCommon,
@@ -233,6 +244,9 @@ export const catalogues = {
     playbookP5: enPlaybookP5,
     access: enAccess,
     assistant: enAssistant,
+    integrations: enIntegrations,
+    imports: enImports,
+    externalChange: enExternalChange,
   },
 } as const;
 
