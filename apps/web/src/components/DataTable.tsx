@@ -1,5 +1,6 @@
 // Accessible data table on TanStack Table (headless; ADR-0009, REQ-S15-013): server-side sorting with aria-sort,
-// column selection (persisted per table), and cursor pagination (Previous / Next, page size).
+// column selection (persisted per table, or in saved views for the lists that offer them: see "saved views" below),
+// and cursor pagination (Previous / Next, page size).
 import {
   flexRender,
   getCoreRowModel,
@@ -228,6 +229,46 @@ export function useCursorPager() {
   // Keeps the same array when already on the first page, so calling reset() in an effect cannot loop.
   const reset = useCallback(() => setStack((s) => (s.length === 1 && s[0] === null ? s : [null])), []);
   return { cursor, pageNumber: stack.length, hasPrevious: stack.length > 1, next, previous, reset };
+}
+
+// ------------------------------------------------------------------------------------------------ saved views
+// T-DG6-FE-D (ADR-0057 §4 "Column choices move to saved views", p6-plan §3 row 14; REQ-S15-013 "persist column choices
+// in saved views"). A list that offers saved views takes its visible columns from the ACTIVE VIEW. The old per-browser
+// choice (`usePersistentVisibility`, below) is read ONCE, as the unsaved initial state of the list, and is never
+// written again for such a list: from then on choices are stored only in saved views, on the server.
+
+/** The visible column keys of a view -> the table's visibility state (a column the view does not name is hidden). */
+export function visibilityFromViewColumns(
+  columnIds: readonly string[],
+  viewColumns: readonly string[],
+): VisibilityState {
+  const shown = new Set(viewColumns);
+  return Object.fromEntries(columnIds.map((id) => [id, shown.has(id)]));
+}
+
+/** The table's visibility state -> the visible column keys to store in a view (in the table's column order). */
+export function viewColumnsFromVisibility(columnIds: readonly string[], visibility: VisibilityState): string[] {
+  return columnIds.filter((id) => visibility[id] !== false);
+}
+
+/**
+ * The old per-browser column choice of `tableId` (written by `usePersistentVisibility` before P6), read once and
+ * never written: null when there is none or it cannot be read.
+ */
+export function readLegacyVisibility(tableId: string): VisibilityState | null {
+  try {
+    const raw = globalThis.localStorage?.getItem(`mth.table.${tableId}.columns`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+    return Object.fromEntries(
+      Object.entries(parsed as Record<string, unknown>).filter(
+        (e): e is [string, boolean] => typeof e[1] === "boolean",
+      ),
+    );
+  } catch {
+    return null;
+  }
 }
 
 /** Column visibility persisted in localStorage per table id. */

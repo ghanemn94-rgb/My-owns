@@ -127,6 +127,10 @@ import enAccess from "./en/access.json" with { type: "json" };
 // provisional (components/assistant/provisional-ar.ts; ADR-0059 §1, §8, §10).
 import arAssistant from "./ar/assistant.json" with { type: "json" };
 import enAssistant from "./en/assistant.json" with { type: "json" };
+// P6 slice H (T-DG6-FE-D; ADR-0057): search, saved views, filter chips and contextual help. Its Arabic is provisional
+// (components/saved-views/provisional-ar.ts).
+import arProductivity from "./ar/productivity.json" with { type: "json" };
+import enProductivity from "./en/productivity.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -181,6 +185,7 @@ export const catalogues = {
     playbookP5: arPlaybookP5,
     access: arAccess,
     assistant: arAssistant,
+    productivity: arProductivity,
   },
   en: {
     common: enCommon,
@@ -233,6 +238,7 @@ export const catalogues = {
     playbookP5: enPlaybookP5,
     access: enAccess,
     assistant: enAssistant,
+    productivity: enProductivity,
   },
 } as const;
 
