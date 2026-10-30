@@ -18,6 +18,8 @@ const NOT_TRIGGERS = new Set([
   "branding.published",
   // T-DG6-BE-L2: the recovery of a connector (consumed by integrations.connector_exception only; no catalogue trigger).
   "connector.run_recovered",
+  // T-DG6-BE-I2 (ADR-0054 §3): the channel fan-out's own event (consumed by notifications.fanout only; no catalogue trigger).
+  "inbox_notification.created",
 ]);
 
 describe("automation samples (D-164 d)", () => {

@@ -46,6 +46,8 @@ const ENQUEUED: Readonly<Record<string, string>> = {
   "connector.run_failed": "api integrations/runs.ts",
   "connector.run_recovered": "api integrations/runs.ts",
   "data.stale": "worker handlers/operations.ts (kpi.freshness_scan; T-DG6-BE-K2, ADR-0053 §3)",
+  // T-DG6-BE-I2 (ADR-0054 §3 step 1): one per notification createWorkItemOnce writes; consumer notifications.fanout.
+  "inbox_notification.created": "api tasks/service.ts, worker kit.ts (createWorkItemOnce)",
 };
 
 /**
@@ -69,6 +71,7 @@ const OUTBOX_WRITE_SITES: Readonly<Record<string, number>> = {
   "apps/api/src/modules/reporting/exports/jobs.ts": 1,
   "apps/api/src/modules/reporting/reports/snapshots.ts": 1,
   "apps/api/src/modules/sustainment/controls.ts": 1,
+  "apps/api/src/modules/tasks/service.ts": 1, // T-DG6-BE-I2: inbox_notification.created (tasks may not import jobs)
   "apps/api/src/modules/workflows/gates.ts": 1,
   "apps/worker/src/handlers/adoption.ts": 1,
   "apps/worker/src/handlers/benefits.ts": 1,

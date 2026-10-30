@@ -43,6 +43,11 @@ const MIGRATIONS = [
     url: new URL("../../../packages/db/migrations/0117_p6_operations_triggers_freshness.sql", import.meta.url),
     table: "p6_operations_job_identity",
   },
+  // T-DG6-BE-I2 (0121): the notification channel fan-out and its delivery sweep.
+  {
+    url: new URL("../../../packages/db/migrations/0121_p6_notification_fanout_jobs.sql", import.meta.url),
+    table: "p6_notification_job_identity",
+  },
 ] as const;
 const CATEGORY: ReadonlyMap<string, string> = new Map(Object.entries(PERMISSIONS));
 
@@ -101,7 +106,7 @@ describe("job service identities (ADR-0053 §1)", () => {
     const declared = JOB_SERVICE_IDENTITIES.map((d) => d.queue);
     expect(new Set(declared).size).toBe(declared.length);
     expect([...declared].sort()).toEqual([...queues].sort());
-    expect(declared).toHaveLength(47); // 40 (T-DG6-BE-J) + two search jobs (T-DG6-BE-P) + two connector jobs (T-DG6-BE-L2) + three operations jobs (T-DG6-BE-K2)
+    expect(declared).toHaveLength(49); // 40 (T-DG6-BE-J) + two search jobs (T-DG6-BE-P) + two connector jobs (T-DG6-BE-L2) + three operations jobs (T-DG6-BE-K2) + two notification jobs (T-DG6-BE-I2)
   });
 
   it("migrations 0114 and 0115 seed exactly the declarations (code, queue, codes, sensitive access, labels)", () => {

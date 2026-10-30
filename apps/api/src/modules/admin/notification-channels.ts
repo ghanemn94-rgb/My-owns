@@ -4,6 +4,9 @@
 //   GET  /api/v1/admin/notification-channels/{channelKind}      getNotificationChannel     (ETag "0" = never configured)
 //   PUT  /api/v1/admin/notification-channels/{channelKind}      putNotificationChannel     (IfMatchOrZero; reason)
 //   POST /api/v1/admin/notification-channels/{channelKind}/test testNotificationChannel    (to the caller's own address)
+//   GET  /api/v1/admin/notification-deliveries                  listNotificationDeliveries (configure or operations.read;
+//                                                               T-DG6-BE-I2: status, attempts, error code; never the
+//                                                               message text or the recipient address)
 // The rules:
 //  - The in-app inbox is always on and is not a channel row. No row, or a disabled row, = in-app only (A21): nothing in
 //    this file is on the path of any workflow; a channel's absence or failure never blocks one.
@@ -115,6 +118,7 @@ const JSON_BODY = ["application/json"] as const;
 const LIST = "/api/v1/admin/notification-channels";
 const ITEM = "/api/v1/admin/notification-channels/:channelKind";
 const TEST = "/api/v1/admin/notification-channels/:channelKind/test";
+const DELIVERIES = "/api/v1/admin/notification-deliveries"; // T-DG6-BE-I2
 
 // ------------------------------------------------------------------------------------------------ schemas (the mirrors)
 
@@ -156,6 +160,35 @@ export const notificationChannelTestResult = z.strictObject({
 });
 export type NotificationChannelView = z.infer<typeof notificationChannelView>;
 
+// T-DG6-BE-I2 (ADR-0054 §3): the deliveries list. Status, attempts, timestamps and the stable error code only: the
+// message is never stored and the recipient's address is never returned.
+export const NOTIFICATION_DELIVERY_STATUSES = ["pending", "sent", "failed", "skipped"] as const;
+export const NOTIFICATION_DELIVERY_SKIP_REASONS = [
+  "no_address",
+  "recipient_restricted",
+  "channel_disabled",
+  "recipient_disabled",
+] as const;
+/** Response mirror of `NotificationDelivery` (docs/api/openapi.yaml). */
+export const notificationDeliveryView = z.strictObject({
+  id: uuid,
+  notificationId: uuid,
+  channelKind: notificationChannelKind,
+  status: z.enum(NOTIFICATION_DELIVERY_STATUSES),
+  attempts: z.number().int().min(0).max(20),
+  lastAttemptAt: z.string().nullable(),
+  sentAt: z.string().nullable(),
+  skipReason: z.enum(NOTIFICATION_DELIVERY_SKIP_REASONS).nullable(),
+  errorCode: z.string().nullable(),
+  createdAt: z.string(),
+  version: z.number().int().min(1),
+});
+export const notificationDeliveryPage = z.strictObject({
+  items: z.array(notificationDeliveryView),
+  nextCursor: z.string().nullable(),
+});
+export type NotificationDeliveryView = z.infer<typeof notificationDeliveryView>;
+
 /** The SMTP host and sender rules of 0102 (checked here so a malformed value is a 400, never a database error). */
 const HOST = /^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/;
 const FROM = /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/;
@@ -178,6 +211,13 @@ export const notificationChannelUpdate = z.strictObject({
 const channelParams = z.strictObject({ channelKind: notificationChannelKind });
 const orgQuery = z.strictObject({ organizationId: uuid });
 const listQuery = z.strictObject({ organizationId: uuid, cursor: cursorSchema, limit: limitSchema });
+const deliveriesQuery = z.strictObject({
+  organizationId: uuid,
+  status: z.enum(NOTIFICATION_DELIVERY_STATUSES).optional(),
+  channelKind: notificationChannelKind.optional(),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
 const testBody = z.strictObject({ recipient: z.literal("self") });
 
 // ------------------------------------------------------------------------------------------------ refusals (ADR-0054 §4)
@@ -567,5 +607,46 @@ export function registerNotificationChannelRoutes(
     return { outcome, channelKind, errorCode, testedAt: testedAt.toISOString() };
   });
 
-  return [`GET ${LIST}`, `GET ${ITEM}`, `PUT ${ITEM}`, `POST ${TEST}`];
+  // listNotificationDeliveries (T-DG6-BE-I2): newest first (UUIDv7 id descending), optional status and channel filters.
+  app.get(DELIVERIES, { config: { access: { permission: CONFIGURE } } }, async (request) => {
+    const query = parseQuery(deliveriesQuery, request.query);
+    const principal = principalOf(request);
+    await requireRead(db, principal, query.organizationId);
+    const hash = filterHash({
+      organizationId: query.organizationId,
+      status: query.status,
+      channelKind: query.channelKind,
+    });
+    const after = decodeCursor(query.cursor, hash, 1);
+    if (after && (typeof after[0] !== "string" || !uuid.safeParse(after[0]).success))
+      throw problems.badRequest(
+        "validation.cursor",
+        "The cursor is invalid or belongs to other filters.",
+        "/query/cursor",
+      );
+    let q = db.selectFrom("notification_delivery").selectAll().where("organization_id", "=", query.organizationId);
+    if (query.status !== undefined) q = q.where("status", "=", query.status);
+    if (query.channelKind !== undefined) q = q.where("channel_kind", "=", query.channelKind);
+    if (after) q = q.where("id", "<", after[0] as string);
+    const rows = await q
+      .orderBy("id", "desc")
+      .limit(query.limit + 1)
+      .execute();
+    const views: NotificationDeliveryView[] = rows.map((r) => ({
+      id: r.id,
+      notificationId: r.inbox_notification_id,
+      channelKind: r.channel_kind as ChannelKind,
+      status: r.status as NotificationDeliveryView["status"],
+      attempts: r.attempts,
+      lastAttemptAt: r.last_attempt_at ? iso(r.last_attempt_at) : null,
+      sentAt: r.sent_at ? iso(r.sent_at) : null,
+      skipReason: r.skip_reason as NotificationDeliveryView["skipReason"],
+      errorCode: r.error_code,
+      createdAt: iso(r.created_at),
+      version: r.version,
+    }));
+    return paginate(views, query.limit, (v) => [v.id], hash);
+  });
+
+  return [`GET ${LIST}`, `GET ${ITEM}`, `PUT ${ITEM}`, `POST ${TEST}`, `GET ${DELIVERIES}`];
 }

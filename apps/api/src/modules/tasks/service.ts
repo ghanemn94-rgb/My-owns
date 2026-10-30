@@ -10,7 +10,7 @@
 // The worker cannot import API code (ADR-0002 rule 5), so apps/worker/src/kit.ts carries a twin of this function over
 // the same `@mth/db` calls; apps/api/test/integration/tasks/work-items.test.ts checks that both write the same rows.
 import { insertAuditEvent, type AuditActor, type Tx } from "@mth/db";
-import { decideDelivery } from "@mth/shared/schemas";
+import { decideDelivery, outboxPayloadSchema } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { loadDeliveryInput } from "./notification-policy.ts"; // T-DG5-BE-L (ADR-0044 §5)
 
@@ -33,6 +33,37 @@ export interface WorkItemInput {
   readonly periodLabel?: string | null;
   /** `<rule>:<subject id>:<slot>[:<recipient>]` (ADR-0025 §3 item 1). */
   readonly dedupeKey: string;
+}
+
+/**
+ * T-DG6-BE-I2 (ADR-0054 §3 step 1; REQ-S12-023): the outbox event of every notification this function writes, in the
+ * same transaction. The worker's notifications.fanout consumes it after commit and fans the notification out to the
+ * organization's enabled external channels (none configured: nothing is written, A21). The tasks module may not import
+ * jobs (architecture.test.ts: tasks depends on access, audit and platform only), so the row is written here with the
+ * same validation as jobs/outbox.ts enqueueOutboxEvent. Ids only, never a text or an address.
+ */
+export const INBOX_NOTIFICATION_CREATED_EVENT = "inbox_notification.created";
+
+async function enqueueNotificationCreated(
+  tx: Tx,
+  n: { readonly id: string; readonly organizationId: string; readonly recipientUserId: string },
+): Promise<void> {
+  const schema = outboxPayloadSchema(INBOX_NOTIFICATION_CREATED_EVENT, 1);
+  if (!schema) throw new Error(`outbox: no schema for ${INBOX_NOTIFICATION_CREATED_EVENT} v1`);
+  const payload = schema.parse({ notificationId: n.id, recipientUserId: n.recipientUserId }) as Record<string, unknown>;
+  await tx
+    .insertInto("outbox_event")
+    .values({
+      id: uuidv7(),
+      organization_id: n.organizationId,
+      aggregate_type: "inbox_notification",
+      aggregate_id: n.id,
+      event_type: INBOX_NOTIFICATION_CREATED_EVENT,
+      schema_version: 1,
+      payload: JSON.stringify(payload),
+      idempotency_key: `inbox_notification.created:${n.id}`,
+    })
+    .execute();
 }
 
 export interface WorkItemOnceResult {
@@ -154,6 +185,13 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
         delivery_state: { from: null, to: delivery.state }, // T-DG5-BE-L
         deliver_after: { from: null, to: delivery.deliverAfter?.toISOString() ?? null }, // T-DG5-BE-L
       },
+    });
+  if (notification)
+    // T-DG6-BE-I2 (ADR-0054 §3 step 1): the fan-out event, in this transaction; no remote I/O here.
+    await enqueueNotificationCreated(tx, {
+      id: notificationId,
+      organizationId: input.organizationId,
+      recipientUserId: input.assigneeUserId,
     });
   return { outcome: "created", workItemId: id };
 }

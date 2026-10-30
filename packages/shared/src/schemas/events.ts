@@ -217,6 +217,19 @@ export const dataStaleV1 = z.strictObject({
 });
 export type DataStaleV1 = z.infer<typeof dataStaleV1>;
 
+/**
+ * T-DG6-BE-I2 (ADR-0054 §3 step 1; REQ-S12-023): one in-app notification was written, in its producing transaction
+ * (apps/api tasks/service.ts createWorkItemOnce and its worker twin in apps/worker/src/kit.ts). Consumer
+ * notifications.fanout (apps/worker queues/notifications.ts): it fans the notification out to the organization's
+ * ENABLED external channels after commit; with no channel row it writes nothing (A21). Ids only: never a title, a
+ * message text or an address.
+ */
+export const inboxNotificationCreatedV1 = z.strictObject({
+  notificationId: uuid,
+  recipientUserId: uuid,
+});
+export type InboxNotificationCreatedV1 = z.infer<typeof inboxNotificationCreatedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -266,6 +279,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "connector.run_recovered": { 1: connectorRunRecoveredV1 },
   // T-DG6-BE-K2 (ADR-0053 §3): consumers operations.exception_raise and automation.evaluate (apps/worker queues).
   "data.stale": { 1: dataStaleV1 },
+  // T-DG6-BE-I2 (ADR-0054 §3): consumer notifications.fanout (apps/worker queues/notifications.ts).
+  "inbox_notification.created": { 1: inboxNotificationCreatedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

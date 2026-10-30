@@ -7,6 +7,7 @@ import { createBoss } from "./queues/index.ts";
 import { startWorker } from "./worker.ts";
 // T-DG6-DO-D (ADR-0053 §6): the worker_heartbeat writer and the queue count it reports.
 import { DOMAIN_HANDLERS } from "./handlers/index.ts";
+import { configureNotificationChannels } from "./handlers/notifications.ts"; // T-DG6-BE-I2
 import { startHeartbeat } from "./heartbeat.ts";
 import { FAILURE_RETRY_QUEUE } from "./kit.ts";
 import { RUN_NOW_QUEUE } from "./job-runs.ts";
@@ -50,11 +51,18 @@ async function main(): Promise<void> {
     }
     throw err;
   }
-  // D-198 (ADR-0052 §5): the built-in providers (env, file). No worker job resolves a secret yet (BE-I and BE-L are the
-  // first); a value is never logged, only the provider ids.
+  // D-198 (ADR-0052 §5): the built-in providers (env, file). The notification channel sends resolve SMTP
+  // credential references through it (T-DG6-BE-I2); a value is never logged, only the provider ids.
   // ADR-0053 §4 item 1 (T-DG6-DO-D): every value a registered provider resolves joins the log redaction set.
   const secrets = withSecretRedaction(createSecretProviderRegistry());
   registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir });
+  // T-DG6-BE-I2 (ADR-0054 §3): the channel sends resolve credential references through this registry (so a resolved
+  // value joins the redaction set), link to APP_BASE_URL when set, and refuse unencrypted SMTP in production.
+  configureNotificationChannels({
+    resolveSecret: (ref) => secrets.resolve(ref),
+    appBaseUrl: config.appBaseUrl,
+    refuseInsecure: config.nodeEnv === "production",
+  });
   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
   const db = createDb(pool);
   // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
