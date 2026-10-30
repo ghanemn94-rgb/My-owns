@@ -1,0 +1,15 @@
+# T-DG6-DO-FB review of the DO-F run-1 artefacts (2026-10-30T12:45:03Z); offline; scratch copies under $TMPDIR
+
+## 1. Post-run diffs reverse to the scripts the driver ran (driver-output.txt line 2-5)
+cp deploy/load/{workload,report}.mjs $TMPDIR/rev/; patch -R -o <f>.orig.mjs <f>.mjs < docs/delivery/handbacks/DG6/T-DG6-DO-F-evidence/load/run-1/<f>-changes-after-run.diff
+current workload.mjs 34734caad8929e82cd99b5c9aafacd26533109c4bf213efc6e97e4903ab9b644 -> reversed c138c2173e5999e5e554507af53e08aa02cbdabc6a35c5f57d15cf93c431d627 (= driver-output.txt)
+current report.mjs   32f89b4a4f7110883a91be7941c37db21195c428c1906e244b5bf75a0c339368 -> reversed 35bb1dc73efc5db3fa76528c893030284ed6c05f9cd0c8e0aba03378c7b4bc77 (= driver-output.txt)
+
+## 2. The current report.mjs regenerates the committed report from the unchanged samples
+cp -r docs/delivery/handbacks/DG6/T-DG6-DO-F-evidence/load/run-1/{rep-1,rep-2,rep-3,infrastructure.json,run-notes.md} $TMPDIR/regen/run-1/
+node deploy/load/report.mjs report --run $TMPDIR/regen/run-1 --title "DG6 load run 1 (first run, draft report; T-DG6-DO-F)" --notes $TMPDIR/regen/run-1/run-notes.md
+exit=0
+regenerated report.md   1d10a57a161e3f869e81cf1de9f4ddcc5fc71df83ed85667f99a464d369b7670 = committed
+regenerated summary.json ea55b9de50defa2ce857d4de79da2a914bcf76d689cd5a14d4cff4fd4f3092ea = committed
+
+## 3. Independent p95 recomputation (awk, not report.mjs): run-1-p95-recompute.txt; all 15 class x repetition p95 equal the report.
