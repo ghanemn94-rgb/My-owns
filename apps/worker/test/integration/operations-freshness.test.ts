@@ -48,7 +48,7 @@ afterEach(() => {
 
 const STARTER_16 = "01920005-0075-7000-8000-000000000110";
 const STARTER_16_V1 = "01920005-0075-7000-8000-000000000210";
-const STARTER_16_V2 = "01920006-0116-7000-8000-000000000001";
+const STARTER_16_V2 = "01920006-0117-7000-8000-000000000001";
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
 const userActor = (userId: string) =>
   ({ actorType: "user", actorUserId: userId, requestId: `test-${randomUUID()}`, source: "api" }) as const;
@@ -284,7 +284,7 @@ const exceptionsOf = (w: World) =>
     .orderBy("first_occurred_at")
     .execute();
 
-describe("the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116)", () => {
+describe("the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0117)", () => {
   it("lists connector.run_failed and data.stale, admin-selectable events of M0239, each fed to the engine", async () => {
     const rows = await env.db
       .selectFrom("automation_trigger")
@@ -303,6 +303,11 @@ describe("the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116)",
     expect([...(QUEUES_FOR_EVENT["data.stale"] ?? [])].sort()).toEqual([
       "automation.evaluate",
       "operations.exception_raise",
+    ]);
+    // T-DG6-BE-K2S: connector.run_failed also keeps its domain consumer (BE-L2's connector exception; D-102).
+    expect(QUEUES_FOR_EVENT["connector.run_failed"]).toEqual([
+      "integrations.connector_exception",
+      "automation.evaluate",
     ]);
     expect(DOMAIN_HANDLERS.map((h) => h.queue)).toEqual(
       expect.arrayContaining(OPERATIONS_HANDLERS.map((h) => h.queue)),

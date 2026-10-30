@@ -41,11 +41,16 @@ describe("operations jobs: registration (ADR-0053 §2, §6)", () => {
     }
   });
 
-  it("routes data.stale to the raise consumer and to the engine; connector.run_failed to the engine", () => {
+  it("routes data.stale to the raise consumer and to the engine; connector.run_failed to its consumer and the engine", () => {
     expect(OPERATIONS_EVENT_QUEUES).toEqual({ [DATA_STALE_EVENT]: EXCEPTION_RAISE_QUEUE });
     // D-102 order: the domain consumer first, the engine last (adoption-below-trajectory.test.ts pins the rule).
     expect(QUEUES_FOR_EVENT[DATA_STALE_EVENT]).toEqual([EXCEPTION_RAISE_QUEUE, "automation.evaluate"]);
     expect(AUTOMATION_EVENT_QUEUES["connector.run_failed"]).toBe("automation.evaluate");
+    // T-DG6-BE-K2S (D-102): BE-L2's connector-exception consumer first, the engine last.
+    expect(QUEUES_FOR_EVENT["connector.run_failed"]).toEqual([
+      "integrations.connector_exception",
+      "automation.evaluate",
+    ]);
     expect(outboxPayloadSchema(DATA_STALE_EVENT, 1)).toBe(dataStaleV1);
     expect(outboxPayloadSchema("connector.run_failed", 1)).toBe(connectorRunFailedV1);
   });

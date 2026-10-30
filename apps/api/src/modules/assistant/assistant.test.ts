@@ -29,6 +29,7 @@ describe("assistant module (P6)", () => {
         "POST /api/v1/admin/assistant/enable",
         "POST /api/v1/assistant/conversations",
         "POST /api/v1/assistant/conversations/:conversationId/messages",
+        "POST /api/v1/assistant/suggestions/:suggestionId/to-draft", // T-DG6-BE-U (§6)
         "PUT /api/v1/admin/assistant",
       ]);
     } finally {

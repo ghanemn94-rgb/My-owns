@@ -6,6 +6,9 @@ import { registerHelpTopicRoutes } from "./help-topics.ts";
 import { registerSearchRoutes } from "./routes.ts";
 import { registerSavedViewRoutes } from "./saved-views.ts";
 
+// T-DG6-BE-U (ADR-0059 §4): the scoped search query, for the assistant's retrieval (it may import only this file).
+export { SEARCH_RECORD_TYPES, searchRecords, type SearchHit } from "./query.ts";
+
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG6-BE-A
  * created them as stubs; p6-plan §5.1). The module reports "scaffold" until a route exists, then "active".

@@ -146,7 +146,9 @@ export async function exerciseP6BeTOperations(ctx: P6ExerciseContext): Promise<v
   expect(posted.body.reply).toMatchObject({
     author: "assistant",
     label: "assistant_suggestion",
-    replyKind: "no_sources",
+    // T-DG6-BE-U replaced the stub seam: retrieval may find records or playbook passages for the question (an answer
+    // from the local test adapter), or nothing (no_sources); either is a valid reply (ADR-0059 §4, §9).
+    replyKind: expect.stringMatching(/^(answer|no_sources)$/),
   });
 
   // listAssistantConversations: 200; 400; 401; 403.
