@@ -1091,14 +1091,12 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // = 413 (the orchestrator reconciles the parallel deltas at merge).
     // W10/W11 merge (orchestrator, measured on the merged tree): BE-N, BE-Q and BE-T add 12 JSON bodies. 411 + 12 = 423;
     // JSON 409 + 12 = 421.
-<<<<<<< HEAD
     // T-DG6-BE-N2: + executeOutboundWrite, confirmOutboundWrite (2 JSON bodies; listOutboundWrites and getOutboundWrite
     // are GETs). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
-=======
     // T-DG6-BE-H2B (continuing T-DG6-BE-H2): + putStorageSetting, testStorageSetting (2 JSON bodies; getStorageSetting
     // is a GET). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
->>>>>>> dg6/be-h2
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([425, 423, 1]);
+    // Merge (orchestrator, measured): BE-N2 and BE-H2B together: 423 + 4 = 427; JSON 421 + 4 = 425.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([427, 425, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);
