@@ -24,8 +24,17 @@ import { problems, type HttpProblem } from "./problem.ts";
 export const JSON_MEDIA_TYPE = "application/json";
 export const OCTET_STREAM_MEDIA_TYPE = "application/octet-stream";
 
+/** createImport's file media types (ADR-0056 §3; T-DG6-BE-M2): their parsers are registered by integrations/routes.ts. */
+export const CSV_REQUEST_MEDIA_TYPE = "text/csv";
+export const XLSX_REQUEST_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
 /** The request media types the API has parsers for (no operation declares any other one). */
-export const SUPPORTED_REQUEST_MEDIA_TYPES: ReadonlySet<string> = new Set([JSON_MEDIA_TYPE, OCTET_STREAM_MEDIA_TYPE]);
+export const SUPPORTED_REQUEST_MEDIA_TYPES: ReadonlySet<string> = new Set([
+  JSON_MEDIA_TYPE,
+  OCTET_STREAM_MEDIA_TYPE,
+  CSV_REQUEST_MEDIA_TYPE,
+  XLSX_REQUEST_MEDIA_TYPE,
+]);
 
 /** A route that declares no `consumes` accepts JSON only (86 operations declare application/json bodies). */
 export const DEFAULT_CONSUMES: readonly string[] = [JSON_MEDIA_TYPE];

@@ -1,10 +1,10 @@
 // integrations routes (P6 slices B and A; p6-work-split §B/A). Route file created as a stub by T-DG6-BE-A; each owning
 // task adds one named block, strictly in the order BE-L (connectors), BE-L2 (runs), BE-M2 (imports), BE-N
 // (webhooks), BE-N2 (outbound writes) (p6-work-split §B/A.11).
-import type { FastifyInstance } from "fastify";
-import { uuid } from "@mth/shared/schemas";
+import type { FastifyInstance, RawRequestDefaultExpression } from "fastify";
+import { freeText, uuid } from "@mth/shared/schemas";
 import { z } from "zod";
-import { principalOf } from "../access/index.ts";
+import { holdsAnywhere, principalOf } from "../access/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -16,7 +16,9 @@ import {
   parseBody,
   idempotencyKeySchema,
   parseQuery,
+  problems,
   requireIfMatch,
+  restrictParserTo,
   sendVersioned,
   type ModuleDeps,
 } from "../platform/index.ts";
@@ -58,6 +60,23 @@ import {
   requireConnectorRun,
   toIntegrationRunDetail,
 } from "./runs.ts";
+import {
+  cancelUpload,
+  commitPermissions,
+  commitUpload,
+  findBatch,
+  IMPORT_READ,
+  listBatchRows,
+  listBatches,
+  requireImportAction,
+  requireImportRead,
+  stageUpload,
+  toImportBatch,
+  toImportRow,
+} from "./imports/commit.ts";
+import { templateCsv, templateFileName, templateRows, templateXlsx, toImportTemplate } from "./imports/templates.ts";
+import { importTargetRegistry, CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE } from "./imports/targets.ts";
+import { importRefusals, IMPORT_LIMITS } from "./imports/validate.ts";
 
 const JSON_BODY = ["application/json"] as const;
 
@@ -344,10 +363,260 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   return [`GET ${RUNS}`, `POST ${RUNS}`, `GET ${RUN}`, `POST ${RUN_RETRY}`];
 }
 
+// ------------------------------------------------------------------------------------------------ BE-M2: imports
+// T-DG6-BE-M2 (ADR-0056 §2-§6, §9; REQ-S17-002, REQ-S17-003):
+//   GET  /api/v1/transformations/{transformationId}/imports                       listImports             (import.read)
+//   POST /api/v1/transformations/{transformationId}/imports?template=             createImport            (import.create)
+//   GET  /api/v1/transformations/{transformationId}/imports/{importId}            getImport               (import.read)
+//   GET  /api/v1/transformations/{transformationId}/imports/{importId}/rows       listImportRows          (import.read)
+//   POST /api/v1/transformations/{transformationId}/imports/{importId}/commit     commitImport            (import.commit
+//                                                                                 + kpi_actual.submit; If-Match)
+//   POST /api/v1/transformations/{transformationId}/imports/{importId}/cancel     cancelImport            (import.commit; If-Match)
+//   GET  /api/v1/import-templates                                                 listImportTemplates     (import.read)
+//   GET  /api/v1/import-templates/{templateVersion}/download                      downloadImportTemplate  (import.read)
+// createImport's body is the file itself (`text/csv` or the XLSX media type; `X-File-Name` names it). Its parser only
+// collects the bytes, refusing more than 10 MiB with 413 import.file_too_large while reading (before any parse); the
+// file is parsed in the handler, after authentication and the 404/403 gates. Order in every mutation: 400
+// query/header/body, 404 read gate, 403 permission gate, 413/415/422 file refusals (upload), 428/400 If-Match, then the
+// transaction (the importCommit lock, the row lock, commit-time re-check on reloaded grants, 409 state and version,
+// the change and its audit event).
+
+const IMPORTS = "/api/v1/transformations/:transformationId/imports";
+const IMPORT = `${IMPORTS}/:importId`;
+const IMPORT_ROWS = `${IMPORT}/rows`;
+const IMPORT_COMMIT_PATH = `${IMPORT}/commit`;
+const IMPORT_CANCEL_PATH = `${IMPORT}/cancel`;
+const IMPORT_TEMPLATES = "/api/v1/import-templates";
+const IMPORT_TEMPLATE_DOWNLOAD = `${IMPORT_TEMPLATES}/:templateVersion/download`;
+
+/** createImport's request media types, in the contract's (sorted) order: the 400 text lists them in this order. */
+const IMPORT_FILE_CONSUMES = [XLSX_MEDIA_TYPE, CSV_MEDIA_TYPE] as const;
+const TEMPLATE_VERSION = /^[a-z][a-z0-9_]*\.v[1-9][0-9]*$/;
+
+const transformationParams = z.strictObject({ transformationId: uuid });
+const importParams = z.strictObject({ transformationId: uuid, importId: uuid });
+const templateParams = z.strictObject({ templateVersion: z.string().max(100).regex(TEMPLATE_VERSION) });
+const importListQuery = z.strictObject({
+  status: z.enum(["staging", "staged", "committed", "cancelled", "failed"]).optional(),
+  sourceKind: z.enum(["csv_upload", "xlsx_upload", "webhook", "connector"]).optional(),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
+const importRowsQuery = z.strictObject({
+  validationStatus: z.enum(["valid", "invalid", "duplicate_in_batch", "duplicate_committed"]).optional(),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
+const createImportQuery = z.strictObject({ template: z.string().max(100).regex(TEMPLATE_VERSION) });
+const fileNameHeader = z.object({ "x-file-name": freeText(1, 255) }).passthrough();
+const importCommitBody = z.strictObject({ note: freeText(3, 1000).nullable() });
+const importCancelBody = z.strictObject({ reason: freeText(3, 1000) });
+const templateDownloadQuery = z.strictObject({
+  format: z.enum(["csv", "xlsx"]).default("csv"),
+  transformationId: uuid,
+});
+
+/**
+ * The upload body parser of one file media type: collects the raw bytes (never decoded here), refusing a declared or
+ * actual size above 10 MiB with 413 import.file_too_large as soon as it is known. Registered once on the root instance;
+ * `restrictParserTo` limits it to routes that declare the media type (createImport only).
+ */
+function fileBodyParser(mediaType: string) {
+  return restrictParserTo<RawRequestDefaultExpression>(mediaType, (request, payload, done) => {
+    const declared = Number(request.headers["content-length"] ?? "0");
+    if (Number.isFinite(declared) && declared > IMPORT_LIMITS.fileBytes) {
+      done(importRefusals.fileTooLarge());
+      return;
+    }
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let settled = false;
+    const settle = (err: Error | null, value?: Buffer) => {
+      if (settled) return;
+      settled = true;
+      payload.removeListener("data", onData);
+      done(err, value);
+    };
+    const onData = (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > IMPORT_LIMITS.fileBytes) {
+        // The rest of the body is never read: the connection is closed after the response (connection hygiene).
+        payload.pause();
+        settle(importRefusals.fileTooLarge());
+        return;
+      }
+      chunks.push(chunk);
+    };
+    payload.on("data", onData);
+    payload.once("end", () => settle(null, Buffer.concat(chunks, size)));
+    payload.once("error", (err) => settle(err));
+  });
+}
+
+function registerImportRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
+  for (const mediaType of IMPORT_FILE_CONSUMES) app.addContentTypeParser(mediaType, fileBodyParser(mediaType));
+
+  // listImports: newest first (cursor over created_at, id).
+  app.get(IMPORTS, { config: { access: { permission: IMPORT_READ } } }, async (request) => {
+    const { transformationId } = parse(transformationParams, request.params, "params");
+    const query = parseQuery(importListQuery, request.query);
+    const principal = principalOf(request);
+    await requireImportRead(db, principal, transformationId);
+    const { cursor, limit, ...filters } = query;
+    const hash = filterHash(filters);
+    const after = decodeCursor(cursor, hash, 2);
+    const rows = await listBatches(db, principal, transformationId, {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.sourceKind ? { sourceKind: query.sourceKind } : {}),
+      after: after ? [String(after[0]), String(after[1])] : null,
+      limit,
+    });
+    const page = paginate(rows, limit, (r) => [r.created_at.toISOString(), r.id], hash);
+    return { items: page.items.map(toImportBatch), nextCursor: page.nextCursor };
+  });
+
+  // createImport: 201 with Location and ETag (the staged batch, version 2).
+  app.post(
+    IMPORTS,
+    { config: { access: { permission: "import.create" }, consumes: IMPORT_FILE_CONSUMES } },
+    async (request, reply) => {
+      const { transformationId } = parse(transformationParams, request.params, "params");
+      const { template } = parseQuery(createImportQuery, request.query);
+      const fileName = parse(fileNameHeader, request.headers, "header")["x-file-name"];
+      const body = request.body;
+      const bytes = body instanceof Uint8Array ? body : new Uint8Array(0);
+      const contentType = request.headers["content-type"];
+      const batch = await stageUpload(db, request, {
+        transformationId,
+        templateVersion: template,
+        fileName,
+        contentType: typeof contentType === "string" ? contentType : null,
+        bytes,
+      });
+      return sendVersioned(
+        reply,
+        201,
+        toImportBatch(batch),
+        `${IMPORTS.replace(":transformationId", transformationId)}/${batch.id}`,
+      );
+    },
+  );
+
+  // getImport: 404 when the batch is not in a transformation the caller can read.
+  app.get(IMPORT, { config: { access: { permission: IMPORT_READ } } }, async (request, reply) => {
+    const { transformationId, importId } = parse(importParams, request.params, "params");
+    parseQuery(noQuery, request.query);
+    await requireImportRead(db, principalOf(request), transformationId);
+    return sendVersioned(reply, 200, toImportBatch(await findBatch(db, transformationId, importId)));
+  });
+
+  // listImportRows: source order (cursor over row_number).
+  app.get(IMPORT_ROWS, { config: { access: { permission: IMPORT_READ } } }, async (request) => {
+    const { transformationId, importId } = parse(importParams, request.params, "params");
+    const query = parseQuery(importRowsQuery, request.query);
+    await requireImportRead(db, principalOf(request), transformationId);
+    await findBatch(db, transformationId, importId);
+    const { cursor, limit, ...filters } = query;
+    const hash = filterHash(filters);
+    const after = decodeCursor(cursor, hash, 1);
+    const afterRowNumber = after === null ? null : Number(after[0]);
+    if (afterRowNumber !== null && !Number.isSafeInteger(afterRowNumber))
+      throw problems.badRequest(
+        "validation.cursor",
+        "The cursor is invalid or belongs to other filters.",
+        "/query/cursor",
+      );
+    const rows = await listBatchRows(db, importId, {
+      ...(query.validationStatus ? { validationStatus: query.validationStatus } : {}),
+      afterRowNumber,
+      limit,
+    });
+    const page = paginate(rows, limit, (r) => [r.row_number], hash);
+    return { items: page.items.map(toImportRow), nextCursor: page.nextCursor };
+  });
+
+  // commitImport: 200 with the committed batch.
+  app.post(
+    IMPORT_COMMIT_PATH,
+    { config: { access: { permission: "import.commit" }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { transformationId, importId } = parse(importParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      const { note } = parseBody(importCommitBody, request.body);
+      const principal = principalOf(request);
+      await requireImportRead(db, principal, transformationId);
+      const batch = await findBatch(db, transformationId, importId);
+      await requireImportAction(
+        db,
+        principal,
+        transformationId,
+        commitPermissions(importTargetRegistry().get(batch.template_version)),
+      );
+      const expected = requireIfMatch(request);
+      const row = await commitUpload(db, request, transformationId, importId, expected, note);
+      return sendVersioned(reply, 200, toImportBatch(row));
+    },
+  );
+
+  // cancelImport: 200 with the cancelled batch; its rows are kept.
+  app.post(
+    IMPORT_CANCEL_PATH,
+    { config: { access: { permission: "import.commit" }, consumes: JSON_BODY } },
+    async (request, reply) => {
+      const { transformationId, importId } = parse(importParams, request.params, "params");
+      parseQuery(noQuery, request.query);
+      const { reason } = parseBody(importCancelBody, request.body);
+      const principal = principalOf(request);
+      await requireImportRead(db, principal, transformationId);
+      await findBatch(db, transformationId, importId);
+      await requireImportAction(db, principal, transformationId, ["import.commit"]);
+      const expected = requireIfMatch(request);
+      const row = await cancelUpload(db, request, transformationId, importId, expected, reason);
+      return sendVersioned(reply, 200, toImportBatch(row));
+    },
+  );
+
+  // listImportTemplates: the registered templates (403 for a caller who holds import.read nowhere).
+  app.get(IMPORT_TEMPLATES, { config: { access: { permission: IMPORT_READ } } }, async (request) => {
+    parseQuery(noQuery, request.query);
+    if (!holdsAnywhere(principalOf(request), IMPORT_READ)) throw problems.forbidden();
+    return { items: importTargetRegistry().list().map(toImportTemplate) };
+  });
+
+  // downloadImportTemplate: the file, prefilled for a transformation the caller can read (404 for an unknown template).
+  app.get(IMPORT_TEMPLATE_DOWNLOAD, { config: { access: { permission: IMPORT_READ } } }, async (request, reply) => {
+    const { templateVersion } = parse(templateParams, request.params, "params");
+    const { format, transformationId } = parseQuery(templateDownloadQuery, request.query);
+    await requireImportRead(db, principalOf(request), transformationId);
+    const target = importTargetRegistry().get(templateVersion);
+    if (!target) throw problems.notFound();
+    const rows = await templateRows(db, target, transformationId);
+    const bytes = format === "csv" ? templateCsv(target, rows) : templateXlsx(target, rows);
+    return reply
+      .code(200)
+      .header("Content-Type", format === "csv" ? `${CSV_MEDIA_TYPE}; charset=utf-8` : XLSX_MEDIA_TYPE)
+      .header("Content-Disposition", `attachment; filename="${templateFileName(target, format)}"`)
+      .header("Cache-Control", "no-store")
+      .send(Buffer.from(bytes));
+  });
+
+  return [
+    `GET ${IMPORTS}`,
+    `POST ${IMPORTS}`,
+    `GET ${IMPORT}`,
+    `GET ${IMPORT_ROWS}`,
+    `POST ${IMPORT_COMMIT_PATH}`,
+    `POST ${IMPORT_CANCEL_PATH}`,
+    `GET ${IMPORT_TEMPLATES}`,
+    `GET ${IMPORT_TEMPLATE_DOWNLOAD}`,
+  ];
+}
+
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerIntegrationRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
   return [
     ...registerConnectorRoutes(app, deps), // BE-L: connectors, configuration versions, mappings, test
     ...registerRunRoutes(app, deps), // BE-L2: integration runs and retries
+    ...registerImportRoutes(app, deps), // BE-M2: imports (upload, staged rows, commit, cancel) and templates
   ];
 }
