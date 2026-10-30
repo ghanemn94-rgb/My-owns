@@ -23,3 +23,5 @@ export * from "./finance/index.ts";
 // P5 slice H health check (T-DG5-KBE-G; p5-work-split §H.3; ADR-0048 §5-§6, §10): the pure score, band, completion
 // and scheme publish rule, mirroring the 0086 database functions in decimal, and the zod mirrors of the scheme reads.
 export * from "./health/index.ts";
+// P6 slice I explanation view models (T-DG6-KBE-B; p6-work-split §I/K.2; ADR-0061 §8): E1, E2, E4 and E5 panel rows.
+export * from "./explain/index.ts";
