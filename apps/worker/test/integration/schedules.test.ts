@@ -37,6 +37,9 @@ const P5_LAUNCH_JOBS = ["launch.day_ninety_tests"];
 const P6_SEARCH_JOBS = ["search.index_feed", "search.reindex"];
 // T-DG6-BE-L2 (0116; ADR-0055 §2): the connector cadence job; this test passes no integrations handler.
 const P6_CONNECTOR_JOBS = ["integrations.connector_run"];
+// T-DG6-BE-K2 (0117; ADR-0053 §2, §6): the KPI freshness scan and the exception alerts; this test passes no
+// operations handler.
+const P6_OPERATIONS_JOBS = ["kpi.freshness_scan", "operations.exception_alerts"];
 // The rows are listed by code (ORDER BY code; ASCII codes, so the default sort is the same order).
 const unhandledOf = (...codes: string[]) => [...codes].sort();
 const GOVERNANCE_JOBS = [
@@ -123,6 +126,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...P5_LAUNCH_JOBS,
         ...P6_SEARCH_JOBS,
         ...P6_CONNECTOR_JOBS,
+        ...P6_OPERATIONS_JOBS,
       ),
     });
     const s = await schedules();
@@ -152,6 +156,7 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...P5_LAUNCH_JOBS,
         ...P6_SEARCH_JOBS,
         ...P6_CONNECTOR_JOBS,
+        ...P6_OPERATIONS_JOBS,
       ),
     });
     const s = await schedules();
