@@ -20,7 +20,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { api, ApiError, newIdempotencyKey } from "../../api/client.ts";
-import { useP3Refresh } from "../../api/queries.ts";
+import { fetchAllPages, useP3Refresh } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Amount } from "../../components/Amount.tsx";
@@ -428,10 +428,8 @@ function LineDialog({
         // Nothing was saved: load the current line so the user can compare, re-apply or discard (A14).
         let latest: BusinessCaseLine | null = null;
         try {
-          const list = await api.get<{ items: BusinessCaseLine[] }>(`${caseUrl(bc.id)}/lines`, {
-            includeArchived: "true",
-          });
-          latest = list.items.find((l) => l.id === against.id) ?? null;
+          const list = await fetchAllPages<BusinessCaseLine>(`${caseUrl(bc.id)}/lines`, { includeArchived: "true" });
+          latest = list.find((l) => l.id === against.id) ?? null;
         } catch (ge) {
           if (action.stale(ge)) return;
         }

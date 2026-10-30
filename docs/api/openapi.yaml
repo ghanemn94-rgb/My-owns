@@ -3863,9 +3863,12 @@ paths:
       tags: [design]
       operationId: listTomWorkshopParticipants
       summary: "Participants (business owners flagged)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All participants."
+          description: "A page of participants (by id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TomWorkshopParticipantList" }
@@ -4979,9 +4982,11 @@ paths:
       summary: "List the links. T05 'Problem / gap addressed': a vehicle link to a T03 gap or a diagnosed finding (`targetType` tom_gap | diagnostic_finding). Any other TOM record type is 422 `initiative.not_tom_evidence` 'A project portfolio is not a Target Operating Model: an initiative cannot be attached as G3 TOM evidence.' (REQ-PB-040)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All links of the initiative."
+          description: "A page of the initiative's links (creation time, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/InitiativeGapLinkList" }
@@ -5060,9 +5065,11 @@ paths:
       summary: "List the links. T05 'Outcome/KPI contribution' (level 5 of the outcome hierarchy). `outcomeId` is required: a contribution without an outcome link is rejected (REQ-PB-032)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All links of the initiative."
+          description: "A page of the initiative's links (creation time, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/InitiativeOutcomeContributionList" }
@@ -5141,9 +5148,11 @@ paths:
       summary: "List the links. T05 'Required decisions': link to a canonical decision (one decision model)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All links of the initiative."
+          description: "A page of the initiative's links (creation time, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/InitiativeDecisionLinkList" }
@@ -5222,9 +5231,11 @@ paths:
       summary: "List the key deliverables of an initiative (3-7 recommended; outside is a warning)."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All deliverables in ordinal order."
+          description: "A page of deliverables in ordinal order (then id); `countWarning` counts every active deliverable of the initiative, not the page."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DeliverableList" }
@@ -5381,9 +5392,12 @@ paths:
       tags: [portfolio]
       operationId: listMilestones
       summary: "List milestones (approved vs forecast dates)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All milestones."
+          description: "A page of milestones (forecast date, undated last, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MilestoneList" }
@@ -5656,9 +5670,12 @@ paths:
       tags: [roadmap]
       operationId: listRoadmapWaves
       summary: "The T07 waves: the four source waves verbatim (B0079) plus added waves; horizons may overlap."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All waves in ordinal order."
+          description: "A page of waves in ordinal order (then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RoadmapWaveList" }
@@ -5791,10 +5808,13 @@ paths:
     get:
       tags: [prioritization]
       operationId: listWeightSets
-      summary: "All weight-set versions (v1 = the source defaults 25/25/20/15/15)."
+      summary: "The weight-set versions (a page; cursor-paged) (v1 = the source defaults 25/25/20/15/15)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All versions, newest first."
+          description: "A page of versions, newest first (version number, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WeightSetList" }
@@ -6336,9 +6356,12 @@ paths:
       tags: [dependencies]
       operationId: listDependencyTypes
       summary: "Dependency types: Decision, Tech, Data, Vendor (B0081) and Other are system rows; administrators add types."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All types."
+          description: "A page of types (ordinal, code, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DependencyTypeList" }
@@ -6437,9 +6460,12 @@ paths:
       tags: [capacity]
       operationId: listResourceRoles
       summary: "Resourcing roles (not access roles)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All roles."
+          description: "A page of roles (code, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ResourceRoleList" }
@@ -7046,9 +7072,11 @@ paths:
       summary: "Investment and benefit lines of a case."
       parameters:
         - { name: includeArchived, in: query, required: false, schema: { type: boolean, default: false } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All lines."
+          description: "A page of lines (creation time, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BusinessCaseLineList" }
@@ -7327,10 +7355,13 @@ paths:
     get:
       tags: [benefit-formulas]
       operationId: listBenefitFormulaVersions
-      summary: "All versions with their Finance validation state."
+      summary: "The versions (a page; cursor-paged) with their Finance validation state."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "All versions, newest first."
+          description: "A page of versions, newest first (version number, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BenefitFormulaVersionList" }
@@ -19773,9 +19804,11 @@ paths:
       summary: "The sequential and parallel approval routes resolved from a published methodology version (default: the newest): route key, mode, roles in order. Routes are edited in Studio as approver_route elements (methodology.read; REQ-S10-015)."
       parameters:
         - $ref: "#/components/parameters/ConfigVersionIdQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "OK."
+          description: "A page of the resolved routes, by route key."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ApprovalRouteDefinitionList" }
@@ -20218,9 +20251,12 @@ paths:
       tags: [report-snapshots]
       operationId: listReportSnapshotVersions
       summary: "The methodology, configuration and calculation versions the snapshot used (transformation.read; REQ-S13-007)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "OK."
+          description: "A page of the pinned versions (kind, reference key, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ReportSnapshotVersionList" }
@@ -20928,9 +20964,12 @@ paths:
       tags: [kpi-restatements]
       operationId: listKpiRestatementReissueOffers
       summary: "The issued report snapshots that showed the restated KPI for a restated period, offered for reissue once the restatement is approved; a reissue is made with reissueReportSnapshot (transformation.read; ADR-0045 §4)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "OK."
+          description: "A page of offers (report, series, issue version, then snapshot id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/KpiRestatementReissueOfferList" }
@@ -21655,9 +21694,12 @@ paths:
       tags: [health-checks]
       operationId: listHealthCheckSchemes
       summary: "The published health-check scoring schemes: responses with credits, score basis and interpretation bands; v1 is Yes = 1, No = 0 with the four B0152 bands (session; REQ-S14-003). Drafts are authored through the Studio configuration operations (kind health_check_scheme)."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "OK."
+          description: "A page of published schemes (key, version number, then id)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthCheckSchemeList" }
@@ -21751,9 +21793,11 @@ paths:
       summary: "The playbook blocks that link to a template, for the form's source link back to its playbook text (session; REQ-S02-004; T01 -> B0031). 404 methodology_template.not_found."
       parameters:
         - $ref: "#/components/parameters/MethodologyTransformationQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: "OK."
+          description: "A page of the linked blocks in playbook order (ordinal, then block reference)."
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TemplateSourceLinkList" }
@@ -26040,12 +26084,13 @@ components:
         excerptAr: { type: string }
     TemplateSourceLinkList:
       type: object
-      required: [templateCode, methodologyVersion, items]
+      required: [templateCode, methodologyVersion, items, nextCursor]
       additionalProperties: false
       properties:
         templateCode: { type: string }
         methodologyVersion: { $ref: "#/components/schemas/MethodologyVersionRef" }
-        items: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/TemplateSourceLink" } }
+        items: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/TemplateSourceLink" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     SearchHighlight:
       type: object
       description: "A match inside snippet: offset and length in UTF-16 code units."
@@ -26532,10 +26577,11 @@ components:
         createdAt: { $ref: "#/components/schemas/Timestamp" }
     KpiRestatementReissueOfferList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/KpiRestatementReissueOffer" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     FormulaPreviewExampleInput:
       type: object
       required: [label, inputs]
@@ -26947,10 +26993,11 @@ components:
         publishedAt: { $ref: "#/components/schemas/Timestamp" }
     HealthCheckSchemeList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/HealthCheckScheme" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     HealthCheckAnswer:
       type: object
       required: [questionCode, response, evidenceNote, evidenceId, ownerUserId, actionNote, answeredBy, updatedAt]
@@ -27233,10 +27280,11 @@ components:
         versionLabel: { type: string }
     ReportSnapshotVersionList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/ReportSnapshotVersion" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     ReportSnapshotEvidenceItem:
       type: object
       required: [sectionKey, evidenceId, contentId, contentRevision, contentSha256, reviewStatus]
@@ -27894,11 +27942,12 @@ components:
         labelAr: { type: [string, "null"] }
     ApprovalRouteDefinitionList:
       type: object
-      required: [methodologyVersionId, items]
+      required: [methodologyVersionId, items, nextCursor]
       additionalProperties: false
       properties:
         methodologyVersionId: { $ref: "#/components/schemas/Uuid" }
         items: { type: array, items: { $ref: "#/components/schemas/ApprovalRouteDefinition" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     ApprovalRouteStep:
       type: object
       required: [stepNo, roundNo, approverRoleCode, assigneeUserId, status, activatedAt, decidedBy, decidedOnBehalfOf, decidedAt, decisionNote]
@@ -31348,10 +31397,11 @@ components:
         isBusinessOwner: { type: boolean }
     TomWorkshopParticipantList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/TomWorkshopParticipant" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     TomWorkshopItemCreate:
       type: object
       description: "`kind` unresolved starts in status `open` and must be converted before the workshop closes; a contribution is `recorded`."
@@ -31738,10 +31788,11 @@ components:
         note: { type: string, minLength: 1, maxLength: 2000 }
     InitiativeGapLinkList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/InitiativeGapLink" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     InitiativeOutcomeContribution:
       type: object
       required: [id, organizationId, transformationId, initiativeId, outcomeId, outcomeKpiId, contributionStatement, expectedKpiMovement, status, removedAt, removedBy, removeReason, version, createdAt, createdBy, updatedAt, updatedBy]
@@ -31775,10 +31826,11 @@ components:
         expectedKpiMovement: { type: [string, "null"], minLength: 1, maxLength: 500 }
     InitiativeOutcomeContributionList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/InitiativeOutcomeContribution" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     InitiativeDecisionLink:
       type: object
       required: [id, organizationId, transformationId, initiativeId, decisionId, status, removedAt, removedBy, removeReason, version, createdAt, createdBy, updatedAt, updatedBy]
@@ -31806,10 +31858,11 @@ components:
         decisionId: { $ref: "#/components/schemas/Uuid" }
     InitiativeDecisionLinkList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/InitiativeDecisionLink" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     Deliverable:
       type: object
       required: [id, organizationId, transformationId, initiativeId, ordinal, title, description, ownerUserId, dueDate, acceptanceStatus, submittedBy, submittedAt, decidedBy, decidedAt, acceptanceNote, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt, updatedBy]
@@ -31862,10 +31915,11 @@ components:
         archiveReason: { type: string, minLength: 3, maxLength: 1000, description: "Present = archive the deliverable." }
     DeliverableList:
       type: object
-      required: [items, countWarning]
+      required: [items, nextCursor, countWarning]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/Deliverable" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
         countWarning: { oneOf: [{ $ref: "#/components/schemas/Warning" }, { type: "null" }], description: "initiative.deliverable_count when the active count is outside 3-7 (a warning, not a rejection)." }
     Milestone:
       type: object
@@ -31924,10 +31978,11 @@ components:
         reason: { $ref: "#/components/schemas/Reason" }
     MilestoneList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/Milestone" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     PortfolioSelection:
       type: object
       required: [id, organizationId, transformationId, initiativeId, action, rationale, rankingSnapshotId, decidedBy, onBehalfOfUserId, decidedAt]
@@ -32136,10 +32191,11 @@ components:
         status: { type: string, enum: [active, archived], description: "Seeded waves cannot be archived (422)." }
     RoadmapWaveList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/RoadmapWave" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     RoadmapView:
       type: object
       description: "The single read model behind the timeline, initiative table and work board (REQ-S09-006)."
@@ -32194,10 +32250,11 @@ components:
         rationale: { type: string, minLength: 1, maxLength: 4000 }
     WeightSetList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/WeightSet" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     ScoreResult:
       type: object
       description: "Calculated, read-only (REQ-PB-047). weightedScore is the exact stored 1-5 value; display100 = (score-1)/4*100 (REQ-S09-001); incomplete -> both null."
@@ -32507,10 +32564,11 @@ components:
         ordinal: { type: integer, minimum: 1, maximum: 999 }
     DependencyTypeList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/DependencyType" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     ResourceRole:
       type: object
       required: [id, organizationId, transformationId, code, labelEn, labelAr, status, version, createdAt, createdBy, updatedAt, updatedBy]
@@ -32546,10 +32604,11 @@ components:
         status: { type: string, enum: [active, archived] }
     ResourceRoleList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/ResourceRole" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     Fte:
       type: string
       pattern: "^[0-9]{1,4}(\\.[0-9]{1,2})?$"
@@ -32862,10 +32921,11 @@ components:
         ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
     BusinessCaseLineList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/BusinessCaseLine" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     MoneyTotal:
       type: object
       required: [currency, amount, unknownLineCount, lineCount]
@@ -32966,10 +33026,11 @@ components:
         changeNote: { type: string, minLength: 1, maxLength: 2000 }
     BenefitFormulaVersionList:
       type: object
-      required: [items]
+      required: [items, nextCursor]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/BenefitFormulaVersion" } }
+        nextCursor: { type: [string, "null"], description: "Cursor of the next page; null on the last page (ADR-0007 §4)." }
     BenefitFormula:
       type: object
       description: "T09 row (B0087): benefit, baseline driver, change assumption, formula (current version), ramp, confidence H/M/L."

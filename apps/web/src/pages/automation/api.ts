@@ -6,6 +6,7 @@
 // Unknown is data: `lastSuccessAt: null` is "Never run", `nextRunAt: null` is "Disabled" or "Unknown" by its reason,
 // never a guessed time; a dry run that has not run for the current content is "Not run", never "Pass".
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PAGINATION } from "@mth/shared";
 import type {
   ApprovalRoute,
   ApprovalRouteDefinitionList,
@@ -24,7 +25,7 @@ import type {
   TrackedGateCondition,
 } from "@mth/shared/schemas";
 import { api, getSessionGeneration } from "../../api/client.ts";
-import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
+import { ALL_PAGES_MAX_PAGES, fetchAllPages, shouldRetry } from "../../api/queries.ts";
 
 export type {
   ApprovalRoute,
@@ -163,8 +164,23 @@ export const useJobOperations = (enabled = true) =>
   useFedQuery(fedKeys.jobs, async () => (await api.get<{ items: JobOperation[] }>(fedPaths.jobs)).items, enabled);
 export const useJobOperation = (code: string | undefined) =>
   useFedQuery(fedKeys.job(code ?? ""), () => api.get<JobOperationDetail>(fedPaths.job(code ?? "")), Boolean(code));
-export const useApprovalRoutes = () =>
-  useFedQuery(fedKeys.approvalRoutes, () => api.get<ApprovalRouteDefinitionList>(fedPaths.approvalRoutes));
+/** Every page of the resolved routes of one version (cursor-paged; T-DG6-BE-V), kept as one list answer. */
+async function allApprovalRoutes(): Promise<ApprovalRouteDefinitionList> {
+  const first = await api.get<ApprovalRouteDefinitionList>(fedPaths.approvalRoutes, { limit: PAGINATION.maxLimit });
+  const items = [...first.items];
+  let cursor = first.nextCursor;
+  for (let i = 1; cursor && i < ALL_PAGES_MAX_PAGES; i++) {
+    const page: ApprovalRouteDefinitionList = await api.get<ApprovalRouteDefinitionList>(fedPaths.approvalRoutes, {
+      versionId: first.methodologyVersionId,
+      limit: PAGINATION.maxLimit,
+      cursor,
+    });
+    items.push(...page.items);
+    cursor = page.nextCursor;
+  }
+  return { methodologyVersionId: first.methodologyVersionId, items, nextCursor: cursor ?? null };
+}
+export const useApprovalRoutes = () => useFedQuery(fedKeys.approvalRoutes, allApprovalRoutes);
 export const useApprovalRoute = (approvalId: string | undefined) =>
   useFedQuery(
     fedKeys.approvalRoute(approvalId ?? ""),

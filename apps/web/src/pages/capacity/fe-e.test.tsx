@@ -92,7 +92,7 @@ function handlers(state: { over: boolean }) {
         ],
       },
     })),
-    route("GET", new RegExp(`${esc(TR)}/resource-roles$`), () => ({ status: 200, body: { items: [ROLE] } })),
+    route("GET", new RegExp(`${esc(TR)}/resource-roles(\\?|$)`), () => ({ status: 200, body: { items: [ROLE] } })),
     route("GET", /\/api\/v1\/capacity\?/, () => page([ROW])),
     route("GET", /\/api\/v1\/resource-demands\?/, () => page([DEMAND])),
     route("GET", new RegExp(`${esc(TR)}/roadmap$`), () => ({ status: 200, body: roadmapView() })),

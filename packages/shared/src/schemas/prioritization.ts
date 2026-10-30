@@ -58,7 +58,7 @@ export const weightSet = z.strictObject({
   updatedBy: uuid,
 });
 export type WeightSet = z.infer<typeof weightSet>;
-export const weightSetList = z.strictObject({ items: z.array(weightSet) });
+export const weightSetList = z.strictObject({ items: z.array(weightSet), nextCursor: z.string().nullable() });
 
 // ------------------------------------------------------------------------------------------------ scores
 

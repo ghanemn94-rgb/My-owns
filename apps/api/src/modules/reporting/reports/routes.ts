@@ -45,6 +45,9 @@ import {
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../../platform/index.ts";
 import { listReportDefinitions, reportRefusals } from "./definitions.ts";
 import {
@@ -67,6 +70,13 @@ const ONE = `${SNAPSHOTS}/:snapshotId`;
 const reportParams = z.strictObject({ transformationId: z.uuid(), definitionCode: reportDefinitionCode });
 const tParams = z.strictObject({ transformationId: z.uuid() });
 const sParams = z.strictObject({ transformationId: z.uuid(), snapshotId: z.uuid() });
+const versionListQuery = z.strictObject({ ...pageQueryFields });
+/** The pinned versions' page sort (T-DG6-BE-V): kind, reference key (unique per snapshot), then id. */
+const SNAPSHOT_VERSION_SORT: readonly SortKey[] = [
+  { name: "version_kind", type: "text" },
+  { name: "reference_key", type: "text" },
+  { name: "id", type: "uuid" },
+];
 const liveQuery = z.strictObject({
   subjectId: z.uuid().optional(),
   reportingPeriodId: z.uuid().optional(),
@@ -226,18 +236,14 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
 
   app.get(`${ONE}/versions`, { config: read }, async (request) => {
     const { transformationId, snapshotId } = parse(sParams, request.params, "params");
-    parseQuery(z.strictObject({}), request.query);
+    const query = parseQuery(versionListQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
     await snapshotOf(transformationId, snapshotId);
-    const rows = await db
-      .selectFrom("report_snapshot_version")
-      .selectAll()
-      .where("snapshot_id", "=", snapshotId)
-      .orderBy("version_kind")
-      .orderBy("reference_key")
-      .execute();
+    const q = db.selectFrom("report_snapshot_version").selectAll().where("snapshot_id", "=", snapshotId);
+    const page = await keysetPage(q, SNAPSHOT_VERSION_SORT, query, { list: "report-snapshot-versions", snapshotId });
     return {
-      items: rows.map(
+      nextCursor: page.nextCursor,
+      items: page.items.map(
         (r): ReportSnapshotVersion => ({
           versionKind: r.version_kind as ReportSnapshotVersion["versionKind"],
           referenceId: r.reference_id,

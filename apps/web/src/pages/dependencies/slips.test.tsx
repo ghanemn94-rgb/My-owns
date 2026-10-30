@@ -48,7 +48,7 @@ const SLIP: DependencySlip = {
 
 const handlers = (slips: DependencySlip[] | "forbidden") => [
   route("GET", /\/api\/v1\/dependencies\?/, () => page([])),
-  route("GET", /\/api\/v1\/dependency-types$/, () => ({ status: 200, body: { items: [] } })),
+  route("GET", /\/api\/v1\/dependency-types(\?|$)/, () => ({ status: 200, body: { items: [] } })),
   route("GET", new RegExp(`${esc(TR)}/roadmap$`), () => ({ status: 200, body: roadmapView({ initiatives: [] }) })),
   route("GET", new RegExp(`${esc(TR)}/dependency-slips(\\?|$)`), () =>
     slips === "forbidden" ? problem(403, "forbidden") : page(slips),

@@ -175,8 +175,7 @@ export function useSubjectOptions(
   });
   const milestones = useQuery({
     queryKey: key(tid, "milestones", initiativeId),
-    queryFn: async () =>
-      (await api.get<{ items: Milestone[] }>(`/api/v1/initiatives/${initiativeId}/milestones`)).items,
+    queryFn: () => fetchAllPages<Milestone>(`/api/v1/initiatives/${initiativeId}/milestones`),
     enabled: on("milestone") && Boolean(initiativeId),
     ...opts,
   });

@@ -291,7 +291,10 @@ export const businessCaseLineUpdate = atLeastOne({
 });
 export type BusinessCaseLineUpdate = z.infer<typeof businessCaseLineUpdate>;
 
-export const businessCaseLineList = z.strictObject({ items: z.array(businessCaseLine) });
+export const businessCaseLineList = z.strictObject({
+  items: z.array(businessCaseLine),
+  nextCursor: z.string().nullable(),
+});
 
 // ------------------------------------------------------------------------------------------------ totals
 

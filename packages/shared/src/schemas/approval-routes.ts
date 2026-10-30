@@ -36,6 +36,7 @@ export type ApprovalRouteDefinition = z.infer<typeof approvalRouteDefinition>;
 export const approvalRouteDefinitionList = z.strictObject({
   methodologyVersionId: uuid,
   items: z.array(approvalRouteDefinition),
+  nextCursor: z.string().nullable(),
 });
 export type ApprovalRouteDefinitionList = z.infer<typeof approvalRouteDefinitionList>;
 

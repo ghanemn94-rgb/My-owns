@@ -25,7 +25,18 @@ import {
 import { Decimal } from "decimal.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { iso, parse, problems, type HttpProblem, type ModuleDeps } from "../platform/index.ts";
+import {
+  iso,
+  keysetPage,
+  pageQueryFields,
+  parse,
+  parseQuery,
+  problems,
+  type HttpProblem,
+  type ModuleDeps,
+  type PageRequest,
+  type SortKey,
+} from "../platform/index.ts";
 
 export const HEALTH_CHECK_SCHEMES = "/api/v1/admin/health-check-schemes";
 export const HEALTH_CHECK_SCHEME_KIND = "health_check_scheme";
@@ -33,6 +44,13 @@ export const HEALTH_CHECK_SCHEME_KIND = "health_check_scheme";
 export const HEALTH_CHECK_DEFAULT_KEY = "health-check";
 
 const schemeParams = z.strictObject({ schemeVersionId: z.uuid() });
+const schemeListQuery = z.strictObject({ ...pageQueryFields });
+/** The schemes' page sort (T-DG6-BE-V): key, version number, then the version id. */
+const SCHEME_SORT: readonly SortKey[] = [
+  { name: "key", type: "text" },
+  { name: "version_no", type: "integer" },
+  { name: "id", type: "uuid" },
+];
 
 /**
  * The ADR-0048 §9 refusal of each `p5_health_scheme_problem` result (exact codes and English texts).
@@ -221,28 +239,28 @@ export function toHealthCheckScheme(s: LoadedHealthScheme): HealthCheckScheme {
   };
 }
 
-/** The published schemes, by key then version number. */
-export async function listPublishedHealthSchemes(db: DbOrTx): Promise<HealthCheckSchemeList> {
-  const ids = await db
+/** One page of the published schemes, by key then version number (cursor-paged: ADR-0007 §4a, T-DG6-BE-V). */
+export async function listPublishedHealthSchemes(db: DbOrTx, page: PageRequest): Promise<HealthCheckSchemeList> {
+  const q = db
     .selectFrom("methodology_version")
     .select("id")
     .where("config_kind", "=", HEALTH_CHECK_SCHEME_KIND)
-    .where("status", "=", "published")
-    .orderBy("key")
-    .orderBy("version_no")
-    .execute();
+    .where("status", "=", "published");
+  const ids = await keysetPage(q, SCHEME_SORT, page, { list: "health-check-schemes" });
   const items: HealthCheckScheme[] = [];
-  for (const { id } of ids) {
+  for (const { id } of ids.items) {
     const s = await loadHealthScheme(db, id);
     if (s !== null) items.push(toHealthCheckScheme(s));
   }
-  return { items };
+  return { items, nextCursor: ids.nextCursor };
 }
 
 /** Registers the two scheme reads and returns them as "METHOD /path". */
 export function registerHealthSchemeRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   const session = { access: { permission: "authenticated" as const } };
-  app.get(HEALTH_CHECK_SCHEMES, { config: session }, async () => listPublishedHealthSchemes(db));
+  app.get(HEALTH_CHECK_SCHEMES, { config: session }, async (request) =>
+    listPublishedHealthSchemes(db, parseQuery(schemeListQuery, request.query)),
+  );
   app.get(`${HEALTH_CHECK_SCHEMES}/:schemeVersionId`, { config: session }, async (request) => {
     const { schemeVersionId } = parse(schemeParams, request.params, "params");
     const s = await loadHealthScheme(db, schemeVersionId);

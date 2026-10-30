@@ -131,7 +131,10 @@ export const benefitFormulaVersion = z.strictObject({
 });
 export type BenefitFormulaVersion = z.infer<typeof benefitFormulaVersion>;
 
-export const benefitFormulaVersionList = z.strictObject({ items: z.array(benefitFormulaVersion) });
+export const benefitFormulaVersionList = z.strictObject({
+  items: z.array(benefitFormulaVersion),
+  nextCursor: z.string().nullable(),
+});
 
 // ------------------------------------------------------------------------------------------------ T09 row
 

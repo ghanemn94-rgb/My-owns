@@ -41,6 +41,9 @@ import {
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import { bumpStamps, openWrite } from "../transformations/index.ts";
 import {
@@ -369,7 +372,12 @@ export async function activeLinesOf(db: DbOrTx, caseId: string): Promise<Busines
 
 // ------------------------------------------------------------------------------------------------ routes
 
-const listQuery = z.strictObject({ includeArchived: z.stringbool().default(false) });
+const listQuery = z.strictObject({ includeArchived: z.stringbool().default(false), ...pageQueryFields });
+/** The lines' page sort (T-DG6-BE-V): creation time, then id. */
+const LINE_SORT: readonly SortKey[] = [
+  { name: "created_at", type: "timestamptz" },
+  { name: "id", type: "uuid" },
+];
 
 export function registerBusinessCaseLineRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
   const write = { access: { permission: EDIT }, consumes: JSON_BODY };
@@ -380,8 +388,12 @@ export function registerBusinessCaseLineRoutes(app: FastifyInstance, { db }: Mod
     await readCase(db, request, caseId);
     let q = db.selectFrom("business_case_line").selectAll().where("business_case_id", "=", caseId);
     if (!query.includeArchived) q = q.where("status", "=", "active");
-    const rows = await q.orderBy("created_at").orderBy("id").execute();
-    return { items: rows.map(toBusinessCaseLine) };
+    const page = await keysetPage(q, LINE_SORT, query, {
+      list: "business-case-lines",
+      caseId,
+      includeArchived: query.includeArchived,
+    });
+    return { items: page.items.map(toBusinessCaseLine), nextCursor: page.nextCursor };
   });
 
   app.post(LINES, { config: write }, async (request, reply) => {
