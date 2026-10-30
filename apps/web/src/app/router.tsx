@@ -73,6 +73,45 @@ const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m
 const P6NotAvailablePage = lazyPage(() =>
   import("../components/P6NotAvailablePage.tsx").then((m) => m.P6NotAvailablePage),
 );
+// P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
+const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
+const AuditEventPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventPage));
+const SecurityPage = lazyPage(() => import("../pages/admin/security/SecurityPage.tsx").then((m) => m.SecurityPage));
+const UploadPolicyPage = lazyPage(() =>
+  import("../pages/admin/upload-policy/UploadPolicyPage.tsx").then((m) => m.UploadPolicyPage),
+);
+const SensitiveGrantsPage = lazyPage(() =>
+  import("../pages/admin/sensitive-grants/SensitiveGrantsPages.tsx").then((m) => m.SensitiveGrantsPage),
+);
+const SensitiveGrantPage = lazyPage(() =>
+  import("../pages/admin/sensitive-grants/SensitiveGrantsPages.tsx").then((m) => m.SensitiveGrantPage),
+);
+const DeepLinkPage = lazyPage(() => import("../pages/deep-link/DeepLinkPage.tsx").then((m) => m.DeepLinkPage));
+const OperationsPage = lazyPage(() =>
+  import("../pages/admin/operations/OperationsPages.tsx").then((m) => m.OperationsPage),
+);
+const OperationalExceptionPage = lazyPage(() =>
+  import("../pages/admin/operations/OperationsPages.tsx").then((m) => m.OperationalExceptionPage),
+);
+const ServiceIdentitiesPage = lazyPage(() =>
+  import("../pages/admin/service-identities/ServiceIdentitiesPages.tsx").then((m) => m.ServiceIdentitiesPage),
+);
+const ServiceIdentityPage = lazyPage(() =>
+  import("../pages/admin/service-identities/ServiceIdentitiesPages.tsx").then((m) => m.ServiceIdentityPage),
+);
+const IdentityPage = lazyPage(() => import("../pages/admin/identity/IdentityPage.tsx").then((m) => m.IdentityPage));
+const StoragePage = lazyPage(() => import("../pages/admin/storage/StoragePage.tsx").then((m) => m.StoragePage));
+const NotificationChannelsPage = lazyPage(() =>
+  import("../pages/admin/notification-channels/NotificationChannelsPages.tsx").then((m) => m.NotificationChannelsPage),
+);
+const NotificationChannelPage = lazyPage(() =>
+  import("../pages/admin/notification-channels/NotificationChannelsPages.tsx").then((m) => m.NotificationChannelPage),
+);
+const NotificationDeliveriesPage = lazyPage(() =>
+  import("../pages/admin/notification-channels/NotificationChannelsPages.tsx").then(
+    (m) => m.NotificationDeliveriesPage,
+  ),
+);
 const ApprovalDetailPage = lazyPage(() =>
   import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalDetailPage),
 );
@@ -466,31 +505,10 @@ export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  * deep link, ADR-0051 §3) never leads to "page not found". `/l/:token` is the deep-link landing: it needs a session
  * (RequireSession returns to it after sign-in) and re-authorizes on the server; the token is never a credential.
  * The later P6 slices (A, B, D, G, H, I, K) append their routes here when their contracts exist.
+ * T-DG6-FE-B delivered every slice E, F, J and C screen (registered in `routes` below), so this seam is empty again and
+ * stays as a tested seam (like P4_PLANNED_ROUTES and P5_PLANNED_ROUTES).
  */
-export const P6_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
-  // slice F (ADR-0052 §8): Administration > Audit, read-only.
-  { path: "admin/audit", feature: "audit", owner: "FE-B" },
-  { path: "admin/audit/:auditEventId", feature: "auditEvent", owner: "FE-B" },
-  // slice F (ADR-0052 §1, §4): Administration > Security (rate limits) and the upload policy.
-  { path: "admin/security", feature: "security", owner: "FE-B" },
-  { path: "admin/upload-policy", feature: "uploadPolicy", owner: "FE-B" },
-  // slice E (ADR-0051 §2): sensitive-record grants.
-  { path: "admin/sensitive-grants", feature: "sensitiveGrants", owner: "FE-B" },
-  { path: "admin/sensitive-grants/:grantId", feature: "sensitiveGrant", owner: "FE-B" },
-  // slice E (ADR-0051 §3): the deep-link landing.
-  { path: "l/:token", feature: "deepLink", owner: "FE-B" },
-  // slice J (ADR-0053 §7): operations and service identities.
-  { path: "admin/operations", feature: "operations", owner: "FE-B" },
-  { path: "admin/operations/exceptions/:exceptionId", feature: "operationalException", owner: "FE-B" },
-  { path: "admin/service-identities", feature: "serviceIdentities", owner: "FE-B" },
-  { path: "admin/service-identities/:serviceIdentityId", feature: "serviceIdentity", owner: "FE-B" },
-  // slice C (ADR-0054 §1-§3): identity, storage, notification channels and deliveries.
-  { path: "admin/identity", feature: "identity", owner: "FE-B" },
-  { path: "admin/storage", feature: "storage", owner: "FE-B" },
-  { path: "admin/notification-channels", feature: "notifications", owner: "FE-B" },
-  { path: "admin/notification-channels/:channelKind", feature: "notificationChannel", owner: "FE-B" },
-  { path: "admin/notification-deliveries", feature: "notificationDeliveries", owner: "FE-B" },
-];
+export const P6_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
 
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
@@ -723,6 +741,24 @@ export const routes: RouteObject[] = [
       { path: "admin/branding", element: <BrandingPage /> },
       { path: "admin/demo", element: <EnvironmentPage /> },
       { path: "walkthrough", element: <WalkthroughPage /> },
+      // P6 slices E, F, J and C (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13; ADR-0051 to ADR-0054). `/l/:token` is the
+      // deep-link landing behind RequireSession: the server re-authorizes every resolution (the token is no credential).
+      { path: "admin/audit", element: <AuditEventsPage /> },
+      { path: "admin/audit/:auditEventId", element: <AuditEventPage /> },
+      { path: "admin/security", element: <SecurityPage /> },
+      { path: "admin/upload-policy", element: <UploadPolicyPage /> },
+      { path: "admin/sensitive-grants", element: <SensitiveGrantsPage /> },
+      { path: "admin/sensitive-grants/:grantId", element: <SensitiveGrantPage /> },
+      { path: "l/:token", element: <DeepLinkPage /> },
+      { path: "admin/operations", element: <OperationsPage /> },
+      { path: "admin/operations/exceptions/:exceptionId", element: <OperationalExceptionPage /> },
+      { path: "admin/service-identities", element: <ServiceIdentitiesPage /> },
+      { path: "admin/service-identities/:serviceIdentityId", element: <ServiceIdentityPage /> },
+      { path: "admin/identity", element: <IdentityPage /> },
+      { path: "admin/storage", element: <StoragePage /> },
+      { path: "admin/notification-channels", element: <NotificationChannelsPage /> },
+      { path: "admin/notification-channels/:channelKind", element: <NotificationChannelPage /> },
+      { path: "admin/notification-deliveries", element: <NotificationDeliveriesPage /> },
       ...p4PlannedRoutes,
       ...p6PlannedRoutes,
       ...landingRoutes,

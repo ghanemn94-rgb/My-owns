@@ -11,6 +11,7 @@ import { QueryState } from "../../components/States.tsx";
 import { WorkspaceFrame, useWorkspace } from "../../components/Workspace.tsx";
 import { useTransformationDashboard, useWorkstreamDashboard, useWorkstreamList } from "./api.ts";
 import { AreaGrid, DrilldownPanel, FilterBar, GeneratedNote, useDrill, useFilterState } from "./ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 export function TransformationDashboardPage() {
   const { t } = useTranslation();
@@ -46,6 +47,7 @@ function TransformationDashboardBody() {
         {(d) => (
           <>
             <GeneratedNote at={d.generatedAt} timezone={d.timezone} onRefresh={() => void query.refetch()} />
+            <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
             <AreaGrid areas={d.areas} onDrill={openDrill} contextTid={tid} />
           </>
         )}
@@ -140,6 +142,7 @@ function WorkstreamDashboardBody() {
               {d.name}
             </h2>
             <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
+            <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
             <AreaGrid areas={d.areas} onDrill={openDrill} contextTid={tid} />
           </>
         )}

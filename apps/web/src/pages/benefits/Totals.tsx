@@ -14,6 +14,7 @@ import { useLocale } from "../../app/locale.ts";
 import { formatDateTime } from "../../lib/format.ts";
 import type { BenefitTotalLine, BenefitTotals, BenefitTotalsCurrency } from "./api.ts";
 import { Amount, BenefitLink, Code } from "./ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 /** The states shown as columns of the class table, in order. Measured is not a total of its own (it overlaps). */
 export const TOTAL_STATES = ["planned", "forecast", "submitted", "validated", "sustained", "rejected"] as const;
@@ -41,6 +42,8 @@ export function TotalsView({ totals, tid }: { totals: BenefitTotals; tid?: strin
   const locale = useLocale();
   return (
     <div data-totals-scope={totals.scope}>
+      {/* T-DG6-FE-B (ADR-0051 §2): "Includes restricted records" when the total contains a record hidden from me. */}
+      <RestrictedRecordsLabel value={totals.includesRestrictedRecords} />
       {totals.allocated ? (
         <p className="banner banner--info" role="note" data-state="allocated">
           <Icon name="info" /> {t("benefitsP4.totals.allocatedNote")}

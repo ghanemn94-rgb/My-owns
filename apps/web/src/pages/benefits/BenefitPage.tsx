@@ -73,6 +73,7 @@ import {
   percentToFraction,
   sharePercent,
 } from "./ui.tsx";
+import { SensitivityPanel } from "../../components/sensitivity/SensitivityPanel.tsx";
 
 export function BenefitPage() {
   const { t } = useTranslation();
@@ -99,6 +100,7 @@ function BenefitBody() {
         {(b) => (
           <>
             <Profile b={b} />
+            <SensitivityPanel tid={ws.tid} recordType="benefit" recordId={b.id} />
             <BenefitFormTools b={b} />
             <Lifecycle b={b} />
             <Enablers b={b} />

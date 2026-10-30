@@ -123,6 +123,10 @@ import enPlaybookP5 from "./en/playbookP5.json" with { type: "json" };
 // All Arabic of the P6 blocks (here, nav, problems, myWork) is provisional: see ./provisional-ar-p6.ts (JSON has no comments).
 import arAccess from "./ar/access.json" with { type: "json" };
 import enAccess from "./en/access.json" with { type: "json" };
+// P6 slices E, F, J and C screens (T-DG6-FE-B): Administration > Audit, Security, Sensitive grants, Operations, Identity,
+// Storage, Notifications; the sensitivity panel, the evidence preview and the deep-link landing. Arabic provisional.
+import arAdminP6 from "./ar/adminP6.json" with { type: "json" };
+import enAdminP6 from "./en/adminP6.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -176,6 +180,7 @@ export const catalogues = {
     launchHealthP5: arLaunchHealthP5,
     playbookP5: arPlaybookP5,
     access: arAccess,
+    adminP6: arAdminP6,
   },
   en: {
     common: enCommon,
@@ -227,6 +232,7 @@ export const catalogues = {
     launchHealthP5: enLaunchHealthP5,
     playbookP5: enPlaybookP5,
     access: enAccess,
+    adminP6: enAdminP6,
   },
 } as const;
 
