@@ -28,6 +28,7 @@ const P5_AUTOMATION_JOBS = [
   "gate.condition_escalation_scan",
   "governance.meeting_cutoff_scan",
   "notification.digest",
+  "notifications.delivery_sweep", // T-DG6-BE-I2 (0120)
 ];
 // Seeded by 0080 (T-DG5-ARCH-04; ADR-0045 §6, §10); unhandled until KBE-D registers the owner-update task handler.
 const P5_REPORT_JOBS = ["reports.owner_update_tasks"];

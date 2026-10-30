@@ -77,6 +77,9 @@ export async function runOnce<T>(
   });
 }
 
+/** T-DG6-BE-I2 (ADR-0054 §3): the twin of tasks/service.ts INBOX_NOTIFICATION_CREATED_EVENT. */
+export const INBOX_NOTIFICATION_CREATED_EVENT = "inbox_notification.created";
+
 // ---------------------------------------------------------------------------------------------------------------
 // createWorkItemOnce: the twin of apps/api/src/modules/tasks/service.ts (keep the two identical except the id source; the
 // parity test fails on any difference in the rows they write).
@@ -219,6 +222,16 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
         delivery_state: { from: null, to: delivery.state }, // T-DG5-BE-L
         deliver_after: { from: null, to: delivery.deliverAfter?.toISOString() ?? null }, // T-DG5-BE-L
       },
+    });
+  if (notification)
+    // T-DG6-BE-I2 (ADR-0054 §3 step 1): the twin of the API's fan-out event line (tasks/service.ts).
+    await insertOutboxRow(tx, {
+      organizationId: input.organizationId,
+      aggregateType: "inbox_notification",
+      aggregateId: notificationId,
+      eventType: INBOX_NOTIFICATION_CREATED_EVENT,
+      payload: { notificationId, recipientUserId: input.assigneeUserId },
+      idempotencyKey: `inbox_notification.created:${notificationId}`,
     });
   return { outcome: "created", workItemId: id };
 }
@@ -1219,7 +1232,7 @@ const declare = (
     labelAr,
   });
 
-/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 45 with T-DG6-BE-K2's). */
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's). */
 export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
   declare(
     "adoption.indicator_evaluated",
@@ -1323,6 +1336,21 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
   declare("launch.day_ninety_tests", [TR], "Job: day-90 tests", "مهمة: اختبارات اليوم التسعين"),
   declare("maintenance.purge_expired", [], "Job: expired session purge", "مهمة: حذف الجلسات المنتهية"),
   declare("notification.digest", ["user.read"], "Job: notification digest", "مهمة: ملخص الإشعارات"),
+  // T-DG6-BE-I2 (ADR-0054 §3; 0120): the channel fan-out after commit and its delivery sweep. They read the
+  // notification, its recipient's address and active grants (whether the recipient can still read the target) and the
+  // organization's channel settings; they never hold notification_channel.configure (a configure code, refused).
+  declare(
+    "notifications.delivery_sweep",
+    [TR, "user.read", "access.read", "operations.read"],
+    "Job: notification delivery sweep",
+    "مهمة: متابعة تسليم الإشعارات",
+  ),
+  declare(
+    "notifications.fanout",
+    [TR, "user.read", "access.read", "operations.read"],
+    "Job: notification channel fan-out",
+    "مهمة: توزيع الإشعارات على القنوات",
+  ),
   declare(
     "operations.exception_alerts",
     ["operations.read", "access.read"],
