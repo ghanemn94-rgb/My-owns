@@ -1088,7 +1088,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // JSON 409 + 12 = 421.
     // T-DG6-BE-N2: + executeOutboundWrite, confirmOutboundWrite (2 JSON bodies; listOutboundWrites and getOutboundWrite
     // are GETs). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([425, 423, 1]);
+    // T-DG6-BE-O: + putDeliverableExternalChange, confirmDeliverableExternalChange (2 JSON bodies;
+    // getDeliverableConfirmation is a GET). 425 + 2 = 427; JSON 423 + 2 = 425 (reconciled at merge).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([427, 425, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);
