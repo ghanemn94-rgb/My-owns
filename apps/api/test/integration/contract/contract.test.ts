@@ -1081,6 +1081,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG6-BE-Q: + createSavedView, putSavedView, shareSavedView (3 JSON bodies; listSavedViews and getSavedView are
     // GETs, deleteSavedView is bodiless). 410 + 3 = 413; JSON 408 + 3 = 411 (the orchestrator reconciles the parallel
     // deltas at merge).
+    // T-DG6-BE-T: + putAssistantSetting, enableAssistant, disableAssistant, createAssistantConversation,
+    // postAssistantMessage (5 JSON bodies; the three other assistant operations are GETs). 410 + 5 = 415; JSON 408 + 5
+    // = 413 (the orchestrator reconciles the parallel deltas at merge).
     expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([411, 409, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,

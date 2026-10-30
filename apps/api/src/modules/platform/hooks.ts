@@ -288,7 +288,12 @@ export const RATE_LIMIT_CLASSES: readonly RateLimitClassSpec[] = [
     operationIds: ["uploadEvidenceContent"],
   },
   { name: "search", variable: "SEARCH_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: ["searchRecords"] },
-  { name: "assistant", variable: "ASSISTANT_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+  {
+    name: "assistant",
+    variable: "ASSISTANT_RATE_LIMIT_PER_MINUTE",
+    keyedBy: "user_or_ip",
+    operationIds: ["postAssistantMessage"], // T-DG6-BE-T (ADR-0059 §9 step 5)
+  },
   {
     name: "webhook",
     variable: "WEBHOOK_RATE_LIMIT_PER_MINUTE",
