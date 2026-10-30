@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# T-DG6-BE-S chain B: typecheck, build, lint, openapi lint, unit tests (locale unset, then C.UTF-8). Node 24.21.0.
+cd /home/user/wt/dg6-be-s
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+E=docs/delivery/handbacks/DG6/T-DG6-BE-S-evidence
+run() { local name=$1; shift; local t0=$(date +%s); echo "== $name start $(date -u +%FT%TZ) node $(node -v)" >"$E/$name.log"; "$@" >>"$E/$name.log" 2>&1; local rc=$?; echo "== $name exit=$rc wall_s=$(( $(date +%s)-t0 )) end $(date -u +%FT%TZ)" | tee -a "$E/$name.log" >>"$E/checks-summary.txt"; }
+run typecheck pnpm -r typecheck
+run build pnpm -r build
+run lint pnpm lint
+run openapi-lint pnpm openapi:lint
+run test-unit-locale-unset env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE -u LC_MESSAGES pnpm test
+run test-unit-c-utf8 env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test
