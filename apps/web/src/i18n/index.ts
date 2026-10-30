@@ -135,6 +135,14 @@ import enAdminP6 from "./en/adminP6.json" with { type: "json" };
 // (components/saved-views/provisional-ar.ts).
 import arProductivity from "./ar/productivity.json" with { type: "json" };
 import enProductivity from "./en/productivity.json" with { type: "json" };
+// P6 slices B and A (T-DG6-FE-C; ADR-0055, ADR-0056): Administration > Integrations, Strategy and KPIs > Imports and the
+// deliverable's external-change confirmation. Their Arabic is provisional (pages/integrations/provisional-ar.ts).
+import arIntegrations from "./ar/integrations.json" with { type: "json" };
+import enIntegrations from "./en/integrations.json" with { type: "json" };
+import arImports from "./ar/imports.json" with { type: "json" };
+import enImports from "./en/imports.json" with { type: "json" };
+import arExternalChange from "./ar/externalChange.json" with { type: "json" };
+import enExternalChange from "./en/externalChange.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -191,6 +199,9 @@ export const catalogues = {
     assistant: arAssistant,
     adminP6: arAdminP6,
     productivity: arProductivity,
+    integrations: arIntegrations,
+    imports: arImports,
+    externalChange: arExternalChange,
   },
   en: {
     common: enCommon,
@@ -245,6 +256,9 @@ export const catalogues = {
     assistant: enAssistant,
     adminP6: enAdminP6,
     productivity: enProductivity,
+    integrations: enIntegrations,
+    imports: enImports,
+    externalChange: enExternalChange,
   },
 } as const;
 

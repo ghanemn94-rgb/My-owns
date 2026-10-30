@@ -67,6 +67,36 @@ const UserDetailPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").the
 const UsersPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UsersPage));
 // T-DG6-FE-D (ADR-0057 §3): the global search results page.
 const SearchPage = lazyPage(() => import("../pages/search/SearchPage.tsx").then((m) => m.SearchPage));
+// T-DG6-FE-C (ADR-0055, ADR-0056; p6-work-split §B/A.9): Administration > Integrations (connectors, runs, mappings,
+// webhook endpoints, outbound writes) and Strategy and KPIs > Imports (upload, staged rows, commit, cancel, templates).
+const ConnectorsPage = lazyPage(() => import("../pages/integrations/ConnectorsPage.tsx").then((m) => m.ConnectorsPage));
+const ConnectorPage = lazyPage(() => import("../pages/integrations/ConnectorsPage.tsx").then((m) => m.ConnectorPage));
+const IntegrationRunPage = lazyPage(() =>
+  import("../pages/integrations/ConnectorsPage.tsx").then((m) => m.IntegrationRunPage),
+);
+const ConnectorCreatePage = lazyPage(() =>
+  import("../pages/integrations/ConnectorFormPage.tsx").then((m) => m.ConnectorCreatePage),
+);
+const ConnectorEditPage = lazyPage(() =>
+  import("../pages/integrations/ConnectorFormPage.tsx").then((m) => m.ConnectorEditPage),
+);
+const ConnectorMappingsPage = lazyPage(() =>
+  import("../pages/integrations/MappingsPage.tsx").then((m) => m.ConnectorMappingsPage),
+);
+const WebhooksPage = lazyPage(() => import("../pages/integrations/WebhooksPage.tsx").then((m) => m.WebhooksPage));
+const WebhookPage = lazyPage(() => import("../pages/integrations/WebhooksPage.tsx").then((m) => m.WebhookPage));
+const OutboundWritesEntryPage = lazyPage(() =>
+  import("../pages/integrations/OutboundWritesPage.tsx").then((m) => m.OutboundWritesEntryPage),
+);
+const OutboundWritesPage = lazyPage(() =>
+  import("../pages/integrations/OutboundWritesPage.tsx").then((m) => m.OutboundWritesPage),
+);
+const OutboundWritePage = lazyPage(() =>
+  import("../pages/integrations/OutboundWritesPage.tsx").then((m) => m.OutboundWritePage),
+);
+const ImportsEntryPage = lazyPage(() => import("../pages/imports/ImportsPage.tsx").then((m) => m.ImportsEntryPage));
+const ImportsPage = lazyPage(() => import("../pages/imports/ImportsPage.tsx").then((m) => m.ImportsPage));
+const ImportPage = lazyPage(() => import("../pages/imports/ImportPage.tsx").then((m) => m.ImportPage));
 // T-DG6-FE-E (ADR-0059 §3): Administration > AI assistant.
 const AssistantSettingsPage = lazyPage(() =>
   import("../pages/admin/assistant/AssistantSettingsPage.tsx").then((m) => m.AssistantSettingsPage),
@@ -669,6 +699,21 @@ export const routes: RouteObject[] = [
       { path: "admin/assignments", element: <AssignmentsPage /> },
       { path: "admin/assistant", element: <AssistantSettingsPage /> },
       { path: "search", element: <SearchPage /> },
+      // T-DG6-FE-C: Administration > Integrations and Strategy and KPIs > Imports.
+      { path: "admin/integrations", element: <ConnectorsPage /> },
+      { path: "admin/integrations/connectors/new", element: <ConnectorCreatePage /> },
+      { path: "admin/integrations/connectors/:connectorId", element: <ConnectorPage /> },
+      { path: "admin/integrations/connectors/:connectorId/edit", element: <ConnectorEditPage /> },
+      { path: "admin/integrations/connectors/:connectorId/mappings", element: <ConnectorMappingsPage /> },
+      { path: "admin/integrations/connectors/:connectorId/runs/:runId", element: <IntegrationRunPage /> },
+      { path: "admin/integrations/webhooks", element: <WebhooksPage /> },
+      { path: "admin/integrations/webhooks/:webhookId", element: <WebhookPage /> },
+      { path: "admin/integrations/outbound-writes", element: <OutboundWritesEntryPage /> },
+      { path: "transformations/:id/outbound-writes", element: <OutboundWritesPage /> },
+      { path: "transformations/:id/outbound-writes/:writeId", element: <OutboundWritePage /> },
+      { path: "strategy-kpis/imports", element: <ImportsEntryPage /> },
+      { path: "transformations/:id/imports", element: <ImportsPage /> },
+      { path: "transformations/:id/imports/:importId", element: <ImportPage /> },
       { path: "about", element: <AboutPage /> },
       // P5 slice A (T-DG5-FE-B; p5-plan §5.1; ADR-0039, ADR-0040): the Playbook Studio (versions, the draft editor,
       // checks, review, publish, rollback, T06 scoring defaults, review policies, revision proposals), the source
