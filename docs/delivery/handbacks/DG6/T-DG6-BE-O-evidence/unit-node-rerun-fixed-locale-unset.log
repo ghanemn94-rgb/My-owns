@@ -1,0 +1,38 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-o
+
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 219ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 61993ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048)  329ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  34625ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules  366ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  3360ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  2318ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  3316ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  14802ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1706ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-worker]: Timeout calling "onTaskUpdate"
+ ❯ Object.onTimeoutError node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10
+ ❯ Timeout._onTimeout node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62
+ ❯ listOnTimeout node:internal/timers:685:17
+ ❯ processTimers node:internal/timers:618:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 passed (2)
+      Tests  144 passed (144)
+     Errors  1 error
+   Start at  08:49:45
+   Duration  67.30s (transform 7.07s, setup 0ms, collect 14.33s, tests 62.21s, environment 1ms, prepare 573ms)
+
+exit=1

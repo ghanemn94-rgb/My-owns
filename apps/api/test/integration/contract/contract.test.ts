@@ -1096,6 +1096,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG6-BE-H2B (continuing T-DG6-BE-H2): + putStorageSetting, testStorageSetting (2 JSON bodies; getStorageSetting
     // is a GET). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
     // Merge (orchestrator, measured): BE-N2 and BE-H2B together: 423 + 4 = 427; JSON 421 + 4 = 425.
+    // T-DG6-BE-O: + putDeliverableExternalChange, confirmDeliverableExternalChange (2 JSON bodies;
+    // getDeliverableConfirmation is a GET). 425 + 2 = 427; JSON 423 + 2 = 425 (reconciled at merge).
     expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([427, 425, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,

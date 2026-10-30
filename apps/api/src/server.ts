@@ -87,6 +87,12 @@ import { registerIntegrationsModule } from "./modules/integrations/index.ts";
 import { createImportTargetRegistry, setImportTargetRegistry } from "./modules/integrations/imports/targets.ts";
 import { setConnectorTargetColumnsSource } from "./modules/integrations/connectors.ts";
 import { createKpiActualImportTarget } from "./modules/kpi/import-target.ts";
+import { setOutboundConfirmationPort } from "./modules/integrations/outbound.ts"; // BE-O (ADR-0055 §6)
+import { requireEvidenceRead } from "./modules/evidence/access.ts"; // BE-O (ADR-0051 §4 read decision)
+import {
+  recordConnectorConfirmation,
+  setExternalChangeEvidenceGate,
+} from "./modules/portfolio/deliverable-confirmation.ts"; // BE-O (ADR-0055 §6)
 import { registerOperationsModule } from "./modules/operations/index.ts";
 import { registerSearchModule } from "./modules/search/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
@@ -560,6 +566,12 @@ export async function buildServer(options: ServerOptions): Promise<{
   setImportTargetRegistry(importTargets);
   setConnectorTargetColumnsSource((kind) => importTargets.columnsOf(kind));
   importTargets.register(createKpiActualImportTarget()); // T-DG6-KBE-A: kpi_actual.v1 (ADR-0056 §4-§6, §9)
+  // T-DG6-BE-O: a confirmed deliverable_status_push confirms its flagged deliverable (connector_result; integrations
+  // imports no portfolio code), and a reviewed-evidence confirmation cites only evidence the confirmer may read.
+  setOutboundConfirmationPort({
+    onConfirmed: async (tx, ctx, confirmed) => void (await recordConnectorConfirmation(tx, ctx, confirmed)),
+  });
+  setExternalChangeEvidenceGate(requireEvidenceRead);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
