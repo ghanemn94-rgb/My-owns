@@ -181,7 +181,7 @@ test("Branding: publish a name and colour (header and theme follow), the prohibi
         reportHeaderAr: b["reportHeaderAr"],
         reportFooterEn: b["reportFooterEn"],
         reportFooterAr: b["reportFooterAr"],
-        changeNote: "Synthetic e2e: restore the settings before T-DG5-FE-G's test",
+        changeNote: "Synthetic e2e: restore the settings that were current before the branding test",
       },
       { ifMatch: now.version },
     );

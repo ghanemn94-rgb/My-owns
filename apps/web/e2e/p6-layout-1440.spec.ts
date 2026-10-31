@@ -30,6 +30,7 @@ let sponsor: SyntheticUser;
 let decisionTitle = "";
 let actionTitle = "";
 let execTitle = "";
+let transformationId = "";
 
 const isoDay = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 
@@ -43,6 +44,7 @@ test.beforeAll(async ({ playwright }, info) => {
     mode: "end_to_end",
   });
   const tid = created.id;
+  transformationId = tid;
   const T = `/api/v1/transformations/${tid}`;
   const orgId = (await admin.call<{ organization: { id: string } }>("GET", "/api/v1/me")).organization.id;
   sponsor = await syntheticUser(
@@ -169,7 +171,13 @@ test("1440 px: the executive page shows key decisions, key outcomes and next act
   const lang = langOf(info);
   await page.setViewportSize(VIEWPORT);
   await signIn(page, lang, "dev.lead");
-  await page.goto("/executive-overview");
+  // The page's own transformation filter (`tr`, the FilterBar's URL state) narrows it to this spec's transformation.
+  // Next actions are the first three dated decisions and blockers of what the page shows, earliest first (ADR-0061
+  // §4.1, ExecutiveRegions.tsx); unfiltered, the dev.lead's whole Synthetic Retail portfolio competes, and overdue
+  // dependencies that earlier specs of the same stack leave behind (for example p5-dependency-slip-impact, one per language) push
+  // this spec's decision out of the three in the second project. The regions, their place above the fold and every
+  // assertion below are unchanged.
+  await page.goto(`/executive-overview?tr=${transformationId}`);
   await expect(page.locator("main#main h1")).toBeVisible();
   const decisions = page.locator("[data-glance-region='decisions']");
   await expect(decisions.locator("[data-glance-area='decisions'] .status-chip .icon")).toHaveCount(1);

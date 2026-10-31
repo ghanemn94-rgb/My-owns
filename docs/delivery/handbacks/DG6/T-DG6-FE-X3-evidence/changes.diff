@@ -1,0 +1,252 @@
+diff --git a/apps/web/e2e/p5-navigation.spec.ts b/apps/web/e2e/p5-navigation.spec.ts
+index 478a7c139..286aa9018 100644
+--- a/apps/web/e2e/p5-navigation.spec.ts
++++ b/apps/web/e2e/p5-navigation.spec.ts
+@@ -199,14 +199,28 @@ test("Navigation colour: changing brand.primary in Branding Settings changes the
+     await expectAccessible(page, lang, "p5-nav-colour-c8102e");
+     await shot(page, lang, "p5-nav-colour-c8102e");
+ 
+-    // A light colour (#FFD700, 1.40:1 with white) is darkened to its contrast-checked shade #8B7500.
++    // ADR-0061 §1.2 (REQ-S15-003, D-195 row 18): a colour that fails a declared pair is refused at publish. #FFD700 is
++    // 1.40:1 on white (brand.primary / surface.card, controls, 3:1): its navigation shade would be #8B7500, but the
++    // publish answers 422 branding.contrast_insufficient in the form's one alert, and the navigation keeps #C8102E.
+     await primary.fill("#FFD700");
+     await expect(form.locator("[data-contrast='navigation']")).toContainText("#8B7500");
+     await publish();
++    const refusal = page.locator("main#main").getByRole("alert");
++    await expect(refusal).toContainText(tr(lang, "problems.branding__contrast_insufficient"));
++    await expect(refusal.locator("[data-contrast-failure='/primaryColour']").first()).toBeVisible();
++    await expect.poll(navBackground).toBe("rgb(200, 16, 46)");
++    await expectAccessible(page, lang, "p5-nav-colour-ffd700-refused");
++    await shot(page, lang, "p5-nav-colour-ffd700-refused");
++
++    // A light colour that meets every declared pair but not 4.5:1 under white navigation text (#E4572E, 3.68:1 with
++    // white) is darkened to its contrast-checked navigation shade #CB4E29.
++    await primary.fill("#E4572E");
++    await expect(form.locator("[data-contrast='navigation']")).toContainText("#CB4E29");
++    await publish();
+     await expect(page.locator("[data-state='branding-saved']")).toBeVisible();
+-    await expect.poll(navBackground).toBe("rgb(139, 117, 0)");
+-    await expectAccessible(page, lang, "p5-nav-colour-ffd700");
+-    await shot(page, lang, "p5-nav-colour-ffd700");
++    await expect.poll(navBackground).toBe("rgb(203, 78, 41)");
++    await expectAccessible(page, lang, "p5-nav-colour-e4572e");
++    await shot(page, lang, "p5-nav-colour-e4572e");
+     expect(foreign).toEqual([]);
+   } finally {
+     // Restore the settings that were current before this test (a new version with the same values).
+@@ -228,7 +242,7 @@ test("Navigation colour: changing brand.primary in Branding Settings changes the
+         reportHeaderAr: b["reportHeaderAr"],
+         reportFooterEn: b["reportFooterEn"],
+         reportFooterAr: b["reportFooterAr"],
+-        changeNote: "Synthetic e2e: restore the settings before T-DG5-FE-G2's navigation-colour test",
++        changeNote: "Synthetic e2e: restore the settings that were current before the navigation-colour test",
+       },
+       { ifMatch: now.version },
+     );
+diff --git a/apps/web/e2e/p5-reader-branding-demo.spec.ts b/apps/web/e2e/p5-reader-branding-demo.spec.ts
+index fe77a219e..29ef3da7d 100644
+--- a/apps/web/e2e/p5-reader-branding-demo.spec.ts
++++ b/apps/web/e2e/p5-reader-branding-demo.spec.ts
+@@ -181,7 +181,7 @@ test("Branding: publish a name and colour (header and theme follow), the prohibi
+         reportHeaderAr: b["reportHeaderAr"],
+         reportFooterEn: b["reportFooterEn"],
+         reportFooterAr: b["reportFooterAr"],
+-        changeNote: "Synthetic e2e: restore the settings before T-DG5-FE-G's test",
++        changeNote: "Synthetic e2e: restore the settings that were current before the branding test",
+       },
+       { ifMatch: now.version },
+     );
+diff --git a/apps/web/e2e/p6-layout-1440.spec.ts b/apps/web/e2e/p6-layout-1440.spec.ts
+index f259440cf..cca23c4e3 100644
+--- a/apps/web/e2e/p6-layout-1440.spec.ts
++++ b/apps/web/e2e/p6-layout-1440.spec.ts
+@@ -30,6 +30,7 @@ let sponsor: SyntheticUser;
+ let decisionTitle = "";
+ let actionTitle = "";
+ let execTitle = "";
++let transformationId = "";
+ 
+ const isoDay = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+ 
+@@ -43,6 +44,7 @@ test.beforeAll(async ({ playwright }, info) => {
+     mode: "end_to_end",
+   });
+   const tid = created.id;
++  transformationId = tid;
+   const T = `/api/v1/transformations/${tid}`;
+   const orgId = (await admin.call<{ organization: { id: string } }>("GET", "/api/v1/me")).organization.id;
+   sponsor = await syntheticUser(
+@@ -169,7 +171,13 @@ test("1440 px: the executive page shows key decisions, key outcomes and next act
+   const lang = langOf(info);
+   await page.setViewportSize(VIEWPORT);
+   await signIn(page, lang, "dev.lead");
+-  await page.goto("/executive-overview");
++  // The page's own transformation filter (`tr`, the FilterBar's URL state) narrows it to this spec's transformation.
++  // Next actions are the first three dated decisions and blockers of what the page shows, earliest first (ADR-0061
++  // §4.1, ExecutiveRegions.tsx); unfiltered, the dev.lead's whole Synthetic Retail portfolio competes, and overdue
++  // dependencies that earlier specs of the same stack leave behind (for example p5-dependency-slip-impact, one per language) push
++  // this spec's decision out of the three in the second project. The regions, their place above the fold and every
++  // assertion below are unchanged.
++  await page.goto(`/executive-overview?tr=${transformationId}`);
+   await expect(page.locator("main#main h1")).toBeVisible();
+   const decisions = page.locator("[data-glance-region='decisions']");
+   await expect(decisions.locator("[data-glance-area='decisions'] .status-chip .icon")).toHaveCount(1);
+diff --git a/apps/web/src/components/saved-views/SavedViewBar.tsx b/apps/web/src/components/saved-views/SavedViewBar.tsx
+index feec96ab8..ace2d6ce0 100644
+--- a/apps/web/src/components/saved-views/SavedViewBar.tsx
++++ b/apps/web/src/components/saved-views/SavedViewBar.tsx
+@@ -81,6 +81,8 @@ export function SavedViewBar({ view, label }: { view: ListView; label: string })
+           value={active?.id ?? ""}
+           onChange={(e) => onPick(e.target.value)}
+           data-saved-view-select
++          // Picking a view only sets the list's own query parameters (ADR-0057 §4): a reading aid, not a write.
++          data-view-control
+           aria-busy={view.views.isPending}
+         >
+           <option value="">{t("productivity.views.none")}</option>
+diff --git a/apps/web/src/components/saved-views/productivity.css b/apps/web/src/components/saved-views/productivity.css
+index a9026742a..9cf7f27e7 100644
+--- a/apps/web/src/components/saved-views/productivity.css
++++ b/apps/web/src/components/saved-views/productivity.css
+@@ -169,9 +169,12 @@
+   margin: 0;
+   overflow-wrap: anywhere;
+ }
++/* The highlighted term keeps a declared, publish-checked pair (brand.deep on surface.selected, the "selected chip" pair):
++   inheriting the link colour (action.primary) on surface.selected is 4.22:1 with the seeded tokens, below 4.5:1. The
++   underline and weight stay the non-colour cue. */
+ .search-hit mark {
+   background: var(--mth-surface-selected);
+-  color: inherit;
++  color: var(--mth-brand-deep);
+   font-weight: 600;
+   text-decoration: underline;
+ }
+diff --git a/apps/web/src/components/sensitivity/SensitivityPanel.tsx b/apps/web/src/components/sensitivity/SensitivityPanel.tsx
+index 10957a462..aeb69f1e8 100644
+--- a/apps/web/src/components/sensitivity/SensitivityPanel.tsx
++++ b/apps/web/src/components/sensitivity/SensitivityPanel.tsx
+@@ -238,7 +238,9 @@ export function SensitivityPanel({
+           )}
+         </>
+       ) : (
+-        <p className="small muted" data-state="read-only">
++        // Its own marker: `data-state="read-only"` is the page's one read-only banner (Workspace), which a record page
++        // must show exactly once; this note only explains who may change the restriction.
++        <p className="small muted" data-state="sensitivity-read-only">
+           <Icon name="info" /> {t("adminP6.sensitivity.cannotManage")}
+         </p>
+       )}
+diff --git a/apps/web/src/pages/admin/operations/OperationsPages.tsx b/apps/web/src/pages/admin/operations/OperationsPages.tsx
+index c53bace64..5b8f636a0 100644
+--- a/apps/web/src/pages/admin/operations/OperationsPages.tsx
++++ b/apps/web/src/pages/admin/operations/OperationsPages.tsx
+@@ -153,19 +153,23 @@ function HeartbeatCard() {
+     <Section id="worker-heartbeat" title={t("adminP6.operations.heartbeatTitle")}>
+       <QueryState query={heartbeat}>
+         {(h) => (
+-          <div data-heartbeat={h.status}>
+-            <p>
+-              <HeartbeatChip status={h.status} />
+-            </p>
+-            <dl className="workspace-header__grid">
+-              <Fact label={t("adminP6.operations.newestBeat")}>
+-                {h.newestBeatAt ? formatDateTime(h.newestBeatAt, locale) : t("adminP6.common.unknown")}
+-              </Fact>
+-              <Fact label={t("adminP6.operations.staleAfter")}>
+-                {t("adminP6.operations.seconds", { count: h.staleAfterSeconds })}
+-              </Fact>
+-              <Fact label={t("adminP6.operations.checkedAt")}>{formatDateTime(h.checkedAt, locale)}</Fact>
+-            </dl>
++          <>
++            {/* The overall worker status: exactly one labelled chip. The per-instance chips follow in their own
++                table, outside this element, so the overall status is never confused with one instance's. */}
++            <div data-heartbeat={h.status}>
++              <p>
++                <HeartbeatChip status={h.status} />
++              </p>
++              <dl className="workspace-header__grid">
++                <Fact label={t("adminP6.operations.newestBeat")}>
++                  {h.newestBeatAt ? formatDateTime(h.newestBeatAt, locale) : t("adminP6.common.unknown")}
++                </Fact>
++                <Fact label={t("adminP6.operations.staleAfter")}>
++                  {t("adminP6.operations.seconds", { count: h.staleAfterSeconds })}
++                </Fact>
++                <Fact label={t("adminP6.operations.checkedAt")}>{formatDateTime(h.checkedAt, locale)}</Fact>
++              </dl>
++            </div>
+             {h.instances.length === 0 ? (
+               <p className="muted small">{t("adminP6.operations.noInstances")}</p>
+             ) : (
+@@ -207,7 +211,7 @@ function HeartbeatCard() {
+                 </table>
+               </div>
+             )}
+-          </div>
++          </>
+         )}
+       </QueryState>
+     </Section>
+diff --git a/apps/web/src/pages/branding/BrandingPage.tsx b/apps/web/src/pages/branding/BrandingPage.tsx
+index 3b3967f98..d08de4c6f 100644
+--- a/apps/web/src/pages/branding/BrandingPage.tsx
++++ b/apps/web/src/pages/branding/BrandingPage.tsx
+@@ -759,7 +759,8 @@ export function ContrastReport({ r }: { r: BrandingContrastReport }) {
+         {r.tokenSourceSha256 ? (
+           <>
+             <dt>{t("explanations.contrast.sha")}</dt>
+-            <dd>
++            {/* 64 hex characters with no break opportunity: wrap anywhere, so a 320–390 px screen does not scroll. */}
++            <dd className="code--wrap">
+               <bdi dir="ltr" className="code small">
+                 {r.tokenSourceSha256}
+               </bdi>
+diff --git a/apps/web/src/styles/app.css b/apps/web/src/styles/app.css
+index ee3bd4545..dd8718134 100644
+--- a/apps/web/src/styles/app.css
++++ b/apps/web/src/styles/app.css
+@@ -112,6 +112,10 @@ a:hover {
+   font-variant-numeric: tabular-nums;
+   letter-spacing: 0.01em;
+ }
++/* Long codes without break opportunities (hashes, identifiers): wrap at any character instead of widening the page. */
++.code--wrap {
++  overflow-wrap: anywhere;
++}
+ .link {
+   color: var(--mth-action-primary);
+   font-weight: 500;
+@@ -1205,10 +1209,32 @@ input[type="radio"] {
+    is a banner below the header. */
+ @media (max-width: 30rem) {
+   .app-header {
++    flex-wrap: wrap;
+     gap: var(--mth-space-2);
++    row-gap: var(--mth-space-1);
+     padding-inline: var(--mth-space-3);
+   }
++  /* T-DG6-FE-X3: the P6 header controls (global search, assistant launcher) no longer fit one 320 px row next to the
++     wordmark. The spacer becomes a full-width line break: the menu button and the wordmark keep the first row, and the
++     controls continue on the next row in the same DOM, focus and visual order. The search field shrinks to the room
++     left on that row instead of squeezing the wordmark. */
++  .app-header__spacer {
++    flex-basis: 100%;
++    block-size: 0;
++  }
++  .app-header .global-search {
++    flex: 1 1 8rem;
++    min-inline-size: 0;
++  }
++  .app-header .global-search__input {
++    flex: 1 1 3rem;
++    inline-size: auto;
++    min-inline-size: 0;
++  }
+   .wordmark {
++    /* Basis 0: the wordmark takes the rest of the first row next to the menu button (it wraps its name and badge
++       inside its box) instead of moving to a row of its own. */
++    flex: 1 1 0;
+     flex-wrap: wrap;
+     row-gap: 0;
+     min-inline-size: 0;

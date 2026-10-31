@@ -153,19 +153,23 @@ function HeartbeatCard() {
     <Section id="worker-heartbeat" title={t("adminP6.operations.heartbeatTitle")}>
       <QueryState query={heartbeat}>
         {(h) => (
-          <div data-heartbeat={h.status}>
-            <p>
-              <HeartbeatChip status={h.status} />
-            </p>
-            <dl className="workspace-header__grid">
-              <Fact label={t("adminP6.operations.newestBeat")}>
-                {h.newestBeatAt ? formatDateTime(h.newestBeatAt, locale) : t("adminP6.common.unknown")}
-              </Fact>
-              <Fact label={t("adminP6.operations.staleAfter")}>
-                {t("adminP6.operations.seconds", { count: h.staleAfterSeconds })}
-              </Fact>
-              <Fact label={t("adminP6.operations.checkedAt")}>{formatDateTime(h.checkedAt, locale)}</Fact>
-            </dl>
+          <>
+            {/* The overall worker status: exactly one labelled chip. The per-instance chips follow in their own
+                table, outside this element, so the overall status is never confused with one instance's. */}
+            <div data-heartbeat={h.status}>
+              <p>
+                <HeartbeatChip status={h.status} />
+              </p>
+              <dl className="workspace-header__grid">
+                <Fact label={t("adminP6.operations.newestBeat")}>
+                  {h.newestBeatAt ? formatDateTime(h.newestBeatAt, locale) : t("adminP6.common.unknown")}
+                </Fact>
+                <Fact label={t("adminP6.operations.staleAfter")}>
+                  {t("adminP6.operations.seconds", { count: h.staleAfterSeconds })}
+                </Fact>
+                <Fact label={t("adminP6.operations.checkedAt")}>{formatDateTime(h.checkedAt, locale)}</Fact>
+              </dl>
+            </div>
             {h.instances.length === 0 ? (
               <p className="muted small">{t("adminP6.operations.noInstances")}</p>
             ) : (
@@ -207,7 +211,7 @@ function HeartbeatCard() {
                 </table>
               </div>
             )}
-          </div>
+          </>
         )}
       </QueryState>
     </Section>

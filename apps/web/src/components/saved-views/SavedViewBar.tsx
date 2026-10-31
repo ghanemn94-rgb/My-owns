@@ -81,6 +81,8 @@ export function SavedViewBar({ view, label }: { view: ListView; label: string })
           value={active?.id ?? ""}
           onChange={(e) => onPick(e.target.value)}
           data-saved-view-select
+          // Picking a view only sets the list's own query parameters (ADR-0057 §4): a reading aid, not a write.
+          data-view-control
           aria-busy={view.views.isPending}
         >
           <option value="">{t("productivity.views.none")}</option>

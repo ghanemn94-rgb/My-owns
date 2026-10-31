@@ -199,14 +199,28 @@ test("Navigation colour: changing brand.primary in Branding Settings changes the
     await expectAccessible(page, lang, "p5-nav-colour-c8102e");
     await shot(page, lang, "p5-nav-colour-c8102e");
 
-    // A light colour (#FFD700, 1.40:1 with white) is darkened to its contrast-checked shade #8B7500.
+    // ADR-0061 §1.2 (REQ-S15-003, D-195 row 18): a colour that fails a declared pair is refused at publish. #FFD700 is
+    // 1.40:1 on white (brand.primary / surface.card, controls, 3:1): its navigation shade would be #8B7500, but the
+    // publish answers 422 branding.contrast_insufficient in the form's one alert, and the navigation keeps #C8102E.
     await primary.fill("#FFD700");
     await expect(form.locator("[data-contrast='navigation']")).toContainText("#8B7500");
     await publish();
+    const refusal = page.locator("main#main").getByRole("alert");
+    await expect(refusal).toContainText(tr(lang, "problems.branding__contrast_insufficient"));
+    await expect(refusal.locator("[data-contrast-failure='/primaryColour']").first()).toBeVisible();
+    await expect.poll(navBackground).toBe("rgb(200, 16, 46)");
+    await expectAccessible(page, lang, "p5-nav-colour-ffd700-refused");
+    await shot(page, lang, "p5-nav-colour-ffd700-refused");
+
+    // A light colour that meets every declared pair but not 4.5:1 under white navigation text (#E4572E, 3.68:1 with
+    // white) is darkened to its contrast-checked navigation shade #CB4E29.
+    await primary.fill("#E4572E");
+    await expect(form.locator("[data-contrast='navigation']")).toContainText("#CB4E29");
+    await publish();
     await expect(page.locator("[data-state='branding-saved']")).toBeVisible();
-    await expect.poll(navBackground).toBe("rgb(139, 117, 0)");
-    await expectAccessible(page, lang, "p5-nav-colour-ffd700");
-    await shot(page, lang, "p5-nav-colour-ffd700");
+    await expect.poll(navBackground).toBe("rgb(203, 78, 41)");
+    await expectAccessible(page, lang, "p5-nav-colour-e4572e");
+    await shot(page, lang, "p5-nav-colour-e4572e");
     expect(foreign).toEqual([]);
   } finally {
     // Restore the settings that were current before this test (a new version with the same values).
@@ -228,7 +242,7 @@ test("Navigation colour: changing brand.primary in Branding Settings changes the
         reportHeaderAr: b["reportHeaderAr"],
         reportFooterEn: b["reportFooterEn"],
         reportFooterAr: b["reportFooterAr"],
-        changeNote: "Synthetic e2e: restore the settings before T-DG5-FE-G2's navigation-colour test",
+        changeNote: "Synthetic e2e: restore the settings that were current before the navigation-colour test",
       },
       { ifMatch: now.version },
     );
