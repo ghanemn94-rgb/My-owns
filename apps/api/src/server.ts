@@ -98,6 +98,8 @@ import { registerAssistantModule, setAssistantSecretProviders } from "./modules/
 import {
   registerAssistantEvidenceTextPort,
   registerAssistantPlaybookPassagePort,
+  type EvidenceTextPort as AssistantEvidenceTextPort,
+  type PlaybookPassagePort as AssistantPlaybookPassagePort,
 } from "./modules/assistant/retrieval.ts";
 import { createEvidenceTextPort } from "./modules/evidence/text-excerpt.ts";
 import { createPlaybookPassagePort } from "./modules/methodology/playbook-passages.ts";
@@ -308,6 +310,38 @@ function holdApiConnectionLog(nodeEnv: string): () => void {
       held.handle.uninstall();
       apiConnectionLogs.delete(file);
     }
+  };
+}
+
+// T-DG6-BE-X3B: BE-U's two retrieval ports are process-wide (assistant/retrieval.ts) and each one captures the `db` of
+// the app that built it. A process normally composes one app; the test harness composes several and closes them in any
+// order, and a port left behind by a closed app reads through a destroyed pool ("driver has already been destroyed",
+// a 500 on postAssistantMessage). So each composed app holds its pair here: the newest open app's pair is registered,
+// and when an app closes while its pair is still the registered one, the newest remaining app's pair (or none)
+// replaces it. A pair registered by someone else (a test's own ports) is left as it is.
+interface AssistantPortPair {
+  readonly evidence: AssistantEvidenceTextPort;
+  readonly playbook: AssistantPlaybookPassagePort;
+}
+const assistantPortHolders: AssistantPortPair[] = [];
+
+/** Registers one app's retrieval ports; returns their release (idempotent). */
+function holdAssistantPorts(pair: AssistantPortPair): () => void {
+  assistantPortHolders.push(pair);
+  registerAssistantEvidenceTextPort(pair.evidence);
+  registerAssistantPlaybookPassagePort(pair.playbook);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const at = assistantPortHolders.indexOf(pair);
+    if (at !== -1) assistantPortHolders.splice(at, 1);
+    const next = assistantPortHolders[assistantPortHolders.length - 1] ?? null;
+    // Reading the current port means swapping it out; it is put back unless it is this app's own.
+    const evidence = registerAssistantEvidenceTextPort(null);
+    registerAssistantEvidenceTextPort(evidence === pair.evidence ? (next?.evidence ?? null) : evidence);
+    const playbook = registerAssistantPlaybookPassagePort(null);
+    registerAssistantPlaybookPassagePort(playbook === pair.playbook ? (next?.playbook ?? null) : playbook);
   };
 }
 
@@ -634,9 +668,13 @@ export async function buildServer(options: ServerOptions): Promise<{
   setAssistantSecretProviders(secrets);
   // T-DG6-BE-X3: BE-U's two retrieval ports (ADR-0059 §4 items 2 and 3). Without them the running assistant gives the
   // model no evidence text and no playbook passage. The evidence port reads content through the driver-selecting
-  // store above and re-applies the evidence read decision (ADR-0051 §4) for the asking user.
-  registerAssistantEvidenceTextPort(createEvidenceTextPort(db, evidenceStore));
-  registerAssistantPlaybookPassagePort(createPlaybookPassagePort(db));
+  // store above and re-applies the evidence read decision (ADR-0051 §4) for the asking user. Held by this app until it
+  // closes (holdAssistantPorts above; T-DG6-BE-X3B).
+  const releaseAssistantPorts = holdAssistantPorts({
+    evidence: createEvidenceTextPort(db, evidenceStore),
+    playbook: createPlaybookPassagePort(db),
+  });
+  app.addHook("onClose", async () => releaseAssistantPorts());
   // T-DG6-BE-M: the ImportTargetRegistry line; each import target's owner adds one registration line below it
   // (KBE-A: kpi_actual.v1). The connector mappings' target columns come from the registered templates (ADR-0056 §9).
   const importTargets = createImportTargetRegistry();

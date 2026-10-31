@@ -2,13 +2,15 @@
 // §4, §12; ADR-0052 §5; REQ-S17-009, REQ-S17-010, REQ-S17-007). The same class of gap as F-DG6-QA-A-1: every other
 // assistant suite injects the secret registry (provider.test.ts) or registers the two retrieval ports itself
 // (be-u-fixtures.ts), which hid that `buildServer` wired none of them, and `installConnectionLog` was called nowhere.
-// This file never calls a setter or a register function to install anything; it only reads what buildServer installed:
+// This file installs nothing for the product: it reads what buildServer installed (a register function is called only
+// to read the current port and put it back, and one case registers a port of its own to prove an app's close keeps it):
 //  1. the HTTP adapter resolves its `credentialRef` through buildServer's own registry (the built-in `env` provider):
 //     the fake model receives `authorization: Bearer <value>`; an unset reference sends nothing (`unavailable`,
 //     assistant.provider_error) and the value never appears in a response;
 //  2. the playbook passage port is registered: a question on "case for change" from a user who reads no record gives
 //     the model playbook passages (without the port it would be `no_sources` and no call); both retrieval ports are
-//     the composition's (each register function returns the port buildServer set, never null);
+//     the composition's (each register function returns the port buildServer set, never null); a second app built
+//     and closed leaves the suite's app's ports in place (T-DG6-BE-X3B: before, they read through the closed pool);
 //  3. MTH_CONNECTION_LOG set when buildServer runs gives the log with `process: "api"`: one undici line for the call
 //     to the fake, and for a TCP attempt that never connects the requested host and port (QA-D-2), never nulls;
 //     the log is held per app and removed when the last app holding it closes.
@@ -198,6 +200,40 @@ describe("buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's co
       expect(c.blockRef).toMatch(/^B0[0-9]{3}$/);
     }
   });
+
+  it("a second app built and closed leaves this app's ports working (no read through a closed pool; BE-X3B)", async () => {
+    // Before BE-X3B the second buildServer replaced both process-wide ports with ones on ITS pool, and after its close
+    // a post here answered 500 ("driver has already been destroyed"), as the contract suite's BE-T block showed.
+    const second = await startApi({ database: scratchDb });
+    const secondsPlaybook = registerAssistantPlaybookPassagePort(null);
+    registerAssistantPlaybookPassagePort(secondsPlaybook);
+    await second.close();
+    const after = registerAssistantPlaybookPassagePort(null);
+    registerAssistantPlaybookPassagePort(after);
+    expect(after).not.toBeNull();
+    expect(after).not.toBe(secondsPlaybook); // the closed app's port is gone; this suite's app's port is back
+    await configureHttp(null);
+    fake.configure({ kind: "envelope", answer: "Synthetic answer from the fake.", citations: [] });
+    const body = await askCaseForChange();
+    expect(body.reply.replyKind).toBe("answer");
+    expect(body.reply.citations.length).toBeGreaterThan(0);
+  }, 60_000);
+
+  it("a port a test registered itself survives an app's close", async () => {
+    const own = { find: async () => [] };
+    const previous = registerAssistantPlaybookPassagePort(own);
+    try {
+      const other = await startApi({ database: scratchDb });
+      // The new app registered its own pair; the test puts its own port back, and the app's close must not replace it.
+      registerAssistantPlaybookPassagePort(own);
+      await other.close();
+      const current = registerAssistantPlaybookPassagePort(null);
+      registerAssistantPlaybookPassagePort(current);
+      expect(current).toBe(own);
+    } finally {
+      registerAssistantPlaybookPassagePort(previous);
+    }
+  }, 60_000);
 
   it("both ports are the ones buildServer set (each register function returns it; restored at once)", () => {
     const evidence = registerAssistantEvidenceTextPort(null);
