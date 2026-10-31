@@ -71,6 +71,41 @@ export function paginate<R>(
   return { items, nextCursor: encodeCursor(keyOf(items[items.length - 1]!), hash) };
 }
 
+// ------------------------------------------------------------------------------- microsecond instants (T-DG6-BE-X7)
+// A list ordered by a timestamptz carries that instant in its cursor. A JS Date keeps milliseconds while the column keeps
+// microseconds, so a cursor made with `Date.toISOString()` names an instant before the page's last row, and the rows
+// that share its millisecond with a smaller microsecond were skipped on the next page (the A20 999-of-1,000 failure).
+// The key is therefore read from the database as UTC ISO-8601 with six fractional digits and compared as timestamptz.
+// A millisecond cursor issued before this repair is still accepted (same hash, same predicate); a value of another shape
+// is a 400 `validation.cursor`, never a database error.
+
+const INSTANT_KEY = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.(\d{3}|\d{6})Z$/;
+
+/** The cursor form of the timestamptz `column` ("t.updated_at" or "updated_at"): "YYYY-MM-DDTHH:MM:SS.ffffffZ". */
+export function cursorInstant(column: string): RawBuilder<string> {
+  return sql<string>`to_char(${sql.ref(column)} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`;
+}
+
+/** A cursor's instant, checked: six (or, from an older cursor, three) fractional digits of a real UTC instant. */
+export function cursorInstantText(value: string | number | null | undefined): string {
+  if (typeof value !== "string" || !INSTANT_KEY.test(value)) throw cursorProblem();
+  const ms = `${value.slice(0, 23)}Z`;
+  const time = Date.parse(ms);
+  if (Number.isNaN(time) || new Date(time).toISOString() !== ms) throw cursorProblem();
+  return value;
+}
+
+/** A cursor's instant as the database reads it (timestamptz, microseconds kept). */
+export function cursorInstantValue(value: string | number | null | undefined): RawBuilder<Date> {
+  return sql<Date>`${cursorInstantText(value)}::timestamptz`;
+}
+
+/** A cursor's row identifier, checked (a malformed one is a 400, never a database cast error). */
+export function cursorUuidText(value: string | number | null | undefined): string {
+  if (typeof value !== "string" || KEY_SHAPES.get("uuid")?.test(value) !== true) throw cursorProblem();
+  return value;
+}
+
 // ------------------------------------------------------------------------------------------------ keyset pages (T-DG6-BE-V)
 // ADR-0007 §4a (D-199): the 17 formerly unbounded lists page with `{ items, nextCursor }`. The page is read in SQL with
 // a keyset over the list's stable sort, which always ends with the row's identifier. Every key is carried as Postgres

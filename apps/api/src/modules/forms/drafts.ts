@@ -39,10 +39,13 @@ import { z } from "zod";
 import { auditContextOf, principalOf, readScopeFor } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  HttpProblem,
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
-  HttpProblem,
   iso,
   isoOrNull,
   limitSchema,
@@ -367,13 +370,15 @@ async function listDrafts(db: Db, request: FastifyRequest, transformationId: str
   if (query.recordType !== undefined) q = q.where("record_type", "=", query.recordType);
   if (query.status !== undefined) q = q.where("status", "=", query.status);
   if (after !== null)
-    q = q.where(sql<boolean>`(updated_at, id) < (${String(after[0])}::timestamptz, ${String(after[1])}::uuid)`);
+    q = q.where(sql<boolean>`(updated_at, id) < (${cursorInstantValue(after[0])}, ${cursorUuidText(after[1])}::uuid)`);
+  // The cursor keeps updated_at to the microsecond (T-DG6-BE-X7; platform/cursor.ts cursorInstant).
   const rows = await q
+    .select(cursorInstant("updated_at").as("cursor_at"))
     .orderBy("updated_at", "desc")
     .orderBy("id", "desc")
     .limit(query.limit + 1)
     .execute();
-  const page = paginate(rows, query.limit, (r) => [r.updated_at.toISOString(), r.id], hash);
+  const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
   const items: FormDraft[] = [];
   for (const r of page.items) items.push(await present(db, r));
   return { items, nextCursor: page.nextCursor };
@@ -436,13 +441,16 @@ async function listMyDrafts(db: Db, request: FastifyRequest) {
       }),
     );
   if (after !== null)
-    q = q.where(sql<boolean>`(d.updated_at, d.id) < (${String(after[0])}::timestamptz, ${String(after[1])}::uuid)`);
+    q = q.where(
+      sql<boolean>`(d.updated_at, d.id) < (${cursorInstantValue(after[0])}, ${cursorUuidText(after[1])}::uuid)`,
+    );
   const rows = await q
+    .select(cursorInstant("d.updated_at").as("cursor_at"))
     .orderBy("d.updated_at", "desc")
     .orderBy("d.id", "desc")
     .limit(query.limit + 1)
     .execute();
-  const page = paginate(rows, query.limit, (r) => [r.updated_at.toISOString(), r.id], hash);
+  const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
   const items: MyFormDraft[] = [];
   for (const r of page.items) {
     const d = await present(db, r);

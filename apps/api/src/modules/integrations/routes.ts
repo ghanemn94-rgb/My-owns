@@ -6,15 +6,17 @@ import { freeText, uuid } from "@mth/shared/schemas";
 import { z } from "zod";
 import { holdsAnywhere, principalOf } from "../access/index.ts";
 import {
+  cursorInstantText,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   etag,
   filterHash,
+  idempotencyKeySchema,
   limitSchema,
   paginate,
   parse,
   parseBody,
-  idempotencyKeySchema,
   parseQuery,
   problems,
   rateLimitClass,
@@ -353,10 +355,10 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
     const after = decodeCursor(cursor, hash, 2);
     const rows = await listRuns(db, connectorId, {
       ...(query.status ? { status: query.status } : {}),
-      after: after ? [String(after[0]), String(after[1])] : null,
+      after: after ? [cursorInstantText(after[0]), cursorUuidText(after[1])] : null,
       limit,
     });
-    const page = paginate(rows, limit, (r) => [r.queued_at.toISOString(), r.id], hash);
+    const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
     return { items: page.items.map(toIntegrationRun), nextCursor: page.nextCursor };
   });
 
@@ -504,10 +506,10 @@ function registerImportRoutes(app: FastifyInstance, { db }: ModuleDeps): string[
     const rows = await listBatches(db, principal, transformationId, {
       ...(query.status ? { status: query.status } : {}),
       ...(query.sourceKind ? { sourceKind: query.sourceKind } : {}),
-      after: after ? [String(after[0]), String(after[1])] : null,
+      after: after ? [cursorInstantText(after[0]), cursorUuidText(after[1])] : null,
       limit,
     });
-    const page = paginate(rows, limit, (r) => [r.created_at.toISOString(), r.id], hash);
+    const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
     return { items: page.items.map(toImportBatch), nextCursor: page.nextCursor };
   });
 
@@ -866,10 +868,10 @@ function registerOutboundRoutes(app: FastifyInstance, { db }: ModuleDeps): strin
     const rows = await listOutboundWrites(db, transformationId, {
       ...(query.status ? { status: query.status } : {}),
       ...(query.deliverableId ? { deliverableId: query.deliverableId } : {}),
-      after: after ? [String(after[0]), String(after[1])] : null,
+      after: after ? [cursorInstantText(after[0]), cursorUuidText(after[1])] : null,
       limit,
     });
-    const page = paginate(rows, limit, (r) => [r.created_at.toISOString(), r.id], hash);
+    const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
     return { items: page.items.map(toOutboundWrite), nextCursor: page.nextCursor };
   });
 

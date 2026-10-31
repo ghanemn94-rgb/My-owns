@@ -20,7 +20,10 @@ import { z } from "zod";
 import { principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
   limitSchema,
@@ -295,21 +298,23 @@ export function registerInitiativeRoutes(app: FastifyInstance, { db }: ModuleDep
       const items = page.items.map(({ sort_key: _k, ...row }) => row);
       return { items: await presentInitiatives(db, items), nextCursor: page.nextCursor };
     }
-    // `sort` absent: today's order and cursor, exactly as at DG5 (ADR-0057 §5 "absent = today's result and order").
-    if (after)
-      q = q.where((eb) =>
-        eb.or([
-          eb("updated_at", "<", new Date(String(after[0]))),
-          eb.and([eb("updated_at", "=", new Date(String(after[0]))), eb("id", "<", String(after[1]))]),
-        ]),
-      );
-    const rows = await q
+    // `sort` absent: today's order (ADR-0057 §5 "absent = today's result and order"): updated_at desc, id desc, with the
+    // DG5 hash. The cursor keeps updated_at to the microsecond (T-DG6-BE-X7): the DG5 cursor kept a JS Date's
+    // millisecond, so the rows sharing that millisecond with the page's last row were skipped on the next page.
+    let dq = q.select(cursorInstant("updated_at").as("cursor_at"));
+    if (after) {
+      const at = cursorInstantValue(after[0]);
+      const id = cursorUuidText(after[1]);
+      dq = dq.where((eb) => eb.or([eb("updated_at", "<", at), eb.and([eb("updated_at", "=", at), eb("id", "<", id)])]));
+    }
+    const rows = await dq
       .orderBy("updated_at", "desc")
       .orderBy("id", "desc")
       .limit(query.limit + 1)
       .execute();
-    const page = paginate(rows, query.limit, (r) => [r.updated_at.toISOString(), r.id], hash);
-    return { items: await presentInitiatives(db, page.items), nextCursor: page.nextCursor };
+    const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
+    const items = page.items.map(({ cursor_at: _k, ...row }) => row);
+    return { items: await presentInitiatives(db, items), nextCursor: page.nextCursor };
   });
 
   app.post(BASE, { config: edit }, async (request, reply) => {

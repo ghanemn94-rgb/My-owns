@@ -1,7 +1,15 @@
 // Unit tests of the keyset cursor helpers (T-DG6-BE-V; ADR-0007 §4/§4a): the cursor value checks that keep a forged
 // cursor from reaching SQL, and `memoryPage` (the resolved approval-route list) walking a list page by page.
 import { describe, expect, it } from "vitest";
-import { decodeKeysetCursor, encodeCursor, keysetHash, memoryPage, type SortKey } from "./cursor.ts";
+import {
+  cursorInstantText,
+  cursorUuidText,
+  decodeKeysetCursor,
+  encodeCursor,
+  keysetHash,
+  memoryPage,
+  type SortKey,
+} from "./cursor.ts";
 import { HttpProblem } from "./problem.ts";
 
 const KEYS: readonly SortKey[] = [
@@ -85,5 +93,37 @@ describe("memoryPage", () => {
     expect(
       refused(() => memoryPage(routes, (r) => [r.routeKey], { cursor: numeric, limit: 1 }, filters, "routeKey")),
     ).toBe(true);
+  });
+});
+
+// T-DG6-BE-X7: the instant of a DG-era `(timestamp, id)` cursor keeps PostgreSQL's microseconds.
+describe("cursorInstantText and cursorUuidText", () => {
+  it("accepts six fractional digits, and three from a cursor issued before the repair", () => {
+    expect(cursorInstantText("2026-10-01T08:00:00.123456Z")).toBe("2026-10-01T08:00:00.123456Z");
+    expect(cursorInstantText("2026-10-01T08:00:00.123Z")).toBe("2026-10-01T08:00:00.123Z");
+    expect(cursorUuidText(ID)).toBe(ID);
+  });
+
+  it("refuses any other shape or an instant that is not real, with a 400", () => {
+    for (const v of [
+      "2026-02-31T00:00:00.000000Z",
+      "2026-10-01T24:00:00.000000Z",
+      "2026-10-01T08:00:00Z",
+      "2026-10-01T08:00:00.1234Z",
+      "2026-10-01 08:00:00.123456+00",
+      "",
+      null,
+      undefined,
+      1_700_000_000_000,
+    ])
+      expect(
+        refused(() => cursorInstantText(v)),
+        String(v),
+      ).toBe(true);
+    for (const v of ["not-a-uuid", ID.toUpperCase(), "", null, 7])
+      expect(
+        refused(() => cursorUuidText(v)),
+        String(v),
+      ).toBe(true);
   });
 });

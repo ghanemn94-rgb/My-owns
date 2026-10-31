@@ -43,7 +43,7 @@ import { v7 as uuidv7 } from "uuid";
 import { auditContextOf, authorize, commitTimeDenial, refreshPrincipal, type Principal } from "../access/index.ts";
 import { record as audit, type AuditContext } from "../audit/index.ts";
 import { enqueueOutboxEvent } from "../jobs/index.ts";
-import { ADVISORY_LOCK_CLASSES, HttpProblem, iso, problems } from "../platform/index.ts";
+import { ADVISORY_LOCK_CLASSES, HttpProblem, cursorInstant, iso, problems } from "../platform/index.ts";
 import { createHttpPullAdapter } from "./adapters/http-pull.ts";
 import {
   CONNECTOR_ERROR_CODES,
@@ -340,12 +340,18 @@ export interface RunListQuery {
 }
 
 /** The runs of a connector the caller may read (the caller checked visibleConnector), newest first. */
-export async function listRuns(db: DbOrTx, connectorId: string, query: RunListQuery): Promise<IntegrationRunRow[]> {
+export async function listRuns(
+  db: DbOrTx,
+  connectorId: string,
+  query: RunListQuery,
+): Promise<(IntegrationRunRow & { cursor_at: string })[]> {
   let q = db.selectFrom("integration_run").selectAll().where("connector_id", "=", connectorId);
   if (query.status) q = q.where("status", "=", query.status);
   if (query.after)
     q = q.where(sql<boolean>`(queued_at, id) < (${query.after[0]}::timestamptz, ${query.after[1]}::uuid)`);
+  // cursor_at: queued_at to the microsecond, the page's cursor key (T-DG6-BE-X7; a JS Date would drop microseconds).
   return q
+    .select(cursorInstant("queued_at").as("cursor_at"))
     .orderBy("queued_at", "desc")
     .orderBy("id", "desc")
     .limit(query.limit + 1)

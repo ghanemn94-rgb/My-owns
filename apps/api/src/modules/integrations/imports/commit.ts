@@ -37,7 +37,7 @@ import {
   type ResolvedTarget,
 } from "../../access/index.ts";
 import { record as audit, type AuditContext } from "../../audit/index.ts";
-import { ADVISORY_LOCK_CLASSES, HttpProblem, problems } from "../../platform/index.ts";
+import { ADVISORY_LOCK_CLASSES, HttpProblem, cursorInstant, problems } from "../../platform/index.ts";
 import {
   bareMediaType,
   parseImportFile,
@@ -160,7 +160,7 @@ export async function listBatches(
   principal: Principal,
   transformationId: string,
   f: BatchListFilter,
-): Promise<ImportBatchRow[]> {
+): Promise<(ImportBatchRow & { cursor_at: string })[]> {
   const scope = await readScopeFor(db, principal, IMPORT_READ);
   let q = db
     .selectFrom("import_batch as b")
@@ -180,7 +180,9 @@ export async function listBatches(
     const [at, id] = f.after;
     q = q.where(sql<boolean>`(b.created_at, b.id) < (${at}::timestamptz, ${id}::uuid)`);
   }
+  // cursor_at: created_at to the microsecond, the page's cursor key (T-DG6-BE-X7).
   return q
+    .select(cursorInstant("b.created_at").as("cursor_at"))
     .orderBy("b.created_at", "desc")
     .orderBy("b.id", "desc")
     .limit(f.limit + 1)

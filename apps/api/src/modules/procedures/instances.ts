@@ -46,7 +46,10 @@ import {
 import { record, type AuditContext } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
   idempotencyKeySchema,
@@ -532,14 +535,18 @@ async function list(db: ModuleDeps["db"], request: FastifyRequest) {
   if (q.procedureCode !== undefined) query = query.where("pi.procedure_code", "=", q.procedureCode);
   if (after !== null) {
     const [at, id] = after;
-    query = query.where(sql<boolean>`(pi.launched_at, pi.id) < (${String(at)}::timestamptz, ${String(id)}::uuid)`);
+    query = query.where(
+      sql<boolean>`(pi.launched_at, pi.id) < (${cursorInstantValue(at)}, ${cursorUuidText(id)}::uuid)`,
+    );
   }
-  const rows: ProcedureInstanceRow[] = await query
+  // The cursor keeps launched_at to the microsecond (T-DG6-BE-X7; platform/cursor.ts cursorInstant).
+  const rows: (ProcedureInstanceRow & { cursor_at: string })[] = await query
+    .select(cursorInstant("pi.launched_at").as("cursor_at"))
     .orderBy("pi.launched_at", "desc")
     .orderBy("pi.id", "desc")
     .limit(q.limit + 1)
     .execute();
-  const page = paginate(rows, q.limit, (r) => [r.launched_at.toISOString(), r.id], hash);
+  const page = paginate(rows, q.limit, (r) => [r.cursor_at, r.id], hash);
   const items = [];
   for (const r of page.items) items.push(await presentInstance(db, await loadBundle(db, r)));
   return { items, nextCursor: page.nextCursor };

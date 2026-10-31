@@ -102,9 +102,11 @@ async function expectedOrder(expr: string, dir: "asc" | "desc"): Promise<string[
 }
 
 describe("listInitiatives: absent parameters return the DG5 response (ADR-0057 ยง5; p6-work-split ยงH/G.14 item 7)", () => {
-  it("every page is byte-identical to the DG5 page: order updated_at desc, id desc; the DG5 cursor and hash", async () => {
+  it("every page is byte-identical to the DG5 page: order updated_at desc, id desc; the DG5 hash; a microsecond cursor", async () => {
     // The golden: the DG5 route body (portfolio/initiatives.ts at DG5) re-stated here - its query, keyset predicate,
-    // presenter and cursor (ADR-0007 ยง4) - and compared byte for byte with the route's response on every page.
+    // presenter and hash (ADR-0007 ยง4) - and compared byte for byte with the route's response on every page. One
+    // deliberate change (T-DG6-BE-X7): the opaque cursor carries updated_at to the microsecond, read from PostgreSQL,
+    // where DG5 carried a JS Date's millisecond and so skipped the rows sharing the page's last millisecond.
     const hash = filterHash({ transformationId: p.transformationId });
     for (const limit of [25, 100]) {
       let cursor: string | null = null;
@@ -116,38 +118,37 @@ describe("listInitiatives: absent parameters return the DG5 response (ADR-0057 ย
           const [at, id] = after;
           q = q.where((eb) =>
             eb.or([
-              eb("updated_at", "<", new Date(at)),
-              eb.and([eb("updated_at", "=", new Date(at)), eb("id", "<", id)]),
+              eb("updated_at", "<", sql<Date>`${at}::timestamptz`),
+              eb.and([eb("updated_at", "=", sql<Date>`${at}::timestamptz`), eb("id", "<", id)]),
             ]),
           );
         }
         const rows = await q
+          .select(sql<string>`to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`.as("at_us"))
           .orderBy("updated_at", "desc")
           .orderBy("id", "desc")
           .limit(limit + 1)
           .execute();
-        const items = rows.slice(0, limit);
-        const last = items[items.length - 1];
-        const expectedCursor =
-          rows.length > limit && last ? encodeCursor([last.updated_at.toISOString(), last.id], hash) : null;
+        const items = rows.slice(0, limit).map(({ at_us: _k, ...row }) => row);
+        const last = rows.slice(0, limit).at(-1);
+        expect(last === undefined || /\.\d{6}Z$/.test(last.at_us)).toBe(true);
+        const expectedCursor = rows.length > limit && last ? encodeCursor([last.at_us, last.id], hash) : null;
         const expected = JSON.stringify({ items: await presentInitiatives(api.db, items), nextCursor: expectedCursor });
         const res = await list(`&limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
         expect(res.status).toBe(200);
         expect(res.raw.body, `limit ${limit}, page ${pages + 1}`).toBe(expected);
         cursor = res.body.nextCursor;
-        after = last ? [last.updated_at.toISOString(), last.id] : null;
+        after = last ? [last.at_us, last.id] : null;
         pages += 1;
       } while (cursor !== null && pages < 50);
       expect(cursor).toBeNull();
     }
   });
 
-  // RAISED (T-DG6-BE-R handback): the DG5 sort-absent cursor keeps updated_at to the MILLISECOND (a JS Date), while the
-  // column holds microseconds, so the rows that tie with a page's last row (same updated_at, e.g. one bulk transaction)
-  // or share its millisecond are skipped on the next page. The byte-identical rule (ADR-0057 ยง5) keeps that behaviour in
-  // this task; the fix (the microsecond keyset that `sort=-updatedAt` already uses) is for the orchestrator to decide.
-  // `it.fails` documents the defect; remove the mark with the fix.
-  it.fails("DG5 defect, raised: with `sort` absent, paging returns every one of the 1,000 rows once", async () => {
+  // Repaired (T-DG6-BE-X7; raised by T-DG6-BE-R): the DG5 sort-absent cursor kept updated_at to the MILLISECOND (a JS
+  // Date) while the column holds microseconds, so the rows sharing a page's last millisecond with a smaller microsecond
+  // were skipped on the next page (A20: 999 of 1,000). The cursor now carries the microsecond.
+  it("with `sort` absent, paging returns every one of the 1,000 rows once, in the database's order", async () => {
     const ids: string[] = [];
     let cursor: string | null = null;
     do {
@@ -155,7 +156,9 @@ describe("listInitiatives: absent parameters return the DG5 response (ADR-0057 ย
       ids.push(...res.body.items.map((i) => i.id));
       cursor = res.body.nextCursor;
     } while (cursor !== null);
+    expect(ids).toHaveLength(N);
     expect(new Set(ids).size).toBe(N);
+    expect(ids).toEqual(await expectedOrder("updated_at", "desc"));
   });
 
   it("the default limit (25) and the DG5 status filter are unchanged too", async () => {
@@ -164,15 +167,16 @@ describe("listInitiatives: absent parameters return the DG5 response (ADR-0057 ย
       .selectAll()
       .where("transformation_id", "=", p.transformationId)
       .where("status", "=", "draft")
+      .select(sql<string>`to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`.as("at_us"))
       .orderBy("updated_at", "desc")
       .orderBy("id", "desc")
       .limit(26)
       .execute();
-    const rows = all.slice(0, 25);
+    const rows = all.slice(0, 25).map(({ at_us: _k, ...row }) => row);
     const hash = filterHash({ transformationId: p.transformationId, status: "draft" });
     const expected = JSON.stringify({
       items: await presentInitiatives(api.db, rows),
-      nextCursor: encodeCursor([rows[24]!.updated_at.toISOString(), rows[24]!.id], hash),
+      nextCursor: encodeCursor([all[24]!.at_us, all[24]!.id], hash),
     });
     const res = await list("&status=draft");
     expect(res.raw.body).toBe(expected);

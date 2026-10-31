@@ -18,7 +18,11 @@ export {
 export { etag, iso, isoOrNull, requireIfMatch, sendVersioned } from "./http.ts";
 export {
   canonicalJson,
+  cursorInstant,
+  cursorInstantText,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   decodeKeysetCursor,
   encodeCursor,

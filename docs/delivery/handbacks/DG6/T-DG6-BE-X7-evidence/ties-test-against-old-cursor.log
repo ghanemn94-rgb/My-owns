@@ -1,0 +1,132 @@
+port-policy: PostgreSQL listening on port 27520 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x7
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvwq4vlw_f2657d59 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts (12 tests | 5 failed) 7680ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > the fixture is the hard case: one millisecond, exact ties and one-microsecond neighbours 3ms
+   × cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 1: all 240 rows once, in updated_at desc, id desc 1656ms
+     → expected [ …(84) ] to have a length of 240 but got 84
+   × cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 7: all 240 rows once, in updated_at desc, id desc 178ms
+     → expected [ …(89) ] to have a length of 240 but got 89
+   × cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 25: all 240 rows once, in updated_at desc, id desc 87ms
+     → expected [ …(108) ] to have a length of 240 but got 108
+   × cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 100: all 240 rows once, in updated_at desc, id desc 29ms
+     → expected [ …(180) ] to have a length of 240 but got 180
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives sort=updatedAt, limit 7: all 240 rows once, in the database's order  543ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives sort=-updatedAt, limit 7: all 240 rows once, in the database's order  725ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listDependencies, limit 1: all 240 rows once, in updated_at desc, id desc  2711ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listDependencies, limit 7: all 240 rows once, in updated_at desc, id desc  320ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listDependencies, limit 50: all 240 rows once, in updated_at desc, id desc 86ms
+   × cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > the cursor carries the microsecond; a millisecond cursor from before the repair is still accepted 22ms
+     → expected '2026-10-01T08:00:00.123Z' to match /^2026-10-01T08:00:00\.123\d{3}Z$/
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > a malformed instant or row identifier in a well-hashed cursor is 400 at /query/cursor, never a 500 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts > cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 1: all 240 rows once, in updated_at desc, id desc
+AssertionError: expected [ …(84) ] to have a length of 240 but got 84
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 240[39m
+[31m+ 84[39m
+
+ ❯ apps/api/test/integration/platform/cursor-microsecond-ties.test.ts:112:19
+    110|     it(`listInitiatives with sort absent, limit ${limit}: all ${N} row…
+    111|       const ids = await walk(`/api/v1/initiatives?transformationId=${p…
+    112|       expect(ids).toHaveLength(N);
+       |                   ^
+    113|       expect(ids).toEqual(await dbOrder("initiative", "desc"));
+    114|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts > cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 7: all 240 rows once, in updated_at desc, id desc
+AssertionError: expected [ …(89) ] to have a length of 240 but got 89
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 240[39m
+[31m+ 89[39m
+
+ ❯ apps/api/test/integration/platform/cursor-microsecond-ties.test.ts:112:19
+    110|     it(`listInitiatives with sort absent, limit ${limit}: all ${N} row…
+    111|       const ids = await walk(`/api/v1/initiatives?transformationId=${p…
+    112|       expect(ids).toHaveLength(N);
+       |                   ^
+    113|       expect(ids).toEqual(await dbOrder("initiative", "desc"));
+    114|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts > cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 25: all 240 rows once, in updated_at desc, id desc
+AssertionError: expected [ …(108) ] to have a length of 240 but got 108
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 240[39m
+[31m+ 108[39m
+
+ ❯ apps/api/test/integration/platform/cursor-microsecond-ties.test.ts:112:19
+    110|     it(`listInitiatives with sort absent, limit ${limit}: all ${N} row…
+    111|       const ids = await walk(`/api/v1/initiatives?transformationId=${p…
+    112|       expect(ids).toHaveLength(N);
+       |                   ^
+    113|       expect(ids).toEqual(await dbOrder("initiative", "desc"));
+    114|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts > cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 100: all 240 rows once, in updated_at desc, id desc
+AssertionError: expected [ …(180) ] to have a length of 240 but got 180
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 240[39m
+[31m+ 180[39m
+
+ ❯ apps/api/test/integration/platform/cursor-microsecond-ties.test.ts:112:19
+    110|     it(`listInitiatives with sort absent, limit ${limit}: all ${N} row…
+    111|       const ids = await walk(`/api/v1/initiatives?transformationId=${p…
+    112|       expect(ids).toHaveLength(N);
+       |                   ^
+    113|       expect(ids).toEqual(await dbOrder("initiative", "desc"));
+    114|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts > cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > the cursor carries the microsecond; a millisecond cursor from before the repair is still accepted
+AssertionError: expected '2026-10-01T08:00:00.123Z' to match /^2026-10-01T08:00:00\.123\d{3}Z$/
+
+[32m- Expected:[39m 
+/^2026-10-01T08:00:00\.123\d{3}Z$/
+
+[31m+ Received:[39m 
+"2026-10-01T08:00:00.123Z"
+
+ ❯ apps/api/test/integration/platform/cursor-microsecond-ties.test.ts:138:26
+    136|     const first = await get(`/api/v1/initiatives?transformationId=${p.…
+    137|     const decoded = JSON.parse(Buffer.from(first.body.nextCursor!, "ba…
+    138|     expect(decoded.k[0]).toMatch(/^2026-10-01T08:00:00\.123\d{3}Z$/);
+       |                          ^
+    139|     const hash = filterHash({ transformationId: p.transformationId });
+    140|     const legacy = encodeCursor(["2026-10-01T08:00:00.124Z", "ffffffff…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 7 passed (12)
+   Start at  18:17:57
+   Duration  31.35s (transform 8.63s, setup 0ms, collect 16.75s, tests 7.68s, environment 0ms, prepare 94ms)
+
+exit=1

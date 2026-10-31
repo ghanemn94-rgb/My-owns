@@ -58,7 +58,7 @@ import {
   type ResolvedTarget,
 } from "../access/index.ts";
 import { record as audit, type AuditContext } from "../audit/index.ts";
-import { ADVISORY_LOCK_CLASSES, HttpProblem, iso, isoOrNull, problems } from "../platform/index.ts";
+import { ADVISORY_LOCK_CLASSES, HttpProblem, cursorInstant, iso, isoOrNull, problems } from "../platform/index.ts";
 import {
   ConnectorAdapterError,
   connectorAdapters,
@@ -303,13 +303,15 @@ export async function listOutboundWrites(
   db: DbOrTx,
   transformationId: string,
   query: OutboundListQuery,
-): Promise<OutboundWriteRow[]> {
+): Promise<(OutboundWriteRow & { cursor_at: string })[]> {
   let q = db.selectFrom("outbound_write").selectAll().where("transformation_id", "=", transformationId);
   if (query.status) q = q.where("status", "=", query.status);
   if (query.deliverableId) q = q.where("deliverable_id", "=", query.deliverableId);
   if (query.after)
     q = q.where(sql<boolean>`(created_at, id) < (${query.after[0]}::timestamptz, ${query.after[1]}::uuid)`);
+  // cursor_at: created_at to the microsecond, the page's cursor key (T-DG6-BE-X7; a JS Date would drop microseconds).
   return q
+    .select(cursorInstant("created_at").as("cursor_at"))
     .orderBy("created_at", "desc")
     .orderBy("id", "desc")
     .limit(query.limit + 1)
