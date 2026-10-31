@@ -1,0 +1,201 @@
+# QA_PG_PORT=27000 MTH_PORT_POOL=27001-27019 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a17-import-and-integration.test.ts 
+Sat Oct 31 00:32:32 UTC 2026
+port-policy: PostgreSQL listening on port 27000 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-a2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvo2ske_f6159aac (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests | 1 failed) 38227ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  845ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  726ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  875ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  507ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > unsigned, wrongly signed, tampered and stale deliveries: 401 webhook.unauthenticated and nothing stored 37ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing 258ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  764ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10268ms
+   × failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes 13464ms
+     → KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+     → KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+     → KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+     → KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+     → AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+     → AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+     → AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+     → AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  2294ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "freshness": "stale",[39m
+[31m+   "freshness": "unknown",[39m
+[2m    "kpiDefinitionId": "01a18f5f-f144-742e-9e1a-c71d704f0cdd",[22m
+[2m    "transformationId": "01a18f5f-b54f-721b-98ef-e9a2ed33f140",[22m
+[2m  }[22m
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:708:64
+    706|       expect.soft(d.body.linkedKpis, `${who}: ${JSON.stringify(d.body.…
+    707|       const linked: Loose = (d.body.linkedKpis as Loose[])[0] ?? {};
+    708|       expect.soft(linked, `${who}: ${JSON.stringify(linked)}`).toMatch…
+       |                                                                ^
+    709|         kpiDefinitionId: stale.id,
+    710|         transformationId: k.transformationId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+
+[32m- Expected:[39m 
+"250.75"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:713:88
+    711|         freshness: "stale",
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+       |                                                                                        ^
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+    715|       expect.soft(linked.lastValueAt && riyadhDate(linked.lastValueAt)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+
+[32m- Expected:[39m 
+Any<String>
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:714:76
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+       |                                                                            ^
+    715|       expect.soft(linked.lastValueAt && riyadhDate(linked.lastValueAt)…
+    716|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+
+[32m- Expected:[39m 
+"2026-01-31"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:715:110
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+    715|       expect.soft(linked.lastValueAt && riyadhDate(linked.lastValueAt)…
+       |                                                                                                              ^
+    716|     }
+    717|     // Negative: a user of another organization gets neither the excep…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "freshness": "stale",[39m
+[31m+   "freshness": "unknown",[39m
+[2m    "kpiDefinitionId": "01a18f5f-f144-742e-9e1a-c71d704f0cdd",[22m
+[2m    "transformationId": "01a18f5f-b54f-721b-98ef-e9a2ed33f140",[22m
+[2m  }[22m
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:708:64
+    706|       expect.soft(d.body.linkedKpis, `${who}: ${JSON.stringify(d.body.…
+    707|       const linked: Loose = (d.body.linkedKpis as Loose[])[0] ?? {};
+    708|       expect.soft(linked, `${who}: ${JSON.stringify(linked)}`).toMatch…
+       |                                                                ^
+    709|         kpiDefinitionId: stale.id,
+    710|         transformationId: k.transformationId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+
+[32m- Expected:[39m 
+"250.75"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:713:88
+    711|         freshness: "stale",
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+       |                                                                                        ^
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+    715|       expect.soft(linked.lastValueAt && riyadhDate(linked.lastValueAt)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+
+[32m- Expected:[39m 
+Any<String>
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:714:76
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+       |                                                                            ^
+    715|       expect.soft(linked.lastValueAt && riyadhDate(linked.lastValueAt)…
+    716|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18f5f-f144-742e-9e1a-c71d704f0cdd","transformationId":"01a18f5f-b54f-721b-98ef-e9a2ed33f140","name":"Synthetic KPI 579ce2","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+
+[32m- Expected:[39m 
+"2026-01-31"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:715:110
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+    715|       expect.soft(linked.lastValueAt && riyadhDate(linked.lastValueAt)…
+       |                                                                                                              ^
+    716|     }
+    717|     // Negative: a user of another organization gets neither the excep…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  00:32:35
+   Duration  56.60s (transform 7.86s, setup 0ms, collect 14.41s, tests 38.23s, environment 0ms, prepare 144ms)
+
+exit=1
