@@ -1,0 +1,87 @@
+port-policy: PostgreSQL listening on port 26720 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-d
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvlurnt_61921080 (server_encoding UTF8); applied 113 migrations to a fresh database
+[qa-mutation] fanout-ignores-disabled applied to apps/worker/src/handlers/notifications.ts
+ ❯ |integration| tests/qa/integration/a21-p6-adapters-disabled.test.ts (10 tests | 2 failed) 5074ms
+   ✓ REQ-S17-009 (A21): a fresh install shows AI disabled; no notification channel is configured > GET /admin/assistant on a freshly migrated database: configured false, enabled false, telemetry false, ETag 0 17ms
+   ✓ REQ-S17-009 (A21): a fresh install shows AI disabled; no notification channel is configured > both external channels are listed as not configured and disabled; enterprise messaging has no adapter 22ms
+   ✓ A21: the adapters are present but disabled > email is configured (pointing at the SMTP double) and saved DISABLED; enterprise messaging cannot be enabled 49ms
+   ✓ A21: the adapters are present but disabled > the assistant is configured with an HTTP endpoint (the model double) and saved DISABLED; it never enables itself 48ms
+   × REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a KPI actual on a review route: submitted by form, its reviewer is notified in the inbox only, accepted; value kept exactly 350ms
+     → expected { outcome: 'fanned_out', …(2) } to match object { outcome: 'no_channel', …(2) }
+   × REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a product gate G1 is submitted and approved by the Sponsor; a charter report is generated from the records 1176ms
+     → expected [ Array(1) ] to deeply equal []
+   ✓ REQ-S17-009 / REQ-S17-010: the disabled assistant refuses to answer and makes no outbound call > starting a conversation is refused with 422 assistant.disabled (contract), nothing is stored, and the model double sees nothing 21ms
+   ✓ REQ-S17-005 (A21) / outbound writes: a disabled connector sends nothing; the native form keeps working > an outbound write through the disabled connector is refused (409 connector.disabled): no row, no downstream effect 23ms
+   ✓ REQ-S17-005 (A21) / outbound writes: a disabled connector sends nothing; the native form keeps working > with the connector disabled, a KPI actual is still submitted by form (201) and reads back exactly 126ms
+   ✓ REQ-S17-005 (A21) / outbound writes: a disabled connector sends nothing; the native form keeps working > enabled on the local test adapter, the write is CAPTURED there (one effect) and stays pending confirmation, never done 71ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a21-p6-adapters-disabled.test.ts > REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a KPI actual on a review route: submitted by form, its reviewer is notified in the inbox only, accepted; value kept exactly
+AssertionError: expected { outcome: 'fanned_out', …(2) } to match object { outcome: 'no_channel', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "created": [],
+-   "outcome": "no_channel",
+-   "sends": [],
++   "created": [
++     {
++       "id": "01a18f26-ae6f-7493-8b7a-7035aaa1c610",
++       "status": "pending",
++     },
++   ],
++   "outcome": "fanned_out",
++   "sends": [
++     "skipped",
++   ],
+  }
+
+ ❯ tests/qa/integration/a21-p6-adapters-disabled.test.ts:236:20
+    234|     // The worker's fan-out consumer, run on the notification's envelo…
+    235|     const result = await FANOUT_HANDLER.handle(api.db, await envelopeO…
+    236|     expect(result).toMatchObject({ outcome: "no_channel", created: [],…
+       |                    ^
+    237|     expect(
+    238|       await api.db
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a21-p6-adapters-disabled.test.ts > REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a product gate G1 is submitted and approved by the Sponsor; a charter report is generated from the records
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "id": "01a18f26-ae6f-7493-8b7a-7035aaa1c610",
++   },
++ ]
+
+ ❯ tests/qa/integration/a21-p6-adapters-disabled.test.ts:288:18
+    286|       .where("organization_id", "=", w.orgA.id)
+    287|       .execute();
+    288|     expect(rows).toEqual([]);
+       |                  ^
+    289|     expectNothingSent("after the gate approval and the report");
+    290|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:30:21
+   Duration  19.71s (transform 5.77s, setup 0ms, collect 10.77s, tests 5.07s, environment 0ms, prepare 91ms)
+

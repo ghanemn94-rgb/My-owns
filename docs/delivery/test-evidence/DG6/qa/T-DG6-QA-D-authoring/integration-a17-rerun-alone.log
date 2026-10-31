@@ -1,0 +1,71 @@
+port-policy: PostgreSQL listening on port 26700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-d
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvme9dx_ab94549b (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests | 2 failed) 31901ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  647ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  488ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  530ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  312ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > unsigned, wrongly signed, tampered and stale deliveries: 401 webhook.unauthenticated and nothing stored 20ms
+   × REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing 12ms
+     → {"type":"urn:mth:problem:unauthenticated","title":"Unauthorized","status":401,"detail":"The webhook request is not signed correctly.","code":"webhook.unauthenticated","requestId":"01a18f34-9728-72c9-91d5-81cc904b5e81"}: expected 401 to be 202 // Object.is equality
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  394ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10135ms
+   × failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes 13164ms
+     → linkedKpis []: expected null to match object { freshness: 'stale', …(2) }
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  2281ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing
+AssertionError: {"type":"urn:mth:problem:unauthenticated","title":"Unauthorized","status":401,"detail":"The webhook request is not signed correctly.","code":"webhook.unauthenticated","requestId":"01a18f34-9728-72c9-91d5-81cc904b5e81"}: expected 401 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 401
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:452:50
+    450|     const before = await countActuals();
+    451|     const res = await post(headers);
+    452|     expect(res.status, JSON.stringify(res.body)).toBe(202);
+       |                                                  ^
+    453|     expect(res.body).toMatchObject({ replay: false, rowsTotal: 10, row…
+    454|     const batch = await call<Loose>(api.app, "GET", `${imports()}/${re…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: linkedKpis []: expected null to match object { freshness: 'stale', …(2) }
+
+- Expected: 
+{
+  "freshness": "stale",
+  "lastValue": StringMatching /^250\.750*$/,
+  "lastValueAt": Any<String>,
+}
+
++ Received: 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:675:81
+    673|     // fixture). Soft, so the remaining assertions of the scenario sti…
+    674|     const linked = (detail.body.linkedKpis as Loose[]).find((x) => x.k…
+    675|     expect.soft(linked, `linkedKpis ${JSON.stringify(detail.body.linke…
+       |                                                                                 ^
+    676|       freshness: "stale",
+    677|       lastValue: expect.stringMatching(/^250\.750*$/),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  23:45:30
+   Duration  46.16s (transform 5.86s, setup 0ms, collect 10.72s, tests 31.90s, environment 0ms, prepare 80ms)
+
+exit=1
