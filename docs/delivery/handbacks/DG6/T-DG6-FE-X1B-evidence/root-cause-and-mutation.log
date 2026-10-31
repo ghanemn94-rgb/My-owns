@@ -1,0 +1,139 @@
+=== 1. Root cause: the pre-FE-X1 assertion (git show 00be23437^) on the integrated tree ===
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-x1/apps/web
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed | 32 skipped) 3532ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 476ms
+     → expected <input id="_r_1_" …(9)></input> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input id="_r_1_" …(9)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-invalid="false"
+  class="global-search__input"
+  data-global-search="true"
+  enterkeyhint="search"
+  id="_r_1_"
+  inputmode="search"
+  maxlength="200"
+  placeholder="Search records"
+  type="text"
+  value=""
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:461:55
+    459|     expect(await screen.findByText("Configured (never shown)")).toBeTr…
+    460|     expect(screen.getByText("https://idp.example.invalid/realms/mth-te…
+    461|     expect(document.querySelector("input, textarea")).toBeNull();
+       |                                                       ^
+    462|   });
+    463| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 skipped (33)
+   Start at  01:28:48
+   Duration  7.40s (transform 308.67s, setup 183ms, collect 2.88s, tests 3.53s, environment 433ms, prepare 140ms)
+
+EXIT=1
+
+=== 2. Mutant A: an <input> inside the identity screen (IdentityPage.tsx) ===
+1
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-x1/apps/web
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed | 32 skipped) 3703ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 451ms
+     → expected <input aria-label="mutant-a"></input> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input aria-label="mutant-a"></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-label="mutant-a"
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:466:84
+    464|     const screenRoot = document.querySelector('[data-p6-screen="identi…
+    465|     expect(screenRoot).toBeTruthy();
+    466|     expect(screenRoot.querySelector("input, textarea, select, [content…
+       |                                                                                    ^
+    467|     const fields = Array.from(document.querySelectorAll("input, textar…
+    468|     expect(fields.every((f) => f.getAttribute("data-global-search") ==…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 skipped (33)
+   Start at  01:28:56
+   Duration  7.57s (transform 338.96s, setup 211ms, collect 2.81s, tests 3.70s, environment 475ms, prepare 136ms)
+
+EXIT=1
+
+=== 3. Mutant B: a non-search field added to the shell, outside the screen (Shell.tsx) ===
+1
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-x1/apps/web
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed | 32 skipped) 3792ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 443ms
+     → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:468:82
+    466|     expect(screenRoot.querySelector("input, textarea, select, [content…
+    467|     const fields = Array.from(document.querySelectorAll("input, textar…
+    468|     expect(fields.every((f) => f.getAttribute("data-global-search") ==…
+       |                                                                                  ^
+    469|   });
+    470| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 skipped (33)
+   Start at  01:29:05
+   Duration  8.27s (transform 335.59s, setup 186ms, collect 3.29s, tests 3.79s, environment 539ms, prepare 161ms)
+
+EXIT=1
+
+=== 4. Restored tree ===
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-x1/apps/web
+
+ ✓ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 32 skipped) 4083ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value  477ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 32 skipped (33)
+   Start at  01:29:14
+   Duration  8.14s (transform 362.84s, setup 179ms, collect 3.06s, tests 4.08s, environment 451ms, prepare 136ms)
+
+EXIT=0
