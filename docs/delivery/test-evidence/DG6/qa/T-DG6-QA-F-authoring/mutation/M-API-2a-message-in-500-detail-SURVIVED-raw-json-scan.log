@@ -1,0 +1,54 @@
+port-policy: PostgreSQL listening on port 27210 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.7UPnmG/claude-0/mut-api
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvwe43s_c8b65759 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts (6 tests | 1 failed) 9435ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > control: the transformation list and detail answer 200 before the fault 216ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real SQL failure (relation missing, 42P01) is a 500 internal problem with a request id and no §8 term 95ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real SQL failure on a write (CSRF-protected POST) leaks nothing either, and writes nothing 29ms
+   × REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real network failure (database port refuses, ECONNREFUSED) answers a problem with a request id and no §8 term 391ms
+     → {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"connect ECONNREFUSED 127.0.0.1:27249","code":"internal","requestId":"01a19035-1256-778a-9ee2-d0fe6de0eb7e"}: expected [ …(2) ] to deeply equal []
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > negative control: an unknown API path is a 404 problem with no §8 term 2ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > negative control: a malformed JSON body is a 400 problem with no parser internals or §8 term 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts > REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real network failure (database port refuses, ECONNREFUSED) answers a problem with a request id and no §8 term
+AssertionError: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"connect ECONNREFUSED 127.0.0.1:27249","code":"internal","requestId":"01a19035-1256-778a-9ee2-d0fe6de0eb7e"}: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "context": "status\":500,\"detail\":\"connect ECONNREFUSED 127.0.0.1:27249\",\"code\":\"inte",[39m
+[31m+     "match": "ECONNREFUSED",[39m
+[31m+     "pattern": "ECONNREFUSED",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "detail\":\"connect ECONNREFUSED 127.0.0.1:27249\",\"code\":\"internal\",\"req",[39m
+[31m+     "match": "127.0.0.1",[39m
+[31m+     "pattern": "127.0.0.1",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ expectCleanProblem tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:60:59
+     58|   expect(typeof res.body.requestId).toBe("string");
+     59|   expect(res.body.requestId.length).toBeGreaterThan(0);
+     60|   expect(scanTerms(receivedText(res)), receivedText(res)).toEqual([]);
+       |                                                           ^
+     61| }
+     62| 
+ ❯ tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:154:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  04:25:20
+   Duration  39.84s (transform 10.71s, setup 0ms, collect 22.73s, tests 9.44s, environment 0ms, prepare 116ms)
+

@@ -1,0 +1,304 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 6 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /search (search) › normal: no stack trace or infrastructure term (5.4s)
+  ✘  2 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /my-work (my-work) › normal: no stack trace or infrastructure term (5.4s)
+  ✘  3 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /transformations/:id/prioritization (prioritization) › normal: no stack trace or infrastructure term (5.1s)
+  ✘  4 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /search (search) › normal: no stack trace or infrastructure term (4.8s)
+  ✘  5 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /my-work (my-work) › normal: no stack trace or infrastructure term (5.0s)
+  ✘  6 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /transformations/:id/prioritization (prioritization) › normal: no stack trace or infrastructure term (6.4s)
+
+
+  1) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /search (search) › normal: no stack trace or infrastructure term 
+
+    Error: /search [normal, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": " English and Arabic. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "ECONNREFUSED",
+    +     "pattern": "ECONNREFUSED",
+    +   },
+    +   Object {
+    +     "context": "Arabic. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "127.0.0.1",
+    +     "pattern": "127.0.0.1",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:241:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /my-work (my-work) › normal: no stack trace or infrastructure term 
+
+    Error: /my-work [normal, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "Your inbox is empty. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "ECONNREFUSED",
+    +     "pattern": "ECONNREFUSED",
+    +   },
+    +   Object {
+    +     "context": " empty. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "127.0.0.1",
+    +     "pattern": "127.0.0.1",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:241:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /transformations/:id/prioritization (prioritization) › normal: no stack trace or infrastructure term 
+
+    Error: /transformations/:id/prioritization [normal, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "oser. No overrides. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "ECONNREFUSED",
+    +     "pattern": "ECONNREFUSED",
+    +   },
+    +   Object {
+    +     "context": "rrides. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "127.0.0.1",
+    +     "pattern": "127.0.0.1",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:241:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /search (search) › normal: no stack trace or infrastructure term 
+
+    Error: /search [normal, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "العربية والإنجليزية. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "ECONNREFUSED",
+    +     "pattern": "ECONNREFUSED",
+    +   },
+    +   Object {
+    +     "context": "جليزية. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "127.0.0.1",
+    +     "pattern": "127.0.0.1",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:241:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--f7f89-race-or-infrastructure-term-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /my-work (my-work) › normal: no stack trace or infrastructure term 
+
+    Error: /my-work [normal, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": " صندوق الوارد فارغ. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "ECONNREFUSED",
+    +     "pattern": "ECONNREFUSED",
+    +   },
+    +   Object {
+    +     "context": "د فارغ. connect ECONNREFUSED 127.0.0.1:5432",
+    +     "match": "127.0.0.1",
+    +     "pattern": "127.0.0.1",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:241:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--f2d29-race-or-infrastructure-term-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /transformations/:id/prioritization (prioritization) › normal: no stack trace or infrastructure term 
+
+    Error: /transformations/:id/prioritization [normal, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "دروس حول هذا المنتج connect ECONNREFUSED 127.0.0.1:5432 التحوّلات TR-",
+    +     "match": "ECONNREFUSED",
+    +     "pattern": "ECONNREFUSED",
+    +   },
+    +   Object {
+    +     "context": " المنتج connect ECONNREFUSED 127.0.0.1:5432 التحوّلات TR-0018 بطاقة",
+    +     "match": "127.0.0.1",
+    +     "pattern": "127.0.0.1",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:241:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--e404e-race-or-infrastructure-term-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6 failed
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /search (search) › normal: no stack trace or infrastructure term 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /my-work (my-work) › normal: no stack trace or infrastructure term 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /transformations/:id/prioritization (prioritization) › normal: no stack trace or infrastructure term 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /search (search) › normal: no stack trace or infrastructure term 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /my-work (my-work) › normal: no stack trace or infrastructure term 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:222:5 › /transformations/:id/prioritization (prioritization) › normal: no stack trace or infrastructure term 
+exit=1

@@ -1,0 +1,718 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 12 tests using 1 worker
+
+  ✘   1 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /search (search) › forced 500: the generic error state with its request id only (10.2s)
+  ✘   2 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /search (search) › network failure: the error state with the network text (8.7s)
+  ✘   3 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /my-work (my-work) › forced 500: the generic error state with its request id only (9.8s)
+  ✘   4 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /my-work (my-work) › network failure: the error state with the network text (9.9s)
+  ✘   5 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /transformations/:id/prioritization (prioritization) › forced 500: the generic error state with its request id only (9.0s)
+  ✘   6 [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /transformations/:id/prioritization (prioritization) › network failure: the error state with the network text (9.5s)
+  ✘   7 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /search (search) › forced 500: the generic error state with its request id only (9.4s)
+  ✘   8 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /search (search) › network failure: the error state with the network text (10.0s)
+  ✘   9 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /my-work (my-work) › forced 500: the generic error state with its request id only (9.2s)
+  ✘  10 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /my-work (my-work) › network failure: the error state with the network text (9.4s)
+  ✘  11 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /transformations/:id/prioritization (prioritization) › forced 500: the generic error state with its request id only (9.3s)
+  ✘  12 [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /transformations/:id/prioritization (prioritization) › network failure: the error state with the network text (8.9s)
+
+
+  1) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /search (search) › forced 500: the generic error state with its request id only 
+
+    Error: /search [500, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "e: qa-f-ref-00016 Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product Search S",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "y again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) About th",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "-00016 Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product S",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:265:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /search (search) › network failure: the error state with the network text 
+
+    Error: /search [network, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "on and try again. Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product Search S",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "y again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) About th",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "again. Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product S",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:280:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /my-work (my-work) › forced 500: the generic error state with its request id only 
+
+    Error: /my-work [500, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "e: qa-f-ref-00019 Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product Welcome,",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "y again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) About th",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "-00019 Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product W",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:265:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /my-work (my-work) › network failure: the error state with the network text 
+
+    Error: /my-work [network, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "on and try again. Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product Welcome,",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "y again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) About th",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "again. Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product W",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:280:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /transformations/:id/prioritization (prioritization) › forced 500: the generic error state with its request id only 
+
+    Error: /transformations/:id/prioritization [500, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "e: qa-f-ref-00019 Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product Somethin",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "y again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) About th",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "-00019 Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product S",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:265:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /transformations/:id/prioritization (prioritization) › network failure: the error state with the network text 
+
+    Error: /transformations/:id/prioritization [network, en]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "on and try again. Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product Somethin",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "y again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) About th",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "again. Try again at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) About this product S",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:280:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /search (search) › forced 500: the generic error state with its request id only 
+
+    Error: /search [500, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "-f-ref-00016 إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج البحث البحث ",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "لمحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا ",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "6 إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج البحث",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:265:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--d2255-te-with-its-request-id-only-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /search (search) › network failure: the error state with the network text 
+
+    Error: /search [network, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "ول مرة أخرى. إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج البحث البحث ",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "لمحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا ",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": ". إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج البحث",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:280:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--1c669-state-with-the-network-text-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /my-work (my-work) › forced 500: the generic error state with its request id only 
+
+    Error: /my-work [500, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "-f-ref-00022 إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج مرحبًا، Synt",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "لمحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا ",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "2 إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج مرحبً",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:265:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--1071e-te-with-its-request-id-only-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /my-work (my-work) › network failure: the error state with the network text 
+
+    Error: /my-work [network, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "ول مرة أخرى. إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج مرحبًا، Synt",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "لمحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا ",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": ". إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج مرحبً",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:280:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--3c413-state-with-the-network-text-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /transformations/:id/prioritization (prioritization) › forced 500: the generic error state with its request id only 
+
+    Error: /transformations/:id/prioritization [500, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "-f-ref-00019 إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج حدث خطأ حدث",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "لمحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا ",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": "9 إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج حدث خ",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:265:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--5c1f5-te-with-its-request-id-only-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /transformations/:id/prioritization (prioritization) › network failure: the error state with the network text 
+
+    Error: /transformations/:id/prioritization [network, ar]: §8 terms in the visible text
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 22
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "context": "ول مرة أخرى. إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج حدث خطأ تعذ",
+    +     "match": "at handler (/srv/app/node_modules/fastify/lib/route.js:12:34)",
+    +     "pattern": "stack frame",
+    +   },
+    +   Object {
+    +     "context": "لمحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) ",
+    +     "match": "node_modules",
+    +     "pattern": "node_modules",
+    +   },
+    +   Object {
+    +     "context": "andler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا ",
+    +     "match": "fastify",
+    +     "pattern": "Fastify",
+    +   },
+    +   Object {
+    +     "context": ". إعادة المحاولة at handler (/srv/app/node_modules/fastify/lib/route.js:12:34) حول هذا المنتج حدث خ",
+    +     "match": "(/srv/app/node_modules/fastify/lib/route.js",
+    +     "pattern": "file path",
+    +   },
+    + ]
+
+      217 |   mkdirSync(dir, { recursive: true });
+      218 |   await page.screenshot({ path: path.join(dir, `${project}--${s.name}--${state}.jpeg`), type: "jpeg", quality: 40 });
+    > 219 |   expect(hits, `${s.route} [${state}, ${lang}]: §8 terms in the visible text`).toEqual([]);
+          |                                                                                ^
+      220 |   expect(text.length, `${s.route} [${state}]: the screen rendered text`).toBeGreaterThan(20);
+      221 |   await expectAccessible(page, lang, `qa-f/${s.name}/${state}`);
+      222 | }
+        at scanAndRecord (/home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:219:80)
+        at /home/user/wt/dg6-qa-f/e2e/a20-s15-014-term-scan.spec.ts:280:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e-a20-s15-014-term-scan--2dabb-state-with-the-network-text-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12 failed
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /search (search) › forced 500: the generic error state with its request id only 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /search (search) › network failure: the error state with the network text 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /my-work (my-work) › forced 500: the generic error state with its request id only 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /my-work (my-work) › network failure: the error state with the network text 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /transformations/:id/prioritization (prioritization) › forced 500: the generic error state with its request id only 
+    [chromium-en] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /transformations/:id/prioritization (prioritization) › network failure: the error state with the network text 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /search (search) › forced 500: the generic error state with its request id only 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /search (search) › network failure: the error state with the network text 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /my-work (my-work) › forced 500: the generic error state with its request id only 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /my-work (my-work) › network failure: the error state with the network text 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:244:5 › /transformations/:id/prioritization (prioritization) › forced 500: the generic error state with its request id only 
+    [chromium-ar] › e2e/a20-s15-014-term-scan.spec.ts:268:5 › /transformations/:id/prioritization (prioritization) › network failure: the error state with the network text 
+exit=1
