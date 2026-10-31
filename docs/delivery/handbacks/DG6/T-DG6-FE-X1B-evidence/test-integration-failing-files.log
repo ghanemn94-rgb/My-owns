@@ -1,0 +1,387 @@
+port-policy: PostgreSQL listening on port 26960 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-x1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvshst7_c4989c78 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests | 1 failed) 32716ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  684ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  518ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  570ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  382ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > unsigned, wrongly signed, tampered and stale deliveries: 401 webhook.unauthenticated and nothing stored 20ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing 252ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  393ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10192ms
+   × failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes 13200ms
+     → KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+     → KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+     → KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+     → KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+     → AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+     → AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+     → AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+     → AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  2069ms
+ ❯ |integration| apps/api/test/integration/assistant/conversations.test.ts (17 tests | 1 failed) 5437ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > with no setting row: create is 422 assistant.disabled, the list is empty and readable 46ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable 137ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > enabled with the HTTP endpoint, BE-T's stub seam answers no_sources and still sends nothing to the model 93ms
+   ✓ authorization and ownership (ADR-0059 §10) > AUD and a user without assistant.use get 403 on every conversation route 44ms
+   ✓ authorization and ownership (ADR-0059 §10) > another user's conversation is 404 on read and post, and never listed 35ms
+   ✓ authorization and ownership (ADR-0059 §10) > a focus transformation the caller cannot read is 404 (TL on tA1 asks about tA2); a readable one is accepted 37ms
+   ✓ authorization and ownership (ADR-0059 §10) > create: validation (400), version 1 with no message, Location and ETag, one audit event 33ms
+   ✓ authorization and ownership (ADR-0059 §10) > create re-checks assistant.use at commit: revoked while waiting is 403 and nothing is created 40ms
+   ✓ postAssistantMessage (ADR-0059 §9) > validation (400), If-Match (428 missing, 409 stale), then one turn: prompt + reply, two versions, two audit events 72ms
+   ✓ postAssistantMessage (ADR-0059 §9) > post re-checks assistant.use at commit: revoked while waiting is 403 and nothing is appended 55ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a reply still awaited is 409 assistant.reply_pending; one awaited past the timeout + 60 s is recovered as `interrupted` 86ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended 207ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  411ms
+   ✓ the list (cursor-paginated, own only, updatedAt desc then id desc) > pages with a stable order; a tampered cursor is 400; the transformation filter applies 67ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > an answer citing a record the owner can no longer read is withheld (content null, readable false), with its suggestion 45ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > a citation of a record that is not (or no longer) indexed is treated as unreadable (fail closed) 21ms
+   × the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt 322ms
+     → expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every operation outside the pending aggregate returned at least one validated response in the contract suite
+[response-validation] 11134 validated responses; 932 of 932 live operations (0 pending excluded); 4288 distinct (operationId, status) pairs; operations without a validated response: 0
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every validated error response is application/problem+json and a Problem; every 400 is the uniform validation body
+[response-validation] 8239 validated error responses; 5540 validated 400 responses, all uniform validation bodies
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > invalid input returns the uniform 400 body in every module (a validated 400 per OpenAPI tag)
+[response-validation] modules (OpenAPI tags) with a validated uniform 400: 119/119
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors
+[response-validation] explicit invalid-body: modules without a 400: none
+[response-validation] explicit invalid-body samples: 73 modules with a uniform 400 (access:createRoleAssignment, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, approvals:requestApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, automation:createAutomationRule, bau-handovers:createBauHandover, benefit-formulas:checkBenefitFormula, benefit-groups:createBenefitGroup, benefit-overlaps:createBenefitOverlap, benefit-scenarios:createBenefitScenario, benefit-valuation-methods:createBenefitValuationMethod, benefits:createBenefit, branding:putBrandingSettings, business-cases:createBusinessCase, capacity:createResourceRole, change-requests:putChangeControlPolicy, charter:createCharter, closure:closeTransformation, controls:createControl, corrective-actions:createCorrectiveCase, decision-rights:createDecisionRight, decisions:createDependency, delegations:createDelegation, dependencies:createT08Dependency, design:createTomGap, diagnose:createValuePool, direction:createStrategicGuardrail, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, financial-metrics:putFinancialMetricEnablement, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-exceptions:createGateException, health-checks:createHealthCheck, improvement-items:createImprovementItem, integrations:createConnector, kpi:createKpiDefinition, launch-plans:generateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology-migrations:createMethodologyMigration, modular-entry:createInheritedRecord, notifications:putMyNotificationPreferences, organizations:createOrganization, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, platform-admin:putStorageSetting, portfolio:createInitiative, prioritization:createWeightSet, procedures:validateProcedureDefinition, raci:createRaciDeliverable, raid:createRaidEntry, risk-dispositions:createRiskDisposition, roadmap:createRoadmapWave, role-mappings:createRoleMapping, scale:createScaleTransition, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createStakeholderGroup, studio:createConfigDraft, traceability:createTraceLink, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream); refused before validation (authorization first): none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment
+[response-validation] unauthorized transformation reads: 124 operations; statuses {"403":1,"404":123}
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission
+[response-validation] auditor write sweep: 478 permissioned writes; statuses {"400":32,"403":312,"404":134}; modules with a 403 forbidden: 94
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call is refused in every module with a business-permission route (the two sweeps and the suite)
+[response-validation] modules with a business-permission route: 111; refused an unauthorized call: 111; not reached: none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it
+[response-validation] list operations: 219; cursor-paginated 198 (268 validated 200s, all with nextCursor); unpaginated, pinned and reported: 21
+
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (113 tests) 94394ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  829ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  3050ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations  311ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  922ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  694ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  970ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  755ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  410ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  427ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  443ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  883ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  602ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  1273ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  557ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1545ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  549ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  927ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  1334ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  626ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  1207ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)  1028ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts)  1253ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  770ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  1157ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  634ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  827ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  1136ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts)  1137ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-A operations (p5-exercises-be-a.ts)  454ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B operations (p5-exercises-be-b.ts)  619ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B3 operations (p5-exercises-be-b3.ts)  975ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-C operations (p5-exercises-be-c.ts)  1167ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-D operations (p5-exercises-be-d.ts)  507ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E operations (p5-exercises-be-e.ts)  483ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E2 operations (p5-exercises-be-e2.ts)  676ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F operations (p5-exercises-be-f.ts)  720ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F2 operations (p5-exercises-be-f2.ts)  1664ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H operations (p5-exercises-be-h.ts)  620ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H2 operations (p5-exercises-be-h2.ts)  606ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I operations (p5-exercises-be-i.ts)  849ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-K operations (p5-exercises-be-k.ts)  666ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L2 operations (p5-exercises-be-l2.ts)  389ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-C operations (p5-exercises-kbe-c.ts)  670ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-D operations (p5-exercises-kbe-d.ts)  687ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-M operations (p5-exercises-be-m.ts)  850ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-O operations (p5-exercises-be-o.ts)  564ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E operations (p5-exercises-kbe-e.ts)  1024ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)  1164ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-F operations (p5-exercises-kbe-f.ts)  588ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P operations (p5-exercises-be-p.ts)  743ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P2 operations (p5-exercises-be-p2.ts)  577ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)  1142ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-R operations (p5-exercises-be-r.ts)  337ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-S operations (p5-exercises-be-s.ts)  4368ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-T2 operations (p5-exercises-be-t2.ts)  3751ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-B operations (p6-exercises-be-b.ts)  440ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-D operations (p6-exercises-be-d.ts)  395ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-H2 operations (p6-exercises-be-h2.ts)  330ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I operations (p6-exercises-be-i.ts)  370ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-K operations (p6-exercises-be-k.ts)  350ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-L operations (p6-exercises-be-l.ts)  997ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-M operations (p6-exercises-be-m.ts)  756ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-N operations (p6-exercises-be-n.ts)  1007ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-O operations (p6-exercises-be-o.ts)  389ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-Q operations (p6-exercises-be-q.ts)  665ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-T operations (p6-exercises-be-t.ts)  499ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  2582ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  5495ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  12637ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  4329ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors  564ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment  528ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission  3918ms
+ ❯ |integration| apps/api/test/integration/admin/security.test.ts (8 tests | 1 failed) 1122ms
+   × getSecurityRateLimits > ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4) 18ms
+     → expected { classes: [ { …(5) }, …(6) ] } to deeply equal { classes: [ { …(5) }, …(6) ] }
+   ✓ getSecurityRateLimits > refuses everyone else with 403 (TO, no role, another organization, an unknown organization) and bad input with 400 71ms
+   ✓ getSecurityRateLimits > is read-only: neither the contract nor the server has a write on the matrix 1ms
+   ✓ class budgets are configuration > defaults to ADR-0052 §4 and reads each variable 2ms
+   ✓ class budgets are configuration > refuses a budget that is not a positive integer, naming the variable 4ms
+   ✓ the routes in each class are the operations the matrix lists > every route that declares a class maps to an operation id of that class, and back 5ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > over the class budget the next upload is 429 rate_limited with Retry-After; other operations and users still pass  533ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > the global limit still applies to a class route: over the global budget an upload is 429 before its class budget 209ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "freshness": "stale",[39m
+[31m+   "freshness": "unknown",[39m
+[2m    "kpiDefinitionId": "01a18fd1-1a6d-722a-8ecc-85d504698843",[22m
+[2m    "transformationId": "01a18fd0-e419-724c-a0ea-f1d1ff6e04f6",[22m
+[2m  }[22m
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:708:64
+    706|       expect.soft(d.body.linkedKpis, `${who}: ${JSON.stringify(d.body.…
+    707|       const linked: Loose = (d.body.linkedKpis as Loose[])[0] ?? {};
+    708|       expect.soft(linked, `${who}: ${JSON.stringify(linked)}`).toMatch…
+       |                                                                ^
+    709|         kpiDefinitionId: stale.id,
+    710|         transformationId: k.transformationId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+
+[32m- Expected:[39m 
+"250.75"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:713:88
+    711|         freshness: "stale",
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+       |                                                                                        ^
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+    715|       expect
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+
+[32m- Expected:[39m 
+Any<String>
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:714:76
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+       |                                                                            ^
+    715|       expect
+    716|         .soft(linked.lastValueAt && riyadhDate(linked.lastValueAt), `$…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: KDS: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+
+[32m- Expected:[39m 
+"2026-01-31"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:717:10
+    715|       expect
+    716|         .soft(linked.lastValueAt && riyadhDate(linked.lastValueAt), `$…
+    717|         .toBe("2026-01-31");
+       |          ^
+    718|     }
+    719|     // Negative: a user of another organization gets neither the excep…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected { …(7) } to match object { …(3) }
+(4 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "freshness": "stale",[39m
+[31m+   "freshness": "unknown",[39m
+[2m    "kpiDefinitionId": "01a18fd1-1a6d-722a-8ecc-85d504698843",[22m
+[2m    "transformationId": "01a18fd0-e419-724c-a0ea-f1d1ff6e04f6",[22m
+[2m  }[22m
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:708:64
+    706|       expect.soft(d.body.linkedKpis, `${who}: ${JSON.stringify(d.body.…
+    707|       const linked: Loose = (d.body.linkedKpis as Loose[])[0] ?? {};
+    708|       expect.soft(linked, `${who}: ${JSON.stringify(linked)}`).toMatch…
+       |                                                                ^
+    709|         kpiDefinitionId: stale.id,
+    710|         transformationId: k.transformationId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '250.75' // Object.is equality
+
+[32m- Expected:[39m 
+"250.75"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:713:88
+    711|         freshness: "stale",
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+       |                                                                                        ^
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+    715|       expect
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to deeply equal Any<String>
+
+[32m- Expected:[39m 
+Any<String>
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:714:76
+    712|       });
+    713|       expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stri…
+    714|       expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked…
+       |                                                                            ^
+    715|       expect
+    716|         .soft(linked.lastValueAt && riyadhDate(linked.lastValueAt), `$…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  |integration| tests/qa/integration/a17-import-and-integration.test.ts > failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes
+AssertionError: AUD: {"kpiDefinitionId":"01a18fd1-1a6d-722a-8ecc-85d504698843","transformationId":"01a18fd0-e419-724c-a0ea-f1d1ff6e04f6","name":"Synthetic KPI 1f367c","unitKind":"count","freshness":"unknown","lastValue":null,"lastValueAt":null}: expected null to be '2026-01-31' // Object.is equality
+
+[32m- Expected:[39m 
+"2026-01-31"
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a17-import-and-integration.test.ts:717:10
+    715|       expect
+    716|         .soft(linked.lastValueAt && riyadhDate(linked.lastValueAt), `$…
+    717|         .toBe("2026-01-31");
+       |          ^
+    718|     }
+    719|     // Negative: a user of another organization gets neither the excep…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/admin/security.test.ts > getSecurityRateLimits > ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4)
+AssertionError: expected { classes: [ { …(5) }, …(6) ] } to deeply equal { classes: [ { …(5) }, …(6) ] }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -46,11 +46,13 @@[39m
+[2m        "variable": "ASSISTANT_RATE_LIMIT_PER_MINUTE",[22m
+[2m      },[22m
+[2m      {[22m
+[2m        "keyedBy": "endpoint_key",[22m
+[2m        "name": "webhook",[22m
+[32m-       "operationIds": [],[39m
+[31m+       "operationIds": [[39m
+[31m+         "receiveWebhook",[39m
+[31m+       ],[39m
+[2m        "perMinute": 6001,[22m
+[2m        "variable": "WEBHOOK_RATE_LIMIT_PER_MINUTE",[22m
+[2m      },[22m
+[2m      {[22m
+[2m        "keyedBy": "user_or_ip",[22m
+
+ ❯ apps/api/test/integration/admin/security.test.ts:62:22
+     60|     // Global and auth are the harness's 100000; the class budgets are…
+     61|     // are pinned in "class budgets are configuration" below, and the …
+     62|     expect(res.body).toEqual({
+       |                      ^
+     63|       classes: [
+     64|         {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/conversations.test.ts > the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt
+AssertionError: expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "conversationId": "01a18fd1-7363-7476-b411-112c7a27df82",[22m
+[32m-   "dataItems": 0,[39m
+[31m+   "dataItems": 1,[39m
+[2m    "droppedSuggestions": 0,[22m
+[2m    "messageSeq": 2,[22m
+[32m-   "replyKind": "no_sources",[39m
+[31m+   "replyKind": "answer",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/conversations.test.ts:670:32
+    668|       expect(assistantLines).toHaveLength(2);
+    669|       const parsed = JSON.parse(assistantLines[0]!) as Body;
+    670|       expect(parsed.assistant).toMatchObject({
+       |                                ^
+    671|         conversationId: conv.body.id,
+    672|         messageSeq: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  3 failed | 145 passed (148)
+   Start at  02:36:13
+   Duration  160.17s (transform 8.76s, setup 0ms, collect 22.09s, tests 133.67s, environment 0ms, prepare 78ms)
+
+exit=1
