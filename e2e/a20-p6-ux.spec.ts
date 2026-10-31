@@ -376,13 +376,18 @@ test("REQ-S15-012 / REQ-S20-020 keyboard: the skip link reaches main content and
   await expectFocusVisible(page, "skip link");
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#main$/);
-  // The language switch, reached and pressed with the keyboard only.
+  // The language switch, reached and pressed with the keyboard only, Tabbing from the start of a freshly loaded page.
+  // T-DG6-QA-G (QA-EB Q-2): `body.focus()` does not move the sequential focus starting point (the body is not
+  // focusable), so after the skip link the Tabs started at main#main and had to pass all of My Work first; the shared
+  // dev.lead accumulates inbox items and tasks from every earlier spec, and after a full run they exceeded the 200
+  // stops (chromium-ar). A fresh load puts the starting point at the top of the document, whatever My Work holds.
   const other: Lang = lang === "en" ? "ar" : "en";
   const sw = page.getByRole("button", {
     name: tr(lang, "common.language.switchTo", { language: other === "ar" ? "العربية" : "English" }),
     exact: true,
   });
-  await page.locator("body").focus();
+  await page.goto("/my-work");
+  await expect(page.locator("main#main h1")).toBeVisible();
   await tabTo(page, sw, "language switch");
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("lang", other);

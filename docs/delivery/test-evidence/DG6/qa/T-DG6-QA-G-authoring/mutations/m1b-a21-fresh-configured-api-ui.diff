@@ -1,0 +1,30 @@
+--- e2e/a21-p6-degradation.spec.ts	2026-10-31 05:31:01.521536734 +0000
++++ /var/tmp/mth-run.Vz44Ls/claude-0/mut/e2e/m1b-a21-fresh-configured-api-ui.spec.ts	2026-10-31 05:33:55.148800599 +0000
+@@ -169,11 +169,23 @@
+   const dir = path.join(EVIDENCE, lang);
+   mkdirSync(dir, { recursive: true });
+   fresh ??= await startFreshInstall(`qa_a21_${lang}`);
++  // MUTATION (T-DG6-QA-G): the "fresh install" ships with a saved assistant setting.
++  {
++    const origin = fresh.baseURL;
++    const m = await browser.newContext({ baseURL: origin });
++    expect((await m.request.post("/api/v1/auth/dev-login", { headers: { origin }, data: { username: "dev.admin" } })).status()).toBe(204);
++    const csrf = ((await (await m.request.get("/api/v1/me")).json()) as { csrfToken: string }).csrfToken;
++    const put = await m.request.put("/api/v1/admin/assistant", {
++      headers: { origin, "x-csrf-token": csrf, "if-match": '"0"' },
++      data: { providerKind: "test_adapter", endpointUrl: null, apiStyle: null, modelName: null, credentialRef: null,
++        authorizationReference: "IT-APPROVAL-SYNTHETIC-QA-G-MUTATION", requestTimeoutMs: 30000, maxOutputTokens: 1024,
++        maxContextRecords: 8, reason: "Synthetic QA-G mutation" },
++    });
++    console.info(`MUTATION PUT /admin/assistant -> ${put.status()}`);
++    expect(put.status()).toBe(200);
++    await m.close();
++  }
+   // The fresh install has saved no assistant setting: no row, no history (the "no row = off" rule of migration 0111).
+-  expect(fresh.psql("SELECT count(*) FROM assistant_setting"), "assistant_setting rows on a fresh install").toEqual([
+-    "0",
+-  ]);
+-  expect(fresh.psql("SELECT count(*) FROM assistant_setting_change")).toEqual(["0"]);
+   const ctx = await browser.newContext({
+     baseURL: fresh.baseURL,
+     locale: lang === "ar" ? "ar-SA" : "en-US",

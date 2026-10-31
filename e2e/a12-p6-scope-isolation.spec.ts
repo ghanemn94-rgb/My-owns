@@ -14,8 +14,11 @@
 // Each page: html lang/dir of the language, and axe reports 0 serious/critical issues.
 // Fixture steps disclosed: (a) the deep-link token of the notification is written with psql as the database owner,
 // as the lazy issue of ADR-0051 §3 does when a notification leaves the inbox (no channel adapter runs in this stack);
-// (b) the assistant is switched on with the LOCAL test adapter (NODE_ENV=development; no network) and switched off
-// again at the end, so later specs (A21) still see the shipped "no AI" configuration.
+// (b) the assistant is switched on with the LOCAL test adapter (NODE_ENV=development; no network) and, in afterAll,
+// returned to the on/off state it had before this spec (T-DG6-QA-G, QA-EB Q-1: off on a fresh stack). The saved
+// setting itself stays: the product has no route that removes a saved assistant setting and its history is
+// append-only, so the shared stack is "configured, off" after this spec. A21's fresh-install check (REQ-S17-009)
+// therefore runs on its own fresh install (e2e/a21-p6-degradation.spec.ts, e2e/support/fresh-install.ts).
 // Users are the SYNTHETIC seed-dev users; dev.nobody receives a TL assignment on X only. Nothing names DG0-DG7; no
 // real business, Finance or IT approval is granted.
 import { randomBytes } from "node:crypto";
@@ -58,6 +61,8 @@ interface World {
 
 let w: World;
 let worker: ProductionWorker | undefined;
+/** The assistant's on/off state before this spec switched it on (restored in afterAll); undefined: never read. */
+let assistantBefore: boolean | undefined;
 
 /** A UUIDv7 (RFC 9562: 48-bit ms time, version 7, variant 10, random rest) for the fixture's audit row. */
 function uuidv7(): string {
@@ -226,6 +231,7 @@ test.beforeAll(async ({ playwright }, info) => {
   // Positive control through the API: dev.office (TO on the organization) finds Y, so Y's absence for dev.nobody is
   // authorization, not an empty index.
   expect((await searchHits(office, yWord)).length).toBeGreaterThan(0);
+  assistantBefore ??= (await admin.call<{ enabled: boolean }>("GET", "/api/v1/admin/assistant")).enabled;
   await assistant(admin, true);
   w = { lang, xWord, yWord, zWord, X, Y, Z, xRisk, yRisk, yAction, yEvidence: ev, token, zAssignment: zA };
   for (const s of [office, admin, nobody]) await s.req.dispose();
@@ -234,7 +240,10 @@ test.beforeAll(async ({ playwright }, info) => {
 test.afterAll(async ({ playwright }) => {
   test.setTimeout(60_000); // stops the worker (SIGTERM, up to 25 s)
   const admin = await apiSession(playwright, "dev.admin");
-  await assistant(admin, false);
+  if (assistantBefore !== undefined) {
+    await assistant(admin, assistantBefore);
+    expect((await admin.call<{ enabled: boolean }>("GET", "/api/v1/admin/assistant")).enabled).toBe(assistantBefore);
+  }
   await admin.req.dispose();
   await worker?.stop();
   worker = undefined;
