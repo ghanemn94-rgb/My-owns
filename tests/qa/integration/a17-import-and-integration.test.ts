@@ -10,6 +10,8 @@
 //    is e2e/a17-import-and-integration.spec.ts)                                          -> describe "S17-001 …"
 //  - REQ-S12-019 "a failing test connector produces one exception and the KPI shows Stale with its last value and
 //    date"                                                                               -> describe "failing connector …"
+//    (T-DG6-QA-A2, D-202 option (a): the linked KPI is read by holders of transformation.read at its transformation,
+//    KDS and AUD; the technical administrator sees only linkedKpiCount 1 / hiddenKpiCount 1, ADR-0053 §2.)
 //  - REQ-S17-005 "with the test connector stopped, a KPI actual can still be submitted by form, and the connector page
 //    shows an actionable error message"                                                  -> describe "stopped connector …"
 //  - REQ-S20-017 / REQ-DLV-038: this file plus the e2e spec are the executable A17 test.
@@ -633,6 +635,11 @@ describe("failing connector (REQ-S12-019, A17): one exception, the KPI shows Sta
     );
     expect(st0.freshness).toMatchObject({ status: "stale", dataAsOf: "2026-01-31" });
     expect(decimalCanon(st0.actual)).toBe("250.75");
+    // Time moves on: a later monthly reporting period is open, and the failing connector (the KPI's feed) delivers
+    // nothing for it. This is why a connector failure matters (M0239 "retain last known values with freshness
+    // labels"): the KPI's last known value stays the 2026-01 one. Opened here explicitly, so the scenario does not
+    // depend on the order of the other tests in this file (which also open later periods).
+    await monthlyPeriod(api, w);
 
     const c = await enabledConnector(api, admin, {
       organizationId: w.orgA.id,
@@ -667,16 +674,52 @@ describe("failing connector (REQ-S12-019, A17): one exception, the KPI shows Sta
       lastErrorCode: "connector.source_unavailable",
     });
     expect(["connector_run_failed", "connector_unreachable"]).toContain(exception.failureClass);
-    const detail = await call<Loose>(api.app, "GET", `${EXCEPTIONS}/${exception.id}`, { session: admin });
-    expect(detail.status, JSON.stringify(detail.body)).toBe(200);
-    // The exception names the KPI it concerns with its Stale label, last value and date (ADR-0053 §2 acceptance
-    // fixture). Soft, so the remaining assertions of the scenario still run and report if this one fails.
-    const linked = (detail.body.linkedKpis as Loose[]).find((x) => x.kpiDefinitionId === stale.id) ?? null;
-    expect.soft(linked, `linkedKpis ${JSON.stringify(detail.body.linkedKpis)}`).toMatchObject({
-      freshness: "stale",
-      lastValue: expect.stringMatching(/^250\.750*$/),
-      lastValueAt: expect.any(String),
+    // REQ-S12-019 "shown to admins and data owners" (ADR-0053 §2 "Readable links only"; D-202 option (a)).
+    // The technical administrator (ADM_TECH + ADM_ACCESS, no transformation.read) sees the exception and that it is
+    // linked to one KPI, but only as a count: the KPI is never named, valued or dated to them.
+    const adminDetail = await call<Loose>(api.app, "GET", `${EXCEPTIONS}/${exception.id}`, { session: admin });
+    expect(adminDetail.status, JSON.stringify(adminDetail.body)).toBe(200);
+    expect(adminDetail.body, JSON.stringify(adminDetail.body)).toMatchObject({
+      id: exception.id,
+      status: "open",
+      linkedKpiCount: 1,
+      hiddenKpiCount: 1,
+      linkedKpis: [],
     });
+    // Holders of transformation.read at the KPI's transformation, its data owner (the KDS assigned there) and the
+    // organization's auditor (AUD), see the stale KPI itself with its Stale label, last value and date (ADR-0053 §2
+    // acceptance fixture). The date is the actual's dataAsOf 2026-01-31 in Asia/Riyadh.
+    const riyadhDate = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh", dateStyle: "short" }).format(new Date(iso));
+    for (const [who, session] of [
+      ["KDS", k.s.kds],
+      ["AUD", k.s.auditor],
+    ] as const) {
+      // Soft per role, so one run reports both readers; any soft failure still fails the test.
+      const d = await call<Loose>(api.app, "GET", `${EXCEPTIONS}/${exception.id}`, { session });
+      expect(d.status, `${who}: ${JSON.stringify(d.body)}`).toBe(200);
+      expect.soft(d.body, `${who}: ${JSON.stringify(d.body)}`).toMatchObject({
+        id: exception.id,
+        linkedKpiCount: 1,
+        hiddenKpiCount: 0,
+      });
+      expect.soft(d.body.linkedKpis, `${who}: ${JSON.stringify(d.body.linkedKpis)}`).toHaveLength(1);
+      const linked: Loose = (d.body.linkedKpis as Loose[])[0] ?? {};
+      expect.soft(linked, `${who}: ${JSON.stringify(linked)}`).toMatchObject({
+        kpiDefinitionId: stale.id,
+        transformationId: k.transformationId,
+        freshness: "stale",
+      });
+      expect.soft(decimalCanon(linked.lastValue), `${who}: ${JSON.stringify(linked)}`).toBe("250.75");
+      expect.soft(linked.lastValueAt, `${who}: ${JSON.stringify(linked)}`).toEqual(expect.any(String));
+      expect
+        .soft(linked.lastValueAt && riyadhDate(linked.lastValueAt), `${who}: ${JSON.stringify(linked)}`)
+        .toBe("2026-01-31");
+    }
+    // Negative: a user of another organization gets neither the exception nor its KPI (contract: 403 or 404).
+    const outside = await call<Loose>(api.app, "GET", `${EXCEPTIONS}/${exception.id}`, { session: k.s.outsider });
+    expect([403, 404], JSON.stringify(outside.body)).toContain(outside.status);
+    expect(JSON.stringify(outside.body)).not.toContain(stale.id);
 
     // The KPI keeps its last value and date, labelled Stale; no KPI actual of the transformation changed.
     const st1 = await status();
