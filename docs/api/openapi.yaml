@@ -24158,7 +24158,7 @@ paths:
     get:
       tags: [assistant]
       operationId: listAssistantConversations
-      summary: "The caller's own assistant conversations, most recently changed first (updatedAt descending, then id descending), optionally only those focused on one transformation (assistant.use; every role except AUD). Others' conversations are never listed. Works whether the assistant is on or off. ADR-0059 §9."
+      summary: "The caller's own assistant conversations, most recently changed first (updatedAt descending, then id descending), optionally only those focused on one transformation (assistant.use; every role except AUD). Others' conversations are never listed. Works whether the assistant is on or off. Each page carries assistantEnabled, whether the assistant is on for the caller now (no other setting field), so a signed-in user who may not read getAssistantSetting still learns whether to offer the assistant. ADR-0059 §9; REQ-S17-007."
       parameters:
         - { name: transformationId, in: query, required: false, schema: { $ref: "#/components/schemas/Uuid" } }
         - $ref: "#/components/parameters/Cursor"
@@ -41262,11 +41262,12 @@ components:
         transformationId: { $ref: "#/components/schemas/NullableUuid" }
     AssistantConversationPage:
       type: object
-      required: [items, nextCursor]
+      required: [items, nextCursor, assistantEnabled]
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/AssistantConversation" } }
         nextCursor: { type: [string, "null"] }
+        assistantEnabled: { type: boolean, description: "Whether the assistant is on for the caller at the time of this read: true only when a saved setting is enabled and its provider may run in this environment, the same check createAssistantConversation and postAssistantMessage make (false with no row, when off, or when the installation refuses the saved provider). It is the only setting information a holder of assistant.use receives: no provider, endpoint, model, credential reference, authorization reference or limit is returned here (those stay behind getAssistantSetting). The web shows the assistant panel only when it is true. T-DG6-BE-X5; REQ-S17-007; ADR-0059 §3, §9." }
     AssistantMessage:
       type: object
       required: [id, conversationId, seq, author, label, replyKind, refusalCode, errorCode, content, contentWithheld, citations, providerKind, modelName, settingVersion, latencyMs, createdAt]

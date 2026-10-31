@@ -1,7 +1,8 @@
 // T-DG6-FE-E (p6-work-split §D.3; ADR-0059 §1, §3, §6, §8–§11): the assistant panel and Administration > AI assistant,
 // in English LTR and Arabic RTL, against a scripted API (SYNTHETIC data).
-//  - the panel is hidden unless the setting read answers enabled: true (off, no row, 403, and AUD without
-//    assistant.use, for whom the setting is not even requested by the panel);
+//  - the panel is hidden unless listAssistantConversations answers assistantEnabled: true (off, a failed read, and AUD
+//    without assistant.use, for whom nothing is requested); it is shown to a user who may not read the admin setting
+//    (T-DG6-BE-X5: QA-B D2), and the slot never reads the admin setting;
 //  - every assistant output is inside the labelled container, never in a record's field area; answers are plain text
 //    (no HTML, no link made from the content); withheld content shows its notice; the non-answer replies render the
 //    ADR §8 texts at read time;
@@ -16,7 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
 import { createI18n } from "../../i18n/index.ts";
 import { ORG_ID, TR_ID, makeMe, mockApi, problem, renderApp, route, type Handler } from "../../test/fixtures.tsx";
-import { availabilityOf, citationHref, type AssistantSetting } from "./api.ts";
+import { availabilityOf, citationHref, type AssistantConversationPage, type AssistantSetting } from "./api.ts";
 import { focusFromPath } from "./AssistantPanel.tsx";
 
 beforeEach(() => localStorage.clear());
@@ -37,6 +38,8 @@ const USER: Permission[] = [
   "transformation.read",
 ];
 const AUD: Permission[] = ["operations.read", "organization.read", "audit_event.read"];
+/** A TL-like user: assistant.use without assistant.configure or operations.read (getAssistantSetting is 403). */
+const LEAD: Permission[] = ["assistant.use", "organization.read", "charter.edit", "transformation.read"];
 const ADM_TECH: Permission[] = ["assistant.configure", "assistant.use", "operations.read", "organization.read"];
 /** The synthetic user; its preferred language follows the test's locale (the app switches to it after sign-in). */
 let userLocale: "en" | "ar" = "en";
@@ -221,11 +224,21 @@ const DETAIL = {
     },
   ],
 };
+const page = (over: Partial<AssistantConversationPage> = {}): AssistantConversationPage => ({
+  items: [conversation],
+  nextCursor: null,
+  assistantEnabled: true,
+  ...over,
+});
+/** The availability read (listAssistantConversations, limit 1); a status >= 400 answers a problem. */
+const availabilityRoute = (assistantEnabled: boolean, status = 200): Handler =>
+  route("GET", /\/api\/v1\/assistant\/conversations\?limit=1$/, () =>
+    status < 400 ? { status, body: page({ items: [], assistantEnabled }) } : problem(status, "forbidden"),
+  );
+const isAvailabilityRead = (r: { url: string }) => /\/api\/v1\/assistant\/conversations\?limit=1$/.test(r.url);
+const isSettingRead = (r: { url: string }) => r.url.endsWith("/api/v1/admin/assistant");
 const panelRoutes = (): Handler[] => [
-  route("GET", /\/api\/v1\/assistant\/conversations\?/, () => ({
-    status: 200,
-    body: { items: [conversation], nextCursor: null },
-  })),
+  route("GET", /\/api\/v1\/assistant\/conversations\?/, () => ({ status: 200, body: page() })),
   route("GET", new RegExp(`/api/v1/assistant/conversations/${CONV_ID}$`), () => ({ status: 200, body: DETAIL })),
 ];
 
@@ -242,53 +255,84 @@ async function openConversation(locale: "en" | "ar") {
 
 describe("the assistant panel slot (ADR-0059 §3, §11: off means hidden)", () => {
   it.each([
-    ["enabled false (configured)", setting({ configured: true, version: 1 })],
-    ["no row (configured false, version 0)", setting()],
-  ])("is hidden when the setting says %s", async (_label, body) => {
-    const api = mockApi(meRoute(USER), settingRoute(body));
+    ["a user who may read the setting (operations.read)", USER],
+    ["a TL-like user who may not (403 on the setting)", LEAD],
+  ])("is hidden when the server says assistantEnabled false, for %s", async (_label, permissions) => {
+    const api = mockApi(meRoute(permissions), availabilityRoute(false), settingRoute(ON));
     renderApp("/about", { i18n: i18nFor("en") });
-    await waitFor(() => expect(api.requests.some((r) => r.url.endsWith("/api/v1/admin/assistant"))).toBe(true));
-    await screen.findByRole("navigation", { name: /primary|الرئيسي|Main/i }).catch(() => undefined);
+    await waitFor(() => expect(api.requests.some(isAvailabilityRead)).toBe(true));
+    await screen.findByText(/Synthetic Test User/);
     expect(document.querySelector("[data-assistant-launcher]")).toBeNull();
-    expect(api.requests.some((r) => r.url.includes("/assistant/conversations"))).toBe(false);
+    // The slot follows the user-level signal only: it never reads the admin setting (which says "on" here).
+    expect(api.requests.some(isSettingRead)).toBe(false);
   });
 
-  it("is hidden when the setting cannot be read (403: unknown is never shown as on)", async () => {
-    const api = mockApi(meRoute(USER), settingRoute(null, 403));
-    renderApp("/about", { i18n: i18nFor("en") });
-    await waitFor(() => expect(api.requests.some((r) => r.url.endsWith("/api/v1/admin/assistant"))).toBe(true));
-    expect(document.querySelector("[data-assistant-launcher]")).toBeNull();
-    expect(availabilityOf({ error: new Error("x") })).toBe("unknown");
-    expect(availabilityOf({ data: setting() })).toBe("off");
-    expect(availabilityOf({ data: ON })).toBe("on");
-  });
+  it.each([403, 500])(
+    "is hidden when the availability read fails (%s: unknown is never shown as on)",
+    async (status) => {
+      const api = mockApi(meRoute(LEAD), availabilityRoute(true, status));
+      renderApp("/about", { i18n: i18nFor("en") });
+      await waitFor(() => expect(api.requests.some(isAvailabilityRead)).toBe(true));
+      expect(document.querySelector("[data-assistant-launcher]")).toBeNull();
+      expect(availabilityOf({ error: new Error("x") })).toBe("unknown");
+      expect(availabilityOf({})).toBe("unknown");
+      expect(availabilityOf({ data: { assistantEnabled: false } })).toBe("off");
+      expect(availabilityOf({ data: { assistantEnabled: true } })).toBe("on");
+    },
+  );
 
-  it("is never shown to AUD (no assistant.use): the panel does not even read the setting", async () => {
-    const api = mockApi(meRoute(AUD), settingRoute(ON));
+  it("is never shown to AUD (no assistant.use): the panel requests neither the availability nor the setting", async () => {
+    const api = mockApi(meRoute(AUD), availabilityRoute(true), settingRoute(ON));
     renderApp("/about", { i18n: i18nFor("en") });
     await screen.findByText(/Synthetic Test User/);
     await new Promise((r) => setTimeout(r, 50));
     expect(document.querySelector("[data-assistant-launcher]")).toBeNull();
-    expect(api.requests.some((r) => r.url.endsWith("/api/v1/admin/assistant"))).toBe(false);
+    expect(api.requests.some(isAvailabilityRead)).toBe(false);
+    expect(api.requests.some(isSettingRead)).toBe(false);
   });
 
-  it.each(LOCALES)("is shown when enabled, and lists the caller's conversations (%s)", async (locale) => {
-    mockApi(meRoute(USER), settingRoute(ON), ...panelRoutes());
-    const i18n = i18nFor(locale);
+  it.each(LOCALES)(
+    "is shown to a TL-like user (403 on the admin setting) when enabled, and lists the caller's conversations (%s)",
+    async (locale) => {
+      const api = mockApi(meRoute(LEAD), settingRoute(null, 403), ...panelRoutes());
+      const i18n = i18nFor(locale);
+      renderApp("/about", { i18n });
+      const launcher = await screen.findByRole("button", { name: new RegExp(i18n.t("assistant.panel.open")) });
+      expect(launcher!.getAttribute("aria-expanded")).toBe("false");
+      fireEvent.click(launcher);
+      expect(launcher!.getAttribute("aria-expanded")).toBe("true");
+      const panel = document.querySelector("[data-assistant-panel]") as HTMLElement;
+      expect(panel).not.toBeNull();
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+      expect(within(panel).getByRole("heading", { level: 2 })!.textContent).toContain(i18n.t("assistant.panel.title"));
+      expect(await within(panel).findByText(conversation.title)).toBeTruthy();
+      expect(api.requests.some(isSettingRead)).toBe(false);
+      // Escape closes the panel and focus returns to the launcher.
+      fireEvent.keyDown(panel, { key: "Escape" });
+      expect(document.querySelector("[data-assistant-panel]")).toBeNull();
+      expect(document.activeElement).toBe(launcher);
+    },
+  );
+
+  it("follows the server: after closing the panel the availability is read again, and an off answer hides the slot", async () => {
+    let enabled = true;
+    const api = mockApi(
+      meRoute(LEAD),
+      route("GET", /\/api\/v1\/assistant\/conversations\?limit=1$/, () => ({
+        status: 200,
+        body: page({ items: [], assistantEnabled: enabled }),
+      })),
+      ...panelRoutes(),
+    );
+    const i18n = i18nFor("en");
     renderApp("/about", { i18n });
     const launcher = await screen.findByRole("button", { name: new RegExp(i18n.t("assistant.panel.open")) });
-    expect(launcher!.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(launcher);
-    expect(launcher!.getAttribute("aria-expanded")).toBe("true");
-    const panel = document.querySelector("[data-assistant-panel]") as HTMLElement;
-    expect(panel).not.toBeNull();
-    expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
-    expect(within(panel).getByRole("heading", { level: 2 })!.textContent).toContain(i18n.t("assistant.panel.title"));
-    expect(await within(panel).findByText(conversation.title)).toBeTruthy();
-    // Escape closes the panel and focus returns to the launcher.
-    fireEvent.keyDown(panel, { key: "Escape" });
-    expect(document.querySelector("[data-assistant-panel]")).toBeNull();
-    expect(document.activeElement).toBe(launcher);
+    const reads = api.requests.filter(isAvailabilityRead).length;
+    enabled = false; // an administrator turned the assistant off meanwhile
+    fireEvent.keyDown(document.querySelector("[data-assistant-panel]") as HTMLElement, { key: "Escape" });
+    await waitFor(() => expect(api.requests.filter(isAvailabilityRead).length).toBeGreaterThan(reads));
+    await waitFor(() => expect(document.querySelector("[data-assistant-launcher]")).toBeNull());
   });
 });
 

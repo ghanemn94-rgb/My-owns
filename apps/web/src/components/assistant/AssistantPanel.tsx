@@ -1,7 +1,7 @@
 // The optional assistant panel (T-DG6-FE-E; p6-work-split §D.3; ADR-0059 §1, §9). `AssistantLauncher` is the shell's
-// slot: it renders NOTHING unless the caller holds assistant.use and the setting read answers `enabled: true` (no row,
-// off, a failed read or a read the caller may not make all hide it; ADR-0059 §3, §11). AUD holds no assistant.use, so
-// AUD never sees the panel.
+// slot: it renders NOTHING unless the caller holds assistant.use and the server says the assistant is on for them
+// (`assistantEnabled` of listAssistantConversations, T-DG6-BE-X5; off, a pending or a failed read all hide it;
+// ADR-0059 §3, §11). AUD holds no assistant.use, so AUD never sees the panel.
 //
 // The panel is a non-modal region beside the page: the conversation list, a new-conversation form (optionally focused
 // on the transformation of the current page), and a conversation with its messages, citations and suggestions. Every
@@ -55,7 +55,8 @@ export function AssistantLauncher() {
   const close = () => {
     setOpen(false);
     launcher.current?.focus();
-    // The panel may have learned that the assistant was turned off: read the setting again so the slot follows it.
+    // The panel may have learned that the assistant was turned off: read the availability again (its key is under the
+    // setting's) so the slot follows it.
     void queryClient.invalidateQueries({ queryKey: assistantKeys.setting });
   };
   return (
