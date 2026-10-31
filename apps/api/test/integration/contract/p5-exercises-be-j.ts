@@ -36,7 +36,12 @@ export async function exerciseP5BeJOperations(ctx: P5ExerciseContext): Promise<v
   });
   expect(created.status, JSON.stringify(created.body)).toBe(201);
 
-  // A critical slip: A -> B on the computed critical path, A's milestone moved 5 days later.
+  // A critical slip: A -> B on the computed critical path, A's milestone moved 90 days later. T-DG6-BE-X6: 90 is the
+  // largest `minimumSlipDays` a starter 9 version may hold (integer 1-90; ADR-0044 §1, packages/shared/src/schemas/automation.ts), so the
+  // move is a slip whatever effective version another suite has published in this database: the exercise no longer
+  // depends on the shared starter's threshold (a 5-day move recorded nothing once a suite had published 7). The dates
+  // are fixed on purpose: detection compares the milestone's dates before and after the write and never reads today
+  // (slip-events.ts, schedule.ts predecessorFinish, schedule-network.ts), so a date in the past gives the same slip.
   const x = await seedExecutionWorld(api, w);
   const ini = async (code: string, owner: string) =>
     insertAudited(api.db, x, "initiative", { code, name: `Synthetic ${code}`, executive_owner_user_id: owner });
@@ -50,7 +55,7 @@ export async function exerciseP5BeJOperations(ctx: P5ExerciseContext): Promise<v
   const moved = await send("PATCH", `/api/v1/milestones/${m}`, {
     session: x.s.tl,
     headers: ifm(1),
-    body: { forecastDate: "2026-11-06" },
+    body: { forecastDate: "2027-01-30" },
   });
   expect(moved.status, JSON.stringify(moved.body)).toBe(200);
 
@@ -59,7 +64,7 @@ export async function exerciseP5BeJOperations(ctx: P5ExerciseContext): Promise<v
   const list = await mirrored("GET", `${url}?limit=10`, { session: x.s.tl });
   expect(list.status).toBe(200);
   expect(list.body.items).toHaveLength(1);
-  expect(list.body.items[0]).toMatchObject({ slipDays: 5, criticalReason: "critical_path" });
+  expect(list.body.items[0]).toMatchObject({ slipDays: 90, criticalReason: "critical_path" });
   expect((await mirrored("GET", url, { session: x.s.auditor })).status).toBe(200);
   expect((await mirrored("GET", `${url}?limit=0`, { session: x.s.tl })).status).toBe(400);
   expect((await mirrored("GET", url)).status).toBe(401);
