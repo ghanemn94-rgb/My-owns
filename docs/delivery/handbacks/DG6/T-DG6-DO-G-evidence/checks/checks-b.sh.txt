@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# T-DG6-DO-G acceptance item 3, plus a memory sampler (every 15 s) while it runs.
+cd /home/user/wt/dg6-do-g
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+E=docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/checks
+( while :; do echo "$(date -u +%FT%TZ) $(cut -d' ' -f1-3 /proc/loadavg) $(free -m | awk '/^Mem:/ {print "used_mb=" $3 " avail_mb=" $7}')"; sleep 15; done ) >"$E/memory-load-samples.txt" 2>&1 &
+SAMPLER=$!
+s=$(date +%s)
+{ echo "# $(date -u +%FT%TZ) node $(node -v); load average $(cut -d' ' -f1-3 /proc/loadavg)"; echo "# \$ QA_PG_PORT=26830 MTH_PORT_POOL=26831-26839 tests/qa/support/with-pg.sh pnpm test:integration"; } >"$E/test-integration.log"
+QA_PG_PORT=26830 MTH_PORT_POOL=26831-26839 tests/qa/support/with-pg.sh pnpm test:integration >>"$E/test-integration.log" 2>&1
+rc=$?
+echo "# exit=$rc $(date -u +%FT%TZ)" >>"$E/test-integration.log"
+echo "test-integration exit=$rc wall_s=$(($(date +%s) - s)) end=$(date -u +%FT%TZ)" >>"$E/checks-summary.txt"
+kill $SAMPLER

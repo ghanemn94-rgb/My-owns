@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# T-DG6-DO-G: independent recomputation of every class p95 from the raw samples, with awk and sort (not report.mjs).
+# Nearest rank: k = ceil(95n/100) = floor((95n+99)/100), over every steady-state sample of the class, errors included
+# (report.mjs's rule). Usage: bash p95-recompute.sh.txt <run dir>
+set -euo pipefail
+run="$1"
+for rep in "$run"/rep-*; do
+  for cls in dashboard export read search update; do
+    zcat "$rep/samples.csv.gz" | awk -F, -v c="$cls" 'NR > 1 && $1 == "steady" && $3 == c { print $7 }' | sort -n |
+      awk -v r="$(basename "$rep")" -v c="$cls" '{ a[NR] = $1 } END { n = NR; if (n == 0) { printf "%s %-9s not measured\n", r, c; exit } k = int((95 * n + 99) / 100); printf "%s %-9s n=%d p95=%.1fms\n", r, c, n, a[k] / 1000 }'
+  done
+  echo "$(basename "$rep") steady rows $(zcat "$rep/samples.csv.gz" | awk -F, 'NR > 1 && $1 == "steady"' | wc -l), error rows $(zcat "$rep/samples.csv.gz" | awk -F, 'NR > 1 && $1 == "steady" && $6 == "error"' | wc -l), conflict rows $(zcat "$rep/samples.csv.gz" | awk -F, 'NR > 1 && $1 == "steady" && $6 == "conflict"' | wc -l)"
+done
