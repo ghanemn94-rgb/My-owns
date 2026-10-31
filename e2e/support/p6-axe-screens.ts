@@ -118,6 +118,9 @@ export const P6_AXE_ROUTES: readonly AxeScreen[] = [
   },
   // Slice H (ADR-0057): Search.
   { route: "/search", name: "search", signInAs: "dev.lead" },
+  // "Your drafts" (ADR-0057 §6; T-DG6-FE-D2), the caller's open drafts across transformations (added by T-DG6-FE-X1:
+  // FE-D2 registered the route after FE-F2 created this list).
+  { route: "/my-work/drafts", name: "my-drafts", signInAs: "dev.lead" },
   // Slice D (ADR-0059): Administration > AI assistant.
   { route: "/admin/assistant", name: "admin-assistant", signInAs: "dev.admin" },
 ];

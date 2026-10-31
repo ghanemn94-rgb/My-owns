@@ -458,7 +458,14 @@ describe("Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S1
     renderApp("/admin/identity", { i18n: createI18n("en") });
     expect(await screen.findByText("Configured (never shown)")).toBeTruthy();
     expect(screen.getByText("https://idp.example.invalid/realms/mth-test")).toBeTruthy();
-    expect(document.querySelector("input, textarea")).toBeNull();
+    // The identity screen itself has no field at all (no secret can be typed or shown in one). The shell's global
+    // search box (slice H, REQ-S15-010; T-DG6-FE-D) is on every page, so the check is scoped to the screen, and the
+    // document-wide check admits that one search field only (T-DG6-FE-X1).
+    const screenRoot = document.querySelector('[data-p6-screen="identity"]')!;
+    expect(screenRoot).toBeTruthy();
+    expect(screenRoot.querySelector("input, textarea, select, [contenteditable]")).toBeNull();
+    const fields = Array.from(document.querySelectorAll("input, textarea, select, [contenteditable]"));
+    expect(fields.every((f) => f.getAttribute("data-global-search") === "true")).toBe(true);
   });
 
   it("storage states no public URL, takes secret references only, and tests before saving", async () => {

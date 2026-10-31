@@ -1,0 +1,68 @@
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-x1/apps/web
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed | 32 skipped) 3299ms
+   ↓ Administration > Audit (REQ-S16-032) > en: lists events read-only; a redacted event shows Redacted, never its reason
+   ↓ Administration > Audit (REQ-S16-032) > ar: lists events read-only; a redacted event shows Redacted, never its reason
+   ↓ Administration > Audit (REQ-S16-032) > an invalid filter shows one alert and sends nothing
+   ↓ Administration > Audit (REQ-S16-032) > the event detail shows the field changes, and Redacted instead of them when redacted
+   ↓ Administration > Security > Upload policy (REQ-S13-011) > en: the auditor reads the default policy with no form
+   ↓ Administration > Security > Upload policy (REQ-S13-011) > ar: the auditor reads the default policy with no form
+   ↓ Administration > Security > Upload policy (REQ-S13-011) > a technical admin narrows the policy: If-Match 0 creates it, with the organization query and a reason
+   ↓ Administration > Security > Upload policy (REQ-S13-011) > a 409 shows the translated conflict and reloads the policy
+   ↓ Administration > Security (rate limits) > shows each class with its per-minute budget, read-only
+   ↓ The deep-link landing (REQ-S12-024) > en: a 403 shows only the refusal text, nothing of the target
+   ↓ The deep-link landing (REQ-S12-024) > ar: a 403 shows only the refusal text, nothing of the target
+   ↓ The deep-link landing (REQ-S12-024) > a malformed token is never sent
+   ↓ The deep-link landing (REQ-S12-024) > an authorized link navigates inside the app; an unsafe path is never followed
+   ↓ Administration > Operations (REQ-S12-019) > en: an unknown heartbeat is Unknown, never Running
+   ↓ Administration > Operations (REQ-S12-019) > ar: an unknown heartbeat is Unknown, never Running
+   ↓ Administration > Operations (REQ-S12-019) > sends the two default statuses as repeated query parameters
+   ↓ Administration > Operations (REQ-S12-019) > a linked KPI without a value is Unknown (never 0) and keeps its label; acknowledge sends If-Match
+   ↓ Administration > Operations (REQ-S12-019) > a resolved exception is final: no action is offered
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 447ms
+     → expected <input aria-label="mutant"></input> to be null
+   ↓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > storage states no public URL, takes secret references only, and tests before saving
+   ↓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > en: the inbox is always on; enterprise messaging cannot be enabled
+   ↓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > ar: the inbox is always on; enterprise messaging cannot be enabled
+   ↓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > the auditor (operations.read) reads storage read-only: no form, no test, no save
+   ↓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a manager marks the record with a reason and If-Match 0
+   ↓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: a reader without the grant right sees the status only
+   ↓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: a reader without the grant right sees the status only
+   ↓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a record the caller cannot read (404) renders nothing
+   ↓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: the label shows only for includesRestrictedRecords true
+   ↓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: the label shows only for includesRestrictedRecords true
+   ↓ The safe evidence preview (REQ-S13-011) > a PNG is an <img> of the preview route; never an iframe, object or embed
+   ↓ The safe evidence preview (REQ-S13-011) > drawing.svg is download-only (no inline content)
+   ↓ The safe evidence preview (REQ-S13-011) > report.pdf is download-only (no inline content)
+   ↓ The safe evidence preview (REQ-S13-011) > tool.exe.png.svg is download-only (no inline content)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input aria-label="mutant"></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-label="mutant"
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:466:84
+    464|     const screenRoot = document.querySelector('[data-p6-screen="identi…
+    465|     expect(screenRoot).toBeTruthy();
+    466|     expect(screenRoot.querySelector("input, textarea, select, [content…
+       |                                                                                    ^
+    467|     const fields = Array.from(document.querySelectorAll("input, textar…
+    468|     expect(fields.every((f) => f.getAttribute("data-global-search") ==…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 skipped (33)
+   Start at  00:27:57
+   Duration  6.98s (transform 286.74s, setup 240ms, collect 2.68s, tests 3.30s, environment 422ms, prepare 127ms)
+
