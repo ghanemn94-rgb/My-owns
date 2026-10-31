@@ -1,0 +1,79 @@
+# mutation M1-deeplink-token-not-masked, 2026-10-31T04:23:58Z, disposable clone /var/tmp/mth-run.yqkbFS/claude-0/mut at 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb (+ the worktree's QA test files)
+# product source in the worktree is NOT changed; the clone file is reverted after the run
+# diff:
+diff --git a/packages/config/src/load.ts b/packages/config/src/load.ts
+index 669477ecb..61ecaee90 100644
+--- a/packages/config/src/load.ts
++++ b/packages/config/src/load.ts
+@@ -469,7 +469,7 @@ const TOKEN_RULES: readonly (readonly [RegExp, string])[] = [
+   [/\bAKIA[0-9A-Z]{16}\b/g, SECRET_CENSOR],
+   [/\bBearer\s+[A-Za-z0-9._~+/-]+=*/g, `Bearer ${SECRET_CENSOR}`],
+   [/\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]*)?/g, SECRET_CENSOR],
+-  [/\/links\/[A-Za-z0-9_-]{16,}/g, "/links/[token]"],
++  [/\/links\/[A-Za-z0-9_-]{16,}/g, "$&"],
+   [/([?&](?:code|state|id_token|access_token|refresh_token)=)[^&\s"'#\\]*/g, `$1${PATH_CENSOR}`],
+ ];
+ 
+# command: QA_PG_PORT=27090 MTH_PORT_POOL=27091-27099 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/a22-p6-operability.test.ts -t "A22 logs"
+port-policy: PostgreSQL listening on port 27090 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.yqkbFS/claude-0/mut
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvwcgon_f0a1c631 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a22-p6-operability.test.ts (17 tests | 1 failed | 14 skipped) 7252ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > each request is logged as one JSON object with time, level, msg and the requestId the problem response carries 50ms
+   × A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an Authorization bearer token, the session cookie, the CSRF header and a deep-link token never appear in a log line 91ms
+     → deep-link token: expected '{"level":30,"time":1793420695152,"pid…' not to contain 'QaA22SyntheticDeepLinkTokenXyz0123456…'
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an OIDC code/state in a query string is masked in the logged URL 3ms
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > no worker ever beat: unknown with no instances (never alive); a non-admin gets 403, an anonymous caller 401
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > acknowledge: 428 without If-Match, 409 version-conflict on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event; a second acknowledge is 409 operations.exception_not_open
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > resolve: needs a note; 200 resolved (manual) with an audit event; a second resolve is refused 409 operations.exception_resolved
+   ↓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > GET /healthz is 200 {status: ok} without a session and carries X-Request-Id; GET /readyz is 200 ready with database ok and migrations ok
+   ↓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200
+   ↓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > the jobs view lists the operations alert sweep with its last success (it ran above), an outcome and a next run or an explicit reason; a team lead gets 403
+   ↓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0)
+   ↓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the value
+   ↓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > BLOCKED, never a pass: no canary with --require-canaries, or a docs/delivery path (exit 2)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an Authorization bearer token, the session cookie, the CSRF header and a deep-link token never appear in a log line
+AssertionError: deep-link token: expected '{"level":30,"time":1793420695152,"pid…' not to contain 'QaA22SyntheticDeepLinkTokenXyz0123456…'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- QaA22SyntheticDeepLinkTokenXyz0123456789abc[39m
+[31m+ {"level":30,"time":1793420695152,"pid":128,"hostname":"vm","requestId":"01a19034-1670-72c8-9207-78aed59525bb","req":{"method":"GET","url":"/api/v1/me","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}[39m
+[31m+ {"level":30,"time":1793420695163,"pid":128,"hostname":"vm","requestId":"01a19034-1670-72c8-9207-78aed59525bb","res":{"statusCode":200},"responseTime":10.72854599999846,"msg":"request completed"}[39m
+[31m+ {"level":30,"time":1793420695164,"pid":128,"hostname":"vm","requestId":"01a19034-167c-722d-9a79-4b381df60af1","req":{"method":"GET","url":"/api/v1/links/QaA22SyntheticDeepLinkTokenXyz0123456789abc","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}[39m
+[31m+ {"level":30,"time":1793420695210,"pid":128,"hostname":"vm","requestId":"01a19034-167c-722d-9a79-4b381df60af1","res":{"statusCode":404},"responseTime":45.48178899999766,"msg":"request completed"}[39m
+[31m+[39m
+
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:163:41
+    161|     expect(sessionValue.length).toBeGreaterThan(8);
+    162|     expect(text, "session cookie value").not.toContain(sessionValue);
+    163|     expect(text, "deep-link token").not.toContain(LINK_TOKEN);
+       |                                         ^
+    164|     expect(text, "the deep-link path is still logged, its token masked…
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 14 skipped (17)
+   Start at  04:24:03
+   Duration  52.55s (transform 18.41s, setup 0ms, collect 37.24s, tests 7.25s, environment 0ms, prepare 103ms)
+
+EXIT=1 (expected non-zero: the mutation must be detected)
+clone not clean after revert

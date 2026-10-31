@@ -1,0 +1,118 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb 2026-10-31T04:58:04Z: spec re-run ALONE on a fresh stack
+# E2E_PG_PORT=27080 E2E_API_PORT=27081 MTH_PORT_POOL=27082-27089 E2E_SCREENSHOT_DIR=$TMPDIR/shots-re QA_EVIDENCE_DIR=$TMPDIR/shots-re-qa apps/web/e2e/support/with-stack.sh npx playwright test e2e/a12-p6-scope-isolation.spec.ts --workers=1 --reporter=list --output=$TMPDIR/pw-re-a12-p6-scope-isolation
+port-policy: PostgreSQL listening on port 27080 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 27081 (attempt 1)
+API: http://localhost:27081 (APP_BASE_URL=http://localhost:27081, PORT=27081)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 12 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:234:1 › A12-1 search: the X-scoped user sees X's record and gets the empty state for Y's word (6.5s)
+  ✓   2 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:255:1 › A12-2 deep link: a forwarded link to a Y record shows the refusal and no title; its recipient opens it (7.8s)
+  ✓   3 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:280:1 › A12-3 evidence: Y's evidence page and download URL show nothing of Y to the X-scoped user (4.6s)
+  ✓   4 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:301:1 › A12-4 exports: Y's reports page shows nothing of Y and an export of Y is refused (4.6s)
+A12-5 en: GET /api/v1/admin/assistant as dev.nobody -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a19053-5a7d-7067-86e3-416d1ae1160b"}; GET /api/v1/assistant/conversations -> 200
+  ✘   5 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:361:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X (18.1s)
+A12-6 en: existing session after revoke: search -> 401 {"type":"urn:mth:problem:unauthenticated","title":"Sign-in required","status":401,"code":"unauthenticated","requestId":"01a19053-cc35-716b-be99-aa647dd5a9df"}
+A12-6 en: fresh session after revoke: search -> 200 {"items":[],"nextCursor":null,"indexedThrough":"2026-10-31T04:59:28.925Z","stale":false}; GET /transformations/Z -> 404
+  ✓   6 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:387:1 › A12-6 revoked after indexing: Z's record is found while granted and gone after the revocation (no reindex) (8.0s)
+  ✓   7 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:234:1 › A12-1 search: the X-scoped user sees X's record and gets the empty state for Y's word (7.6s)
+  ✓   8 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:255:1 › A12-2 deep link: a forwarded link to a Y record shows the refusal and no title; its recipient opens it (7.9s)
+  ✓   9 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:280:1 › A12-3 evidence: Y's evidence page and download URL show nothing of Y to the X-scoped user (5.0s)
+  ✓  10 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:301:1 › A12-4 exports: Y's reports page shows nothing of Y and an export of Y is refused (5.5s)
+A12-5 ar: GET /api/v1/admin/assistant as dev.nobody -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a19054-93fa-7489-920d-3c0d5075217d"}; GET /api/v1/assistant/conversations -> 200
+  ✘  11 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:361:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X (24.2s)
+A12-6 ar: existing session after revoke: search -> 401 {"type":"urn:mth:problem:unauthenticated","title":"Sign-in required","status":401,"code":"unauthenticated","requestId":"01a19055-08dd-767e-800d-a96ea1315f43"}
+A12-6 ar: fresh session after revoke: search -> 200 {"items":[],"nextCursor":null,"indexedThrough":"2026-10-31T05:00:52.209Z","stale":false}; GET /transformations/Z -> 404
+  ✓  12 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:387:1 › A12-6 revoked after indexing: Z's record is found while granted and gone after the revocation (no reindex) (7.6s)
+
+
+  1) [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:361:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X 
+
+    Error: the assistant launcher is not shown to a signed-in TL while the assistant is on
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('button', { name: 'Assistant' }).first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - the assistant launcher is not shown to a signed-in TL while the assistant is on with timeout 15000ms[22m
+    [2m  - waiting for getByRole('button', { name: 'Assistant' }).first()[22m
+
+
+      339 | async function askAssistant(page: Page, lang: Lang, title: string, question: string) {
+      340 |   const launcher = page.getByRole("button", { name: tr(lang, "assistant.panel.open") }).first();
+    > 341 |   await expect(launcher, "the assistant launcher is not shown to a signed-in TL while the assistant is on").toBeVisible(
+          |                                                                                                             ^
+      342 |     {
+      343 |       timeout: 15_000,
+      344 |     },
+        at askAssistant (/home/user/wt/dg6-qa-e/e2e/a12-p6-scope-isolation.spec.ts:341:109)
+        at /home/user/wt/dg6-qa-e/e2e/a12-p6-scope-isolation.spec.ts:376:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:361:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X 
+
+    Error: the assistant launcher is not shown to a signed-in TL while the assistant is on
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByRole('button', { name: 'المساعد' }).first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - the assistant launcher is not shown to a signed-in TL while the assistant is on with timeout 15000ms[22m
+    [2m  - waiting for getByRole('button', { name: 'المساعد' }).first()[22m
+
+
+      339 | async function askAssistant(page: Page, lang: Lang, title: string, question: string) {
+      340 |   const launcher = page.getByRole("button", { name: tr(lang, "assistant.panel.open") }).first();
+    > 341 |   await expect(launcher, "the assistant launcher is not shown to a signed-in TL while the assistant is on").toBeVisible(
+          |                                                                                                             ^
+      342 |     {
+      343 |       timeout: 15_000,
+      344 |     },
+        at askAssistant (/home/user/wt/dg6-qa-e/e2e/a12-p6-scope-isolation.spec.ts:341:109)
+        at /home/user/wt/dg6-qa-e/e2e/a12-p6-scope-isolation.spec.ts:376:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a12-p6-scope-isolation/e2e-a12-p6-scope-isolation-555df-xt-asked-about-X-it-cites-X-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:361:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X 
+    [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:361:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X 
+  10 passed (2.5m)
+---- api.log (tail)
+EXIT=1

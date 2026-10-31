@@ -1,0 +1,299 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb 2026-10-31T05:05:54Z: spec re-run ALONE on a fresh stack
+# E2E_PG_PORT=27080 E2E_API_PORT=27081 MTH_PORT_POOL=27082-27089 E2E_SCREENSHOT_DIR=$TMPDIR/shots-re QA_EVIDENCE_DIR=$TMPDIR/shots-re-qa apps/web/e2e/support/with-stack.sh npx playwright test e2e/a17-failing-connector-exception.spec.ts --workers=1 --reporter=list --output=$TMPDIR/pw-re-a17-failing-connector-exception
+port-policy: PostgreSQL listening on port 27080 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 27081 (attempt 1)
+API: http://localhost:27081 (APP_BASE_URL=http://localhost:27081, PORT=27081)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/a17-failing-connector-exception.spec.ts:85:1 › A17 / REQ-S12-019: a failing test connector opens one operational exception; the data owner sees the KPI Stale with its last value and date, the technical admin only its count (49.8s)
+  ✘  2 [chromium-ar] › e2e/a17-failing-connector-exception.spec.ts:85:1 › A17 / REQ-S12-019: a failing test connector opens one operational exception; the data owner sees the KPI Stale with its last value and date, the technical admin only its count (53.3s)
+
+
+  1) [chromium-en] › e2e/a17-failing-connector-exception.spec.ts:85:1 › A17 / REQ-S12-019: a failing test connector opens one operational exception; the data owner sees the KPI Stale with its last value and date, the technical admin only its count 
+
+    Error: freshness label
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('table[data-table=\'exception-kpis\']').locator('tbody tr')
+    Expected: [32m"stale"[39m
+    Received: [31m"unknown"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - freshness label with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr')[22m
+    [2m    9 × locator resolved to <tr data-kpi-freshness="unknown">…</tr>[22m
+    [2m      - unexpected value "unknown"[22m
+
+
+      275 |   await expectAccessible(page, lang, "a17-exception-data-owner");
+      276 |   await shot(page, lang, "a17-exception-data-owner");
+    > 277 |   await expect.soft(row, "freshness label").toHaveAttribute("data-kpi-freshness", "stale");
+          |                                             ^
+      278 |   await expect.soft(row.locator(`[data-last-value='${LAST_VALUE}']`), "last value").toHaveText(LAST_VALUE);
+      279 |   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).
+      280 |   const dateCell = row.locator("td").nth(2);
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:277:45
+
+    Error: last value
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('[data-last-value=\'250.75\']')
+    Expected: [32m"250.75"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - last value with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('[data-last-value=\'250.75\']')[22m
+
+
+      276 |   await shot(page, lang, "a17-exception-data-owner");
+      277 |   await expect.soft(row, "freshness label").toHaveAttribute("data-kpi-freshness", "stale");
+    > 278 |   await expect.soft(row.locator(`[data-last-value='${LAST_VALUE}']`), "last value").toHaveText(LAST_VALUE);
+          |                                                                                     ^
+      279 |   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).
+      280 |   const dateCell = row.locator("td").nth(2);
+      281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:278:85
+
+    Error: last value date
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)
+    Expected substring: [32m"2026"[39m
+    Received string:    [31m"Unknown"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - last value date with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)[22m
+    [2m    8 × locator resolved to <td>Unknown</td>[22m
+    [2m      - unexpected value "Unknown"[22m
+
+
+      279 |   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).
+      280 |   const dateCell = row.locator("td").nth(2);
+    > 281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+          |                                                  ^
+      282 |   await expect.soft(dateCell, "last value date").toContainText("31");
+      283 |   await expect.soft(dateCell, "last value date").not.toContainText(tr(lang, "adminP6.common.unknown"));
+      284 |
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:281:50
+
+    Error: last value date
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)
+    Expected substring: [32m"31"[39m
+    Received string:    [31m"Unknown"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - last value date with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)[22m
+    [2m    9 × locator resolved to <td>Unknown</td>[22m
+    [2m      - unexpected value "Unknown"[22m
+
+
+      280 |   const dateCell = row.locator("td").nth(2);
+      281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+    > 282 |   await expect.soft(dateCell, "last value date").toContainText("31");
+          |                                                  ^
+      283 |   await expect.soft(dateCell, "last value date").not.toContainText(tr(lang, "adminP6.common.unknown"));
+      284 |
+      285 |   // ---- the technical administrator: the exception and one hidden linked KPI, never its name.
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:282:50
+
+    Error: last value date
+
+    [2mexpect([22m[31mlocator[39m[2m).not.[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)
+    Expected substring: not [32m"Unknown"[39m
+    Received string: [31m"[7mUnknown[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - last value date with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)[22m
+    [2m    8 × locator resolved to <td>Unknown</td>[22m
+    [2m      - unexpected value "Unknown"[22m
+
+
+      281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+      282 |   await expect.soft(dateCell, "last value date").toContainText("31");
+    > 283 |   await expect.soft(dateCell, "last value date").not.toContainText(tr(lang, "adminP6.common.unknown"));
+          |                                                      ^
+      284 |
+      285 |   // ---- the technical administrator: the exception and one hidden linked KPI, never its name.
+      286 |   await page.context().clearCookies();
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:283:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-en/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-ar] › e2e/a17-failing-connector-exception.spec.ts:85:1 › A17 / REQ-S12-019: a failing test connector opens one operational exception; the data owner sees the KPI Stale with its last value and date, the technical admin only its count 
+
+    Error: freshness label
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveAttribute[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('table[data-table=\'exception-kpis\']').locator('tbody tr')
+    Expected: [32m"stale"[39m
+    Received: [31m"unknown"[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - freshness label with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr')[22m
+    [2m    9 × locator resolved to <tr data-kpi-freshness="unknown">…</tr>[22m
+    [2m      - unexpected value "unknown"[22m
+
+
+      275 |   await expectAccessible(page, lang, "a17-exception-data-owner");
+      276 |   await shot(page, lang, "a17-exception-data-owner");
+    > 277 |   await expect.soft(row, "freshness label").toHaveAttribute("data-kpi-freshness", "stale");
+          |                                             ^
+      278 |   await expect.soft(row.locator(`[data-last-value='${LAST_VALUE}']`), "last value").toHaveText(LAST_VALUE);
+      279 |   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).
+      280 |   const dateCell = row.locator("td").nth(2);
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:277:45
+
+    Error: last value
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('[data-last-value=\'250.75\']')
+    Expected: [32m"250.75"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - last value with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('[data-last-value=\'250.75\']')[22m
+
+
+      276 |   await shot(page, lang, "a17-exception-data-owner");
+      277 |   await expect.soft(row, "freshness label").toHaveAttribute("data-kpi-freshness", "stale");
+    > 278 |   await expect.soft(row.locator(`[data-last-value='${LAST_VALUE}']`), "last value").toHaveText(LAST_VALUE);
+          |                                                                                     ^
+      279 |   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).
+      280 |   const dateCell = row.locator("td").nth(2);
+      281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:278:85
+
+    Error: last value date
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)
+    Expected substring: [32m"2026"[39m
+    Received string:    [31m"غير معروف"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - last value date with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)[22m
+    [2m    9 × locator resolved to <td>غير معروف</td>[22m
+    [2m      - unexpected value "غير معروف"[22m
+
+
+      279 |   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).
+      280 |   const dateCell = row.locator("td").nth(2);
+    > 281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+          |                                                  ^
+      282 |   await expect.soft(dateCell, "last value date").toContainText("31");
+      283 |   await expect.soft(dateCell, "last value date").not.toContainText(tr(lang, "adminP6.common.unknown"));
+      284 |
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:281:50
+
+    Error: last value date
+
+    [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)
+    Expected substring: [32m"31"[39m
+    Received string:    [31m"غير معروف"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - last value date with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)[22m
+    [2m    9 × locator resolved to <td>غير معروف</td>[22m
+    [2m      - unexpected value "غير معروف"[22m
+
+
+      280 |   const dateCell = row.locator("td").nth(2);
+      281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+    > 282 |   await expect.soft(dateCell, "last value date").toContainText("31");
+          |                                                  ^
+      283 |   await expect.soft(dateCell, "last value date").not.toContainText(tr(lang, "adminP6.common.unknown"));
+      284 |
+      285 |   // ---- the technical administrator: the exception and one hidden linked KPI, never its name.
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:282:50
+
+    Error: last value date
+
+    [2mexpect([22m[31mlocator[39m[2m).not.[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)
+    Expected substring: not [32m"غير معروف"[39m
+    Received string: [31m"[7mغير معروف[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - last value date with timeout 5000ms[22m
+    [2m  - waiting for locator('table[data-table=\'exception-kpis\']').locator('tbody tr').locator('td').nth(2)[22m
+    [2m    8 × locator resolved to <td>غير معروف</td>[22m
+    [2m      - unexpected value "غير معروف"[22m
+
+
+      281 |   await expect.soft(dateCell, "last value date").toContainText("2026");
+      282 |   await expect.soft(dateCell, "last value date").toContainText("31");
+    > 283 |   await expect.soft(dateCell, "last value date").not.toContainText(tr(lang, "adminP6.common.unknown"));
+          |                                                      ^
+      284 |
+      285 |   // ---- the technical administrator: the exception and one hidden linked KPI, never its name.
+      286 |   await page.context().clearCookies();
+        at /home/user/wt/dg6-qa-e/e2e/a17-failing-connector-exception.spec.ts:283:54
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-ar/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../var/tmp/mth-run.yqkbFS/claude-0/pw-re-a17-failing-connector-exception/e2e-a17-failing-connector--8af39-hnical-admin-only-its-count-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium-en] › e2e/a17-failing-connector-exception.spec.ts:85:1 › A17 / REQ-S12-019: a failing test connector opens one operational exception; the data owner sees the KPI Stale with its last value and date, the technical admin only its count 
+    [chromium-ar] › e2e/a17-failing-connector-exception.spec.ts:85:1 › A17 / REQ-S12-019: a failing test connector opens one operational exception; the data owner sees the KPI Stale with its last value and date, the technical admin only its count 
+---- api.log (tail)
+EXIT=1

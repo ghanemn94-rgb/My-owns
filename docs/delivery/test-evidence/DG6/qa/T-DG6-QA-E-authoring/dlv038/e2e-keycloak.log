@@ -1,0 +1,19 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb 2026-10-31T04:55:07Z
+# E2E_PG_PORT=27090 E2E_API_PORT=27091 MTH_PORT_POOL=27092-27099 apps/web/e2e/support/with-stack.sh npx playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --reporter=list --output=$TMPDIR/pw-kc
+port-policy: PostgreSQL listening on port 27090 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 27091 (attempt 1)
+API: http://localhost:27091 (APP_BASE_URL=http://localhost:27091, PORT=27091)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 4 tests using 1 worker
+
+  -  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session
+  -  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session
+  -  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session
+  -  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session
+
+  4 skipped
+EXIT=0

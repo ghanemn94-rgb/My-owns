@@ -2,7 +2,9 @@
 // visibility and production/demo separation are demonstrated" (master prompt §20). The P5 suite
 // (a22-operational-readiness.test.ts) covers health, the jobs view and production/demo separation; this file adds what
 // P6 delivers and what A22 names but P5 could not show: structured logs with secrets redacted, the post-suite log scan,
-// error alerts, the worker heartbeat and operational exceptions, each observable and asserted.
+// error alerts, the worker heartbeat and operational exceptions, each observable and asserted. T-DG6-QA-EB (continuation)
+// added the health checks (/healthz, /readyz ready and not ready) and the P6 alert sweep in the admin jobs view, so
+// that every part of the A22 text is asserted in this one file, and tightened the conflict statuses to the contract.
 //
 // Binding row texts (docs/delivery/requirements.csv, final gate DG6), each tested literally:
 //  - REQ-S20-022 (A22) "Health checks, logs, error alerts, admin job visibility and production/demo separation are
@@ -41,7 +43,8 @@ import {
   type WorkerProcess,
 } from "../support/a22-ops.ts";
 import { CONNECTORS, enabledConnector, ifm } from "../support/a17.ts";
-import { auditOf, call, expectProblem, uniq, type Loose } from "../support/api.ts";
+import { auditOf, call, expectProblem, startApi, uniq, type Loose } from "../support/api.ts";
+import { createScratchDatabase, dropScratchDatabase, testDatabase } from "../../../packages/db/test/helpers.ts";
 
 vi.setConfig({ testTimeout: 150_000 });
 
@@ -427,7 +430,7 @@ describe("A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022)
     );
   });
 
-  it("acknowledge: 428 without If-Match, 412/409 on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event", async () => {
+  it("acknowledge: 428 without If-Match, 409 version-conflict on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event; a second acknowledge is 409 operations.exception_not_open", async () => {
     const path = `${OPS_EXCEPTIONS}/${exceptionId}/acknowledge`;
     const cur = await call<Loose>(env.api.app, "GET", `${OPS_EXCEPTIONS}/${exceptionId}`, { session: w.tech.session });
     const v: number = cur.body.version;
@@ -441,7 +444,10 @@ describe("A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022)
       headers: ifm(v + 7),
       body: { note: "Synthetic acknowledgement" },
     });
-    expect([409, 412]).toContain(stale.status);
+    // Contract (components.responses.VersionConflict): a stale If-Match is 409 urn:mth:problem:version-conflict with
+    // the server's currentVersion, and nothing is written. (QA-EB: tightened from QA-E's [409, 412].)
+    expectProblem(stale, 409, "urn:mth:problem:version-conflict");
+    expect(stale.body.currentVersion).toBe(v);
     const auditor = await call<Loose>(env.api.app, "POST", path, {
       session: w.auditor.session,
       headers: ifm(v),
@@ -456,8 +462,9 @@ describe("A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022)
     // ADR-0053 §2 problem table: a note outside 3-1,000 characters is 422 operations.note_required.
     expectProblem(short, 422, short.body.type);
     expect(short.body.code).toBe("operations.note_required");
-    expect((await call<Loose>(env.api.app, "GET", `${OPS_EXCEPTIONS}/${exceptionId}`, { session: w.tech.session })).body)
-      .toMatchObject({ status: "open", version: v });
+    expect(
+      (await call<Loose>(env.api.app, "GET", `${OPS_EXCEPTIONS}/${exceptionId}`, { session: w.tech.session })).body,
+    ).toMatchObject({ status: "open", version: v });
 
     const ok = await call<Loose>(env.api.app, "POST", path, {
       session: w.tech.session,
@@ -481,7 +488,8 @@ describe("A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022)
       headers: ifm(v + 1),
       body: { note: "Synthetic acknowledgement again" },
     });
-    expect([409, 422]).toContain(twice.status);
+    // ADR-0053 §2 problem table: 409 operations.exception_not_open (QA-EB: tightened from [409, 422]).
+    expect(twice.status, JSON.stringify(twice.body)).toBe(409);
     expect(twice.body.code).toBe("operations.exception_not_open");
   });
 
@@ -510,11 +518,57 @@ describe("A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022)
       headers: ifm(v + 1),
       body: { note: "Synthetic resolution again" },
     });
-    expect([409, 422]).toContain(again.status);
+    // ADR-0053 §2 problem table: 409 operations.exception_resolved (QA-EB: tightened from [409, 422]).
+    expect(again.status, JSON.stringify(again.body)).toBe(409);
     expect(again.body.code).toBe("operations.exception_resolved");
     // Resolved exceptions leave the default (open + acknowledged) list.
     const list = await exceptionsList(`organizationId=${w.orgId}&sourceKind=connector&limit=100`);
     expect((list.body.items as Loose[]).filter((e) => e.id === exceptionId)).toHaveLength(0);
+  });
+});
+
+// ------------------------------------------------------------------ health checks and admin job visibility (QA-EB)
+
+describe("A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view", () => {
+  it("GET /healthz is 200 {status: ok} without a session and carries X-Request-Id; GET /readyz is 200 ready with database ok and migrations ok", async () => {
+    const live = await call<Loose>(env.api.app, "GET", "/healthz");
+    expect(live.status, JSON.stringify(live.body)).toBe(200);
+    expect(live.body).toEqual({ status: "ok" });
+    expect(String(live.headers["x-request-id"] ?? "")).not.toBe("");
+    const ready = await call<Loose>(env.api.app, "GET", "/readyz");
+    expect(ready.status, JSON.stringify(ready.body)).toBe(200);
+    expect(ready.body).toEqual({ status: "ready", checks: { database: "ok", migrations: "ok" } });
+  });
+
+  it("negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200", async () => {
+    const { adminUrl } = testDatabase();
+    const bare = await createScratchDatabase(adminUrl, "mth_qa_a22p6_bare");
+    let bareApi: Awaited<ReturnType<typeof startApi>> | null = null;
+    try {
+      bareApi = await startApi({ database: bare });
+      const ready = await call<Loose>(bareApi.app, "GET", "/readyz");
+      expect(ready.status, JSON.stringify(ready.body)).toBe(503);
+      expect(ready.body.status).toBe("not_ready");
+      expect(ready.body.checks.migrations, JSON.stringify(ready.body)).not.toBe("ok");
+      expect((await call<Loose>(bareApi.app, "GET", "/healthz")).status).toBe(200);
+    } finally {
+      await bareApi?.close().catch(() => undefined);
+      await dropScratchDatabase(adminUrl, bare);
+    }
+  });
+
+  it("the jobs view lists the operations alert sweep with its last success (it ran above), an outcome and a next run or an explicit reason; a team lead gets 403", async () => {
+    const r = await call<Loose>(env.api.app, "GET", JOBS, { session: w.tech.session });
+    expect(r.status, JSON.stringify(r.body).slice(0, 600)).toBe(200);
+    const sweep = (r.body.items as Loose[]).find((j) => j.code === "operations.exception_alerts");
+    expect(sweep, JSON.stringify((r.body.items as Loose[]).map((j) => j.code))).toBeDefined();
+    expect(sweep.lastSuccessAt, JSON.stringify(sweep)).not.toBeNull();
+    expect(sweep.lastOutcome).toBe("succeeded");
+    // Never a guessed time: either a next run, or null with a reason.
+    if (sweep.nextRunAt === null) expect(["disabled", "unknown"]).toContain(sweep.nextRunUnknownReason);
+    else expect(sweep.nextRunUnknownReason).toBeNull();
+    const lead = await call<Loose>(env.api.app, "GET", JOBS, { session: w.lead.session });
+    expectProblem(lead, 403, lead.body.type);
   });
 });
 

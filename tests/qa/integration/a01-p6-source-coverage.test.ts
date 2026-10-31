@@ -9,8 +9,9 @@
 //   T01-T16             GET /methodology/templates/{T}/source-links for each: 200 with at least one playbook block
 //                       (B0001-B0165); T17 does not exist (404), so the set is exactly sixteen;
 //   charter, TOM canvas, business case, launch plan, health check
-//                       each read from the example transformation with content, and the TOM canvas, the launch plan
-//                       and the health check each accept a native write (create / update) with a new version;
+//                       each read from the example transformation with content, and the TOM canvas (a box edited
+//                       with If-Match, QA-EB), the launch plan (generated when absent) and the health check (a draft
+//                       assessment) each accept a native write;
 //   example             the playbook's illustrative example (B0143-B0147, "International Roaming Transformation") is
 //                       the seeded synthetic demo transformation: its North Star is the playbook's text, and the three
 //                       B0147 traceability chains (problem -> TOM gap -> initiative -> KPI -> benefit) are readable.
@@ -74,7 +75,10 @@ describe("A01 / REQ-S20-001: the playbook's source elements are mapped to workin
     const phases = itemsOf(await get("/api/v1/phases"));
     expect(phases, JSON.stringify(phases).slice(0, 400)).toHaveLength(6);
     expect(phases.map((p) => p.ordinal)).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(phases.map((p) => p.gateCode), "each phase closes at its gate").toEqual(["G1", "G2", "G3", "G4", "G5", "G6"]);
+    expect(
+      phases.map((p) => p.gateCode),
+      "each phase closes at its gate",
+    ).toEqual(["G1", "G2", "G3", "G4", "G5", "G6"]);
     for (const p of phases) {
       expect(p.sourceNameEn.length).toBeGreaterThan(0);
       expect(p.nameAr, "an Arabic name").toMatch(/[؀-ۿ]/);
@@ -126,6 +130,27 @@ describe("A01 / REQ-S20-001: the playbook's source elements are mapped to workin
     for (const c of cells) expect(JSON.stringify(c.dimension), "bilingual dimension").toMatch(/[؀-ۿ]/);
   });
 
+  it("TOM canvas is a working feature: the lead edits a box natively (If-Match, new version, read back); the read-only auditor is refused 403 (QA-EB)", async () => {
+    const path = `${TX}/tom-canvas/technology`;
+    const before = await get(path);
+    const v: number = before.cell.version;
+    const target = "Synthetic QA target design: one roaming rating platform (A01 final run).";
+    const denied = await call<Loose>(api.app, "PATCH", path, {
+      session: reader,
+      headers: { "if-match": `"${v}"` },
+      body: { targetDesign: target },
+    });
+    expect(denied.status, JSON.stringify(denied.body)).toBe(403);
+    const ok = await call<Loose>(api.app, "PATCH", path, {
+      session: lead,
+      headers: { "if-match": `"${v}"` },
+      body: { targetDesign: target },
+    });
+    expect(ok.status, JSON.stringify(ok.body).slice(0, 600)).toBe(200);
+    expect(ok.body.cell).toMatchObject({ dimensionCode: "technology", targetDesign: target, version: v + 1 });
+    expect((await get(path)).cell).toMatchObject({ targetDesign: target, version: v + 1 });
+  });
+
   it("business case: the example's transformation case is readable with its totals", async () => {
     const list = itemsOf(await get(`/api/v1/business-cases?transformationId=${T}`));
     expect(list.length).toBeGreaterThanOrEqual(1);
@@ -163,7 +188,10 @@ describe("A01 / REQ-S20-001: the playbook's source elements are mapped to workin
     if (made.status !== 201) expect(made.body.code, JSON.stringify(made.body)).toBe("health_check.draft_exists");
     const after = itemsOf(await get(`${TX}/health-checks`));
     expect(after.length).toBe(before.length + (made.status === 201 ? 1 : 0));
-    expect(after.some((h) => h.status === "draft"), JSON.stringify(after).slice(0, 600)).toBe(true);
+    expect(
+      after.some((h) => h.status === "draft"),
+      JSON.stringify(after).slice(0, 600),
+    ).toBe(true);
   });
 
   it("example (B0143-B0147): the seeded example transformation carries the playbook's North Star and the three traceability chains", async () => {

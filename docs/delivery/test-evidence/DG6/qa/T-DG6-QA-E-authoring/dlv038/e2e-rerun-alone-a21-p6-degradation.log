@@ -1,0 +1,19 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb 2026-10-31T04:57:10Z: spec re-run ALONE on a fresh stack
+# E2E_PG_PORT=27080 E2E_API_PORT=27081 MTH_PORT_POOL=27082-27089 E2E_SCREENSHOT_DIR=$TMPDIR/shots-re QA_EVIDENCE_DIR=$TMPDIR/shots-re-qa apps/web/e2e/support/with-stack.sh npx playwright test e2e/a21-p6-degradation.spec.ts --workers=1 --reporter=list --output=$TMPDIR/pw-re-a21-p6-degradation
+port-policy: PostgreSQL listening on port 27080 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 27081 (attempt 1)
+API: http://localhost:27081 (APP_BASE_URL=http://localhost:27081, PORT=27081)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 4 tests using 1 worker
+
+  ✓  1 [chromium-en] › e2e/a21-p6-degradation.spec.ts:131:1 › A21 / REQ-S17-009: Administration shows the assistant off (not configured), telemetry off, and every channel not enabled (6.6s)
+  ✓  2 [chromium-en] › e2e/a21-p6-degradation.spec.ts:180:1 › A21 / REQ-S12-023: with no channel configured the reviewer finds the reminder in the inbox, follows it and accepts the actual (7.0s)
+  ✓  3 [chromium-ar] › e2e/a21-p6-degradation.spec.ts:131:1 › A21 / REQ-S17-009: Administration shows the assistant off (not configured), telemetry off, and every channel not enabled (7.1s)
+  ✓  4 [chromium-ar] › e2e/a21-p6-degradation.spec.ts:180:1 › A21 / REQ-S12-023: with no channel configured the reviewer finds the reminder in the inbox, follows it and accepts the actual (7.0s)
+
+  4 passed (34.6s)
+EXIT=0

@@ -1,0 +1,200 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - search "Search records" [ref=e10]:
+      - generic [ref=e11]: Search for
+      - textbox "Search for" [ref=e12]:
+        - /placeholder: Search records
+      - button "Search records" [ref=e13] [cursor=pointer]: Search
+    - button "Switch language to العربية" [ref=e15] [cursor=pointer]: العربية
+    - generic [ref=e16]:
+      - generic [ref=e17]: Synthetic Dev Admin
+      - generic [ref=e18]: Synthetic Dev Organization
+    - button "Sign out" [ref=e19] [cursor=pointer]:
+      - img [ref=e20]
+      - generic [ref=e22]: Sign out
+  - generic [ref=e24]:
+    - navigation "Primary navigation" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "My Work" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: My Work
+          - list "My Work" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "Tasks and inbox" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "Approvals" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "Delegations" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "Notification preferences" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "Playbook and Procedures" [ref=e40] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e41]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "Phase steps and review queue" [ref=e44] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e45]:
+              - link "Playbook reader" [ref=e46] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e47]:
+              - link "My procedures" [ref=e48] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e49]:
+              - link "90-day launch plan" [ref=e50] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e51]:
+              - link "Health check" [ref=e52] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e53]:
+          - link "Administration" [ref=e54] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e55]: Administration
+          - list "Administration" [ref=e56]:
+            - listitem [ref=e57]:
+              - link "Calendar" [ref=e58] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e59]:
+              - link "Jobs" [ref=e60] [cursor=pointer]:
+                - /url: /admin/jobs
+            - listitem [ref=e61]:
+              - link "Form builder" [ref=e62] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e63]:
+              - link "Procedure builder" [ref=e64] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e65]:
+              - link "Automation" [ref=e66] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e67]:
+              - link "Approval routes" [ref=e68] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e69]:
+              - link "Branding" [ref=e70] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e71]:
+              - link "Demo environment" [ref=e72] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e73]:
+              - link "Job operations" [ref=e74] [cursor=pointer]:
+                - /url: /admin/jobs/operations
+            - listitem [ref=e75]:
+              - link "Audit" [ref=e76] [cursor=pointer]:
+                - /url: /admin/audit
+            - listitem [ref=e77]:
+              - link "Security" [ref=e78] [cursor=pointer]:
+                - /url: /admin/security
+            - listitem [ref=e79]:
+              - link "Sensitive grants" [ref=e80] [cursor=pointer]:
+                - /url: /admin/sensitive-grants
+            - listitem [ref=e81]:
+              - link "Operations" [ref=e82] [cursor=pointer]:
+                - /url: /admin/operations
+            - listitem [ref=e83]:
+              - link "Identity" [ref=e84] [cursor=pointer]:
+                - /url: /admin/identity
+            - listitem [ref=e85]:
+              - link "Storage" [ref=e86] [cursor=pointer]:
+                - /url: /admin/storage
+            - listitem [ref=e87]:
+              - link "Notifications" [ref=e88] [cursor=pointer]:
+                - /url: /admin/notification-channels
+            - listitem [ref=e89]:
+              - link "AI assistant" [ref=e90] [cursor=pointer]:
+                - /url: /admin/assistant
+            - listitem [ref=e91]:
+              - link "Integrations" [ref=e92] [cursor=pointer]:
+                - /url: /admin/integrations
+      - paragraph [ref=e93]:
+        - link "About this product" [ref=e94] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e95]:
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - navigation "Breadcrumbs" [ref=e98]:
+            - list [ref=e99]:
+              - listitem [ref=e100]:
+                - link "Administration" [ref=e101] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=e102]:
+                - text: /
+                - link "Operations" [ref=e103] [cursor=pointer]:
+                  - /url: /admin/operations
+              - listitem [ref=e104]:
+                - text: /
+                - generic [ref=e105]: Operational exception
+          - generic [ref=e107]:
+            - heading "Operational exception" [level=1] [ref=e108]
+            - paragraph [ref=e109]: "One operational exception: its occurrences, linked KPIs, acknowledgement and resolution."
+        - region "Connector unreachable Open" [ref=e110]:
+          - heading "Connector unreachable Open" [level=2] [ref=e111]:
+            - text: Connector unreachable
+            - generic [ref=e112]:
+              - img [ref=e113]
+              - text: Open
+          - generic [ref=e115]:
+            - term [ref=e116]: Source
+            - definition [ref=e117]: Connector · qa-a17x-fail-ene05086
+            - term [ref=e118]: Occurrences
+            - definition [ref=e119]: "1"
+            - term [ref=e120]: First occurred
+            - definition [ref=e121]: 31 Oct 2026, 07:25
+            - term [ref=e122]: Last occurred
+            - definition [ref=e123]: 31 Oct 2026, 07:25
+            - term [ref=e124]: Error code
+            - definition [ref=e125]: connector.source_unavailable
+            - term [ref=e126]: Last error
+            - definition [ref=e127]: The source system did not respond.
+            - term [ref=e128]: Service identity
+            - definition [ref=e129]:
+              - link "01a19034-d605-72ce-812d-38bf35be24de" [ref=e130] [cursor=pointer]:
+                - /url: /admin/service-identities/01a19034-d605-72ce-812d-38bf35be24de
+          - generic [ref=e131]:
+            - button "Acknowledge" [ref=e132] [cursor=pointer]
+            - button "Resolve" [ref=e133] [cursor=pointer]
+        - region "Linked KPIs" [ref=e134]:
+          - heading "Linked KPIs" [level=2] [ref=e136]
+          - paragraph [ref=e137]:
+            - img [ref=e138]
+            - text: "Linked KPIs not shown because you cannot read them: 1."
+        - region "History" [ref=e140]:
+          - heading "History" [level=2] [ref=e142]
+          - region "History" [ref=e143]:
+            - table "History" [ref=e144]:
+              - caption [ref=e145]: History
+              - rowgroup [ref=e146]:
+                - row "Time History Status Occurrences Error code Note" [ref=e147]:
+                  - columnheader "Time" [ref=e148]
+                  - columnheader "History" [ref=e149]
+                  - columnheader "Status" [ref=e150]
+                  - columnheader "Occurrences" [ref=e151]
+                  - columnheader "Error code" [ref=e152]
+                  - columnheader "Note" [ref=e153]
+              - rowgroup [ref=e154]:
+                - row "31 Oct 2026, 07:25 Opened Open 1 connector.source_unavailable —" [ref=e155]:
+                  - rowheader "31 Oct 2026, 07:25" [ref=e156]
+                  - cell "Opened" [ref=e157]
+                  - cell "Open" [ref=e158]:
+                    - generic [ref=e159]:
+                      - img [ref=e160]
+                      - text: Open
+                  - cell "1" [ref=e162]
+                  - cell "connector.source_unavailable" [ref=e163]
+                  - cell "—" [ref=e164]
+```

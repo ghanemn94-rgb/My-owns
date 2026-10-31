@@ -1,0 +1,59 @@
+# mutation M7, 2026-10-31T04:32:30Z, disposable clone at 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb: summary.json states rep-3 read p95 1 ms lower than the raw samples give
+diff --git a/docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/summary.json b/docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/summary.json
+index e83f16026..d6800c73a 100644
+--- a/docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/summary.json
++++ b/docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/summary.json
+@@ -103,7 +103,7 @@
+           "errors": 0,
+           "conflicts": 0,
+           "p50": 7189,
+-          "p95": 22906,
++          "p95": 21906,
+           "p99": 42623,
+           "max": 302451
+         }
+# command: npx vitest run --configLoader runner --project unit-node tests/qa/unit/dlv038-s20-029-load-report.test.ts
+
+ RUN  v3.2.7 /var/tmp/mth-run.yqkbFS/claude-0/mut
+
+ ❯ |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts (6 tests | 1 failed) 92ms
+   ✓ REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > three repetitions, each with steady-state samples of the five classes 75ms
+   × REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > every stated p95 and count (6 groups x 3 repetitions) equals the recomputation to the microsecond 11ms
+     → read p95 per repetition: expected [ 19325, 21478, 21906 ] to deeply equal [ 19325, 21478, 22906 ]
+   ✓ REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > each class is judged against its target (2 s, dashboards 4 s); a class over target is a listed miss, and 'no miss' is claimed only when none is over 3ms
+   ✓ REQ-S20-029: the report states the dataset, the infrastructure and the workload > dataset: 50 transformations, 1,000 initiatives, 10,000 KPI-period actuals, 100,000 audit events (marker and counts at capture) 1ms
+   ✓ REQ-S20-029: the report states the dataset, the infrastructure and the workload > infrastructure: CPUs, memory, Node, PostgreSQL with its non-default settings, and the not-production caveat 0ms
+   ✓ REQ-S20-029: the report states the dataset, the infrastructure and the workload > workload: 100 concurrent users, warm-up excluded, a 600 s steady state, three repetitions with the same seed 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts > REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > every stated p95 and count (6 groups x 3 repetitions) equals the recomputation to the microsecond
+AssertionError: read p95 per repetition: expected [ 19325, 21478, 21906 ] to deeply equal [ 19325, 21478, 22906 ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    19325,[22m
+[2m    21478,[22m
+[32m-   22906,[39m
+[31m+   21906,[39m
+[2m  ][22m
+
+ ❯ tests/qa/unit/dlv038-s20-029-load-report.test.ts:109:9
+    107|         g.perRep.map((r) => r.p95),
+    108|         `${g.key} p95 per repetition`,
+    109|       ).toEqual(recomputed.get(g.key));
+       |         ^
+    110|       expect(
+    111|         g.perRep.map((r) => r.count),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  04:32:32
+   Duration  800ms (transform 59ms, setup 0ms, collect 195ms, tests 92ms, environment 0ms, prepare 135ms)
+
+EXIT=1 (expected non-zero)
