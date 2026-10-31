@@ -146,6 +146,20 @@ An unreachable store keeps the existing DG2 503 problem `unavailable` ("Service 
 
 No entity here holds money, a rate, FTE or a KPI value. `smtp_port`, `attempts` and byte sizes are integers. A channel that was never configured shows "Not configured", never "Enabled"; a storage test that was not run shows "Not tested".
 
+### 8. Composition: one `SecretProvider` registry per process, and the connection log (as shipped 2026-10-31; T-DG6-ARCH-08)
+
+Every credential reference in this ADR (`s3_access_key_ref`, `s3_secret_key_ref`, `smtp_username_ref`, `smtp_password_ref`) and in ADR-0055 and ADR-0059 is resolved through the `SecretProvider` registry of the process that needs it (ADR-0052 §5). Each composition root creates exactly one registry: `withSecretRedaction(createSecretProviderRegistry())`, then `registerBuiltInSecretProviders` (the `env` and `file` providers, BE-E), so every resolved value joins the log redaction set (ADR-0053 §4 item 1). An IT-supplied provider is registered on the same registry.
+
+**API (`apps/api/src/server.ts`).** The one registry is handed to:
+- the evidence store (`SelectingEvidenceStore`) and Administration > Storage (the test target), for the S3 references (§2);
+- Administration > Notifications, for the SMTP references of the test send (§3);
+- the integrations module, through `setConnectorSecretProviders(secrets)` (T-DG6-BE-X2; F-DG6-QA-A-1): connector credentials and webhook signing secrets (ADR-0055, ADR-0056). Before this line every reference was unresolvable;
+- the assistant, through `setAssistantSecretProviders(secrets)` (T-DG6-BE-X3): the HTTP endpoint's `credentialRef` (ADR-0059 §2, §12). Before this line a configured reference never resolved.
+
+**Worker (`apps/worker/src/main.ts`).** Its own registry, built the same way (the twin `apps/worker/src/secrets.ts`), resolves the SMTP references of the channel sends (`configureNotificationChannels`, T-DG6-BE-I2; §3 step 3). The worker executes no connector adapter and has no assistant code, so it hands the registry to neither.
+
+**The A21 connection log** (ADR-0059 §12) is installed by both roots: in the API by `buildServer` (`holdApiConnectionLog`, one subscription per log file, held per composed app and removed by the last `onClose`), and in the worker right after `installConsoleRedaction()` and before the first database connection. It is a test instrument: ignored, with one warning, under `NODE_ENV=production`. So an outbound call that this ADR's adapters make (an S3 request, an SMTP connection) appears in that log when the variable is set, with the fields ADR-0059 §12 lists.
+
 ## Alternatives
 
 - **Pre-signed object-store URLs for downloads.** Rejected: ADR-0010 §2, REQ-S16-006 "never served from a public URL", D-195 Q2.
