@@ -498,7 +498,9 @@ describe("receiveWebhook: every authentication failure is the same 401 and store
       ["malformed signature", deliver(e.endpointKey, body, { headers: { "x-mth-webhook-signature": "v1=zz" } })],
       ["malformed delivery id", deliver(e.endpointKey, body, { headers: { "x-mth-webhook-delivery": "short" } })],
       ["stale timestamp", deliver(e.endpointKey, body, { timestamp: Math.floor(Date.now() / 1000) - 61 })],
-      ["future timestamp", deliver(e.endpointKey, body, { timestamp: Math.floor(Date.now() / 1000) + 61 })],
+      // +3600, not +61: the timestamps are computed when this array is built, and the requests are served later. A slow host
+      // can close a 1 s margin over the 60 s tolerance; a stale timestamp only gets staler, so -61 keeps its meaning.
+      ["future timestamp", deliver(e.endpointKey, body, { timestamp: Math.floor(Date.now() / 1000) + 3600 })],
       ["unknown key", deliver("A".repeat(43), body)],
       ["disabled endpoint", deliver(other.endpointKey, body)],
       ["disabled connector", deliver(stopped.endpointKey, body)],
