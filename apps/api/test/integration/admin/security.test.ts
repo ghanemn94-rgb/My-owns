@@ -101,7 +101,7 @@ describe("getSecurityRateLimits", () => {
           variable: "WEBHOOK_RATE_LIMIT_PER_MINUTE",
           perMinute: 6001,
           keyedBy: "endpoint_key",
-          operationIds: [],
+          operationIds: ["receiveWebhook"], // T-DG6-BE-N (the merged hooks.ts carries both classes; orchestrator, pre-freeze)
         },
         {
           name: "export",

@@ -1127,6 +1127,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     ]);
   });
 
+  // Budget measured, not guessed (D-173 rule): this sweep sends one request per body operation (932 operations at the
+  // DG6 freeze). Alone on an idle host it took 13.3 s (orchestrator, pre-freeze run); in the full integration project the
+  // files run in parallel and both copies (contract, response-validation) exceeded the 30 s default. 90 s leaves headroom.
   it("every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written", async () => {
     const checked = await exerciseUndeclaredMediaTypes({ api, world: w, session: admin }, operations);
     const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
@@ -1138,7 +1141,7 @@ describe("every operation, validated against the contract and the zod mirrors", 
     );
     expect(checked.bodyOperations.length + checked.getOperations.length).toBe(live.length);
     expect(checked.bodyOperations).toContain("uploadEvidenceContent");
-  });
+  }, 90_000);
 
   // T-DG2-ARCH-03 (ADR-0007 §5b): every status the platform layer can return is declared on the operation.
   it("the contract: every operation declares each platform status derived from its route (ADR-0007 §5b)", () => {
