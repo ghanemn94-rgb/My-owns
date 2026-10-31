@@ -759,7 +759,8 @@ export function ContrastReport({ r }: { r: BrandingContrastReport }) {
         {r.tokenSourceSha256 ? (
           <>
             <dt>{t("explanations.contrast.sha")}</dt>
-            <dd>
+            {/* 64 hex characters with no break opportunity: wrap anywhere, so a 320–390 px screen does not scroll. */}
+            <dd className="code--wrap">
               <bdi dir="ltr" className="code small">
                 {r.tokenSourceSha256}
               </bdi>

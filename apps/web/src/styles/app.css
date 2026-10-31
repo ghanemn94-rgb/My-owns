@@ -112,6 +112,10 @@ a:hover {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
 }
+/* Long codes without break opportunities (hashes, identifiers): wrap at any character instead of widening the page. */
+.code--wrap {
+  overflow-wrap: anywhere;
+}
 .link {
   color: var(--mth-action-primary);
   font-weight: 500;
@@ -1205,10 +1209,32 @@ input[type="radio"] {
    is a banner below the header. */
 @media (max-width: 30rem) {
   .app-header {
+    flex-wrap: wrap;
     gap: var(--mth-space-2);
+    row-gap: var(--mth-space-1);
     padding-inline: var(--mth-space-3);
   }
+  /* T-DG6-FE-X3: the P6 header controls (global search, assistant launcher) no longer fit one 320 px row next to the
+     wordmark. The spacer becomes a full-width line break: the menu button and the wordmark keep the first row, and the
+     controls continue on the next row in the same DOM, focus and visual order. The search field shrinks to the room
+     left on that row instead of squeezing the wordmark. */
+  .app-header__spacer {
+    flex-basis: 100%;
+    block-size: 0;
+  }
+  .app-header .global-search {
+    flex: 1 1 8rem;
+    min-inline-size: 0;
+  }
+  .app-header .global-search__input {
+    flex: 1 1 3rem;
+    inline-size: auto;
+    min-inline-size: 0;
+  }
   .wordmark {
+    /* Basis 0: the wordmark takes the rest of the first row next to the menu button (it wraps its name and badge
+       inside its box) instead of moving to a row of its own. */
+    flex: 1 1 0;
     flex-wrap: wrap;
     row-gap: 0;
     min-inline-size: 0;

@@ -238,7 +238,9 @@ export function SensitivityPanel({
           )}
         </>
       ) : (
-        <p className="small muted" data-state="read-only">
+        // Its own marker: `data-state="read-only"` is the page's one read-only banner (Workspace), which a record page
+        // must show exactly once; this note only explains who may change the restriction.
+        <p className="small muted" data-state="sensitivity-read-only">
           <Icon name="info" /> {t("adminP6.sensitivity.cannotManage")}
         </p>
       )}
