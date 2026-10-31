@@ -391,7 +391,14 @@ async function linkedKpiStatus(
           .as("ev"),
       (join) => join.onTrue(),
     )
-    .select(["ev.value", "ev.value_status", "ev.value_reason", "ev.calculated_rag", "ev.explanation_key", "ev.data_as_of"])
+    .select([
+      "ev.value",
+      "ev.value_status",
+      "ev.value_reason",
+      "ev.calculated_rag",
+      "ev.explanation_key",
+      "ev.data_as_of",
+    ])
     .where("p.organization_id", "=", link.organization_id)
     .where("p.frequency", "=", def.frequency)
     .where("p.status", "in", ["open", "closed"])
