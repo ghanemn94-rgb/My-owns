@@ -332,10 +332,11 @@ async function startOfBusinessDate(db: DbOrTx, organizationId: string, date: str
 }
 
 /**
- * One linked KPI as the DG4 panel shows it at transformation scope for its current reporting period (ADR-0028 §6):
- * the latest period evaluation with the read-time staleness rule of @mth/shared/calc, the same function and the same
- * reads as kpi/kpi-status.ts `statusOf` (operations may not import kpi, ADR-0002; the integration test compares the
- * two). Nothing is written; a missing evaluation is Unknown with a null value, never 0.
+ * One linked KPI with its last known value at transformation scope (ADR-0053 §2, M0239): the panel evaluation of the
+ * KPI's latest reporting period that has a value, with the read-time staleness rule of @mth/shared/calc, the same
+ * function and the same per-period read as kpi/kpi-status.ts `statusOf` for that period (operations may not import
+ * kpi, ADR-0002; the integration tests compare the two). Nothing is written; a KPI with no value in any period is
+ * Unknown with a null value, never 0.
  */
 async function linkedKpiStatus(
   db: DbOrTx,
@@ -362,26 +363,47 @@ async function linkedKpiStatus(
     .where("status", "=", "active")
     .executeTakeFirst();
   if (!version) return unknown;
-  const period = await db
-    .selectFrom("reporting_period")
-    .select("id")
-    .where("organization_id", "=", link.organization_id)
-    .where("frequency", "=", def.frequency)
-    .where("status", "in", ["open", "closed"])
-    .orderBy("period_end", "desc")
-    .limit(1)
-    .executeTakeFirst();
-  if (!period) return unknown;
+  // The last known value (M0239; ADR-0053 §2; REQ-S12-019, T-DG6-BE-X4): the newest open or closed period of the KPI's
+  // frequency whose panel evaluation (the slot's highest run seq, as kpi-status.ts) carries a value. A later period
+  // without one (the current month, which the failing feed did not fill) never hides the last value and its date.
   const evaluation = await db
-    .selectFrom("kpi_evaluation as e")
-    .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
-    .select(["e.value", "e.value_status", "e.value_reason", "e.calculated_rag", "e.explanation_key", "e.data_as_of"])
-    .where("e.kpi_definition_id", "=", def.id)
-    .where("e.scope_kind", "=", "transformation")
-    .where("e.scope_id", "=", link.transformation_id)
-    .where("e.reporting_period_id", "=", period.id)
-    .where("e.value_basis", "=", "period")
-    .orderBy("r.seq", "desc")
+    .selectFrom("reporting_period as p")
+    .innerJoinLateral(
+      (eb) =>
+        eb
+          .selectFrom("kpi_evaluation as e")
+          .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
+          .select([
+            "e.value",
+            "e.value_status",
+            "e.value_reason",
+            "e.calculated_rag",
+            "e.explanation_key",
+            "e.data_as_of",
+          ])
+          .where("e.kpi_definition_id", "=", def.id)
+          .where("e.scope_kind", "=", "transformation")
+          .where("e.scope_id", "=", link.transformation_id)
+          .whereRef("e.reporting_period_id", "=", "p.id")
+          .where("e.value_basis", "=", "period")
+          .orderBy("r.seq", "desc")
+          .limit(1)
+          .as("ev"),
+      (join) => join.onTrue(),
+    )
+    .select([
+      "ev.value",
+      "ev.value_status",
+      "ev.value_reason",
+      "ev.calculated_rag",
+      "ev.explanation_key",
+      "ev.data_as_of",
+    ])
+    .where("p.organization_id", "=", link.organization_id)
+    .where("p.frequency", "=", def.frequency)
+    .where("p.status", "in", ["open", "closed"])
+    .where("ev.value", "is not", null)
+    .orderBy("p.period_end", "desc")
     .limit(1)
     .executeTakeFirst();
   if (!evaluation) return unknown;
