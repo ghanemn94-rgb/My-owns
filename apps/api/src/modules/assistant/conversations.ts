@@ -1,5 +1,6 @@
 // Assistant conversations and messages (ADR-0059 §9, §10; REQ-S17-007, REQ-S17-009, REQ-S17-010; T-DG6-BE-T).
-//   GET  /api/v1/assistant/conversations                            listAssistantConversations  (own only; on or off)
+//   GET  /api/v1/assistant/conversations                            listAssistantConversations  (own only; on or off;
+//                                                                   + assistantEnabled, T-DG6-BE-X5)
 //   POST /api/v1/assistant/conversations                            createAssistantConversation (422 when off)
 //   GET  /api/v1/assistant/conversations/{conversationId}           getAssistantConversation    (own only; re-checked)
 //   POST /api/v1/assistant/conversations/{conversationId}/messages  postAssistantMessage        (rate-limit class)
@@ -105,6 +106,8 @@ export const assistantConversationView = z.strictObject({
 export const assistantConversationPage = z.strictObject({
   items: z.array(assistantConversationView),
   nextCursor: z.string().nullable(),
+  /** Whether the assistant is on for the caller now (T-DG6-BE-X5; REQ-S17-007): no other setting field is returned. */
+  assistantEnabled: z.boolean(),
 });
 const recordCitationView = z.strictObject({
   source: z.literal("record"),
@@ -548,7 +551,11 @@ export function registerAssistantConversationRoutes(app: FastifyInstance, { db, 
     return { setting, provider: providerFor(setting, assistantSecretProviders(), env) };
   };
 
-  // listAssistantConversations: own only, updatedAt desc then id desc; works on or off.
+  // listAssistantConversations: own only, updatedAt desc then id desc; works on or off. Each page also says whether the
+  // assistant is on for the caller (`assistantEnabled`, T-DG6-BE-X5): the same providerFor check that create and post
+  // make, so the web offers the panel to every holder of assistant.use without the admin setting read (REQ-S17-007).
+  // Only the boolean leaves this route: no provider, endpoint, model, credential reference or limit. Constructing the
+  // provider makes no network call.
   app.get(LIST, { config: { access: { permission: USE } } }, async (request) => {
     const query = parseQuery(listQuery, request.query);
     const principal = principalOf(request);
@@ -583,9 +590,11 @@ export function registerAssistantConversationRoutes(app: FastifyInstance, { db, 
       .execute();
     const page = rows.slice(0, query.limit);
     const last = page[page.length - 1];
+    const assistantEnabled = (await enabledProvider(db)).provider !== null;
     return {
       items: page.map(({ updated_us: _us, ...row }) => toConversationView(row)),
       nextCursor: rows.length > query.limit && last ? encodeCursor([last.updated_us, last.id], hash) : null,
+      assistantEnabled,
     };
   });
 

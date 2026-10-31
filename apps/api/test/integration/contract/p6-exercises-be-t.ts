@@ -155,6 +155,7 @@ export async function exerciseP6BeTOperations(ctx: P6ExerciseContext): Promise<v
   const list = await mirrored("GET", `${C}?limit=1`, { session: office });
   expect(list.status).toBe(200);
   expect(list.body.items.map((c: { id: string }) => c.id)).toContain(id);
+  expect(list.body.assistantEnabled).toBe(true); // T-DG6-BE-X5: the user-level availability signal while on
   expect((await mirrored("GET", `${C}?limit=0`, { session: office })).status).toBe(400);
   expect((await mirrored("GET", C)).status).toBe(401);
   expect((await mirrored("GET", C, { session: auditor })).status).toBe(403);
@@ -182,4 +183,7 @@ export async function exerciseP6BeTOperations(ctx: P6ExerciseContext): Promise<v
   expect([disabledPost.status, disabledPost.body.code]).toEqual([422, "assistant.disabled"]);
   const disabledCreate = await mirrored("POST", C, { session: office, body: { title: "Synthetic while off" } });
   expect([disabledCreate.status, disabledCreate.body.code]).toEqual([422, "assistant.disabled"]);
+  // T-DG6-BE-X5: the list still reads while off, and now says the assistant is off.
+  const offList = await mirrored("GET", `${C}?limit=1`, { session: office });
+  expect([offList.status, offList.body.assistantEnabled]).toEqual([200, false]);
 }

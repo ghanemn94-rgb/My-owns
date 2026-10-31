@@ -3,10 +3,11 @@
 // the response shapes (mirrors of docs/api/openapi.yaml `Assistant*`; no @mth/shared mirror exists at this revision),
 // and the record links of the citation chips.
 //
-// Off means hidden (ADR-0059 §3, §11): `useAssistantAvailability` answers "on" only when the setting read says
-// `enabled: true`. No row, a failed read and a read the caller may not make (403: getAssistantSetting needs
-// assistant.configure or operations.read) all answer "off" or "unknown", and the panel is not shown: never "On" by
-// guess. The handback records the contract need of an `enabled` read for every holder of assistant.use.
+// Off means hidden (ADR-0059 §3, §11): `useAssistantAvailability` answers "on" only when the server says the assistant
+// is on for the caller. It reads `assistantEnabled` from listAssistantConversations (limit 1; assistant.use, every role
+// except AUD), never the admin setting read (getAssistantSetting needs assistant.configure or operations.read, so an
+// ordinary user got 403 there and never saw the panel: QA-B D2, repaired by T-DG6-BE-X5). A failed or pending read is
+// "unknown" and the panel is not shown: never "On" by guess.
 import { useQuery } from "@tanstack/react-query";
 import { api, apiRequest, ApiError } from "../../api/client.ts";
 import { shouldRetry } from "../../api/queries.ts";
@@ -103,6 +104,8 @@ export interface AssistantConversation {
 export interface AssistantConversationPage {
   readonly items: readonly AssistantConversation[];
   readonly nextCursor: string | null;
+  /** Whether the assistant is on for the caller now (the only setting information a user receives; T-DG6-BE-X5). */
+  readonly assistantEnabled: boolean;
 }
 
 export const REPLY_KINDS = ["answer", "refusal", "no_sources", "unavailable", "interrupted"] as const;
@@ -219,6 +222,8 @@ export const assistantPaths = {
 export const assistantKeys = {
   all: ["p6", "assistant"] as const,
   setting: ["p6", "assistant", "setting"] as const,
+  /** Under `setting`, so every invalidation of the setting (the admin screen's toggles, the panel) refreshes it too. */
+  availability: ["p6", "assistant", "setting", "availability"] as const,
   conversations: (transformationId: string | null) =>
     ["p6", "assistant", "conversations", transformationId ?? ""] as const,
   conversation: (id: string) => ["p6", "assistant", "conversation", id] as const,
@@ -248,20 +253,30 @@ export function canUseAssistant(me: Me | undefined): boolean {
 export type AssistantAvailability = "on" | "off" | "unknown";
 
 /**
- * "on" only when the setting read answers `enabled: true`. While pending, on a failure, or when the caller may not
- * read the setting (403), it is "unknown"; with no row or `enabled: false` it is "off". The panel shows only for "on".
+ * "on" only when the availability read answers `assistantEnabled: true`. While pending or on a failure (including a
+ * 403) it is "unknown"; with `assistantEnabled: false` it is "off". The panel shows only for "on".
  */
 export function availabilityOf(query: {
-  readonly data?: AssistantSetting | undefined;
+  readonly data?: Pick<AssistantConversationPage, "assistantEnabled"> | undefined;
   readonly error?: unknown;
 }): AssistantAvailability {
-  if (query.data) return query.data.enabled === true ? "on" : "off";
+  if (query.data) return query.data.assistantEnabled === true ? "on" : "off";
   return "unknown";
+}
+
+/** The availability read: one page of one of the caller's own conversations, for its `assistantEnabled` flag. */
+export function readAssistantAvailability(): Promise<AssistantConversationPage> {
+  return api.get<AssistantConversationPage>(assistantPaths.conversations, { limit: 1 });
 }
 
 export function useAssistantAvailability(me: Me | undefined): AssistantAvailability {
   const may = canUseAssistant(me);
-  const q = useAssistantSetting(may);
+  const q = useQuery({
+    queryKey: assistantKeys.availability,
+    queryFn: readAssistantAvailability,
+    enabled: may,
+    retry: shouldRetry,
+  });
   if (!may) return "off";
   return availabilityOf(q);
 }

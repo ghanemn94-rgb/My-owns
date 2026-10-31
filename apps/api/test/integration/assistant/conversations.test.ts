@@ -20,7 +20,7 @@ import {
   registerAssistantPlaybookPassagePort,
 } from "../../../src/modules/assistant/retrieval.ts";
 import { loadSetting } from "../../../src/modules/assistant/settings.ts";
-import { testAdapter } from "../../../src/modules/assistant/provider.ts";
+import { providerFor, testAdapter } from "../../../src/modules/assistant/provider.ts";
 import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
 import { FakeModel } from "../../support/fake-model.ts";
 import {
@@ -265,7 +265,7 @@ describe("off means no call (REQ-S17-009; ADR-0059 §3)", () => {
     expect(res.body.detail).toBe("The assistant is turned off. Every other feature works without it.");
     const list = await call<Body>(api.app, "GET", C, { session: office });
     expect(list.status).toBe(200);
-    expect(list.body).toEqual({ items: [], nextCursor: null });
+    expect(list.body).toEqual({ items: [], nextCursor: null, assistantEnabled: false });
   });
 
   it("an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable", async () => {
@@ -311,6 +311,107 @@ describe("off means no call (REQ-S17-009; ADR-0059 §3)", () => {
     expect(res.body.reply).toMatchObject({ replyKind: "no_sources", content: null, providerKind: null });
     expect(fake.requestCount).toBe(0);
     await setting({}, true); // back to the test adapter, enabled, for the rest of the suite
+  });
+});
+
+describe("assistantEnabled: whether the assistant is on, for every holder of assistant.use (T-DG6-BE-X5; REQ-S17-007)", () => {
+  // The setting fields that only getAssistantSetting may return (assistant.configure or operations.read).
+  const SETTING_KEYS = [
+    "configured",
+    "enabled",
+    "providerKind",
+    "endpointUrl",
+    "apiStyle",
+    "modelName",
+    "credentialRef",
+    "authorizationReference",
+    "requestTimeoutMs",
+    "maxOutputTokens",
+    "maxContextRecords",
+    "enabledAt",
+    "enabledBy",
+    "reason",
+  ];
+  const listAs = (session: Session, query = "?limit=1") => call<Body>(api.app, "GET", `${C}${query}`, { session });
+
+  it("a TL without assistant.configure or operations.read: 403 on the setting, and the list says on/off and nothing else", async () => {
+    const lead = (await userWith([["TL", { type: "transformation", id: tA1 }]])).session;
+    // The admin read stays closed to this user (the admin screens are unchanged).
+    expect((await call<Body>(api.app, "GET", S, { session: lead })).status).toBe(403);
+    await setting({}, true);
+    const on = await listAs(lead);
+    expect(on.status).toBe(200);
+    expect(on.body.assistantEnabled).toBe(true);
+    expect(Object.keys(on.body).sort()).toEqual(["assistantEnabled", "items", "nextCursor"]);
+    const text = JSON.stringify(on.body);
+    for (const key of SETTING_KEYS) expect(Object.hasOwn(on.body, key)).toBe(false);
+    expect(text).not.toContain("IT-APPROVAL-SYNTHETIC-0100"); // the authorization reference
+    expect(text).not.toContain("test_adapter"); // the provider kind
+    // The filter and the cursor do not change the signal.
+    expect((await listAs(lead, `?limit=1&transformationId=${tA1}`)).body.assistantEnabled).toBe(true);
+    // Off (a saved but disabled HTTP endpoint): false, and the endpoint, model and credential reference stay hidden.
+    await setting(
+      {
+        providerKind: "http_endpoint",
+        endpointUrl: fake.url,
+        apiStyle: "openai_chat_completions",
+        modelName: "synthetic-model-x5",
+        credentialRef: { provider: "env", name: "MTH_SYNTHETIC_X5_KEY" },
+      },
+      false,
+    );
+    const before = fake.requestCount;
+    const off = await listAs(lead);
+    expect([off.status, off.body.assistantEnabled]).toEqual([200, false]);
+    for (const s of [fake.url, "synthetic-model-x5", "MTH_SYNTHETIC_X5_KEY"])
+      expect(JSON.stringify(off.body)).not.toContain(s);
+    // Enabled HTTP endpoint: true, still nothing of the setting, and reading the signal sends nothing to the model.
+    const current = (await loadSetting(api.db))!;
+    const enabled = await call<Body>(api.app, "POST", `${S}/enable`, {
+      session: admin,
+      body: { reason: "Synthetic: on (http, X5)" },
+      headers: ifm(current.version),
+    });
+    expect(enabled.status).toBe(200);
+    const onHttp = await listAs(lead);
+    expect(onHttp.body.assistantEnabled).toBe(true);
+    for (const s of [fake.url, "synthetic-model-x5", "MTH_SYNTHETIC_X5_KEY"])
+      expect(JSON.stringify(onHttp.body)).not.toContain(s);
+    expect(fake.requestCount).toBe(before);
+    await setting({}, true); // back to the test adapter, enabled, for the rest of the suite
+  });
+
+  it("agrees with create: when the list says false, create answers 422 assistant.disabled; when true, create succeeds", async () => {
+    await setting({}, false);
+    expect((await listAs(office)).body.assistantEnabled).toBe(false);
+    expect((await create(office)).body.code).toBe("assistant.disabled");
+    await setting({}, true);
+    expect((await listAs(office)).body.assistantEnabled).toBe(true);
+    expect((await create(office, { title: "Synthetic: X5 agrees" })).status).toBe(201);
+  });
+
+  it("the signal is providerFor's answer: a test adapter saved and enabled is refused under NODE_ENV=production", async () => {
+    // The route computes assistantEnabled as providerFor(setting, …, { nodeEnv }) !== null, the check create and post
+    // make. This suite's server runs outside production (where the row is on); the production answer of the same row
+    // is null, so a production server reports false (the settings suite tests the production refusals themselves).
+    await setting({}, true);
+    const row = (await loadSetting(api.db))!;
+    expect(row.enabled).toBe(true);
+    expect((await listAs(office)).body.assistantEnabled).toBe(true);
+    expect(providerFor(row, null, { nodeEnv: "test" })).not.toBeNull();
+    expect(providerFor(row, null, { nodeEnv: "production" })).toBeNull();
+  });
+
+  it("AUD, a user without assistant.use and an anonymous caller learn nothing: 403, 403, 401", async () => {
+    await setting({}, true);
+    for (const session of [auditor, nobody]) {
+      const res = await listAs(session);
+      expect(res.status).toBe(403);
+      expect(Object.hasOwn(res.body, "assistantEnabled")).toBe(false);
+    }
+    const anon = await call<Body>(api.app, "GET", `${C}?limit=1`);
+    expect(anon.status).toBe(401);
+    expect(Object.hasOwn(anon.body, "assistantEnabled")).toBe(false);
   });
 });
 
