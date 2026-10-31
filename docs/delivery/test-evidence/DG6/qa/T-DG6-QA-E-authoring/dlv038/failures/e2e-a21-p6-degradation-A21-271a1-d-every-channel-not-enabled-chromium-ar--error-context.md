@@ -1,0 +1,183 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - search "البحث في السجلات" [ref=e10]:
+      - generic [ref=e11]: ابحث عن
+      - textbox "ابحث عن" [ref=e12]:
+        - /placeholder: ابحث في السجلات
+      - button "البحث في السجلات" [ref=e13] [cursor=pointer]: بحث
+    - button "تغيير اللغة إلى English" [ref=e15] [cursor=pointer]: English
+    - generic [ref=e16]:
+      - generic [ref=e17]: Synthetic Dev Admin
+      - generic [ref=e18]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e19] [cursor=pointer]:
+      - img [ref=e20]
+      - generic [ref=e22]: تسجيل الخروج
+  - generic [ref=e24]:
+    - navigation "التنقل الرئيسي" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "عملي" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: عملي
+          - list "عملي" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "المهام وصندوق الوارد" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "الموافقات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "التفويضات" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "تفضيلات الإشعارات" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "الدليل والإجراءات" [ref=e40] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e41]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e44] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e45]:
+              - link "قارئ الدليل" [ref=e46] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e47]:
+              - link "إجراءاتي" [ref=e48] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e49]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e50] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e51]:
+              - link "فحص سلامة التحوّل" [ref=e52] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e53]:
+          - link "الإدارة" [ref=e54] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e55]: الإدارة
+          - list "الإدارة" [ref=e56]:
+            - listitem [ref=e57]:
+              - link "التقويم" [ref=e58] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e59]:
+              - link "المهام المجدولة" [ref=e60] [cursor=pointer]:
+                - /url: /admin/jobs
+            - listitem [ref=e61]:
+              - link "منشئ النماذج" [ref=e62] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e63]:
+              - link "منشئ الإجراءات" [ref=e64] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e65]:
+              - link "الأتمتة" [ref=e66] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e67]:
+              - link "مسارات الاعتماد" [ref=e68] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e69]:
+              - link "الهوية البصرية" [ref=e70] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e71]:
+              - link "بيئة العرض التوضيحي" [ref=e72] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e73]:
+              - link "تشغيل المهام المجدولة" [ref=e74] [cursor=pointer]:
+                - /url: /admin/jobs/operations
+            - listitem [ref=e75]:
+              - link "سجل التدقيق" [ref=e76] [cursor=pointer]:
+                - /url: /admin/audit
+            - listitem [ref=e77]:
+              - link "الأمان" [ref=e78] [cursor=pointer]:
+                - /url: /admin/security
+            - listitem [ref=e79]:
+              - link "صلاحيات السجلات الحساسة" [ref=e80] [cursor=pointer]:
+                - /url: /admin/sensitive-grants
+            - listitem [ref=e81]:
+              - link "العمليات التشغيلية" [ref=e82] [cursor=pointer]:
+                - /url: /admin/operations
+            - listitem [ref=e83]:
+              - link "الهوية" [ref=e84] [cursor=pointer]:
+                - /url: /admin/identity
+            - listitem [ref=e85]:
+              - link "التخزين" [ref=e86] [cursor=pointer]:
+                - /url: /admin/storage
+            - listitem [ref=e87]:
+              - link "الإشعارات" [ref=e88] [cursor=pointer]:
+                - /url: /admin/notification-channels
+            - listitem [ref=e89]:
+              - link "مساعد الذكاء الاصطناعي" [ref=e90] [cursor=pointer]:
+                - /url: /admin/assistant
+            - listitem [ref=e91]:
+              - link "التكاملات" [ref=e92] [cursor=pointer]:
+                - /url: /admin/integrations
+      - paragraph [ref=e93]:
+        - link "حول هذا المنتج" [ref=e94] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e95]:
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - navigation "مسار التنقل" [ref=e98]:
+            - list [ref=e99]:
+              - listitem [ref=e100]:
+                - link "الإدارة" [ref=e101] [cursor=pointer]:
+                  - /url: /admin
+              - listitem [ref=e102]:
+                - text: /
+                - generic [ref=e103]: مساعد الذكاء الاصطناعي
+          - generic [ref=e105]:
+            - heading "مساعد الذكاء الاصطناعي" [level=1] [ref=e106]
+            - paragraph [ref=e107]: المساعد الاختياري. يبقى متوقفًا ما لم يشغّله مسؤول تقني بمرجع تفويض من الشركة.
+        - region "الحالة" [ref=e108]:
+          - heading "الحالة" [level=2] [ref=e109]
+          - paragraph [ref=e110]:
+            - generic [ref=e111]:
+              - img [ref=e112]
+              - text: متوقف
+          - paragraph [ref=e114]: "القياس عن بُعد والتحليلات: متوقفة. لا يحتوي هذا التثبيت على أي عميل للقياس عن بُعد أو التحليلات."
+          - paragraph [ref=e115]: لا تُختبر أي نقطة نهاية لنموذج من هذا المنتج. نقطة نهاية HTTP هي التي توفرها إدارة تقنية المعلومات لديك؛ ولا يتحقق المنتج منها.
+          - generic [ref=e116]:
+            - button "تعديل الإعدادات" [ref=e117] [cursor=pointer]:
+              - img [ref=e118]
+              - text: تعديل الإعدادات
+            - button "تشغيل" [ref=e120] [cursor=pointer]
+        - region "الإعدادات" [ref=e121]:
+          - heading "الإعدادات" [level=2] [ref=e122]
+          - generic [ref=e123]:
+            - term [ref=e124]: المزوّد
+            - definition [ref=e125]: محوّل اختبار محلي (ليس للإنتاج)
+            - term [ref=e126]: عنوان نقطة النهاية
+            - definition [ref=e127]: غير محدد
+            - term [ref=e128]: نمط الواجهة البرمجية
+            - definition [ref=e129]: لم يُختر
+            - term [ref=e130]: اسم النموذج
+            - definition [ref=e131]: غير محدد
+            - term [ref=e132]: "مرجع بيانات الاعتماد: المزوّد"
+            - definition [ref=e133]: لا يوجد
+            - term [ref=e134]: "مرجع بيانات الاعتماد: الاسم"
+            - definition [ref=e135]: لا يوجد
+            - term [ref=e136]: مرجع تفويض الشركة
+            - definition [ref=e137]:
+              - text: IT-APPROVAL-SYNTHETIC-QA-A12
+              - paragraph [ref=e138]: يُسجَّل المرجع كما أُدخل؛ ولا يتحقق المنتج منه مع إدارة تقنية المعلومات.
+            - term [ref=e139]: مهلة الطلب (بالمللي ثانية)
+            - definition [ref=e140]: "30000"
+            - term [ref=e141]: الحد الأقصى لطول الإجابة (وحدات نصية)
+            - definition [ref=e142]: "1024"
+            - term [ref=e143]: الحد الأقصى للسجلات لكل سؤال
+            - definition [ref=e144]: "8"
+            - term [ref=e145]: الإصدار
+            - definition [ref=e146]: "12"
+            - term [ref=e147]: آخر تغيير
+            - definition [ref=e148]: 31‏/10‏/2026 07:39
+```

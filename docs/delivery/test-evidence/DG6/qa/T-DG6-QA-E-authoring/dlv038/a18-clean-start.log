@@ -1,0 +1,402 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb 2026-10-31T05:00:52Z
+# QA_A18_PG_PORT=27055 QA_A18_PORT=27056 MTH_PORT_POOL=27057-27069 e2e/clean-start/a18-clean-start.sh (no --install: the assignment forbids pnpm install; the install step is NOT RUN)
+
+==> [   0.1 s] environment
+  date (UTC): 2026-10-31T05:00:52Z; node v24.21.0; pnpm 10.33.0; postgres (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+==> [   0.9 s] 1. fresh checkout of HEAD
+  PASS checked-out commit: 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb
+  PASS working tree clean: 
+  PASS no build output or node_modules in the fresh checkout
+
+==> [  54.0 s] 2. dependencies
+  NOT RUN: pnpm install (forbidden by the DG1 QA assignment). Copying the candidate's installed node_modules,
+  which were installed from the same committed pnpm-lock.yaml.
+
+==> [  58.6 s] 3. build (documented: pnpm -r build)
+apps/worker build: Done
+apps/api build: Done
+  PASS build outputs present
+
+==> [ 492.4 s] 4. fresh PostgreSQL, roles and empty database (docs/operations: mth_owner owns, mth_app runtime)
+port-policy: PostgreSQL listening on port 27055 (attempt 1)
+
+==> [ 496.0 s] 5. migrate the fresh database (documented: mth-db status / migrate)
+  | pending  0001_identity_access.sql
+  | pending  0002_transformation.sql
+  | pending  0003_audit_event.sql
+  | pending  0004_outbox_jobs.sql
+  | pending  0005_seed_roles_permissions.sql
+  | pending  0006_pgboss_schema_v25.sql
+  | pending  0007_oidc_login_browser_binding.sql
+  | pending  0008_scoped_assignment_derived_from.sql
+  | pending  0009_business_unit_hierarchy_guard.sql
+  | pending  0010_p2_record_guards.sql
+  | pending  0011_p2_methodology_catalogue.sql
+  | pending  0012_p2_evidence.sql
+  | pending  0013_p2_direction_charter.sql
+  | pending  0014_p2_kpi_baseline_value_pool.sql
+  | pending  0015_p2_diagnose.sql
+  | pending  0016_p2_design_tom.sql
+  | pending  0017_p2_decisions_gates.sql
+  | pending  0018_p2_access_instantiation.sql
+  | pending  0019_evidence_review_separation.sql
+  | pending  0020_p3_portfolio_roadmap.sql
+  | pending  0021_p3_prioritization.sql
+  | pending  0022_p3_dependency_capacity_funding.sql
+  | pending  0023_p3_business_case_formula.sql
+  | pending  0024_p3_gates_access_instantiation.sql
+  | pending  0025_p3_g1_agreement_guard.sql
+  | pending  0026_p3_enable_g4.sql
+  | pending  0027_p3_calculation_rounding.sql
+  | pending  0028_p4_calendar_jobs_work_items.sql
+  | pending  0029_p4_groups_role_mapping_delegation.sql
+  | pending  0030_p4_decision_rights_raci.sql
+  | pending  0031_p4_approvals_permissions.sql
+  | pending  0032_p4_slice_i_c_reserved.sql
+  | pending  0033_p4_kpi_dictionary_versions.sql
+  | pending  0034_p4_kpi_trajectories_actuals.sql
+  | pending  0035_p4_kpi_calculation_runs_quality.sql
+  | pending  0036_p4_kpi_permissions_backfill.sql
+  | pending  0037_p4_benefit_register.sql
+  | pending  0038_p4_benefit_measurement_validation.sql
+  | pending  0039_p4_benefit_value_views.sql
+  | pending  0040_p4_benefit_permissions.sql
+  | pending  0041_p4_raid_actions_corrective.sql
+  | pending  0042_p4_budget_schedule.sql
+  | pending  0043_p4_raid_permissions.sql
+  | pending  0044_p4_forums_meetings.sql
+  | pending  0045_p4_t16_escalation.sql
+  | pending  0046_p4_governance_permissions.sql
+  | pending  0047_p4_adoption.sql
+  | pending  0048_p4_sustainment.sql
+  | pending  0049_p4_adoption_sustainment_permissions.sql
+  | pending  0050_p4_sustainment_schedules.sql
+  | pending  0051_p4_phases_gates_g5_g6_exceptions.sql
+  | pending  0052_p4_change_control.sql
+  | pending  0053_p4_gates_change_permissions.sql
+  | pending  0054_p4_gate_exception_expiry_schedule.sql
+  | pending  0055_p4_traceability_modular_structure.sql
+  | pending  0056_p4_dashboards_t10.sql
+  | pending  0057_p4_dashboards_traceability_permissions.sql
+  | pending  0058_p4_approval_reminder_kinds.sql
+  | pending  0059_p4_enable_g5_g6.sql
+  | pending  0060_p4_governance_schedules_weekly_cadence.sql
+  | pending  0061_p4_finance_validation_correction_step.sql
+  | pending  0062_p5_config_versions.sql
+  | pending  0063_p5_pins_methodology_migrations.sql
+  | pending  0064_p5_studio_permissions_source_inventory.sql
+  | pending  0065_p5_scoring_defaults_instantiation.sql
+  | pending  0068_p5_form_schemas_framework.sql
+  | pending  0069_p5_procedures.sql
+  | pending  0070_p5_forms_procedures_permissions_coverage.sql
+  | pending  0071_p5_choice_multiple_values.sql
+  | pending  0072_p5_procedure_step_approval_type.sql
+  | pending  0074_p5_automation_engine.sql
+  | pending  0075_p5_starters_routes_policies.sql
+  | pending  0076_p5_automation_permissions.sql
+  | pending  0080_p5_reports_snapshots_updates.sql
+  | pending  0081_p5_export_jobs.sql
+  | pending  0082_p5_reporting_permissions.sql
+  | pending  0085_p5_kpi_restatements_financial_metrics.sql
+  | pending  0086_p5_launch_plans_health_checks.sql
+  | pending  0087_p5_kpi_launch_health_permissions.sql
+  | pending  0088_p5_launch_health_source_working.sql
+  | pending  0089_p5_reader_provenance_branding.sql
+  | pending  0090_p5_demo_environment_walkthrough.sql
+  | pending  0091_p5_reader_branding_demo_permissions.sql
+  | pending  0092_p5_playbook_blocks.sql
+  | pending  0093_p5_roaming_example_source_working.sql
+  | pending  0094_p5_gate_approver_configured.sql
+  | pending  0095_p5_procedures_v2_baseline_assignee.sql
+  | pending  0096_p5_intake_adopts_transformation.sql
+  | pending  0097_p5_config_review_contributors.sql
+  | pending  0098_p6_sensitive_records_deep_links.sql
+  | pending  0099_p6_upload_policy_content_types.sql
+  | pending  0100_p6_access_hardening_permissions.sql
+  | pending  0101_p6_operations_service_identities.sql
+  | pending  0102_p6_storage_notification_channels.sql
+  | pending  0103_p6_operations_channels_permissions.sql
+  | pending  0104_p6_connectors_runs_outbound_writes.sql
+  | pending  0105_p6_imports_lineage_webhooks.sql
+  | pending  0106_p6_deliverable_external_change.sql
+  | pending  0107_p6_integrations_permissions.sql
+  | pending  0108_p6_search_saved_views_help.sql
+  | pending  0109_p6_search_productivity_permissions.sql
+  | pending  0110_p6_register_filter_indexes.sql
+  | pending  0111_p6_assistant.sql
+  | pending  0112_p6_assistant_permissions.sql
+  | pending  0113_p6_branding_contrast_reports.sql
+  | pending  0114_p6_job_service_identities.sql
+  | pending  0115_p6_search_index_jobs.sql
+  | pending  0116_p6_connector_run_jobs.sql
+  | pending  0117_p6_operations_triggers_freshness.sql
+  | pending  0118_p6_evidence_content_detected_type_required.sql
+  | pending  0119_p6_branding_version_contrast_required.sql
+  | pending  0120_p6_audit_required_index_use.sql
+  | pending  0121_p6_notification_fanout_jobs.sql
+  | mth-db status: 113 pending
+  | mth-db migrate: applying 0001_identity_access.sql
+  | mth-db migrate: applying 0002_transformation.sql
+  | mth-db migrate: applying 0003_audit_event.sql
+  | mth-db migrate: applying 0004_outbox_jobs.sql
+  | mth-db migrate: applying 0005_seed_roles_permissions.sql
+  | mth-db migrate: applying 0006_pgboss_schema_v25.sql
+  | mth-db migrate: applying 0007_oidc_login_browser_binding.sql
+  | mth-db migrate: applying 0008_scoped_assignment_derived_from.sql
+  | mth-db migrate: applying 0009_business_unit_hierarchy_guard.sql
+  | mth-db migrate: applying 0010_p2_record_guards.sql
+  | mth-db migrate: applying 0011_p2_methodology_catalogue.sql
+  | mth-db migrate: applying 0012_p2_evidence.sql
+  | mth-db migrate: applying 0013_p2_direction_charter.sql
+  | mth-db migrate: applying 0014_p2_kpi_baseline_value_pool.sql
+  | mth-db migrate: applying 0015_p2_diagnose.sql
+  | mth-db migrate: applying 0016_p2_design_tom.sql
+  | mth-db migrate: applying 0017_p2_decisions_gates.sql
+  | mth-db migrate: applying 0018_p2_access_instantiation.sql
+  | mth-db migrate: applying 0019_evidence_review_separation.sql
+  | mth-db migrate: applying 0020_p3_portfolio_roadmap.sql
+  | mth-db migrate: applying 0021_p3_prioritization.sql
+  | mth-db migrate: applying 0022_p3_dependency_capacity_funding.sql
+  | mth-db migrate: applying 0023_p3_business_case_formula.sql
+  | mth-db migrate: applying 0024_p3_gates_access_instantiation.sql
+  | mth-db migrate: applying 0025_p3_g1_agreement_guard.sql
+  | mth-db migrate: applying 0026_p3_enable_g4.sql
+  | mth-db migrate: applying 0027_p3_calculation_rounding.sql
+  | mth-db migrate: applying 0028_p4_calendar_jobs_work_items.sql
+  | mth-db migrate: applying 0029_p4_groups_role_mapping_delegation.sql
+  | mth-db migrate: applying 0030_p4_decision_rights_raci.sql
+  | mth-db migrate: applying 0031_p4_approvals_permissions.sql
+  | mth-db migrate: applying 0032_p4_slice_i_c_reserved.sql
+  | mth-db migrate: applying 0033_p4_kpi_dictionary_versions.sql
+  | mth-db migrate: applying 0034_p4_kpi_trajectories_actuals.sql
+  | mth-db migrate: applying 0035_p4_kpi_calculation_runs_quality.sql
+  | mth-db migrate: applying 0036_p4_kpi_permissions_backfill.sql
+  | mth-db migrate: applying 0037_p4_benefit_register.sql
+  | mth-db migrate: applying 0038_p4_benefit_measurement_validation.sql
+  | mth-db migrate: applying 0039_p4_benefit_value_views.sql
+  | mth-db migrate: applying 0040_p4_benefit_permissions.sql
+  | mth-db migrate: applying 0041_p4_raid_actions_corrective.sql
+  | mth-db migrate: applying 0042_p4_budget_schedule.sql
+  | mth-db migrate: applying 0043_p4_raid_permissions.sql
+  | mth-db migrate: applying 0044_p4_forums_meetings.sql
+  | mth-db migrate: applying 0045_p4_t16_escalation.sql
+  | mth-db migrate: applying 0046_p4_governance_permissions.sql
+  | mth-db migrate: applying 0047_p4_adoption.sql
+  | mth-db migrate: applying 0048_p4_sustainment.sql
+  | mth-db migrate: applying 0049_p4_adoption_sustainment_permissions.sql
+  | mth-db migrate: applying 0050_p4_sustainment_schedules.sql
+  | mth-db migrate: applying 0051_p4_phases_gates_g5_g6_exceptions.sql
+  | mth-db migrate: applying 0052_p4_change_control.sql
+  | mth-db migrate: applying 0053_p4_gates_change_permissions.sql
+  | mth-db migrate: applying 0054_p4_gate_exception_expiry_schedule.sql
+  | mth-db migrate: applying 0055_p4_traceability_modular_structure.sql
+  | mth-db migrate: applying 0056_p4_dashboards_t10.sql
+  | mth-db migrate: applying 0057_p4_dashboards_traceability_permissions.sql
+  | mth-db migrate: applying 0058_p4_approval_reminder_kinds.sql
+  | mth-db migrate: applying 0059_p4_enable_g5_g6.sql
+  | mth-db migrate: applying 0060_p4_governance_schedules_weekly_cadence.sql
+  | mth-db migrate: applying 0061_p4_finance_validation_correction_step.sql
+  | mth-db migrate: applying 0062_p5_config_versions.sql
+  | mth-db migrate: applying 0063_p5_pins_methodology_migrations.sql
+  | mth-db migrate: applying 0064_p5_studio_permissions_source_inventory.sql
+  | mth-db migrate: applying 0065_p5_scoring_defaults_instantiation.sql
+  | mth-db migrate: applying 0068_p5_form_schemas_framework.sql
+  | mth-db migrate: applying 0069_p5_procedures.sql
+  | mth-db migrate: applying 0070_p5_forms_procedures_permissions_coverage.sql
+  | mth-db migrate: applying 0071_p5_choice_multiple_values.sql
+  | mth-db migrate: applying 0072_p5_procedure_step_approval_type.sql
+  | mth-db migrate: applying 0074_p5_automation_engine.sql
+  | mth-db migrate: applying 0075_p5_starters_routes_policies.sql
+  | mth-db migrate: applying 0076_p5_automation_permissions.sql
+  | mth-db migrate: applying 0080_p5_reports_snapshots_updates.sql
+  | mth-db migrate: applying 0081_p5_export_jobs.sql
+  | mth-db migrate: applying 0082_p5_reporting_permissions.sql
+  | mth-db migrate: applying 0085_p5_kpi_restatements_financial_metrics.sql
+  | mth-db migrate: applying 0086_p5_launch_plans_health_checks.sql
+  | mth-db migrate: applying 0087_p5_kpi_launch_health_permissions.sql
+  | mth-db migrate: applying 0088_p5_launch_health_source_working.sql
+  | mth-db migrate: applying 0089_p5_reader_provenance_branding.sql
+  | mth-db migrate: applying 0090_p5_demo_environment_walkthrough.sql
+  | mth-db migrate: applying 0091_p5_reader_branding_demo_permissions.sql
+  | mth-db migrate: applying 0092_p5_playbook_blocks.sql
+  | mth-db migrate: applying 0093_p5_roaming_example_source_working.sql
+  | mth-db migrate: applying 0094_p5_gate_approver_configured.sql
+  | mth-db migrate: applying 0095_p5_procedures_v2_baseline_assignee.sql
+  | mth-db migrate: applying 0096_p5_intake_adopts_transformation.sql
+  | mth-db migrate: applying 0097_p5_config_review_contributors.sql
+  | mth-db migrate: applying 0098_p6_sensitive_records_deep_links.sql
+  | mth-db migrate: applying 0099_p6_upload_policy_content_types.sql
+  | mth-db migrate: applying 0100_p6_access_hardening_permissions.sql
+  | mth-db migrate: applying 0101_p6_operations_service_identities.sql
+  | mth-db migrate: applying 0102_p6_storage_notification_channels.sql
+  | mth-db migrate: applying 0103_p6_operations_channels_permissions.sql
+  | mth-db migrate: applying 0104_p6_connectors_runs_outbound_writes.sql
+  | mth-db migrate: applying 0105_p6_imports_lineage_webhooks.sql
+  | mth-db migrate: applying 0106_p6_deliverable_external_change.sql
+  | mth-db migrate: applying 0107_p6_integrations_permissions.sql
+  | mth-db migrate: applying 0108_p6_search_saved_views_help.sql
+  | mth-db migrate: applying 0109_p6_search_productivity_permissions.sql
+  | mth-db migrate: applying 0110_p6_register_filter_indexes.sql
+  | mth-db migrate: applying 0111_p6_assistant.sql
+  | mth-db migrate: applying 0112_p6_assistant_permissions.sql
+  | mth-db migrate: applying 0113_p6_branding_contrast_reports.sql
+  | mth-db migrate: applying 0114_p6_job_service_identities.sql
+  | mth-db migrate: applying 0115_p6_search_index_jobs.sql
+  | mth-db migrate: applying 0116_p6_connector_run_jobs.sql
+  | mth-db migrate: applying 0117_p6_operations_triggers_freshness.sql
+  | mth-db migrate: applying 0118_p6_evidence_content_detected_type_required.sql
+  | mth-db migrate: applying 0119_p6_branding_version_contrast_required.sql
+  | mth-db migrate: applying 0120_p6_audit_required_index_use.sql
+  | mth-db migrate: applying 0121_p6_notification_fanout_jobs.sql
+  | mth-db migrate: applied 113 migration(s)
+  | mth-db migrate: database is up to date
+  | applied  0001_identity_access.sql
+  | applied  0002_transformation.sql
+  | applied  0003_audit_event.sql
+  | applied  0004_outbox_jobs.sql
+  | applied  0005_seed_roles_permissions.sql
+  | applied  0006_pgboss_schema_v25.sql
+  | applied  0007_oidc_login_browser_binding.sql
+  | applied  0008_scoped_assignment_derived_from.sql
+  | applied  0009_business_unit_hierarchy_guard.sql
+  | applied  0010_p2_record_guards.sql
+  | applied  0011_p2_methodology_catalogue.sql
+  | applied  0012_p2_evidence.sql
+  | applied  0013_p2_direction_charter.sql
+  | applied  0014_p2_kpi_baseline_value_pool.sql
+  | applied  0015_p2_diagnose.sql
+  | applied  0016_p2_design_tom.sql
+  | applied  0017_p2_decisions_gates.sql
+  | applied  0018_p2_access_instantiation.sql
+  | applied  0019_evidence_review_separation.sql
+  | applied  0020_p3_portfolio_roadmap.sql
+  | applied  0021_p3_prioritization.sql
+  | applied  0022_p3_dependency_capacity_funding.sql
+  | applied  0023_p3_business_case_formula.sql
+  | applied  0024_p3_gates_access_instantiation.sql
+  | applied  0025_p3_g1_agreement_guard.sql
+  | applied  0026_p3_enable_g4.sql
+  | applied  0027_p3_calculation_rounding.sql
+  | applied  0028_p4_calendar_jobs_work_items.sql
+  | applied  0029_p4_groups_role_mapping_delegation.sql
+  | applied  0030_p4_decision_rights_raci.sql
+  | applied  0031_p4_approvals_permissions.sql
+  | applied  0032_p4_slice_i_c_reserved.sql
+  | applied  0033_p4_kpi_dictionary_versions.sql
+  | applied  0034_p4_kpi_trajectories_actuals.sql
+  | applied  0035_p4_kpi_calculation_runs_quality.sql
+  | applied  0036_p4_kpi_permissions_backfill.sql
+  | applied  0037_p4_benefit_register.sql
+  | applied  0038_p4_benefit_measurement_validation.sql
+  | applied  0039_p4_benefit_value_views.sql
+  | applied  0040_p4_benefit_permissions.sql
+  | applied  0041_p4_raid_actions_corrective.sql
+  | applied  0042_p4_budget_schedule.sql
+  | applied  0043_p4_raid_permissions.sql
+  | applied  0044_p4_forums_meetings.sql
+  | applied  0045_p4_t16_escalation.sql
+  | applied  0046_p4_governance_permissions.sql
+  | applied  0047_p4_adoption.sql
+  | applied  0048_p4_sustainment.sql
+  | applied  0049_p4_adoption_sustainment_permissions.sql
+  | applied  0050_p4_sustainment_schedules.sql
+  | applied  0051_p4_phases_gates_g5_g6_exceptions.sql
+  | applied  0052_p4_change_control.sql
+  | applied  0053_p4_gates_change_permissions.sql
+  | applied  0054_p4_gate_exception_expiry_schedule.sql
+  | applied  0055_p4_traceability_modular_structure.sql
+  | applied  0056_p4_dashboards_t10.sql
+  | applied  0057_p4_dashboards_traceability_permissions.sql
+  | applied  0058_p4_approval_reminder_kinds.sql
+  | applied  0059_p4_enable_g5_g6.sql
+  | applied  0060_p4_governance_schedules_weekly_cadence.sql
+  | applied  0061_p4_finance_validation_correction_step.sql
+  | applied  0062_p5_config_versions.sql
+  | applied  0063_p5_pins_methodology_migrations.sql
+  | applied  0064_p5_studio_permissions_source_inventory.sql
+  | applied  0065_p5_scoring_defaults_instantiation.sql
+  | applied  0068_p5_form_schemas_framework.sql
+  | applied  0069_p5_procedures.sql
+  | applied  0070_p5_forms_procedures_permissions_coverage.sql
+  | applied  0071_p5_choice_multiple_values.sql
+  | applied  0072_p5_procedure_step_approval_type.sql
+  | applied  0074_p5_automation_engine.sql
+  | applied  0075_p5_starters_routes_policies.sql
+  | applied  0076_p5_automation_permissions.sql
+  | applied  0080_p5_reports_snapshots_updates.sql
+  | applied  0081_p5_export_jobs.sql
+  | applied  0082_p5_reporting_permissions.sql
+  | applied  0085_p5_kpi_restatements_financial_metrics.sql
+  | applied  0086_p5_launch_plans_health_checks.sql
+  | applied  0087_p5_kpi_launch_health_permissions.sql
+  | applied  0088_p5_launch_health_source_working.sql
+  | applied  0089_p5_reader_provenance_branding.sql
+  | applied  0090_p5_demo_environment_walkthrough.sql
+  | applied  0091_p5_reader_branding_demo_permissions.sql
+  | applied  0092_p5_playbook_blocks.sql
+  | applied  0093_p5_roaming_example_source_working.sql
+  | applied  0094_p5_gate_approver_configured.sql
+  | applied  0095_p5_procedures_v2_baseline_assignee.sql
+  | applied  0096_p5_intake_adopts_transformation.sql
+  | applied  0097_p5_config_review_contributors.sql
+  | applied  0098_p6_sensitive_records_deep_links.sql
+  | applied  0099_p6_upload_policy_content_types.sql
+  | applied  0100_p6_access_hardening_permissions.sql
+  | applied  0101_p6_operations_service_identities.sql
+  | applied  0102_p6_storage_notification_channels.sql
+  | applied  0103_p6_operations_channels_permissions.sql
+  | applied  0104_p6_connectors_runs_outbound_writes.sql
+  | applied  0105_p6_imports_lineage_webhooks.sql
+  | applied  0106_p6_deliverable_external_change.sql
+  | applied  0107_p6_integrations_permissions.sql
+  | applied  0108_p6_search_saved_views_help.sql
+  | applied  0109_p6_search_productivity_permissions.sql
+  | applied  0110_p6_register_filter_indexes.sql
+  | applied  0111_p6_assistant.sql
+  | applied  0112_p6_assistant_permissions.sql
+  | applied  0113_p6_branding_contrast_reports.sql
+  | applied  0114_p6_job_service_identities.sql
+  | applied  0115_p6_search_index_jobs.sql
+  | applied  0116_p6_connector_run_jobs.sql
+  | applied  0117_p6_operations_triggers_freshness.sql
+  | applied  0118_p6_evidence_content_detected_type_required.sql
+  | applied  0119_p6_branding_version_contrast_required.sql
+  | applied  0120_p6_audit_required_index_use.sql
+  | applied  0121_p6_notification_fanout_jobs.sql
+  | mth-db status: up to date (113 applied)
+  PASS status on the empty database (3 = pending): 3
+  PASS migrate exit: 0
+  PASS second migrate exit (no-op): 0
+  PASS status after migrate (0 = up to date): 0
+  PASS applied migrations recorded = migration files: 113
+
+==> [ 502.7 s] 6. start api + worker in PRODUCTION configuration (AUTH_MODE=oidc; IdP not reachable offline)
+port-policy: API listening on port 27056 (attempt 1)
+
+==> [ 505.4 s] 7. health and readiness
+  PASS GET /healthz status: 200
+  body: {"status":"ok"}
+  PASS healthz body: ok
+  PASS GET /readyz status: 200
+  body: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+  PASS readyz body: ready/ok/ok
+  PASS GET / serves the SPA: 200
+  PASS SPA index has lang="ar" dir="rtl"
+  PASS dev login absent in production (404): 404
+  PASS GET /api/v1/me without a session: 401
+  PASS worker running (pid alive after 2 s)
+
+==> [ 508.0 s] 8. restart: the API comes back ready against the same database
+port-policy: API listening on port 27056 (attempt 1)
+  PASS GET /readyz after restart: 200
+
+==> [ 511.2 s] 9. negative: an UNMIGRATED database is live but not ready
+port-policy: API listening on port 27056 (attempt 1)
+  PASS GET /healthz (liveness) on an unmigrated database: 200
+  PASS GET /readyz on an unmigrated database: 503
+  body: {"status":"not_ready","checks":{"database":"ok","migrations":"pending"}}
+
+==> [ 517.4 s] done
+A18 CLEAN START: PASS (commit 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb; install step: NOT RUN, candidate node_modules reused; total 517.5 s)
+EXIT=0
