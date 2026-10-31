@@ -35,7 +35,10 @@ import { z } from "zod";
 import { holdsAnywhere, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   etag,
   filterHash,
@@ -261,16 +264,17 @@ export function registerCalculationRoutes(app: FastifyInstance, { db }: ModuleDe
     if (after)
       q = q.where((eb) =>
         eb.or([
-          eb("computed_at", "<", new Date(String(after[0]))),
-          eb.and([eb("computed_at", "=", new Date(String(after[0]))), eb("id", "<", String(after[1]))]),
+          eb("computed_at", "<", cursorInstantValue(after[0])),
+          eb.and([eb("computed_at", "=", cursorInstantValue(after[0])), eb("id", "<", cursorUuidText(after[1]))]),
         ]),
       );
     const rows = await q
+      .select(cursorInstant("computed_at").as("cursor_at"))
       .orderBy("computed_at", "desc")
       .orderBy("id", "desc")
       .limit(query.limit + 1)
       .execute();
-    const page = paginate(rows, query.limit, (r) => [r.computed_at.toISOString(), r.id], hash);
+    const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
     return { items: page.items.map(toBenefitCalculation), nextCursor: page.nextCursor };
   });
 

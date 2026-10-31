@@ -12,10 +12,11 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { authorize, organizationsWith, principalOf } from "../access/index.ts";
 import {
+  cursorInstantText,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
-  iso,
   limitSchema,
   paginate,
   parse,
@@ -82,10 +83,10 @@ export function registerOperationsRoutes(app: FastifyInstance, { db }: ModuleDep
       ...(query.status ? { status: query.status } : {}),
       ...(query.sourceKind ? { sourceKind: query.sourceKind } : {}),
       ...(query.failureClass ? { failureClass: query.failureClass } : {}),
-      after: after ? [String(after[0]), String(after[1])] : null,
+      after: after ? [cursorInstantText(after[0]), cursorUuidText(after[1])] : null,
       limit,
     });
-    const page = paginate(rows, limit, (r) => [iso(r.last_occurred_at), r.id], hash);
+    const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
     return { items: page.items.map((r) => toOperationalException(r, r.linked_kpi_count)), nextCursor: page.nextCursor };
   });
 

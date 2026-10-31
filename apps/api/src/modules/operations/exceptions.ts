@@ -33,7 +33,7 @@ import {
   type Principal,
 } from "../access/index.ts";
 import { record as audit, type AuditContext } from "../audit/index.ts";
-import { ADVISORY_LOCK_CLASSES, HttpProblem, iso, isoOrNull, problems } from "../platform/index.ts";
+import { ADVISORY_LOCK_CLASSES, HttpProblem, cursorInstant, iso, isoOrNull, problems } from "../platform/index.ts";
 
 export const OPERATIONS_READ: Permission = "operations.read";
 export const OPERATIONS_ACKNOWLEDGE: Permission = "operations.acknowledge";
@@ -273,7 +273,7 @@ export async function listOperationalExceptions(
   db: DbOrTx,
   principal: Principal,
   query: ExceptionListQuery,
-): Promise<ListedException[]> {
+): Promise<(ListedException & { cursor_at: string })[]> {
   const decision = await authorize(db, principal, OPERATIONS_READ, { type: "organization", id: query.organizationId });
   if (!decision.target) throw problems.notFound();
   const orgLevel = decision.allowed;
@@ -304,7 +304,9 @@ export async function listOperationalExceptions(
   if (query.failureClass) q = q.where("e.failure_class", "=", query.failureClass);
   if (query.after)
     q = q.where(sql<boolean>`(e.last_occurred_at, e.id) < (${query.after[0]}::timestamptz, ${query.after[1]}::uuid)`);
+  // cursor_at: last_occurred_at to the microsecond, the page's cursor key (T-DG6-BE-X7).
   return q
+    .select(cursorInstant("e.last_occurred_at").as("cursor_at"))
     .orderBy("e.last_occurred_at", "desc")
     .orderBy("e.id", "desc")
     .limit(query.limit + 1)

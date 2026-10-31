@@ -40,11 +40,14 @@ import { principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
-  cursorSchema,
   DependencyCycleProblem,
+  HttpProblem,
+  cursorInstant,
+  cursorInstantValue,
+  cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
-  HttpProblem,
   iso,
   isoOrNull,
   limitSchema,
@@ -577,16 +580,17 @@ export function registerT08DependencyRoutes(
     if (after)
       q = q.where((eb) =>
         eb.or([
-          eb("updated_at", "<", new Date(String(after[0]))),
-          eb.and([eb("updated_at", "=", new Date(String(after[0]))), eb("id", "<", String(after[1]))]),
+          eb("updated_at", "<", cursorInstantValue(after[0])),
+          eb.and([eb("updated_at", "=", cursorInstantValue(after[0])), eb("id", "<", cursorUuidText(after[1]))]),
         ]),
       );
     const rows = await q
+      .select(cursorInstant("updated_at").as("cursor_at"))
       .orderBy("updated_at", "desc")
       .orderBy("id", "desc")
       .limit(query.limit + 1)
       .execute();
-    const page = paginate(rows, query.limit, (r) => [r.updated_at.toISOString(), r.id], hash);
+    const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
     const flags = await flagsFor(scheduleFlags, db, query.transformationId);
     return { items: page.items.map((r) => toT08Dependency(r, flags(r))), nextCursor: page.nextCursor };
   });

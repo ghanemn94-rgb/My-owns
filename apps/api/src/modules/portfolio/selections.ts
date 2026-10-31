@@ -18,10 +18,13 @@ import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import { record } from "../audit/index.ts";
 import {
+  HttpProblem,
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
-  HttpProblem,
   iso,
   limitSchema,
   paginate,
@@ -195,16 +198,17 @@ export function registerSelectionRoutes(app: FastifyInstance, { db }: ModuleDeps
     if (after)
       q = q.where((eb) =>
         eb.or([
-          eb("decided_at", "<", new Date(String(after[0]))),
-          eb.and([eb("decided_at", "=", new Date(String(after[0]))), eb("id", "<", String(after[1]))]),
+          eb("decided_at", "<", cursorInstantValue(after[0])),
+          eb.and([eb("decided_at", "=", cursorInstantValue(after[0])), eb("id", "<", cursorUuidText(after[1]))]),
         ]),
       );
     const rows = await q
+      .select(cursorInstant("decided_at").as("cursor_at"))
       .orderBy("decided_at", "desc")
       .orderBy("id", "desc")
       .limit(query.limit + 1)
       .execute();
-    const page = paginate(rows, query.limit, (r) => [r.decided_at.toISOString(), r.id], hash);
+    const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
     return { items: page.items.map(toPortfolioSelection), nextCursor: page.nextCursor };
   });
 

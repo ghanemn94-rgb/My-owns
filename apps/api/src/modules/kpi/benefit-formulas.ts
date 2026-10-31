@@ -48,10 +48,13 @@ import { z } from "zod";
 import { holdsAnywhere, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  HttpProblem,
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
-  HttpProblem,
   iso,
   isoOrNull,
   limitSchema,
@@ -694,16 +697,17 @@ export function registerBenefitFormulaRoutes(app: FastifyInstance, { db }: Modul
     if (after)
       q = q.where((eb) =>
         eb.or([
-          eb("created_at", "<", new Date(String(after[0]))),
-          eb.and([eb("created_at", "=", new Date(String(after[0]))), eb("id", "<", String(after[1]))]),
+          eb("created_at", "<", cursorInstantValue(after[0])),
+          eb.and([eb("created_at", "=", cursorInstantValue(after[0])), eb("id", "<", cursorUuidText(after[1]))]),
         ]),
       );
     const rows = await q
+      .select(cursorInstant("created_at").as("cursor_at"))
       .orderBy("created_at", "desc")
       .orderBy("id", "desc")
       .limit(query.limit + 1)
       .execute();
-    const page = paginate(rows, query.limit, (r) => [r.created_at.toISOString(), r.id], hash);
+    const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
     return { items: await presentFormulas(db, page.items), nextCursor: page.nextCursor };
   });
 
