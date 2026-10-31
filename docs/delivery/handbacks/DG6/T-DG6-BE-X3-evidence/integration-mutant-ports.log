@@ -1,0 +1,112 @@
+port-policy: PostgreSQL listening on port 26910 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvoe3ye_3a9e2ce9 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/assistant/composition.test.ts (9 tests | 5 failed) 7571ms
+   × buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > a set credential reference reaches the model as `authorization: Bearer`; the value is never in a response 427ms
+     → {"id":"01a18f67-f147-733f-b742-dc52b89361e1","conversationId":"01a18f67-f0c6-76a8-8694-5c9aa34777f8","seq":2,"author":"assistant","label":"assistant_suggestion","replyKind":"no_sources","refusalCode":null,"errorCode":null,"content":null,"contentWithheld":false,"citations":[],"providerKind":null,"modelName":null,"settingVersion":2,"latencyMs":null,"createdAt":"2026-10-31T00:41:56.273Z"}: expected 'no_sources' to be 'answer' // Object.is equality
+   × buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > an unset reference sends nothing: `unavailable` with assistant.provider_error 218ms
+     → expected [ 'no_sources', null ] to deeply equal [ 'unavailable', …(1) ]
+   × buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > the playbook port gives a reader of no record the playbook passages on 'case for change' 92ms
+     → expected 'no_sources' to be 'answer' // Object.is equality
+   × buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > both ports are the ones buildServer set (each register function returns it; restored at once) 1ms
+     → expected null not to be null
+   × the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > logs the call to the model as the api process, with the destination only 1ms
+     → expected 0 to be greater than or equal to 1
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a TCP attempt that never connects is logged with the requested host and port, not nulls (QA-D-2) 3ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a connection refused on loopback keeps its host, address and port 2ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a failed lookup is logged with the host asked for; no address or port was dialled 3ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > is held per app: a second app on the same file keeps it after closing; the last holder's close removes it  728ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > a set credential reference reaches the model as `authorization: Bearer`; the value is never in a response
+AssertionError: {"id":"01a18f67-f147-733f-b742-dc52b89361e1","conversationId":"01a18f67-f0c6-76a8-8694-5c9aa34777f8","seq":2,"author":"assistant","label":"assistant_suggestion","replyKind":"no_sources","refusalCode":null,"errorCode":null,"content":null,"contentWithheld":false,"citations":[],"providerKind":null,"modelName":null,"settingVersion":2,"latencyMs":null,"createdAt":"2026-10-31T00:41:56.273Z"}: expected 'no_sources' to be 'answer' // Object.is equality
+
+Expected: [32m"answer"[39m
+Received: [31m"no_sources"[39m
+
+ ❯ apps/api/test/integration/assistant/composition.test.ts:158:62
+    156|     const before = fake.requestCount;
+    157|     const body = await askCaseForChange();
+    158|     expect(body.reply.replyKind, JSON.stringify(body.reply)).toBe("ans…
+       |                                                              ^
+    159|     expect(fake.requestCount).toBe(before + 1);
+    160|     expect(fake.requests[fake.requests.length - 1]!.authorization).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > an unset reference sends nothing: `unavailable` with assistant.provider_error
+AssertionError: expected [ 'no_sources', null ] to deeply equal [ 'unavailable', …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "unavailable",[39m
+[32m-   "assistant.provider_error",[39m
+[31m+   "no_sources",[39m
+[31m+   null,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/assistant/composition.test.ts:168:58
+    166|     const before = fake.requestCount;
+    167|     const body = await askCaseForChange();
+    168|     expect([body.reply.replyKind, body.reply.errorCode]).toEqual(["una…
+       |                                                          ^
+    169|     expect(fake.requestCount).toBe(before);
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > the playbook port gives a reader of no record the playbook passages on 'case for change'
+AssertionError: expected 'no_sources' to be 'answer' // Object.is equality
+
+Expected: [32m"answer"[39m
+Received: [31m"no_sources"[39m
+
+ ❯ apps/api/test/integration/assistant/composition.test.ts:179:34
+    177|     const body = await askCaseForChange();
+    178|     // An uncited answer cites every item given: here only playbook pa…
+    179|     expect(body.reply.replyKind).toBe("answer");
+       |                                  ^
+    180|     expect(body.reply.citations.length).toBeGreaterThan(0);
+    181|     for (const c of body.reply.citations) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > both ports are the ones buildServer set (each register function returns it; restored at once)
+AssertionError: expected null not to be null
+ ❯ apps/api/test/integration/assistant/composition.test.ts:192:26
+    190|     const playbook = registerAssistantPlaybookPassagePort(null);
+    191|     registerAssistantPlaybookPassagePort(playbook);
+    192|     expect(evidence).not.toBeNull();
+       |                          ^
+    193|     expect(typeof evidence?.excerpt).toBe("function");
+    194|     expect(playbook).not.toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > logs the call to the model as the api process, with the destination only
+AssertionError: expected 0 to be greater than or equal to 1
+ ❯ apps/api/test/integration/assistant/composition.test.ts:204:27
+    202|     const lines = readLines(logFile);
+    203|     const toFake = lines.filter((l) => l.channel === "undici:client:be…
+    204|     expect(toFake.length).toBeGreaterThanOrEqual(1);
+       |                           ^
+    205|     for (const l of toFake) expect(l).toMatchObject({ process: "api", …
+    206|     for (const l of lines) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 4 passed (9)
+   Start at  00:41:22
+   Duration  34.72s (transform 8.47s, setup 0ms, collect 18.93s, tests 7.57s, environment 0ms, prepare 86ms)
+
