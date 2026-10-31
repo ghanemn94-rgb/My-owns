@@ -1,0 +1,37 @@
+port-policy: PostgreSQL listening on port 26720 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-d
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvlwbxt_4943da5e (server_encoding UTF8); applied 113 migrations to a fresh database
+[qa-mutation] register-ignores-q applied to apps/api/src/modules/portfolio/initiatives.ts
+ ❯ |integration| tests/qa/integration/a20-p6-register-1000.test.ts (4 tests | 1 failed) 4220ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > is paginated: limit 50 gives 20 pages of at most 50, exactly 1,000 distinct initiatives, and the last page ends the chain  448ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > sorts across pages: sort=code is ascending and sort=-code its exact reverse; sort=name agrees with the code order's set  680ms
+   × REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > filters on the server: q is a case-insensitive substring over the text columns and matches exactly the expected subset 515ms
+     → expected 1000 to be less than 1000
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > refuses an unknown sort and an oversized limit with 400 (validation), never a silent full list 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a20-p6-register-1000.test.ts > REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > filters on the server: q is a case-insensitive substring over the text columns and matches exactly the expected subset
+AssertionError: expected 1000 to be less than 1000
+ ❯ tests/qa/integration/a20-p6-register-1000.test.ts:95:29
+     93|     const filtered = (await allPages(`&q=${encodeURIComponent(needle)}…
+     94|     expect(filtered.length).toBeGreaterThan(0);
+     95|     expect(filtered.length).toBeLessThan(N);
+       |                             ^
+     96|     // Every result matches; nothing that matches is missing (the decl…
+     97|     for (const i of filtered)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  23:31:34
+   Duration  20.05s (transform 6.20s, setup 0ms, collect 11.31s, tests 4.22s, environment 0ms, prepare 93ms)
+
