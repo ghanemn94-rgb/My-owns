@@ -7,11 +7,18 @@
 // the `interrupted` recovery; conversation_full; the rate-limit class `assistant` (429); the cursor-paginated list; the
 // read-time ReadScope re-check (a revoked grant withholds an earlier answer and its suggestion); the one log line per
 // post carries no prompt text. BE-T's answer seam is a stub (no_sources): no model is called here even when enabled;
-// BE-U's tests cover retrieval and the provider call. All data is SYNTHETIC; nothing approves anything (G1-G6) or
+// BE-U's tests cover retrieval and the provider call. Since T-DG6-BE-X3B buildServer registers BE-U's two retrieval
+// ports (the playbook port finds passages for these prompts); this file tests the conversation frame with nothing
+// retrievable, so it clears both ports after each buildServer (noRetrievalPorts) and puts the suite app's back at the
+// end; composition.test.ts covers the composed ports. All data is SYNTHETIC; nothing approves anything (G1-G6) or
 // touches DG0-DG7.
 import { migrate } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
+import {
+  registerAssistantEvidenceTextPort,
+  registerAssistantPlaybookPassagePort,
+} from "../../../src/modules/assistant/retrieval.ts";
 import { loadSetting } from "../../../src/modules/assistant/settings.ts";
 import { testAdapter } from "../../../src/modules/assistant/provider.ts";
 import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
@@ -216,11 +223,23 @@ async function userWith(
   return { id: u.id, session: await signIn(api.app, u.subject) };
 }
 
+/** Clears the two retrieval ports the last buildServer registered; returns the ones it removed (T-DG6-BE-X3B). */
+function noRetrievalPorts(): () => void {
+  const evidence = registerAssistantEvidenceTextPort(null);
+  const playbook = registerAssistantPlaybookPassagePort(null);
+  return () => {
+    registerAssistantEvidenceTextPort(evidence);
+    registerAssistantPlaybookPassagePort(playbook);
+  };
+}
+let restoreRetrievalPorts: () => void = () => undefined;
+
 beforeAll(async () => {
   const { adminUrl } = inject("mthDb");
   scratchDb = await createScratchDatabase(adminUrl, "mth_asst_conv");
   await migrate(roleUrl(adminUrl, scratchDb, "mth_owner"));
   api = await startApi({ database: scratchDb });
+  restoreRetrievalPorts = noRetrievalPorts();
   w = await seedWorld(api.db);
   fake = await new FakeModel().start();
   admin = await signIn(api.app, w.admin.subject);
@@ -233,6 +252,7 @@ beforeAll(async () => {
 }, 120_000);
 afterAll(async () => {
   await fake.stop();
+  restoreRetrievalPorts();
   await api.close();
   await dropScratchDatabase(inject("mthDb").adminUrl, scratchDb);
 });
@@ -642,10 +662,12 @@ describe("the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0
       env: { ASSISTANT_RATE_LIMIT_PER_MINUTE: "2" },
       logStream: { write: (line: string) => void lines.push(line) },
     });
+    noRetrievalPorts(); // this app registered its own pair; the file keeps nothing retrievable (BE-X3B)
     try {
       const session = await signIn(limited.app, w.office.subject);
       const conv = await call<Body>(limited.app, "POST", C, { session, body: { title: "Synthetic: limited" } });
       let version = conv.body.version as number;
+      let firstReply: Body = null;
       for (let i = 0; i < 2; i++) {
         const ok = await call<Body>(limited.app, "POST", `${C}/${conv.body.id}/messages`, {
           session,
@@ -653,6 +675,7 @@ describe("the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0
           headers: ifm(version),
         });
         expect(ok.status).toBe(201);
+        firstReply ??= ok.body.reply;
         version = ok.body.conversation.version;
       }
       const over = await call<Body>(limited.app, "POST", `${C}/${conv.body.id}/messages`, {
@@ -667,11 +690,15 @@ describe("the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0
       const assistantLines = lines.filter((l) => l.includes('"assistant message"'));
       expect(assistantLines).toHaveLength(2);
       const parsed = JSON.parse(assistantLines[0]!) as Body;
+      // T-DG6-BE-X3B: the line describes the reply actually given. Since BE-U, search retrieval can find a record for
+      // "Synthetic ..." (the scoped search; this file clears only the two ports), so the reply is `answer` with its
+      // items, or `no_sources` with none (the BE-C2 handback's deterministic seam at :670, which expected only the stub).
+      expect(["answer", "no_sources"]).toContain(firstReply.replyKind);
       expect(parsed.assistant).toMatchObject({
         conversationId: conv.body.id,
         messageSeq: 2,
-        replyKind: "no_sources",
-        dataItems: 0,
+        replyKind: firstReply.replyKind,
+        dataItems: firstReply.citations.length, // the local test adapter cites every item given (provider.ts)
         droppedSuggestions: 0,
       });
       expect(lines.join("\n")).not.toContain(PROMPT_CANARY);

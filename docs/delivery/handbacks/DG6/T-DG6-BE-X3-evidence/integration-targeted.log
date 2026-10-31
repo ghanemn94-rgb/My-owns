@@ -1,0 +1,21 @@
+port-policy: PostgreSQL listening on port 26900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvo995y_8ac66024 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/assistant/composition.test.ts (9 tests) 4448ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > is held per app: a second app on the same file keeps it after closing; the last holder's close removes it  347ms
+ ✓ |integration| apps/worker/test/integration/connection-log-main.test.ts (3 tests) 12241ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > MTH_CONNECTION_LOG set: one line per outbound connection, process worker, the database among them  3188ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > NODE_ENV=production: ignored with one warning, and no file is written  3172ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > unset: the worker starts and stops as before, with no warning  2789ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  00:37:36
+   Duration  40.76s (transform 8.76s, setup 0ms, collect 17.79s, tests 16.69s, environment 0ms, prepare 235ms)
+

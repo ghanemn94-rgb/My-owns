@@ -3,7 +3,8 @@
 // to two Node diagnostics channels and appends one JSON line per outbound connection attempt of this process:
 //   - `undici:client:beforeConnect`: every connection `fetch` (undici) opens: the host name and port it connects to;
 //   - `net.client.socket`: every outbound TCP socket (net.connect, http, pg, SMTP...): the remote address and port,
-//     written when the socket connects (or, for an attempt that never connects, when it closes, with what is known).
+//     written when the socket connects (or, for an attempt that never connects, when it closes, with what is known:
+//     the host asked for, and the address and port dialled once an attempt started; T-DG6-BE-X3, QA-D-2).
 // Each line is `{at, process, channel, host, address, port}`; nothing else (no path, header, body or credential).
 // In production the variable is ignored and one warning is emitted: the log is a test instrument (QA-D's A21 check,
 // e2e/support/connection-log-check.ts), never a production feature. What it does NOT see: connections made outside
@@ -23,9 +24,15 @@ export interface ConnectionLogLine {
   readonly at: string;
   readonly process: string;
   readonly channel: ConnectionLogChannel;
-  /** The host name asked for (fetch: the URL's host; a socket: the name it looked up), else null. */
+  /**
+   * The host name asked for (fetch: the URL's host; a socket: the name it looked up, or for an IP literal the address
+   * it dialled), else null (a local IPC socket, or a socket destroyed before its first attempt).
+   */
   readonly host: string | null;
-  /** The remote IP address of a connected socket, else null (fetch lines are written before the address is known). */
+  /**
+   * The remote IP address of a connected socket, else the address its last attempt dialled, else null (fetch lines are
+   * written before the address is known; a failed lookup dials nothing).
+   */
   readonly address: string | null;
   readonly port: number | null;
 }
@@ -93,18 +100,37 @@ export function installConnectionLog(
   const onSocket = (message: unknown) => {
     const socket = (message as { socket?: Socket }).socket;
     if (socket === undefined) return;
-    let host: string | null = null;
+    // What is known about the destination (T-DG6-BE-X3, QA-D-2: a socket that never connects is no longer logged with
+    // nulls). Node publishes this message inside `socket.connect(...)` before it looks the host up, so every source
+    // below is a public socket event of that same call:
+    //  - `lookup`: the host name asked for (emitted also when the lookup fails; Node skips it for an IP literal);
+    //  - `connectionAttempt` (Node 22 and 24): the address and port each attempt dials. For an IP literal that address
+    //    IS the requested host, so it is the host when no lookup happened;
+    //  - `connect`: the remote address and port of the connected socket.
+    // A lookup that fails dials nothing, so its line has the host and a null port: no TCP attempt was made.
+    let lookedUp: string | null = null;
+    let attempt: { address: string | null; port: number | null } = { address: null, port: null };
     let written = false;
     socket.once("lookup", (_err: Error | null, _address: string, _family: unknown, name: string) => {
-      host = typeof name === "string" ? name : null;
+      lookedUp = typeof name === "string" && name !== "" ? name : null;
     });
+    socket.on("connectionAttempt", (address: unknown, port: unknown) => {
+      attempt = { address: typeof address === "string" && address !== "" ? address : null, port: portOf(port) };
+    });
+    const line = () =>
+      write(
+        "net.client.socket",
+        lookedUp ?? attempt.address,
+        socket.remoteAddress ?? attempt.address,
+        portOf(socket.remotePort) ?? attempt.port,
+      );
     socket.once("connect", () => {
       written = true;
-      write("net.client.socket", host, socket.remoteAddress ?? null, portOf(socket.remotePort));
+      line();
     });
     // An attempt that never connected (refused, unreachable, aborted) is still an attempt: logged with what is known.
     socket.once("close", () => {
-      if (!written) write("net.client.socket", host, socket.remoteAddress ?? null, portOf(socket.remotePort));
+      if (!written) line();
     });
   };
 

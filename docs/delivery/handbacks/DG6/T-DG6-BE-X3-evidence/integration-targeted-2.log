@@ -1,0 +1,22 @@
+port-policy: PostgreSQL listening on port 26912 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvof0sr_05fdefdb (server_encoding UTF8); applied 113 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/connection-log-main.test.ts (3 tests) 16660ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > MTH_CONNECTION_LOG set: one line per outbound connection, process worker, the database among them  3863ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > NODE_ENV=production: ignored with one warning, and no file is written  3608ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > unset: the worker starts and stops as before, with no warning  3848ms
+ ✓ |integration| apps/api/test/integration/assistant/composition.test.ts (9 tests) 6924ms
+   ✓ buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > a set credential reference reaches the model as `authorization: Bearer`; the value is never in a response  375ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > is held per app: a second app on the same file keeps it after closing; the last holder's close removes it  815ms
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  00:42:05
+   Duration  55.23s (transform 10.11s, setup 0ms, collect 22.41s, tests 23.58s, environment 0ms, prepare 84ms)
+

@@ -24,6 +24,8 @@ import fastifyStatic from "@fastify/static";
 import type { AppConfig } from "@mth/config";
 // ADR-0053 §4 (T-DG6-DO-D): the log redaction set and its line redactor.
 import { REDACTED_LOG_PATHS, redactLogLine, withSecretRedaction } from "@mth/config";
+// T-DG6-BE-X3 (QA-D-1; ADR-0059 §12): the A21 connection log of the API process (a test instrument).
+import { CONNECTION_LOG_VARIABLE, installConnectionLog, type ConnectionLogHandle } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
 import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
@@ -90,7 +92,17 @@ import { launchPlanGenerator } from "./modules/launch/port.ts";
 import { registerLaunchPlanPort } from "./modules/automation/ports/launch-plan.ts";
 import { registerProceduresModule, wireProcedureApprovals } from "./modules/procedures/index.ts";
 // P6 modules (p6-plan §3 seam 21; T-DG6-BE-A): each registers its route files (stubs until their owners fill them).
-import { registerAssistantModule } from "./modules/assistant/index.ts";
+import { registerAssistantModule, setAssistantSecretProviders } from "./modules/assistant/index.ts";
+// T-DG6-BE-X3: BE-U's two assistant read ports (ADR-0059 §4; the D-197 injected-port precedent: assistant imports
+// neither evidence nor methodology).
+import {
+  registerAssistantEvidenceTextPort,
+  registerAssistantPlaybookPassagePort,
+  type EvidenceTextPort as AssistantEvidenceTextPort,
+  type PlaybookPassagePort as AssistantPlaybookPassagePort,
+} from "./modules/assistant/retrieval.ts";
+import { createEvidenceTextPort } from "./modules/evidence/text-excerpt.ts";
+import { createPlaybookPassagePort } from "./modules/methodology/playbook-passages.ts";
 import { registerIntegrationsModule } from "./modules/integrations/index.ts";
 // T-DG6-BE-M (ADR-0056 §1): the ImportTargetRegistry port; the connector mappings read the template columns from it.
 import { createImportTargetRegistry, setImportTargetRegistry } from "./modules/integrations/imports/targets.ts";
@@ -270,6 +282,69 @@ export interface RouteRecord {
   readonly rateLimitClass: string | null;
 }
 
+// T-DG6-BE-X3 (QA-D-1; ADR-0059 §12 "one call each in apps/api/src/server.ts and apps/worker/src/main.ts"): the API's
+// connection log is installed by the composition root. buildServer may compose more than one app in one process (the
+// test harness builds one per suite, sometimes two at once), so the subscription is shared per log file and counted:
+// each app holds it until it closes, and the last close removes it. With MTH_CONNECTION_LOG unset or empty, or
+// NODE_ENV=production (one warning), installConnectionLog writes nothing and nothing is held.
+const apiConnectionLogs = new Map<string, { handle: ConnectionLogHandle; holders: number }>();
+
+/** Opens (or joins) the API connection log for one composed app; returns its release (idempotent). */
+function holdApiConnectionLog(nodeEnv: string): () => void {
+  const file = process.env[CONNECTION_LOG_VARIABLE] ?? "";
+  let entry = apiConnectionLogs.get(file);
+  if (entry === undefined) {
+    const handle = installConnectionLog("api", { env: { [CONNECTION_LOG_VARIABLE]: file, NODE_ENV: nodeEnv } });
+    if (handle === null) return () => undefined;
+    entry = { handle, holders: 0 };
+    apiConnectionLogs.set(file, entry);
+  }
+  const held = entry;
+  held.holders += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    held.holders -= 1;
+    if (held.holders === 0) {
+      held.handle.uninstall();
+      apiConnectionLogs.delete(file);
+    }
+  };
+}
+
+// T-DG6-BE-X3B: BE-U's two retrieval ports are process-wide (assistant/retrieval.ts) and each one captures the `db` of
+// the app that built it. A process normally composes one app; the test harness composes several and closes them in any
+// order, and a port left behind by a closed app reads through a destroyed pool ("driver has already been destroyed",
+// a 500 on postAssistantMessage). So each composed app holds its pair here: the newest open app's pair is registered,
+// and when an app closes while its pair is still the registered one, the newest remaining app's pair (or none)
+// replaces it. A pair registered by someone else (a test's own ports) is left as it is.
+interface AssistantPortPair {
+  readonly evidence: AssistantEvidenceTextPort;
+  readonly playbook: AssistantPlaybookPassagePort;
+}
+const assistantPortHolders: AssistantPortPair[] = [];
+
+/** Registers one app's retrieval ports; returns their release (idempotent). */
+function holdAssistantPorts(pair: AssistantPortPair): () => void {
+  assistantPortHolders.push(pair);
+  registerAssistantEvidenceTextPort(pair.evidence);
+  registerAssistantPlaybookPassagePort(pair.playbook);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const at = assistantPortHolders.indexOf(pair);
+    if (at !== -1) assistantPortHolders.splice(at, 1);
+    const next = assistantPortHolders[assistantPortHolders.length - 1] ?? null;
+    // Reading the current port means swapping it out; it is put back unless it is this app's own.
+    const evidence = registerAssistantEvidenceTextPort(null);
+    registerAssistantEvidenceTextPort(evidence === pair.evidence ? (next?.evidence ?? null) : evidence);
+    const playbook = registerAssistantPlaybookPassagePort(null);
+    registerAssistantPlaybookPassagePort(playbook === pair.playbook ? (next?.playbook ?? null) : playbook);
+  };
+}
+
 export async function buildServer(options: ServerOptions): Promise<{
   app: FastifyInstance;
   db: Db;
@@ -329,6 +404,9 @@ export async function buildServer(options: ServerOptions): Promise<{
     forceCloseConnections: "idle",
   });
   appLog = app.log;
+  // T-DG6-BE-X3 (QA-D-1): the connection log, held by this app until it closes (holdApiConnectionLog above).
+  const releaseConnectionLog = holdApiConnectionLog(config.nodeEnv);
+  app.addHook("onClose", async () => releaseConnectionLog());
   // F-DG2-290: JSON bodies are read as raw bytes and decoded as strict UTF-8 (never rewritten to U+FFFD), then parsed
   // by Fastify's default JSON parser (same empty/invalid-JSON errors and prototype-poisoning protection). Registered on
   // the root instance, so every module inherits it; the evidence octet-stream parser is separate.
@@ -584,6 +662,19 @@ export async function buildServer(options: ServerOptions): Promise<{
   // T-DG6-BE-X2 (F-DG6-QA-A-1): the integrations module resolves connector credentials and webhook signing secrets
   // through this process's registry (secret-refs.ts); without this line every reference is unresolvable.
   setConnectorSecretProviders(secrets);
+  // T-DG6-BE-X3 (the BE-X2 handback §5): the assistant's HTTP adapter resolves its credential reference through the
+  // same registry (assistant/provider.ts); without this line a configured `credentialRef` never resolves and every
+  // call that needs it fails with assistant.provider_error before anything is sent.
+  setAssistantSecretProviders(secrets);
+  // T-DG6-BE-X3: BE-U's two retrieval ports (ADR-0059 §4 items 2 and 3). Without them the running assistant gives the
+  // model no evidence text and no playbook passage. The evidence port reads content through the driver-selecting
+  // store above and re-applies the evidence read decision (ADR-0051 §4) for the asking user. Held by this app until it
+  // closes (holdAssistantPorts above; T-DG6-BE-X3B).
+  const releaseAssistantPorts = holdAssistantPorts({
+    evidence: createEvidenceTextPort(db, evidenceStore),
+    playbook: createPlaybookPassagePort(db),
+  });
+  app.addHook("onClose", async () => releaseAssistantPorts());
   // T-DG6-BE-M: the ImportTargetRegistry line; each import target's owner adds one registration line below it
   // (KBE-A: kpi_actual.v1). The connector mappings' target columns come from the registered templates (ADR-0056 §9).
   const importTargets = createImportTargetRegistry();

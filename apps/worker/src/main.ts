@@ -1,7 +1,13 @@
 // Worker process entry point: `node dist/main.js`. A separate OS process from the API that shares only PostgreSQL
 // (ADR-0002). Connects as mth_app; pg-boss starts with migrate=false and refuses to run on a missing/outdated schema.
 import { readFileSync } from "node:fs";
-import { ConfigError, installConsoleRedaction, loadConfig, withSecretRedaction } from "@mth/config";
+import {
+  ConfigError,
+  installConnectionLog,
+  installConsoleRedaction,
+  loadConfig,
+  withSecretRedaction,
+} from "@mth/config";
 import { createDb, createPool } from "@mth/db";
 import { createBoss } from "./queues/index.ts";
 import { startWorker } from "./worker.ts";
@@ -19,6 +25,11 @@ import { createSecretProviderRegistry, registerBuiltInSecretProviders } from "./
 // (configuration secrets, SecretProvider values, storage keys, URLs and paths, tokens) before it is written. Installed
 // first, so even a start-up failure line is redacted.
 installConsoleRedaction();
+// T-DG6-BE-X3 (QA-D-1; ADR-0059 §12 "one call each in apps/api/src/server.ts and apps/worker/src/main.ts"): the A21
+// connection log of the worker process, a test instrument. With MTH_CONNECTION_LOG naming a file (and NODE_ENV not
+// production: then one warning and nothing written) every outbound connection attempt of this process, from the first
+// database connection on, appends one line {at, process: "worker", channel, host, address, port}; unset, it is a no-op.
+installConnectionLog("worker");
 
 /** The worker's version (its package.json, one level above both src/ and dist/). */
 function appVersion(): string {
