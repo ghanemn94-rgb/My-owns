@@ -16,7 +16,7 @@ import {
   route,
 } from "../test/fixtures.tsx";
 import type { MethodologyCatalogue } from "../api/types.ts";
-import { formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "./format.ts";
+import { businessDateIn, formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "./format.ts";
 import { gateLabel, gateName } from "./methodology.ts";
 import { charterUpdate, diagnosticItemUpdate, freeText } from "@mth/shared/schemas";
 import { issueCode } from "../components/Form.tsx";
@@ -68,6 +68,18 @@ describe("dates", () => {
     expect(zonedLocalToUtcIso("2026-11-02T23:30", "Asia/Riyadh")).toBe("2026-11-02T20:30:00.000Z");
     expect(zonedLocalToUtcIso("2026-01-01", "UTC")).toBe("2026-01-01T00:00:00.000Z");
     expect(zonedLocalToUtcIso("garbage", "UTC")).toBeNull();
+  });
+  it("today's business date is the organization zone's calendar date, also across a month boundary (T-DG6-BE-X8)", () => {
+    // 2026-10-31T21:30Z is 00:30 on 1 November in Riyadh (UTC+3): a new month there, still October in UTC.
+    const afterRiyadhMidnight = new Date("2026-10-31T21:30:00Z");
+    expect(businessDateIn("Asia/Riyadh", afterRiyadhMidnight)).toBe("2026-11-01");
+    expect(businessDateIn("UTC", afterRiyadhMidnight)).toBe("2026-10-31");
+    // The last Riyadh minute of October and the first: the boundary is Riyadh midnight (20:59 / 21:00 UTC).
+    expect(businessDateIn("Asia/Riyadh", new Date("2026-10-31T20:59:59Z"))).toBe("2026-10-31");
+    expect(businessDateIn("Asia/Riyadh", new Date("2026-10-31T21:00:00Z"))).toBe("2026-11-01");
+    // A year boundary, and a configured zone other than the default (the zone is configurable, never hardcoded).
+    expect(businessDateIn("Asia/Riyadh", new Date("2026-12-31T22:00:00Z"))).toBe("2027-01-01");
+    expect(businessDateIn("America/New_York", new Date("2026-11-01T02:00:00Z"))).toBe("2026-10-31");
   });
 });
 
