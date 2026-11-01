@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-100",
+      "stage_id": "DG6",
+      "requirement": "REQ-S12-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The 'data becomes stale' starter automation (M0239) never fires once the KPI's next reporting period is open, so a KPI whose feed stops gets no data_stale exception in normal operation",
+      "reproduction": "Disposable clone at 3cce3d4 (candidate 7d6b4a9f), tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/worker/test/integration/zz-domain-probe-freshness.test.ts (probe copied to docs/delivery/test-evidence/DG6/domain/round-1/probes/zz-domain-probe-freshness.test.ts.txt). It reuses the fixtures of apps/worker/test/integration/operations-freshness.test.ts: an active monthly KPI (dq_stale_after_days 30) and the open period that contains today. The probe changes one thing: the KPI's last accepted value 0.4125, with data as of today minus 60 days, is evaluated in the PREVIOUS (closed) monthly period, as happens when a feed stops. The current period stays open and empty. It then runs FRESHNESS_SCAN_HANDLER (kpi.freshness_scan).",
+      "expected": "M0239 (master prompt §12 starter table): 'Connector/job fails or data becomes stale -> Create a visible operational exception; retain last known values with freshness labels'. The value is 60 days old against a 30-day window, so the scan should emit one data.stale event and open one data_stale exception linked to the KPI, showing the last value and its date as Stale. The Operations screen promises exactly this in en and ar: 'An exception is opened when a job or connector fails or data becomes stale. Linked KPIs keep their last known value and are labelled Stale.'",
+      "actual": "kpiFreshness returns {freshness: 'unknown', lastValue: null, dataAsOf: null}. The scan returns {kpis: 1, stale: 0, emitted: 0}, and no data.stale event and no exception are created (probe-freshness.log: expected 0 to be 1). Cause: apps/worker/src/handlers/operations.ts kpiFreshness reads only the organization's newest open or closed period of the KPI's frequency. kpi.reporting_period_open opens every period automatically the day after it ends (apps/worker/src/handlers/kpi.ts header item 2). So for a monthly KPI on the default 45-day window, the newest period is always newer than the period holding the last value before that value turns stale, and the scan never sees 'stale'. The only covering test (operations-freshness.test.ts) puts a January-dated value into the CURRENT period, which is not how a stopped feed looks. BE-X4 §5 and ADR-0053 (as amended) record this as open, 'not decided here'; no decision in D-193 to D-205 accepts it. The connector-failure path (connector.run_failed) and the exception's linked-KPI read (BE-X4) are correct and unaffected. The KPI panel shows Unknown, never zero or green, so there is no mandatory 'Unknown/Stale' violation. But the stale-data trigger of the starter automation, which the row title and the user-facing text promise, is effectively unreachable.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-1/probe-freshness.log",
+        "docs/delivery/test-evidence/DG6/domain/round-1/probes/zz-domain-probe-freshness.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-1/screenshots/en/dom-admin-operations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-1/screenshots/ar/dom-admin-operations.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T14:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by domain-reviewer. Suggested repair: read freshness for the scan the way linkedKpiStatus now does (the newest open or closed period whose evaluation carries a value), with a test whose stale value sits in an earlier period while a later period is open. Alternatively, an explicit decision that changes the user-facing text and M0239's mapping."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-101",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-029",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The shipped load-dataset generator deploy/load/generate.mjs makes ids the API refuses, so the reported load results cannot be reproduced from the candidate",
+      "reproduction": "Disposable clone at 3cce3d4: node docs/delivery/test-evidence/DG6/domain/round-1/probes/uuidprobe.mjs.txt (saved as .mjs) <clone>/deploy/load/generate.mjs <zod of apps/api>. It calls the generator's exported loadId(1, 'initiative', n) for n = 0..999 and validates each id with an RFC 9562 pattern and with zod's z.uuid(), the API's validator. Compare with the load report's run notes (docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/report.md, 'Generator patch').",
+      "expected": "REQ-S20-029: 'Exercise a documented realistic load dataset ... and report actual results'. The register cites deploy/load/generate.mjs as the row's evidence. The delivered generator should produce the dataset that was measured, so the reported p95 figures can be reproduced from the frozen candidate.",
+      "actual": "865 of 1,000 ids from the shipped loadId are not RFC 9562 UUIDs and are rejected by z.uuid(): {nonRfc: 865, rejectedByZodUuid: 865}. The final load run (DO-G) and the REQ-S20-030 idle re-measurement (DO-H) both used an out-of-tree 'patched scratch copy' (sha256 6b2a9007...) with DO-F's generate-rfc-uuid.patch, which is only in a handback evidence folder. The report says 'no orchestrator decision on DO-F's generate-rfc-uuid.patch exists', and none exists in D-193 to D-205. The candidate therefore ships load tooling that cannot regenerate the measured dataset. A load run with the shipped tool would hit the API with ids it refuses. The measurements themselves, and their provisional labelling, are not in question.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-1/probes/uuidprobe.mjs.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-1/probe-uuid.log",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/report.md",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-F-evidence/generate-rfc-uuid.patch"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T14:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by domain-reviewer. Suggested repair: apply the RFC 9562 id fix to deploy/load/generate.mjs with a unit test that every generated id passes the API's UUID validation, and show that the shipped generator reproduces the measured dataset (marker counts) or re-measure with it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-102",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Web unit test 'integration run detail > shows the retry chain and retries a failed run once' waits only 1 s for the post-retry page and fails under load",
+      "reproduction": "Disposable clone at 3cce3d4, host load average about 20: npx vitest run --configLoader runner --project unit-web apps/web/src/pages/integrations/integrations.test.tsx, three times (once with three other web files, then twice alone).",
+      "expected": "A deterministic unit test: the retry-chain assertion passes whatever the host load, as other worker-backed waits were widened for F-DG5-145/146 and in 441b6e23b.",
+      "actual": "It failed in 2 of 3 runs (unit-web-p6.log, unit-web-integrations-rerun2.log) and passed in 1 (unit-web-integrations-rerun1.log). Each failure was 'Unable to find role=\"link\" and name \"Open the previous attempt\"' at integrations.test.tsx:306, a findByRole with the default 1,000 ms timeout after the retry click navigates to the new run and refetches. The other 16 tests passed each time, and the orchestrator's unit runs on the idle host passed. This is a test-timing defect with no product effect. It can turn a gate run red on a loaded host.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-1/unit-web-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-1/unit-web-integrations-rerun1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-1/unit-web-integrations-rerun2.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T14:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by domain-reviewer. Low, test-only. Suggested repair: give that findByRole an explicit timeout, as the other async waits in the file do or should."
+        }
+      ]
+    }
+  ]
+}
