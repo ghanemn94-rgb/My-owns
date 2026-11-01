@@ -7218,6 +7218,25 @@ export interface Database {
 export type BrandingContrastReportRow = Selectable<BrandingContrastReportTable>;
 export type BrandingContrastPairRow = Selectable<BrandingContrastPairTable>;
 
+// ---------------------------------------------------------------------------------------------------------------
+// P6 pre-freeze repair (0122, T-DG6-BE-X9; D-203 O-2): the moment a rule's effective version became enabled.
+// Append-only, written only by the trigger automation_rule_enablement_record (the application role reads it).
+
+export interface AutomationRuleEnablementTable {
+  id: string;
+  automation_rule_id: string;
+  automation_rule_version_id: string;
+  enabled_from: Timestamp;
+  /** 'enable' | 'effective_version' | 'backfill' */
+  source: string;
+}
+
+export interface Database {
+  automation_rule_enablement: AutomationRuleEnablementTable;
+}
+
+export type AutomationRuleEnablementRow = Selectable<AutomationRuleEnablementTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -13240,6 +13259,7 @@ export const SCHEMA_COLUMNS = {
     "usage_note",
     "created_at",
   ],
+  automation_rule_enablement: ["id", "automation_rule_id", "automation_rule_version_id", "enabled_from", "source"],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

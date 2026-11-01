@@ -45,6 +45,34 @@ export const gateDecidedEnvelope = (organizationId: string, payload: Record<stri
   payload,
 });
 
+/**
+ * T-DG6-BE-X9 (D-203 O-2): a gate.decided envelope WITH its (already published) outbox row, as the relay delivers one.
+ * The engine reads the event's stored occurrence time (outbox_event.created_at), so an envelope that is evaluated
+ * needs its row, written after the test's rule was enabled.
+ */
+export async function storedGateDecidedEnvelope(
+  db: Db,
+  organizationId: string,
+  payload: Record<string, unknown>,
+): Promise<ReturnType<typeof gateDecidedEnvelope>> {
+  const envelope = gateDecidedEnvelope(organizationId, payload);
+  await db
+    .insertInto("outbox_event")
+    .values({
+      id: envelope.outboxEventId,
+      organization_id: organizationId,
+      aggregate_type: "synthetic",
+      aggregate_id: crypto.randomUUID(),
+      event_type: envelope.eventType,
+      schema_version: envelope.schemaVersion,
+      payload: JSON.stringify(payload),
+      idempotency_key: envelope.idempotencyKey,
+      published_at: new Date(),
+    })
+    .execute();
+  return envelope;
+}
+
 export interface LiveRule {
   readonly id: string;
   readonly code: string;

@@ -74,7 +74,10 @@ async function main(): Promise<void> {
     appBaseUrl: config.appBaseUrl,
     refuseInsecure: config.nodeEnv === "production",
   });
-  const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: 5 });
+  // D-203 O-1 (T-DG6-BE-X9): each of a queue's concurrently running jobs may hold a connection; two more stay for the
+  // outbox relay and the heartbeat. Never below the earlier five.
+  const poolMax = Math.max(5, config.worker.jobConcurrency + 2);
+  const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: poolMax });
   const db = createDb(pool);
   // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
   const boss = createBoss(config.databaseUrl!, { superviseIntervalSeconds: config.worker.superviseIntervalSeconds });
@@ -84,7 +87,13 @@ async function main(): Promise<void> {
     if (!stopping) console.error(JSON.stringify({ level: "error", msg: "pg-boss error", err: err.message }));
   });
   await boss.start();
-  const worker = await startWorker({ db, boss, timeZone: config.defaultTimezone });
+  const worker = await startWorker({
+    db,
+    boss,
+    timeZone: config.defaultTimezone,
+    jobBatchSize: config.worker.jobBatchSize,
+    jobConcurrency: config.worker.jobConcurrency,
+  });
   // ADR-0053 §6 (T-DG6-DO-D): one worker_heartbeat row per process, moved forward every WORKER_HEARTBEAT_SECONDS.
   const heartbeat = startHeartbeat({
     db,
@@ -99,6 +108,8 @@ async function main(): Promise<void> {
       timeZone: config.defaultTimezone,
       superviseIntervalSeconds: config.worker.superviseIntervalSeconds,
       heartbeatSeconds: config.worker.heartbeatSeconds,
+      jobBatchSize: config.worker.jobBatchSize,
+      jobConcurrency: config.worker.jobConcurrency,
       instanceKey: heartbeat.instanceKey,
       secretProviders: secrets.ids(),
     }),

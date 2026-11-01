@@ -201,6 +201,25 @@ export const ENV_VARS = {
     default: "30",
     usedBy: ["worker"],
   },
+  // D-203 O-1 (T-DG6-BE-X9): the worker's per-queue throughput.
+  WORKER_JOB_BATCH_SIZE: {
+    description:
+      "Jobs a worker process fetches per poll of one queue (D-203). Integer 1-50. A full batch polls again at once, " +
+      "so a backlog drains without waiting for the polling interval",
+    required: false,
+    secret: false,
+    default: "8",
+    usedBy: ["worker"],
+  },
+  WORKER_JOB_CONCURRENCY: {
+    description:
+      "Jobs of one fetched batch a worker process runs at the same time (D-203). Integer 1-16, at most " +
+      "WORKER_JOB_BATCH_SIZE. Each running job may hold one of the worker's database connections",
+    required: false,
+    secret: false,
+    default: "4",
+    usedBy: ["worker"],
+  },
   // P5 slice J (T-DG5-BE-S; ADR-0050 §1, §6; D-142 Q7).
   MTH_ENV: {
     description:
@@ -254,6 +273,14 @@ export const SUPERVISE_INTERVAL_SECONDS = { min: 1, max: 600, default: 60 } as c
  * reported stale because of its configuration.
  */
 export const HEARTBEAT_INTERVAL_SECONDS = { min: 1, max: 30, default: 30 } as const;
+
+/**
+ * D-203 O-1 (T-DG6-BE-X9): the worker's per-queue throughput. The defaults (8 per fetch, 4 at once) keep one queue's
+ * running jobs below the worker's database pool (apps/worker/src/main.ts sizes the pool from the concurrency), and a
+ * batch short enough that its last job starts long before pg-boss's 15-minute job expiry.
+ */
+export const JOB_BATCH_SIZE = { min: 1, max: 50, default: 8 } as const;
+export const JOB_CONCURRENCY = { min: 1, max: 16, default: 4 } as const;
 
 // Validated loader over the catalogue above (T-DG1-BE).
 export {

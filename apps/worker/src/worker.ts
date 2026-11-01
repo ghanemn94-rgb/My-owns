@@ -31,6 +31,66 @@ export interface WorkerOptions {
   readonly queuePolicy?: QueuePolicyOverrides;
   /** The domain handlers to start (default: every registered DOMAIN_HANDLERS entry; tests pass their own). */
   readonly handlers?: readonly JobHandler[];
+  /**
+   * D-203 O-1 (T-DG6-BE-X9): jobs fetched per poll of one queue (WORKER_JOB_BATCH_SIZE) and how many of them run at
+   * once (WORKER_JOB_CONCURRENCY). Defaults: JOB_THROUGHPUT_DEFAULTS. A fetch that returns a full batch polls again at
+   * once instead of waiting for the polling interval, so a backlog drains at the handlers' own speed.
+   */
+  readonly jobBatchSize?: number;
+  readonly jobConcurrency?: number;
+}
+
+/** D-203 O-1: the safe defaults (packages/config WORKER_JOB_BATCH_SIZE and WORKER_JOB_CONCURRENCY name the same values). */
+export const JOB_THROUGHPUT_DEFAULTS = { batchSize: 8, concurrency: 4 } as const;
+
+/**
+ * D-203 O-1 (T-DG6-BE-X9): runs `run` for every job of one fetched batch, at most `concurrency` at a time, and settles
+ * EACH job on its own: `boss.complete(queue, id, result)` when it resolves, `boss.fail(queue, id, error)` when it throws.
+ * pg-boss's own settlement after the batch then finds no active job and changes nothing (its complete only updates
+ * `state = 'active'`). So every job keeps exactly the retry, backoff and dead-letter of the batch-of-one worker: one
+ * job's error never fails or retries its neighbours, and a job that succeeds is never re-run because a neighbour failed.
+ * Exactly-once is unchanged: it never depended on serial execution (several worker processes already run one queue
+ * concurrently), but on the UNIQUE backstops, idempotency keys and advisory locks inside each handler (ADR-0043).
+ * A settlement that itself fails (the database is unreachable) is rethrown after the batch, so pg-boss fails every job
+ * of the batch that is not completed and its retry policy applies (never a silent completion).
+ */
+export async function runJobBatch<J extends { readonly id: string }>(
+  boss: Pick<PgBoss, "complete" | "fail">,
+  queue: string,
+  jobs: readonly J[],
+  concurrency: number,
+  run: (job: J) => Promise<unknown>,
+): Promise<void> {
+  let next = 0;
+  let settleError: unknown = null;
+  const lane = async () => {
+    while (next < jobs.length) {
+      const job = jobs[next]!;
+      next += 1;
+      let ok = true;
+      let value: unknown;
+      try {
+        value = await run(job);
+      } catch (err) {
+        ok = false;
+        value = err;
+      }
+      try {
+        if (ok) await boss.complete(queue, job.id, outputOf(value));
+        else await boss.fail(queue, job.id, outputOf(value));
+      } catch (err) {
+        settleError ??= err;
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, jobs.length)) }, lane));
+  if (settleError !== null) throw settleError instanceof Error ? settleError : new Error(String(settleError));
+}
+
+/** The output pg-boss stores for a job: the batch-of-one worker passed the handler's value (or error) the same way. */
+function outputOf(value: unknown): object {
+  if (value !== null && typeof value === "object") return value;
+  return value === undefined || value === null ? {} : { value };
 }
 
 export interface RunningWorker {
@@ -46,6 +106,10 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
   const { db, boss } = options;
   const log = options.log ?? consoleLogger;
   const pollingIntervalSeconds = options.jobPollingIntervalSeconds ?? 2;
+  const batchSize = options.jobBatchSize ?? JOB_THROUGHPUT_DEFAULTS.batchSize;
+  const concurrency = Math.min(options.jobConcurrency ?? JOB_THROUGHPUT_DEFAULTS.concurrency, batchSize);
+  if (!Number.isInteger(batchSize) || batchSize < 1 || !Number.isInteger(concurrency) || concurrency < 1)
+    throw new Error("worker: jobBatchSize and jobConcurrency must be integers >= 1");
 
   wireWorkerLaunchPlanPort(); // T-DG5-BE-P: starter 1's optional 90-day plan (ADR-0044 §2 step 3)
   await ensureQueues(boss, options.queuePolicy);
@@ -91,16 +155,33 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
     return result;
   };
 
-  await boss.work(
-    QUEUES.transformationCreated,
-    { batchSize: 1, pollingIntervalSeconds, includeMetadata: true },
-    async ([job]) =>
-      captured(QUEUES.transformationCreated, job!, async () => {
-        const outcome = await handleTransformationCreated(db, job!.data, job!.id);
-        log.info({ queue: QUEUES.transformationCreated, jobId: job!.id, outcome }, "job handled");
-        return { outcome };
-      }),
-  );
+  // D-203 O-1 (T-DG6-BE-X9): every captured queue fetches a bounded batch and runs it with bounded concurrency
+  // (runJobBatch settles each job on its own). A full batch polls again at once (notifyWorker skips pg-boss's loop
+  // delay); a partial or empty one waits the polling interval as before, so idle queues cost what they did.
+  const work = async (
+    queue: string,
+    perJob: (job: PgBoss.JobWithMetadata<unknown>, attempt: JobAttempt) => Promise<unknown>,
+  ): Promise<void> => {
+    let workerId: string | null = null;
+    workerId = await boss.work(
+      queue,
+      { batchSize, pollingIntervalSeconds, includeMetadata: true },
+      async (jobs: PgBoss.JobWithMetadata<unknown>[]) => {
+        await runJobBatch(boss, queue, jobs, concurrency, (job) =>
+          captured(queue, job, (attempt) => perJob(job, attempt)),
+        );
+        if (jobs.length >= batchSize && workerId !== null) boss.notifyWorker(workerId);
+      },
+    );
+  };
+
+  await work(QUEUES.transformationCreated, async (job) => {
+    const outcome = await handleTransformationCreated(db, job.data, job.id);
+    log.info({ queue: QUEUES.transformationCreated, jobId: job.id, outcome }, "job handled");
+    return { outcome };
+  });
+  // D-203 O-1: the two maintenance queues stay one job per fetch (a daily purge; schedule re-registrations, applied in
+  // the order they arrive). Neither carries a burst of domain events.
   await boss.work(QUEUES.purge, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
     const result = await purgeExpired(db);
     log.info({ queue: QUEUES.purge, jobId: job!.id, ...result }, "expired rows purged");
@@ -112,57 +193,51 @@ export async function startWorker(options: WorkerOptions): Promise<RunningWorker
   // that records a final failure (kpi.recalculate) needs no read of pg-boss's own tables.
   const handlers = options.handlers ?? DOMAIN_HANDLERS;
   for (const h of handlers) {
-    await boss.work(h.queue, { batchSize: 1, pollingIntervalSeconds, includeMetadata: true }, async ([job]) =>
-      captured(h.queue, job!, async (attempt) => {
-        const outcome = await h.handle(db, job!.data, job!.id, attempt);
-        log.info({ queue: h.queue, jobId: job!.id, attempt, outcome }, "job handled");
-        return { outcome };
-      }),
-    );
+    await work(h.queue, async (job, attempt) => {
+      const outcome = await h.handle(db, job.data, job.id, attempt);
+      log.info({ queue: h.queue, jobId: job.id, attempt, outcome }, "job handled");
+      return { outcome };
+    });
   }
   // T-DG5-BE-I (ADR-0043 §5): the retry dispatcher. The API moved the failure to `retrying` and wrote the
   // automation_failure.retry_requested event in one transaction; after that COMMIT the relay delivers it here. A rule
   // execution is resumed (completed actions are skipped by their keys); a job is re-sent to its original queue with its
   // original data under a deterministic job id (a replayed dispatch sends nothing new), and the handler's own runOnce
   // ledger skips work already done. A stale message (the entry moved on, or a later retry exists) does nothing.
-  await boss.work(FAILURE_RETRY_QUEUE, { batchSize: 1, pollingIntervalSeconds, includeMetadata: true }, async ([job]) =>
-    captured(FAILURE_RETRY_QUEUE, job!, async (attempt) => {
-      const request = automationFailureRetryRequestedV1.parse(outboxEnvelope.parse(job!.data).payload);
-      const failure = await db
-        .selectFrom("operational_failure")
-        .selectAll()
-        .where("id", "=", request.failureId)
-        .executeTakeFirst();
-      let outcome: string;
-      if (failure === undefined || failure.status !== "retrying" || failure.retry_count !== request.retryCount)
-        outcome = "stale";
-      else if (failure.source === "rule_execution" && failure.automation_execution_id !== null)
-        outcome = (await resumeExecution(db, failure.automation_execution_id, job!.id, attempt)).outcome;
-      else {
-        const sent = await boss.send(failure.queue_name, failure.job_data as object, {
-          id: failureRetryJobId(failure.id, failure.retry_count),
-        });
-        outcome = sent === null ? "already_sent" : "sent";
-      }
-      log.info({ queue: FAILURE_RETRY_QUEUE, jobId: job!.id, failureId: request.failureId, outcome }, "job handled");
-      return { outcome };
-    }),
-  );
+  await work(FAILURE_RETRY_QUEUE, async (job, attempt) => {
+    const request = automationFailureRetryRequestedV1.parse(outboxEnvelope.parse(job.data).payload);
+    const failure = await db
+      .selectFrom("operational_failure")
+      .selectAll()
+      .where("id", "=", request.failureId)
+      .executeTakeFirst();
+    let outcome: string;
+    if (failure === undefined || failure.status !== "retrying" || failure.retry_count !== request.retryCount)
+      outcome = "stale";
+    else if (failure.source === "rule_execution" && failure.automation_execution_id !== null)
+      outcome = (await resumeExecution(db, failure.automation_execution_id, job.id, attempt)).outcome;
+    else {
+      const sent = await boss.send(failure.queue_name, failure.job_data as object, {
+        id: failureRetryJobId(failure.id, failure.retry_count),
+      });
+      outcome = sent === null ? "already_sent" : "sent";
+    }
+    log.info({ queue: FAILURE_RETRY_QUEUE, jobId: job.id, failureId: request.failureId, outcome }, "job handled");
+    return { outcome };
+  });
   const handledQueues: ReadonlySet<string> = new Set(handlers.map((h) => h.queue));
   log.info({ ...(await syncSchedules(db, boss, handledQueues)) }, "job schedules registered");
   // T-DG5-BE-I2 (ADR-0043 §6): "run now". The API wrote job.run_requested in the transaction of its audit event; after
   // that COMMIT the relay delivers it here, and the schedule's own job data is sent to its queue under job id = the
   // event id (a replayed dispatch sends nothing new). The run is then recorded like a scheduled one (job_run above).
-  await boss.work(RUN_NOW_QUEUE, { batchSize: 1, pollingIntervalSeconds, includeMetadata: true }, async ([job]) =>
-    captured(RUN_NOW_QUEUE, job!, async () => {
-      const result = await dispatchRunNow(db, boss, handledQueues, job!.data);
-      log.info(
-        { queue: RUN_NOW_QUEUE, jobId: job!.id, outcome: result.outcome, code: result.code, runJobId: result.jobId },
-        "job handled",
-      );
-      return result;
-    }),
-  );
+  await work(RUN_NOW_QUEUE, async (job) => {
+    const result = await dispatchRunNow(db, boss, handledQueues, job.data);
+    log.info(
+      { queue: RUN_NOW_QUEUE, jobId: job.id, outcome: result.outcome, code: result.code, runJobId: result.jobId },
+      "job handled",
+    );
+    return result;
+  });
   await boss.work(QUEUES.jobScheduleUpdated, { batchSize: 1, pollingIntervalSeconds }, async ([job]) => {
     const result = await handleJobScheduleUpdated(db, boss, handledQueues, job!.data);
     log.info({ queue: QUEUES.jobScheduleUpdated, jobId: job!.id, ...result }, "job schedules re-registered");

@@ -14,7 +14,13 @@ import type { z } from "zod";
 import { resumeExecution } from "../../../../worker/src/automation/retry.ts";
 import { AUTOMATION_HANDLERS } from "../../../../worker/src/handlers/automation.ts";
 import { captureJobFailure, failureRetryJobId } from "../../../../worker/src/kit.ts";
-import { gateDecidedEnvelope, gateDecidedPayload, liveRule, ruleAuthor } from "../../support/automation-failures.ts";
+import {
+  gateDecidedEnvelope,
+  gateDecidedPayload,
+  liveRule,
+  ruleAuthor,
+  storedGateDecidedEnvelope,
+} from "../../support/automation-failures.ts";
 import { createTransformationRow, signIn, type P5ExerciseContext } from "../../support/harness.ts";
 
 export const P5_MIRRORS_BE_I: Readonly<Record<string, z.ZodType>> = {
@@ -52,10 +58,15 @@ export async function exerciseP5BeIOperations(ctx: P5ExerciseContext): Promise<v
     plant: [task(txA2)],
   });
   const evaluate = AUTOMATION_HANDLERS.find((h) => h.queue === "automation.evaluate")!;
-  await evaluate.handle(api.db, gateDecidedEnvelope(w.orgA.id, gateDecidedPayload(txA)), "contract-be-i", {
-    retryCount: 0,
-    retryLimit: 5,
-  });
+  await evaluate.handle(
+    api.db,
+    await storedGateDecidedEnvelope(api.db, w.orgA.id, gateDecidedPayload(txA)),
+    "contract-be-i",
+    {
+      retryCount: 0,
+      retryLimit: 5,
+    },
+  );
 
   // listAutomationExecutions: 200 (filters); 400; 403 (no automation.read).
   const execs = await mirrored("GET", `${E}?ruleId=${rule.id}&status=failed&transformationId=${txA}`, {

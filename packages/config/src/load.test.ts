@@ -6,6 +6,8 @@ import {
   assertLoadDatasetEnvironment,
   ConfigError,
   HEARTBEAT_INTERVAL_SECONDS,
+  JOB_BATCH_SIZE,
+  JOB_CONCURRENCY,
   LOAD_ENV_NEEDS_MARKER,
   LOAD_MARKER_REFUSES_ENV,
   loadDatasetStartupRefusal,
@@ -50,10 +52,17 @@ describe("loadConfig", () => {
 
     it("defaults to the 60 s cadence pg-boss documents when unset or empty", () => {
       expect(SUPERVISE_INTERVAL_SECONDS).toEqual({ min: 1, max: 600, default: 60 });
-      expect(loadConfig("worker", worker).worker).toEqual({ superviseIntervalSeconds: 60, heartbeatSeconds: 30 });
+      expect(loadConfig("worker", worker).worker).toEqual({
+        superviseIntervalSeconds: 60,
+        heartbeatSeconds: 30,
+        jobBatchSize: 8,
+        jobConcurrency: 4,
+      });
       expect(loadConfig("worker", { ...worker, WORKER_SUPERVISE_INTERVAL_SECONDS: "" }).worker).toEqual({
         superviseIntervalSeconds: 60,
         heartbeatSeconds: 30,
+        jobBatchSize: 8,
+        jobConcurrency: 4,
       });
     });
 
@@ -93,6 +102,40 @@ describe("loadConfig", () => {
       const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: value }));
       expect(problems).toHaveLength(1);
       expect(problems[0]).toMatch(/^WORKER_HEARTBEAT_SECONDS is invalid/);
+    });
+  });
+
+  describe("WORKER_JOB_BATCH_SIZE and WORKER_JOB_CONCURRENCY (D-203 O-1; T-DG6-BE-X9)", () => {
+    const worker = { NODE_ENV: "test", DATABASE_URL: base.DATABASE_URL };
+
+    it("default to 8 per fetch and 4 at once, and accept values in range", () => {
+      expect(JOB_BATCH_SIZE).toEqual({ min: 1, max: 50, default: 8 });
+      expect(JOB_CONCURRENCY).toEqual({ min: 1, max: 16, default: 4 });
+      const d = loadConfig("worker", worker).worker;
+      expect([d.jobBatchSize, d.jobConcurrency]).toEqual([8, 4]);
+      const c = loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: "50", WORKER_JOB_CONCURRENCY: "16" }).worker;
+      expect([c.jobBatchSize, c.jobConcurrency]).toEqual([50, 16]);
+      const one = loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: "1", WORKER_JOB_CONCURRENCY: "1" }).worker;
+      expect([one.jobBatchSize, one.jobConcurrency]).toEqual([1, 1]);
+    });
+
+    it.each(["0", "51", "2.5", "abc"])("refuses batch size %s, naming the variable", (value) => {
+      const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: value }));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^WORKER_JOB_BATCH_SIZE is invalid/);
+    });
+
+    it.each(["0", "17", "1.5", "abc"])("refuses concurrency %s, naming the variable", (value) => {
+      const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_JOB_CONCURRENCY: value }));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^WORKER_JOB_CONCURRENCY is invalid/);
+    });
+
+    it("refuses a concurrency above the batch size", () => {
+      const problems = problemsOf(() =>
+        loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: "2", WORKER_JOB_CONCURRENCY: "3" }),
+      );
+      expect(problems).toEqual(["WORKER_JOB_CONCURRENCY is invalid (must be at most WORKER_JOB_BATCH_SIZE)"]);
     });
   });
 

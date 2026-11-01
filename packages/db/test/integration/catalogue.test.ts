@@ -642,6 +642,7 @@ describe("schema.ts matches the migrated database", () => {
          'gate_condition_closure', 'gate_condition_escalation', 'notification_policy', 'notification_preference',
          'notification_digest', 'meeting_cutoff_pack', 'dependency_slip')
          AND t.tgname NOT LIKE '%contributor%' -- 0097's triggers: checked by the 0097 test below
+         AND t.tgname <> 'automation_rule_enablement_record' -- 0122's trigger: checked by the 0122 test below
        ORDER BY 1, 2`,
     );
     type Row = [string, string, boolean, boolean];
@@ -1039,6 +1040,25 @@ describe("schema.ts matches the migrated database", () => {
       ["assistant_suggestion", "assistant_suggestion_row_guard", false, false],
     ];
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0122: the enablement ledger is append-only and written by its SECURITY DEFINER trigger on automation_rule (D-203 O-2)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname = 'automation_rule_enablement' OR t.tgname = 'automation_rule_enablement_record')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["automation_rule", "automation_rule_enablement_record", false, false],
+      ["automation_rule_enablement", "automation_rule_enablement_append_only", false, false],
+      ["automation_rule_enablement", "automation_rule_enablement_append_only_truncate", false, false],
+    ]);
+    const [fn] = await q<{ definer: boolean; public_exec: boolean }>(
+      `SELECT p.prosecdef AS definer, has_function_privilege('public', p.oid, 'EXECUTE') AS public_exec
+         FROM pg_proc p WHERE p.proname = 'automation_rule_enablement_record'`,
+    );
+    expect(fn).toEqual({ definer: true, public_exec: false });
   });
 
   it("0113: the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only)", async () => {
@@ -1763,6 +1783,9 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       // P6 slice I (0113; T-DG6-ARCH-06, ADR-0061 §2): the contrast report of a published branding version, append-only.
       branding_contrast_report: "INSERT,SELECT",
       branding_contrast_pair: "INSERT,SELECT",
+      // P6 pre-freeze repair (0122; T-DG6-BE-X9, D-203 O-2): the enablement ledger is written only by its SECURITY
+      // DEFINER trigger on automation_rule (SELECT only).
+      automation_rule_enablement: "SELECT",
     });
   });
 

@@ -23,6 +23,7 @@ import {
 import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
 import {
   gateDecidedEnvelope,
+  storedGateDecidedEnvelope,
   gateDecidedPayload,
   liveRule,
   ruleAuthor,
@@ -122,7 +123,12 @@ async function failedTransientExecution(): Promise<{ ruleCode: string; execution
   });
   try {
     await expect(
-      evaluate.handle(api.db, gateDecidedEnvelope(w.orgA.id, gateDecidedPayload(tx)), "job-transient", LAST),
+      evaluate.handle(
+        api.db,
+        await storedGateDecidedEnvelope(api.db, w.orgA.id, gateDecidedPayload(tx)),
+        "job-transient",
+        LAST,
+      ),
     ).rejects.toThrow("synthetic transient fault");
   } finally {
     executors.set("notify", real);
@@ -142,7 +148,7 @@ describe("REQ-S12-003: an out-of-scope action fails with automation.action_forbi
       transformationId: txA,
       plant: [task({ targetTransformationId: txA2 })],
     });
-    const envelope = gateDecidedEnvelope(w.orgA.id, gateDecidedPayload(txA));
+    const envelope = await storedGateDecidedEnvelope(api.db, w.orgA.id, gateDecidedPayload(txA));
     // Delivered on its FIRST attempt: an authorization failure is not thrown (so pg-boss does not retry it); it is a
     // recorded result and enters the queue at once.
     const reports = (await evaluate.handle(api.db, envelope, "job-a12", { retryCount: 0, retryLimit: 5 })) as Body[];
