@@ -25,7 +25,7 @@ import {
   problems,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { loadRecordType, recordExists, requireTransformationRead } from "./record-types.ts";
+import { loadRecordType, requireRecordVisible, requireTransformationRead } from "./record-types.ts";
 
 export const FORM_RECORD = "/api/v1/transformations/:transformationId/form-records/:recordType/:recordId";
 export const VERSIONS = `${FORM_RECORD}/versions`;
@@ -35,7 +35,8 @@ const listQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 
 /**
  * The read gate shared by the BE-E read operations: the transformation in the caller's read scope (404 outside it),
- * then a stored record of the registered type in that transformation (404 otherwise; a planned type has no records).
+ * then a stored record of the registered type in that transformation (404 otherwise; a planned type has no records)
+ * that is not a sensitive record the caller is not admitted to (404; ADR-0051 §2).
  * Returns the record type row (with its table).
  */
 export async function requireRecordRead(
@@ -45,8 +46,9 @@ export async function requireRecordRead(
 ) {
   await requireTransformationRead(db, request, p.transformationId);
   const rt = await loadRecordType(db, p.recordType);
-  if (rt.table_name === null || !(await recordExists(db, rt, p.transformationId, p.recordId)))
-    throw problems.notFound();
+  if (rt.table_name === null) throw problems.notFound();
+  // ADR-0051 §2 (T-DG6-BE-Y1, F-DG6-123): a sensitive record the caller may not open is 404 here too.
+  await requireRecordVisible(db, request, rt, p.transformationId, p.recordId);
   return rt as typeof rt & { table_name: string };
 }
 

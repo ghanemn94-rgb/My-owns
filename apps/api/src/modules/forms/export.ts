@@ -37,7 +37,7 @@ import {
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { principalOf } from "../access/index.ts";
+import { principalOf, withoutRestricted } from "../access/index.ts";
 import { createConfigResolver } from "../methodology/index.ts";
 import { parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
 import {
@@ -320,7 +320,14 @@ async function sendExport(db: Db, request: FastifyRequest, reply: FastifyReply) 
   assertWorking(rt);
   const format = formatOf(request, query.format);
   const lang = query.lang ?? (await callerLanguage(db, request));
-  const body = await buildFormExport(db, p.transformationId, rt, lang);
+  const built = await buildFormExport(db, p.transformationId, rt, lang);
+  // ADR-0051 §2 (T-DG6-BE-Y1; F-DG6-123 sweep): a sensitive record (T14 -> benefit) the caller is not admitted to is
+  // absent from the export, as from every list; the shared helper decides (access/sensitive-reach.ts).
+  const rows = await withoutRestricted(db, principalOf(request), built.rows, (r) => ({
+    recordType: rt.table_name,
+    recordId: r.recordId,
+  }));
+  const body = rows.length === built.rows.length ? built : { ...built, rows };
   if (format === "json") return reply.code(200).send(body);
   return reply
     .code(200)

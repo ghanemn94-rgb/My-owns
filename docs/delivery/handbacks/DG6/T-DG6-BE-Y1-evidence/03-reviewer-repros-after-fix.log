@@ -1,0 +1,92 @@
+port-policy: PostgreSQL listening on port 28120 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvycdcu1_46f32278 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+measurement-audited benefit [{"benefit_id":"01995000-4401-7000-8000-000000000001","n":"3"}]
+benefit with own events [{"record_id":"01995000-4401-7000-8000-000000000001","n":"6"}]
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+mark [33m200[39m {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","isSensitive":true,"reason":"Synthetic: commercially sensitive figure.","version":1,"updatedAt":"2026-11-01T21:29:08.905Z","updatedBy":"01a19904-27a2-767b-90d0-62518645
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+owner measurement [33m201[39m {"id":"01a19904-2910-7539-8165-298b105ce75c","benefitId":"01995000-4401-7000-8000-000000000001","measurementNo":3,"kind":"measurement","correctsMeasurementId":null,"source":"manual","calculationRunId":null,"benefitCalculationId":null,"formulaVersionId":null,"periodStart":"2026-09-01","periodEnd":"20
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+record GET: TL [33m404[39m AUD [33m404[39m (tl 01a19904-2755-778d-ad82-8acd42c262eb aud 01a19904-25e7-75cb-93f9-5b70e857aa3b )
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+F-DG6-121 TL /transformations/{t}/audit: events of the sensitive benefit: [33m6[39m with changes: [33m0[39m sample: {"id":"01a19904-1472-77a2-b405-56c46e092789","seq":"507","occurredAt":"2026-11-01T21:29:01.695Z","action":"benefit.validate_baseline","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"system","userId":null,"displayName":null},"onBehalfOfUserId":null,"priorVersion":5,"newVersion":6,"reason":null,"requestId":null,"changes":null}
+F-DG6-121 TL also sees benefit_measurement events: [33m6[39m
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+F-DG6-121 TL /transformations/{t}/audit: measurement events of the sensitive benefit with changes: [33m0[39m sample: null
+F-DG6-122 AUD /audit-events benefit_measurement events of the sensitive benefit: [33m4[39m unredacted: [33m0[39m sample: null
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+control: AUD /audit-events of the benefit itself: redacted [ [33mtrue[39m, [33mtrue[39m, [33mtrue[39m, [33mtrue[39m, [33mtrue[39m, [33mtrue[39m ]
+
+ ❯ |integration| tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts (1 test | 1 failed) 16995ms
+   × sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122 950ms
+     → expected 0 to be greater than 0
+stdout | tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+TL comment before marking [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+TO comment after marking [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+TL GET benefit [33m404[39m | compare [33m400[39m
+TL GET versions [33m404[39m {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a19904-6f84-71ee-8589-3265d15d6e5f"}
+TL GET comments [33m404[39m {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a19904-6f9e-7003-9588-f293465f275d"}
+TL GET attachments [33m404[39m {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a19904-7021-7088-b5e1-e31ff44b23a2"}
+TL POST comment after marking [33m404[39m {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a19904-7041-720f-84ea-0975f38eb30c"}
+
+ ❯ |integration| tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts (1 test | 1 failed) 16693ms
+   × F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it 510ms
+     → expected 404 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts:203:90
+    201|     // The defects (each expectation is the leak; a fixed product make…
+    202|     expect(own.length).toBeGreaterThan(0);
+    203|     expect(ofSensitive.filter((e) => e.redacted === false && e.changes…
+       |                                                                                          ^
+    204|   }, 120_000);
+    205| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+AssertionError: expected 404 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 404[39m
+
+ ❯ tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts:93:29
+     91|     expect(record.status).toBe(404);
+     92|     // The defect (a fixed product answers 404 to each of these, as th…
+     93|     expect(versions.status).toBe(200);
+       |                             ^
+     94|     expect(comments.status).toBe(200);
+     95|   }, 120_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed (2)
+   Start at  21:28:10
+   Duration  82.33s (transform 12.44s, setup 0ms, collect 35.71s, tests 33.69s, environment 0ms, prepare 292ms)
+

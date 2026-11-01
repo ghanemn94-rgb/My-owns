@@ -34,8 +34,10 @@ import {
   registerAccessP2Routes,
   registerAccessP4Routes,
   registerDeniedMutationAudit,
+  registerSensitiveReachGuard,
   registerSensitivityRoutes,
   resolveTarget,
+  restrictedRecordRefs,
   scopeFilter,
 } from "./modules/access/index.ts";
 import {
@@ -57,7 +59,7 @@ import {
   registerStorageAdminRoutes,
   registerUploadPolicyRoutes,
 } from "./modules/admin/index.ts";
-import { registerAuditRoutes, sensitiveRecordsRedactedForEveryone } from "./modules/audit/index.ts";
+import { registerAuditRoutes } from "./modules/audit/index.ts";
 import {
   RateLimitSubjects,
   registerIdentity,
@@ -481,6 +483,9 @@ export async function buildServer(options: ServerOptions): Promise<{
     rateLimitSubjects,
     ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
   });
+  // T-DG6-BE-Y1 (ADR-0051 §2; F-DG6-121..123): before any business route, the guard that answers 404 when a path
+  // parameter names a sensitive record, or a record carrying its values, that the caller is not admitted to.
+  registerSensitiveReachGuard(app, db);
   registerOrganizationRoutes(app, deps);
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);
@@ -521,8 +526,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerSecurityRoutes(app, deps); // BE-E: the security view, rate-limit classes (ADR-0052 §4)
   registerAuditRoutes(app, deps, {
     // BE-E: the global audit API (ADR-0052 §8). The access port (D-197 item 5): audit_event.read per ADR-0006, and the
-    // ADR-0051 §2 redaction. MERGE NOTE: when T-DG6-BE-B's sensitivity clause lands, restrictedRecords uses it instead
-    // of the fail-closed interim (which redacts every sensitive record's events for everyone).
+    // ADR-0051 §2 redaction: the §2 clause over the event's record and the sensitive owner of a child record
+    // (access/sensitive-reach.ts; T-DG6-BE-Y1, F-DG6-122).
     organizationAccess: async (request, organizationId) => {
       const principal = principalOf(request);
       principal.tracker.decisions += 1;
@@ -533,7 +538,7 @@ export async function buildServer(options: ServerOptions): Promise<{
       return holds ? "allowed" : "forbidden";
     },
     readFilter: (request, cols) => scopeFilter(principalOf(request), "audit_event.read", cols),
-    restrictedRecords: sensitiveRecordsRedactedForEveryone(db),
+    restrictedRecords: (request, refs) => restrictedRecordRefs(db, principalOf(request), refs),
   });
   registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
   // BE-H2: Administration > Storage (slice C). admin may not import evidence, so the setting read and the storage test's

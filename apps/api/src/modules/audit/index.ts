@@ -220,7 +220,6 @@ export async function findAuditEvent(
 export {
   auditRecordKey,
   registerAuditRoutes,
-  sensitiveRecordsRedactedForEveryone,
   type AuditOrganizationAccess,
   type AuditRecordRef,
   type AuditRouteAccess,

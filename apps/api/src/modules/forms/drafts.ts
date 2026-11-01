@@ -36,7 +36,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf, readScopeFor } from "../access/index.ts";
+import { auditContextOf, principalOf, readScopeFor, restrictedRecordRefs } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   HttpProblem,
@@ -191,6 +191,12 @@ async function createDraft(tx: Tx, request: FastifyRequest, transformationId: st
   checkPayload(body.payload);
   const recordId = body.recordId ?? null;
   const base = body.baseRecordVersion ?? null;
+  // A draft of a sensitive record the caller may not open: 404, as the record (ADR-0051 §2; T-DG6-BE-Y1 sweep).
+  if (
+    recordId !== null &&
+    (await restrictedRecordRefs(tx, principalOf(request), [{ recordType: rt.table_name!, recordId }])).size > 0
+  )
+    throw problems.notFound();
   if (recordId !== null && base !== null) {
     const current = await currentRecordVersion(tx, rt, transformationId, recordId);
     if (current === null) throw problems.notFound();

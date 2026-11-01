@@ -18,8 +18,10 @@ import {
   auditContextOf,
   grantCreatorTransformationRoles,
   principalOf,
+  reachKey,
   requireAction,
   requireRead,
+  restrictedRecordRefs,
   scopeFilter,
   targetFor,
 } from "../access/index.ts";
@@ -461,7 +463,16 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
         id: transformationId,
       });
       await requireAction(db, principal, "audit.read", target);
-      return listTransformationAudit(db, transformationId, query);
+      const page = await listTransformationAudit(db, transformationId, query);
+      // ADR-0051 §2 (T-DG6-BE-Y1, F-DG6-121): the events of a sensitive record the caller is not admitted to, and of
+      // the records that carry its values, keep actor, action, time, record id and versions, never the changed values
+      // or the reason (the same redaction as /audit-events; the shared helper access/sensitive-reach.ts).
+      const restricted = await restrictedRecordRefs(db, principal, page.items);
+      if (restricted.size === 0) return page;
+      return {
+        nextCursor: page.nextCursor,
+        items: page.items.map((e) => (restricted.has(reachKey(e)) ? { ...e, reason: null, changes: null } : e)),
+      };
     },
   );
 }

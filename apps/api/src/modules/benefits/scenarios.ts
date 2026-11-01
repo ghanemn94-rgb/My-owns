@@ -41,7 +41,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -470,7 +470,12 @@ export function registerBenefitScenarioRoutes(app: FastifyInstance, { db }: Modu
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentScenarios(db, page.items), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Y1 sweep): the row of a sensitive record the caller is not admitted to is absent.
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "benefit_scenario",
+      recordId: r.id,
+    }));
+    return { items: await presentScenarios(db, visible), nextCursor: page.nextCursor };
   });
 
   app.post(SCENARIOS, { config: write }, async (request, reply) => {

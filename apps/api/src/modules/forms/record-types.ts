@@ -10,7 +10,16 @@ import { type DbOrTx, type FormRecordTypeRow, type Tx } from "@mth/db";
 import type { Permission } from "@mth/shared";
 import type { FormRecordType } from "@mth/shared/schemas";
 import type { FastifyRequest } from "fastify";
-import { commitTimeDenial, principalOf, refreshPrincipal, requireAction, requireRead } from "../access/index.ts";
+import {
+  commitTimeDenial,
+  principalOf,
+  refreshPrincipal,
+  requireAction,
+  requireRead,
+  requireRecordReach,
+  resolveTarget,
+  restrictedRecordRefs,
+} from "../access/index.ts";
 import { problems } from "../platform/index.ts";
 
 /** ADR-0041 §10 refusals of the slice B record and schema operations (exact English texts). */
@@ -137,4 +146,41 @@ export async function recordExists(
   if (recordType.discriminator_column !== null && recordType.discriminator_value !== null)
     q = q.where(recordType.discriminator_column as "id", "=", recordType.discriminator_value);
   return (await q.executeTakeFirst()) !== undefined;
+}
+
+/**
+ * ADR-0051 §2 for the form-record routes (T-DG6-BE-Y1, F-DG6-123): true when `recordId` is a stored record of the type
+ * in the transformation AND it is not a sensitive record (T14 -> benefit) that the caller is not admitted to. A record
+ * the caller may not open is, for every sub-resource read and write, a record that does not exist.
+ */
+export async function recordVisible(
+  db: DbOrTx,
+  request: FastifyRequest,
+  recordType: FormRecordTypeRow,
+  transformationId: string,
+  recordId: string,
+): Promise<boolean> {
+  if (!(await recordExists(db, recordType, transformationId, recordId))) return false;
+  const restricted = await restrictedRecordRefs(db, principalOf(request), [
+    { recordType: recordType.table_name!, recordId },
+  ]);
+  return restricted.size === 0;
+}
+
+/**
+ * The 404 form of `recordVisible` (existence not disclosed, ADR-0006), with the denial attached for the audit when the
+ * record exists but is restricted. Every form-record sub-resource (versions, compare, comments, attachments, custom
+ * values, drafts of an existing record, bulk rows) answers through this one gate.
+ */
+export async function requireRecordVisible(
+  db: DbOrTx,
+  request: FastifyRequest,
+  recordType: FormRecordTypeRow,
+  transformationId: string,
+  recordId: string,
+): Promise<void> {
+  if (!(await recordExists(db, recordType, transformationId, recordId))) throw problems.notFound();
+  const target = await resolveTarget(db, { type: "transformation", id: transformationId });
+  if (target === null) throw problems.notFound();
+  await requireRecordReach(db, principalOf(request), recordType.table_name!, recordId, target);
 }

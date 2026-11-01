@@ -10,9 +10,11 @@
 //     (inherits downward) sees its organizations, units and transformations, and ADM_TECH / ADM_ACCESS
 //     (non-inheriting; audit_event.read is not structural) see organization-level events and the transformations they
 //     are assigned to;
-//   - restrictedRecords: which records are sensitive and not admitted to the caller (ADR-0051 §2); their events are
-//     listed with changes and reason null and redacted true. Actor, action, time, record id and versions remain.
-import { sql, type DbOrTx } from "@mth/db";
+//   - restrictedRecords: which records are sensitive and not admitted to the caller (ADR-0051 §2), OR are children
+//     that carry such a record's values (benefit measurements and the other benefit value rows, business-case lines,
+//     evidence links and contents, form comments/attachments/custom values/drafts, the sensitivity flag and grants;
+//     access/sensitive-reach.ts, T-DG6-BE-Y1, F-DG6-122); their events are listed with changes and reason null and
+//     redacted true. Actor, action, time, record id and versions remain.
 import { auditEventListQuery, uuid, type GlobalAuditEvent } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -33,6 +35,8 @@ export interface AuditRecordRef {
   readonly recordType: string;
   readonly recordId: string;
   readonly transformationId: string | null;
+  /** The event's changes: the owner of a child row that no longer exists is read from them (fail-closed). */
+  readonly changes?: unknown;
 }
 
 /** The key of a record in `restrictedRecords`' answer. */
@@ -46,26 +50,6 @@ export interface AuditRouteAccess {
   readFilter(request: FastifyRequest, cols: AuditEventTargetColumns): ReturnType<AuditScopePredicate>;
   /** The `auditRecordKey`s of the given records that are sensitive and that the caller is not admitted to. */
   restrictedRecords(request: FastifyRequest, refs: readonly AuditRecordRef[]): Promise<ReadonlySet<string>>;
-}
-
-/**
- * The fail-closed redaction used until T-DG6-BE-B's sensitivity clause (ADR-0051 §2 `sensitiveAdmits`) is wired on
- * the server.ts line: every record currently marked sensitive (record_sensitivity.is_sensitive) is treated as not
- * admitted for every caller, so its events are always redacted. It never under-redacts; it over-redacts for the
- * callers ADR-0051 §2 admits (grantees, named parties, sensitive_record.grant holders) until BE-B's clause replaces it.
- */
-export function sensitiveRecordsRedactedForEveryone(db: DbOrTx): AuditRouteAccess["restrictedRecords"] {
-  return async (_request, refs) => {
-    const ids = [...new Set(refs.map((r) => r.recordId))];
-    if (ids.length === 0) return new Set();
-    const rows = await db
-      .selectFrom("record_sensitivity")
-      .select(["record_type", "record_id"])
-      .where("is_sensitive", "=", true)
-      .where("record_id", "=", sql<string>`ANY(${ids}::uuid[])`)
-      .execute();
-    return new Set(rows.map((r) => auditRecordKey({ recordType: r.record_type, recordId: r.record_id })));
-  };
 }
 
 const eventParams = z.strictObject({ auditEventId: uuid });
