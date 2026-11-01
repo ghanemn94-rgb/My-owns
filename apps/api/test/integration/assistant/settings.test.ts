@@ -54,7 +54,7 @@ const httpSetting = (over: Record<string, unknown> = {}) => ({
   endpointUrl: "https://model.example.invalid/v1/chat/completions",
   apiStyle: "openai_chat_completions",
   modelName: "synthetic-model-1",
-  credentialRef: { provider: "env", name: "MTH_TEST_ASSISTANT_KEY" },
+  credentialRef: { provider: "env", name: "MTH_SECRET_TEST_ASSISTANT_KEY" },
   authorizationReference: AUTH_REF,
   requestTimeoutMs: 30000,
   maxOutputTokens: 1024,
@@ -89,7 +89,7 @@ const toggle = (to: "enable" | "disable", ifMatch: number | string | null, sessi
   });
 
 beforeAll(async () => {
-  process.env["MTH_TEST_ASSISTANT_KEY"] = CREDENTIAL_CANARY;
+  process.env["MTH_SECRET_TEST_ASSISTANT_KEY"] = CREDENTIAL_CANARY;
   const { adminUrl } = inject("mthDb");
   scratchDb = await createScratchDatabase(adminUrl, "mth_asst_set");
   await migrate(roleUrl(adminUrl, scratchDb, "mth_owner"));
@@ -103,7 +103,7 @@ beforeAll(async () => {
   admMethod = (await userWith("ADM_METHOD")).session;
 }, 120_000);
 afterAll(async () => {
-  delete process.env["MTH_TEST_ASSISTANT_KEY"];
+  delete process.env["MTH_SECRET_TEST_ASSISTANT_KEY"];
   await api.close();
   await dropScratchDatabase(inject("mthDb").adminUrl, scratchDb);
 });
@@ -218,7 +218,7 @@ describe("putAssistantSetting", () => {
       configured: true,
       enabled: false,
       providerKind: "http_endpoint",
-      credentialRef: { provider: "env", name: "MTH_TEST_ASSISTANT_KEY" },
+      credentialRef: { provider: "env", name: "MTH_SECRET_TEST_ASSISTANT_KEY" },
       authorizationReference: AUTH_REF,
       telemetryEnabled: false,
       enabledAt: null,

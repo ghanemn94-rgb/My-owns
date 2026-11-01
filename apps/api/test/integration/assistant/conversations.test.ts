@@ -356,14 +356,14 @@ describe("assistantEnabled: whether the assistant is on, for every holder of ass
         endpointUrl: fake.url,
         apiStyle: "openai_chat_completions",
         modelName: "synthetic-model-x5",
-        credentialRef: { provider: "env", name: "MTH_SYNTHETIC_X5_KEY" },
+        credentialRef: { provider: "env", name: "MTH_SECRET_SYNTHETIC_X5_KEY" },
       },
       false,
     );
     const before = fake.requestCount;
     const off = await listAs(lead);
     expect([off.status, off.body.assistantEnabled]).toEqual([200, false]);
-    for (const s of [fake.url, "synthetic-model-x5", "MTH_SYNTHETIC_X5_KEY"])
+    for (const s of [fake.url, "synthetic-model-x5", "MTH_SECRET_SYNTHETIC_X5_KEY"])
       expect(JSON.stringify(off.body)).not.toContain(s);
     // Enabled HTTP endpoint: true, still nothing of the setting, and reading the signal sends nothing to the model.
     const current = (await loadSetting(api.db))!;
@@ -375,7 +375,7 @@ describe("assistantEnabled: whether the assistant is on, for every holder of ass
     expect(enabled.status).toBe(200);
     const onHttp = await listAs(lead);
     expect(onHttp.body.assistantEnabled).toBe(true);
-    for (const s of [fake.url, "synthetic-model-x5", "MTH_SYNTHETIC_X5_KEY"])
+    for (const s of [fake.url, "synthetic-model-x5", "MTH_SECRET_SYNTHETIC_X5_KEY"])
       expect(JSON.stringify(onHttp.body)).not.toContain(s);
     expect(fake.requestCount).toBe(before);
     await setting({}, true); // back to the test adapter, enabled, for the rest of the suite

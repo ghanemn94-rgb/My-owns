@@ -74,8 +74,8 @@ export const P6_MIRRORS_BE_N: Readonly<Record<string, z.ZodType>> = {
 };
 
 const SECRET = "whsec-SYNTHETIC-contract-3b9e";
-const SECRET_NAME = "MTH_CONTRACT_WEBHOOK_SECRET";
-const NEXT_NAME = "MTH_CONTRACT_WEBHOOK_SECRET_NEXT";
+const SECRET_NAME = "MTH_SECRET_CONTRACT_WEBHOOK_SECRET";
+const NEXT_NAME = "MTH_SECRET_CONTRACT_WEBHOOK_SECRET_NEXT";
 
 export async function exerciseP6BeNOperations(ctx: P6ExerciseContext): Promise<void> {
   const secrets = createSecretProviderRegistry();

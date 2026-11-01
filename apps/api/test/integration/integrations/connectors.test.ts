@@ -57,7 +57,7 @@ import {
 type Body = any;
 const L = "/api/v1/admin/connectors";
 const SECRET_VALUE = "s3cr3t-VALUE-be-l-9f2c";
-const SECRET_NAME = "MTH_TEST_CONNECTOR_SECRET";
+const SECRET_NAME = "MTH_SECRET_TEST_CONNECTOR_SECRET";
 
 /** The test double of the local test adapter (BE-L2 ships the real one): mode healthy | failing | stopped. */
 const fakeTestAdapter: ConnectorAdapter = {
@@ -681,12 +681,16 @@ describe("testConnector and the derived verification, last success and actionabl
   });
 
   it("names the unresolvable secret and the missing mapped column in the error (connector.secret_unresolvable, mapping_mismatch)", async () => {
-    const noSecret = (await create({}, { credentialRefs: { api: { provider: "env", name: "MTH_TEST_MISSING" } } }))
-      .body;
+    const noSecret = (
+      await create({}, { credentialRefs: { api: { provider: "env", name: "MTH_SECRET_TEST_MISSING" } } })
+    ).body;
     const t1 = await call<Body>(api.app, "POST", `${L}/${noSecret.id}/test`, { session: admin, body: {} });
     expect(t1.body).toMatchObject({ status: "failed", errorCode: "connector.secret_unresolvable" });
     const e1 = (await call<Body>(api.app, "GET", `${L}/${noSecret.id}`, { session: admin })).body.actionableError;
-    expect(e1).toMatchObject({ errorCode: "connector.secret_unresolvable", params: { name: "MTH_TEST_MISSING" } });
+    expect(e1).toMatchObject({
+      errorCode: "connector.secret_unresolvable",
+      params: { name: "MTH_SECRET_TEST_MISSING" },
+    });
     const badMap = (await create({}, { fieldMappings: [{ source: "no_such_column", target: "value" }] })).body;
     const t2 = await call<Body>(api.app, "POST", `${L}/${badMap.id}/test`, { session: admin, body: {} });
     expect(t2.body).toMatchObject({ status: "failed", errorCode: "connector.mapping_mismatch" });
@@ -742,7 +746,7 @@ describe("credentials are references only", () => {
       {
         credentialRefs: {
           api: { provider: "env", name: SECRET_NAME },
-          backup: { provider: "env", name: "MTH_TEST_NOT_PROVIDED" },
+          backup: { provider: "env", name: "MTH_SECRET_TEST_NOT_PROVIDED" },
           vault: { provider: "it_vault", name: "connectors/kpi" },
         },
       },
@@ -757,7 +761,7 @@ describe("credentials are references only", () => {
     for (const text of scans) expect(text).not.toContain(SECRET_VALUE);
     expect(res.body.config.credentialRefs).toEqual({
       api: { provider: "env", name: SECRET_NAME, resolvable: true },
-      backup: { provider: "env", name: "MTH_TEST_NOT_PROVIDED", resolvable: false },
+      backup: { provider: "env", name: "MTH_SECRET_TEST_NOT_PROVIDED", resolvable: false },
       vault: { provider: "it_vault", name: "connectors/kpi", resolvable: false },
     });
     // No row or audit event holds the value either.

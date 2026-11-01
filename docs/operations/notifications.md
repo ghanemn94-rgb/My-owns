@@ -101,10 +101,11 @@ text is the generic "You no longer have access to this item." and no detail is i
 so a value cannot be stored there. Values are resolved at send time through the `SecretProvider` registry
 (ADR-0052 §5; `configuration.md`, "Secret providers"):
 
-- `env`: for example `{ "provider": "env", "name": "MTH_SMTP_PASSWORD" }`. Set `MTH_SMTP_PASSWORD_FILE` (a container
-  secret) or `MTH_SMTP_PASSWORD`.
+- `env`: for example `{ "provider": "env", "name": "MTH_SECRET_SMTP_PASSWORD" }`. Set
+  `MTH_SECRET_SMTP_PASSWORD_FILE` (a container secret) or `MTH_SECRET_SMTP_PASSWORD`. Only `MTH_SECRET_*` names are
+  accepted (`configuration.md`, "The namespace"): a platform variable is refused with `400 validation`.
 - `file`: for example `{ "provider": "file", "name": "mth_smtp_password" }`. Place the file directly inside
-  `SECRETS_DIR`.
+  `SECRETS_DIR`, a directory dedicated to these secrets.
 - Another provider (IT's vault) is used only if IT registers its own adapter. The product ships none.
 
 The names are examples. Provide the values to **both** the API (test) and the worker (sends). A reference that

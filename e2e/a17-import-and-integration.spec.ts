@@ -12,7 +12,7 @@
 //     are committed with a lineage link and 2 are not committed; the API confirms 8 KPI actuals with lineage;
 //  2. REQ-S17-003: a signed webhook delivery to the real server is accepted (202) and its batch is listed on the
 //     Imports page; an unsigned one is refused 401 (the webhook signing secret is the synthetic process variable
-//     QA_A17_WEBHOOK_SIGNING_SECRET, exported before the stack starts and read by the built-in `env` SecretProvider);
+//     MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET, exported before the stack starts and read by the built-in `env` SecretProvider);
 //  3. REQ-S17-005 / A17: a failing and a stopped test connector, each run with "Run now": the connector page shows which
 //     run failed, why and what to do, with both fallbacks, "Never succeeded" and "Not verified"; no KPI actual changes;
 //     with the connector stopped, the fallback links open and a KPI actual is still submitted.
@@ -38,7 +38,7 @@ type Playwright = PlaywrightWorkerArgs["playwright"];
 type Body = any;
 
 const DEV_ISSUER = "urn:mth:dev-local";
-const SECRET_VAR = "QA_A17_WEBHOOK_SIGNING_SECRET";
+const SECRET_VAR = "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET";
 /** The template's columns (ADR-0056 §9; also read from GET /api/v1/import-templates in beforeAll). */
 let HEADER: string[] = [];
 

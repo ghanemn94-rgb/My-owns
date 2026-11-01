@@ -1,0 +1,48 @@
+port-policy: PostgreSQL listening on port 28150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvyfjynj_8e0bd517 (server_encoding UTF8); applied 115 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/integrations/webhooks.test.ts (16 tests) 6987ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > answers 202 and stages 10 = 8 + 1 + 1 with its receipt and webhook run, as the connector's service identity  842ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > commits the valid rows after the staging transaction, on behalf of the configured KDS  633ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > leaves the batch staged and records import_batch.auto_commit_refused when the commit-time re-check refuses  417ms
+   ✓ receiveWebhook: every authentication failure is the same 401 and stores nothing > refuses unsigned, wrongly signed, stale, malformed, unknown, disabled-endpoint and disabled-connector deliveries  329ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  313ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > two concurrent deliveries with one id create one receipt and one batch  543ms
+   ✓ rotateWebhookSecret: the previous secret is valid for the grace period only > accepts the new and the previous secret inside the grace period and refuses the previous one after it  651ms
+ ✓ |integration| apps/api/test/integration/assistant/conversations.test.ts (21 tests) 6142ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  401ms
+   ✓ the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt  390ms
+ ✓ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests) 35046ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  1167ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  1106ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  1016ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  527ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing  516ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  687ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10395ms
+   ✓ failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes  12859ms
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  2183ms
+ ✓ |integration| apps/api/test/integration/assistant/settings.test.ts (17 tests) 3908ms
+ ✓ |integration| apps/api/test/integration/admin/storage.test.ts (13 tests) 6192ms
+ ✓ |integration| apps/api/test/integration/admin/notification-channels.test.ts (11 tests) 2035ms
+   ✓ testNotificationChannel > 422 not_configured until email is enabled; then one message to the caller's own address and an audit event  384ms
+ ✓ |integration| apps/api/test/integration/tasks/email-adapter-contract.test.ts (14 tests) 1195ms
+ ✓ |integration| apps/api/test/integration/assistant/provider.test.ts (14 tests) 677ms
+   ✓ the HTTP adapter against the local fake (never live) > a stall before the response or inside the body is assistant.provider_timeout  605ms
+ ✓ |integration| apps/api/test/integration/assistant/composition.test.ts (11 tests) 6489ms
+   ✓ buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > a second app built and closed leaves this app's ports working (no read through a closed pool; BE-X3B)  314ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > is held per app: a second app on the same file keeps it after closing; the last holder's close removes it  519ms
+ ✓ |integration| apps/api/test/integration/operations/log-redaction.test.ts (2 tests) 214ms
+
+ Test Files  10 passed (10)
+      Tests  129 passed (129)
+   Start at  22:57:17
+   Duration  112.70s (transform 9.74s, setup 0ms, collect 38.32s, tests 68.88s, environment 0ms, prepare 99ms)
+
+exit=0

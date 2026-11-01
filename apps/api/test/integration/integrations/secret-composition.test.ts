@@ -33,11 +33,11 @@ type Body = any;
 const CONNECTORS = "/api/v1/admin/connectors";
 // Variable names unique to this file (the integration files of one run share the process environment of their
 // worker only; the names keep them apart from every other suite anyway).
-const SIGNING_NAME = "MTH_BE_X2_COMPOSITION_SIGNING_SECRET";
+const SIGNING_NAME = "MTH_SECRET_BE_X2_COMPOSITION_SIGNING_SECRET";
 const SIGNING_VALUE = "whsec-SYNTHETIC-be-x2-composition-5c2a";
-const CREDENTIAL_NAME = "MTH_BE_X2_COMPOSITION_API_TOKEN";
+const CREDENTIAL_NAME = "MTH_SECRET_BE_X2_COMPOSITION_API_TOKEN";
 const CREDENTIAL_VALUE = "tok-SYNTHETIC-be-x2-composition-91d0";
-const UNSET_NAME = "MTH_BE_X2_COMPOSITION_NEVER_SET";
+const UNSET_NAME = "MTH_SECRET_BE_X2_COMPOSITION_NEVER_SET";
 
 let api: TestApi;
 let w: World;

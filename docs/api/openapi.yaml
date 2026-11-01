@@ -40208,7 +40208,12 @@ components:
       type: object
       required: [provider, name]
       additionalProperties: false
-      description: "A reference to a secret held by a SecretProvider (ADR-0052 §5); never the secret value."
+      description: >-
+        A reference to a secret held by a SecretProvider (ADR-0052 §5); never the secret value. The name must be
+        inside the provider's namespace (F-DG6-120): for `env` a variable `MTH_SECRET_<NAME>` (A-Z 0-9 _, first
+        character a letter or digit, not ending in `_FILE`), for `file` a plain file name in SECRETS_DIR; never a
+        platform variable. A reference outside it is refused with 400 validation, field error
+        `validation.secret_ref_namespace` at the field.
       properties:
         provider: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
         name: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_./-]{0,127}$" }

@@ -53,8 +53,8 @@ let nobody: Session;
 let fake: FakeS3;
 let openStore: FakeS3; // NEGATIVE FIXTURE: serves anonymous reads
 const BUCKET = "mth-evidence";
-const ACCESS_VAR = "MTH_IT_STORAGE_S3_ACCESS";
-const SECRET_VAR = "MTH_IT_STORAGE_S3_SECRET";
+const ACCESS_VAR = "MTH_SECRET_IT_STORAGE_S3_ACCESS";
+const SECRET_VAR = "MTH_SECRET_IT_STORAGE_S3_SECRET";
 const S = "/api/v1/admin/storage";
 const TEST = "/api/v1/admin/storage/test";
 const PDF = (text: string) => Buffer.from(`%PDF-1.7\n% synthetic ${text}\n%%EOF\n`);
@@ -265,7 +265,7 @@ describe("REQ-S16-006: driver selection, Administration > Storage", () => {
   });
 
   it("wrong credentials fail the write check (failed outcome, no save admitted)", async () => {
-    const res = await runTest(s3Of(fake, { secretKeyRef: { provider: "env", name: "MTH_IT_STORAGE_UNSET" } }));
+    const res = await runTest(s3Of(fake, { secretKeyRef: { provider: "env", name: "MTH_SECRET_IT_STORAGE_UNSET" } }));
     expect(res.body).toMatchObject({ outcome: "failed", errorCode: "storage.write_failed" });
     expect(res.body.checks.slice(1).every((c: { outcome: string }) => c.outcome === "skipped")).toBe(true);
   });

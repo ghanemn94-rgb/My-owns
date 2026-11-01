@@ -67,7 +67,7 @@ import {
 // says what it waited for); a test timeout above those bounds makes a failure name its cause instead of "timed out".
 vi.setConfig({ testTimeout: 120_000 });
 
-const SECRET_VAR = "QA_A17_WEBHOOK_SIGNING_SECRET";
+const SECRET_VAR = "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET";
 const SECRET = "synthetic-qa-a17-signing-secret-not-real-0001";
 
 let env: ScratchEnv;

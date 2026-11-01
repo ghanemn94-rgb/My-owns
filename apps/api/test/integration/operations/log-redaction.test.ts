@@ -13,7 +13,7 @@ const logStream = { write: (line: string) => void lines.push(line) };
 
 let built: Awaited<ReturnType<typeof buildServer>>;
 let pool: ReturnType<typeof createPool>;
-const ENV_SECRET = "MTH_LOG_REDACTION_TEST_SECRET";
+const ENV_SECRET = "MTH_SECRET_LOG_REDACTION_TEST_SECRET";
 
 beforeAll(async () => {
   process.env[ENV_SECRET] = canary("provider-value");
