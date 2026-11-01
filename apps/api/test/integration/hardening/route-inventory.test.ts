@@ -22,8 +22,8 @@
 // "Nothing persisted" (ADR-0051 §5): per request, the only audit rows it wrote are `authorization.denied` failure
 // records (ADR-0004); per case, the count of `audit_event` rows other than `authorization.denied` is identical before
 // and after, and so is a row fingerprint (count and md5 of every row) of every table of the private scratch database
-// except the session table (an authenticated request refreshes its own session's idle timer, ADR-0005) and the
-// authorization.denied rows of audit_event.
+// except the session table's sliding idle-expiry columns (an authenticated request refreshes its own session's idle
+// timer, ADR-0005; every other session column is compared) and the authorization.denied rows of audit_event.
 // Every operation ruled out of a case is named here with its reason and the test fails if any other is skipped.
 //
 // A DG1-DG5 operation that fails a case is a finding for the T-DG6-BE-C2 handback, not fixed here (p6-plan R1).
@@ -80,19 +80,9 @@ const CALLER_SCOPED: ReadonlyMap<string, string> = new Map([
 const REPORTED_DEVIATIONS: ReadonlyMap<
   string,
   { readonly status: number; readonly code: string; readonly why: string }
-> = new Map([
-  [
-    "4:createTomGap",
-    {
-      status: 422,
-      code: "t03.dimension_required",
-      why:
-        "the contract's TomGapCreate requires dimensionCode, but the route parses it with a lenient schema " +
-        "(apps/api/src/modules/transformations/registers.ts, tomGapCreateLenient) and refuses its absence as a " +
-        "business rule (422, pointer /dimensionCode) instead of the uniform 400",
-    },
-  ],
-]);
+  // Empty: 4:createTomGap (422 t03.dimension_required) was fixed by T-DG6-BE-Y3 (F-DG6-146): the route now parses with
+  // the contract's TomGapCreate and answers the uniform 400.
+> = new Map();
 
 /**
  * Case 4 exclusions: operations with no input that can violate the contract (no request body and no path parameter).
@@ -103,8 +93,15 @@ const NO_INVALID_INPUT: ReadonlyMap<string, string> = new Map([
   ["requestDemoReset", "no body, no parameter (refused outside a demo database, 409 environment.not_demo)"],
 ]);
 
-/** The table whose rows an authenticated request legitimately updates: its own session's last-seen time. */
-const SESSION_TABLES = new Set(["user_session"]);
+/**
+ * The columns an authenticated request legitimately updates: its own session's sliding idle expiry (ADR-0005;
+ * apps/api/src/modules/identity/sessions.ts touchSession, at most once a minute). They are left out of the `session`
+ * table's fingerprint, and every other column of it (a new, revoked or altered session) is still compared, so the
+ * verdict does not depend on how long a case takes (F-DG6-124/F-DG6-145).
+ */
+const SLIDING_COLUMNS: ReadonlyMap<string, readonly string[]> = new Map([
+  ["public.session", ["last_seen_at", "idle_expires_at"]],
+]);
 
 let api: TestApi;
 let scratch: string | null = null;
@@ -192,7 +189,7 @@ async function auditRowsBesidesDenials(): Promise<number> {
   return Number(r.rows[0]!.n);
 }
 
-/** count and md5 of every row of every base table of the scratch database, except the session table. */
+/** count and md5 of every row of every base table of the scratch database (the session's sliding columns left out). */
 async function fingerprint(): Promise<Map<string, string>> {
   const tables = await api.owner.query<{ s: string; t: string }>(
     `SELECT table_schema AS s, table_name AS t FROM information_schema.tables
@@ -201,12 +198,13 @@ async function fingerprint(): Promise<Map<string, string>> {
   );
   const out = new Map<string, string>();
   for (const { s, t } of tables.rows) {
-    if (SESSION_TABLES.has(t)) continue;
     const q = `"${s.replace(/"/g, '""')}"."${t.replace(/"/g, '""')}"`;
     // ADR-0004: a refused call may write its authorization.denied failure record, and nothing else.
     const where = t === "audit_event" ? "WHERE x.action <> 'authorization.denied'" : "";
+    const sliding = SLIDING_COLUMNS.get(`${s}.${t}`) ?? [];
+    const row = sliding.length === 0 ? "x::text" : `(to_jsonb(x) ${sliding.map((c) => `- '${c}'`).join(" ")})::text`;
     const r = await api.owner.query<{ n: string; h: string | null }>(
-      `SELECT count(*) AS n, md5(coalesce(string_agg(x::text, E'\\n' ORDER BY x::text), '')) AS h FROM ${q} x ${where}`,
+      `SELECT count(*) AS n, md5(coalesce(string_agg(${row}, E'\\n' ORDER BY ${row}), '')) AS h FROM ${q} x ${where}`,
     );
     out.set(`${s}.${t}`, `${r.rows[0]!.n}:${r.rows[0]!.h}`);
   }
@@ -345,6 +343,43 @@ describe("REQ-S02-006: the route-inventory sweep over every mutating operation o
     // The generated requests of cases 1-3 are valid under the contract's request schema.
     const invalidBodies = eligible.filter((o) => !requestFor(o, anchors).bodyValid).map((o) => o.operationId);
     expect(invalidBodies).toEqual([]);
+  });
+
+  it("the fingerprint ignores only the session's sliding idle expiry, whatever a case's duration (F-DG6-124/F-DG6-145)", async () => {
+    // Age the caller's session past touchSession's one-minute threshold, as a long case under load does.
+    const age = () =>
+      api.owner.query(
+        `UPDATE session SET last_seen_at = now() - interval '2 minutes' WHERE user_id = $1 AND revoked_at IS NULL`,
+        [everyone.userId],
+      );
+    const lastSeen = async () =>
+      (
+        await api.owner.query<{ t: Date }>(
+          `SELECT max(last_seen_at) AS t FROM session WHERE user_id = $1 AND revoked_at IS NULL`,
+          [everyone.userId],
+        )
+      ).rows[0]!.t.getTime();
+    await age();
+    const aged = await lastSeen();
+    const before = await fingerprint();
+    const me = await call<Json>(api.app, "GET", "/api/v1/me", { session: everyone });
+    expect(me.status).toBe(200);
+    expect(await lastSeen(), "the request slid the session's idle expiry").toBeGreaterThan(aged);
+    expect(changedTables(before, await fingerprint())).toEqual([]);
+    // Any other change to a session row is still seen.
+    const original = await api.owner.query<{ id: string; ua: string | null }>(
+      `SELECT id, user_agent AS ua FROM session WHERE user_id = $1`,
+      [everyone.userId],
+    );
+    const base = await fingerprint();
+    await api.owner.query(`UPDATE session SET user_agent = 'synthetic-changed' WHERE user_id = $1`, [everyone.userId]);
+    try {
+      expect(changedTables(base, await fingerprint())).toEqual(["public.session"]);
+    } finally {
+      for (const r of original.rows)
+        await api.owner.query(`UPDATE session SET user_agent = $2 WHERE id = $1`, [r.id, r.ua]);
+    }
+    expect(changedTables(base, await fingerprint())).toEqual([]);
   });
 
   it("case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted", async () => {

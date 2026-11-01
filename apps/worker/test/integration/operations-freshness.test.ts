@@ -619,3 +619,150 @@ describe("kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S
     await expect(scan(null, "restored")).resolves.toMatchObject({ emitted: expect.any(Number) });
   });
 });
+
+// F-DG6-100 / F-DG6-140 (regression; the domain reviewer's probe, zz-domain-probe-freshness, and the QA probe
+// zz-qa-dg6r1-freshness-later-period): a stopped feed. The last accepted value sits in an EARLIER (closed) monthly
+// period, older than staleAfterDays, while the current period (opened automatically by kpi.reporting_period_open) is
+// open and empty. Freshness is the latest accepted value across periods, so the scan raises one data_stale exception.
+describe("a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100)", () => {
+  /** An earlier monthly period of the organization (`monthsBack` before the current month), with its audit event. */
+  async function earlierPeriod(w: World, monthsBack: number, status: "open" | "closed"): Promise<string> {
+    const d = await today(env.db);
+    const id = randomUUID();
+    await env.db.transaction().execute(async (tx) => {
+      await tx
+        .insertInto("reporting_period")
+        .values({
+          id,
+          organization_id: w.organizationId,
+          frequency: "monthly",
+          period_label: `PREV-${monthsBack}`,
+          period_start: sql<string>`(date_trunc('month', ${d}::date) - make_interval(months => ${monthsBack}))::date`,
+          period_end: sql<string>`(date_trunc('month', ${d}::date) - make_interval(months => ${monthsBack - 1})
+            - interval '1 day')::date`,
+          status,
+          opened_at: sql<Date>`now()`,
+          closed_at: status === "closed" ? sql<Date>`now()` : null,
+          created_by: w.userId,
+          updated_by: w.userId,
+        })
+        .execute();
+      await insertAuditEvent(tx, userActor(w.userId), {
+        action: "reporting_period.create",
+        recordType: "reporting_period",
+        recordId: id,
+        organizationId: w.organizationId,
+        newVersion: 1,
+      });
+    });
+    return id;
+  }
+  const daysBefore = async (d: string, n: number) =>
+    (await sql<{ d: string }>`SELECT (${d}::date - ${n}::int)::text AS d`.execute(env.db)).rows[0]!.d;
+  const readOf = async (w: World) =>
+    kpiFreshness(
+      env.db,
+      { id: w.kpiId, organization_id: w.organizationId, transformation_id: w.transformationId, frequency: "monthly" },
+      await today(env.db),
+    );
+
+  it("the scan reads the last value as Stale, emits one data.stale event and opens one data_stale exception (M0239)", async () => {
+    const w = await seed(env.db);
+    const d = await today(env.db);
+    const prevId = await earlierPeriod(w, 1, "closed");
+    const staleDate = await daysBefore(d, 60);
+    await evaluate(env.db, { ...w, periodId: prevId }, "0.4125", staleDate);
+
+    const read = await readOf(w);
+    expect([read.freshness, read.lastValue, read.dataAsOf]).toEqual(["stale", "0.4125", staleDate]);
+    expect(await scan(w, "stopped-1")).toMatchObject({ kpis: 1, stale: 1, emitted: 1 });
+    // The same episode on the next scan writes nothing.
+    expect(await scan(w, "stopped-2")).toMatchObject({ kpis: 1, stale: 1, emitted: 0 });
+    const events = await staleEvents(w);
+    expect(events.map((e) => e.idempotency_key)).toEqual([dataStaleEventKey(w.kpiId, staleDate)]);
+    expect(await EXCEPTION_RAISE_HANDLER.handle(env.db, envelopeOf(events[0]!), "stopped-raise")).toMatchObject({
+      outcome: "done",
+      raised: "opened",
+    });
+    const rows = await exceptionsOf(w);
+    expect(rows.map((r) => [r.failure_class, r.status])).toEqual([["data_stale", "open"]]);
+  });
+
+  it("an Unknown (no-value) evaluation in the current period does not hide the earlier stale value either", async () => {
+    const w = await seed(env.db);
+    const d = await today(env.db);
+    const prevId = await earlierPeriod(w, 2, "closed");
+    const staleDate = await daysBefore(d, 75);
+    await evaluate(env.db, { ...w, periodId: prevId }, "0.5", staleDate);
+    // The current period's run found no accepted actual: an Unknown evaluation (value null).
+    await env.db.transaction().execute(async (tx) => {
+      const runId = randomUUID();
+      await tx
+        .insertInto("calculation_run")
+        .values({
+          id: runId,
+          organization_id: w.organizationId,
+          transformation_id: w.transformationId,
+          trigger_kind: "actual_accepted",
+          trigger_record_type: "kpi_actual",
+          trigger_record_id: randomUUID(),
+          trigger_slot: 1,
+          idempotency_key: `test-run:${runId}`,
+          status: "completed",
+          evaluation_count: 1,
+          formula_engine_version: "synthetic",
+          kpi_rules_version: "mth-kpi/1.0.0",
+          started_at: sql<Date>`now()`,
+        })
+        .execute();
+      await tx
+        .insertInto("kpi_evaluation")
+        .values({
+          id: randomUUID(),
+          organization_id: w.organizationId,
+          transformation_id: w.transformationId,
+          calculation_run_id: runId,
+          kpi_definition_id: w.kpiId,
+          kpi_version_id: w.versionId,
+          scope_kind: "transformation",
+          scope_id: w.transformationId,
+          reporting_period_id: w.periodId,
+          period_label: "P",
+          value_basis: "period",
+          value: null,
+          value_status: "unknown",
+          value_reason: "kpi.no_accepted_actual",
+          value_source: "entered",
+          trend: "unknown",
+          calculated_rag: "unknown",
+          deviation: "unknown",
+          threshold_source: "default",
+          explanation_key: "kpi.rag.synthetic",
+          data_as_of: null,
+        })
+        .execute();
+    });
+    const read = await readOf(w);
+    expect([read.freshness, read.lastValue, read.dataAsOf]).toEqual(["stale", "0.5", staleDate]);
+    expect(await scan(w, "unknown-later")).toMatchObject({ stale: 1, emitted: 1 });
+  });
+
+  it("a value that is still within staleAfterDays in the earlier period is Fresh: no event", async () => {
+    const w = await seed(env.db);
+    const d = await today(env.db);
+    const prevId = await earlierPeriod(w, 1, "closed");
+    const recent = await daysBefore(d, 5);
+    await evaluate(env.db, { ...w, periodId: prevId }, "0.7", recent);
+    expect((await readOf(w)).freshness).toBe("fresh");
+    expect(await scan(w, "fresh-earlier")).toMatchObject({ stale: 0, emitted: 0 });
+    expect(await staleEvents(w)).toHaveLength(0);
+  });
+
+  it("never a value in any period stays Unknown with nulls (never 0) and raises nothing", async () => {
+    const w = await seed(env.db);
+    await earlierPeriod(w, 1, "closed");
+    expect(await readOf(w)).toMatchObject({ freshness: "unknown", lastValue: null, dataAsOf: null });
+    expect(await scan(w, "never")).toMatchObject({ kpis: 1, stale: 0, emitted: 0 });
+    expect(await staleEvents(w)).toHaveLength(0);
+  });
+});

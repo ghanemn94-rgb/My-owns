@@ -164,8 +164,21 @@ describe("dependency.slipped through the real relay (D-QA-F2-1)", () => {
     });
     expect(items.map((i) => i.assignee_user_id)).toEqual([x.users.bo.id]);
 
-    // A further relay round publishes nothing more, and the execution stays the only one.
-    expect(await relayOnce(api.db, boss)).toEqual({ published: 0, failed: 0 });
+    // A further relay round republishes nothing of THIS event, and the execution stays the only one. Scoped to the
+    // slip's own outbox row (F-DG6-145): the running worker writes and relays rows of its own (other events) meanwhile,
+    // so the round's global tally is not this test's to assert.
+    const publishedAt = row.published_at;
+    await relayOnce(api.db, boss);
+    const again = await api.db
+      .selectFrom("outbox_event")
+      .select(["published_at", "publish_attempts", "last_error"])
+      .where("idempotency_key", "=", row.idempotency_key)
+      .executeTakeFirstOrThrow();
+    expect([again.published_at?.getTime(), again.publish_attempts, again.last_error]).toEqual([
+      publishedAt?.getTime(),
+      1,
+      null,
+    ]);
     const job = await waitFor(async () => {
       const r = await sql<{ state: string }>`SELECT state FROM pgboss.job
         WHERE name = 'portfolio.dependency_slip' AND data->>'idempotencyKey' = ${row.idempotency_key}`.execute(api.db);
