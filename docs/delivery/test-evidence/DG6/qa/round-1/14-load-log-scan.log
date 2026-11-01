@@ -1,0 +1,14 @@
+$ node deploy/scripts/log-scan.mjs --canary not-used-load-run --storage-path $TMPDIR/qa-load/evidence $TMPDIR/qa-load/*.log (2026-11-01T17:28:05Z)
+     0 $TMPDIR/qa-load/api-index.log
+     0 $TMPDIR/qa-load/api-proof.log
+     0 $TMPDIR/qa-load/api-rep1.log
+     6 $TMPDIR/qa-load/worker-index.log
+    91 $TMPDIR/qa-load/worker-proof.log
+   637 $TMPDIR/qa-load/worker-rep1.log
+   734 total
+log-scan: PASS: 6 file(s), 734 line(s), 1 canary value(s), 7 fixed pattern(s), 0 store host(s), 1 storage path(s)
+EXIT 0
+--- negative control: a copy of one log with the canary appended
+$TMPDIR/qa-load-neg.log:1: canary-secret: {"level":30,"msg":"synthetic leak «masked:canary-secret»"}
+log-scan: FAIL: 1 line(s) matched; 1 file(s), 1 line(s), 1 canary value(s), 7 fixed pattern(s), 0 store host(s), 0 storage path(s)
+EXIT 1 (expected 1)

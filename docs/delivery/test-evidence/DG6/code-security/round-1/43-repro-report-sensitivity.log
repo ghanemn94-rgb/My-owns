@@ -1,0 +1,35 @@
+# 43-repro-report-sensitivity  started 2026-11-01T13:17:31Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=24.08 22.43 18.75  commit=3cce3d4452fcd91e3db2888c60271e5afdc06062
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts
+port-policy: PostgreSQL listening on port 27985 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.bYRJvo/claude-0/r/rv2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvxuulot_c6d70999 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts > F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot
+live before marking [33m200[39m mentions benefit: [33mtrue[39m
+
+stdout | tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts > F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot
+TL GET benefit [33m404[39m | benefits list [33m200[39m contains it: [33mfalse[39m
+
+stdout | tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts > F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot
+F-DG6-124 TL live register report [33m200[39m contains the sensitive benefit: [33mtrue[39m excerpt: .filters","sources":[],"kind":"list","items":[],"emptyKey":"report.registers.no_filters"},{"key":"register","titleKey":"report.registers.benefits.title","sources":[{"recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","recordVersion":6},{"recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000002","recordVersion":3},{"recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000003","recordVersion":5}],"kind":"table","columns":[{"key":"code","labelKey":"report.registers.benefits.code","valueKind":"text","unitKind":null},{"key":"title","labelKey":"report.registers.benefits.title","valueKind":"text","unitKind":null},{"key":"benefit_type","labelKey":"report.registers.benefits.benefit_type","valueKind":"code","unitKind":null},{"key":"value_class","labelKey":"report.registers.benefits.value_class","valueKind":"code","unitKind":null},{"key":"baseline","lab
+
+stdout | tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts > F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot
+F-DG6-124 live row with the title "Revenue uplift" ls":[{"type":"text","value":"B01","authored":"user","validation":"not_applicable","reason":null},{"type":"text","value":"Revenue uplift","authored":"user","validation":"not_applicable","reason":null},{"type":"code","value":"revenue","labelKey":"report.benefit_type.revenue","validation":"not_applicable","reason":null},{"type":"code","value":"revenue_uplift","labelKey":"report.benefit_value_class.revenue_uplift","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.180000","unitKind":"other","currency":null,"valueBasis":"baseline","validation":"validated","reason":null},{"type":"text","value":"fraction","authored":"user","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.240000","unitKind":"other","currency":null,"valueBasis":"target","validation":"not_applicable","reason":null},{"type":"decimal","value":"7128000.0000","unitKind":"currency","currency":"SAR","valueBasis":"planned","validation":"not_applicable","reason":null},{"type":"decimal","value":"222750.0000","
+
+stdout | tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts > F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot
+TO generate snapshot [33m201[39m {"id":"01a19743-e9c3-7747-954f-9be73cf1e200","transformationId":"01995000-0000-7000-8000-000000000001","definitionCode":"registers","subjectType":"transformation","subjectId":"01995000-0000-7000-8000-
+
+stdout | tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts > F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot
+F-DG6-124 TL GET snapshot [33m200[39m contains the sensitive benefit: [33mtrue[39m
+
+ ✓ |integration| tests/qa/integration/zz-cs-r1-report-sensitivity.test.ts (1 test) 42097ms
+   ✓ F-DG6-124: the on-screen reports ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads it in the live register report and in a stored snapshot  2320ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  13:17:42
+   Duration  117.46s (transform 19.60s, setup 0ms, collect 51.90s, tests 42.10s, environment 0ms, prepare 687ms)
+
+exit=0  finished 2026-11-01T13:19:47Z  load=25.06 23.61 19.70

@@ -1,0 +1,40 @@
+# 22-unit-rerun-node22-node  started 2026-11-01T14:25:22Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=22.89 26.01 26.60  commit=3cce3d4452fcd91e3db2888c60271e5afdc06062
+$ npx vitest run --configLoader runner --project unit-node apps/api/src/architecture.test.ts apps/api/src/server.test.ts tests/qa/unit/dlv038-s20-029-load-report.test.ts
+
+ RUN  v3.2.7 /var/tmp/mth-run.bYRJvo/claude-0/r/rv2
+
+ ✓ |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts (6 tests) 255ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 10588ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  4175ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  3956ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  1105ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  1057ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 69352ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  40953ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  2491ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1208ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  2668ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  18633ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1278ms
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-worker]: Timeout calling "onTaskUpdate"
+ ❯ Object.onTimeoutError node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10
+ ❯ Timeout._onTimeout node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62
+ ❯ listOnTimeout node:internal/timers:588:17
+ ❯ processTimers node:internal/timers:523:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 passed (3)
+      Tests  153 passed (153)
+     Errors  1 error
+   Start at  14:25:27
+   Duration  76.33s (transform 28.46s, setup 0ms, collect 63.98s, tests 80.19s, environment 33ms, prepare 2.80s)
+
+exit=1  finished 2026-11-01T14:26:45Z  load=23.40 25.30 26.29

@@ -1,0 +1,32 @@
+$ tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG6/qa/tests/round-1/load-driver.sh (2026-11-01T13:18:55Z) cwd=$TMPDIR/rv-e2e node=v24.21.0
+port-policy: PostgreSQL listening on port 28040 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+== qa load driver start 2026-11-01T13:19:02Z; node v24.21.0
+host start: 2026-11-01T13:19:03Z loadavg 25.69 23.52 19.48 nproc 4 mem 16091 MB total, 3910 MB available
+patching file deploy/load/generate.mjs
+7470ea749005bcbf529be70351bbb87d696d277503de26c20132b1269ad9feee  deploy/load/generate.mjs
+6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a  $TMPDIR/qa-load/gen/deploy/load/generate.mjs
+7b860ee08890dcc88fdcc82615cd2bf7460bf11f9507348ee28a56d65985fca0  deploy/load/sessions.mjs
+34734caad8929e82cd99b5c9aafacd26533109c4bf213efc6e97e4903ab9b644  deploy/load/workload.mjs
+32f89b4a4f7110883a91be7941c37db21195c428c1906e244b5bf75a0c339368  deploy/load/report.mjs
+7865d9d3f1aa5d4063b72243ad52e795c485fcee78fe24c429663d5549ed154b  deploy/load/export-proof.mjs
+5aa6313addb1058dfb5c3ad3ae64b979b2d8e6937511c340058d8c89b1e3d2e7  apps/api/dist/main.js
+221e1bca5ecc6e2783ef01acdeceb659d28fba13f57ef6215554ea0a20054a20  apps/worker/dist/main.js
+67a5a8177b9c75d99ed1de2b2a9e8f370f3ced0d9a7722349a23a9f3e74f1b72  /home/user/My-owns/docs/delivery/handbacks/DG6/T-DG6-DO-F-evidence/generate-rfc-uuid.patch
+33:export const START_TARGET_MS = 2000;
+
+################ Phase A: tree generate.mjs (unpatched), profile smoke 2026-11-01T13:19:03Z
+mth-db migrate: applied 115 migration(s)
+  "seconds": 5.797
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0
+initiatives 30, non-RFC ids 25
+transformations 3, non-RFC ids 3
+mth-load sessions: 10 synthetic load session(s) written to $TMPDIR/qa-load/sessions-tree.json (cookie mth_session, expiry 120 min); the file holds bearer credentials
+PHASE-A getInitiative statuses over 30 initiatives: {"200":5,"400":25}
+PHASE-A getTransformation statuses over 3 transformations: {"400":3}
+PHASE-A sample 400 body: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a19744-1892-726d-b899-fc1820b18d5c","errors":[{"pointer":"/params/initiativeId","code":"validation.invalid_format","message":"Invalid UUID"}]}
+phase A probe exit=0
+Phase B skipped (SKIP_B=1)
+EXIT 0 (2026-11-01T13:19:56Z)

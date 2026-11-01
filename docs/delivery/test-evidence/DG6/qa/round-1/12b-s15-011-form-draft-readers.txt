@@ -1,0 +1,12 @@
+# REQ-S15-011 static: which source files read the form_draft table (drafts must never reach a total) 2026-11-01T13:21:39Z
+apps/api/src/modules/platform/advisory-locks.ts
+apps/api/src/modules/forms/drafts.ts
+packages/db/src/schema.ts
+# SQL views/functions in migrations that reference form_draft:
+packages/db/migrations/0068_p5_form_schemas_framework.sql
+# lines in migrations outside CREATE TABLE/INDEX/POLICY/TRIGGER/GRANT/COMMENT that read form_draft:
+packages/db/migrations/0068_p5_form_schemas_framework.sql:537:    RAISE EXCEPTION 'form_draft %: a draft starts open', NEW.id
+packages/db/migrations/0068_p5_form_schemas_framework.sql:542:      RAISE EXCEPTION 'form_draft %: a closed draft never changes', OLD.id
+packages/db/migrations/0068_p5_form_schemas_framework.sql:546:      RAISE EXCEPTION 'form_draft %: owner and base record version never change', OLD.id
+packages/db/migrations/0068_p5_form_schemas_framework.sql:553:  FOR EACH ROW EXECUTE FUNCTION form_draft_guard();
+packages/db/migrations/0068_p5_form_schemas_framework.sql:554:SELECT p2_attach_guards('form_draft', true);

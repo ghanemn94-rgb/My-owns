@@ -1,0 +1,26 @@
+# 35 F-DG6-124 code evidence (repository tree, HEAD 945324cca9f15f806344241c51a3ceb0759c7177; source 3cce3d4)  2026-11-01T17:36:06Z
+$ grep -n "SESSION_TABLES" apps/api/test/integration/hardening/route-inventory.test.ts
+107:const SESSION_TABLES = new Set(["user_session"]);
+204:    if (SESSION_TABLES.has(t)) continue;
+$ grep -n "CREATE TABLE session\b\|CREATE TABLE user_session" packages/db/migrations/*.sql
+packages/db/migrations/0001_identity_access.sql:120:CREATE TABLE session (
+$ sed -n 108,119p apps/api/src/modules/identity/sessions.ts
+/** Slide the idle expiry at most once a minute per session (keeps writes cheap). */
+export async function touchSession(db: DbOrTx, session: ActiveSession, idleMinutes: number): Promise<void> {
+  if (Date.now() - session.lastSeenAt.getTime() < 60_000) return;
+  await db
+    .updateTable("session")
+    .set({
+      last_seen_at: sql<Date>`now()`,
+      idle_expires_at: sql<Date>`least(now() + make_interval(mins => ${idleMinutes}), absolute_expires_at)`,
+    })
+    .where("id", "=", session.id)
+    .where("revoked_at", "is", null)
+    .execute();
+# failures with exactly this cause:
+## 30-integration-lang-unset.log
+     → case 4 invalid input: tables whose rows changed: expected [ 'public.session' ] to deeply equal []
+## 32-integration-lang-unset-shard2of2.log
+     → case 3b unauthorized (other organization): tables whose rows changed: expected [ 'public.session' ] to deeply equal []
+     → case 4 invalid input: tables whose rows changed: expected [ 'public.session' ] to deeply equal []
+## 34-route-inventory-alone.log (load about 3.5):       Tests  9 passed (9)

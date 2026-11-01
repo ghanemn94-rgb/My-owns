@@ -1,0 +1,30 @@
+# 42-repro-form-record-sensitivity  started 2026-11-01T13:11:05Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=24.94 21.27 16.71  commit=3cce3d4452fcd91e3db2888c60271e5afdc06062
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts
+port-policy: PostgreSQL listening on port 27985 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.bYRJvo/claude-0/r/rv2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvxumban_33230a00 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+TL comment before marking [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+TO comment after marking [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts > F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it
+TL GET benefit [33m404[39m | compare [33m400[39m
+TL GET versions [33m200[39m {"items":[{"version":1,"action":"benefit.create","actorUserId":null,"actorDisplayName":null,"occurredAt":"2026-11-01T13:12:32.491Z","changedFields":[]},{"version":2,"action":"benefit.step","actorUserId":null,"actorDisplayName":null,"occurredAt":"2026-11-01T13:12:32.491Z","changedFields":[]},{"version":3,"action":"benefit.allocate","actorUserId":null,"actorDisplayName":null,"occurredAt":"2026-11-01T13:12:32.491Z","changedFields":[]},{"version":4,"action":"benefit.step","actorUserId":null,"actorDi
+TL GET comments [33m200[39m {"items":[{"id":"01a1973d-adf1-752d-9795-e455724fdb14","recordType":"T14","recordId":"01995000-4401-7000-8000-000000000001","parentCommentId":null,"body":"Synthetic remark: the supplier rebate is 4.2 MSAR.","createdAt":"2026-11-01T13:12:44.219Z","createdBy":"01a1973d-ab6c-769e-92bb-5de3a6e7bce4","createdByDisplayName":"Synthetic u.baf0ec0bed"},{"id":"01a1973d-af55-7698-ab8a-ee7bbf891343","recordType":"T14","recordId":"01995000-4401-7000-8000-000000000001","parentCommentId":null,"body":"Synthetic: restricted - the final rebate figure is 5.1 MSAR.","createdAt":"2026-11-01T13:12:44.596Z","createdBy":"01a1973d-ad00-7411-b63b-8db7f8219a4c","createdByDisplayName":"Synthetic u.723a909c4b"}],"nextCu
+TL GET attachments [33m200[39m {"items":[],"nextCursor":null}
+TL POST comment after marking [33m201[39m {"id":"01a1973d-b0c3-72ca-8845-daff91c2daa6","recordType":"T14","recordId":"01995000-4401-7000-8000-000000000001","parentCommentId":null,"body":"Synthetic: TL writes on a record it cannot open.","crea
+
+ ✓ |integration| tests/qa/integration/zz-cs-r1-form-record-sensitivity.test.ts (1 test) 25632ms
+   ✓ F-DG6-123: P5 form-record routes ignore the sensitivity clause > a TL with 404 on the sensitive benefit reads its versions, comments and attachments and comments on it  850ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  13:11:15
+   Duration  89.98s (transform 15.81s, setup 0ms, collect 45.63s, tests 25.63s, environment 0ms, prepare 344ms)
+
+exit=0  finished 2026-11-01T13:12:53Z  load=22.02 21.52 17.32

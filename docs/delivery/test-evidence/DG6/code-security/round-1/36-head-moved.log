@@ -1,0 +1,19 @@
+# 36 repository HEAD moved during the review  2026-11-01T17:36:22Z
+start of review: 60a6b3a5cfc710f726494530fe498eb331cc2619 (see 01-candidate-identity.log)
+now: 945324cca9f15f806344241c51a3ceb0759c7177
+$ git log --oneline 60a6b3a5c..HEAD
+945324cca DG6 round 1: domain review (FAIL: F-DG6-100, 101 Medium; 102 Low)
+73080634a run: DG6-T-DG6-REV-DOM-R1-domain-reviewer-20261101T123843Z-6947adea (review evidence, auto-committed by run-agent.sh)
+$ git diff --name-only 60a6b3a5c HEAD | sed "s#/[^/]*$##" | sort | uniq -c
+      2 docs/delivery/reviews/DG6/round-1
+      6 docs/delivery/runs/DG6/DG6-T-DG6-REV-DOM-R1-domain-reviewer-20261101T123843Z-6947adea
+     24 docs/delivery/test-evidence/DG6/domain/round-1
+      4 docs/delivery/test-evidence/DG6/domain/round-1/probes
+     23 docs/delivery/test-evidence/DG6/domain/round-1/screenshots/ar
+     23 docs/delivery/test-evidence/DG6/domain/round-1/screenshots/en
+$ git diff --name-only 60a6b3a5c HEAD -- apps packages tools docs/api docs/architecture docs/source | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:7d6b4a9f202cfa4031c916dca22a410a6e19da5ff0c5f480a822fd0d025608cb","files":2708}
+exit=0
+(the added files are another reviewer's round-1 record and evidence; I did not read them)

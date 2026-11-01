@@ -1,0 +1,50 @@
+# 41-repro-audit-sensitivity  started 2026-11-01T12:56:37Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=17.83 15.89 9.86  commit=3cce3d4452fcd91e3db2888c60271e5afdc06062
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts
+port-policy: PostgreSQL listening on port 27975 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.bYRJvo/claude-0/r/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvxu3r2l_43e8e9b2 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+measurement-audited benefit [{"benefit_id":"01995000-4401-7000-8000-000000000001","n":"3"}]
+benefit with own events [{"record_id":"01995000-4401-7000-8000-000000000001","n":"6"}]
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+mark [33m200[39m {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","isSensitive":true,"reason":"Synthetic: commercially sensitive figure.","version":1,"updatedAt":"2026-11-01T12:58:29.647Z","updatedBy":"01a19730-a297-72de-9b06-07d8ab66
+
+ ❯ |integration| tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts (1 test | 1 failed) 27853ms
+   × sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122 210ms
+     → column u.subject does not exist
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+error: column u.subject does not exist
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts:108:7
+    106|     // The benefit's owner (a named party, admitted) records a measure…
+    107|     const owner = (
+    108|       await sql<{ id: string; subject: string }>`
+       |       ^
+    109|         SELECT u.id, u.subject FROM benefit b JOIN app_user u ON u.id …
+    110|         api.db,
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts:108:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  12:56:49
+   Duration  104.14s (transform 21.37s, setup 0ms, collect 52.76s, tests 27.85s, environment 0ms, prepare 1.38s)
+
+exit=1  finished 2026-11-01T12:58:40Z  load=25.38 19.26 11.84

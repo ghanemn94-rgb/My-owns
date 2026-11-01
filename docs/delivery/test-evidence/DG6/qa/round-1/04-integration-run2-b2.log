@@ -1,0 +1,237 @@
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts apps/api/test/integration/adoption/assessment-form-version.test.ts apps/api/test/integration/adoption/entity-group-metric-link.test.ts apps/api/test/integration/adoption/metric-link-read.test.ts apps/api/test/integration/assistant/injection.test.ts apps/api/test/integration/automation/dependency-slip-relay.test.ts apps/api/test/integration/benefits/allocations.test.ts apps/api/test/integration/benefits/entity-group.test.ts apps/api/test/integration/environment/demo-traceability-chains.test.ts apps/api/test/integration/forms/bulk-conflict-p6.test.ts apps/api/test/integration/governance/entity-group.test.ts apps/api/test/integration/governance/meeting-actions.test.ts apps/api/test/integration/hardening/route-inventory.test.ts apps/api/test/integration/health/s16-021-group.test.ts apps/api/test/integration/integrations/secret-composition.test.ts apps/api/test/integration/kpi-p4/cumulative-lineage.test.ts apps/api/test/integration/kpi-p4/entity-group.test.ts apps/api/test/integration/kpi-p4/formula-lineage.test.ts apps/api/test/integration/kpi-p4/periods.test.ts apps/api/test/integration/kpi-p4/status.test.ts apps/api/test/integration/kpi/formula-preview.test.ts apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts apps/api/test/integration/methodology/entity-group.test.ts apps/api/test/integration/navigation/navigation.test.ts apps/api/test/integration/p6-guard-mapping.test.ts apps/api/test/integration/platform/cursor-microsecond-ties.test.ts apps/api/test/integration/portfolio/initiative-schedule-read.test.ts apps/api/test/integration/portfolio/unpaged-lists.test.ts apps/api/test/integration/procedures/coverage.test.ts apps/api/test/integration/raid/entity-group.test.ts apps/api/test/integration/reporting/drilldown.test.ts apps/api/test/integration/reporting/exports-orphan.test.ts apps/api/test/integration/reporting/exports-xml-chars.test.ts apps/api/test/integration/reporting/filters.test.ts apps/api/test/integration/reporting/kpi-target-text.test.ts apps/api/test/integration/reporting/one-source-of-truth.test.ts apps/api/test/integration/reporting/table-totals-demo.test.ts apps/api/test/integration/security/csrf.test.ts apps/api/test/integration/security/xss.test.ts apps/api/test/integration/text-scan/export-templates.test.ts apps/api/test/integration/text-scan/sql-agreement.test.ts apps/api/test/integration/workflows/risk-dispositions.test.ts apps/api/test/integration/workflows/scale.test.ts apps/worker/test/integration/connection-log-main.test.ts apps/worker/test/integration/day-ninety-tasks.test.ts apps/worker/test/integration/demo-reset-dev-binding.test.ts apps/worker/test/integration/restart.test.ts packages/db/test/integration/audit-required-index.test.ts packages/db/test/integration/encoding.test.ts packages/db/test/integration/migrate.test.ts packages/db/test/integration/protection.test.ts tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts tests/qa/integration/a13-p6-reindex-kill-restart.test.ts tests/qa/integration/a20-p6-register-1000.test.ts (2026-11-01T16:43:42Z) cwd=$TMPDIR/rv node=v24.21.0
+port-policy: PostgreSQL listening on port 28005 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 $TMPDIR/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvy27pff_c2a2b559 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > the inventory: eligible = every unsafe operation minus the pending aggregate and the two named exclusions
+[route-inventory] contract unsafe operations 486; pending (not routed) 0 (none); excluded devLogin, receiveWebhook; eligible 484
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted
+[route-inventory] case 1 unauthenticated: 484 eligible operations swept; statuses {"401":484}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 335, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 2, CSRF (a session without X-CSRF-Token): 403 csrf, nothing persisted
+[route-inventory] case 2 csrf: 484 eligible operations swept; statuses {"403":484}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 335, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted
+[route-inventory] case 3a unauthorized (no assignment): 481 eligible operations swept; statuses {"403":137,"404":344}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 335, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted
+[route-inventory] case 3a: 312 of 481 operations address a real record of org A by path; 3 caller-scoped operations excluded (logout, updateMyPreferences, previewFormula)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3b, unauthorized (a user of org B holding every role there) on org A's records: 403 or 404, nothing persisted
+[route-inventory] case 3b unauthorized (other organization): 312 eligible operations swept; statuses {"403":70,"404":242}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 335, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted
+[route-inventory] case 4 invalid input: 482 eligible operations swept; statuses {"400":481,"422":1}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 335, changed 1 (public.session)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > positive control (runs last): the same generated requests, sent by an authorized user, succeed and are detected as written
+[route-inventory] positive control: 18 of 62 generated transformation-scoped creates succeeded for an authorized user (statuses {"201":18,"400":5,"403":1,"404":2,"422":36}; the others are refused by business rules on the minimal synthetic body, e.g. a referenced record that does not exist); audit rows 160 -> 179; tables changed 22
+
+ ❯ |integration| apps/api/test/integration/hardening/route-inventory.test.ts (9 tests | 1 failed) 87223ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > the inventory: eligible = every unsafe operation minus the pending aggregate and the two named exclusions 76ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > the exclusions are exactly the public unsafe routes of the running server 16ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > every case-3 and case-4 exclusion is derived, pinned and named  4490ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted  7999ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 2, CSRF (a session without X-CSRF-Token): 403 csrf, nothing persisted  14157ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted  14181ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3b, unauthorized (a user of org B holding every role there) on org A's records: 403 or 404, nothing persisted  6345ms
+   × REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted 17469ms
+     → case 4 invalid input: tables whose rows changed: expected [ 'public.session' ] to deeply equal []
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > positive control (runs last): the same generated requests, sent by an authorized user, succeed and are detected as written  2950ms
+ ✓ |integration| apps/api/test/integration/assistant/injection.test.ts (5 tests) 19759ms
+   ✓ REQ-S17-011: document text is quoted data, never instructions > the injection appears only inside data[i].text; nothing is approved; no out-of-scope record is retrieved  1219ms
+   ✓ REQ-S17-011: document text is quoted data, never instructions > a prompt that repeats the injection is refused before retrieval (§8) and changes nothing  695ms
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)
+KBE-D3 demo business_cases SUM cells: [["group_1_margin_uplift_sar","SUM(D4:D4)","1920000"],["group_1_cost_cash_sar","SUM(D4:D4)","900000"],["group_2_avoided_cost_sar","SUM(D4:D4)","1584000"],["group_2_cost_cash_sar","SUM(D4:D4)","360000"],["group_3_revenue_uplift_sar","SUM(D4:D4)","7128000"],["group_3_cost_cash_sar","SUM(D4:D4)","2400000"],["group_4_avoided_cost_sar","SUM(D4:D4)","1584000"],["group_4_margin_uplift_sar","SUM(D4:D4)","1920000"],["group_4_revenue_uplift_sar","SUM(D4:D4)","7128000"],["group_4_cost_cash_sar","SUM(D4:D6)","3660000"],["group_4_cost_non_cash_sar","SUM(D4:D4)","1170000"]]
+
+stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency)
+KBE-D3 demo benefits register SUM cells: [["totals_sar_revenue_uplift","SUM(C4:C4)","222750"],["totals_sar_revenue_uplift","SUM(E4:E4)","0"],["totals_sar_revenue_uplift","SUM(G4:G4)","99000"],["totals_sar_margin_uplift","SUM(C4:C4)","80000"],["totals_sar_margin_uplift","SUM(E4:E4)","0"],["totals_sar_margin_uplift","SUM(G4:G4)","0"],["totals_sar_avoided_cost","SUM(C4:C4)","0"],["totals_sar_avoided_cost","SUM(E4:E4)","0"],["totals_sar_avoided_cost","SUM(G4:G4)","0"]]
+
+ ✓ |integration| apps/api/test/integration/reporting/table-totals-demo.test.ts (2 tests) 14220ms
+   ✓ REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > business_cases: SUM(...) cached = GET /business-cases/{id}/totals (gross per value basis, cost cash/non-cash)  836ms
+   ✓ REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (class × state, per currency)  380ms
+ ✓ |integration| apps/api/test/integration/kpi/formula-preview.test.ts (8 tests) 892ms
+ ✓ |integration| apps/api/test/integration/integrations/secret-composition.test.ts (3 tests) 3071ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a correctly signed webhook is accepted through buildServer's own registry; another secret is refused 401  1061ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a connector run resolves its credential through the composed registry; an unset reference fails the run  481ms
+ ✓ |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts (12 tests) 21103ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 1: all 240 rows once, in updated_at desc, id desc  8623ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 7: all 240 rows once, in updated_at desc, id desc  1103ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives with sort absent, limit 25: all 240 rows once, in updated_at desc, id desc  1193ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives sort=updatedAt, limit 7: all 240 rows once, in the database's order  2089ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listInitiatives sort=-updatedAt, limit 7: all 240 rows once, in the database's order  1363ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listDependencies, limit 1: all 240 rows once, in updated_at desc, id desc  4077ms
+   ✓ cursor order is total when many rows share a timestamp or its millisecond (T-DG6-BE-X7) > listDependencies, limit 7: all 240 rows once, in updated_at desc, id desc  479ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/cumulative-lineage.test.ts (5 tests) 3124ms
+   ✓ a cumulative roll-up names the actual versions of each scope's whole window (ADR-0027 amendment C5) > C5 missing-scope rule: a scope with earlier values but no current actual is missing; Unknown; no entry; no finding  1242ms
+ ✓ |integration| apps/api/test/integration/procedures/coverage.test.ts (4 tests) 1416ms
+ ✓ |integration| apps/api/test/integration/raid/entity-group.test.ts (7 tests) 5797ms
+   ✓ REQ-S16-018: Risk, Assumption, Issue (raid_entry), with owner and status > risk: create and read through the API; AUD 403 on the write; 404 outside scope  477ms
+   ✓ REQ-S16-018: Action (action_item), with owner and status > an action on a Risk and a DG2 action: create and read; AUD 403; 404 outside scope  696ms
+   ✓ REQ-S16-018: Approval (the P4 canonical approval), with requester, assignee and status > request and read through the API; AUD 403; 404 outside scope  717ms
+   ✓ REQ-S16-018: ChangeRequest (change_request), with owner (raised_by) and status > create and read through the API; AUD 403 on the write; 404 outside scope  359ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/status.test.ts (5 tests) 7013ms
+   ✓ the KPI panel (REQ-S07-008) > returns the seven elements, the explanation naming the threshold version, and i18n keys  902ms
+   ✓ the KPI panel (REQ-S07-008) > Stale data shows Stale with its reason, never green; a band outside its bounds is adverse  595ms
+   ✓ the KPI panel (REQ-S07-008) > AUD reads the panel and the list; outside the transformation is 404  365ms
+   ✓ override display (REQ-S07-009) > an override in force changes displayedRag only; after expiry the calculated RAG displays again  2530ms
+   ✓ comparability (REQ-S07-005) > a 4-week period after a 5-week period: trend not_comparable and a not_comparable finding  388ms
+ ✓ |integration| apps/api/test/integration/methodology/entity-group.test.ts (3 tests) 5983ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > Transformation, Charter, GateInstance and GateDecision: created and read; AUD 403 on writes; 404 outside scope  3259ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > MethodologyVersion, Phase and GateDefinition: a draft with version-scoped rows; AUD 403; outsiders 403/404  1437ms
+   ✓ REQ-S16-012: the transformation, methodology and gates entity group through the API > PerformanceArea: created and read by its owner; AUD 403 on create; 404 outside scope  816ms
+ ✓ |integration| tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts (1 test) 22076ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a channel send and restarted > the interrupted send stays pending and unaccepted; after the restart it is sent once, never twice  14175ms
+ ✓ |integration| apps/api/test/integration/health/s16-021-group.test.ts (1 test) 3139ms
+   ✓ REQ-S16-021: each entity of the group is created and read through the API, with authorization enforced > BAUHandover, Control, ControlCheck, ImprovementItem, Lesson and HealthAssessment  2440ms
+ ✓ |integration| apps/api/test/integration/reporting/drilldown.test.ts (4 tests) 6591ms
+   ✓ REQ-S13-003: the validated total drills to its benefit records > items are the benefits, their decimal sum over all pages equals the headline, with evidence  398ms
+   ✓ REQ-S13-003: zero, Unknown and not_applicable are distinct > nothing validated yet is a known zero; no financial benefit is n/a; a KPI with no data is unknown  326ms
+ ✓ |integration| apps/api/test/integration/reporting/filters.test.ts (3 tests) 5668ms
+ ✓ |integration| apps/api/test/integration/navigation/navigation.test.ts (8 tests) 1514ms
+ ✓ |integration| apps/api/test/integration/benefits/allocations.test.ts (6 tests) 2232ms
+   ✓ replaceBenefitAllocations (REQ-S08-013) > 60 % + 50 % is rejected; 60 % + 30 % saves and shows 10 % unallocated  311ms
+   ✓ replaceBenefitAllocations (REQ-S08-013) > share range, duplicates, scale and references are refused; nothing written  376ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts (5 tests) 2610ms
+   ✓ A/B transcript (T-DG6-BE-B2): the touched DG4/DG5 read paths, nothing sensitive in the reader's scope > export selection: a live benefits-register export is accepted (202) as before  580ms
+ ✓ |integration| tests/qa/integration/a01-one-source-of-truth-scorecard.test.ts (2 tests) 1630ms
+   ✓ REQ-PB-010 (A01): one rename shows in the T10 scorecard and the traceability view from the one row > after ONE PATCH, the scorecard, the traceability view, the roadmap and the benefits register all show the new name; no stale copy; one DB row  524ms
+ ✓ |integration| apps/api/test/integration/automation/dependency-slip-relay.test.ts (1 test) 6928ms
+   ✓ dependency.slipped through the real relay (D-QA-F2-1) > the outbox row is published on its first attempt and starter 9's execution succeeds once  803ms
+ ✓ |integration| apps/api/test/integration/governance/meeting-actions.test.ts (3 tests) 3782ms
+   ✓ createMeetingAction (REQ-S10-011: actions appear in owners' My Work) > the action, its link and the owner's My Work item are created in one transaction, audited  526ms
+   ✓ createMeetingAction (REQ-S10-011: actions appear in owners' My Work) > validation, AUD 403, ADM-only and another organization 404, frozen, commit-time 403  1343ms
+ ✓ |integration| apps/worker/test/integration/day-ninety-tasks.test.ts (3 tests) 2693ms
+   ✓ launch.day_ninety_tests (ADR-0048 §4; REQ-PB-087) > run twice on day 90 it creates one task per SP/TL holder, and none for AUD, TO or WL  893ms
+   ✓ launch.day_ninety_tests (ADR-0048 §4; REQ-PB-087) > a test not yet due (day 89 today) and a completed test get no task  1553ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/formula-lineage.test.ts (2 tests) 2825ms
+   ✓ formula lineage nests through a formula source (ADR-0027 amendment C1) > N = s * 2 over S = a + b names a's and b's accepted actual versions one level down  1142ms
+ ✓ |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 22875ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  12367ms
+ ✓ |integration| apps/api/test/integration/environment/demo-traceability-chains.test.ts (6 tests) 12819ms
+stdout | apps/api/test/integration/security/xss.test.ts > XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > clause summary: every surface passed
+PASS REQ-S16-030 XSS in rich text: 6 payloads x 4 surfaces round-trip byte-identical
+
+ ✓ |integration| apps/api/test/integration/security/xss.test.ts (5 tests) 3573ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (a) a P5 rich_text form field stores and returns each payload verbatim  561ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (d) an inbox-visible title (a meeting action's) reaches its owner's inbox verbatim  350ms
+ ✓ |integration| apps/worker/test/integration/restart.test.ts (1 test) 17981ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  10104ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (9 tests) 14934ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  6271ms
+ ✓ |integration| tests/qa/integration/a13-p6-reindex-kill-restart.test.ts (1 test) 18514ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a search reindex and restarted > the killed reindex leaves no partial documents and says `reindexing`; after the restart it completes once  10650ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/periods.test.ts (4 tests) 1375ms
+   ✓ reporting periods (ADR-0027 §3) > creates a scheduled period, reads it, lists it, opens and closes it with one audit event each  544ms
+ ✓ |integration| apps/api/test/integration/workflows/risk-dispositions.test.ts (3 tests) 3404ms
+   ✓ risk dispositions (REQ-PB-020) > creates the row, its audit event and one pending risk_disposition approval routed to SP  974ms
+   ✓ risk dispositions (REQ-PB-020) > only an open risk: a closed risk or an issue is 422 risk_disposition.not_open_risk; AUD 403; nothing written  1057ms
+   ✓ risk dispositions (REQ-PB-020) > G5 configured to BO: routed to the T11 Go-live / scale party BO; unmapped BO -> 422 routing.role_unmapped, nothing written  925ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/entity-group.test.ts (1 test) 2464ms
+   ✓ REQ-S16-014: the KPI entity group through the API > creates and reads each entity with authorization enforced (AUD 403 on writes, 200 on reads)  1559ms
+stdout | apps/api/test/integration/security/csrf.test.ts > CSRF (REQ-S16-030; ADR-0052 §4) > one mutation per module: no Origin, a foreign Origin, no token or a wrong token -> 403 csrf; correct -> not csrf
+PASS REQ-S16-030 CSRF: 109 modules (contract tags), one mutation each, x 4 refusals -> 403 csrf; correct Origin and token -> not csrf
+  sample: access:createSensitiveGrant, actions:updateActionRegisterItem, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, agenda-items:createAgendaItem, approval-routes:decideApprovalRouteStep, approvals:decideApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, attendance:recordMeetingAttendance, auth:logout, automation:dismissAutomationFailure, bau-handovers:createBauHandover, benefit-allocations:replaceBenefitAllocations, benefit-formulas:createBenefitFormula, benefit-groups:createBenefitGroup, benefit-measurements:updateBenefitMeasurement, benefit-overlaps:createBenefitOverlap, benefit-scenarios:updateBenefitScenarioValue, benefit-valuation-methods:createBenefitValuationMethod, benefits:removeBenefitEnabler, branding:putBrandingSettings, budget-lines:updateBudgetLine, business-cases:createBusinessCase, calendar:updateBusinessCalendar, capacity:createCapacity, change-requests:putChangeControlPolicy, charter:updateCharter, closure:closeInitiative, control-checks:recordControlCheck, controls:createControl, corrective-actions:createCorrectiveActionRule, dashboards:putDashboardRagPolicy, data-quality:resolveDataQualityFinding, day-90-tests:completeDayNinetyTest, decision-rights:createDecisionRight, decisions:createDecision, delegations:createDelegation, dependencies:createT08Dependency, design:createCapabilityHeatmapEntry, diagnose:createDiagnosticFinding, direction:setNorthStar, environment:requestDemoReset, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, finance-validations:amendFinanceValidation, financial-metrics:putFinancialMetricAssumptions, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-conditions:closeGateCondition, gate-exceptions:createGateException, gates:configureGateApprover, groups:updateGroup, health-checks:createHealthCheck, imports:createImport, improvement-items:createImprovementItem, integrations:createConnector, jobs:updateJobSchedule, kpi:createBaseline, kpi-actuals:acceptKpiActual, kpi-restatements:createKpiRestatement, kpi-versions:createKpiRagThreshold, launch-plans:updateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology:updateTomDimensionLabels, methodology-migrations:createMethodologyMigration, minutes:updateMeetingMinutes, modular-entry:createInheritedRecord, notifications:putNotificationPolicy, operations:acknowledgeOperationalException, organizations:updateBusinessUnit, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, phases:updatePhaseStep, platform-admin:putNotificationChannel, portfolio:updateDeliverable, portfolios:createPortfolio, prioritization:createInitiativeScore, procedures:putProcedureDefinition, raci:submitGovernanceMatrix, rag-overrides:createRagOverride, raid:createRaidEntry, report-snapshots:discardReportSnapshot, reporting-periods:createReportingPeriod, reports:generateReportSnapshot, risk-dispositions:createRiskDisposition, roadmap:updateMilestone, role-mappings:createRoleMapping, scale:createScaleTransition, schedule-network:updateInitiativeSchedule, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createChampionConstraint, status-model:setInitiativeAdoptionStatus, studio:updateConfigReviewPolicy, target-trajectories:createTargetTrajectory, tasks:markInboxNotificationRead, traceability:setOutcomeContributionAllocation, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream
+
+ ✓ |integration| apps/api/test/integration/security/csrf.test.ts (3 tests) 12570ms
+   ✓ CSRF (REQ-S16-030; ADR-0052 §4) > one mutation per module: no Origin, a foreign Origin, no token or a wrong token -> 403 csrf; correct -> not csrf  11836ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-orphan.test.ts (2 tests) 3766ms
+   ✓ D-QA-F2-3: no orphan export file after a killed attempt > attempt 1 is killed after store.put: attempt 2 removes its file when it starts; only a2 remains; other jobs untouched  796ms
+stdout | apps/api/test/integration/reporting/exports-xml-chars.test.ts > F-DG5-100: a C0 control character in a record title -> well-formed DOCX, PPTX and XLSX exports > the API accepts the text; each export job succeeds and every XML part of every package parses
+F-DG5-100 results: {
+ "charter.en.docx": "job succeeded, 12650 bytes, not-well-formed parts: none",
+ "charter.ar.docx": "job succeeded, 13256 bytes, not-well-formed parts: none",
+ "roadmap.en.pptx": "job succeeded, 35651 bytes, not-well-formed parts: none",
+ "roadmap.ar.pptx": "job succeeded, 36589 bytes, not-well-formed parts: none",
+ "roadmap.en.xlsx": "job succeeded, 6971 bytes, not-well-formed parts: none",
+ "roadmap.ar.xlsx": "job succeeded, 7623 bytes, not-well-formed parts: none",
+ "registers.en.xlsx": "job succeeded, 4469 bytes, not-well-formed parts: none",
+ "registers.ar.xlsx": "job succeeded, 4873 bytes, not-well-formed parts: none"
+}
+
+ ✓ |integration| apps/api/test/integration/reporting/exports-xml-chars.test.ts (1 test) 4592ms
+   ✓ F-DG5-100: a C0 control character in a record title -> well-formed DOCX, PPTX and XLSX exports > the API accepts the text; each export job succeeds and every XML part of every package parses  3712ms
+ ✓ |integration| apps/api/test/integration/adoption/assessment-form-version.test.ts (2 tests) 1961ms
+   ✓ getAssessmentFormVersion (ADR-0033 amendment V1) > version 1 after an update to version 2 returns the old questions; no ETag; unpublished and retired readable  322ms
+   ✓ getAssessmentFormVersion (ADR-0033 amendment V1) > 404: version 99, another transformation's form, an unknown form, outside scope; 400 bad versionNo; 401  350ms
+ ✓ |integration| apps/api/test/integration/reporting/kpi-target-text.test.ts (2 tests) 1044ms
+ ✓ |integration| packages/db/test/integration/protection.test.ts (17 tests) 309ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 2308ms
+ ✓ |integration| apps/api/test/integration/p6-guard-mapping.test.ts (6 tests) 662ms
+ ✓ |integration| tests/qa/integration/a20-p6-register-1000.test.ts (4 tests) 5570ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > is paginated: limit 50 gives 20 pages of at most 50, exactly 1,000 distinct initiatives, and the last page ends the chain  553ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > sorts across pages: sort=code is ascending and sort=-code its exact reverse; sort=name agrees with the code order's set  827ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > filters on the server: q is a case-insensitive substring over the text columns and matches exactly the expected subset  1365ms
+ ✓ |integration| apps/api/test/integration/benefits/entity-group.test.ts (1 test) 1767ms
+   ✓ REQ-S16-017: the benefits entity group through the API > creates and reads each of the seven entities; AUD is refused every mutation and reads every record  1132ms
+ ✓ |integration| packages/db/test/integration/encoding.test.ts (8 tests) 17078ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db migrate: exit 1, the message on stderr, nothing applied, no schema_migration table  1910ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db status: exit 1 with the same message, nothing written  1918ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db seed-dev: exit 1 with the same message, nothing written  2271ms
+   ✓ a SQL_ASCII database is refused before anything is created > mth-db bootstrap: exit 1 with the same message (checked before the arguments are used)  2466ms
+   ✓ a SQL_ASCII database is refused before anything is created > control: the same CLI migrates a UTF8 scratch database created the same way  8134ms
+ ✓ |integration| apps/api/test/integration/workflows/scale.test.ts (2 tests) 3372ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > before G5: 422 invalid-transition naming G5; the scope reads approved = false; nothing written  1761ms
+   ✓ scale transitions (REQ-S03-004, REQ-S04-007) > after the G5 approval: inside the scope 201 with its audit event; outside 422; a repeat 409; AUD/ADM 403  737ms
+ ✓ |integration| packages/db/test/integration/audit-required-index.test.ts (8 tests) 101ms
+ ✓ |integration| apps/worker/test/integration/connection-log-main.test.ts (3 tests) 18629ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > MTH_CONNECTION_LOG set: one line per outbound connection, process worker, the database among them  3913ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > NODE_ENV=production: ignored with one warning, and no file is written  3516ms
+   ✓ the worker entry point installs the A21 connection log (QA-D-1) > unset: the worker starts and stops as before, with no warning  4575ms
+ ✓ |integration| apps/api/test/integration/governance/entity-group.test.ts (1 test) 3946ms
+   ✓ REQ-S16-019: the slice D entity group through the API > Forum, Meeting, AgendaItem, Attendance, Minutes and MeetingActionLink: created and read, AUD 403, outside 404  1569ms
+ ✓ |integration| apps/api/test/integration/portfolio/initiative-schedule-read.test.ts (3 tests) 1359ms
+   ✓ getInitiativeSchedule (ADR-0031 amendment S1) > returns the recorded row with its version as ETag; the ETag drives the PATCH; Location resolves  721ms
+ ✓ |integration| apps/api/test/integration/reporting/one-source-of-truth.test.ts (2 tests) 1250ms
+   ✓ REQ-PB-010: one canonical initiative > one rename shows in the roadmap, the traceability view and the benefits register; one initiative row  348ms
+ ✓ |integration| apps/api/test/integration/text-scan/export-templates.test.ts (23 tests) 8112ms
+   ✓ the template literals and label tables > no literal of the report and export code claims official PMI status or names DG0-DG7  1228ms
+   ✓ a rendered sample export: pdf, en > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7  2631ms
+   ✓ a rendered sample export: pdf, en > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text)  507ms
+   ✓ a rendered sample export: pdf, ar > REQ-PB-001 and REQ-S21-001: its text has no official-PMI claim and no DG0-DG7  1067ms
+   ✓ a rendered sample export: pdf, ar > a planted claim and a planted gate name in a cell are found (the scan sees the rendered text)  1573ms
+ ✓ |integration| apps/api/test/integration/forms/bulk-conflict-p6.test.ts (2 tests) 941ms
+ ✓ |integration| apps/api/test/integration/adoption/metric-link-read.test.ts (2 tests) 791ms
+ ✓ |integration| apps/api/test/integration/text-scan/sql-agreement.test.ts (4 tests) 3246ms
+   ✓ SQL and TypeScript agree > on every UI string (en, ar) and every API literal  3083ms
+ ✓ |integration| apps/worker/test/integration/demo-reset-dev-binding.test.ts (2 tests) 4522ms
+ ✓ |integration| apps/api/test/integration/adoption/entity-group-metric-link.test.ts (1 test) 641ms
+ ✓ |integration| apps/api/test/integration/portfolio/unpaged-lists.test.ts (1 test) 1322ms
+   ✓ the formerly unpaged P3 lists are paged (ADR-0021 §11 item 6, ADR-0007 §4a) > 200 with {items, nextCursor} with and without limit; 400 on an out-of-range limit or unknown parameter  1054ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted
+AssertionError: case 4 invalid input: tables whose rows changed: expected [ 'public.session' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "public.session",[39m
+[31m+ ][39m
+
+ ❯ withNothingPersisted apps/api/test/integration/hardening/route-inventory.test.ts:281:84
+    279|   expect(result.persisted, `case ${label}: a rejected call wrote an au…
+    280|   expect(auditAfter, `case ${label}: audit rows besides authorization.…
+    281|   expect(changedTables(before, after), `case ${label}: tables whose ro…
+       |                                                                                    ^
+    282|   expect(result.deviations, `case ${label}: responses outside the cont…
+    283|   // A pinned deviation that no longer reproduces must leave the pin (…
+ ❯ apps/api/test/integration/hardening/route-inventory.test.ts:401:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 55 passed (56)
+      Tests  1 failed | 250 passed (251)
+   Start at  16:43:50
+   Duration  729.53s (transform 19.21s, setup 0ms, collect 286.44s, tests 429.09s, environment 0ms, prepare 197ms)
+
+EXIT 1 (2026-11-01T16:56:02Z)

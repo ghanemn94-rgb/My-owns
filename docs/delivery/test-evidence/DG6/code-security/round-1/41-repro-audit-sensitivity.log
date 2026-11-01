@@ -1,0 +1,41 @@
+# 41-repro-audit-sensitivity  started 2026-11-01T12:59:16Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=22.75 19.25 12.11  commit=3cce3d4452fcd91e3db2888c60271e5afdc06062
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts
+port-policy: PostgreSQL listening on port 27975 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.bYRJvo/claude-0/r/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvxu742y_e5ae2c65 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+measurement-audited benefit [{"benefit_id":"01995000-4401-7000-8000-000000000001","n":"3"}]
+benefit with own events [{"record_id":"01995000-4401-7000-8000-000000000001","n":"6"}]
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+mark [33m200[39m {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","isSensitive":true,"reason":"Synthetic: commercially sensitive figure.","version":1,"updatedAt":"2026-11-01T13:01:00.904Z","updatedBy":"01a19732-f1ef-7407-b22d-24f898d1
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+owner measurement [33m201[39m {"id":"01a19732-f34d-700d-9f03-fa2e369580ef","benefitId":"01995000-4401-7000-8000-000000000001","measurementNo":3,"kind":"measurement","correctsMeasurementId":null,"source":"manual","calculationRunId":null,"benefitCalculationId":null,"formulaVersionId":null,"periodStart":"2026-09-01","periodEnd":"20
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+record GET: TL [33m404[39m AUD [33m404[39m (tl 01a19732-f07d-7069-96cb-12861880e2ce aud 01a19732-eed2-737e-aaab-18710cb157fb )
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+F-DG6-121 TL /transformations/{t}/audit: events of the sensitive benefit: [33m6[39m with changes: [33m0[39m sample: {"id":"01a19732-d232-7246-810d-439400174687","seq":"507","occurredAt":"2026-11-01T13:00:48.268Z","action":"benefit.validate_baseline","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"system","userId":null,"displayName":null},"onBehalfOfUserId":null,"priorVersion":5,"newVersion":6,"reason":"Synthetic demonstration data (illustrative example; not Mobily actual performance)","requestId":null,"changes":null}
+F-DG6-121 TL also sees benefit_measurement events: [33m6[39m
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+F-DG6-121 TL /transformations/{t}/audit: measurement events of the sensitive benefit with changes: [33m1[39m sample: {"id":"01a19732-f351-741f-92f2-a532fba45e91","seq":"831","occurredAt":"2026-11-01T13:01:01.122Z","action":"benefit_measurement.create","recordType":"benefit_measurement","recordId":"01a19732-f34d-700d-9f03-fa2e369580ef","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"user","userId":"01995000-0000-7000-8000-000000000013","displayName":"roaming.user.bo (synthetic)"},"onBehalfOfUserId":null,"priorVersion":null,"newVersion":1,"reason":null,"requestId":"01a19732-f33d-7175-bdf9-4e7e09ea6f6a","changes":{"kind":{"to":"measurement","from":null},"amount":{"to":"987654.3200","from":null},"source":{"to":"manual","from":null},"status":{"to":"draft","from":null},"currency":{"to":"SAR","from":null},"benefit_id":{"to":"01995000-4401-7000-8000-000000000001","from":null},"period_end":{"to":"2026-09-30","from":null},"attribution":{"to":"Synthetic attribution note for the reproduc
+F-DG6-122 AUD /audit-events benefit_measurement events of the sensitive benefit: [33m4[39m unredacted: [33m1[39m sample: {"id":"01a19732-f351-741f-92f2-a532fba45e91","seq":"831","occurredAt":"2026-11-01T13:01:01.122Z","organizationId":"01995000-0000-7000-8000-000000000002","action":"benefit_measurement.create","recordType":"benefit_measurement","recordId":"01a19732-f34d-700d-9f03-fa2e369580ef","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"user","userId":"01995000-0000-7000-8000-000000000013","displayName":"roaming.user.bo (synthetic)"},"onBehalfOfUserId":null,"priorVersion":null,"newVersion":1,"reason":null,"requestId":"01a19732-f33d-7175-bdf9-4e7e09ea6f6a","source":"api","changes":{"kind":{"to":"measurement","from":null},"amount":{"to":"987654.3200","from":null},"source":{"to":"ma
+
+stdout | tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts > sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122
+control: AUD /audit-events of the benefit itself: redacted [ [33mtrue[39m, [33mtrue[39m, [33mtrue[39m, [33mtrue[39m, [33mtrue[39m, [33mtrue[39m ]
+
+ ✓ |integration| tests/qa/integration/zz-cs-r1-audit-sensitivity.test.ts (1 test) 31535ms
+   ✓ sensitive benefits and the audit trail > F-DG6-121 and F-DG6-122  1152ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  12:59:26
+   Duration  100.70s (transform 19.18s, setup 0ms, collect 48.71s, tests 31.54s, environment 0ms, prepare 772ms)
+
+exit=0  finished 2026-11-01T13:01:13Z  load=21.79 20.05 13.24
