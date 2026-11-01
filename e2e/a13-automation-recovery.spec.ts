@@ -56,6 +56,22 @@ const ok = (r: { status: number; body: Body }, status: number) => expect(r.statu
  * bound that allows that backlog. The time each wait took is logged (stdout) for the evidence.
  */
 const BACKLOG_MS = 240_000;
+/**
+ * T-DG6-QA-H: this spec's precondition and its bound. Earlier root specs create events while no worker runs, so this
+ * file's worker inherits their backlog. Two product behaviours make that backlog matter (root.log at 70957f5, and the
+ * QA-H reproduction):
+ *  - the production worker takes at most one automation.evaluate job per polling interval (batchSize 1, 2 s; pg-boss
+ *    11 waits out the interval after every fetch, even a full one), oldest first;
+ *  - the engine picks the candidate rules when it EVALUATES an event, not when the event occurred: an inherited
+ *    transformation.created evaluated after this spec's rule is live runs that rule, meets the disclosed fault, fails
+ *    and is retried under the production policy (5 retries, backoff), each due retry ahead of this spec's own job.
+ * In the chromium-ar pass of the full root set, this spec's own job therefore stayed `created` for the whole of
+ * BACKLOG_MS. beforeAll, before this spec's rule or events exist, waits until every transformation.created event it
+ * inherited is relayed and every automation.evaluate job it inherited is finished (an `active` one only while it can
+ * still be running: a job orphaned by a killed earlier worker waits for pg-boss's expiry and cannot block this file);
+ * the wait is bounded by INHERITED_MS and logged with what it found.
+ */
+const INHERITED_MS = 900_000;
 const timed = async <T>(label: string, run: () => Promise<T>): Promise<T> => {
   const t = Date.now();
   const v = await run();
@@ -79,10 +95,40 @@ test.beforeAll(async () => {
     DROP TRIGGER IF EXISTS qa_a13_fault_in ON public.inbox_notification;
     CREATE TRIGGER qa_a13_fault_in BEFORE INSERT ON public.inbox_notification FOR EACH ROW EXECUTE FUNCTION public.qa_a13_fault_fn();`);
   worker = await startProductionWorker();
+  // T-DG6-QA-H: this spec's own precondition (see INHERITED_MS): nothing inherited is still to be evaluated. The
+  // budgets of the waits on this spec's own event, execution and failure entry are unchanged.
+  test.setTimeout(INHERITED_MS + 120_000);
+  const [mark] = psql("SELECT now()::text");
+  const inherited = () => {
+    const [outbox, jobs] = psql(
+      `SELECT (SELECT count(*) FROM outbox_event WHERE event_type = 'transformation.created' AND published_at IS NULL
+                   AND created_at < ${q(mark!)}::timestamptz)
+         || chr(10) || (SELECT count(*) FROM pgboss.job WHERE name = 'automation.evaluate'
+                          AND created_on < ${q(mark!)}::timestamptz
+                          AND (state IN ('created', 'retry')
+                               OR (state = 'active' AND started_on > now() - interval '5 minutes')))`,
+    );
+    return { outbox: Number(outbox), jobs: Number(jobs) };
+  };
+  const found = inherited();
+  await timed(
+    `inherited backlog worked off (${found.outbox} unrelayed transformation.created events, ${found.jobs} automation.evaluate jobs)`,
+    () =>
+      poll(
+        async () => {
+          const n = inherited();
+          return n.outbox === 0 && n.jobs === 0;
+        },
+        "the inherited events and automation.evaluate jobs to be worked off",
+        INHERITED_MS,
+        () => `${JSON.stringify(inherited())} inherited; ${backlog()}`,
+      ),
+  );
   // Started by the worker with the production policy; only the queue under test gets retry limit 0 (disclosed), and
-  // the production values are restored in afterAll (D-163).
+  // the production values are restored in afterAll (D-163). retry_backoff is read as 't'/'f' (a boolean concatenated
+  // to text is 'true'/'false', which the restore below used to read as false).
   [queueBefore] = psql(
-    "SELECT retry_limit || ',' || retry_delay || ',' || retry_backoff FROM pgboss.queue WHERE name = 'automation.evaluate'",
+    "SELECT retry_limit || ',' || retry_delay || ',' || (CASE WHEN retry_backoff THEN 't' ELSE 'f' END) FROM pgboss.queue WHERE name = 'automation.evaluate'",
   );
   psql(
     "UPDATE pgboss.queue SET retry_limit = 0, retry_delay = 0, retry_backoff = false WHERE name = 'automation.evaluate'",
