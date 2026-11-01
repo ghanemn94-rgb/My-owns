@@ -2137,7 +2137,7 @@ Recorded by T-DG6-ARCH-07 (2026-10-30). The implementer migrations of DG6 add no
 
 ## 1aa. P6 pre-freeze repair migration 0122: the automation rule enablement ledger (T-DG6-ARCH-09, 2026-11-01; ADR-0043 amendment E1, E2)
 
-One new append-only table, `automation_rule_enablement` (`0122_p6_automation_rule_enablement.sql`, T-DG6-BE-X9; D-203 O-2). It records the moment each version of an automation rule became enabled, and the worker evaluates an event only against a rule version that became enabled at or before the event's stored occurrence time (`outbox_event.created_at`; D-204 decides that a late event is evaluated against the version in force at its occurrence). Its rows are written only by the `SECURITY DEFINER` trigger `automation_rule_enablement_record` on `automation_rule`, in the transaction of the audited enable or publish that causes them; `mth_app` reads only. The composite foreign key `(automation_rule_id, automation_rule_version_id)` → `automation_rule_version (automation_rule_id, id)` (deferred) guarantees that a row names a version of its own rule. No existing table changes. T-DG6-BE-X10 (D-204) completes the ledger with the disabled windows. Its handback had not landed when this section was written; its unmerged work in progress (`0123`) adds no column and no relationship, so this diagram would not change (ADR-0043 amendment E2). The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0122").
+One new append-only table, `automation_rule_enablement` (`0122_p6_automation_rule_enablement.sql`, T-DG6-BE-X9; D-203 O-2). It records the moment each version of an automation rule became enabled, and the worker evaluates an event only against a rule version that became enabled at or before the event's stored occurrence time (`outbox_event.created_at`; D-204 decides that a late event is evaluated against the version in force at its occurrence). Its rows are written only by the `SECURITY DEFINER` trigger `automation_rule_enablement_record` on `automation_rule`, in the transaction of the audited enable or publish that causes them; `mth_app` reads only. The composite foreign key `(automation_rule_id, automation_rule_version_id)` → `automation_rule_version (automation_rule_id, id)` (deferred) guarantees that a row names a version of its own rule. No existing table changes. T-DG6-BE-X10 (D-204) completes the ledger with the disabled windows: `0123_p6_automation_rule_enablement_disable.sql` adds no column and no relationship, so the diagram is unchanged; it adds the `source` values `disable` and `backfill_disable` (the rule stopped, on the named version), so the rows of a rule form its interval history (§1aa.2; ADR-0043 amendment G1). The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0122").
 
 ```mermaid
 erDiagram
@@ -2149,7 +2149,18 @@ erDiagram
 
 | Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
 |---|---|---|---|---|---|---|---|
-| Automation rule enablement (REQ-S12-001, REQ-S12-002) | `automation_rule_enablement` | `id` | none (derived from `automation_rule`) | only the trigger `automation_rule_enablement_record`, on the enable or publish of a rule (`automation.configure`, the existing audited rule update) | none (`source`: `enable`, `effective_version`, `backfill`) | no (append-only) | none (read by the worker) |
+| Automation rule enablement (REQ-S12-001, REQ-S12-002) | `automation_rule_enablement` | `id` | none (derived from `automation_rule`) | only the trigger `automation_rule_enablement_record`, on the enable or publish of a rule (`automation.configure`, the existing audited rule update) | none (`source`: `enable`, `effective_version`, `backfill`; since `0123` also `disable`, `backfill_disable`) | no (append-only) | none (read by the worker) |
+
+### 1aa.2 P6 pre-freeze repair migration 0123: disables in the ledger (T-DG6-ARCH-10, 2026-11-01; ADR-0043 amendment G1–G3)
+
+`0123_p6_automation_rule_enablement_disable.sql` (T-DG6-BE-X10; D-204, D-205) adds no table, column or relationship, so the §1aa diagram is unchanged. Its changes to `automation_rule_enablement`:
+
+- the trigger function `automation_rule_enablement_record()` now also writes a `disable` row, naming the version that stopped, when an enabled rule is disabled;
+- the backfill writes a `backfill_disable` row for each earlier disable found in the audit trail after a ledger row of the same rule;
+- the `source` CHECK accepts `disable` and `backfill_disable`;
+- the index `automation_rule_enablement_rule_time_idx` serves the lookup of the newest row at or before an event's occurrence time.
+
+On a disable row, `enabled_from` is the moment the rule stopped. The relationship labels of §1aa are read with that in mind: a row is written per enable, effective-version change **or disable**. The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0123").
 
 ## 2. Conceptual model, all §16 entity groups
 

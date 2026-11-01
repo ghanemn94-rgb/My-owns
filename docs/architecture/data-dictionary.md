@@ -14258,7 +14258,7 @@ Recorded by T-DG6-ARCH-07 (2026-10-30) from the shipped files (`ls packages/db/m
 
 # P6 pre-freeze repair migration 0122 (DG6)
 
-Recorded by T-DG6-ARCH-09 (2026-11-01) from the shipped file `packages/db/migrations/0122_p6_automation_rule_enablement.sql` (T-DG6-BE-X9; D-203 O-2; ADR-0043 amendment E1). It adds one table and one trigger on `automation_rule`. No existing table, column or row changes. T-DG6-BE-X10 (D-204; ADR-0043 amendment E2) completes the ledger with the disabled windows. Its handback had not landed when this section was written, so this section describes `0122` as shipped. Its unmerged work in progress (`0123`) adds no column; it widens the `source` CHECK and adds an index and disable rows (ADR-0043 amendment E2), and this section is amended when it merges.
+Recorded by T-DG6-ARCH-09 (2026-11-01) from the shipped file `packages/db/migrations/0122_p6_automation_rule_enablement.sql` (T-DG6-BE-X9; D-203 O-2; ADR-0043 amendment E1). It adds one table and one trigger on `automation_rule`. No existing table, column or row changes. T-DG6-BE-X10 (D-204; ADR-0043 amendment E2) completes the ledger with the disabled windows. This section describes `0122` as shipped. Migration `0123` (T-DG6-BE-X10, merged) adds no column but widens the `source` CHECK, adds an index, replaces the trigger function so that disabling writes a row, and backfills past disables: see the next section, "P6 pre-freeze repair migration 0123 (DG6)", which wins where the two differ.
 
 ## automation_rule_enablement
 
@@ -14307,3 +14307,46 @@ The trigger is excluded from the `0074` trigger pin of `catalogue.test.ts` and c
 ## Backfill (0122)
 
 One row per rule that was enabled when `0122` ran, with `source = 'backfill'`, for its effective version, at `GREATEST` of three stored times: the effective version's `published_at`, the newest `audit_event.occurred_at` with `record_type = 'automation_rule'`, the rule's id and `action = 'automation_rule.enable'`, and the rule's `created_at` (a seeded starter is created enabled). The migration's own clock is never used. No `automation_rule` row changes, so there is no version step and no audit event.
+
+# P6 pre-freeze repair migration 0123 (DG6)
+
+Recorded by T-DG6-ARCH-10 (2026-11-01) from the shipped file `packages/db/migrations/0123_p6_automation_rule_enablement_disable.sql` (T-DG6-BE-X10; D-204, D-205; ADR-0043 amendment G1, G2). It changes the table `automation_rule_enablement` of `0122` (above) without adding a column or a relationship, so that its rows form the full interval history of each rule: enabled on a version, or disabled. Where this section and the `0122` section differ, this section wins.
+
+## automation_rule_enablement: changes in 0123
+
+- **Purpose (amended):** The moments each automation rule became enabled on a version, changed its effective version while enabled, or was disabled. Per rule, the rows ordered by (`enabled_from`, `id`) partition time into intervals; each starts at a row and ends at the next. The worker evaluates an event against the rule version of the newest row at or before the event's stored occurrence time (`outbox_event.created_at`); a disable row, or no row, means the rule was not enabled then and the event is not acted on (D-203, D-204). The rule must also be enabled at evaluation (D-205, ADR-0043 amendment G3).
+- **Migration:** `0122_p6_automation_rule_enablement.sql`, amended by `0123_p6_automation_rule_enablement_disable.sql`. Writers, lifecycle and `mth_app` privileges (SELECT) are unchanged.
+
+| Column | Change in 0123 |
+|---|---|
+| enabled_from | No type change. Its meaning depends on `source`: on an `enable`, `effective_version` or `backfill` row it is the moment the rule became enabled on that version; on a `disable` or `backfill_disable` row it is the moment the rule **stopped**. The column is not renamed (forward-only migrations); read `source` to interpret it. |
+| automation_rule_version_id | No type change. On a disable row it names the version that stopped (`OLD.effective_version_id`, never NULL). |
+| source | CHECK `automation_rule_enablement_source` is replaced: `source IN ('enable', 'effective_version', 'backfill', 'disable', 'backfill_disable')` |
+
+**`source` values:**
+
+| Value | Written by | Meaning of the row |
+|---|---|---|
+| `enable` | trigger (0122) | the rule was inserted enabled, or went from disabled to enabled, on this version |
+| `effective_version` | trigger (0122) | the effective version of an enabled rule changed (a publish while enabled) |
+| `backfill` | migration `0122` | the rule was enabled when `0122` ran (see "Backfill (0122)") |
+| `disable` | trigger (0123) | an enabled rule was disabled; the version is the one that stopped |
+| `backfill_disable` | migration `0123` | a disable recorded only in the audit trail before `0123` (see "Backfill (0123)") |
+
+The engine treats `disable` and `backfill_disable` as the start of a disabled interval (`engine.ts` `DISABLE_SOURCES`).
+
+**Indexes (added):**
+
+- `automation_rule_enablement_rule_time_idx`: `(automation_rule_id, enabled_from DESC, id DESC)`, the engine's lookup of the newest row of a rule at or before an instant. `automation_rule_enablement_rule_idx` (0122) is kept.
+
+## P6 function (0123)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `automation_rule_enablement_record()` | 0122, replaced by 0123 | `CREATE OR REPLACE`, same signature; still `SECURITY DEFINER`, `search_path = public, pg_temp`. The `0122` branch is unchanged (`enable` / `effective_version` rows). New branch: on an `UPDATE` with `OLD.enabled` true and `NEW.enabled` false, inserts one row with `automation_rule_version_id = OLD.effective_version_id`, `enabled_from = now()` and `source = 'disable'`. An update that does not change `enabled` from true to false writes no disable row (the API writes nothing for a no-op disable). Returns NULL. | none (`PUBLIC` execute revoked again; runs only through the trigger) |
+
+The trigger `automation_rule_enablement_record` on `automation_rule` is unchanged (AFTER INSERT OR UPDATE, row, not deferred). The "0123" test of `packages/db/test/integration/catalogue.test.ts` checks the five CHECK values, the index definition, and that the function is `SECURITY DEFINER`, has no `PUBLIC` execute and contains the disable branch.
+
+## Backfill (0123)
+
+One row with `source = 'backfill_disable'` for each `audit_event` with `record_type = 'automation_rule'` and `action = 'automation_rule.disable'` that follows a ledger row of the same rule (`enabled_from <= occurred_at`), when that preceding row is not itself a disable row. The row's `enabled_from` is the audit event's `occurred_at` (the disabling transaction's `now()`, the instant the trigger would have stored) and its version is that of the preceding row. Rows are inserted in (`occurred_at`, `seq`) order. A disable that precedes the rule's first ledger row gets no row, because no row already means "not enabled". The migration's own clock is never used. No `automation_rule` row changes, so there is no version step and no audit event.
