@@ -1,0 +1,60 @@
+port-policy: PostgreSQL listening on port 28262 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y4
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvydrd1i_d9fc9c87 (server_encoding UTF8); applied 115 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests | 1 failed) 9293ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > lists every record to the workstream member, and no aggregate carries includesRestrictedRecords  1371ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > the member may export the benefits register (the export path is unchanged)  643ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > benefit list and GET: absent / 404 for the member and AUD; visible to the owner, the creator and the TO  846ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > the benefit's sub-resource reads (values, lifecycle, enablers, allocations, measurements) are 404 too  724ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > visible to the member after a grant; hidden again after the revocation (next request)  378ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > business case: list, GET, totals, lines and financial metrics hidden from the member; the creator reads them  426ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > evidence metadata: list and GET hidden from the member; the owner reads them 119ms
+   ✓ rollups (D-195 Q3): identical totals, labelled for the reader without admission > benefit totals: same figures for the member and the owner; includesRestrictedRecords true only for the member 135ms
+   ✓ rollups (D-195 Q3): identical totals, labelled for the reader without admission > Unknown stays Unknown: the sensitive case's missing cost keeps cost and net Unknown for every reader 83ms
+   ✓ rollups (D-195 Q3): identical totals, labelled for the reader without admission > transformation dashboard: same areas' headlines and statuses; the restricted benefit is not listed 100ms
+   ✓ rollups (D-195 Q3): identical totals, labelled for the reader without admission > finance dashboard: same lines and headlines; labelled for the member only 49ms
+   ✓ rollups (D-195 Q3): identical totals, labelled for the reader without admission > drill-down: same value and inputs; the restricted benefit is not an item; a restricted subject is refused 161ms
+   × REQ-S10-004: export selection through the ReadScope > the member's export of the benefits register is 403 and writes nothing; the owner exports it 118ms
+     → expected [ …(2) ] to deeply equal [ Array(1) ]
+   ✓ REQ-S10-004: export selection through the ReadScope > a snapshot without a sensitive source still exports for the member (a RAID register) 133ms
+   ✓ REQ-S10-004: export selection through the ReadScope > the owner's snapshot exported by the member (by snapshot id) is 403 too 118ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reads.test.ts > REQ-S10-004: export selection through the ReadScope > the member's export of the benefits register is 403 and writes nothing; the owner exports it
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[2m      "id": "01a19927-7e54-75ae-86cc-3d0400e4da89",[22m
+[2m    },[22m
+[31m+   {[39m
+[31m+     "id": "01a19927-8d38-733a-99b5-5c6fb56eb586",[39m
+[31m+   },[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reads.test.ts:380:46
+    378|     // T-DG6-BE-Y4 (F-DG6-147): the live selection's snapshot is writt…
+    379|     // start leaves no snapshot either (before: it was committed in it…
+    380|     expect(await snapshotsBy(member.userId)).toEqual(snapshotsBefore);
+       |                                              ^
+    381|     ok(await registersExport(b.s.bo), 202);
+    382|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 passed (15)
+   Start at  22:07:03
+   Duration  45.17s (transform 11.28s, setup 0ms, collect 27.22s, tests 9.29s, environment 0ms, prepare 173ms)
+

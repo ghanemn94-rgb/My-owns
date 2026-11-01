@@ -1,0 +1,29 @@
+port-policy: PostgreSQL listening on port 28250 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y4
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvybzeas_b2a02446 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | apps/api/test/integration/security/rate-limits.test.ts > rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > clause summary
+PASS REQ-S16-030 rate limiting: 7 classes, 8 operations (global/getMe, auth/devLogin, upload/uploadEvidenceContent, upload/createImport, search/searchRecords, assistant/postAssistantMessage, webhook/receiveWebhook, export/createExport) at budget 1 -> second call 429 rate_limited with Retry-After; user-keyed classes counted per user; one class log line per refusal
+
+ ✓ |integration| apps/api/test/integration/security/rate-limits.test.ts (10 tests) 4974ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > global (RATE_LIMIT_PER_MINUTE=1, getMe): the second call is 429 rate_limited with Retry-After  1057ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > auth (AUTH_RATE_LIMIT_PER_MINUTE=1, devLogin): the second call is 429 rate_limited with Retry-After  631ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, uploadEvidenceContent): the second call is 429 rate_limited with Retry-After  711ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, createImport): the second call is 429 rate_limited with Retry-After  432ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > search (SEARCH_RATE_LIMIT_PER_MINUTE=1, searchRecords): the second call is 429 rate_limited with Retry-After  670ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > assistant (ASSISTANT_RATE_LIMIT_PER_MINUTE=1, postAssistantMessage): the second call is 429 rate_limited with Retry-After  505ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > webhook (WEBHOOK_RATE_LIMIT_PER_MINUTE=1, receiveWebhook): the second call is 429 rate_limited with Retry-After  482ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > export (EXPORT_RATE_LIMIT_PER_MINUTE=1, createExport): the second call is 429 rate_limited with Retry-After  469ms
+ ✓ |integration| apps/api/test/integration/admin/security.test.ts (8 tests) 2253ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > over the class budget the next upload is 429 rate_limited with Retry-After; other operations and users still pass  1076ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  21:17:19
+   Duration  36.83s (transform 9.77s, setup 0ms, collect 23.38s, tests 7.23s, environment 0ms, prepare 217ms)
+

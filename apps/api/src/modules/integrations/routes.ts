@@ -516,7 +516,10 @@ function registerImportRoutes(app: FastifyInstance, { db }: ModuleDeps): string[
   // createImport: 201 with Location and ETag (the staged batch, version 2).
   app.post(
     IMPORTS,
-    { config: { access: { permission: "import.create" }, consumes: IMPORT_FILE_CONSUMES } },
+    // T-DG6-BE-Y4 (F-DG6-141; ADR-0052 §4): the import upload is in the `upload` class (UPLOAD_RATE_LIMIT_PER_MINUTE).
+    {
+      config: { access: { permission: "import.create" }, consumes: IMPORT_FILE_CONSUMES, ...rateLimitClass("upload") },
+    },
     async (request, reply) => {
       const { transformationId } = parse(transformationParams, request.params, "params");
       const { template } = parseQuery(createImportQuery, request.query);

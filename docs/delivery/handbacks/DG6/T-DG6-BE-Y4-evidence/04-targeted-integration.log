@@ -1,0 +1,132 @@
+port-policy: PostgreSQL listening on port 28262 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y4
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvydi81y_2df1f752 (server_encoding UTF8); applied 115 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/integrations/webhooks.test.ts (16 tests) 16086ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > answers 202 and stages 10 = 8 + 1 + 1 with its receipt and webhook run, as the connector's service identity  2026ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > applies the connector's field mappings and turns a JSON number into the row reason value_not_decimal  593ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > commits the valid rows after the staging transaction, on behalf of the configured KDS  1211ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > leaves the batch staged and records import_batch.auto_commit_refused when the commit-time re-check refuses  753ms
+   ✓ receiveWebhook: every authentication failure is the same 401 and stores nothing > refuses unsigned, wrongly signed, stale, malformed, unknown, disabled-endpoint and disabled-connector deliveries  1491ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  812ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > two concurrent deliveries with one id create one receipt and one batch  680ms
+   ✓ rotateWebhookSecret: the previous secret is valid for the grace period only > accepts the new and the previous secret inside the grace period and refuses the previous one after it  1779ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > creates an active endpoint with a server-generated key and a SecretRef; one audit event; no secret value anywhere  1050ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > lists the organization's endpoints newest first; the cursor walks every endpoint exactly once  411ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > rotates and disables with If-Match (428, 409), refuses a bad grace (422) and any change after disable (409)  306ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > AUD and KDS get 403 on every mutation, an outsider 404, no session 401; nothing is written  347ms
+ ✓ |integration| apps/api/test/integration/integrations/connectors.test.ts (20 tests) 7061ms
+   ✓ createConnector (ADR-0055 §1) > writes the connector, configuration version 1, its service identity and 3 audit events in one transaction  309ms
+   ✓ putConnector, mappings, enable and disable > a configuration is a new version n+1; names alone keep it; If-Match 428 and 409  313ms
+   ✓ putConnector, mappings, enable and disable > mappings: get with the connector's ETag; put is a new configuration version; 422 duplicate; 428/409  353ms
+   ✓ putConnector, mappings, enable and disable > enable and disable: the status machine, the reason, and the queued runs of a disabled connector are cancelled  614ms
+   ✓ putConnector, mappings, enable and disable > every mutation is 403 for AUD and KDS (readers), 404 for an outsider; nothing is written  567ms
+   ✓ reads: list, get and the transformation-level reader > lists by code with a cursor; AUD and KDS read; an outsider gets 403; an unknown organization 404  421ms
+   ✓ testConnector and the derived verification, last success and actionable error > is not_verified until a succeeded test on the CURRENT configuration version  310ms
+   ✓ testConnector and the derived verification, last success and actionable error > a failing or stopped adapter gives a failed run and the actionable error with the form and import fallbacks  309ms
+ ✓ |integration| apps/api/test/integration/integrations/runs.test.ts (15 tests) 7225ms
+   ✓ the A17 run with the local test adapter (REQ-S17-001) > queues, runs and records 10 read, 10 staged, 8/1/1, reconciliation matched and the last success  904ms
+   ✓ failing: bounded retries with backoff, then exactly one operational exception (REQ-S17-005) > retries up to the bound, raises one exception, shows the actionable error, and recovers  1039ms
+   ✓ failing: bounded retries with backoff, then exactly one operational exception (REQ-S17-005) > a manual retry of a failed run is the next attempt, due at once, and runs  423ms
+   ✓ the cadence schedule (worker job integrations.connector_run) > creates one run per slot (organization time zone), a replay creates nothing, the watch executes it  340ms
+   ✓ authorization and refusals (ADR-0055 §9) > KDS and ADM_TECH run; AUD and TD get 403; an outsider 404; anonymous 401; nothing is written  561ms
+   ✓ authorization and refusals (ADR-0055 §9) > the commit-time re-check: a right lost while the request waits is 403 and nothing is written  443ms
+ ✓ |integration| apps/api/test/integration/integrations/outbound.test.ts (22 tests) 8591ms
+   ✓ executeOutboundWrite: a confirmed write and its replay (A13) > confirms on the adapter's confirmed response with its reference: one effect, audited, with its history  642ms
+   ✓ executeOutboundWrite: a confirmed write and its replay (A13) > refuses another request under a used key with 409 outbound_write.idempotency_key_reused  607ms
+   ✓ a crash between the steps (A13) > leaves the write requested; a replay does not dispatch; confirm re-dispatches with the same key: one effect  308ms
+   ✓ a write without confirmation stays pending confirmation (A12) > a stopped adapter (no response) and a failing adapter (it throws) leave the write pending, never confirmed  503ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > KDS, ADM_TECH and AUD get 403 on execute and confirm; nothing is written or dispatched  311ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > outsiders get 404 on reads, a TD elsewhere 404 on writes; a reader without outbound_write.read 403; AUD, TO, KDS read  532ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > the commit-time re-check: a right lost while the request waits is 403 and nothing is written  515ms
+   ✓ the dispatch happens outside any transaction, and the confirmation port > calls the connector-confirmation port once, inside transaction 2, when a write becomes confirmed  739ms
+   ✓ listOutboundWrites > lists newest first with filters and a cursor  379ms
+ ✓ |integration| apps/api/test/integration/reporting/exports.test.ts (16 tests) 6441ms
+   ✓ REQ-S13-005 / REQ-S13-006: XLSX and CSV of the filtered RAID register > XLSX contains exactly the filtered rows, cell by cell against GET /raid?type=risk; =HYPERLINK is quotePrefixed text  329ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  721ms
+   ✓ authorization: exports are authorized like the records > another user's getExport and downloadExport -> 404; the list shows only the caller's own jobs  433ms
+   ✓ authorization: exports are authorized like the records > a requester who lost transformation.read gets 404 on download; the worker fails their queued job (source_unavailable)  307ms
+   ✓ refusals and cancel (ADR-0046 §8) > cancel: 428 without If-Match, 409 stale, 200 queued -> cancelled (audited), the worker then stores nothing; 422 when finished  483ms
+   ✓ refusals and cancel (ADR-0046 §8) > cancel of a succeeded job -> 422 export.not_cancellable; cancel while running stops the render without a file  345ms
+ ✓ |integration| apps/api/test/integration/integrations/imports.test.ts (11 tests) 9326ms
+   ✓ the A17 8/1/1 fixture through the API as CSV (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 with provenance, and keeps the 2 others visible with their reasons  2806ms
+   ✓ the A17 8/1/1 fixture through the API as XLSX (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 with provenance, and keeps the 2 others visible with their reasons  1346ms
+   ✓ commitImport rules (ADR-0056 §6, §9) > authorization: commit without kpi_actual.submit -> 403; AUD 403 on upload, commit, cancel; unreadable -> 404  640ms
+   ✓ cancelImport (ADR-0056 §6) > staged -> cancelled with a reason, rows kept, audited; final afterwards  547ms
+   ✓ import templates (ADR-0056 §9; REQ-S17-003) > downloads CSV and XLSX prefilled with the active KPIs; both re-import without a whole-file refusal  569ms
+ ✓ |integration| apps/api/test/integration/reporting/report-snapshots.test.ts (11 tests) 7227ms
+   ✓ REQ-S13-004: charter and registers generate from a seeded transformation > the charter snapshot contains the transformation's ID, its charter text and the charter record with its revision  326ms
+   ✓ REQ-S13-004: charter and registers generate from a seeded transformation > the snapshot cites the evidence linked to the charter with its revision and SHA-256  404ms
+   ✓ REQ-S13-007: issue, immutability after a later KPI change, reissue as version 2 > the issued snapshot keeps the old values and kpi_version; the issued reissue is v2 and v1 is superseded unchanged  1959ms
+   ✓ refusals, authorization and concurrency on every write > issue by a WL -> 403; AUD -> 403 on generate, issue, discard and reissue; nothing written  615ms
+   ✓ refusals, authorization and concurrency on every write > If-Match: 428 when missing, 409 when stale, on issue, discard and reissue  307ms
+   ✓ refusals, authorization and concurrency on every write > commit-time authorization: report.generate / report.issue revoked while the request waits -> 403; nothing written  618ms
+ ✓ |integration| apps/api/test/integration/integrations/import-staging.test.ts (10 tests) 949ms
+ ✓ |integration| apps/api/test/integration/integrations/s16-022-entity-group.test.ts (6 tests) 23828ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > FormSchemaVersion: a Studio form_schema version published through the API, read by getFormSchemaAdmin  1207ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > AutomationRuleVersion: createAutomationRuleVersion, read by getAutomationRuleVersion  507ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > Notification: a KPI actual submitted on a review route notifies the reviewer, read by listMyInbox  1836ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > IntegrationRun: runConnector, read by getIntegrationRun  912ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > ReportSnapshot and AuditEvent: issueReportSnapshot, read by getReportSnapshot; its audit event by getAuditEvent  1489ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 5738ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > lists every record to the workstream member, and no aggregate carries includesRestrictedRecords  855ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > the member may export the benefits register (the export path is unchanged)  304ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > business case: list, GET, totals, lines and financial metrics hidden from the member; the creator reads them  318ms
+   ✓ rollups (D-195 Q3): identical totals, labelled for the reader without admission > drill-down: same value and inputs; the restricted benefit is not an item; a restricted subject is refused  328ms
+ ✓ |integration| apps/api/test/integration/integrations/adapter-contract.test.ts (20 tests) 699ms
+   ✓ the http_pull adapter against the local fake source (residual: no corporate source, p6-plan R3) > 5xx, 429 and a hang (timeout) are connector.source_unavailable  530ms
+ ✓ |integration| apps/api/test/integration/admin/security.test.ts (8 tests) 2625ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > over the class budget the next upload is 429 rate_limited with Retry-After; other operations and users still pass  1065ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > the global limit still applies to a class route: over the global budget an upload is 429 before its class budget  337ms
+ ✓ |integration| apps/api/test/integration/integrations/run-failure-kpi-links.test.ts (5 tests) 3735ms
+   ✓ connector.run_failed names the KPIs the failing run feeds (ADR-0053 §2, ADR-0055) > the fixture's KPIs of the target transformation, through the field mappings; never another transformation's  423ms
+   ✓ connector.run_failed names the KPIs the failing run feeds (ADR-0053 §2, ADR-0055) > a KPI the connector staged before is linked although the failing configuration names none  574ms
+   ✓ the worker's consumer links the exception to those KPIs, once (REQ-S12-019; F-DG6-QA-A-2) > exactly one exception, linked to the fed KPI, shown with its DG4 freshness; a redelivery adds nothing  784ms
+ ✓ |integration| apps/api/test/integration/reporting/report-synthetic.test.ts (6 tests) 12106ms
+   ✓ the worker prints what the snapshot records (D-163) > demo: CSV and XLSX in en and ar carry the illustrative label and the B0004 statement  781ms
+   ✓ the worker prints what the snapshot records (D-163) > production: no label in either language, and the B0004 statement on every sheet and in the CSV  647ms
+stdout | apps/api/test/integration/security/rate-limits.test.ts > rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > clause summary
+PASS REQ-S16-030 rate limiting: 7 classes, 8 operations (global/getMe, auth/devLogin, upload/uploadEvidenceContent, upload/createImport, search/searchRecords, assistant/postAssistantMessage, webhook/receiveWebhook, export/createExport) at budget 1 -> second call 429 rate_limited with Retry-After; user-keyed classes counted per user; one class log line per refusal
+
+ ✓ |integration| apps/api/test/integration/security/rate-limits.test.ts (10 tests) 4774ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > global (RATE_LIMIT_PER_MINUTE=1, getMe): the second call is 429 rate_limited with Retry-After  349ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > auth (AUTH_RATE_LIMIT_PER_MINUTE=1, devLogin): the second call is 429 rate_limited with Retry-After  730ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, uploadEvidenceContent): the second call is 429 rate_limited with Retry-After  842ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, createImport): the second call is 429 rate_limited with Retry-After  773ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > search (SEARCH_RATE_LIMIT_PER_MINUTE=1, searchRecords): the second call is 429 rate_limited with Retry-After  566ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > assistant (ASSISTANT_RATE_LIMIT_PER_MINUTE=1, postAssistantMessage): the second call is 429 rate_limited with Retry-After  545ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > webhook (WEBHOOK_RATE_LIMIT_PER_MINUTE=1, receiveWebhook): the second call is 429 rate_limited with Retry-After  449ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > export (EXPORT_RATE_LIMIT_PER_MINUTE=1, createExport): the second call is 429 rate_limited with Retry-After  504ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-paged.test.ts (4 tests) 23033ms
+   ✓ PDF register exports (REQ-S13-009, REQ-S13-005) > Arabic: RTL base direction, IBM Plex Sans Arabic embedded, identifiers and numbers left to right; only the filtered rows  4471ms
+   ✓ PDF register exports (REQ-S13-009, REQ-S13-005) > English: left to right with IBM Plex Sans; 'Draft — not an issued report'  4194ms
+   ✓ REQ-S13-008: a pending benefit value is labelled provisional in the PDF > prints Provisional (en) and مؤقت (ar) for the pending value  9198ms
+   ✓ REQ-S13-005: a PPTX gate pack contains each criterion of the gate > every criterion of G2 (key, English and Arabic label) is in the PPTX, in both languages; DOCX Arabic is bidi  1930ms
+ ✓ |integration| apps/api/test/integration/integrations/secret-composition.test.ts (3 tests) 4032ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a correctly signed webhook is accepted through buildServer's own registry; another secret is refused 401  1075ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a connector run resolves its credential through the composed registry; an unset reference fails the run  761ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts (5 tests) 3344ms
+   ✓ A/B transcript (T-DG6-BE-B2): the touched DG4/DG5 read paths, nothing sensitive in the reader's scope > benefit list, GET and sub-resource reads  314ms
+   ✓ A/B transcript (T-DG6-BE-B2): the touched DG4/DG5 read paths, nothing sensitive in the reader's scope > aggregates: benefit totals, transformation dashboard, finance dashboard, drill-down: no new property  612ms
+ ✓ |integration| apps/api/test/integration/integrations/graceful-degradation.test.ts (2 tests) 2729ms
+   ✓ REQ-S17-005: with the test connector stopped, the form and the import keep working > the connector page shows the actionable error (which run, why, both fallbacks); form and import succeed  967ms
+   ✓ REQ-S17-005: with the test connector stopped, the form and the import keep working > the same with the connector disabled: no KPI or import route reads a connector's status  470ms
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+Error: Channel closed
+ ❯ target.send node:internal/child_process:794:16
+ ❯ ProcessWorker.send node_modules/.pnpm/tinypool@2.2.0/node_modules/tinypool/dist/index.js:100:41
+ ❯ MessagePort.<anonymous> node_modules/.pnpm/tinypool@2.2.0/node_modules/tinypool/dist/index.js:109:62
+ ❯ [nodejs.internal.kHybridDispatch] node:internal/event_target:848:20
+ ❯ MessagePort.<anonymous> node:internal/per_context/messageport:23:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_IPC_CHANNEL_CLOSED' }
+
+
+

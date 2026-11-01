@@ -253,10 +253,10 @@ export function registerNotFoundHandler(app: FastifyInstance, options: NotFoundO
 // class gets a second limiter with the class's own budget and store, run after the global one, so whichever is reached
 // first answers 429 rate_limited with Retry-After. A route joins a class with one config line:
 //   { config: { access: ..., ...rateLimitClass("upload") } }
-// The classes whose operations do not exist yet (search, assistant, webhook, the import upload) are joined by their
-// owner tasks with the same line, adding the operation id to RATE_LIMIT_CLASSES below; export start operations are
-// joined by the owner of reporting/exports (handback of T-DG6-BE-E). The auth class is the identity routes' own
-// per-route limit (ADR-0007 §5b), unchanged.
+// Every class of the matrix is wired: upload (uploadEvidenceContent, createImport), search, assistant, webhook and
+// export (createExport; T-DG6-BE-Y4, F-DG6-141). A new operation joins a class with the same line, adding its id to
+// RATE_LIMIT_CLASSES below. Each refusal writes one "rate limit class exceeded" log line. The auth class is the identity
+// routes' own per-route limit (ADR-0007 §5b), unchanged.
 
 /** How a class's counter is keyed (the RateLimitMatrix `keyedBy` of the contract). */
 export type RateLimitKey = "user_or_ip" | "ip" | "endpoint_key";
@@ -285,7 +285,7 @@ export const RATE_LIMIT_CLASSES: readonly RateLimitClassSpec[] = [
     name: "upload",
     variable: "UPLOAD_RATE_LIMIT_PER_MINUTE",
     keyedBy: "user_or_ip",
-    operationIds: ["uploadEvidenceContent"],
+    operationIds: ["uploadEvidenceContent", "createImport"], // createImport: the import upload (T-DG6-BE-Y4)
   },
   { name: "search", variable: "SEARCH_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: ["searchRecords"] },
   {
@@ -300,7 +300,12 @@ export const RATE_LIMIT_CLASSES: readonly RateLimitClassSpec[] = [
     keyedBy: "endpoint_key",
     operationIds: ["receiveWebhook"], // T-DG6-BE-N
   },
-  { name: "export", variable: "EXPORT_RATE_LIMIT_PER_MINUTE", keyedBy: "user_or_ip", operationIds: [] },
+  {
+    name: "export",
+    variable: "EXPORT_RATE_LIMIT_PER_MINUTE",
+    keyedBy: "user_or_ip",
+    operationIds: ["createExport"], // export start, ADR-0046 (T-DG6-BE-Y4, F-DG6-141)
+  },
 ];
 
 /** The route-config fragment that puts a route in a rate-limit class (spread into `config`). */
@@ -339,6 +344,9 @@ export function registerRateLimitClasses(
     const hook: onRequestAsyncHookHandler = async (request, reply) => {
       const result = await limiter(request);
       if (result.isAllowed || !result.isExceeded) return;
+      // T-DG6-BE-Y4 (F-DG6-141): one log line per refusal, naming the class and the route, never the key (user id or
+      // client IP) or any request content; the request id joins it to the access log line of the same request.
+      request.log.warn({ rateLimitClass: name, route: `${request.method} ${route.url}` }, "rate limit class exceeded");
       reply.header("retry-after", result.ttlInSeconds);
       throw problems.rateLimited();
     };
