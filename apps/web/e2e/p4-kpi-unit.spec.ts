@@ -195,6 +195,7 @@ interface ApiArea {
 }
 
 test("1. the worker calculates both KPIs; People & adoption carries the KPI's kpiUnit (KBE-R8)", async () => {
+  test.setTimeout(240_000); // two 90 s polls (below) plus the worker's start and stop
   // The e2e stack runs no worker: start the real one for this step, against the same database, then stop it.
   const worker: ChildProcess = spawn(process.execPath, ["apps/worker/dist/main.js"], {
     cwd: ROOT,
@@ -209,7 +210,9 @@ test("1. the worker calculates both KPIs; People & adoption carries the KPI's kp
       await expect
         .poll(
           async () => (await lead.call<{ actual: string | null }>("GET", `${T}/kpi-definitions/${k.id}/status`)).actual,
-          { timeout: 20_000, intervals: [500] },
+          // 90 s as in p4-benefits.spec.ts: the worker starts late in a full run and first drains the jobs the earlier specs
+          // queued with no worker running (20 s ran out on the C.UTF-8 run of b7a1a96a7, chromium-ar #415).
+          { timeout: 90_000, intervals: [500] },
         )
         .toBe(k.actual);
   } catch (e) {
