@@ -553,6 +553,7 @@ describe("REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3
 describe("REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4)", () => {
   /** The tables created by the P6 migrations (0098 onward). */
   const P6_TABLES = [
+    "automation_rule_enablement", // 0122 (T-DG6-BE-X9, D-203 O-2)
     "connector",
     "connector_change",
     "connector_config_version",

@@ -97,14 +97,36 @@ const gateDecidedPayload = (transformationId: string) => ({
   scaleScopeItemIds: [],
   conditionIds: [],
 });
-const envelope = (payload: Record<string, unknown>) => ({
-  outboxEventId: crypto.randomUUID(),
-  eventType: "gate.decided",
-  schemaVersion: 1,
-  idempotencyKey: `gate.decided:${crypto.randomUUID()}`,
-  organizationId: w.orgA.id,
-  payload,
-});
+/**
+ * An envelope as the relay delivers it, with its (already published) outbox row: the engine reads the event's stored
+ * occurrence time, outbox_event.created_at (T-DG6-BE-X9, D-203 O-2).
+ */
+async function envelope(payload: Record<string, unknown>) {
+  const outboxEventId = crypto.randomUUID();
+  const idempotencyKey = `gate.decided:${crypto.randomUUID()}`;
+  await api.db
+    .insertInto("outbox_event")
+    .values({
+      id: outboxEventId,
+      organization_id: w.orgA.id,
+      aggregate_type: "synthetic",
+      aggregate_id: crypto.randomUUID(),
+      event_type: "gate.decided",
+      schema_version: 1,
+      payload: JSON.stringify(payload),
+      idempotency_key: idempotencyKey,
+      published_at: new Date(),
+    })
+    .execute();
+  return {
+    outboxEventId,
+    eventType: "gate.decided",
+    schemaVersion: 1,
+    idempotencyKey,
+    organizationId: w.orgA.id,
+    payload,
+  };
+}
 const evaluate = AUTOMATION_HANDLERS.find((h) => h.queue === "automation.evaluate")!;
 
 /** A transformation-scoped admin rule with one notify action to TL, published and enabled through the API. */
@@ -158,7 +180,7 @@ const notesOf = (code: string, key: string) =>
 describe("D-153 (a): the notify action is delivered under the recipient's policy and preferences", () => {
   it("exactly one policy-governed notification per recipient; x3 replays create nothing; the execution log records the outcome", async () => {
     const rule = await notifyRule();
-    const ev = envelope(gateDecidedPayload(tx));
+    const ev = await envelope(gateDecidedPayload(tx));
     const before = Date.now();
     for (let i = 0; i < 3; i += 1) await evaluate.handle(api.db, ev, `job-notify-${i}`);
     await Promise.all([1, 2].map((i) => evaluate.handle(api.db, ev, `job-notify-c${i}`)));

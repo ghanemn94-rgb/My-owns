@@ -152,10 +152,18 @@ export interface Candidate {
   readonly servicePermissionCodes: string[];
 }
 
+/**
+ * The candidate rules of one trigger occurrence. `outboxEventId` (D-203 O-2; T-DG6-BE-X9): for an event, the outbox
+ * row whose created_at is its STORED occurrence time. A rule is a candidate only when its effective version became
+ * enabled at or before that time (the newest automation_rule_enablement row of that version, migration 0122), so a rule
+ * enabled after an event occurred never acts on it, however late the event is evaluated. Both times are compared in
+ * SQL at their full (microsecond) precision. Ticks pass none (a tick's slot is its own occurrence).
+ */
 export async function candidates(
   db: Db,
   triggerCode: string,
   where: { organizationId: string; transformationId: string | null } | null,
+  outboxEventId?: string,
 ): Promise<Candidate[]> {
   let q = db
     .selectFrom("automation_rule as r")
@@ -177,6 +185,12 @@ export async function candidates(
     .where("r.origin", "=", "admin")
     .where("v.status", "=", "published")
     .where(sql<boolean>`${triggerCode} = ANY (v.trigger_codes)`);
+  if (outboxEventId !== undefined)
+    q = q.where(
+      sql<boolean>`(SELECT max(e.enabled_from) FROM automation_rule_enablement e
+                     WHERE e.automation_rule_id = r.id AND e.automation_rule_version_id = r.effective_version_id)
+                   <= (SELECT o.created_at FROM outbox_event o WHERE o.id = ${outboxEventId}::uuid)`,
+    );
   if (where !== null) {
     q = q.where("r.organization_id", "=", where.organizationId);
     q = q.where((eb) =>
@@ -523,16 +537,47 @@ export async function executeRule(
 
 // ------------------------------------------------------------------------------------------------ entry points
 
-/** An outbox event on automation.evaluate: every candidate rule, in code order. */
+export const OCCURRENCE_UNKNOWN = "automation.occurrence_time_unknown";
+
+/**
+ * D-203 O-2: the stored occurrence time of an event, its outbox row's created_at (the time of the transaction that
+ * recorded it), never the evaluation time. The relay builds every envelope from its row and outbox rows are never
+ * deleted, so a missing row means the envelope did not come from the outbox: the job throws (pg-boss retries it, and
+ * its last attempt enters the failure queue), and no rule acts on an event whose occurrence time is unknown.
+ */
+export async function occurredAtOf(db: Db, outboxEventId: string): Promise<Date> {
+  if (!UUID.test(outboxEventId)) throw new Error(`${OCCURRENCE_UNKNOWN}: no outbox event ${outboxEventId}`);
+  const row = await db
+    .selectFrom("outbox_event")
+    .select("created_at")
+    .where("id", "=", outboxEventId)
+    .executeTakeFirst();
+  if (row === undefined) throw new Error(`${OCCURRENCE_UNKNOWN}: no outbox event ${outboxEventId}`);
+  return row.created_at;
+}
+
+/** An outbox event on automation.evaluate: every candidate rule (enabled when the event occurred), in code order. */
 export async function evaluateEvent(
   db: Db,
-  envelope: { eventType: string; idempotencyKey: string; organizationId: string; payload: Record<string, unknown> },
+  envelope: {
+    outboxEventId: string;
+    eventType: string;
+    idempotencyKey: string;
+    organizationId: string;
+    payload: Record<string, unknown>;
+  },
   jobId: string,
   attempt?: JobAttempt,
 ): Promise<ExecutionReport[]> {
   const t = new Map(Object.entries(envelope.payload)).get("transformationId");
   const transformationId = typeof t === "string" && UUID.test(t) ? t : null;
-  const rules = await candidates(db, envelope.eventType, { organizationId: envelope.organizationId, transformationId });
+  await occurredAtOf(db, envelope.outboxEventId); // throws when the occurrence time is unknown
+  const rules = await candidates(
+    db,
+    envelope.eventType,
+    { organizationId: envelope.organizationId, transformationId },
+    envelope.outboxEventId,
+  );
   const out: ExecutionReport[] = [];
   for (const c of rules)
     out.push(

@@ -14,6 +14,8 @@ import {
   AUTH_MODES,
   ENV_VARS,
   HEARTBEAT_INTERVAL_SECONDS,
+  JOB_BATCH_SIZE,
+  JOB_CONCURRENCY,
   MTH_ENVS,
   SUPERVISE_INTERVAL_SECONDS,
   type EnvVarName,
@@ -71,6 +73,10 @@ export interface AppConfig {
     readonly superviseIntervalSeconds: number;
     /** P6 (ADR-0053 §6; T-DG6-DO-D): the worker_heartbeat cadence, WORKER_HEARTBEAT_SECONDS (default 30). */
     readonly heartbeatSeconds: number;
+    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_BATCH_SIZE (default 8, 1-50). */
+    readonly jobBatchSize: number;
+    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_CONCURRENCY (default 4, 1-16, at most the batch size). */
+    readonly jobConcurrency: number;
   };
 }
 
@@ -216,6 +222,16 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     "WORKER_HEARTBEAT_SECONDS",
     z.coerce.number().int().min(HEARTBEAT_INTERVAL_SECONDS.min).max(HEARTBEAT_INTERVAL_SECONDS.max),
   );
+  const jobBatchSize = field(
+    "WORKER_JOB_BATCH_SIZE",
+    z.coerce.number().int().min(JOB_BATCH_SIZE.min).max(JOB_BATCH_SIZE.max),
+  );
+  const jobConcurrency = field(
+    "WORKER_JOB_CONCURRENCY",
+    z.coerce.number().int().min(JOB_CONCURRENCY.min).max(JOB_CONCURRENCY.max),
+  );
+  if (jobBatchSize !== undefined && jobConcurrency !== undefined && jobConcurrency > jobBatchSize)
+    problems.push("WORKER_JOB_CONCURRENCY is invalid (must be at most WORKER_JOB_BATCH_SIZE)");
   const mthEnvSet = field("MTH_ENV", z.enum(MTH_ENVS));
   const demoAdminDatabaseUrl = field(
     "MTH_DEMO_ADMIN_DATABASE_URL",
@@ -307,7 +323,12 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     secretsDir: secretsDir ?? null,
     logLevel: logLevel!,
     trustProxy,
-    worker: { superviseIntervalSeconds: superviseIntervalSeconds!, heartbeatSeconds: heartbeatSeconds! },
+    worker: {
+      superviseIntervalSeconds: superviseIntervalSeconds!,
+      heartbeatSeconds: heartbeatSeconds!,
+      jobBatchSize: jobBatchSize!,
+      jobConcurrency: jobConcurrency!,
+    },
     mthEnv: mthEnv!,
     demoAdminDatabaseUrl: demoAdminDatabaseUrl ?? null,
   });
