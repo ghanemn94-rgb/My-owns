@@ -67,3 +67,10 @@ None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 
 ## D-198 (2026-10-26): W3 stopped by a container restart
 
 All four W3 runs (ARCH-03, BE-B, BE-E, FE-A) were stopped by a container restart. Their run folders are kept as `*-orphaned`; ARCH-03's partial work is the WIP commit `d206925` (its handback still had PENDING placeholders); BE-B, BE-E and FE-A had written their handbacks, but their final checks are unconfirmed, and their work is WIP-committed on their branches. Continuation runs T-DG6-{ARCH-03,BE-B,BE-E,FE-A}B review the WIP, finish and run every acceptance check. Recorded in `decisions.md` with the next merge.
+
+## 2026-11-02: T-DG6-ARCH-11 run record incomplete (orchestrator note)
+
+- **What happened:** `run-agent.sh` for `DG6-T-DG6-ARCH-11-solution-architect-20261101T230117Z-114368f1` exited **1** after the agent's own turn ended. The transcript's last records are `result: success` and `task_summary`.
+- **Missing:** the runner's post-run steps did not complete. The run folder has no `meta.json`, and `transcript.jsonl` is not gzipped. The likely cause is the runner's post-run snapshot or git step failing while the orchestrator merged other branches into the same checkout (ARCH-11 ran in the main checkout). Not proven.
+- **Kept as is:** the handback is complete, and the four document edits match it. They were committed as delivered (204260d3f), together with the run folder as found.
+- **Consequence:** for this one documents-only run, this note stands in for the missing run metadata. Later documents-only tasks run in their own worktree, so that merges cannot overlap a run's post-processing.
