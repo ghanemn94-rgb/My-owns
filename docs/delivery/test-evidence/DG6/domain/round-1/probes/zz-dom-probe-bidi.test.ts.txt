@@ -1,0 +1,10 @@
+// DOMAIN REVIEWER PROBE (disposable clone): REQ-S15-007 clause 3 with the literal strings.
+import { expect, it } from "vitest";
+import { markLtrStretches } from "./bidi.ts";
+it("Arabic export text keeps 'KPI-001' and '12.5%' as isolated LTR runs", () => {
+  const s = "المؤشر KPI-001 بلغ 12.5% هذا الشهر";
+  const out = markLtrStretches(s, "rtl");
+  console.log("DOMAIN-PROBE", JSON.stringify(out), [...out].map((c) => c.codePointAt(0)!.toString(16)).filter((h) => h.length === 4 && h.startsWith("20")).join(","));
+  expect(out.replace(/[⁦-⁩‎‏‪-‮]/g, "")).toBe(s);
+  expect(out).not.toBe(s);
+});

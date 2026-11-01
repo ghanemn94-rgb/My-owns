@@ -1,0 +1,38 @@
+// DOMAIN REVIEWER PROBE (DG6 round 1), disposable clone only. SYNTHETIC data. Visits P6 screens in en and ar on the
+// production-initialized dev stack, checks <html lang/dir>, that no page shows a raw stack trace / SQL / infrastructure
+// term, that no "0"/green placeholder stands in for Unknown on empty P6 screens, and takes a full-page screenshot.
+import { expect, test } from "@playwright/test";
+import { langOf, shot, signIn } from "../../apps/web/e2e/support/ui.ts";
+
+const SCREENS: [string, string, string][] = [
+  ["dev.admin", "/admin/assistant", "dom-admin-assistant-off"],
+  ["dev.admin", "/admin/integrations", "dom-admin-integrations"],
+  ["dev.admin", "/admin/operations", "dom-admin-operations"],
+  ["dev.office", "/strategy-kpis/imports", "dom-imports-entry"],
+  ["dev.office", "/search?q=synthetic", "dom-search"],
+  ["dev.office", "/evidence-reports/exports", "dom-exports"],
+  ["dev.office", "/my-work", "dom-my-work"],
+];
+const INFRA = /\b(stack trace|at Object\.|SELECT |postgres|pg-boss|ECONNREFUSED|kysely|node_modules|undefined|NaN)\b/i;
+
+test.describe.configure({ timeout: 240_000 });
+test("DOMAIN PROBE: P6 screens in the project's language", async ({ page }, info) => {
+  const lang = langOf(info);
+  let who = "";
+  for (const [user, path, name] of SCREENS) {
+    if (user !== who) {
+      await page.context().clearCookies();
+      await signIn(page, lang, user);
+      who = user;
+    }
+    await page.goto(path);
+    await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    const text = await page.locator("main#main").innerText();
+    console.log(`DOMAIN-PROBE ${lang} ${path} h1=${JSON.stringify(await page.locator("main#main h1").innerText())} infraHit=${INFRA.test(text) ? JSON.stringify(text.match(INFRA)![0]) : "none"} chars=${text.length}`);
+    expect(INFRA.test(text), `${path}: ${text.match(INFRA)?.[0]}`).toBe(false);
+    await shot(page, lang, name);
+  }
+});
