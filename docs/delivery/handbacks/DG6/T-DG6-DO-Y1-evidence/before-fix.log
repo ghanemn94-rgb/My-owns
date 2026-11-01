@@ -1,0 +1,102 @@
+7470ea749005bcbf529be70351bbb87d696d277503de26c20132b1269ad9feee  deploy/load/generate.mjs
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-do-y1
+
+ ❯ |unit-node| deploy/scripts/tests/load-generate-ids.vitest.mjs (4 tests | 4 failed) 1051ms
+   × deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > every id loadId gives for the default profile passes the API's z.uuid() and the RFC 9562 layout, without collision 1039ms
+     → expected { Object (rejected, nonRfc, ...) } to deeply equal { Object (rejected, nonRfc, ...) }
+   × deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > the domain reviewer's probe: loadId(1, 'initiative', 0..999) -> 0 rejected by z.uuid() 9ms
+     → expected [ …(865) ] to have a length of +0 but got 865
+   × deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > is deterministic: md5(dataset:seed:kind:n) with only the version nibble (3) and the two variant bits set 1ms
+     → (0 , rfcUuidFromMd5Hex) is not a function
+   × deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > reproduces the ids of the measured DO-G/DO-H dataset (seed 20261027) 2ms
+     → expected 'd044310c-e30f-44b1-11b4-8c86cfb1c8fc' to be 'd044310c-e30f-34b1-91b4-8c86cfb1c8fc' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| deploy/scripts/tests/load-generate-ids.vitest.mjs > deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > every id loadId gives for the default profile passes the API's z.uuid() and the RFC 9562 layout, without collision
+AssertionError: expected { Object (rejected, nonRfc, ...) } to deeply equal { Object (rejected, nonRfc, ...) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "nonRfc": 0,[39m
+[32m-   "rejected": 0,[39m
+[32m-   "sample": [],[39m
+[31m+   "nonRfc": 47623,[39m
+[31m+   "rejected": 47623,[39m
+[31m+   "sample": [[39m
+[31m+     "d044310c-e30f-44b1-11b4-8c86cfb1c8fc",[39m
+[31m+     "aee1f19b-a2c7-a486-31d0-85c3ee72a46c",[39m
+[31m+     "4a292145-2f35-30a1-f875-2d7867d68d98",[39m
+[31m+   ],[39m
+[2m  }[22m
+
+ ❯ deploy/scripts/tests/load-generate-ids.vitest.mjs:50:96
+     48|     const rejected = ids.filter((id) => !apiUuid.safeParse(id).success…
+     49|     const nonRfc = ids.filter((id) => !RFC_9562.test(id));
+     50|     expect({ rejected: rejected.length, nonRfc: nonRfc.length, sample:…
+       |                                                                                                ^
+     51|       rejected: 0,
+     52|       nonRfc: 0,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit-node| deploy/scripts/tests/load-generate-ids.vitest.mjs > deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > the domain reviewer's probe: loadId(1, 'initiative', 0..999) -> 0 rejected by z.uuid()
+AssertionError: expected [ …(865) ] to have a length of +0 but got 865
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 865[39m
+
+ ❯ deploy/scripts/tests/load-generate-ids.vitest.mjs:61:62
+     59|   it("the domain reviewer's probe: loadId(1, 'initiative', 0..999) -> …
+     60|     const ids = Array.from({ length: 1000 }, (_, i) => loadId(1, "init…
+     61|     expect(ids.filter((x) => !apiUuid.safeParse(x).success)).toHaveLen…
+       |                                                              ^
+     62|     expect(ids.filter((x) => !RFC_9562.test(x))).toHaveLength(0);
+     63|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit-node| deploy/scripts/tests/load-generate-ids.vitest.mjs > deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > is deterministic: md5(dataset:seed:kind:n) with only the version nibble (3) and the two variant bits set
+TypeError: (0 , rfcUuidFromMd5Hex) is not a function
+ ❯ deploy/scripts/tests/load-generate-ids.vitest.mjs:74:40
+     72|       const id = loadId(DEFAULT_SEED, kind, n);
+     73|       expect(id).toBe(loadId(DEFAULT_SEED, kind, n));
+     74|       expect(id).toBe(rfcUuidFromMd5Hex(h));
+       |                                        ^
+     75|       const hex = id.replaceAll("-", "");
+     76|       expect(hex[12]).toBe("3");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit-node| deploy/scripts/tests/load-generate-ids.vitest.mjs > deploy/load/generate.mjs ids (F-DG6-101, F-DG6-142) > reproduces the ids of the measured DO-G/DO-H dataset (seed 20261027)
+AssertionError: expected 'd044310c-e30f-44b1-11b4-8c86cfb1c8fc' to be 'd044310c-e30f-34b1-91b4-8c86cfb1c8fc' // Object.is equality
+
+Expected: [32m"d044310c-e30f-[7m3[27m4b1-[7m9[27m1b4-8c86cfb1c8fc"[39m
+Received: [31m"d044310c-e30f-[7m4[27m4b1-[7m1[27m1b4-8c86cfb1c8fc"[39m
+
+ ❯ deploy/scripts/tests/load-generate-ids.vitest.mjs:87:53
+     85|     expect(DEFAULT_SEED).toBe(20261027);
+     86|     // The organization (DO-F run-1 EXPLAIN digest), LOAD-T01 and its …
+     87|     expect(loadId(DEFAULT_SEED, "organization", 1)).toBe("d044310c-e30…
+       |                                                     ^
+     88|     expect(loadId(DEFAULT_SEED, "transformation", 1)).toBe("e2b51ceb-1…
+     89|     expect(loadId(DEFAULT_SEED, "app_user", 1)).toBe("3e23f9e4-d64e-39…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  21:11:10
+   Duration  1.78s (transform 181ms, setup 0ms, collect 316ms, tests 1.05s, environment 0ms, prepare 168ms)
+
+exit 1

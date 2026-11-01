@@ -13,12 +13,13 @@ workload harness and the report (`workload.mjs`, `report.mjs`) are T-DG6-DO-F; t
 
 ## Files
 
-| File                      | What it does                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `generate.mjs`            | Writes the dataset `mth_load_v1` into a migrated, **empty** database (owner role), in one transaction               |
-| `sessions.mjs`            | Mints one session per load virtual user through the API's own `createSession`, into a file under `$TMPDIR`          |
-| `generate.test.mjs`       | Determinism and guard tests (Vitest `integration` project, via `packages/db/test/integration/load-dataset.test.ts`) |
-| `../compose/compose.yaml` | The `load` profile (`load-generate`, `load-sessions`), off by default                                               |
+| File                                            | What it does                                                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `generate.mjs`                                  | Writes the dataset `mth_load_v1` into a migrated, **empty** database (owner role), in one transaction               |
+| `sessions.mjs`                                  | Mints one session per load virtual user through the API's own `createSession`, into a file under `$TMPDIR`          |
+| `generate.test.mjs`                             | Determinism and guard tests (Vitest `integration` project, via `packages/db/test/integration/load-dataset.test.ts`) |
+| `../scripts/tests/load-generate-ids.vitest.mjs` | Every generated id passes the API's `z.uuid()`; the measured dataset's ids are pinned (`pnpm test`, unit-node)      |
+| `../compose/compose.yaml`                       | The `load` profile (`load-generate`, `load-sessions`), off by default                                               |
 
 No new dependency: both scripts use Node built-ins and `pg`, resolved from `@mth/db`'s own dependency.
 
@@ -62,12 +63,24 @@ product's own `p4_instantiate_transformation` (which runs the P3 and P2 structur
 initializer writes. KPI actuals pass the same guards as the API's: open period, active version, value shape, and a
 review row for each decision. No trigger is disabled, and `session_replication_role` is never changed.
 
-**Determinism.** Ids are UUIDs derived by md5 from (dataset, seed, kind, ordinal). Every choice comes from a 32-bit
+**Determinism.** Ids are UUIDs derived by md5 from (dataset, seed, kind, ordinal), with the RFC 9562 version 3
+(name-based, MD5) and variant bits set (`rfcUuidFromMd5Hex`), so the API's id validation (zod `z.uuid()`) accepts every
+one of them. The version-step audit events written in SQL use the same scheme. Every choice comes from a 32-bit
 mulberry32 PRNG seeded with `--seed` (default `20261027`, recorded in the marker). Every timestamp the generator writes
 comes from the synthetic clock `2026-09-01T06:00Z`. The rows that `p4_instantiate_transformation` creates keep that
 function's own generated ids and times, because that is the product path, unchanged. `datasetRowHashes` hashes the
 generator's own rows, its own audit events, the per-action audit counts and the marker. Two runs with one seed give
 identical hashes: the test checks this for `smoke`, and the handback evidence records two full `default` runs.
+
+**The dataset of the measured load runs.** This generator, at sha256
+`6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a`, reproduces the dataset that the DG6 load figures
+were measured on: T-DG6-DO-F run-1, T-DG6-BE-S, the final report T-DG6-DO-G and the REQ-S20-030 idle re-measurement
+T-DG6-DO-H. Those runs used a scratch copy of this file patched with DO-F's `generate-rfc-uuid.patch`, with exactly this
+sha256 (their driver outputs record it). T-DG6-DO-Y1 applied that patch to this file unchanged, closing the gap raised
+in F-DG6-101 and F-DG6-142. With `--profile default` and the default seed `20261027`, it gives the same ids, rows,
+marker counts and 100,000 audit events. The `load-generate-ids` test pins three ids that appear in those runs' evidence.
+The generator before T-DG6-DO-Y1 (sha256 `7470ea74…`) wrote ids without these bits. The API refused most of them with
+400 `Invalid UUID`, so no load figure was measured on it.
 
 **Search index.** In the same transaction, the generator requests the `search.reindex` job exactly as the API's
 `runJobNow` does: the internal outbox event `job.run_requested` plus its `job_schedule.run_now` audit event. A worker
@@ -136,7 +149,9 @@ read-only at `/app/deploy/load` in the mth-app image.
 
 These are T-DG6-DO-E's runs on 2026-10-29: the sandbox host (4 vCPU Intel Xeon @ 2.80GHz, 16 GB, kernel
 6.18.44-fc-v185, Node 24.21.0, PostgreSQL 16.15, a disposable cluster on the same host). Other jobs shared the host, so
-treat the times as indicative. Logs are in `docs/delivery/handbacks/DG6/T-DG6-DO-E-evidence/generate/`.
+treat the times as indicative. Logs are in `docs/delivery/handbacks/DG6/T-DG6-DO-E-evidence/generate/`. These runs
+used the generator before the RFC id fix (sha256 `7470ea74…`). Its ids differ from today's in the version and variant
+bits only, so the row hashes recorded there are not today's. The counts, the guard behaviour and the timings carry over.
 
 | Run                             | Wall time | Rows written before COMMIT | Result                                                                     |
 | ------------------------------- | --------- | -------------------------- | -------------------------------------------------------------------------- |
