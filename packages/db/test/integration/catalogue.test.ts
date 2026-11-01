@@ -1061,7 +1061,27 @@ describe("schema.ts matches the migrated database", () => {
     expect(fn).toEqual({ definer: true, public_exec: false });
   });
 
-  it("0113: the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only)", async () => {
+  it("0123: the ledger records disables (source CHECK), has the occurrence-time lookup index, and its writer stays SECURITY DEFINER (D-204)", async () => {
+    const [check] = await q<{ def: string }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c
+        WHERE c.conname = 'automation_rule_enablement_source' AND c.conrelid = 'automation_rule_enablement'::regclass`,
+    );
+    for (const source of ["enable", "effective_version", "backfill", "disable", "backfill_disable"])
+      expect(check?.def).toContain(`'${source}'::text`);
+    const [idx] = await q<{ def: string }>(
+      `SELECT pg_get_indexdef(i.indexrelid) AS def FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+        WHERE c.relname = 'automation_rule_enablement_rule_time_idx'`,
+    );
+    expect(idx?.def).toContain("(automation_rule_id, enabled_from DESC, id DESC)");
+    const [fn] = await q<{ definer: boolean; public_exec: boolean; src: string }>(
+      `SELECT p.prosecdef AS definer, has_function_privilege('public', p.oid, 'EXECUTE') AS public_exec, p.prosrc AS src
+         FROM pg_proc p WHERE p.proname = 'automation_rule_enablement_record'`,
+    );
+    expect(fn).toMatchObject({ definer: true, public_exec: false });
+    expect(fn?.src).toContain("'disable'");
+  });
+
+  it("0113:the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
        FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
