@@ -14350,3 +14350,44 @@ The trigger `automation_rule_enablement_record` on `automation_rule` is unchange
 ## Backfill (0123)
 
 One row with `source = 'backfill_disable'` for each `audit_event` with `record_type = 'automation_rule'` and `action = 'automation_rule.disable'` that follows a ledger row of the same rule (`enabled_from <= occurred_at`), when that preceding row is not itself a disable row. The row's `enabled_from` is the audit event's `occurred_at` (the disabling transaction's `now()`, the instant the trigger would have stored) and its version is that of the preceding row. Rows are inserted in (`occurred_at`, `seq`) order. A disable that precedes the rule's first ledger row gets no row, because no row already means "not enabled". The migration's own clock is never used. No `automation_rule` row changes, so there is no version step and no audit event.
+
+# P6 round-1 repair migration 0124 (DG6)
+
+Recorded by T-DG6-ARCH-11 (2026-11-01) from D-207 (F-DG6-147) and ADR-0046 amendment H4, **before** the migration file exists. `packages/db/migrations/0124_p6_export_job_pending_snapshot.sql` is written by T-DG6-BE-Y5 (the file name is indicative). If the shipped names differ, the orchestrator reconciles this section at merge. The migration changes the table `export_job` of `0081` (P5 tables, slice F) without adding a table or a relationship. Where this section and the `0081` section differ, this section wins. The seed free-id example in `packages/db/src/seed.test.ts` moves to `0125`.
+
+## export_job: changes in 0124
+
+- **Purpose (amended):** One export of one snapshot in one format and language. A **live-selection** export is created without a snapshot. The API snapshot watch (ADR-0046 amendment H3) assigns the snapshot once, after assembling it, and only then is the job sent to the worker. An export of an existing snapshot has its snapshot from the INSERT, as in DG5.
+- **Who writes (amended):** `export.create` (create), the API snapshot watch (assign the snapshot, or fail the job with `export.source_unavailable` when access was lost), the requester (cancel), and the worker (start, retry, finish). **Lifecycle (unchanged states):** queued → running → succeeded | failed | queued (retry) | cancelled. Additionally, a pending job goes queued → failed (access lost at assembly) or queued → cancelled. The request is immutable, except that `snapshot_id` is assigned once. The table is versioned. `mth_app` privileges are unchanged (INSERT, SELECT, UPDATE).
+
+| Column | Type | Null | Default | Change in 0124 |
+|---|---|---|---|---|
+| snapshot_id | uuid | **NULL** (was NOT NULL) |  | NULL only while a live-selection job is pending assembly, or when it failed or was cancelled before assembly (CHECK `export_job_snapshot_pending`). Assigned once, from NULL to a snapshot, while `queued` (`export_job_guard()`). The FK `export_job_snapshot_fkey` `(transformation_id, snapshot_id)` → `report_snapshot(transformation_id, id)` is unchanged. A NULL is not checked (MATCH SIMPLE). |
+| live_selection | jsonb | NULL |  | **New.** The validated `ExportLiveSelection` of the request (`definitionCode`, optional `subjectId`, `reportingPeriodId`, `parameters`; zod in `@mth/shared/schemas` before the write). NULL for the export of an existing snapshot. Never changes. An idempotent replay compares it with the request (D-207 (3)). `CHECK (((live_selection IS NULL) OR ((jsonb_typeof(live_selection) = 'object') AND (octet_length((live_selection)::text) <= 8192))))` (`export_job_live_selection_shape`) |
+
+**Table constraints (added):**
+
+- `export_job_live_selection_shape` (CHECK): as in the column row above (an object of at most 8,192 bytes, the bound of `report_snapshot.parameters`).
+- `export_job_snapshot_pending` (CHECK): `CHECK ((((snapshot_id IS NOT NULL) OR (live_selection IS NOT NULL)) AND ((snapshot_id IS NOT NULL) OR (status = ANY (ARRAY['queued', 'failed', 'cancelled'])))))`. A job names a snapshot or a selection, and `running` and `succeeded` always have a snapshot.
+
+Every DG5 constraint of `export_job` is kept unchanged, including `export_job_idempotency_key`, `export_job_error_complete`, `export_job_times` and `export_job_file_complete`. The `error_code` closed set is unchanged: access lost at assembly uses `export.source_unavailable`.
+
+**Indexes (added):**
+
+- `export_job_pending_assembly_idx`: `(created_at, id) WHERE ((status = 'queued') AND (snapshot_id IS NULL))`. The watch's claim of the oldest pending jobs (`FOR UPDATE SKIP LOCKED`).
+
+**Backfill:** none. Every row written before `0124` has a snapshot and a NULL `live_selection`, and it satisfies both CHECKs.
+
+## P6 function (0124)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `export_job_guard()` | 0081, replaced by 0124 | `CREATE OR REPLACE`, same signature and trigger. On INSERT: created `queued` with no attempt (unchanged). With a snapshot: the snapshot is not discarded and its definition offers the format (unchanged). With a NULL snapshot: a `live_selection` is present, its `definitionCode` is a `report_definition` that offers the format, the subject and period it names are checked later, by `report_snapshot_guard()`, when the watch inserts the snapshot. On UPDATE: `format`, `language`, `requested_by`, `idempotency_key` and `live_selection` never change. `snapshot_id` changes only from NULL to a value, only while `OLD.status = 'queued'` and `NEW.status = 'queued'`, and the snapshot must be in the job's transformation, not discarded, of `live_selection.definitionCode`, and offer the format. A non-NULL `snapshot_id` never changes. The transitions, finished-job freeze and attempt rule are unchanged. | via trigger |
+
+## P6 validation rules (0124)
+
+| Layer | What it checks |
+|---|---|
+| Database | The two CHECKs above. `export_job_guard()` enforces that the snapshot is assigned once and that the selection is immutable. |
+| API (`@mth/shared/schemas`) | `ExportLiveSelection` on the request and before the `live_selection` write. `ExportJob.snapshotId` is a UUID or `null` (D-207 (3); `docs/api/openapi.yaml` and the zod mirror are T-DG6-BE-Y5's). |
+| Watch (API process) | Claim `FOR UPDATE SKIP LOCKED`, re-check of `transformation.read`, `export.create` and `report.generate`, and the restricted-source check on the assembled sources, all in the claim transaction. The `export_job.requested` outbox event is written only after the snapshot is assigned (ADR-0046 amendment H3). |

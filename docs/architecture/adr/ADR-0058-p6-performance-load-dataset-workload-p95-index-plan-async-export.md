@@ -138,3 +138,22 @@ Sources: D-203 O-1 (`docs/delivery/decisions.md`), the T-DG6-BE-X9 handback §2 
   Exactly-once held under the concurrent replays: 240 executions, 240 distinct trigger keys, all `succeeded`, and 240 tasks with 240 distinct subjects.
 - **Limits of the figure.** It is one run, on the shared sandbox host (other work was running), with one worker process and one queue. It is indicative, not a benchmark, and not a production capacity statement (§5; production scale remains to be agreed with Mobily IT). It is not part of DO-F/DO-G's p95 report, whose workload is HTTP (§3).
 - **Operations note.** `docs/operations/monitoring.md` is devops-owned; listing the two variables there next to `WORKER_HEARTBEAT_SECONDS` is suggested to its owner (BE-X9 handback §6 item 7), not done here.
+
+## Amendment (2026-11-01, T-DG6-ARCH-11; D-207, F-DG6-147): §7, what the 2 s start measures
+
+Sources: D-207 (`docs/delivery/decisions.md`, read verbatim), F-DG6-147, and the T-DG6-BE-Y4 handback (its measurement drivers in `T-DG6-BE-Y4-evidence/`). The design is ADR-0046 amendment H1–H6. Nothing above is removed. Where this amendment and §7 differ, this amendment wins.
+
+### T2. The 2 s start of a live-selection export (REQ-S20-030)
+
+- **The finding.** §7 asserts that "every `createExport` returns its job id within 2 s". With 50 simultaneous live-selection starts, that failed (F-DG6-147). About 55 % of each start was report assembly, which ADR-0046 §2 placed in the request, and trimming the assembly (T-DG6-BE-Y4) did not bring the starts under 2 s.
+- **The target is unchanged: 2 s per start** (the ordinary-update target of §1). The work inside a start changes. A live-selection `createExport` now only does what ADR-0046 amendment H2 lists: validation, authorization, D-199's restricted-source check, and one transaction that writes the job, its progress and its audit event. It answers **202 with `snapshotId: null`**. The snapshot is assembled afterwards by the API snapshot watch (ADR-0046 amendment H3), and only then does the worker render.
+- **What the proof asserts now (§7 "Assertions", amended).** For (a) and (b) of §7:
+  1. every `createExport` returns 202 with a job id within 2 s, and its `snapshotId` is `null` or a UUID;
+  2. `getExport` shows `snapshotId` assigned before `status` leaves `queued`, then `percent` non-decreasing from 0 to 100 and `status = succeeded`;
+  3. the file downloads (200) for the requester, and another user with the same transformation scope gets 404, and so does AUD (unchanged).
+
+  The completion time of each job is still reported, and it now includes the assembly. M0398 states no completion target, so none is added here.
+- **The measurement.** Devops re-measures on the merged tree with the full dataset (T-DG6-DO-Y2, D-207). The load drivers run with `EXPORT_RATE_LIMIT_PER_MINUTE` set high (BE-Y4 handback item 1). At its default of 10 per minute per user, the `export` rate-limit class would refuse the proof's 11th and later starts from one user with 429. That setting is part of the stated workload (§3) and is reported with the figures, so it is not a change made after a run to turn a miss into a pass (§1). The before/after figures of 50 simultaneous starts are BE-Y5's (its assignment), and DO-Y2's run on the merged tree is the one the report cites. A start that still exceeds 2 s remains F-DG6-147's class finding, and it is not closed by this text.
+- **Unchanged.** The export of an existing snapshot, §7's reading of "the full load dataset" (D-199 ARCH-04 §5 (2)), `EXPORT_MAX_BYTES` and the requester-only download.
+
+Requirement row: REQ-S20-030. These figures are engineering measurements on the stated sandbox host, not a Mobily capacity statement. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

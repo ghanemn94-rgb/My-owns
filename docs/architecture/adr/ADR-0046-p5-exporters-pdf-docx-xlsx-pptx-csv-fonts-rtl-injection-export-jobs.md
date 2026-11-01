@@ -236,3 +236,71 @@ Requirement row: REQ-S13-006. Nothing here touches product gates G1–G6 or the 
 
 - Every OOXML writer (DOCX, PPTX, XLSX) replaces the characters XML 1.0 cannot carry (C0 controls other than tab, LF and CR; lone surrogates; U+FFFE and U+FFFF) with U+FFFD, through the shared `packages/reporting/src/xml-chars.ts` (`xmlSafe`), and checks the finished package (`assertWellFormedChars`). A package that still holds such a character is a `RenderError` (`export.render_failed`): no file is stored and the job does not report succeeded.
 - Stored record text is not changed; the input rule (`hasInvalidCharacter`, ADR-0007) is unchanged.
+
+## Amendment (2026-11-01, T-DG6-ARCH-11; D-207, F-DG6-147): §2, §5 and §6, a live selection is assembled after the start, not in it
+
+Sources: D-207 (`docs/delivery/decisions.md`, read verbatim), F-DG6-147, and the T-DG6-BE-Y4 handback (its measurement: about 55 % of a live-selection start was report assembly, and trimming it did not bring 50 simultaneous starts under 2 s). The implementation is T-DG6-BE-Y5's. This amendment records the design that D-207 decides. Where it differs from §2, §5 or §6 above, it wins. Nothing else above is removed. When this amendment was written (main checkout at `8268ac5a6`), BE-Y5 had not yet written its migration or code, so it cites no file lines. The names below (`live_selection`, the CHECK, the index and the watch) are the architecture's. If the merged files use other names, the orchestrator reconciles them with this text at merge (handback Q4).
+
+### H1. What changes in §2
+
+§2 said: "An export of a live report first generates a snapshot from the request (ADR-0045 §2) and exports that." That still holds, but **the generation no longer happens in the request**:
+
+- An export still renders exactly one stored snapshot, and the file still equals a stored, reproducible content. Nothing is ever rendered from a live query.
+- For a live selection, the snapshot is assembled **after** the 202, by the snapshot watch (H3). Until then the job has no snapshot (`snapshotId` is `null`).
+- **Data-as-of** is the assembly time, recorded on the snapshot (`report_snapshot.as_of`) as before (D-207 (5)). It is not the request time. A user who starts an export reads the data-as-of from the snapshot, not from the job's `createdAt`.
+- **Exports of an existing snapshot (`snapshotId` in the body) are unchanged** (D-207 (5)). They have a snapshot from the INSERT, and they are never touched by the watch.
+
+### H2. The start (§5 Flow step 1, live selection)
+
+`createExport` with a `report` selection (D-207 (1)):
+
+1. **Synchronously, before any write**, as in DG5: validate the body (`ExportCreate`, the definition offers the format), resolve the transformation from the subject, check `transformation.read`, `export.create` and `report.generate`, and run the restricted-source check. **D-199's 403 `export.includes_restricted_records` is unchanged**: a start that DG5/DG6 refused with 403 is still refused with 403, before the 202, and writes nothing. How that check is computed without an assembled snapshot is BE-Y5's to implement and test, and the `sensitive-reads` tests stay unchanged (BE-Y5 assignment). It is listed as Q1 in the handback.
+2. **In one transaction**, after the grants are reloaded (commit-time re-authorization, unchanged): insert the job (`queued`, `snapshot_id` NULL, `live_selection` = the validated selection), its progress row (`stage = queued`, `percent = 0`) and the audit event `export_job.create`. **No snapshot and no `export_job.requested` outbox event are written here.**
+3. Answer **202** with the job. `snapshotId` is `null`, and `GET /exports/{id}` shows the same until assembly. No new progress stage is added: a pending job is `queued` at 0 %.
+
+An idempotent replay (same requester and `Idempotency-Key`) **compares the stored selection** (`live_selection`, `format` and `language`) with the request, not the snapshot (D-207 (3)). It answers 200 with the job whether or not the job has been assembled yet. A different request under the same key is still the DG5 refusal `idempotency.key_reused`.
+
+### H3. The snapshot watch (new; D-207 (2))
+
+- **Where.** The watch runs in the **API process**, not in the worker. The assemblers are API code (`apps/api/src/modules/reporting/reports/assemblers/*.ts`). ADR-0002 rule 5 lets packages depend in one direction only (`apps/*` → `packages/*`), so `apps/worker` cannot import `apps/api`. This is the reason ADR-0046 §1 gives for keeping renderers in `@mth/reporting`, and the reason ADR-0055 §2 gives for running connector runs in the API.
+- **The precedent: the connector run watch** (ADR-0055 §2, "The run", as amended on 2026-10-30 by T-DG6-ARCH-07). That watch is `connectorRunWatchStep` in `apps/api/src/modules/integrations/runs.ts`. `integrations/index.ts` starts it at `onReady` and stops it at `onClose`. It is not started under `NODE_ENV=test`, where suites drive the step directly. Several API replicas are safe because of the claim and the state transition. The snapshot watch follows the same pattern from the `reporting` module's `index.ts`. Its step is exported, so suites drive it directly. It polls every **1 s**, because a user is waiting on an interactive export and the connector watch's 10 s is too slow. BE-Y5 may change the interval if a measurement justifies it, and must state it in its handback.
+- **The claim.** For each pending job (`status = 'queued'` and `snapshot_id IS NULL`, served by `export_job_pending_assembly_idx`, oldest `created_at` first), one transaction runs:
+  1. `SELECT … FOR UPDATE SKIP LOCKED` on the job row. A job locked by another watcher is skipped, so several API replicas never assemble the same job.
+  2. Re-check the requester's access on fresh grants: `transformation.read`, `export.create` and `report.generate` in the job's transformation.
+  3. Assemble the selection (database reads only, no remote I/O) and insert the snapshot with the requester as `created_by`, together with its sources, versions and evidence, as in DG5. Also run the restricted-source check on the assembled snapshot's sources.
+  4. Set `export_job.snapshot_id` (version step, audit event `export_job.assemble`).
+  5. **Only then** write the `export_job.requested` outbox event. The relay hands it to `reports.export` after COMMIT, and the worker's flow (§5 steps 2–5) is unchanged.
+
+  A crash or restart before COMMIT rolls everything back, and the job is still pending, so the next watch tick resumes it. The row lock and the `snapshot_id IS NULL` predicate make sure a job is assembled **at most once**, and the guard's "assigned once" rule backs this up (H4).
+- **Access lost between the start and the assembly** (D-207 (2)). If step 2 fails, or step 3 finds a restricted source, the same transaction moves the job `queued → failed` with `error_code = 'export.source_unavailable'` and `finished_at`, and writes the audit event `export_job.fail`. No snapshot is written, no outbox event is written, and **no file is ever written**. `export.source_unavailable` is the existing DG5 code, and it already has its en/ar text in the web catalogue. It has the same meaning as the worker's re-check in §5 step 2. So the error-code set and the contract enum do not change (Q2 in the handback).
+- **An assembly error** (an assembler throws) rolls the transaction back, and the job stays pending for the next tick. A selection whose assembly fails the same way repeatedly is bounded by BE-Y5. The design point is that it ends `failed` with `export.render_failed` and never loops silently (Q3).
+- **Cancel.** `POST /exports/{id}/cancel` on a pending job moves it `queued → cancelled` (unchanged). If the watch holds the row at that moment, the cancel waits for it. The cancel then sees the new `version` and gets the usual 409, and the client re-reads and cancels again. A cancelled pending job is never assembled, because the claim takes only `queued` jobs.
+- **No new lock class.** The claim is the row lock with `SKIP LOCKED`, so ADR-0016's registry gets no new number. The worker's lock 730264 is unchanged.
+- **Attribution.** The watch's job writes are made by the API process on behalf of the requester. They use the service-actor pattern of the worker's job transitions (§5 step 2, "actor `service`"), with the requester recorded as in `export-runner.ts`'s `jobActor`. The snapshot stays the requester's (`created_by`), so its ADR-0045 issue and discard rights are the same as in DG5.
+
+### H4. Physical model: migration `0124` (D-207 (4))
+
+`0124` is the next id above `0123` on BE-Y5's branch (D-196). The seed free-id example in `packages/db/src/seed.test.ts` moves to `0125`. The data dictionary ("P6 round-1 repair migration 0124") and the ERD (§1ab) record:
+
+- `export_job.snapshot_id` becomes **nullable**. The composite FK `export_job_snapshot_fkey` is unchanged, and a NULL is not checked (MATCH SIMPLE).
+- New column `export_job.live_selection jsonb NULL`. It holds the validated `ExportLiveSelection` (`definitionCode`, optional `subjectId`, `reportingPeriodId` and `parameters`). It is NULL for the export of an existing snapshot. Its shape is checked by zod before the write (typed JSON, never an unvalidated blob), and the database bounds it with the CHECK `export_job_live_selection_shape` (an object of at most 8,192 bytes, the bound of `report_snapshot.parameters`).
+- New CHECK `export_job_snapshot_pending`. A job names a snapshot or a selection. A job without a snapshot is only `queued` (pending), `failed` (access lost) or `cancelled`. `running` and `succeeded` therefore always have a snapshot, and the worker's flow never sees a NULL.
+- `export_job_guard()` is replaced:
+  - on INSERT, a NULL `snapshot_id` needs a `live_selection` whose definition offers the format;
+  - `snapshot_id` may change only once, from NULL to a snapshot, while the job is `queued`;
+  - that snapshot must be in the job's transformation, not discarded, of the selection's definition, and offer the format;
+  - `live_selection` never changes;
+  - every other DG5 rule is unchanged (request fixed, transitions, finished jobs frozen, each start is the next attempt).
+- New partial index `export_job_pending_assembly_idx` on `(created_at, id) WHERE status = 'queued' AND snapshot_id IS NULL`, for the watch's claim.
+
+Rows written before `0124` all have a snapshot and a NULL `live_selection`, and they satisfy both CHECKs, so no backfill is needed.
+
+### H5. Contract (D-207 (3); owned by T-DG6-BE-Y5)
+
+`ExportJob.snapshotId` becomes `{ type: [string, "null"] }` (a UUID, or `null` until the snapshot is assigned). It stays in `required`. The operations, status codes, the `ExportCreate` body and the error-code enum are unchanged. This document does not edit `docs/api/openapi.yaml`, the zod mirrors or the web client. BE-Y5 owns them (its assignment, "Contract change"). The change is a breaking change of a DG5 response field type (D-207 decides it), so it is raised as such in the handback.
+
+### H6. §6 authorization, restated
+
+The live-selection row of the §6 table still needs `export.create`, `transformation.read` and `report.generate`. They are checked **twice**: at the start (synchronously, with D-199's 403) and again at assembly (H3 step 2). A loss of access between the two gives a failed job and no file. Download is unchanged (requester only; `transformation.read` re-checked; others 404).
+
+Requirement rows: REQ-S13-005 ("Long export -> async job with progress"), REQ-S20-030 (ADR-0058 amendment T2). Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.

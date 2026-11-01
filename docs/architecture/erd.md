@@ -2162,6 +2162,21 @@ erDiagram
 
 On a disable row, `enabled_from` is the moment the rule stopped. The relationship labels of §1aa are read with that in mind: a row is written per enable, effective-version change **or disable**. The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0123").
 
+## 1ab. P6 round-1 repair migration 0124: an export job's snapshot is assigned after the start (T-DG6-ARCH-11, 2026-11-01; ADR-0046 amendment H1–H6, D-207)
+
+`0124` (T-DG6-BE-Y5; D-207, F-DG6-147; the next id above `0123`, D-196) adds no table and no relationship. It changes the cardinality of the existing slice F relationship `report_snapshot ||--o{ export_job` (§1o). An export job now has **zero or one** snapshot: a live-selection job is created with `snapshot_id` NULL and the new column `live_selection`, and the API snapshot watch assigns its snapshot once, after assembly. Until then the job is `queued`, or it ends `failed` (access lost at assembly, `export.source_unavailable`) or `cancelled` without one. `running` and `succeeded` always have a snapshot (CHECK `export_job_snapshot_pending`). An export of an existing snapshot is unchanged. The column list, the CHECKs, the partial index `export_job_pending_assembly_idx` and the replaced `export_job_guard()` are in `data-dictionary.md` ("P6 round-1 repair migration 0124"). The names are the architecture's, and they are reconciled at merge if the shipped file differs.
+
+```mermaid
+erDiagram
+    report_snapshot |o--o{ export_job : "exported in one format and language; snapshot_id NULL while a live selection is pending assembly, assigned once"
+```
+
+### 1ab.1 P6 entity register (0124) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Export job (S13-005, S13-009, S20-030), amended | `export_job` + `export_job_progress` | `id` (requester, idempotency key unique) | `requested_by` | `export.create`; the API snapshot watch (assign the snapshot, or fail the job); the requester (cancel); the worker | `status` (unchanged: queued, running, succeeded, failed, cancelled); `stage` (unchanged) | yes (progress without audit) | reporting |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
