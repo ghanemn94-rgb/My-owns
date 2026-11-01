@@ -6,6 +6,8 @@
 //  - the marker holds exactly the stored counts, and audit_event holds exactly the marker's count;
 //  - a second run into the now populated database is refused by the 0108 guard and changes nothing;
 //  - a different seed gives different rows;
+//  - every id the generator writes (its own tables and its audit events, including the SQL-derived version-step ids)
+//    passes the API's z.uuid() (F-DG6-101 / F-DG6-142);
 //  - the generator imports nothing from the demo seed.
 // The `smoke` profile keeps this inside the integration budget; the full `default` profile's two-run comparison is
 // recorded in the DO-E handback evidence (measured, with its timings).
@@ -14,10 +16,12 @@ import { createRequire } from "node:module";
 import { afterAll, describe, expect, it } from "vitest";
 import { migrate } from "../../packages/db/src/migrate.ts";
 import { createScratchDatabase, dropScratchDatabase, roleUrl, testDatabase } from "../../packages/db/test/helpers.ts";
-import { datasetRowHashes, generate, plannedCounts, readCounts } from "./generate.mjs";
+import { HASHED_TABLES, datasetRowHashes, generate, plannedCounts, readCounts } from "./generate.mjs";
 
 // `pg` is @mth/db's dependency (deploy/ has no node_modules of its own), resolved as generate.mjs resolves it.
 const pg = createRequire(new URL("../../packages/db/package.json", import.meta.url))("pg");
+// The API's own id validator (zod's z.uuid(), apps/api's dependency), as the API applies it to path ids.
+const { z } = createRequire(new URL("../../apps/api/package.json", import.meta.url))("zod");
 
 const { adminUrl } = testDatabase();
 const dropAtEnd = [];
@@ -97,6 +101,22 @@ describe("deploy/load/generate.mjs (ADR-0058 §2)", () => {
       // A decimal string from a numeric column (pg returns numeric as text, never a binary double).
       expect(typeof value.rows[0].value).toBe("string");
       expect(value.rows[0].value).toMatch(/^[0-9]+\.[0-9]+$/);
+    });
+  });
+
+  it("every id the generator writes passes the API's z.uuid() (F-DG6-101, F-DG6-142)", async () => {
+    await withClient(firstUrl, async (c) => {
+      const rows = [];
+      for (const t of HASHED_TABLES) rows.push(...(await c.query(`SELECT '${t}' AS t, id::text AS id FROM ${t}`)).rows);
+      // The generator's own audit events: loadId ids and the SQL-derived version-step ids (md5 with the v3 bits).
+      const audit = await c.query(
+        "SELECT 'audit_event' AS t, id::text AS id, (action LIKE '%.update') AS step FROM audit_event WHERE request_id = 'mth-load-generate'",
+      );
+      rows.push(...audit.rows);
+      expect(audit.rows.some((r) => r.step)).toBe(true);
+      expect(rows.length).toBeGreaterThan(1000);
+      const rejected = rows.filter((r) => !z.uuid().safeParse(r.id).success);
+      expect({ rejected: rejected.length, sample: rejected.slice(0, 3) }).toEqual({ rejected: 0, sample: [] });
     });
   });
 
