@@ -253,7 +253,8 @@ describe("O-2: a rule applies only to events that occurred at or after its effec
       .where("automation_rule_id", "=", rule.id)
       .orderBy("enabled_from")
       .execute();
-    expect(ledger.map((l) => l.source)).toEqual(["enable", "enable"]);
+    // 0123 (T-DG6-BE-X10, D-204) also records the disable, so the ledger holds the whole interval history.
+    expect(ledger.map((l) => l.source)).toEqual(["enable", "disable", "enable"]);
     const after = await createTransformation("Synthetic BE-X9 event after re-enabling");
 
     worker = await startWorker({ db: api.db, boss, timeZone: "Asia/Riyadh", handlers: AUTOMATION_HANDLERS });

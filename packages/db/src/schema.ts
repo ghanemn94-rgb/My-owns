@@ -7227,7 +7227,7 @@ export interface AutomationRuleEnablementTable {
   automation_rule_id: string;
   automation_rule_version_id: string;
   enabled_from: Timestamp;
-  /** 'enable' | 'effective_version' | 'backfill' */
+  /** 'enable' | 'effective_version' | 'backfill' (0122) | 'disable' | 'backfill_disable' (0123, D-204): a disable row starts a disabled interval */
   source: string;
 }
 

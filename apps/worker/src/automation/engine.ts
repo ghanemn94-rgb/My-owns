@@ -152,12 +152,24 @@ export interface Candidate {
   readonly servicePermissionCodes: string[];
 }
 
+/** The ledger sources (0122, 0123) of a row that starts a DISABLED interval. */
+export const DISABLE_SOURCES = ["disable", "backfill_disable"] as const;
+
 /**
- * The candidate rules of one trigger occurrence. `outboxEventId` (D-203 O-2; T-DG6-BE-X9): for an event, the outbox
- * row whose created_at is its STORED occurrence time. A rule is a candidate only when its effective version became
- * enabled at or before that time (the newest automation_rule_enablement row of that version, migration 0122), so a rule
- * enabled after an event occurred never acts on it, however late the event is evaluated. Both times are compared in
- * SQL at their full (microsecond) precision. Ticks pass none (a tick's slot is its own occurrence).
+ * The candidate rules of one trigger occurrence.
+ *
+ * Events (`outboxEventId` given; D-203, D-204; T-DG6-BE-X9, T-DG6-BE-X10): the event's STORED occurrence time is its
+ * outbox row's created_at, and the version that evaluates it is the one that was effective AND enabled at that time:
+ * per rule, the newest automation_rule_enablement row (migrations 0122, 0123) at or before the occurrence time, by
+ * (enabled_from, id). No such row (the event occurred before the rule's first enablement) or a disable row (it occurred
+ * while the rule was disabled) gives no candidate; otherwise that row's version evaluates the event, also when a newer
+ * version has been published since (it is then `superseded`, which 0074 still lets run). The ledger is append-only, so
+ * every evaluation and every replay of one event resolves the same version, and the execution UNIQUE (rule version,
+ * trigger key) keeps it to one execution per rule. Evaluation time is never used; both times are compared in SQL at
+ * their full (microsecond) precision. The rule must ALSO be enabled now: disabling a rule stops the actions of its
+ * not-yet-evaluated events (a kill switch), and the trigger must still be one of that version's triggers.
+ *
+ * Ticks (no `outboxEventId`): a tick's slot is its own occurrence, evaluated against the current effective version.
  */
 export async function candidates(
   db: Db,
@@ -165,9 +177,23 @@ export async function candidates(
   where: { organizationId: string; transformationId: string | null } | null,
   outboxEventId?: string,
 ): Promise<Candidate[]> {
+  // The version that evaluates the occurrence: for an event, the ledger's version at its occurrence time (NULL, so no
+  // join, before the first enablement or inside a disabled window); for a tick, the current effective version.
+  const versionAt =
+    outboxEventId === undefined
+      ? sql<string>`r.effective_version_id`
+      : sql<string>`(SELECT CASE WHEN e.source IN (${sql.join(DISABLE_SOURCES.map((x) => sql.lit(x)))})
+                                 THEN NULL ELSE e.automation_rule_version_id END
+                       FROM automation_rule_enablement e
+                      WHERE e.automation_rule_id = r.id
+                        AND e.enabled_from <= (SELECT o.created_at FROM outbox_event o WHERE o.id = ${outboxEventId}::uuid)
+                      ORDER BY e.enabled_from DESC, e.id DESC
+                      LIMIT 1)`;
   let q = db
     .selectFrom("automation_rule as r")
-    .innerJoin("automation_rule_version as v", "v.id", "r.effective_version_id")
+    .innerJoin("automation_rule_version as v", (join) =>
+      join.onRef("v.automation_rule_id", "=", "r.id").on("v.id", "=", versionAt),
+    )
     .select([
       "r.id as ruleId",
       "r.code as ruleCode",
@@ -183,14 +209,8 @@ export async function candidates(
     ])
     .where("r.enabled", "=", true)
     .where("r.origin", "=", "admin")
-    .where("v.status", "=", "published")
+    .where("v.status", "in", outboxEventId === undefined ? ["published"] : ["published", "superseded"])
     .where(sql<boolean>`${triggerCode} = ANY (v.trigger_codes)`);
-  if (outboxEventId !== undefined)
-    q = q.where(
-      sql<boolean>`(SELECT max(e.enabled_from) FROM automation_rule_enablement e
-                     WHERE e.automation_rule_id = r.id AND e.automation_rule_version_id = r.effective_version_id)
-                   <= (SELECT o.created_at FROM outbox_event o WHERE o.id = ${outboxEventId}::uuid)`,
-    );
   if (where !== null) {
     q = q.where("r.organization_id", "=", where.organizationId);
     q = q.where((eb) =>
