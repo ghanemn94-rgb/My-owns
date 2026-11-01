@@ -12,7 +12,7 @@ Check that ADR-0002 rule 5 and the connector-run-watch precedent are cited corre
 ## Stage and working tree
 
 - **Stage:** P6 "Integration and system hardening", gate DG6 (FIXING after review round 1).
-- **Working tree:** a separate git worktree prepared by the orchestrator. It is your current working directory (`--cwd`), on branch `dg6/arch-11`, at the integrated `HEAD`.
+- **Working tree:** a separate git worktree prepared by the orchestrator. It is your current working directory (`--cwd`), the main checkout (no worktree for a documents-only task).
   - `node_modules` is installed and the packages are built.
   - Work only in this tree. Never run `git worktree add`.
 - **Concurrency (D-004):** T-DG6-BE-Y1, BE-Y2, DO-Y1, FE-Y1 and the implementation task T-DG6-BE-Y5 run at the same time. Touch only what your work needs.
