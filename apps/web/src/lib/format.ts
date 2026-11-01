@@ -147,6 +147,23 @@ function offsetMs(epoch: number, timeZone: string): number {
 }
 
 /**
+ * Today's business date "YYYY-MM-DD" in `timeZone` (the organization's zone, default Asia/Riyadh), never the UTC or the
+ * browser's date. Between 00:00 and 03:00 Riyadh the UTC date is still the previous day (at a month boundary, the
+ * previous month), so a default taken from `toISOString()` would fall outside the period the API selects from the
+ * business date (`p4_business_date`; ADR-0025 §2). `now` is injected for tests.
+ */
+export function businessDateIn(timeZone: string, now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+/**
  * A business date "YYYY-MM-DD" (a calendar date in the transformation's zone, no time). Formatted as that calendar
  * date, never shifted by the browser's or the server's offset. Null/invalid input yields null (the caller renders
  * Unknown).

@@ -301,6 +301,9 @@ test("4. Training 100 % with no observation shows proficiency Unknown; a form ob
   await expect(page.locator("[data-respond]")).toBeVisible();
   await page.locator("[data-respond]").click();
   dialog = page.getByRole("dialog");
+  // The observation date defaults to today's Asia/Riyadh business date, the calendar the API selects the reporting
+  // period with (T-DG6-BE-X8: a UTC default fell in the previous month between 00:00 and 03:00 Riyadh on the 1st).
+  await expect(dialog.getByLabel(tr(lang, "adoptionP4.records.observedOn"))).toHaveValue(day(0));
   await dialog.getByLabel(tr(lang, "adoptionP4.forms.subjectLabel")).fill(`Synthetic agent 7 ${lang}`);
   await dialog.locator("[data-answer='q1']").selectOption("yes");
   await submitOf(dialog).click();
