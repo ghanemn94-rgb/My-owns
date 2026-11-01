@@ -78,7 +78,11 @@ export interface ProductionWorker {
 }
 
 export async function startProductionWorker(): Promise<ProductionWorker> {
-  const child = spawn(process.execPath, ["apps/worker/dist/main.js"], {
+  // T-DG6-QA-H: QA_WORKER_ENTRY points the mutation checks at a deliberately broken COPY of the built worker under
+  // $TMPDIR (docs/delivery/test-evidence/DG6/qa/T-DG6-QA-H-authoring/mutations.sh). Unset (every normal run): the built
+  // production entry point.
+  const entry = process.env["QA_WORKER_ENTRY"] ?? "apps/worker/dist/main.js";
+  const child = spawn(process.execPath, [entry], {
     env: { ...process.env, LOG_LEVEL: "warn" },
     stdio: ["ignore", "pipe", "pipe"],
   });
