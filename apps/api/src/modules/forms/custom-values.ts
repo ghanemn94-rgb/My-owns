@@ -53,7 +53,8 @@ import {
   assertWorking,
   formRefusals,
   loadRecordType,
-  recordExists,
+  recordVisible,
+  requireRecordVisible,
   requireRecordWrite,
   requireTransformationRead,
 } from "./record-types.ts";
@@ -146,6 +147,7 @@ function fieldProblem(field: string, code: FieldValueCode) {
 /** The deferred checks of the validators, in the transaction (ADR-0041 §3 reference, attachment, lookup). */
 async function runDeferredChecks(
   tx: Tx,
+  request: FastifyRequest,
   checks: readonly DeferredCheck[],
   transformationId: string,
   organizationId: string,
@@ -158,7 +160,8 @@ async function runDeferredChecks(
         .selectAll()
         .where("code", "=", c.targetRecordType)
         .executeTakeFirst();
-      if (target === undefined || !(await recordExists(tx, target, transformationId, c.id)))
+      // A sensitive record the caller may not open is an unknown reference (ADR-0051 §2; F-DG6-123).
+      if (target === undefined || !(await recordVisible(tx, request, target, transformationId, c.id)))
         errors.push(fieldProblem(c.field, "validation.reference"));
     } else if (c.kind === "attachment") {
       const found = await tx
@@ -220,7 +223,7 @@ async function putValues(tx: Tx, request: FastifyRequest, p: Params): Promise<Fo
   if (!rt.custom_fields_allowed) throw formRefusals.extensionsNotAllowed();
   const body = parseBody(formCustomValuesPut, request.body);
   const expected = valuesIfMatch(request);
-  if (!(await recordExists(tx, rt, p.transformationId, p.recordId))) throw problems.notFound();
+  await requireRecordVisible(tx, request, rt, p.transformationId, p.recordId); // ADR-0051 §2 (F-DG6-123)
   const t = await tx
     .selectFrom("transformation")
     .select(["currency", "organization_id"])
@@ -240,7 +243,7 @@ async function putValues(tx: Tx, request: FastifyRequest, p: Params): Promise<Fo
       ? formRefusals.customFieldRequired()
       : formRefusals.customFieldUnknown();
   }
-  await runDeferredChecks(tx, v.checks, p.transformationId, t.organization_id);
+  await runDeferredChecks(tx, request, v.checks, p.transformationId, t.organization_id);
 
   const current = await loadValuesRow(tx, rt.code, p.recordId, true);
   if ((current?.version ?? 0) !== expected) throw conflict(current?.version ?? null);
@@ -310,7 +313,7 @@ export function registerCustomValueRoutes(app: FastifyInstance, { db }: ModuleDe
     parseQuery(z.strictObject({}), request.query);
     await requireTransformationRead(db, request, p.transformationId);
     const rt = await loadRecordType(db, p.recordType);
-    if (!(await recordExists(db, rt, p.transformationId, p.recordId))) throw problems.notFound();
+    await requireRecordVisible(db, request, rt, p.transformationId, p.recordId); // ADR-0051 §2 (F-DG6-123)
     const t = await db
       .selectFrom("transformation")
       .select("currency")

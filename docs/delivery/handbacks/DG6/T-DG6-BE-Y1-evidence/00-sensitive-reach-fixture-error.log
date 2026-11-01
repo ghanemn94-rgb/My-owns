@@ -1,0 +1,50 @@
+port-policy: PostgreSQL listening on port 28100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvyc8b1i_b70e8333 (server_encoding UTF8); applied 115 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach.test.ts (10 tests | 10 skipped) 1551ms
+   ↓ before marking: nothing is redacted or refused (DG1-DG5 unchanged) > TL and AUD read the benefit's events with their changes, and its form sub-resources
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > control: TL and AUD get 404 on the benefit itself; TO and the owner read it
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-121: /transformations/{t}/audit redacts the benefit's events and its children's for TL and AUD
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-121 positive: TO and the owner read the same events with their changes
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-122: /audit-events redacts child events (measurements, case lines) for AUD without a grant
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-123: the T14 form-record sub-resources are 404 for TL and AUD; 200 for TO and the owner
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-123 write: TL's comment on the sensitive benefit is 404 and persists nothing
+   ↓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > sweep: the child item routes and the T14 export follow the same rule
+   ↓ with an explicit grant: TL and AUD are admitted (next request); revocation restores the rule > TL with a grant reads the events unredacted and the form sub-resources, and may comment
+   ↓ with an explicit grant: TL and AUD are admitted (next request); revocation restores the rule > AUD with grants on the benefit and the case reads their child events unredacted
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach.test.ts [ apps/api/test/integration/access/sensitive-reach.test.ts ]
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Benefit B02 is at the identify step. Measurements start at Measure; a delivered enabler is not realized value.","code":"benefit_measurement.step","requestId":"01a19900-181c-7528-86ed-8e19166a8b21","errors":[{"pointer":"","code":"benefit_measurement.step","message":"Benefit B02 is at the identify step. Measurements start at Measure; a delivered enabler is not realized value."}]}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/sensitive-reach.test.ts:41:48
+     39| const BC = "/api/v1/business-cases";
+     40| const ok = (res: Res<Body>, status = 200) => {
+     41|   expect(res.status, JSON.stringify(res.body)).toBe(status);
+       |                                                ^
+     42|   return res.body as Body;
+     43| };
+ ❯ measure apps/api/test/integration/access/sensitive-reach.test.ts:55:3
+ ❯ apps/api/test/integration/access/sensitive-reach.test.ts:148:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 skipped (10)
+   Start at  21:24:15
+   Duration  27.47s (transform 10.00s, setup 0ms, collect 19.87s, tests 1.55s, environment 0ms, prepare 97ms)
+

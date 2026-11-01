@@ -47,6 +47,7 @@ import {
   principalOf,
   requireTransformationRead,
   resolveParty,
+  withoutRestricted,
   type ResolvedTarget,
 } from "../access/index.ts";
 import { record } from "../audit/index.ts";
@@ -509,7 +510,12 @@ export function registerBenefitOverlapRoutes(app: FastifyInstance, { db }: Modul
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.status, r.id], hash);
-    return { items: page.items.map(toOverlap), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Y1 sweep): the row of a sensitive record the caller is not admitted to is absent.
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "benefit_overlap",
+      recordId: r.id,
+    }));
+    return { items: visible.map(toOverlap), nextCursor: page.nextCursor };
   });
 
   app.post(

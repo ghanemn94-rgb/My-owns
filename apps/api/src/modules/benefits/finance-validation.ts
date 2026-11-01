@@ -37,7 +37,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
 import { PROBLEM_TYPES } from "@mth/shared";
-import { denialOf, principalOf, requireTransformationRead } from "../access/index.ts";
+import { denialOf, principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -425,10 +425,13 @@ export function registerFinanceValidationRoutes(app: FastifyInstance, { db }: Mo
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [Number(r.rank), r.created_key, r.id], hash);
+    // ADR-0051 §2 (T-DG6-BE-Y1 sweep): the row of a sensitive record the caller is not admitted to is absent.
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "finance_validation",
+      recordId: r.id,
+    }));
     return {
-      items: page.items.map(({ rank: _rank, created_key: _key, ...r }) =>
-        toFinanceValidation(r as FinanceValidationRow),
-      ),
+      items: visible.map(({ rank: _rank, created_key: _key, ...r }) => toFinanceValidation(r as FinanceValidationRow)),
       nextCursor: page.nextCursor,
     };
   });

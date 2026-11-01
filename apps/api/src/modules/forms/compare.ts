@@ -22,25 +22,18 @@
 // this transformation, is 404; a sensitive record (benefit, business case, evidence; ADR-0051 §2) the caller is not
 // admitted to is 404, as its own GET. Then `toVersion` > `fromVersion` >= 1 and both <= the current version, else 422
 // form_record.compare_versions_invalid. Read-only: nothing is written; no G1-G6 business approval is involved.
-import { type DbOrTx, type FormRecordTypeRow } from "@mth/db";
+import { type DbOrTx } from "@mth/db";
 import type { Permission } from "@mth/shared";
 import { uuid, formRecordTypeCode } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import {
-  authorize,
-  loadSensitiveRecord,
-  principalOf,
-  requireSensitiveRead,
-  SENSITIVE_RECORD_TYPE_LIST,
-  type SensitiveRecordType,
-} from "../access/index.ts";
+import { authorize, principalOf } from "../access/index.ts";
 import { createConfigResolver } from "../methodology/index.ts";
 import { parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
 import { currentRecordVersion } from "./drafts.ts";
 import { FORM_RECORD } from "./history.ts";
 import { resolveForm, type ResolvedFormField } from "./provider.ts";
-import { loadRecordType, recordExists, requireTransformationRead } from "./record-types.ts";
+import { loadRecordType, requireRecordVisible, requireTransformationRead } from "./record-types.ts";
 
 export const COMPARE = `${FORM_RECORD}/compare`;
 const AUDIT_READ = "audit.read" as const satisfies Permission;
@@ -176,11 +169,6 @@ export function foldComparison(
   return out;
 }
 
-const sensitiveTypeOf = (rt: FormRecordTypeRow): SensitiveRecordType | null =>
-  (SENSITIVE_RECORD_TYPE_LIST as readonly string[]).includes(rt.table_name ?? "")
-    ? (rt.table_name as SensitiveRecordType)
-    : null;
-
 async function steps(db: DbOrTx, table: string, recordId: string, fromVersion: number, toVersion: number) {
   return (
     db
@@ -204,16 +192,10 @@ export function registerRecordCompareRoutes(app: FastifyInstance, { db }: Module
     // 404 outside the read scope, for an unknown or planned type and for a record not in this transformation.
     const target = await requireTransformationRead(db, request, p.transformationId);
     const rt = await loadRecordType(db, p.recordType);
-    if (rt.table_name === null || !(await recordExists(db, rt, p.transformationId, p.recordId)))
-      throw problems.notFound();
+    if (rt.table_name === null) throw problems.notFound();
+    // A sensitive record the caller is not admitted to: 404, as its own GET (ADR-0051 §1, §2; the shared gate).
+    await requireRecordVisible(db, request, rt, p.transformationId, p.recordId);
     const table = rt.table_name;
-    // A sensitive record the caller is not admitted to: 404, as its own GET (ADR-0051 §1, §2).
-    const sensitive = sensitiveTypeOf(rt);
-    if (sensitive !== null) {
-      const rec = await loadSensitiveRecord(db, sensitive, p.recordId, p.transformationId);
-      if (rec === null) throw problems.notFound();
-      await requireSensitiveRead(db, principal, sensitive, p.recordId, target, rec.partyUserIds);
-    }
     const currentVersion = await currentRecordVersion(db, rt, p.transformationId, p.recordId);
     if (currentVersion === null) throw problems.notFound();
     if (query.toVersion <= query.fromVersion || query.toVersion > currentVersion)

@@ -79,6 +79,20 @@ export {
   sensitivityRefusals,
   type SensitiveRecordRow,
 } from "./sensitivity.ts";
+// T-DG6-BE-Y1 (F-DG6-121..123; ADR-0051 §2): the one helper for every route that reaches a sensitive record's children.
+export {
+  isSensitiveRecordType,
+  reachKey,
+  reachRefsOfParams,
+  registerSensitiveReachGuard,
+  requireRecordReach,
+  restrictedRecordRefs,
+  SENSITIVE_CHILD_SOURCES,
+  SENSITIVE_REACH_PARAMS,
+  sensitiveOwnersOf,
+  withoutRestricted,
+  type ReachRef,
+} from "./sensitive-reach.ts";
 // REQ-S10-003 (D-094; T-DG4-BE-B2): the technical-admin-only 403 on gate and Finance approval endpoints.
 export { isTechnicalAdminOnly, TECHNICAL_ADMIN_ROLES, technicalAdminRefusal } from "./technical-admin.ts";
 // P6 slice J (T-DG6-BE-J; ADR-0053 §1): service identities (load, read gate, the grant change); routes in admin.
