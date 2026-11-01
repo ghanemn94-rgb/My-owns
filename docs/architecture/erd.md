@@ -2135,6 +2135,22 @@ erDiagram
 
 Recorded by T-DG6-ARCH-07 (2026-10-30). The implementer migrations of DG6 add no table, column or relationship, so the diagrams above are unchanged. They seed job service identities and schedules (`0114_p6_job_service_identities.sql`, `0115_p6_search_index_jobs.sql`, `0116_p6_connector_run_jobs.sql`, `0121_p6_notification_fanout_jobs.sql`). They also seed the operations triggers and starter 16 version 2 (`0117_p6_operations_triggers_freshness.sql`), and add or replace guards on existing tables (`0118_p6_evidence_content_detected_type_required.sql` on `evidence_content`, `0119_p6_branding_version_contrast_required.sql` on `branding_version`, `0120_p6_audit_required_index_use.sql` for `p2_audit_required()`). The data dictionary section "P6 implementer migrations (0114–0121, DG6)" lists the rows and functions. The ids are the shipped file names after the merge renumbering of D-196 item 2 (BE-J 0113 → 0114, BE-K2 0116 → 0117, BE-S 0119 → 0120, BE-I2 0120 → 0121).
 
+## 1aa. P6 pre-freeze repair migration 0122: the automation rule enablement ledger (T-DG6-ARCH-09, 2026-11-01; ADR-0043 amendment E1, E2)
+
+One new append-only table, `automation_rule_enablement` (`0122_p6_automation_rule_enablement.sql`, T-DG6-BE-X9; D-203 O-2). It records the moment each version of an automation rule became enabled, and the worker evaluates an event only against a rule version that became enabled at or before the event's stored occurrence time (`outbox_event.created_at`; D-204 decides that a late event is evaluated against the version in force at its occurrence). Its rows are written only by the `SECURITY DEFINER` trigger `automation_rule_enablement_record` on `automation_rule`, in the transaction of the audited enable or publish that causes them; `mth_app` reads only. The composite foreign key `(automation_rule_id, automation_rule_version_id)` → `automation_rule_version (automation_rule_id, id)` (deferred) guarantees that a row names a version of its own rule. No existing table changes. T-DG6-BE-X10 (D-204) completes the ledger with the disabled windows. Its handback had not landed when this section was written; its unmerged work in progress (`0123`) adds no column and no relationship, so this diagram would not change (ADR-0043 amendment E2). The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0122").
+
+```mermaid
+erDiagram
+    automation_rule ||--o{ automation_rule_enablement : "enabled_from per enable or effective-version change, append-only"
+    automation_rule_version ||--o{ automation_rule_enablement : "(automation_rule_id, automation_rule_version_id), deferred"
+```
+
+### 1aa.1 P6 entity register (0122) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Automation rule enablement (REQ-S12-001, REQ-S12-002) | `automation_rule_enablement` | `id` | none (derived from `automation_rule`) | only the trigger `automation_rule_enablement_record`, on the enable or publish of a rule (`automation.configure`, the existing audited rule update) | none (`source`: `enable`, `effective_version`, `backfill`) | no (append-only) | none (read by the worker) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

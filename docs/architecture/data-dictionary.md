@@ -14255,3 +14255,55 @@ Recorded by T-DG6-ARCH-07 (2026-10-30) from the shipped files (`ls packages/db/m
 | `0119_p6_branding_version_contrast_required.sql` | BE-W | none | `branding_version_contrast_required()` and its deferred constraint trigger AFTER INSERT on `branding_version`: at COMMIT a new version has its `branding_contrast_report` (ADR-0061 §2) |
 | `0120_p6_audit_required_index_use.sql` | BE-S | none | `p2_audit_required()` replaced: the deferred audit check uses `audit_event_record_idx` again (ADR-0058 §6); its behaviour is unchanged |
 | `0121_p6_notification_fanout_jobs.sql` | BE-I2 | `job_schedule` `notifications.delivery_sweep` (every minute); identities `job:notifications.fanout` and `job:notifications.delivery_sweep` (read codes only) | none |
+
+# P6 pre-freeze repair migration 0122 (DG6)
+
+Recorded by T-DG6-ARCH-09 (2026-11-01) from the shipped file `packages/db/migrations/0122_p6_automation_rule_enablement.sql` (T-DG6-BE-X9; D-203 O-2; ADR-0043 amendment E1). It adds one table and one trigger on `automation_rule`. No existing table, column or row changes. T-DG6-BE-X10 (D-204; ADR-0043 amendment E2) completes the ledger with the disabled windows. Its handback had not landed when this section was written, so this section describes `0122` as shipped. Its unmerged work in progress (`0123`) adds no column; it widens the `source` CHECK and adds an index and disable rows (ADR-0043 amendment E2), and this section is amended when it merges.
+
+## automation_rule_enablement
+
+- **Purpose:** The moment each version of an automation rule became enabled: when the rule was inserted enabled, when it went from disabled to enabled, or when its effective version changed while it was enabled. The worker evaluates an event only against a rule version that became enabled at or before the event's stored occurrence time (`outbox_event.created_at`), so enabling a rule never acts on history (D-203, D-204; ADR-0043 amendment E1, E2).
+- **Migration:** `0122_p6_automation_rule_enablement.sql`. **API module:** none. **Reader:** the worker (`apps/worker/src/automation/engine.ts` `candidates`). **Who writes:** only the trigger `automation_rule_enablement_record` (below), in the transaction of the audited rule update that causes the row; no application writer. **Lifecycle:** append-only (`p2_attach_append_only`). Not audited separately: the causing `automation_rule` update writes its own audit event (the `0098` `record_sensitivity_change` pattern).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PRIMARY KEY (`mth_uuid_v7()` in the trigger and the backfill) |
+| automation_rule_id | uuid | NOT NULL |  | FK → automation_rule(id) ON DELETE RESTRICT ON UPDATE RESTRICT |
+| automation_rule_version_id | uuid | NOT NULL |  | part of the composite FK below |
+| enabled_from | timestamp with time zone | NOT NULL |  | the trigger writes `now()` (the transaction time of the causing update) |
+| source | text | NOT NULL |  | CHECK `automation_rule_enablement_source`: `source IN ('enable', 'effective_version', 'backfill')` |
+
+**Table constraints:**
+
+- `automation_rule_enablement_pkey` (PRIMARY KEY): `(id)`
+- `automation_rule_enablement_automation_rule_id_fkey` (FOREIGN KEY): `(automation_rule_id)` → `automation_rule(id)` ON DELETE RESTRICT ON UPDATE RESTRICT
+- `automation_rule_enablement_version_fkey` (FOREIGN KEY): `(automation_rule_id, automation_rule_version_id)` → `automation_rule_version(automation_rule_id, id)` ON DELETE RESTRICT ON UPDATE RESTRICT, DEFERRABLE INITIALLY DEFERRED (a seeded starter and its version 1 reference each other, like `automation_rule`'s own effective-version key)
+- `automation_rule_enablement_source` (CHECK): see the column
+
+**Indexes:**
+
+- `automation_rule_enablement_rule_idx`: `(automation_rule_id, automation_rule_version_id, enabled_from DESC)`
+
+**Triggers:**
+
+- `automation_rule_enablement_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `automation_rule_enablement_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## Trigger added to an earlier table (0122)
+
+| Table (owner) | Trigger | When | Function |
+|---|---|---|---|
+| `automation_rule` (P5 0074) | `automation_rule_enablement_record` | AFTER INSERT OR UPDATE, row, not deferred | `automation_rule_enablement_record()` |
+
+The trigger is excluded from the `0074` trigger pin of `catalogue.test.ts` and checked by its own "0122" test, which pins the three triggers above as not deferrable.
+
+## P6 function (0122)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `automation_rule_enablement_record()` | 0122 | `SECURITY DEFINER`, `search_path = public, pg_temp`. When `NEW.enabled` and `NEW.effective_version_id IS NOT NULL`, and the operation is an INSERT, or `OLD.enabled` was false, or the effective version changed: inserts one row with `enabled_from = now()` and `source = 'enable'` (INSERT, or disabled → enabled) or `'effective_version'` (a version change while enabled). Disabling writes nothing. Returns NULL. | none (`PUBLIC` execute revoked; runs only through the trigger) |
+
+## Backfill (0122)
+
+One row per rule that was enabled when `0122` ran, with `source = 'backfill'`, for its effective version, at `GREATEST` of three stored times: the effective version's `published_at`, the newest `audit_event.occurred_at` with `record_type = 'automation_rule'`, the rule's id and `action = 'automation_rule.enable'`, and the rule's `created_at` (a seeded starter is created enabled). The migration's own clock is never used. No `automation_rule` row changes, so there is no version step and no audit event.
