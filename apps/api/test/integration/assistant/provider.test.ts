@@ -68,14 +68,14 @@ const row = (over: Partial<AssistantSettingRow> = {}) =>
 let fake: FakeModel;
 let target: FakeModel; // a redirect target that must never be reached
 const secrets = createSecretProviderRegistry();
-secrets.register(envSecretProvider({ MTH_TEST_MODEL_KEY: KEY_CANARY }));
+secrets.register(envSecretProvider({ MTH_SECRET_TEST_MODEL_KEY: KEY_CANARY }));
 
 const http = (over: { credential?: boolean; timeoutMs?: number; url?: string } = {}) =>
   createHttpProvider(
     {
       endpointUrl: over.url ?? fake.url,
       modelName: "synthetic-model",
-      credentialRef: over.credential ? { provider: "env", name: "MTH_TEST_MODEL_KEY" } : null,
+      credentialRef: over.credential ? { provider: "env", name: "MTH_SECRET_TEST_MODEL_KEY" } : null,
       requestTimeoutMs: over.timeoutMs ?? 5_000,
     },
     secrets,
@@ -214,7 +214,7 @@ describe("the HTTP adapter against the local fake (never live)", () => {
       {
         endpointUrl: fake.url,
         modelName: "m",
-        credentialRef: { provider: "env", name: "MTH_NOT_SET" },
+        credentialRef: { provider: "env", name: "MTH_SECRET_NOT_SET" },
         requestTimeoutMs: 5000,
       },
       secrets,
@@ -225,7 +225,7 @@ describe("the HTTP adapter against the local fake (never live)", () => {
       {
         endpointUrl: fake.url,
         modelName: "m",
-        credentialRef: { provider: "env", name: "MTH_TEST_MODEL_KEY" },
+        credentialRef: { provider: "env", name: "MTH_SECRET_TEST_MODEL_KEY" },
         requestTimeoutMs: 5000,
       },
       null,

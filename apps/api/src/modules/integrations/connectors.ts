@@ -34,7 +34,14 @@ import {
   type Principal,
 } from "../access/index.ts";
 import { record as audit } from "../audit/index.ts";
-import { ADVISORY_LOCK_CLASSES, HttpProblem, iso, isoOrNull, problems } from "../platform/index.ts";
+import {
+  ADVISORY_LOCK_CLASSES,
+  assertSecretRefInNamespace,
+  HttpProblem,
+  iso,
+  isoOrNull,
+  problems,
+} from "../platform/index.ts";
 import {
   CONNECTOR_ADAPTER_KINDS,
   CONNECTOR_ERROR_CODES,
@@ -290,6 +297,10 @@ export async function checkConfig(
       },
     ]);
   }
+  // F-DG6-120: a reference names a secret IT provisioned (env MTH_SECRET_<NAME>, file in SECRETS_DIR), never a
+  // platform variable such as OIDC_CLIENT_SECRET (400 validation.secret_ref_namespace, before any row is written).
+  for (const [key, ref] of Object.entries(credentials.refs))
+    assertSecretRefInNamespace(ref, `/config/credentialRefs/${key}`);
   const secretKey = secretLikeKeyPath(input.adapterSettings, "/config/adapterSettings");
   if (secretKey !== null) throw connectorRefusals.secretValueRefused(secretKey);
   if (input.endpointUrl !== null && urlCarriesSecret(input.endpointUrl))

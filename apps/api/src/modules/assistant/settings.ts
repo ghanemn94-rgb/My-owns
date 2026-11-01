@@ -40,6 +40,7 @@ import {
 } from "../access/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
+  assertSecretRefInNamespace,
   canonicalJson,
   etag,
   HttpProblem,
@@ -301,6 +302,7 @@ export function checkedSettingUpdate(
   if (body.credentialRef !== null && body.credentialRef !== undefined) {
     const ref = assistantSecretRef.safeParse(body.credentialRef);
     if (!ref.success) throw assistantSettingRefusals.credentialRefInvalid();
+    assertSecretRefInNamespace(ref.data, "/credentialRef"); // F-DG6-120: 400 outside the namespace
     credentialRef = ref.data;
   }
   if (body.endpointUrl !== null && !ENDPOINT_URL.test(body.endpointUrl))

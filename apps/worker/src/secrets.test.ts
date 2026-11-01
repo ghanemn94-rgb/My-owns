@@ -20,9 +20,12 @@ describe("worker SecretProvider twin (D-198)", () => {
 
   it("the composition line registers env then file; a reference resolves and never prints its value", async () => {
     const registry = createSecretProviderRegistry();
-    registerBuiltInSecretProviders(registry, { secretsDir: null, env: { MTH_BE_J_CANARY: "synthetic-canary-value" } });
+    registerBuiltInSecretProviders(registry, {
+      secretsDir: null,
+      env: { MTH_SECRET_BE_J_CANARY: "synthetic-canary-value" },
+    });
     expect(registry.ids()).toEqual(["env", "file"]);
-    const value = await registry.resolve({ provider: "env", name: "MTH_BE_J_CANARY" });
+    const value = await registry.resolve({ provider: "env", name: "MTH_SECRET_BE_J_CANARY" });
     expect(value?.reveal()).toBe("synthetic-canary-value");
     expect(String(value)).toBe("[secret]");
     expect(JSON.stringify({ value })).toBe('{"value":"[secret]"}');

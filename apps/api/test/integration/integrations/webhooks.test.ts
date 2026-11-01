@@ -53,8 +53,8 @@ type Body = any;
 const ADMIN = "/api/v1/admin/webhooks";
 const SECRET_A = "whsec-SYNTHETIC-a-7d1f0c";
 const SECRET_B = "whsec-SYNTHETIC-b-91ce44";
-const NAME_A = "MTH_TEST_WEBHOOK_SECRET_A";
-const NAME_B = "MTH_TEST_WEBHOOK_SECRET_B";
+const NAME_A = "MTH_SECRET_TEST_WEBHOOK_SECRET_A";
+const NAME_B = "MTH_SECRET_TEST_WEBHOOK_SECRET_B";
 const refA = { provider: "env", name: NAME_A };
 const refB = { provider: "env", name: NAME_B };
 

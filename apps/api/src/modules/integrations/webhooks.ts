@@ -54,7 +54,15 @@ import {
   type Principal,
 } from "../access/index.ts";
 import { record as audit, type AuditContext } from "../audit/index.ts";
-import { ADVISORY_LOCK_CLASSES, decodeUtf8Body, HttpProblem, iso, isoOrNull, problems } from "../platform/index.ts";
+import {
+  ADVISORY_LOCK_CLASSES,
+  assertSecretRefInNamespace,
+  decodeUtf8Body,
+  HttpProblem,
+  iso,
+  isoOrNull,
+  problems,
+} from "../platform/index.ts";
 import {
   CONNECTOR_READ,
   connectorRefusals,
@@ -200,12 +208,15 @@ const webhookDelivery = z.strictObject({
 
 /**
  * A request's SecretRef: exactly `{provider, name}` (the connector credential rules). Anything else is a value the
- * server refuses (422 connector.secret_value_refused at `pointer`), before any row is written.
+ * server refuses (422 connector.secret_value_refused at `pointer`), before any row is written. A reference outside
+ * its provider's namespace (F-DG6-120: env MTH_SECRET_<NAME>, file in SECRETS_DIR) is 400 validation.secret_ref_namespace.
  */
 export function checkSecretRef(input: unknown, pointer: string): { provider: string; name: string } {
   const checked = checkCredentialRefs({ signing: input });
   if (!checked.ok) throw connectorRefusals.secretValueRefused(pointer);
-  return checked.refs["signing"]!;
+  const ref = checked.refs["signing"]!;
+  assertSecretRefInNamespace(ref, pointer); // F-DG6-120: 400 validation.secret_ref_namespace outside the namespace
+  return ref;
 }
 
 // ------------------------------------------------------------------------------------------------ view

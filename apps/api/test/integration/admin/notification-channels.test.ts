@@ -82,8 +82,8 @@ async function freshOrg() {
 }
 
 beforeAll(async () => {
-  process.env["MTH_TEST_SMTP_USER"] = "synthetic-user";
-  process.env["MTH_TEST_SMTP_PASS"] = SECRET_CANARY;
+  process.env["MTH_SECRET_TEST_SMTP_USER"] = "synthetic-user";
+  process.env["MTH_SECRET_TEST_SMTP_PASS"] = SECRET_CANARY;
   api = await startApi();
   w = await seedWorld(api.db);
   fake = await new FakeSmtp().start();
@@ -93,8 +93,8 @@ beforeAll(async () => {
   nobody = await signIn(api.app, w.nobody.subject);
 });
 afterAll(async () => {
-  delete process.env["MTH_TEST_SMTP_USER"];
-  delete process.env["MTH_TEST_SMTP_PASS"];
+  delete process.env["MTH_SECRET_TEST_SMTP_USER"];
+  delete process.env["MTH_SECRET_TEST_SMTP_PASS"];
   await fake.stop();
   await api.close();
 });
@@ -156,8 +156,8 @@ describe("putNotificationChannel", () => {
       body: {
         enabled: true,
         smtp: smtpSettings({
-          usernameRef: { provider: "env", name: "MTH_TEST_SMTP_USER" },
-          passwordRef: { provider: "env", name: "MTH_TEST_SMTP_PASS" },
+          usernameRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_USER" },
+          passwordRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_PASS" },
         }),
         reason: "Synthetic: enable email",
       },
@@ -170,10 +170,10 @@ describe("putNotificationChannel", () => {
       version: 1,
       reason: "Synthetic: enable email",
     });
-    expect(created.body.smtp.passwordRef).toEqual({ provider: "env", name: "MTH_TEST_SMTP_PASS" });
+    expect(created.body.smtp.passwordRef).toEqual({ provider: "env", name: "MTH_SECRET_TEST_SMTP_PASS" });
     expect(JSON.stringify(created.body)).not.toContain(SECRET_CANARY);
     const row = (await channelRow(org.id, "email"))!;
-    expect(row.smtp_password_ref).toEqual({ provider: "env", name: "MTH_TEST_SMTP_PASS" });
+    expect(row.smtp_password_ref).toEqual({ provider: "env", name: "MTH_SECRET_TEST_SMTP_PASS" });
     const [createdAudit] = await auditsOf(row.id, "notification_channel.changed");
     expect(createdAudit).toMatchObject({ prior_version: null, new_version: 1, reason: "Synthetic: enable email" });
     expect(JSON.stringify(createdAudit!.changes)).not.toContain(SECRET_CANARY);
@@ -228,7 +228,7 @@ describe("putNotificationChannel", () => {
         "email",
         {
           enabled: true,
-          smtp: smtpSettings({ usernameRef: { provider: "env", name: "MTH_TEST_SMTP_USER" } }),
+          smtp: smtpSettings({ usernameRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_USER" } }),
           reason: "Synthetic",
         },
         422,
@@ -402,8 +402,8 @@ describe("testNotificationChannel", () => {
       body: {
         enabled: true,
         smtp: smtpSettings({
-          usernameRef: { provider: "env", name: "MTH_TEST_SMTP_USER" },
-          passwordRef: { provider: "env", name: "MTH_TEST_SMTP_PASS" },
+          usernameRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_USER" },
+          passwordRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_PASS" },
         }),
         reason: "Synthetic: enable",
       },
@@ -436,8 +436,8 @@ describe("testNotificationChannel", () => {
       body: {
         enabled: true,
         smtp: smtpSettings({
-          usernameRef: { provider: "env", name: "MTH_TEST_SMTP_USER" },
-          passwordRef: { provider: "env", name: "MTH_TEST_SMTP_PASS" },
+          usernameRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_USER" },
+          passwordRef: { provider: "env", name: "MTH_SECRET_TEST_SMTP_PASS" },
         }),
         reason: "Synthetic: enable",
       },

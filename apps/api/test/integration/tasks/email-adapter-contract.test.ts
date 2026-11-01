@@ -30,11 +30,11 @@ import { decodedBody, decodedSubject, FakeSmtp } from "../../support/fake-smtp.t
 
 const TIMEOUTS = { connection: 5_000, greeting: 5_000, socket: 5_000 };
 const SECRET_CANARY = "synthetic-canary-secret-7f3a91";
-const USER_REF: ChannelSecretRef = { provider: "env", name: "MTH_TEST_SMTP_USER" };
-const PASS_REF: ChannelSecretRef = { provider: "env", name: "MTH_TEST_SMTP_PASS" };
+const USER_REF: ChannelSecretRef = { provider: "env", name: "MTH_SECRET_TEST_SMTP_USER" };
+const PASS_REF: ChannelSecretRef = { provider: "env", name: "MTH_SECRET_TEST_SMTP_PASS" };
 const secrets = new Map<string, string>([
-  ["env:MTH_TEST_SMTP_USER", "synthetic-user"],
-  ["env:MTH_TEST_SMTP_PASS", SECRET_CANARY],
+  ["env:MTH_SECRET_TEST_SMTP_USER", "synthetic-user"],
+  ["env:MTH_SECRET_TEST_SMTP_PASS", SECRET_CANARY],
 ]);
 const resolveSecret = (ref: ChannelSecretRef) =>
   Promise.resolve(
@@ -232,7 +232,7 @@ describe("the email adapter against the fake SMTP server", () => {
     const result = await createEmailChannel({
       settings: settings(fake.port, {
         usernameRef: USER_REF,
-        passwordRef: { provider: "env", name: "MTH_TEST_NOT_SET" },
+        passwordRef: { provider: "env", name: "MTH_SECRET_TEST_NOT_SET" },
       }),
       resolveSecret,
       refuseInsecure: false,

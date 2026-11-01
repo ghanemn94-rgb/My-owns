@@ -48,9 +48,9 @@ const S = "/api/v1/admin/assistant";
 const C = "/api/v1/assistant/conversations";
 const ifm = (v: number | string) => ({ "if-match": `"${v}"` });
 // Variable names unique to this file; the values are SYNTHETIC canaries.
-const KEY_NAME = "MTH_BE_X3_COMPOSITION_MODEL_KEY";
+const KEY_NAME = "MTH_SECRET_BE_X3_COMPOSITION_MODEL_KEY";
 const KEY_VALUE = "synthetic-canary-be-x3-model-key-6b0e";
-const UNSET_NAME = "MTH_BE_X3_COMPOSITION_NEVER_SET";
+const UNSET_NAME = "MTH_SECRET_BE_X3_COMPOSITION_NEVER_SET";
 // TEST-NET-1 (RFC 5737): never routed, so a connect to it never succeeds.
 const UNREACHABLE = { host: "192.0.2.10", port: 443 };
 

@@ -146,7 +146,11 @@ export {
   envSecretProvider,
   fileSecretProvider,
   registerBuiltInSecretProviders,
+  ENV_SECRET_PREFIX,
   SECRET_PLACEHOLDER,
+  SECRET_REF_NAMESPACE_CODE,
+  SECRET_REF_NAMESPACE_MESSAGE,
+  secretRefInNamespace,
   secretValue,
   SecretProviderError,
   type SecretProvider,
@@ -154,3 +158,5 @@ export {
   type SecretRef,
   type SecretValue,
 } from "./secrets.ts";
+// F-DG6-120: the write-time SecretRef namespace check every consumer runs (400 validation.secret_ref_namespace).
+export { assertSecretRefInNamespace } from "./secret-namespace.ts";

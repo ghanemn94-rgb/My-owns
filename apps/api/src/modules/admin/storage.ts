@@ -44,6 +44,7 @@ import {
 } from "../access/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
+  assertSecretRefInNamespace,
   etag,
   HttpProblem,
   iso,
@@ -223,6 +224,7 @@ export function checkedS3(input: z.infer<typeof s3Input>, providers: readonly st
     const ref = storageSecretRef.safeParse(value);
     if (!ref.success || !providers.includes(ref.data.provider))
       throw storageRefusals.secretRefInvalid(`${pointer}/${field}`);
+    assertSecretRefInNamespace(ref.data, `${pointer}/${field}`); // F-DG6-120: 400 outside the namespace
     return ref.data;
   };
   const accessKeyRef = refOf(input.accessKeyRef, "accessKeyRef");

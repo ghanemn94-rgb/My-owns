@@ -45,6 +45,7 @@ import {
   type Principal,
 } from "../access/index.ts";
 import {
+  assertSecretRefInNamespace,
   cursorSchema,
   decodeCursor,
   etag,
@@ -386,6 +387,7 @@ export function checkedChannelUpdate(
     const ref = notificationSecretRef.safeParse(value);
     if (!ref.success || !deps.providers.includes(ref.data.provider))
       throw notificationChannelRefusals.secretRefInvalid(`/smtp/${field}`);
+    assertSecretRefInNamespace(ref.data, `/smtp/${field}`); // F-DG6-120: 400 outside the namespace
     refs.push(ref.data);
   }
   if ((refs[0] === null) !== (refs[1] === null))

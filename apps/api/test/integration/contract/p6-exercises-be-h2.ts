@@ -16,8 +16,8 @@ export const P6_MIRRORS_BE_H2: Readonly<Record<string, z.ZodType>> = {
   testStorageSetting: storageTestResult,
 };
 
-const ACCESS_VAR = "MTH_CONTRACT_S3_ACCESS_KEY";
-const SECRET_VAR = "MTH_CONTRACT_S3_SECRET_KEY";
+const ACCESS_VAR = "MTH_SECRET_CONTRACT_S3_ACCESS_KEY";
+const SECRET_VAR = "MTH_SECRET_CONTRACT_S3_SECRET_KEY";
 
 export async function exerciseP6BeH2Operations(ctx: P6ExerciseContext): Promise<void> {
   const { api, world: w, mirrored } = ctx;
@@ -62,7 +62,7 @@ export async function exerciseP6BeH2Operations(ctx: P6ExerciseContext): Promise<
     expect(local.body).toMatchObject({ outcome: "passed", driver: "filesystem" });
     const wrong = await mirrored("POST", T, {
       session: admin,
-      body: { candidate: { ...s3, secretKeyRef: { provider: "env", name: "MTH_CONTRACT_S3_UNSET" } } },
+      body: { candidate: { ...s3, secretKeyRef: { provider: "env", name: "MTH_SECRET_CONTRACT_S3_UNSET" } } },
     });
     expect(wrong.body).toMatchObject({ outcome: "failed", errorCode: "storage.write_failed" });
     expect((await mirrored("POST", T, { session: admin, body: {} })).status).toBe(400);

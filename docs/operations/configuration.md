@@ -37,8 +37,26 @@ prints as `[secret]` in `String()`, `JSON.stringify` and log lines.
 
 | Provider | Reads | Configuration |
 |---|---|---|
-| `env` (default) | the variable `NAME`, or the file named by `NAME_FILE`, exactly as the secrets rule above (both set is refused, naming the variable only) | none |
-| `file` | the file `NAME` directly inside `SECRETS_DIR` (a container secret mount, for example `/run/secrets`); one trailing newline is removed, as for `NAME_FILE` | `SECRETS_DIR` |
+| `env` (default) | only a variable named `MTH_SECRET_<NAME>`: the variable, or the file named by `MTH_SECRET_<NAME>_FILE`, exactly as the secrets rule above (both set is refused, naming the variable only) | none |
+| `file` | the file `NAME` directly inside `SECRETS_DIR`, a directory **dedicated** to these secrets (for example `/run/secrets/mth-settings`, never `/run/secrets` itself); one trailing newline is removed, as for `NAME_FILE` | `SECRETS_DIR` |
+
+**The namespace (F-DG6-120).** A reference can name only a secret IT provisioned for a setting, never one of the
+platform's own variables (`DATABASE_URL`, `DATABASE_OWNER_URL`, `OIDC_CLIENT_SECRET`, `MTH_DEMO_ADMIN_DATABASE_URL`
+or any other):
+
+- `env` names are `MTH_SECRET_` followed by `A–Z 0–9 _` (first character a letter or digit, 128 characters in all at
+  most), and do not end in `_FILE`. For example `{ "provider": "env", "name": "MTH_SECRET_SMTP_PASSWORD" }` reads
+  `MTH_SECRET_SMTP_PASSWORD`, or the file named by `MTH_SECRET_SMTP_PASSWORD_FILE`.
+- `file` names are plain file names (below). The provider also refuses a file whose real path leaves `SECRETS_DIR`
+  (a symbolic link out), and a `SECRETS_DIR` that holds a platform secret file (the target of any `<VARIABLE>_FILE`
+  of the process other than `MTH_SECRET_*_FILE`): resolving then fails with a configuration error naming the
+  variable, never a value.
+- Every setting that stores a reference (connector credentials, webhook signing secrets, the email channel, the
+  object store, the assistant endpoint) refuses a reference outside the namespace when it is saved or tested:
+  `400 validation` with the field error `validation.secret_ref_namespace` at the field. The answer depends on the
+  name only, never on whether the variable or file exists.
+- A reference outside the namespace stored before this rule resolves as "not set": nothing is sent, and the
+  setting shows the reference as not resolvable. Re-point it to an `MTH_SECRET_*` name.
 
 - `SECRETS_DIR` is **optional** (no default). Unset means the `file` provider is not configured: resolving a
   `file` reference then fails with a configuration error that names the secret, never a value. A missing file under
