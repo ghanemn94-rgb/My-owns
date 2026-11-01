@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-140",
+      "stage_id": "DG6",
+      "requirement": "REQ-S12-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The KPI freshness scan never raises a data_stale exception once a later reporting period is open and empty, so the 'data becomes stale' half of the starter automation is inert in normal monthly operation",
+      "reproduction": "Probe docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-dg6r1-freshness-later-period.test.ts (the candidate's operations-freshness.test.ts seed/evaluate helpers, copied; run with the integration project on a disposable PostgreSQL): a monthly KPI (staleAfterDays 30) whose last accepted data (as of 2026-01-15) is evaluated in the PREVIOUS month's period, while the current month's period is open with no evaluation yet (as the daily kpi.reporting_period_open job leaves it; apps/worker/src/handlers/kpi.ts header item 2). Result: kpiFreshness returns freshness 'unknown', lastValue null, dataAsOf null; FRESHNESS_SCAN_HANDLER reports {stale: 0, emitted: 0}; no data.stale outbox event, so no data_stale exception. Control in the same file: the same stale evaluation placed in the newest period gives {stale: 1, emitted: 1}. Cause: apps/worker/src/handlers/operations.ts kpiFreshness reads only the organization's newest open or closed period of the KPI's frequency (lines ~164-173). ADR-0053 (line 79, 'Not changed by this repair (open, for the BE-K2 owner and the orchestrator; T-DG6-BE-X4 section 5)') records the gap as undecided; no decision D-193 to D-205 rules on it.",
+      "expected": "REQ-S12-019 / M0239 (starter table): 'Connector/job fails or data becomes stale | Create a visible operational exception; retain last known values with freshness labels'. A KPI whose last accepted data is older than its staleness window should open one data_stale exception linked to it, whatever later empty period exists, using the same last-known-value rule that getOperationalException already applies after the T-DG6-BE-X4 repair (ADR-0053 'Which period the linked-KPI status reads').",
+      "actual": "Once the period after the last data is open (which the scheduled kpi.reporting_period_open job does as soon as each period ends), the scan sees 'unknown' and raises nothing: a feed that silently stops is never surfaced as a stale-data exception. The connector-failure path (connector.run_failed) is unaffected, so the row's literal A17 acceptance ('a failing test connector produces one exception and the KPI shows Stale with its last value and date') still passes; the 'data becomes stale' trigger of the same requirement does not work in the normal cadence. Bounded: no KPI value is changed, the KPI panel still labels missing data Unknown, and connector exceptions still open.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/10-probe-freshness-later-period.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-dg6r1-freshness-later-period.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-1/RUN-NOTES.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1) on candidate sha256:7d6b4a9f; reproduced by an executable probe; the gap is recorded as open and undecided in ADR-0053."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-141",
+      "stage_id": "DG6",
+      "requirement": "REQ-S16-030",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The ADR-0052 section 4 rate-limit classes are not wired for export start (class 'export') or for the import upload (class 'upload'), although EXPORT_RATE_LIMIT_PER_MINUTE is documented as an effective control",
+      "reproduction": "Probe docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-dg6r1-rate-limit-classes.test.ts (the method of the candidate's rate-limits.test.ts: a fresh API with one class budget set to 1, two calls from one session). Control: UPLOAD_RATE_LIMIT_PER_MINUTE=1, uploadEvidenceContent twice -> 404 then 429 rate_limited (the class limiter runs before validation). EXPORT_RATE_LIMIT_PER_MINUTE=1, createExport (POST /api/v1/exports) twice -> 400 then 400, never 429. UPLOAD_RATE_LIMIT_PER_MINUTE=1, createImport (POST /api/v1/transformations/{id}/imports) twice -> 400 then 400, never 429. Static: apps/api/src/modules/platform/hooks.ts RATE_LIMIT_CLASSES lists the export class with operationIds [] and the upload class with ['uploadEvidenceContent'] only; rateLimitClass('export') and rateLimitClass('upload') are used by no route; rate-limits.test.ts carries an it.todo for export.",
+      "expected": "ADR-0052 section 4 table: 'upload | uploadEvidenceContent, import upload (ADR-0056) | UPLOAD_RATE_LIMIT_PER_MINUTE | 30' and 'export | export start (ADR-0046 operations) | EXPORT_RATE_LIMIT_PER_MINUTE | 10', applied in addition to the global limit, 'wired by their owner tasks'. The export operations exist (reporting/exports), and packages/config and .env.example describe EXPORT_RATE_LIMIT_PER_MINUTE as 'Export starts per minute per session/IP (rate-limit class export; ADR-0052 section 4)', default 10.",
+      "actual": "Export starts and import uploads are limited only by the global per-minute limit; an administrator who sets EXPORT_RATE_LIMIT_PER_MINUTE gets no effect, and the import upload ignores UPLOAD_RATE_LIMIT_PER_MINUTE. The register notes disclose the export half as 'partial'; the import-upload half is not disclosed. Bounded: the global limit, authorization, size and type limits still apply; no data is exposed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/13-probe-rate-limit-classes.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-dg6r1-rate-limit-classes.test.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1); behavioural probe on the candidate's built API."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-142",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-029",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The candidate's own load-dataset generator (deploy/load/generate.mjs) writes ids that are not RFC 4122 UUIDs, which the API refuses, so the documented load dataset cannot reproduce the REQ-S20-029/030 measurements without an out-of-tree patch",
+      "reproduction": "Driver docs/delivery/test-evidence/DG6/qa/tests/round-1/load-driver.sh phase A, inside tests/qa/support/with-pg.sh: node deploy/load/generate.mjs --profile smoke (sha256 7470ea74..., unchanged in the candidate) into a migrated database; deploy/load/sessions.mjs; the built API with MTH_ENV=load; GET each initiative and transformation as its Transformation Lead. Result: 25 of 30 initiative ids and 3 of 3 transformation ids are not RFC UUIDs; the API answers 400 validation.invalid_format 'Invalid UUID' for those 25 initiatives and all 3 transformations (5 initiatives 200). Every DG6 load figure (DO-F run-1, BE-S, DO-G, DO-H) used a scratch copy patched with DO-F's generate-rfc-uuid.patch (sha256 6b2a9007...), which is not in the tree; DO-F section 5 item 1 raised it, DO-G and DO-H restated it as open, and no decision D-193 to D-205 resolved it.",
+      "expected": "REQ-S20-029: 'Exercise a documented realistic load dataset against provisional targets'; deploy/load/README.md documents generate.mjs as the way to produce that dataset. Running the documented, in-tree generator should give a dataset the API can serve, so that the load report can be reproduced from the candidate.",
+      "actual": "Following deploy/load/README.md on the candidate produces a dataset on which most record reads fail with 400 (DO-F measured 881 of 1,000 initiatives on the default profile); the load figures in the register notes come from a file that is not part of the candidate. With the patch applied (my phase B), the measurement itself runs (see the REQ-S20-029 check). Bounded: test tooling only, no product data path; the repair is the one-line-per-site patch DO-F proposed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/14-load-phase-a-tree-generator.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/load-driver.sh",
+        "docs/delivery/test-evidence/DG6/qa/round-1/14-load-phase-b.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1); reproduced end to end against the built API."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-143",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-009",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Administration > Upload policy scrolls horizontally at 360 px in English: the status chip 'Default policy: no organization setting has been saved' does not wrap",
+      "reproduction": "Probe zz-qa-dg6r1-aud-reflow.spec.ts test B (dev.admin, production-initialized stack, viewport 360 x 800, chromium-en): document scrollWidth 385 > clientWidth 360 on /admin/upload-policy. Diagnostic zz-qa-dg6r1-upload-policy-overflow.spec.ts names the element: span.status-chip.status-chip--unknown spanning x 29..385. Arabic is not affected (360 = 360); the other 13 P6 administration screens and the 5 user screens reflow at 360 px, 390 px and 200 % text in both languages, in both locale settings. At 1280 x 900 with the root font at 200 % the same screen gave 1283 > 1280 in 2 of 3 runs (the reflow probe locale unset and C.UTF-8; the single-route diagnostic read 1280 = 1280). The C.UTF-8 run (08f-probe-aud-reflow-cutf8.log) reproduces the 360 px reading exactly (385 > 360).",
+      "expected": "REQ-S15-009 responsive layouts; ADR-0061 reflow: no page-level horizontal scroll at 360 px on P6 screens (the same rule the candidate's own reflow specs apply to other screens).",
+      "actual": "A 25 px page-level horizontal overflow at 360 px in English on one technical administration screen (screenshot 08-probe-out/upload-policy/upload-policy-en-360.png), and a 3 px one at 200 % text in 2 of 3 runs. Cosmetic and limited to a desktop-oriented admin screen; not one of the mobile review, approval or KPI-update flows of the acceptance.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/08b-probe-reflow-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/08c-diag-upload-policy-overflow.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/08-probe-out/upload-policy/upload-policy-en-360.png",
+        "docs/delivery/test-evidence/DG6/qa/round-1/08-probe-out/upload-policy/upload-policy-overflow-en.json",
+        "docs/delivery/test-evidence/DG6/qa/round-1/08f-probe-aud-reflow-cutf8.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-144",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The DG5 carry-forward 'sweep the specs on the default 30 s budget' (F-DG5-145/146, D-193) is not done: 17 product journey specs still run on the default 30 s budget and several fail even when run alone at a 1-minute load of 12-18",
+      "reproduction": "grep -L for test.setTimeout / describe.configure timeout in apps/web/e2e/*.spec.ts lists 17 specs (journeys, p2-blank-text, p3-business-cases, p3-inherited-approval, p3-portfolio, p3-seams, p4-adoption-bau, p4-execution, p4-governance, p4-kpi, p4-route-splitting, p4-traceability, p4-value-headlines, p5-reader-branding-demo, p5-shell, p6-shell, session-end). In this review, run alone on a fresh stack at load 15-18 (06-e2e-product-unset-part2-en.log / -ar.log), p3-seams test 2 (en, ar), p4-adoption-bau test 6 (en, ar), p4-benefits test 8 (en, ar), p4-gates-closure test 6 (en) and p4-value-headlines test 2 (en) failed with 'Test timeout of 30000ms exceeded'; the same tests passed alone at load 3-9 (06-e2e-product-reruns-low-load.log).",
+      "expected": "D-193 carried F-DG5-145/146 to DG6 as 'e2e test budgets; sweep the specs on the default 30 s budget'; p6-work-split section 2 rules 13 and 15 set per-spec budgets from a measured loaded worst case. A journey that needs more than 30 s under the review load should carry an explicit, measured budget so a gate run is not decided by host load.",
+      "actual": "The product journeys are green only on a quiet host: a full run at review load produces 10-40 timeout failures plus their serial followers, which then have to be re-run alone (this review re-ran 70 + 8 + 16 (project, spec) pairs). No assertion failed and no product defect was found behind any of them. Test-only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-unset-part2-en.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-unset-part2-ar.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-reruns-low-load.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-cutf8-en.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1); the same class as F-DG5-145/146, carried forward by D-193."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-145",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two integration tests assert global database state that legitimately changes under load: route-inventory's 'nothing persisted' fingerprint includes public.session (touched once a minute), and dependency-slip-relay's extra relay round counts any unpublished row",
+      "reproduction": "(1) apps/api/test/integration/hardening/route-inventory.test.ts case 4 (and once case 3b) failed in integration run 1 part 1 and in run 2 (04-integration-run2-b2.log): 'tables whose rows changed: expected [ public.session ] to deeply equal []'. touchSession (apps/api/src/modules/identity/sessions.ts) slides the session's idle expiry at most once a minute, so a sweep that takes over 60 s under load writes the caller's session row. Alone: 9/9, case 4 in 12.4 s (04-integration-run2-rerun-alone.log). (2) apps/api/test/integration/automation/dependency-slip-relay.test.ts line 168 'A further relay round publishes nothing more' got {published: 1} in run 1 part 2: the worker started by the test runs its own relay loop and writes further outbox rows after the starter runs, and the test's relayOnce publishes any unpublished row of the database. Alone: 1/1 twice (04-integration-run1-rerun-alone.log).",
+      "expected": "Acceptance and sweep tests that decide a gate should be deterministic under the review load: the route-inventory fingerprint should exclude (or compare semantically) session activity, and the relay assertion should be scoped to the asserted event.",
+      "actual": "Both files fail intermittently on a loaded host and pass alone; no product write or duplicate was found behind either (the asserted outbox row was published once on its first attempt and the execution succeeded once). Test-only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/04-integration-run2-b2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/04-integration-run2-rerun-alone.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/04-integration-run1-part2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/04-integration-run1-rerun-alone.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-146",
+      "stage_id": "DG6",
+      "requirement": "REQ-S16-027",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "createTomGap answers 422 t03.dimension_required instead of the uniform 400 validation body when the contract-required dimensionCode is missing (pinned in the route-inventory sweep, proposed as F-DG6-BE-C2-1, never imported or decided)",
+      "reproduction": "The candidate's route-inventory sweep, case 4 (04-integration-run2-rerun-alone.log: '[route-inventory] case 4 invalid input: reported deviations (handback findings): 4:createTomGap'; statuses {400: 481, 422: 1}). The test pins it in REPORTED_DEVIATIONS: POST /api/v1/transformations/{transformationId}/tom-gaps without dimensionCode -> 422 t03.dimension_required at /dimensionCode, because the route parses with tomGapCreateLenient (apps/api/src/modules/transformations/registers.ts) while the contract's TomGapCreate lists dimensionCode as required. The BE-C2 handback section 5 proposed it as Low finding F-DG6-BE-C2-1; findings.json holds no DG6 finding and no decision covers it.",
+      "expected": "REQ-S16-027 acceptance: 'invalid input returns the uniform 400 body'; ADR-0051 section 5 case 4. Either the route parses with tomGapCreate (400), or the contract makes dimensionCode optional and keeps the 422, with the pin removed in the same change.",
+      "actual": "One of 482 swept operations returns 422 for a contract-violating body. The input is rejected and nothing is persisted, with a problem body and a pointer; only the status and type differ.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/04-integration-run2-rerun-alone.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1) so that the implementer's unimported proposal is tracked."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-147",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-030",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Fifty simultaneous export starts on the full load dataset miss ADR-0058 section 7's 2 s 'immediately' target even on a host meeting D-202's idle criterion (38 of 50 over 2 s; p95 2.31 s)",
+      "reproduction": "Driver docs/delivery/test-evidence/DG6/qa/tests/round-1/export-proof-idle-driver.sh inside tests/qa/support/with-pg.sh, DO-H's method: a fresh default load database from the patched generator copy (sha256 6b2a9007..., the one every DG6 figure used), 100 sessions, the reindex, a fresh API and worker, a wait until the 1-minute load average was 0.95 (<= 1.0, after 616 s), then deploy/load/export-proof.mjs unchanged (sha256 7865d9d3..., START_TARGET_MS 2000). Part A (LOAD-T01, 16 exports): 0 of 16 over 2 s (max 307 ms). Part B (50 exports queued at once by 50 users): 38 of 50 over 2 s (2.00-2.31 s; p50 2.12 s, p95 2.31 s). The earlier run on the same host right after the workload (1-minute load 4.6): 20 of 50 over 2 s (p95 2.24 s). Both reports: 14-load/export-proof-idle.json and 14-load/export-proof.json.",
+      "expected": "REQ-S20-030 acceptance 'exporting the full load dataset returns immediately with a job ID', read by ADR-0058 section 7 as createExport answering 202 with the job id within 2 s, including part B's 50 concurrent starts; ADR-0058 section 1 makes a miss against a provisional target a Medium finding. D-202 accepted the row on DO-H's idle re-measurement (0 of 150 over 2 s, max 1.58 s).",
+      "actual": "My idle-criterion measurement reproduces the misses DO-G (24 of 50) and BE-S (48 of 50) saw, not DO-H's result: with 50 simultaneous starts on one API process the start latency sits at 2.0-2.3 s. Every other clause held in both runs (66/66 got 202 with a job id; progress non-decreasing to 100; succeeded; requester download 200; the same-scope other user and the AUD user got 404 on the job and the download). The register notes and BE-S name the likely cause: the snapshot is assembled inside the request. Provisional sandbox figures on one 4-vCPU host, not Mobily capacity; still, the margin D-202 relied on did not hold in an independent run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-1/14-load-export-proof-idle.log",
+        "docs/delivery/test-evidence/DG6/qa/round-1/14-load/export-proof-idle.json",
+        "docs/delivery/test-evidence/DG6/qa/round-1/14-load/export-proof.json",
+        "docs/delivery/test-evidence/DG6/qa/round-1/14-load-export-proof-summary.txt",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/export-proof-idle-driver.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 1 (T-DG6-REV-QA-R1); independent re-measurement contradicts the idle basis of D-202."
+        }
+      ]
+    }
+  ]
+}
