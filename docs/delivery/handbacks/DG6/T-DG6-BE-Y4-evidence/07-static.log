@@ -1,0 +1,37 @@
+$ pnpm -r typecheck (22:08:32)
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/api typecheck: Killed
+apps/api typecheck: Failed
+/home/user/wt/dg6-be-y4/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/api@0.1.0 typecheck: `tsc -p tsconfig.json`
+Exit status 137
+EXIT=137
+$ pnpm -r build (22:18:36)
+apps/worker build: Done
+apps/api build: Killed
+apps/api build: Failed
+/home/user/wt/dg6-be-y4/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/api@0.1.0 build: `tsc -p tsconfig.build.json`
+Exit status 137
+EXIT=137
+$ pnpm lint (22:29:21)
+
+> mobily-transformation-hub@0.1.0 lint /home/user/wt/dg6-be-y4
+> eslint . --max-warnings=0
+
+EXIT=0
+$ pnpm openapi:lint (22:32:20)
+
+> mobily-transformation-hub@0.1.0 openapi:lint /home/user/wt/dg6-be-y4
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 932 operations
+EXIT=0
+$ git ls-files -co --exclude-standard -z | xargs -0 npx prettier --check --ignore-unknown (22:32:22)
+Checking formatting...
+All matched files use Prettier code style!
+Checking formatting...
+All matched files use Prettier code style!
+Checking formatting...
+All matched files use Prettier code style!
+EXIT=0

@@ -96,6 +96,9 @@ const registersExport = (s: Session) =>
   });
 const exportJobsOf = (userId: string) =>
   api.db.selectFrom("export_job").select("id").where("requested_by", "=", userId).execute();
+/** T-DG6-BE-Y4 (F-DG6-147): the snapshots a user generated (a live-selection export writes one in its transaction). */
+const snapshotsBy = (userId: string) =>
+  api.db.selectFrom("report_snapshot").select("id").where("created_by", "=", userId).execute();
 
 beforeAll(async () => {
   api = await startApi();
@@ -368,9 +371,13 @@ describe("rollups (D-195 Q3): identical totals, labelled for the reader without 
 describe("REQ-S10-004: export selection through the ReadScope", () => {
   it("the member's export of the benefits register is 403 and writes nothing; the owner exports it", async () => {
     const before = await exportJobsOf(member.userId);
+    const snapshotsBefore = await snapshotsBy(member.userId);
     const res = await registersExport(member);
     expectRestrictedExportRefusal(res);
     expect(await exportJobsOf(member.userId)).toEqual(before);
+    // T-DG6-BE-Y4 (F-DG6-147): the live selection's snapshot is written in the job's transaction, so the refused
+    // start leaves no snapshot either (before: it was committed in its own transaction, then the export refused).
+    expect(await snapshotsBy(member.userId)).toEqual(snapshotsBefore);
     ok(await registersExport(b.s.bo), 202);
   });
 

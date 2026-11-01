@@ -118,16 +118,29 @@ async function requireWriteAtCommit(
 
 // ------------------------------------------------------------------------------------------------ canonical JSON
 
-/** Code-point order (not UTF-16 code units; they differ only above U+FFFF). */
-function compareCodePoints(a: string, b: string): number {
-  const x = Array.from(a, (c) => c.codePointAt(0) ?? 0);
-  const y = Array.from(b, (c) => c.codePointAt(0) ?? 0);
-  const n = Math.min(x.length, y.length);
+/**
+ * Code-point order (not UTF-16 code units; they differ only above U+FFFF). Only the sign is used (the key sort).
+ * T-DG6-BE-Y4 (F-DG6-147): allocation-free. The two strings are compared by UTF-16 code unit up to the first
+ * difference; there the units are "fixed up" so that surrogates (code points >= U+10000) sort above U+E000-U+FFFF,
+ * which gives exactly code-point order for well-formed strings. A prefix in code units is a prefix in code points,
+ * so the length difference has the same sign. Same order as the earlier Array.from comparison, so the canonical JSON
+ * and every stored content_sha256 are unchanged (reports.test.ts pins both).
+ */
+export function compareCodePoints(a: string, b: string): number {
+  const n = Math.min(a.length, b.length);
   for (let i = 0; i < n; i += 1) {
-    const d = (x.at(i) ?? 0) - (y.at(i) ?? 0);
-    if (d !== 0) return d;
+    const x = a.charCodeAt(i);
+    const y = b.charCodeAt(i);
+    if (x !== y) return fixUp(x) - fixUp(y);
   }
-  return x.length - y.length;
+  return a.length - b.length;
+}
+
+/** U+D800-U+DFFF (surrogates) above U+E000-U+FFFF; BMP order otherwise unchanged. */
+function fixUp(unit: number): number {
+  if (unit >= 0xe000) return unit - 0x800;
+  if (unit >= 0xd800) return unit + 0x2000;
+  return unit;
 }
 
 /**
@@ -553,6 +566,21 @@ async function insertSnapshot(
     },
   });
   return row;
+}
+
+/**
+ * T-DG6-BE-Y4 (F-DG6-147): the snapshot of an assembly written inside the CALLER's write transaction, by the actor the
+ * caller authorized at commit time (`report.generate` on reloaded grants). createExport's live selection writes the
+ * snapshot and its export job in ONE transaction with this; the rows and the `report_snapshot.generate` audit event
+ * are exactly those of generateSnapshot.
+ */
+export function insertGeneratedSnapshot(
+  tx: Tx,
+  request: FastifyRequest,
+  userId: string,
+  a: Assembly,
+): Promise<ReportSnapshotRow> {
+  return insertSnapshot(tx, request, userId, a, null);
 }
 
 /** POST …/reports/{code}/generate: assembly (read-only), then the write transaction. */

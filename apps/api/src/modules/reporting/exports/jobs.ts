@@ -57,7 +57,12 @@ import {
   paginate,
   problems,
 } from "../../platform/index.ts";
-import { generateSnapshot, requireReportPermission } from "../reports/snapshots.ts";
+import {
+  assembleReport,
+  insertGeneratedSnapshot,
+  requireReportPermission,
+  type Assembly,
+} from "../reports/snapshots.ts";
 
 export const EXPORT_REQUESTED_EVENT = "export_job.requested";
 // The closed sets, ExportCreate and the ExportJob mirrors live in @mth/shared/schemas (export-jobs.ts; promoted by
@@ -293,8 +298,11 @@ async function definitionOf(db: DbOrTx, code: string) {
  * The transformation of a live selection, from its subject (the request names no transformation; ExportLiveSelection
  * has none): the subject is required, and for a transformation-level output it IS the transformation.
  */
-async function liveTransformationId(db: DbOrTx, sel: z.infer<typeof exportLiveSelection>): Promise<string> {
-  const def = await definitionOf(db, sel.definitionCode);
+async function liveTransformationId(
+  db: DbOrTx,
+  sel: z.infer<typeof exportLiveSelection>,
+  def: Awaited<ReturnType<typeof definitionOf>>,
+): Promise<string> {
   if (sel.subjectId === undefined) throw exportRefusals.subjectInvalid();
   if (def.subject_type === "transformation") return sel.subjectId;
   const table = SUBJECT_TABLES.get(def.subject_type as ReportSubjectType);
@@ -381,30 +389,35 @@ export async function createExport(
     if (existing !== undefined) return replay(db, principal, existing, body);
   }
 
-  // The snapshot: an existing one, or a live selection generated first (its own audited transaction, ADR-0045 §2).
-  let snapshotId: string;
+  // The snapshot: an existing one, or a live selection assembled first (ADR-0045 §2, ADR-0046 §2).
+  // T-DG6-BE-Y4 (F-DG6-147): a live selection is assembled (read-only) before the write transaction and its snapshot
+  // is written IN the job's transaction: one transaction, one grant reload and one restricted-source check per start,
+  // where there were two of each (generateSnapshot's own transaction, then the job's) plus a third permission check.
+  // The rows, the audit events (report_snapshot.generate, export_job.create) and every refusal are unchanged; a
+  // refused start now leaves no orphan snapshot either.
+  let snapshotId: string | null = null;
   let transformationId: string;
+  let assembly: Assembly | null = null;
   if (body.snapshotId !== undefined) {
     const s = await exportableSnapshot(db, principal, body.snapshotId, body.format);
     snapshotId = s.id;
     transformationId = s.transformation_id;
+    await requireUnrestrictedSelection(db, principal, snapshotId);
   } else {
     const sel = body.report!;
-    transformationId = await liveTransformationId(db, sel);
+    const def = await definitionOf(db, sel.definitionCode);
+    transformationId = await liveTransformationId(db, sel, def);
     await requireReportPermission(db, principal, transformationId, "export.create");
     await requireReportPermission(db, principal, transformationId, "report.generate");
-    const def = await definitionOf(db, sel.definitionCode);
     if (!def.formats.includes(body.format)) throw exportRefusals.formatNotOffered();
-    const generated = await generateSnapshot(db, request, {
+    assembly = await assembleReport(db, {
       definitionCode: sel.definitionCode,
       transformationId,
       subjectId: sel.subjectId,
       reportingPeriodId: sel.reportingPeriodId,
       parameters: sel.parameters ?? {},
     });
-    snapshotId = generated.id;
   }
-  await requireUnrestrictedSelection(db, principal, snapshotId);
 
   return db.transaction().execute(async (tx) => {
     // Commit-time re-authorization: the grants are reloaded inside the write transaction (shared rule 4).
@@ -412,25 +425,38 @@ export async function createExport(
     try {
       await requireReportPermission(tx, fresh, transformationId, "export.create");
       if (body.report !== undefined) await requireReportPermission(tx, fresh, transformationId, "report.generate");
-      await requireUnrestrictedSelection(tx, fresh, snapshotId);
+      if (snapshotId !== null) await requireUnrestrictedSelection(tx, fresh, snapshotId);
     } catch (err) {
       throw commitTimeDenial(err);
     }
-    const s = await tx
-      .selectFrom("report_snapshot")
-      .select(["organization_id", "status"])
-      .where("id", "=", snapshotId)
-      .forShare()
-      .executeTakeFirstOrThrow();
-    if (s.status === "discarded") throw exportRefusals.snapshotDiscarded();
+    let organizationId: string;
+    if (assembly !== null) {
+      // The live selection's snapshot, written by the requester (authorized above on the reloaded grants).
+      const generated = await insertGeneratedSnapshot(tx, request, userId, assembly);
+      snapshotId = generated.id;
+      organizationId = generated.organization_id;
+      // D-199: the export of a snapshot with a source the requester is not admitted to is refused (403); the whole
+      // transaction, snapshot included, rolls back.
+      await requireUnrestrictedSelection(tx, fresh, snapshotId);
+    } else {
+      const s = await tx
+        .selectFrom("report_snapshot")
+        .select(["organization_id", "status"])
+        .where("id", "=", snapshotId!)
+        .forShare()
+        .executeTakeFirstOrThrow();
+      if (s.status === "discarded") throw exportRefusals.snapshotDiscarded();
+      organizationId = s.organization_id;
+    }
+    const exportedSnapshotId: string = snapshotId!;
     const id = uuidv7();
     const inserted = await tx
       .insertInto("export_job")
       .values({
         id,
-        organization_id: s.organization_id,
+        organization_id: organizationId,
         transformation_id: transformationId,
-        snapshot_id: snapshotId,
+        snapshot_id: exportedSnapshotId,
         requested_by: userId,
         format: body.format,
         language: body.language,
@@ -451,26 +477,27 @@ export async function createExport(
         .executeTakeFirstOrThrow();
       return replay(tx, fresh, winner, body);
     }
-    await tx
+    const progress = await tx
       .insertInto("export_job_progress")
-      .values({ export_job_id: id, organization_id: s.organization_id })
-      .execute();
+      .values({ export_job_id: id, organization_id: organizationId })
+      .returningAll()
+      .executeTakeFirstOrThrow();
     await record(tx, auditContextOf(request), {
       action: "export_job.create",
       recordType: "export_job",
       recordId: id,
-      organizationId: s.organization_id,
+      organizationId,
       transformationId,
       newVersion: 1,
       changes: {
-        snapshot_id: { from: null, to: snapshotId },
+        snapshot_id: { from: null, to: exportedSnapshotId },
         format: { from: null, to: body.format },
         language: { from: null, to: body.language },
         status: { from: null, to: "queued" },
       },
     });
-    await enqueueExportRequested(tx, s.organization_id, id);
-    return { status: 202 as const, job: toExportJob(inserted, await progressOf(tx, id)) };
+    await enqueueExportRequested(tx, organizationId, id);
+    return { status: 202 as const, job: toExportJob(inserted, progress) };
   });
 }
 

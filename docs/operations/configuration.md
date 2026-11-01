@@ -66,11 +66,11 @@ user ids. The Administration > Security page that displays it is a planned P6 it
 |---|---|---|---|---|
 | global | `RATE_LIMIT_PER_MINUTE` | 300 | user, else client IP | every operation without a class |
 | auth | `AUTH_RATE_LIMIT_PER_MINUTE` | 20 | client IP | `startOidcLogin`, `completeOidcLogin`, `devLogin` |
-| upload | `UPLOAD_RATE_LIMIT_PER_MINUTE` | 30 | user, else client IP | `uploadEvidenceContent` (the import upload joins when it ships) |
+| upload | `UPLOAD_RATE_LIMIT_PER_MINUTE` | 30 | user, else client IP | `uploadEvidenceContent`, `createImport` (the import upload) |
 | search | `SEARCH_RATE_LIMIT_PER_MINUTE` | 120 | user, else client IP | none yet (global search, a planned P6 item) |
 | assistant | `ASSISTANT_RATE_LIMIT_PER_MINUTE` | 20 | user, else client IP | none yet (assistant messages, a planned P6 item) |
 | webhook | `WEBHOOK_RATE_LIMIT_PER_MINUTE` | 600 | webhook endpoint key | none yet (webhook receivers, a planned P6 item) |
-| export | `EXPORT_RATE_LIMIT_PER_MINUTE` | 10 | user, else client IP | none yet (export starts join through their owner) |
+| export | `EXPORT_RATE_LIMIT_PER_MINUTE` | 10 | user, else client IP | `createExport` (export start) |
 
 The "operations wired" column describes this tree. The authoritative list is the running API's
 `getSecurityRateLimits` response, which a test pins to the routes that declare each class

@@ -80,7 +80,7 @@ describe("getSecurityRateLimits", () => {
           variable: "UPLOAD_RATE_LIMIT_PER_MINUTE",
           perMinute: 301,
           keyedBy: "user_or_ip",
-          operationIds: ["uploadEvidenceContent"],
+          operationIds: ["uploadEvidenceContent", "createImport"], // createImport: T-DG6-BE-Y4 (F-DG6-141)
         },
         {
           name: "search",
@@ -108,7 +108,7 @@ describe("getSecurityRateLimits", () => {
           variable: "EXPORT_RATE_LIMIT_PER_MINUTE",
           perMinute: 101,
           keyedBy: "user_or_ip",
-          operationIds: [],
+          operationIds: ["createExport"], // T-DG6-BE-Y4 (F-DG6-141)
         },
       ],
     });

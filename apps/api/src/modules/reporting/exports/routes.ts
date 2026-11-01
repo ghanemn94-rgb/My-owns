@@ -19,6 +19,7 @@ import {
   parseBody,
   parseQuery,
   problems,
+  rateLimitClass,
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
@@ -55,7 +56,8 @@ export function registerExportRoutes(app: FastifyInstance, deps: ModuleDeps): st
 
   app.post(
     BASE,
-    { config: { access: { permission: "export.create" }, consumes: JSON_BODY } },
+    // T-DG6-BE-Y4 (F-DG6-141; ADR-0052 §4): export start is in the `export` class (EXPORT_RATE_LIMIT_PER_MINUTE).
+    { config: { access: { permission: "export.create" }, consumes: JSON_BODY, ...rateLimitClass("export") } },
     async (request, reply) => {
       const raw = request.headers["idempotency-key"];
       const key = Array.isArray(raw) ? raw[0] : raw;
