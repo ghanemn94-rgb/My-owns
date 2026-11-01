@@ -456,8 +456,11 @@ export const toTomGap = (r: TomGapRow): TomGap => ({
   status: r.status as TomGap["status"],
   ...archiveOf(r),
 });
-/** T03: a row without a TOM dimension is a 422 template violation (B0058), checked here and by NOT NULL. */
-const tomGapCreateLenient = tomGapCreate.partial({ dimensionCode: true });
+/**
+ * T03: a row needs its TOM dimension (B0058). On create the contract's TomGapCreate requires dimensionCode, so its
+ * absence is the uniform 400 validation body (F-DG6-146; REQ-S16-027; ADR-0051 §5 case 4); `check` still refuses a row
+ * whose dimension would be null (422, and NOT NULL in the table) for any other path.
+ */
 export const tomGapRegister: RegisterSpec<TomGapRow, TomGap> = {
   table: "tom_gap",
   path: `${T}/tom-gaps`,
@@ -465,10 +468,10 @@ export const tomGapRegister: RegisterSpec<TomGapRow, TomGap> = {
   searchColumns: ["dimension_code", "current_state", "target_state", "gap"],
   sortColumns: registerSortColumns([["dimensionCode", "dimension_code", "text"]]),
   writeRules: [{ permission: "tom.edit" }, { permission: "tom.contribute", scope: "own" }],
-  createSchema: tomGapCreateLenient,
+  createSchema: tomGapCreate,
   updateSchema: tomGapUpdate,
   toApi: toTomGap,
-  insertValues: (b: z.infer<typeof tomGapCreateLenient>) => ({ dimension_code: null, ...pick(b, TOM_GAP_COLS) }),
+  insertValues: (b: z.infer<typeof tomGapCreate>) => pick(b, TOM_GAP_COLS),
   updateValues: (b: z.infer<typeof tomGapUpdate>) => pick(b, TOM_GAP_COLS),
   check: async (m, ctx) => {
     if ((col(m, "dimension_code") ?? null) === null)

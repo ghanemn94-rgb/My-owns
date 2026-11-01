@@ -339,12 +339,14 @@ describe("T01 / T03 template rules and record-level rules", () => {
     expect([unknownDim.status, unknownDim.body.code]).toEqual([422, "validation.unknown_code"]);
   });
 
-  it("T03: a gap without a TOM dimension is 422 (pointer /dimensionCode); the design decision must be T04 of this transformation", async () => {
+  it("T03: a gap without a TOM dimension is the uniform 400 (pointer /dimensionCode); the design decision must be T04 of this transformation", async () => {
+    // The contract's TomGapCreate requires dimensionCode: its absence is a validation error, the uniform 400 body
+    // (REQ-S16-027; F-DG6-146), no longer the 422 business rule t03.dimension_required.
     const res = await call(api.app, "POST", `${T}/tom-gaps`, {
       session: p.lead.session,
       body: { gap: "Missing dimension" },
     });
-    expect(res.status).toBe(422);
+    expect([res.status, res.body.type]).toEqual([400, "urn:mth:problem:validation"]);
     expect(res.body.errors[0].pointer).toBe("/dimensionCode");
     const wrongDecision = await call(api.app, "POST", `${T}/tom-gaps`, {
       session: p.lead.session,

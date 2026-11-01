@@ -19,6 +19,7 @@ import {
   DATA_STALE_EVENT,
   EXCEPTION_RAISE_HANDLER,
   FRESHNESS_SCAN_HANDLER,
+  kpiFreshness,
   setOperationsAlertLogger,
 } from "../../../../worker/src/handlers/operations.ts";
 import {
@@ -311,6 +312,14 @@ describe("a linked KPI keeps its last known value while a later period is open (
         ...stale,
       },
     ]);
+    // The worker's freshness read agrees (F-DG6-100/F-DG6-140): the empty later period does not hide the stale value,
+    // so the scan keeps seeing the same stale episode (no new event).
+    const worker = await kpiFreshness(
+      api.db,
+      { id: kpiId, organization_id: w.orgA.id, transformation_id: t, frequency: "monthly" },
+      await businessToday(),
+    );
+    expect([worker.freshness, worker.lastValue, worker.dataAsOf]).toEqual(["stale", "250.75", "2026-01-31"]);
   });
 
   it("parity with the DG4 panel for the period that holds the value; the panel's own default period is unchanged", async () => {

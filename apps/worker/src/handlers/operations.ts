@@ -5,9 +5,10 @@
 //
 // kpi.freshness_scan (hourly, 0117). Per organization, through the job's principal (`transformation.read` for the KPI
 //   reads, `operations.read` for the exception reads; a narrowed grant fails the run with service_identity.out_of_scope):
-//   every active KPI definition is read as the DG4 panel reads it for its transformation and current reporting period
-//   (the latest period evaluation with the ADR-0028 read-time staleness rule of @mth/shared; the twin of
-//   apps/api operations/exceptions.ts `linkedKpiStatus`, itself the parity of kpi/kpi-status.ts). Nothing is written to
+//   every active KPI definition's last known value is read at transformation scope (the newest open or closed period
+//   whose panel evaluation carries a value, with the ADR-0028 read-time staleness rule of @mth/shared; the twin of
+//   apps/api operations/exceptions.ts `linkedKpiStatus`, itself the parity of kpi/kpi-status.ts per period; an empty
+//   later period never hides staleness, F-DG6-100/F-DG6-140). Nothing is written to
 //   any KPI table: the value and its freshness label stay DG4's (ADR-0053 §2 "retain last known values").
 //     - `stale`  -> one `data.stale` outbox event per stale EPISODE, key `data.stale:<kpiId>:<dataAsOf>` (UNIQUE
 //                   outbox_event_idempotency_key: a replay or the next hourly scan of the same episode writes nothing);
@@ -136,9 +137,10 @@ export interface KpiFreshnessRead {
 }
 
 /**
- * The DG4 read of one KPI at transformation scope for its current reporting period: the latest open or closed period of
- * its frequency, the newest evaluation of that period (by calculation run), and the read-time staleness rule of
- * @mth/shared (ADR-0028), unchanged. Reads only; a missing version, period or evaluation is Unknown with a null value.
+ * The last known value of one KPI at transformation scope (the twin of the API's linkedKpiStatus): the newest open or
+ * closed period of its frequency whose panel evaluation (the slot's highest run seq) carries a value, with the read-time
+ * staleness rule of @mth/shared (ADR-0028), unchanged. Reads only; a missing version, or no value in any period, is
+ * Unknown with a null value (never 0).
  */
 export async function kpiFreshness(
   db: DbOrTx,
@@ -161,26 +163,49 @@ export async function kpiFreshness(
     staleAfterDays,
   };
   if (!version) return unknown;
-  const period = await db
-    .selectFrom("reporting_period")
-    .select("id")
-    .where("organization_id", "=", kpi.organization_id)
-    .where("frequency", "=", kpi.frequency)
-    .where("status", "in", ["open", "closed"])
-    .orderBy("period_end", "desc")
-    .limit(1)
-    .executeTakeFirst();
-  if (!period) return unknown;
+  // The latest accepted value across periods (F-DG6-100/F-DG6-140; M0239; ADR-0053 §2): the newest open or closed
+  // period of the KPI's frequency whose panel evaluation (the slot's highest run seq, as kpi-status.ts) carries a value,
+  // the same rule as the API's linkedKpiStatus (T-DG6-BE-X4). A later period without one (the current month, opened
+  // automatically by kpi.reporting_period_open, which the stopped feed never filled) never hides the last value, so its
+  // data-as-of turns Stale against dq_stale_after_days. No value in any period stays Unknown.
   const evaluation = await db
-    .selectFrom("kpi_evaluation as e")
-    .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
-    .select(["e.value", "e.value_status", "e.value_reason", "e.calculated_rag", "e.explanation_key", "e.data_as_of"])
-    .where("e.kpi_definition_id", "=", kpi.id)
-    .where("e.scope_kind", "=", "transformation")
-    .where("e.scope_id", "=", kpi.transformation_id)
-    .where("e.reporting_period_id", "=", period.id)
-    .where("e.value_basis", "=", "period")
-    .orderBy("r.seq", "desc")
+    .selectFrom("reporting_period as p")
+    .innerJoinLateral(
+      (eb) =>
+        eb
+          .selectFrom("kpi_evaluation as e")
+          .innerJoin("calculation_run as r", "r.id", "e.calculation_run_id")
+          .select([
+            "e.value",
+            "e.value_status",
+            "e.value_reason",
+            "e.calculated_rag",
+            "e.explanation_key",
+            "e.data_as_of",
+          ])
+          .where("e.kpi_definition_id", "=", kpi.id)
+          .where("e.scope_kind", "=", "transformation")
+          .where("e.scope_id", "=", kpi.transformation_id)
+          .whereRef("e.reporting_period_id", "=", "p.id")
+          .where("e.value_basis", "=", "period")
+          .orderBy("r.seq", "desc")
+          .limit(1)
+          .as("ev"),
+      (join) => join.onTrue(),
+    )
+    .select([
+      "ev.value",
+      "ev.value_status",
+      "ev.value_reason",
+      "ev.calculated_rag",
+      "ev.explanation_key",
+      "ev.data_as_of",
+    ])
+    .where("p.organization_id", "=", kpi.organization_id)
+    .where("p.frequency", "=", kpi.frequency)
+    .where("p.status", "in", ["open", "closed"])
+    .where("ev.value", "is not", null)
+    .orderBy("p.period_end", "desc")
     .limit(1)
     .executeTakeFirst();
   if (!evaluation) return unknown;
