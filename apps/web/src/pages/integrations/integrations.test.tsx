@@ -254,57 +254,103 @@ describe.each(LOCALES)("connectors (%s)", (locale) => {
   });
 });
 
+// F-DG6-102: the budget of each step of the retry chain (POST, then the refetch and navigation, then the new attempt's
+// render), and of the test. Measured (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f102-measure-chain.log and
+// f102-before-after-loaded.log; MTH_UNIT_WEB_TIMING_REPORT=1 prints the marks): run alone at a 1-minute load of 24-29 on
+// 4 CPUs, click to rendered took at most 1.9 s (slowest step 1.4 s); in the whole file at a load of 31-36 the test took
+// at most 27.3 s, its first render included. Each step gets 15 s (about 8x the slowest chain) and the test 60 s (2x).
+const RETRY_CHAIN_WAIT = { timeout: 15_000 };
+const RETRY_CHAIN_TEST_TIMEOUT_MS = 60_000;
+
 describe("integration run detail", () => {
-  it("shows the retry chain and retries a failed run once", async () => {
-    const i18n = i18nFor("en");
-    const t = i18n.t.bind(i18n);
-    let retried = false;
-    const api = mockApi(
-      meRoute(KDS),
-      route("POST", new RegExp(`/runs/${RUN_FAILED}/retry$`), () => {
-        retried = true;
-        return { status: 202, body: run({ id: RUN_RETRY, status: "queued", attemptNo: 2, retryOfRunId: RUN_FAILED }) };
-      }),
-      route("GET", new RegExp(`/runs/${RUN_RETRY}$`), () => ({
-        status: 200,
-        body: {
-          run: run({ id: RUN_RETRY, status: "queued", attemptNo: 2, retryOfRunId: RUN_FAILED, errorCode: null }),
-          retriedByRunId: null,
-          events: [],
-          actionableError: null,
-        },
-      })),
-      route("GET", new RegExp(`/runs/${RUN_FAILED}$`), () => ({
-        status: 200,
-        body: {
-          run: run(),
-          retriedByRunId: retried ? RUN_RETRY : null,
-          events: [
-            {
-              recordVersion: 1,
-              status: "queued",
-              rowsRead: null,
-              rowsStaged: null,
-              rowsCommitted: null,
-              rowsRejected: null,
-              rowsDuplicate: null,
-              errorCount: null,
-              errorCode: null,
-              occurredAt: "2026-10-30T08:00:00Z",
-            },
-          ],
-          actionableError: connector().actionableError,
-        },
-      })),
-      ...connectorRoutes(),
-    );
-    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/runs/${RUN_FAILED}`, { i18n });
-    expect(await screen.findByText(t("integrations.run.firstAttempt"))).toBeTruthy();
-    expect(screen.getByText(t("integrations.run.notRetried"))).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: t("integrations.run.retry") }));
-    await waitFor(() => expect(api.requests.some((r) => r.method === "POST" && /retry$/.test(r.url))).toBe(true));
-    expect(await screen.findByRole("link", { name: t("integrations.run.openPrevious") })).toBeTruthy();
-  });
+  it(
+    "shows the retry chain and retries a failed run once",
+    async () => {
+      const i18n = i18nFor("en");
+      const t = i18n.t.bind(i18n);
+      let retried = false;
+      const api = mockApi(
+        meRoute(KDS),
+        route("POST", new RegExp(`/runs/${RUN_FAILED}/retry$`), () => {
+          retried = true;
+          return {
+            status: 202,
+            body: run({ id: RUN_RETRY, status: "queued", attemptNo: 2, retryOfRunId: RUN_FAILED }),
+          };
+        }),
+        route("GET", new RegExp(`/runs/${RUN_RETRY}$`), () => ({
+          status: 200,
+          body: {
+            run: run({ id: RUN_RETRY, status: "queued", attemptNo: 2, retryOfRunId: RUN_FAILED, errorCode: null }),
+            retriedByRunId: null,
+            events: [],
+            actionableError: null,
+          },
+        })),
+        route("GET", new RegExp(`/runs/${RUN_FAILED}$`), () => ({
+          status: 200,
+          body: {
+            run: run(),
+            retriedByRunId: retried ? RUN_RETRY : null,
+            events: [
+              {
+                recordVersion: 1,
+                status: "queued",
+                rowsRead: null,
+                rowsStaged: null,
+                rowsCommitted: null,
+                rowsRejected: null,
+                rowsDuplicate: null,
+                errorCount: null,
+                errorCode: null,
+                occurredAt: "2026-10-30T08:00:00Z",
+              },
+            ],
+            actionableError: connector().actionableError,
+          },
+        })),
+        ...connectorRoutes(),
+      );
+      renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/runs/${RUN_FAILED}`, { i18n });
+      expect(await screen.findByText(t("integrations.run.firstAttempt"), {}, RETRY_CHAIN_WAIT)).toBeTruthy();
+      expect(screen.getByText(t("integrations.run.notRetried"))).toBeTruthy();
+      // F-DG6-102: after the click the page posts the retry, refetches the integrations queries, navigates to the new
+      // attempt and fetches it. Each step is awaited on its own, with the measured RETRY_CHAIN_WAIT budget, instead of
+      // one findBy* with the 5 s default covering the whole chain (which failed in 2 of 3 runs at a load of about 20).
+      const started = performance.now();
+      const mark: Record<string, number> = {};
+      const since = () => Math.round(performance.now() - started);
+      fireEvent.click(screen.getByRole("button", { name: t("integrations.run.retry") }));
+      await waitFor(
+        () => expect(api.requests.some((r) => r.method === "POST" && /retry$/.test(r.url))).toBe(true),
+        RETRY_CHAIN_WAIT,
+      );
+      mark["post"] = since();
+      // The navigation to the new attempt: its detail is requested (only the new route asks for RUN_RETRY).
+      await waitFor(
+        () =>
+          expect(api.requests.some((r) => r.method === "GET" && new RegExp(`/runs/${RUN_RETRY}$`).test(r.url))).toBe(
+            true,
+          ),
+        RETRY_CHAIN_WAIT,
+      );
+      mark["navigated"] = since();
+      // The new attempt is rendered: its heading names attempt 2, and it links back to the failed attempt.
+      const nextHeading = t("integrations.run.heading", {
+        trigger: t(`integrations.trigger.${run().triggerKind}`),
+        attempt: 2,
+      });
+      await screen.findByRole("heading", { level: 1, name: nextHeading }, RETRY_CHAIN_WAIT);
+      expect(
+        await screen.findByRole("link", { name: t("integrations.run.openPrevious") }, RETRY_CHAIN_WAIT),
+      ).toBeTruthy();
+      mark["rendered"] = since();
+      if (process.env["MTH_UNIT_WEB_TIMING_REPORT"] === "1") {
+        process.stderr.write(`[retry-chain] ${JSON.stringify(mark)} ms\n`);
+      }
+    },
+    RETRY_CHAIN_TEST_TIMEOUT_MS,
+  );
 });
 
 function write(over: Partial<OutboundWrite> = {}): OutboundWrite {

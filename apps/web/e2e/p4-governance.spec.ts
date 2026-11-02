@@ -31,6 +31,15 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 75 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 15-26 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 20.5 s ([chromium-en] :311 administration: calendar and jobs; governance: g...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-p4-governance.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test timed out at the default
+// 30 s (33.1 s reported), so at least that long.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+test.setTimeout(75_000);
+
 let tid = "";
 let T = "";
 let orgId = "";

@@ -10,6 +10,14 @@
 import { expect, test } from "@playwright/test";
 import { langOf, shot, signIn, tr, trackRequests } from "./support/ui.ts";
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 14-17 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 4.4 s ([chromium-ar] :66 P6: Administration > security opens its screen, n...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-p6-shell.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test took 5.4 s.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+test.setTimeout(60_000);
+
 /** The P6 Administration entries and their placeholder feature ids (app/nav.ts P6_SUBPAGES, app/router.tsx). */
 const ENTRIES: readonly { id: string; path: string; feature: string }[] = [
   { id: "audit", path: "/admin/audit", feature: "audit" },
