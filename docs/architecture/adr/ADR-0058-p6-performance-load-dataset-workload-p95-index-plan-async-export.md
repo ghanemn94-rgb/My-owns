@@ -157,3 +157,18 @@ Sources: D-207 (`docs/delivery/decisions.md`, read verbatim), F-DG6-147, and the
 - **Unchanged.** The export of an existing snapshot, §7's reading of "the full load dataset" (D-199 ARCH-04 §5 (2)), `EXPORT_MAX_BYTES` and the requester-only download.
 
 Requirement row: REQ-S20-030. These figures are engineering measurements on the stated sandbox host, not a Mobily capacity statement. Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
+
+## Amendment (2026-11-02, T-DG6-ARCH-12; D-207, F-DG6-147): §7 and T2 against what T-DG6-BE-Y5 shipped
+
+### T3. What the 2 s start now contains, as shipped
+
+- **T2 holds as written**, with the names of ADR-0046 amendment R. "The API snapshot watch" is the **export assembly watch** (`apps/api/src/modules/reporting/exports/assembly.ts`). It runs every 1 s (`EXPORT_ASSEMBLY_INTERVAL_MS`) and right after each pending 202 (`kick`), with 2 concurrent claims per API process (`EXPORT_ASSEMBLY_CONCURRENCY`).
+- **The in-request work of a live-selection start depends on the requester** (ADR-0046 R3):
+  - When the requester is restricted from **no** record of the transformation, the start does no assembly. It runs one indexed `record_sensitivity` query instead. This is the case for every user of the synthetic load dataset, which has no sensitive marks.
+  - When the requester **is** restricted from some record of the transformation, the start still assembles the report read-only in the request, to keep D-199's synchronous 403. Such a start costs about what a DG5 start cost.
+  - The proof's workload (§3) has no such user. So a 2 s result on the load dataset says nothing about starts by restricted requesters, and the report must say so rather than generalise. This is stated, not hidden: a sensitive-marks workload is not part of M0398's proof.
+- **Completion time includes queueing at the watch.** With 50 simultaneous starts, assembly runs 2 at a time per API process, so the last job's snapshot arrives later than the first. §7 and T2 report each job's completion time, and M0398 sets no target for it.
+- **BE-Y5's sandbox figures** (smoke profile, `EXPORT_RATE_LIMIT_PER_MINUTE=100000`, 3 bursts of 50): 0 of 300 starts over 2 s in the two AFTER runs, worst 1.38 s (`docs/delivery/handbacks/DG6/T-DG6-BE-Y5-backend-workflow-engineer.md`). They are provisional and not a controlled A/B, and the before and after host loads differed. **The run the report cites is DO-Y2's** on the merged tree with the full dataset. F-DG6-147 stays open until a reviewer verifies it.
+
+Requirement row: REQ-S20-030. These are engineering measurements on a shared sandbox host, not a Mobily capacity statement. Nothing here grants a business, Finance or IT approval (G1–G6), and nothing implies a DG0–DG7 result.
+
