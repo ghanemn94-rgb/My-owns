@@ -480,6 +480,56 @@ describe("REQ-S13-005: exports", () => {
       expect(requests.find((r) => r.url.endsWith("/cancel"))!.headers["if-match"]).toBe('"3"');
     });
   }
+
+  // T-DG6-BE-Y5 (D-207): a live-selection export has no snapshot until the API assembles it (snapshotId null).
+  for (const locale of ["en", "ar"] as const) {
+    it(`${locale}: a pending live-selection export shows "Preparing the report" and no snapshot link; one failed first shows its translated error`, async () => {
+      const base = {
+        transformationId: TR_ID,
+        snapshotId: null,
+        format: "csv",
+        language: "en",
+        stage: "queued",
+        percent: 0,
+        sectionsDone: 0,
+        sectionsTotal: null,
+        attemptCount: 0,
+        startedAt: null,
+        fileName: null,
+        contentType: null,
+        fileSha256: null,
+        fileSizeBytes: null,
+        cancelledAt: null,
+        createdAt: "2026-10-16T10:00:00Z",
+      };
+      const pending = { ...base, id: UUIDX(621), status: "queued", finishedAt: null, errorCode: null, version: 1 };
+      const refused = {
+        ...base,
+        id: UUIDX(622),
+        status: "failed",
+        finishedAt: "2026-10-16T10:00:02Z",
+        errorCode: "export.includes_restricted_records",
+        version: 2,
+      };
+      mockApi(
+        meRoute(["transformation.read", "export.create"], locale),
+        route("GET", /\/api\/v1\/exports/, ok(page([pending, refused]))),
+        usersRoute,
+      );
+      renderApp("/evidence-reports/exports", { i18n: createI18n(locale) });
+      const c = locale === "en" ? en : ar;
+      const wait = await found(`[data-export-pending-snapshot='${pending.id}']`);
+      expect(wait.textContent).toBe(c.exports.preparing);
+      const none = await found(`[data-export-pending-snapshot='${refused.id}']`);
+      expect(none.textContent).toBe(c.exports.noSnapshot);
+      const pendingRow = document.querySelector(`[data-export-row='${pending.id}']`)!;
+      expect(pendingRow.querySelector("a[href*='/reports/']")).toBeNull();
+      expect(pendingRow.textContent).not.toContain("null");
+      const err = await found(`[data-export-error='export.includes_restricted_records']`);
+      expect(err.textContent).toContain(catalogues[locale].problems.export__includes_restricted_records);
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    });
+  }
 });
 
 describe("REQ-S09-011: owner updates", () => {

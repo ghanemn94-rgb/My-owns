@@ -6,7 +6,8 @@
 //   GET  /exports/{exportId}/download   downloadExport  (requester; transformation.read re-checked; others 404)
 //   POST /exports/{exportId}/cancel     cancelExport    (requester; If-Match)
 //
-// The API never renders (ADR-0046 §1): it writes the job and its outbox event, and streams the stored file through the
+// The API never renders (ADR-0046 §1): it writes the job (and, for an existing snapshot, its outbox event; a live
+// selection is assembled after the 202 by the export assembly watch, assembly.ts, D-207), and streams the stored file through the
 // dependency-free export-file store `@mth/reporting/storage`. Rendering is the worker's (apps/worker reports.export).
 // Every write: authorization re-checked at commit time, Zod validation, If-Match on cancel (428 missing, 409 stale;
 // create is version 1), one audit event per job transition in the same transaction, no remote I/O inside it (jobs.ts).
@@ -33,6 +34,7 @@ import {
   getExport,
   listExports,
 } from "./jobs.ts";
+import { startExportAssemblyWatch, type ExportAssemblyWatch } from "./assembly.ts";
 
 const JSON_BODY = ["application/json"] as const;
 const BASE = "/api/v1/exports";
@@ -48,6 +50,18 @@ export function registerExportRoutes(app: FastifyInstance, deps: ModuleDeps): st
   // Created on first use: the store reads the configured evidence storage (ADR-0046 §5) only when a file is served.
   let store: ExportFileStore | null = null;
   const fileStore = (): ExportFileStore => (store ??= createExportStore(deps.config.evidenceStorage));
+  // T-DG6-BE-Y5 (D-207): the API process assembles the pending live selections (assembly.ts), every second and right
+  // after a 202 of one. Not started by a route-only instance (`{} as ModuleDeps`), nor under NODE_ENV=test, where the
+  // suites call `exportAssemblyWatchStep` themselves so no job is assembled behind a test's back.
+  let watch: ExportAssemblyWatch | null = null;
+  if (db !== undefined && deps.config?.nodeEnv !== "test") {
+    app.addHook("onReady", async () => {
+      watch = startExportAssemblyWatch(db, app.log);
+    });
+    app.addHook("onClose", async () => {
+      await watch?.stop();
+    });
+  }
 
   app.get(BASE, { config: { access: { permission: "authenticated" } } }, async (request) => {
     const query = parseQuery(exportListQuery, request.query);
@@ -62,6 +76,7 @@ export function registerExportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       const raw = request.headers["idempotency-key"];
       const key = Array.isArray(raw) ? raw[0] : raw;
       const result = await createExport(db, request, () => parseBody(exportCreate, request.body), key);
+      if (result.pendingAssembly) watch?.kick();
       return sendVersioned(reply, result.status, result.job, `${BASE}/${result.job.id}`);
     },
   );

@@ -5681,7 +5681,8 @@ export interface ExportJobTable {
   id: string;
   organization_id: string;
   transformation_id: string;
-  snapshot_id: string;
+  /** 0124 (D-207): NULL while a live selection is pending assembly (then `selection` is set). */
+  snapshot_id: string | null;
   requested_by: string;
   format: string;
   language: string;
@@ -5703,6 +5704,8 @@ export interface ExportJobTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string | null;
+  /** 0124 (D-207): the stored live selection (ExportLiveSelection), NULL for an export of an existing snapshot. */
+  selection: NullableJson;
 }
 
 export interface ExportJobProgressTable {
@@ -12111,6 +12114,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "selection",
   ],
   export_job_progress: [
     "export_job_id",

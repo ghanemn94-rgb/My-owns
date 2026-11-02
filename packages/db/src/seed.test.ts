@@ -1052,8 +1052,9 @@ describe("migration files", () => {
     // T-DG6-BE-D shipped 0118 (on its branch; the orchestrator renumbers at the W10 merge if needed), so it was 0119;
     // T-DG6-BE-W shipped 0119, so it was 0120; T-DG6-BE-S shipped 0120 (renumbered from 0119 at merge), so it was 0121;
     // T-DG6-BE-I2 shipped 0121 (renumbered from 0120 at merge), so it was 0122; T-DG6-BE-X9 shipped 0122, so it was 0123;
-    // T-DG6-BE-X10 shipped 0123 (on its branch; the orchestrator renumbers at merge if needed), so it is 0124.
-    expect(numberingViolations([...files, { id: 124, name: "0124_p6_example.sql" }])).toEqual([]);
+    // T-DG6-BE-X10 shipped 0123 (on its branch; the orchestrator renumbers at merge if needed), so it was 0124;
+    // T-DG6-BE-Y5 shipped 0124 (on its branch; the orchestrator renumbers at merge if needed), so it is 0125.
+    expect(numberingViolations([...files, { id: 125, name: "0125_p6_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 134, name: "0134_p7_example.sql" }])).toEqual([
       "0134_p7_example.sql: above 0133",
     ]);

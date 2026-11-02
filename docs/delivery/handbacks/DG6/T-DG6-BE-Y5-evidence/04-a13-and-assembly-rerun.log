@@ -1,0 +1,25 @@
+port-policy: PostgreSQL listening on port 28431 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y5
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvyhdge5_baacb13a (server_encoding UTF8); applied 116 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests) 35941ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the same Idempotency-Key returns the existing job (200) and queues nothing more  425ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  25714ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1425ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  2835ms
+   ✓ A13 health check (no job exists, ADR-0048 §8): the retried submit leaves one submitted assessment, one score, three actions > the same submit replayed, and two concurrent submits, change nothing after the first  1265ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-assembly.test.ts (13 tests) 3203ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports  426ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  407ms
+
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  23:48:13
+   Duration  66.95s (transform 9.95s, setup 0ms, collect 22.31s, tests 39.14s, environment 0ms, prepare 166ms)
+
+exit=0
