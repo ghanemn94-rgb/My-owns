@@ -29,6 +29,14 @@ import { syntheticUser } from "./support/p3-journey-setup.ts";
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 12-15 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 13.8 s ([chromium-en] :160 inherited-approval badge fits its card and row a...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-p3-inherited-approval.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test took 22.7 s.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+test.setTimeout(60_000);
+
 let tid = "";
 const WIDTHS = [1024, 1366, 1920, 390] as const;
 /** The SVG path of the approved ("check") icon (components/Icon.tsx). */

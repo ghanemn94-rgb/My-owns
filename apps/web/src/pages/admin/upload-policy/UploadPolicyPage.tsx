@@ -183,9 +183,9 @@ export function UploadPolicyPage() {
             <section className="card" aria-labelledby="upload-policy-current" data-policy-default={p.isDefault}>
               <h2 id="upload-policy-current" className="card__title">
                 {p.isDefault ? (
-                  <Chip tone="neutral" icon="info" label={t("adminP6.uploadPolicy.isDefault")} data="default" />
+                  <Chip tone="neutral" icon="info" label={t("adminP6.uploadPolicy.isDefault")} data="default" wrap />
                 ) : (
-                  <Chip tone="draft" icon="lock" label={t("adminP6.uploadPolicy.isSaved")} data="saved" />
+                  <Chip tone="draft" icon="lock" label={t("adminP6.uploadPolicy.isSaved")} data="saved" wrap />
                 )}
               </h2>
               <dl className="workspace-header__grid">

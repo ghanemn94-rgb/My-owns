@@ -29,8 +29,30 @@ const TONE_CLASS: Record<ChipTone, string> = {
   closed: "lifecycle-chip lifecycle-chip--closed",
 };
 
-/** A status chip: tone + icon + translated label (the label is always present). */
-export function Chip({ tone, icon, label, data }: { tone: ChipTone; icon: IconName; label: string; data?: string }) {
+/**
+ * A status chip: tone + icon + translated label (the label is always present). `wrap` (F-DG6-143) is for a sentence-
+ * long label: the chip wraps inside its container (`.status-chip--wrap`) instead of widening the page at 360 px.
+ */
+export function Chip({
+  tone,
+  icon,
+  label,
+  data,
+  wrap = false,
+}: {
+  tone: ChipTone;
+  icon: IconName;
+  label: string;
+  data?: string;
+  wrap?: boolean;
+}) {
+  if (wrap) {
+    return (
+      <span className={`${TONE_CLASS[tone]} status-chip--wrap`} data-status={data ?? ""}>
+        <Icon name={icon} /> <span>{label}</span>
+      </span>
+    );
+  }
   return (
     <span className={TONE_CLASS[tone]} data-status={data ?? ""}>
       <Icon name={icon} /> {label}

@@ -56,6 +56,40 @@ for (const s of SCREENS) {
   });
 }
 
+// F-DG6-143 (REQ-S15-009; ADR-0061 reflow): the policy status chip is a sentence ("Default policy: no organization
+// setting has been saved") and did not wrap, so the page scrolled 25 px sideways at 360 px in English (385 > 360). It
+// now wraps inside the card. Checked at 360 x 800 and at 1280 x 900 with the root font at 200 %, in each language
+// project. This test runs before the narrowing test below, so on a fresh stack the English project measures the
+// default (long) chip; the state measured is recorded in the failure message either way.
+test("P6 upload policy: no page-level horizontal scroll at 360 px or with 200 % text; the status chip wraps", async ({
+  page,
+}, info) => {
+  test.setTimeout(BUDGET_MS);
+  const lang = langOf(info);
+  await signIn(page, lang, "dev.admin");
+  const overflow = () =>
+    page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+      state: document.querySelector("[data-policy-default]")?.getAttribute("data-policy-default") ?? "none",
+    }));
+  await page.setViewportSize({ width: 360, height: 800 });
+  await open(page, lang, "/admin/upload-policy", "nav.p6.uploadPolicy.title");
+  const chip = page.locator("#upload-policy-current [data-status]");
+  await expect(chip).toBeVisible();
+  const at360 = await overflow();
+  expect(at360.scroll, `360 px (policy default: ${at360.state})`).toBeLessThanOrEqual(at360.client);
+  await expect(chip).toHaveClass(/status-chip--wrap/);
+  await shot(page, lang, "p6-upload-policy-360");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%";
+  });
+  const at200 = await overflow();
+  expect(at200.scroll, `200 % text (policy default: ${at200.state})`).toBeLessThanOrEqual(at200.client);
+  await shot(page, lang, "p6-upload-policy-200pct");
+});
+
 test("P6 upload policy: the administrator narrows it with a reason; it persists and is audited", async ({
   page,
 }, info) => {
