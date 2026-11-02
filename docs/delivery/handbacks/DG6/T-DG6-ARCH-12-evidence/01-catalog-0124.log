@@ -1,0 +1,22 @@
+$ QA_PG_PORT=28550 MTH_PORT_POOL=28551-28599 tests/qa/support/with-pg.sh node --conditions=@mth/source <probe> $PWD
+port-policy: PostgreSQL listening on port 28550 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrate exit 0 116 applied; 
+CONSTRAINTS
+export_job_error_code_check => CHECK (((error_code IS NULL) OR (error_code = ANY (ARRAY['export.render_failed'::text, 'export.too_large'::text, 'export.source_unavailable'::text, 'export.retries_exhausted'::text, 'export.includes_restricted_records'::text, 'export.assembly_failed'::text]))))
+export_job_selection_pending => CHECK ((((snapshot_id IS NOT NULL) OR ((selection IS NOT NULL) AND (status = ANY (ARRAY['queued'::text, 'failed'::text, 'cancelled'::text])))) AND ((selection IS NULL) OR ((jsonb_typeof(selection) = 'object'::text) AND (jsonb_typeof((selection -> 'definitionCode'::text)) = 'string'::text)))))
+export_job_snapshot_fkey => FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT
+INDEX
+CREATE INDEX export_job_pending_assembly_idx ON public.export_job USING btree (created_at, id) WHERE ((snapshot_id IS NULL) AND (status = 'queued'::text))
+COLUMNS
+{"column_name":"selection","data_type":"jsonb","is_nullable":"YES","column_default":null}
+{"column_name":"snapshot_id","data_type":"uuid","is_nullable":"YES","column_default":null}
+TRIGGERS
+export_job_guard => CREATE TRIGGER export_job_guard BEFORE INSERT OR UPDATE ON public.export_job FOR EACH ROW EXECUTE FUNCTION export_job_guard()
+export_job_row_guard => CREATE TRIGGER export_job_row_guard BEFORE INSERT OR UPDATE ON public.export_job FOR EACH ROW EXECUTE FUNCTION p2_row_guard()
+export_job_audit_required => CREATE CONSTRAINT TRIGGER export_job_audit_required AFTER INSERT OR UPDATE ON public.export_job DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION p2_audit_required()
+GRANTS
+INSERT
+SELECT
+UPDATE
+exit=0

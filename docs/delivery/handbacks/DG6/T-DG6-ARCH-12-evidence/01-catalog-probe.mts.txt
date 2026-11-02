@@ -1,0 +1,18 @@
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+const root = process.argv[2]!;
+const gs = await import(root + "/packages/db/test/global-setup.ts");
+const pg = createRequire(root + "/packages/db/package.json")("pg");
+const admin = process.env.TEST_DATABASE_ADMIN_URL!;
+const db = await gs.createScratchDatabase(admin, "arch12");
+const owner = gs.roleUrl(admin, db, "mth_owner");
+const r = spawnSync(process.execPath, ["--conditions=@mth/source", root + "/packages/db/src/cli.ts", "migrate"], { env: { ...process.env, NODE_ENV: "test", DATABASE_OWNER_URL: owner }, encoding: "utf8" });
+console.log("migrate exit", r.status, (r.stdout.match(/applying/g) ?? []).length, "applied;", r.stderr.slice(-400));
+const c = new pg.Client({ connectionString: gs.roleUrl(admin, db, null) }); await c.connect();
+const q = async (s: string) => (await c.query(s)).rows;
+console.log("CONSTRAINTS"); for (const x of await q(`SELECT conname, pg_get_constraintdef(oid) d FROM pg_constraint WHERE conrelid='export_job'::regclass AND conname IN ('export_job_selection_pending','export_job_error_code_check','export_job_snapshot_fkey') ORDER BY 1`)) console.log(x.conname, "=>", x.d);
+console.log("INDEX"); for (const x of await q(`SELECT indexdef FROM pg_indexes WHERE indexname='export_job_pending_assembly_idx'`)) console.log(x.indexdef);
+console.log("COLUMNS"); for (const x of await q(`SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name='export_job' AND column_name IN ('snapshot_id','selection')`)) console.log(JSON.stringify(x));
+console.log("TRIGGERS"); for (const x of await q(`SELECT tgname, pg_get_triggerdef(oid) d FROM pg_trigger WHERE tgrelid='export_job'::regclass AND NOT tgisinternal`)) console.log(x.tgname, "=>", x.d);
+console.log("GRANTS"); for (const x of await q(`SELECT privilege_type FROM information_schema.role_table_grants WHERE table_name='export_job' AND grantee='mth_app' ORDER BY 1`)) console.log(x.privilege_type);
+await c.end(); await gs.dropScratchDatabase(admin, db);
