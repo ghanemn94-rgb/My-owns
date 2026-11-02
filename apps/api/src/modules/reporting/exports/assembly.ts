@@ -22,9 +22,10 @@
 //     3. the assembly (read-only REPEATABLE READ, on its own connection, while the claim is held): the snapshot's
 //        data-as-of is the assembly time, recorded on the snapshot as before (D-207 (5)). A refusal of the report
 //        itself (its subject or period is gone, it became too large) fails the job `export.assembly_failed`;
-//     4. D-199 on the assembly's actual sources: a record the requester is not admitted to fails the job
-//        `export.includes_restricted_records` (nothing written but the failure: no snapshot, never a file);
-//     5. the access re-check on grants reloaded after the assembly (commit time); then the snapshot (rows and the
+//     4. the access re-check on grants reloaded after the assembly (commit time), else `export.source_unavailable`;
+//     5. D-199 on the assembly's actual sources: a record the requester is not admitted to fails the job
+//        `export.includes_restricted_records` (nothing written but the failure: no snapshot, never a file); then the
+//        snapshot (rows and the
 //        `report_snapshot.generate` audit event exactly as generateSnapshot writes them; created_by = the requester),
 //        the job's `snapshot_id` (version + 1, audited `export_job.assemble`) and the `export_job.requested` outbox
 //        event for the worker, which renders after this COMMIT exactly as for an export of an existing snapshot.
