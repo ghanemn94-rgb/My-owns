@@ -302,8 +302,10 @@ beforeAll(async () => {
       (await ledgerOf(id)).map((l) => l.source),
     );
 
-  // Now 0123.
-  expect(await migrate(ownerUrl)).toEqual([expect.stringMatching(/^0123_/)]);
+  // Now 0123 (and every later migration, which this test does not depend on).
+  const applied = await migrate(ownerUrl);
+  expect(applied[0]).toMatch(/^0123_/);
+  expect(applied.slice(1).every((f) => f.slice(0, 4) > "0123")).toBe(true);
 }, 180_000);
 
 afterAll(async () => {
