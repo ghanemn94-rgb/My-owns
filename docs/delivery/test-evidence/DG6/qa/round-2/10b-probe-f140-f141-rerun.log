@@ -1,0 +1,57 @@
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts (2026-11-02T09:59:51Z) cwd=$TMPDIR/work/rv node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=19.25 16.54 10.51
+port-policy: PostgreSQL listening on port 28812 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 $TMPDIR/work/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz385ht_915ec034 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts > QA-DG6R2 part 1 (round-1 reproduction): budget 1, two calls > upload/uploadEvidenceContent (control): the second call within the minute is 429 rate_limited with Retry-After
+PROBE-R2 upload/uploadEvidenceContent (control): [404,429] code=rate_limited retry-after=60
+
+stdout | apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts > QA-DG6R2 part 1 (round-1 reproduction): budget 1, two calls > export/createExport: the second call within the minute is 429 rate_limited with Retry-After
+PROBE-R2 export/createExport: [400,429] code=rate_limited retry-after=60
+
+stdout | apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts > QA-DG6R2 part 1 (round-1 reproduction): budget 1, two calls > upload/createImport: the second call within the minute is 429 rate_limited with Retry-After
+PROBE-R2 upload/createImport: [400,429] code=rate_limited retry-after=60
+
+stdout | apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts > QA-DG6R2 part 2a: loadConfig without the class variables resolves the ADR-0052 section 4 defaults > export 10, upload 30 (and the documented ENV_VARS defaults say the same)
+PROBE-R2 loadConfig rateLimitClasses={"upload":30,"search":120,"assistant":20,"webhook":600,"export":10}
+
+stdout | apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts > QA-DG6R2 part 2: the documented default budgets, set explicitly over the harness's 100000 > export default 10: calls 1-10 not 429, call 11 is 429; a second session's call is not counted
+PROBE-R2 export default: s1=[400,400,400,400,400,400,400,400,400,400,429] s2=400
+
+stdout | apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts > QA-DG6R2 part 2: the documented default budgets, set explicitly over the harness's 100000 > upload default 30: createImport calls 1-30 not 429, call 31 is 429
+PROBE-R2 upload default createImport: [400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,400,429]
+
+ ✓ |integration| apps/api/test/integration/security/zz-qa-dg6r2-rate-limit-classes.test.ts (6 tests) 5519ms
+   ✓ QA-DG6R2 part 1 (round-1 reproduction): budget 1, two calls > upload/uploadEvidenceContent (control): the second call within the minute is 429 rate_limited with Retry-After  2299ms
+   ✓ QA-DG6R2 part 1 (round-1 reproduction): budget 1, two calls > export/createExport: the second call within the minute is 429 rate_limited with Retry-After  726ms
+   ✓ QA-DG6R2 part 1 (round-1 reproduction): budget 1, two calls > upload/createImport: the second call within the minute is 429 rate_limited with Retry-After  725ms
+   ✓ QA-DG6R2 part 2: the documented default budgets, set explicitly over the harness's 100000 > export default 10: calls 1-10 not 429, call 11 is 429; a second session's call is not counted  898ms
+   ✓ QA-DG6R2 part 2: the documented default budgets, set explicitly over the harness's 100000 > upload default 30: createImport calls 1-30 not 429, call 31 is 429  863ms
+stdout | apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts > QA-DG6R1 probe: REQ-S12-019 stale data once a later period is open > control: stale evaluation in the newest period -> the scan counts it stale (1) and emits one data.stale
+PROBE control: {"organizations":1,"kpis":1,"stale":1,"emitted":1,"recovered":0}
+
+stdout | apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts > QA-DG6R1 probe: REQ-S12-019 stale data once a later period is open > probe: last data (as of 2026-01-15) in the previous period, the current period open and empty -> expected stale 1, one data.stale
+PROBE later-period: kpiFreshness={"kpiDefinitionId":"41ed291a-6e20-4236-8106-d3c38aec7085","transformationId":"62763ef4-c6ce-4b45-b8b0-ebb20d654d53","freshness":"stale","lastValue":"0.4125","dataAsOf":"2026-01-15","staleAfterDays":30} scan={"organizations":1,"kpis":1,"stale":1,"emitted":1,"recovered":0} data.stale events=1
+
+stdout | apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts > QA-DG6R2 adversarial: freshness from the latest accepted value across periods > A: data in the period two months back (closed), the previous AND current periods open and empty -> stale, one event
+PROBE-R2 A: read={"kpiDefinitionId":"85d4fa93-90b8-4cca-9c51-2861112a46fe","transformationId":"4eba1a4c-773d-4b3a-b569-0efdef868ca0","freshness":"stale","lastValue":"0.31","dataAsOf":"2026-08-24","staleAfterDays":30} scan1={"organizations":1,"kpis":1,"stale":1,"emitted":1,"recovered":0} scan2={"organizations":1,"kpis":1,"stale":1,"emitted":0,"recovered":0}
+
+stdout | apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts > QA-DG6R2 adversarial: freshness from the latest accepted value across periods > B: an old stale value two months back but a FRESH value in the previous period -> fresh, no event (no false stale)
+PROBE-R2 B: read={"kpiDefinitionId":"bc997033-bcac-48a8-8b15-240dd9adf2f9","transformationId":"c254ded6-72a4-4da4-8934-5b5b70bd7ee6","freshness":"fresh","lastValue":"0.9","dataAsOf":"2026-10-30","staleAfterDays":30} scan={"organizations":1,"kpis":1,"stale":0,"emitted":0,"recovered":0}
+
+stdout | apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts > QA-DG6R2 adversarial: freshness from the latest accepted value across periods > D: stale in the previous period (event 1), then fresh data lands in the current period -> fresh, no new event
+PROBE-R2 D: scan1={"organizations":1,"kpis":1,"stale":1,"emitted":1,"recovered":0} read={"kpiDefinitionId":"e60cc922-12d3-4468-8712-0fa957eadbd8","transformationId":"42c65d5f-d143-4428-a87a-48e349a61019","freshness":"fresh","lastValue":"0.55","dataAsOf":"2026-11-01","staleAfterDays":30} scan2={"organizations":1,"kpis":1,"stale":0,"emitted":0,"recovered":0}
+
+ ✓ |integration| apps/worker/test/integration/zz-qa-dg6r2-freshness-later-period.test.ts (5 tests) 7512ms
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  09:59:57
+   Duration  56.21s (transform 13.85s, setup 0ms, collect 31.97s, tests 13.03s, environment 0ms, prepare 138ms)
+
+EXIT 0 (2026-11-02T10:01:00Z) load=22.56 18.05 11.44

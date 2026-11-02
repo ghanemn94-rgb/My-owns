@@ -1,0 +1,54 @@
+$ tests/qa/support/with-pg.sh bash -c for i in 1 2 3; do echo "### repetition $i $(date -u +%T) load $(cut -d" " -f1 /proc/loadavg)"; npx vitest run --project integration apps/api/test/integration/reporting/exports-assembly.test.ts 2>&1 | grep -E "✓|×|→|Tests |Test Files"; done (2026-11-02T10:10:48Z) cwd=$TMPDIR/work/rv node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=32.50 28.92 20.12
+port-policy: PostgreSQL listening on port 28814 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+### repetition 1 10:10:55 load 32.78
+ ✓ |integration| apps/api/test/integration/reporting/exports-assembly.test.ts (18 tests) 23420ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event  1109ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > the 0124 CHECK: a job without a snapshot cannot be running  301ms
+   ✓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200  523ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports  1114ms
+   ✓ D-207 (3): an idempotent replay compares the stored selection > same key and selection -> 200 with the same job (pending, then assembled); other parameters -> 422 idempotency.key_reused  513ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once  483ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > the running watch (as the API process starts it) assembles a pending job on its own, and stops cleanly  438ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > unexpected errors are retried at most 3 times, then the job fails export.assembly_failed  383ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  9555ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  985ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own  381ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending  648ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  1101ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+### repetition 2 10:12:26 load 30.58
+ ✓ |integration| apps/api/test/integration/reporting/exports-assembly.test.ts (18 tests) 18769ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event  364ms
+   ✓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200  469ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports  1223ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once  445ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > the running watch (as the API process starts it) assembles a pending job on its own, and stops cleanly  446ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  8346ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  1225ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a watcher holding a job keeps a second one out between its two transactions (session lock), and releases the lock after the job  410ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own  803ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending  471ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  1158ms
+   ✓ exactly once: two watchers race > a second watcher skips a job the first one holds (FOR UPDATE SKIP LOCKED), and the job is assembled once  325ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+### repetition 3 10:13:55 load 33.45
+ ✓ |integration| apps/api/test/integration/reporting/exports-assembly.test.ts (18 tests) 22571ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event  747ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > the 0124 CHECK: a job without a snapshot cannot be running  320ms
+   ✓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200  835ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a revoked grant: failed export.source_unavailable, no snapshot, no outbox event, no file  388ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports  1408ms
+   ✓ D-207 (3): an idempotent replay compares the stored selection > same key and selection -> 200 with the same job (pending, then assembled); other parameters -> 422 idempotency.key_reused  326ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once  544ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > unexpected errors are retried at most 3 times, then the job fails export.assembly_failed  559ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  7830ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  1168ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own  460ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending  922ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  763ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+EXIT 0 (2026-11-02T10:15:28Z) load=35.58 32.26 23.79

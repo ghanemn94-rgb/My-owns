@@ -1,0 +1,7 @@
+const g = await import(process.argv[2]);
+const ids = Array.from({length: 1000}, (_, i) => g.loadId(1, "initiative", i));
+const rfc = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const bad = ids.filter((x) => !rfc.test(x)).length;
+const { z } = await import(process.argv[3]);
+const zbad = ids.filter((x) => !z.uuid().safeParse(x).success).length;
+console.log(JSON.stringify({ sample: ids.slice(0, 3), nonRfc: bad, rejectedByZodUuid: zbad, of: ids.length }));

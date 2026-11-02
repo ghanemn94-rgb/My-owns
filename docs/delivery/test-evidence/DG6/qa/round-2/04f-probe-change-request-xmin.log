@@ -1,0 +1,27 @@
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/workflows/zz-qa-dg6r2-change-request-xmin-order.test.ts (2026-11-02T11:10:14Z) cwd=$TMPDIR/work/rv node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=21.15 22.02 21.94
+port-policy: PostgreSQL listening on port 28819 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 $TMPDIR/work/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz5qody_d82158a3 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/workflows/zz-qa-dg6r2-change-request-xmin-order.test.ts > QA-DG6R2 probe: round-2 submit and approval.resubmit in one transaction (order-independent) > 15 resubmissions: the LATER change_request.submit audit (by occurred_at, seq) has the resubmit's xmin; heap order logged
+QA-DG6R2 xmin probe: [{"i":0,"resubmitX":"989","unordered":["987","989"],"ordered":["987@(16,7)","989@(17,4)"],"ok":true,"heapSwapped":false},{"i":1,"resubmitX":"994","unordered":["992","994"],"ordered":["992@(17,12)","994@(18,9)"],"ok":true,"heapSwapped":false},{"i":2,"resubmitX":"999","unordered":["997","999"],"ordered":["997@(19,1)","999@(19,12)"],"ok":true,"heapSwapped":false},{"i":3,"resubmitX":"1004","unordered":["1002","1004"],"ordered":["1002@(20,5)","1004@(21,2)"],"ok":true,"heapSwapped":false},{"i":4,"resubmitX":"1009","unordered":["1007","1009"],"ordered":["1007@(21,10)","1009@(22,5)"],"ok":true,"heapSwapped":false},{"i":5,"resubmitX":"1014","unordered":["1012","1014"],"ordered":["1012@(22,13)","1014@(23,10)"],"ok":true,"heapSwapped":false},{"i":6,"resubmitX":"1019","unordered":["1017","1019"],"ordered":["1017@(24,3)","1019@(24,14)"],"ok":true,"heapSwapped":false},{"i":7,"resubmitX":"1024","unordered":["1022","1024"],"ordered":["1022@(25,6)","1024@(26,4)"],"ok":true,"heapSwapped":false},{"i":8,"resubmitX":"1029","unordered":["1027","1029"],"ordered":["1027@(26,12)","1029@(27,9)"],"ok":true,"heapSwapped":false},{"i":9,"resubmitX":"1034","unordered":["1032","1034"],"ordered":["1032@(28,2)","1034@(28,13)"],"ok":true,"heapSwapped":false},{"i":10,"resubmitX":"1039","unordered":["1037","1039"],"ordered":["1037@(29,6)","1039@(30,4)"],"ok":true,"heapSwapped":false},{"i":11,"resubmitX":"1044","unordered":["1042","1044"],"ordered":["1042@(30,12)","1044@(31,9)"],"ok":true,"heapSwapped":false},{"i":12,"resubmitX":"1049","unordered":["1047","1049"],"ordered":["1047@(32,2)","1049@(32,13)"],"ok":true,"heapSwapped":false},{"i":13,"resubmitX":"1054","unordered":["1052","1054"],"ordered":["1052@(33,6)","1054@(34,4)"],"ok":true,"heapSwapped":false},{"i":14,"resubmitX":"1059","unordered":["1057","1059"],"ordered":["1057@(34,12)","1059@(35,9)"],"ok":true,"heapSwapped":false}]
+
+ ✓ |integration| apps/api/test/integration/workflows/zz-qa-dg6r2-change-request-xmin-order.test.ts (7 tests) 13050ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  852ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > a resubmission by a lead who is not the approval's requester is 403 approval.not_requester; nothing is written  362ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > changes requested: both withdrawn; a lead who is not the requester gets 403 approval.not_requester first, nothing written  456ms
+   ✓ (c) POST /approvals/{id}/resubmit refuses change_request approvals > 422 approval.resubmit_through_record with the exact text; the approval and the request are unchanged  435ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  1168ms
+   ✓ QA-DG6R2 probe: round-2 submit and approval.resubmit in one transaction (order-independent) > 15 resubmissions: the LATER change_request.submit audit (by occurred_at, seq) has the resubmit's xmin; heap order logged  5538ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  11:10:21
+   Duration  57.81s (transform 14.08s, setup 0ms, collect 31.27s, tests 13.05s, environment 8ms, prepare 343ms)
+
+EXIT 0 (2026-11-02T11:11:27Z) load=20.55 21.74 21.85

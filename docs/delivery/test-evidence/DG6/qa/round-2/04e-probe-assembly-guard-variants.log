@@ -1,0 +1,131 @@
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts -t QA-DG6R2 (2026-11-02T11:05:58Z) cwd=$TMPDIR/work/rv node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=22.10 21.70 21.76
+port-policy: PostgreSQL listening on port 28818 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 $TMPDIR/work/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz5l82c_cb570451 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts > QA-DG6R2 probe: the guard test's sequence, repeated (variants) > as-is: 40 repetitions, step([job]) assembles the job each time
+QA-DG6R2 guard-sequence variant as-is: misses 5 of 40 [{"i":11,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":16,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":[]},{"i":18,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":[]},{"i":24,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":[]},{"i":28,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]}]
+
+stdout | apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts > QA-DG6R2 probe: the guard test's sequence, repeated (variants) > pause: 40 repetitions, step([job]) assembles the job each time
+QA-DG6R2 guard-sequence variant pause: misses 0 of 40 []
+
+stdout | apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts > QA-DG6R2 probe: the guard test's sequence, repeated (variants) > no-update: 40 repetitions, step([job]) assembles the job each time
+QA-DG6R2 guard-sequence variant no-update: misses 0 of 40 []
+
+ ❯ |integration| apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts (21 tests | 1 failed | 18 skipped) 52432ms
+   ↓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event
+   ↓ D-207 (1): a live selection is accepted with no snapshot > the request-time refusals stay synchronous: 422 report.subject_invalid / report.parameters_invalid, 403 for AUD
+   ↓ D-207 (1): a live selection is accepted with no snapshot > the 0124 CHECK: a job without a snapshot cannot be running
+   ↓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200
+   ↓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a revoked grant: failed export.source_unavailable, no snapshot, no outbox event, no file
+   ↓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports
+   ↓ D-207 (3): an idempotent replay compares the stored selection > same key and selection -> 200 with the same job (pending, then assembled); other parameters -> 422 idempotency.key_reused
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > the running watch (as the API process starts it) assembles a pending job on its own, and stops cleanly
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > unexpected errors are retried at most 3 times, then the job fails export.assembly_failed
+   ↓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed
+   ↓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once
+   ↓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a watcher holding a job keeps a second one out between its two transactions (session lock), and releases the lock after the job
+   ↓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own
+   ↓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending
+   ↓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)
+   ↓ exactly once: two watchers race > a second watcher skips a job the first one holds (FOR UPDATE SKIP LOCKED), and the job is assembled once
+   ↓ exactly once: two watchers race > a cancelled pending job is never assembled (cancel with If-Match 1)
+   × QA-DG6R2 probe: the guard test's sequence, repeated (variants) > as-is: 40 repetitions, step([job]) assembles the job each time 15272ms
+     → expected [ { i: 11, out: [], …(2) }, …(4) ] to deeply equal []
+   ✓ QA-DG6R2 probe: the guard test's sequence, repeated (variants) > pause: 40 repetitions, step([job]) assembles the job each time  24583ms
+   ✓ QA-DG6R2 probe: the guard test's sequence, repeated (variants) > no-update: 40 repetitions, step([job]) assembles the job each time  8303ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts > QA-DG6R2 probe: the guard test's sequence, repeated (variants) > as-is: 40 repetitions, step([job]) assembles the job each time
+AssertionError: expected [ { i: 11, out: [], …(2) }, …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "again": [
++       "assembled",
++     ],
++     "i": 11,
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [],
++     "i": 16,
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [],
++     "i": 18,
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [],
++     "i": 24,
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [
++       "assembled",
++     ],
++     "i": 28,
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++ ]
+
+ ❯ apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts:657:22
+    655|       }
+    656|       console.log(`QA-DG6R2 guard-sequence variant ${variant}: misses …
+    657|       expect(misses).toEqual([]);
+       |                      ^
+    658|     }, 600_000);
+    659|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 18 skipped (21)
+   Start at  11:06:06
+   Duration  117.39s (transform 18.52s, setup 0ms, collect 46.37s, tests 52.43s, environment 0ms, prepare 177ms)
+
+EXIT 1 (2026-11-02T11:08:10Z) load=25.02 22.79 22.14

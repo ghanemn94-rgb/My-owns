@@ -1,0 +1,113 @@
+port-policy: PostgreSQL listening on port 28702 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.3bsACT/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz5oc4u_56714660 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests) 56448ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  2474ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  1888ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  3266ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  1338ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing  1092ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  1773ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10650ms
+   ✓ failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes  14196ms
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  3083ms
+ ✓ |integration| tests/qa/integration/a22-p6-operability.test.ts (17 tests) 151726ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON  6360ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line  51859ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered  59899ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead  2595ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing  8866ms
+   ✓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200  621ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0)  337ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the value  311ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > BLOCKED, never a pass: no canary with --require-canaries, or a docs/delivery path (exit 2)  545ms
+ ✓ |integration| tests/qa/integration/a16-health-check.test.ts (13 tests) 15931ms
+   ✓ REQ-PB-091: all 25 questions render verbatim (B0150) > a new assessment lists 25 unanswered questions and its answers carry response, evidence, owner and action  1664ms
+   ✓ REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > 24 answers: completion 24/25, complete false, score null and band null (API band=null)  1734ms
+   ✓ REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted  1104ms
+   ✓ REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim  4769ms
+   ✓ REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > concurrency: an answer without If-Match is 428, with a stale version 409; each accepted write is audited  1001ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > a draft that adds N/A and keeps the four source bands is refused at preview (422 health_scheme.own_bands_required) and publishing it is rejected  969ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > with its own bands (the source bands removed) it publishes; v1 and every existing assessment keep their scheme, score and band  1111ms
+ ✓ |integration| tests/qa/integration/a16-launch-plan.test.ts (11 tests) 6214ms
+   ✓ REQ-PB-086: the 90-day launch plan generated from the chosen start date > generation is refused to AUD (403) and to another organization (404), and writes nothing  375ms
+   ✓ REQ-PB-086: the 90-day launch plan generated from the chosen start date > start 2026-10-01: Days 31-60 tasks fall between 2026-11-01 and 2026-11-30; every B0134 action and output appears; Day-90 test on day 90  681ms
+   ✓ REQ-PB-087: the Day-90 leadership test > five answers: incomplete (5/6) and completion is refused; AUD cannot answer  662ms
+   ✓ REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > +7 days moves every unstarted task by 7 days and leaves completed (and started) tasks unchanged; the open Day-90 test moves too  377ms
+   ✓ REQ-S14-004: editable tasks, 'blocked by' and re-dating unstarted tasks > REQ-PB-087: the sixth answer completes the test; a completed test is final  319ms
+   ✓ REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > starter 1 generates the plan from launchPlan.startDate once; replaying the event duplicates nothing  809ms
+   ✓ REQ-S12-004 (A16): with the plan flag, creating a transformation dates the 90-day tasks from the start date; a retry creates nothing more > without the flag no plan is generated  466ms
+ ✓ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests) 116087ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  1673ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > a disabled schedule shows next run null 'disabled' and refuses run-now with 422 job.schedule_disabled  331ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  2555ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  18274ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  50044ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  900ms
+ ✓ |integration| tests/qa/integration/a21-p6-adapters-disabled.test.ts (10 tests) 15930ms
+   ✓ A21: the adapters are present but disabled > email is configured (pointing at the SMTP double) and saved DISABLED; enterprise messaging cannot be enabled  370ms
+   ✓ REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a KPI actual on a review route: submitted by form, its reviewer is notified in the inbox only, accepted; value kept exactly  1417ms
+   ✓ REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a product gate G1 is submitted and approved by the Sponsor; a charter report is generated from the records  3093ms
+ ✓ |integration| tests/qa/integration/a15-snapshots-and-packs.test.ts (15 tests) 32908ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (en) of the issued snapshot exported after the change shows the old target and the issue  4353ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (ar) of the issued snapshot exported after the change shows the old target and the issue  4176ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (en) prints the submitted update text and the workstream  4778ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (ar) prints the submitted update text and the workstream  5331ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > docx (en) prints the submitted update text and the workstream  535ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (en) prints the submitted update text and the workstream  548ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > changing the linked decision before the cut-off changes the live presentation  429ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the issued meeting pack remains the snapshot after a later change; the live view follows the change  5672ms
+ ✓ |integration| tests/qa/integration/a15-outputs-every-definition.test.ts (5 tests) 77662ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > every file carries its data, provenance and readable en/ar layout  68616ms
+   ✓ A15: every report definition, every offered format, en and ar (REQ-S13-004/005/009, REQ-S20-015) > an export is the requester's own: another user of the organization gets 404 on the job and the file  971ms
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each of the ten outputs generates from the demo transformation
+A15 demo: not generated: {}
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every generated demo snapshot records that it is synthetic
+A15 demo: snapshot content keys: ["asOf","period","subject","sections","synthetic","methodology","approvalState","schemaVersion","definitionCode","transformation"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label
+A15 demo: files with any illustrative wording: ["charter/pdf/en","charter/pdf/ar","charter/docx/en","charter/docx/ar","diagnostic/pdf/en","diagnostic/pdf/ar","diagnostic/docx/en","diagnostic/docx/ar","diagnostic/xlsx/en","diagnostic/xlsx/ar","tom/pdf/en","tom/pdf/ar","tom/docx/en","tom/docx/ar","tom/xlsx/en","tom/xlsx/ar","business_cases/pdf/en","business_cases/pdf/ar","business_cases/docx/en","business_cases/docx/ar","business_cases/xlsx/en","business_cases/xlsx/ar","roadmap/pdf/en","roadmap/pdf/ar","roadmap/pptx/en","roadmap/pptx/ar","roadmap/xlsx/en","roadmap/xlsx/ar","registers/xlsx/en","registers/xlsx/ar","registers/csv/en","registers/csv/ar","registers/pdf/en","registers/pdf/ar","executive_dashboard/pdf/en","executive_dashboard/pdf/ar","executive_dashboard/pptx/en","executive_dashboard/pptx/ar","executive_dashboard/xlsx/en","executive_dashboard/xlsx/ar","gate_pack/pdf/en","gate_pack/pdf/ar","gate_pack/pptx/en","gate_pack/pptx/ar","gate_pack/docx/en","gate_pack/docx/ar","handover/pdf/en","handover/pdf/ar","handover/docx/en","handover/docx/ar","meeting_minutes/pdf/en","meeting_minutes/pdf/ar","meeting_minutes/docx/en","meeting_minutes/docx/ar"]
+
+stdout | tests/qa/integration/a15-demo-transformation-outputs.test.ts > REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register
+A15 demo XLSX formulas: {"business_cases":["SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D4)","SUM(D4:D6)","SUM(D4:D4)"],"registers":["SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)","SUM(C4:C4)","SUM(E4:E4)","SUM(G4:G4)"]}
+
+ ✓ |integration| tests/qa/integration/a15-demo-transformation-outputs.test.ts (7 tests) 169955ms
+   ✓ REQ-S13-004 on the demo transformation: the ten outputs generate and contain its ID and records > each output's PDF (en and ar) contains the demo transformation's ID  64690ms
+   ✓ REQ-PB-089: every exported demo report shows the illustrative label in en and ar (ADR-0050 §2 d) > every format of every demo output, en and ar, prints the illustrative label  69425ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a system SUM total remains a formula in the XLSX of the business cases and of the benefits register  379ms
+   ✓ REQ-S13-006 / REQ-S13-008 on demo data with business cases and benefit values > a benefit value that is not validated is labelled provisional in the PDF (en and ar)  9294ms
+ ✓ |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts (6 tests) 9505ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real network failure (database port refuses, ECONNREFUSED) answers a problem with a request id and no §8 term  708ms
+ ✓ |integration| tests/qa/integration/a17-s01-005-external-change.test.ts (4 tests) 4198ms
+   ✓ REQ-S01-005: only reviewed evidence or a test-adapter confirmation confirms an external change > a filename-only link does not confirm it (422 external_change.evidence_not_verified); it stays Unconfirmed  480ms
+   ✓ REQ-S01-005: only reviewed evidence or a test-adapter confirmation confirms an external change > reviewed evidence sets it and records the source (the evidence and who confirmed)  535ms
+   ✓ REQ-S01-005: only reviewed evidence or a test-adapter confirmation confirms an external change > a test-adapter confirmation sets it and records the source (connector, source system id, reference, time)  1007ms
+stdout | tests/qa/integration/a15-selected-records-and-injection.test.ts > REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > the dangerous texts and the plain risk were accepted by the API (the refusals, if any, are listed)
+A15 RAID texts: [["\"=HYPERLINK(\\\"http://exa",201,null],["\"+SUM(1,2) QA-A15 plus-p",201,null],["\"-2+3 QA-A15 minus-prefi",201,null],["\"@SUM(1,2) QA-A15 at-pre",201,null],["\"\\tQA-A15 tab-prefixed r",201,null],["\"\\rQA-A15 CR-prefixed ri",201,null],["\"QA-A15 synthetic risk, ",201,null],["\"QA-A15 synthetic issue:",201,null]]
+
+ ✓ |integration| tests/qa/integration/a15-selected-records-and-injection.test.ts (7 tests) 5618ms
+   ✓ REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (en): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row  486ms
+   ✓ REQ-S13-005: an XLSX export of the RAID register contains exactly the filtered rows > XLSX (ar): the RAID codes in the workbook are exactly GET /raid?type=risk; no issue row  327ms
+   ✓ REQ-S13-006: user text that starts like a formula exports as text (XLSX and CSV) > XLSX: each such description is an inline string with a quote prefix, never a formula  576ms
+ ✓ |integration| tests/qa/integration/a16-s16-021-entities.test.ts (6 tests) 4080ms
+   ✓ REQ-S16-021: each entity of the group is created and read through the API with authorization enforced > BAUHandover: prepared by the Workstream Lead, read with its receiving owner and status  547ms
+   ✓ REQ-S16-021: each entity of the group is created and read through the API with authorization enforced > HealthAssessment: created by the Lead, read with owner and status  581ms
+   ✓ REQ-S16-021: each entity of the group is created and read through the API with authorization enforced > ControlCheck: created by the control-check job, read through the API; recording it is refused to AUD and allowed to the owner  358ms
+ ✓ |integration| tests/qa/integration/a20-p6-register-1000.test.ts (4 tests) 8502ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > is paginated: limit 50 gives 20 pages of at most 50, exactly 1,000 distinct initiatives, and the last page ends the chain  828ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > sorts across pages: sort=code is ascending and sort=-code its exact reverse; sort=name agrees with the code order's set  1370ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > filters on the server: q is a case-insensitive substring over the text columns and matches exactly the expected subset  1813ms
+
+ Test Files  14 passed (14)
+      Tests  123 passed (123)
+   Start at  11:08:31
+   Duration  816.36s (transform 17.62s, setup 0ms, collect 128.55s, tests 674.76s, environment 0ms, prepare 216ms)
+
+exit=0

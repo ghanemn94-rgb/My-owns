@@ -1,0 +1,178 @@
+$ tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG6/qa/tests/round-2/load-driver-r2.sh (2026-11-02T10:02:52Z) cwd=$TMPDIR/work/cand node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=27.45 21.17 13.35
+port-policy: PostgreSQL listening on port 28850 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+== qa load driver r2 start 2026-11-02T10:02:56Z; node v24.21.0
+host start: 2026-11-02T10:02:56Z loadavg 27.45 21.17 13.35 nproc 4 mem 16091 MB total, 5379 MB available
+6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a  deploy/load/generate.mjs
+7b860ee08890dcc88fdcc82615cd2bf7460bf11f9507348ee28a56d65985fca0  deploy/load/sessions.mjs
+34734caad8929e82cd99b5c9aafacd26533109c4bf213efc6e97e4903ab9b644  deploy/load/workload.mjs
+32f89b4a4f7110883a91be7941c37db21195c428c1906e244b5bf75a0c339368  deploy/load/report.mjs
+7865d9d3f1aa5d4063b72243ad52e795c485fcee78fe24c429663d5549ed154b  deploy/load/export-proof.mjs
+0a8d1c78d92765db962ca6dc4ae15883c0a491cf55b8975b1e86616f133bcb4b  deploy/load/rate-limits.mjs
+5aa6313addb1058dfb5c3ad3ae64b979b2d8e6937511c340058d8c89b1e3d2e7  apps/api/dist/main.js
+221e1bca5ecc6e2783ef01acdeceb659d28fba13f57ef6215554ea0a20054a20  apps/worker/dist/main.js
+33:export const START_TARGET_MS = 2000;
+== rate-limits.mjs (as deploy/load/README.md):
+mth-load rate limits: 5 P6 class budget(s) set to 100000/min (load stacks only; global and auth limits unchanged)
+ASSISTANT_RATE_LIMIT_PER_MINUTE=100000
+EXPORT_RATE_LIMIT_PER_MINUTE=100000
+SEARCH_RATE_LIMIT_PER_MINUTE=100000
+UPLOAD_RATE_LIMIT_PER_MINUTE=100000
+WEBHOOK_RATE_LIMIT_PER_MINUTE=100000
+
+################ Phase A: in-tree generate.mjs, profile smoke 2026-11-02T10:02:56Z
+mth-db migrate: applied 117 migration(s)
+  "seconds": 4.661
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0
+NOTICE:  UUIDCHECK mth_tree: 17018 uuid values checked, 120 not RFC 9562
+  non-RFC methodology_coverage_link.id: 96 of 114
+  non-RFC procedure_step_definition.id: 24 of 62
+mth-load sessions: 10 synthetic load session(s) written to $TMPDIR/qa-load-r2/sessions-tree.json (cookie mth_session, expiry 120 min); the file holds bearer credentials
+PHASE-A getInitiative statuses over 30 initiatives: {"200":30}
+PHASE-A getTransformation statuses over 3 transformations: {"200":3}
+phase A probe exit=0
+
+################ Phase B: in-tree generator, profile default 2026-11-02T10:03:25Z
+host before-generate: 2026-11-02T10:03:25Z loadavg 27.96 21.89 13.83 nproc 4 mem 16091 MB total, 7082 MB available
+mth-db migrate: applied 117 migration(s)
+  },
+  "reindexRequested": true,
+  "seconds": 79.524
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0 wall_ms=84926
+{"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+audit_event 100000
+transformation 50
+initiative 1000
+kpi_actual 10000
+app_user 120
+database size 154 MB
+NOTICE:  UUIDCHECK mth: 770559 uuid values checked, 120 not RFC 9562
+  non-RFC methodology_coverage_link.id: 96 of 114
+  non-RFC procedure_step_definition.id: 24 of 62
+mth-load sessions: 100 synthetic load session(s) written to $TMPDIR/qa-load-r2/sessions.json (cookie mth_session, expiry 300 min); the file holds bearer credentials
+== reindex 2026-11-02T10:05:10Z
+search index: reindex completed jobs 1, types not idle 0 2026-11-02T10:05:42Z
+mth-load report: infrastructure captured to /home/user/My-owns/docs/delivery/test-evidence/DG6/qa/round-2/14-load/infrastructure.json
+== workload repetition 1 (warmup 60 s, steady 300 s) 2026-11-02T10:05:43Z
+host before-workload: 2026-11-02T10:05:43Z loadavg 24.88 23.05 15.42 nproc 4 mem 16091 MB total, 5074 MB available
+mth-load workload: repetition 1: 11950 steady-state request(s) (2235 warm-up, excluded) from 100 virtual users in 362.976 s
+workload exit=0
+host after-workload: 2026-11-02T10:12:53Z loadavg 30.74 29.82 21.59 nproc 4 mem 16091 MB total, 4619 MB available
+api error-level log lines: 0; worker: 0; rate-limit refusals: 0
+Key dashboard: highest p95 1683.6 ms (within target)
+Export start: highest p95 2442.1 ms (MISS)
+Ordinary read incl. search: highest p95 1466.7 ms (within target)
+report exit=0
+== export proof 1 2026-11-02T10:12:55Z
+host before-proof1: 2026-11-02T10:13:12Z loadavg 31.77 30.12 21.87 nproc 4 mem 16091 MB total, 6035 MB available
+mth-load export-proof qa-dg6-r2-1: 66 exports, 22 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 685.378 ms, done succeeded in 2810.872 ms, 6797 bytes, percents 0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 49.366 ms, done succeeded in 1663.014 ms, 7382 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 47.725 ms, done succeeded in 2147.78 ms, 6548 bytes, percents 0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 85.348 ms, done succeeded in 1577.168 ms, 27163 bytes, percents 0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 64.992 ms, done succeeded in 2330.683 ms, 28701 bytes, percents 0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 17.536 ms, done succeeded in 1659.341 ms, 18762 bytes, percents 0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 39.541 ms, done succeeded in 1589.892 ms, 4893 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 63.954 ms, done succeeded in 1463.944 ms, 10638 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 18.181 ms, done succeeded in 1964.806 ms, 10329 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 32.674 ms, done succeeded in 2399.875 ms, 4318 bytes, percents 0,0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 82.248 ms, done succeeded in 1657.708 ms, 60328 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 22.628 ms, done succeeded in 2042.957 ms, 24383 bytes, percents 0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 507.105 ms, done succeeded in 2823.281 ms, 2063 bytes, percents 0,0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 22.871 ms, done succeeded in 2265.827 ms, 16719 bytes, percents 0,0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 109.233 ms, done succeeded in 1799.296 ms, 18121 bytes, percents 0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 24.736 ms, done succeeded in 1912.48 ms, 1173 bytes, percents 0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T12 FAIL: createExport took 2375.406 ms > 2000 ms
+    LOAD-T13 FAIL: createExport took 2124.126 ms > 2000 ms
+    LOAD-T14 FAIL: createExport took 2309.634 ms > 2000 ms
+    LOAD-T16 FAIL: createExport took 2143.876 ms > 2000 ms
+    LOAD-T18 FAIL: createExport took 2062.646 ms > 2000 ms
+    LOAD-T19 FAIL: createExport took 2024.758 ms > 2000 ms
+    LOAD-T20 FAIL: createExport took 2067.057 ms > 2000 ms; no sameScopeOther user for this transformation
+    LOAD-T35 FAIL: createExport took 2138.586 ms > 2000 ms
+    LOAD-T36 FAIL: createExport took 2203.601 ms > 2000 ms
+    LOAD-T38 FAIL: createExport took 2589.706 ms > 2000 ms
+    LOAD-T39 FAIL: createExport took 2516.105 ms > 2000 ms
+    LOAD-T40 FAIL: createExport took 2551.331 ms > 2000 ms
+    LOAD-T41 FAIL: createExport took 2903.331 ms > 2000 ms
+    LOAD-T42 FAIL: createExport took 2900.742 ms > 2000 ms
+    LOAD-T43 FAIL: createExport took 2903.33 ms > 2000 ms
+    LOAD-T44 FAIL: createExport took 2598.675 ms > 2000 ms
+    LOAD-T45 FAIL: createExport took 2990.698 ms > 2000 ms
+    LOAD-T46 FAIL: createExport took 2899.962 ms > 2000 ms
+    LOAD-T47 FAIL: createExport took 3012.631 ms > 2000 ms
+    LOAD-T48 FAIL: createExport took 3011.788 ms > 2000 ms
+    LOAD-T49 FAIL: createExport took 3098.315 ms > 2000 ms
+    LOAD-T50 FAIL: createExport took 3043.349 ms > 2000 ms
+  start A {"count":16,"p50Ms":47.725,"p95Ms":685.378,"maxMs":685.378}
+  start B {"count":50,"p50Ms":1870.581,"p95Ms":3012.631,"maxMs":3098.315}
+  completion A {"count":16,"p50Ms":1912.48,"p95Ms":2823.281,"maxMs":2823.281}
+  completion B {"count":50,"p50Ms":26251.032,"p95Ms":34285.21,"maxMs":36290.623}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+export-proof 1 exit=1
+host after-proof1: 2026-11-02T10:14:27Z loadavg 34.91 31.50 23.00 nproc 4 mem 16091 MB total, 4903 MB available
+api error-level log lines: 0; worker: 0; rate-limit refusals: 0
+== export proof 2 2026-11-02T10:14:28Z
+host before-proof2: 2026-11-02T10:14:44Z loadavg 35.18 31.72 23.21 nproc 4 mem 16091 MB total, 5018 MB available
+mth-load export-proof qa-dg6-r2-2: 66 exports, 25 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 396.496 ms, done succeeded in 1815.158 ms, 6797 bytes, percents 0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 89.094 ms, done succeeded in 1562.768 ms, 7382 bytes, percents 0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 375.611 ms, done succeeded in 3258.654 ms, 6550 bytes, percents 0,0,0,0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 98.705 ms, done succeeded in 2698.65 ms, 27163 bytes, percents 0,0,0,0,0,1,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 105.168 ms, done succeeded in 4011.572 ms, 28700 bytes, percents 0,0,0,0,0,0,0,0,1,1,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 99.247 ms, done succeeded in 4220.655 ms, 18765 bytes, percents 0,0,0,0,0,0,0,18,90,95,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 59.875 ms, done succeeded in 2323.732 ms, 4895 bytes, percents 0,0,0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 69.605 ms, done succeeded in 2162.901 ms, 10636 bytes, percents 0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 54.905 ms, done succeeded in 1847.094 ms, 10332 bytes, percents 0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 146.707 ms, done succeeded in 1905.659 ms, 4318 bytes, percents 0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 73.538 ms, done succeeded in 1084.917 ms, 60328 bytes, percents 0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 52.922 ms, done succeeded in 1906.538 ms, 24383 bytes, percents 0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 95.801 ms, done succeeded in 1458.038 ms, 2063 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 21.978 ms, done succeeded in 1973.225 ms, 16719 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 124.249 ms, done succeeded in 1794.387 ms, 18121 bytes, percents 0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 47.122 ms, done succeeded in 1742.406 ms, 1173 bytes, percents 0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T20 FAIL: no sameScopeOther user for this transformation
+    LOAD-T26 FAIL: createExport took 2361.307 ms > 2000 ms
+    LOAD-T28 FAIL: createExport took 2177.179 ms > 2000 ms
+    LOAD-T29 FAIL: createExport took 2223.454 ms > 2000 ms
+    LOAD-T30 FAIL: createExport took 2266.449 ms > 2000 ms
+    LOAD-T31 FAIL: createExport took 2275.949 ms > 2000 ms
+    LOAD-T32 FAIL: createExport took 2158.229 ms > 2000 ms
+    LOAD-T33 FAIL: createExport took 2147.165 ms > 2000 ms
+    LOAD-T34 FAIL: createExport took 2434.113 ms > 2000 ms
+    LOAD-T35 FAIL: createExport took 2558.647 ms > 2000 ms
+    LOAD-T36 FAIL: createExport took 2217.453 ms > 2000 ms
+    LOAD-T37 FAIL: createExport took 2401.76 ms > 2000 ms
+    LOAD-T38 FAIL: createExport took 2408.422 ms > 2000 ms
+    LOAD-T39 FAIL: createExport took 2441.19 ms > 2000 ms
+    LOAD-T40 FAIL: createExport took 2578.482 ms > 2000 ms
+    LOAD-T41 FAIL: createExport took 2592.835 ms > 2000 ms
+    LOAD-T42 FAIL: createExport took 2557.247 ms > 2000 ms
+    LOAD-T43 FAIL: createExport took 2629.528 ms > 2000 ms
+    LOAD-T44 FAIL: createExport took 2603.178 ms > 2000 ms
+    LOAD-T45 FAIL: createExport took 2619.47 ms > 2000 ms
+    LOAD-T46 FAIL: createExport took 2617.887 ms > 2000 ms
+    LOAD-T47 FAIL: createExport took 2618.759 ms > 2000 ms
+    LOAD-T48 FAIL: createExport took 2624.472 ms > 2000 ms
+    LOAD-T49 FAIL: createExport took 2644.743 ms > 2000 ms
+    LOAD-T50 FAIL: createExport took 2640.553 ms > 2000 ms
+  start A {"count":16,"p50Ms":89.094,"p95Ms":396.496,"maxMs":396.496}
+  start B {"count":50,"p50Ms":1962.669,"p95Ms":2629.528,"maxMs":2644.743}
+  completion A {"count":16,"p50Ms":1905.659,"p95Ms":4220.655,"maxMs":4220.655}
+  completion B {"count":50,"p50Ms":21170.76,"p95Ms":25925.646,"maxMs":26052.889}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+export-proof 2 exit=1
+host after-proof2: 2026-11-02T10:15:54Z loadavg 37.37 32.98 24.26 nproc 4 mem 16091 MB total, 5987 MB available
+api error-level log lines: 0; worker: 0; rate-limit refusals: 0
+export_job succeeded 425
+assembly attempts max 1, pending 0
+== qa load driver r2 end 2026-11-02T10:15:55Z
+EXIT 0 (2026-11-02T10:16:04Z) load=36.82 33.02 24.36

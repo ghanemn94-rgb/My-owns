@@ -1,0 +1,95 @@
+port-policy: PostgreSQL listening on port 28742 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+== driver start 2026-11-02T11:43:18Z; git HEAD e56b3d2fc59611443fdfe273c6a1adc51c234222; node v24.21.0
+host driver-start: 2026-11-02T11:43:19Z loadavg 26.06 25.60 23.01 nproc 4
+6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a  deploy/load/generate.mjs
+7b860ee08890dcc88fdcc82615cd2bf7460bf11f9507348ee28a56d65985fca0  deploy/load/sessions.mjs
+7865d9d3f1aa5d4063b72243ad52e795c485fcee78fe24c429663d5549ed154b  deploy/load/export-proof.mjs
+0a8d1c78d92765db962ca6dc4ae15883c0a491cf55b8975b1e86616f133bcb4b  deploy/load/rate-limits.mjs
+5aa6313addb1058dfb5c3ad3ae64b979b2d8e6937511c340058d8c89b1e3d2e7  apps/api/dist/main.js
+42279ac53cbea3c95aa03a78e1505a3dba9f47d66dbc461a31c30c824c544675  apps/api/dist/modules/reporting/exports/jobs.js
+1428fa25df6f93d2d701573dfe575d436650f501e4e654aa041e73f76653965b  apps/api/dist/modules/reporting/exports/assembly.js
+221e1bca5ecc6e2783ef01acdeceb659d28fba13f57ef6215554ea0a20054a20  apps/worker/dist/main.js
+30c51a6dcf1a5ed032b87455eaf42f7348bf015f79194a2a22acca0c166c30f2  packages/db/dist/cli.js
+0124_p6_export_live_selection_pending.sql
+0125_p6_export_assembly_attempts.sql
+33:export const START_TARGET_MS = 2000;
+mth-load rate limits: 5 P6 class budget(s) set to 100000/min (load stacks only; global and auth limits unchanged)
+ASSISTANT_RATE_LIMIT_PER_MINUTE=100000
+EXPORT_RATE_LIMIT_PER_MINUTE=100000
+SEARCH_RATE_LIMIT_PER_MINUTE=100000
+UPLOAD_RATE_LIMIT_PER_MINUTE=100000
+WEBHOOK_RATE_LIMIT_PER_MINUTE=100000
+
+################ repetition 1 of 1 2026-11-02T11:43:19Z
+NOTICE:  database "mth" does not exist, skipping
+mth-db migrate: applied 117 migration(s)
+migrate exit=0
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0 wall_ms=74521
+marker {"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+transformation 50
+initiative 1000
+raid_entry 1500
+audit_event 100000
+app_user 120
+export_job before proof 0
+mth-load sessions: 100 synthetic load session(s) written to $TMPDIR/doy2-rep-1/sessions.json (cookie mth_session, expiry 180 min); the file holds bearer credentials
+search index: reindex completed jobs 1, types not idle 0 2026-11-02T11:45:32Z
+idle wait: 60 s, ended by: timeout
+host rep-1-before-proof: 2026-11-02T11:46:48Z loadavg 23.54 24.92 23.27 nproc 4
+mth-load export-proof do-y2-rep-1: 66 exports, 17 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 216.868 ms, done succeeded in 1784.995 ms, 6795 bytes, percents 0,0,0,0,1,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 51.401 ms, done succeeded in 1529.68 ms, 7381 bytes, percents 0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 75.733 ms, done succeeded in 1836.352 ms, 6549 bytes, percents 0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 35.075 ms, done succeeded in 2178.444 ms, 27164 bytes, percents 0,0,0,0,0,1,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 43.791 ms, done succeeded in 3379.169 ms, 28699 bytes, percents 0,0,0,0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 244.348 ms, done succeeded in 1792.095 ms, 18762 bytes, percents 0,0,0,0,18,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 125.324 ms, done succeeded in 3107.083 ms, 4893 bytes, percents 0,0,0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 49.061 ms, done succeeded in 2026.011 ms, 10638 bytes, percents 0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 31.256 ms, done succeeded in 2102.294 ms, 10332 bytes, percents 0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 109.309 ms, done succeeded in 1374.718 ms, 4314 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 66.415 ms, done succeeded in 1981.708 ms, 60328 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 58.801 ms, done succeeded in 1847.165 ms, 24383 bytes, percents 0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 55.297 ms, done succeeded in 1916.85 ms, 2063 bytes, percents 0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 159.798 ms, done succeeded in 1712.119 ms, 16719 bytes, percents 0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 40.359 ms, done succeeded in 1642.912 ms, 18121 bytes, percents 0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 74.931 ms, done succeeded in 1752.702 ms, 1173 bytes, percents 0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T06 FAIL: createExport took 2261.583 ms > 2000 ms
+    LOAD-T12 FAIL: createExport took 2012.122 ms > 2000 ms
+    LOAD-T15 FAIL: createExport took 2210.098 ms > 2000 ms
+    LOAD-T19 FAIL: createExport took 2129.798 ms > 2000 ms
+    LOAD-T20 FAIL: createExport took 2097.863 ms > 2000 ms; no sameScopeOther user for this transformation
+    LOAD-T27 FAIL: createExport took 2018.465 ms > 2000 ms
+    LOAD-T35 FAIL: createExport took 2089.971 ms > 2000 ms
+    LOAD-T38 FAIL: createExport took 2316.504 ms > 2000 ms
+    LOAD-T39 FAIL: createExport took 2269.657 ms > 2000 ms
+    LOAD-T42 FAIL: createExport took 2308.526 ms > 2000 ms
+    LOAD-T44 FAIL: createExport took 2141.371 ms > 2000 ms
+    LOAD-T45 FAIL: createExport took 2140.878 ms > 2000 ms
+    LOAD-T46 FAIL: createExport took 2138.983 ms > 2000 ms
+    LOAD-T47 FAIL: createExport took 2137.416 ms > 2000 ms
+    LOAD-T48 FAIL: createExport took 2139.502 ms > 2000 ms
+    LOAD-T49 FAIL: createExport took 2139.934 ms > 2000 ms
+    LOAD-T50 FAIL: createExport took 2256.144 ms > 2000 ms
+  start A {"count":16,"p50Ms":58.801,"p95Ms":244.348,"maxMs":244.348}
+  start B {"count":50,"p50Ms":1567.339,"p95Ms":2269.657,"maxMs":2316.504}
+  completion A {"count":16,"p50Ms":1836.352,"p95Ms":3379.169,"maxMs":3379.169}
+  completion B {"count":50,"p50Ms":24449.572,"p95Ms":32609.549,"maxMs":32940.791}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+docs/delivery/handbacks/DG6/T-DG6-DO-Y2-evidence/driver.sh: line 33:   401 Killed                  ( while :; do
+    echo "$(date +%s) $(cut -d' ' -f1 /proc/loadavg)"; sleep 2;
+done ) > "$WORK/loadavg.txt"
+host rep-1-after-proof: 2026-11-02T11:48:00Z loadavg 24.46 24.85 23.37 nproc 4
+loadavg-1m during proof: samples 35 min 22.98 max 24.50 last 24.46
+rep 1 export-proof exit=1
+export_job succeeded 66
+first created -> last finished (s) 70.392; jobs 66; unfinished 0
+jobs with no snapshot 0
+api error-level log lines: 0; worker: 0; api 429 class lines: 0
+host driver-end: 2026-11-02T11:48:00Z loadavg 24.46 24.85 23.37 nproc 4
+== driver end 2026-11-02T11:48:00Z; proofs overall exit 1 (0 = every assertion held in every repetition)
+exit=1

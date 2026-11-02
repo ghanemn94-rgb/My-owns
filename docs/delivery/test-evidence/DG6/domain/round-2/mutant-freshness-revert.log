@@ -1,0 +1,160 @@
+port-policy: PostgreSQL listening on port 28701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.3bsACT/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz2vjb6_3e9c1315 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/operations-freshness.test.ts (11 tests | 3 failed) 3430ms
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0117) > lists connector.run_failed and data.stale, admin-selectable events of M0239, each fed to the engine 17ms
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0117) > version 1 is unchanged published history (superseded); version 2 is effective with the three triggers 20ms
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0117) > the guard refuses an application version that adds a trigger and accepts one that keeps version 2's set 49ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a KPI older than staleAfterDays -> one data_stale exception linked to it; the KPI still reads Stale with its last value and date 153ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > one alert per open, none per recurrence; fresh again -> recovered 146ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > platform exceptions alert every organization's holders; heartbeat_missed gets no second log line 44ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a narrowed grant fails the scan with service_identity.out_of_scope; restoring it lets it run 44ms
+   × a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > the scan reads the last value as Stale, emits one data.stale event and opens one data_stale exception (M0239) 30ms
+     → expected [ 'unknown', null, null ] to deeply equal [ 'stale', '0.4125', '2026-09-03' ]
+   × a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > an Unknown (no-value) evaluation in the current period does not hide the earlier stale value either 25ms
+     → expected [ 'unknown', null, null ] to deeply equal [ 'stale', '0.5', '2026-08-19' ]
+   × a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > a value that is still within staleAfterDays in the earlier period is Fresh: no event 30ms
+     → expected 'unknown' to be 'fresh' // Object.is equality
+   ✓ a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > never a value in any period stays Unknown with nulls (never 0) and raises nothing 39ms
+stdout | apps/worker/test/integration/zz-domain-probe-freshness.test.ts > DOMAIN PROBE: stale value in an earlier period, current period open and empty > the freshness scan should open one data_stale exception (M0239)
+DOMAIN-PROBE today=2026-11-02 staleDate=2026-09-03 kpiFreshness={"freshness":"unknown","lastValue":null,"dataAsOf":null} scan={"organizations":1,"kpis":1,"stale":0,"emitted":0,"recovered":0} dataStaleEvents=0
+
+ ❯ |integration| apps/worker/test/integration/zz-domain-probe-freshness.test.ts (1 test | 1 failed) 4039ms
+   × DOMAIN PROBE: stale value in an earlier period, current period open and empty > the freshness scan should open one data_stale exception (M0239) 69ms
+     → M0239 expects a data.stale event (and so one data_stale exception): expected +0 to be 1 // Object.is equality
+ ❯ |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts (8 tests | 1 failed) 1344ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > baseline: January is the newest period; the data owner sees Stale, 250.75 and the date 41ms
+   × a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a later open period WITHOUT an evaluation (the failing feed never filled it): still Stale, 250.75 and the date 49ms
+     → expected [ 'unknown', null, null ] to deeply equal [ 'stale', '250.75', '2026-01-31' ]
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > parity with the DG4 panel for the period that holds the value; the panel's own default period is unchanged 166ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > an Unknown evaluation of a later period, a later SCHEDULED period with a value and another transformation's value never hide or replace it 41ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a recalculation of the same period (higher run seq) gives that period's newest value 38ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > authorization is unchanged: the admin without transformation.read only counts it; another organization gets 404 34ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a value in the later period then becomes the last value, Fresh with today's date 26ms
+   ✓ a linked KPI with no value in any period stays Unknown (never 0) > only Unknown evaluations: freshness unknown, lastValue and lastValueAt null 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > the scan reads the last value as Stale, emits one data.stale event and opens one data_stale exception (M0239)
+AssertionError: expected [ 'unknown', null, null ] to deeply equal [ 'stale', '0.4125', '2026-09-03' ]
+
+- Expected
++ Received
+
+  [
+-   "stale",
+-   "0.4125",
+-   "2026-09-03",
++   "unknown",
++   null,
++   null,
+  ]
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:677:61
+    675| 
+    676|     const read = await readOf(w);
+    677|     expect([read.freshness, read.lastValue, read.dataAsOf]).toEqual(["…
+       |                                                             ^
+    678|     expect(await scan(w, "stopped-1")).toMatchObject({ kpis: 1, stale:…
+    679|     // The same episode on the next scan writes nothing.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > an Unknown (no-value) evaluation in the current period does not hide the earlier stale value either
+AssertionError: expected [ 'unknown', null, null ] to deeply equal [ 'stale', '0.5', '2026-08-19' ]
+
+- Expected
++ Received
+
+  [
+-   "stale",
+-   "0.5",
+-   "2026-08-19",
++   "unknown",
++   null,
++   null,
+  ]
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:746:61
+    744|     });
+    745|     const read = await readOf(w);
+    746|     expect([read.freshness, read.lastValue, read.dataAsOf]).toEqual(["…
+       |                                                             ^
+    747|     expect(await scan(w, "unknown-later")).toMatchObject({ stale: 1, e…
+    748|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > a stopped feed: the stale value is in an earlier period and the current period is open and empty (F-DG6-100) > a value that is still within staleAfterDays in the earlier period is Fresh: no event
+AssertionError: expected 'unknown' to be 'fresh' // Object.is equality
+
+Expected: "fresh"
+Received: "unknown"
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:756:41
+    754|     const recent = await daysBefore(d, 5);
+    755|     await evaluate(env.db, { ...w, periodId: prevId }, "0.7", recent);
+    756|     expect((await readOf(w)).freshness).toBe("fresh");
+       |                                         ^
+    757|     expect(await scan(w, "fresh-earlier")).toMatchObject({ stale: 0, e…
+    758|     expect(await staleEvents(w)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/worker/test/integration/zz-domain-probe-freshness.test.ts > DOMAIN PROBE: stale value in an earlier period, current period open and empty > the freshness scan should open one data_stale exception (M0239)
+AssertionError: M0239 expects a data.stale event (and so one data_stale exception): expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ apps/worker/test/integration/zz-domain-probe-freshness.test.ts:332:97
+    330|       events.length,
+    331|     );
+    332|     expect(events.length, "M0239 expects a data.stale event (and so on…
+       |                                                                                                 ^
+    333|   });
+    334| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts > a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a later open period WITHOUT an evaluation (the failing feed never filled it): still Stale, 250.75 and the date
+AssertionError: expected [ 'unknown', null, null ] to deeply equal [ 'stale', '250.75', '2026-01-31' ]
+
+- Expected
++ Received
+
+  [
+-   "stale",
+-   "250.75",
+-   "2026-01-31",
++   "unknown",
++   null,
++   null,
+  ]
+
+ ❯ apps/api/test/integration/operations/exception-last-known-value.test.ts:322:67
+    320|       await businessToday(),
+    321|     );
+    322|     expect([worker.freshness, worker.lastValue, worker.dataAsOf]).toEq…
+       |                                                                   ^
+    323|   });
+    324| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 15 passed (20)
+   Start at  09:50:09
+   Duration  33.20s (transform 9.47s, setup 0ms, collect 18.87s, tests 8.81s, environment 0ms, prepare 101ms)
+
+exit=1

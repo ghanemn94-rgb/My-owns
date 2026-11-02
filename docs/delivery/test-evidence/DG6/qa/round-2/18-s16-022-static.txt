@@ -1,0 +1,76 @@
+REQ-S16-022 static check (2026-11-02T10:22:24Z) on $TMPDIR/work/cand (source 9bb2207)
+== FormSchemaVersion (table form_schema_version)
+  erd.md mentions: 4
+  data-dictionary mentions: 0
+  CREATE TABLE in migrations: 
+== AutomationRuleVersion (table automation_rule_version)
+  erd.md mentions: 14
+  data-dictionary mentions: 16
+  CREATE TABLE in migrations: 0074_p5_automation_engine.sql 
+      id                       uuid PRIMARY KEY,
+      status                   text NOT NULL DEFAULT 'draft'
+                               CHECK (status IN ('draft', 'in_review', 'approved', 'published', 'superseded', 'discarded')),
+        (status IN ('published', 'superseded')) = (published_at IS NOT NULL) AND (published_by IS NULL OR published_at IS NOT NULL)),
+      CONSTRAINT automation_rule_version_superseded_complete CHECK ((status = 'superseded') = (superseded_at IS NOT NULL)),
+      CONSTRAINT automation_rule_version_discarded_complete CHECK ((status = 'discarded') = (discarded_at IS NOT NULL)),
+== Job (table job_run)
+  erd.md mentions: 11
+  data-dictionary mentions: 1
+  CREATE TABLE in migrations: 0074_p5_automation_engine.sql 
+      id                uuid PRIMARY KEY,
+== Notification (table notification)
+  erd.md mentions: 11
+  data-dictionary mentions: 10
+  CREATE TABLE in migrations: 
+== IntegrationRun (table integration_run)
+  erd.md mentions: 11
+  data-dictionary mentions: 8
+  CREATE TABLE in migrations: 0104_p6_connectors_runs_outbound_writes.sql 
+      id                     uuid PRIMARY KEY,
+      organization_id        uuid NOT NULL REFERENCES organization (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+      status                 text NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'running', 'succeeded', 'failed', 'cancelled')),
+      reconciliation_status  text NOT NULL DEFAULT 'not_checked'
+                               CHECK (reconciliation_status IN ('not_checked', 'matched', 'mismatched', 'not_applicable')),
+      CONSTRAINT integration_run_connector_org_fkey FOREIGN KEY (organization_id, connector_id)
+== ReportSnapshot (table report_snapshot)
+  erd.md mentions: 18
+  data-dictionary mentions: 13
+  CREATE TABLE in migrations: 0080_p5_reports_snapshots_updates.sql 
+      id                      uuid PRIMARY KEY,
+      organization_id         uuid NOT NULL REFERENCES organization (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+      status                  text NOT NULL DEFAULT 'generated' CHECK (status IN ('generated', 'issued', 'superseded', 'discarded')),
+      CONSTRAINT report_snapshot_issue_complete CHECK ((status IN ('issued', 'superseded')) = (issue_version IS NOT NULL)
+      CONSTRAINT report_snapshot_supersede_complete CHECK ((status = 'superseded') = (superseded_at IS NOT NULL)
+      CONSTRAINT report_snapshot_discard_complete CHECK ((status = 'discarded') = (discarded_at IS NOT NULL)
+== AuditEvent (table audit_event)
+  erd.md mentions: 7
+  data-dictionary mentions: 11
+  CREATE TABLE in migrations: 0003_audit_event.sql 
+      id                   uuid PRIMARY KEY,
+      organization_id      uuid NULL REFERENCES organization (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+== integration test that creates and reads each through the API: grep
+90:describe("REQ-S16-022: each entity of the group is created and read through the API with authorization enforced", () => {
+91:  it("FormSchemaVersion: a Studio form_schema version published through the API, read by getFormSchemaAdmin", async () => {
+171:  it("AutomationRuleVersion: createAutomationRuleVersion, read by getAutomationRuleVersion", async () => {
+218:  it("Job: runJobNow (and the worker's run record), read by getJobOperation", async () => {
+255:  it("Notification: a KPI actual submitted on a review route notifies the reviewer, read by listMyInbox", async () => {
+291:  it("IntegrationRun: runConnector, read by getIntegrationRun", async () => {
+358:  it("ReportSnapshot and AuditEvent: issueReportSnapshot, read by getReportSnapshot; its audit event by getAuditEvent", async () => {
+
+== mapping recorded in erd.md section 2464-2500 (entity -> table):
+    AuditEvent }o--o| Transformation : "scoped to"
+```
+
+| Entity | Table | Stage |
+|---|---|---|
+| FormSchemaVersion | `methodology_version` rows with `key = 'forms'` (`0011`, seeded v1 `0068`), pinned per transformation by `transformation_config_pin` kind `form_schema` (`0063`; corrected by T-DG6-ARCH-03, ADR-0055 §7: no table `form_schema_version` exists) | P2/P5 (ADR-0014, ADR-0041) |
+| AutomationRuleVersion | `automation_rule_version` | P5 |
+| Job | `pgboss.job` (+ `pgboss.schedule`), plus `outbox_event` and `processed_message`; P5 `job_schedule` and `job_run` (`0074`) | **P1** (queue, outbox, ledger); P5 run history |
+| Notification | `inbox_notification` (in-app inbox, `0028`; corrected by T-DG6-ARCH-03, ADR-0055 §7: no table `notification` exists) | P4 |
+| IntegrationRun | `integration_run` (`0104`; ERD §1v, ADR-0055 §2) | P6 |
+| ReportSnapshot | `report_snapshot` (immutable once issued) | P5 |
+| AuditEvent | `audit_event` | **P1** |
+
+## 3. Coverage check (REQ-S16-011…022)
+
+Every entity named in master prompt §16 appears in section 2:

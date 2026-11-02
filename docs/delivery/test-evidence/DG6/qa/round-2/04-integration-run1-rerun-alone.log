@@ -1,0 +1,147 @@
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/contract/response-validation.test.ts apps/api/test/integration/workflows/change-requests-in-tx.test.ts (2026-11-02T11:35:16Z) cwd=$TMPDIR/work/cand node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=20.65 20.16 20.21
+port-policy: PostgreSQL listening on port 28834 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 $TMPDIR/work/cand
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz6mv26_d410bb2c (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every operation outside the pending aggregate returned at least one validated response in the contract suite
+[response-validation] 11135 validated responses; 932 of 932 live operations (0 pending excluded); 4288 distinct (operationId, status) pairs; operations without a validated response: 0
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every validated error response is application/problem+json and a Problem; every 400 is the uniform validation body
+[response-validation] 8239 validated error responses; 5540 validated 400 responses, all uniform validation bodies
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > invalid input returns the uniform 400 body in every module (a validated 400 per OpenAPI tag)
+[response-validation] modules (OpenAPI tags) with a validated uniform 400: 119/119
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors
+[response-validation] explicit invalid-body: modules without a 400: none
+[response-validation] explicit invalid-body samples: 73 modules with a uniform 400 (access:createRoleAssignment, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, approvals:requestApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, automation:createAutomationRule, bau-handovers:createBauHandover, benefit-formulas:checkBenefitFormula, benefit-groups:createBenefitGroup, benefit-overlaps:createBenefitOverlap, benefit-scenarios:createBenefitScenario, benefit-valuation-methods:createBenefitValuationMethod, benefits:createBenefit, branding:putBrandingSettings, business-cases:createBusinessCase, capacity:createResourceRole, change-requests:putChangeControlPolicy, charter:createCharter, closure:closeTransformation, controls:createControl, corrective-actions:createCorrectiveCase, decision-rights:createDecisionRight, decisions:createDependency, delegations:createDelegation, dependencies:createT08Dependency, design:createTomGap, diagnose:createValuePool, direction:createStrategicGuardrail, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, financial-metrics:putFinancialMetricEnablement, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-exceptions:createGateException, health-checks:createHealthCheck, improvement-items:createImprovementItem, integrations:createConnector, kpi:createKpiDefinition, launch-plans:generateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology-migrations:createMethodologyMigration, modular-entry:createInheritedRecord, notifications:putMyNotificationPreferences, organizations:createOrganization, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, platform-admin:putStorageSetting, portfolio:createInitiative, prioritization:createWeightSet, procedures:validateProcedureDefinition, raci:createRaciDeliverable, raid:createRaidEntry, risk-dispositions:createRiskDisposition, roadmap:createRoadmapWave, role-mappings:createRoleMapping, scale:createScaleTransition, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createStakeholderGroup, studio:createConfigDraft, traceability:createTraceLink, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream); refused before validation (authorization first): none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment
+[response-validation] unauthorized transformation reads: 124 operations; statuses {"403":1,"404":123}
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission
+[response-validation] auditor write sweep: 478 permissioned writes; statuses {"400":32,"403":312,"404":134}; modules with a 403 forbidden: 94
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call is refused in every module with a business-permission route (the two sweeps and the suite)
+[response-validation] modules with a business-permission route: 111; refused an unauthorized call: 111; not reached: none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it
+[response-validation] list operations: 219; cursor-paginated 198 (269 validated 200s, all with nextCursor); unpaginated, pinned and reported: 21
+
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (113 tests) 442476ms
+   ✓ every operation, validated against the contract and the zod mirrors > health  455ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me  1588ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units  1167ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments  1671ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit  2114ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  6257ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  19066ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations  2776ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  5031ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  3088ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  5196ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  3665ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  2388ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  2569ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  2635ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  4337ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  2391ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  3899ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  3062ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  9761ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  2518ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  3978ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  5531ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  3572ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  6786ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)  4829ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts)  6380ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  2224ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  4799ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  3112ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  2487ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  4132ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-F operations (p4-exercises-kbe-f.ts)  3221ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts)  5686ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-A operations (p5-exercises-be-a.ts)  3801ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B operations (p5-exercises-be-b.ts)  2297ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B2 operations (p5-exercises-be-b2.ts)  936ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B3 operations (p5-exercises-be-b3.ts)  4621ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-C operations (p5-exercises-be-c.ts)  7230ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-A operations (p5-exercises-kbe-a.ts)  1029ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-D operations (p5-exercises-be-d.ts)  2381ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E operations (p5-exercises-be-e.ts)  3580ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E2 operations (p5-exercises-be-e2.ts)  3379ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F operations (p5-exercises-be-f.ts)  2772ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F2 operations (p5-exercises-be-f2.ts)  7580ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-G operations (p5-exercises-be-g.ts)  582ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H operations (p5-exercises-be-h.ts)  4306ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H2 operations (p5-exercises-be-h2.ts)  3836ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I operations (p5-exercises-be-i.ts)  5319ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I2 operations (p5-exercises-be-i2.ts)  963ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-J operations (p5-exercises-be-j.ts)  642ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-K operations (p5-exercises-be-k.ts)  3816ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L operations (p5-exercises-be-l.ts)  1351ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L2 operations (p5-exercises-be-l2.ts)  1803ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-C operations (p5-exercises-kbe-c.ts)  2470ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-D operations (p5-exercises-kbe-d.ts)  2969ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-M operations (p5-exercises-be-m.ts)  3963ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-O operations (p5-exercises-be-o.ts)  3626ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E operations (p5-exercises-kbe-e.ts)  4569ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)  4942ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-F operations (p5-exercises-kbe-f.ts)  3209ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P operations (p5-exercises-be-p.ts)  3554ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P2 operations (p5-exercises-be-p2.ts)  2832ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G operations (p5-exercises-kbe-g.ts)  313ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)  6855ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-Q2 operations (p5-exercises-be-q2.ts)  416ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-R operations (p5-exercises-be-r.ts)  1108ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-S operations (p5-exercises-be-s.ts)  19362ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-T2 operations (p5-exercises-be-t2.ts)  11776ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-B operations (p6-exercises-be-b.ts)  2157ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-D operations (p6-exercises-be-d.ts)  1485ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-E operations (p6-exercises-be-e.ts)  729ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-G operations (p6-exercises-be-g.ts)  489ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-H2 operations (p6-exercises-be-h2.ts)  1495ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I operations (p6-exercises-be-i.ts)  1414ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I2 operations (p6-exercises-be-i2.ts)  686ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-J operations (p6-exercises-be-j.ts)  1689ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-K operations (p6-exercises-be-k.ts)  1008ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-L operations (p6-exercises-be-l.ts)  5859ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-M operations (p6-exercises-be-m.ts)  4283ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-N operations (p6-exercises-be-n.ts)  5190ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-O operations (p6-exercises-be-o.ts)  1598ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-P operations (p6-exercises-be-p.ts)  678ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-Q operations (p6-exercises-be-q.ts)  2865ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-T operations (p6-exercises-be-t.ts)  2448ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-U operations (p6-exercises-be-u.ts)  1171ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-W operations (p6-exercises-be-w.ts)  324ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts)  1345ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  9550ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  21918ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request media types its operation declares  391ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  45613ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b)  1017ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  22903ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors  3260ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment  2243ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission  15678ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call is refused in every module with a business-permission route (the two sweeps and the suite)  313ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 6788ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  1289ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > a resubmission by a lead who is not the approval's requester is 403 approval.not_requester; nothing is written  623ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > pending: the approval and the request are withdrawn in one transaction, both audited; the decision is then 422  652ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > changes requested: both withdrawn; a lead who is not the requester gets 403 approval.not_requester first, nothing written  407ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  633ms
+
+ Test Files  2 passed (2)
+      Tests  119 passed (119)
+   Start at  11:35:22
+   Duration  529.43s (transform 21.53s, setup 0ms, collect 61.61s, tests 449.26s, environment 1ms, prepare 159ms)
+
+EXIT 0 (2026-11-02T11:44:24Z) load=25.58 25.41 23.11

@@ -1,0 +1,27 @@
+Register notes vs the candidate (qa-verifier DG6 round 2; docs/delivery/requirements.csv at the repository HEAD during the review, unchanged since round 1: git diff 3cce3d44..9bb2207 lists no change to requirements.csv)
+
+== REQ-S12-019 (status IMPLEMENTED, final_gate DG6)
+  phrase FOUND: "Residual noted by BE-X4"
+    context: ...g both integration files; the A17 e2e has not been re-run on the integrated tree since BE-X4 (QA-G's full e2e runs predate the merge), so the binding re-run is the orchestrator's freeze verification. Residual noted by BE-X4 §5, not this row's acceptance: the worker's freshness scan still reads only the newest period, so it may not open a new...
+  phrase FOUND: "the worker's freshness scan still reads only the newest period"
+    context: ...un on the integrated tree since BE-X4 (QA-G's full e2e runs predate the merge), so the binding re-run is the orchestrator's freeze verification. Residual noted by BE-X4 §5, not this row's acceptance: the worker's freshness scan still reads only the newest period, so it may not open a new data_stale exception once a later empty period is open....
+  mentions any round-1 repair (BE-Y*, DO-Y*, D-207, D-208): False
+
+== REQ-S16-030 (status IMPLEMENTED, final_gate DG6)
+  phrase FOUND: "the export rate-limit class has no operation wired"
+    context: ...ding 0 HTML sinks; .exe and renamed .exe 422; oversized 413; rate limiting 429 with Retry-After on six classes), and QA-B's A12 suite independently covers CSRF, SQL injection, type and size; partial: the export rate-limit class has no operation wired (an it.todo in rate-limits.test.ts, so exports fall under the global limit only), QA-D did not deliver the planned XSS ...
+  mentions any round-1 repair (BE-Y*, DO-Y*, D-207, D-208): False
+
+== REQ-S20-029 (status IMPLEMENTED, final_gate DG6)
+  phrase FOUND: "the run used DO-F's patched copy of generate.mjs, which is not in the tree"
+    context: ...20.5 ms, dashboards 50.3 ms, export start 108.5 ms; independently recomputed), with no miss and so no p95 finding; caveats: getWorkstreamDashboard was not measured (the profile writes no workstream), the run used DO-F's patched copy of generate.mjs, which is not in the tree, the report sits in the DO-G handback folder because docs/delivery/test-evidence/DG6/load/ was read-only to implementer...
+  mentions any round-1 repair (BE-Y*, DO-Y*, D-207, D-208): False
+
+== REQ-S20-030 (status IMPLEMENTED, final_gate DG6)
+  phrase FOUND: "the run used DO-F's patched generator copy"
+    context: ...each repetition on one assertion, 'LOAD-T20 FAIL: no sameScopeOther user for this transformation', a dataset gap (LOAD-T20's export is still refused to its AUD user), not a latency or access failure; the run used DO-F's patched generator copy (6b2a9007...), not the tree's generate.mjs; the margin to 2 s at 50 concurrent starts is 0.42 s on one sandbox host and...
+  phrase FOUND: "IMPLEMENTED on DO-H's idle-host re-measurement (D-202)"
+    context: ...d BE-S propose a Medium finding and a reopen candidate (the snapshot is assembled inside the request), which the orchestrator has not yet classified. DG6 analyst check (T-DG6-AN-P6C, base 350db3f20): IMPLEMENTED on DO-H's idle-host re-measurement (D-202): same dataset, generator copy, sessions, API binary and unchanged export-proof.mjs (START_TARGET_MS 2000) as DO-G proof...
+  mentions any round-1 repair (BE-Y*, DO-Y*, D-207, D-208): False
+
+What the candidate does instead (this round's evidence): kpiFreshness reads the last accepted value across periods (10b-probe-f140-f141-rerun.log); createExport is in the export class and createImport in the upload class (10b); deploy/load/generate.mjs in the tree is sha256 6b2a9007... with RFC ids (14-load-driver.log, 12b-f142-generator-ids-candidate.log); a live export start is answered before assembly (D-207, ADR-0046 amendment; 14-load-driver.log).

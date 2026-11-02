@@ -1,0 +1,65 @@
+=== mutant run 1  09:59:34 up 13:13,  0 user,  load average: 18.15, 16.16, 10.26
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.3bsACT/claude-0/review-dg6
+
+ ❯ |unit-web| src/pages/integrations/integrations.test.tsx (17 tests | 17 skipped) 60309ms
+   ↓ connectors (en) > shows Not verified, Never succeeded, Unknown counts and the actionable error with both fallbacks
+   ↓ connectors (en) > gives AUD a read-only view: no test, run, edit, enable or disable control
+   ↓ connectors (en) > queues a manual run with an Idempotency-Key and shows the one form-level alert on a 409
+   ↓ connectors (en) > lists connectors with their verification and last success
+   ↓ connectors (ar) > shows Not verified, Never succeeded, Unknown counts and the actionable error with both fallbacks
+   ↓ connectors (ar) > gives AUD a read-only view: no test, run, edit, enable or disable control
+   ↓ connectors (ar) > queues a manual run with an Idempotency-Key and shows the one form-level alert on a 409
+   ↓ connectors (ar) > lists connectors with their verification and last success
+   ↓ integration run detail > shows the retry chain and retries a failed run once
+   ↓ outbound writes (en) > shows requested and pending_confirmation as Pending confirmation, never Confirmed
+   ↓ outbound writes (ar) > shows requested and pending_confirmation as Pending confirmation, never Confirmed
+   ↓ import batch (en) > renders each row reason in the reader's language and labels the staged batch as not committed
+   ↓ import batch (en) > commits the valid rows with If-Match and gives AUD no commit control
+   ↓ import batch (en) > shows Unknown counts while a batch is staging, never 0
+   ↓ import batch (ar) > renders each row reason in the reader's language and labels the staged batch as not committed
+   ↓ import batch (ar) > commits the valid rows with If-Match and gives AUD no commit control
+   ↓ import batch (ar) > shows Unknown counts while a batch is staging, never 0
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/integrations/integrations.test.tsx [ apps/web/src/pages/integrations/integrations.test.tsx ]
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ test/setup.ts:37:1
+     35| export const UNIT_WEB_WARMED_PAGE_MODULES = Object.keys(PAGE_MODULES);
+     36| 
+     37| beforeAll(async (suite) => {
+       | ^
+     38|   const started = performance.now();
+     39|   await Promise.all(Object.values(PAGE_MODULES).map((load) => load()));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 skipped (17)
+   Start at  10:00:05
+   Duration  211.37s (transform 7910.54s, setup 10.09s, collect 88.34s, tests 60.31s, environment 27.08s, prepare 5.82s)
+
+exit=1
+=== mutant run 2  10:03:44 up 13:17,  0 user,  load average: 27.77, 22.24, 14.12
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.3bsACT/claude-0/review-dg6
+
+[retry-chain] {"post":650,"navigated":874,"rendered":2369} ms
+ ✓ |unit-web| src/pages/integrations/integrations.test.tsx (17 tests | 16 skipped) 18731ms
+   ✓ integration run detail > shows the retry chain and retries a failed run once  3463ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 16 skipped (17)
+   Start at  10:04:15
+   Duration  31.15s (transform 1573.41s, setup 450ms, collect 8.29s, tests 18.73s, environment 2.67s, prepare 174ms)
+
+exit=0

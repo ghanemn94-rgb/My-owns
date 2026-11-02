@@ -1,0 +1,78 @@
+// DOMAIN REVIEWER PROBE (DG6 round 2), disposable clone only. SYNTHETIC data. Production-initialized dev stack
+// (apps/web/e2e/support/with-stack.sh; no worker). Visits P6 screens in en and ar, checks <html lang/dir>, scans for raw
+// stack traces / SQL / infrastructure terms and for "0"-as-Unknown on empty screens, takes full-page screenshots, and
+// starts ONE live-selection export (D-207) through the API to see the asynchronous assembly on "Your exports".
+import { expect, test } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { apiSession, langOf, shot, signIn, SYN_RETAIL } from "../../apps/web/e2e/support/ui.ts";
+
+const SCREENS: [string, string, string][] = [
+  ["dev.admin", "/admin/assistant", "dom-r2-admin-assistant-off"],
+  ["dev.admin", "/admin/integrations", "dom-r2-admin-integrations"],
+  ["dev.admin", "/admin/operations", "dom-r2-admin-operations"],
+  ["dev.office", "/strategy-kpis/imports", "dom-r2-imports-entry"],
+  ["dev.office", "/search?q=synthetic", "dom-r2-search"],
+  ["dev.office", "/my-work", "dom-r2-my-work"],
+];
+const INFRA = /\b(stack trace|at Object\.|SELECT |postgres|pg-boss|ECONNREFUSED|kysely|node_modules|undefined|NaN|advisory|SKIP LOCKED|outbox)\b/i;
+
+test.describe.configure({ timeout: 600_000 });
+test("DOMAIN PROBE R2: P6 screens and a live-selection export in the project's language", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  let who = "";
+  for (const [user, path, name] of SCREENS) {
+    if (user !== who) {
+      await page.context().clearCookies();
+      await signIn(page, lang, user);
+      who = user;
+    }
+    await page.goto(path);
+    await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    const text = await page.locator("main#main").innerText();
+    console.log(`DOMAIN-PROBE ${lang} ${path} h1=${JSON.stringify(await page.locator("main#main h1").innerText())} infraHit=${INFRA.test(text) ? JSON.stringify(text.match(INFRA)![0]) : "none"} chars=${text.length}`);
+    expect(INFRA.test(text), `${path}: ${text.match(INFRA)?.[0]}`).toBe(false);
+    await shot(page, lang, name);
+  }
+  // A live-selection export (D-207): 202 immediately, no snapshot yet; the API's assembly watch assigns it.
+  const lead = await apiSession(playwright, "dev.lead");
+  const tr = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R2 export ${lang.toUpperCase()}`, mode: "end_to_end" });
+  await lead.call("POST", `/api/v1/transformations/${tr.id}/raid`, { type: "risk",
+    description: `Synthetic domain R2 risk ${lang}`, impact: "high", probability: "medium", ownerUserId: lead.userId });
+  await page.context().clearCookies();
+  await signIn(page, lang, "dev.lead");
+  await page.goto("/evidence-reports/exports");
+  await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+  const csrf = ((await (await page.request.get("/api/v1/me")).json()) as { csrfToken: string }).csrfToken;
+  const t0 = Date.now();
+  const res = await page.request.post("/api/v1/exports", {
+    headers: { "x-csrf-token": csrf, origin: new URL(page.url()).origin, "idempotency-key": randomUUID() },
+    data: { report: { definitionCode: "registers", subjectId: tr.id, parameters: { register: "raid" } }, format: "csv", language: lang },
+  });
+  const ms = Date.now() - t0;
+  const body = await res.json();
+  console.log(`DOMAIN-PROBE ${lang} createExport live -> ${res.status()} in ${ms} ms snapshotId=${body.snapshotId} status=${body.status} percent=${body.progress?.percent ?? JSON.stringify(body.progress ?? null)}`);
+  expect(res.status()).toBe(202);
+  await page.goto("/evidence-reports/exports");
+  await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+  await page.waitForLoadState("networkidle");
+  const rowText = await page.locator(`table[data-table="exports"]`).innerText();
+  console.log(`DOMAIN-PROBE ${lang} exports table: ${JSON.stringify(rowText.slice(0, 600))}`);
+  await shot(page, lang, "dom-r2-exports-live");
+  let job: any = null;
+  for (let i = 0; i < 30; i++) {
+    job = await (await page.request.get(`/api/v1/exports/${body.id}`)).json();
+    if (job.snapshotId !== null || job.status !== "queued") break;
+    await page.waitForTimeout(1000);
+  }
+  console.log(`DOMAIN-PROBE ${lang} after assembly: status=${job.status} snapshotId=${job.snapshotId} errorCode=${job.errorCode} stage=${job.stage ?? job.progress?.stage}`);
+  expect(job.snapshotId, "the API's assembly watch assigns the snapshot").not.toBeNull();
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  const text = await page.locator("main#main").innerText();
+  expect(INFRA.test(text), `exports: ${text.match(INFRA)?.[0]}`).toBe(false);
+  await shot(page, lang, "dom-r2-exports-assembled");
+});

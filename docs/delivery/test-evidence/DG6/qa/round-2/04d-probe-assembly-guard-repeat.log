@@ -1,0 +1,154 @@
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts (2026-11-02T11:03:25Z) cwd=$TMPDIR/work/rv node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=22.80 21.30 21.66
+port-policy: PostgreSQL listening on port 28818 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 $TMPDIR/work/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz5hx0w_133b823f (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts > QA-DG6R2 probe: the guard test's sequence, repeated > 40 repetitions: a rejected foreign-definition assignment, then step([job]) assembles the job each time
+QA-DG6R2 guard-sequence misses: 5 of 40 [{"i":4,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"locks":[],"again":[{"outcome":"assembled","exportJobId":"01a19bee-e12a-7041-ade0-f006e1b40497","snapshotId":"01a19bee-e1f2-717b-a5e7-0447613f40fb"}]},{"i":8,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"locks":[],"again":[{"outcome":"assembled","exportJobId":"01a19bee-e3ed-7109-af27-bc3e64686c31","snapshotId":"01a19bee-e455-7064-a852-a73fdf0e1182"}]},{"i":18,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"locks":[],"again":[{"outcome":"assembled","exportJobId":"01a19bee-efee-7389-b528-0321e26856f6","snapshotId":"01a19bee-f063-7548-ae99-9484407a0348"}]},{"i":24,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"locks":[],"again":[{"outcome":"assembled","exportJobId":"01a19bee-f647-7342-8216-a56f723e5739","snapshotId":"01a19bee-f6e3-76a8-a266-88ad3e7e98f8"}]},{"i":39,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"locks":[],"again":[{"outcome":"assembled","exportJobId":"01a19bef-0a99-77eb-8fde-e94713f69249","snapshotId":"01a19bef-0b47-753c-a53a-7ee13ec2ae8e"}]}]
+
+ ❯ |integration| apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts (19 tests | 1 failed) 34380ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event  522ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > the request-time refusals stay synchronous: 422 report.subject_invalid / report.parameters_invalid, 403 for AUD 153ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > the 0124 CHECK: a job without a snapshot cannot be running 272ms
+   ✓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200  617ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a revoked grant: failed export.source_unavailable, no snapshot, no outbox event, no file 292ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports  804ms
+   ✓ D-207 (3): an idempotent replay compares the stored selection > same key and selection -> 200 with the same job (pending, then assembled); other parameters -> 422 idempotency.key_reused 271ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once  345ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > the running watch (as the API process starts it) assembles a pending job on its own, and stops cleanly  370ms
+   ✓ durability: a restart in the middle of a job, the running watch, bounded retries > unexpected errors are retried at most 3 times, then the job fails export.assembly_failed 144ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  8041ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  1806ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a watcher holding a job keeps a second one out between its two transactions (session lock), and releases the lock after the job 279ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own  468ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending  733ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  859ms
+   ✓ exactly once: two watchers race > a second watcher skips a job the first one holds (FOR UPDATE SKIP LOCKED), and the job is assembled once  422ms
+   ✓ exactly once: two watchers race > a cancelled pending job is never assembled (cancel with If-Match 1)  1900ms
+   × QA-DG6R2 probe: the guard test's sequence, repeated > 40 repetitions: a rejected foreign-definition assignment, then step([job]) assembles the job each time 12728ms
+     → expected [ { i: 4, out: [], …(3) }, …(4) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts > QA-DG6R2 probe: the guard test's sequence, repeated > 40 repetitions: a rejected foreign-definition assignment, then step([job]) assembles the job each time
+AssertionError: expected [ { i: 4, out: [], …(3) }, …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "again": [
++       {
++         "exportJobId": "01a19bee-e12a-7041-ade0-f006e1b40497",
++         "outcome": "assembled",
++         "snapshotId": "01a19bee-e1f2-717b-a5e7-0447613f40fb",
++       },
++     ],
++     "i": 4,
++     "locks": [],
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [
++       {
++         "exportJobId": "01a19bee-e3ed-7109-af27-bc3e64686c31",
++         "outcome": "assembled",
++         "snapshotId": "01a19bee-e455-7064-a852-a73fdf0e1182",
++       },
++     ],
++     "i": 8,
++     "locks": [],
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [
++       {
++         "exportJobId": "01a19bee-efee-7389-b528-0321e26856f6",
++         "outcome": "assembled",
++         "snapshotId": "01a19bee-f063-7548-ae99-9484407a0348",
++       },
++     ],
++     "i": 18,
++     "locks": [],
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [
++       {
++         "exportJobId": "01a19bee-f647-7342-8216-a56f723e5739",
++         "outcome": "assembled",
++         "snapshotId": "01a19bee-f6e3-76a8-a266-88ad3e7e98f8",
++       },
++     ],
++     "i": 24,
++     "locks": [],
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++   {
++     "again": [
++       {
++         "exportJobId": "01a19bef-0a99-77eb-8fde-e94713f69249",
++         "outcome": "assembled",
++         "snapshotId": "01a19bef-0b47-753c-a53a-7ee13ec2ae8e",
++       },
++     ],
++     "i": 39,
++     "locks": [],
++     "out": [],
++     "row": {
++       "attempts": 0,
++       "snapshot": null,
++       "status": "queued",
++       "version": 1,
++     },
++   },
++ ]
+
+ ❯ apps/api/test/integration/reporting/zz-qa-dg6r2-assembly-guard-repeat.test.ts:660:20
+    658|     }
+    659|     console.log(`QA-DG6R2 guard-sequence misses: ${misses.length} of 4…
+    660|     expect(misses).toEqual([]);
+       |                    ^
+    661|   }, 600_000);
+    662| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  11:03:32
+   Duration  84.97s (transform 14.57s, setup 0ms, collect 34.48s, tests 34.38s, environment 0ms, prepare 490ms)
+
+EXIT 1 (2026-11-02T11:05:03Z) load=23.03 21.73 21.77

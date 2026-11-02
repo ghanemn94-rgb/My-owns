@@ -1,0 +1,7 @@
+$ tests/qa/support/with-pg.sh bash -c B="${TEST_DATABASE_ADMIN_URL%/postgres}"; psql "$TEST_DATABASE_ADMIN_URL" -q -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" -c "CREATE DATABASE e OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"; DATABASE_OWNER_URL="$B/e?options=-c%20role%3Dmth_owner" DATABASE_URL="$B/e?options=-c%20role%3Dmth_app" NODE_ENV=production node packages/db/dist/cli.js migrate | tail -1; psql "$B/e" -qAt -c "select 'methodology_coverage_link non-RFC ' || count(*) filter (where id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$') || ' of ' || count(*) from methodology_coverage_link" -c "select 'procedure_step_definition non-RFC ' || count(*) filter (where id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$') || ' of ' || count(*) from procedure_step_definition" (2026-11-02T11:01:21Z) cwd=$TMPDIR/work/cand node=v24.21.0 LANG=<unset> LC_ALL=<unset> load=18.88 20.43 21.48
+port-policy: PostgreSQL listening on port 28816 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 117 migration(s)
+methodology_coverage_link non-RFC 96 of 114
+procedure_step_definition non-RFC 24 of 62
+EXIT 0 (2026-11-02T11:01:46Z) load=20.15 20.62 21.51
