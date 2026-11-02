@@ -7,6 +7,7 @@ import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { FilesystemExportStore, type ExportFileStore } from "../../../../../packages/reporting/src/storage.ts";
 import { runExport, type ExportRunnerDeps } from "../../../../worker/src/reports/export-runner.ts";
+import { exportAssemblyWatchStep } from "../../../src/modules/reporting/exports/assembly.ts";
 import { call, seedWorld, startApi, testEvidenceDir, type TestApi, type World } from "../../support/harness.ts";
 import { setupP2World, type P2World } from "../../support/p2-fixtures.ts";
 
@@ -25,6 +26,8 @@ const ok = (res: { status: number; body: unknown }, status: number, what: string
 };
 
 async function work(exportJobId: string, retryCount: number, deps: Partial<ExportRunnerDeps> = {}) {
+  // T-DG6-BE-Y5 (D-207): a live selection is assembled by the export assembly watch before its outbox event exists.
+  await exportAssemblyWatchStep(api.db, { onlyJobIds: [exportJobId] });
   const row = await api.db
     .selectFrom("outbox_event")
     .selectAll()

@@ -50,7 +50,7 @@ import {
   type Principal,
   type ResolvedTarget,
 } from "../../access/index.ts";
-import { record } from "../../audit/index.ts";
+import { record, type AuditContext } from "../../audit/index.ts";
 import { createConfigResolver } from "../../methodology/index.ts";
 import { ADVISORY_LOCK_CLASSES, iso, isoOrNull, problems } from "../../platform/index.ts";
 import { assemblerOf, type AssembledOutput, type Assembler } from "./assembler.ts";
@@ -265,6 +265,16 @@ async function resolveRequest(db: DbOrTx, req: ReportRequest): Promise<Resolved>
   };
 }
 
+/**
+ * T-DG6-BE-Y5 (D-207): the request checks of an assembly alone (definition, subject, period and parameters: the 422
+ * refusals of ADR-0045 §11, and 404 for an unknown transformation or an output without an assembler), read-only and
+ * without assembling. createExport runs them in the request for a live selection, so those refusals stay synchronous
+ * while the assembly itself runs after the 202.
+ */
+export async function checkReportRequest(db: DbOrTx, req: ReportRequest): Promise<void> {
+  await resolveRequest(db, req);
+}
+
 // ------------------------------------------------------------------------------------------------ assembly
 
 export interface Assembly {
@@ -433,7 +443,7 @@ export function batches<T>(rows: readonly T[], size: number = INSERT_BATCH): T[]
 /** Inserts a generated snapshot and its captured children; one audit event (the children are covered by it, RC01). */
 async function insertSnapshot(
   tx: Tx,
-  request: FastifyRequest,
+  ctx: AuditContext,
   userId: string,
   a: Assembly,
   reissue: { readonly of: ReportSnapshotRow; readonly reason: string } | null,
@@ -542,7 +552,7 @@ async function insertSnapshot(
     });
   }
   for (const chunk of batches(evidenceRows)) await tx.insertInto("report_snapshot_evidence").values(chunk).execute();
-  await record(tx, auditContextOf(request), {
+  await record(tx, ctx, {
     action: reissue === null ? "report_snapshot.generate" : "report_snapshot.reissue",
     recordType: "report_snapshot",
     recordId: id,
@@ -570,17 +580,18 @@ async function insertSnapshot(
 
 /**
  * T-DG6-BE-Y4 (F-DG6-147): the snapshot of an assembly written inside the CALLER's write transaction, by the actor the
- * caller authorized at commit time (`report.generate` on reloaded grants). createExport's live selection writes the
- * snapshot and its export job in ONE transaction with this; the rows and the `report_snapshot.generate` audit event
- * are exactly those of generateSnapshot.
+ * caller authorized at commit time (`report.generate` on reloaded grants); the rows and the `report_snapshot.generate`
+ * audit event are exactly those of generateSnapshot. T-DG6-BE-Y5 (D-207): the caller passes the audit context, because
+ * the export assembly watch (exports/assembly.ts) writes a live selection's snapshot with no request: its actor is the
+ * service acting on behalf of the requester, who stays the snapshot's `created_by`.
  */
 export function insertGeneratedSnapshot(
   tx: Tx,
-  request: FastifyRequest,
+  ctx: AuditContext,
   userId: string,
   a: Assembly,
 ): Promise<ReportSnapshotRow> {
-  return insertSnapshot(tx, request, userId, a, null);
+  return insertSnapshot(tx, ctx, userId, a, null);
 }
 
 /** POST …/reports/{code}/generate: assembly (read-only), then the write transaction. */
@@ -593,7 +604,7 @@ export async function generateSnapshot(
   const a = await assembleReport(db, req);
   return db.transaction().execute(async (tx) => {
     const actor = await requireWriteAtCommit(tx, request, req.transformationId, "report.generate");
-    return insertSnapshot(tx, request, actor.userId, a, null);
+    return insertSnapshot(tx, auditContextOf(request), actor.userId, a, null);
   });
 }
 
@@ -819,6 +830,6 @@ export async function reissueSnapshot(
     const s = await lockedSnapshot(tx, transformationId, snapshotId);
     if (s.version !== expected) throw problems.versionConflict(s.version);
     if (s.status !== "issued") throw reportRefusals.notIssued();
-    return insertSnapshot(tx, request, actor.userId, a, { of: s, reason });
+    return insertSnapshot(tx, auditContextOf(request), actor.userId, a, { of: s, reason });
   });
 }

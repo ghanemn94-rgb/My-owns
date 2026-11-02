@@ -2,6 +2,9 @@
 // idempotency, list, read, download with the access re-check, cancel. The API never renders: it validates the request,
 // writes the job (queued), its progress row, the audit event and the `export_job.requested` outbox event in ONE
 // transaction, and the worker (apps/worker/src/reports/export-runner.ts) renders after that COMMIT.
+// T-DG6-BE-Y5 (D-207, migration 0124): for a LIVE selection the job is written with its stored selection and no
+// snapshot (202, `snapshotId` null) and no outbox event; the export assembly watch (assembly.ts) assembles and assigns
+// the snapshot and then writes the outbox event. D-199's restricted-source 403 is still decided in the request.
 //
 // Authorization ("export authorization equal to record views", ADR-0046 §5-§6):
 //   - create: `export.create` in the snapshot's transformation (and `report.generate` for a live selection, which
@@ -59,9 +62,11 @@ import {
 } from "../../platform/index.ts";
 import {
   assembleReport,
-  insertGeneratedSnapshot,
+  canonicalReportJson,
+  checkReportRequest,
   requireReportPermission,
   type Assembly,
+  type ReportRequest,
 } from "../reports/snapshots.ts";
 
 export const EXPORT_REQUESTED_EVENT = "export_job.requested";
@@ -192,6 +197,15 @@ async function ownJob(db: DbOrTx, principal: Principal, jobId: string, lock = fa
 
 // ------------------------------------------------------------------------------------------------ export selection (P6)
 
+/** The source record types that can carry (or belong to) a sensitive record (ADR-0051 §1). */
+const SENSITIVE_SOURCE_TYPES = [
+  "benefit",
+  "business_case",
+  "evidence",
+  "business_case_line",
+  "benefit_measurement",
+] as const;
+
 /**
  * The export selection's sensitivity boundary (T-DG6-BE-B2; ADR-0051 §1, §2; REQ-S10-002, REQ-S10-004): the
  * requester's ReadScope applied to the records the snapshot was assembled from (`report_snapshot_source`). The worker
@@ -209,8 +223,22 @@ export async function includesRestrictedSources(
     .selectFrom("report_snapshot_source")
     .select(["record_type", "record_id"])
     .where("snapshot_id", "=", snapshotId)
-    .where("record_type", "in", ["benefit", "business_case", "evidence", "business_case_line", "benefit_measurement"])
+    .where("record_type", "in", [...SENSITIVE_SOURCE_TYPES])
     .execute();
+  return restrictedAmong(db, principal, sources);
+}
+
+/**
+ * True when one of `sources` is, or belongs to, a sensitive record the principal is not admitted to (the D-199 rule,
+ * shared by a stored snapshot's sources and an assembly's in-memory sources, T-DG6-BE-Y5).
+ */
+export async function restrictedAmong(
+  db: DbOrTx,
+  principal: Principal,
+  all: readonly { record_type: string; record_id: string }[],
+): Promise<boolean> {
+  const types = new Set<string>(SENSITIVE_SOURCE_TYPES);
+  const sources = all.filter((r) => types.has(r.record_type));
   if (sources.length === 0) return false;
   const idsOf = (type: string) => [...new Set(sources.filter((r) => r.record_type === type).map((r) => r.record_id))];
   const lineIds = idsOf("business_case_line");
@@ -233,6 +261,32 @@ export async function includesRestrictedSources(
     if ((await restrictionOf(db, principal, type, ids)).restricted.size > 0) return true;
   }
   return false;
+}
+
+/** The sources of an assembly (not yet written), in the shape of `report_snapshot_source`. */
+export function assemblySources(a: Assembly): { record_type: string; record_id: string }[] {
+  return a.output.sources.map((src) => ({ record_type: src.recordType, record_id: src.recordId }));
+}
+
+/**
+ * T-DG6-BE-Y5 (D-207): whether the transformation holds a record marked sensitive that the principal is not admitted
+ * to. One indexed query (`record_sensitivity_transformation_idx`) when nothing is marked. When this is false, no
+ * assembly of a live selection of this transformation can include a restricted record of it, so createExport needs no
+ * assembly in the request to keep D-199's answer; when it is true, createExport assembles read-only in the request to
+ * decide the 403 exactly as before. The assembly watch re-checks the actual sources before it writes the snapshot.
+ */
+export async function transformationHasRestricted(
+  db: DbOrTx,
+  principal: Principal,
+  transformationId: string,
+): Promise<boolean> {
+  const marked = await db
+    .selectFrom("record_sensitivity")
+    .select(["record_type", "record_id"])
+    .where("transformation_id", "=", transformationId)
+    .where("is_sensitive", "=", true)
+    .execute();
+  return restrictedAmong(db, principal, marked);
 }
 
 /**
@@ -259,7 +313,7 @@ async function requireUnrestrictedSelection(db: DbOrTx, principal: Principal, sn
  * The `export_job.requested` outbox row, in the creating transaction (the relay sends it to `reports.export` after
  * COMMIT; ADR-0008). Written directly, as reports/snapshots.ts does: the reporting module does not depend on jobs.
  */
-async function enqueueExportRequested(tx: Tx, organizationId: string, exportJobId: string): Promise<void> {
+export async function enqueueExportRequested(tx: Tx, organizationId: string, exportJobId: string): Promise<void> {
   const schema = outboxPayloadSchema(EXPORT_REQUESTED_EVENT, 1);
   if (schema === null) throw new Error(`outbox: no schema for ${EXPORT_REQUESTED_EVENT} v1`);
   const payload = schema.parse({ exportJobId }) as Record<string, unknown>;
@@ -313,33 +367,54 @@ async function liveTransformationId(
   return row.transformation_id;
 }
 
-/** True when an existing job answers the same request (ADR-0007 §6: same key and request -> the original job). */
-async function sameRequest(db: DbOrTx, j: JobRow, body: ExportCreate): Promise<boolean> {
+/** The stored selection of a live-selection job (D-207, migration 0124): ExportLiveSelection as it was requested. */
+export function storedSelection(j: JobRow): z.infer<typeof exportLiveSelection> | null {
+  if (j.selection === null || j.selection === undefined) return null;
+  const raw = typeof j.selection === "string" ? (JSON.parse(j.selection) as unknown) : j.selection;
+  return exportLiveSelection.parse(raw);
+}
+
+/** The selection as stored: only the members the request carried (canonical key order, for the replay comparison). */
+function selectionToStore(sel: z.infer<typeof exportLiveSelection>): Record<string, unknown> {
+  return {
+    definitionCode: sel.definitionCode,
+    ...(sel.subjectId === undefined ? {} : { subjectId: sel.subjectId }),
+    ...(sel.reportingPeriodId === undefined ? {} : { reportingPeriodId: sel.reportingPeriodId }),
+    ...(sel.parameters === undefined ? {} : { parameters: sel.parameters }),
+  };
+}
+
+/**
+ * True when an existing job answers the same request (ADR-0007 §6: same key and request -> the original job).
+ * T-DG6-BE-Y5 (D-207 (3)): a live-selection job compares the STORED selection (definition, subject, period and
+ * parameters), whether or not its snapshot has been assembled yet; a job of an existing snapshot compares the id.
+ */
+function sameRequest(j: JobRow, body: ExportCreate): boolean {
   if (j.format !== body.format || j.language !== body.language) return false;
-  if (body.snapshotId !== undefined) return j.snapshot_id === body.snapshotId;
-  const s = await db
-    .selectFrom("report_snapshot")
-    .select(["definition_code", "subject_id", "reporting_period_id"])
-    .where("id", "=", j.snapshot_id)
-    .executeTakeFirstOrThrow();
+  const stored = storedSelection(j);
+  if (body.snapshotId !== undefined) return stored === null && j.snapshot_id === body.snapshotId;
+  if (stored === null) return false;
   const sel = body.report!;
   return (
-    s.definition_code === sel.definitionCode &&
-    (sel.subjectId === undefined || s.subject_id === sel.subjectId) &&
-    (s.reporting_period_id ?? undefined) === sel.reportingPeriodId
+    stored.definitionCode === sel.definitionCode &&
+    stored.subjectId === sel.subjectId &&
+    stored.reportingPeriodId === sel.reportingPeriodId &&
+    canonicalReportJson(stored.parameters ?? {}) === canonicalReportJson(sel.parameters ?? {})
   );
 }
 
 /** The existing job of a repeated key: 200 with it when the request matches and the requester can read it. */
 async function replay(db: DbOrTx, principal: Principal, j: JobRow, body: ExportCreate) {
   if (!(await canRead(db, principal, j.transformation_id))) throw problems.notFound();
-  if (!(await sameRequest(db, j, body))) throw exportRefusals.keyReused();
+  if (!sameRequest(j, body)) throw exportRefusals.keyReused();
   return { status: 200 as const, job: toExportJob(j, await progressOf(db, j.id)) };
 }
 
 export interface CreateResult {
   readonly status: 200 | 202;
   readonly job: ExportJob;
+  /** T-DG6-BE-Y5: true when the job is a live selection waiting for the assembly watch (routes.ts wakes it). */
+  readonly pendingAssembly: boolean;
 }
 
 /** The snapshot to export, after the request-start checks (visibility, permission, discarded, format). */
@@ -357,7 +432,42 @@ async function exportableSnapshot(db: Db, principal: Principal, snapshotId: stri
   return s;
 }
 
-/** POST /exports (createExport). */
+/** The ReportRequest of a live selection in its transformation. */
+export function reportRequestOf(sel: z.infer<typeof exportLiveSelection>, transformationId: string): ReportRequest {
+  return {
+    definitionCode: sel.definitionCode,
+    transformationId,
+    subjectId: sel.subjectId,
+    reportingPeriodId: sel.reportingPeriodId,
+    parameters: sel.parameters ?? {},
+  };
+}
+
+/**
+ * D-199 for a live selection, in the request (T-DG6-BE-Y5, D-207 (1)): 403 `export.includes_restricted_records` when
+ * the report would include a record the requester is not admitted to. When the transformation holds no record that is
+ * restricted for the requester (the common case: one indexed query), no assembly can include one and nothing is
+ * assembled here; otherwise the report is assembled read-only, exactly as before D-207, and its sources decide. The
+ * assembly is not kept: the snapshot is assembled by the watch (its data-as-of is the assembly time, D-207 (5)), which
+ * checks the actual sources again.
+ */
+async function requireUnrestrictedLiveSelection(db: Db, principal: Principal, req: ReportRequest): Promise<void> {
+  if (!(await transformationHasRestricted(db, principal, req.transformationId))) return;
+  const a = await assembleReport(db, req);
+  if (await restrictedAmong(db, principal, assemblySources(a))) throw includesRestrictedRecordsRefusal();
+}
+
+/**
+ * POST /exports (createExport).
+ *
+ * T-DG6-BE-Y5 (D-207; F-DG6-147; ADR-0046 §2 as amended): a LIVE selection is validated, authorized (export.create and
+ * report.generate, 404/403) and checked (format, the report request's 422 refusals, D-199's restricted-source 403) in
+ * the request, then ONE transaction re-authorizes on reloaded grants and writes the job with its stored selection, its
+ * progress row and the `export_job.create` audit event, and the answer is 202 with `snapshotId` null. No snapshot and
+ * no outbox event are written here: the API process's export assembly watch (assembly.ts) assembles the snapshot,
+ * assigns it and only then writes `export_job.requested` for the worker. An export of an existing snapshot is
+ * unchanged (snapshot, job, progress, audit and outbox event in one transaction).
+ */
 export async function createExport(
   db: Db,
   request: FastifyRequest,
@@ -386,18 +496,12 @@ export async function createExport(
       .where("requested_by", "=", userId)
       .where("idempotency_key", "=", key)
       .executeTakeFirst();
-    if (existing !== undefined) return replay(db, principal, existing, body);
+    if (existing !== undefined) return { ...(await replay(db, principal, existing, body)), pendingAssembly: false };
   }
 
-  // The snapshot: an existing one, or a live selection assembled first (ADR-0045 §2, ADR-0046 §2).
-  // T-DG6-BE-Y4 (F-DG6-147): a live selection is assembled (read-only) before the write transaction and its snapshot
-  // is written IN the job's transaction: one transaction, one grant reload and one restricted-source check per start,
-  // where there were two of each (generateSnapshot's own transaction, then the job's) plus a third permission check.
-  // The rows, the audit events (report_snapshot.generate, export_job.create) and every refusal are unchanged; a
-  // refused start now leaves no orphan snapshot either.
   let snapshotId: string | null = null;
   let transformationId: string;
-  let assembly: Assembly | null = null;
+  let selection: Record<string, unknown> | null = null;
   if (body.snapshotId !== undefined) {
     const s = await exportableSnapshot(db, principal, body.snapshotId, body.format);
     snapshotId = s.id;
@@ -410,16 +514,13 @@ export async function createExport(
     await requireReportPermission(db, principal, transformationId, "export.create");
     await requireReportPermission(db, principal, transformationId, "report.generate");
     if (!def.formats.includes(body.format)) throw exportRefusals.formatNotOffered();
-    assembly = await assembleReport(db, {
-      definitionCode: sel.definitionCode,
-      transformationId,
-      subjectId: sel.subjectId,
-      reportingPeriodId: sel.reportingPeriodId,
-      parameters: sel.parameters ?? {},
-    });
+    const req = reportRequestOf(sel, transformationId);
+    await checkReportRequest(db, req);
+    await requireUnrestrictedLiveSelection(db, principal, req);
+    selection = selectionToStore(sel);
   }
 
-  return db.transaction().execute(async (tx) => {
+  const result = await db.transaction().execute(async (tx) => {
     // Commit-time re-authorization: the grants are reloaded inside the write transaction (shared rule 4).
     const fresh = await refreshPrincipal(tx, request);
     try {
@@ -430,25 +531,23 @@ export async function createExport(
       throw commitTimeDenial(err);
     }
     let organizationId: string;
-    if (assembly !== null) {
-      // The live selection's snapshot, written by the requester (authorized above on the reloaded grants).
-      const generated = await insertGeneratedSnapshot(tx, request, userId, assembly);
-      snapshotId = generated.id;
-      organizationId = generated.organization_id;
-      // D-199: the export of a snapshot with a source the requester is not admitted to is refused (403); the whole
-      // transaction, snapshot included, rolls back.
-      await requireUnrestrictedSelection(tx, fresh, snapshotId);
+    if (snapshotId === null) {
+      const t = await tx
+        .selectFrom("transformation")
+        .select("organization_id")
+        .where("id", "=", transformationId)
+        .executeTakeFirstOrThrow();
+      organizationId = t.organization_id;
     } else {
       const s = await tx
         .selectFrom("report_snapshot")
         .select(["organization_id", "status"])
-        .where("id", "=", snapshotId!)
+        .where("id", "=", snapshotId)
         .forShare()
         .executeTakeFirstOrThrow();
       if (s.status === "discarded") throw exportRefusals.snapshotDiscarded();
       organizationId = s.organization_id;
     }
-    const exportedSnapshotId: string = snapshotId!;
     const id = uuidv7();
     const inserted = await tx
       .insertInto("export_job")
@@ -456,7 +555,8 @@ export async function createExport(
         id,
         organization_id: organizationId,
         transformation_id: transformationId,
-        snapshot_id: exportedSnapshotId,
+        snapshot_id: snapshotId,
+        selection: selection === null ? null : JSON.stringify(selection),
         requested_by: userId,
         format: body.format,
         language: body.language,
@@ -475,7 +575,7 @@ export async function createExport(
         .where("requested_by", "=", userId)
         .where("idempotency_key", "=", key)
         .executeTakeFirstOrThrow();
-      return replay(tx, fresh, winner, body);
+      return { ...(await replay(tx, fresh, winner, body)), pendingAssembly: false };
     }
     const progress = await tx
       .insertInto("export_job_progress")
@@ -490,15 +590,18 @@ export async function createExport(
       transformationId,
       newVersion: 1,
       changes: {
-        snapshot_id: { from: null, to: exportedSnapshotId },
+        snapshot_id: { from: null, to: snapshotId },
+        ...(selection === null ? {} : { selection: { from: null, to: selection } }),
         format: { from: null, to: body.format },
         language: { from: null, to: body.language },
         status: { from: null, to: "queued" },
       },
     });
-    await enqueueExportRequested(tx, organizationId, id);
-    return { status: 202 as const, job: toExportJob(inserted, progress) };
+    // An existing snapshot is sent to the worker now; a live selection after its assembly (assembly.ts).
+    if (snapshotId !== null) await enqueueExportRequested(tx, organizationId, id);
+    return { status: 202 as const, job: toExportJob(inserted, progress), pendingAssembly: snapshotId === null };
   });
+  return result;
 }
 
 // ------------------------------------------------------------------------------------------------ reads
@@ -557,7 +660,8 @@ export async function downloadableExport(db: Db, request: FastifyRequest, jobId:
   const principal = principalOf(request);
   const row = await ownJob(db, principal, jobId);
   // P6 (T-DG6-BE-B2): a grant revoked or a record marked since the request still keeps the file from this requester.
-  await requireUnrestrictedSelection(db, principal, row.snapshot_id);
+  // T-DG6-BE-Y5 (D-207): a live selection pending assembly has no snapshot (and no file) yet.
+  if (row.snapshot_id !== null) await requireUnrestrictedSelection(db, principal, row.snapshot_id);
   if (row.status === "failed") throw exportRefusals.failed();
   if (row.status !== "succeeded" || row.storage_key === null) throw exportRefusals.notReady();
   return {

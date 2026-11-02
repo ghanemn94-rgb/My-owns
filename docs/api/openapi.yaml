@@ -20415,7 +20415,7 @@ paths:
     post:
       tags: [exports]
       operationId: createExport
-      summary: "Export a report snapshot, or a live selection (which generates its snapshot first), as PDF, DOCX, XLSX, PPTX or CSV in English or Arabic; rendered by the worker, with progress (export.create, plus report.generate for a live selection; REQ-S13-005, REQ-S13-009). The same Idempotency-Key returns the existing job with 200. 422 export.format_not_offered, export.snapshot_discarded, report.*."
+      summary: "Export a report snapshot, or a live selection (whose snapshot the API process assembles after the 202: snapshotId is null until then, D-207), as PDF, DOCX, XLSX, PPTX or CSV in English or Arabic; rendered by the worker, with progress (export.create, plus report.generate for a live selection; REQ-S13-005, REQ-S13-009). The same Idempotency-Key returns the existing job with 200. 422 export.format_not_offered, export.snapshot_discarded, report.*."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -20428,7 +20428,7 @@ paths:
             schema: { $ref: "#/components/schemas/ExportCreate" }
       responses:
         "202":
-          description: "Accepted (queued)."
+          description: "Accepted (queued). For a live selection the job has no snapshot yet (snapshotId null): the access, permission, format and restricted-record checks ran in the request (D-199's 403 is unchanged), and the report is assembled after this answer (D-207)."
           headers:
             ETag: { $ref: "#/components/headers/ETag" }
           content:
@@ -27359,7 +27359,9 @@ components:
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
         transformationId: { $ref: "#/components/schemas/Uuid" }
-        snapshotId: { $ref: "#/components/schemas/Uuid" }
+        snapshotId:
+          $ref: "#/components/schemas/NullableUuid"
+          description: "The exported snapshot. D-207: null while a live selection is pending assembly (the API process assembles it after the 202), and for a job that failed or was cancelled before its snapshot was assigned."
         format: { type: string, enum: [pdf, docx, xlsx, pptx, csv] }
         language: { type: string, enum: [en, ar] }
         status: { type: string, enum: [queued, running, succeeded, failed, cancelled] }
@@ -27374,7 +27376,7 @@ components:
         contentType: { type: [string, "null"] }
         fileSha256: { type: [string, "null"], pattern: '^[0-9a-f]{64}$' }
         fileSizeBytes: { type: [integer, "null"], minimum: 1 }
-        errorCode: { type: [string, "null"], enum: [export.render_failed, export.too_large, export.source_unavailable, export.retries_exhausted, null] }
+        errorCode: { type: [string, "null"], enum: [export.render_failed, export.too_large, export.source_unavailable, export.retries_exhausted, export.includes_restricted_records, export.assembly_failed, null] }
         cancelledAt: { $ref: "#/components/schemas/NullableTimestamp" }
         version: { $ref: "#/components/schemas/Version" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }

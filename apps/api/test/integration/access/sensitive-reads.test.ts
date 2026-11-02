@@ -19,6 +19,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { financialBody, insertInitiative, seedBenefitWorld, type BenefitWorld } from "../benefits/fixtures.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { exportAssemblyWatchStep } from "../../../src/modules/reporting/exports/assembly.ts";
 import {
   call,
   createUser,
@@ -401,9 +402,13 @@ describe("REQ-S10-004: export selection through the ReadScope", () => {
 
   it("the owner's snapshot exported by the member (by snapshot id) is 403 too", async () => {
     const job = ok(await registersExport(b.s.bo), 202);
+    // T-DG6-BE-Y5 (D-207): the live selection's snapshot is assembled after the 202, by the export assembly watch.
+    expect(job.snapshotId).toBeNull();
+    await exportAssemblyWatchStep(api.db, { onlyJobIds: [job.id] });
+    const assembled = ok(await call<Body>(api.app, "GET", `/api/v1/exports/${job.id}`, { session: b.s.bo }));
     const res = await call<Body>(api.app, "POST", "/api/v1/exports", {
       session: member,
-      body: { snapshotId: job.snapshotId, format: "csv", language: "en" },
+      body: { snapshotId: assembled.snapshotId, format: "csv", language: "en" },
     });
     expectRestrictedExportRefusal(res);
   });

@@ -18,6 +18,9 @@ export const EXPORT_ERROR_CODES = [
   "export.too_large",
   "export.source_unavailable",
   "export.retries_exhausted",
+  // T-DG6-BE-Y5 (D-207, migration 0124): a live selection assembled after the 202 can fail before any file exists.
+  "export.includes_restricted_records",
+  "export.assembly_failed",
 ] as const;
 export type ExportErrorCode = (typeof EXPORT_ERROR_CODES)[number];
 export const EXPORT_LANGUAGES = ["en", "ar"] as const;
@@ -52,7 +55,8 @@ const nullableTimestamp = z.iso.datetime({ offset: true }).nullable();
 export const exportJob = z.strictObject({
   id: z.uuid(),
   transformationId: z.uuid(),
-  snapshotId: z.uuid(),
+  /** D-207: null while a live selection is pending assembly (and for a job that failed or was cancelled before it). */
+  snapshotId: z.uuid().nullable(),
   format: z.enum(REPORT_FORMATS),
   language: z.enum(EXPORT_LANGUAGES),
   status: z.enum(EXPORT_STATUSES),

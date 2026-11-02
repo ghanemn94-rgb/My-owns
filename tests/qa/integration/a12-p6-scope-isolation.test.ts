@@ -438,9 +438,18 @@ describe("A12 exports (REQ-S10-004): X's export carries no Y record; Y's exports
     });
     expect(yExport.status, JSON.stringify(yExport.body)).toBe(202);
     expect((await runWorker(aw.api, yExport.body.id)).outcome).toBe("succeeded");
+    // T-DG6-BE-Y5 (D-207): the 202 of a live selection has no snapshot yet; Y's snapshot is the one assembled for it.
+    const ySnapshotId = (
+      await aw.api.db
+        .selectFrom("export_job")
+        .select("snapshot_id")
+        .where("id", "=", yExport.body.id)
+        .executeTakeFirstOrThrow()
+    ).snapshot_id;
+    expect(ySnapshotId).not.toBeNull();
     const bySnapshot = await send("POST", "/api/v1/exports", {
       session: s.xTl,
-      body: { snapshotId: yExport.body.snapshotId, format: "csv", language: "en" },
+      body: { snapshotId: ySnapshotId, format: "csv", language: "en" },
     });
     const ghostSnapshot = await send("POST", "/api/v1/exports", {
       session: s.xTl,

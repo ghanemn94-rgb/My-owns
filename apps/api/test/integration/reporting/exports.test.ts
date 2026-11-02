@@ -17,6 +17,7 @@ import { RenderError } from "../../../../../packages/reporting/src/model.ts";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
 import { readXlsx, type ReadCell } from "../../../../../packages/reporting/src/xlsx/read.ts";
 import { runExport, type ExportRunnerDeps } from "../../../../worker/src/reports/export-runner.ts";
+import { exportAssemblyWatchStep } from "../../../src/modules/reporting/exports/assembly.ts";
 import {
   call,
   createUser,
@@ -52,6 +53,8 @@ const key = () => `it-${crypto.randomUUID()}`;
 
 /** The relay's envelope of the job's outbox event (what pg-boss delivers to reports.export). */
 async function envelopeOf(exportJobId: string): Promise<{ id: string; envelope: Body }> {
+  // T-DG6-BE-Y5 (D-207): a live selection is assembled by the export assembly watch before its outbox event exists.
+  await exportAssemblyWatchStep(api.db, { onlyJobIds: [exportJobId] });
   const row = await api.db
     .selectFrom("outbox_event")
     .selectAll()
@@ -693,7 +696,7 @@ describe("refusals and cancel (ADR-0046 §8)", () => {
     ).toBe(400);
   });
 
-  it("a live selection generates its snapshot first, then exports it (202); without a subject -> 422 report.subject_invalid", async () => {
+  it("a live selection is accepted with no snapshot yet (202, D-207), assembled by the watch, then exported; without a subject -> 422 report.subject_invalid", async () => {
     const live = ok(
       await exportOf(
         {
@@ -710,8 +713,16 @@ describe("refusals and cancel (ADR-0046 §8)", () => {
       202,
       "live",
     );
+    expect(live).toMatchObject({ status: "queued", snapshotId: null, stage: "queued", percent: 0 });
+    expect(await exportAssemblyWatchStep(api.db, { onlyJobIds: [live.id] })).toMatchObject([{ outcome: "assembled" }]);
+    const assembled = ok(
+      await call<Body>(api.app, "GET", `/api/v1/exports/${live.id}`, { session: p.lead.session }),
+      200,
+      "assembled",
+    );
+    expect(assembled).toMatchObject({ status: "queued", version: 2 });
     const snap = ok(
-      await call<Body>(api.app, "GET", `${T}/report-snapshots/${live.snapshotId}`, { session: p.lead.session }),
+      await call<Body>(api.app, "GET", `${T}/report-snapshots/${assembled.snapshotId}`, { session: p.lead.session }),
       200,
       "snap",
     );

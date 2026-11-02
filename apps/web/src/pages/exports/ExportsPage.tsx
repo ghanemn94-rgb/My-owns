@@ -1,7 +1,9 @@
 // Your exports (T-DG5-FE-E; REQ-S13-005; ADR-0046 §5, §8): the export jobs YOU requested, newest first (others' jobs are
 // never listed: the API answers only the requester), with status, stage and progress, polled while a job is queued or
 // running. A succeeded job's file downloads with its name, size and SHA-256; a failed job shows its error code
-// translated (render failed, too large, source unavailable, retries exhausted); a queued or running job can be
+// translated (render failed, too large, source unavailable, retries exhausted, and since D-207 includes restricted
+// records and assembly failed); a live-selection job shows "Preparing the report" until its snapshot is assembled
+// (snapshotId null, D-207), and "No snapshot was produced" if it failed or was cancelled first; a queued or running job can be
 // cancelled (If-Match). Download re-checks access on the server: a job whose records you can no longer read answers 404.
 // Under a transformation the list shows that transformation's jobs only.
 import { useState } from "react";
@@ -172,9 +174,21 @@ export function ExportsPage() {
                       <th scope="row">
                         {formatDateTime(j.createdAt, locale)}
                         <span className="block small">
-                          <Link className="link" to={`/transformations/${j.transformationId}/reports/${j.snapshotId}`}>
-                            {t("reportsP5.exports.openSnapshot")}
-                          </Link>
+                          {j.snapshotId !== null ? (
+                            <Link
+                              className="link"
+                              to={`/transformations/${j.transformationId}/reports/${j.snapshotId}`}
+                            >
+                              {t("reportsP5.exports.openSnapshot")}
+                            </Link>
+                          ) : (
+                            // T-DG6-BE-Y5 (D-207): a live selection has no snapshot until the API assembles it.
+                            <span className="muted" data-export-pending-snapshot={j.id}>
+                              {j.status === "queued"
+                                ? t("reportsP5.exports.preparing")
+                                : t("reportsP5.exports.noSnapshot")}
+                            </span>
+                          )}
                         </span>
                       </th>
                       <td>{t(`reportsP5.format.${j.format}`)}</td>

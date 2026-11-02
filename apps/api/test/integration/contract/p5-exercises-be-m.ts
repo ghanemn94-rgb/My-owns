@@ -12,6 +12,7 @@ import type { z } from "zod";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
 import { RenderError } from "../../../../../packages/reporting/src/model.ts";
 import { runExport, type ExportRunnerDeps } from "../../../../worker/src/reports/export-runner.ts";
+import { exportAssemblyWatchStep } from "../../../src/modules/reporting/exports/assembly.ts";
 import { testEvidenceDir, signIn, type P5ExerciseContext } from "../../support/harness.ts";
 import { ifm, setupP2World } from "../../support/p2-fixtures.ts";
 
@@ -58,6 +59,8 @@ export async function exerciseP5BeMOperations(ctx: P5ExerciseContext): Promise<v
   ).toBe(200);
 
   const work = async (exportJobId: string, retryCount = 0, deps: Partial<ExportRunnerDeps> = {}) => {
+    // T-DG6-BE-Y5 (D-207): a live selection is assembled by the export assembly watch before its outbox event exists.
+    await exportAssemblyWatchStep(api.db, { onlyJobIds: [exportJobId] });
     const row = await api.db
       .selectFrom("outbox_event")
       .selectAll()

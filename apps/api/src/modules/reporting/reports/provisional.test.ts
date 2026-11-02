@@ -195,7 +195,11 @@ describe("canonical content JSON and its SHA-256 (ADR-0045 §3, ADR-0039 §1 rul
     const reference = (a: string, b: string) => {
       const x = Array.from(a, (c) => c.codePointAt(0) ?? 0);
       const y = Array.from(b, (c) => c.codePointAt(0) ?? 0);
-      for (let i = 0; i < Math.min(x.length, y.length); i += 1) if (x[i] !== y[i]) return x[i]! - y[i]!;
+      // T-DG6-BE-Y5: element access through entries()/at(), not x[i] (the ADR-0002 boundary walk flags computed members).
+      for (const [i, v] of x.slice(0, Math.min(x.length, y.length)).entries()) {
+        const w = y.at(i)!;
+        if (v !== w) return v - w;
+      }
       return x.length - y.length;
     };
     const units = [
