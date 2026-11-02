@@ -74,3 +74,7 @@ All four W3 runs (ARCH-03, BE-B, BE-E, FE-A) were stopped by a container restart
 - **Missing:** the runner's post-run steps did not complete. The run folder has no `meta.json`, and `transcript.jsonl` is not gzipped. The likely cause is the runner's post-run snapshot or git step failing while the orchestrator merged other branches into the same checkout (ARCH-11 ran in the main checkout). Not proven.
 - **Kept as is:** the handback is complete, and the four document edits match it. They were committed as delivered (204260d3f), together with the run folder as found.
 - **Consequence:** for this one documents-only run, this note stands in for the missing run metadata. Later documents-only tasks run in their own worktree, so that merges cannot overlap a run's post-processing.
+
+## 2026-11-02: DG6 round-2 reviewers aborted by a container restart
+
+The first launch of the three round-2 reviews (runs `DG6-T-DG6-REV-{DOM,CS,QA}-R2-*-20261102T0929*`/`T0930*`) ended at 09:43Z with exit 143 (SIGTERM, `no-result-line`), about 14 minutes in, when the session's container was restarted. No review record was written. Their run records are kept as written; their partial evidence was moved out of the tree (it is not review evidence). The three reviews are relaunched on the same candidate `cf40705b` with the same assignments.
