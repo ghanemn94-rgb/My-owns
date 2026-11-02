@@ -1,0 +1,16 @@
+# mutant 122: git diff of the disposable copy w2
+ apps/api/src/modules/access/sensitive-reach.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/access/sensitive-reach.ts b/apps/api/src/modules/access/sensitive-reach.ts
+index 5c0e90b1..f5eef485 100644
+--- a/apps/api/src/modules/access/sensitive-reach.ts
++++ b/apps/api/src/modules/access/sensitive-reach.ts
+@@ -136,7 +136,7 @@ export const SENSITIVE_CHILD_SOURCES: Readonly<Record<string, ChildSource>> = {
+ };
+ 
+ const SENSITIVE_TYPES: ReadonlySet<string> = new Set(SENSITIVE_RECORD_TYPE_LIST);
+-const CHILD_SOURCES: ReadonlyMap<string, ChildSource> = new Map(Object.entries(SENSITIVE_CHILD_SOURCES));
++const CHILD_SOURCES: ReadonlyMap<string, ChildSource> = new Map(); // MUTANT 122
+ 
+ export function isSensitiveRecordType(recordType: string): recordType is SensitiveRecordType {
+   return SENSITIVE_TYPES.has(recordType);

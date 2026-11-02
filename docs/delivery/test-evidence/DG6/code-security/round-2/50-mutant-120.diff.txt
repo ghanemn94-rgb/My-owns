@@ -1,0 +1,16 @@
+# mutant 120: git diff of the disposable copy w2
+ apps/api/src/modules/platform/secrets.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/platform/secrets.ts b/apps/api/src/modules/platform/secrets.ts
+index a8cc4be2..2620445a 100644
+--- a/apps/api/src/modules/platform/secrets.ts
++++ b/apps/api/src/modules/platform/secrets.ts
+@@ -98,7 +98,7 @@ export function secretValue(value: string): SecretValue {
+  * named. `MTH_SECRET_<NAME>_FILE` is still read (the ADR-0011 rule), but a name cannot end in `_FILE` itself.
+  */
+ export const ENV_SECRET_PREFIX = "MTH_SECRET_" as const;
+-const ENV_SECRET_NAME = /^MTH_SECRET_[A-Z0-9][A-Z0-9_]{0,116}$/;
++const ENV_SECRET_NAME = /^[A-Z][A-Z0-9_]{0,127}$/;
+ /** A secret name the `file` provider accepts: one plain file name inside SECRETS_DIR (no path, no "..", no dot first). */
+ const FILE_SECRET_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
+ 

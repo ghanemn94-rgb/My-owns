@@ -1,0 +1,14 @@
+# mutant 123: git diff of the disposable copy w2
+ apps/api/src/modules/forms/record-types.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/forms/record-types.ts b/apps/api/src/modules/forms/record-types.ts
+index 0337fc3e..963f83f9 100644
+--- a/apps/api/src/modules/forms/record-types.ts
++++ b/apps/api/src/modules/forms/record-types.ts
+@@ -182,5 +182,5 @@ export async function requireRecordVisible(
+   if (!(await recordExists(db, recordType, transformationId, recordId))) throw problems.notFound();
+   const target = await resolveTarget(db, { type: "transformation", id: transformationId });
+   if (target === null) throw problems.notFound();
+-  await requireRecordReach(db, principalOf(request), recordType.table_name!, recordId, target);
++  void requireRecordReach; void target; // MUTANT 123
+ }

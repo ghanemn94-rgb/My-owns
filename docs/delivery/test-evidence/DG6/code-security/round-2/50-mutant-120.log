@@ -1,0 +1,295 @@
+# 50-mutant-120  started 2026-11-02T10:11:06Z  cwd=/var/tmp/mth-run.hoqSrD/claude-0/r/w2  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=34.18 29.46 20.44  commit=9bb2207667d8ef68e32e351a3782c4e9dfcdecd1
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/integrations/secret-namespace.test.ts tests/qa/integration/zz-cs-r2-env-secret.test.ts
+port-policy: PostgreSQL listening on port 28776 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.hoqSrD/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz3mps2_a1127415 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/integrations/secret-namespace.test.ts (9 tests | 7 failed) 21930ms
+   × F-DG6-120: connector credentials > refuses a platform variable or a file traversal at write time (400), writing nothing 683ms
+     → {"id":"01a19bbf-3420-7009-906a-cdf57b312c41","organizationId":"01a19bbf-3079-75c2-9922-212d5090ca80","code":"y2-94ffc9","nameEn":"Synthetic source","nameAr":"مصدر اصطناعي","adapterKind":"http_pull","targetKind":"none","status":"disabled","statusReason":null,"config":{"versionNo":1,"sourceSystemId":"synthetic.source:v1","endpointUrl":"https://collector.example.invalid/collect","credentialRefs":{"bearer":{"provider":"env","name":"OIDC_CLIENT_SECRET","resolvable":true}},"fieldMappings":[],"targetTransformationId":null,"cadence":"manual","retryMaxAttempts":0,"retryBackoffSeconds":60,"commitMode":"manual","commitOnBehalfOf":null,"outboundActions":[],"reconciliationRule":"none","adapterSettings":{},"reason":"Synthetic F-DG6-120 repair test.","createdAt":"2026-11-02T10:12:41.620Z","createdBy":"01a19bbf-30cd-75f1-a536-e3ec11d6e9c7"},"verification":"not_verified","lastSuccessAt":null,"lastRun":null,"actionableError":null,"serviceIdentityId":"01a19bbf-3437-7539-99fc-0e1f46babc58","version":1,"updatedAt":"2026-11-02T10:12:41.620Z"}: expected 201 to be 400 // Object.is equality
+   × F-DG6-120: connector credentials > answers the same for a set and an unset platform variable (no existence oracle) 484ms
+     → expected [ 201, { …(18) } ] to deeply equal [ 201, { …(18) } ]
+   ✓ F-DG6-120: connector credentials > accepts an MTH_SECRET_* reference, which resolves and is sent (positive)  392ms
+   ✓ F-DG6-120: connector credentials > a caller without connector.configure is still 403 (the authorization check runs as before) 73ms
+   × F-DG6-120: connector credentials > a platform reference stored before the fix resolves nothing: no outbound request, resolvable false 276ms
+     → expected { bearer: { provider: 'env', …(2) } } to deeply equal { bearer: { provider: 'env', …(2) } }
+   × F-DG6-120: webhook signing secrets > refuses a platform variable or a traversal on create and on rotate (400); accepts MTH_SECRET_* 163ms
+     → {"id":"01a19bbf-3fff-71dc-9130-34d9e360c0b8","organizationId":"01a19bbf-3079-75c2-9922-212d5090ca80","connectorId":"01a19bbf-3ea6-7568-ae82-4929f70e25ef","endpointKey":"QPU9aUvSaTAYrTAsLnnMw3iY3Ae3eNzjnqv2Q7Gc3PU","receivePath":"/api/v1/webhooks/QPU9aUvSaTAYrTAsLnnMw3iY3Ae3eNzjnqv2Q7Gc3PU","label":"Synthetic sender","signingSecretRef":{"provider":"env","name":"OIDC_CLIENT_SECRET"},"previousSecretRef":null,"previousValidUntil":null,"secretRotatedAt":null,"toleranceSeconds":300,"status":"active","disabledAt":null,"disabledBy":null,"disableReason":null,"lastReceiptAt":null,"version":1,"updatedAt":"2026-11-02T10:12:44.654Z"}: expected 201 to be 400 // Object.is equality
+   × F-DG6-120: the SMTP notification channel > refuses a platform variable or a traversal as username or password (400); accepts MTH_SECRET_* 108ms
+     → {"organizationId":"01a19bbf-3079-75c2-9922-212d5090ca80","channelKind":"email","configured":true,"enabled":true,"adapterAvailable":true,"smtp":{"host":"127.0.0.1","port":2525,"security":"none","usernameRef":{"name":"OIDC_CLIENT_SECRET","provider":"env"},"passwordRef":{"name":"MTH_SECRET_BE_Y2_SMTP_PASS","provider":"env"},"fromAddress":"hub-noreply@example.invalid"},"reason":"Synthetic channel","version":1,"updatedAt":"2026-11-02T10:12:44.822Z"}: expected 200 to be 400 // Object.is equality
+   × F-DG6-120: the S3 storage settings > refuses a platform variable or a traversal in the test and the save (400); MTH_SECRET_* tests passed 672ms
+     → {"outcome":"failed","driver":"s3","checks":[{"name":"write","outcome":"failed"},{"name":"read_back","outcome":"skipped"},{"name":"checksum","outcome":"skipped"},{"name":"delete","outcome":"skipped"},{"name":"anonymous_read_refused","outcome":"skipped"}],"errorCode":"storage.write_failed","durationMs":387,"testedAt":"2026-11-02T10:12:45.478Z"}: expected 200 to be 400 // Object.is equality
+   × F-DG6-120: the assistant endpoint > refuses a platform variable or a traversal as the credential (400); accepts MTH_SECRET_* 192ms
+     → {"configured":true,"enabled":false,"providerKind":"http_endpoint","endpointUrl":"https://model.example.invalid/v1/chat/completions","apiStyle":"openai_chat_completions","modelName":"synthetic-model-1","credentialRef":{"provider":"env","name":"OIDC_CLIENT_SECRET"},"authorizationReference":"IT-APPROVAL-SYNTHETIC-0001","requestTimeoutMs":30000,"maxOutputTokens":1024,"maxContextRecords":8,"enabledAt":null,"enabledBy":null,"telemetryEnabled":false,"reason":"Synthetic test: configure the assistant","version":1,"updatedAt":"2026-11-02T10:12:45.630Z"}: expected 200 to be 400 // Object.is equality
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+create bearer OIDC_CLIENT_SECRET [33m201[39m {"id":"01a19bbf-7ba5-7527-a20b-a250cd538832","organizationId":"01a19bbf-7a5c-712c-bc85-cffdab736d5b","code":"exfil-75c459","nameEn":"Synthetic source","nameAr":"مصدر اصطناعي","adapterKind":"http_pull","targetKind":"none","status":"disabled","statusReason":null,"config":{"versionNo":1,"sourceSystemId
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+create bearer DATABASE_URL [33m201[39m {"id":"01a19bbf-7c3c-700f-950a-7f9dd861cf48","organizationId":"01a19bbf-7a5c-712c-bc85-cffdab736d5b","code":"exfil-d8585c","nameEn":"Synthetic source","nameAr":"مصدر اصطناعي","adapterKind":"http_pull","targetKind":"none","status":"disabled","statusReason":null,"config":{"versionNo":1,"sourceSystemId
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+create bearer NO_SUCH_VARIABLE_CS_R2 [33m201[39m {"id":"01a19bbf-7ccb-720b-9dd4-49ee677c586a","organizationId":"01a19bbf-7a5c-712c-bc85-cffdab736d5b","code":"exfil-f46196","nameEn":"Synthetic source","nameAr":"مصدر اصطناعي","adapterKind":"http_pull","targetKind":"none","status":"disabled","statusReason":null,"config":{"versionNo":1,"sourceSystemId
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+create bearer MTH_SECRET_CS_R2_BEARER_FILE [33m400[39m {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a19bbf-7d3c-770b-b8b9-7c94c4726b82","errors":[{"pointer":"/config/credentialRefs/bearer","code":"validation.secret_ref_namespace","message":"Name a se
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+create bearer MTH_SECRETS_DIR [33m201[39m {"id":"01a19bbf-7d88-73bc-8969-8872e4730641","organizationId":"01a19bbf-7a5c-712c-bc85-cffdab736d5b","code":"exfil-d2aa40","nameEn":"Synthetic source","nameAr":"مصدر اصطناعي","adapterKind":"http_pull","targetKind":"none","status":"disabled","statusReason":null,"config":{"versionNo":1,"sourceSystemId
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+create bearer mth_secret_cs_r2_bearer [33m400[39m {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a19bbf-7dca-73b8-a690-0c73afa502b3","errors":[{"pointer":"/config/credentialRefs/bearer","code":"validation.secret_ref_namespace","message":"Name a se
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 2. resolve time: a stored reference outside the namespace resolves nothing (env and file providers)
+resolveCredentials(OIDC_CLIENT_SECRET) -> null [90mundefined[39m
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 3. control: a namespaced reference is accepted and sent (the recorder sees it)
+create namespaced [33m201[39m {"bearer":{"provider":"env","name":"MTH_SECRET_CS_R2_BEARER","resolvable":true}}
+
+stdout | tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 3. control: a namespaced reference is accepted and sent (the recorder sees it)
+test [33m200[39m succeeded [1mnull[22m captured [{"url":"https://attacker.example.invalid/collect","authorization":"Bearer synthetic-connector-bearer-cs-r2-5d2a"}]
+
+ ❯ |integration| tests/qa/integration/zz-cs-r2-env-secret.test.ts (3 tests | 2 failed) 3039ms
+   × F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle 949ms
+     → expected 201 to be 400 // Object.is equality
+   × F-DG6-120 re-verification > 2. resolve time: a stored reference outside the namespace resolves nothing (env and file providers) 7ms
+     → expected null not to be null
+   ✓ F-DG6-120 re-verification > 3. control: a namespaced reference is accepted and sent (the recorder sees it)  595ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 1. write time: platform variables are refused, with no existence oracle
+AssertionError: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ tests/qa/integration/zz-cs-r2-env-secret.test.ts:111:51
+    109|       console.log("create bearer", name, r.status, JSON.stringify(r.bo…
+    110|     }
+    111|     expect(answers["OIDC_CLIENT_SECRET"]!.status).toBe(400);
+       |                                                   ^
+    112|     expect(answers["OIDC_CLIENT_SECRET"]!.body).toContain("validation.…
+    113|     expect(answers["OIDC_CLIENT_SECRET"]!.body).toBe(answers["NO_SUCH_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r2-env-secret.test.ts > F-DG6-120 re-verification > 2. resolve time: a stored reference outside the namespace resolves nothing (env and file providers)
+AssertionError: expected null not to be null
+ ❯ tests/qa/integration/zz-cs-r2-env-secret.test.ts:128:23
+    126|     }
+    127|     console.log("resolveCredentials(OIDC_CLIENT_SECRET) ->", String((e…
+    128|     expect(error).not.toBeNull();
+       |                       ^
+    129|     const env = envSecretProvider({ OIDC_CLIENT_SECRET: PLATFORM_SECRE…
+    130|     expect(await env.get("OIDC_CLIENT_SECRET")).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: connector credentials > refuses a platform variable or a file traversal at write time (400), writing nothing
+AssertionError: {"id":"01a19bbf-3420-7009-906a-cdf57b312c41","organizationId":"01a19bbf-3079-75c2-9922-212d5090ca80","code":"y2-94ffc9","nameEn":"Synthetic source","nameAr":"مصدر اصطناعي","adapterKind":"http_pull","targetKind":"none","status":"disabled","statusReason":null,"config":{"versionNo":1,"sourceSystemId":"synthetic.source:v1","endpointUrl":"https://collector.example.invalid/collect","credentialRefs":{"bearer":{"provider":"env","name":"OIDC_CLIENT_SECRET","resolvable":true}},"fieldMappings":[],"targetTransformationId":null,"cadence":"manual","retryMaxAttempts":0,"retryBackoffSeconds":60,"commitMode":"manual","commitOnBehalfOf":null,"outboundActions":[],"reconciliationRule":"none","adapterSettings":{},"reason":"Synthetic F-DG6-120 repair test.","createdAt":"2026-11-02T10:12:41.620Z","createdBy":"01a19bbf-30cd-75f1-a536-e3ec11d6e9c7"},"verification":"not_verified","lastSuccessAt":null,"lastRun":null,"actionableError":null,"serviceIdentityId":"01a19bbf-3437-7539-99fc-0e1f46babc58","version":1,"updatedAt":"2026-11-02T10:12:41.620Z"}: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ expectNamespaceRefusal apps/api/test/integration/integrations/secret-namespace.test.ts:89:48
+     87| /** 400 validation with exactly one field error validation.secret_ref_…
+     88| function expectNamespaceRefusal(res: { status: number; body: Body }, p…
+     89|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     90|   expect(res.body.code).toBe("validation");
+     91|   expect(res.body.errors).toEqual([
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:195:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: connector credentials > answers the same for a set and an unset platform variable (no existence oracle)
+AssertionError: expected [ 201, { …(18) } ] to deeply equal [ 201, { …(18) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,23 +1,23 @@[39m
+[2m  [[22m
+[2m    201,[22m
+[2m    {[22m
+[2m      "actionableError": null,[22m
+[2m      "adapterKind": "http_pull",[22m
+[32m-     "code": "y2-5575db",[39m
+[31m+     "code": "y2-3e5db2",[39m
+[2m      "config": {[22m
+[2m        "adapterSettings": {},[22m
+[2m        "cadence": "manual",[22m
+[2m        "commitMode": "manual",[22m
+[2m        "commitOnBehalfOf": null,[22m
+[32m-       "createdAt": "2026-11-02T10:12:42.484Z",[39m
+[31m+       "createdAt": "2026-11-02T10:12:42.216Z",[39m
+[2m        "createdBy": "01a19bbf-30cd-75f1-a536-e3ec11d6e9c7",[22m
+[2m        "credentialRefs": {[22m
+[2m          "k": {[22m
+[32m-           "name": "DATABASE_OWNER_URL",[39m
+[31m+           "name": "OIDC_CLIENT_SECRET",[39m
+[2m            "provider": "env",[22m
+[32m-           "resolvable": false,[39m
+[31m+           "resolvable": true,[39m
+[2m          },[22m
+[2m        },[22m
+[2m        "endpointUrl": "https://collector.example.invalid/collect",[22m
+[2m        "fieldMappings": [],[22m
+[2m        "outboundActions": [],[22m
+[33m@@ -27,21 +27,21 @@[39m
+[2m        "retryMaxAttempts": 0,[22m
+[2m        "sourceSystemId": "synthetic.source:v1",[22m
+[2m        "targetTransformationId": null,[22m
+[2m        "versionNo": 1,[22m
+[2m      },[22m
+[32m-     "id": "01a19bbf-3785-7239-9e42-7bc509cb41f2",[39m
+[31m+     "id": "01a19bbf-368d-7759-91bb-9a89a8941a68",[39m
+[2m      "lastRun": null,[22m
+[2m      "lastSuccessAt": null,[22m
+[2m      "nameAr": "مصدر اصطناعي",[22m
+[2m      "nameEn": "Synthetic source",[22m
+[2m      "organizationId": "01a19bbf-3079-75c2-9922-212d5090ca80",[22m
+[2m      "requestId": null,[22m
+[32m-     "serviceIdentityId": "01a19bbf-37b8-753b-829d-e56fc707ab0c",[39m
+[31m+     "serviceIdentityId": "01a19bbf-36c2-75f2-82af-2f0cab1e7cad",[39m
+[2m      "status": "disabled",[22m
+[2m      "statusReason": null,[22m
+[2m      "targetKind": "none",[22m
+[32m-     "updatedAt": "2026-11-02T10:12:42.484Z",[39m
+[31m+     "updatedAt": "2026-11-02T10:12:42.216Z",[39m
+[2m      "verification": "not_verified",[22m
+[2m      "version": 1,[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:213:43
+    211|       body: connectorBody({ k: { provider: "env", name: "DATABASE_OWNE…
+    212|     });
+    213|     expect([set.status, strip(set.body)]).toEqual([unset.status, strip…
+       |                                           ^
+    214|   });
+    215| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: connector credentials > a platform reference stored before the fix resolves nothing: no outbound request, resolvable false
+AssertionError: expected { bearer: { provider: 'env', …(2) } } to deeply equal { bearer: { provider: 'env', …(2) } }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "bearer": {[22m
+[2m      "name": "OIDC_CLIENT_SECRET",[22m
+[2m      "provider": "env",[22m
+[32m-     "resolvable": false,[39m
+[31m+     "resolvable": true,[39m
+[2m    },[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:270:45
+    268|     const view = await call<Body>(api.app, "GET", `${CONNECTORS}/${cre…
+    269|     expect(view.status, JSON.stringify(view.body)).toBe(200);
+    270|     expect(view.body.config.credentialRefs).toEqual({
+       |                                             ^
+    271|       bearer: { provider: "env", name: "OIDC_CLIENT_SECRET", resolvabl…
+    272|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: webhook signing secrets > refuses a platform variable or a traversal on create and on rotate (400); accepts MTH_SECRET_*
+AssertionError: {"id":"01a19bbf-3fff-71dc-9130-34d9e360c0b8","organizationId":"01a19bbf-3079-75c2-9922-212d5090ca80","connectorId":"01a19bbf-3ea6-7568-ae82-4929f70e25ef","endpointKey":"QPU9aUvSaTAYrTAsLnnMw3iY3Ae3eNzjnqv2Q7Gc3PU","receivePath":"/api/v1/webhooks/QPU9aUvSaTAYrTAsLnnMw3iY3Ae3eNzjnqv2Q7Gc3PU","label":"Synthetic sender","signingSecretRef":{"provider":"env","name":"OIDC_CLIENT_SECRET"},"previousSecretRef":null,"previousValidUntil":null,"secretRotatedAt":null,"toleranceSeconds":300,"status":"active","disabledAt":null,"disabledBy":null,"disableReason":null,"lastReceiptAt":null,"version":1,"updatedAt":"2026-11-02T10:12:44.654Z"}: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ expectNamespaceRefusal apps/api/test/integration/integrations/secret-namespace.test.ts:89:48
+     87| /** 400 validation with exactly one field error validation.secret_ref_…
+     88| function expectNamespaceRefusal(res: { status: number; body: Body }, p…
+     89|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     90|   expect(res.body.code).toBe("validation");
+     91|   expect(res.body.errors).toEqual([
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:315:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: the SMTP notification channel > refuses a platform variable or a traversal as username or password (400); accepts MTH_SECRET_*
+AssertionError: {"organizationId":"01a19bbf-3079-75c2-9922-212d5090ca80","channelKind":"email","configured":true,"enabled":true,"adapterAvailable":true,"smtp":{"host":"127.0.0.1","port":2525,"security":"none","usernameRef":{"name":"OIDC_CLIENT_SECRET","provider":"env"},"passwordRef":{"name":"MTH_SECRET_BE_Y2_SMTP_PASS","provider":"env"},"fromAddress":"hub-noreply@example.invalid"},"reason":"Synthetic channel","version":1,"updatedAt":"2026-11-02T10:12:44.822Z"}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ expectNamespaceRefusal apps/api/test/integration/integrations/secret-namespace.test.ts:89:48
+     87| /** 400 validation with exactly one field error validation.secret_ref_…
+     88| function expectNamespaceRefusal(res: { status: number; body: Body }, p…
+     89|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     90|   expect(res.body.code).toBe("validation");
+     91|   expect(res.body.errors).toEqual([
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:371:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: the S3 storage settings > refuses a platform variable or a traversal in the test and the save (400); MTH_SECRET_* tests passed
+AssertionError: {"outcome":"failed","driver":"s3","checks":[{"name":"write","outcome":"failed"},{"name":"read_back","outcome":"skipped"},{"name":"checksum","outcome":"skipped"},{"name":"delete","outcome":"skipped"},{"name":"anonymous_read_refused","outcome":"skipped"}],"errorCode":"storage.write_failed","durationMs":387,"testedAt":"2026-11-02T10:12:45.478Z"}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ expectNamespaceRefusal apps/api/test/integration/integrations/secret-namespace.test.ts:89:48
+     87| /** 400 validation with exactly one field error validation.secret_ref_…
+     88| function expectNamespaceRefusal(res: { status: number; body: Body }, p…
+     89|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     90|   expect(res.body.code).toBe("validation");
+     91|   expect(res.body.errors).toEqual([
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:409:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-namespace.test.ts > F-DG6-120: the assistant endpoint > refuses a platform variable or a traversal as the credential (400); accepts MTH_SECRET_*
+AssertionError: {"configured":true,"enabled":false,"providerKind":"http_endpoint","endpointUrl":"https://model.example.invalid/v1/chat/completions","apiStyle":"openai_chat_completions","modelName":"synthetic-model-1","credentialRef":{"provider":"env","name":"OIDC_CLIENT_SECRET"},"authorizationReference":"IT-APPROVAL-SYNTHETIC-0001","requestTimeoutMs":30000,"maxOutputTokens":1024,"maxContextRecords":8,"enabledAt":null,"enabledBy":null,"telemetryEnabled":false,"reason":"Synthetic test: configure the assistant","version":1,"updatedAt":"2026-11-02T10:12:45.630Z"}: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ expectNamespaceRefusal apps/api/test/integration/integrations/secret-namespace.test.ts:89:48
+     87| /** 400 validation with exactly one field error validation.secret_ref_…
+     88| function expectNamespaceRefusal(res: { status: number; body: Body }, p…
+     89|   expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                ^
+     90|   expect(res.body.code).toBe("validation");
+     91|   expect(res.body.errors).toEqual([
+ ❯ apps/api/test/integration/integrations/secret-namespace.test.ts:446:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 3 passed (12)
+   Start at  10:11:16
+   Duration  104.49s (transform 18.34s, setup 0ms, collect 58.21s, tests 24.97s, environment 0ms, prepare 437ms)
+
+exit=1  finished 2026-11-02T10:13:08Z  load=31.58 30.05 21.80
+restored: 0 changed paths

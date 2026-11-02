@@ -1,0 +1,16 @@
+# mutant 121: git diff of the disposable copy w2
+ apps/api/src/modules/transformations/routes.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/transformations/routes.ts b/apps/api/src/modules/transformations/routes.ts
+index 2137d9f2..fb98fe1e 100644
+--- a/apps/api/src/modules/transformations/routes.ts
++++ b/apps/api/src/modules/transformations/routes.ts
+@@ -468,7 +468,7 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
+       // the records that carry its values, keep actor, action, time, record id and versions, never the changed values
+       // or the reason (the same redaction as /audit-events; the shared helper access/sensitive-reach.ts).
+       const restricted = await restrictedRecordRefs(db, principal, page.items);
+-      if (restricted.size === 0) return page;
++      if (restricted.size >= 0) return page; // MUTANT 121
+       return {
+         nextCursor: page.nextCursor,
+         items: page.items.map((e) => (restricted.has(reachKey(e)) ? { ...e, reason: null, changes: null } : e)),

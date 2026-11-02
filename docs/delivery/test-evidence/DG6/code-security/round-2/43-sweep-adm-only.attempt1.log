@@ -1,0 +1,33 @@
+# 43-sweep-adm-only  started 2026-11-02T13:00:32Z  cwd=/var/tmp/mth-run.hoqSrD/claude-0/r/w2  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=18.55 19.64 20.13  commit=9bb2207667d8ef68e32e351a3782c4e9dfcdecd1
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r2-adm-only-sweep.test.ts
+port-policy: PostgreSQL listening on port 28775 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.hoqSrD/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz9ok1i_0034289d (server_encoding UTF8); applied 117 migrations to a fresh database
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r2-adm-only-sweep.test.ts [ tests/qa/integration/zz-cs-r2-adm-only-sweep.test.ts ]
+Error: Cannot find package 'yaml' imported from '/var/tmp/mth-run.hoqSrD/claude-0/r/w2/tests/qa/integration/zz-cs-r2-adm-only-sweep.test.ts'
+ ❯ tests/qa/integration/zz-cs-r2-adm-only-sweep.test.ts:10:1
+      8| // so the sweep can see a leak. The list of operations and every answe…
+      9| import { readFileSync } from "node:fs";
+     10| import { parse } from "yaml";
+       | ^
+     11| import { afterAll, beforeAll, describe, expect, inject, it } from "vit…
+     12| import { migrate, seedDemo } from "../../../packages/db/src/index.ts";
+
+Caused by: Error: Failed to load url yaml (resolved id: yaml) in /var/tmp/mth-run.hoqSrD/claude-0/r/w2/tests/qa/integration/zz-cs-r2-adm-only-sweep.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  13:00:40
+   Duration  11.12s (transform 380ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 706ms)
+
+exit=1  finished 2026-11-02T13:00:54Z  load=18.78 19.63 20.12

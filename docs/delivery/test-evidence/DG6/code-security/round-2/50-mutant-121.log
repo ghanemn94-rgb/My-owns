@@ -1,0 +1,603 @@
+# 50-mutant-121  started 2026-11-02T10:13:09Z  cwd=/var/tmp/mth-run.hoqSrD/claude-0/r/w2  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=31.58 30.05 21.80  commit=9bb2207667d8ef68e32e351a3782c4e9dfcdecd1
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/sensitive-reach.test.ts tests/qa/integration/zz-cs-r2-sens-reach.test.ts
+port-policy: PostgreSQL listening on port 28776 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.hoqSrD/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvz3pbwu_c8545582 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach.test.ts (10 tests | 2 failed) 19232ms
+   ✓ before marking: nothing is redacted or refused (DG1-DG5 unchanged) > TL and AUD read the benefit's events with their changes, and its form sub-resources  580ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > control: TL and AUD get 404 on the benefit itself; TO and the owner read it  459ms
+   × after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-121: /transformations/{t}/audit redacts the benefit's events and its children's for TL and AUD 345ms
+     → expected [ 'benefit', { …(3) }, null ] to deeply equal [ 'benefit', null, null ]
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-121 positive: TO and the owner read the same events with their changes 209ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-122: /audit-events redacts child events (measurements, case lines) for AUD without a grant  390ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-123: the T14 form-record sub-resources are 404 for TL and AUD; 200 for TO and the owner  1629ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-123 write: TL's comment on the sensitive benefit is 404 and persists nothing  414ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > sweep: the child item routes and the T14 export follow the same rule  3156ms
+   × with an explicit grant: TL and AUD are admitted (next request); revocation restores the rule > TL with a grant reads the events unredacted and the form sub-resources, and may comment 792ms
+     → expected [ { …(14) } ] to deeply equal []
+   ✓ with an explicit grant: TL and AUD are admitted (next request); revocation restores the rule > AUD with grants on the benefit and the case reads their child events unredacted  701ms
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > setup: mark a measured, NON-formula demo benefit sensitive; its owner records a measurement
+benefit 01995000-4401-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > setup: mark a measured, NON-formula demo benefit sensitive; its owner records a measurement
+mark 01995000-4401-7000-8000-000000000001 [33m200[39m {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","isSensitive":true,"reason":"Synthetic: commercially sensitive figur
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > setup: mark a measured, NON-formula demo benefit sensitive; its owner records a measurement
+owner measurement [33m201[39m {"id":"01a19bc1-7485-7680-8edf-fac8f293b1df","benefitId":"01995000-4401-7000-8000-000000000001","measurementNo":3,"kind":"measurement","correctsMeasurementId":null,"source":"manual","calculationRunId"
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > setup: mark a measured, NON-formula demo benefit sensitive; its owner records a measurement
+record GET: TL [33m404[39m AUD [33m404[39m TO (admitted) [33m200[39m
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-121: TL per-transformation audit trail carries no value or reason of the benefit or its children
+TL trail: [33m633[39m own [33m6[39m children [33m4[39m sensitivity [33m1[39m
+TL trail leaking entries [33m11[39m {"id":"01a19bc1-5efd-75df-9d78-756e49f17d17","seq":"507","occurredAt":"2026-11-02T10:14:59.908Z","action":"benefit.validate_baseline","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000001","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"system","userId":null,"displayName":null},"onBehalfOfUserId":null,"priorVersion":5,"newVersion":6,"reason":"Synthetic demonstration data (illustrative example; not Mobily actual performance)","requestId":null,"changes"
+TL trail entries containing the amount [33m1[39m {"id":"01a19bc1-748b-70b0-8a8c-59f39ccf9c00","seq":"831","occurredAt":"2026-11-02T10:15:09.150Z","action":"benefit_measurement.create","recordType":"benefit_measurement","recordId":"01a19bc1-7485-7680-8edf-fac8f293b1df","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"user","userId":"01995000-0000-7000-8000-000000000013","displayName":"roaming.user.bo (synthetic)"},"onBehalfOfUserId":null,"priorVersion":null,"newVersion":1,"reason":null,"requestId":"01a19bc1-7352-758c-9
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-122: AUD /audit-events and the single-event read redact the children's events
+AUD measurement events of the sensitive benefit [33m4[39m unredacted [33m0[39m null
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-122: AUD /audit-events and the single-event read redact the children's events
+AUD record_sensitivity events [33m1[39m unredacted [33m0[39m null
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-122: AUD /audit-events and the single-event read redact the children's events
+AUD single event [33m200[39m {"id":"01a19bc1-748b-70b0-8a8c-59f39ccf9c00","seq":"831","occurredAt":"2026-11-02T10:15:09.150Z","organizationId":"01995000-0000-7000-8000-000000000002","action":"benefit_measurement.create","recordType":"benefit_measurement","recordId":"01a19bc1-7485-7680-8edf-fac8f293b1df","transformationId":"01995000-0000-7000-8000-000000000001","actor":{"type":"user","userId":"01995000-0000-7000-8000-000000000
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-123: the form-record sub-resources of the T14 benefit answer 404 to the TL
+TO comment [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-123: the form-record sub-resources of the T14 benefit answer 404 to the TL
+TL form-record statuses {"versions":404,"comments":404,"attachments":404,"custom-fields":404,"compare":404,"post-comment":404}
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-123: the form-record sub-resources of the T14 benefit answer 404 to the TL
+TO comments [33m200[39m [33m1[39m
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-123: the form-record sub-resources of the T14 benefit answer 404 to the TL
+TL T14 export [33m200[39m contains the benefit id: [33mfalse[39m
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL
+formula-backed measured benefit {"benefit_id":"01995000-4401-7000-8000-000000000003","formula_id":"01995000-4301-7000-8000-000000000003","version_no":1,"calc_id":"01995000-4304-7000-8000-000000000002","result":"80000.000000","amount":"80000.0000"}
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL
+TL calculations before marking [33m200[39m [33m1[39m
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL
+mark 01995000-4401-7000-8000-000000000003 [33m200[39m {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000003","isSensitive":true,"reason":"Synthetic: commercially sensitive figur
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL
+TL GET formula benefit after marking [33m404[39m
+
+stdout | tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL
+TL calculations after marking [33m1[39m the sensitive measurement's calculation: {"id":"01995000-4304-7000-8000-000000000002","formulaVersionId":"01995000-4302-7000-8000-000000000003","inputs":{"roaming_data_mb":{"kind":"count","name":"roaming_data_mb","unit":"MB","value":"80000000","period":"month","source":"Synthetic planning assumption","currency":null,"description":"Roaming data volume per month (planning volume)"},"baseline_cost_per_mb":{"kind":"currency","name":"baseline_cost_per_mb","unit":null,"value":"0.012","period":"none","source":"Synthetic baseline","currency":"SAR","description":"Baseline partner wholesale cost per MB (May 2026)"},"measured_cost_per_mb":{"kin
+measurement amount 80000.0000 calculation result 80000.000000
+
+ ❯ |integration| tests/qa/integration/zz-cs-r2-sens-reach.test.ts (5 tests | 2 failed) 22975ms
+   ✓ cs-r2: the reach of a sensitive benefit > setup: mark a measured, NON-formula demo benefit sensitive; its owner records a measurement  1222ms
+   × cs-r2: the reach of a sensitive benefit > F-DG6-121: TL per-transformation audit trail carries no value or reason of the benefit or its children 422ms
+     → expected [ { …(14) }, { …(14) }, …(9) ] to deeply equal []
+   ✓ cs-r2: the reach of a sensitive benefit > F-DG6-122: AUD /audit-events and the single-event read redact the children's events  308ms
+   ✓ cs-r2: the reach of a sensitive benefit > F-DG6-123: the form-record sub-resources of the T14 benefit answer 404 to the TL  571ms
+   × cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL 592ms
+     → expected { …(18) } to be undefined
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > F-DG6-121: TL per-transformation audit trail carries no value or reason of the benefit or its children
+AssertionError: expected [ { …(14) }, { …(14) }, …(9) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "action": "benefit.validate_baseline",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5efd-75df-9d78-756e49f17d17",[39m
+[31m+     "newVersion": 6,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": 5,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "507",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit.step",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5db0-7073-a0e4-b453dccc4ad3",[39m
+[31m+     "newVersion": 5,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": 4,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "471",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit.step",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5d9f-7019-af56-8aa2775829af",[39m
+[31m+     "newVersion": 4,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": 3,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "469",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit.allocate",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5d35-739f-9f23-7c89e32a65e4",[39m
+[31m+     "newVersion": 3,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": 2,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "462",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit.step",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5d32-77cb-ba6f-ca257407bafd",[39m
+[31m+     "newVersion": 2,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": 1,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "461",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit.create",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5d24-7199-9947-08ad25b9af92",[39m
+[31m+     "newVersion": 1,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": null,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "460",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit_measurement.create",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": "roaming.user.bo (synthetic)",[39m
+[31m+       "type": "user",[39m
+[31m+       "userId": "01995000-0000-7000-8000-000000000013",[39m
+[31m+     },[39m
+[31m+     "changes": {[39m
+[31m+       "amount": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "987654.3200",[39m
+[31m+       },[39m
+[31m+       "attribution": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "Synthetic cs-r2.",[39m
+[31m+       },[39m
+[31m+       "benefit_id": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "01995000-4401-7000-8000-000000000001",[39m
+[31m+       },[39m
+[31m+       "currency": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "SAR",[39m
+[31m+       },[39m
+[31m+       "evidence_ids": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": [],[39m
+[31m+       },[39m
+[31m+       "kind": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "measurement",[39m
+[31m+       },[39m
+[31m+       "measurement_no": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": 3,[39m
+[31m+       },[39m
+[31m+       "period_end": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "2026-09-30",[39m
+[31m+       },[39m
+[31m+       "period_start": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "2026-09-01",[39m
+[31m+       },[39m
+[31m+       "source": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "manual",[39m
+[31m+       },[39m
+[31m+       "status": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "draft",[39m
+[31m+       },[39m
+[31m+       "sustain_phase": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": false,[39m
+[31m+       },[39m
+[31m+     },[39m
+[31m+     "id": "01a19bc1-748b-70b0-8a8c-59f39ccf9c00",[39m
+[31m+     "newVersion": 1,[39m
+[31m+     "occurredAt": "2026-11-02T10:15:09.150Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": null,[39m
+[31m+     "reason": null,[39m
+[31m+     "recordId": "01a19bc1-7485-7680-8edf-fac8f293b1df",[39m
+[31m+     "recordType": "benefit_measurement",[39m
+[31m+     "requestId": "01a19bc1-7352-758c-9fc5-65785aed308e",[39m
+[31m+     "seq": "831",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit_measurement.validate",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5f27-71ec-ab8e-84f9e3fae1d3",[39m
+[31m+     "newVersion": 2,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": 1,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4405-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit_measurement",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "511",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit_measurement.create",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5dec-715c-80e6-0983b9f22eb3",[39m
+[31m+     "newVersion": 1,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": null,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4405-7000-8000-000000000003",[39m
+[31m+     "recordType": "benefit_measurement",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "479",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "benefit_measurement.create",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": null,[39m
+[31m+       "type": "system",[39m
+[31m+       "userId": null,[39m
+[31m+     },[39m
+[31m+     "changes": null,[39m
+[31m+     "id": "01a19bc1-5dc9-7424-8a9c-02085af955c5",[39m
+[31m+     "newVersion": 1,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:59.908Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": null,[39m
+[31m+     "reason": "Synthetic demonstration data (illustrative example; not Mobily actual performance)",[39m
+[31m+     "recordId": "01995000-4405-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit_measurement",[39m
+[31m+     "requestId": null,[39m
+[31m+     "seq": "473",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "action": "record_sensitivity.marked",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": "Synthetic u.1ad511e4df",[39m
+[31m+       "type": "user",[39m
+[31m+       "userId": "01a19bc1-71a7-77bc-afa0-733fb119cbe4",[39m
+[31m+     },[39m
+[31m+     "changes": {[39m
+[31m+       "is_sensitive": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": true,[39m
+[31m+       },[39m
+[31m+       "reason": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "Synthetic: commercially sensitive figure (cs-r2).",[39m
+[31m+       },[39m
+[31m+       "record_id": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "01995000-4401-7000-8000-000000000001",[39m
+[31m+       },[39m
+[31m+       "record_type": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "benefit",[39m
+[31m+       },[39m
+[31m+     },[39m
+[31m+     "id": "01a19bc1-72f8-719b-b6e8-6cb8ea0fae0f",[39m
+[31m+     "newVersion": 1,[39m
+[31m+     "occurredAt": "2026-11-02T10:15:08.661Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": null,[39m
+[31m+     "reason": "Synthetic: commercially sensitive figure (cs-r2).",[39m
+[31m+     "recordId": "01a19bc1-72f2-748f-a659-dac9de4f656a",[39m
+[31m+     "recordType": "record_sensitivity",[39m
+[31m+     "requestId": "01a19bc1-722d-77a8-9b18-d18727f48bee",[39m
+[31m+     "seq": "829",[39m
+[31m+     "transformationId": "01995000-0000-7000-8000-000000000001",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r2-sens-reach.test.ts:143:18
+    141|     expect(own.length).toBeGreaterThan(0);
+    142|     expect(kids.length).toBeGreaterThan(0);
+    143|     expect(leak).toEqual([]);
+       |                  ^
+    144|     expect(amountAnywhere).toEqual([]);
+    145|     // Control: the admitted TO still sees the values (no blanket over…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r2-sens-reach.test.ts > cs-r2: the reach of a sensitive benefit > P-CALC: the calculation lineage of a sensitive FORMULA benefit is not listed to the TL
+AssertionError: expected { …(18) } to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+{
+  "assumptions": "80,000,000 MB of roaming data per month (synthetic).",
+  "computedAt": "2026-08-04T07:30:00.000Z",
+  "computedBy": "01995000-0000-7000-8000-000000000013",
+  "engineVersion": "mth-formula/1.0.0",
+  "errorCode": null,
+  "formulaVersionId": "01995000-4302-7000-8000-000000000003",
+  "id": "01995000-4304-7000-8000-000000000002",
+  "inputs": {
+    "baseline_cost_per_mb": {
+      "currency": "SAR",
+      "description": "Baseline partner wholesale cost per MB (May 2026)",
+      "kind": "currency",
+      "name": "baseline_cost_per_mb",
+      "period": "none",
+      "source": "Synthetic baseline",
+      "unit": null,
+      "value": "0.012",
+    },
+    "measured_cost_per_mb": {
+      "currency": "SAR",
+      "description": "Partner cost per MB; the target here, the accepted KPI actual in a measurement",
+      "kind": "currency",
+      "name": "measured_cost_per_mb",
+      "period": "none",
+      "source": "KPI actual 01995000-4201-7000-8000-000000000008 value 1",
+      "unit": null,
+      "value": "0.011",
+    },
+    "roaming_data_mb": {
+      "currency": null,
+      "description": "Roaming data volume per month (planning volume)",
+      "kind": "count",
+      "name": "roaming_data_mb",
+      "period": "month",
+      "source": "Synthetic planning assumption",
+      "unit": "MB",
+      "value": "80000000",
+    },
+  },
+  "outcome": "ok",
+  "periodEnd": "2026-07-31",
+  "periodStart": "2026-07-01",
+  "result": "80000",
+  "resultCurrency": "SAR",
+  "resultKind": "currency",
+  "resultPeriod": "month",
+  "resultUnit": null,
+  "rounded": false,
+  "rounding": {
+    "column": "numeric(24,6)",
+    "exact": "80000",
+    "inexactIntermediate": false,
+    "mode": "ROUND_HALF_UP",
+    "precision": 80,
+    "rounded": false,
+    "scale": 6,
+    "stored": "80000.000000",
+  },
+}
+
+ ❯ tests/qa/integration/zz-cs-r2-sens-reach.test.ts:253:17
+    251|     console.log("measurement amount", row.amount, "calculation result"…
+    252|     // ADR-0051 §2: the sensitive benefit's individual value is never …
+    253|     expect(hit).toBeUndefined();
+       |                 ^
+    254|   }, 180_000);
+    255| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach.test.ts > after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-121: /transformations/{t}/audit redacts the benefit's events and its children's for TL and AUD
+AssertionError: expected [ 'benefit', { …(3) }, null ] to deeply equal [ 'benefit', null, null ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "benefit",[22m
+[32m-   null,[39m
+[31m+   {[39m
+[31m+     "baseline_validated_at": {[39m
+[31m+       "from": null,[39m
+[31m+       "to": "2026-11-02T10:14:27.709Z",[39m
+[31m+     },[39m
+[31m+     "baseline_validated_by": {[39m
+[31m+       "from": null,[39m
+[31m+       "to": "01a19bc0-c547-72ae-ad70-160156d6e1fd",[39m
+[31m+     },[39m
+[31m+     "baseline_validation_status": {[39m
+[31m+       "from": "unvalidated",[39m
+[31m+       "to": "validated",[39m
+[31m+     },[39m
+[31m+   },[39m
+[2m    null,[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach.test.ts:230:53
+    228|       expect(planned.length).toBeGreaterThan(0);
+    229|       for (const e of [...own, ...measured, ...planned, ...flag, ...co…
+    230|         expect([e.recordType, e.changes, e.reason]).toEqual([e.recordT…
+       |                                                     ^
+    231|       // Actor, action, time, record id and versions remain.
+    232|       expect(measured[0].action).toBe("benefit_measurement.create");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach.test.ts > with an explicit grant: TL and AUD are admitted (next request); revocation restores the rule > TL with a grant reads the events unredacted and the form sub-resources, and may comment
+AssertionError: expected [ { …(14) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "action": "benefit_measurement.create",[39m
+[31m+     "actor": {[39m
+[31m+       "displayName": "Synthetic u.7789e9d778",[39m
+[31m+       "type": "user",[39m
+[31m+       "userId": "01a19bc0-c52b-753b-9ed7-6551f1c25410",[39m
+[31m+     },[39m
+[31m+     "changes": {[39m
+[31m+       "amount": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "987654.3200",[39m
+[31m+       },[39m
+[31m+       "attribution": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "Synthetic attribution for the reach test",[39m
+[31m+       },[39m
+[31m+       "benefit_id": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "01a19bc0-cf35-70d2-b430-38cb21ed701e",[39m
+[31m+       },[39m
+[31m+       "currency": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "SAR",[39m
+[31m+       },[39m
+[31m+       "evidence_ids": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": [],[39m
+[31m+       },[39m
+[31m+       "kind": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "measurement",[39m
+[31m+       },[39m
+[31m+       "measurement_no": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": 1,[39m
+[31m+       },[39m
+[31m+       "period_end": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "2026-09-30",[39m
+[31m+       },[39m
+[31m+       "period_start": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "2026-09-01",[39m
+[31m+       },[39m
+[31m+       "source": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "manual",[39m
+[31m+       },[39m
+[31m+       "status": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": "draft",[39m
+[31m+       },[39m
+[31m+       "sustain_phase": {[39m
+[31m+         "from": null,[39m
+[31m+         "to": false,[39m
+[31m+       },[39m
+[31m+     },[39m
+[31m+     "id": "01a19bc0-e05e-708b-83cf-10829ced1f06",[39m
+[31m+     "newVersion": 1,[39m
+[31m+     "occurredAt": "2026-11-02T10:14:31.217Z",[39m
+[31m+     "onBehalfOfUserId": null,[39m
+[31m+     "priorVersion": null,[39m
+[31m+     "reason": null,[39m
+[31m+     "recordId": "01a19bc0-e04f-7019-ae92-7942657a3084",[39m
+[31m+     "recordType": "benefit_measurement",[39m
+[31m+     "requestId": "01a19bc0-e016-70d2-b252-aaa9876223ec",[39m
+[31m+     "seq": "201",[39m
+[31m+     "transformationId": "01a19bc0-c525-7099-9348-4f1fbb82c11d",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach.test.ts:357:83
+    355|     );
+    356|     expect((await get(tl, form(sensitiveId, "versions"))).status).toBe…
+    357|     expect(withValues(of(await trail(tl), "benefit_measurement", measu…
+       |                                                                                   ^
+    358|   });
+    359| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 11 passed (15)
+   Start at  10:13:18
+   Duration  113.81s (transform 15.60s, setup 0ms, collect 55.17s, tests 42.21s, environment 0ms, prepare 800ms)
+
+exit=1  finished 2026-11-02T10:15:22Z  load=35.71 32.23 23.73
+restored: 0 changed paths
