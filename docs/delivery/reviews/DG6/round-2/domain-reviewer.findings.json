@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-160",
+      "stage_id": "DG6",
+      "requirement": "REQ-S12-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0053 still says the worker's freshness scan reads only the newest period and that adopting the last-known-value rule is 'not decided here', which contradicts the shipped kpiFreshness after T-DG6-BE-Y3",
+      "reproduction": "Candidate cf40705b (source 9bb2207). Read docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md line 79 (bullet 'Not changed by this repair (open ...)'). Compare it with apps/worker/src/handlers/operations.ts kpiFreshness (the lateral join over open/closed periods with ev.value IS NOT NULL) and with my runs: probe-freshness.log (the scan reads Stale 0.4125 and emits one data.stale event while a later period is open and empty) and mutant-freshness-revert.log (reverting operations.ts to the round-1 text fails 5 tests). git log shows ADR-0053 last changed in T-DG6-ARCH-08 (1726c9657), before the repair. BE-Y3 handback section 6 proposed the replacement text for the architect; ARCH-11 to ARCH-13 did not apply it.",
+      "expected": "The ADR records the shipped behaviour: the freshness scan uses the same last-known-value rule as linkedKpiStatus (F-DG6-100/F-DG6-140, T-DG6-BE-Y3), so an empty or Unknown later period does not hide a stale value and the scan opens the data_stale exception (M0239).",
+      "actual": "ADR-0053 line 79 says the scan 'still reads only the organization's newest period of the KPI's frequency ... so it does not open a new data_stale exception ... Whether the scan adopts the same last-known-value rule is not decided here.' The code and tests do the opposite. Documentation drift only: the product behaviour is correct and verified. A maintainer reading the ADR would wrongly conclude the M0239 stale-data trigger is unreachable.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probe-freshness.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-freshness-revert.log",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Y3-backend-workflow-engineer.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-02T12:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 2 by domain-reviewer. Low, documentation only. Suggested repair: replace the line-79 bullet with BE-Y3 handback section 6's proposed text (a dated amendment)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-161",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The DG6 register rows were not updated after the round-1 repairs: their notes still disclose residuals the repairs removed, and REQ-S20-030 cites only the measurement of the replaced synchronous export start",
+      "reproduction": "git diff 3cce3d4452fcd91e3db2888c60271e5afdc06062..9bb2207667d8ef68e32e351a3782c4e9dfcdecd1 -- docs/delivery/requirements.csv is empty. Read the notes and evidence columns of REQ-S16-030, REQ-S20-029, REQ-S20-030 and REQ-S12-019 at the candidate, and compare them with the candidate's code and my runs: rate-limits.test.ts now has an 'export' class exercising POST /api/v1/exports (passed in int-api-p6.log); sha256 of deploy/load/generate.mjs is 6b2a9007... and its ids pass z.uuid() (probe-uuid.log, unit-load-ids.log); the scan fix (probe-freshness.log); createExport for a live selection is asynchronous since D-207 (load-export-proof-1rep.log).",
+      "expected": "REQ-DLV-038: 'the P6 outputs and their evidence exist and match what the register claims'. The register's notes describe the candidate's actual residuals, and each row cites the evidence of the shipped behaviour (BE-Y3, BE-Y4, BE-Y5, DO-Y1, DO-Y2).",
+      "actual": "REQ-S16-030 notes: 'partial: the export rate-limit class has no operation wired (an it.todo ...)', which BE-Y4 repaired. REQ-S20-029 notes: 'the run used DO-F's patched copy of generate.mjs, which is not in the tree', and REQ-S20-030 notes: 'the run used DO-F's patched generator copy (6b2a9007...), not the tree's generate.mjs'. Since DO-Y1 the shipped file is that copy. REQ-S20-030's evidence and figures are DO-H's re-measurement of the synchronous export start that D-207/BE-Y5 replaced; DO-Y2's re-measurement of the shipped asynchronous path is not cited. REQ-S12-019 still lists the freshness-scan residual as open. Every stale note understates the candidate; nothing is overclaimed, and the shipped behaviour is verified. This is register drift with no behavioural effect.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probe-uuid.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-load-ids.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/load-export-proof-1rep.log",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-Y2-devops-engineer.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-02T12:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 2 by domain-reviewer. Low, register drift only. Suggested repair: an analyst pass over the DG6 rows touched by D-206 to D-208 that updates notes and evidence to the repaired candidate."
+        }
+      ]
+    }
+  ]
+}

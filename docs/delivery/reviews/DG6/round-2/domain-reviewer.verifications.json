@@ -1,0 +1,43 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-100",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b734ba75d1a80f4df0e38d9dde46a95b93e2601cabfe51be49bc5bf0d (recomputed, 2720 files, on the repository and on a complete non-shallow clone at e56b3d2fc, whose product tree equals source 9bb2207). Fix (T-DG6-BE-Y3): apps/worker/src/handlers/operations.ts kpiFreshness now reads the newest open or closed period of the KPI's frequency whose panel evaluation (highest run seq) carries a value, via a lateral join with ev.value IS NOT NULL, then applies the ADR-0028 read-time staleness rule. That is the same rule as the API's linkedKpiStatus. (1) My unedited round-1 probe (stale value 60 days old in the previous closed monthly period, current period open and empty, dq_stale_after_days 30) now passes: kpiFreshness={freshness:'stale', lastValue:'0.4125', dataAsOf:'2026-09-03'}, scan {kpis:1, stale:1, emitted:1}, one data.stale event. In round 1 it was unknown/null/null with emitted 0. Run together with operations-freshness.test.ts (11) and exception-last-known-value.test.ts (8): 3 files, 20/20, exit 0. (2) Mutant: operations.ts reverted to the round-1 text (git show 3cce3d4:...). 5 failed and 15 passed, exit 1: the 3 new 'stopped feed' worker tests, my probe, and the API parity test. The 'never a value stays Unknown' control and every older test still pass. So the tests catch the regression and Unknown stays Unknown (never 0). The real-stack A17 exception (EN and AR) shows the linked KPI Stale with 250.75 and 31 Jan 2026. Residual documentation drift: ADR-0053 line 79 still describes the old scan. Raised separately as Low F-DG6-160; it does not affect this closure.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/probe-freshness.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-freshness-revert.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-probe-freshness.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-exception-data-owner.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-101",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate cf40705b. deploy/load/generate.mjs sha256 6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a, which is the measured copy's hash. (1) My unedited round-1 probe (loadId(1,'initiative',0..999) checked against an RFC 9562 regex and apps/api's own zod z.uuid()) gives {nonRfc:0, rejectedByZodUuid:0, of:1000}. In round 1 it was 865/865. (2) The new unit test deploy/scripts/tests/load-generate-ids.vitest.mjs passes 4/4 on Node 24.21.0 and Node 22.22.0. (3) Mutant: generate.mjs reverted to the round-1 text. All 4 tests fail ('rejected': 47623 in the default-profile sweep), exit 1. (4) Reproducibility: I ran one repetition of DO-Y2's driver with the SHIPPED generator on a disposable PostgreSQL. It generated marker {transformations 50, initiatives 1000, kpi_actuals 10000, audit_events 100000, users 120, seed 20261027}, and export-proof ran against the API with no id refused: 66 of 66 jobs succeeded and 0 had no snapshot. The load dataset is now reproducible from the candidate. That run's latency observations are recorded in check DOM-R2-12 (a loaded host), not here.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/probe-uuid.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/uuidprobe.mjs.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-load-ids.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-load-ids-revert.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/node22-unit.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/load-export-proof-1rep.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-102",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate cf40705b. Fix (T-DG6-FE-Y1): the retry-chain test awaits each step (POST, navigation request, heading, previous-attempt link) separately with RETRY_CHAIN_WAIT {timeout 15000} and a 60 s test timeout. (1) The repaired file under synthetic CPU load (12 busy processes on 4 vCPU plus the two other reviews): 3 of 3 runs passed 17/17 at load 7.9, 17.3 and 19.3. The marks were click to rendered 2960, 4493 and 2978 ms, so the round-1 single 1 s wait would have missed. A second loaded series at load 30.7-32.0: run 1 never reached the test (Error: Hook timed out in 60000ms in apps/web/test/setup.ts:37, the shared beforeAll that warms every page module; 17 skipped, exit 1); run 2 passed 17/17 (rendered 1678 ms). (2) Mutant that reverts the fix, the round-1 test body (git show 3cce3d4:integrations.test.tsx), at the same load (24.5-32.6): run 1 hit the same 60 s setup-hook timeout; run 2 failed exactly as in round 1, 'Unable to find role=\"link\" and name \"Open the previous attempt\"', exit 1. A weaker mutant (only RETRY_CHAIN_WAIT set to 1000 ms, keeping the split steps) was inconclusive: one setup-hook timeout, then one pass. Each split step stays under 1 s, so that mutant does not reproduce the original single wait. That is disclosed, not counted. The setup-hook timeouts are at 7-8 times CPU oversubscription that I created on purpose. They sit outside this test, in the suite-wide page warm-up, and did not occur at load 8-19. I judge them load artefacts of my stress set-up, not a defect of this repair.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-web-integrations-loaded.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-web-integrations-loaded-2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-integrations-round1-test.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-integrations-1s-wait.log"
+      ]
+    }
+  ]
+}

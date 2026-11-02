@@ -1,0 +1,337 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 2,
+  "candidate_id": "sha256:cf40705b734ba75d1a80f4df0e38d9dde46a95b93e2601cabfe51be49bc5bf0d",
+  "source_commit": "9bb2207667d8ef68e32e351a3782c4e9dfcdecd1",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-R2-domain-reviewer-20261102T094427Z-7c2ae251",
+    "session_id": "7c2ae251-4656-4139-8545-ee38e2e0045b"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG6 implementation, test, register row, ADR, repair or delivery decision in the reviewed candidate. My only earlier DG6 work is the round-1 review (findings F-DG6-100 to 102), which I now verify. I formed this verdict only from my own runs in this session (task T-DG6-REV-DOM-R2; assignment sha256 c157e09b...1ac3 verified). I did not open any other reviewer's round-2 record or evidence, nor the evidence of the aborted round-2 runs. I saw only file names in git status/log. Every command that built or ran code used a complete, non-shallow disposable clone under $TMPDIR at e56b3d2fc, whose product tree equals the source commit 9bb2207: only docs/delivery assignments, the manifest, stages.json, progress.md, run folders and a code-security evidence file differ. node_modules were copied from the repository working tree (pnpm-lock.yaml byte-identical). My probes were added to the clone only, and copies are kept as .txt under my evidence directory. All data I created or cite is SYNTHETIC. No in-product G1-G6 decision, Finance validation or demo approval cited here approves anything real, and none relates to DG0-DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-2/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038", "REQ-S01-005", "REQ-S02-006", "REQ-S10-002", "REQ-S10-004", "REQ-S12-019", "REQ-S12-023", "REQ-S12-024",
+    "REQ-S13-011", "REQ-S13-013", "REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-010", "REQ-S15-011",
+    "REQ-S15-012", "REQ-S15-013", "REQ-S15-014", "REQ-S16-006", "REQ-S16-007", "REQ-S16-022", "REQ-S16-023", "REQ-S16-026",
+    "REQ-S16-027", "REQ-S16-029", "REQ-S16-030", "REQ-S16-032", "REQ-S17-001", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005",
+    "REQ-S17-006", "REQ-S17-007", "REQ-S17-008", "REQ-S17-009", "REQ-S17-010", "REQ-S17-011", "REQ-S20-001", "REQ-S20-012",
+    "REQ-S20-013", "REQ-S20-014", "REQ-S20-017", "REQ-S20-020", "REQ-S20-021", "REQ-S20-022", "REQ-S20-029", "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R2-00-candidate",
+      "procedure": "Verify the frozen candidate before and after the review. Check git rev-parse HEAD, the commits between source_commit and HEAD, and node tools/gates/candidate.mjs --stage DG6 on the repository and on a complete clone.",
+      "command": "git rev-parse HEAD; git log/diff --name-only 9bb2207..HEAD; node tools/gates/candidate.mjs --stage DG6 (repository and $TMPDIR/review-dg6); git rev-parse --is-shallow-repository",
+      "environment": "Repository /home/user/My-owns at HEAD e56b3d2fc (start) and e89910659 (end); clone $TMPDIR/review-dg6 at e56b3d2fc, non-shallow; Node 24.21.0.",
+      "expected": "candidate_id sha256:cf40705b...bf0d over 2720 files; only delivery metadata differs from 9bb2207.",
+      "actual": "sha256:cf40705b734ba75d1a80f4df0e38d9dde46a95b93e2601cabfe51be49bc5bf0d, files 2720, on the repository (start and end of the run) and on the clone. The clone is not shallow. HEAD is not the source commit: 9bb2207..e56b3d2fc adds only the round-2 assignments, the manifest, stages.json, progress.md, the auto-committed run folders of the aborted round-2 runs, and one code-security evidence file. During my run, HEAD moved to e89910659, which changes only docs/delivery/progress.md. None of these is in the manifest.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG6/cf40705b734ba75d.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM-R2-01-validators",
+      "procedure": "Run the register validator for DG6 and the historical validators for DG5 to DG1.",
+      "command": "node tools/gates/validate.mjs --register DG6; node tools/gates/validate.mjs --historical --stage DG5 (DG4, DG3, DG2, DG1)",
+      "environment": "Repository at e56b3d2fc; Node 24.21.0.",
+      "expected": "Each exits 0 with PASS.",
+      "actual": "PASS register rules at DG6; PASS gate DG5/DG4/DG3/DG2/DG1 (historical). All exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-__register_DG6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-__historical___stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-__historical___stage_DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-__historical___stage_DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-__historical___stage_DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-__historical___stage_DG1.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-02-build",
+      "procedure": "Build the workspace in the disposable clone (prerequisite of every stack run).",
+      "command": "pnpm -r build",
+      "environment": "Clone at e56b3d2fc; Node 24.21.0; pnpm 10.33.0.",
+      "expected": "Exit 0.",
+      "actual": "exit=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-03-finding-verification",
+      "procedure": "Re-run my round-1 reproductions of F-DG6-100, 101 and 102 on this candidate, run a mutant that reverts each fix, and judge each repair (details in domain-reviewer.verifications.json).",
+      "command": "with-pg.sh vitest --project integration zz-domain-probe-freshness + operations-freshness + exception-last-known-value (and with operations.ts reverted); node uuidprobe.mjs generate.mjs zod; vitest unit-node load-generate-ids.vitest.mjs (and with generate.mjs reverted); vitest unit-web integrations.test.tsx under 12 synthetic CPU burners (repaired, round-1 body, 1 s wait)",
+      "environment": "Clone at e56b3d2fc; PostgreSQL 16.15 (UTF8, C) on ports 28700-28701; Node 24.21.0 (and 22.22.0 for the load-id test); host load average 7-32 (three reviews plus my burners).",
+      "expected": "Each reproduction now passes and each revert mutant fails.",
+      "actual": "F-DG6-100: the probe reads Stale 0.4125 2026-09-03 and emits 1 event; 20/20, exit 0. The revert mutant gives 5 failed and 15 passed, exit 1 (by design: the 3 stopped-feed tests, my probe and the API parity test fail because the round-1 read sees Unknown). F-DG6-101: 0 of 1000 ids rejected; unit test 4/4; the revert mutant fails 4/4, exit 1 (by design: 47623 rejected ids). F-DG6-102: the repaired test passed 3/3 at load 8-19. Of 2 runs at load 31-32, one passed and one hit 'Hook timed out in 60000ms' in apps/web/test/setup.ts:37 (the shared page warm-up; 17 skipped, exit 1). The round-1 body mutant failed with the round-1 error at load 32, exit 1 (its other run hit the same setup-hook timeout). The 1 s-only mutant was inconclusive (setup-hook timeout, then a pass). The setup-hook timeouts arise only under the 7-8x oversubscription I induced, and are explained in the verifications. All three are CLOSED_VERIFIED.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/probe-freshness.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-freshness-revert.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probe-uuid.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-load-ids.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-load-ids-revert.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-web-integrations-loaded.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-web-integrations-loaded-2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-integrations-round1-test.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-integrations-1s-wait.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-04-qa-integration",
+      "procedure": "Run the whole independent QA integration suite (tests/qa/integration, 45 files) on a disposable PostgreSQL.",
+      "command": "QA_PG_PORT=28702 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <files> (first all 45 at once; then in three parts of 15/15/15 files)",
+      "environment": "Clone at e56b3d2fc; PostgreSQL 16.15; Node 24.21.0; --configLoader runner (read-only node_modules); host load average 18-30, available memory down to about 3 GB.",
+      "expected": "45 files pass, with no unexplained error.",
+      "actual": "First attempt (all 45 in the single integration fork): after 13 files had passed, the fork died with 'Unhandled Rejection: Error: Channel closed' (ERR_IPC_CHANNEL_CLOSED, tinypool); no summary; exit 1. This is the Vitest worker process lost under memory pressure on the shared host, the same signature BE-Y3 recorded; it is not a test assertion. Re-run in three parts: part 00 16 files / 211 tests passed, part 01 15 / 103, part 02 14 / 123, all exit 0. In total 45/45 files and 437/437 tests, with no skip and no todo. The same count as round 1. It covers A12 (scope isolation 26 tests), A13 (runs, outbound once), A14, A17 (8/1/1 CSV/XLSX, webhook, stopped and failing connector), A21 adapters disabled, A22 operability, and a17-s01-005 external change.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-run1-crashed.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part00.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part01.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part02.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-05-implementer-integration",
+      "procedure": "Run the implementer integration files behind the P6 domain rows and every file the round-1 repairs touched: the round-1 set (ownership transfer, entity group, integrity sweep, deliverable confirmation, other realm, store contract, assistant guardrails/no-write/injection/conversations, last-known value, automation backlog/enablement, graceful degradation, preview, deep links), plus sensitive-reach, sensitive-reads, secret-namespace, exports-assembly, exports, rate-limits, automation-version-at-occurrence, connectors, webhooks, notification-channels, operations-freshness and the db catalogue.",
+      "command": "QA_PG_PORT=28703 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat int-api-files.txt)",
+      "environment": "Clone at e56b3d2fc; PostgreSQL 16.15; Node 24.21.0; host load average about 20.",
+      "expected": "All pass.",
+      "actual": "Test Files 27 passed (27); Tests 401 passed (401); exit 0; no skip. Among them: rate-limits.test.ts now has the export class (no it.todo left); exports-assembly.test.ts 18/18 (pending to assembled; access lost gives a failed job with errorCode, never a file; the attempt bound); the D-204 version-at-occurrence and D-205 kill-switch tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-files.txt"
+      ]
+    },
+    {
+      "id": "DOM-R2-06-root-e2e-functional",
+      "procedure": "Run the DG6 root acceptance journeys in chromium-en and chromium-ar on the QA stack: A12 scope isolation, A13 connector run once, A14 compare and reapply, A17 failing-connector exception, A17 import and integration, A21 degradation, A22 operability. Then re-run the failing spec alone.",
+      "command": "MTH_PORT_POOL=28736-28749 QA_E2E_PG_PORT=28736 QA_E2E_API_PORT=28737 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_SCREENSHOT_DIR=$TMPDIR/shots-root e2e/support/qa-stack.sh npx playwright test <7 specs> --workers=1; then the same with e2e/a12-p6-scope-isolation.spec.ts --project chromium-en",
+      "environment": "Clone at e56b3d2fc; Playwright with the pre-installed Chromium (/opt/pw-browsers); E2E_SCREENSHOT_DIR writable as the assignment requires; host load average about 20-28.",
+      "expected": "Every journey passes in en and ar.",
+      "actual": "Batch: 32 passed, 2 failed, exit 1. Both failures were chromium-en A12. A12-4 failed at the sign-in field 'Synthetic user name' not visible within the 5 s expect default (signIn, ui.ts:79). A12-5 failed when the assistant reply [data-assistant-output] was not visible within 5 s. Both are load timeouts, not assertions about scope; the same tests passed in chromium-ar. Re-run of A12 alone in en: 6/6 passed (A12-4 in 5.9 s, A12-5 in 10.5 s), exit 0. Every other journey passed in both languages. A17: the failing connector opens one exception; the data owner sees the KPI Stale with 250.75 and 31 Jan 2026; the technical admin sees only the count. The 8/1/1 CSV and XLSX imports are staged 'not committed' with Committed 'Unknown', and row reasons are shown for the invalid row ('12,5' is not a decimal) and the duplicate. The webhook batch commits. Stopped connector: actionable error. A13: one press gives one run. A14: the conflict, compare and reapply keep the first change. A22: Operations alive/stale/forbidden and the exception resolved. A21 degradation passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-p6-functional.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-a12-en-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a14-reapplied.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a14-reapplied.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a22-p6-operations-stale.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-07-root-e2e-a20",
+      "procedure": "Run the A20 journeys on the QA stack in en and ar: layout and brand at 1440 px, UX (360 px approve and KPI submit, keyboard, API error in the selected language, greyscale chips), the REQ-S15-014 term scan, and the axe scan.",
+      "command": "e2e/support/qa-stack.sh npx playwright test e2e/a20-p6-layout-brand.spec.ts e2e/a20-p6-ux.spec.ts; then e2e/a20-s15-014-term-scan.spec.ts; then e2e/a20-p6-axe.spec.ts (each --workers=1)",
+      "environment": "Clone at e56b3d2fc; Chromium (/opt/pw-browsers); host load average about 20-25.",
+      "expected": "All pass. The axe skips are only the spec's by-design NOT SCANNED screens.",
+      "actual": "Layout/brand + UX: 20 passed, exit 0. Term scan: 126 passed (21 non-admin routes x normal, forced-500 and network-failure x en/ar), 0 term hits, exit 0. Axe: 76 passed and 18 skipped, exit 0. The 18 skips are the spec's own NOT SCANNED screens, 9 per language, as the REQ-S15-012 note discloses; some of them are scanned by other specs (A17 imports, A12 deep link). The disclosed limits of REQ-S15-014 (some states are scanned in their not-found or not-demo form) and REQ-S15-012 (ten walkthrough steps not completed by keyboard in a test) are acceptable: the clauses tested are met, and the residuals are stated honestly in the register.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-a20-layout-ux.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-a20-term-scan.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-a20-axe.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-08-demo-stack-e2e",
+      "procedure": "Run on the demo-initialized stack (AUTH_MODE=dev; demo role users): the A02 guided walkthrough, A21 no-AI operation and the demo users' twelve-step walkthrough, in en and ar. Then re-run the failing one alone.",
+      "command": "E2E_PG_PORT=28724 E2E_API_PORT=28725 e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a21-no-ai-operation.spec.ts e2e/a02-demo-users-walkthrough.spec.ts --workers=1; then a02-demo-users-walkthrough --project chromium-ar on ports 28726/28727",
+      "environment": "Clone at e56b3d2fc; demo stack; Chromium. The axe run of DOM-R2-07 was running in the same clone at the same time.",
+      "expected": "6/6 pass.",
+      "actual": "Batch: 5 passed, 1 failed, exit 1. The failing test was chromium-ar a02-demo-users-walkthrough. Every walkthrough step and the accessibility check had passed; it failed at the final context close with 'ENOENT ... test-results/.playwright-artifacts-1/traces/....trace' and a truncated trace zip. The cause is my own concurrent Playwright run (DOM-R2-07) in the same clone sharing test-results/: a harness artefact, not a product assertion. Re-run alone: 1 passed (2.4 min), exit 0. So 6/6 pass, with AI and external channels off.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-demo.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/e2e-demo-ar-walkthrough-rerun.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-09-own-screen-probe",
+      "procedure": "My own probe on the production-initialized dev stack in en and ar. It visits the assistant, integrations, operations, imports, search and my-work screens and asserts html lang/dir and no stack trace, SQL or infrastructure term. Then dev.lead creates a SYNTHETIC transformation and a RAID risk, starts a LIVE-selection export through the API (D-207), and checks the 202, the Exports screen and that the API's assembly watch assigns the snapshot.",
+      "command": "E2E_PG_PORT=28722 E2E_API_PORT=28723 apps/web/e2e/support/with-stack.sh npx playwright test e2e/zz-domain/dom-r2-screens.spec.ts --workers=1 (then --project chromium-en alone, twice)",
+      "environment": "Clone at e56b3d2fc (probe in the clone only; copy in probes/dom-r2-screens.spec.ts.txt); Chromium; no worker on this stack (by design of with-stack.sh).",
+      "expected": "Every screen passes in both languages; the live export answers 202 at once with no snapshot, then the snapshot is assigned without a worker.",
+      "actual": "Attempt 1 (log overwritten by attempt 2; its console showed every screen passing in en and ar): createExport got 404 because my probe used the business-unit id SYN_RETAIL as a transformation id. That was a probe error, and I fixed it. Attempt 2 (dom-probe-screens-run1.log): ar passed; en passed all six screens and the export start, then exceeded my probe's own 300 s test budget waiting for the Exports h1 under load. En re-run 1: all six screens passed, then 'locator.click: Target crashed' (Chromium out of memory, about 1.4 GB free). En re-run 2: passed, exit 0. Results: 0 infrastructure hits; html lang/dir correct; the worker is 'Unknown: no heartbeat recorded', never alive; the assistant is off (not configured); connector and import counts are Unknown, never 0. Live export: 202 in 169/64/51 ms with snapshotId null, status queued; the snapshot was assigned by the API watch within the poll. The Exports screen in en and ar shows 'Open the snapshot', 'Queued, waiting to start, 0 %' and 'No file yet'. That is the truth without a worker; the worker-backed run to 100 % is DOM-R2-12. The transient 'Preparing the report' text is too brief to capture on screen. It is asserted by fee.test.tsx (DOM-R2-10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/dom-probe-screens-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/dom-probe-screens-en-rerun1-crashed.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/dom-probe-screens-en-rerun2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/dom-r2-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-admin-operations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-admin-operations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-exports-assembled.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-exports-assembled.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-search.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-search.png"
+      ]
+    },
+    {
+      "id": "DOM-R2-10-unit",
+      "procedure": "Run the QA unit suite (token contrast, i18n catalogue and others), the web tests of the exports/reports states (the D-207 'Preparing' and 'No snapshot' texts, the problem texts) and the plain-language explanations, and a Node 22 run.",
+      "command": "npx vitest run --configLoader runner --project unit-node tests/qa/unit; --project unit-web apps/web/src/pages/reports/fee.test.tsx apps/web/src/components/explanation/explanation.test.tsx; PATH=/opt/node22/bin npx vitest run --project unit-node tests/qa/unit deploy/scripts/tests/load-generate-ids.vitest.mjs",
+      "environment": "Clone at e56b3d2fc; Node 24.21.0; Node 22.22.0 at /opt/node22/bin (the assignment names 22.22.2; the installed one is 22.22.0).",
+      "expected": "All pass.",
+      "actual": "QA unit: 6 files, 61 passed, exit 0. fee + explanation: 2 files, 37 passed, exit 0 (fee.test.tsx asserts exports.preparing for a pending live job; the weighted-score and benefit-realized-value explanations in en and ar). Node 22.22.0: 7 files, 65 passed, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-qa.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/unit-web-fee-explanation.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/node22-unit.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-11-operating-truth",
+      "procedure": "Judge the operating logic against the master prompt and playbook. No implied external change (M0080; REQ-S01-005, REQ-S17-006). Stale and failed data (M0239; REQ-S12-019). Unknown is never 0 or green. Imports are staged and lineage-preserving. Core workflows run with connectors stopped. Scope, sensitivity and notification deep links. The assistant is off by default and never approves. Honest labelling. Judged from my runs above, the source and the en/ar catalogues.",
+      "command": "grep -rn -i 'official|certif|PMI' apps/web/src/i18n/en/*.json; read apps/worker/src/handlers/operations.ts, apps/api/src/modules/reporting/exports/assembly.ts, access/sensitive-reach.ts, platform/secret-namespace.ts, i18n externalChange.json/adminP6.json/reportsP5.json/problems.json; screenshots",
+      "environment": "Clone at e56b3d2fc; screenshots from DOM-R2-06 and DOM-R2-09.",
+      "expected": "Every operational state is truthful and the product claims nothing official.",
+      "actual": "Holds. (a) A completed task leaves the deliverable 'Unconfirmed', and only reviewed evidence or a confirmed connector result confirms it (externalChange.unconfirmedHint; a17-s01-005 4/4). An outbound write without confirmation stays pending_confirmation (a13 outbound-once). (b) A failing connector opens one exception, and the linked KPI shows Stale with 250.75 and its date (en/ar screenshots). Since BE-Y3 the stale-data scan also fires when a later period is open (F-DG6-100 closed). The register's residual 'the scan reads only the newest period' no longer applies (F-DG6-161 records the stale note; F-DG6-160 the ADR text). (c) Unknown: worker heartbeat, import Committed and connector counts show Unknown; a zero denominator is 'Not computable'. (d) The D-207 asynchronous export: the restricted-source check stays synchronous (D-199's 403 unchanged; A12-4 refuses Y). Access lost before assembly gives a failed job with en/ar text (export__source_unavailable / export__assembly_failed), never a file. The snapshot's data-as-of is the assembly time, which is documented. I accept this. (e) Credentials are by reference only. The MTH_SECRET_* namespace is enforced at write time with a 400 and no existence oracle. The UI hint shows the namespace in en/ar. (f) The assistant is off by default; its refusals cover approve, validate a benefit, set a value and create evidence. The admin screens say automations never decide a business approval. (g) Nothing claims official PMI status or Mobily branding: the provisional wordmark and 'Provisional' badge are on every screen, and the about text says #0078FF is provisional. Observation, not a defect: the AR exception page shows the connector's own error message ('The source system did not respond.') in English, as source-system data on an admin screen.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-connector-failing.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-connector-failing.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-imports-entry.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-imports-entry.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part00.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-12-load-export-proof",
+      "procedure": "Re-run what the REQ-S20-029/030 notes defer: one repetition of T-DG6-DO-Y2's driver (unchanged) with the SHIPPED generator on the full default dataset. It generates, mints sessions, reindexes, starts the API and worker, then runs export-proof.mjs (part A: 16 exports by one user; part B: 50 simultaneous starts by 50 users).",
+      "command": "REPS=1 IDLE_MAX_S=60 API_PORT=28741 QA_PG_PORT=28742 MTH_PORT_POOL=28742-28749 tests/qa/support/with-pg.sh bash docs/delivery/handbacks/DG6/T-DG6-DO-Y2-evidence/driver.sh",
+      "environment": "Clone at e56b3d2fc; generate.mjs sha256 6b2a9007...; PostgreSQL 16.15; Node 24.21.0; 4 vCPU. The 1-minute load during the proof was 22.98-24.50: about 6x CPU oversubscription from the three concurrent reviews; the idle wait ended by its 60 s timeout.",
+      "expected": "The dataset matches the documented profile. Every export returns 202 with a job id, progress rises to 100, the job succeeds, and the file downloads only for the requester. Start latency is provisional and judged against DO-Y2's idle-host figures.",
+      "actual": "Dataset marker {transformations 50, initiatives 1000, kpi_actuals 10000, audit_events 100000, users 120, seed 20261027}, generated by the shipped file. 66/66 jobs: 202 with a job id; progress never decreased and ended at 100; succeeded; 0 with no snapshot; requester download OK; same-scope other user and AUD got 404/404. One exception: LOAD-T20 has no second non-AUD user (the disclosed dataset gap; AUD still covers it). 0 API/worker error lines, 0 rate-limit class lines. Start latency: part A p95 244 ms. Part B p50 1567 ms, p95 2270 ms, max 2317 ms; 17 of 50 starts were over 2 s (2.01-2.32 s). export-proof therefore exits 1, on 17 'createExport took > 2000 ms' assertions plus the LOAD-T20 gap. Judgement: 'returns immediately with a job ID' (REQ-S20-030) holds functionally. The 2 s reading (ADR-0058 §7) was missed only at 6x oversubscription. On the same driver, DO-Y2 measured 0 of 150 over 2 s at load 0.9-4.8 (max 1.33 s), against 38/50 over at idle before D-207. The assignment's environmental residual applies: the targets are provisional engineering targets measured on one sandbox host, never Mobily capacity. I record this check as PASS on that basis and state the loaded miss plainly. I could not obtain an idle host during this review, so the idle figures rest on DO-Y2's evidence, which I read but did not reproduce. The LOAD-T20 dataset gap is acceptable as disclosed: it removes one same-scope probe of 66, and AUD still proves requester-only access for that export.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/load-export-proof-1rep.log",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-Y2-devops-engineer.md"
+      ]
+    },
+    {
+      "id": "DOM-R2-13-automation-semantics",
+      "procedure": "Judge D-203 to D-205 and the ADR-0043 G4 residual race against REQ-S12-019 and REQ-S20-013. Diff apps/worker/src (automation unchanged since round 1), read ADR-0043 G3/G4, and run the version-at-occurrence and backlog/enablement tests (DOM-R2-05).",
+      "command": "git diff --stat 3cce3d4..9bb2207 -- apps/worker/src; grep ADR-0043 G4; integration files in DOM-R2-05",
+      "environment": "Clone at e56b3d2fc.",
+      "expected": "A late event is evaluated against the version in force and enabled at occurrence, and still enabled at evaluation. Disabling a rule stops its pending events. The residual race is documented and bounded.",
+      "actual": "The automation engine is unchanged since round 1 (only operations.ts and secrets.ts changed in apps/worker/src). automation-version-at-occurrence.test.ts and automation-backlog-enablement.test.ts pass in DOM-R2-05. ADR-0043 G4 documents the commit-order race (a publish/enable transaction that starts before an event's transaction but commits after the evaluation), why it is not repaired, and that it is bounded by the evaluation lag. It never acts on a rule the administrator had not enabled at occurrence. That meets the M0239 starter automation and A13's 'no duplicates; failed jobs recoverable' (the exactly-once layers are unchanged). I accept D-203, D-204 and D-205, and the residual race as documented.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/architecture/adr/ADR-0043-p5-automation-engine-rules-executions-failure-queue.md",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-14-register-and-docs",
+      "procedure": "Compare the register's DG6 notes and evidence, and the ADRs, with the repaired candidate (REQ-DLV-038: the outputs and evidence match what the register claims). Judge each disclosed partial clause.",
+      "command": "git diff 3cce3d4..9bb2207 -- docs/delivery/requirements.csv; read the 48 DG6 rows; grep ADR-0053; deploy/load/README.md",
+      "environment": "Repository at e56b3d2fc.",
+      "expected": "Notes and ADRs describe the shipped behaviour; disclosures are honest and acceptable.",
+      "actual": "Two Low documentation drifts, raised as findings. F-DG6-160: ADR-0053 line 79 still describes the pre-BE-Y3 scan. F-DG6-161: the register was not touched after round 1. REQ-S16-030 still says the export rate-limit class is unwired. REQ-S20-029/030 still say the measured generator is out of tree. REQ-S20-030 cites only DO-H's measurement of the replaced synchronous start. Both drifts understate the candidate; neither overclaims. The remaining disclosures I judge acceptable as stated: S15-007 (the Arabic-export literals are proven by equivalent RTL-isolation tests), S15-011/013 and S02-006 (frontend-owned e2e), S15-012 (keyboard: two walkthrough steps plus the main journeys), S16-007 (live Keycloak BLOCKED for want of a container runtime: environmental, D-049), S17-009 (a connection log, not a packet capture; the A18 capture is DG7's), S20-020 (output templates on P5 unit evidence), S12-019 (the binding re-run is done here: the A17 integration and e2e pass). The load README labels the figures provisional and 'never Mobily production capacity'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md",
+        "deploy/load/README.md"
+      ]
+    },
+    {
+      "id": "DOM-R2-15-environmental-residuals",
+      "procedure": "Record the environmental residuals the assignment lists as PASS on the offline/config surface.",
+      "command": "",
+      "environment": "Sandbox: no network, no container runtime; no real Mobily system, mail server, messaging service, AI provider, registry, CI or IdP.",
+      "expected": "Each residual is recorded and none is presented as delivered.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058): not reachable; not claimed. Keycloak and a real enterprise IdP (D-049): the OIDC clauses pass against the bundled test issuer (other-realm.test.ts in DOM-R2-05); the SAML broker is documented, not run. External systems: connectors, outbound writes, notification channels and the assistant were exercised only through their test adapters and the shipped disabled configuration (ADR-0054, 0055, 0059). Production capacity: the REQ-S20-029/030 figures are provisional sandbox measurements (DOM-R2-12).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-R2-16-decisions",
+      "procedure": "Judge D-194 to D-196, D-199 item 2, D-202, D-203 to D-205 and D-206 to D-208 against the playbook, the master prompt and my runs.",
+      "command": "",
+      "environment": "docs/delivery/decisions.md at e56b3d2fc; my runs above.",
+      "expected": "Each is accepted or raised as a finding.",
+      "actual": "Accepted. D-194 to D-196: the plan, scope and Option A 404 for callers without transformation.read (non-disclosure, ADR-0006). D-199 item 2: per-transformation exports; the load dataset is documented and now reproducible from the shipped generator. D-202: pre-freeze repairs; its two round-1 gaps are closed (F-DG6-100, F-DG6-101). D-203 to D-205: see DOM-R2-13. D-206 to D-208: every round-1 finding was routed. The asynchronous live export (D-207) keeps the synchronous 403 and fails closed. The four proposed Lows sa12-1 to 3 (0125's snapshot/selection CHECK and the persisted attempt count, both exercised by exports-assembly.test.ts 18/18) and sa13-1 (comment order) are repaired soundly. The only gaps are the documentation drifts F-DG6-160/161.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG6-160",
+    "F-DG6-161"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-2/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG6/round-2/domain-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG6/domain/round-2/probe-freshness.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/probe-uuid.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part00.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part01.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/int-qa-part02.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/int-api-p6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-p6-functional.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-a20-term-scan.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/e2e-root-a20-axe.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/e2e-demo.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/load-export-proof-1rep.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/probes/dom-r2-screens.spec.ts.txt"
+  ],
+  "reviewed_at": "2026-11-02T12:00:00Z",
+  "summary": "PASS on candidate cf40705b (2720 files, source 9bb2207). All three of my round-1 findings are CLOSED_VERIFIED: each round-1 reproduction now passes, and each revert mutant fails. F-DG6-100: the freshness scan reads Stale and opens the data_stale exception while a later period is open. F-DG6-101: the shipped generator makes 0/1000 refused ids and regenerates the measured dataset. F-DG6-102: the retry-chain test survives load, and the round-1 body fails again under load. My own runs: QA integration 45/45 files and 437 tests (after one fork crash under memory pressure, re-run in three parts); implementer integration 27/27 files and 401 tests; root e2e en/ar (32+6 functional after a load-timeout re-run of A12 en, A20 20/20, term scan 126/126, axe 76 with 18 by-design skips); demo 6/6 (one artefact clash re-run); my EN/AR screen probe including a live asynchronous export. Operating truth holds on screen: Unknown, never 0 or green; staged imports are 'not committed'; the failing connector shows Stale with 250.75 and 31 Jan 2026; external changes stay Unconfirmed; the assistant is off; nothing is called official PMI or Mobily. The full-dataset export proof meets every functional clause. Under 6x CPU oversubscription, 17/50 simultaneous starts took 2.0-2.3 s. That is recorded as the environmental residual of provisional targets, beside DO-Y2's 0/150 at low load. Two Low documentation findings, not blocking: F-DG6-160 (ADR-0053 still describes the old scan) and F-DG6-161 (DG6 register notes not updated after the round-1 repairs). D-194 to D-196, D-199 item 2, D-202 and D-203 to D-208 are accepted."
+}
