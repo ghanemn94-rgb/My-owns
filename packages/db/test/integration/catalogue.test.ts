@@ -1081,6 +1081,34 @@ describe("schema.ts matches the migrated database", () => {
     expect(fn?.src).toContain("'disable'");
   });
 
+  it("0125: export_job counts its assembly attempts (NOT NULL, default 0, >= 0) and its guard checks the assigned snapshot's definition and the attempt step (F-DG6-sa12-1, F-DG6-sa12-3)", async () => {
+    const [col] = await q<{ data_type: string; is_nullable: string; column_default: string }>(
+      `SELECT data_type, is_nullable, column_default FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'export_job' AND column_name = 'assembly_attempt_count'`,
+    );
+    expect(col).toEqual({ data_type: "integer", is_nullable: "NO", column_default: "0" });
+    const [check] = await q<{ def: string }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c
+        WHERE c.conname = 'export_job_assembly_attempt_count_check' AND c.conrelid = 'export_job'::regclass`,
+    );
+    expect(check?.def).toBe("CHECK ((assembly_attempt_count >= 0))");
+    const [fn] = await q<{ src: string }>(`SELECT p.prosrc AS src FROM pg_proc p WHERE p.proname = 'export_job_guard'`);
+    // The 0124 rules stay; 0125 adds the snapshot/selection definition match and the attempt step.
+    for (const name of [
+      "export_job_created_queued",
+      "export_job_request_immutable",
+      "export_job_transition",
+      "export_job_finished_frozen",
+      "export_job_attempt_step",
+      "export_job_snapshot_exportable",
+      "export_job_format_offered",
+      "export_job_snapshot_selection",
+      "export_job_assembly_attempt_step",
+    ])
+      expect(fn?.src, name).toContain(`'${name}'`);
+    expect(fn?.src).toContain("s.definition_code IS DISTINCT FROM NEW.selection ->> 'definitionCode'");
+  });
+
   it("0113:the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only)", async () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred

@@ -795,6 +795,7 @@ function adrText(n: string): string {
   return readFileSync(join(dir, file), "utf8");
 }
 const ROW = /^\|\s*4\d\d\s*\|\s*`([a-z_][a-z0-9_.]*)`\s*\|\s*(.*?)\s*\|\s*$/;
+const JOB_ROW = /^\|\s*job \(assembly\)\s*\|\s*`([a-z_][a-z0-9_.]*)`\s*\|\s*(.*?)\s*\|\s*$/;
 
 describe("slice F problem texts (ADR-0045 §11, ADR-0046 §8)", () => {
   const rows = new Map<string, string>();
@@ -805,9 +806,18 @@ describe("slice F problem texts (ADR-0045 §11, ADR-0046 §8)", () => {
     }
   // ADR-0046 §8's job error codes are given in a sentence: `code` "text".
   for (const m of adrText("0046").matchAll(/`(export\.[a-z_]+)` "([^"]+)"/g)) rows.set(m[1]!, m[2]!);
+  // ADR-0046 R5's assembly job codes (D-207) are table rows whose first column is `job (assembly)`, not a status
+  // (T-DG6-BE-Y6, F-DG6-sa12-2).
+  const assemblyRows = new Map<string, string>();
+  for (const line of adrText("0046").split("\n")) {
+    const m = JOB_ROW.exec(line);
+    if (m) assemblyRows.set(m[1]!, m[2]!);
+  }
+  for (const [code, text] of assemblyRows) rows.set(code, text);
 
   it("reads every table row and job error code", () => {
-    expect(rows.size).toBe(24);
+    expect([...assemblyRows.keys()].sort()).toEqual(["export.assembly_failed", "export.includes_restricted_records"]);
+    expect(rows.size).toBe(26);
   });
 
   it("each code has the ADR's exact English text and a different Arabic text", () => {

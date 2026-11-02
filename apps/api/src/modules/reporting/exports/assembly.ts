@@ -1,14 +1,22 @@
-// The export assembly watch (T-DG6-BE-Y5; D-207; F-DG6-147; ADR-0046 §2 as amended by D-207; migration 0124).
+// The export assembly watch (T-DG6-BE-Y5; D-207; F-DG6-147; ADR-0046 §2 as amended by D-207; migration 0124; the
+// persisted attempt count and the session lock: T-DG6-BE-Y6, F-DG6-sa12-3, migration 0125).
 //
 // createExport (jobs.ts) answers a LIVE selection with 202 and a job that has its stored selection but no snapshot yet
 // (`snapshot_id IS NULL`, `status = 'queued'`), and no outbox event. This watch, in the API process (the assembler is
 // API code and the worker imports none, ADR-0002 rule 5; the connector-run-watch precedent, integrations/runs.ts),
 // turns each such job into an ordinary export of a snapshot:
 //
-//   ONE transaction per job:
-//     1. claim: the oldest pending job `FOR UPDATE SKIP LOCKED`, then `pg_try_advisory_xact_lock` on the job's
-//        `exportJob` lock class (the class cancel and the worker hold; never waited for, so no lock-order deadlock):
-//        a job another watcher (another API instance, or a concurrent step) holds is skipped, never assembled twice;
+//   ONE database connection per job, holding the job's `exportJob` advisory lock as a SESSION lock from the claim to
+//   the end (the class cancel and the worker hold; only ever tried, never waited for, so no lock-order deadlock; a
+//   process that dies loses its connection and so the lock), and on it TWO transactions:
+//     0. the attempt (its own committed transaction, 0125): the oldest pending job `FOR UPDATE SKIP LOCKED`, then
+//        `pg_try_advisory_lock` (a job another watcher, another API instance or a concurrent step, holds is skipped,
+//        never assembled twice); a job whose `assembly_attempt_count` reached EXPORT_ASSEMBLY_MAX_ERRORS fails
+//        `export.assembly_failed`; otherwise the attempt is counted (+ 1, version + 1, audited
+//        `export_job.assembly_attempt`) and COMMITTED before anything is assembled, so even a crash that kills the
+//        process in the middle of the assembly leaves it counted;
+//   then ONE transaction for the job itself:
+//     1. the job re-read `FOR UPDATE` at the counted version (still pending; the session lock keeps others out);
 //     2. the requester's access, on the CURRENT grants: an active user holding transformation.read, export.create and
 //        report.generate in the job's transformation, else the job fails `export.source_unavailable`;
 //     3. the assembly (read-only REPEATABLE READ, on its own connection, while the claim is held): the snapshot's
@@ -24,10 +32,10 @@
 //
 // Durable and idempotent: the pending state lives in the job row, so a restart (or a crash in the middle of a job,
 // whose transaction then rolls back) leaves the job pending and the next step assembles it; a job is assembled at most
-// once because the claim, the snapshot, the assignment and the outbox event commit together and a claimed job is no
-// longer pending (the 0124 guard also refuses a second assignment). An unexpected error (not a refusal) rolls back and
-// is retried at the next tick; after EXPORT_ASSEMBLY_MAX_ERRORS such errors for one job in this process, the job fails
-// `export.assembly_failed` (bounded; a restart starts the count again).
+// once because the snapshot, the assignment and the outbox event commit together and an assembled job is no longer
+// pending (the 0124 guard also refuses a second assignment). An unexpected error (not a refusal) or a crash rolls back
+// and is retried at the next tick; its attempt is already counted ON THE JOB, so after EXPORT_ASSEMBLY_MAX_ERRORS
+// attempts that never committed an outcome the job fails `export.assembly_failed`, across restarts and processes.
 //
 // Who drives it: every API process, every EXPORT_ASSEMBLY_INTERVAL_MS, and immediately after a 202 of a live selection
 // (routes.ts `kick`). Not started under NODE_ENV=test, where the suites call `exportAssemblyWatchStep` themselves.
@@ -52,7 +60,11 @@ export const EXPORT_ASSEMBLY_INTERVAL_MS = 1_000;
 export const EXPORT_ASSEMBLY_CONCURRENCY = 2;
 /** At most this many jobs per step and loop (the next tick continues). */
 export const EXPORT_ASSEMBLY_BATCH = 50;
-/** Unexpected errors for one job in this process before it fails `export.assembly_failed`. */
+/**
+ * Assembly attempts of one job that ended without a committed outcome (an unexpected error, or a crash that killed the
+ * process) before the next claim fails it `export.assembly_failed`. Counted on the job (`assembly_attempt_count`,
+ * 0125), so the bound holds across restarts.
+ */
 export const EXPORT_ASSEMBLY_MAX_ERRORS = 3;
 
 type AssemblyErrorCode = Extract<
@@ -101,7 +113,10 @@ async function stillAllowed(tx: Tx, userId: string, transformationId: string): P
 
 type ClaimedJob = NonNullable<Awaited<ReturnType<typeof claimNext>>>;
 
-/** The oldest pending job not held by another watcher, locked; undefined when there is none. */
+/**
+ * The oldest pending job not held by another watcher, row-locked, with its `exportJob` lock taken as a SESSION lock
+ * (released by `assembleNextExport`, or by the connection's end); undefined when there is none.
+ */
 async function claimNext(tx: Tx, onlyJobIds: readonly string[] | null) {
   for (;;) {
     let q = tx
@@ -118,12 +133,13 @@ async function claimNext(tx: Tx, onlyJobIds: readonly string[] | null) {
     const job = await q.executeTakeFirst();
     if (job === undefined) return undefined;
     const locked = await sql<{ ok: boolean }>`
-      SELECT pg_try_advisory_xact_lock(${ADVISORY_LOCK_CLASSES.exportJob}::int4, hashtext(${job.id}::text)) AS ok`.execute(
+      SELECT pg_try_advisory_lock(${ADVISORY_LOCK_CLASSES.exportJob}::int4, hashtext(${job.id}::text)) AS ok`.execute(
       tx,
     );
     if (locked.rows[0]?.ok === true) return job;
-    // A cancel holds the job's lock right now: leave this job to it (the next step sees the outcome). Another pending
-    // job may still be free; the row lock of this one is kept until the transaction ends, so it is not claimed again.
+    // A cancel (or another watcher) holds the job's lock right now: leave this job to it (the next step sees the
+    // outcome). Another pending job may still be free; the row lock of this one is kept until this short claim
+    // transaction ends, so it is not claimed again.
     if (onlyJobIds !== null && onlyJobIds.length === 1) return undefined;
     onlyJobIds = await otherPending(tx, job.id, onlyJobIds);
     if (onlyJobIds.length === 0) return undefined;
@@ -173,78 +189,129 @@ async function failPending(tx: Tx, job: ClaimedJob, code: AssemblyErrorCode): Pr
   return { outcome: "failed", exportJobId: job.id, errorCode: code };
 }
 
-/** In-process count of unexpected errors per job (bounded retry; see the header). */
-const errorCounts = new Map<string, number>();
+/** Counts the claimed job's assembly attempt (+ 1, version + 1), audited, in `tx`; returns the counted row. */
+async function countAttempt(tx: Tx, job: ClaimedJob): Promise<ClaimedJob> {
+  const counted = await tx
+    .updateTable("export_job")
+    .set({
+      assembly_attempt_count: job.assembly_attempt_count + 1,
+      version: job.version + 1,
+      updated_at: sql<Date>`now()`,
+    })
+    .where("id", "=", job.id)
+    .where("version", "=", job.version)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+  await record(tx, ASSEMBLY_ACTOR(job.id, job.requested_by), {
+    action: "export_job.assembly_attempt",
+    recordType: "export_job",
+    recordId: job.id,
+    organizationId: job.organization_id,
+    transformationId: job.transformation_id,
+    priorVersion: job.version,
+    newVersion: counted.version,
+    changes: { assembly_attempt_count: { from: job.assembly_attempt_count, to: counted.assembly_attempt_count } },
+  });
+  return counted;
+}
+
+export interface AssemblyHooks {
+  /** After the attempt is counted and committed, before the job's transaction (tests: a crash before assembly). */
+  readonly afterAttemptCounted?: (jobId: string) => Promise<void>;
+  /** After the assembly, before the commit-time checks and writes (tests: a crash in the middle of the job). */
+  readonly afterAssembly?: (jobId: string) => Promise<void>;
+}
 
 /**
- * Claims and assembles ONE pending job (the oldest one free), in one transaction; `none` when there is nothing to do.
- * `onlyJobIds` limits the claim to those jobs (the tests' scoping; production passes null). Safe against concurrent
- * calls in this or another process.
+ * Claims and assembles ONE pending job (the oldest one free); `none` when there is nothing to do. The attempt is
+ * counted and committed first, then the job is assembled in one transaction (see the header). `onlyJobIds` limits the
+ * claim to those jobs (the tests' scoping; production passes null). Safe against concurrent calls in this or another
+ * process.
  */
 export async function assembleNextExport(
   db: Db,
   onlyJobIds: readonly string[] | null = null,
-  hooks: { readonly afterAssembly?: (jobId: string) => Promise<void> } = {},
+  hooks: AssemblyHooks = {},
 ): Promise<AssemblyOutcome> {
-  let claimedId: string | null = null;
-  try {
-    const outcome = await db.transaction().execute(async (tx): Promise<AssemblyOutcome> => {
-      const job = await claimNext(tx, onlyJobIds);
-      if (job === undefined) return { outcome: "none" };
-      claimedId = job.id;
-      if ((errorCounts.get(job.id) ?? 0) >= EXPORT_ASSEMBLY_MAX_ERRORS) {
-        errorCounts.delete(job.id);
-        return failPending(tx, job, "export.assembly_failed");
-      }
-      const sel = storedSelection(job);
-      // The 0124 CHECK makes this impossible; fail closed rather than guess.
-      if (sel === null) return failPending(tx, job, "export.assembly_failed");
-      if ((await stillAllowed(tx, job.requested_by, job.transformation_id)) === null)
-        return failPending(tx, job, "export.source_unavailable");
-      let assembly: Assembly;
-      try {
-        assembly = await assembleReport(db, reportRequestOf(sel, job.transformation_id));
-      } catch (err) {
-        // The report's own refusals (422 subject/period/parameters, report.too_large, 404 subject or output gone).
-        if (err instanceof HttpProblem && err.status >= 400 && err.status < 500)
-          return failPending(tx, job, "export.assembly_failed");
-        throw err;
-      }
-      if (hooks.afterAssembly !== undefined) await hooks.afterAssembly(job.id);
-      // Commit time: the grants are reloaded after the assembly.
-      const principal = await stillAllowed(tx, job.requested_by, job.transformation_id);
-      if (principal === null) return failPending(tx, job, "export.source_unavailable");
-      if (await restrictedAmong(tx, principal, assemblySources(assembly)))
-        return failPending(tx, job, "export.includes_restricted_records");
-      const ctx = ASSEMBLY_ACTOR(job.id, job.requested_by);
-      const snapshot = await insertGeneratedSnapshot(tx, ctx, job.requested_by, assembly);
-      const updated = await tx
-        .updateTable("export_job")
-        .set({ snapshot_id: snapshot.id, version: job.version + 1, updated_at: sql<Date>`now()` })
-        .where("id", "=", job.id)
-        .where("version", "=", job.version)
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      await record(tx, ctx, {
-        action: "export_job.assemble",
-        recordType: "export_job",
-        recordId: job.id,
-        organizationId: job.organization_id,
-        transformationId: job.transformation_id,
-        priorVersion: job.version,
-        newVersion: updated.version,
-        changes: { snapshot_id: { from: null, to: snapshot.id } },
+  return db.connection().execute(async (conn): Promise<AssemblyOutcome> => {
+    let lockedId: string | null = null;
+    try {
+      // 0. The attempt, committed on its own before anything is assembled.
+      const claim = await conn.transaction().execute(async (tx) => {
+        const job = await claimNext(tx, onlyJobIds);
+        if (job === undefined) return { outcome: { outcome: "none" } as AssemblyOutcome };
+        lockedId = job.id;
+        if (job.assembly_attempt_count >= EXPORT_ASSEMBLY_MAX_ERRORS)
+          return { outcome: await failPending(tx, job, "export.assembly_failed") };
+        return { counted: await countAttempt(tx, job) };
       });
-      await enqueueExportRequested(tx, job.organization_id, job.id);
-      return { outcome: "assembled", exportJobId: job.id, snapshotId: snapshot.id };
-    });
-    // A committed outcome (assembled or failed) ends the job's pending state: forget its error count.
-    if (outcome.outcome !== "none") errorCounts.delete(outcome.exportJobId);
-    return outcome;
-  } catch (err) {
-    if (claimedId !== null) errorCounts.set(claimedId, (errorCounts.get(claimedId) ?? 0) + 1);
-    throw err;
-  }
+      if ("outcome" in claim) return claim.outcome;
+      const counted = claim.counted;
+      if (hooks.afterAttemptCounted !== undefined) await hooks.afterAttemptCounted(counted.id);
+      // 1-5. The job, in one transaction, under the session lock.
+      return await conn.transaction().execute(async (tx): Promise<AssemblyOutcome> => {
+        const job = await tx
+          .selectFrom("export_job")
+          .selectAll()
+          .where("id", "=", counted.id)
+          .where("version", "=", counted.version)
+          .where("snapshot_id", "is", null)
+          .where("status", "=", "queued")
+          .forUpdate()
+          .executeTakeFirst();
+        // Changed by none of the watch, cancel or the worker while the session lock is held; leave it if it did.
+        if (job === undefined) return { outcome: "none" };
+        const sel = storedSelection(job);
+        // The 0124 CHECK makes this impossible; fail closed rather than guess.
+        if (sel === null) return failPending(tx, job, "export.assembly_failed");
+        if ((await stillAllowed(tx, job.requested_by, job.transformation_id)) === null)
+          return failPending(tx, job, "export.source_unavailable");
+        let assembly: Assembly;
+        try {
+          assembly = await assembleReport(db, reportRequestOf(sel, job.transformation_id));
+        } catch (err) {
+          // The report's own refusals (422 subject/period/parameters, report.too_large, 404 subject or output gone).
+          if (err instanceof HttpProblem && err.status >= 400 && err.status < 500)
+            return failPending(tx, job, "export.assembly_failed");
+          throw err;
+        }
+        if (hooks.afterAssembly !== undefined) await hooks.afterAssembly(job.id);
+        // Commit time: the grants are reloaded after the assembly.
+        const principal = await stillAllowed(tx, job.requested_by, job.transformation_id);
+        if (principal === null) return failPending(tx, job, "export.source_unavailable");
+        if (await restrictedAmong(tx, principal, assemblySources(assembly)))
+          return failPending(tx, job, "export.includes_restricted_records");
+        const ctx = ASSEMBLY_ACTOR(job.id, job.requested_by);
+        const snapshot = await insertGeneratedSnapshot(tx, ctx, job.requested_by, assembly);
+        const updated = await tx
+          .updateTable("export_job")
+          .set({ snapshot_id: snapshot.id, version: job.version + 1, updated_at: sql<Date>`now()` })
+          .where("id", "=", job.id)
+          .where("version", "=", job.version)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await record(tx, ctx, {
+          action: "export_job.assemble",
+          recordType: "export_job",
+          recordId: job.id,
+          organizationId: job.organization_id,
+          transformationId: job.transformation_id,
+          priorVersion: job.version,
+          newVersion: updated.version,
+          changes: { snapshot_id: { from: null, to: snapshot.id } },
+        });
+        await enqueueExportRequested(tx, job.organization_id, job.id);
+        return { outcome: "assembled", exportJobId: job.id, snapshotId: snapshot.id };
+      });
+    } finally {
+      // The session lock is released whatever happened (a broken connection has lost it already, and the pool
+      // discards such a connection).
+      if (lockedId !== null)
+        await sql`SELECT pg_advisory_unlock(${ADVISORY_LOCK_CLASSES.exportJob}::int4, hashtext(${lockedId}::text))`
+          .execute(conn)
+          .catch(() => undefined);
+    }
+  });
 }
 
 /**
