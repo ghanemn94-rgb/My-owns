@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-200",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Two integration tests fail intermittently through test-side races, not product defects: the new 0125 export_job_guard test (BE-Y6) races its own rejected UPDATE, and change-requests-in-tx indexes an unordered query",
+      "reproduction": "(1) apps/api/test/integration/reporting/exports-assembly.test.ts, test 'F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own' failed in integration run 1 half B (04-integration-run1-B.log: 'expected [] to match object [ { outcome: assembled } ]') and passed 3/3 alone (04c). My probe zz-qa-dg6r2-assembly-guard-repeat.test.ts (the candidate file copied verbatim plus a loop over the same sequence: createExport, charter generate, the rejected owner-pool UPDATE assigning the charter snapshot, then step([job])) gives 5 of 40 misses as-is in two separate runs (04d, 04e); each miss leaves the job queued, snapshot null, version 1, attempts 0 (never claimed), and the next step usually assembles it. With a 250 ms pause after the rejected UPDATE: 0 of 40; without the rejected UPDATE: 0 of 40 (04e). So the claim's FOR UPDATE SKIP LOCKED skips the row while the rejected UPDATE's transaction (a BEFORE UPDATE trigger raising after GetTupleForTrigger locked the tuple) is still aborting, though the client already has the error. (2) apps/api/test/integration/workflows/change-requests-in-tx.test.ts '(a) round-2 resubmission ...' failed in run 1's half-B continuation (04-integration-run1-B2.log: expected '3971' to be '3973' at line 107). auditXmin() reads the two change_request.submit audit rows WITHOUT ORDER BY and the test takes submitX[1]; under concurrent pooled inserts the heap order need not be insertion order. My probe zz-qa-dg6r2-change-request-xmin-order.test.ts (04f): 15/15 resubmissions put the LATER submit audit (ordered by occurred_at, id) in the same transaction as approval.resubmit, and the round-1 submit's xmin is always the resubmit's minus 2, the exact value the failing run read at index 1. The file passes alone (04-integration-run1-rerun-alone.log).",
+      "expected": "Gate-deciding integration tests should be deterministic under the review load (the same rule F-DG6-145 applied in round 1): the guard test should not claim the job in the instant its own refused UPDATE is still aborting (for example, assert the refusal in a transaction that it rolls back and waits on, or retry the step until the job is assembled within a bound), and auditXmin should order its rows (by occurred_at, id) before the test indexes them.",
+      "actual": "Each test fails now and then on a loaded host and passes alone. Behind neither is a product defect: a job SKIP LOCKED skips is assembled at the next watch tick (the candidate's own running-watch test, and 0 misses in both control variants), and the round-2 submit and approval.resubmit audits share one transaction 15/15. Test-only; bounded to two files.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run1-B.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04c-exports-assembly-alone-x3.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04d-probe-assembly-guard-repeat-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04e-probe-assembly-guard-variants.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-dg6r2-assembly-guard-repeat.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run1-B2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04f-probe-change-request-xmin.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-dg6r2-change-request-xmin-order.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run1-rerun-alone.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-02T13:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 2 (T-DG6-REV-QA-R2) on candidate sha256:cf40705b; both races reproduced by executable probes with controls; test-only."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-201",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-030",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The register notes of REQ-S12-019, REQ-S16-030, REQ-S20-029 and REQ-S20-030 still describe the round-1 gaps and designs that the round-1 repairs replaced",
+      "reproduction": "docs/delivery/requirements.csv is unchanged between the round-1 source 3cce3d44 and this candidate's source 9bb2207. Its notes (extracted in 22-register-notes-drift.txt) still say: REQ-S12-019 'Residual ... the worker's freshness scan still reads only the newest period, so it may not open a new data_stale exception once a later empty period is open'; REQ-S16-030 'partial: the export rate-limit class has no operation wired (an it.todo in rate-limits.test.ts, so exports fall under the global limit only)'; REQ-S20-029 'the run used DO-F's patched copy of generate.mjs, which is not in the tree'; REQ-S20-030 'IMPLEMENTED on DO-H's idle-host re-measurement (D-202)', describing the in-request assembly and 'the run used DO-F's patched generator copy ..., not the tree's generate.mjs'. None of the four notes mentions BE-Y3, BE-Y4, BE-Y5, BE-Y6, DO-Y1, DO-Y2, D-207 or D-208.",
+      "expected": "The register is the gate's statement of what each row delivers and what remains partial. After T-DG6-BE-Y3 (freshness across periods), BE-Y4 (export and upload classes wired), DO-Y1 (RFC ids in the tree's generator) and BE-Y5/BE-Y6/DO-Y2 (asynchronous live-export assembly, D-207, and its re-measurement), these notes should cite the repairs and the current evidence, and drop the gaps that no longer exist.",
+      "actual": "The four notes understate the candidate (this round's probes show each of the described gaps closed: 10b, 12b, 14-load-driver.log) and cite superseded designs and measurements. Documentation drift only: no behaviour is affected and nothing is hidden, since the drift reports gaps that are now closed rather than hiding open ones.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/22-register-notes-drift.txt",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG6/qa/round-2/10b-probe-f140-f141-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/12b-f142-generator-ids-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/14-load-driver.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-02T13:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 2 (T-DG6-REV-QA-R2) on candidate sha256:cf40705b; documentation drift with no behavioural effect."
+        }
+      ]
+    }
+  ]
+}

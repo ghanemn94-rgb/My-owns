@@ -1,0 +1,111 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-140",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (source 9bb2207; repair T-DG6-BE-Y3: apps/worker/src/handlers/operations.ts kpiFreshness now reads the newest open or closed period of the KPI's frequency whose panel evaluation carries a value, the twin of the API's linkedKpiStatus, which I compared). (1) My round-1 probe, unchanged, on a disposable PostgreSQL: last data as of 2026-01-15 in the PREVIOUS month's period, current period open and empty -> kpiFreshness {freshness stale, lastValue 0.4125, dataAsOf 2026-01-15}, scan {stale 1, emitted 1}, one data.stale event (was unknown/null and 0/0 in round 1). (2) New adversarial cases, all pass: data two months back with the previous AND current periods open and empty -> stale, one event, a second scan emits nothing; a FRESH value in the previous period beats an older stale one -> fresh, no event (no false stale); stale episode then fresh data in the current period -> fresh, no new event. (3) Mutant: operations.ts reverted to the round-1 file -> 4 of my 5 probe tests and 3 of the candidate's operations-freshness tests fail; restored -> all pass. Both integration runs pass operations-freshness.test.ts and exception-last-known-value.test.ts. My first execution had one failing assertion of MY OWN test (numeric '0.90' is returned as '0.9'); corrected and disclosed in 10-probe-f140-f141.log / 10b.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-dg6r2-freshness-later-period.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/10-probe-f140-f141.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/10b-probe-f140-f141-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-mutants.diff",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-mutants-run.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-141",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (repair T-DG6-BE-Y4: RATE_LIMIT_CLASSES lists createExport in 'export' and createImport in 'upload'; both routes carry rateLimitClass(...); a refusal logs 'rate limit class exceeded' without the key). (1) Round-1 reproduction, budget 1, two calls from one session: uploadEvidenceContent 404 -> 429 (control), createExport 400 -> 429 rate_limited Retry-After 60 (was 400, 400), createImport 400 -> 429 rate_limited Retry-After 60 (was 400, 400). (2) Beyond round 1: loadConfig with no class variable resolves export 10 and upload 30 (ENV_VARS defaults '10'/'30'); at those documented values calls 1-10 of createExport are not 429 and call 11 is 429, a second session's call is not counted; createImport calls 1-30 not 429, call 31 is 429. (My first part-2 run left the variables unset and so measured the test harness's 100000: 3 expected-to-fail assertions of my own design error, disclosed in 10-probe-f140-f141.log; 10b is the corrected run, 11/11.) (3) Mutant removing rateLimitClass from both routes: the candidate's rate-limits.test.ts fails its export and createImport cases and its clause summary, and my probe fails; restored -> pass in both integration runs. Load drivers raise the classes on purpose (deploy/load/rate-limits.mjs); 0 refusals in my load runs.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-dg6r2-rate-limit-classes.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/10-probe-f140-f141.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/10b-probe-f140-f141-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-mutants.diff",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-mutants-run.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-142",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (repair T-DG6-DO-Y1: deploy/load/generate.mjs sets the RFC 9562 v3 version and variant bits, in loadId and in the SQL audit ids; the file's sha256 is 6b2a9007..., the patched copy every DG6 load figure used). (1) Round-1 phase A, the in-tree generator exactly as deploy/load/README.md documents it, profile smoke: getInitiative 200 for 30/30 initiatives and getTransformation 200 for 3/3 (round 1: 25 and 3 refused 400 Invalid UUID). (2) Beyond round 1: every uuid column of every public table checked against the RFC pattern: smoke 17,018 values, default profile 770,559 values; the only non-RFC values are 96 methodology_coverage_link.id and 24 procedure_step_definition.id, which an EMPTY migrated database already holds (DG5 migrations 0069/0070 md5::uuid catalogue rows, addressed by step key, not by path id; not the generator). The default profile gives the documented dataset (50 transformations, 1,000 initiatives, 10,000 KPI actuals, 100,000 audit events, 120 users) and the load runs measured on it. (3) Mutant: the pre-repair generate.mjs (sha256 7470ea74...) fails 4/4 of deploy/scripts/tests/load-generate-ids.vitest.mjs; the candidate passes 4/4.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/load-driver-r2.sh",
+        "docs/delivery/test-evidence/DG6/qa/round-2/14-load-driver.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/14b-uuid-empty-migrated-db.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/12-mutant-f142-generator-ids.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/12b-f142-generator-ids-candidate.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-143",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (repair T-DG6-FE-Y1: the upload-policy status chips get the wrap prop). (1) My round-1 diagnostic on the production-initialized stack, dev.admin, en and ar, locale unset and C.UTF-8: /admin/upload-policy scrollWidth 360 = clientWidth 360 at 360 x 800 and 1280 = 1280 at 1280 x 900 with the root font at 200 %, no element outside the viewport (round 1: 385 > 360 and 1283 > 1280 in en); screenshot shows the chip wrapping inside the card. (2) My full reflow probe (14 P6 admin screens as dev.admin and 5 user screens as dev.lead at 360 px, 390 px and 200 % text): 42 + 15 checks, 0 problems in en and ar, unset and C.UTF-8 (the first unset en attempt was ended by a Chromium 'Target crashed' under memory pressure and passed on re-run, 08b). (3) Mutant: a web build of the candidate with the wrap prop removed reproduces round 1 exactly in en (385 > 360, span.status-chip status-chip--unknown [29..385]; 1283 > 1280 at 200 %), ar unaffected; candidate restored -> 360 = 360.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-dg6r2-upload-policy-overflow.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/08-probe-aud-reflow-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/08b-probe-reflow-en-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/08c-probe-aud-reflow-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/13b-mutant-f143-upload-policy-overflow.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/13-f143-shots/candidate-upload-policy-en-360.png",
+        "docs/delivery/test-evidence/DG6/qa/round-2/13-f143-shots/mutant-upload-policy-overflow-en.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-144",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "NOT closed on candidate sha256:cf40705b. The repair (T-DG6-FE-Y1) gave the 17 named specs measured file-level budgets, but the finding's own round-1 reproduction also named p4-benefits test 8 and p4-gates-closure test 6 as 30 s timeouts at review load, and FE-Y1's handback lists both as 'Not done'. Re-run of my round-1 reproduction on this candidate (full product runs, --workers=1, production-initialized stack): p4-benefits '8. Auditor read-only; register and benefit page at 390 px and 200 % text' failed with 'Test timeout of 30000ms exceeded' in 3 of 4 full runs (en unset 30.6 s, ar unset 30.1 s, en C.UTF-8 30.9 s; passed in ar C.UTF-8); p4-gates-closure '6. Modular G3 ...' and p3-journeys '2a. prioritization ...' also timed out at 30 s in the full en run and AGAIN when re-run alone at load ~20 (06b: 3 failed, all 30 s timeouts). With a measurement-only --timeout=120000 the three specs pass 36/36 (p4-benefits 8 in 43.3 s, p3-journeys 2a 29.2 s, p4-gates-closure 6 26.0 s), so no product defect is behind them: only the budget is missing. Static scan: 14 product specs budget only some of their tests (e.g. p3-journeys 1 of 18, p4-benefits 1 of 9, p4-gates-closure 2 of 9), so their other tests still run on the default 30 s. Expected (the finding): a journey that needs more than 30 s under review load carries an explicit, measured budget so a gate run is not decided by host load.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-unset-en.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-unset-ar.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-cutf8-en.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-cutf8-ar.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/06b-e2e-product-unset-en-rerun-alone.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/06c-e2e-product-en-timeout120-measure.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/16-f144-budget-static.txt",
+        "docs/delivery/handbacks/DG6/T-DG6-FE-Y1-frontend-ux-engineer.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-145",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (repair T-DG6-BE-Y3: route-inventory fingerprints the session table without only its sliding columns last_seen_at and idle_expires_at, every other session column still compared; dependency-slip-relay asserts its own outbox row instead of the round's global tally). (1) Both integration runs at a 1-minute load of 18-30: route-inventory.test.ts 10/10 with cases lasting far over touchSession's 60 s (file 131 s), and dependency-slip-relay.test.ts 1/1 with the worker's own relay running. (2) The new test ages the caller's session past 60 s and shows the request slides it while the fingerprint is unchanged, and that a user_agent change to a session row IS seen. (3) Mutant: the same test file with the session's sliding columns compared again (the round-1 behaviour) fails that test with 'expected [ public.session ] to deeply equal []'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run1-A.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run2-A.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-dg6r2-mutant-route-inventory.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/15-mutant-f145-route-inventory.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-146",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (repair T-DG6-BE-Y3: createTomGap parses with the contract's tomGapCreate; REPORTED_DEVIATIONS is empty). Round-1 reproduction: route-inventory case 4 now reports statuses {\"400\":482} (round 1: {400: 481, 422: 1} with 4:createTomGap pinned), in both integration runs. Mutant: registers.ts reverted to tomGapCreateLenient -> case 4 fails with 'createTomGap ... 422 t03.dimension_required', so the sweep catches a regression.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run1-A.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/04-integration-run2-A.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-mutants.diff",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-mutants-run.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-147",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf40705b (repairs BE-Y4, BE-Y5/D-207 asynchronous live-export assembly, BE-Y6/0125, DO-Y2). Round-1 method repeated: the full default load dataset from the IN-TREE generator, 100 sessions, the reindex, a fresh API and worker, rate-limit classes raised as deploy/load/README.md prescribes, then a wait for D-202's idle criterion (1-minute load <= 1.0: reached 0.99 after 1,289 s, then 0.94), then deploy/load/export-proof.mjs UNCHANGED (sha256 7865d9d3..., START_TARGET_MS 2000), two repetitions: 0 of 132 starts over 2 s; part B (50 simultaneous starts by 50 users) p95 771 ms / 626 ms, max 772 ms / 628 ms (round 1 at the same criterion: 38 of 50 over 2 s, p95 2.31 s); part A max 165 ms / 104 ms. Every other clause held: 202 with a job id 66/66 per repetition, progress non-decreasing to 100, all 132 jobs succeeded, requester download 200, the same-scope other user and the AUD user 404 on job and download; assembly attempts max 1, nothing left pending; 0 error-level log lines, 0 rate-limit refusals. Each proof exits 1 on its one known dataset assertion 'LOAD-T20 FAIL: no sameScopeOther user for this transformation' (disclosed in the register notes; not latency or access). Disclosed adversarial run: on the same host at a 1-minute load of 31-37 (three reviews plus my own suites) the proof saw 22 and 24 of 50 part-B starts over 2 s (p95 3.0 s / 2.6 s) while every API class of the concurrent workload ran 17-40x slower than at idle; that is outside the ADR-0058 section 7 / D-202 measuring condition and is reported, not hidden (14-load-driver.log). Provisional sandbox figures on one 4-vCPU host, not Mobily capacity.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/17-export-proof-idle-driver.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/17-export-proof-idle/export-proof-1.json",
+        "docs/delivery/test-evidence/DG6/qa/round-2/17-export-proof-idle/export-proof-2.json",
+        "docs/delivery/test-evidence/DG6/qa/round-2/14-load-driver.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/load-driver-r2.sh"
+      ]
+    }
+  ]
+}
