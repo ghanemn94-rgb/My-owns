@@ -1,0 +1,131 @@
+Mon Nov  2 02:08:07 UTC 2026
+BEFORE: HEAD assembly.ts (in-memory errorCounts) + 0125 without the export_job_snapshot_selection check
+port-policy: PostgreSQL listening on port 28600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvymdenu_1d329d56 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/reporting/exports-assembly.test.ts (18 tests | 4 failed | 13 skipped) 32087ms
+   ↓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event
+   ↓ D-207 (1): a live selection is accepted with no snapshot > the request-time refusals stay synchronous: 422 report.subject_invalid / report.parameters_invalid, 403 for AUD
+   ↓ D-207 (1): a live selection is accepted with no snapshot > the 0124 CHECK: a job without a snapshot cannot be running
+   ↓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200
+   ↓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a revoked grant: failed export.source_unavailable, no snapshot, no outbox event, no file
+   ↓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports
+   ↓ D-207 (3): an idempotent replay compares the stored selection > same key and selection -> 200 with the same job (pending, then assembled); other parameters -> 422 idempotency.key_reused
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > the running watch (as the API process starts it) assembles a pending job on its own, and stops cleanly
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > unexpected errors are retried at most 3 times, then the job fails export.assembly_failed
+   × F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed 909ms
+     → expected { …(27) } to match object { status: 'queued', …(2) }
+(27 matching properties omitted from actual)
+   × F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once 104ms
+     → promise resolved "{ outcome: 'assembled', …(2) }" instead of rejecting
+   × F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the session lock is released after each job (a cancel that waits for it proceeds), and a watcher holding a job keeps a second one out between its two transactions 30005ms
+     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   × F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own 130ms
+     → expected error: no audit_event for export_job 01a1… { …(15) } to match object { Object (constraint) }
+(17 matching properties omitted from actual)
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending 192ms
+   ↓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)
+   ↓ exactly once: two watchers race > a second watcher skips a job the first one holds (FOR UPDATE SKIP LOCKED), and the job is assembled once
+   ↓ exactly once: two watchers race > a cancelled pending job is never assembled (cancel with If-Match 1)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/exports-assembly.test.ts > F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed
+AssertionError: expected { …(27) } to match object { status: 'queued', …(2) }
+(27 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "assembly_attempt_count": 1,[39m
+[31m+   "assembly_attempt_count": 0,[39m
+[2m    "snapshot_id": null,[22m
+[2m    "status": "queued",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/reporting/exports-assembly.test.ts:435:36
+    433|         }),
+    434|       ).rejects.toThrow(/synthetic process kill/);
+    435|       expect(await jobRow(job.id)).toMatchObject({ status: "queued", s…
+       |                                    ^
+    436|     }
+    437|     // The next restarted process does not assemble it again: it fails…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/exports-assembly.test.ts > F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once
+AssertionError: promise resolved "{ outcome: 'assembled', …(2) }" instead of rejecting
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Error {[39m
+[32m-   "message": "rejected promise",[39m
+[31m+ {[39m
+[31m+   "exportJobId": "01a19a03-df7f-7294-8e4a-97711446088f",[39m
+[31m+   "outcome": "assembled",[39m
+[31m+   "snapshotId": "01a19a03-dfbd-7219-94f4-caa0cfab16d0",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/reporting/exports-assembly.test.ts:468:5
+    466|         },
+    467|       }),
+    468|     ).rejects.toThrow(/before the assembly/);
+       |     ^
+    469|     expect(await jobRow(job.id)).toMatchObject({ status: "queued", sna…
+    470|     const fresh = await restartedProcess();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/exports-assembly.test.ts > F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the session lock is released after each job (a cancel that waits for it proceeds), and a watcher holding a job keeps a second one out between its two transactions
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ apps/api/test/integration/reporting/exports-assembly.test.ts:479:3
+    477|   });
+    478| 
+    479|   it("the session lock is released after each job (a cancel that waits…
+       |   ^
+    480|     const job = ok(await start(member, raidSelection()), 202);
+    481|     let release!: () => void;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/exports-assembly.test.ts > F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own
+AssertionError: expected error: no audit_event for export_job 01a1… { …(15) } to match object { Object (constraint) }
+(17 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- {[39m
+[32m-   "constraint": "export_job_snapshot_selection",[39m
+[31m+ DatabaseError {[39m
+[31m+   "constraint": "export_job_audit_required",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/reporting/exports-assembly.test.ts:529:5
+    527|         snapshotId,
+    528|       ]);
+    529|     await expect(assign(charter.id as string)).rejects.toMatchObject({…
+       |     ^
+    530|     expect(await jobRow(job.id)).toMatchObject({ snapshot_id: null, ve…
+    531|     // The watch assigns a snapshot of the selection's own definition …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed | 13 skipped (18)
+   Start at  02:08:09
+   Duration  48.48s (transform 6.44s, setup 0ms, collect 11.52s, tests 32.09s, environment 0ms, prepare 85ms)
+
+exit=1

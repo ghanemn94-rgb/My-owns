@@ -5706,6 +5706,8 @@ export interface ExportJobTable {
   updated_by: string | null;
   /** 0124 (D-207): the stored live selection (ExportLiveSelection), NULL for an export of an existing snapshot. */
   selection: NullableJson;
+  /** 0125 (F-DG6-sa12-3): assembly attempts of a pending live selection, counted before each assembly (>= 0). */
+  assembly_attempt_count: Generated<number>;
 }
 
 export interface ExportJobProgressTable {
@@ -12115,6 +12117,7 @@ export const SCHEMA_COLUMNS = {
     "updated_at",
     "updated_by",
     "selection",
+    "assembly_attempt_count",
   ],
   export_job_progress: [
     "export_job_id",

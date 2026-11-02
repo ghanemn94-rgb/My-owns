@@ -4,7 +4,9 @@
 //   - createExport for a live selection answers 202 with `snapshotId` null and writes the job with its stored selection,
 //     its progress row and its audit event: no snapshot, no outbox event (D-207 (1));
 //   - the export assembly watch assembles the snapshot (requester as created_by, service actor on behalf of the
-//     requester), assigns it (version 2, audited `export_job.assemble`) and only then writes `export_job.requested`;
+//     requester), counts the attempt first (version 2, audited `export_job.assembly_attempt`, committed on its own;
+//     T-DG6-BE-Y6, 0125), assigns it (version 3, audited `export_job.assemble`) and only then writes
+//     `export_job.requested`;
 //     the REAL worker runner then exports it and the requester downloads it (D-207 (2));
 //   - access lost between the start and the assembly gives a failed job with its error code and no snapshot, no outbox
 //     event and no file: a revoked grant (`export.source_unavailable`) and a record marked sensitive meanwhile
@@ -13,12 +15,16 @@
 //     idempotency.key_reused for other parameters) (D-207 (3));
 //   - a crash in the middle of a job (after the assembly, before the commit) leaves it pending with nothing written,
 //     and the next step (a restarted process) assembles it exactly once; the running watch (timer + kick) does too;
-//     unexpected errors are retried a bounded number of times, then the job fails `export.assembly_failed`;
+//     unexpected errors are retried a bounded number of times, then the job fails `export.assembly_failed`; the bound
+//     is persisted on the job, so it holds across restarts, including a crash that kills the process mid-assembly
+//     (F-DG6-sa12-3, 0125);
+//   - the 0125 guard: a snapshot of another definition than the stored selection's is refused, and the assembly
+//     attempt count only steps by 1 while the job is pending (F-DG6-sa12-1, F-DG6-sa12-3);
 //   - two watchers racing (two concurrent steps; and a step while another holds a job) assemble every job exactly once;
 //   - a cancelled pending job is never assembled; the AUD user is refused (403) and the 0124 CHECK holds.
 // Every API call is validated against docs/api/openapi.yaml (the harness `call`), including the 202 with a null
 // snapshotId.
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { REPORT_CONTENT_LABELS } from "../../../../../packages/shared/src/reports/content-labels.ts";
 import { FilesystemExportStore } from "../../../../../packages/reporting/src/storage.ts";
 import { runExport } from "../../../../worker/src/reports/export-runner.ts";
@@ -204,7 +210,7 @@ describe("D-207 (2): the watch assembles, then the worker exports", () => {
     const out = await step([job.id]);
     expect(out).toEqual([{ outcome: "assembled", exportJobId: job.id, snapshotId: expect.any(String) }]);
     const row = await jobRow(job.id);
-    expect(row).toMatchObject({ status: "queued", version: 2 });
+    expect(row).toMatchObject({ status: "queued", version: 3, assembly_attempt_count: 1 });
     expect(row.snapshot_id).toBe(out[0]!.outcome === "assembled" ? out[0]!.snapshotId : null);
     const snap = await api.db
       .selectFrom("report_snapshot")
@@ -223,6 +229,7 @@ describe("D-207 (2): the watch assembles, then the worker exports", () => {
     ]);
     expect((await auditsOf(job.id)).map((a) => [a.action, a.actor_type, a.on_behalf_of_user_id ?? null])).toEqual([
       ["export_job.create", "user", null],
+      ["export_job.assembly_attempt", "service", memberId],
       ["export_job.assemble", "service", memberId],
     ]);
     expect(await outboxOf(job.id)).toHaveLength(1);
@@ -261,14 +268,15 @@ describe("D-207 (2): access lost between the start and the assembly gives a fail
       error_code: "export.source_unavailable",
       snapshot_id: null,
       storage_key: null,
-      version: 2,
+      version: 3, // 1 created, 2 the counted attempt (0125), 3 the failure
     });
     expect(row.finished_at).not.toBeNull();
     expect(await outboxOf(job.id)).toEqual([]);
     expect(await snapshotsBy(m.id)).toEqual([]);
     expect((await auditsOf(job.id)).map((a) => [a.action, a.actor_type, a.prior_version, a.new_version])).toEqual([
       ["export_job.create", "user", null, 1],
-      ["export_job.fail", "service", 1, 2],
+      ["export_job.assembly_attempt", "service", 1, 2],
+      ["export_job.fail", "service", 2, 3],
     ]);
   });
 
@@ -330,7 +338,7 @@ describe("D-207 (3): an idempotent replay compares the stored selection", () => 
     expect([bySnapshot.status, bySnapshot.body.code]).toEqual([422, "idempotency.key_reused"]);
     await step([first.id]);
     const after = ok(await start(member, raidSelection(), k), 200);
-    expect(after).toMatchObject({ id: first.id, version: 2 });
+    expect(after).toMatchObject({ id: first.id, version: 3 }); // 2: the counted attempt (0125); 3: the assignment
     expect(after.snapshotId).not.toBeNull();
     // Nothing new was written by the replays: one job for the key, one outbox event.
     const jobs = await api.db.selectFrom("export_job").select("id").where("idempotency_key", "=", k).execute();
@@ -350,7 +358,13 @@ describe("durability: a restart in the middle of a job, the running watch, bound
         },
       }),
     ).rejects.toThrow(/synthetic process crash/);
-    expect(await jobRow(job.id)).toMatchObject({ status: "queued", snapshot_id: null, version: 1 });
+    // The attempt was counted and committed before the assembly (0125); nothing else was written.
+    expect(await jobRow(job.id)).toMatchObject({
+      status: "queued",
+      snapshot_id: null,
+      version: 2,
+      assembly_attempt_count: 1,
+    });
     expect(await snapshotsBy(memberId)).toEqual(before);
     expect(await outboxOf(job.id)).toEqual([]);
     // The restarted process (a new step) assembles it, once.
@@ -398,6 +412,161 @@ describe("durability: a restart in the middle of a job, the running watch, bound
   });
 });
 
+describe("F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125)", () => {
+  /** A fresh copy of assembly.ts with no in-process state at all: what a restarted API process loads. */
+  const restartedProcess = async () => {
+    vi.resetModules();
+    return import("../../../src/modules/reporting/exports/assembly.ts");
+  };
+
+  it(`a job whose assembly kills the process is attempted at most ${EXPORT_ASSEMBLY_MAX_ERRORS} times across restarts, then fails export.assembly_failed`, async () => {
+    const job = ok(await start(member, raidSelection()), 202);
+    const before = await snapshotsBy(memberId);
+    for (let i = 1; i <= EXPORT_ASSEMBLY_MAX_ERRORS; i += 1) {
+      // Each "process" dies in the middle of the assembly: its transaction never commits and its memory is lost.
+      const fresh = await restartedProcess();
+      await expect(
+        fresh.assembleNextExport(api.db, [job.id], {
+          afterAssembly: async () => {
+            throw new Error(`synthetic process kill ${i}`);
+          },
+        }),
+      ).rejects.toThrow(/synthetic process kill/);
+      expect(await jobRow(job.id)).toMatchObject({ status: "queued", snapshot_id: null, assembly_attempt_count: i });
+    }
+    // The next restarted process does not assemble it again: it fails the job (no snapshot, no event, no file).
+    const fresh = await restartedProcess();
+    expect(await fresh.exportAssemblyWatchStep(api.db, { onlyJobIds: [job.id] })).toEqual([
+      { outcome: "failed", exportJobId: job.id, errorCode: "export.assembly_failed" },
+    ]);
+    expect(await jobRow(job.id)).toMatchObject({
+      status: "failed",
+      error_code: "export.assembly_failed",
+      snapshot_id: null,
+      assembly_attempt_count: EXPORT_ASSEMBLY_MAX_ERRORS,
+    });
+    expect(await snapshotsBy(memberId)).toEqual(before);
+    expect(await outboxOf(job.id)).toEqual([]);
+    const actions = (await auditsOf(job.id)).map((a) => a.action);
+    expect(actions).toEqual([
+      "export_job.create",
+      ...Array.from({ length: EXPORT_ASSEMBLY_MAX_ERRORS }, () => "export_job.assembly_attempt"),
+      "export_job.fail",
+    ]);
+  });
+
+  it("the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once", async () => {
+    const job = ok(await start(member, raidSelection()), 202);
+    await expect(
+      assembleNextExport(api.db, [job.id], {
+        afterAttemptCounted: async () => {
+          // Seen from another connection while the attempt's process is still "alive": committed already.
+          expect(await jobRow(job.id)).toMatchObject({ assembly_attempt_count: 1, version: 2 });
+          throw new Error("synthetic process kill before the assembly");
+        },
+      }),
+    ).rejects.toThrow(/before the assembly/);
+    expect(await jobRow(job.id)).toMatchObject({ status: "queued", snapshot_id: null, assembly_attempt_count: 1 });
+    const fresh = await restartedProcess();
+    expect(await fresh.exportAssemblyWatchStep(api.db, { onlyJobIds: [job.id] })).toMatchObject([
+      { outcome: "assembled", exportJobId: job.id },
+    ]);
+    expect(await jobRow(job.id)).toMatchObject({ status: "queued", assembly_attempt_count: 2, version: 4 });
+    expect(await outboxOf(job.id)).toHaveLength(1);
+    expect((await auditsOf(job.id)).filter((a) => a.action === "export_job.assemble")).toHaveLength(1);
+  });
+
+  it("a watcher holding a job keeps a second one out between its two transactions (session lock), and releases the lock after the job", async () => {
+    const job = ok(await start(member, raidSelection()), 202);
+    let release!: () => void;
+    let held!: () => void;
+    const holding = new Promise<void>((r) => (held = r));
+    const first = assembleNextExport(api.db, [job.id], {
+      afterAttemptCounted: () =>
+        new Promise<void>((r) => {
+          release = r;
+          held();
+        }),
+    });
+    await holding;
+    // Between the committed attempt and the job's transaction the row is not locked, but the session lock is held.
+    expect(await assembleNextExport(api.db, [job.id])).toEqual({ outcome: "none" });
+    expect((await jobRow(job.id)).assembly_attempt_count).toBe(1);
+    release();
+    expect(await first).toMatchObject({ outcome: "assembled", exportJobId: job.id });
+    const [lock] = (
+      await api.owner.query(
+        `SELECT count(*)::int AS n FROM pg_locks WHERE locktype = 'advisory' AND classid = $1::int4::oid
+           AND objid = (hashtext($2) & 4294967295)::bigint::oid`,
+        [730264, job.id],
+      )
+    ).rows as { n: number }[];
+    expect(lock?.n).toBe(0);
+  });
+});
+
+describe("F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard", () => {
+  it("refuses a snapshot of another definition than the stored selection's; accepts the selection's own", async () => {
+    // registers offers pdf, and so does charter: only the definition differs.
+    const job = ok(
+      await call<Body>(api.app, "POST", "/api/v1/exports", {
+        session: member,
+        headers: { "idempotency-key": key() },
+        body: { report: raidSelection(), format: "pdf", language: "en" },
+      }),
+      202,
+    );
+    const charter = ok(
+      await call<Body>(api.app, "POST", `${b.base}/reports/charter/generate`, { session: member, body: {} }),
+      201,
+    );
+    expect(charter.definitionCode).toBe("charter");
+    const assign = (snapshotId: string) =>
+      api.owner.query(`UPDATE export_job SET snapshot_id = $2, version = version + 1 WHERE id = $1`, [
+        job.id,
+        snapshotId,
+      ]);
+    await expect(assign(charter.id as string)).rejects.toMatchObject({ constraint: "export_job_snapshot_selection" });
+    expect(await jobRow(job.id)).toMatchObject({ snapshot_id: null, version: 1 });
+    // The watch assigns a snapshot of the selection's own definition (the guard accepts it).
+    expect(await step([job.id])).toMatchObject([{ outcome: "assembled", exportJobId: job.id }]);
+  });
+
+  it("the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending", async () => {
+    const pending = ok(await start(member, raidSelection()), 202);
+    const set = (id: string, sqlSet: string) =>
+      api.owner.query(`UPDATE export_job SET ${sqlSet}, version = version + 1 WHERE id = $1`, [id]);
+    await expect(set(pending.id, "assembly_attempt_count = 2")).rejects.toMatchObject({
+      constraint: "export_job_assembly_attempt_step",
+    });
+    await expect(set(pending.id, "assembly_attempt_count = -1")).rejects.toMatchObject({
+      constraint: "export_job_assembly_attempt_step",
+    });
+    // A cancelled (no longer pending) job keeps its count.
+    ok(await call<Body>(api.app, "POST", `/api/v1/exports/${pending.id}/cancel`, { session: member, headers: ifm(1) }));
+    // (a finished job is frozen first; the count rule would refuse it as well)
+    await expect(set(pending.id, "assembly_attempt_count = 1")).rejects.toMatchObject({
+      constraint: "export_job_finished_frozen",
+    });
+    // An assembled job (it has a snapshot) keeps its count.
+    const assembled = ok(await start(member, raidSelection()), 202);
+    await step([assembled.id]);
+    await expect(set(assembled.id, "assembly_attempt_count = assembly_attempt_count + 1")).rejects.toMatchObject({
+      constraint: "export_job_assembly_attempt_step",
+    });
+    // A job is never created with an attempt.
+    const row = await jobRow(assembled.id);
+    await expect(
+      api.owner.query(
+        `INSERT INTO export_job (id, organization_id, transformation_id, snapshot_id, requested_by, format, language,
+           idempotency_key, created_by, assembly_attempt_count)
+         VALUES ($1, $2, $3, $4, $5, 'csv', 'en', $6, $5, 1)`,
+        [crypto.randomUUID(), row.organization_id, row.transformation_id, row.snapshot_id, memberId, key()],
+      ),
+    ).rejects.toMatchObject({ constraint: "export_job_created_queued" });
+  });
+});
+
 describe("exactly once: two watchers race", () => {
   it("two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)", async () => {
     const jobs = [] as string[];
@@ -413,7 +582,7 @@ describe("exactly once: two watchers race", () => {
         (await auditsOf(id)).filter((x) => x.action === "export_job.assemble"),
         id,
       ).toHaveLength(1);
-      expect(await jobRow(id), id).toMatchObject({ version: 2, status: "queued" });
+      expect(await jobRow(id), id).toMatchObject({ version: 3, status: "queued", assembly_attempt_count: 1 });
     }
     const snapshotIds = await Promise.all(jobs.map(async (id) => (await jobRow(id)).snapshot_id));
     expect(new Set(snapshotIds).size).toBe(6);

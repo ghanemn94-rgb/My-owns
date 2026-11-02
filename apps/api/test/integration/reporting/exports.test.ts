@@ -720,7 +720,8 @@ describe("refusals and cancel (ADR-0046 §8)", () => {
       200,
       "assembled",
     );
-    expect(assembled).toMatchObject({ status: "queued", version: 2 });
+    // Version 2 is the watch's counted assembly attempt (0125, T-DG6-BE-Y6), version 3 the assigned snapshot.
+    expect(assembled).toMatchObject({ status: "queued", version: 3 });
     const snap = ok(
       await call<Body>(api.app, "GET", `${T}/report-snapshots/${assembled.snapshotId}`, { session: p.lead.session }),
       200,
