@@ -78,22 +78,34 @@ applied **in addition to** the global limit: whichever is reached first answers 
 `Retry-After`. Each budget is a positive integer per minute (range 1–1,000,000). An invalid value stops the API at
 start with exit 78 and names the variable. The API read model `GET /api/v1/admin/security/rate-limits`
 (`security.read`) returns the effective budgets and the operations in each class, with no counters, client IPs or
-user ids. The Administration > Security page that displays it is a planned P6 item (frontend), not yet in this tree.
+user ids. The **Administration > Security** page (`/admin/security`, `apps/web/src/pages/admin/security/SecurityPage.tsx`;
+shown to holders of `security.read` or `upload_policy.configure`, `apps/web/src/app/nav.ts`) displays that read model
+read-only: the values come from the server configuration and cannot be changed in the page.
 
 | Class | Variable | Default per minute | Keyed by | Operations wired at this release |
 |---|---|---|---|---|
 | global | `RATE_LIMIT_PER_MINUTE` | 300 | user, else client IP | every operation without a class |
 | auth | `AUTH_RATE_LIMIT_PER_MINUTE` | 20 | client IP | `startOidcLogin`, `completeOidcLogin`, `devLogin` |
 | upload | `UPLOAD_RATE_LIMIT_PER_MINUTE` | 30 | user, else client IP | `uploadEvidenceContent`, `createImport` (the import upload) |
-| search | `SEARCH_RATE_LIMIT_PER_MINUTE` | 120 | user, else client IP | none yet (global search, a planned P6 item) |
-| assistant | `ASSISTANT_RATE_LIMIT_PER_MINUTE` | 20 | user, else client IP | none yet (assistant messages, a planned P6 item) |
-| webhook | `WEBHOOK_RATE_LIMIT_PER_MINUTE` | 600 | webhook endpoint key | none yet (webhook receivers, a planned P6 item) |
+| search | `SEARCH_RATE_LIMIT_PER_MINUTE` | 120 | user, else client IP | `searchRecords` (`GET /api/v1/search`, global search; `apps/api/src/modules/search/routes.ts`) |
+| assistant | `ASSISTANT_RATE_LIMIT_PER_MINUTE` | 20 | user, else client IP | `postAssistantMessage` (`POST /api/v1/assistant/conversations/{conversationId}/messages`; `apps/api/src/modules/assistant/conversations.ts`) |
+| webhook | `WEBHOOK_RATE_LIMIT_PER_MINUTE` | 600 | webhook endpoint key | `receiveWebhook` (`POST /api/v1/webhooks/{endpointKey}`; `apps/api/src/modules/integrations/routes.ts`) |
 | export | `EXPORT_RATE_LIMIT_PER_MINUTE` | 10 | user, else client IP | `createExport` (export start) |
 
 The "operations wired" column describes this tree. The authoritative list is the running API's
 `getSecurityRateLimits` response, which a test pins to the routes that declare each class
 (`apps/api/test/integration/admin/security.test.ts`). Behind a reverse proxy, set `TRUST_PROXY` so that "client IP"
 means the real client and not the proxy.
+
+The class matrix in code is `RATE_LIMIT_CLASSES` (`apps/api/src/modules/platform/hooks.ts`); a route joins a class
+with `rateLimitClass` in its route config (upload: `apps/api/src/modules/evidence/routes.ts` and
+`apps/api/src/modules/integrations/routes.ts`; export: `apps/api/src/modules/reporting/exports/routes.ts`). The
+variable names are `RATE_LIMIT_CLASS_VARIABLES` (`packages/config/src/load.ts`).
+
+**Load stacks only.** A synthetic load run (ADR-0058; `deploy/load/README.md`) raises the five class budgets to
+100,000 per minute with `deploy/load/rate-limits.mjs` (or the Compose overlay `deploy/compose/compose.load.yaml`), so
+that the measurement reflects the product and not the limiter. Never apply that to a production or demo stack: it
+removes the abuse protection of those classes.
 
 ## Compose-level settings (`deploy/compose/compose.yaml`)
 

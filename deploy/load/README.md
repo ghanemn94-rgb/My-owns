@@ -17,9 +17,12 @@ workload harness and the report (`workload.mjs`, `report.mjs`) are T-DG6-DO-F; t
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `generate.mjs`                                  | Writes the dataset `mth_load_v1` into a migrated, **empty** database (owner role), in one transaction               |
 | `sessions.mjs`                                  | Mints one session per load virtual user through the API's own `createSession`, into a file under `$TMPDIR`          |
+| `rate-limits.mjs`                               | `eval "$(node deploy/load/rate-limits.mjs)"`: raises the five P6 rate-limit class budgets for a load stack (below)  |
+| `../scripts/tests/load-rate-limits.vitest.mjs`  | Pins `rate-limits.mjs` and `compose.load.yaml` to the API's own class variables (`pnpm test`, unit-node)            |
 | `generate.test.mjs`                             | Determinism and guard tests (Vitest `integration` project, via `packages/db/test/integration/load-dataset.test.ts`) |
 | `../scripts/tests/load-generate-ids.vitest.mjs` | Every generated id passes the API's `z.uuid()`; the measured dataset's ids are pinned (`pnpm test`, unit-node)      |
 | `../compose/compose.yaml`                       | The `load` profile (`load-generate`, `load-sessions`), off by default                                               |
+| `../compose/compose.load.yaml`                  | Overlay for the load stack's `api` and `worker`: `MTH_ENV=load` and the five class budgets at 100,000 per minute    |
 
 No new dependency: both scripts use Node built-ins and `pg`, resolved from `@mth/db`'s own dependency.
 
@@ -128,6 +131,32 @@ OIDC_ISSUER_URL=https://… OIDC_CLIENT_ID=… OIDC_CLIENT_SECRET=… \
 - `mth-db bootstrap` and `mth-db seed-demo` refuse a database that holds the marker, with exit 3 and "This database
   holds the synthetic load dataset; it cannot be bootstrapped or seeded as a demo." Nothing changes.
 
+## Rate limits on a load stack (`rate-limits.mjs`)
+
+A load run must measure the product, not the rate limiter. The five P6 rate-limit classes (ADR-0052 §4;
+[configuration.md](../../docs/operations/configuration.md)) have production budgets that a load driver reaches from
+one session: `export-proof.mjs` part A starts 16 exports from one user within a minute, and the `export` class allows
+10 per minute per session by default, so starts 11–16 would get 429 and the result would describe the limiter
+(F-DG6-141, F-DG6-147). So every load stack starts its API with the class budgets raised **by default**:
+
+- **Processes:** run `eval "$(node deploy/load/rate-limits.mjs)"` in the shell that starts the API and the worker. It
+  exports `UPLOAD_`, `SEARCH_`, `ASSISTANT_`, `WEBHOOK_` and `EXPORT_RATE_LIMIT_PER_MINUTE=100000` (stdout: `export`
+  lines only; a one-line note on stderr). A variable that is already set, directly or through `<NAME>_FILE`, is kept,
+  so a run can measure a limiter on purpose.
+- **Compose:** add `-f deploy/compose/compose.load.yaml` when you start `api` and `worker` (below). It sets the same
+  five budgets (override one with `MTH_LOAD_<CLASS>_RATE_LIMIT`, for example `MTH_LOAD_EXPORT_RATE_LIMIT=10`).
+- **Not raised:** the global `RATE_LIMIT_PER_MINUTE` (300) and `AUTH_RATE_LIMIT_PER_MINUTE` (20). They are not P6
+  classes, and every measured load run (DO-F, DO-G, DO-H, QA round 1, DO-Y2) ran with them at the product default with
+  no 429 (DO-Y2 counted 0 "rate limit class exceeded" lines). The drivers never count a 429 as a success:
+  `workload.mjs` records it as an `error`, `export-proof.mjs` as a failed start or poll. A driver of your own that
+  polls faster than 300 requests per minute per session **is** decided by the global limit: DO-Y2's 100 ms polling
+  burst driver got 8,240 global 429s on its polls in one burst, which stretched that burst's time to completion
+  (not its start latency). Keep each session under 300 requests per minute (`export-proof.mjs` did: no failed poll
+  in DO-Y2's three repetitions), or set `RATE_LIMIT_PER_MINUTE` explicitly and report it with the figures.
+- A unit test pins the helper and the overlay to the API's own class variables (`RATE_LIMIT_CLASS_VARIABLES` in
+  `packages/config/src/load.ts`), so a class added later is raised too or the test fails.
+- **Never** apply either to a production or demo stack: it removes the abuse protection of those classes.
+
 ## With Compose (profile `load`, off by default)
 
 Run it as its own Compose project, so it gets its own empty volume, and never against a production or demo stack.
@@ -136,7 +165,8 @@ Secrets come from `deploy/scripts/init-secrets.sh`, as for the default stack.
 ```bash
 docker compose -p mth-load -f deploy/compose/compose.yaml up -d --wait db migrate
 docker compose -p mth-load -f deploy/compose/compose.yaml --profile load run --rm load-generate   # MTH_LOAD_PROFILE=default
-MTH_ENV=load docker compose -p mth-load -f deploy/compose/compose.yaml up -d --wait api worker
+MTH_ENV=load docker compose -p mth-load -f deploy/compose/compose.yaml -f deploy/compose/compose.load.yaml \
+  up -d --wait api worker                                                                         # class budgets 100000/min
 MTH_LOAD_OUT_DIR="$TMPDIR/mth-load" docker compose -p mth-load -f deploy/compose/compose.yaml --profile load \
   run --rm load-sessions                                                                          # MTH_LOAD_DURATION_MINUTES=60
 ```
@@ -168,3 +198,11 @@ compares `audit_event.record_type` (text) with `TG_TABLE_NAME` (type `name`), so
 write pays it too. This is raised in the DO-E handback as a finding candidate for BE-S (a corrective migration
 comparing `TG_TABLE_NAME::text`). It is not changed here. These are generation times only, not load-test results: the
 workload and the p95 figures are T-DG6-DO-F's.
+
+**Export starts with the class budgets raised (T-DG6-DO-Y2, 2026-11-02).** The same host, the shipped generator
+(sha256 `6b2a9007…`, profile `default`: 50 transformations, 1,000 initiatives, 100,000 audit events; about 25–28 s per
+generation now), `eval "$(node deploy/load/rate-limits.mjs)"`, and `export-proof.mjs` unchanged, three repetitions on
+fresh databases. Part B (50 export starts at once by 50 users): p95 908 / 869 / 1,313 ms, max 1,330 ms, 0 of 150 over
+2 s; part A (16 starts by one user): max 169 ms; all 198 jobs `succeeded`, no 429. Host 1-minute load during the
+proofs 0.87–4.80. Logs and the driver: `docs/delivery/handbacks/DG6/T-DG6-DO-Y2-evidence/`. Provisional sandbox
+figures, not Mobily capacity.
