@@ -172,3 +172,13 @@ Requirement row: REQ-S20-030. These figures are engineering measurements on the 
 
 Requirement row: REQ-S20-030. These are engineering measurements on a shared sandbox host, not a Mobily capacity statement. Nothing here grants a business, Finance or IT approval (G1–G6), and nothing implies a DG0–DG7 result.
 
+
+## Amendment (2026-11-02, T-DG6-ARCH-13; F-DG6-sa12-3): T3 against what T-DG6-BE-Y6 shipped
+
+### T4. One counted attempt per assembly
+
+- **T2 and T3 hold as written.** T-DG6-BE-Y6 (migration `0125`, ADR-0046 amendment S3) changed only the export assembly watch, not the start. A live-selection `createExport` does the same work as in T3, and it still answers 202 with `snapshotId: null`. The 2 s start target and its assertions are unchanged.
+- **What each assembly now adds** is one short committed transaction before it. That transaction counts the attempt on the job (`assembly_attempt_count` + 1, version + 1) and writes one `export_job.assembly_attempt` audit row. The two transactions use the same session connection, so the pool use of ADR-0046 R4 is unchanged: two connections per concurrent claim, up to 4 per API process out of 20.
+- **What the proof sees.** The completion time of each job that §7 and T2 report includes this transaction. An assembled live job is at version 3 after assembly, not 2. The proof's assertions in T2 read `snapshotId`, `status` and `percent`. The proof driver (`deploy/load/export-proof.mjs`) never reads the version or sends `If-Match`, so none of its assertions changes. No new measurement is asked for here. DO-Y2's run on the merged tree, which includes `0125`, is the one the report cites.
+
+Requirement row: REQ-S20-030. Nothing here grants a business, Finance or IT approval (G1–G6), and nothing implies a DG0–DG7 result.

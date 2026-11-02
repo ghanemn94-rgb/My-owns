@@ -2183,7 +2183,20 @@ erDiagram
 
 | Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
 |---|---|---|---|---|---|---|---|
-| Export job (S13-005, S13-009, S20-030), amended | `export_job` (new column `selection`; `snapshot_id` nullable) + `export_job_progress` | `id` (requester, idempotency key unique) | `requested_by` | `export.create`; the export assembly watch (assign the snapshot, or fail the pending job; service actor on behalf of the requester); the requester (cancel); the worker | `status` (unchanged: queued, running, succeeded, failed, cancelled); `stage` (unchanged) | yes (progress without audit) | reporting |
+| Export job (S13-005, S13-009, S20-030), amended | `export_job` (new column `selection`; `snapshot_id` nullable) + `export_job_progress` | `id` (requester, idempotency key unique) | `requested_by` | `export.create`; the export assembly watch (assign the snapshot, or fail the pending job; since `0125` also count each assembly attempt, §1ab.2; service actor on behalf of the requester); the requester (cancel); the worker | `status` (unchanged: queued, running, succeeded, failed, cancelled); `stage` (unchanged) | yes (progress without audit) | reporting |
+
+### 1ab.2 P6 round-1 repair migration 0125: the assembly attempt count and the definition check (T-DG6-ARCH-13, 2026-11-02; ADR-0046 amendment S)
+
+`0125_p6_export_assembly_attempts.sql` (T-DG6-BE-Y6; F-DG6-sa12-1, F-DG6-sa12-3; the next id above `0124`, D-196) adds no table and no relationship, so the §1ab diagram is unchanged. Its changes to `export_job`:
+
+- **New column `assembly_attempt_count`** (`integer NOT NULL DEFAULT 0`, CHECK `export_job_assembly_attempt_count_check` ≥ 0). It is the number of started assembly attempts of a pending live selection. The export assembly watch counts each attempt and commits it before it assembles, so the bound of 3 (`EXPORT_ASSEMBLY_MAX_ERRORS`) holds per job across restarts. The count is not in the API.
+- **The replaced `export_job_guard()`:**
+  - a job is created with no assembly attempt (`export_job_created_queued`);
+  - the count steps by + 1 only while the job is `queued` with no snapshot (`export_job_assembly_attempt_step`);
+  - a snapshot assigned to a job with a stored selection must be of that selection's definition (`export_job_snapshot_selection`). Together with the unchanged composite FK, an assigned snapshot is therefore in the job's transformation **and** of its selected definition.
+- **The writer register gains one write** (the §1ab.1 row is amended): the export assembly watch also counts an attempt (version + 1, audit `export_job.assembly_attempt`, service actor on behalf of the requester).
+
+The column list, the CHECK and the guard's constraint names are in `data-dictionary.md` ("P6 round-1 repair migration 0125"), as read from the migrated catalogue.
 
 ## 2. Conceptual model, all §16 entity groups
 
