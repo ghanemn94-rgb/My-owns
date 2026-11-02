@@ -200,7 +200,8 @@ services:
   # unmarked. A load stack is a sandbox measurement setup, not Mobily production infrastructure and not HA.
   #   docker compose -p mth-load -f deploy/compose/compose.yaml up -d --wait db migrate
   #   docker compose -p mth-load -f deploy/compose/compose.yaml --profile load run --rm load-generate
-  #   MTH_ENV=load docker compose -p mth-load -f deploy/compose/compose.yaml up -d --wait api worker
+  #   MTH_ENV=load docker compose -p mth-load -f deploy/compose/compose.yaml -f deploy/compose/compose.load.yaml \
+  #     up -d --wait api worker      # compose.load.yaml: the P6 rate-limit class budgets raised (T-DG6-DO-Y2)
   #   MTH_LOAD_OUT_DIR=$TMPDIR/mth-load docker compose -p mth-load -f deploy/compose/compose.yaml --profile load \
   #     run --rm load-sessions
   load-generate:

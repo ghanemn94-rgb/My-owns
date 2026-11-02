@@ -1,0 +1,27 @@
+# Load-stack overlay (ADR-0058; T-DG6-DO-Y2, D-207). Use it ON TOP of compose.yaml for a synthetic LOAD stack only,
+# never for a production or demo stack (deploy/load/README.md):
+#
+#   MTH_ENV=load docker compose -p mth-load -f deploy/compose/compose.yaml -f deploy/compose/compose.load.yaml \
+#     up -d --wait api worker
+#
+# A load run must measure the product, not the limiter. The five P6 rate-limit classes (ADR-0052 §4) get a budget of
+# 100000 per minute here, the value of deploy/load/rate-limits.mjs (LOAD_RATE_LIMIT_PER_MINUTE), unless the operator
+# exports MTH_LOAD_<CLASS>_RATE_LIMIT to measure the limiter on purpose. With the product default (export: 10 per minute
+# per session), deploy/load/export-proof.mjs part A (16 starts by one user in a minute) is decided by the limiter.
+# The global and auth limits stay at the product default, as in every measured load run. It sets MTH_ENV=load too, so
+# a stack started with this overlay is labelled a load stack in its configuration. Note: the start-up refusal of
+# MTH_ENV=load on a database without the load-dataset marker (`assertLoadDatasetEnvironment`, packages/config) is not
+# yet called by apps/api/src/main.ts or apps/worker/src/main.ts (deploy/load/README.md), so this overlay does not stop
+# itself from being applied to a production database. Keep it to the separate `-p mth-load` project.
+services:
+  api:
+    environment:
+      MTH_ENV: load
+      UPLOAD_RATE_LIMIT_PER_MINUTE: ${MTH_LOAD_UPLOAD_RATE_LIMIT:-100000}
+      SEARCH_RATE_LIMIT_PER_MINUTE: ${MTH_LOAD_SEARCH_RATE_LIMIT:-100000}
+      ASSISTANT_RATE_LIMIT_PER_MINUTE: ${MTH_LOAD_ASSISTANT_RATE_LIMIT:-100000}
+      WEBHOOK_RATE_LIMIT_PER_MINUTE: ${MTH_LOAD_WEBHOOK_RATE_LIMIT:-100000}
+      EXPORT_RATE_LIMIT_PER_MINUTE: ${MTH_LOAD_EXPORT_RATE_LIMIT:-100000}
+  worker:
+    environment:
+      MTH_ENV: load
