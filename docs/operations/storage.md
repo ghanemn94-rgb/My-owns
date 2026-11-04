@@ -208,6 +208,9 @@ and those keys valid. Then give the hub the two files through the `file` provide
 - In the no-egress Compose variant (`compose.no-egress.yaml`, `restricted-network.md`), an internal store must be
   attached to the project's internal network, or reachable on a route IT allows.
 - The browser never reaches the store (§1), so no firewall opening for users is needed.
+- The object store is one of the hub's optional outbound destinations. The full list, and the two controls on where
+  they may connect (the binding's `hosts` and the deployment's egress policy), are in
+  [restricted-network.md](restricted-network.md).
 
 ## 8. Status of each piece in this release
 

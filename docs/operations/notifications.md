@@ -38,7 +38,7 @@ back the change that produced the notification: sending happens after that chang
 | **TLS trust** | If the relay's certificate is issued by a corporate CA, the runtime must trust it. Node.js reads extra CA certificates from the file named by `NODE_EXTRA_CA_CERTS` at process start. This has **not** been exercised against a corporate CA here. Verification is never switched off. |
 | **Credentials** (optional) | A username and password for SMTP AUTH, **both or neither**. They are stored as secret **references**, never values (§5). Leave both empty for a relay that authorizes the hub by network address. |
 | **Sender address** | The `From` address, for example `transformation-hub@<mobily domain>`. Up to 254 characters, a plain address. Its SPF, DKIM and DMARC alignment is set up by IT's mail team on the relay and in DNS. The hub signs nothing. |
-| **Network route** | From every **worker** process (it sends the notifications) and every **API** process (it sends the "test to me" message) to the relay. No other outbound route is needed. |
+| **Network route** | From every **worker** process (it sends the notifications) and every **API** process (it sends the "test to me" message) to the relay. Email needs no other outbound route. The other optional destinations are listed in [restricted-network.md](restricted-network.md). |
 | **Recipient addresses** | Each user's email address held by the hub (`app_user.email`, normally taken from the identity provider's `email` claim). A user with no address is skipped (`no_address`). |
 | **`APP_BASE_URL`** | The public base URL of the hub (ADR-0011). Deep links in messages are built on it. |
 
@@ -138,6 +138,9 @@ name and restart the processes. If the name changes, save the channel again.
 The only outbound route email needs is from the worker and the API to IT's relay. No public mail service, CDN or
 builder-hosted service is involved. In the no-egress Compose variant (`compose.no-egress.yaml`), the relay must be
 reachable on a route IT allows. With email disabled, the hub makes no SMTP connection at all.
+The deployment's egress policy should allow the relay only from the worker and the API. The binding's `hosts`
+([configuration.md](configuration.md), "The binding") limits where SMTP credentials are sent. It does not limit a relay
+configured without AUTH. All optional outbound destinations: [restricted-network.md](restricted-network.md).
 
 ## 8. Status of each piece in this release
 
