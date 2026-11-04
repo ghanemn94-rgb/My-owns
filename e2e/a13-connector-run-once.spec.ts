@@ -52,6 +52,8 @@ const COLUMNS = [
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async ({ playwright }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // the hook is timed inside the test it precedes; the slowest test after it in this file took 19.1 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");
@@ -104,6 +106,8 @@ test.beforeAll(async ({ playwright }, info) => {
 test("A13: one press of Run now gives one run; a retried request is refused; the run completes once", async ({
   page,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 19.1 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);

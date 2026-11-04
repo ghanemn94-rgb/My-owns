@@ -20,7 +20,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { SYN_RETAIL, apiSession, expectAccessible, langOf, shot, signIn, tr, trackRequests } from "./support/ui.ts";
 
-test.describe.configure({ mode: "serial", timeout: 300_000 });
+// T-DG6-FE-Z1 (F-DG6-144, round 2): raised from 300 s to 330 s. In the DG6 QA round-2 full product runs
+// (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log) its slowest test took 162.0 s; the budget is at least 2x that, rounded up to 15 s
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt).
+test.describe.configure({ mode: "serial", timeout: 330_000 });
 
 const COUNT = 1000;
 const NAME = (n: number) => `Synthetic register item ${String(n).padStart(4, "0")}`;

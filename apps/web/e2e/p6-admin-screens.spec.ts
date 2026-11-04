@@ -41,6 +41,8 @@ async function open(page: Page, lang: Lang, path: string, titleKey: string) {
 
 for (const s of SCREENS) {
   test(`P6 screen ${s.name}: renders from the API for the administrator, axe clean`, async ({ page }, info) => {
+    // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+    // this test's worst loaded run took 8.9 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
     test.setTimeout(BUDGET_MS);
     const lang = langOf(info);
     const foreign = trackRequests(page);
@@ -93,6 +95,8 @@ test("P6 upload policy: no page-level horizontal scroll at 360 px or with 200 % 
 test("P6 upload policy: the administrator narrows it with a reason; it persists and is audited", async ({
   page,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 6.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(BUDGET_MS);
   const lang = langOf(info);
   await signIn(page, lang, "dev.admin");
@@ -123,6 +127,8 @@ test("P6 upload policy: the administrator narrows it with a reason; it persists 
 });
 
 test("P6 auditor: reads Audit, the upload policy and Storage without any write control", async ({ page }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 10.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(BUDGET_MS);
   const lang = langOf(info);
   const writes: string[] = [];
@@ -148,6 +154,8 @@ test("P6 auditor: reads Audit, the upload policy and Storage without any write c
 });
 
 test("P6 deep link: an unknown token is refused with the forbidden text only", async ({ page }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 5.6 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(BUDGET_MS);
   const lang = langOf(info);
   await signIn(page, lang, "dev.office");
@@ -162,6 +170,8 @@ test("P6 deep link: an unknown token is refused with the forbidden text only", a
 });
 
 test("P6 operations: the heartbeat has a text label and is never Running without a worker", async ({ page }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 3.4 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(BUDGET_MS);
   const lang = langOf(info);
   await signIn(page, lang, "dev.admin");

@@ -23,6 +23,8 @@ const EVIDENCE = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa
 /** The seeded International Roaming transformation (DEMO_TRANSFORMATION_ID). */
 const ROAMING = "01995000-0000-7000-8000-000000000001";
 
+// Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+// the slowest test it covers took 78.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
 test.setTimeout(240_000);
 
 async function checkScreen(p: Page, lang: Lang, url: string): Promise<void> {

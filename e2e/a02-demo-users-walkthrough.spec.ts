@@ -26,6 +26,8 @@ type Body = any;
 const EVIDENCE = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa-a02-e2");
 
 test.describe.configure({ mode: "serial" });
+// Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+// the slowest test it covers took 138.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
 test.setTimeout(300_000);
 
 test("REQ-S18-004: the demo role users perform the twelve walkthrough steps in the UI on a new transformation; the resulting records are verified", async ({

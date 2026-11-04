@@ -41,6 +41,8 @@ test("Procedure outputs: the TL records a baseline natively, chooses it as recor
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 18.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(150_000);
   const lang: Lang = langOf(info);
   const foreign = trackRequests(page);

@@ -41,7 +41,11 @@ test.describe.configure({ mode: "serial" });
 // (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test timed out at the default
 // 30 s (30.9 s reported), so at least that long.
 // The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
-test.setTimeout(105_000);
+// T-DG6-FE-Z1B (F-DG6-144, round 2): raised from 105 s to 120 s; in T-DG6-FE-Z1's run1 loaded full runs
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/run1-*-chromium-*.log, load 15-23) 6. BAU handover took 35.6-52.6 s (52.6 s, unset, chromium-en), so 2x is 105.2 s.
+// T-DG6-FE-Z1B: raised from 120 s to 180 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :362 of z1b-budget-table-pass1.txt took 90.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(180_000);
 
 let tid = "";
 let tid2 = "";

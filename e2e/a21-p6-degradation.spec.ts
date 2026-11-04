@@ -37,7 +37,10 @@ import {
 } from "../apps/web/e2e/support/ui.ts";
 
 test.describe.configure({ mode: "serial" });
-test.setTimeout(60_000);
+// Budget (F-DG6-144 sweep, T-DG6-FE-Z1B): raised from 60 s to 75 s. In the DG6 QA round-2 root e2e runs (under load,
+// docs/delivery/test-evidence/DG6/qa/round-2/05-e2e-root-unset.log) the reminder test took up to 30.9 s, so 2x is 61.8 s.
+// Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
+test.setTimeout(75_000);
 
 const EVIDENCE = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa-a21-p6");
 const stamp = Date.now().toString(36);

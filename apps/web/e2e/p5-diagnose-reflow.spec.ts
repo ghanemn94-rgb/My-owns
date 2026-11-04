@@ -42,6 +42,8 @@ test("Diagnose: no page-level horizontal scroll at 390 px or with 200 % text; ev
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 11.4 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(180_000);
   const lang = langOf(info);
   const devLead = await apiSession(playwright, "dev.lead");
@@ -142,6 +144,8 @@ test("Conflict banner: a 409 at 390 px shows its compare table without page-leve
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 5.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

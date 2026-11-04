@@ -44,6 +44,8 @@ test("Launch plan: generate from a start date, re-date by +7 days, the predecess
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 22.1 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -151,6 +153,8 @@ test("Health check: Incomplete (24/25) with no band, 17 / 25 in band 16-20, the 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 24.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");
@@ -227,6 +231,8 @@ test("Formula preview, financial metrics and KPI restatement: SAR and Not comput
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 12.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

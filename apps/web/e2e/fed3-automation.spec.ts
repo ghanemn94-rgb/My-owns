@@ -22,6 +22,14 @@ import {
   type ApiSession,
 } from "./support/ui.ts";
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): Failure queue at 1280 px took 8.9 s.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+test.setTimeout(60_000);
+
 const ORG = "01920000-0000-7000-9000-000000000001";
 const NOBODY = "01920000-0000-7000-9000-000000000205";
 const PLACEHOLDER = "00000000-0000-7000-8000-000000000000";
@@ -77,6 +85,8 @@ test("Dry run: the gate.submitted sample is pre-filled with the selected transfo
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 17.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(150_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);

@@ -167,6 +167,8 @@ test.describe.serial("A07 historical integrity", () => {
     browser,
     playwright,
   }, info) => {
+    // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 root e2e runs (under load),
+    // this test's worst loaded run took 30.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
     test.setTimeout(240_000);
     const lang = langOf(info);
     const w = await setup(playwright, lang);

@@ -28,6 +28,8 @@ import {
   type ApiSession,
 } from "./support/ui.ts";
 
+// Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+// the slowest test it covers took 40.6 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
 test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 let lead: ApiSession;

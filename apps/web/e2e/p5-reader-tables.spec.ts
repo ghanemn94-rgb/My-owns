@@ -76,6 +76,8 @@ async function measure(page: Page, scope: string) {
 test("Reader: table blocks are tables, not Markdown; B0016, B0024 and B0124 callouts wrap inside the page at 1280 px, 390 px and 200 % text", async ({
   page,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 17.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(180_000);
   const lang = langOf(info);
   await signIn(page, lang, "dev.office");
