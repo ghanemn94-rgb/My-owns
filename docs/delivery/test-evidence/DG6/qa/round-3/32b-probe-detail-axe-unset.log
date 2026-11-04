@@ -1,0 +1,33 @@
+### 2026-11-04T17:32:54Z node=v24.21.0 cwd=$TMPDIR/r3b (candidate 95f98191) LANG=<unset> LC_ALL=<unset> (continuation run f440e4a5)
+$ apps/web/e2e/support/with-stack.sh npx playwright test e2e/zz-qa-dg6r3b-detail-axe.spec.ts --workers=1 --reporter=list --trace=off --output=$TMPDIR/pw-32b-probe-detail-axe-unset
+(env: E2E_PG_PORT=29710 E2E_API_PORT=29711 MTH_PORT_POOL=29700-29799 E2E_SCREENSHOT_DIR/QA_PROBE_OUT under $TMPDIR; MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=<synthetic test value>)
+port-policy: PostgreSQL listening on port 29710 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 117 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 29711 (attempt 1)
+API: http://localhost:29711 (APP_BASE_URL=http://localhost:29711, PORT=29711)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 6 tests using 1 worker
+
+QA-R3B setup en: grant 01a1a79f-290f-753e-8af0-8b519b80f2d9, webhook 01a1a79f-29bb-710c-aad5-7453379453b2
+  ✓  1 [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:28:1 › setup: a sensitive evidence note with an explicit grant, and a webhook endpoint (synthetic) (594ms)
+QA-R3B DETAIL en: {"admin-sensitive-grant@1366":{"scrollWidth":1366,"clientWidth":1366,"h1":"Sensitive grant","h1InView":true},"admin-sensitive-grant@390":{"scrollWidth":390,"clientWidth":390,"h1":"Sensitive grant","h1InView":true},"admin-sensitive-grant@360":{"scrollWidth":360,"clientWidth":360,"h1":"Sensitive grant","h1InView":true},"admin-sensitive-grant@1280-text200":{"scrollWidth":1280,"clientWidth":1280,"h1":"Sensitive grant","h1InView":true},"admin-webhook@1366":{"scrollWidth":1366,"clientWidth":1366,"h1":"QA R3B synthetic sender en","h1InView":true},"admin-webhook@390":{"scrollWidth":390,"clientWidth":390,"h1":"QA R3B synthetic sender en","h1InView":true},"admin-webhook@360":{"scrollWidth":360,"clientWidth":360,"h1":"QA R3B synthetic sender en","h1InView":true},"admin-webhook@1280-text200":{"scrollWidth":1280,"clientWidth":1280,"h1":"QA R3B synthetic sender en","h1InView":true}}
+  ✓  2 [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens (12.3s)
+QA-R3B AUD en: enabled buttons []; forms 0; methods ["GET"]
+QA-R3B TO control en: enabled buttons ["Revoke"]
+  ✓  3 [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:205:1 › C: the auditor (AUD) reads the sensitive-grant detail with no enabled write control and sends only GETs (3.8s)
+QA-R3B setup ar: grant 01a1a79f-6e32-717b-a888-943692bb5b2f, webhook 01a1a79f-6e9a-740e-bbf2-bb1a12db6cdb
+  ✓  4 [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:28:1 › setup: a sensitive evidence note with an explicit grant, and a webhook endpoint (synthetic) (354ms)
+QA-R3B DETAIL ar: {"admin-sensitive-grant@1366":{"scrollWidth":1366,"clientWidth":1366,"h1":"صلاحية سجل حساس","h1InView":true},"admin-sensitive-grant@390":{"scrollWidth":390,"clientWidth":390,"h1":"صلاحية سجل حساس","h1InView":true},"admin-sensitive-grant@360":{"scrollWidth":360,"clientWidth":360,"h1":"صلاحية سجل حساس","h1InView":true},"admin-sensitive-grant@1280-text200":{"scrollWidth":1280,"clientWidth":1280,"h1":"صلاحية سجل حساس","h1InView":true},"admin-webhook@1366":{"scrollWidth":1366,"clientWidth":1366,"h1":"QA R3B synthetic sender ar","h1InView":true},"admin-webhook@390":{"scrollWidth":390,"clientWidth":390,"h1":"QA R3B synthetic sender ar","h1InView":true},"admin-webhook@360":{"scrollWidth":360,"clientWidth":360,"h1":"QA R3B synthetic sender ar","h1InView":true},"admin-webhook@1280-text200":{"scrollWidth":1280,"clientWidth":1280,"h1":"QA R3B synthetic sender ar","h1InView":true}}
+  ✓  5 [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens (12.2s)
+QA-R3B AUD ar: enabled buttons []; forms 0; methods ["GET"]
+QA-R3B TO control ar: enabled buttons ["إلغاء"]
+  ✓  6 [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:205:1 › C: the auditor (AUD) reads the sensitive-grant detail with no enabled write control and sends only GETs (4.0s)
+
+  6 passed (36.9s)
+EXIT 0 2026-11-04T17:33:43Z

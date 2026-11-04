@@ -1,0 +1,79 @@
+### 2026-11-04T17:31:51Z node=v24.21.0 cwd=$TMPDIR/r3b (candidate 95f98191) LANG=<unset> LC_ALL=<unset> (continuation run f440e4a5)
+$ apps/web/e2e/support/with-stack.sh npx playwright test e2e/zz-qa-dg6r3b-detail-axe.spec.ts e2e/zz-qa-dg6r3b-reports-output-label.spec.ts --workers=1 --reporter=list --trace=off --output=$TMPDIR/pw-32-probes-detail-axe-output-label-unset
+(env: E2E_PG_PORT=29710 E2E_API_PORT=29711 MTH_PORT_POOL=29700-29799 E2E_SCREENSHOT_DIR/QA_PROBE_OUT under $TMPDIR; MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=<synthetic test value>)
+port-policy: PostgreSQL listening on port 29710 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 117 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 29711 (attempt 1)
+API: http://localhost:29711 (APP_BASE_URL=http://localhost:29711, PORT=29711)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 10 tests using 1 worker
+
+QA-R3B setup en: grant 01a1a79e-34e7-7060-8f8c-a2840040f7dd, webhook 01a1a79e-3583-72d9-b64b-59cf73eefa32
+  ✓   1 [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:28:1 › setup: a sensitive evidence note with an explicit grant, and a webhook endpoint (synthetic) (548ms)
+  ✘   2 [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens (6.8s)
+  -   3 [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:205:1 › C: the auditor (AUD) reads the sensitive-grant detail with no enabled write control and sends only GETs
+  ✓   4 [chromium-en] › e2e/zz-qa-dg6r3b-reports-output-label.spec.ts:21:1 › setup: a fresh synthetic transformation (163ms)
+QA-R3B OUTPUT-LABEL en: control {"delayMs":0,"generate":"charter","filter":"","generateEnabled":true}; delayed {"delayMs":4000,"generate":"","filter":"charter","generateEnabled":false}
+  ✓   5 [chromium-en] › e2e/zz-qa-dg6r3b-reports-output-label.spec.ts:62:1 › the spec's 'Output' locator under a late definitions answer (7.5s)
+QA-R3B setup ar: grant 01a1a79e-78a9-76c8-aff4-a06ca5f1e9b4, webhook 01a1a79e-792a-72b1-b040-92dd4e9693ac
+  ✓   6 [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:28:1 › setup: a sensitive evidence note with an explicit grant, and a webhook endpoint (synthetic) (472ms)
+  ✘   7 [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens (6.9s)
+  -   8 [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:205:1 › C: the auditor (AUD) reads the sensitive-grant detail with no enabled write control and sends only GETs
+  ✓   9 [chromium-ar] › e2e/zz-qa-dg6r3b-reports-output-label.spec.ts:21:1 › setup: a fresh synthetic transformation (144ms)
+QA-R3B OUTPUT-LABEL ar: control {"delayMs":0,"generate":"charter","filter":"","generateEnabled":true}; delayed {"delayMs":4000,"generate":"","filter":"charter","generateEnabled":false}
+  ✓  10 [chromium-ar] › e2e/zz-qa-dg6r3b-reports-output-label.spec.ts:62:1 › the spec's 'Output' locator under a late definitions answer (7.8s)
+
+
+  1) [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens 
+
+    Error: page.addStyleTag: Refused to apply inline style because it violates the following Content Security Policy directive: "style-src 'self'". Either the 'unsafe-inline' keyword, a hash ('sha256-zUn5oDzPsppVGjsH1dfZN++02EiT3BdaThbZxoIpBFc='), or a nonce ('nonce-...') is required to enable inline execution.
+
+
+      141 |       await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+      142 |       await page.waitForLoadState("networkidle");
+    > 143 |       if (vp.text200) await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+          |                                  ^
+      144 |       const r = await reflow(page);
+      145 |       report[`${s.name}@${vp.name}`] = r;
+      146 |       await page.screenshot({ path: path.join(dir, `${s.name}--${vp.name}.png`), fullPage: true });
+        at $TMPDIR/r3b/e2e/zz-qa-dg6r3b-detail-axe.spec.ts:143:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../pw-32-probes-detail-axe-output-label-unset/e2e-zz-qa-dg6r3b-detail-ax-75c0c-wo-unscanned-detail-screens-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../pw-32-probes-detail-axe-output-label-unset/e2e-zz-qa-dg6r3b-detail-ax-75c0c-wo-unscanned-detail-screens-chromium-en/error-context.md
+
+  2) [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens 
+
+    Error: page.addStyleTag: Refused to apply inline style because it violates the following Content Security Policy directive: "style-src 'self'". Either the 'unsafe-inline' keyword, a hash ('sha256-zUn5oDzPsppVGjsH1dfZN++02EiT3BdaThbZxoIpBFc='), or a nonce ('nonce-...') is required to enable inline execution.
+
+
+      141 |       await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+      142 |       await page.waitForLoadState("networkidle");
+    > 143 |       if (vp.text200) await page.addStyleTag({ content: "html { font-size: 200% !important; }" });
+          |                                  ^
+      144 |       const r = await reflow(page);
+      145 |       report[`${s.name}@${vp.name}`] = r;
+      146 |       await page.screenshot({ path: path.join(dir, `${s.name}--${vp.name}.png`), fullPage: true });
+        at $TMPDIR/r3b/e2e/zz-qa-dg6r3b-detail-axe.spec.ts:143:34
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../pw-32-probes-detail-axe-output-label-unset/e2e-zz-qa-dg6r3b-detail-ax-75c0c-wo-unscanned-detail-screens-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../pw-32-probes-detail-axe-output-label-unset/e2e-zz-qa-dg6r3b-detail-ax-75c0c-wo-unscanned-detail-screens-chromium-ar/error-context.md
+
+  2 failed
+    [chromium-en] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens 
+    [chromium-ar] › e2e/zz-qa-dg6r3b-detail-axe.spec.ts:146:1 › A+B: axe 0 serious/critical and reflow on the two unscanned detail screens 
+  2 did not run
+  6 passed (36.4s)
+---- api.log (tail)
+EXIT 1 2026-11-04T17:32:40Z

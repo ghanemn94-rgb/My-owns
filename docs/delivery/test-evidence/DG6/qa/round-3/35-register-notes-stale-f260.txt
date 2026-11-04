@@ -1,0 +1,27 @@
+# qa-verifier DG6 R3B (continuation, run f440e4a5): register notes that still report failing or absent suites
+# docs/delivery/requirements.csv at repo HEAD 30cbe3755ed5f6ae3b215adf7de7a02488a2d3a2; byte-identical to the candidate's source 95f98191:
+#   git diff --quiet 95f981917e4e5572f954d7cd159d869eca142bff HEAD -- docs/delivery/requirements.csv -> exit 0
+
+== REQ-S20-001 (status IMPLEMENTED); analyst checks in the note: 1 (the only one is T-DG6-AN-P6B, base bc5bb7b32)
+  note says : QA-E's final A01 run ... runs concurrently and is not yet in this tree ... the A01 run on the DG6 candidate is still to be recorded
+  phrase present verbatim-ish: True
+  candidate : tests/qa/integration/a01-p6-source-coverage.test.ts (11 tests) and a01-one-source-of-truth-scorecard.test.ts (2 tests) are in the candidate and pass (04c-tests-qa-alone.log: 45 files, 437 tests passed)
+  full note : DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): the mapping of the six phases, six gates, T01-T16, charter, TOM canvas, business case, launch plan, health check and roaming example to working features is asserted by coverage.test.ts (all 80 seeded source elements linked to a form, procedure or module: covered 80, planned 0, not covered 0) and source-coverage.test.ts (2/6/6/16/10/5/6/3/1/25 on v1), with the lifecycle and the demo example exercised end to end by the A02/A21 and A15 suites; QA-E's final A01 run on the integrated tree (p6-plan §5.1) runs concurrently and is not yet in this tree, so the A01 run on the DG6 candidate is still to be recorded with REQ-DLV-038.
+
+== REQ-S20-012 (status IMPLEMENTED); analyst checks in the note: 1 (the only one is T-DG6-AN-P6B, base bc5bb7b32)
+  note says : partial: e2e A12-5 (AI retrieval through the UI) still fails ... the A12 e2e file is not fully green
+  phrase present verbatim-ish: True
+  candidate : e2e/a12-p6-scope-isolation.spec.ts A12-1..A12-6 pass in chromium-en and chromium-ar, including 'A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X' (05-e2e-root-unset.log tests 13/166; 05c-e2e-root-cutf8-connection-log.log)
+  full note : DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): cross-transformation reads and writes, exports, search results, evidence URLs and AI retrieval are denied in QA-B's A12 API suite plus the DG5 a12-cross-scope suite, and e2e A12-1 to A12-4 and A12-6 pass in en and ar, with BE-X1 declaring the evidence 403 that D1 found; partial: e2e A12-5 (AI retrieval through the UI) still fails, because the assistant launcher is never shown to ordinary users (D2, tracked on REQ-S17-007), so AI-retrieval denial is proven at the API only and the A12 e2e file is not fully green.
+
+== REQ-S20-017 (status IMPLEMENTED); analyst checks in the note: 1 (the only one is T-DG6-AN-P6B, base bc5bb7b32)
+  note says : partial: the A17 integration file and e2e/a17-failing-connector-exception.spec.ts are not fully green, because QA-A2-F1 (REQ-S12-019 ...) is unrepaired in this tree
+  phrase present verbatim-ish: True
+  candidate : F-DG6-100/140 were repaired by T-DG6-BE-Y3 and verified CLOSED in round 2; e2e/a17-failing-connector-exception.spec.ts passes en/ar (05-e2e-root-unset.log tests 21/174) and tests/qa/integration/a17-*.test.ts pass (04c-tests-qa-alone.log); REQ-S12-019's own note says 'No residual remains'
+  full note : DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): each clause of the A17 scenario passes in QA-A's suite and the root A17 e2e (invalid rows isolated with row-level reasons, the duplicate detected, 8 valid rows committed with lineage, the stopped connector's actionable error), as QA-A2 reports; partial: the A17 integration file and e2e/a17-failing-connector-exception.spec.ts are not fully green, because QA-A2-F1 (REQ-S12-019: once a later period is open, the exception detail shows the linked KPI as Unknown with no last value) is unrepaired in this tree.
+
+== REQ-S20-022 (status IMPLEMENTED); analyst checks in the note: 1 (the only one is T-DG6-AN-P6B, base bc5bb7b32)
+  note says : QA-E's A22 extension, the single acceptance suite that asserts these together, runs concurrently and is not yet in this tree
+  phrase present verbatim-ish: True
+  candidate : e2e/a22-p6-operability.spec.ts and e2e/a22-operations-jobs.spec.ts are in the candidate and pass en/ar (05-e2e-root-unset.log tests 153/306)
+  full note : DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): each part is demonstrated by tests: health and readiness (platform.test.ts); admin job visibility and production/demo separation (the DG5 A22 suite and e2e/a22-operations-jobs.spec.ts); redacted structured logs with a post-suite scan PASS (DO-D); error alerts as one alert log line and one inbox alert per opened exception (operations-freshness.test.ts); and the worker heartbeat (heartbeat.test.ts, exceptions.test.ts, p6-admin-screens.spec.ts); QA-E's A22 extension, the single acceptance suite that asserts these together, runs concurrently and is not yet in this tree.
