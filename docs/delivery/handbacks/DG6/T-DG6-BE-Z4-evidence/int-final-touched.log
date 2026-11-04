@@ -1,0 +1,28 @@
+port-policy: PostgreSQL listening on port 28920 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z4
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2hq40v_60239164 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts (18 tests) 1907ms
+stderr | apps/api/test/integration/tasks/channel-fanout.test.ts > F-DG6-181: the worker resolves SMTP references only for the channel's own organization and host > a channel whose password reference is bound to another organization: smtp.secret_unavailable, no connection
+{"level":"warn","event":"secret_ref.refused","consumer":"smtp","organizationId":"01a1a7f7-6fb3-7128-abb5-56e0d15b1e13","provider":"env","name":"MTH_SECRET_Z2_FANOUT_SMTP_PASS","reason":"not_bound"}
+
+ ✓ |integration| apps/api/test/integration/tasks/channel-fanout.test.ts (11 tests) 2620ms
+ ✓ |integration| apps/api/test/integration/tasks/notification-delivery.test.ts (11 tests) 1232ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (5 tests) 2606ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404  521ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not  475ms
+ ✓ |integration| apps/api/test/integration/tasks/deep-links.test.ts (13 tests) 1210ms
+ ✓ |integration| apps/api/test/integration/tasks/email-adapter-contract.test.ts (14 tests) 970ms
+ ✓ |integration| apps/api/test/integration/reporting/my-work.test.ts (9 tests) 1234ms
+
+ Test Files  7 passed (7)
+      Tests  81 passed (81)
+   Start at  19:09:08
+   Duration  44.28s (transform 7.56s, setup 0ms, collect 26.80s, tests 11.78s, environment 0ms, prepare 81ms)
+
+exit 0

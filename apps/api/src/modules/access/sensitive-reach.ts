@@ -19,7 +19,8 @@
 //     `not_found` (existence not disclosed, ADR-0006) when restricted. Used by the form-record sub-resources.
 //   - `registerSensitiveReachGuard(app, db)`: the same decision for every route whose path parameters name a sensitive
 //     value child (`SENSITIVE_REACH_PARAMS`: benefitMeasurementId, benefitPlanValueId, financeValidationId, lineId of a
-//     business case, ...), before the handler runs, for reads and writes alike.
+//     business case, correctiveCaseId, transitionDecisionId, performanceAreaLinkId, ...), before the handler runs, for
+//     reads and writes alike.
 //
 // Fail-closed: a child row that no longer exists (or a polymorphic reference to an unknown form type) is resolved from
 // the audit event's `changes` (`<owner column>.from|to`) when the caller passes them; when no owner can be resolved and
@@ -462,6 +463,12 @@ export const SENSITIVE_REACH_PARAMS: Readonly<
   benefitOverlapId: { recordType: "benefit_overlap" },
   financeValidationId: { recordType: "finance_validation" },
   lineId: { recordType: "business_case_line", urlIncludes: "/business-cases/" },
+  // T-DG6-BE-Z4 (F-DG6-220): the benefit children of the sustainment and corrective registers (item, close, signals,
+  // actions, submit, link remove), and the enabler link's remove route.
+  correctiveCaseId: { recordType: "corrective_case" },
+  transitionDecisionId: { recordType: "transition_decision" },
+  performanceAreaLinkId: { recordType: "performance_area_link" },
+  benefitEnablerId: { recordType: "benefit_enabler" },
 };
 
 const REACH_PARAMS: ReadonlyMap<string, { readonly recordType: string; readonly urlIncludes?: string }> = new Map(

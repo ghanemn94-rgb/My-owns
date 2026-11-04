@@ -31,7 +31,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { loadDefaultWorkingCalendar } from "../portfolio/index.ts";
-import { loadOpenWorkItems, type OpenWorkItemFact } from "../tasks/index.ts";
+import { INBOX_RESTRICTED, loadOpenWorkItems, restrictedLinkChildren, type OpenWorkItemFact } from "../tasks/index.ts";
 import { dueSoonHorizon } from "./dashboards/areas.ts";
 import { readOnly, T_PATH } from "./dashboards/engine.ts";
 import { businessClockOf } from "./dashboards/filters.ts";
@@ -244,7 +244,18 @@ export async function loadMyWork(db: DbOrTx, principal: Principal): Promise<MyWo
   const workItems = (await loadOpenWorkItems(db, userId)).filter((w) =>
     visible(w.transformationId, w.organizationId, readable, orgs),
   );
-  const items: MyWorkItem[] = workItems.map((w) => workItemOf(w, clock.date));
+  // T-DG6-BE-Z4 (F-DG6-220; ADR-0051 §2, §3): an item about a corrective case or transition decision the caller is not
+  // admitted to stays listed (it is the caller's task) with the inbox's `inbox.restricted` text and no code.
+  const restricted = await restrictedLinkChildren(
+    db,
+    principal,
+    workItems.map((w) => w.linkPath),
+  );
+  const items: MyWorkItem[] = workItems.map((w, i) =>
+    restricted.at(i) === true
+      ? { ...workItemOf(w, clock.date), ...INBOX_RESTRICTED, code: null }
+      : workItemOf(w, clock.date),
+  );
 
   // Action items the caller owns that no open work item of the caller names as its subject (listed once).
   const named = new Set(workItems.filter((w) => w.subjectType === "action_item").map((w) => w.subjectId));
