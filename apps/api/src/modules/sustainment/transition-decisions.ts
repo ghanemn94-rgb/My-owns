@@ -55,7 +55,13 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead, type ResolvedTarget } from "../access/index.ts";
+import {
+  principalOf,
+  requireTransformationRead,
+  restrictedRecordRefs,
+  withoutRestricted,
+  type ResolvedTarget,
+} from "../access/index.ts";
 import { record, type AuditContext } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -386,6 +392,12 @@ async function createDecision(tx: Tx, request: FastifyRequest, transformationId:
     .where("transformation_id", "=", transformationId)
     .executeTakeFirst();
   if (!benefit || benefit.status !== "active") throw BENEFIT_REFERENCE();
+  // ADR-0051 §2 (T-DG6-BE-Z4, F-DG6-220): a sensitive benefit the caller is not admitted to is answered as absent, so a
+  // draft cannot disclose that it exists (or whether it has validated value or a live decision).
+  if (
+    (await restrictedRecordRefs(tx, principalOf(request), [{ recordType: "benefit", recordId: benefit.id }])).size > 0
+  )
+    throw BENEFIT_REFERENCE();
   await assertActiveUsers(tx, ctx.organizationId, [{ id: body.residualOwnerUserId, pointer: "/residualOwnerUserId" }]);
   if (body.firstMonitoringDate > body.expectedRealizationEnd) throw MONITORING_AFTER_END();
   if (await benefitHasValidatedValue(tx, benefit.id)) throw BENEFIT_VALIDATED();
@@ -819,7 +831,14 @@ export function registerTransitionDecisionRoutes(app: FastifyInstance, { db }: M
       .limit(query.limit + 1)
       .execute()) as DecisionRow[];
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentDecisions(db, page.items), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Z4, F-DG6-220): the decision of a sensitive benefit the caller is not admitted to is absent
+    // (after pagination, no count of hidden rows; the item, edit and submit answer 404 through the transitionDecisionId
+    // reach guard).
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "transition_decision",
+      recordId: r.id,
+    }));
+    return { items: await presentDecisions(db, visible), nextCursor: page.nextCursor };
   });
 
   app.post(TRANSITION_DECISIONS, { config: propose }, async (request, reply) => {

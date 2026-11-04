@@ -18,7 +18,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { auditContextOf, organizationsWith, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
-import { readableTargets } from "./deep-links.ts";
+import { readableTargets, restrictedLinkChildren } from "./deep-links.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -91,6 +91,10 @@ export const toWorkItem = (r: WorkItemRow): WorkItem => ({
   createdAt: iso(r.created_at),
   version: r.version,
 });
+
+/** A work item as returned to its assignee; `restricted`: its text is redacted (T-DG6-BE-Z4; ADR-0051 §3). */
+const workItemFor = (r: WorkItemRow, restricted: boolean): WorkItem =>
+  restricted ? { ...toWorkItem(r), ...INBOX_RESTRICTED, periodLabel: null } : toWorkItem(r);
 
 export const toInboxNotification = (r: InboxNotificationRow): InboxNotification => ({
   id: r.id,
@@ -271,7 +275,14 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [Number(r.status_rank), String(r.due_rank), r.id], hash);
-    return { items: page.items.map(toWorkItem), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z4 (F-DG6-220; ADR-0051 §2, §3): a work item about a corrective case or transition decision the caller
+    // is not admitted to keeps its ids, link, status and version, and its text is the inbox's `inbox.restricted`.
+    const restricted = await restrictedLinkChildren(
+      db,
+      principalOf(request),
+      page.items.map((r) => r.link_path),
+    );
+    return { items: page.items.map((r, i) => workItemFor(r, restricted.at(i) === true)), nextCursor: page.nextCursor };
   });
 
   app.get(ITEM, { config: session }, async (request, reply) => {
@@ -285,7 +296,8 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .where("assignee_user_id", "=", userId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, toWorkItem(row));
+    const [restricted] = await restrictedLinkChildren(db, principalOf(request), [row.link_path]);
+    return sendVersioned(reply, 200, workItemFor(row, restricted === true));
   });
 
   app.post(COMPLETE, { config: session }, async (request, reply) => {

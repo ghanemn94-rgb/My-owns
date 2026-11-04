@@ -16,7 +16,9 @@
 //   read on its transformation AND the ADR-0051 §2 sensitivity clause (through `ReadScope.admits`), and, for an evidence
 //   item, every benefit or business case it is linked to passes the same clause (ADR-0051 §4; the same link tables as
 //   evidence/access.ts - the tasks module may not import evidence, so the deep-link parity test pins the agreement).
-//   A missing (deleted) record is not readable.
+//   A missing (deleted) record is not readable. A link to a corrective case or a transition decision (records that carry
+//   a benefit's values; `restrictedLinkChildren`, T-DG6-BE-Z4) is not readable when that record is restricted for the
+//   reader under the ADR-0051 §2 amendment (sensitive-reach.ts).
 //
 // The token is an opaque identifier, NEVER a credential: holding it grants nothing, every resolution re-authorizes the
 // signed-in caller, and being the recipient is neither required nor sufficient. Every forbidden token answers the same
@@ -32,7 +34,9 @@ import {
   loadSensitiveRecords,
   principalOf,
   readScopeFor,
+  reachKey,
   resolveTarget,
+  restrictedRecordRefs,
   SENSITIVE_RECORD_TYPE_LIST,
   type Principal,
   type ReadScope,
@@ -80,6 +84,42 @@ export function deepLinkTarget(linkPath: string): DeepLinkTarget | null {
     if (m) return { recordType, recordId: m[2]!.toLowerCase(), transformationId: m[1]!.toLowerCase() };
   }
   return null;
+}
+
+/**
+ * The web routes of the records that carry a sensitive benefit's values and have their own page (T-DG6-BE-Z4,
+ * F-DG6-220; ADR-0051 §2 amendment): a corrective case and a transition decision. A notification or work item whose
+ * link names one is readable only when that record is not restricted for the reader (`restrictedRecordRefs`).
+ */
+const CHILD_ROUTES: readonly (readonly [string, RegExp])[] = [
+  ["corrective_case", new RegExp(`^/transformations/(${UUID})/corrective-actions/(${UUID})(?:[/?#]|$)`)],
+  ["transition_decision", new RegExp(`^/transformations/(${UUID})/transition-decisions/(${UUID})(?:[/?#]|$)`)],
+];
+
+/** The sensitive-value child record a link path names (a corrective case or transition decision), or null. */
+export function deepLinkChild(linkPath: string): { recordType: string; recordId: string } | null {
+  for (const [recordType, pattern] of CHILD_ROUTES) {
+    const m = pattern.exec(linkPath);
+    if (m) return { recordType, recordId: m[2]!.toLowerCase() };
+  }
+  return null;
+}
+
+/**
+ * For each link path: true when it names a corrective case or transition decision that discloses a sensitive record
+ * the principal is not admitted to (ADR-0051 §2; T-DG6-BE-Z4, F-DG6-220). One reach decision for the batch; a path
+ * naming no such record is false. Used by the work-item reads and My Work to redact their text.
+ */
+export async function restrictedLinkChildren(
+  db: DbOrTx,
+  principal: Principal,
+  linkPaths: readonly string[],
+): Promise<boolean[]> {
+  const children = linkPaths.map(deepLinkChild);
+  const refs = children.filter((c): c is NonNullable<typeof c> => c !== null);
+  if (refs.length === 0) return linkPaths.map(() => false);
+  const restricted = await restrictedRecordRefs(db, principal, refs);
+  return children.map((c) => c !== null && restricted.has(reachKey(c)));
 }
 
 /** What a notification points to, for the read check. */
@@ -154,6 +194,12 @@ export async function readableTargets(
 ): Promise<boolean[]> {
   const refs = rows.map(targetRefOf);
   if (refs.every((r) => r.kind === "organization")) return refs.map(() => true);
+  // T-DG6-BE-Z4 (F-DG6-220): a link to a restricted corrective case or transition decision is not readable.
+  const restrictedChild = await restrictedLinkChildren(
+    db,
+    principal,
+    rows.map((r) => r.link_path),
+  );
   const scope = await readScopeFor(db, principal, "transformation.read");
   // Records of each type, then the evidence items' parents.
   const records = new Map<SensitiveRecordType, Map<string, SensitiveRecordRow>>();
@@ -181,8 +227,10 @@ export async function readableTargets(
     return scopeOf.admits({ recordType: rec.recordType, recordId: rec.id, target, partyUserIds: rec.partyUserIds });
   };
   const out: boolean[] = [];
-  for (const ref of refs) {
-    if (ref.kind === "organization") {
+  for (const [i, ref] of refs.entries()) {
+    if (restrictedChild.at(i) === true) {
+      out.push(false);
+    } else if (ref.kind === "organization") {
       out.push(true);
     } else if (ref.kind === "transformation") {
       const target = await transformationTarget(ref.transformationId);

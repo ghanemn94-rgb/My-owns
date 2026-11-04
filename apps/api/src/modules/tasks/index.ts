@@ -33,6 +33,7 @@ export {
   deepLinkTarget,
   issueDeepLink,
   readableTargets,
+  restrictedLinkChildren,
   type DeepLinkTarget,
   type IssuedDeepLink,
 } from "./deep-links.ts";

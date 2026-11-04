@@ -41,7 +41,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -518,7 +518,14 @@ export function registerCorrectiveCaseRoutes(app: FastifyInstance, { db }: Modul
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentCases(db, page.items), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Z4, F-DG6-220): the case of a sensitive benefit the caller is not admitted to is absent
+    // (after pagination, no count of hidden rows; the item, signals, actions and writes answer 404 through the
+    // correctiveCaseId reach guard).
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "corrective_case",
+      recordId: r.id,
+    }));
+    return { items: await presentCases(db, visible), nextCursor: page.nextCursor };
   });
 
   app.post(CORRECTIVE_CASES, { config: write }, async (request, reply) => {

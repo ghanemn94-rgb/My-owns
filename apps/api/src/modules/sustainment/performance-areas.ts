@@ -38,7 +38,13 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead, technicalAdminRefusal } from "../access/index.ts";
+import {
+  principalOf,
+  requireTransformationRead,
+  restrictedRecordRefs,
+  technicalAdminRefusal,
+  withoutRestricted,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -750,6 +756,9 @@ async function findLink(tx: DbOrTx, areaId: string, linkId: string, lock = false
   return row as LinkRow;
 }
 
+/** A transformation id no row has (the nil uuid): `assertSameTransformation` then answers its 422 for any id. */
+const NO_TRANSFORMATION = "00000000-0000-0000-0000-000000000000";
+
 async function createLink(tx: Tx, request: FastifyRequest): Promise<{ areaId: string; linkId: string }> {
   const { transformationId, performanceAreaId } = parseAreaParams(request.params);
   const ctx = await openSustainmentWrite(tx, request, transformationId, PERFORMANCE_AREA_MANAGE);
@@ -759,7 +768,20 @@ async function createLink(tx: Tx, request: FastifyRequest): Promise<{ areaId: st
   const targetId = (body.linkKind === "kpi" ? body.kpiDefinitionId : body.benefitId)!;
   if (body.linkKind === "kpi")
     await assertSameTransformation(tx, "kpi_definition", transformationId, targetId, "/kpiDefinitionId");
-  else await assertSameTransformation(tx, "benefit", transformationId, targetId, "/benefitId");
+  else {
+    // ADR-0051 §2 (T-DG6-BE-Z4, F-DG6-220): a sensitive benefit the caller is not admitted to is answered as absent
+    // (the same 422 validation.reference as an unknown id), so a link cannot disclose that it exists.
+    const restricted = await restrictedRecordRefs(tx, principalOf(request), [
+      { recordType: "benefit", recordId: targetId },
+    ]);
+    await assertSameTransformation(
+      tx,
+      "benefit",
+      restricted.size > 0 ? NO_TRANSFORMATION : transformationId,
+      targetId,
+      "/benefitId",
+    );
+  }
   const existing = await tx
     .selectFrom("performance_area_link")
     .select("id")
@@ -920,7 +942,13 @@ export function registerPerformanceAreaRoutes(app: FastifyInstance, { db }: Modu
       .limit(query.limit + 1)
       .execute()) as LinkRow[];
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toLink), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Z4, F-DG6-220): the link to a sensitive benefit the caller is not admitted to is absent
+    // (after pagination, no count of hidden rows; a KPI link has no sensitive owner and stays listed).
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "performance_area_link",
+      recordId: r.id,
+    }));
+    return { items: visible.map(toLink), nextCursor: page.nextCursor };
   });
 
   app.post(AREA_LINKS, { config: manage }, async (request, reply) => {

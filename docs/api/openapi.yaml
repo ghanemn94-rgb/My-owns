@@ -7759,7 +7759,7 @@ paths:
     get:
       tags: [tasks]
       operationId: listMyWorkItems
-      summary: "The caller's own My Work items (open first by due date). No other person's items are ever listed."
+      summary: "The caller's own My Work items (open first by due date). No other person's items are ever listed. An item about a corrective case or transition decision of a sensitive benefit the caller is not admitted to keeps its ids, link, status and version, with messageKey inbox.restricted, messageParams {} and periodLabel null (ADR-0051 §2, §3)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -7781,7 +7781,7 @@ paths:
     get:
       tags: [tasks]
       operationId: getWorkItem
-      summary: "Read one of the caller's work items (others: 404)."
+      summary: "Read one of the caller's work items (others: 404). Redacted as in listMyWorkItems (inbox.restricted) when it is about a restricted corrective case or transition decision (ADR-0051 §2, §3)."
       responses:
         "200":
           description: "OK."
@@ -7826,7 +7826,7 @@ paths:
     get:
       tags: [tasks]
       operationId: listMyInbox
-      summary: "The caller's in-app reminders, newest first, with the unread count."
+      summary: "The caller's in-app reminders, newest first, with the unread count. An item whose target the caller cannot read now (a restricted benefit, business case or evidence item, or a corrective case or transition decision of a restricted benefit) keeps its ids, link, read state and version, with messageKey inbox.restricted and messageParams {} (ADR-0051 §2, §3)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -11274,7 +11274,7 @@ paths:
     get:
       tags: [corrective-actions]
       operationId: listCorrectiveCases
-      summary: "Corrective-action cases (recovery plans) of the transformation, from KPI deviations, benefit variances, failed adoption or control checks, and Value Review findings (transformation.read)."
+      summary: "Corrective-action cases (recovery plans) of the transformation, from KPI deviations, benefit variances, failed adoption or control checks, and Value Review findings (transformation.read). The case of a sensitive benefit the caller is not admitted to is absent, with no count of hidden rows (filtered after pagination, so a page can hold fewer than limit items; ADR-0051 §2)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -11326,7 +11326,7 @@ paths:
     get:
       tags: [corrective-actions]
       operationId: getCorrectiveCase
-      summary: "Read one corrective-action case, with the benefit's lifecycle step when the source is a benefit (transformation.read)."
+      summary: "Read one corrective-action case, with the benefit's lifecycle step when the source is a benefit (transformation.read). 404 when the case belongs to a sensitive benefit the caller is not admitted to, as on every route under this case (ADR-0051 §2)."
       responses:
         "200":
           description: "OK."
@@ -14382,7 +14382,7 @@ paths:
     get:
       tags: [transition-decisions]
       operationId: listTransitionDecisions
-      summary: "Benefit transition decisions for long-realization benefits (REQ-S11-007) (transformation.read)."
+      summary: "Benefit transition decisions for long-realization benefits (REQ-S11-007) (transformation.read). The decision of a sensitive benefit the caller is not admitted to is absent, with no count of hidden rows (filtered after pagination; ADR-0051 §2)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -14433,7 +14433,7 @@ paths:
     get:
       tags: [transition-decisions]
       operationId: getTransitionDecision
-      summary: "Read one decision with its approval (transformation.read)."
+      summary: "Read one decision with its approval (transformation.read). 404 when the decision belongs to a sensitive benefit the caller is not admitted to, as on every route under this decision (ADR-0051 §2)."
       responses:
         "200":
           description: "OK."
@@ -14678,7 +14678,7 @@ paths:
     get:
       tags: [performance-areas]
       operationId: listPerformanceAreaLinks
-      summary: "The area's KPIs and benefits (transformation.read)."
+      summary: "The area's KPIs and benefits (transformation.read). The link to a sensitive benefit the caller is not admitted to is absent, with no count of hidden rows (filtered after pagination; ADR-0051 §2)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -16462,7 +16462,7 @@ paths:
     get:
       tags: [dashboards]
       operationId: getMyWork
-      summary: "My Work = the personal work dashboard (REQ-S03-008): the caller's own assigned actions, drafts, reviews, approvals, missing updates and other items, with upcoming deadlines; section pages one section (any signed-in user; own items only)."
+      summary: "My Work = the personal work dashboard (REQ-S03-008): the caller's own assigned actions, drafts, reviews, approvals, missing updates and other items, with upcoming deadlines; section pages one section (any signed-in user; own items only). A work item about a corrective case or transition decision of a sensitive benefit the caller is not admitted to is listed with messageKey inbox.restricted, messageParams {} and code null (ADR-0051 §2, §3)."
       parameters:
         - $ref: "#/components/parameters/MyWorkSectionQuery"
         - $ref: "#/components/parameters/Cursor"
