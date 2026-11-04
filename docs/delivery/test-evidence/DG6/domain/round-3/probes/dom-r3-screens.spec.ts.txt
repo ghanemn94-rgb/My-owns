@@ -1,0 +1,110 @@
+// DOMAIN REVIEWER PROBE (DG6 round 3), disposable clone only. SYNTHETIC data. Production-initialized dev stack
+// (apps/web/e2e/support/with-stack.sh; no worker). (1) Visits P6 screens in en and ar, checks <html lang/dir>, scans for
+// raw stack traces / SQL / infrastructure terms, takes full-page screenshots. (2) Edits a connector to name a secret
+// reference IT has NOT bound (D-209, F-DG6-181) and records what the administrator sees. (3) Starts ONE live-selection
+// export (D-207) and watches its asynchronous assembly on "Your exports".
+import { expect, test } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { apiSession, langOf, shot, signIn, SYN_RETAIL, tr } from "../../apps/web/e2e/support/ui.ts";
+
+const ORG = "01920000-0000-7000-9000-000000000001";
+const SCREENS: [string, string, string][] = [
+  ["dev.admin", "/admin/assistant", "dom-r3-admin-assistant-off"],
+  ["dev.admin", "/admin/integrations", "dom-r3-admin-integrations"],
+  ["dev.admin", "/admin/operations", "dom-r3-admin-operations"],
+  ["dev.office", "/strategy-kpis/imports", "dom-r3-imports-entry"],
+  ["dev.office", "/search?q=synthetic", "dom-r3-search"],
+  ["dev.office", "/my-work", "dom-r3-my-work"],
+];
+const INFRA = /\b(stack trace|at Object\.|SELECT |postgres|pg-boss|ECONNREFUSED|kysely|node_modules|undefined|NaN|advisory|SKIP LOCKED|outbox|SECRET_BINDINGS_FILE|secret_ref_not_bound)\b/i;
+
+test.describe.configure({ timeout: 600_000 });
+test("DOMAIN PROBE R3: P6 screens, an unbound secret reference, and a live-selection export", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  let who = "";
+  for (const [user, path, name] of SCREENS) {
+    if (user !== who) { await page.context().clearCookies(); await signIn(page, lang, user); who = user; }
+    await page.goto(path);
+    await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    const text = await page.locator("main#main").innerText();
+    console.log(`DOMAIN-PROBE ${lang} ${path} h1=${JSON.stringify(await page.locator("main#main h1").innerText())} infraHit=${INFRA.test(text) ? JSON.stringify(text.match(INFRA)![0]) : "none"} chars=${text.length}`);
+    expect(INFRA.test(text), `${path}: ${text.match(INFRA)?.[0]}`).toBe(false);
+    await shot(page, lang, name);
+  }
+
+  // (2) An unbound SecretRef on the connector form (D-209).
+  const admin = await apiSession(playwright, "dev.admin");
+  const lead = await apiSession(playwright, "dev.lead");
+  const tr0 = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R3 connector ${lang.toUpperCase()}`, mode: "end_to_end" });
+  const created = await admin.call<{ id: string }>("POST", "/api/v1/admin/connectors", {
+    organizationId: ORG, code: `dom-r3-${lang}-${randomUUID().slice(0, 6)}`,
+    nameEn: `Synthetic domain R3 source ${lang.toUpperCase()}`, nameAr: `مصدر اصطناعي للمراجعة ${lang.toUpperCase()}`,
+    adapterKind: "test_adapter", targetKind: "kpi_actual",
+    config: { sourceSystemId: `synthetic.kpi-source:dom-r3-${lang}`, endpointUrl: null, credentialRefs: {}, fieldMappings: [],
+      targetTransformationId: tr0.id, cadence: "manual", retryMaxAttempts: 0, retryBackoffSeconds: 60, commitMode: "manual",
+      commitOnBehalfOf: null, outboundActions: [], reconciliationRule: "row_count",
+      adapterSettings: { mode: "healthy", fixture: { rows: [], controlColumn: "value" } }, reason: "Synthetic connector for the domain probe." },
+  });
+  await page.context().clearCookies();
+  await signIn(page, lang, "dev.admin");
+  await page.goto(`/admin/integrations/connectors/${created.id}/edit`);
+  await expect(page.locator("form[data-connector-form]")).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: tr(lang, "integrations.credentials.add") }).click();
+  const row = page.locator(".integrations-credential").last();
+  await row.getByLabel(tr(lang, "integrations.credentials.purpose")).fill("api");
+  await row.getByLabel(tr(lang, "integrations.credentials.provider")).fill("env");
+  await row.getByLabel(tr(lang, "integrations.credentials.secretName")).fill("MTH_SECRET_DOMAIN_R3_NOT_BOUND");
+  await page.locator("form[data-connector-form] textarea").last().fill("Synthetic: name the feed credential (domain probe)");
+  const respP = page.waitForResponse((r) => r.url().includes(`/api/v1/admin/connectors/${created.id}`) && r.request().method() === "PUT", { timeout: 60_000 });
+  await page.locator("form[data-connector-form] button[type=submit]").click();
+  const resp = await respP;
+  const body = await resp.json();
+  await page.waitForTimeout(500);
+  const banner = await page.locator("form[data-connector-form] [role=alert]").allInnerTexts();
+  const invalid = await page.locator("form[data-connector-form] .field--invalid").count();
+  const fieldErrs = await page.locator("form[data-connector-form] .field--invalid").allInnerTexts();
+  console.log(`DOMAIN-PROBE ${lang} unbound SecretRef: PUT -> ${resp.status()} code=${body.code} fieldErrors=${JSON.stringify(body.errors)} | banner=${JSON.stringify(banner)} invalidFields=${invalid} ${JSON.stringify(fieldErrs)}`);
+  await shot(page, lang, "dom-r3-connector-unbound-secret");
+  expect(resp.status()).toBe(400);
+
+  // (3) A live-selection export (D-207): 202 immediately, no snapshot yet; the API's assembly watch assigns it.
+  const tr1 = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R3 export ${lang.toUpperCase()}`, mode: "end_to_end" });
+  await lead.call("POST", `/api/v1/transformations/${tr1.id}/raid`, { type: "risk",
+    description: `Synthetic domain R3 risk ${lang}`, impact: "high", probability: "medium", ownerUserId: lead.userId });
+  await page.context().clearCookies();
+  await signIn(page, lang, "dev.lead");
+  await page.goto("/evidence-reports/exports");
+  await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+  const csrf = ((await (await page.request.get("/api/v1/me")).json()) as { csrfToken: string }).csrfToken;
+  const t0 = Date.now();
+  const res = await page.request.post("/api/v1/exports", {
+    headers: { "x-csrf-token": csrf, origin: new URL(page.url()).origin, "idempotency-key": randomUUID() },
+    data: { report: { definitionCode: "registers", subjectId: tr1.id, parameters: { register: "raid" } }, format: "csv", language: lang },
+  });
+  const ms = Date.now() - t0;
+  const ex = await res.json();
+  console.log(`DOMAIN-PROBE ${lang} createExport live -> ${res.status()} in ${ms} ms snapshotId=${ex.snapshotId} status=${ex.status}`);
+  expect(res.status()).toBe(202);
+  await page.goto("/evidence-reports/exports");
+  await page.waitForLoadState("networkidle");
+  await shot(page, lang, "dom-r3-exports-live");
+  let job: any = null;
+  for (let i = 0; i < 30; i++) {
+    job = await (await page.request.get(`/api/v1/exports/${ex.id}`)).json();
+    if (job.snapshotId !== null || job.status !== "queued") break;
+    await page.waitForTimeout(1000);
+  }
+  console.log(`DOMAIN-PROBE ${lang} after assembly: status=${job.status} snapshotId=${job.snapshotId} errorCode=${job.errorCode}`);
+  expect(job.snapshotId, "the API's assembly watch assigns the snapshot").not.toBeNull();
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  const text = await page.locator("main#main").innerText();
+  console.log(`DOMAIN-PROBE ${lang} exports table: ${JSON.stringify(text.slice(0, 500))}`);
+  expect(INFRA.test(text), `exports: ${text.match(INFRA)?.[0]}`).toBe(false);
+  await shot(page, lang, "dom-r3-exports-assembled");
+});

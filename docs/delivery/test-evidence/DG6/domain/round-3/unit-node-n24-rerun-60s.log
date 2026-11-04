@@ -1,0 +1,34 @@
+$ (Node v24.21.0; load average: 27.16 27.06 26.32) npx vitest run --configLoader runner --project unit-node --testTimeout=60000 apps/api/src/server.test.ts apps/api/src/architecture.test.ts packages/reporting/src/branding-layout.test.ts tests/qa/unit/dlv038-s20-029-load-report.test.ts  (diagnostic: the default 5 s / 30 s per-test limits raised to 60 s because of host load; no other change)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.CXqoMv/claude-0/review-dg6
+
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 4866ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  2161ms
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  719ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  1297ms
+   ✓ DOCX and PPTX > PPTX: the header, the footer and B0004 on the closing 'About this file' slide  445ms
+ ✓ |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts (6 tests) 111ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 9158ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  3360ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  2531ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  2015ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  980ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 56701ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048)  368ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  33257ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  1880ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1766ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/config imports only @mth/shared  373ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  4606ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  11809ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1618ms
+
+ Test Files  4 passed (4)
+      Tests  158 passed (158)
+   Start at  14:05:15
+   Duration  59.72s (transform 21.98s, setup 0ms, collect 50.41s, tests 70.84s, environment 1ms, prepare 501ms)
+
+exit=0

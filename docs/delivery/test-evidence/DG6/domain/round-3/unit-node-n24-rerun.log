@@ -1,0 +1,73 @@
+$ (Node v24.21.0; load average: 26.86 26.02 25.81) npx vitest run --configLoader runner --project unit-node tests/qa/unit/dlv038-s20-029-load-report.test.ts apps/api/src/architecture.test.ts apps/api/src/server.test.ts packages/reporting/src/branding-layout.test.ts  (re-run alone after the full run; sparse checkout now includes T-DG6-DO-G/H/B evidence)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.CXqoMv/claude-0/review-dg6
+
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 13902ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  4918ms
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  3973ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  3271ms
+   ✓ DOCX and PPTX > DOCX: the header line in the body, the footer line and B0004 in the page footer  767ms
+   ✓ DOCX and PPTX > PPTX: the header, the footer and B0004 on the closing 'About this file' slide  941ms
+ ✓ |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts (6 tests) 90ms
+ ❯ |unit-node| apps/api/src/server.test.ts (6 tests | 1 failed) 13834ms
+   × route registration > declares access on every /api route and on the health endpoints 5805ms
+     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  4551ms
+   ✓ session cookie security in production (F-DG1-112) > the loader fails closed at startup on a plain-http, non-loopback APP_BASE_URL 3ms
+   ✓ session cookie security in production (F-DG1-112) > the API refuses to start even with a hand-built configuration that bypassed the loader 195ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  2103ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  1138ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 112962ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048)  562ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  72935ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: a planted non-.ts module file (zz-planted.mts etc.) is linted like a .ts one, end to end  508ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-134: zz-planted.mts via fileViolations yields the rule-5 and deep-import violations  504ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > F-DG1-135: only *.test.ts/*.test.tsx (build-excluded) get the test allowance; *.test.mts etc. get full rules  483ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  3874ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1629ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/config imports only @mth/shared  309ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  4722ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  22332ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1721ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/server.test.ts > route registration > declares access on every /api route and on the health endpoints
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ apps/api/src/server.test.ts:24:3
+     22| 
+     23| describe("route registration", () => {
+     24|   it("declares access on every /api route and on the health endpoints"…
+       |   ^
+     25|     const routes = await routesFor({ AUTH_MODE: "dev" });
+     26|     const governed = routes.filter(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-worker]: Timeout calling "onTaskUpdate"
+ ❯ Object.onTimeoutError node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10
+ ❯ Timeout._onTimeout node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62
+ ❯ listOnTimeout node:internal/timers:685:17
+ ❯ processTimers node:internal/timers:618:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 157 passed (158)
+     Errors  1 error
+   Start at  14:01:28
+   Duration  118.81s (transform 40.17s, setup 0ms, collect 96.30s, tests 140.79s, environment 1ms, prepare 1.25s)
+
+exit=1

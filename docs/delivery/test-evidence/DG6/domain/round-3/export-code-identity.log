@@ -1,0 +1,10 @@
+# Export/load code identity since round 2 (9bb2207 -> 95f981917)
+$ git diff --stat 9bb2207..95f981917 -- apps/api/src/modules/reporting deploy/load deploy/scripts packages/reporting apps/worker/src/handlers/reports* apps/worker/src/handlers/export*
+(empty above = unchanged)
+$ sha256sum deploy/load/generate.mjs deploy/load/export-proof.mjs
+6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a  deploy/load/generate.mjs
+7865d9d3f1aa5d4063b72243ad52e795c485fcee78fe24c429663d5549ed154b  deploy/load/export-proof.mjs
+$ git diff --stat 9bb2207..95f981917 -- apps/api/test/integration/reporting
+ apps/api/test/integration/reporting/exports-assembly.test.ts | 4 ++++
+ 1 file changed, 4 insertions(+)
+exit=0
