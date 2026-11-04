@@ -6,7 +6,11 @@
 //
 //   - `SENSITIVE_CHILD_SOURCES`: the record types (audit `record_type` = table name) whose rows hold a sensitive
 //     record's values, and the column(s) naming their sensitive owner(s). A row may have two owners (a benefit-evidence
-//     link, a form attachment, an overlap of two benefits); it is restricted when ANY owner is.
+//     link, a form attachment, an overlap of two benefits); it is restricted when ANY owner is. A row that names no
+//     owner itself but is named BY a child (a `benefit_calculation` lineage row, referenced by
+//     `benefit_measurement.benefit_calculation_id`; T-DG6-BE-Z1, F-DG6-180) is a `via` source: its owners are the
+//     owners of the referencing rows, and a lineage row no measurement references (a T09 calculation run on the
+//     formula alone) has no owner.
 //   - `restrictedRecordRefs(db, principal, refs)`: the `<recordType>:<recordId>` keys of the given records whose
 //     sensitive owner (the record itself, for the three sensitive types) is marked sensitive and not admitted to the
 //     principal by the §2 clause (`sensitivityClauseAdmits`: an active grant, a named party, or `sensitive_record.grant`
@@ -58,6 +62,15 @@ export type ChildSource =
       readonly table: string;
       readonly codes: "table" | "form";
       readonly extra?: readonly ColumnOwner[];
+    }
+  /**
+   * The row is referenced by rows of `via.table` (`via.column` = the row's id), whose owner columns name its owners.
+   * The row carries the referencing record's value (a calculation lineage row holds the measured amount and inputs).
+   */
+  | {
+      readonly kind: "via";
+      readonly table: string;
+      readonly via: { readonly table: string; readonly column: string; readonly owners: readonly ColumnOwner[] };
     };
 
 export interface ColumnOwner {
@@ -112,6 +125,17 @@ export const SENSITIVE_CHILD_SOURCES: Readonly<Record<string, ChildSource>> = {
       { type: "benefit", column: "benefit_id" },
       { type: "evidence", column: "evidence_id" },
     ],
+  },
+  // the calculation lineage of a formula-computed measurement (0023, 0038; F-DG6-180): its inputs and result are the
+  // measured value. Read through benefit_measurement.benefit_calculation_id.
+  benefit_calculation: {
+    kind: "via",
+    table: "benefit_calculation",
+    via: {
+      table: "benefit_measurement",
+      column: "benefit_calculation_id",
+      owners: [{ type: "benefit", column: "benefit_id" }],
+    },
   },
   // business case (0023, 0037, 0085)
   business_case_line: caseChild("business_case_line"),
@@ -197,6 +221,10 @@ export async function sensitiveOwnersOf(db: DbOrTx, refs: readonly ReachRef[]): 
   for (const [type, list] of byType) {
     const source = CHILD_SOURCES.get(type)!;
     const ids = [...new Set(list.map((r) => r.recordId))];
+    if (source.kind === "via") {
+      await viaOwners(db, source, list, ids, add);
+      continue;
+    }
     // Table and column names come from the constant map above, never from input.
     const columns =
       source.kind === "column"
@@ -242,6 +270,45 @@ export async function sensitiveOwnersOf(db: DbOrTx, refs: readonly ReachRef[]): 
     }
   }
   return out;
+}
+
+/**
+ * The owners of `via` child rows: the owners of every row of `via.table` that references them. A row that does not
+ * exist (never expected: the lineage is append-only) is unresolved (fail closed); an existing row nothing references
+ * has no owner.
+ */
+async function viaOwners(
+  db: DbOrTx,
+  source: Extract<ChildSource, { kind: "via" }>,
+  list: readonly ReachRef[],
+  ids: readonly string[],
+  add: (ref: ReachRef, owner: string) => void,
+): Promise<void> {
+  // Table and column names come from the constant map above, never from input.
+  const existing = await sql<{ id: string }>`
+    SELECT id::text AS id FROM ${sql.table(source.table)} WHERE id = ANY(${ids}::uuid[])`.execute(db);
+  const present = new Set(existing.rows.map((r) => r.id));
+  const { table, column, owners } = source.via;
+  const rows = await sql<ChildRow & { readonly ref_id: string }>`
+    SELECT ${sql.ref(column)}::text AS ref_id, id::text AS id,
+           ${sql.join(owners.map((o) => sql`${sql.ref(o.column)}::text AS ${sql.ref(o.column)}`))}
+      FROM ${sql.table(table)} WHERE ${sql.ref(column)} = ANY(${ids}::uuid[])`.execute(db);
+  const byRef = new Map<string, Map<string, string | null>[]>();
+  for (const r of rows.rows) {
+    const m = new Map(Object.entries(r));
+    byRef.set(r.ref_id, [...(byRef.get(r.ref_id) ?? []), m]);
+  }
+  for (const ref of list) {
+    if (!present.has(ref.recordId)) {
+      for (const o of owners) add(ref, unresolved(o.type));
+      continue;
+    }
+    for (const m of byRef.get(ref.recordId) ?? [])
+      for (const o of owners) {
+        const v = m.get(o.column);
+        if (typeof v === "string") add(ref, recordKey(o.type, v));
+      }
+  }
 }
 
 /** The organizations a principal can read anything in (its assignments' organizations). */

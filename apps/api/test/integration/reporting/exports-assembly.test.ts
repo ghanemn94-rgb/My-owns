@@ -527,6 +527,10 @@ describe("F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard", () => {
         snapshotId,
       ]);
     await expect(assign(charter.id as string)).rejects.toMatchObject({ constraint: "export_job_snapshot_selection" });
+    // F-DG6-200: the client has the guard's error before the server has finished aborting the refused UPDATE, whose
+    // BEFORE UPDATE trigger already locked the row; a claim in that instant (FOR UPDATE SKIP LOCKED) skips the job. A
+    // blocking row lock waits on the aborting transaction itself (no timer), and is released when it returns.
+    await api.owner.query(`SELECT id FROM export_job WHERE id = $1 FOR UPDATE`, [job.id]);
     expect(await jobRow(job.id)).toMatchObject({ snapshot_id: null, version: 1 });
     // The watch assigns a snapshot of the selection's own definition (the guard accepts it).
     expect(await step([job.id])).toMatchObject([{ outcome: "assembled", exportJobId: job.id }]);
