@@ -294,3 +294,12 @@ No core module can import `assistant`: at `HEAD` `af13bd6` no module's `dependsO
 - **Database (this task):** `probe-output.txt`, 106/106 PASS, exit 0: G00–G04 (fresh, and over a P5-populated database), AS01–AS20, CV01–CV22, SG01–SG18, NW01–NW03, PM01–PM04 (and LB01–LB06 for the ADR-0007 §4 amendment of 2026-10-27). Two earlier runs are kept and explained in the handback.
 - `catalogue.test.ts` "0111: the P6 slice D guards are attached", the mutable-table and privilege pins; `seed.test.ts` "0112 seed equals the P6 part of permissions.ts (slice D, the assistant)"; `advisory-locks.test.ts` (52 classes).
 - **Implementers** (`p6-work-split.md` §D): BE-T (settings routes with audit, lock and AUD 403; the production refusals; the HTTP adapter against the fake model server; zero requests while disabled; the connection-log module), BE-U (the A12 scoped-retrieval test; the A08/A10 refusal tests with the before/after table snapshot; the injection test; citations; withheld content after a revoked grant; to-draft), FE-E (panel, labels, citations, Administration > AI assistant, en/ar), QA-B (A12), QA-D (A21 with the connection log).
+
+## Amendment (2026-11-04, T-DG6-ARCH-14; F-DG6-181): SecretRefs are bound to their setting
+
+ADR-0052 §5 (amendment of 2026-11-04) binds every `SecretRef` to one consumer kind, one scope (an organization, or the installation) and, for a secret that is sent anywhere, the hosts it may be sent to. IT declares the binding in `SECRET_BINDINGS_FILE`, outside the database and without values. In this ADR the rule applies to the assistant's `credentialRef` (consumer `assistant`, the installation, host of `endpointUrl`; checked on PUT and on enable, and again per call; unbound means no request is made).
+
+- **Write time:** a reference that is not bound gives `400 validation`, field error `validation.secret_ref_not_bound`. A bound reference sent to an unlisted host gives `validation.secret_ref_host_not_bound` at the host field. Each refusal writes the audit event `secret_ref.refused`.
+- **Resolve time:** the check runs again and fails closed. An unbound reference resolves as unset, and the existing unresolvable outcome of this ADR applies.
+
+Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

@@ -215,3 +215,12 @@ The staged view lists every row with its status and reasons; invalid and duplica
 - `probe-output.txt` (110/110 PASS, exit 0): IM01–IM27, WH01–WH13 (with the G, CN, IR, OW, DX, PM groups of ADR-0055).
 - `catalogue.test.ts` and `seed.test.ts` pins (as ADR-0055).
 - Implementer tests in `p6-work-split.md` §B/A: parser limit tests (BE-M), the 8/1/1 CSV and XLSX integration tests (KBE-A), the webhook signature, window, replay and idempotency tests (BE-N); QA-A's A17 suite.
+
+## Amendment (2026-11-04, T-DG6-ARCH-14; F-DG6-181): SecretRefs are bound to their setting
+
+ADR-0052 §5 (amendment of 2026-11-04) binds every `SecretRef` to one consumer kind, one scope (an organization, or the installation) and, for a secret that is sent anywhere, the hosts it may be sent to. IT declares the binding in `SECRET_BINDINGS_FILE`, outside the database and without values. In this ADR the rule applies to the webhook `signingSecretRef` and the carried-over `previousSecretRef` (consumer `webhook_signing`, the endpoint's organization, no host; checked on create and rotate, and again when `receiveWebhook` resolves them; an unbound reference gives the same single 401 `webhook.unauthenticated`).
+
+- **Write time:** a reference that is not bound gives `400 validation`, field error `validation.secret_ref_not_bound`. A bound reference sent to an unlisted host gives `validation.secret_ref_host_not_bound` at the host field. Each refusal writes the audit event `secret_ref.refused`.
+- **Resolve time:** the check runs again and fails closed. An unbound reference resolves as unset, and the existing unresolvable outcome of this ADR applies.
+
+Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

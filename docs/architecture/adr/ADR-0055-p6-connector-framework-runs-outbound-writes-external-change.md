@@ -228,3 +228,12 @@ BE-O writes `apps/api/test/integration/integrations/s16-022-entity-group.test.ts
 - `probe-output.txt` (110/110 PASS, exit 0): G00–G05, CN01–CN16, IR01–IR18, OW01–OW11, DX01–DX14, PM01–PM05 (the WH and IM groups are ADR-0056's).
 - `packages/db/test/integration/catalogue.test.ts` "0104-0106: the P6 slice B/A guards are attached" and the privilege and mutable-table pins; `packages/db/src/seed.test.ts` "0107 seed equals the P6 part of permissions.ts (slices B and A)".
 - Implementer tests named in `p6-work-split.md` §B/A: the test-adapter contract suite (BE-L), the A13 replay test (BE-N), the S17-005 stopped-connector form test (BE-O), the S01-005 four-case test (BE-O), the S16-022 entity-group test (BE-O); QA-A's A17 suite.
+
+## Amendment (2026-11-04, T-DG6-ARCH-14; F-DG6-181): SecretRefs are bound to their setting
+
+ADR-0052 §5 (amendment of 2026-11-04) binds every `SecretRef` to one consumer kind, one scope (an organization, or the installation) and, for a secret that is sent anywhere, the hosts it may be sent to. IT declares the binding in `SECRET_BINDINGS_FILE`, outside the database and without values. In this ADR the rule applies to connector `credentialRefs` (consumer `connector`, the connector's organization, host of `endpointUrl`; checked on create and on every configuration version, so changing either a reference or the endpoint re-checks, and again at every resolve: test, run and outbound dispatch). `CredentialRefView.resolvable` is computed through the binding: an unbound reference is `false` without asking the provider, so it is no existence oracle.
+
+- **Write time:** a reference that is not bound gives `400 validation`, field error `validation.secret_ref_not_bound`. A bound reference sent to an unlisted host gives `validation.secret_ref_host_not_bound` at the host field. Each refusal writes the audit event `secret_ref.refused`.
+- **Resolve time:** the check runs again and fails closed. An unbound reference resolves as unset, and the existing unresolvable outcome of this ADR applies.
+
+Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

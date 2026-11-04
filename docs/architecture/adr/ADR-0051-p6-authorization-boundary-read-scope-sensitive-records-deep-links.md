@@ -184,3 +184,27 @@ None of these entities holds money, a rate or a KPI value. The rollup rule of §
 - **Catalogue and seeds:** `packages/db/test/integration/catalogue.test.ts` (trigger list, mutable-table list, privileges), `packages/db/src/seed.test.ts` (0100 equals `P6_ACCESS_HARDENING_*`).
 - **Implementers:** BE-B parity test (§1) and rollup label tests; BE-C deep-link tests (forwarded link 403 without title; redacted inbox item; restored access), post-handover evidence test (§4), route-inventory sweep (§5); QA-B A12 extension (search, export, evidence URL, deep link, sensitive benefit hidden from a workstream member without the grant).
 - No third-party dependency is added by this ADR.
+
+## Amendment (2026-11-04, T-DG6-ARCH-14): §2, the records that carry a sensitive record's values (sweep after T-DG6-BE-Z1)
+
+**Why.** §2 says that a sensitive record a principal is not admitted to is absent from lists, search, exports and assistant retrieval. It does not say how that extends to the rows that **carry** such a record's values (its children). This ADR does not enumerate them. The shipped rule is recorded here so that the ADR states it, and the enumeration stays in one place in the code.
+
+**The rule as shipped:**
+
+- **Where it lives.** `apps/api/src/modules/access/sensitive-reach.ts` (T-DG6-BE-Y1: F-DG6-121/122/123; T-DG6-BE-Z1: F-DG6-180), constant `SENSITIVE_CHILD_SOURCES`, which is authoritative.
+- **What it lists.** Each record type (the audit `record_type`, which is the table name) whose rows hold a sensitive record's values, and how its sensitive owner(s) are found. There are three kinds of source:
+  - `column`: the row names its owner(s) in a column. Examples are `benefit_overlap` (two benefits) and `benefit_evidence` (a benefit and an evidence item).
+  - `pair`: the row names a `(record type or form code, record id)` pair. Examples are the form sub-resources and the sensitivity and grant rows. The form attachment also names its evidence.
+  - `via`: the row names no owner, but rows of another table name it. Its owners are the owners of those referencing rows. T-DG6-BE-Z1 adds the first such source: `benefit_calculation`, referenced by `benefit_measurement.benefit_calculation_id`, owned by that measurement's `benefit_id`. A stand-alone T09 calculation that no measurement references has no owner and stays listed.
+- **When a row is restricted.** It is restricted when **any** of its owners is sensitive and the principal is not admitted by the §2 clause.
+- **Effects on reads:**
+  - A route whose path names a restricted child answers 404 (`registerSensitiveReachGuard`, `requireRecordReach`).
+  - Lists leave the row out (`restrictedRecordRefs`, `withoutRestricted`). This includes `listBenefitCalculations` since T-DG6-BE-Z1.
+  - Both audit routes redact the row's events.
+- **Pagination.** As in the overlap list (T-DG6-BE-Y1), the list filter runs after pagination. A page can hold fewer than `limit` items while `nextCursor` is set. No count or total of hidden rows is returned.
+- **Unresolved owners fail closed.** An unresolved owner (a deleted child, an unknown form code) is resolved from the audit `changes`. If it cannot be resolved, the row is treated as restricted whenever its transformation holds a sensitive record of the owner type that the principal is not admitted to.
+- **Adding a table.** A new table that carries a sensitive record's value must be added to `SENSITIVE_CHILD_SOURCES` in the same change. Reviewers check this against the migrations' foreign keys, as in the BE-Z1 sweep.
+
+**Checked against the code.** The integrated `HEAD` `561565123` agrees with this rule. No contradiction with §2 was found.
+
+Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
