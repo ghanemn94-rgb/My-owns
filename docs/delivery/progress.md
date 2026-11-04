@@ -78,3 +78,7 @@ All four W3 runs (ARCH-03, BE-B, BE-E, FE-A) were stopped by a container restart
 ## 2026-11-02: DG6 round-2 reviewers aborted by a container restart
 
 The first launch of the three round-2 reviews (runs `DG6-T-DG6-REV-{DOM,CS,QA}-R2-*-20261102T0929*`/`T0930*`) ended at 09:43Z with exit 143 (SIGTERM, `no-result-line`), about 14 minutes in, when the session's container was restarted. No review record was written. Their run records are kept as written; the runner auto-committed their run records and one code-security repro file (kept as committed); the rest of their partial evidence was moved out of the tree (it is not review evidence). The three reviews are relaunched on the same candidate `cf40705b` with the same assignments.
+
+## 2026-11-04: DG6 round-3 QA review aborted
+
+The round-3 QA run `DG6-T-DG6-REV-QA-R3-qa-verifier-20261104T123608Z-01cb5eae` ended with exit 143 (SIGTERM, `no-result-line`) and wrote no review record. A container restart happened while it ran. Its run record is kept as written. Its partial evidence and its unfinished verifications file were moved out of the tree, because they are not review evidence. The QA review is relaunched on the same candidate `aa219bd2` with the same assignment. The domain review (FAIL: F-DG6-220 High, 221 Low, 222 Medium) and the code-security review (PASS; 180 and 181 CLOSED_VERIFIED) are complete.
