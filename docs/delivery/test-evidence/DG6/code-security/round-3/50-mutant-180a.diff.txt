@@ -1,0 +1,16 @@
+# mutant 180a: git diff of the disposable copy w1
+ apps/api/src/modules/kpi/calculations.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/kpi/calculations.ts b/apps/api/src/modules/kpi/calculations.ts
+index d47ae9c52..d1b50e394 100644
+--- a/apps/api/src/modules/kpi/calculations.ts
++++ b/apps/api/src/modules/kpi/calculations.ts
+@@ -283,7 +283,7 @@ export function registerCalculationRoutes(app: FastifyInstance, { db }: ModuleDe
+       recordType: "benefit_calculation",
+       recordId: r.id,
+     }));
+-    return { items: visible.map(toBenefitCalculation), nextCursor: page.nextCursor };
++    void visible; return { items: page.items.map(toBenefitCalculation), nextCursor: page.nextCursor }; // MUTANT 180a
+   });
+ 
+   app.post(

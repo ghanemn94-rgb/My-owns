@@ -1,0 +1,34 @@
+# 44-implementer-regressions-unmutated  started 2026-11-04T13:14:32Z  cwd=/var/tmp/mth-run.QOxjWl/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=26.34 23.12 17.86  commit=95f981917e4e5572f954d7cd159d869eca142bff
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/sensitive-reach-calculations.test.ts apps/api/test/integration/access/sensitive-reach-scenarios.test.ts apps/api/test/integration/integrations/secret-binding.test.ts apps/api/test/integration/integrations/secret-namespace.test.ts apps/api/test/integration/integrations/secret-composition.test.ts
+port-policy: PostgreSQL listening on port 29580 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.QOxjWl/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw252aok_b96ae0f0 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/integrations/secret-binding.test.ts (8 tests) 7859ms
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-1 (the reviewer's reproduction): A cannot name B's connector secret; nothing is sent; one refusal is audited  1016ms
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-3 (host rule, own organization): B cannot point its own bound secret at another host  320ms
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-4 (resolve time, fail closed): a reference written past the API resolves as unset; nothing is sent  932ms
+ ✓ |integration| apps/api/test/integration/integrations/secret-namespace.test.ts (9 tests) 23054ms
+   ✓ F-DG6-120: connector credentials > refuses a platform variable or a file traversal at write time (400), writing nothing  402ms
+   ✓ F-DG6-120: connector credentials > accepts an MTH_SECRET_* reference, which resolves and is sent (positive)  557ms
+   ✓ F-DG6-120: connector credentials > a platform reference stored before the fix resolves nothing: no outbound request, resolvable false  457ms
+   ✓ F-DG6-120: webhook signing secrets > refuses a platform variable or a traversal on create and on rotate (400); accepts MTH_SECRET_*  983ms
+   ✓ F-DG6-120: the SMTP notification channel > refuses a platform variable or a traversal as username or password (400); accepts MTH_SECRET_*  510ms
+   ✓ F-DG6-120: the S3 storage settings > refuses a platform variable or a traversal in the test and the save (400); MTH_SECRET_* tests passed  2016ms
+   ✓ F-DG6-120: the assistant endpoint > refuses a platform variable or a traversal as the credential (400); accepts MTH_SECRET_*  379ms
+ ✓ |integration| apps/api/test/integration/integrations/secret-composition.test.ts (3 tests) 5293ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a correctly signed webhook is accepted through buildServer's own registry; another secret is refused 401  1153ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a connector's credential view says whether each reference resolves (true / false, never null or a value)  322ms
+   ✓ the composition root hands its SecretProvider registry to integrations (F-DG6-QA-A-1) > a connector run resolves its credential through the composed registry; an unset reference fails the run  850ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts (7 tests) 4225ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-calculations.test.ts (5 tests) 5193ms
+   ✓ before marking: every reader lists all lineage rows (DG3-DG5 unchanged) > TL and AUD list the measurement lineage of both benefits and the stand-alone calculation  438ms
+
+ Test Files  5 passed (5)
+      Tests  32 passed (32)
+   Start at  13:14:42
+   Duration  152.12s (transform 16.14s, setup 0ms, collect 86.30s, tests 45.62s, environment 0ms, prepare 876ms)
+
+exit=0  finished 2026-11-04T13:17:23Z  load=28.59 25.60 19.71

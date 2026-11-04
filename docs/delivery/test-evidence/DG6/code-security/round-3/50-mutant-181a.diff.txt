@@ -1,0 +1,16 @@
+# mutant 181a: git diff of the disposable copy w1
+ packages/config/src/secret-bindings.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/packages/config/src/secret-bindings.ts b/packages/config/src/secret-bindings.ts
+index 7ee710ca8..f246cac34 100644
+--- a/packages/config/src/secret-bindings.ts
++++ b/packages/config/src/secret-bindings.ts
+@@ -318,7 +318,7 @@ export function secretBinding(
+   const b = bindings.get(ref.provider, ref.name);
+   if (b === undefined) return "not_bound";
+   if (b.consumer !== use.consumer) return "not_bound";
+-  if (b.organization !== use.organizationCode) return "not_bound";
++  // MUTANT 181a: organization not compared
+   if (b.hosts === null || use.host === null) return "bound";
+   const { hostname, port } = use.host;
+   return b.hosts.some((h) => h.hostname === hostname && (h.port === null || h.port === port))

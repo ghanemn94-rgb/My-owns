@@ -1,0 +1,26 @@
+# 05-install-w1 2026-11-04T12:40:14Z node=v24.21.0 commit=95f981917e4e5572f954d7cd159d869eca142bff
+# node_modules trees copied (cp -a, relative pnpm symlinks preserved) from /home/user/My-owns, whose node_modules/.pnpm/lock.yaml is byte-identical to pnpm-lock.yaml (cmp: LOCK-MATCH); then verified offline:
+$ pnpm install --offline --frozen-lockfile --store-dir /root/.local/share/pnpm/store/v10
+Scope: all 9 workspace projects
+ EROFS  EROFS: read-only file system, symlink '../../../../../../../var/tmp/mth-run.QOxjWl/claude-0/r/w1' -> '/root/.local/share/pnpm/store/v10/projects/e2b529da46e7587787bf3b2b919297a4'
+
+pnpm: EROFS: read-only file system, symlink '../../../../../../../var/tmp/mth-run.QOxjWl/claude-0/r/w1' -> '/root/.local/share/pnpm/store/v10/projects/e2b529da46e7587787bf3b2b919297a4'
+    at async Object.symlink (node:internal/fs/promises:1707:10)
+    at async forceSymlink (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:91544:9)
+    at async registerProject (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:105463:7)
+    at async getContext (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:129463:7)
+    at async mutateModules (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:162923:17)
+    at async recursive (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:164367:100)
+    at async recursiveInstallThenUpdateWorkspaceState (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:164878:31)
+    at async installDeps (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:164685:11)
+    at async /root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:201528:23
+    at async main (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:201486:34)
+exit=226
+# attempt 2: the shared store is read-only (EROFS above, exit 226, pnpm registers the project in <store>/projects). Same check against an empty private store dir: an up-to-date node_modules needs no package from it.
+$ pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/r/store-empty
+Scope: all 9 workspace projects
+ ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY  Aborted removal of modules directory due to no TTY
+
+If you are running pnpm in CI, set the CI environment variable to "true", or set "confirmModulesPurge" to "false".
+exit=1
+# conclusion: node_modules is the byte-for-byte copy of an install whose node_modules/.pnpm/lock.yaml equals the candidate's pnpm-lock.yaml (cmp exit 0); pnpm's own up-to-date check cannot run here (read-only shared store: EROFS; a private store would purge and refetch, offline impossible). Setup only; not a gate check.

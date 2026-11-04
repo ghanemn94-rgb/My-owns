@@ -1,0 +1,16 @@
+# mutant 181b: git diff of the disposable copy w1
+ apps/api/src/modules/platform/secret-namespace.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/platform/secret-namespace.ts b/apps/api/src/modules/platform/secret-namespace.ts
+index 243febcb3..c1065d829 100644
+--- a/apps/api/src/modules/platform/secret-namespace.ts
++++ b/apps/api/src/modules/platform/secret-namespace.ts
+@@ -78,7 +78,7 @@ export async function assertSecretRefsBound(
+   hostPointer: string | null,
+ ): Promise<void> {
+   for (const { ref, pointer } of entries) assertSecretRefInNamespace(ref, pointer);
+-  if (entries.length === 0) return;
++  if (entries.length >= 0) return; // MUTANT 181b: no write-time binding check
+   let organizationCode: string | null = null;
+   if (use.organizationId !== null) organizationCode = await organizationCodeLookup(db)(use.organizationId);
+   const bindings = activeSecretBindings();

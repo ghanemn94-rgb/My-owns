@@ -1,0 +1,16 @@
+# mutant 181c: git diff of the disposable copy w1
+ apps/api/src/modules/platform/secrets.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/platform/secrets.ts b/apps/api/src/modules/platform/secrets.ts
+index b71aa7398..c9c08062d 100644
+--- a/apps/api/src/modules/platform/secrets.ts
++++ b/apps/api/src/modules/platform/secrets.ts
+@@ -123,7 +123,7 @@ export function createSecretProviderRegistry(options: SecretProviderRegistryOpti
+     provider: (id) => providers.get(id),
+     ids: () => [...providers.keys()],
+     async resolve(ref, use) {
+-      const answer = await binding(ref, use);
++      const answer = (await binding(ref, use), "bound" as const); // MUTANT 181c: resolve ignores the binding
+       if (answer !== "bound") {
+         warn({
+           event: "secret_ref.refused",

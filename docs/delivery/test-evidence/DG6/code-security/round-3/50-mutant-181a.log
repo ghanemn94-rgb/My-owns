@@ -1,0 +1,224 @@
+# 50-mutant-181a  started 2026-11-04T13:21:56Z  cwd=/var/tmp/mth-run.QOxjWl/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=22.75 24.44 20.80  commit=95f981917e4e5572f954d7cd159d869eca142bff
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/integrations/secret-binding.test.ts tests/qa/integration/zz-cs-r3-secret-binding.test.ts
+port-policy: PostgreSQL listening on port 29576 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.QOxjWl/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw25buh4_fad47b92 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/integrations/secret-binding.test.ts (8 tests | 4 failed) 6384ms
+   × F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-1 (the reviewer's reproduction): A cannot name B's connector secret; nothing is sent; one refusal is audited 557ms
+     → expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+   × F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-2 (no oracle): an unset unbound name and B's name with B's variable unset give SB-1's exact answer 84ms
+     → Cannot read properties of undefined (reading 'status')
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-3 (host rule, own organization): B cannot point its own bound secret at another host  678ms
+   × F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-4 (resolve time, fail closed): a reference written past the API resolves as unset; nothing is sent 702ms
+     → expected true to be false // Object.is equality
+   × F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-5 (installation and cross-kind): every consumer refuses a secret bound to another kind or scope 371ms
+     → {"id":"01a1a6ba-5b8d-7778-9e7a-ae80618aedb7","organizationId":"01a1a6ba-4fa9-73c3-a013-727c6bbfe3bf","connectorId":"01a1a6ba-5ab3-763e-a561-6228c7279921","endpointKey":"3wT2O73NIjcmLPcYtoh8C2A68soBNH_XgwzCw-1uQkY","receivePath":"/api/v1/webhooks/3wT2O73NIjcmLPcYtoh8C2A68soBNH_XgwzCw-1uQkY","label":"Synthetic sender","signingSecretRef":{"provider":"env","name":"MTH_SECRET_CS_ORGB_SIGNING"},"previousSecretRef":null,"previousValidUntil":null,"secretRotatedAt":null,"toleranceSeconds":300,"status":"active","disabledAt":null,"disabledBy":null,"disableReason":null,"lastReceiptAt":null,"version":1,"updatedAt":"2026-11-04T13:23:13.354Z"}: expected 201 to be 400 // Object.is equality
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-6 (SMTP host): a bound SMTP secret sent to another host is refused at /smtp/host 76ms
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-7 (manifest unset): with an empty manifest even B's own create is refused (fail closed) 124ms
+   ✓ F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-8 (the organization code the binding relies on is immutable in the product) 165ms
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R1 (round-2 reproduction, IT's binding for B in place): A cannot send B's secret to A's host
+R1 B's own connector [33m201[39m {"bearer":{"provider":"env","name":"MTH_SECRET_CS_R2_ORGB_ERP_TOKEN","resolvable":true}}
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R1 (round-2 reproduction, IT's binding for B in place): A cannot send B's secret to A's host
+R1 A GET B's connector [33m404[39m
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R1 (round-2 reproduction, IT's binding for B in place): A cannot send B's secret to A's host
+R1 A's connector naming B's secret [33m400[39m {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a1a6ba-8d1a-7733-95a6-5311fee4669b","errors":[{"pointer":"/config/endpointUrl","code":"validation.secret_ref_host_not_bound","message":"IT has not bound this setting's secret to this host. A secret is sent only to the hosts IT names for it."}]}
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R1 (round-2 reproduction, IT's binding for B in place): A cannot send B's secret to A's host
+R1 B's own test [33m200[39m succeeded [1mnull[22m
+R1 hosts that received B's token ["erp.orgb.example.invalid"]
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R2: A naming B's secret at B's OWN bound host is refused exactly like an unset unbound name
+R2 B's name at B's host {"status":201,"code":"xorg-92a351"}
+R2 unset unbound name    {"status":400,"type":"urn:mth:problem:validation","code":"validation","errors":[{"pointer":"/config/credentialRefs/bearer","code":"validation.secret_ref_not_bound","message":"Name a secret IT bound to this setting. IT binds each secret to one kind of setting and one organization."}]}
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://erp.orgb.example.invalid@collector.attacker.example.invalid/x" -> [33m422[39m connector.secret_value_refused 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://erp.orgb.example.invalid.collector.attacker.example.invalid/x" -> [33m400[39m validation.secret_ref_host_not_bound 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://collector.attacker.example.invalid/erp.orgb.example.invalid" -> [33m400[39m validation.secret_ref_host_not_bound 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://erp.orgb.example.invalid./x" -> [33m400[39m validation.secret_ref_host_not_bound 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://ERP.ORGB.EXAMPLE.INVALID/x" -> [33m201[39m xorg-057aa7 test 200 succeeded 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://erp.orgb.example.invalid:8443/x" -> [33m201[39m xorg-82ddd2 test 200 succeeded 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://erp.orgb.example.invalid%2F@collector.attacker.example.invalid/x" -> [33m422[39m connector.secret_value_refused 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://erp.orgb.example.invalid\\@collector.attacker.example.invalid/x" -> [33m201[39m xorg-81e871 test 200 succeeded 
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname
+R3 "https://2130706433/x" -> [33m400[39m validation.secret_ref_host_not_bound 
+R3 hosts that received B's token ["erp.orgb.example.invalid"]
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R4: rotating an org-A webhook endpoint to B's signing secret is refused
+R4 A endpoint with A's bound secret [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R4: rotating an org-A webhook endpoint to B's signing secret is refused
+R4 rotate to B's signing secret {"status":200}
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R5: the storage candidate TEST naming B's connector secret at the bound S3 host is refused
+R5 storage candidate test {"status":400,"type":"urn:mth:problem:validation","code":"validation","errors":[{"pointer":"/candidate/secretKeyRef","code":"validation.secret_ref_not_bound","message":"Name a secret IT bound to this setting. IT binds each secret to one kind of setting and one organization."}]}
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R6 (observation): an organization code IT pre-bound can be created by another organization's ADM_TECH
+R6 A's ADM_TECH creates organization CSR3PREA3F464 -> [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R6 (observation): an organization code IT pre-bound can be created by another organization's ADM_TECH
+R6 connector in the new organization naming the pre-bound secret at its bound host -> [33m201[39m
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R6 (observation): an organization code IT pre-bound can be created by another organization's ADM_TECH
+R6 the same at another host -> {"status":400,"type":"urn:mth:problem:validation","code":"validation","errors":[{"pointer":"/config/endpointUrl","code":"validation.secret_ref_host_not_bound","message":"IT has not bound this setting's secret to this host. A secret is sent only to the hosts IT names for it."}]}
+
+stdout | tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R6 (observation): an organization code IT pre-bound can be created by another organization's ADM_TECH
+R6 test [33m200[39m succeeded [1mnull[22m
+R6 hosts that received the pre-bound token ["erp.pre.example.invalid"]
+
+ ❯ |integration| tests/qa/integration/zz-cs-r3-secret-binding.test.ts (6 tests | 2 failed) 4948ms
+   ✓ cs-r3: F-DG6-181 adversarial re-verification > R1 (round-2 reproduction, IT's binding for B in place): A cannot send B's secret to A's host  549ms
+   × cs-r3: F-DG6-181 adversarial re-verification > R2: A naming B's secret at B's OWN bound host is refused exactly like an unset unbound name 197ms
+     → expected 201 to be 400 // Object.is equality
+   ✓ cs-r3: F-DG6-181 adversarial re-verification > R3: URL-parser tricks on B's own bound secret never send it to another hostname  875ms
+   × cs-r3: F-DG6-181 adversarial re-verification > R4: rotating an org-A webhook endpoint to B's signing secret is refused 675ms
+     → expected 200 to be 400 // Object.is equality
+   ✓ cs-r3: F-DG6-181 adversarial re-verification > R5: the storage candidate TEST naming B's connector secret at the bound S3 host is refused 46ms
+   ✓ cs-r3: F-DG6-181 adversarial re-verification > R6 (observation): an organization code IT pre-bound can be created by another organization's ADM_TECH  324ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R2: A naming B's secret at B's OWN bound host is refused exactly like an unset unbound name
+AssertionError: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ tests/qa/integration/zz-cs-r3-secret-binding.test.ts:175:22
+    173|     console.log("R2 B's name at B's host", shape(a));
+    174|     console.log("R2 unset unbound name   ", shape(nobody));
+    175|     expect(a.status).toBe(400);
+       |                      ^
+    176|     expect(shape(a)).toBe(shape(nobody));
+    177|     expect(captured.some((c) => c.url.includes("/a-side"))).toBe(false…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r3-secret-binding.test.ts > cs-r3: F-DG6-181 adversarial re-verification > R4: rotating an org-A webhook endpoint to B's signing secret is refused
+AssertionError: expected 200 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 200[39m
+
+ ❯ tests/qa/integration/zz-cs-r3-secret-binding.test.ts:235:24
+    233|     });
+    234|     console.log("R4 rotate to B's signing secret", shape(rot));
+    235|     expect(rot.status).toBe(400);
+       |                        ^
+    236|     expect(rot.body.errors).toEqual([
+    237|       expect.objectContaining({ pointer: "/signingSecretRef", code: "v…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-binding.test.ts > F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-1 (the reviewer's reproduction): A cannot name B's connector secret; nothing is sent; one refusal is audited
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[32m-     "code": "validation.secret_ref_not_bound",[39m
+[32m-     "message": "Name a secret IT bound to this setting. IT binds each secret to one kind of setting and one organization.",[39m
+[32m-     "pointer": "/config/credentialRefs/bearer",[39m
+[31m+     "code": "validation.secret_ref_host_not_bound",[39m
+[31m+     "message": "IT has not bound this setting's secret to this host. A secret is sent only to the hosts IT names for it.",[39m
+[31m+     "pointer": "/config/endpointUrl",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/integrations/secret-binding.test.ts:184:27
+    182|     expect(a.status, JSON.stringify(a.body)).toBe(400);
+    183|     expect(a.body.code).toBe("validation");
+    184|     expect(a.body.errors).toEqual([
+       |                           ^
+    185|       {
+    186|         pointer: "/config/credentialRefs/bearer",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-binding.test.ts > F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-2 (no oracle): an unset unbound name and B's name with B's variable unset give SB-1's exact answer
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ comparable apps/api/test/integration/integrations/secret-binding.test.ts:155:13
+    153|     .execute();
+    154| const comparable = (r: { status: number; body: Body }) => ({
+    155|   status: r.status,
+       |             ^
+    156|   type: r.body.type,
+    157|   code: r.body.code,
+ ❯ apps/api/test/integration/integrations/secret-binding.test.ts:219:42
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-binding.test.ts > F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-4 (resolve time, fail closed): a reference written past the API resolves as unset; nothing is sent
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/integrations/secret-binding.test.ts:271:63
+    269|     logLines.length = 0;
+    270|     const view = await call<Body>(api.app, "GET", `${L}/${id}`, { sess…
+    271|     expect(view.body.config.credentialRefs.bearer.resolvable).toBe(fal…
+       |                                                               ^
+    272|     const t = await call<Body>(api.app, "POST", `${L}/${id}/test`, { s…
+    273|     expect(t.body.errorCode).toBe("connector.secret_unresolvable");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-binding.test.ts > F-DG6-181: a SecretRef is bound to its setting, its organization and its hosts > SB-5 (installation and cross-kind): every consumer refuses a secret bound to another kind or scope
+AssertionError: {"id":"01a1a6ba-5b8d-7778-9e7a-ae80618aedb7","organizationId":"01a1a6ba-4fa9-73c3-a013-727c6bbfe3bf","connectorId":"01a1a6ba-5ab3-763e-a561-6228c7279921","endpointKey":"3wT2O73NIjcmLPcYtoh8C2A68soBNH_XgwzCw-1uQkY","receivePath":"/api/v1/webhooks/3wT2O73NIjcmLPcYtoh8C2A68soBNH_XgwzCw-1uQkY","label":"Synthetic sender","signingSecretRef":{"provider":"env","name":"MTH_SECRET_CS_ORGB_SIGNING"},"previousSecretRef":null,"previousValidUntil":null,"secretRotatedAt":null,"toleranceSeconds":300,"status":"active","disabledAt":null,"disabledBy":null,"disableReason":null,"lastReceiptAt":null,"version":1,"updatedAt":"2026-11-04T13:23:13.354Z"}: expected 201 to be 400 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 400[39m
+[31m+ 201[39m
+
+ ❯ apps/api/test/integration/integrations/secret-binding.test.ts:363:60
+    361|       },
+    362|     });
+    363|     expect(endpoint.status, JSON.stringify(endpoint.body)).toBe(400);
+       |                                                            ^
+    364|     expect(endpoint.body.errors).toEqual(fieldError("/signingSecretRef…
+    365|     // The installation settings naming B's connector secret.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 8 passed (14)
+   Start at  13:22:07
+   Duration  81.53s (transform 16.91s, setup 0ms, collect 52.08s, tests 11.33s, environment 0ms, prepare 640ms)
+
+exit=1  finished 2026-11-04T13:23:36Z  load=19.63 23.05 20.68
+restored: 0 changed paths
