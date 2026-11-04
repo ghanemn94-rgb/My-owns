@@ -18,7 +18,7 @@ preparation. They are written for Mobily IT and for the delivery team's reviewer
 | [configuration.md](configuration.md) | Environment template (`.env.example`), secrets as `<NAME>_FILE`, secret providers and `SECRETS_DIR`, rate-limit classes, corporate IdP vs the Keycloak **test** realm, storage |
 | [monitoring.md](monitoring.md) | Worker heartbeat, operational exceptions, the alert lines IT routes, structured logs and the redaction list, the post-suite log scan (P6) |
 | [dependency-audit.md](dependency-audit.md) | The live `pnpm audit` CI job and the offline SBOM check against a dated advisory snapshot; refreshing the snapshot; restricted networks (P6) |
-| [restricted-network.md](restricted-network.md) | Building and running with no outbound internet: mirrors, image list, build-time CA, the no-egress Compose variant |
+| [restricted-network.md](restricted-network.md) | Building and running with no outbound internet: the optional outbound destinations (each off until IT configures it) and their controls, mirrors, image list, build-time CA, the no-egress Compose variant |
 
 Where things live:
 
