@@ -14524,7 +14524,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-1/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-01T18:10:00Z",
@@ -14535,28 +14535,33 @@
           "at": "2026-11-02T14:40:00Z",
           "status": "OPEN",
           "note": "verified by qa-verifier round 2: FAIL"
+        },
+        {
+          "at": "2026-11-04T18:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "verification": {
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG6-T-DG6-REV-QA-R2-qa-verifier-20261102T094507Z-198e5e6c",
-          "session_id": "198e5e6c-7e5d-4c5e-a172-33769dd34197"
+          "run_id": "DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5",
+          "session_id": "f440e4a5-612c-4d15-8bf4-da2ea59699f9"
         },
-        "at": "2026-11-02T14:40:00Z",
-        "result": "FAIL",
+        "at": "2026-11-04T18:15:00Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-unset-en.log",
-          "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-unset-ar.log",
-          "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-cutf8-en.log",
-          "docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-cutf8-ar.log",
-          "docs/delivery/test-evidence/DG6/qa/round-2/06b-e2e-product-unset-en-rerun-alone.log",
-          "docs/delivery/test-evidence/DG6/qa/round-2/06c-e2e-product-en-timeout120-measure.log",
-          "docs/delivery/test-evidence/DG6/qa/round-2/16-f144-budget-static.txt",
-          "docs/delivery/handbacks/DG6/T-DG6-FE-Y1-frontend-ux-engineer.md"
+          "docs/delivery/test-evidence/DG6/qa/round-3/06-e2e-product-unset-en.log",
+          "docs/delivery/test-evidence/DG6/qa/round-3/06-e2e-product-unset-en-samples.log",
+          "docs/delivery/test-evidence/DG6/qa/round-3/06-e2e-product-unset-ar.log",
+          "docs/delivery/test-evidence/DG6/qa/round-3/16-f144-budget-static.txt",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-3/budget-scan.mjs",
+          "docs/delivery/test-evidence/DG6/qa/round-3/14-f144-mutant-budgets-removed.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-mutant-f144-p4-benefits.spec.ts",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-mutant-f144-p4-gates-closure.spec.ts"
         ],
-        "note": "NOT closed on candidate sha256:cf40705b. The repair (T-DG6-FE-Y1) gave the 17 named specs measured file-level budgets, but the finding's own round-1 reproduction also named p4-benefits test 8 and p4-gates-closure test 6 as 30 s timeouts at review load, and FE-Y1's handback lists both as 'Not done'. Re-run of my round-1 reproduction on this candidate (full product runs, --workers=1, production-initialized stack): p4-benefits '8. Auditor read-only; register and benefit page at 390 px and 200 % text' failed with 'Test timeout of 30000ms exceeded' in 3 of 4 full runs (en unset 30.6 s, ar unset 30.1 s, en C.UTF-8 30.9 s; passed in ar C.UTF-8); p4-gates-closure '6. Modular G3 ...' and p3-journeys '2a. prioritization ...' also timed out at 30 s in the full en run and AGAIN when re-run alone at load ~20 (06b: 3 failed, all 30 s timeouts). With a measurement-only --timeout=120000 the three specs pass 36/36 (p4-benefits 8 in 43.3 s, p3-journeys 2a 29.2 s, p4-gates-closure 6 26.0 s), so no product defect is behind them: only the budget is missing. Static scan: 14 product specs budget only some of their tests (e.g. p3-journeys 1 of 18, p4-benefits 1 of 9, p4-gates-closure 2 of 9), so their other tests still run on the default 30 s. Expected (the finding): a journey that needs more than 30 s under review load carries an explicit, measured budget so a gate run is not decided by host load."
+        "note": "Verified on candidate sha256:aa219bd2 (source 95f98191; repair T-DG6-FE-Y1, then T-DG6-FE-Z1/FE-Z1B: measured file-level budgets in 45 product specs and the root specs). (1) The finding's own reproduction (full product journeys at review load on the production-initialized stack, --workers=1): chromium-en with the locale unset 273 passed, 1 skipped (p6-walkthrough-keyboard, demo database only), 0 failed, 0 timeouts in 1.6 h at 1-minute load 7-30 (06-e2e-product-unset-en.log); chromium-ar unset: every one of the 274 candidate tests ran, 273 passed, 1 skipped (same demo-only spec), 0 timeouts (06-e2e-product-unset-ar.log; that run's exit 1 comes only from MY 18 mutant entries, see the record's QA-R3-06 check). The three tests round 2 named pass within their budgets at load ~20: p4-benefits 8 in 49.6 s en / 38.0 s ar (budget 210 s; it took 30.1-30.9 s and failed at 30 s in round 2), p4-gates-closure 6 in 44.2 s en / 27.0 s ar (budget 120 s), p3-journeys 2a in 26.5 s en / 24.5 s ar (budget 150 s). The C.UTF-8 product runs (06-e2e-product-cutf8-en/-ar) are reported in the record. (2) Static: my scan of 301 e2e tests finds 0 on the default 30 s (16-f144-budget-static.txt; three heuristic hits checked by hand: a22-operations-jobs sets test.setTimeout(crossBoundary ? 1_200_000 : 300_000), keycloak-login sets 60 s). (3) Mutant: p4-benefits and p4-gates-closure with every test.setTimeout line removed (default 30 s again), run alone at load ~20: 2 tests fail with 'Test timeout of 30000ms exceeded' (p4-benefits 6 at 31.2 s, p4-gates-closure 6) and their 6 serial followers do not run (14-f144-mutant-budgets-removed.log); with the candidate's budgets the same files pass in every full run. Residual (not this finding): the unit-web harness's fixed 5 s Testing Library wait is load-sensitive at the same load (see the record's QA-R3-02 check)."
       }
     },
     {
@@ -14727,14 +14732,37 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-2/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-02T12:00:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 2 by domain-reviewer. Low, documentation only. Suggested repair: replace the line-79 bullet with BE-Y3 handback section 6's proposed text (a dated amendment)."
+        },
+        {
+          "at": "2026-11-04T14:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R3-domain-reviewer-20261104T123528Z-bc45927b",
+          "session_id": "bc45927b-54af-4ee6-8849-e90332d69d4e"
+        },
+        "at": "2026-11-04T14:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-3/f160-doc-check.log",
+          "docs/delivery/test-evidence/DG6/domain/round-3/probe-freshness.log",
+          "docs/delivery/test-evidence/DG6/domain/round-3/mutant-freshness-revert.log",
+          "docs/delivery/test-evidence/DG6/domain/round-3/candidate-verify.log",
+          "docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md"
+        ],
+        "note": "Verified on candidate sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14 (recomputed, 2729 files, on the repository at the freeze commit f2d030f6f and on a complete non-shallow clone at source 95f981917). Repair T-DG6-ARCH-14 (dated amendment of 2026-11-04). (1) Documentation reproduction from round 2: at 9bb2207, ADR-0053 line 79 still said the scan 'still reads only the organization's newest period' and that the rule was 'not decided here'. At the candidate, line 79 is replaced by 'The worker's freshness scan uses the same rule'. It names the lateral join with ev.value IS NOT NULL, withReadTimeStaleness, one data.stale event per episode (key data.stale:<kpiId>:<dataAsOf>) and the operations.exception_raise consumer, and a closing amendment records the change. The only remaining occurrence of the old wording is the amendment's own quotation of history (line 177). No other document under docs/architecture or docs/operations still describes the old scan. The text matches the shipped code: apps/worker/src/handlers/operations.ts line 207 has .where('ev.value', 'is not', null), and the header comment has the data.stale:<kpiId>:<dataAsOf> key (f160-doc-check.log). (2) Behaviour reproduction on the real database: my unedited round-2 probe (a stale value 60 days old in the previous closed monthly period, the current period open and empty, dq_stale_after_days 30) gives kpiFreshness {freshness:'stale', lastValue:'0.4125', dataAsOf:'2026-09-05'}, scan {kpis:1, stale:1, emitted:1} and one data.stale event. With operations-freshness.test.ts (11) and exception-last-known-value.test.ts (8): 3 files, 20/20, exit 0 (probe-freshness.log). So the ADR now states what the code does. (3) Mutant: operations.ts reverted to the round-1 text (git show 3cce3d4:...). Result: 5 failed, 15 passed, exit 1. The failures are the three 'stopped feed' worker tests, my probe and the API parity test 'a later open period WITHOUT an evaluation' (mutant-freshness-revert.log). The non-zero exit is the intended red of the mutant, and the file was restored afterwards (git status clean for operations.ts). The finding was documentation only, and the documentation is now correct."
+      }
     },
     {
       "id": "F-DG6-161",
@@ -14757,14 +14785,36 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-2/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-02T12:00:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 2 by domain-reviewer. Low, register drift only. Suggested repair: an analyst pass over the DG6 rows touched by D-206 to D-208 that updates notes and evidence to the repaired candidate."
+        },
+        {
+          "at": "2026-11-04T14:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R3-domain-reviewer-20261104T123528Z-bc45927b",
+          "session_id": "bc45927b-54af-4ee6-8849-e90332d69d4e"
+        },
+        "at": "2026-11-04T14:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-3/f161-register-check.log",
+          "docs/delivery/test-evidence/DG6/domain/round-3/val-__register_DG6.log",
+          "docs/delivery/requirements.csv",
+          "docs/delivery/handbacks/DG6/T-DG6-DO-Y2-devops-engineer.md"
+        ],
+        "note": "Verified on candidate sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14. Repair T-DG6-AN-Z1 (register rows). Round-2 reproduction re-run: I compared the DG6 rows at 9bb2207 with those at 95f981917 (f161-register-check.log). Twelve DG6 rows changed, only in their evidence and notes, and all 48 stay IMPLEMENTED. For each stale disclosure I named in round 2, I checked the row's LATEST analyst check (T-DG6-AN-Z1). (a) REQ-S16-030 no longer says the export class has no operation wired. It says 'The it.todo is gone', names createExport rateLimitClass('export') and cites BE-Y4's before/after logs. (b) REQ-S20-029 no longer says the patched generator is not in the tree. It says DO-Y1 shipped it (sha256 6b2a9007...). I recomputed the in-tree deploy/load/generate.mjs: sha256 6b2a9007e47b...dff8a. (c) REQ-S20-030 now cites DO-Y2's re-measurement of the shipped asynchronous path (0 of 150 part-B starts over 2 s, 03-summary.txt, rep-1..3 export-proof.json) and QA's round-2 idle proof. It keeps DO-G's synchronous figures as history and discloses the LOAD-T20 dataset gap and the loaded-host misses. (d) REQ-S12-019's latest check says 'No residual remains against this row's acceptance' and describes the BE-Y3 scan rule. Every evidence path of the 48 DG6 rows exists (0 missing). In every case the round-2 latest check still had the stale phrase, and the candidate's latest check does not. That comparison is the regression check for a text-only repair, where a code mutant is not applicable. node tools/gates/validate.mjs --register DG6 passes (val-__register_DG6.log). One residual of the same class remains, and I do not reopen this finding for it: REQ-S10-002's AN-Z1 check (base 9ca69c3da) still lists 'a benefit-scenarios list item ... can still embed a scenario value row of a sensitive benefit, because presentScenarios was not changed'. BE-Z3 repaired that after AN-Z1 (scenarios.ts presentScenarios(db, principal, rows); sensitive-reach-scenarios.test.ts). It understates the candidate and overclaims nothing. I record it under F-DG6-220, whose repair must update the REQ-S10-002 row anyway."
+      }
     },
     {
       "id": "F-DG6-180",
@@ -14787,14 +14837,44 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
       "owner": "kpi-benefits-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-02T10:05:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 2 by code-security-reviewer; reproduced twice on the demo dataset against candidate cf40705b (source 9bb2207), while re-verifying F-DG6-121..123."
+        },
+        {
+          "at": "2026-11-04T16:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R3-code-security-reviewer-20261104T123548Z-e9216a1b",
+          "session_id": "e9216a1b-ff58-4259-96b5-2169c32aa6e2"
+        },
+        "at": "2026-11-04T16:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-3/40-repro-r2-sens-reach-verbatim.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/41-repro-r3-sens-reach.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180a.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180a.diff.txt",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180b.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180b.diff.txt",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r2-sens-reach.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r3-sens-reach.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/checks.sh",
+          "apps/api/src/modules/kpi/calculations.ts",
+          "apps/api/src/modules/access/sensitive-reach.ts"
+        ],
+        "note": "Re-verified on candidate aa219bd2 (source 95f9819), migrated and demo-seeded disposable PostgreSQL (synthetic data), real API. (1) The round-2 reproduction, copied VERBATIM (repro/zz-cs-r2-sens-reach.test.ts, log 40, exit 0, 5/5): a TO marks the formula-backed demo benefit 01995000-4401-7000-8000-000000000003 sensitive; the TL then gets 404 on the benefit, and the calculation 01995000-4304-7000-8000-000000000002 (result = the measured amount, with its inputs) is ABSENT from GET /api/v1/benefit-formulas/{formulaId}/versions/1/calculations (round 2: listed, 'expected { ...(18) } to be undefined'). (2) Extended probe P-CALC-2 (repro/zz-cs-r3-sens-reach.test.ts, log 41, exit 0, 6/6): an organization AUD does not list it; the TO (sensitive_record.grant) does; after POST /admin/sensitive-grants for the TL (201) the TL lists it; after the revocation (200) it is absent again. (3) The implementer's regression file sensitive-reach-calculations.test.ts (plain-benefit lineage and a stand-alone T09 row stay listed, limit=2 paging across cursors) passes with the other repair tests (log 44, 32/32). (4) Mutants in the disposable copy, each caught: 180a returns page.items unfiltered in kpi/calculations.ts (log 50-mutant-180a: 4 failed, incl. my P-CALC and P-CALC-2 and the implementer's P-CALC/positive tests); 180b removes the benefit_calculation 'via' source from SENSITIVE_CHILD_SOURCES (log 50-mutant-180b: the same 4 failed). Both restored (0 changed paths). (5) Source review: benefit_calculation is read only by this list route (grep of apps/api/src, apps/worker/src, packages/reporting: no search, export or assistant surface), the via-owner resolution fails closed for a missing row, and measurement-input lineage is read only inside the (already filtered) measurement view. Closed."
+      }
     },
     {
       "id": "F-DG6-181",
@@ -14817,14 +14897,47 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-02T10:10:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 2 by code-security-reviewer while re-verifying F-DG6-120 (which is closed as raised); reproduced end to end against candidate cf40705b (source 9bb2207)."
+        },
+        {
+          "at": "2026-11-04T16:58:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R3-code-security-reviewer-20261104T123548Z-e9216a1b",
+          "session_id": "e9216a1b-ff58-4259-96b5-2169c32aa6e2"
+        },
+        "at": "2026-11-04T16:58:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-3/42-repro-r2-secret-cross-org-verbatim.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/43-repro-r3-secret-binding.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181a.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181a.diff.txt",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181b.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181b.diff.txt",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181c.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181c.diff.txt",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r2-secret-cross-org.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r3-secret-binding.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-3/checks.sh",
+          "packages/config/src/secret-bindings.ts",
+          "apps/api/src/modules/platform/secrets.ts",
+          "apps/api/src/modules/platform/secret-namespace.ts"
+        ],
+        "note": "Re-verified on candidate aa219bd2 (source 95f9819): real API, real env provider, disposable PostgreSQL; only the http_pull transport is a recorder. (1) The round-2 reproduction copied VERBATIM (log 42, exit 1 BY DESIGN of the new rule): it now stops at its first assertion, 'expected 400 to be 201', because with no SECRET_BINDINGS_FILE manifest even organization B's own connector naming MTH_SECRET_CS_R2_ORGB_ERP_TOKEN is refused 400 validation (fail closed, ADR-0052 amendment rule A7); nothing was sent. (2) The same scenario with the one binding line IT would add for B (repro/zz-cs-r3-secret-binding.test.ts, log 43, exit 0, 6/6): R1 B's own connector 201 resolvable true and its test sends B's token only to erp.orgb.example.invalid; A gets 404 on B's connector; A's connector naming B's secret at the attacker host is 400 validation.secret_ref_not_bound. R2 A naming B's secret at B's OWN bound host is 400 and its body is identical to that of an unset, unbound name (no existence oracle). R3 B's own admin: userinfo, suffix, path, trailing dot, decimal-IPv4 and percent-encoded tricks are refused (400 host_not_bound or 422 secret_value_refused); upper case, :8443 and a backslash form are accepted but WHATWG-canonicalize to the bound host; the token reached no hostname but erp.orgb.example.invalid. R4 webhook ROTATE of an org-A endpoint to B's signing secret: 400 at /signingSecretRef, stored ref unchanged. R5 the storage candidate TEST naming B's connector secret: 400 at /candidate/secretKeyRef. R6 (observation, see CS-15) a pre-bound organization code can be created by another organization's ADM_TECH, but the secret still goes only to its bound host. (3) The implementer's secret-binding.test.ts (SB-1..SB-8: cross-kind, installation vs tenant, SMTP host, resolve-time fail closed for a reference stored past the API, run and outbound paths, audit event secret_ref.refused, org code immutable) passes (log 44). (4) Mutants, each caught and restored: 181a drops the organization comparison in secretBinding (6 failed); 181b removes the write-time binding check (11 failed; even then no token reached an unbound host, resolve time held); 181c makes resolve ignore the binding (caught by SB-4). Closed."
+      }
     },
     {
       "id": "F-DG6-200",
@@ -14850,14 +14963,37 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-2/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-02T13:00:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 2 (T-DG6-REV-QA-R2) on candidate sha256:cf40705b; both races reproduced by executable probes with controls; test-only."
+        },
+        {
+          "at": "2026-11-04T18:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5",
+          "session_id": "f440e4a5-612c-4d15-8bf4-da2ea59699f9"
+        },
+        "at": "2026-11-04T18:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-assembly-guard-lock.test.ts",
+          "docs/delivery/test-evidence/DG6/qa/round-3/10-f200-probe-assembly-guard-lock.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-mutant-change-requests-xmin-desc.test.ts",
+          "docs/delivery/test-evidence/DG6/qa/round-3/10b-f200-probe-xmin-order.log",
+          "docs/delivery/test-evidence/DG6/qa/round-3/04-integration-run1-B.log"
+        ],
+        "note": "Verified on candidate sha256:aa219bd2 (repair T-DG6-BE-Z1). (1) exports-assembly 0125 guard test: BE-Z1 adds, after the refused UPDATE, a blocking 'SELECT id FROM export_job WHERE id = $1 FOR UPDATE', which waits on the aborting transaction's row lock (PostgreSQL sends the ErrorResponse before AbortCurrentTransaction releases it) instead of a timer. My round-2 probe method, re-written on the candidate's file copied verbatim (zz-qa-dg6r3-assembly-guard-lock.test.ts), 80 repetitions per variant on a disposable PostgreSQL at load ~16: 'fixed' (the candidate's sequence) 0 misses of 80; 'mutant' (the same sequence without the FOR UPDATE line, i.e. the round-2 test) 11 misses of 80, each leaving the job queued, snapshot null, version 1, attempts 0 (10-f200-probe-assembly-guard-lock.log; exit 1 BY DESIGN: only the mutant variant's assertion fails). (2) change-requests-in-tx: auditXmin now orders by occurred_at, seq (seq is the audit_event identity column, migration 0003). The candidate file passes alone 3 of 3 (6/6 tests each); a mutant ordering DESC fails exactly test (a) '...round-2 resubmission...' (10b-f200-probe-xmin-order.log), so the test depends on the order the repair fixes. (3) Both files pass in integration run 1 (half B: exports-assembly 18/18, change-requests-in-tx 6/6); run 2 is reported in the record."
+      }
     },
     {
       "id": "F-DG6-201",
@@ -14879,12 +15015,184 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-2/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-02T13:00:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 2 (T-DG6-REV-QA-R2) on candidate sha256:cf40705b; documentation drift with no behavioural effect."
+        },
+        {
+          "at": "2026-11-04T18:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5",
+          "session_id": "f440e4a5-612c-4d15-8bf4-da2ea59699f9"
+        },
+        "at": "2026-11-04T18:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-3/22-register-notes-check.txt",
+          "docs/delivery/requirements.csv",
+          "docs/delivery/test-evidence/DG6/qa/round-3/05-e2e-root-unset.log"
+        ],
+        "note": "Verified on candidate sha256:aa219bd2 (repair T-DG6-AN-Z1). The four notes the finding named now carry a T-DG6-AN-Z1 check that cites the repairs and the current evidence: REQ-S12-019 cites BE-Y3 and D-208 and turns 'still reads only the newest period' into a closed residual (F-DG6-100/140 repaired by BE-Y3); REQ-S16-030 cites BE-Y4 and D-208 and says the export class is wired ('The first and third are resolved'); REQ-S20-029 cites DO-Y1, D-207, D-208 and states that the generator is now in the tree (sha256 6b2a9007...); REQ-S20-030 cites BE-Y4, BE-Y5, BE-Y6, DO-Y1, DO-Y2, D-207 and D-208 and keeps the DO-H text only as history of the synchronous design (22-register-notes-check.txt). Each statement matches this candidate: my runs show the A17 failing-connector e2e (Stale, last value and date), rate-limit classes in rate-limits.test.ts, and the asynchronous export assembly passing. Not part of this finding: four OTHER rows whose latest analyst paragraph (T-DG6-AN-P6B) still reports failing or absent suites (REQ-S20-001, -012, -017, -022); I raise that separately as F-DG6-260 (Low)."
+      }
+    },
+    {
+      "id": "F-DG6-220",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "A sensitive benefit's corrective case, transition decision and performance-area link stay listed and readable, by item, to a user who gets 404 on the benefit itself",
+      "reproduction": "Candidate aa219bd2 (source 95f981917), disposable clone and PostgreSQL 16.15, probe apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts (copy in probes/dom-r3-sensitive-registers.test.ts.txt). Run: QA_PG_PORT=29500 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <probe>. Setup, all SYNTHETIC: seedClosureWorld; BO creates a benefit; BO drafts a transition decision for it (TD-01); TO creates a performance area and BO links the benefit; a worker-style benefit_variance corrective case names the benefit (title 'Synthetic CONFIDENTIAL tariff uplift variance', a recovery plan, consecutive_off_track 2); the TO marks the benefit sensitive (PUT .../records/benefit/{id}/sensitivity). Then, as TL (not a named party) and as AUD, read: GET /benefits/{id}; GET /corrective-actions and /corrective-actions/{caseId}; GET /transition-decisions and /transition-decisions/{id}; GET /performance-areas/{areaId}/links.",
+      "expected": "ADR-0051 §2 and its 2026-11-04 amendment: a sensitive record the principal is not admitted to is absent from lists. A route whose path names a restricted child answers 404. The rows that carry its values are the types in SENSITIVE_CHILD_SOURCES, and corrective_case, transition_decision and performance_area_link are listed there (sensitive-reach.ts lines 110-112, benefitChild). REQ-S10-002 acceptance: 'a sensitive benefit is hidden from a workstream member without the grant'. M0188: 'Enforce permissions on the server for records, files, APIs, exports, search'. TL and AUD should therefore not find the case, the decision or the link in the lists (or should receive them without the benefit), and the item routes should answer 404, as already happens for the benefit's measurements, plan values, scenario values, overlaps and finance validations. The REQ-S10-002 register row should describe the repaired state. Its AN-Z1 residual (1) about scenarios is also stale since BE-Z3.",
+      "actual": "TL and AUD get 404 on GET /benefits/{id} (the control). Yet both receive 200 with the rows in every list and item route (probe-sensitive-registers.log, summary {caseInList:true, decisionInList:true, linkInList:true, caseItem:200, decisionItem:200} for both). The corrective case returns benefitId, the benefit's current lifecycle step ('identify', read from the benefit row by presentCases), sourceKind 'benefit_variance', the off-track count, the title and the recovery plan. That discloses that this benefit exists and is off track, and what the recovery is. The transition decision returns benefitId, the rationale, expectedRealizationEnd, the residual owner and the status. The area link returns benefitId. The audit routes already redact these rows (BE-Y1), and the export check refuses them (restrictedAmong over assembly sources). Only the register routes themselves (raid/corrective-cases.ts list, item and signals; sustainment/transition-decisions.ts list and item; sustainment/performance-areas.ts links) apply neither withoutRestricted nor a SENSITIVE_REACH_PARAMS guard (correctiveCaseId and transitionDecisionId are not in the map). The register discloses this as a 'domain question' (REQ-S10-002 residual 2; BE-Z3 handback 'What remains'), and D-210 left it undecided. I judge it a defect, because the shipped ADR rule and the code's own child-source map already classify these rows as carrying the benefit's values.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-sensitive-registers.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-sensitive-registers-statusmodel.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probes/dom-r3-sensitive-registers.test.ts.txt",
+        "apps/api/src/modules/access/sensitive-reach.ts",
+        "apps/api/src/modules/raid/corrective-cases.ts",
+        "apps/api/src/modules/sustainment/transition-decisions.ts",
+        "apps/api/src/modules/sustainment/performance-areas.ts",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z3-backend-workflow-engineer.md",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T13:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 3 by domain-reviewer, answering the D-210 open question 1. High and mandatory (access control). Suggested repair: apply withoutRestricted to the corrective-case, transition-decision and area-link lists (and the case's signals and actions), and add correctiveCaseId and transitionDecisionId (and the link item, if it has one) to SENSITIVE_REACH_PARAMS. Add a test with the negative case (TL, AUD) and the positive case (TO, owner, grantee). Then update the REQ-S10-002 register row."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-221",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The operational exception page shows the server's English 'Last error' sentence on the Arabic screen, although the Arabic text for the same code is in the catalogue",
+      "reproduction": "Candidate aa219bd2 (source 95f981917), disposable clone, apps/web/e2e/support/with-stack.sh. Run e2e/a17-failing-connector-exception.spec.ts in chromium-ar (passes). Open the screenshot screenshots/ar/a17-exception-data-owner.png: Administration > Operations > one 'connector unreachable' exception. Code: apps/web/src/pages/admin/operations/OperationsPages.tsx renders <bdi>{x.lastErrorMessage}</bdi> under adminP6.operations.lastError. The API fills that field with the English adapter text from apps/api/src/modules/integrations/adapters/port.ts ('connector.source_unavailable': 'The source system did not respond.').",
+      "expected": "Arabic RTL and English LTR for every user-facing string (CLAUDE.md; REQ-S15-007). ADR-0007 says the problem title/detail are English diagnostics and never the user-facing message. The page should show the localized text of lastErrorCode. apps/web/src/i18n/ar/integrations.json already has actionable.connector__source_unavailable.why = 'لم يستجب نظام المصدر.', and the Connectors page uses that catalogue. The raw message could stay as a secondary diagnostic only.",
+      "actual": "On the Arabic exception page every label is Arabic and the error code is shown, but the 'آخر خطأ' value reads 'The source system did not respond.' in English. The English screen is correct. The page shows no wrong value and no infrastructure term, so this is cosmetic. It has no effect on state, RAG or approvals.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-p6-functional.log",
+        "apps/web/src/pages/admin/operations/OperationsPages.tsx",
+        "apps/web/src/i18n/ar/integrations.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T13:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 3 by domain-reviewer. Low, not blocking on its own. Suggested repair: render the lastErrorCode's catalogue text (integrations actionable.<code>.why, the same lookup the Connectors page uses) and fall back to the raw message only when no text exists."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-222",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-011",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Saving a connector with a secret reference IT has not bound (D-209) shows 'Check the highlighted fields' with no field highlighted and never says the reference is not bound",
+      "reproduction": "Candidate aa219bd2 (source 95f981917), disposable clone, production-initialized stack apps/web/e2e/support/with-stack.sh (its SECRET_BINDINGS_FILE binds only the A17 webhook secret). Probe e2e/zz-domain/dom-r3-screens.spec.ts (copy in probes/dom-r3-screens.spec.ts.txt), en and ar. Steps: as dev.admin, create a test_adapter connector through the API. In the UI, open Administration > Integrations > the connector > Edit. Add a credential reference (purpose 'api', provider 'env', secret name 'MTH_SECRET_DOMAIN_R3_NOT_BOUND'), give a reason and press Save.",
+      "expected": "D-209 / ADR-0052 §5 amendment: the API answers 400 validation with the field error validation.secret_ref_not_bound at the reference ('Name a secret IT bound to this setting...'). REQ-S15-011: the error state is handled explicitly. The form should mark the credential row it names (pointer /config/credentialRefs/api) and say, in the user's language, that IT has not bound this secret to this setting, so the administrator knows what to ask IT for. ADR-0052 itself notes that 'if a form shows them as text, the web owner adds the Arabic'.",
+      "actual": "The API answers correctly: PUT -> 400, code validation, errors [{pointer:'/config/credentialRefs/api', code:'validation.secret_ref_not_bound'}]. The form then shows only the generic banner 'Some values are not valid. Check the highlighted fields.' / 'بعض القيم غير صالحة. راجع الحقول المميّزة.', and 0 fields are marked invalid (the probe counts .field--invalid = 0). ConnectorFormPage maps server field errors to no field: the credential row's error slot is keyed credential.<i> for client checks only. The web catalogue has no text for validation.secret_ref_not_bound or validation.secret_ref_host_not_bound. The administrator is told to check highlighted fields that do not exist, and is never told the cause. The refusal itself and the audit event are correct. The effect is bounded to the administrator's connector form (the same pattern likely applies to the other SecretRef settings: webhooks, SMTP, storage, assistant; not each checked).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/dom-probe-screens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/dom-r3-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/dom-r3-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probes/dom-r3-screens.spec.ts.txt",
+        "apps/web/src/pages/integrations/ConnectorFormPage.tsx",
+        "apps/web/src/lib/problem.ts",
+        "docs/architecture/adr/ADR-0052-p6-request-input-hardening-uploads-preview-secrets-audit-api-sweeps.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T14:05:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 3 by domain-reviewer. Medium: a real error-state defect in the new D-209 flow, with a bounded effect (administrator forms only). Suggested repair: map /config/credentialRefs/<key> (and the equivalent pointers of the webhook, SMTP, storage and assistant forms) to the credential row. Add en/ar texts for validation.secret_ref_not_bound, validation.secret_ref_host_not_bound and validation.secret_ref_namespace. Add a component test and an e2e step."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-260",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The register notes of REQ-S20-001, REQ-S20-012, REQ-S20-017 and REQ-S20-022 still report acceptance suites as failing or not yet in the tree; on this candidate they are present and pass",
+      "reproduction": "Read the notes column of docs/delivery/requirements.csv (identical at the candidate's source 95f98191 and at HEAD 30cbe375) for the four A01/A12/A17/A22 rows. Each carries ONE analyst paragraph, T-DG6-AN-P6B on base bc5bb7b32, and no later check (the F-DG6-201 repair T-DG6-AN-Z1 updated other rows). REQ-S20-001: 'QA-E's final A01 run ... runs concurrently and is not yet in this tree, so the A01 run on the DG6 candidate is still to be recorded'. REQ-S20-012: 'partial: e2e A12-5 (AI retrieval through the UI) still fails ... the A12 e2e file is not fully green'. REQ-S20-017: 'partial: the A17 integration file and e2e/a17-failing-connector-exception.spec.ts are not fully green, because QA-A2-F1 (REQ-S12-019 ...) is unrepaired in this tree'. REQ-S20-022: 'QA-E's A22 extension ... runs concurrently and is not yet in this tree'. Compare with this candidate's runs: tests/qa/integration/a01-p6-source-coverage.test.ts and a01-one-source-of-truth-scorecard.test.ts pass (04c-tests-qa-alone.log); e2e/a12-p6-scope-isolation.spec.ts A12-1 to A12-6, including A12-5 (assistant), pass in en and ar in both root runs; e2e/a17-failing-connector-exception.spec.ts and the A17 suites pass (F-DG6-100/140 repaired by BE-Y3, verified in round 2); e2e/a22-p6-operability.spec.ts passes en/ar. Extract: 35-register-notes-stale-f260.txt.",
+      "expected": "The register is the gate's statement of what each row delivers and what remains partial. After the QA-E suites merged and the round-1 repairs (BE-Y3, the assistant availability repair BE-X5), the four notes should cite the current evidence and drop the failures that no longer exist, as T-DG6-AN-Z1 did for the four rows of F-DG6-201.",
+      "actual": "The four notes understate the candidate: they report failing or absent suites that are present and green. Documentation drift only, of the same class as F-DG6-201: no behaviour is affected and nothing is hidden (the drift reports gaps that are closed, not open ones). validate.mjs --register DG6 passes, because the rule checks status and evidence, not the currency of the prose.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/35-register-notes-stale-f260.txt",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG6/qa/round-3/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/04c-tests-qa-alone.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T17:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 3 (continuation run T-DG6-REV-QA-R3B) on candidate sha256:aa219bd2. Low, non-mandatory, documentation drift."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-261",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "e2e/a02-demo-users-walkthrough.spec.ts step 10 selects the report output through an ambiguous 'Output' label; when the report definitions answer late it selects the snapshot-list filter, the Generate button stays disabled and the test hangs to its 300 s timeout",
+      "reproduction": "(1) Observed: the stopped round-3 run's demo C.UTF-8 run, 07c-e2e-demo-cutf8.log: chromium-en 'REQ-S18-004 ... twelve walkthrough steps' failed at step '10 generate report' with 'Test timeout of 300000ms exceeded' and 'locator resolved to <button disabled type=\"submit\" ...>Generate snapshot</button>' (452 click retries); the same spec passed alone twice (07d-...-alone-1/-2.log), in ar in the same run, in the unset run, and twice more on the quiet host (33-e2e-demo-crumbs-probe-and-walkthrough-cutf8.log). (2) Cause: line 544 runs tlPage.getByLabel(field(lang, 'Output')).first().selectOption('charter') right after visit(), which waits only for the h1, lang/dir and the banner. apps/web/src/pages/reports/ReportsPage.tsx has two selects with that label (reportsP5.generate.output): the Generate form's #report-definition, rendered only after the definitions query resolves (QueryState), and the snapshot list's filter #snapshot-filter-code, rendered at once. (3) Deterministic reproduction: zz-qa-dg6r3b-reports-output-label.spec.ts holds GET /report-definitions for 4 s and performs the spec's exact locator and action: control (no delay) generate='charter', Generate enabled; delayed: generate='', filter='charter', Generate DISABLED, in en and ar (32-probes-detail-axe-output-label-unset.log).",
+      "expected": "A gate-deciding acceptance spec should be deterministic under load (the rule F-DG6-145 and F-DG6-200 applied): step 10 should wait for the Generate form (for example scope the locator to the generate section or select #report-definition / data-form='generate-report') before selecting the output.",
+      "actual": "The step depends on which select is first in the DOM at the instant the locator resolves; on a loaded host the definitions answer late often enough to fail a full demo run (1 of 8 (project, run) executions of this test in this round: en in 07, 07c, 07d-1, 07d-2 and 33; ar in 07, 07c and 33). No product defect: with the right select the page generates the snapshot (every other run, and the control). Test-only; one line in one spec.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/07c-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/07d-e2e-demo-users-walkthrough-cutf8-en-alone-1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-probes-detail-axe-output-label-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3b-reports-output-label.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-3/33-e2e-demo-crumbs-probe-and-walkthrough-cutf8.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T17:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 3 (continuation run T-DG6-REV-QA-R3B) on candidate sha256:aa219bd2. Low, non-mandatory, test-side race."
         }
       ]
     }
