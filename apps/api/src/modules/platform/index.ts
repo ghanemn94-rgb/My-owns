@@ -154,9 +154,22 @@ export {
   secretValue,
   SecretProviderError,
   type SecretProvider,
+  type OrganizationCodeOf,
   type SecretProviderRegistry,
+  type SecretProviderRegistryOptions,
   type SecretRef,
+  type SecretRefusalLogLine,
+  type SecretUse,
   type SecretValue,
 } from "./secrets.ts";
-// F-DG6-120: the write-time SecretRef namespace check every consumer runs (400 validation.secret_ref_namespace).
-export { assertSecretRefInNamespace } from "./secret-namespace.ts";
+// F-DG6-120 and F-DG6-181: the write-time SecretRef checks every consumer runs (400 validation: the namespace, then the
+// binding; a binding refusal is audited as secret_ref.refused by access/secret-refusals.ts).
+export {
+  assertSecretRefInNamespace,
+  assertSecretRefsBound,
+  secretRefusalOf,
+  type RefusedSecretRef,
+  type SecretRefEntry,
+  type SecretRefusal,
+} from "./secret-namespace.ts";
+export { organizationCodeLookup } from "./organization-code.ts";

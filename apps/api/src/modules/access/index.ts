@@ -41,6 +41,8 @@ export {
 export { auditContextOf, commitTimeDenial, principalOf, refreshPrincipal, type PrincipalResolver } from "./request.ts";
 export { grantCreatorAdminRoles, grantCreatorTransformationRoles } from "./assignments.ts";
 export { registerDeniedMutationAudit } from "./denials.ts";
+// F-DG6-181 (T-DG6-BE-Z2): the `secret_ref.refused` audit of a SecretRef binding refusal (ADR-0052 amendment §D).
+export { registerSecretRefusalAudit } from "./secret-refusals.ts";
 export {
   actsOnBehalfOf,
   holds,

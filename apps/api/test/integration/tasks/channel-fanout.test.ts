@@ -33,7 +33,13 @@ import { DEFAULT_CHANNEL_CATALOGUE } from "../../../../worker/src/channels/rende
 import { runDigestWindow } from "../../../../worker/src/handlers/digests.ts";
 import { createWorkItemOnce as workerCreateWorkItemOnce, jobActor } from "../../../../worker/src/kit.ts";
 import { createWorkItemOnce } from "../../../src/modules/tasks/service.ts";
+import { organizationCodeLookup as workerOrganizationCodeLookup } from "../../../../worker/src/organization-code.ts";
+import {
+  createSecretProviderRegistry as createWorkerSecretRegistry,
+  registerBuiltInSecretProviders as registerWorkerBuiltInProviders,
+} from "../../../../worker/src/secrets.ts";
 import { decodedBody, FakeSmtp } from "../../support/fake-smtp.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 import {
   call,
   createTransformationRow,
@@ -326,6 +332,64 @@ describe("email enabled: one notification -> one sent delivery, exactly once", (
     const [d] = await deliveriesOf(disabled.notification.id);
     expect(d).toMatchObject({ status: "skipped", skip_reason: "recipient_disabled", attempts: 0 });
     expect(smtp.messages).toHaveLength(2);
+  });
+});
+
+describe("F-DG6-181: the worker resolves SMTP references only for the channel's own organization and host", () => {
+  it("a channel whose password reference is bound to another organization: smtp.secret_unavailable, no connection", async () => {
+    const w = await seedWorld(api.db);
+    const other = await seedWorld(api.db);
+    const USER = "MTH_SECRET_Z2_FANOUT_SMTP_USER";
+    const PASS = "MTH_SECRET_Z2_FANOUT_SMTP_PASS";
+    process.env[USER] = "synthetic-z2-user";
+    process.env[PASS] = "synthetic-z2-pass";
+    const binding = (name: string, organization: string) =>
+      ({ name, consumer: "smtp", organization, hosts: ["127.0.0.1"] }) as const;
+    // IT first bound both to organization A (the save is checked), then moved the password's binding elsewhere.
+    let unbind = bindSecrets([binding(USER, w.orgA.code), binding(PASS, w.orgA.code)]);
+    const registry = createWorkerSecretRegistry({ organizationCodeOf: workerOrganizationCodeLookup(api.db) });
+    registerWorkerBuiltInProviders(registry, { secretsDir: null });
+    configureNotificationChannels({
+      refuseInsecure: false,
+      appBaseUrl: new URL("https://hub.example.invalid"),
+      resolveSecret: (ref, use) => registry.resolve(ref, use),
+    });
+    try {
+      const admin = await signIn(api.app, w.admin.subject);
+      const put = await call(api.app, "PUT", `/api/v1/admin/notification-channels/email?organizationId=${w.orgA.id}`, {
+        session: admin,
+        headers: { "if-match": '"0"' },
+        body: {
+          enabled: true,
+          smtp: {
+            host: "127.0.0.1",
+            port: smtp.port,
+            security: "none",
+            usernameRef: { provider: "env", name: USER },
+            passwordRef: { provider: "env", name: PASS },
+            fromAddress: "hub-noreply@example.invalid",
+          },
+          reason: "Synthetic F-DG6-181 worker binding check",
+        },
+      });
+      expect(put.status).toBe(200);
+      unbind();
+      unbind = bindSecrets([binding(USER, w.orgA.code), binding(PASS, other.orgA.code)]);
+      const connections = smtp.connections;
+      const { notification } = await notify(w, w.office);
+      const r = await runFanout(api.db, await envelopeOf(notification.id), "z2-unbound");
+      expect(r.sends).toEqual(["failed"]);
+      expect((await deliveriesOf(notification.id))[0]).toMatchObject({
+        status: "failed",
+        error_code: "smtp.secret_unavailable",
+      });
+      expect(smtp.connections).toBe(connections);
+    } finally {
+      unbind();
+      configureNotificationChannels({ refuseInsecure: false, appBaseUrl: new URL("https://hub.example.invalid") });
+      delete process.env[USER];
+      delete process.env[PASS];
+    }
   });
 });
 

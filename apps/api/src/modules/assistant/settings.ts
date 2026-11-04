@@ -22,6 +22,7 @@
 //    IT approved an endpoint. telemetryEnabled is the constant false: the installation has no telemetry client.
 // Nothing here is a business approval (G1-G6), and nothing reads or writes DG0-DG7.
 import { freeText, reason as reasonRule } from "@mth/shared/schemas";
+import { secretUseHostOfUrl } from "@mth/config";
 import { sql, type DbOrTx } from "@mth/db";
 import { PROBLEM_TYPES, type Permission } from "@mth/shared";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -41,6 +42,7 @@ import {
 import {
   ADVISORY_LOCK_CLASSES,
   assertSecretRefInNamespace,
+  assertSecretRefsBound,
   canonicalJson,
   etag,
   HttpProblem,
@@ -282,6 +284,25 @@ function checkedReason(value: string): string {
 }
 
 /** The validated values of a PUT body (ADR-0059 §3, §10). Pure: tested directly. */
+/**
+ * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): 400 validation unless the credential reference is bound to
+ * `assistant`, the installation (null) and the endpoint's host (`validation.secret_ref_not_bound` at /credentialRef, or
+ * `validation.secret_ref_host_not_bound` at /endpointUrl). No reference: nothing to check. Never asks a provider.
+ */
+export async function assertAssistantSecretBound(
+  db: DbOrTx,
+  credentialRef: { provider: string; name: string } | null,
+  endpointUrl: string | null,
+): Promise<void> {
+  if (credentialRef === null) return;
+  await assertSecretRefsBound(
+    db,
+    [{ ref: credentialRef, pointer: "/credentialRef" }],
+    { consumer: "assistant", organizationId: null, host: secretUseHostOfUrl(endpointUrl) },
+    "/endpointUrl",
+  );
+}
+
 export function checkedSettingUpdate(
   body: AssistantSettingUpdate,
   deps: { production: boolean },
@@ -409,6 +430,9 @@ export function registerAssistantSettingRoutes(app: FastifyInstance, { db, confi
     await requireConfigure(db, principal);
     const body = parseBody(assistantSettingUpdate, request.body);
     const update = checkedSettingUpdate(body, { production });
+    // F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): the credential must be bound to `assistant`, the
+    // installation (null) and the endpoint's host (400 validation, audited as secret_ref.refused).
+    await assertAssistantSecretBound(db, update.credential_ref, update.endpoint_url);
     const expected = ifMatchOrZero(request);
     const view = await db.transaction().execute(async (tx) => {
       await lockSetting(tx);
@@ -497,6 +521,8 @@ export function registerAssistantSettingRoutes(app: FastifyInstance, { db, confi
       if (to) {
         const refusal = enableRefusal(current, { production });
         if (refusal !== null) throw refusal;
+        // F-DG6-181: re-checked with the stored row, so a binding IT removed since the save refuses the enable.
+        await assertAssistantSecretBound(tx, asRef(current.credential_ref), current.endpoint_url);
       }
       const me = fresh.userId!;
       const row = await tx

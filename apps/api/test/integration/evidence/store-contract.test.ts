@@ -24,6 +24,7 @@ import { FilesystemEvidenceStore } from "../../../src/modules/evidence/stores/fi
 import { S3EvidenceStore, S3_MULTIPART_THRESHOLD_BYTES } from "../../../src/modules/evidence/stores/s3.ts";
 import { EvidenceStoreUnavailable, STALE_TEMPORARY_AGE_MS } from "../../../src/modules/evidence/store.ts";
 import { FakeS3, sigV4Signature } from "../../support/fake-s3.ts";
+import { testSecretBindings } from "../../support/secret-bindings.ts";
 
 const BUCKET = "mth-evidence";
 const runner = { describe, it };
@@ -88,13 +89,25 @@ describeEvidenceStoreContract(
 const fake = new FakeS3({ buckets: [BUCKET] });
 const access = fake.credentials[0]!;
 
+const STORE_BINDINGS = testSecretBindings(
+  ["S3_ACCESS", "S3_SECRET"].map((name) => ({
+    provider: "test",
+    name,
+    consumer: "storage" as const,
+    organization: null,
+    hosts: ["127.0.0.1"],
+  })),
+);
+
 /** A synthetic provider holding the fake's keys, plus one name that resolves to nothing. */
 function testSecrets(values: Record<string, string>): ReturnType<typeof createSecretProviderRegistry> {
   const provider: SecretProvider = {
     id: "test",
     get: (name) => Promise.resolve(name in values ? secretValue(values[name]!) : undefined),
   };
-  const registry = createSecretProviderRegistry();
+  // F-DG6-181 (T-DG6-BE-Z2): the two references are bound, as IT would, to `storage`, the installation and the fake's
+  // host (127.0.0.1), so the store resolves them; the binding itself is tested in secret-binding.test.ts.
+  const registry = createSecretProviderRegistry({ bindings: () => STORE_BINDINGS });
   registry.register(provider);
   return registry;
 }

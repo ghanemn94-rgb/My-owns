@@ -11,7 +11,18 @@
 // util.inspect (console) does not print either.
 import { readFile, realpath } from "node:fs/promises";
 import { join, sep } from "node:path";
-import { ConfigError, readSecretVariable } from "@mth/config";
+import {
+  activeSecretBindings,
+  ConfigError,
+  ENV_SECRET_PREFIX,
+  readSecretVariable,
+  secretBinding,
+  secretRefInNamespace,
+  type SecretBindingResult,
+  type SecretBindings,
+  type SecretConsumer,
+  type SecretUseHost,
+} from "@mth/config";
 
 /** A reference to a secret, stored in settings instead of the value (ADR-0052 §5). */
 export interface SecretRef {
@@ -38,18 +49,71 @@ export const BUILT_IN_SECRET_PROVIDER_IDS = ["env", "file"] as const;
 
 const PROVIDER_ID = /^[a-z][a-z0-9_-]{0,31}$/;
 
+/**
+ * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §B, §E; D-209): what a resolve is for. The consumer kind, the setting's
+ * organization (null for the installation settings storage and assistant; from the stored row, or on create from the
+ * authorized target organization) and the host the secret is about to be sent to (null only for webhook signing and for
+ * a connector without a network destination). There is no resolve without a use.
+ */
+export interface SecretUse {
+  readonly consumer: SecretConsumer;
+  readonly organizationId: string | null;
+  readonly host: SecretUseHost | null;
+}
+
+/** The code of an organization (immutable in the product), or null when there is none; cached by the caller. */
+export type OrganizationCodeOf = (organizationId: string) => Promise<string | null>;
+
+/** The structured `warn` line of a refused resolve; it holds no value. */
+export interface SecretRefusalLogLine {
+  readonly event: "secret_ref.refused";
+  readonly consumer: SecretConsumer;
+  readonly organizationId: string | null;
+  readonly provider: string;
+  readonly name: string;
+  readonly reason: Exclude<SecretBindingResult, "bound">;
+}
+
+export interface SecretProviderRegistryOptions {
+  /** The binding manifest; default: the process's active one (`setSecretBindings`, set by the entry points). */
+  readonly bindings?: () => SecretBindings;
+  /** The organization code lookup; default: none, so no tenant use is bound (fail closed). */
+  readonly organizationCodeOf?: OrganizationCodeOf;
+  /** Where the refusal line goes; default: one JSON line through console.warn (redacted in the worker). */
+  readonly warn?: (line: SecretRefusalLogLine) => void;
+}
+
 export interface SecretProviderRegistry {
   /** Adds a provider; a malformed or already registered id is a composition error. */
   register(provider: SecretProvider): void;
   provider(id: string): SecretProvider | undefined;
   /** The registered ids, in registration order. */
   ids(): readonly string[];
-  /** Resolves a reference; an unknown provider is a configuration error that names the provider, never a value. */
-  resolve(ref: SecretRef): Promise<SecretValue | undefined>;
+  /**
+   * Resolves a reference for one use (F-DG6-181): outside the namespace, or not bound to this consumer kind, the
+   * setting's organization and the destination host, it resolves undefined without asking the provider (one `warn`
+   * line, no value). An unknown provider is a configuration error that names the provider, never a value.
+   */
+  resolve(ref: SecretRef, use: SecretUse): Promise<SecretValue | undefined>;
 }
 
-export function createSecretProviderRegistry(): SecretProviderRegistry {
+const defaultWarn = (line: SecretRefusalLogLine) => console.warn(JSON.stringify({ level: "warn", ...line }));
+
+export function createSecretProviderRegistry(options: SecretProviderRegistryOptions = {}): SecretProviderRegistry {
   const providers = new Map<string, SecretProvider>();
+  const bindings = options.bindings ?? activeSecretBindings;
+  const organizationCodeOf: OrganizationCodeOf = options.organizationCodeOf ?? (() => Promise.resolve(null));
+  const warn = options.warn ?? defaultWarn;
+  async function binding(ref: SecretRef, use: SecretUse): Promise<SecretBindingResult> {
+    if (!secretRefInNamespace(ref)) return "not_bound";
+    let organizationCode: string | null = null;
+    if (use.organizationId !== null) {
+      organizationCode = await organizationCodeOf(use.organizationId);
+      // A tenant use whose organization has no code can never match an installation (null) binding.
+      if (organizationCode === null) return "not_bound";
+    }
+    return secretBinding(bindings(), ref, { consumer: use.consumer, organizationCode, host: use.host });
+  }
   return {
     register(provider) {
       if (!PROVIDER_ID.test(provider.id)) throw new Error(`secret provider id "${provider.id}" is not valid`);
@@ -58,7 +122,19 @@ export function createSecretProviderRegistry(): SecretProviderRegistry {
     },
     provider: (id) => providers.get(id),
     ids: () => [...providers.keys()],
-    async resolve(ref) {
+    async resolve(ref, use) {
+      const answer = await binding(ref, use);
+      if (answer !== "bound") {
+        warn({
+          event: "secret_ref.refused",
+          consumer: use.consumer,
+          organizationId: use.organizationId,
+          provider: ref.provider,
+          name: ref.name,
+          reason: answer,
+        });
+        return undefined;
+      }
       const provider = providers.get(ref.provider);
       if (provider === undefined) throw new Error(`secret provider "${ref.provider}" is not registered`);
       return provider.get(ref.name);
@@ -91,28 +167,11 @@ export function secretValue(value: string): SecretValue {
 }
 
 /**
- * The namespace of the built-in `env` provider (F-DG6-120): a SecretRef names only a variable `MTH_SECRET_<NAME>`
- * (NAME: `A-Z 0-9 _`, first character a letter or digit, not ending in `_FILE`; 128 characters at most). IT provisions
- * the secrets of connectors, notification channels, storage, the assistant and webhooks under it. Every other variable
- * of the process (DATABASE_URL, DATABASE_OWNER_URL, OIDC_CLIENT_SECRET, ...) is the platform's own and can never be
- * named. `MTH_SECRET_<NAME>_FILE` is still read (the ADR-0011 rule), but a name cannot end in `_FILE` itself.
+ * The namespace of the built-in providers (F-DG6-120): `env` resolves only MTH_SECRET_<NAME>, `file` only a plain file
+ * name inside SECRETS_DIR; a provider IT registers owns its namespace. F-DG6-181 moved the rule into @mth/config, where
+ * the binding manifest's parser uses the same regexes; it is re-exported here for the consumers.
  */
-export const ENV_SECRET_PREFIX = "MTH_SECRET_" as const;
-const ENV_SECRET_NAME = /^MTH_SECRET_[A-Z0-9][A-Z0-9_]{0,116}$/;
-/** A secret name the `file` provider accepts: one plain file name inside SECRETS_DIR (no path, no "..", no dot first). */
-const FILE_SECRET_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/;
-
-/**
- * Whether a reference names a secret inside its provider's namespace (F-DG6-120): `env` only `MTH_SECRET_<NAME>`,
- * `file` only a plain file name directly inside SECRETS_DIR. A provider IT registers at composition owns its own
- * namespace. Every SecretRef consumer refuses a reference outside it at write time (400 validation), and the two
- * built-in providers resolve nothing outside it (the same answer as an unset secret, so no name is an oracle).
- */
-export function secretRefInNamespace(ref: SecretRef): boolean {
-  if (ref.provider === "env") return ENV_SECRET_NAME.test(ref.name) && !ref.name.endsWith("_FILE");
-  if (ref.provider === "file") return FILE_SECRET_NAME.test(ref.name);
-  return true;
-}
+export { ENV_SECRET_PREFIX, secretRefInNamespace };
 
 /** The validation error code and message every consumer answers for a reference outside the namespace (400). */
 export const SECRET_REF_NAMESPACE_CODE = "validation.secret_ref_namespace" as const;

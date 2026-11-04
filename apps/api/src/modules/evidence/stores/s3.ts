@@ -32,7 +32,8 @@ import {
   UploadPartCommand,
   type CompletedPart,
 } from "@aws-sdk/client-s3";
-import type { SecretRef, SecretValue } from "../../platform/index.ts";
+import { secretUseHostOfUrl } from "@mth/config";
+import type { SecretRef, SecretUse, SecretValue } from "../../platform/index.ts";
 import {
   EvidenceStoreUnavailable,
   EvidenceTooLarge,
@@ -56,9 +57,12 @@ const TEMPORARY_NAME = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 const KEY_DEPTH = 3;
 const BUCKET = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
 
-/** What resolves a SecretRef (the SecretProviderRegistry of ADR-0052 §5, or a test double). */
+/**
+ * What resolves a SecretRef (the SecretProviderRegistry of ADR-0052 §5, or a test double). F-DG6-181: each resolve
+ * names its use (`storage`, the installation, the endpoint's host), checked against the binding manifest.
+ */
 export interface SecretResolver {
-  resolve(ref: SecretRef): Promise<SecretValue | undefined>;
+  resolve(ref: SecretRef, use: SecretUse): Promise<SecretValue | undefined>;
 }
 
 export interface S3EvidenceStoreOptions {
@@ -148,9 +152,15 @@ export class S3EvidenceStore implements EvidenceStore {
       },
       // Resolved through the SecretProvider at request time; the SDK caches the identity in memory only.
       credentials: async () => {
+        // F-DG6-181: bound to `storage`, the installation and this store's endpoint host, or unresolvable.
+        const use: SecretUse = {
+          consumer: "storage",
+          organizationId: null,
+          host: secretUseHostOfUrl(options.endpoint),
+        };
         const [accessKeyId, secretAccessKey] = await Promise.all([
-          secrets.resolve(accessKeyRef),
-          secrets.resolve(secretKeyRef),
+          secrets.resolve(accessKeyRef, use),
+          secrets.resolve(secretKeyRef, use),
         ]);
         if (accessKeyId === undefined || secretAccessKey === undefined)
           throw new EvidenceStoreUnavailable(

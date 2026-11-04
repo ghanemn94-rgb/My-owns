@@ -18,6 +18,7 @@ import type { FastifyBaseLogger, FastifyRequest } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createImportTargetRegistry, importTargetRegistry } from "../../../src/modules/integrations/imports/targets.ts";
 import { setConnectorSecretProviders } from "../../../src/modules/integrations/secret-refs.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 import {
   receiveWebhook,
   rotateSecret,
@@ -26,6 +27,7 @@ import {
 } from "../../../src/modules/integrations/webhooks.ts";
 import {
   createSecretProviderRegistry,
+  organizationCodeLookup,
   HttpProblem,
   secretValue,
   type SecretProviderRegistry,
@@ -57,6 +59,10 @@ const NAME_A = "MTH_SECRET_TEST_WEBHOOK_SECRET_A";
 const NAME_B = "MTH_SECRET_TEST_WEBHOOK_SECRET_B";
 const refA = { provider: "env", name: NAME_A };
 const refB = { provider: "env", name: NAME_B };
+let unbindSecrets: () => void = () => undefined;
+/** F-DG6-181: the manifest of this suite (names, consumer kind and organization code only). */
+const SIGNING_BINDINGS = (names: readonly string[] = [NAME_A, NAME_B]) =>
+  names.map((name) => ({ name, consumer: "webhook_signing" as const, organization: w.orgA.code }));
 
 let api: TestApi;
 let w: World;
@@ -91,7 +97,9 @@ beforeAll(async () => {
   const kdsUser = await createUser(api.db, w.orgA.id);
   await grant(api.db, w.grantor.id, kdsUser.id, "KDS", { type: "organization", id: w.orgA.id }, w.orgA.id);
   kdsOrg = await signIn(api.app, kdsUser.subject);
-  const secrets = createSecretProviderRegistry();
+  // F-DG6-181 (T-DG6-BE-Z2): both signing secrets are bound, as IT would, to organization A's webhook signing.
+  unbindSecrets = bindSecrets(SIGNING_BINDINGS());
+  const secrets = createSecretProviderRegistry({ organizationCodeOf: organizationCodeLookup(api.db) });
   secrets.register({
     id: "env",
     get: async (name) =>
@@ -101,6 +109,7 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
+  unbindSecrets();
   setConnectorSecretProviders(previousSecrets);
   await api?.close();
 });
@@ -747,6 +756,23 @@ describe("webhook endpoint administration (webhook.configure; ADR-0056 §7)", ()
     ]) {
       expect(text).not.toContain(SECRET_A);
       expect(text).not.toContain(SECRET_B);
+    }
+  });
+
+  it("F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing", async () => {
+    const e = await endpoint(await webhookConnector());
+    const body = fixture(await periods(4));
+    const before = await counts(e);
+    unbindSecrets();
+    unbindSecrets = bindSecrets(SIGNING_BINDINGS([NAME_B])); // IT removed NAME_A's binding
+    try {
+      const res = await deliver(e.endpointKey, body);
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({ code: "webhook.unauthenticated" });
+      expect(await counts(e)).toEqual(before);
+    } finally {
+      unbindSecrets();
+      unbindSecrets = bindSecrets(SIGNING_BINDINGS());
     }
   });
 

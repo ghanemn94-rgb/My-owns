@@ -38,6 +38,7 @@ import {
   type TestApi,
   type World,
 } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 import { ifm, setupP2World, type P2World } from "../../support/p2-fixtures.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +56,7 @@ let openStore: FakeS3; // NEGATIVE FIXTURE: serves anonymous reads
 const BUCKET = "mth-evidence";
 const ACCESS_VAR = "MTH_SECRET_IT_STORAGE_S3_ACCESS";
 const SECRET_VAR = "MTH_SECRET_IT_STORAGE_S3_SECRET";
+let unbindSecrets: () => void = () => undefined;
 const S = "/api/v1/admin/storage";
 const TEST = "/api/v1/admin/storage/test";
 const PDF = (text: string) => Buffer.from(`%PDF-1.7\n% synthetic ${text}\n%%EOF\n`);
@@ -114,6 +116,16 @@ beforeAll(async () => {
   process.env[ACCESS_VAR] = fake.credentials[0]!.accessKeyId;
   process.env[SECRET_VAR] = fake.credentials[0]!.secretAccessKey;
   api = await startApi({ database: scratchDb });
+  // F-DG6-181 (T-DG6-BE-Z2): IT binds the installation's S3 references to `storage` and the stores' host (both fakes
+  // listen on 127.0.0.1); the unset name is bound too, so the test reaches the provider and reports it unresolvable.
+  unbindSecrets = bindSecrets(
+    [ACCESS_VAR, SECRET_VAR, "MTH_SECRET_IT_STORAGE_UNSET"].map((name) => ({
+      name,
+      consumer: "storage" as const,
+      organization: null,
+      hosts: ["127.0.0.1"],
+    })),
+  );
   w = await seedWorld(api.db);
   p = await setupP2World(api, w);
   T = `/api/v1/transformations/${p.transformationId}`;
@@ -122,6 +134,7 @@ beforeAll(async () => {
   nobody = await signIn(api.app, w.nobody.subject);
 }, 180_000);
 afterAll(async () => {
+  unbindSecrets();
   delete process.env[ACCESS_VAR];
   delete process.env[SECRET_VAR];
   await api?.close();

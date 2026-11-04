@@ -175,6 +175,15 @@ export const ENV_VARS = {
     secret: false,
     usedBy: ["api", "worker"],
   },
+  // F-DG6-181 (T-DG6-BE-Z2; ADR-0052 amendment of 2026-11-04 §A; D-209): the IT-maintained SecretRef binding manifest.
+  SECRET_BINDINGS_FILE: {
+    description:
+      "Path of the IT-maintained JSON manifest that binds each SecretRef to one setting kind, one organization code " +
+      "(or the installation) and the hosts it may be sent to. Holds no values. Unset: no SecretRef is bound.",
+    required: false,
+    secret: false,
+    usedBy: ["api", "worker"],
+  },
   LOG_LEVEL: {
     description: "fatal | error | warn | info | debug",
     required: false,
@@ -327,6 +336,43 @@ export {
   STORAGE_URL_CENSOR,
   withSecretRedaction,
 } from "./load.ts";
+// F-DG6-181 (T-DG6-BE-Z2; ADR-0052 amendment of 2026-11-04; D-209): the SecretRef namespace and binding manifest.
+export {
+  activeSecretBindings,
+  EMPTY_SECRET_BINDINGS,
+  ENV_SECRET_NAME,
+  ENV_SECRET_PREFIX,
+  FILE_SECRET_NAME,
+  HOSTLESS_SECRET_CONSUMERS,
+  loadSecretBindings,
+  MAX_SECRET_BINDING_HOSTS,
+  MAX_SECRET_BINDINGS,
+  MAX_SECRET_BINDINGS_FILE_BYTES,
+  parseSecretBindingHost,
+  parseSecretBindings,
+  SECRET_BINDINGS_VARIABLE,
+  SECRET_CONSUMERS,
+  SECRET_PROVIDER_ID,
+  SECRET_REF_HOST_NOT_BOUND_CODE,
+  SECRET_REF_HOST_NOT_BOUND_MESSAGE,
+  SECRET_REF_NOT_BOUND_CODE,
+  SECRET_REF_NOT_BOUND_MESSAGE,
+  secretBinding,
+  secretBindingsOf,
+  secretRefInNamespace,
+  secretUseHost,
+  secretUseHostOfUrl,
+  setSecretBindings,
+  TENANT_SECRET_CONSUMERS,
+  type SecretBinding,
+  type SecretBindingHost,
+  type SecretBindingResult,
+  type SecretBindings,
+  type SecretBindingUse,
+  type SecretConsumer,
+  type SecretRefLike,
+  type SecretUseHost,
+} from "./secret-bindings.ts";
 // P6 (T-DG6-BE-T; ADR-0059 §12): the A21 connection log (a test instrument; ignored in production).
 export {
   CONNECTION_LOG_CHANNELS,

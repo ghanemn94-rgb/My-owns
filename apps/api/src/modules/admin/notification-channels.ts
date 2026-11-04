@@ -26,6 +26,7 @@
 //    (outcome and error code only, never the address or the text) is written afterwards.
 // Problem codes and English texts are ADR-0054 §4's, exactly. Nothing here is a business approval, and nothing reads or
 // writes DG0-DG7. The live mail service is a residual: the adapter is proven against the in-process fake SMTP only.
+import { secretUseHost } from "@mth/config";
 import { reason as reasonRule, uuid } from "@mth/shared/schemas";
 import { sql, type DbOrTx, type NotificationChannelTable } from "@mth/db";
 import { PROBLEM_TYPES, type Permission } from "@mth/shared";
@@ -46,6 +47,8 @@ import {
 } from "../access/index.ts";
 import {
   assertSecretRefInNamespace,
+  assertSecretRefsBound,
+  type SecretUse,
   cursorSchema,
   decodeCursor,
   etag,
@@ -357,6 +360,14 @@ function versionConflict(current: ChannelRow | undefined): HttpProblem {
   });
 }
 
+/**
+ * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C): the use an email channel's references resolve for: `smtp`, the
+ * channel's organization and the SMTP host and port the adapter connects to.
+ */
+export function smtpSecretUse(organizationId: string, smtp: { host: string; port: number }): SecretUse {
+  return { consumer: "smtp", organizationId, host: secretUseHost(smtp.host, smtp.port) };
+}
+
 /** The validated settings of a PUT body (the ADR-0054 §4 business rules). */
 export function checkedChannelUpdate(
   kind: ChannelKind,
@@ -497,6 +508,18 @@ export function registerNotificationChannelRoutes(
     await requireConfigure(db, principal, organizationId);
     const body = parseBody(notificationChannelUpdate, request.body);
     const update = checkedChannelUpdate(channelKind, body, { production, providers: providers() });
+    // F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): both references must be bound to `smtp`, this (authorized)
+    // organization's code and the SMTP host (400 validation, audited as secret_ref.refused); nothing is written.
+    if (update.smtp !== null)
+      await assertSecretRefsBound(
+        db,
+        [
+          ...(update.smtp.usernameRef ? [{ ref: update.smtp.usernameRef, pointer: "/smtp/usernameRef" }] : []),
+          ...(update.smtp.passwordRef ? [{ ref: update.smtp.passwordRef, pointer: "/smtp/passwordRef" }] : []),
+        ],
+        smtpSecretUse(organizationId, update.smtp),
+        "/smtp/host",
+      );
     const expected = ifMatchOrZero(request);
     const view = await db.transaction().execute(async (tx) => {
       const current = await loadRow(tx, organizationId, channelKind, true);
@@ -590,7 +613,7 @@ export function registerNotificationChannelRoutes(
     const secrets = options.secrets();
     const channel = options.channels.createEmailChannel({
       settings: smtp,
-      resolveSecret: (ref) => secrets.resolve(ref),
+      resolveSecret: (ref) => secrets.resolve(ref, smtpSecretUse(organizationId, smtp)), // F-DG6-181
       refuseInsecure: production,
     });
     const result = await channel.send(message, address);

@@ -44,9 +44,12 @@ import { inboxNotificationCreatedV1, outboxEnvelope } from "@mth/shared/schemas"
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { createEmailChannel } from "../channels/email.ts";
+import { secretUseHost } from "@mth/config";
 import type {
   ChannelKind,
+  ChannelSecretRef,
   ChannelSecretResolver,
+  ChannelSecretValue,
   ChannelSendResult,
   NotificationChannel,
   SmtpSettings,
@@ -62,6 +65,7 @@ import {
   runOnce,
   type LoadedServiceIdentity,
 } from "../kit.ts";
+import type { SecretUse } from "../secrets.ts";
 import { ServiceScopeViolation } from "../service-scope.ts";
 import type { JobHandler } from "./spec.ts";
 
@@ -100,9 +104,21 @@ export const retryDelaySeconds = (attempts: number): number => RETRY_BACKOFF_SEC
 
 // ------------------------------------------------------------------------------------------------ configuration
 
+/**
+ * Resolves a credential reference for one use (the worker's SecretProvider registry; main.ts). F-DG6-181 (ADR-0052
+ * amendment of 2026-11-04 §C, §E): the use is `smtp`, the channel row's organization and its SMTP host and port, so a
+ * reference not bound to them resolves as unset (smtp.secret_unavailable) and nothing connects.
+ */
+export type ScopedSecretResolver = (ref: ChannelSecretRef, use: SecretUse) => Promise<ChannelSecretValue | undefined>;
+
+/** The use an email channel's references resolve for (F-DG6-181): smtp, the row's organization, its host and port. */
+export function smtpSecretUse(organizationId: string, settings: Pick<SmtpSettings, "host" | "port">): SecretUse {
+  return { consumer: "smtp", organizationId, host: secretUseHost(settings.host, settings.port) };
+}
+
 export interface NotificationChannelDeps {
-  /** Resolves a credential reference (the worker's SecretProvider registry; main.ts). */
-  readonly resolveSecret: ChannelSecretResolver;
+  /** Resolves a credential reference for a use (the worker's SecretProvider registry; main.ts). */
+  readonly resolveSecret: ScopedSecretResolver;
   /** The application origin of the deep links (APP_BASE_URL); null = a relative `/links/<token>` path. */
   readonly appBaseUrl: URL | null;
   /** Refuse `none` SMTP security (NODE_ENV=production). */
@@ -112,6 +128,7 @@ export interface NotificationChannelDeps {
     kind: ChannelKind,
     settings: SmtpSettings,
     deps: NotificationChannelDeps,
+    organizationId: string,
   ) => NotificationChannel | null;
 }
 
@@ -119,10 +136,14 @@ const defaultChannelFor = (
   kind: ChannelKind,
   settings: SmtpSettings,
   deps: NotificationChannelDeps,
-): NotificationChannel | null =>
-  kind === "email"
-    ? createEmailChannel({ settings, resolveSecret: deps.resolveSecret, refuseInsecure: deps.refuseInsecure })
-    : null;
+  organizationId: string,
+): NotificationChannel | null => {
+  if (kind !== "email") return null;
+  // F-DG6-181: the resolver of this channel row only (its organization, its SMTP host and port).
+  const use = smtpSecretUse(organizationId, settings);
+  const resolveSecret: ChannelSecretResolver = (ref) => deps.resolveSecret(ref, use);
+  return createEmailChannel({ settings, resolveSecret, refuseInsecure: deps.refuseInsecure });
+};
 
 const DEFAULT_DEPS: NotificationChannelDeps = Object.freeze({
   resolveSecret: async () => undefined,
@@ -558,7 +579,9 @@ export async function sendDelivery(db: Db, deliveryId: string, jobId: string): P
         .where("channel_kind", "=", d.channel_kind)
         .executeTakeFirst();
       const settings = channel?.enabled ? smtpOf(channel) : null;
-      const adapter = settings ? deps.channelFor(d.channel_kind as ChannelKind, settings, deps) : null;
+      const adapter = settings
+        ? deps.channelFor(d.channel_kind as ChannelKind, settings, deps, d.organization_id)
+        : null;
       const user = await conn
         .selectFrom("app_user")
         .select(["status", "email", "preferred_locale"])

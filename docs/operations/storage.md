@@ -135,6 +135,10 @@ value is resolved at request time through the `SecretProvider` registry (ADR-005
 | `file` | `{ "provider": "file", "name": "mth_s3_secret_access_key" }` | The file `mth_s3_secret_access_key` directly inside `SECRETS_DIR`, a directory dedicated to these secrets (for example `/run/secrets/mth-settings`, never `/run/secrets` itself) |
 | another id | IT's vault | Only if IT registers its own `SecretProvider` adapter at composition. The product ships no vault adapter. |
 
+IT also binds each secret to this setting in `SECRET_BINDINGS_FILE` (`configuration.md`, "The binding"): consumer
+`storage` with `null` and the object store's endpoint host. An unbound secret is refused with `400 validation`
+(`validation.secret_ref_not_bound`).
+
 The names above are examples: the hub reads the names the references give, inside the namespace of
 `configuration.md` ("The namespace"); a reference outside it is refused with `400 validation`. Provide the values to every process
 that opens the store: each **API** instance (uploads, downloads, the test), and the **worker** too if export files

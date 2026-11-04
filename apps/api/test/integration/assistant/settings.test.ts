@@ -30,6 +30,7 @@ import {
   type TestApi,
   type World,
 } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Body = any;
@@ -88,7 +89,22 @@ const toggle = (to: "enable" | "disable", ifMatch: number | string | null, sessi
     headers: ifMatch === null ? {} : ifm(ifMatch),
   });
 
+let unbindSecrets: () => void = () => undefined;
+
 beforeAll(async () => {
+  // F-DG6-181 (T-DG6-BE-Z2): the assistant"s credential references are bound, as IT would, to `assistant`, the
+  // installation and the endpoint hosts this suite uses.
+  unbindSecrets = bindSecrets(
+    [
+      { provider: "env", name: "MTH_SECRET_TEST_ASSISTANT_KEY" },
+      { provider: "file", name: "model_key" }, // the locked-while-enabled case changes to it
+    ].map((ref) => ({
+      ...ref,
+      consumer: "assistant" as const,
+      organization: null,
+      hosts: ["model.example.invalid", "other.example.invalid"],
+    })),
+  );
   process.env["MTH_SECRET_TEST_ASSISTANT_KEY"] = CREDENTIAL_CANARY;
   const { adminUrl } = inject("mthDb");
   scratchDb = await createScratchDatabase(adminUrl, "mth_asst_set");
@@ -103,6 +119,7 @@ beforeAll(async () => {
   admMethod = (await userWith("ADM_METHOD")).session;
 }, 120_000);
 afterAll(async () => {
+  unbindSecrets();
   delete process.env["MTH_SECRET_TEST_ASSISTANT_KEY"];
   await api.close();
   await dropScratchDatabase(inject("mthDb").adminUrl, scratchDb);

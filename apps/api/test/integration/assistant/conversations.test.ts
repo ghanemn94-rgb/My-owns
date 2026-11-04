@@ -35,6 +35,7 @@ import {
   type TestApi,
   type World,
 } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Body = any;
@@ -234,7 +235,19 @@ function noRetrievalPorts(): () => void {
 }
 let restoreRetrievalPorts: () => void = () => undefined;
 
+let unbindSecrets: () => void = () => undefined;
+
 beforeAll(async () => {
+  // F-DG6-181 (T-DG6-BE-Z2): the assistant"s credential references are bound, as IT would, to `assistant`, the
+  // installation and the endpoint hosts this suite uses.
+  unbindSecrets = bindSecrets(
+    ["MTH_SECRET_SYNTHETIC_X5_KEY"].map((name) => ({
+      name,
+      consumer: "assistant" as const,
+      organization: null,
+      hosts: ["127.0.0.1"],
+    })),
+  );
   const { adminUrl } = inject("mthDb");
   scratchDb = await createScratchDatabase(adminUrl, "mth_asst_conv");
   await migrate(roleUrl(adminUrl, scratchDb, "mth_owner"));
@@ -251,6 +264,7 @@ beforeAll(async () => {
   testAdapter.reset();
 }, 120_000);
 afterAll(async () => {
+  unbindSecrets();
   await fake.stop();
   restoreRetrievalPorts();
   await api.close();

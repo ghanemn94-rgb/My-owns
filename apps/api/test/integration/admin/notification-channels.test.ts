@@ -23,6 +23,7 @@ import {
   type TestApi,
   type World,
 } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 let api: TestApi;
 let w: World;
@@ -65,6 +66,23 @@ async function auditsOf(recordId: string, action: string) {
     .execute();
 }
 
+let unbindSecrets: () => void = () => undefined;
+/**
+ * F-DG6-181 (T-DG6-BE-Z2): IT binds each SMTP secret to one organization and the SMTP host; the tests here run one
+ * after another, each in its own organization, so the two synthetic names are re-bound to the organization in use.
+ */
+function bindSmtpTo(organizationCode: string): void {
+  unbindSecrets();
+  unbindSecrets = bindSecrets(
+    ["MTH_SECRET_TEST_SMTP_USER", "MTH_SECRET_TEST_SMTP_PASS"].map((name) => ({
+      name,
+      consumer: "smtp" as const,
+      organization: organizationCode,
+      hosts: ["127.0.0.1"],
+    })),
+  );
+}
+
 /** A fresh organization with its own ADM_TECH user, signed in (so tests never share a channel row). */
 async function freshOrg() {
   const org = await createOrg(api.db);
@@ -72,6 +90,7 @@ async function freshOrg() {
   const adminEmail = `${uniq("adm")}@example.invalid`.toLowerCase();
   const user = await createUser(api.db, org.id, { email: adminEmail });
   await grant(api.db, grantor.id, user.id, "ADM_TECH", { type: "organization", id: org.id }, org.id);
+  bindSmtpTo(org.code);
   return {
     id: org.id,
     grantorId: grantor.id,
@@ -86,6 +105,7 @@ beforeAll(async () => {
   process.env["MTH_SECRET_TEST_SMTP_PASS"] = SECRET_CANARY;
   api = await startApi();
   w = await seedWorld(api.db);
+  bindSmtpTo(w.orgA.code);
   fake = await new FakeSmtp().start();
   admin = await signIn(api.app, w.admin.subject);
   auditor = await signIn(api.app, w.auditor.subject);
@@ -93,6 +113,7 @@ beforeAll(async () => {
   nobody = await signIn(api.app, w.nobody.subject);
 });
 afterAll(async () => {
+  unbindSecrets();
   delete process.env["MTH_SECRET_TEST_SMTP_USER"];
   delete process.env["MTH_SECRET_TEST_SMTP_PASS"];
   await fake.stop();

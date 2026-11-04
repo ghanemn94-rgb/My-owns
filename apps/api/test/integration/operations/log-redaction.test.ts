@@ -6,6 +6,7 @@ import { createPool } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildServer } from "../../../src/server.ts";
 import { testConfig, testEvidenceDir } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 const canary = (name: string) => `mth-canary-${name}-${"q".repeat(16)}`;
 const lines: string[] = [];
@@ -57,7 +58,16 @@ describe("the composed API logger (ADR-0053 §4)", () => {
 
   it("censors a value resolved through the server's SecretProvider registry, storage fields, paths and signed URLs", async () => {
     lines.length = 0;
-    const value = await built.secrets.resolve({ provider: "env", name: ENV_SECRET });
+    // F-DG6-181 (T-DG6-BE-Z2): bound, as IT would, to the assistant setting (installation) at a synthetic host.
+    const unbind = bindSecrets([
+      { name: ENV_SECRET, consumer: "assistant", organization: null, hosts: ["model.example.invalid"] },
+    ]);
+    const value = await built.secrets
+      .resolve(
+        { provider: "env", name: ENV_SECRET },
+        { consumer: "assistant", organizationId: null, host: { hostname: "model.example.invalid", port: 443 } },
+      )
+      .finally(unbind);
     expect(value?.reveal()).toBe(canary("provider-value"));
     built.app.log.error(
       {

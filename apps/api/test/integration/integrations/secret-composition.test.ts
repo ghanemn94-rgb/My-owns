@@ -25,6 +25,7 @@ import {
   type World,
 } from "../../support/harness.ts";
 import { assertContract } from "../../support/contract.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 import { DIRECT_FLOW, monthlyPeriod, ownedKpi } from "../kpi-p4/kbe-c-fixtures.ts";
 import { seedKpiWorld, type KpiWorld } from "../kpi/fixtures.ts";
 
@@ -38,6 +39,7 @@ const SIGNING_VALUE = "whsec-SYNTHETIC-be-x2-composition-5c2a";
 const CREDENTIAL_NAME = "MTH_SECRET_BE_X2_COMPOSITION_API_TOKEN";
 const CREDENTIAL_VALUE = "tok-SYNTHETIC-be-x2-composition-91d0";
 const UNSET_NAME = "MTH_SECRET_BE_X2_COMPOSITION_NEVER_SET";
+let unbindSecrets: () => void = () => undefined;
 
 let api: TestApi;
 let w: World;
@@ -51,12 +53,20 @@ beforeAll(async () => {
   delete process.env[UNSET_NAME];
   api = await startApi();
   w = await seedWorld(api.db);
+  // F-DG6-181 (T-DG6-BE-Z2): the names this suite uses are bound, as IT would, to organization A (buildServer's own
+  // registry checks them with A's code; the connectors have no endpoint, so no host).
+  unbindSecrets = bindSecrets([
+    { name: SIGNING_NAME, consumer: "webhook_signing", organization: w.orgA.code },
+    { name: CREDENTIAL_NAME, consumer: "connector", organization: w.orgA.code, hosts: ["source.example.invalid"] },
+    { name: UNSET_NAME, consumer: "connector", organization: w.orgA.code, hosts: ["source.example.invalid"] },
+  ]);
   k = await seedKpiWorld(api, w);
   admin = await signIn(api.app, w.admin.subject);
   kpiId = (await ownedKpi(api, k, DIRECT_FLOW)).id;
 }, 120_000);
 
 afterAll(async () => {
+  unbindSecrets();
   delete process.env[SIGNING_NAME];
   delete process.env[CREDENTIAL_NAME];
   await api?.close();

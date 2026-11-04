@@ -12,7 +12,11 @@ import { expect } from "vitest";
 import { z } from "zod";
 import { setConnectorSecretProviders } from "../../../src/modules/integrations/secret-refs.ts";
 import { webhookSignature } from "../../../src/modules/integrations/webhooks.ts";
-import { createSecretProviderRegistry, secretValue } from "../../../src/modules/platform/index.ts";
+import {
+  createSecretProviderRegistry,
+  organizationCodeLookup,
+  secretValue,
+} from "../../../src/modules/platform/index.ts";
 import { assertAcceptedRequest, assertContract } from "../../support/contract.ts";
 import {
   createTransformationRow,
@@ -24,6 +28,7 @@ import {
 } from "../../support/harness.ts";
 import { insertDeliverable, insertInitiative, type BenefitWorld } from "../benefits/fixtures.ts";
 import { seedKpiWorld } from "../kpi/fixtures.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 // ------------------------------------------------------------------------------------------------ T-DG6-BE-N mirrors
 
@@ -78,13 +83,22 @@ const SECRET_NAME = "MTH_SECRET_CONTRACT_WEBHOOK_SECRET";
 const NEXT_NAME = "MTH_SECRET_CONTRACT_WEBHOOK_SECRET_NEXT";
 
 export async function exerciseP6BeNOperations(ctx: P6ExerciseContext): Promise<void> {
-  const secrets = createSecretProviderRegistry();
+  // F-DG6-181 (T-DG6-BE-Z2): both signing secrets are bound, as IT would, to organization A's webhook signing.
+  const unbind = bindSecrets(
+    [SECRET_NAME, NEXT_NAME].map((name) => ({
+      name,
+      consumer: "webhook_signing" as const,
+      organization: ctx.world.orgA.code,
+    })),
+  );
+  const secrets = createSecretProviderRegistry({ organizationCodeOf: organizationCodeLookup(ctx.api.db) });
   secrets.register({ id: "env", get: async (name) => (name === SECRET_NAME ? secretValue(SECRET) : undefined) });
   const previous = setConnectorSecretProviders(secrets);
   try {
     await exerciseWebhooks(ctx);
   } finally {
     setConnectorSecretProviders(previous);
+    unbind();
   }
   await exerciseOutboundWrites(ctx); // T-DG6-BE-N2
 }

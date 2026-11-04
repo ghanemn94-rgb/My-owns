@@ -8,6 +8,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inspect } from "node:util";
+import { secretBindingsOf } from "@mth/config";
 import Fastify from "fastify";
 import { afterAll, describe, expect, it } from "vitest";
 import {
@@ -206,15 +207,32 @@ describe("the file provider (SECRETS_DIR)", () => {
   });
 });
 
+/** The installation use the registration tests resolve for (F-DG6-181). */
+const USE = { consumer: "storage", organizationId: null, host: { hostname: "s3.it.example", port: 443 } } as const;
+
 describe("registration (the server.ts line)", () => {
   it("registers env then file; a reference resolves through the registry", async () => {
     writeFileSync(join(dir, "smtp"), VALUE);
-    const registry = createSecretProviderRegistry();
+    // F-DG6-181: each reference is bound (synthetic manifest) to the installation use the resolves name.
+    const bound = (provider: string, name: string) =>
+      ({
+        provider,
+        name,
+        consumer: "storage",
+        organization: null,
+        hosts: [{ hostname: "s3.it.example", port: null }],
+      }) as const;
+    const manifest = secretBindingsOf([
+      bound("env", "MTH_SECRET_SMTP_PASSWORD"),
+      bound("file", "smtp"),
+      bound("vault", "SMTP_PASSWORD"),
+    ]);
+    const registry = createSecretProviderRegistry({ bindings: () => manifest });
     registerBuiltInSecretProviders(registry, { secretsDir: dir, env: { MTH_SECRET_SMTP_PASSWORD: VALUE } });
     expect(registry.ids()).toEqual(["env", "file"]);
-    expect((await registry.resolve({ provider: "env", name: "MTH_SECRET_SMTP_PASSWORD" }))?.reveal()).toBe(VALUE);
-    expect((await registry.resolve({ provider: "file", name: "smtp" }))?.reveal()).toBe(VALUE);
-    expect(await refusal(registry.resolve({ provider: "vault", name: "SMTP_PASSWORD" }))).toBe(
+    expect((await registry.resolve({ provider: "env", name: "MTH_SECRET_SMTP_PASSWORD" }, USE))?.reveal()).toBe(VALUE);
+    expect((await registry.resolve({ provider: "file", name: "smtp" }, USE))?.reveal()).toBe(VALUE);
+    expect(await refusal(registry.resolve({ provider: "vault", name: "SMTP_PASSWORD" }, USE))).toBe(
       'secret provider "vault" is not registered',
     );
   });
@@ -222,7 +240,7 @@ describe("registration (the server.ts line)", () => {
   it("with no new variable set nothing is read: env with an empty environment resolves nothing", async () => {
     const registry = createSecretProviderRegistry();
     registerBuiltInSecretProviders(registry, { secretsDir: null, env: {} });
-    expect(await registry.resolve({ provider: "env", name: "MTH_SECRET_SMTP_PASSWORD" })).toBeUndefined();
+    expect(await registry.resolve({ provider: "env", name: "MTH_SECRET_SMTP_PASSWORD" }, USE)).toBeUndefined();
   });
 });
 

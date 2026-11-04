@@ -68,6 +68,7 @@ import {
 } from "./adapters/port.ts";
 import {
   adapterConfigOf,
+  connectorSecretUse,
   connectorRefusals,
   findConnector,
   jsonbTextBytes,
@@ -452,7 +453,7 @@ async function callAdapter(
   const ms = options.adapterTimeoutMs ?? OUTBOUND_ADAPTER_TIMEOUT_MS;
   let credentials;
   try {
-    credentials = await resolveCredentials(config.credential_refs);
+    credentials = await resolveCredentials(config.credential_refs, connectorSecretUse(connector, config));
   } catch {
     // Nothing was sent: no attempt is counted.
     return { outcome: { outcome: "no_response" }, dispatched: false };

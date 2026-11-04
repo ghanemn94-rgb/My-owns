@@ -49,6 +49,7 @@ import {
   type FixtureKpis,
   type Row,
 } from "../support/a17.ts";
+import { bindSecrets } from "../../../apps/api/test/support/secret-bindings.ts";
 import { call, signIn, uniq, type Loose, type Session, type TestApi } from "../support/api.ts";
 import {
   DIRECT_FLOW,
@@ -69,6 +70,7 @@ vi.setConfig({ testTimeout: 120_000 });
 
 const SECRET_VAR = "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET";
 const SECRET = "synthetic-qa-a17-signing-secret-not-real-0001";
+let unbindSecrets: () => void = () => undefined;
 
 let env: ScratchEnv;
 let boss: ReturnType<typeof qaBoss>;
@@ -88,6 +90,8 @@ beforeAll(async () => {
   await boss.start();
   worker = await inProcessWorker(env, boss);
   w = await seedWorld(api.db);
+  // F-DG6-181 (T-DG6-BE-Z2): IT binds the synthetic signing secret to organization A's webhook signing.
+  unbindSecrets = bindSecrets([{ name: SECRET_VAR, consumer: "webhook_signing", organization: w.orgA.code }]);
   k = await seedKpiWorld(api, w);
   await mapPartyTo(api, k, "BO", k.users.bo.id); // the review-route KPI's reviewer
   admin = await signIn(api.app, w.admin.subject);
@@ -99,6 +103,7 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
+  unbindSecrets();
   delete process.env[SECRET_VAR];
   await worker?.stop().catch(() => undefined);
   await boss?.stop({ graceful: false }).catch(() => undefined);
