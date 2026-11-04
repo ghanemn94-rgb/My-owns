@@ -1,0 +1,19 @@
+$ git clone --shared --no-checkout /home/user/My-owns $TMPDIR/r3; sparse-checkout excludes docs/delivery/runs/ and docs/delivery/test-evidence/ (not in the candidate spec; disk ~6 GB free shared by 3 reviewers); git checkout 95f981917e4e5572f954d7cd159d869eca142bff (2026-11-04T12:38:44Z)
+95f981917e4e5572f954d7cd159d869eca142bff
+$ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14","files":2729}
+EXIT 0
+$ (in /home/user/My-owns, HEAD f2d030f6f9a9497e9664dcfe38d53b45c4994bc3) node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14","files":2729}
+EXIT 0
+$ git -C /home/user/My-owns diff --stat 95f98191..HEAD
+ .../DG6/round-3/code-security-reviewer.md          |   163 +
+ .../assignments/DG6/round-3/domain-reviewer.md     |   164 +
+ .../assignments/DG6/round-3/qa-verifier.md         |   144 +
+ .../candidates/DG6/aa219bd2e60c986e.manifest.json  | 13663 +++++++++++++++++++
+ docs/delivery/stages.json                          |    67 +-
+ 5 files changed, 14176 insertions(+), 25 deletions(-)
+$ sha256sum manifest
+0a7c40afb185549b6dbad2298d7db342c01b3f2f0757f2d9cd40f2433b95fc05  /home/user/My-owns/docs/delivery/candidates/DG6/aa219bd2e60c986e.manifest.json
+manifest candidate_id sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14 source_commit 95f981917e4e5572f954d7cd159d869eca142bff entries 2729
+node: v24.21.0; node22: v22.22.0

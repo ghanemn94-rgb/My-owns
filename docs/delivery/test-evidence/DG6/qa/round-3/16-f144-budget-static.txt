@@ -1,0 +1,51 @@
+$ node budget-scan.mjs apps/web/e2e/*.spec.ts e2e/*.spec.ts e2e/**/*.spec.ts  (candidate 95f98191; heuristic static scan, F-DG6-144)
+# apps/web/e2e/fec3-extension-hosts.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-dependency-slip-impact.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-diagnose-reflow.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# apps/web/e2e/p5-extension-fields.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-form-tables-reflow.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# apps/web/e2e/p5-forms.spec.ts: no file-level budget; 3 tests, 0 without an explicit budget
+# apps/web/e2e/p5-launch-health-kpi.spec.ts: no file-level budget; 3 tests, 0 without an explicit budget
+# apps/web/e2e/p5-launch-permission.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# apps/web/e2e/p5-navigation.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# apps/web/e2e/p5-procedure-outputs.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-procedures-automation.spec.ts: no file-level budget; 6 tests, 0 without an explicit budget
+# apps/web/e2e/p5-reader-tables.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-record-name-reflow.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# apps/web/e2e/p5-reflow-axe.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-reports-exports.spec.ts: no file-level budget; 5 tests, 0 without an explicit budget
+# apps/web/e2e/p5-snapshot-page.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-studio-routes.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-studio.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# apps/web/e2e/p5-table-regions-axe.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-title-reflow.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p5-transformation-picker-complete.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# apps/web/e2e/p6-admin-screens.spec.ts: no file-level budget; 6 tests, 0 without an explicit budget
+# e2e/a06-configuration-change.spec.ts: no file-level budget; 2 tests, 0 without an explicit budget
+# e2e/a07-historical-integrity.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# e2e/a13-automation-recovery.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# e2e/a13-connector-run-once.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+# e2e/a15-reporting.spec.ts: no file-level budget; 1 tests, 0 without an explicit budget
+e2e/a22-operations-jobs.spec.ts:79: test("A22 / REQ-S12-022: the jobs screen shows last success and next run for every scheduled job; run now is r
+# e2e/a22-operations-jobs.spec.ts: no file-level budget; 1 tests, 1 without an explicit budget
+e2e/identity/keycloak-login.spec.ts:47: test("signs in through realm mth-test and gets a session", async ({ page }, info) => {
+e2e/identity/keycloak-login.spec.ts:62: test("refuses the authorization response and token of realm mth-other: token_invalid, no session", async ({
+# e2e/identity/keycloak-login.spec.ts: no file-level budget; 2 tests, 2 without an explicit budget
+TOTAL tests 301; on the default 30 s (heuristic): 3
+EXIT 0
+
+--- manual check of the 3 heuristic hits:
+e2e/a22-operations-jobs.spec.ts:89:  test.setTimeout(crossBoundary ? 1_200_000 : 300_000);
+e2e/identity/keycloak-login.spec.ts:45:  test.setTimeout(60_000);
+=> a22-operations-jobs.spec.ts:89 sets test.setTimeout(crossBoundary ? 1_200_000 : 300_000) inside its only test (the regex required a digit/constant); keycloak-login.spec.ts:45 sets test.setTimeout(60_000) in a beforeEach/describe scope. Corrected count of tests on the default 30 s: 0 of 301.
+
+--- the three tests F-DG6-144 round 2 named:
+## apps/web/e2e/p4-benefits.spec.ts
+37:test.describe.configure({ mode: "serial" });
+49:test.setTimeout(210_000);
+## apps/web/e2e/p4-gates-closure.spec.ts
+37:test.describe.configure({ mode: "serial" });
+47:test.setTimeout(120_000);
+## apps/web/e2e/p3-journeys.spec.ts
+51:test.describe.configure({ mode: "serial" });
+63:test.setTimeout(150_000);

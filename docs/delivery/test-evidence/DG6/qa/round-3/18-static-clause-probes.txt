@@ -1,0 +1,184 @@
+### 2026-11-04T13:12:26Z candidate 95f98191 static clause probes
+== REQ-S16-022: CREATE TABLE of each entity's table in packages/db/migrations (primary key / owner / status columns)
+-- methodology_version: packages/db/migrations/0011_p2_methodology_catalogue.sql
+     id              uuid PRIMARY KEY,
+     status          text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'retired')),
+     created_by      uuid NULL REFERENCES app_user (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+     CONSTRAINT methodology_version_published_complete CHECK ((status = 'draft') = (published_at IS NULL))
+-- automation_rule_version: packages/db/migrations/0074_p5_automation_engine.sql
+     id                       uuid PRIMARY KEY,
+     status                   text NOT NULL DEFAULT 'draft'
+                              CHECK (status IN ('draft', 'in_review', 'approved', 'published', 'superseded', 'discarded')),
+     created_by               uuid NULL REFERENCES app_user (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+       (status IN ('published', 'superseded')) = (published_at IS NOT NULL) AND (published_by IS NULL OR published_at IS NOT NULL)),
+     CONSTRAINT automation_rule_version_superseded_complete CHECK ((status = 'superseded') = (superseded_at IS NOT NULL)),
+-- job_run: packages/db/migrations/0074_p5_automation_engine.sql
+     id                uuid PRIMARY KEY,
+-- job_definition: NOT FOUND
+-- inbox_notification: packages/db/migrations/0028_p4_calendar_jobs_work_items.sql
+     id                uuid PRIMARY KEY,
+     recipient_user_id uuid NOT NULL REFERENCES app_user (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+     created_by        uuid NULL REFERENCES app_user (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+-- integration_run: packages/db/migrations/0104_p6_connectors_runs_outbound_writes.sql
+     id                     uuid PRIMARY KEY,
+     status                 text NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'running', 'succeeded', 'failed', 'cancelled')),
+     reconciliation_status  text NOT NULL DEFAULT 'not_checked'
+                              CHECK (reconciliation_status IN ('not_checked', 'matched', 'mismatched', 'not_applicable')),
+     created_by             uuid NULL REFERENCES app_user (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+     CONSTRAINT integration_run_status_shape CHECK (
+-- report_snapshot: packages/db/migrations/0080_p5_reports_snapshots_updates.sql
+     id                      uuid PRIMARY KEY,
+     status                  text NOT NULL DEFAULT 'generated' CHECK (status IN ('generated', 'issued', 'superseded', 'discarded')),
+     created_by              uuid NOT NULL REFERENCES app_user (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+     CONSTRAINT report_snapshot_issue_complete CHECK ((status IN ('issued', 'superseded')) = (issue_version IS NOT NULL)
+     CONSTRAINT report_snapshot_supersede_complete CHECK ((status = 'superseded') = (superseded_at IS NOT NULL)
+     CONSTRAINT report_snapshot_discard_complete CHECK ((status = 'discarded') = (discarded_at IS NOT NULL)
+-- audit_event: packages/db/migrations/0003_audit_event.sql
+     id                   uuid PRIMARY KEY,
+     actor_type           text NOT NULL CHECK (actor_type IN ('user', 'service', 'system')),
+     actor_user_id        uuid NULL,
+     on_behalf_of_user_id uuid NULL,
+     CONSTRAINT audit_event_user_actor CHECK (actor_type <> 'user' OR actor_user_id IS NOT NULL),
+
+== erd.md §2.12 rows
+206:- The `pgboss.*` schema: owned and migrated by pg-boss (ADR-0008). This is P1's "job tables as required by the queue choice", and the physical form of the §16 entity **Job**.
+951:### 1d.1 Calendar, job schedules, work items and inbox — `organization`, `tasks` modules, worker
+960:    work_item |o--o{ inbox_notification : "reminder (same dedupe key)"
+961:    app_user ||--o{ inbox_notification : "recipient"
+1001:    inbox_notification {
+1150:| **Approval** (§16 S16-018, P4 part) | `approval`, `approval_decision`, `approval_escalation`; view `approval_decision_record` | `id` | `requested_by`; assignee | `approval.request`; `approval.decide`; the escalation job | `status` | yes (decisions, escalations append-only) | workflows |
+1154:| Job (S16-005) | `job_schedule` (+ pg-boss, `processed_message`) | `id` (code UK) | `owner_module` | migrations; `job.configure` (ADM_TECH) | `enabled` | yes | jobs / worker |
+1155:| Task / reminder (S12-005, S03-008) | `work_item`, `inbox_notification` (+ seed `work_item_kind`) | `id` (dedupe key UK) | `assignee_user_id` / `recipient_user_id` | `createWorkItemOnce`; the assignee / recipient | `status`; `read_at` | yes | tasks |
+1208:| Reporting period (S07-003) | `reporting_period` | `id` (organization, frequency, label UK) | `organization_id` | `reporting_period.manage` (TO); job `kpi.reporting_period_open` | `status` | yes | kpi |
+1710:## 1n. P5 slices D and E: automation engine, starters, routes and notification policy (migrations 0074–0076; T-DG5-ARCH-03; ADR-0043, ADR-0044)
+1712:Every new table has PK `id` (uuid from the application; the two catalogues use `code`), `timestamptz` stamps and, when mutable, `version` with the P2 guards (`_row_guard`, deferred `_audit_required`). Dry runs, action results, job runs, condition closures and escalations, digests and slips are append-only; `job_run` is an operational log without audit events. Two DG4 tables gain defaulted columns: `work_item_kind.urgency` and `inbox_notification.urgency, delivery_state, deliver_after, digest_id, is_digest` (`0075`; every existing row keeps `normal`/`delivered`). `agenda_item` gains one BEFORE UPDATE trigger (`agenda_item_cutoff_review`). The data dictionary ("P5 tables, slices D and E") lists every column, constraint, index and trigger.
+1728:    job_schedule |o--o{ operational_failure : "job failures"
+1734:### 1n.2 Starters, routes, conditions, notifications, cut-off packs and slips (slice E)
+1743:    organization ||--o| notification_policy : "one per organization"
+1744:    app_user ||--o| notification_preference : "one per user"
+1745:    app_user ||--o{ notification_digest : "one per window"
+1746:    notification_digest ||--o{ inbox_notification : "digested notifications"
+1747:    notification_digest }o--|| inbox_notification : "the digest notification"
+1765:| Failure queue (S12-002, S12-020, S12-022) | `operational_failure` | `id` (one open per source, queue, key) | — | the worker; `automation.repair`, `job.repair` | `status` (open, retrying, resolved, dismissed) | yes | automation, jobs |
+1766:| Job run (S12-022) | `job_run` | `id` (job id, attempt unique) | — | the worker | `outcome` (succeeded, failed) | append-only, no audit | jobs |
+
+== s16-022-entity-group.test.ts test titles
+apps/api/test/integration/integrations/s16-022-entity-group.test.ts
+91:  it("FormSchemaVersion: a Studio form_schema version published through the API, read by getFormSchemaAdmin", async () => {
+171:  it("AutomationRuleVersion: createAutomationRuleVersion, read by getAutomationRuleVersion", async () => {
+218:  it("Job: runJobNow (and the worker's run record), read by getJobOperation", async () => {
+255:  it("Notification: a KPI actual submitted on a review route notifies the reviewer, read by listMyInbox", async () => {
+291:  it("IntegrationRun: runConnector, read by getIntegrationRun", async () => {
+358:  it("ReportSnapshot and AuditEvent: issueReportSnapshot, read by getReportSnapshot; its audit event by getAuditEvent", async () => {
+
+== p6-pending-* / p6-exercises-* lists (contract.test.ts must report every pending list empty)
+-- apps/api/test/support/p6-pending-arch-01.ts
+export const P6_PENDING_ARCH_01: readonly string[] = [
+  ...P6_PENDING_BE_B,
+  ...P6_PENDING_BE_C,
+  ...P6_PENDING_BE_D,
+  ...P6_PENDING_BE_E,
+-- apps/api/test/support/p6-pending-arch-02.ts
+export const P6_PENDING_ARCH_02: readonly string[] = [
+  ...P6_PENDING_BE_G,
+  ...P6_PENDING_BE_H2,
+  ...P6_PENDING_BE_I,
+  ...P6_PENDING_BE_I2,
+  ...P6_PENDING_BE_J,
+  ...P6_PENDING_BE_K,
+-- apps/api/test/support/p6-pending-arch-03.ts
+export const P6_PENDING_ARCH_03: readonly string[] = [
+  ...P6_PENDING_BE_L,
+  ...P6_PENDING_BE_L2,
+  ...P6_PENDING_BE_M2,
+  ...P6_PENDING_BE_N,
+  ...P6_PENDING_BE_N2,
+  ...P6_PENDING_BE_O,
+-- apps/api/test/support/p6-pending-arch-04.ts
+export const P6_PENDING_ARCH_04: readonly string[] = [...P6_PENDING_BE_P, ...P6_PENDING_BE_Q, ...P6_PENDING_BE_Q2];
+-- apps/api/test/support/p6-pending-arch-05.ts
+export const P6_PENDING_ARCH_05: readonly string[] = [...P6_PENDING_BE_T, ...P6_PENDING_BE_U];
+-- apps/api/test/support/p6-pending-arch-06.ts
+export const P6_PENDING_ARCH_06: readonly string[] = [...P6_PENDING_BE_W];
+-- apps/api/test/support/p6-pending-be-b.ts
+export const P6_PENDING_BE_B: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-c.ts
+export const P6_PENDING_BE_C: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-d.ts
+export const P6_PENDING_BE_D: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-e.ts
+export const P6_PENDING_BE_E: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-g.ts
+export const P6_PENDING_BE_G: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-h2.ts
+export const P6_PENDING_BE_H2: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-i.ts
+export const P6_PENDING_BE_I: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-i2.ts
+export const P6_PENDING_BE_I2: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-j.ts
+export const P6_PENDING_BE_J: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-k.ts
+export const P6_PENDING_BE_K: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-l.ts
+export const P6_PENDING_BE_L: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-l2.ts
+export const P6_PENDING_BE_L2: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-m2.ts
+export const P6_PENDING_BE_M2: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-n.ts
+export const P6_PENDING_BE_N: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-n2.ts
+export const P6_PENDING_BE_N2: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-o.ts
+export const P6_PENDING_BE_O: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-p.ts
+export const P6_PENDING_BE_P: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-q.ts
+export const P6_PENDING_BE_Q: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-q2.ts
+export const P6_PENDING_BE_Q2: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-t.ts
+export const P6_PENDING_BE_T: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-u.ts
+export const P6_PENDING_BE_U: readonly string[] = [];
+-- apps/api/test/support/p6-pending-be-w.ts
+export const P6_PENDING_BE_W: readonly string[] = [];
+
+== operationIds in docs/api/openapi.yaml
+932
+== migrations
+117
+packages/db/migrations/0001_identity_access.sql
+packages/db/migrations/0125_p6_export_assembly_attempts.sql
+
+== evaluated (node 24 type stripping) lengths of every exported array in apps/api/test/support/p6-pending-*.ts and p6-exercises-*.ts
+p6-pending-arch-01.ts P6_PENDING_ARCH_01 length 0
+p6-pending-arch-02.ts P6_PENDING_ARCH_02 length 0
+p6-pending-arch-03.ts P6_PENDING_ARCH_03 length 0
+p6-pending-arch-04.ts P6_PENDING_ARCH_04 length 0
+p6-pending-arch-05.ts P6_PENDING_ARCH_05 length 0
+p6-pending-arch-06.ts P6_PENDING_ARCH_06 length 0
+p6-pending-be-b.ts P6_PENDING_BE_B length 0
+p6-pending-be-c.ts P6_PENDING_BE_C length 0
+p6-pending-be-d.ts P6_PENDING_BE_D length 0
+p6-pending-be-e.ts P6_PENDING_BE_E length 0
+p6-pending-be-g.ts P6_PENDING_BE_G length 0
+p6-pending-be-h2.ts P6_PENDING_BE_H2 length 0
+p6-pending-be-i.ts P6_PENDING_BE_I length 0
+p6-pending-be-i2.ts P6_PENDING_BE_I2 length 0
+p6-pending-be-j.ts P6_PENDING_BE_J length 0
+p6-pending-be-k.ts P6_PENDING_BE_K length 0
+p6-pending-be-l.ts P6_PENDING_BE_L length 0
+p6-pending-be-l2.ts P6_PENDING_BE_L2 length 0
+p6-pending-be-m2.ts P6_PENDING_BE_M2 length 0
+p6-pending-be-n.ts P6_PENDING_BE_N length 0
+p6-pending-be-n2.ts P6_PENDING_BE_N2 length 0
+p6-pending-be-o.ts P6_PENDING_BE_O length 0
+p6-pending-be-p.ts P6_PENDING_BE_P length 0
+p6-pending-be-q.ts P6_PENDING_BE_Q length 0
+p6-pending-be-q2.ts P6_PENDING_BE_Q2 length 0
+p6-pending-be-t.ts P6_PENDING_BE_T length 0
+p6-pending-be-u.ts P6_PENDING_BE_U length 0
+p6-pending-be-w.ts P6_PENDING_BE_W length 0
+sum of P6_PENDING_* lengths: 0

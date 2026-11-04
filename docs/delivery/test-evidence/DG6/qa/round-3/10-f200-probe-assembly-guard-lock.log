@@ -1,0 +1,210 @@
+### 2026-11-04T12:52:14Z node=v24.21.0 cwd=/var/tmp/mth-run.s2mfu8/claude-0/r3 LANG=<unset> LC_ALL=<unset>
+$ tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/reporting/zz-qa-dg6r3-assembly-guard-lock.test.ts -t QA-DG6R3
+port-policy: PostgreSQL listening on port 29640 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.s2mfu8/claude-0/r3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw249idg_00b15313 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/reporting/zz-qa-dg6r3-assembly-guard-lock.test.ts > QA-DG6R3 probe (F-DG6-200): the guard test's sequence, repeated, with and without BE-Z1's blocking row lock > fixed: 80 repetitions, step([job]) assembles the job each time
+QA-DG6R3 guard-sequence variant fixed: misses 0 of 80 []
+
+stdout | apps/api/test/integration/reporting/zz-qa-dg6r3-assembly-guard-lock.test.ts > QA-DG6R3 probe (F-DG6-200): the guard test's sequence, repeated, with and without BE-Z1's blocking row lock > mutant: 80 repetitions, step([job]) assembles the job each time
+QA-DG6R3 guard-sequence variant mutant: misses 11 of 80 [{"i":14,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":[]},{"i":20,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":28,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":33,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":37,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":40,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":42,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":61,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":65,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":68,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]},{"i":69,"out":[],"row":{"status":"queued","snapshot":null,"version":1,"attempts":0},"again":["assembled"]}]
+
+ ❯ |integration| apps/api/test/integration/reporting/zz-qa-dg6r3-assembly-guard-lock.test.ts (20 tests | 1 failed | 18 skipped) 40752ms
+   ↓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event
+   ↓ D-207 (1): a live selection is accepted with no snapshot > the request-time refusals stay synchronous: 422 report.subject_invalid / report.parameters_invalid, 403 for AUD
+   ↓ D-207 (1): a live selection is accepted with no snapshot > the 0124 CHECK: a job without a snapshot cannot be running
+   ↓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200
+   ↓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a revoked grant: failed export.source_unavailable, no snapshot, no outbox event, no file
+   ↓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports
+   ↓ D-207 (3): an idempotent replay compares the stored selection > same key and selection -> 200 with the same job (pending, then assembled); other parameters -> 422 idempotency.key_reused
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > a crash after the assembly and before the commit leaves the job pending with nothing written; the next step assembles it once
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > the running watch (as the API process starts it) assembles a pending job on its own, and stops cleanly
+   ↓ durability: a restart in the middle of a job, the running watch, bounded retries > unexpected errors are retried at most 3 times, then the job fails export.assembly_failed
+   ↓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed
+   ↓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once
+   ↓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a watcher holding a job keeps a second one out between its two transactions (session lock), and releases the lock after the job
+   ↓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > refuses a snapshot of another definition than the stored selection's; accepts the selection's own
+   ↓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending
+   ↓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)
+   ↓ exactly once: two watchers race > a second watcher skips a job the first one holds (FOR UPDATE SKIP LOCKED), and the job is assembled once
+   ↓ exactly once: two watchers race > a cancelled pending job is never assembled (cancel with If-Match 1)
+   ✓ QA-DG6R3 probe (F-DG6-200): the guard test's sequence, repeated, with and without BE-Z1's blocking row lock > fixed: 80 repetitions, step([job]) assembles the job each time  19319ms
+   × QA-DG6R3 probe (F-DG6-200): the guard test's sequence, repeated, with and without BE-Z1's blocking row lock > mutant: 80 repetitions, step([job]) assembles the job each time 18094ms
+     → expected [ { i: 14, out: [], …(2) }, …(10) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/zz-qa-dg6r3-assembly-guard-lock.test.ts > QA-DG6R3 probe (F-DG6-200): the guard test's sequence, repeated, with and without BE-Z1's blocking row lock > mutant: 80 repetitions, step([job]) assembles the job each time
+AssertionError: expected [ { i: 14, out: [], …(2) }, …(10) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "again": [],[39m
+[31m+     "i": 14,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 20,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 28,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 33,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 37,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 40,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 42,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 61,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 65,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 68,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "again": [[39m
+[31m+       "assembled",[39m
+[31m+     ],[39m
+[31m+     "i": 69,[39m
+[31m+     "out": [],[39m
+[31m+     "row": {[39m
+[31m+       "attempts": 0,[39m
+[31m+       "snapshot": null,[39m
+[31m+       "status": "queued",[39m
+[31m+       "version": 1,[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/reporting/zz-qa-dg6r3-assembly-guard-lock.test.ts:656:22
+    654|       }
+    655|       console.log(`QA-DG6R3 guard-sequence variant ${variant}: misses …
+    656|       expect(misses).toEqual([]);
+       |                      ^
+    657|     }, 900_000);
+    658|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 18 skipped (20)
+   Start at  12:52:19
+   Duration  89.51s (transform 16.19s, setup 0ms, collect 35.07s, tests 40.75s, environment 0ms, prepare 242ms)
+
+EXIT 1 2026-11-04T12:53:54Z

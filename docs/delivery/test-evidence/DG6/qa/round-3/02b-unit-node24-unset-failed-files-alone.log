@@ -1,0 +1,42 @@
+### 2026-11-04T13:48:52Z node=v24.21.0 cwd=/var/tmp/mth-run.s2mfu8/claude-0/r3 LANG=<unset> LC_ALL=<unset>
+$ /var/tmp/mth-run.s2mfu8/claude-0/rerun-unit.sh
+load at start: 28.50 27.74 25.36 30/1169 14
+
+ RUN  v3.2.7 /var/tmp/mth-run.s2mfu8/claude-0/r3
+
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 9451ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  3176ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  4093ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  727ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  1295ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  13:48:55
+   Duration  51.77s (transform 21.84s, setup 0ms, collect 40.76s, tests 9.45s, environment 0ms, prepare 409ms)
+
+unit-node rerun exit 0
+ ❯ |unit-web| src/pages/raid/raid.test.tsx (18 tests | 1 failed) 104300ms
+   × RAID and actions screens (en) > action register: source, follow-up date and overdue flag; edit sends If-Match 8099ms
+ ❯ |unit-web| src/pages/traceability/traceability.test.tsx (32 tests | 1 failed) 95919ms
+   × Portfolios and workstreams (en) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal 7008ms
+ ❯ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests | 2 failed) 66248ms
+   × effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload 7914ms
+   × effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload 7239ms
+ ❯ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests | 1 failed) 236050ms
+   × gate submission note (en) > a whitespace-only note is refused inline and nothing is sent 6327ms
+ FAIL  |unit-web| src/pages/p2-blank-forms.test.tsx > gate submission note (en) > a whitespace-only note is refused inline and nothing is sent
+TestingLibraryElementError: Unable to find role="button" and name "Submit for decision"
+ FAIL  |unit-web| src/pages/raid/raid.test.tsx > RAID and actions screens (en) > action register: source, follow-up date and overdue flag; edit sends If-Match
+TestingLibraryElementError: Unable to find role="link" and name "Synthetic call the vendor"
+ FAIL  |unit-web| src/pages/traceability/traceability.test.tsx > Portfolios and workstreams (en) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal
+TestingLibraryElementError: Unable to find role="button" and name "Assign initiative"
+ FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload
+TestingLibraryElementError: Unable to find role="link" and name "Edit"
+ FAIL  |unit-web| src/pages/transformations/transformations.test.tsx > effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload
+TestingLibraryElementError: Unable to find role="link" and name "تعديل"
+ Test Files  4 failed (4)
+      Tests  5 failed | 118 passed (123)
+unit-web rerun exit 1
+load at end: 27.36 27.89 26.15 21/1164 194
+EXIT 0 2026-11-04T13:54:18Z

@@ -1,0 +1,29 @@
+# qa-verifier DG6 R3: D-203 worker burst (O-1) and A13 drills, extracted from 04-integration-run1-A.log / -B.log
+$ grep '"queue":"automation.evaluate"' 04-integration-run1-A.log | grep -o ruleCode/executionId/outcome | count
+test: ✓ O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event  15703ms
+job-handled outcome lines: 305
+      1 backlog.b337728 succeeded
+     60 backlog.b4780eb duplicate
+    240 backlog.b4780eb succeeded
+      4 backlog.bc356c8 succeeded
+distinct executionIds with outcome succeeded: 245
+executionIds that succeeded more than once: 0
+(backlog.b4780eb is O-1's rule: 240 events -> 240 executions succeeded once each; the 60 concurrent replays are 'duplicate'. backlog.bc356c8 / backlog.b337728 belong to the file's other tests.)
+batch/concurrency defaults (D-203):
+/var/tmp/mth-run.s2mfu8/claude-0/r3/packages/config/src/load.ts:82:    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_BATCH_SIZE (default 8, 1-50). */
+/var/tmp/mth-run.s2mfu8/claude-0/r3/packages/config/src/load.ts:84:    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_CONCURRENCY (default 4, 1-16, at most the batch size). */
+
+## A13 kill-and-restart drills and outbound-write-once (tests/qa/integration):
+✓ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests) 60587ms
+✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 18191ms
+✓ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests) 60587ms
+✓ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests) 52793ms
+✓ |integration| tests/qa/integration/a13-starter-jobs.test.ts (4 tests) 19560ms
+✓ |integration| tests/qa/integration/a13-dependency-slip-rule-b.test.ts (8 tests) 16299ms
+✓ |integration| tests/qa/integration/a13-starters-run.test.ts (11 tests) 25853ms
+✓ |integration| tests/qa/integration/a13-job-idempotency.test.ts (5 tests) 18191ms
+✓ |integration| tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 140872ms
+✓ |integration| tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts (1 test) 22489ms
+✓ |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 25427ms
+✓ |integration| tests/qa/integration/a13-p6-reindex-kill-restart.test.ts (1 test) 18816ms
+✓ |integration| tests/qa/integration/a13-p6-outbound-write-once.test.ts (3 tests) 1486ms

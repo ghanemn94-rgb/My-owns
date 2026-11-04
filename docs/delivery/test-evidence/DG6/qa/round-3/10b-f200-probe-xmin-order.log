@@ -1,0 +1,99 @@
+### 2026-11-04T12:54:09Z node=v24.21.0 cwd=/var/tmp/mth-run.s2mfu8/claude-0/r3 LANG=<unset> LC_ALL=<unset>
+$ tests/qa/support/with-pg.sh /var/tmp/mth-run.s2mfu8/claude-0/xmin.sh
+port-policy: PostgreSQL listening on port 29640 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+=== candidate change-requests-in-tx.test.ts, alone, repetition 1
+
+ RUN  v3.2.7 /var/tmp/mth-run.s2mfu8/claude-0/r3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw24bzig_86237e71 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 6936ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  1230ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > a resubmission by a lead who is not the approval's requester is 403 approval.not_requester; nothing is written  340ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > pending: the approval and the request are withdrawn in one transaction, both audited; the decision is then 422  400ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > changes requested: both withdrawn; a lead who is not the requester gets 403 approval.not_requester first, nothing written  478ms
+   ✓ (c) POST /approvals/{id}/resubmit refuses change_request approvals > 422 approval.resubmit_through_record with the exact text; the approval and the request are unchanged  318ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  640ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  12:54:14
+   Duration  47.03s (transform 13.12s, setup 0ms, collect 29.49s, tests 6.94s, environment 0ms, prepare 180ms)
+
+rep 1 exit 0
+=== candidate change-requests-in-tx.test.ts, alone, repetition 2
+
+ RUN  v3.2.7 /var/tmp/mth-run.s2mfu8/claude-0/r3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw24d325_ec236ab6 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 6405ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  461ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > pending: the approval and the request are withdrawn in one transaction, both audited; the decision is then 422  303ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > changes requested: both withdrawn; a lead who is not the requester gets 403 approval.not_requester first, nothing written  465ms
+   ✓ (c) POST /approvals/{id}/resubmit refuses change_request approvals > 422 approval.resubmit_through_record with the exact text; the approval and the request are unchanged  423ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  1234ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  12:55:06
+   Duration  48.17s (transform 13.32s, setup 0ms, collect 30.43s, tests 6.40s, environment 0ms, prepare 384ms)
+
+rep 2 exit 0
+=== candidate change-requests-in-tx.test.ts, alone, repetition 3
+
+ RUN  v3.2.7 /var/tmp/mth-run.s2mfu8/claude-0/r3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw24e81d_6a205095 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 8443ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  1467ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > a resubmission by a lead who is not the approval's requester is 403 approval.not_requester; nothing is written  550ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > changes requested: both withdrawn; a lead who is not the requester gets 403 approval.not_requester first, nothing written  652ms
+   ✓ (c) POST /approvals/{id}/resubmit refuses change_request approvals > 422 approval.resubmit_through_record with the exact text; the approval and the request are unchanged  560ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  957ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  12:55:59
+   Duration  58.00s (transform 14.77s, setup 0ms, collect 34.42s, tests 8.44s, environment 0ms, prepare 257ms)
+
+rep 3 exit 0
+=== MUTANT: auditXmin ordered DESC (occurred_at desc, seq desc), i.e. the opposite of the repair; expected: test (a) fails
+
+ RUN  v3.2.7 /var/tmp/mth-run.s2mfu8/claude-0/r3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw24fm5u_80e049a1 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/workflows/zz-qa-dg6r3-mutant-change-requests-xmin-desc.test.ts (6 tests | 1 failed) 5448ms
+   × (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409 427ms
+     → expected '1755' to be '1757' // Object.is equality
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > a resubmission by a lead who is not the approval's requester is 403 approval.not_requester; nothing is written  301ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > pending: the approval and the request are withdrawn in one transaction, both audited; the decision is then 422 119ms
+   ✓ (b) withdrawChangeRequest on a request in approval (ADR-0036 amendment A2) > changes requested: both withdrawn; a lead who is not the requester gets 403 approval.not_requester first, nothing written  382ms
+   ✓ (c) POST /approvals/{id}/resubmit refuses change_request approvals > 422 approval.resubmit_through_record with the exact text; the approval and the request are unchanged 290ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  721ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/zz-qa-dg6r3-mutant-change-requests-xmin-desc.test.ts > (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409
+AssertionError: expected '1755' to be '1757' // Object.is equality
+
+Expected: [32m"175[7m7[27m"[39m
+Received: [31m"175[7m5[27m"[39m
+
+ ❯ apps/api/test/integration/workflows/zz-qa-dg6r3-mutant-change-requests-xmin-desc.test.ts:110:24
+    108|     const submitX = await auditXmin(r.id, "change_request.submit");
+    109|     expect(submitX).toHaveLength(2);
+    110|     expect(submitX[1]).toBe(resubmitX);
+       |                        ^
+    111|     // A second assessment was frozen for version 4.
+    112|     expect(await assessmentsOf(r.id)).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  12:57:03
+   Duration  45.37s (transform 13.69s, setup 0ms, collect 29.39s, tests 5.45s, environment 0ms, prepare 189ms)
+
+mutant exit 1
+EXIT 0 2026-11-04T12:57:53Z

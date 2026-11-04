@@ -1,0 +1,72 @@
+$ pnpm install --offline --frozen-lockfile --store-dir $TMPDIR/pnpm-store-v10 (2026-11-04T12:38:54Z) pnpm 10.33.0
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +432
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERR_PNPM_NO_OFFLINE_TARBALL  A package is missing from the store but cannot download it in offline mode. The missing package may be downloaded from https://registry.npmjs.org/@aws-sdk/client-s3/-/client-s3-3.1156.0.tgz.
+EXIT 1
+--- offline install failed above: the pre-installed pnpm store (/root/.local/share/pnpm/store/v10) lacks @aws-sdk/client-s3-3.1156.0 (apps/api dependency since T-DG6-DO-A2). No network in the sandbox.
+$ fallback (2026-11-04T12:39:15Z): cp -a the repository's installed node_modules trees (root + apps/* + packages/*; symlinks are relative, so workspace links resolve inside the clone). This makes node_modules writable in the clone, so Vitest's --configLoader runner is not needed.
+$ pnpm install --offline --frozen-lockfile --lockfile-only check: pnpm ls --depth 0 -r (sanity)
+Legend: production dependency, optional only, dev only
+
+mobily-transformation-hub@0.1.0 /var/tmp/mth-run.s2mfu8/claude-0/r3 (PRIVATE)
+│
+│   devDependencies:
+├── @apidevtools/swagger-parser@10.1.1
+├── @axe-core/playwright@4.10.2
+├── @playwright/test@1.56.1
+├── @types/node@22.18.0
+├── eslint@10.1.0
+├── eslint-plugin-react-hooks@7.1.1
+├── openapi-types@12.1.3
+├── prettier@3.8.1
+├── typescript@6.0.2
+├── typescript-eslint@8.71.0
+└── vitest@3.2.7
+
+@mth/api@0.1.0 /var/tmp/mth-run.s2mfu8/claude-0/r3/apps/api (PRIVATE)
+│
+│   dependencies:
+├── @aws-sdk/client-s3@3.1156.0
+├── @fastify/cookie@11.0.2
+├── @fastify/helmet@13.0.2
+├── @fastify/rate-limit@10.3.0
+├── @fastify/static@10.1.7
+├── @mth/config@link:../../packages/config
+├── @mth/db@link:../../packages/db
+├── @mth/design-tokens@link:../../packages/design-tokens
+├── @mth/reporting@link:../../packages/reporting
+├── @mth/shared@link:../../packages/shared
+├── decimal.js@10.6.0
+├── fastify@5.12.7
+├── kysely@0.28.18
+├── nodemailer@10.2.1
+├── openid-client@6.8.1
+├── pg@8.16.3
+├── uuid@13.0.0
+├── zod@4.6.7
+│
+│   devDependencies:
+├── @types/pg@8.15.5
+├── ajv@8.17.1
+├── ajv-formats@3.0.1
+└── yaml@2.8.1
+
+@mth/web@0.1.0 /var/tmp/mth-run.s2mfu8/claude-0/r3/apps/web (PRIVATE)
+│
+│   dependencies:
+├── @fontsource/ibm-plex-sans@5.2.6
+├── @fontsource/ibm-plex-sans-arabic@5.2.6
+├── @mth/design-tokens@link:../../packages/design-tokens
+├── @mth/shared@link:../../packages/shared
+├── @tanstack/react-query@5.90.2
+├── @tanstack/react-table@8.21.3
+├── decimal.js@10.6.0
+├── i18next@26.4.2
+├── react@19.2.0
+├── react-dom@19.2.0
+├── react-hook-form@7.62.0
+├── react-i18next@17.0.15
+EXIT 0
