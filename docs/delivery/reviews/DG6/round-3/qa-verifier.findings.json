@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-260",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The register notes of REQ-S20-001, REQ-S20-012, REQ-S20-017 and REQ-S20-022 still report acceptance suites as failing or not yet in the tree; on this candidate they are present and pass",
+      "reproduction": "Read the notes column of docs/delivery/requirements.csv (identical at the candidate's source 95f98191 and at HEAD 30cbe375) for the four A01/A12/A17/A22 rows. Each carries ONE analyst paragraph, T-DG6-AN-P6B on base bc5bb7b32, and no later check (the F-DG6-201 repair T-DG6-AN-Z1 updated other rows). REQ-S20-001: 'QA-E's final A01 run ... runs concurrently and is not yet in this tree, so the A01 run on the DG6 candidate is still to be recorded'. REQ-S20-012: 'partial: e2e A12-5 (AI retrieval through the UI) still fails ... the A12 e2e file is not fully green'. REQ-S20-017: 'partial: the A17 integration file and e2e/a17-failing-connector-exception.spec.ts are not fully green, because QA-A2-F1 (REQ-S12-019 ...) is unrepaired in this tree'. REQ-S20-022: 'QA-E's A22 extension ... runs concurrently and is not yet in this tree'. Compare with this candidate's runs: tests/qa/integration/a01-p6-source-coverage.test.ts and a01-one-source-of-truth-scorecard.test.ts pass (04c-tests-qa-alone.log); e2e/a12-p6-scope-isolation.spec.ts A12-1 to A12-6, including A12-5 (assistant), pass in en and ar in both root runs; e2e/a17-failing-connector-exception.spec.ts and the A17 suites pass (F-DG6-100/140 repaired by BE-Y3, verified in round 2); e2e/a22-p6-operability.spec.ts passes en/ar. Extract: 35-register-notes-stale-f260.txt.",
+      "expected": "The register is the gate's statement of what each row delivers and what remains partial. After the QA-E suites merged and the round-1 repairs (BE-Y3, the assistant availability repair BE-X5), the four notes should cite the current evidence and drop the failures that no longer exist, as T-DG6-AN-Z1 did for the four rows of F-DG6-201.",
+      "actual": "The four notes understate the candidate: they report failing or absent suites that are present and green. Documentation drift only, of the same class as F-DG6-201: no behaviour is affected and nothing is hidden (the drift reports gaps that are closed, not open ones). validate.mjs --register DG6 passes, because the rule checks status and evidence, not the currency of the prose.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/35-register-notes-stale-f260.txt",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG6/qa/round-3/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/04c-tests-qa-alone.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T17:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 3 (continuation run T-DG6-REV-QA-R3B) on candidate sha256:aa219bd2. Low, non-mandatory, documentation drift."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-261",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-038",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "e2e/a02-demo-users-walkthrough.spec.ts step 10 selects the report output through an ambiguous 'Output' label; when the report definitions answer late it selects the snapshot-list filter, the Generate button stays disabled and the test hangs to its 300 s timeout",
+      "reproduction": "(1) Observed: the stopped round-3 run's demo C.UTF-8 run, 07c-e2e-demo-cutf8.log: chromium-en 'REQ-S18-004 ... twelve walkthrough steps' failed at step '10 generate report' with 'Test timeout of 300000ms exceeded' and 'locator resolved to <button disabled type=\"submit\" ...>Generate snapshot</button>' (452 click retries); the same spec passed alone twice (07d-...-alone-1/-2.log), in ar in the same run, in the unset run, and twice more on the quiet host (33-e2e-demo-crumbs-probe-and-walkthrough-cutf8.log). (2) Cause: line 544 runs tlPage.getByLabel(field(lang, 'Output')).first().selectOption('charter') right after visit(), which waits only for the h1, lang/dir and the banner. apps/web/src/pages/reports/ReportsPage.tsx has two selects with that label (reportsP5.generate.output): the Generate form's #report-definition, rendered only after the definitions query resolves (QueryState), and the snapshot list's filter #snapshot-filter-code, rendered at once. (3) Deterministic reproduction: zz-qa-dg6r3b-reports-output-label.spec.ts holds GET /report-definitions for 4 s and performs the spec's exact locator and action: control (no delay) generate='charter', Generate enabled; delayed: generate='', filter='charter', Generate DISABLED, in en and ar (32-probes-detail-axe-output-label-unset.log).",
+      "expected": "A gate-deciding acceptance spec should be deterministic under load (the rule F-DG6-145 and F-DG6-200 applied): step 10 should wait for the Generate form (for example scope the locator to the generate section or select #report-definition / data-form='generate-report') before selecting the output.",
+      "actual": "The step depends on which select is first in the DOM at the instant the locator resolves; on a loaded host the definitions answer late often enough to fail a full demo run (1 of 8 (project, run) executions of this test in this round: en in 07, 07c, 07d-1, 07d-2 and 33; ar in 07, 07c and 33). No product defect: with the right select the page generates the snapshot (every other run, and the control). Test-only; one line in one spec.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/07c-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/07d-e2e-demo-users-walkthrough-cutf8-en-alone-1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-probes-detail-axe-output-label-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3b-reports-output-label.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-3/33-e2e-demo-crumbs-probe-and-walkthrough-cutf8.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-04T17:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 3 (continuation run T-DG6-REV-QA-R3B) on candidate sha256:aa219bd2. Low, non-mandatory, test-side race."
+        }
+      ]
+    }
+  ]
+}
