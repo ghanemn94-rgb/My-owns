@@ -1,0 +1,113 @@
+files: apps/api/test/integration/access/read-scope-parity.test.ts apps/api/test/integration/access/sensitive-reach-calculations.test.ts apps/api/test/integration/access/sensitive-reach.test.ts apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts apps/api/test/integration/access/sensitive-reads.test.ts apps/api/test/integration/access/sensitivity.test.ts apps/api/test/integration/audit/audit-events.test.ts apps/api/test/integration/benefits/allocations.test.ts apps/api/test/integration/benefits/corrections.test.ts apps/api/test/integration/benefits/entity-group.test.ts apps/api/test/integration/benefits/finance-validation.test.ts apps/api/test/integration/benefits/financial-metrics.test.ts apps/api/test/integration/benefits/groups.test.ts apps/api/test/integration/benefits/lifecycle.test.ts apps/api/test/integration/benefits/measurements.test.ts apps/api/test/integration/benefits/overlaps.test.ts apps/api/test/integration/benefits/plan-value-read.test.ts apps/api/test/integration/benefits/register.test.ts apps/api/test/integration/benefits/scenarios.test.ts apps/api/test/integration/benefits/slice-b-denials.test.ts apps/api/test/integration/benefits/totals.test.ts apps/api/test/integration/benefits/valuation-methods.test.ts apps/api/test/integration/benefits/values.test.ts apps/api/test/integration/kpi/benefit-formulas.test.ts apps/api/test/integration/kpi/business-cases.test.ts apps/api/test/integration/kpi/formula-preview.test.ts apps/api/test/integration/kpi/import-target.test.ts apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts apps/api/test/integration/kpi/kpi-resources.test.ts apps/api/test/integration/p6-guard-mapping.test.ts apps/api/test/integration/reporting/exports-assembly.test.ts apps/api/test/integration/reporting/exports-orphan.test.ts apps/api/test/integration/reporting/exports-paged.test.ts apps/api/test/integration/reporting/exports-xml-chars.test.ts apps/api/test/integration/reporting/exports.test.ts apps/api/test/integration/workflows/change-requests-in-tx.test.ts apps/api/test/integration/workflows/change-requests.test.ts tests/qa/integration/a12-p6-scope-isolation.test.ts 
+Tue Nov  3 23:43:26 UTC 2026
+port-policy: PostgreSQL listening on port 28910 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw1c323u_e1d68943 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts (16 tests) 4864ms
+   ✓ T09 register (REQ-PB-056) > the six T09 columns persist; BF-nn codes; the formula is the current version's expression  532ms
+   ✓ T09 register (REQ-PB-056) > confidence outside H/M/L -> 400 (create and PATCH), nothing written; the DB CHECK refuses it too  316ms
+   ✓ calculations and lineage > records inputs with kind/unit/currency/period/source, assumptions and period; Unknown never 0; append-only  453ms
+   ✓ Finance validation of the benefit logic (REQ-PB-055) > FIN validates or rejects with a note; the author gets 403; final once recorded; If-Match 428/409  343ms
+   ✓ every mutation: AUD 403, If-Match, audit, archive > If-Match: 428 without, 409 stale on PATCH, archive and new version; archive guards; audit events  421ms
+stdout | tests/qa/integration/a12-p6-scope-isolation.test.ts > A12 P6 extension: a scope revoked AFTER indexing hides Y everywhere without a reindex > after the revocation (no reindex): no search hit, record 404, link 403, assistant reads no Y, old answer withheld
+A12 revoke: the existing session was ended by the revocation (401); probing with a fresh session
+
+ ✓ |integration| tests/qa/integration/a12-p6-scope-isolation.test.ts (26 tests) 6465ms
+   ✓ A12 evidence URLs (REQ-S10-004, REQ-S13-013, REQ-S16-006) > uploads: an .exe and an oversized file are rejected; an SVG with script is never previewed (REQ-S13-011)  328ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests.test.ts (10 tests) 2995ms
+   ✓ change requests: create, read, edit, withdraw (S-4) > draft CR-nn with ETag 1; AUD 403; outside and ADM-only 404; exact 400/409/422 refusals; one audit event per mutation  317ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > with no policy the DG3 re-approval is unchanged; beyond a configured threshold it is 422, within it 200; budget likewise  316ms
+   ✓ REQ-S07-015: a KPI target change (preview, refusal, approval, the old version readable) > the preview lists the bound benefit and the approved G2 decision; a direct second activation is 422; after BO's approval v2 is active and v1 readable  441ms
+   ✓ REQ-S04-014: a new version of an approved G4 benefit formula creates one change request > one automatic benefit_logic request routed to Finance; the DG3 response unchanged; G4 decision and snapshot byte-identical  457ms
+ ✓ |integration| apps/api/test/integration/kpi/business-cases.test.ts (17 tests) 3936ms
+   ✓ transformation case: the ten B0085 sections (REQ-PB-053) > all ten sections persist and read back; missingSections clears once lines and owners exist  565ms
+   ✓ lines: exactly one class (REQ-PB-053, REQ-S05-005) > two classes -> 400 at /class; class/kind and class/value-basis mismatch -> 422; value rules  312ms
+   ✓ Finance validation of the baseline (REQ-PB-055 part) > FIN validates; the author is refused 403; the hash is stored; a baseline change shows Stale  381ms
+ ✓ |integration| apps/api/test/integration/reporting/exports.test.ts (16 tests) 1993ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  314ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-assembly.test.ts (18 tests) 5209ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  2523ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  539ms
+ ✓ |integration| apps/api/test/integration/kpi/import-target.test.ts (9 tests) 1893ms
+   ✓ the A17 8/1/1 fixture as CSV (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  444ms
+   ✓ the A17 8/1/1 fixture as XLSX (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  388ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 1172ms
+ ✓ |integration| apps/api/test/integration/benefits/measurements.test.ts (12 tests) 2660ms
+   ✓ create, read, list (ADR-0030 §2) > the §11 refusals: step, value shape, unmonetised, period taken, period range, unknown evidence  319ms
+ ✓ |integration| apps/api/test/integration/benefits/financial-metrics.test.ts (12 tests) 2607ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > walks every status of ADR-0047 §5 on one case, and every response names its assumptions and extension: true  418ms
+ ✓ |integration| apps/api/test/integration/access/sensitivity.test.ts (22 tests) 1076ms
+ ✓ |integration| apps/api/test/integration/benefits/finance-validation.test.ts (9 tests) 2747ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > BO, AUD and ADM-only get 403; FIN approves; two audit events by FIN; the task is done; validated +amount  474ms
+ ✓ |integration| apps/api/test/integration/benefits/overlaps.test.ts (11 tests) 1624ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 1868ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > lists every record to the workstream member, and no aggregate carries includesRestrictedRecords  356ms
+ ✓ |integration| apps/api/test/integration/benefits/register.test.ts (17 tests) 1481ms
+stdout | apps/api/test/integration/access/read-scope-parity.test.ts > ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair
+[read-scope-parity] readers=55 records=18 pairs=990 admitted=116 view-by-GET=495 view-by-record-decision=495 mismatches=0
+
+ ✓ |integration| apps/api/test/integration/access/read-scope-parity.test.ts (2 tests) 4752ms
+   ✓ ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair  3315ms
+ ✓ |integration| apps/api/test/integration/audit/audit-events.test.ts (15 tests | 1 skipped) 653ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach.test.ts (10 tests) 1840ms
+ ✓ |integration| apps/api/test/integration/benefits/corrections.test.ts (6 tests) 1771ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after  399ms
+ ✓ |integration| apps/api/test/integration/benefits/scenarios.test.ts (7 tests) 1171ms
+ ✓ |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts (7 tests) 1847ms
+   ✓ F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > AUD: every slice B mutation is 403 with exactly one denial  318ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (11 tests) 1126ms
+ ✓ |integration| apps/api/test/integration/benefits/lifecycle.test.ts (10 tests) 1318ms
+ ✓ |integration| apps/api/test/integration/benefits/totals.test.ts (7 tests) 2120ms
+   ✓ counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %  400ms
+   ✓ classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0  554ms
+   ✓ open overlaps (REQ-S08-014) and the portfolio > a validated value of a benefit with an open overlap is on pendingOverlap, not in validated  304ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests-in-tx.test.ts (6 tests) 1905ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  303ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  317ms
+ ✓ |integration| apps/api/test/integration/benefits/valuation-methods.test.ts (6 tests) 1022ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-paged.test.ts (4 tests) 6449ms
+   ✓ PDF register exports (REQ-S13-009, REQ-S13-005) > Arabic: RTL base direction, IBM Plex Sans Arabic embedded, identifiers and numbers left to right; only the filtered rows  1766ms
+   ✓ PDF register exports (REQ-S13-009, REQ-S13-005) > English: left to right with IBM Plex Sans; 'Draft — not an issued report'  1001ms
+   ✓ REQ-S13-008: a pending benefit value is labelled provisional in the PDF > prints Provisional (en) and مؤقت (ar) for the pending value  2368ms
+   ✓ REQ-S13-005: a PPTX gate pack contains each criterion of the gate > every criterion of G2 (key, English and Arabic label) is in the PPTX, in both languages; DOCX Arabic is bidi  553ms
+ ✓ |integration| apps/api/test/integration/benefits/values.test.ts (5 tests) 1198ms
+   ✓ REQ-S08-001: seven states kept apart > planned, forecast, measured, submitted, validated, rejected each with its own total; forecast never validated  401ms
+ ✓ |integration| apps/api/test/integration/kpi/formula-preview.test.ts (8 tests) 374ms
+ ✓ |integration| apps/api/test/integration/benefits/allocations.test.ts (6 tests) 726ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts (5 tests) 1012ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-calculations.test.ts (5 tests) 779ms
+ ✓ |integration| apps/api/test/integration/benefits/groups.test.ts (4 tests) 774ms
+ ✓ |integration| apps/api/test/integration/benefits/plan-value-read.test.ts (3 tests) 650ms
+ ✓ |integration| apps/api/test/integration/reporting/exports-orphan.test.ts (2 tests) 616ms
+stdout | apps/api/test/integration/reporting/exports-xml-chars.test.ts > F-DG5-100: a C0 control character in a record title -> well-formed DOCX, PPTX and XLSX exports > the API accepts the text; each export job succeeds and every XML part of every package parses
+F-DG5-100 results: {
+ "charter.en.docx": "job succeeded, 12647 bytes, not-well-formed parts: none",
+ "charter.ar.docx": "job succeeded, 13252 bytes, not-well-formed parts: none",
+ "roadmap.en.pptx": "job succeeded, 35648 bytes, not-well-formed parts: none",
+ "roadmap.ar.pptx": "job succeeded, 36588 bytes, not-well-formed parts: none",
+ "roadmap.en.xlsx": "job succeeded, 6971 bytes, not-well-formed parts: none",
+ "roadmap.ar.xlsx": "job succeeded, 7624 bytes, not-well-formed parts: none",
+ "registers.en.xlsx": "job succeeded, 4467 bytes, not-well-formed parts: none",
+ "registers.ar.xlsx": "job succeeded, 4872 bytes, not-well-formed parts: none"
+}
+
+ ✓ |integration| apps/api/test/integration/reporting/exports-xml-chars.test.ts (1 test) 1127ms
+   ✓ F-DG5-100: a C0 control character in a record title -> well-formed DOCX, PPTX and XLSX exports > the API accepts the text; each export job succeeds and every XML part of every package parses  769ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-aud-write-deny.test.ts (18 tests) 651ms
+ ✓ |integration| apps/api/test/integration/p6-guard-mapping.test.ts (6 tests) 301ms
+ ✓ |integration| apps/api/test/integration/benefits/entity-group.test.ts (1 test) 807ms
+   ✓ REQ-S16-017: the benefits entity group through the API > creates and reads each of the seven entities; AUD is refused every mutation and reads every record  525ms
+
+ Test Files  39 passed (39)
+      Tests  387 passed | 1 todo (388)
+   Start at  23:43:28
+   Duration  167.43s (transform 7.63s, setup 0ms, collect 84.72s, tests 77.58s, environment 0ms, prepare 101ms)
+
+exit 0
+Tue Nov  3 23:46:16 UTC 2026

@@ -2,7 +2,9 @@
 // T-DG3-KBE-C):
 //   POST /benefit-formulas/validate                                   parse + type-check + preview; writes NOTHING
 //                                                                     (benefit_formula.edit held anywhere)
-//   GET  /benefit-formulas/{id}/versions/{versionNo}/calculations     the lineage of a version, newest first
+//   GET  /benefit-formulas/{id}/versions/{versionNo}/calculations     the lineage of a version, newest first; the row of
+//                                                                     a measurement of a sensitive benefit the caller is
+//                                                                     not admitted to is absent (ADR-0051 §2, F-DG6-180)
 //   POST /benefit-formulas/{id}/versions/{versionNo}/calculations     evaluate the version with inputs, assumptions and a
 //                                                                     period, and append one benefit_calculation row
 //                                                                     (benefit_formula.edit)
@@ -32,7 +34,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { holdsAnywhere, principalOf, requireTransformationRead } from "../access/index.ts";
+import { holdsAnywhere, principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorInstant,
@@ -275,7 +277,13 @@ export function registerCalculationRoutes(app: FastifyInstance, { db }: ModuleDe
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
-    return { items: page.items.map(toBenefitCalculation), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (F-DG6-180): the lineage row of a measurement of a sensitive benefit the caller is not admitted to
+    // carries that measurement's value (its inputs and result); the row is absent, as in every other list.
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "benefit_calculation",
+      recordId: r.id,
+    }));
+    return { items: visible.map(toBenefitCalculation), nextCursor: page.nextCursor };
   });
 
   app.post(
