@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 3,
+  "candidate_id": "sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14",
+  "source_commit": "95f981917e4e5572f954d7cd159d869eca142bff",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-CS-R3-code-security-reviewer-20261104T123548Z-e9216a1b",
+    "session_id": "e9216a1b-ff58-4259-96b5-2169c32aa6e2"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session e9216a1b-ff58-4259-96b5-2169c32aa6e2, task T-DG6-REV-CS-R3. I verified the assignment's sha256 (0cc6a8d3132bdd45e1fa500461f5f896486e439f84bf4d8834b775bae7f1824b). I authored no implementation in the DG6 scope and changed no implementation file: every execution ran in disposable --shared clones under my run's $TMPDIR, removed at the end with 0 changed paths in either (90-cleanup.log). F-DG6-180 and F-DG6-181 were raised by me in round 2; I verify their repairs here, which I did not author. I formed this verdict without reading any other reviewer's round-3 record: the domain reviewer's run records were committed to HEAD during my run (80-head-moved.log), and I did not open them. Nothing here is a business approval (G1-G6), and product gate G6 never implies DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-3/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-010",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "CS-00-candidate-identity",
+      "procedure": "Verify the assignment hash; check HEAD against the source commit; recompute the candidate ID in the repository tree; make a --shared, non-shallow clone w1 with a sparse checkout that omits only the manifest-excluded docs/delivery/{runs,test-evidence}, earlier stages' handbacks and trading_agent; check out 95f9819 and recompute there; same for w2.",
+      "command": "checks.sh identity (sha256sum; git rev-parse HEAD; git diff --name-only 95f9819 HEAD; node tools/gates/candidate.mjs --stage DG6; git clone --shared --no-checkout; git sparse-checkout set --no-cone ...; git checkout 95f9819)",
+      "environment": "Node 24.21.0; repository HEAD f2d030f6f (the freeze commit on top of 95f9819); $TMPDIR/r/w1 and w2",
+      "expected": "sha256:aa219bd2...cb14 over 2729 files in every tree; the commits after 95f9819 add only delivery records.",
+      "actual": "Assignment sha256 matches. HEAD was f2d030f6f, not 95f9819: the freeze commit, which adds only the three round-3 assignments, the candidate manifest and stages.json (listed in the log); 95f9819 is its parent. Every tree gives sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14 over 2729 files, exit 0: the repository tree, w1 at 95f9819 and w2 (also 06-w2-setup.log). w1 is not shallow (rev-parse --is-shallow-repository = false). A --shared clone, not --no-local: the volume had about 6 GB free, shared by three reviews; the complete repository tree recomputes to the same ID, and the sparse clones do too, so the product tree is complete.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/checks.sh"
+      ]
+    },
+    {
+      "id": "CS-01-setup-install-build",
+      "procedure": "Dependencies: the sandbox's node_modules is read-only, and copying the pnpm store filled the shared volume to 0 bytes once (three reviews at once), so I copied the repository's node_modules trees (cp -a, relative pnpm links kept) into the clone after checking that node_modules/.pnpm/lock.yaml is byte-identical to the candidate's pnpm-lock.yaml; then built every package. w2 was dropped while disk was short and re-created later (06/06b).",
+      "command": "cmp pnpm-lock.yaml node_modules/.pnpm/lock.yaml; cp -a node_modules ...; pnpm install --offline --frozen-lockfile (verification attempts); checks.sh build; checks.sh w2-setup; checks.sh w2-fix",
+      "environment": "Node 24.21.0, pnpm 10.33.0, offline; w1 and w2",
+      "expected": "The lockfile matches the copied install; every package builds (exit 0).",
+      "actual": "cmp: identical (LOCK-MATCH). pnpm's own up-to-date check could not run, and both attempts are disclosed in 05-install-w1.log: exit 226 (EROFS: pnpm tries to register the project in the read-only shared store) and exit 1 (ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY: with an empty private store it wants to purge and refetch, impossible offline). Setup only, not a gate check. Build of w1: exit 0 (10-build-w1.log). w2: the first setup's copy loop expanded packages/*/node_modules inside the empty clone, so the per-package node_modules were missing. Its build failed ('Cannot find module zod', ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL in 06-w2-setup.log; the block's trailing exit=0 is the set +x block's, not pnpm's). Two unset-locale shards started on that copy and failed at start ('Cannot find package @mth/config' from packages/db/src/cli.ts; kept as 30-*.setup-failure.log, exit 1, before any test ran). Fixed by copying from the source tree's glob and rebuilding: every package 'Done', exit 0, 0 changed paths (06b-w2-fix.log). Every result below comes from the fixed copies.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/05-install-w1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/10-build-w1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/06-w2-setup.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/06b-w2-fix.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-integration-lang-unset-shard1of2.setup-failure.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-integration-lang-unset-shard2of2.setup-failure.log"
+      ]
+    },
+    {
+      "id": "CS-02-typecheck",
+      "procedure": "Typecheck every package, one at a time.",
+      "command": "checks.sh static: pnpm -r --workspace-concurrency=1 typecheck",
+      "environment": "Node 24.21.0, w1",
+      "expected": "exit 0",
+      "actual": "exit 0; every package's tsc passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/11-typecheck.log"
+      ]
+    },
+    {
+      "id": "CS-03-lint-format-openapi-no-cdn",
+      "procedure": "ESLint, the prettier check, the OpenAPI lint and the no-CDN scan, run before any reproduction file was copied into the clone.",
+      "command": "pnpm lint; pnpm format:check; pnpm openapi:lint; pnpm check:no-cdn",
+      "environment": "Node 24.21.0, w1",
+      "expected": "exit 0 each",
+      "actual": "lint exit 0; format:check exit 0; openapi:lint exit 0; check:no-cdn exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/12-lint.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/13-format-check.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/14-openapi-lint.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/15-no-cdn.log"
+      ]
+    },
+    {
+      "id": "CS-04-historical-validators",
+      "procedure": "Run validate.mjs --historical for DG5, DG4, DG3, DG2 and DG1 in the repository tree (read-only).",
+      "command": "checks.sh historical: node tools/gates/validate.mjs --historical --stage DG5|DG4|DG3|DG2|DG1",
+      "environment": "Node 24.21.0, /home/user/My-owns at HEAD f2d030f6f",
+      "expected": "PASS for each, exit 0",
+      "actual": "'PASS gate DGn (historical)', exit 0, for DG5, DG4, DG3, DG2 and DG1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/02-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/02-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/02-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/02-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/02-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "CS-05-unit-node22",
+      "procedure": "pnpm test (unit-node, unit-web, unit-formula-nocodegen) on Node 22 with LANG/LC_ALL unset; each failing file re-run alone until it ran under lower load.",
+      "command": "checks.sh unit 22; checks.sh unit-one ... 22 unit-node apps/api/src/architecture.test.ts (x3); checks.sh unit-one ... 22 unit-web traceability.test.tsx transformations.test.tsx; ... src/pages/traceability/traceability.test.tsx",
+      "environment": "Node 22.22.0 (/opt/node22/bin; the log header shows v22.22.0), w1, load 18-26 on 4 vCPU (three reviews at once)",
+      "expected": "Every test passes; any failure is explained and passes alone.",
+      "actual": "Full run exit 1. unit-node 2898/2899: architecture.test.ts 'apps/web never imports @mth/db or @mth/config' timed out (30 s). unit-web 2017/2020: traceability.test.tsx 'workstreams list WS-nn codes...' (findByRole 'Assign initiative' not found within the 5 s asyncUtilTimeout) and transformations.test.tsx 'effective permissions refresh after create' en and ar (findByRole Edit / تعديل, the same wait). nocodegen 259 passed, 2 skipped (fuzz.test.ts it.skipIf(NOCODEGEN), declared). Re-runs alone: architecture.test.ts 141/141 passed twice with exit 1, because vitest raised its own unhandled '[vitest-worker]: Timeout calling onTaskUpdate' (worker-to-main RPC timeout while the synchronous source scan blocked the worker at load 19-20; no test failed); the third re-run at load 9 passed 141/141, exit 0. transformations.test.tsx passed alone (21/21) on the first re-run; traceability.test.tsx failed again on it (the same 5 s wait, the test took 6.25 s at load 21) and passed alone on the second (32/32, exit 0). Every failure is a wait or time limit exceeded under load. The web sources these tests cover changed since round 2 only in two i18n strings of integrations.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/20-unit-node22.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node22-rerun-unit-node.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node22-rerun2-unit-node.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node22-rerun3-unit-node.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node22-rerun-unit-web.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node22-rerun2-unit-web.log"
+      ]
+    },
+    {
+      "id": "CS-06-unit-node24",
+      "procedure": "The same suite on Node 24, LANG/LC_ALL unset; the failing files re-run alone.",
+      "command": "checks.sh unit 24; checks.sh unit-one ... 24 unit-node apps/api/src/architecture.test.ts apps/api/src/server.test.ts packages/reporting/src/branding-layout.test.ts; ... 24 unit-web traceability.test.tsx",
+      "environment": "Node 24.21.0, w1, load 21-26",
+      "expected": "Every test passes; any failure is explained and passes alone.",
+      "actual": "Full run exit 1. unit-node 2895/2899: architecture.test.ts (the same 30 s scan time-out), server.test.ts 'declares access on every /api route...' and 'registers dev login only in AUTH_MODE=dev...' (5 s time-outs), branding-layout.test.ts 'PDF > a configured branding...' (5 s time-out); two unhandled '[vitest-worker]: Timeout calling onTaskUpdate'. unit-web 2019/2020: traceability.test.tsx (the same 5 s findByRole wait). nocodegen 259 passed, 2 skipped (declared). Re-run alone: the three unit-node files 152/152, exit 0; traceability.test.tsx 32/32, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/21-unit-node24.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node24-rerun-unit-node.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/22-unit-node24-rerun-unit-web.log"
+      ]
+    },
+    {
+      "id": "CS-07-integration-lang-unset",
+      "procedure": "The integration suite on a disposable PostgreSQL (tests/qa/support/with-pg.sh; it includes contract/contract.test.ts and migrate.test.ts, 0001->0125) with LANG and LC_ALL unset, as shards 1/2 and 2/2 in parallel in w2. The background task hit its 2-hour limit before shard 1/2 ended. I completed it by running, alone, every file that neither shard log reports, from the full list of `vitest list` (33-unset-remaining-files.txt). Each failing file was then re-run alone.",
+      "command": "checks.sh int-w w2 unset 1|2; npx vitest list --project integration --filesOnly > 32-shard1of2-file-list.txt; checks.sh int-one 34-... w1 unset $(cat 33-unset-remaining-files.txt); checks.sh int-one 35-... w1 unset <4 failed files>",
+      "environment": "Node 22.22.0; PostgreSQL 16.15, server_encoding UTF8, lc_collate C; 117 migration files (0001-0125; the gaps before 0068/0074/0080/0085 date from DG5) applied to a fresh database; load 18-29",
+      "expected": "Every one of the 416 files runs and passes; any failure is explained and passes alone.",
+      "actual": "Shard 2/2: 208 files, 207 passed. contract.test.ts failed 4 tests, all 'Test timed out' (30 s or 90 s): P5 BE-S operations, the U+0000 query sweep, the undeclared-media-type sweep and the live 429 sweep. Total 2214 passed / 4 failed, exit 1. Shard 1/2 was stopped by the 2-hour background limit (its log has no exit line) after 199 files. Of these, 196 passed and 3 failed: connection-hygiene.test.ts 'SIGTERM: the API process exits 0 within the grace period with a stalled upload in flight' (20 s); worker adoption-below-trajectory.test.ts 'all or none: when one queue's send fails...' ('expected { published: 5, failed: 1 } to deeply equal { published: 0, failed: 1 }': five more outbox events were relayed than the test expects); and response-validation.test.ts with 4 time-outs (30-90 s sweeps, plus 'an unauthorized call returns 403: the auditor...' at 30 s). The 9 files neither log completed (8 not started, 1 in flight when the task stopped; shard 1 had shown no progress for about 10 minutes): 9/9 passed alone, 32 tests, exit 0 (34). The 4 failed files alone at load 9: 4/4 passed, 245 tests, exit 0 (35). So every one of the 416 files passed in this locale. The relay count failure passes alone; I judge it a load-dependent test-isolation effect: other events of the same database reached the relay between the test's two relay calls. It is not a product defect: the relay publishes every other event independently, and all-or-none for the failing event holds (its jobs and mark are absent). Declared: audit-events.test.ts has an it.todo ('PENDING T-DG6-BE-B: a caller admitted ... sees it unredacted'; the admitted view is tested in sensitive-reads*.test.ts); presentation.test.ts has a runIf pair, one of which always skips.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-integration-lang-unset-shard1of2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-integration-lang-unset-shard2of2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/32-shard1of2-file-list.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/33-unset-remaining-files.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/34-integration-lang-unset-remaining9.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/35-integration-unset-alone-failed.log"
+      ]
+    },
+    {
+      "id": "CS-08-integration-lang-c-utf8",
+      "procedure": "The same suite with LANG=C.UTF-8 (LC_ALL unset) as four shards (1-2/4 in w2, 3-4/4 in w1, two at a time), so that each finishes inside the background limit; the failing files re-run alone.",
+      "command": "checks.sh int-w4 w2 cutf8 1|2; checks.sh int-w4 w1 cutf8 3|4; checks.sh int-one 36-... w2 cutf8 <3 failed files>",
+      "environment": "Node 22.22.0; LANG=C.UTF-8; PostgreSQL 16.15 UTF8; 117 migrations applied; load 10-19",
+      "expected": "Every one of the 416 files passes; any failure is explained and passes alone.",
+      "actual": "4 x 104 = 416 files ran. 1/4: 1030 passed, 2 failed, response-validation.test.ts time-outs (U+0000 sweep 30 s, media-type sweep 90 s), exit 1. 2/4: 962 passed, 1 skipped, 1 todo (the declared ones), exit 0. 3/4: 1276 passed, 1 failed, contract.test.ts live 429 sweep timed out (30 s), exit 1. 4/4: 939 passed, 2 failed, shutdown-cleanup.test.ts F-DG2-460 two tests 'API process failed to start' (the spawned API did not report ready within the harness window at load about 13-19), exit 1. In total 4207 passed, 5 failed, 1 skipped, 1 todo, consistent with the orchestrator's 4212 + 1 + 1 on the same tree. The 3 failed files alone, C.UTF-8: 3/3 passed, 222 tests, exit 0 (36).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard1of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard2of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard3of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard4of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/36-integration-cutf8-alone-failed.log"
+      ]
+    },
+    {
+      "id": "CS-09-reverify-F-DG6-180",
+      "requirements": [
+        "REQ-S10-002"
+      ],
+      "procedure": "Re-run the round-2 reproduction verbatim on a migrated, demo-seeded disposable database (synthetic data). Extend it with P-CALC-2: the organization AUD; the TO; an explicit sensitive grant to the TL, then its revocation. Run the implementer's regression tests next to it. Details are in the verifications sidecar.",
+      "command": "checks.sh repro 40-... zz-cs-r2-sens-reach.test.ts; checks.sh repro 41-... zz-cs-r3-sens-reach.test.ts; checks.sh one 44-... <5 repair test files>",
+      "environment": "Node 22.22.0, LANG unset, PostgreSQL 16.15, w1 (repro copied into tests/qa/integration and removed afterwards)",
+      "expected": "After the marking the TL (and AUD) no longer list the sensitive measurement's calculation; admitted readers do; revocation hides it again.",
+      "actual": "40: 5/5, exit 0. P-CALC passes: the TL gets 404 on the benefit and the calculation 01995000-4304-7000-8000-000000000002 is absent from the version's list (round 2: listed). 41: 6/6, exit 0. AUD lists it: false. TO lists it: true. Grant 201: TL lists it. Revoke 200: TL does not. 44: the five repair test files 32/32, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/40-repro-r2-sens-reach-verbatim.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/41-repro-r3-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r2-sens-reach.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r3-sens-reach.test.ts"
+      ]
+    },
+    {
+      "id": "CS-10-reverify-F-DG6-181-adversarial",
+      "requirements": [
+        "REQ-S16-029",
+        "REQ-S10-004",
+        "REQ-S16-030"
+      ],
+      "procedure": "Re-run the round-2 cross-organization probe verbatim (real API, real env provider, disposable PostgreSQL, recorder transport). Then try to resolve a secret for a setting, organization or host it is not bound to, through every write and resolve path, with the manifest IT would write (repro/zz-cs-r3-secret-binding.test.ts R1-R6). The implementer's SB-1..SB-8 cover cross-kind, installation/tenant, SMTP host, resolve-time fail-closed, run and outbound paths.",
+      "command": "checks.sh repro 42-... zz-cs-r2-secret-cross-org.test.ts; checks.sh repro 43-... zz-cs-r3-secret-binding.test.ts",
+      "environment": "Node 22.22.0, LANG unset, PostgreSQL 16.15, w1",
+      "expected": "No secret leaves the process for a setting, organization or host it is not bound to; refusals disclose nothing; nothing is written on refusal.",
+      "actual": "42 exit 1 BY DESIGN of the repair. The only failed assertion is the probe's first, 'expected 400 to be 201': with no SECRET_BINDINGS_FILE manifest, even organization B's own connector naming its secret is refused 400 validation (fail closed). The probe stops there and nothing is sent. 43: 6/6, exit 0. R1: B's connector 201, resolvable true, test sends B's token only to erp.orgb.example.invalid; A gets 404 on it; A's connector naming B's secret at the attacker host is 400 validation.secret_ref_not_bound. R2: A naming B's secret at B's own bound host is 400; the body is identical to that of an unset, unbound name. R3: of nine URL forms, userinfo, suffix, path, trailing-dot and decimal-IPv4 forms were refused (400 host_not_bound or 422 secret_value_refused); upper case, :8443 and a backslash form were accepted and canonicalize to the bound host; the token reached no other hostname. R4: webhook rotate to B's signing secret is 400 at /signingSecretRef; the stored ref is unchanged. R5: storage candidate test naming B's connector secret is 400 at /candidate/secretKeyRef. R6: see CS-15 (observation). 44: secret-binding.test.ts 8/8, secret-namespace and secret-composition pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/42-repro-r2-secret-cross-org-verbatim.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/43-repro-r3-secret-binding.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r2-secret-cross-org.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r3-secret-binding.test.ts"
+      ]
+    },
+    {
+      "id": "CS-11-mutants",
+      "procedure": "In the disposable copy w1, apply one textual change that reverts each repair. Run the candidate's own regression test(s) and my reproduction against it, then restore with git checkout. 180a: the calculations list returns page.items unfiltered. 180b: benefit_calculation removed from SENSITIVE_CHILD_SOURCES. 181a: secretBinding no longer compares the organization. 181b: no write-time binding check. 181c: registry resolve ignores the binding.",
+      "command": "checks.sh mutant 180a|180b|181a|181b|181c",
+      "environment": "Node 22.22.0, LANG unset, PostgreSQL 16.15, w1 (@mth/config resolves to source through the @mth/source condition, so the packages/config mutant takes effect)",
+      "expected": "Each mutant is caught (exit 1 BY DESIGN) and the copy is restored.",
+      "actual": "Every mutant was caught, and w1 restored each time (0 changed paths). 180a: 4 failed / 7 passed; the failures are my P-CALC and P-CALC-2 and the implementer's P-CALC and 'positive' tests ('expected { ...(18) } to be undefined', 'expected [...] to not include <id>'). 180b: the same 4. 181a: 6 failed (SB-1, SB-2, SB-4, SB-5, my R2, R4). Even then the token reached only the bound host, because the host rule still held. 181b: 11 failed; even with no write-time check, no token reached an unbound host (resolve time held). 181c: 1 failed, SB-4 (resolve time, fail closed), the layer that mutant removes. My write-path probes pass there because the write-time check still refuses.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180a.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180a.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180b.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180b.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181a.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181a.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181b.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181b.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181c.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181c.diff.txt"
+      ]
+    },
+    {
+      "id": "CS-12-role-sweeps",
+      "requirements": [
+        "REQ-S02-006",
+        "REQ-S20-012",
+        "REQ-S16-027"
+      ],
+      "procedure": "AUD: the shipped aud-write-deny.test.ts (every P6 operation of p6-operations.ts and the DG1-DG5 ones), kpi-aud-write-deny and the route inventory, inside CS-07/CS-08. ADM-only: my round-2 sweep re-run (none ships). It calls every GET of the contract whose only path parameter is {transformationId}, for the demo transformation, as an ADM_TECH + ADM_ACCESS user, with a TO control.",
+      "command": "checks.sh repro 45-sweep-adm-only zz-cs-r2-adm-only-sweep.test.ts",
+      "environment": "Node 22.22.0, LANG unset, demo-seeded disposable database",
+      "expected": "AUD 403 on every write; ADM-only: 403/404 or nothing on every transformation-scoped read.",
+      "actual": "aud-write-deny.test.ts 128/128 and kpi-aud-write-deny 18/18 in both locales. ADM-only sweep exit 0, 1/1: 126 operations. ADM-only got 404 x123, 403 x1 and 400 x2 (required query parameters); none was 200. The TO control got 200 on 125 and 400 on 2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/45-sweep-adm-only.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard1of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-integration-lang-unset-shard1of2.log"
+      ]
+    },
+    {
+      "id": "CS-13-deferred-e2e",
+      "requirements": [
+        "REQ-S12-019",
+        "REQ-S17-007",
+        "REQ-S10-004",
+        "REQ-S17-003",
+        "REQ-S17-005"
+      ],
+      "procedure": "Re-run the e2e specs the register notes defer to the freeze verification, on the production-initialized stack (apps/web/e2e/support/with-stack.sh, no worker; its default SECRET_BINDINGS_FILE binds only the synthetic A17 signing secret): e2e/a17-failing-connector-exception.spec.ts (REQ-S12-019), e2e/a17-import-and-integration.spec.ts (signed and unsigned webhook, CSV/XLSX), e2e/a12-p6-scope-isolation.spec.ts (A12-1..6, incl. A12-5 assistant scope).",
+      "command": "checks.sh e2e2 70-e2e-a17-a12 <3 specs> (MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001, a synthetic test value; E2E_SCREENSHOT_DIR=$TMPDIR/r/shots; --workers=1)",
+      "environment": "Node 24.21.0, pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers), ports 29590/29592, w1 built",
+      "expected": "Every test passes in both locale projects.",
+      "actual": "24 passed (7.5 m), exit 0: 12 in chromium-en and 12 in chromium-ar. No retries, no skips. The 'error' strings in the log are only test titles ('an actionable error').",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/70-e2e-a17-a12.log"
+      ]
+    },
+    {
+      "id": "CS-14-contract-pending-graph-migrations",
+      "requirements": [
+        "REQ-S16-027",
+        "REQ-S16-022"
+      ],
+      "procedure": "Every apps/api/test/support/p6-pending-*.ts leaf list is empty; count operationIds and read info.version; migrations contiguous 0098-0125, none changed since round 2, none pre-existing at DG5 modified; the worker imports no API code; what contract.test.ts / response-validation report.",
+      "command": "60-source-checks.log (grep/ls/git diff); contract.test.ts and response-validation.test.ts inside CS-07/CS-08",
+      "environment": "repository tree (product tree identical to 95f9819)",
+      "expected": "Empty lists; 932 operations, 1.5.0-p6; forward-only migrations; acyclic graph.",
+      "actual": "All 25 leaf lists are '= []'. operationId plain count 932 (932 unique), info.version 1.5.0-p6. contract.test.ts asserts toHaveLength(932) and passes in full alone in both locales. response-validation reports '932 of 932 live operations (0 pending excluded); 10537 validated responses; 4288 distinct (operationId, status) pairs; operations without a validated response: 0'. Migrations: 117 files to 0125; P6 0098-0125 is contiguous (the gaps before 0068/0074/0080/0085 are DG5's). Since round 2 no migration changed, and no migration that existed at DG5 was modified. The worker imports no apps/api code. The architecture test (ADR-0002 rule 5) passes alone.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/60-source-checks.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/35-integration-unset-alone-failed.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/36-integration-cutf8-alone-failed.log"
+      ]
+    },
+    {
+      "id": "CS-15-source-review-and-D-210-judgements",
+      "procedure": "Direct review of the round-2-to-round-3 diff 9bb2207..95f9819: 142 files in apps, packages, e2e, tests, docs/api, ADRs and operations. I read all of it, and the P6 code it touches. That covers: packages/config/src/secret-bindings.ts (parser, match rule, active manifest); platform/secrets.ts resolve(ref, use); secret-namespace.ts assertSecretRefsBound; secret-refusals.ts; organization-code.ts (API and worker); the five consumers (connectors checkConfig/connectorSecretUse/test/run/outbound, webhooks create/rotate/verify, notification-channels PUT/test and the worker delivery, storage PUT/test and s3.ts, assistant settings PUT/enable and provider); the http_pull, assistant and S3 redirect settings; access/sensitive-reach.ts (the via source); kpi/calculations.ts; benefits/scenarios.ts (BE-Z3); config load; with-stack.sh; openapi.yaml; i18n. I also judged the four points D-210 names.",
+      "command": "git diff 9bb2207667d8ef68e32e351a3782c4e9dfcdecd1..95f981917e4e5572f954d7cd159d869eca142bff; reading; probes CS-09/CS-10",
+      "environment": "repository tree",
+      "expected": "No new Critical/High/Medium defect; every D-210 point judged.",
+      "actual": "No new defect found. (1) Binding: the write-time check runs after authorization, on the authorized organization (create: requireCreate before checkConfig; update: the stored row's), before any write. No remote I/O inside a transaction (the webhook rotate checks inside its transaction but only reads organization.code). Resolve time re-checks with the stored organization and the very URL the adapter calls. http_pull and the assistant use redirect 'error', and the S3 probe uses 'manual'. The SDK signs with SigV4 and never sends the key. An unbound or host-mismatched reference resolves as unset without asking the provider; `resolvable` goes through it. The not_bound answer is uniform (R2). No path resolves without a use, because the type has no such overload. Observation R6, not a defect: any ADM_TECH holds organization.manage installation-wide (DG1 design, 0005 seed). So an organization code that IT bound before the organization exists (rule A9 allows it) can be created by another organization's ADM_TECH, who then administers it. The secret still goes only to its bound host, and ADM roles read no business records (CS-12). This is a consequence of who may create organizations, not of the binding; IT can bind after creation. (2) BE-Z3: presentScenarios omits values of benefits the caller is not admitted to, on every route that returns a scenario (list, item, create, patch). A new value naming such a benefit answers the same 422 validation.reference as an unknown benefit. A value item of a sensitive benefit is 404 through the route guard (benefitScenarioValueId -> benefit_scenario_value, a benefit child). Scenarios carry no total. Acceptable. (3) Credential-less endpoints (an http_pull without credential, an SMTP relay without AUTH, an assistant endpoint) can still reach internal hosts. I judge this an acceptable residual. Only an ADM_TECH (technical configuration role) can set one. http_pull is https-only, refuses redirects, caps the body and parses a strict envelope, so content is reflected only as rows of that shape (blind reachability through error codes remains). D-209 and ADR-0052 §G leave it explicitly to the deployment's egress policy, which restricted-network.md tells IT to configure (allow only PostgreSQL, the IdP and the destinations IT configures). No secret can be carried there (CS-10). (4) ADR-0011 rule 4 lists the IdP, SMTP, connectors and the AI endpoint, not the object store. This is documentation drift with no behavioural effect, and I do not count it as a defect. The S3 adapter was planned in ADR-0010 §3 and decided in ADR-0054, which builds on ADR-0011. The operator-facing list (restricted-network.md, the S3-compatible object store row) is complete and correct. A dated ADR-0011 amendment naming it would be tidy, but nothing behaves differently. Earlier P6 judgements (ADR-0043 batching and enablement ledger 0122/0123, D-204/D-205, the documented commit-order residual, export assembly 0124/0125) stand: no worker automation, migration or export code changed since round 2, and their suites pass in both locales.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/43-repro-r3-secret-binding.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/60-source-checks.log",
+        "packages/config/src/secret-bindings.ts",
+        "apps/api/src/modules/platform/secrets.ts",
+        "apps/api/src/modules/platform/secret-namespace.ts",
+        "apps/api/src/modules/benefits/scenarios.ts",
+        "docs/operations/restricted-network.md",
+        "docs/architecture/adr/ADR-0011-packaging-configuration.md",
+        "docs/architecture/adr/ADR-0052-p6-request-input-hardening-uploads-preview-secrets-audit-api-sweeps.md"
+      ]
+    },
+    {
+      "id": "CS-16-secrets-scan",
+      "requirements": [
+        "REQ-S16-029"
+      ],
+      "procedure": "Scan the ADDED lines of the round-2-to-candidate diff (outside docs/delivery) for private keys, AWS keys, Slack/GitHub/OpenAI-style tokens; list shipped binding manifests; check SECRET_BINDINGS_FILE in ENV_VARS and .env.example; list resolve() calls without a use. Log redaction: log-redaction.test.ts in CS-07/08.",
+      "command": "60-source-checks.log",
+      "environment": "repository tree",
+      "expected": "No secret; no production manifest shipped; every resolve names a use.",
+      "actual": "No match. The only binding files are the parser, its unit test and the test-support helper. with-stack.sh writes a synthetic manifest (names and scopes only) into its own work directory. SECRET_BINDINGS_FILE is in ENV_VARS (secret: false) and .env.example (empty). No resolve(ref) without a use. log-redaction.test.ts 2/2 (34) and service-identity-scope.test.ts 10/10 in both locales; SB-4 asserts the resolved token never appears in the API log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/60-source-checks.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/34-integration-lang-unset-remaining9.log"
+      ]
+    },
+    {
+      "id": "CS-17-requirements",
+      "procedure": "Judge the 36 assigned requirements literally against their acceptance texts on the evidence above. That means the shipped tests in CS-05..08, my probes CS-09..12 and the deferred e2e CS-13. For the notes that defer to the freeze verification, re-run what they defer.",
+      "command": "see the checks cited",
+      "environment": "as cited",
+      "expected": "Each acceptance text holds on evidence I ran.",
+      "actual": "All 36 met. REQ-S10-002: a BO of X gets 403/404 on Y (access suites), and a sensitive benefit and now its calculation lineage are hidden from a member without the grant (CS-09). REQ-S16-029: the log scan and job-identity clauses hold (log-redaction, service-identity-scope), and secrets cannot be sent outside their binding (CS-10). REQ-S10-004, REQ-S20-012 and REQ-S15-010: search, export, evidence URL and AI retrieval are scoped (A12-1..6 e2e, search/exports/assistant retrieval suites). REQ-S12-024 (deep links), REQ-S13-011 (uploads), REQ-S13-013 (evidence download) and REQ-S16-030 (CSRF, SQL injection, XSS, upload type and size, rate limits): the security/*.test.ts suites pass in both locales. REQ-S16-027: 932/932 operations validated. REQ-S16-032: append-only audit, and one event per mutation incl. secret_ref.refused. REQ-S16-023, S16-026, S20-013 and S20-014: integrity sweep, a13 kill-restart, a14 concurrency. REQ-S17-001..011 and REQ-S20-017: integrations, imports, webhooks, outbound, assistant guardrails/injection/no-write. REQ-S01-005, S02-006, S12-023, S16-006 (store contract), S16-022 (migrate), S20-022 and S20-029/030: their suites pass. The freeze-verification deferrals (REQ-S10-002, S10-004, S12-019, S16-027, S16-029, S16-030, S17-007): I re-ran what they defer, namely the full integration suite in both locales and the A17/A12 e2e. They pass, so the disclosures are acceptable. Residuals recorded per the assignment (CS-18).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard1of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard2of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard3of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard4of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/70-e2e-a17-a12.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/41-repro-r3-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/43-repro-r3-secret-binding.log"
+      ]
+    },
+    {
+      "id": "CS-18-environment-residuals",
+      "procedure": "Record the environmental residuals the assignment names, on the offline and configuration surface.",
+      "command": "n/a (recorded from the runs above)",
+      "environment": "sandbox, no network",
+      "expected": "PASS on the offline/config surface, residual noted.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058) are not reachable here; the offline checks ran (CS-02/03). Keycloak and a real enterprise IdP (D-049): the OIDC clauses ran against the bundled test issuer (oidc.test.ts 33/33, identity/other-realm.test.ts 13/13 in both locales); the SAML broker is documented, not run. External systems: connectors, outbound writes, notification channels and the assistant ran only through their test adapters, the in-process fakes and the shipped disabled configuration. Production capacity: the REQ-S20-029/030 targets are provisional engineering targets on one sandbox host (load-dataset.test.ts 9/9), not verified Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/34-integration-lang-unset-remaining9.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-integration-lang-cutf8-shard2of4.log"
+      ]
+    },
+    {
+      "id": "CS-19-head-moved-and-cleanup",
+      "procedure": "Check what moved HEAD during the review; recompute the candidate ID at the end; remove the disposable copies and confirm that the repository's implementation paths are untouched.",
+      "command": "80-head-moved.log; 90-cleanup.log",
+      "environment": "repository tree",
+      "expected": "No product path changed; candidate ID unchanged; $TMPDIR/r removed.",
+      "actual": "HEAD moved from f2d030f6f to 3cc7bb805, the runner's auto-commit of the domain reviewer's run records (docs/delivery/reviews/DG6/round-3 x3, docs/delivery/runs x6; I did not open them). Product paths changed: 0. The candidate ID at the end is sha256:aa219bd2...cb14 over 2729 files, exit 0. w1 and w2 had 0 changed paths when removed; $TMPDIR/r was removed (1.3 GB). No implementation path changed in the repository working tree.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/80-head-moved.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/90-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-3/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/checks.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/01-candidate-identity.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/40-repro-r2-sens-reach-verbatim.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/41-repro-r3-sens-reach.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/42-repro-r2-secret-cross-org-verbatim.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/43-repro-r3-secret-binding.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/45-sweep-adm-only.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/60-source-checks.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/70-e2e-a17-a12.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-3/90-cleanup.log"
+  ],
+  "reviewed_at": "2026-11-04T16:58:00Z",
+  "summary": "PASS on candidate aa219bd2 (source 95f9819). Both open findings verify CLOSED_VERIFIED. F-DG6-180: the round-2 P-CALC reproduction passes verbatim, and grant/revoke/AUD behave; the two mutants are caught. F-DG6-181: the verbatim probe now fails closed at its first step (no manifest, so nothing is bound). With IT's binding in place, cross-organization, cross-kind, rotate, storage-test and URL-parser attacks are all refused, and the token only ever reached its bound host; the three mutants are caught. No new findings. D-210 points judged in CS-15: the binding holds on every path; BE-Z3 is acceptable; the credential-less SSRF residual is acceptable under the documented egress policy; ADR-0011's missing object-store mention is drift with no behavioural effect. One observation: an organization code IT pre-binds can be created by any ADM_TECH, but the secret still goes only to its bound host. Static checks and the DG1-DG5 historical validators pass. Unit tests (Node 22 and 24) and the integration suite (LANG unset and C.UTF-8, all 416 files) pass, and the deferred e2e passes 24/24. Every full-run failure was a timeout or wait under load ~20-29 on 4 vCPU, or the relay count effect, and each such file passes alone; all are disclosed in the checks."
+}

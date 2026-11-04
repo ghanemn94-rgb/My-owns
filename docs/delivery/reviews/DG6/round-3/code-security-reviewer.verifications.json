@@ -1,0 +1,47 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-180",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate aa219bd2 (source 95f9819), migrated and demo-seeded disposable PostgreSQL (synthetic data), real API. (1) The round-2 reproduction, copied VERBATIM (repro/zz-cs-r2-sens-reach.test.ts, log 40, exit 0, 5/5): a TO marks the formula-backed demo benefit 01995000-4401-7000-8000-000000000003 sensitive; the TL then gets 404 on the benefit, and the calculation 01995000-4304-7000-8000-000000000002 (result = the measured amount, with its inputs) is ABSENT from GET /api/v1/benefit-formulas/{formulaId}/versions/1/calculations (round 2: listed, 'expected { ...(18) } to be undefined'). (2) Extended probe P-CALC-2 (repro/zz-cs-r3-sens-reach.test.ts, log 41, exit 0, 6/6): an organization AUD does not list it; the TO (sensitive_record.grant) does; after POST /admin/sensitive-grants for the TL (201) the TL lists it; after the revocation (200) it is absent again. (3) The implementer's regression file sensitive-reach-calculations.test.ts (plain-benefit lineage and a stand-alone T09 row stay listed, limit=2 paging across cursors) passes with the other repair tests (log 44, 32/32). (4) Mutants in the disposable copy, each caught: 180a returns page.items unfiltered in kpi/calculations.ts (log 50-mutant-180a: 4 failed, incl. my P-CALC and P-CALC-2 and the implementer's P-CALC/positive tests); 180b removes the benefit_calculation 'via' source from SENSITIVE_CHILD_SOURCES (log 50-mutant-180b: the same 4 failed). Both restored (0 changed paths). (5) Source review: benefit_calculation is read only by this list route (grep of apps/api/src, apps/worker/src, packages/reporting: no search, export or assistant surface), the via-owner resolution fails closed for a missing row, and measurement-input lineage is read only inside the (already filtered) measurement view. Closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/40-repro-r2-sens-reach-verbatim.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/41-repro-r3-sens-reach.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180a.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180a.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180b.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-180b.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r2-sens-reach.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r3-sens-reach.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/checks.sh",
+        "apps/api/src/modules/kpi/calculations.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-181",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate aa219bd2 (source 95f9819): real API, real env provider, disposable PostgreSQL; only the http_pull transport is a recorder. (1) The round-2 reproduction copied VERBATIM (log 42, exit 1 BY DESIGN of the new rule): it now stops at its first assertion, 'expected 400 to be 201', because with no SECRET_BINDINGS_FILE manifest even organization B's own connector naming MTH_SECRET_CS_R2_ORGB_ERP_TOKEN is refused 400 validation (fail closed, ADR-0052 amendment rule A7); nothing was sent. (2) The same scenario with the one binding line IT would add for B (repro/zz-cs-r3-secret-binding.test.ts, log 43, exit 0, 6/6): R1 B's own connector 201 resolvable true and its test sends B's token only to erp.orgb.example.invalid; A gets 404 on B's connector; A's connector naming B's secret at the attacker host is 400 validation.secret_ref_not_bound. R2 A naming B's secret at B's OWN bound host is 400 and its body is identical to that of an unset, unbound name (no existence oracle). R3 B's own admin: userinfo, suffix, path, trailing dot, decimal-IPv4 and percent-encoded tricks are refused (400 host_not_bound or 422 secret_value_refused); upper case, :8443 and a backslash form are accepted but WHATWG-canonicalize to the bound host; the token reached no hostname but erp.orgb.example.invalid. R4 webhook ROTATE of an org-A endpoint to B's signing secret: 400 at /signingSecretRef, stored ref unchanged. R5 the storage candidate TEST naming B's connector secret: 400 at /candidate/secretKeyRef. R6 (observation, see CS-15) a pre-bound organization code can be created by another organization's ADM_TECH, but the secret still goes only to its bound host. (3) The implementer's secret-binding.test.ts (SB-1..SB-8: cross-kind, installation vs tenant, SMTP host, resolve-time fail closed for a reference stored past the API, run and outbound paths, audit event secret_ref.refused, org code immutable) passes (log 44). (4) Mutants, each caught and restored: 181a drops the organization comparison in secretBinding (6 failed); 181b removes the write-time binding check (11 failed; even then no token reached an unbound host, resolve time held); 181c makes resolve ignore the binding (caught by SB-4). Closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/42-repro-r2-secret-cross-org-verbatim.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/43-repro-r3-secret-binding.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/44-implementer-regressions-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181a.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181a.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181b.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181b.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181c.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/50-mutant-181c.diff.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r2-secret-cross-org.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-cs-r3-secret-binding.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/checks.sh",
+        "packages/config/src/secret-bindings.ts",
+        "apps/api/src/modules/platform/secrets.ts",
+        "apps/api/src/modules/platform/secret-namespace.ts"
+      ]
+    }
+  ]
+}
