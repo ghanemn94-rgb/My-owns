@@ -3,7 +3,7 @@
 ## Stage and working tree
 
 - **Stage:** P6 "Integration and system hardening", gate DG6 (FIXING after review round 3).
-- **Working tree:** a separate git worktree prepared by the orchestrator. It is your current working directory, on branch `dg6/an-z2`, at the integrated `HEAD`. Every round-1 repair (BE-Y1..Y6, DO-Y1, DO-Y2, FE-Y1, ARCH-11..13; D-206 to D-208) the round-2 repairs (D-209, D-210) and the round-3 repairs BE-Z4 and FE-Z2 are merged. Their handbacks are under `docs/delivery/handbacks/DG6/`.
+- **Working tree:** a separate git worktree prepared by the orchestrator. It is your current working directory, on branch `dg6/an-z2`, at the integrated `HEAD`. Every round-1 repair (BE-Y1..Y6, DO-Y1, DO-Y2, FE-Y1, ARCH-11..13; D-206 to D-208), the round-2 repairs (D-209, D-210) and the round-3 repairs BE-Z4 and FE-Z2 are merged. Their handbacks are under `docs/delivery/handbacks/DG6/`.
 - **Concurrency (D-004):** you run alone.
 
 ## What to change
