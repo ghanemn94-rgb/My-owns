@@ -1,0 +1,44 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-144",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:aa219bd2 (source 95f98191; repair T-DG6-FE-Y1, then T-DG6-FE-Z1/FE-Z1B: measured file-level budgets in 45 product specs and the root specs). (1) The finding's own reproduction (full product journeys at review load on the production-initialized stack, --workers=1): chromium-en with the locale unset 273 passed, 1 skipped (p6-walkthrough-keyboard, demo database only), 0 failed, 0 timeouts in 1.6 h at 1-minute load 7-30 (06-e2e-product-unset-en.log); chromium-ar unset: every one of the 274 candidate tests ran, 273 passed, 1 skipped (same demo-only spec), 0 timeouts (06-e2e-product-unset-ar.log; that run's exit 1 comes only from MY 18 mutant entries, see the record's QA-R3-06 check). The three tests round 2 named pass within their budgets at load ~20: p4-benefits 8 in 49.6 s en / 38.0 s ar (budget 210 s; it took 30.1-30.9 s and failed at 30 s in round 2), p4-gates-closure 6 in 44.2 s en / 27.0 s ar (budget 120 s), p3-journeys 2a in 26.5 s en / 24.5 s ar (budget 150 s). The C.UTF-8 product runs (06-e2e-product-cutf8-en/-ar) are reported in the record. (2) Static: my scan of 301 e2e tests finds 0 on the default 30 s (16-f144-budget-static.txt; three heuristic hits checked by hand: a22-operations-jobs sets test.setTimeout(crossBoundary ? 1_200_000 : 300_000), keycloak-login sets 60 s). (3) Mutant: p4-benefits and p4-gates-closure with every test.setTimeout line removed (default 30 s again), run alone at load ~20: 2 tests fail with 'Test timeout of 30000ms exceeded' (p4-benefits 6 at 31.2 s, p4-gates-closure 6) and their 6 serial followers do not run (14-f144-mutant-budgets-removed.log); with the candidate's budgets the same files pass in every full run. Residual (not this finding): the unit-web harness's fixed 5 s Testing Library wait is load-sensitive at the same load (see the record's QA-R3-02 check).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/06-e2e-product-unset-en.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/06-e2e-product-unset-en-samples.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/06-e2e-product-unset-ar.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/16-f144-budget-static.txt",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/budget-scan.mjs",
+        "docs/delivery/test-evidence/DG6/qa/round-3/14-f144-mutant-budgets-removed.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-mutant-f144-p4-benefits.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-mutant-f144-p4-gates-closure.spec.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-200",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:aa219bd2 (repair T-DG6-BE-Z1). (1) exports-assembly 0125 guard test: BE-Z1 adds, after the refused UPDATE, a blocking 'SELECT id FROM export_job WHERE id = $1 FOR UPDATE', which waits on the aborting transaction's row lock (PostgreSQL sends the ErrorResponse before AbortCurrentTransaction releases it) instead of a timer. My round-2 probe method, re-written on the candidate's file copied verbatim (zz-qa-dg6r3-assembly-guard-lock.test.ts), 80 repetitions per variant on a disposable PostgreSQL at load ~16: 'fixed' (the candidate's sequence) 0 misses of 80; 'mutant' (the same sequence without the FOR UPDATE line, i.e. the round-2 test) 11 misses of 80, each leaving the job queued, snapshot null, version 1, attempts 0 (10-f200-probe-assembly-guard-lock.log; exit 1 BY DESIGN: only the mutant variant's assertion fails). (2) change-requests-in-tx: auditXmin now orders by occurred_at, seq (seq is the audit_event identity column, migration 0003). The candidate file passes alone 3 of 3 (6/6 tests each); a mutant ordering DESC fails exactly test (a) '...round-2 resubmission...' (10b-f200-probe-xmin-order.log), so the test depends on the order the repair fixes. (3) Both files pass in integration run 1 (half B: exports-assembly 18/18, change-requests-in-tx 6/6); run 2 is reported in the record.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-assembly-guard-lock.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-3/10-f200-probe-assembly-guard-lock.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/zz-qa-dg6r3-mutant-change-requests-xmin-desc.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-3/10b-f200-probe-xmin-order.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/04-integration-run1-B.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-201",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:aa219bd2 (repair T-DG6-AN-Z1). The four notes the finding named now carry a T-DG6-AN-Z1 check that cites the repairs and the current evidence: REQ-S12-019 cites BE-Y3 and D-208 and turns 'still reads only the newest period' into a closed residual (F-DG6-100/140 repaired by BE-Y3); REQ-S16-030 cites BE-Y4 and D-208 and says the export class is wired ('The first and third are resolved'); REQ-S20-029 cites DO-Y1, D-207, D-208 and states that the generator is now in the tree (sha256 6b2a9007...); REQ-S20-030 cites BE-Y4, BE-Y5, BE-Y6, DO-Y1, DO-Y2, D-207 and D-208 and keeps the DO-H text only as history of the synchronous design (22-register-notes-check.txt). Each statement matches this candidate: my runs show the A17 failing-connector e2e (Stale, last value and date), rate-limit classes in rate-limits.test.ts, and the asynchronous export assembly passing. Not part of this finding: four OTHER rows whose latest analyst paragraph (T-DG6-AN-P6B) still reports failing or absent suites (REQ-S20-001, -012, -017, -022); I raise that separately as F-DG6-260 (Low).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/22-register-notes-check.txt",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG6/qa/round-3/05-e2e-root-unset.log"
+      ]
+    }
+  ]
+}
