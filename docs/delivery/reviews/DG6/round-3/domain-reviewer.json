@@ -1,0 +1,385 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 3,
+  "candidate_id": "sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14",
+  "source_commit": "95f981917e4e5572f954d7cd159d869eca142bff",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-R3-domain-reviewer-20261104T123528Z-bc45927b",
+    "session_id": "bc45927b-54af-4ee6-8849-e90332d69d4e"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG6 implementation, test, register row, ADR, repair or delivery decision in the reviewed candidate. My only earlier DG6 artefacts are my round-1 and round-2 review records and findings (F-DG6-160 and F-DG6-161 are mine; I verify them here as their originating reviewer, as the protocol allows). I formed this verdict only from my own runs in this session. I did not open any other reviewer's round-3 record or evidence. Every command that built or ran code used a disposable clone under $TMPDIR at 95f981917 (git clone --shared, non-shallow, with a sparse checkout that leaves out docs/delivery/runs, docs/delivery/test-evidence, the handback *-evidence folders and trading_agent; none of these is in the candidate manifest, and I later added back the three load-evidence folders that unit tests read). node_modules was copied from the repository working tree (pnpm-lock.yaml byte-identical). All product data I created or cite is SYNTHETIC. No in-product G1-G6 decision, sensitivity mark, grant or demo approval cited here approves anything real, and none relates to DG0-DG7. Product gate G6 never implies DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-3/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038",
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-007",
+    "REQ-S15-009",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S15-014",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-001",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-020",
+    "REQ-S20-021",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R3-00-candidate",
+      "procedure": "Verify the frozen candidate. Run git rev-parse HEAD on the repository, then node tools/gates/candidate.mjs --stage DG6 on the repository and on a complete, non-shallow disposable clone at the source commit 95f981917 and at the freeze commit f2d030f6f. List the files that differ between the two commits. Confirm that the product tree equals the orchestrator's verified 8b22cc095 outside docs/delivery.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6 (repository and clone); git rev-parse --is-shallow-repository; git diff --name-only 95f981917 f2d030f6f; git diff --stat 8b22cc095 95f981917 -- . ':!docs/delivery'",
+      "environment": "Repository /home/user/My-owns at HEAD f2d030f6f; clone $TMPDIR/review-dg6 (git clone --shared, non-shallow, 1894 commits, sparse as stated in the independence declaration); Node 24.21.0.",
+      "expected": "candidate_id sha256:aa219bd2...cb14 with 2729 files everywhere; only delivery records between the source and freeze commits; an empty product diff to 8b22cc095.",
+      "actual": "Every computation prints sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14 with 2729 files. HEAD is the freeze commit f2d030f6f, not the source 95f981917. That is expected: 95f981917..f2d030f6f adds only the three round-3 assignments, the candidate manifest and stages.json, all excluded from the candidate ID. The diff 8b22cc095..95f981917 outside docs/delivery is empty. No manifest entry lies under the paths my sparse checkout leaves out. Disclosed: my first full clone failed with 'No space left on device' (the scratch volume is shared and had 7 GB free), so I deleted it and used the shared sparse clone. Later in the run my three untracked probe files in the clone made its working-tree hash differ (2732 files). That is expected; the pristine verification above was taken before they were added.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/candidate-verify.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-01-validators",
+      "procedure": "Run the register validator for DG6 and the historical validators for DG5, DG4, DG3, DG2 and DG1.",
+      "command": "node tools/gates/validate.mjs --register DG6; node tools/gates/validate.mjs --historical --stage DG5 (DG4, DG3, DG2, DG1)",
+      "environment": "Repository at f2d030f6f; Node 24.21.0.",
+      "expected": "PASS and exit 0 for each.",
+      "actual": "'PASS register rules at DG6' and 'PASS gate DG5/DG4/DG3/DG2/DG1 (historical)', each with exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__register_DG6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__historical___stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__historical___stage_DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__historical___stage_DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__historical___stage_DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__historical___stage_DG1.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-02-build",
+      "procedure": "Build every workspace package in the clone.",
+      "command": "pnpm -r build",
+      "environment": "Clone at 95f981917; Node 24.21.0.",
+      "expected": "Exit 0.",
+      "actual": "Exit 0. The only warnings are Vite's chunk-size advisories. The first build ran in a backgrounded shell and completed (exit 0), but I had overwritten its log, so I ran the build again; build.log is that second run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-03-finding-verification",
+      "procedure": "Verify my open findings F-DG6-160 and F-DG6-161 on this candidate (details in domain-reviewer.verifications.json). For F-DG6-160, re-run the round-2 freshness probe on a real database, revert operations.ts as a mutant, and compare the ADR text with the code. For F-DG6-161, compare the DG6 register rows at 9bb2207 and 95f981917.",
+      "command": "with-pg.sh vitest --project integration operations-freshness + exception-last-known-value + zz-domain-probe-freshness (and with operations.ts = git show 3cce3d4:...); grep ADR-0053 at 9bb2207 / 95f981917; python register comparison",
+      "environment": "Clone at 95f981917; PostgreSQL 16.15 (UTF8, C) on ports 29502-29503; Node 24.21.0.",
+      "expected": "The probe passes and the mutant fails. ADR-0053 states the shipped scan rule. The DG6 register notes no longer disclose residuals that are already repaired.",
+      "actual": "Probe run: 3 files, 20/20, exit 0. Stale 0.4125 with date 2026-09-05; one data.stale event. Mutant run: 5 failed, 15 passed, exit 1. That is the intended red: 3 stopped-feed worker tests, my probe and the API parity test fail. ADR-0053 line 79 now states the shipped rule; the old wording survives only as the amendment's own quotation of history. The latest analyst check of every row named in F-DG6-161 is corrected, and all DG6 evidence paths exist. Both findings: CLOSED_VERIFIED. One residual of the same class remains: the REQ-S10-002 note still lists the scenario residual that BE-Z3 repaired. It understates the candidate, and I fold it into F-DG6-220.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-freshness.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-freshness-revert.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/f160-doc-check.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/f161-register-check.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-04-qa-integration",
+      "procedure": "Run all 45 QA integration files on a disposable database, with the synthetic A17 signing value exported.",
+      "command": "QA_PG_PORT=29505 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration; then the 11 files not reached, on port 29506",
+      "environment": "Clone at 95f981917; PostgreSQL 16.15; Node 24.21.0; --configLoader runner (read-only node_modules); host load average 13-27 (three concurrent reviews).",
+      "expected": "Every file and test passes.",
+      "actual": "Part 1: 34 files, all ✓ (237 test lines ✓, none ×). The review harness then stopped the run at its 30-minute background limit, so part 1 has no vitest summary; this is noted at the end of int-qa.log. Part 2 ran the 11 remaining files: 11 passed, 35 tests passed, exit 0. All 45 QA files therefore passed, with no failed or skipped test in either log. Among them: A12 scope isolation, the A13 kill/restart files, A17 external change, a20-p6-register-1000, A01 source coverage and A15 every-definition outputs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-qa.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-qa-part2.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-05-implementer-integration",
+      "procedure": "Run the implementers' P6 integration files: my round-2 list of 27 plus 14 files that are new or touched since round 2 (sensitive-reach-calculations, sensitive-reach-scenarios, secret-binding, secret-composition, channel-fanout, admin/storage, assistant settings/provider/composition, log-redaction, change-requests-in-tx, raid/corrective-cases, sustainment/transition-decisions, benefits/scenarios).",
+      "command": "QA_PG_PORT=29540 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat int-api-files.txt)",
+      "environment": "Clone at 95f981917; PostgreSQL 16.15; Node 24.21.0; host load average about 24.",
+      "expected": "Every file and test passes.",
+      "actual": "Test Files 41 passed (41); Tests 531 passed (531); exit 0. These files include the automation version-at-occurrence and backlog-enablement tests (D-204, D-205), the freshness and last-known-value files, rate-limits (export and upload classes), exports and exports-assembly, deep links, ownership transfer, the assistant guardrail, injection and no-write tests, and the SB-1 to SB-8 secret-binding tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-api-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-api-files.txt"
+      ]
+    },
+    {
+      "id": "DOM-R3-06-root-e2e-functional",
+      "procedure": "Run the root P6 functional e2e specs (A12, A13, A14, A17 x2, A21 degradation, A22 x2) in en and ar on a real stack. Then re-run the failed spec on the harness the spec names.",
+      "command": "MTH_PORT_POOL=29510-29519 ... E2E_SCREENSHOT_DIR=$TMPDIR/shots-root e2e/support/qa-stack.sh npx playwright test <8 specs> --workers=1; then MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=... QA_PG_PORT=29520 E2E_API_PORT=29521 apps/web/e2e/support/with-stack.sh npx playwright test e2e/a17-import-and-integration.spec.ts --workers=1",
+      "environment": "Clone at 95f981917; Playwright with the pre-installed Chromium (/opt/pw-browsers); E2E_SCREENSHOT_DIR writable, as the assignment requires; no worker on these stacks (by design); host load average 9-17.",
+      "expected": "Every test passes.",
+      "actual": "Run 1 (qa-stack.sh): 34 passed, 2 failed, exit 1. The failures are 'REQ-S17-003: a signed webhook is accepted...' in en and ar: creating the webhook endpoint returned 400 validation at /signingSecretRef. The cause is my harness choice. qa-stack.sh is a DG2-era QA harness that writes no SECRET_BINDINGS_FILE, so under D-209 the synthetic signing secret is unbound and the API refuses it, fail-closed, exactly as D-209 requires. The spec's header names apps/web/e2e/support/with-stack.sh, which binds that one secret, and the orchestrator's root run used it too. Run 2 (with-stack.sh, the spec alone): 10 passed, exit 0, including the webhook test in en and ar. Also disclosed: api.log contains 'heartbeat_missed' alert lines, because these stacks run no worker by design. That is the expected operational exception, not a failure. On screen, the A17 data owner sees one 'Connector unreachable' exception and the linked KPI Stale with 250.75 and 31 Jan 2026 (never 0 or green); the CSV and XLSX imports are staged and then committed with lineage; stopped and failing connectors show their state with an actionable error. On the Arabic exception page, the 'Last error' value is English: F-DG6-221 (Low).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-p6-functional.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-a17-withstack-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a14-conflict.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a14-conflict.png"
+      ]
+    },
+    {
+      "id": "DOM-R3-07-root-e2e-a20",
+      "procedure": "Run the A20 root specs (layout and brand, UX, the S15-014 term scan, P6 axe, bilingual shell). Then re-run, in chromium-ar, the Arabic specs that the first run did not reach.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=... QA_PG_PORT=29530 E2E_API_PORT=29531 apps/web/e2e/support/with-stack.sh npx playwright test e2e/a20-p6-layout-brand.spec.ts e2e/a20-p6-ux.spec.ts e2e/a20-s15-014-term-scan.spec.ts e2e/a20-p6-axe.spec.ts e2e/a20-bilingual-shell.spec.ts --workers=1; then the first four with --project chromium-ar",
+      "environment": "Clone at 95f981917; Chromium (/opt/pw-browsers); host load average 21-27.",
+      "expected": "Every test passes; skips only for the spec's declared 'NOT SCANNED' cases.",
+      "actual": "Run 1: 151 passed, 0 failed, 17 skipped. That covers the en project of all five specs (layout 3, UX 7, term scan 63, axe 47, shell 2) plus ar shell 2 and ar axe 44 so far. The review harness then stopped the run at its 30-minute background limit, which is noted in the log. Run 2 (chromium-ar, the four specs): 111 passed, 9 skipped, 0 failed, exit 0. Every skip is the axe spec's declared test.skip('NOT SCANNED: ...'), for a route whose fixture id or user does not exist on this stack (for example /admin/sensitive-grants/:grantId and /l/:token). The orchestrator's root run had 18 such skips. They limit axe coverage and are not failures. The term scan found no stack trace or infrastructure term in the normal, forced-500 and network-failure states, in en and ar. That re-runs REQ-S15-014's deferred binding re-run on this candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-a20.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-a20-part2.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-08-demo-stack-e2e",
+      "procedure": "Run the demo-initialized stack (AUTH_MODE=dev; roaming.user.* through the dev sign-in, D-165) with the A02 guided walkthrough, the A02 demo users walkthrough, the A02 demo labels and the A21 no-AI operation, in en and ar.",
+      "command": "E2E_PG_PORT=29522 E2E_API_PORT=29523 e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a21-no-ai-operation.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-demo-labels.spec.ts --workers=1",
+      "environment": "Clone at 95f981917; demo stack; Chromium.",
+      "expected": "Every test passes.",
+      "actual": "12 passed (10.5 min), exit 0; no skip or flake. A report is generated with no AI, external notification or export channel. The demo labels are shown, and the illustrative label appears in exports.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-09-own-screen-probe",
+      "procedure": "My own EN/AR probe on the production-initialized stack. It visits six P6 screens and checks <html lang/dir> and the absence of infrastructure terms, with screenshots. It then saves a connector naming a secret IT has not bound (D-209), through the real edit form. Finally it starts one live-selection export and watches its asynchronous assembly.",
+      "command": "QA_PG_PORT=29512 E2E_API_PORT=29513 E2E_SCREENSHOT_DIR=$TMPDIR/shots-probe apps/web/e2e/support/with-stack.sh npx playwright test e2e/zz-domain/dom-r3-screens.spec.ts --workers=1",
+      "environment": "Clone at 95f981917 (the probe lives only in the clone; a copy is in probes/); Chromium; no worker (by design).",
+      "expected": "lang/dir correct; no infrastructure term; the unbound reference is refused with a clear, localized, field-level explanation; the export answers 202 and the assembly watch assigns a snapshot.",
+      "actual": "Run 1 failed in en and ar after 10 minutes each. That was a defect in MY probe: the edit form requires a Reason, the probe did not fill it, client validation blocked the save ('Enter a reason of 3 to 1,000 characters.'), and the probe waited for a PUT that was never sent. This is documented in the run-1 log. Run 2, with the probe fixed: 2 passed, exit 0. Every screen has the correct lang/dir and no infrastructure term (Assistant, Connectors, Operations, Imports, Search, My Work). Export: 202 in 154 ms (en) and 76 ms (ar), snapshotId null at first, then assigned by the API's assembly watch. The job stays 'queued' because this stack runs no worker, by design. Unbound SecretRef: the API answers correctly (400 validation, validation.secret_ref_not_bound at /config/credentialRefs/api). The form, however, shows only 'Some values are not valid. Check the highlighted fields.' (and the Arabic equivalent) with 0 fields highlighted and no reason given. Raised as F-DG6-222 (Medium).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/dom-probe-screens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/dom-probe-screens-run1-probe-bug.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probes/dom-r3-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/dom-r3-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/dom-r3-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/dom-r3-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/dom-r3-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/dom-r3-exports-assembled.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/dom-r3-exports-assembled.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/dom-r3-search.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/dom-r3-search.png"
+      ]
+    },
+    {
+      "id": "DOM-R3-10-sensitive-scope-open-questions",
+      "procedure": "Judge the three D-210 open questions with a real-database probe and by reading the code. (1) Are a sensitive benefit's corrective_case, transition_decision and performance_area_link hidden from TL and AUD (404 on the benefit)? (2) Do the routes that disclose ids without values break ADR-0051? (3) Is BE-Z3's scenario omission rule correct and complete?",
+      "command": "QA_PG_PORT=29500/29501 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts; read sensitive-reach.ts, scenarios.ts, status-model.ts, g6.ts, closure.ts, RegisterPages.tsx, dashboards/finance.ts, exports/jobs.ts",
+      "environment": "Clone at 95f981917; PostgreSQL 16.15; Node 24.21.0.",
+      "expected": "ADR-0051 §2 as amended: the rows that carry a sensitive benefit's values are absent from lists, and their item routes answer 404, for a reader who is not admitted.",
+      "actual": "(1) DEFECT: F-DG6-220 (High, mandatory). TL and AUD get 404 on the benefit but 200 on its corrective case (benefitId, lifecycle step, benefit_variance, off-track count, title, recovery plan), its transition decision (rationale, expected realization end) and its area link. The TO and the owner (the controls) see everything. The probe exits 1 by design, and only on the soft assertion stating the ADR expectation, for TL and for AUD. (2) Acceptable. GET /status-model returns aggregates only (valueState, counts) and no per-benefit facts (probe-sensitive-registers-statusmodel.log). The per-benefit ids and codes reach only the frozen closure snapshot (closure.ts benefitSnapshot) and the G6 submission snapshot (g6SnapshotOf), which are immutable evidence of a business approval. Making them differ by viewer would break the rule that gates are explicit approvals tied to evidence snapshots. They carry ids, codes and states, never values, and aggregates may include restricted records by D-195 Q3. (3) Correct and complete within its scope. Every scenario presenter (list, item, create, PATCH) filters through restrictedRecordRefs. The POST of a hidden benefit answers like an unknown benefit (422 validation.reference). The PATCH of a hidden value is already 404 through the benefitScenarioValueId guard. A scenario carries no total. The web scenario page renders rows without summing them (RegisterPages.tsx). The finance dashboard never reads scenarios. An export of a selection that includes a hidden value is refused 403. Silent omission without a label is consistent with §2's list rule, because no aggregate is shown. sensitive-reach-scenarios.test.ts passes in int-api-p6.log.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-sensitive-registers.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-sensitive-registers-statusmodel.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probes/dom-r3-sensitive-registers.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-api-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-11-unit",
+      "procedure": "Run the full unit-node project on Node 24 and Node 22. Re-run the failing files alone, and then with a disclosed 60 s per-test limit, to separate load timeouts from logic.",
+      "command": "npx vitest run --configLoader runner --project unit-node (Node 24.21.0 and /opt/node22/bin); re-run of 4 files; re-run with --testTimeout=60000",
+      "environment": "Clone at 95f981917; Node 24.21.0 and Node 22.22.0 (the assignment names 22.22.2; the installed one is 22.22.0); host load average 21-29.",
+      "expected": "Every test passes.",
+      "actual": "Full runs. Node 24: 2892/2893 passed, 2 files failed, 2 errors. Node 22: 2889/2893 passed, 4 files failed. Every failure is explained. (a) tests/qa/unit/dlv038-s20-029-load-report.test.ts failed with ENOENT on T-DG6-DO-G-evidence/final/summary.json, a file my sparse checkout had left out. I added the DO-G, DO-H and DO-B evidence folders and it passes. (b) architecture.test.ts (30 s), server.test.ts (5 s, two tests) and branding-layout.test.ts (5 s) timed out, and vitest reported 'Timeout calling onTaskUpdate' worker-RPC errors, all at load average 21-29. Re-run alone: Node 22 passes 158/158 but exits 1 on one worker-RPC timeout; Node 24 has one 5 s timeout in server.test.ts. Re-run with --testTimeout=60000 (diagnostic only): Node 24 4 files, 158/158, exit 0; Node 22 4 files, 158/158, but exit 1 on one vitest worker-RPC 'Timeout calling onTaskUpdate' error. That error is a harness-to-worker RPC timeout under load, not a test assertion. No assertion fails anywhere. The orchestrator's quieter run of the same product tree (8b22cc095) exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/unit-node-n24.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/unit-node-n22.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/unit-node-n24-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/unit-node-n22-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/unit-node-n24-rerun-60s.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/unit-node-n22-rerun-60s.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-12-operating-truth",
+      "procedure": "Check the operating logic against the playbook and the master prompt on this candidate's screens and code: Unknown/Stale versus 0 or green; staged versus committed imports; external change unconfirmed until confirmed (M0080); the assistant off by default; no official PMI or Mobily claims; #0078FF provisional; the secret-binding error texts; the DO-Z1 operations documents.",
+      "command": "Screenshots from DOM-R3-06/07/09; read OperationsPages.tsx, ConnectorFormPage.tsx, problem.ts, integrations.json (en/ar), docs/operations/restricted-network.md, notifications.md",
+      "environment": "Clone at 95f981917; screenshots under screenshots/en and screenshots/ar.",
+      "expected": "Truthful operational state in en and ar; nothing overclaimed.",
+      "actual": "Held on screen. The Stale chip shows the last value and its date, never 0 or green. Imports are 'staged' before commit. The connector states are Not verified / Never succeeded. The assistant shows off and not configured, with telemetry off (A21). The wordmark is the provisional text 'Mobily Transformation Hub' with a 'Provisional' badge in en and ar. QA's a17-s01-005-external-change passes (an outbound write stays unconfirmed until it is confirmed). The DO-Z1 documents state that every outbound destination is off until IT configures it, proven only against local fakes, and connected to no Mobily system. Defects: F-DG6-221 (Low; English 'Last error' text on the Arabic page) and F-DG6-222 (Medium; the unbound-secret error state).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a17-connector-failing.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a17-connector-failing.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/a17-xlsx-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/a17-xlsx-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/en/dom-r3-admin-integrations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/screenshots/ar/dom-r3-admin-integrations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-qa-part2.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-13-load-and-exports",
+      "procedure": "Judge REQ-S20-029, REQ-S20-030 and the LOAD-T20 dataset gap. Confirm that the export and load code is byte-identical to round 2, where I ran the full-dataset export proof. Re-run the live-selection export path (DOM-R3-09) and exports-assembly.test.ts (DOM-R3-05).",
+      "command": "git diff --stat 9bb2207..95f981917 -- apps/api/src/modules/reporting deploy/load deploy/scripts packages/reporting apps/worker/src/handlers/reports* apps/worker/src/handlers/export*; sha256sum deploy/load/generate.mjs deploy/load/export-proof.mjs",
+      "environment": "Repository at f2d030f6f; clone at 95f981917.",
+      "expected": "Unchanged export code; the asynchronous start with progress works; targets labelled provisional; the dataset documented.",
+      "actual": "The export, reporting and load code is unchanged since round 2 (empty diff; only exports-assembly.test.ts gained 4 lines). generate.mjs has sha256 6b2a9007..., the shipped generator. I did not re-run the full-dataset proof in this round: the code is identical, the host load was 20-28, and my round-2 proof (round-2 evidence) together with DO-Y2's three repetitions and QA's idle proof cover it. On this candidate the live export answers 202 with snapshotId null, and the watch assigns the snapshot; exports-assembly passes. The LOAD-T20 gap (export-proof.mjs exits 1 on 'no sameScopeOther user' for one transformation) is a dataset-generation gap, not a latency or access failure, and it is disclosed. I accept it as a residual of D-199 item 2. Every figure comes from one 4-vCPU sandbox host, is labelled provisional and is not Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/export-code-identity.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/load-export-proof-1rep.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/dom-probe-screens.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-14-automation-semantics",
+      "procedure": "Judge D-203 to D-205 on this candidate. Confirm the automation code and ADR-0043 are unchanged since round 2, and run the automation integration files.",
+      "command": "git diff --stat 9bb2207..95f981917 -- apps/worker/src/handlers/automation* apps/api/src/modules/automation docs/architecture/adr/ADR-0043* packages/db/migrations; DOM-R3-05 files",
+      "environment": "Repository and clone at 95f981917.",
+      "expected": "D-204 and D-205 behaviour holds; the residual race is documented.",
+      "actual": "The diff is empty. automation-version-at-occurrence and automation-backlog-enablement pass (DOM-R3-05). A late event is evaluated against the rule version in force and enabled at its occurrence (D-204), and a rule disabled now stops its pending events (D-205). This meets M0239's operating logic and REQ-S20-013's exactly-once rule. The ADR-0043 G4 commit-order race needs a rule transaction to overlap a relay-and-evaluate cycle, never acts on a rule that was not enabled at occurrence, and keeps exactly-once per (version, trigger key). It is acceptable as documented. D-203 (batch 8, concurrency 4) is unchanged. All accepted, as in round 2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-api-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-15-register-and-docs",
+      "procedure": "Check REQ-DLV-038: the 48 DG6 rows' evidence exists and matches the candidate. Judge each 'binding re-run is the orchestrator's freeze verification' disclosure against the orchestrator's final run on 8b22cc095 and my own runs. Review the round-2 to round-3 diff in full.",
+      "command": "python register check; read orchestrator-final-8b22cc0/README.md, summary.txt, e2e/*.log; git diff 9bb2207..95f981917",
+      "environment": "Repository at f2d030f6f.",
+      "expected": "Every evidence path exists; every deferred re-run has actually been run.",
+      "actual": "48/48 rows are IMPLEMENTED, and 0 evidence paths are missing. Every deferred binding re-run is done. The orchestrator's final run on 8b22cc095 (equal to this product tree) has every step at exit 0: integration 416 files / 4212 passed, e2e 546 passed per locale, root 288 passed with 18 declared skips, demo 10 passed. I re-ran the deferred items myself: A12-5 (assistant scope, REQ-S17-007), A17 (REQ-S12-019) and the A20 term scan (REQ-S15-014). Their disclosures are therefore acceptable, but REQ-S10-002's acceptance is not met (F-DG6-220). The round-2 to round-3 diff contains: the SecretRef binding (correct fail-closed behaviour in the API, with the UX gap F-DG6-222); benefit_calculation as a via source; the scenario omission; e2e changes that touch only time limits, comments and the stack's binding file; the operations documents; and the ADR amendments. I found no assertion that was weakened. The REQ-S10-002 note's scenario residual is stale (folded into F-DG6-220).",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/f161-register-check.log",
+        "docs/delivery/test-evidence/DG6/orchestrator-final-8b22cc0/README.md",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "DOM-R3-16-environmental-residuals",
+      "procedure": "Record the assignment's environmental residuals on their offline/config surface.",
+      "environment": "Sandbox: no network and no container runtime; no real Mobily system, mail server, messaging service, AI provider, registry, CI or IdP.",
+      "expected": "Each residual recorded as PASS on the offline surface, with its note.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025, D-058): not reachable; the offline surfaces are documented. Keycloak and a real IdP (D-049): the OIDC clauses are tested against the bundled test issuer (REQ-S16-007 other-realm.test.ts passes in DOM-R3-05); the SAML broker is documented, not run. External systems: connectors, outbound writes, channels and the assistant are exercised through test adapters and the shipped 'disabled' configuration (A21, a13-p6-outbound-write-once, channel-fanout). Production capacity: provisional targets measured on one sandbox host, not Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/int-api-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/e2e-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R3-17-decisions",
+      "procedure": "Judge D-194 to D-196, D-199 item 2, D-202, D-203 to D-205 and the round-2 repair decisions D-209 and D-210.",
+      "environment": "docs/delivery/decisions.md at f2d030f6f; my runs above.",
+      "expected": "Each decision accepted or answered with a finding.",
+      "actual": "D-194 to D-196 (plan and scope; sensitive types benefit, business case and evidence; aggregates with includesRestrictedRecords): accepted. Their application to the three benefit registers is incomplete (F-DG6-220). D-199 item 2 (the full load dataset read as the largest transformation's selection plus 50 concurrent exports): accepted, with the LOAD-T20 gap disclosed. D-202 and D-203 to D-205: accepted (DOM-R3-14). D-209: the API binding is accepted (correct, fail-closed, audited), but its administrator error state is defective (F-DG6-222). Leaving credential-less SSRF to the network egress policy is honestly documented in restricted-network.md and I accept it as a domain residual (security judgement is the code-security reviewer's). D-210's open questions are answered in DOM-R3-10.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-sensitive-registers.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/dom-probe-screens.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG6-220",
+    "F-DG6-221",
+    "F-DG6-222"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-3/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG6/round-3/domain-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG6/domain/round-3/candidate-verify.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/probe-sensitive-registers.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/dom-probe-screens.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/int-qa.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/int-qa-part2.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/int-api-p6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-p6-functional.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-a17-withstack-rerun.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-a20.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/e2e-root-a20-part2.log",
+    "docs/delivery/test-evidence/DG6/domain/round-3/e2e-demo.log"
+  ],
+  "reviewed_at": "2026-11-04T14:15:00Z",
+  "summary": "FAIL on candidate aa219bd2 (2729 files, source 95f981917). Both of my open findings are CLOSED_VERIFIED. F-DG6-160: ADR-0053 now states the shipped freshness-scan rule; the probe passes and the revert mutant fails 5 tests. F-DG6-161: the DG6 register notes are corrected and every evidence path exists. My runs: QA integration 45/45 files (34 before the harness's 30-minute stop, then 11/11 with 35 tests); implementer P6 integration 41/41 files, 531 tests; root P6 e2e 34+2, where the 2 failures came from my use of the DG2 qa-stack.sh, which has no secret binding, and the spec alone on its own with-stack.sh passes 10/10; A20 151 + 111 passed, with declared axe skips only; demo 12/12; unit-node all assertions pass, with load timeouts explained. Answering D-210 question 1, one real authorization defect: F-DG6-220 (High, mandatory). A user who gets 404 on a sensitive benefit still lists and reads its corrective case (lifecycle step, off-track, recovery plan), its transition decision and its area link. This breaks REQ-S10-002 and ADR-0051 §2's own child-source rule. F-DG6-222 (Medium): an unbound secret reference gives 'Check the highlighted fields' with nothing highlighted and no reason, in en and ar. F-DG6-221 (Low): the Arabic exception page shows the English last-error text. Ids in the frozen G6 and closure snapshots are acceptable, and BE-Z3's scenario rule is correct. D-194 to D-196, D-199 item 2, D-202 and D-203 to D-205 are accepted."
+}

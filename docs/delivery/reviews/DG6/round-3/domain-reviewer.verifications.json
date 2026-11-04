@@ -1,0 +1,29 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-160",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14 (recomputed, 2729 files, on the repository at the freeze commit f2d030f6f and on a complete non-shallow clone at source 95f981917). Repair T-DG6-ARCH-14 (dated amendment of 2026-11-04). (1) Documentation reproduction from round 2: at 9bb2207, ADR-0053 line 79 still said the scan 'still reads only the organization's newest period' and that the rule was 'not decided here'. At the candidate, line 79 is replaced by 'The worker's freshness scan uses the same rule'. It names the lateral join with ev.value IS NOT NULL, withReadTimeStaleness, one data.stale event per episode (key data.stale:<kpiId>:<dataAsOf>) and the operations.exception_raise consumer, and a closing amendment records the change. The only remaining occurrence of the old wording is the amendment's own quotation of history (line 177). No other document under docs/architecture or docs/operations still describes the old scan. The text matches the shipped code: apps/worker/src/handlers/operations.ts line 207 has .where('ev.value', 'is not', null), and the header comment has the data.stale:<kpiId>:<dataAsOf> key (f160-doc-check.log). (2) Behaviour reproduction on the real database: my unedited round-2 probe (a stale value 60 days old in the previous closed monthly period, the current period open and empty, dq_stale_after_days 30) gives kpiFreshness {freshness:'stale', lastValue:'0.4125', dataAsOf:'2026-09-05'}, scan {kpis:1, stale:1, emitted:1} and one data.stale event. With operations-freshness.test.ts (11) and exception-last-known-value.test.ts (8): 3 files, 20/20, exit 0 (probe-freshness.log). So the ADR now states what the code does. (3) Mutant: operations.ts reverted to the round-1 text (git show 3cce3d4:...). Result: 5 failed, 15 passed, exit 1. The failures are the three 'stopped feed' worker tests, my probe and the API parity test 'a later open period WITHOUT an evaluation' (mutant-freshness-revert.log). The non-zero exit is the intended red of the mutant, and the file was restored afterwards (git status clean for operations.ts). The finding was documentation only, and the documentation is now correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/f160-doc-check.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probe-freshness.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-freshness-revert.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/candidate-verify.log",
+        "docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-161",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:aa219bd2e60c986ea7cf03665a9940e15be05931b26b4b8ddc7ca9918c41cb14. Repair T-DG6-AN-Z1 (register rows). Round-2 reproduction re-run: I compared the DG6 rows at 9bb2207 with those at 95f981917 (f161-register-check.log). Twelve DG6 rows changed, only in their evidence and notes, and all 48 stay IMPLEMENTED. For each stale disclosure I named in round 2, I checked the row's LATEST analyst check (T-DG6-AN-Z1). (a) REQ-S16-030 no longer says the export class has no operation wired. It says 'The it.todo is gone', names createExport rateLimitClass('export') and cites BE-Y4's before/after logs. (b) REQ-S20-029 no longer says the patched generator is not in the tree. It says DO-Y1 shipped it (sha256 6b2a9007...). I recomputed the in-tree deploy/load/generate.mjs: sha256 6b2a9007e47b...dff8a. (c) REQ-S20-030 now cites DO-Y2's re-measurement of the shipped asynchronous path (0 of 150 part-B starts over 2 s, 03-summary.txt, rep-1..3 export-proof.json) and QA's round-2 idle proof. It keeps DO-G's synchronous figures as history and discloses the LOAD-T20 dataset gap and the loaded-host misses. (d) REQ-S12-019's latest check says 'No residual remains against this row's acceptance' and describes the BE-Y3 scan rule. Every evidence path of the 48 DG6 rows exists (0 missing). In every case the round-2 latest check still had the stale phrase, and the candidate's latest check does not. That comparison is the regression check for a text-only repair, where a code mutant is not applicable. node tools/gates/validate.mjs --register DG6 passes (val-__register_DG6.log). One residual of the same class remains, and I do not reopen this finding for it: REQ-S10-002's AN-Z1 check (base 9ca69c3da) still lists 'a benefit-scenarios list item ... can still embed a scenario value row of a sensitive benefit, because presentScenarios was not changed'. BE-Z3 repaired that after AN-Z1 (scenarios.ts presentScenarios(db, principal, rows); sensitive-reach-scenarios.test.ts). It understates the candidate and overclaims nothing. I record it under F-DG6-220, whose repair must update the REQ-S10-002 row anyway.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/f161-register-check.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/val-__register_DG6.log",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-Y2-devops-engineer.md"
+      ]
+    }
+  ]
+}
