@@ -555,3 +555,151 @@ describe.each(LOCALES)("import batch (%s)", (locale) => {
     expect(screen.queryByRole("button", { name: t("imports.batch.commit") })).toBeNull();
   });
 });
+
+// F-DG6-222 (REQ-S15-011): a credential reference IT has not bound to this connector (D-209). The API answers 400
+// validation with the field error at the reference's pointer; the form marks that credential row and says why in the
+// reader's language, and an error the form shows no field for is said in its one alert (never "check the highlighted
+// fields" with nothing highlighted).
+const validation400 = (errors: { pointer: string; code: string }[]) => ({
+  status: 400,
+  body: {
+    type: "urn:mth:problem:validation",
+    title: "Validation failed",
+    status: 400,
+    code: "validation",
+    requestId: "r",
+    errors: errors.map((e) => ({ ...e, message: "English diagnostics only" })),
+  },
+});
+
+describe.each(LOCALES)("connector form: an unbound secret reference (%s)", (locale) => {
+  const editRoutes = (put: Parameters<typeof route>[2]): Handler[] => [
+    meRoute(ADM_TECH),
+    route("GET", /\/api\/v1\/transformations\?/, () => ({ status: 200, body: { items: [], nextCursor: null } })),
+    route("PUT", new RegExp(`/api/v1/admin/connectors/${CONNECTOR_ID}$`), put),
+    ...connectorRoutes(
+      connector({
+        config: {
+          ...connector().config,
+          credentialRefs: {
+            api: { provider: "env", name: "MTH_SECRET_SYN_FEED", resolvable: null },
+            backup: { provider: "env", name: "MTH_SECRET_SYN_BACKUP", resolvable: null },
+          },
+        },
+      }),
+    ),
+  ];
+  const save = async (t: (k: string) => string) => {
+    fireEvent.change(await screen.findByLabelText(new RegExp(t("integrations.field.reason"))), {
+      target: { value: "Synthetic reason" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: t("integrations.form.save") }));
+  };
+
+  it("marks the credential row the pointer names and says IT has not bound it", async () => {
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    const api = mockApi(
+      ...editRoutes(() =>
+        validation400([{ pointer: "/config/credentialRefs/backup", code: "validation.secret_ref_not_bound" }]),
+      ),
+    );
+    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/edit`, { i18n });
+    await save(t);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(t("problems.validation"));
+    const text = t("problems.validation__secret_ref_not_bound");
+    expect(text).not.toBe("");
+    expect(locale === "ar" ? /[؀-ۿ]/.test(text) : !/[؀-ۿ]/.test(text)).toBe(true);
+    // the "backup" row (the second) is marked; its secret-name field says why and is invalid; the "api" row is not
+    const rows = [...document.querySelectorAll<HTMLElement>("[data-credential-row]")];
+    expect(rows.map((r) => r.getAttribute("data-credential-row"))).toEqual(["api", "backup"]);
+    await waitFor(() => expect(rows[1]!.getAttribute("data-invalid")).toBe("true"));
+    expect(rows[0]!.getAttribute("data-invalid")).toBeNull();
+    expect(within(rows[1]!).getByText(text)).toBeTruthy();
+    const name = within(rows[1]!).getByLabelText(t("integrations.credentials.secretName"));
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(document.getElementById(name.getAttribute("aria-describedby")!.split(" ").pop()!)?.textContent).toContain(
+      text,
+    );
+    expect(document.querySelectorAll(".field--invalid")).toHaveLength(1);
+    // the server's English message is never shown; one alert only
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    const put = api.requests.find((r) => r.method === "PUT")!;
+    expect(put.headers["if-match"]).toBe('"4"');
+  });
+
+  it("says a host error the form shows no field for inside its one alert", async () => {
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    // a test adapter shows no endpoint field: /config/endpointUrl has nothing to highlight
+    mockApi(
+      ...editRoutes(() =>
+        validation400([{ pointer: "/config/endpointUrl", code: "validation.secret_ref_host_not_bound" }]),
+      ),
+    );
+    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/edit`, { i18n });
+    await save(t);
+    const alert = await screen.findByRole("alert");
+    await waitFor(() => expect(alert.textContent).toContain(t("problems.validation__secret_ref_host_not_bound")));
+    expect(document.querySelectorAll(".field--invalid")).toHaveLength(0);
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+  });
+});
+
+// F-DG6-222: the webhook signing-secret rotation names a reference IT has not bound to webhook signing (D-209): 400 at
+// /signingSecretRef marks the secret-name field with the localized reason.
+describe.each(LOCALES)("webhook rotation: an unbound signing secret (%s)", (locale) => {
+  it("marks the secret name and says IT has not bound it", async () => {
+    const WEBHOOK_ID = "01920000-0000-7000-c000-000000000061";
+    const endpoint = {
+      id: WEBHOOK_ID,
+      organizationId: ORG_ID,
+      connectorId: CONNECTOR_ID,
+      endpointKey: "syn-key",
+      receivePath: "/api/v1/webhooks/syn-key",
+      label: "Synthetic webhook",
+      signingSecretRef: { provider: "env", name: "MTH_SECRET_SYN_SIGN" },
+      previousSecretRef: null,
+      previousValidUntil: null,
+      secretRotatedAt: null,
+      toleranceSeconds: 300,
+      status: "active",
+      disabledAt: null,
+      disabledBy: null,
+      disableReason: null,
+      lastReceiptAt: null,
+      version: 2,
+      updatedAt: "2026-10-30T08:00:00Z",
+    };
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    const api = mockApi(
+      meRoute(ADM_TECH),
+      route("GET", new RegExp(`/api/v1/admin/webhooks/${WEBHOOK_ID}$`), () => ({ status: 200, body: endpoint })),
+      route("POST", /\/rotate-secret$/, () =>
+        validation400([{ pointer: "/signingSecretRef", code: "validation.secret_ref_not_bound" }]),
+      ),
+      ...connectorRoutes(),
+    );
+    renderApp(`/admin/integrations/webhooks/${WEBHOOK_ID}`, { i18n });
+    fireEvent.click(await screen.findByRole("button", { name: t("integrations.webhooks.rotate") }));
+    const form = document.querySelector<HTMLElement>("form[data-rotate-form]")!;
+    fireEvent.change(within(form).getByLabelText(new RegExp(`^${t("integrations.credentials.secretName")}`)), {
+      target: { value: "MTH_SECRET_SYN_SIGN_2" },
+    });
+    fireEvent.change(within(form).getByLabelText(new RegExp(`^${t("integrations.field.reason")}`)), {
+      target: { value: "Synthetic rotation" },
+    });
+    fireEvent.click(within(form).getByRole("button", { name: t("integrations.webhooks.rotateSubmit") }));
+    const text = t("problems.validation__secret_ref_not_bound");
+    expect(await within(form).findByText(text)).toBeTruthy();
+    const name = within(form).getByLabelText(new RegExp(`^${t("integrations.credentials.secretName")}`));
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(form.querySelectorAll(".field--invalid")).toHaveLength(1);
+    expect(within(form).getAllByRole("alert")).toHaveLength(1);
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+    expect(api.requests.find((r) => r.method === "POST")!.headers["if-match"]).toBe('"2"');
+  });
+});

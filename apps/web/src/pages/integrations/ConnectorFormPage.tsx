@@ -7,6 +7,9 @@
 //    server refuses one (connector.secret_value_refused).
 //  - Field mappings are edited on their own screen (they are a configuration version too); this form keeps them.
 //  - One form-level alert; If-Match is the connector's version (409 shows the conflict and reloads it).
+//  - F-DG6-222: a 400 validation answer's field errors are placed on the fields they name. A reference IT has not bound
+//    to this connector (D-209: validation.secret_ref_not_bound at /config/credentialRefs/<purpose>) marks that
+//    credential row and says why, in the user's language; an error the form shows no field for is said in the alert.
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
@@ -17,9 +20,10 @@ import { useMe } from "../../auth/session.tsx";
 import { useSessionBoundAction, useSessionNavigate } from "../../auth/sessionBound.ts";
 import { Field } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
+import { FormProblemAlert } from "../../components/UnplacedFieldErrors.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { NoPermissionState, QueryState } from "../../components/States.tsx";
-import { errorMessage, fieldErrorMessage } from "../../lib/problem.ts";
+import { fieldErrorMessage, placeFieldErrors, type UnplacedFieldError } from "../../lib/problem.ts";
 import { useSelectedOrganization } from "../admin/UsersPage.tsx";
 import {
   CONNECTOR_ADAPTER_KINDS,
@@ -62,7 +66,48 @@ export interface ConnectorFormValues {
   reason: string;
 }
 
-type Errors = Partial<Record<keyof ConnectorFormValues | `credential.${number}`, string>>;
+type ErrorKey = keyof ConnectorFormValues | `credential.${number}` | `credentialSecret.${number}`;
+type Errors = Partial<Record<ErrorKey, string>>;
+
+/** The form fields a server field error may name at the top level of the body (POST/PUT connector). */
+const TOP_FIELDS = new Set<ErrorKey>(["code", "nameEn", "nameAr"]);
+/** The configuration fields (`/config/<name>`) the form shows with an error slot. */
+const CONFIG_FIELDS = new Set<ErrorKey>([
+  "sourceSystemId",
+  "endpointUrl",
+  "targetTransformationId",
+  "retryMaxAttempts",
+  "retryBackoffSeconds",
+  "commitOnBehalfOf",
+  "reason",
+]);
+
+/** "a~1b~0c" -> "a/b~c" (RFC 6901). */
+const unescapePointerToken = (token: string) => token.replace(/~1/g, "/").replace(/~0/g, "~");
+
+/**
+ * F-DG6-222: the form field a server field error's pointer names, for the submitted values `v`, or null when the form
+ * shows no field for it (then the alert says it). `/config/credentialRefs/<purpose>[/…]` is the credential row of that
+ * purpose (its secret-name field: the value to change or to ask IT to bind); `/config/endpointUrl` only while the
+ * endpoint field is shown (an HTTP pull connector); every other configuration field likewise only while shown.
+ */
+export function connectorFieldOf(v: ConnectorFormValues, pointer: string): ErrorKey | null {
+  const cred = /^\/config\/credentialRefs\/([^/]+)(?:\/.*)?$/.exec(pointer);
+  if (cred) {
+    const purpose = unescapePointerToken(cred[1]!);
+    const i = v.credentials.findIndex((r) => r.key === purpose);
+    return i >= 0 ? `credentialSecret.${i}` : null;
+  }
+  const top = /^\/([A-Za-z]+)$/.exec(pointer);
+  if (top && TOP_FIELDS.has(top[1] as ErrorKey)) return top[1] as ErrorKey;
+  const inConfig = /^\/config\/([A-Za-z]+)$/.exec(pointer);
+  if (!inConfig || !CONFIG_FIELDS.has(inConfig[1] as ErrorKey)) return null;
+  const field = inConfig[1] as ErrorKey;
+  if (field === "endpointUrl" && v.adapterKind !== "http_pull") return null;
+  if (field === "targetTransformationId" && v.targetKind !== "kpi_actual") return null;
+  if (field === "commitOnBehalfOf" && v.commitMode !== "auto") return null;
+  return field;
+}
 
 const blank = (): ConnectorFormValues => ({
   code: "",
@@ -227,6 +272,7 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
   const [values, setValues] = useState<ConnectorFormValues>(() => (connector ? fromConnector(connector) : blank()));
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<unknown>(null);
+  const [unplaced, setUnplaced] = useState<UnplacedFieldError[]>([]);
   const [busy, setBusy] = useState(false);
   const editing = connector !== null;
   const set =
@@ -244,6 +290,7 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setUnplaced([]);
     const errs: Errors = {};
     if (!editing && !/^[a-z][a-z0-9_-]{1,62}$/.test(values.code)) errs.code = "integrations.form.codeInvalid";
     if (values.nameEn.trim() === "") errs.nameEn = "validation.required";
@@ -291,6 +338,9 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
       if (action.stale(err)) return;
       setBusy(false);
       setFormError(err);
+      const placed = placeFieldErrors(err, (pointer) => connectorFieldOf(values, pointer));
+      setErrors(placed.byField);
+      setUnplaced(placed.unplaced);
       if (err instanceof ApiError && err.status === 409 && editing) await refresh();
     }
   };
@@ -302,11 +352,7 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
       </h2>
       <p className="small muted">{t("integrations.form.intro")}</p>
       <form className="stack" onSubmit={(e) => void submit(e)} noValidate aria-busy={busy} data-connector-form>
-        {formError ? (
-          <p className="banner banner--error" role="alert">
-            <Icon name="alert" /> <span>{errorMessage(t, formError)}</span>
-          </p>
-        ) : null}
+        {formError ? <FormProblemAlert error={formError} unplaced={unplaced} /> : null}
         <Field
           label={t("integrations.field.code")}
           hint={editing ? t("integrations.form.fixedAfterCreate") : t("integrations.form.codeHint")}
@@ -417,7 +463,12 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
           <legend>{t("integrations.credentials.title")}</legend>
           <p className="small muted">{t("integrations.credentials.hint")}</p>
           {values.credentials.map((row, i) => (
-            <div className="integrations-credential" key={i}>
+            <div
+              className="integrations-credential"
+              key={i}
+              data-credential-row={row.key}
+              data-invalid={errors[`credential.${i}`] || errors[`credentialSecret.${i}`] ? "true" : undefined}
+            >
               <Field label={t("integrations.credentials.purpose")} error={errorText(`credential.${i}`)}>
                 {(c) => (
                   <input
@@ -441,7 +492,7 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
                   />
                 )}
               </Field>
-              <Field label={t("integrations.credentials.secretName")}>
+              <Field label={t("integrations.credentials.secretName")} error={errorText(`credentialSecret.${i}`)}>
                 {(c) => (
                   <input
                     {...c}

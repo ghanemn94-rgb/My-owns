@@ -114,6 +114,61 @@ export function distinctFormMessages(banner: string | null | undefined, others: 
   return out;
 }
 
+/**
+ * The field-error codes of a secret reference that IT has not provisioned or bound for a setting (ADR-0052 §5 and its
+ * amendments: F-DG6-120 namespace, F-DG6-181 / D-209 binding). The API answers them as 400 `validation` with the code at
+ * the reference's own pointer (or, for a host, at the setting's host field); every form that edits a SecretRef places
+ * them on that field (F-DG6-222).
+ */
+export const SECRET_REF_FIELD_CODES = [
+  "validation.secret_ref_namespace",
+  "validation.secret_ref_not_bound",
+  "validation.secret_ref_host_not_bound",
+] as const;
+
+/** One server field error placed on nothing the form shows: its code and pointer. */
+export interface UnplacedFieldError {
+  readonly pointer: string;
+  readonly code: string;
+}
+
+/**
+ * F-DG6-222: places the field errors of a 400 `validation` answer on a form's fields. `fieldOf` names the field a JSON
+ * pointer belongs to, or null when the form shows no field for it; the first error of a field wins. Anything else than a
+ * 400 with field errors places nothing. The errors no field took are returned in `unplaced`, so the form says them in
+ * its alert (`unplacedMessages`) instead of asking the user to check a highlighted field that does not exist.
+ */
+export function placeFieldErrors<K extends string>(
+  error: unknown,
+  fieldOf: (pointer: string) => K | null,
+): { byField: Partial<Record<K, string>>; unplaced: UnplacedFieldError[] } {
+  const byField: Partial<Record<K, string>> = {};
+  const unplaced: UnplacedFieldError[] = [];
+  if (!(error instanceof ApiError) || error.status !== 400) return { byField, unplaced };
+  for (const fe of error.fieldErrors) {
+    const field = fieldOf(fe.pointer);
+    if (field === null) unplaced.push({ pointer: fe.pointer, code: fe.code });
+    else if (byField[field] === undefined) byField[field] = fe.code;
+  }
+  return { byField, unplaced };
+}
+
+/**
+ * The texts of the field errors no field took, translated at render time (FE12), each once and never the banner's own
+ * text again (F-DG2-340). A code without a catalogue text is not shown here: the banner already says the request was
+ * refused, and the generic "not valid" text would add nothing.
+ */
+export function unplacedMessages(
+  t: TFunction,
+  banner: string | null | undefined,
+  unplaced: readonly UnplacedFieldError[],
+): string[] {
+  return distinctFormMessages(
+    banner,
+    unplaced.map((u) => t(problemKey(u.code), { defaultValue: "" })),
+  );
+}
+
 /** "/name" -> "name", "/identity/subject" -> "identity.subject", "/query/q" -> "q". */
 export function pointerToField(pointer: string): string {
   return pointer

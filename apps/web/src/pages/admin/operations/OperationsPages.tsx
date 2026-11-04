@@ -5,11 +5,14 @@
 //  - the heartbeat `unknown` (no beat recorded) and `stale` are never shown as running, and never green;
 //  - a linked KPI shows the DG4 freshness label the server sends (Fresh, Stale, Unknown), its last known value as the
 //    decimal string the server sends and its date; a null value is "Unknown", never 0;
-//  - a resolved exception is final (no action is offered on it).
+//  - a resolved exception is final (no action is offered on it);
+//  - "Last error" is the catalogue text of `lastErrorCode` in the user's language, never the server's English
+//    `lastErrorMessage` (ADR-0007; F-DG6-221); without a catalogue text it is the code itself.
 // The response types are written from docs/api/openapi.yaml 1.5.0-p6 (no zod mirror exists for slice J at this
 // revision); the OpenAPI file is the source of truth.
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Link, useParams, useSearchParams } from "react-router";
 import {
   p6Paths,
@@ -26,6 +29,8 @@ import { RegisterTable, type RegisterColumn } from "../../../components/Register
 import { Section } from "../../../components/Section.tsx";
 import { QueryState } from "../../../components/States.tsx";
 import { formatDateTime } from "../../../lib/format.ts";
+import { problemText } from "../../../lib/problem.ts";
+import { codeKey, fillText } from "../../integrations/ui.tsx";
 import { HumanDecisionNote, NoteForm, StatusChip, useRunner } from "../../automation/ui.tsx";
 import {
   adminCrumbs,
@@ -63,6 +68,24 @@ export interface OperationalException {
   readonly resolutionNote: string | null;
   readonly linkedKpiCount: number;
   readonly version: number;
+}
+
+/**
+ * F-DG6-221: the text of an exception's `lastErrorCode` in the user's language, or "" when no catalogue has one (the
+ * caller then shows the code). The connector codes are the Connectors page's own texts (`integrations.actionable.<code>
+ * .why`, the same lookup as its actionable-error panel); any other code is its problem text (`problems.<code>`). The
+ * server's `lastErrorMessage` is English diagnostics (ADR-0007) and is never the shown text.
+ */
+export function exceptionErrorText(t: TFunction, code: string): string {
+  if (code === "") return "";
+  return fillText(t, `integrations.actionable.${codeKey(code)}.why`, null) || problemText(t, code);
+}
+
+/** The "Last error" value: the catalogue text, or the code itself (never the English server message). */
+export function ExceptionErrorText({ code }: { code: string }) {
+  const { t } = useTranslation();
+  const text = exceptionErrorText(t, code);
+  return text ? <span data-error-text={code}>{text}</span> : <Code>{code}</Code>;
 }
 
 export interface LinkedKpi {
@@ -381,7 +404,7 @@ export function OperationalExceptionPage() {
                   <Code>{x.lastErrorCode}</Code>
                 </Fact>
                 <Fact label={t("adminP6.operations.lastError")}>
-                  <bdi>{x.lastErrorMessage}</bdi>
+                  <ExceptionErrorText code={x.lastErrorCode} />
                 </Fact>
                 {x.serviceIdentityId ? (
                   <Fact label={t("adminP6.operations.serviceIdentity")}>

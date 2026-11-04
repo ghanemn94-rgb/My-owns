@@ -16,6 +16,7 @@ import { PageHeader, usePageTitle } from "../../../components/Page.tsx";
 import { Section } from "../../../components/Section.tsx";
 import { QueryState } from "../../../components/States.tsx";
 import { formatDateTime } from "../../../lib/format.ts";
+import { fieldErrorMessage, placeFieldErrors } from "../../../lib/problem.ts";
 import { StatusChip, useRunner, type Runner } from "../../automation/ui.tsx";
 import {
   adminCrumbs,
@@ -119,6 +120,21 @@ const s3Body = (f: S3Form) => ({
   secretKeyRef: secretRefOrNull(f.secretKeyRef),
 });
 
+/** The S3 fields a server field error may name: `/s3/<field>` on save, `/candidate/<field>` on a test. */
+const S3_FIELDS = ["endpoint", "region", "bucket", "keyPrefix", "accessKeyRef", "secretKeyRef"] as const;
+type S3ErrorField = (typeof S3_FIELDS)[number];
+
+/**
+ * F-DG6-222: the S3 field a server field error's pointer names (`/s3/…` on save, `/candidate/…` on a test; a reference's
+ * own `/provider` or `/name` is the reference), or null. The API puts `validation.secret_ref_not_bound` and
+ * `validation.secret_ref_namespace` at a key reference and `validation.secret_ref_host_not_bound` at the endpoint.
+ */
+export function storageFieldOf(pointer: string): S3ErrorField | null {
+  const m = /^\/(?:s3|candidate)\/([A-Za-z]+)(?:\/.*)?$/.exec(pointer);
+  const field = m?.[1];
+  return field !== undefined && (S3_FIELDS as readonly string[]).includes(field) ? (field as S3ErrorField) : null;
+}
+
 export function TestResult({ r }: { r: StorageTestResult }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -157,6 +173,8 @@ function StorageForm({ setting, runner, notice }: { setting: StorageSetting; run
   const [invalid, setInvalid] = useState<S3Invalid & { reason?: boolean }>({});
   const [result, setResult] = useState<StorageTestResult | null>(null);
   const { saved, setSaved } = notice;
+  // The last refused save or test's field errors, placed on the S3 fields while they are shown (F-DG6-222).
+  const server = driver === "s3" ? placeFieldErrors(runner.error, storageFieldOf).byField : {};
   const set = <K extends keyof S3Form>(k: K, v: S3Form[K]) => {
     setForm((f) => ({ ...f, [k]: v }));
     setResult(null);
@@ -191,29 +209,34 @@ function StorageForm({ setting, runner, notice }: { setting: StorageSetting; run
       setSaved(true);
     }
   };
-  const text = (k: "endpoint" | "region" | "bucket" | "keyPrefix", label: string, required: boolean) => (
-    <div className={`field${invalid[k] ? " field--invalid" : ""}`}>
-      <label className="field__label" htmlFor={`storage-${k}`}>
-        {label}
-        {required ? <span className="field__required"> ({t("common.form.required")})</span> : null}
-      </label>
-      <input
-        id={`storage-${k}`}
-        dir="ltr"
-        autoComplete="off"
-        value={form[k]}
-        aria-required={required || undefined}
-        aria-invalid={invalid[k] || undefined}
-        aria-describedby={invalid[k] ? `storage-${k}-error` : undefined}
-        onChange={(e) => set(k, e.target.value)}
-      />
-      {invalid[k] ? (
-        <p id={`storage-${k}-error`} className="field__error">
-          <Icon name="alert" /> {t("adminP6.storage.fieldInvalid")}
-        </p>
-      ) : null}
-    </div>
-  );
+  const text = (k: "endpoint" | "region" | "bucket" | "keyPrefix", label: string, required: boolean) => {
+    const serverCode = server[k];
+    const bad = Boolean(invalid[k] || serverCode);
+    return (
+      <div className={`field${bad ? " field--invalid" : ""}`} data-error-code={serverCode || undefined}>
+        <label className="field__label" htmlFor={`storage-${k}`}>
+          {label}
+          {required ? <span className="field__required"> ({t("common.form.required")})</span> : null}
+        </label>
+        <input
+          id={`storage-${k}`}
+          dir="ltr"
+          autoComplete="off"
+          value={form[k]}
+          aria-required={required || undefined}
+          aria-invalid={bad || undefined}
+          aria-describedby={bad ? `storage-${k}-error` : undefined}
+          onChange={(e) => set(k, e.target.value)}
+        />
+        {bad ? (
+          <p id={`storage-${k}-error`} className="field__error">
+            <Icon name="alert" />{" "}
+            {serverCode && !invalid[k] ? fieldErrorMessage(t, serverCode) : t("adminP6.storage.fieldInvalid")}
+          </p>
+        ) : null}
+      </div>
+    );
+  };
   return (
     <form
       className="form"
@@ -271,6 +294,7 @@ function StorageForm({ setting, runner, notice }: { setting: StorageSetting; run
               value={form.accessKeyRef}
               onChange={(v) => set("accessKeyRef", v)}
               invalid={Boolean(invalid.accessKeyRef)}
+              errorCode={invalid.accessKeyRef ? undefined : server.accessKeyRef}
             />
             <SecretRefFields
               id="storage-secret-key"
@@ -278,6 +302,7 @@ function StorageForm({ setting, runner, notice }: { setting: StorageSetting; run
               value={form.secretKeyRef}
               onChange={(v) => set("secretKeyRef", v)}
               invalid={Boolean(invalid.secretKeyRef)}
+              errorCode={invalid.secretKeyRef ? undefined : server.secretKeyRef}
             />
           </div>
           <p className="small muted">

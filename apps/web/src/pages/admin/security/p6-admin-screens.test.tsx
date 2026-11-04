@@ -16,14 +16,19 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
-import { resetSessionStateForTests } from "../../../api/client.ts";
+import { ApiError, resetSessionStateForTests } from "../../../api/client.ts";
 import { AppProviders, createQueryClient } from "../../../app/App.tsx";
 import { RequireSession } from "../../../auth/session.tsx";
 import { EvidencePreview } from "../../../components/evidence-preview/EvidencePreview.tsx";
 import { RestrictedRecordsLabel } from "../../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { SensitivityPanel } from "../../../components/sensitivity/SensitivityPanel.tsx";
 import { catalogues, createI18n } from "../../../i18n/index.ts";
+import { SECRET_REF_FIELD_CODES, fieldErrorMessage, placeFieldErrors, unplacedMessages } from "../../../lib/problem.ts";
 import { ORG_ID, TR_ID, USER_ID, makeMe, mockApi, problem, renderApp, route } from "../../../test/fixtures.tsx";
+import { webhookFieldOf } from "../../integrations/WebhooksPage.tsx";
+import { smtpFieldOf } from "../notification-channels/NotificationChannelsPages.tsx";
+import { exceptionErrorText } from "../operations/OperationsPages.tsx";
+import { storageFieldOf } from "../storage/StoragePage.tsx";
 
 beforeEach(() => localStorage.clear());
 afterEach(() => {
@@ -712,4 +717,205 @@ describe("The safe evidence preview (REQ-S13-011)", () => {
       expect(link.hasAttribute("download")).toBe(true);
     },
   );
+});
+
+// F-DG6-221 (REQ-S15-007): "Last error" is the catalogue text of lastErrorCode in the reader's language, never the
+// server's English lastErrorMessage; without a catalogue text it is the code itself.
+describe("Administration > Operations: the last error in the reader's language (F-DG6-221)", () => {
+  const renderDetail = async (locale: "en" | "ar", lastErrorCode: string) => {
+    mockApi(
+      meRoute(["organization.read", "operations.read"], locale),
+      route("GET", /\/api\/v1\/admin\/operations\/exceptions\/[^/?]+$/, () => ({
+        status: 200,
+        body: detail({
+          sourceKind: "connector",
+          failureClass: "connector_unreachable",
+          lastErrorCode,
+          lastErrorMessage: "Synthetic English server diagnostics.",
+        }),
+      })),
+    );
+    renderApp(`/admin/operations/exceptions/${EXC_ID}`, { i18n: createI18n(locale) });
+    const label = await screen.findByText(tx(locale, "adminP6.operations.lastError"));
+    return label.nextElementSibling as HTMLElement;
+  };
+
+  it.each(LOCALES)("%s: a connector code shows the Connectors page's text for it", async (locale) => {
+    const value = await renderDetail(locale, "connector.source_unavailable");
+    const text = tx(locale, "integrations.actionable.connector__source_unavailable.why");
+    expect(value.textContent).toBe(text);
+    if (locale === "ar") expect(text).toMatch(/[؀-ۿ]/);
+    expect(document.body.textContent).not.toContain("Synthetic English server diagnostics.");
+  });
+
+  it.each(LOCALES)("%s: a code without a catalogue text shows the code, not the English message", async (locale) => {
+    const value = await renderDetail(locale, "synthetic.code_without_text");
+    expect(value.textContent).toBe("synthetic.code_without_text");
+    expect(value.querySelector("bdi[dir='ltr']")).toBeTruthy();
+    expect(document.body.textContent).not.toContain("Synthetic English server diagnostics.");
+  });
+
+  it("the lookup: integrations text first, then the problem text, else empty (the caller shows the code)", () => {
+    for (const locale of LOCALES) {
+      const t = createI18n(locale).t;
+      expect(exceptionErrorText(t, "connector.source_unavailable")).toBe(
+        tx(locale, "integrations.actionable.connector__source_unavailable.why"),
+      );
+      expect(exceptionErrorText(t, "storage.test_required")).toBe(tx(locale, "problems.storage__test_required"));
+      expect(exceptionErrorText(t, "synthetic.none")).toBe("");
+      expect(exceptionErrorText(t, "")).toBe("");
+    }
+  });
+});
+
+// F-DG6-222 (REQ-S15-011): a secret reference IT has not bound (D-209) on the storage, SMTP and assistant forms. The
+// API's 400 validation names the reference (or the host); the form marks that field and says why, in en and ar.
+const validation400 = (errors: { pointer: string; code: string }[]) => ({
+  status: 400,
+  body: {
+    type: "urn:mth:problem:validation",
+    title: "Validation failed",
+    status: 400,
+    code: "validation",
+    requestId: "r",
+    errors: errors.map((e) => ({ ...e, message: "English diagnostics only" })),
+  },
+});
+const ARABIC = /[؀-ۿ]/;
+
+describe("SecretRef forms: an unbound reference is marked and explained (F-DG6-222)", () => {
+  it("the pointer mappers name the field of each SecretRef setting", () => {
+    expect(storageFieldOf("/s3/accessKeyRef")).toBe("accessKeyRef");
+    expect(storageFieldOf("/candidate/secretKeyRef/name")).toBe("secretKeyRef");
+    expect(storageFieldOf("/s3/endpoint")).toBe("endpoint");
+    expect(storageFieldOf("/driver")).toBeNull();
+    expect(smtpFieldOf("/smtp/passwordRef")).toBe("passwordRef");
+    expect(smtpFieldOf("/smtp/usernameRef/provider")).toBe("usernameRef");
+    expect(smtpFieldOf("/smtp/host")).toBe("host");
+    expect(smtpFieldOf("/smtp/security")).toBeNull();
+    expect(webhookFieldOf("/signingSecretRef", ["secretName"])).toBe("secretName");
+    expect(webhookFieldOf("/signingSecretRef/name", ["secretName", "grace"])).toBe("secretName");
+    expect(webhookFieldOf("/graceHours", ["secretName", "grace"])).toBe("grace");
+    expect(webhookFieldOf("/graceHours", ["secretName"])).toBeNull();
+  });
+
+  it("placeFieldErrors places 400 field errors and returns the rest; any other error places nothing", () => {
+    const err = new ApiError(400, {
+      type: "urn:mth:problem:validation",
+      title: "x",
+      status: 400,
+      code: "validation",
+      requestId: "r",
+      errors: [
+        { pointer: "/a", code: "validation.secret_ref_not_bound", message: "m" },
+        { pointer: "/a", code: "validation.too_big", message: "m" },
+        { pointer: "/b", code: "validation.secret_ref_host_not_bound", message: "m" },
+      ],
+    });
+    const placed = placeFieldErrors(err, (p) => (p === "/a" ? "a" : null));
+    expect(placed.byField).toEqual({ a: "validation.secret_ref_not_bound" });
+    expect(placed.unplaced).toEqual([{ pointer: "/b", code: "validation.secret_ref_host_not_bound" }]);
+    expect(placeFieldErrors(new Error("x"), () => "a")).toEqual({ byField: {}, unplaced: [] });
+    for (const locale of LOCALES) {
+      const t = createI18n(locale).t;
+      for (const code of SECRET_REF_FIELD_CODES) {
+        const text = fieldErrorMessage(t, code);
+        expect(text).not.toBe(fieldErrorMessage(t, "validation.invalid"));
+        expect(ARABIC.test(text)).toBe(locale === "ar");
+      }
+      expect(unplacedMessages(t, null, placed.unplaced)).toEqual([
+        fieldErrorMessage(t, "validation.secret_ref_host_not_bound"),
+      ]);
+    }
+  });
+
+  it.each(LOCALES)("%s: storage marks the key reference IT has not bound and says why", async (locale) => {
+    const s3 = {
+      endpoint: "https://s3.example.invalid",
+      region: "me-central-1",
+      bucket: "mth-evidence",
+      keyPrefix: null,
+      forcePathStyle: false,
+      accessKeyRef: { provider: "env", name: "MTH_SECRET_S3_ACCESS" },
+      secretKeyRef: { provider: "env", name: "MTH_SECRET_S3_SECRET" },
+    };
+    const { requests } = mockApi(
+      meRoute(["organization.read", "storage.configure"], locale),
+      route("GET", /\/api\/v1\/admin\/storage$/, () => ({
+        status: 200,
+        body: { driver: "s3", source: "database", s3, publicUrls: false, reason: "r", version: 3, updatedAt: null },
+      })),
+      route("PUT", /\/api\/v1\/admin\/storage$/, () =>
+        validation400([{ pointer: "/s3/secretKeyRef", code: "validation.secret_ref_not_bound" }]),
+      ),
+    );
+    renderApp("/admin/storage", { i18n: createI18n(locale) });
+    const reason = await screen.findByLabelText(new RegExp(tx(locale, "adminP6.common.reason")));
+    fireEvent.change(reason, { target: { value: "Synthetic reason" } });
+    fireEvent.click(screen.getByRole("button", { name: tx(locale, "adminP6.common.save") }));
+    const text = tx(locale, "problems.validation__secret_ref_not_bound");
+    const box = await waitFor(() => {
+      const el = document.querySelector<HTMLElement>("[data-secret-ref='storage-secret-key']")!;
+      expect(el.getAttribute("data-error-code")).toBe("validation.secret_ref_not_bound");
+      return el;
+    });
+    expect(box.className).toContain("field--invalid");
+    expect(within(box).getByText(text)).toBeTruthy();
+    expect(document.getElementById("storage-secret-key-name")!.getAttribute("aria-invalid")).toBe("true");
+    expect(document.getElementById("storage-secret-key-name")!.getAttribute("aria-describedby")).toBe(
+      "storage-secret-key-error",
+    );
+    expect(document.querySelector("[data-secret-ref='storage-access-key']")!.className).not.toContain("invalid");
+    expect(ARABIC.test(text)).toBe(locale === "ar");
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+    expect(requests.find((r) => r.method === "PUT")!.headers["if-match"]).toBe('"3"');
+  });
+
+  it.each(LOCALES)("%s: SMTP marks the password reference and the host IT has not bound", async (locale) => {
+    const channel = {
+      organizationId: ORG_ID,
+      channelKind: "email",
+      configured: true,
+      enabled: true,
+      adapterAvailable: true,
+      smtp: {
+        host: "smtp.example.invalid",
+        port: 587,
+        security: "starttls",
+        usernameRef: { provider: "env", name: "MTH_SECRET_SMTP_USER" },
+        passwordRef: { provider: "env", name: "MTH_SECRET_SMTP_PASS" },
+        fromAddress: "hub@example.invalid",
+      },
+      reason: "r",
+      version: 2,
+      updatedAt: null,
+    };
+    mockApi(
+      meRoute(["organization.read", "notification_channel.configure"], locale),
+      route("GET", /\/api\/v1\/admin\/notification-channels\/email\?/, () => ({ status: 200, body: channel })),
+      route("PUT", /\/api\/v1\/admin\/notification-channels\/email\?/, () =>
+        validation400([
+          { pointer: "/smtp/passwordRef", code: "validation.secret_ref_not_bound" },
+          { pointer: "/smtp/host", code: "validation.secret_ref_host_not_bound" },
+        ]),
+      ),
+    );
+    renderApp("/admin/notification-channels/email", { i18n: createI18n(locale) });
+    const reason = await screen.findByLabelText(new RegExp(tx(locale, "adminP6.common.reason")));
+    fireEvent.change(reason, { target: { value: "Synthetic reason" } });
+    fireEvent.click(screen.getByRole("button", { name: tx(locale, "adminP6.common.save") }));
+    const box = await waitFor(() => {
+      const el = document.querySelector<HTMLElement>("[data-secret-ref='smtp-password']")!;
+      expect(el.getAttribute("data-error-code")).toBe("validation.secret_ref_not_bound");
+      return el;
+    });
+    expect(within(box).getByText(tx(locale, "problems.validation__secret_ref_not_bound"))).toBeTruthy();
+    expect(document.querySelector("[data-secret-ref='smtp-username']")!.className).not.toContain("invalid");
+    const host = document.getElementById("smtp-host")!;
+    expect(host.getAttribute("aria-invalid")).toBe("true");
+    expect(document.getElementById("smtp-host-error")!.textContent).toContain(
+      tx(locale, "problems.validation__secret_ref_host_not_bound"),
+    );
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+  });
 });

@@ -541,8 +541,16 @@ test("REQ-S18-004: the demo role users perform the twelve walkthrough steps in t
   await test.step("10 generate report: TL generates the charter snapshot in the reports screen", async () => {
     await expectStep("generate_report", false);
     await visit(tlPage, `${base}/reports`);
-    await tlPage.getByLabel(field(lang, "Output")).first().selectOption("charter");
-    await tlPage.getByRole("button", { name: uiRe(lang, "Generate snapshot") }).click();
+    // F-DG6-261: the Generate form renders only once the report definitions have answered; the output select is the
+    // one inside it (scoped and strict, never `.first()`), and it is chosen only once the charter option exists.
+    const generate = tlPage.locator("form[data-form='generate-report']");
+    const output = generate.getByLabel(field(lang, "Output"));
+    await expect(output.locator("option[value='charter']")).toHaveCount(1, { timeout: 30_000 });
+    await output.selectOption("charter");
+    await expect(output).toHaveValue("charter");
+    const generateButton = generate.getByRole("button", { name: uiRe(lang, "Generate snapshot") });
+    await expect(generateButton).toBeEnabled();
+    await generateButton.click();
     await expectStep("generate_report", true);
     const snaps = await tlApi.call<Body>("GET", `${API}/report-snapshots?limit=50`);
     const snap = (snaps.items as Body[]).find((x) => x.definitionCode === "charter");

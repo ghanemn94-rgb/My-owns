@@ -18,6 +18,7 @@ import { useMe } from "../../../auth/session.tsx";
 import { beginSessionGuard } from "../../../auth/sessionBound.ts";
 import { Field } from "../../../components/Form.tsx";
 import { Icon } from "../../../components/Icon.tsx";
+import { FormProblemAlert } from "../../../components/UnplacedFieldErrors.tsx";
 import { PageHeader, usePageTitle } from "../../../components/Page.tsx";
 import { ReasonDialog } from "../../../components/ReasonDialog.tsx";
 import { QueryState } from "../../../components/States.tsx";
@@ -31,7 +32,7 @@ import {
   type AssistantSettingUpdate,
 } from "../../../components/assistant/api.ts";
 import { formatDateTime } from "../../../lib/format.ts";
-import { errorMessage, fieldErrorMessage } from "../../../lib/problem.ts";
+import { fieldErrorMessage, placeFieldErrors, type UnplacedFieldError } from "../../../lib/problem.ts";
 
 const LIMITS = {
   requestTimeoutMs: [1000, 120000],
@@ -265,7 +266,11 @@ export function toUpdate(
   };
 }
 
-/** The JSON pointer of a server field error -> the form field. */
+/**
+ * The JSON pointer of a server field error -> the form field. The credential reference (`/credentialRef`, where the API
+ * puts `validation.secret_ref_not_bound` and `validation.secret_ref_namespace`) is the secret-name field, and the
+ * endpoint (`validation.secret_ref_host_not_bound`) the endpoint field (F-DG6-222); every field is always shown.
+ */
 const POINTER_FIELD: Readonly<Record<string, keyof FormValues>> = {
   "/providerKind": "providerKind",
   "/endpointUrl": "endpointUrl",
@@ -296,6 +301,7 @@ function SettingForm({
   const [values, setValues] = useState<FormValues>(() => initialValues(setting));
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [formError, setFormError] = useState<unknown>(null);
+  const [unplaced, setUnplaced] = useState<UnplacedFieldError[]>([]);
   const [busy, setBusy] = useState(false);
   const locked = setting.enabled;
   const set = (key: keyof FormValues) => (e: { target: { value: string } }) =>
@@ -314,6 +320,7 @@ function SettingForm({
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setUnplaced([]);
     const parsed = toUpdate(values);
     if (!parsed.ok) {
       setErrors(parsed.errors);
@@ -334,14 +341,11 @@ function SettingForm({
     } catch (err) {
       if (action.stale(err)) return;
       setBusy(false);
-      const fieldErrors: Partial<Record<keyof FormValues, string>> = {};
-      if (err instanceof ApiError)
-        for (const fe of err.fieldErrors) {
-          const field = POINTER_FIELD[fe.pointer];
-          if (field && !fieldErrors[field]) fieldErrors[field] = fe.code;
-        }
-      setErrors(fieldErrors);
-      if (Object.keys(fieldErrors).length === 0 || !(err instanceof ApiError) || err.status !== 400) setFormError(err);
+      const placed = placeFieldErrors(err, (pointer) => POINTER_FIELD[pointer] ?? null);
+      setErrors(placed.byField);
+      setUnplaced(placed.unplaced);
+      // Every field error on a shown field: the fields say it. Otherwise the one alert says the rest (F-DG6-222).
+      if (Object.keys(placed.byField).length === 0 || placed.unplaced.length > 0) setFormError(err);
       // A stale version: load the current setting; the typed values stay so the administrator can review them.
       if (err instanceof ApiError && err.status === 409) await onConflict();
     }
@@ -352,11 +356,7 @@ function SettingForm({
     <section className="card" aria-labelledby="assistant-form-h">
       <h2 id="assistant-form-h">{t("assistant.admin.edit")}</h2>
       <form className="assistant-admin__form" onSubmit={(e) => void submit(e)} noValidate aria-busy={busy}>
-        {formError ? (
-          <p className="banner banner--error" role="alert">
-            <Icon name="alert" /> <span>{errorMessage(t, formError)}</span>
-          </p>
-        ) : null}
+        <FormProblemAlert error={formError} unplaced={unplaced} />
         {locked ? (
           <p className="banner banner--info">
             <Icon name="lock" /> <span>{t("assistant.admin.lockedNote")}</span>

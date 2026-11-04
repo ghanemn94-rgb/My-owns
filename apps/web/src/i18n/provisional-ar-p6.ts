@@ -14,7 +14,9 @@
 //  - "fe-b": the Arabic of the T-DG6-FE-B screens (the whole `adminP6` namespace), written by T-DG6-FE-B.
 //  - "fe-f": the Arabic written by T-DG6-FE-F (p6-work-split §I/K.3): the `explanations` namespace (ADR-0061 §8 gives
 //    English only) and the problem texts that `problems-all.test.ts` found missing (the English is the API's detail).
-export type ProvisionalArabicSource = "adr" | "fe-a" | "fe-b" | "fe-f";
+//  - "fe-z2": the Arabic written by T-DG6-FE-Z2 (F-DG6-222): the field-error texts of a secret reference IT has not
+//    provisioned or bound (ADR-0052 amendments; the ADR gives English only and asks the web owner for the Arabic).
+export type ProvisionalArabicSource = "adr" | "fe-a" | "fe-b" | "fe-f" | "fe-z2";
 
 /** Catalogue path (namespace.key, with "__" for "." inside a problem code) -> where the provisional Arabic comes from. */
 export const P6_PROVISIONAL_ARABIC: Readonly<Record<string, ProvisionalArabicSource>> = {
@@ -86,6 +88,10 @@ export const P6_PROVISIONAL_ARABIC: Readonly<Record<string, ProvisionalArabicSou
   "problems.validation__idempotency_key": "fe-f",
   "problems.validation__transformation_not_allowed": "fe-f",
   "problems.gate__out_of_sequence": "fe-f",
+  // problems.json: the SecretRef field errors (T-DG6-FE-Z2, F-DG6-222; ADR-0052 §5 amendments of 2026-11-02/04)
+  "problems.validation__secret_ref_namespace": "fe-z2",
+  "problems.validation__secret_ref_not_bound": "fe-z2",
+  "problems.validation__secret_ref_host_not_bound": "fe-z2",
   // explanations.json (T-DG6-FE-F): the explanation panels of ADR-0061 §8 (E1, E2, E4, E5) and the contrast report
   "explanations.": "fe-f",
 };
