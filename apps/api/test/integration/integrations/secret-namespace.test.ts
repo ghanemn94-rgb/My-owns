@@ -31,6 +31,7 @@ import {
   type TestApi,
   type World,
 } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Body = any;
@@ -49,6 +50,7 @@ const SMTP_PASS = "MTH_SECRET_BE_Y2_SMTP_PASS";
 const S3_ACCESS = "MTH_SECRET_BE_Y2_S3_ACCESS";
 const S3_SECRET = "MTH_SECRET_BE_Y2_S3_SECRET";
 const MODEL_KEY = "MTH_SECRET_BE_Y2_MODEL_KEY";
+let unbindSecrets: () => void = () => undefined;
 const BUCKET = "mth-evidence";
 /** The names a SecretRef must never reach: platform variables of the process, and a traversal for `file`. */
 const REFUSED: readonly { provider: string; name: string }[] = [
@@ -167,11 +169,24 @@ beforeAll(async () => {
   );
   api = await startApi({ database: scratchDb });
   w = await seedWorld(api.db);
+  // F-DG6-181 (T-DG6-BE-Z2): the MTH_SECRET_* names of the positive cases are bound, as IT would, to their setting,
+  // organization A (tenant kinds) or the installation, and the hosts the suite uses. The namespace refusals come first.
+  unbindSecrets = bindSecrets([
+    { name: FEED_NAME, consumer: "connector", organization: w.orgA.code, hosts: ["collector.example.invalid"] },
+    { name: SIGNING_NAME, consumer: "webhook_signing", organization: w.orgA.code },
+    { name: SIGNING_NEXT, consumer: "webhook_signing", organization: w.orgA.code },
+    { name: SMTP_USER, consumer: "smtp", organization: w.orgA.code, hosts: ["127.0.0.1"] },
+    { name: SMTP_PASS, consumer: "smtp", organization: w.orgA.code, hosts: ["127.0.0.1"] },
+    { name: S3_ACCESS, consumer: "storage", organization: null, hosts: ["127.0.0.1"] },
+    { name: S3_SECRET, consumer: "storage", organization: null, hosts: ["127.0.0.1"] },
+    { name: MODEL_KEY, consumer: "assistant", organization: null, hosts: ["model.example.invalid"] },
+  ]);
   admin = await signIn(api.app, w.admin.subject);
   nobody = await signIn(api.app, w.nobody.subject);
 }, 180_000);
 
 afterAll(async () => {
+  unbindSecrets();
   setConnectorAdapters(previousAdapters);
   for (const name of SET_VARIABLES) delete process.env[name];
   await api?.close();

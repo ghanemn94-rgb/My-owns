@@ -6,6 +6,7 @@ import {
   installConnectionLog,
   installConsoleRedaction,
   loadConfig,
+  setSecretBindings,
   withSecretRedaction,
 } from "@mth/config";
 import { createDb, createPool } from "@mth/db";
@@ -20,6 +21,7 @@ import { RUN_NOW_QUEUE } from "./job-runs.ts";
 import { QUEUES } from "./queues/index.ts";
 // D-198 (ADR-0052 §5; T-DG6-BE-J): the worker's SecretProvider registry, the twin of the API's.
 import { createSecretProviderRegistry, registerBuiltInSecretProviders } from "./secrets.ts";
+import { organizationCodeLookup } from "./organization-code.ts"; // F-DG6-181 (T-DG6-BE-Z2)
 
 // ADR-0053 §4 (T-DG6-DO-D): the worker logs through console; every console line passes the process-wide redaction set
 // (configuration secrets, SecretProvider values, storage keys, URLs and paths, tokens) before it is written. Installed
@@ -65,20 +67,24 @@ async function main(): Promise<void> {
   // D-198 (ADR-0052 §5): the built-in providers (env, file). The notification channel sends resolve SMTP
   // credential references through it (T-DG6-BE-I2); a value is never logged, only the provider ids.
   // ADR-0053 §4 item 1 (T-DG6-DO-D): every value a registered provider resolves joins the log redaction set.
-  const secrets = withSecretRedaction(createSecretProviderRegistry());
-  registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir });
-  // T-DG6-BE-I2 (ADR-0054 §3): the channel sends resolve credential references through this registry (so a resolved
-  // value joins the redaction set), link to APP_BASE_URL when set, and refuse unencrypted SMTP in production.
-  configureNotificationChannels({
-    resolveSecret: (ref) => secrets.resolve(ref),
-    appBaseUrl: config.appBaseUrl,
-    refuseInsecure: config.nodeEnv === "production",
-  });
   // D-203 O-1 (T-DG6-BE-X9): each of a queue's concurrently running jobs may hold a connection; two more stay for the
   // outbox relay and the heartbeat. Never below the earlier five.
   const poolMax = Math.max(5, config.worker.jobConcurrency + 2);
   const pool = createPool(config.databaseUrl!, { applicationName: "mth-worker", max: poolMax });
   const db = createDb(pool);
+  // F-DG6-181 (D-209; ADR-0052 amendment of 2026-11-04 §E): the binding manifest of SECRET_BINDINGS_FILE (empty:
+  // nothing is bound), and the cached organization code lookup every tenant resolve is checked with.
+  setSecretBindings(config.secretBindings);
+  const secrets = withSecretRedaction(createSecretProviderRegistry({ organizationCodeOf: organizationCodeLookup(db) }));
+  registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir });
+  // T-DG6-BE-I2 (ADR-0054 §3): the channel sends resolve credential references through this registry (so a resolved
+  // value joins the redaction set), link to APP_BASE_URL when set, and refuse unencrypted SMTP in production. Each send
+  // resolves for its channel row's use (smtp, its organization, its host and port; F-DG6-181).
+  configureNotificationChannels({
+    resolveSecret: (ref, use) => secrets.resolve(ref, use),
+    appBaseUrl: config.appBaseUrl,
+    refuseInsecure: config.nodeEnv === "production",
+  });
   // F-DG4-128: the supervision cadence is always explicit (WORKER_SUPERVISE_INTERVAL_SECONDS, default 60 s, 1-600).
   const boss = createBoss(config.databaseUrl!, { superviseIntervalSeconds: config.worker.superviseIntervalSeconds });
   let stopping = false;

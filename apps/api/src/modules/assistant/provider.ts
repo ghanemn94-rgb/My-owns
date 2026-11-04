@@ -21,6 +21,7 @@
 // server (apps/api/test/support/fake-model.ts). No IT endpoint exists here; the live endpoint is a residual.
 import type { AssistantSettingTable } from "@mth/db";
 import type { Selectable } from "kysely";
+import { secretUseHostOfUrl } from "@mth/config";
 import type { SecretProviderRegistry, SecretRef } from "../platform/index.ts";
 
 export type ProviderKind = "http_endpoint" | "test_adapter";
@@ -295,7 +296,13 @@ export function createHttpProvider(
         // Resolved per call, held for this call only; never logged. Unresolvable: no request is made.
         let value: string | undefined;
         try {
-          value = secrets === null ? undefined : (await secrets.resolve(settings.credentialRef))?.reveal();
+          // F-DG6-181: bound to `assistant`, the installation and the endpoint's host, or no request is made.
+          const use = {
+            consumer: "assistant",
+            organizationId: null,
+            host: secretUseHostOfUrl(settings.endpointUrl),
+          } as const;
+          value = secrets === null ? undefined : (await secrets.resolve(settings.credentialRef, use))?.reveal();
         } catch {
           value = undefined;
         }

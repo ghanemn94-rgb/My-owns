@@ -57,6 +57,8 @@ import { record as audit, type AuditContext } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
   assertSecretRefInNamespace,
+  assertSecretRefsBound,
+  type SecretUse,
   decodeUtf8Body,
   HttpProblem,
   iso,
@@ -218,6 +220,30 @@ export function checkSecretRef(input: unknown, pointer: string): { provider: str
   assertSecretRefInNamespace(ref, pointer); // F-DG6-120: 400 validation.secret_ref_namespace outside the namespace
   return ref;
 }
+
+/**
+ * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): 400 validation.secret_ref_not_bound at /signingSecretRef unless
+ * IT bound the reference to `webhook_signing` and this organization's code. A signing secret is never sent, so no host.
+ */
+async function assertWebhookSecretBound(
+  db: DbOrTx,
+  ref: { provider: string; name: string },
+  organizationId: string,
+): Promise<void> {
+  await assertSecretRefsBound(
+    db,
+    [{ ref, pointer: "/signingSecretRef" }],
+    { consumer: "webhook_signing", organizationId, host: null },
+    null,
+  );
+}
+
+/** The use a webhook endpoint's signing secret resolves for (F-DG6-181): webhook_signing, its organization, no host. */
+const webhookSecretUse = (organizationId: string): SecretUse => ({
+  consumer: "webhook_signing",
+  organizationId,
+  host: null,
+});
 
 // ------------------------------------------------------------------------------------------------ view
 
@@ -381,6 +407,8 @@ export async function createEndpoint(
   await requireWebhookConfigure(db, principal, connector.organization_id);
   if (connector.adapter_kind !== "webhook") throw webhookRefusals.connectorNotWebhook();
   const ref = checkSecretRef(input.signingSecretRef, "/signingSecretRef");
+  // F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): bound to webhook_signing and the connector's organization.
+  await assertWebhookSecretBound(db, ref, connector.organization_id);
   const endpointKey = randomBytes(32).toString("base64url");
   return db.transaction().execute(async (tx) => {
     // Lock the connector row so the kind and organization checked above are the ones the endpoint is created under.
@@ -454,6 +482,9 @@ export async function rotateSecret(
 ): Promise<WebhookEndpointRow> {
   return db.transaction().execute(async (tx) => {
     const { locked, me } = await lockForChange(tx, request, id, expectedVersion);
+    // F-DG6-181: the new reference must be bound to webhook_signing and the endpoint's organization (checked after
+    // authorization; a refusal rolls this transaction back and is audited as secret_ref.refused).
+    await assertWebhookSecretBound(tx, input.signingSecretRef, locked.organization_id);
     const current = refOf(locked.signing_secret_ref)!;
     if (current.provider === input.signingSecretRef.provider && current.name === input.signingSecretRef.name)
       throw connectorRefusals.secretValueRefused("/signingSecretRef");
@@ -583,10 +614,10 @@ function sameSignature(expectedHex: string, presentedHex: string): boolean {
 }
 
 /** One SecretRef resolved now (outside any transaction); null when it does not resolve. */
-async function resolveRef(ref: { provider: string; name: string } | null): Promise<string | null> {
+async function resolveRef(ref: { provider: string; name: string } | null, use: SecretUse): Promise<string | null> {
   if (ref === null) return null;
   try {
-    const resolved = await resolveCredentials({ signing: ref });
+    const resolved = await resolveCredentials({ signing: ref }, use);
     return resolved.get("signing")?.reveal() ?? null;
   } catch {
     return null;
@@ -660,9 +691,11 @@ async function verify(db: Db, input: ReceiveInput): Promise<Verified> {
   const signedAtMs = Number(ts) * 1000;
   if (Math.abs(nowMs - signedAtMs) > endpoint.tolerance_seconds * 1000) fail("timestamp_outside_window");
   // The secrets are resolved here, before any transaction (ADR-0052 §5); the values never leave this function.
-  const current = await resolveRef(refOf(endpoint.signing_secret_ref));
+  // F-DG6-181: both resolve for webhook_signing and the endpoint's organization; an unbound one resolves as unset.
+  const use = webhookSecretUse(endpoint.organization_id);
+  const current = await resolveRef(refOf(endpoint.signing_secret_ref), use);
   const previousValid = endpoint.previous_valid_until !== null && nowMs <= endpoint.previous_valid_until.getTime();
-  const previous = previousValid ? await resolveRef(refOf(endpoint.previous_secret_ref)) : null;
+  const previous = previousValid ? await resolveRef(refOf(endpoint.previous_secret_ref), use) : null;
   if (current === null && previous === null) fail("secret_unresolvable");
   let slot: "current" | "previous" | null = null;
   if (current !== null && sameSignature(webhookSignature(current, ts!, deliveryId!, input.body), presented!))

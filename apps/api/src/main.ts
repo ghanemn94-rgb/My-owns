@@ -8,7 +8,7 @@
 // get the grace, then their connections are destroyed); 2. wait for every tracked request handler and post-handler task
 // to SETTLE, including its catch/finally cleanup (an upload cut by step 1 removes its temporary `.part` object here),
 // bounded by SHUTDOWN_SETTLE_MS; 3. db.destroy(); 4. process.exit(0). The backstop bounds steps 1-3 together.
-import { ConfigError, loadConfig } from "@mth/config";
+import { ConfigError, loadConfig, setSecretBindings } from "@mth/config";
 import { createPool } from "@mth/db";
 import { DEFAULT_SHUTDOWN_GRACE_MS } from "./modules/platform/index.ts";
 import { buildServer } from "./server.ts";
@@ -32,6 +32,8 @@ async function main(): Promise<void> {
     }
     throw err;
   }
+  // F-DG6-181 (D-209): the SecretRef binding manifest read from SECRET_BINDINGS_FILE (empty: nothing is bound).
+  setSecretBindings(config.secretBindings);
   const pool = createPool(config.databaseUrl!, { applicationName: "mth-api", max: 20 });
   const { app, db, inFlight } = await buildServer({ config, pool });
   const shutdown = async (signal: string) => {

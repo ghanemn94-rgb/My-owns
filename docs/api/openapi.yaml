@@ -40216,6 +40216,11 @@ components:
         character a letter or digit, not ending in `_FILE`), for `file` a plain file name in SECRETS_DIR; never a
         platform variable. A reference outside it is refused with 400 validation, field error
         `validation.secret_ref_namespace` at the field.
+        IT also binds each secret, in `SECRET_BINDINGS_FILE`, to one kind of setting, one organization (or the
+        installation) and the hosts it may be sent to. A reference that is not bound to this setting is refused with
+        `400 validation`, field error `validation.secret_ref_not_bound`. A bound reference sent to a host IT did not
+        list is refused with `validation.secret_ref_host_not_bound` at the host field. A stored reference that is no
+        longer bound resolves as not set.
       properties:
         provider: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
         name: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_./-]{0,127}$" }
@@ -40400,7 +40405,11 @@ components:
       properties:
         provider: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
         name: { type: string, pattern: "^[A-Za-z_][A-Za-z0-9_./-]{0,127}$" }
-        resolvable: { type: [boolean, "null"], description: "null = not checked (Unknown)." }
+        resolvable:
+          type: [boolean, "null"]
+          description: >-
+            null = not checked (Unknown). Computed through the binding: a reference not bound to this connector's
+            organization and host is `false`, and the secret provider is not asked.
     ConnectorConfigInput:
       type: object
       required: [sourceSystemId, endpointUrl, credentialRefs, fieldMappings, targetTransformationId, cadence, retryMaxAttempts, retryBackoffSeconds, commitMode, commitOnBehalfOf, outboundActions, reconciliationRule, adapterSettings, reason]

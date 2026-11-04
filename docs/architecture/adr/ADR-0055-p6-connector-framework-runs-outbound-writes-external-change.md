@@ -97,7 +97,7 @@ Acceptance: "A17;A21: with the test connector stopped, a KPI actual can still be
 | `connector.source_unavailable` | "The source system did not respond." | "Retry the run later. Until the source is back, enter the values by form or import a file." |
 | `connector.stopped` | "The connector's test adapter is stopped." | "Start the adapter (set its mode to healthy), or enter the values by form or import a file." |
 | `connector.credentials_rejected` | "The source system rejected the connector's credentials." | "Ask IT to renew the secret named in the connector's credential reference, then retry." |
-| `connector.secret_unresolvable` | "The secret reference {name} could not be resolved." | "Ask IT to provide the secret {name} to the application's secret provider, then retry." |
+| `connector.secret_unresolvable` | "The secret reference {name} could not be resolved." | "Ask IT to provide the secret {name} and bind it to this connector and its host, then retry." |
 | `connector.mapping_mismatch` | "The source did not provide the mapped column {column}." | "Update the field mappings to match the source, then retry." |
 | `connector.response_invalid` | "The source returned data the connector cannot read." | "Check the source export with its owner; meanwhile enter the values by form or import a file." |
 
@@ -237,3 +237,5 @@ ADR-0052 §5 (amendment of 2026-11-04) binds every `SecretRef` to one consumer k
 - **Resolve time:** the check runs again and fails closed. An unbound reference resolves as unset, and the existing unresolvable outcome of this ADR applies.
 
 Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
+
+**Text update (2026-11-04, T-DG6-BE-Z2, implementing the amendment above; F-DG4-160 rule).** With the binding shipped, a reference can be unresolvable because IT has not bound it to this connector and its host, so the §4 what-to-do text of `connector.secret_unresolvable` now reads "Ask IT to provide the secret {name} and bind it to this connector and its host, then retry." (was "… to the application's secret provider, then retry."). The en and ar texts of `apps/web/src/i18n/{en,ar}/integrations.json` (`connector__secret_unresolvable.todo`, its `_noParams` twin, and `credentials.hint`) were changed in the same change, as proposed in handback T-DG6-ARCH-14 §7 item 4. No code, status or contract changes.

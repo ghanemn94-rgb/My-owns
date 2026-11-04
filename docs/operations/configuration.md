@@ -31,7 +31,7 @@ configuration at startup and exit 78 with a message that names the variable, nev
 
 ### Secret providers (P6; ADR-0052 §5)
 
-Settings that need a secret (connector credentials, SMTP, an assistant endpoint) store a **reference** to it,
+Settings that need a secret (connector credentials, webhook signing secrets, the email channel, the object store, the assistant endpoint) store a **reference** to it,
 `{ provider, name }`, never the value. The reference is resolved at use through a `SecretProvider`. A resolved value
 prints as `[secret]` in `String()`, `JSON.stringify` and log lines.
 
@@ -55,8 +55,55 @@ or any other):
   object store, the assistant endpoint) refuses a reference outside the namespace when it is saved or tested:
   `400 validation` with the field error `validation.secret_ref_namespace` at the field. The answer depends on the
   name only, never on whether the variable or file exists.
-- A reference outside the namespace stored before this rule resolves as "not set": nothing is sent, and the
-  setting shows the reference as not resolvable. Re-point it to an `MTH_SECRET_*` name.
+- A stored reference outside the namespace, or not bound to its setting, resolves as "not set": nothing is sent.
+  Re-point it to an `MTH_SECRET_*` name and bind it.
+
+**The binding (F-DG6-181).** A reference in the namespace is still not enough: IT also **binds** each secret to the
+one setting it was provisioned for, in a JSON manifest named by `SECRET_BINDINGS_FILE` (mounted read-only into the API
+and the worker, for example `/run/mth-config/secret-bindings.json`). The manifest holds names, scopes and hosts, never
+a value; no screen or API can change it. Each entry is `{ "provider", "name", "consumer", "organization", "hosts" }`:
+
+- `consumer`: `connector`, `webhook_signing`, `smtp` (the email channel), `storage` (the S3 object store) or
+  `assistant`.
+- `organization`: the organization's **code** for `connector`, `webhook_signing` and `smtp`; `null` for `storage` and
+  `assistant`, which are installation-wide. An installation secret can never be used by an organization's setting,
+  and the reverse.
+- `hosts`: for every kind except `webhook_signing`, the 1–16 hosts (`host` or `host:port`, lower case, no scheme or
+  path, no wildcard) the secret may be sent to. A connector, email channel, object store or assistant pointed at
+  another host does not receive the secret.
+- Each `(provider, name)` appears once: provision a separate secret for each organization and each use.
+
+```json
+{
+  "version": 1,
+  "bindings": [
+    { "provider": "env", "name": "MTH_SECRET_ORGB_ERP_TOKEN", "consumer": "connector", "organization": "ORGB", "hosts": ["erp.orgb.example"] },
+    { "provider": "env", "name": "MTH_SECRET_ORGB_WEBHOOK_SIGNING", "consumer": "webhook_signing", "organization": "ORGB" },
+    { "provider": "env", "name": "MTH_SECRET_ORGB_SMTP_PASSWORD", "consumer": "smtp", "organization": "ORGB", "hosts": ["smtp.orgb.example:587"] },
+    { "provider": "file", "name": "s3_secret_access_key", "consumer": "storage", "organization": null, "hosts": ["objects.it.example"] },
+    { "provider": "env", "name": "MTH_SECRET_ASSISTANT_KEY", "consumer": "assistant", "organization": null, "hosts": ["llm.it.example"] }
+  ]
+}
+```
+
+The example is synthetic. Rules: `version` is `1`; at most 1,000 bindings in a file of at most 1 MiB; the name is
+inside its provider's namespace (so a binding can never name a platform variable); an organization code that matches
+no organization binds nothing; a port of 1–65535, and an entry without a port allows any port of that host; host names
+match exactly (no suffix match).
+
+Unset `SECRET_BINDINGS_FILE` means **no reference is bound**: every setting that names a secret is refused. An
+invalid file stops the API and the worker at start (exit 78, naming the entry and field, never the content). The file
+is read at start; restart both after a change.
+
+A setting that names a secret not bound to it is refused when it is saved or tested: `400 validation` with the field
+error `validation.secret_ref_not_bound` (the same answer whether the secret exists or belongs to another
+organization), or `validation.secret_ref_host_not_bound` at the host field when the host is not listed. Each refusal
+is audited (`secret_ref.refused`). A stored reference that is no longer bound (a binding removed) resolves as "not
+set": nothing is sent, and the connector shows the reference as not resolvable.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SECRET_BINDINGS_FILE` | unset (nothing bound) | Path of the IT-maintained JSON manifest that binds each SecretRef to one setting kind, one organization code (or the installation) and the hosts it may be sent to. Holds no values. |
 
 - `SECRETS_DIR` is **optional** (no default). Unset means the `file` provider is not configured: resolving a
   `file` reference then fails with a configuration error that names the secret, never a value. A missing file under

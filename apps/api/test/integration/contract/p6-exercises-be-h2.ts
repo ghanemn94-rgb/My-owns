@@ -9,6 +9,7 @@ import type { z } from "zod";
 import { storageSettingView, storageTestResult } from "../../../src/modules/admin/storage.ts";
 import { FakeS3 } from "../../support/fake-s3.ts";
 import { signIn, type P6ExerciseContext } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 export const P6_MIRRORS_BE_H2: Readonly<Record<string, z.ZodType>> = {
   getStorageSetting: storageSettingView,
@@ -40,6 +41,15 @@ export async function exerciseP6BeH2Operations(ctx: P6ExerciseContext): Promise<
   await fake.start();
   process.env[ACCESS_VAR] = fake.credentials[0]!.accessKeyId;
   process.env[SECRET_VAR] = fake.credentials[0]!.secretAccessKey;
+  // F-DG6-181 (T-DG6-BE-Z2): bound, as IT would, to `storage`, the installation and the fake's host.
+  const unbind = bindSecrets(
+    [ACCESS_VAR, SECRET_VAR, "MTH_SECRET_CONTRACT_S3_UNSET"].map((name) => ({
+      name,
+      consumer: "storage" as const,
+      organization: null,
+      hosts: ["127.0.0.1"],
+    })),
+  );
   try {
     const s3 = {
       endpoint: fake.endpoint,
@@ -106,6 +116,7 @@ export async function exerciseP6BeH2Operations(ctx: P6ExerciseContext): Promise<
     const updated = await put({ ...filesystem, reason: "Synthetic contract exercise: again" }, `"${v}"`);
     expect(updated.body).toMatchObject({ driver: "filesystem", version: v + 1 });
   } finally {
+    unbind();
     delete process.env[ACCESS_VAR];
     delete process.env[SECRET_VAR];
     await fake.stop();

@@ -34,6 +34,7 @@ import {
   registerAccessP2Routes,
   registerAccessP4Routes,
   registerDeniedMutationAudit,
+  registerSecretRefusalAudit,
   registerSensitiveReachGuard,
   registerSensitivityRoutes,
   resolveTarget,
@@ -137,6 +138,7 @@ import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
   createSecretProviderRegistry,
+  organizationCodeLookup,
   createJsonBodyParser,
   registerBuiltInSecretProviders,
   registerRateLimitClasses,
@@ -477,6 +479,7 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerRateLimitClasses(app, config.rateLimitClasses, rateLimitKey);
 
   registerDeniedMutationAudit(app, db);
+  registerSecretRefusalAudit(app, db); // F-DG6-181 (T-DG6-BE-Z2): audits a SecretRef binding refusal
   registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
   const deps = { db, config };
   registerIdentity(app, deps, {
@@ -662,7 +665,14 @@ export async function buildServer(options: ServerOptions): Promise<{
   //  - ModelProvider (ARCH-05; BE-T, assistant/provider.ts): the provider line goes below this block (the local test
   //    adapter, or the HTTP adapter when configured); with nothing configured the assistant stays disabled.
   // ADR-0053 §4 item 1 (DO-D): every value a registered provider resolves joins the log redaction set.
-  const secrets = withSecretRedaction(createSecretProviderRegistry());
+  // F-DG6-181 (T-DG6-BE-Z2; ADR-0052 amendment of 2026-11-04 §E): every resolve names its use and is checked against
+  // the process's binding manifest (set by main.ts from SECRET_BINDINGS_FILE) with the setting's organization code.
+  const secrets = withSecretRedaction(
+    createSecretProviderRegistry({
+      organizationCodeOf: organizationCodeLookup(db),
+      warn: (line) => app.log.warn(line, "secret_ref.refused"),
+    }),
+  );
   registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir }); // BE-E: env and file (ADR-0052 §5)
   // T-DG6-BE-X2 (F-DG6-QA-A-1): the integrations module resolves connector credentials and webhook signing secrets
   // through this process's registry (secret-refs.ts); without this line every reference is unresolvable.

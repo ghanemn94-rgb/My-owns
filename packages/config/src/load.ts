@@ -10,6 +10,7 @@
 import { readFileSync } from "node:fs";
 import { formatWithOptions } from "node:util";
 import { z } from "zod";
+import { loadSecretBindings, type SecretBindings } from "./secret-bindings.ts";
 import {
   AUTH_MODES,
   ENV_VARS,
@@ -59,6 +60,11 @@ export interface AppConfig {
   readonly rateLimitClasses: RateLimitClassBudgets;
   /** P6 (ADR-0052 §5): the directory of the built-in `file` SecretProvider, or null when unset. */
   readonly secretsDir: string | null;
+  /**
+   * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §A; D-209): the SecretRef binding manifest read from
+   * SECRET_BINDINGS_FILE at start; empty (nothing bound) when unset. The entry points hand it to setSecretBindings.
+   */
+  readonly secretBindings: SecretBindings;
   readonly logLevel: (typeof LOG_LEVELS)[number];
   readonly trustProxy: readonly string[];
   /**
@@ -213,6 +219,14 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     Object.entries(RATE_LIMIT_CLASS_VARIABLES).map(([cls, name]) => [cls, field(name, positiveInt(1_000_000))]),
   ) as { [K in BudgetedRateLimitClass]: number | undefined };
   const secretsDir = field("SECRETS_DIR", z.string().min(1));
+  // F-DG6-181 (D-209): an unreadable or invalid manifest is a start error naming the entry and field, never content.
+  let secretBindings: SecretBindings | undefined;
+  try {
+    secretBindings = loadSecretBindings(env);
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    problems.push(...error.problems);
+  }
   const logLevel = field("LOG_LEVEL", z.enum(LOG_LEVELS));
   const superviseIntervalSeconds = field(
     "WORKER_SUPERVISE_INTERVAL_SECONDS",
@@ -321,6 +335,7 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     rateLimit: { perMinute: perMinute!, authPerMinute: authPerMinute! },
     rateLimitClasses: Object.freeze({ ...classBudgets }) as RateLimitClassBudgets,
     secretsDir: secretsDir ?? null,
+    secretBindings: secretBindings!,
     logLevel: logLevel!,
     trustProxy,
     worker: {

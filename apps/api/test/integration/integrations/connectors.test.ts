@@ -29,8 +29,10 @@ import {
 } from "../../../src/modules/integrations/adapters/port.ts";
 import { jsonbTextBytes, putConnector } from "../../../src/modules/integrations/connectors.ts";
 import { setConnectorSecretProviders } from "../../../src/modules/integrations/secret-refs.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 import {
   createSecretProviderRegistry,
+  organizationCodeLookup,
   HttpProblem,
   secretValue,
   type SecretProviderRegistry,
@@ -58,6 +60,7 @@ type Body = any;
 const L = "/api/v1/admin/connectors";
 const SECRET_VALUE = "s3cr3t-VALUE-be-l-9f2c";
 const SECRET_NAME = "MTH_SECRET_TEST_CONNECTOR_SECRET";
+let unbindSecrets: () => void = () => undefined;
 
 /** The test double of the local test adapter (BE-L2 ships the real one): mode healthy | failing | stopped. */
 const fakeTestAdapter: ConnectorAdapter = {
@@ -154,7 +157,17 @@ beforeAll(async () => {
   nobody = await signIn(api.app, w.nobody.subject);
   tdReader = await signIn(api.app, td.subject);
   previousAdapters = setConnectorAdapters(createConnectorAdapterRegistry([fakeTestAdapter]));
-  const secrets = createSecretProviderRegistry();
+  // F-DG6-181 (T-DG6-BE-Z2): the references this suite names are bound, as IT would, to organization A's connectors
+  // (test_adapter: no network destination, so no host is checked); the registry checks them with A's code.
+  const bound = (name: string, provider = "env") =>
+    ({ provider, name, consumer: "connector", organization: w.orgA.code, hosts: ["source.example.invalid"] }) as const;
+  unbindSecrets = bindSecrets([
+    bound(SECRET_NAME),
+    bound("MTH_SECRET_TEST_MISSING"),
+    bound("MTH_SECRET_TEST_NOT_PROVIDED"),
+    bound("connectors/kpi", "it_vault"),
+  ]);
+  const secrets = createSecretProviderRegistry({ organizationCodeOf: organizationCodeLookup(api.db) });
   secrets.register({
     id: "env",
     get: async (name) => (name === SECRET_NAME ? secretValue(SECRET_VALUE) : undefined),
@@ -163,6 +176,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  unbindSecrets();
   setConnectorAdapters(previousAdapters);
   setConnectorSecretProviders(previousSecrets);
   await api?.close();

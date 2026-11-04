@@ -26,6 +26,7 @@
 //    API route that authorizes the parent record. Nothing here is a business approval or touches DG0-DG7. The IT
 //    object store is a configuration slot Mobily IT fills; this adapter is proven only against the in-process fake S3.
 import { createHash, randomBytes } from "node:crypto";
+import { secretUseHostOfUrl } from "@mth/config";
 import { reason as reasonRule } from "@mth/shared/schemas";
 import { sql, type Db, type DbOrTx } from "@mth/db";
 import { PROBLEM_TYPES, type Permission } from "@mth/shared";
@@ -45,6 +46,7 @@ import {
 import {
   ADVISORY_LOCK_CLASSES,
   assertSecretRefInNamespace,
+  assertSecretRefsBound,
   etag,
   HttpProblem,
   iso,
@@ -238,6 +240,23 @@ export function checkedS3(input: z.infer<typeof s3Input>, providers: readonly st
     accessKeyRef,
     secretKeyRef,
   };
+}
+
+/**
+ * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): 400 validation unless both references are bound to `storage`,
+ * the installation (null) and the S3 endpoint's host: `validation.secret_ref_not_bound` at `<pointer>/accessKeyRef` or
+ * `<pointer>/secretKeyRef`, or `validation.secret_ref_host_not_bound` at `<pointer>/endpoint`. Never asks a provider.
+ */
+export async function assertStorageSecretsBound(db: DbOrTx, s3: S3Settings, pointer: string): Promise<void> {
+  await assertSecretRefsBound(
+    db,
+    [
+      { ref: s3.accessKeyRef, pointer: `${pointer}/accessKeyRef` },
+      { ref: s3.secretKeyRef, pointer: `${pointer}/secretKeyRef` },
+    ],
+    { consumer: "storage", organizationId: null, host: secretUseHostOfUrl(s3.endpoint) },
+    `${pointer}/endpoint`,
+  );
 }
 
 /** The validated values of a PUT body (the ADR-0054 §4 business rules except the test window). */
@@ -453,6 +472,9 @@ export function registerStorageAdminRoutes(
     await requireConfigure(db, principal);
     const body = parseBody(storageSettingUpdate, request.body);
     const update = checkedStorageUpdate(body, providers());
+    // F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): the s3 references must be bound to `storage`, the
+    // installation (null) and the endpoint's host (400 validation, audited as secret_ref.refused).
+    if (update.s3 !== null) await assertStorageSecretsBound(db, update.s3, "/s3");
     if (update.driver === "s3" && !recentlyPassed(update.s3!)) throw storageRefusals.testRequired();
     const expected = ifMatchOrZero(request);
     const view = await db.transaction().execute(async (tx) => {
@@ -537,6 +559,7 @@ export function registerStorageAdminRoutes(
     const organizationId = await requireConfigure(db, principal);
     const body = parseBody(testRequest, request.body);
     const candidate = body.candidate === null ? null : checkedS3(body.candidate, providers(), "/candidate");
+    if (candidate !== null) await assertStorageSecretsBound(db, candidate, "/candidate"); // F-DG6-181
     const effective = await options.storage.load(db);
     const driver: StorageDriver = candidate !== null ? "s3" : effective.driver;
     const s3 = candidate ?? (driver === "s3" ? effective.s3 : null);

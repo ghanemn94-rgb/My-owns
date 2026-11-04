@@ -6,12 +6,15 @@
 //   - answers, for a response, whether each reference resolves NOW (`resolvable`), by asking the SecretProvider and
 //     dropping the value at once (it is never kept, returned, logged or audited);
 //   - resolves the references just before an adapter call, outside any transaction (§B/A.13 item 1).
+// F-DG6-181 (ADR-0052 amendment of 2026-11-04 §E, §F): both the view and the resolve name the connector's use
+// (`connector`, its organization, its endpoint's host); the registry refuses an unbound reference without asking the
+// provider, so `resolvable` is false for it and a call that needs it fails with connector.secret_unresolvable.
 //
 // The SecretProvider registry is the process's (ADR-0052 §5, BE-E; server.ts creates it). It reaches this module
 // through `setConnectorSecretProviders`, called on one composition line. Until that line runs, `resolvable` is null
 // ("not checked", shown Unknown) and a call that needs a credential fails with connector.secret_unresolvable: the
 // server never guesses that a secret exists.
-import type { SecretProviderRegistry, SecretRef, SecretValue } from "../platform/index.ts";
+import type { SecretProviderRegistry, SecretRef, SecretUse, SecretValue } from "../platform/index.ts";
 import { ConnectorAdapterError } from "./adapters/port.ts";
 
 /** The property names of the credential map and the reference patterns of the contract (SecretRef, 0104). */
@@ -70,11 +73,15 @@ export function checkCredentialRefs(
   return { ok: true, refs: Object.fromEntries(refs) };
 }
 
-/** Whether one reference resolves now; the value is dropped at once. Errors and unknown providers are `false`. */
-async function resolvesNow(registry: SecretProviderRegistry, ref: SecretRef): Promise<boolean> {
+/**
+ * Whether one reference resolves now for this connector's use; the value is dropped at once. Errors and unknown
+ * providers are `false`. F-DG6-181: the registry checks the binding first, so a reference not bound to this
+ * connector's organization and host is `false` without asking the provider (no existence oracle).
+ */
+async function resolvesNow(registry: SecretProviderRegistry, ref: SecretRef, use: SecretUse): Promise<boolean> {
   if (registry.provider(ref.provider) === undefined) return false;
   try {
-    return (await registry.resolve(ref)) !== undefined;
+    return (await registry.resolve(ref, use)) !== undefined;
   } catch {
     return false;
   }
@@ -84,7 +91,7 @@ async function resolvesNow(registry: SecretProviderRegistry, ref: SecretRef): Pr
  * The response view of a stored credential map: `{provider, name, resolvable}` per reference, never a value. Called
  * outside any transaction (a provider may read a file or a vault).
  */
-export async function credentialRefViews(stored: unknown): Promise<Record<string, CredentialRefView>> {
+export async function credentialRefViews(stored: unknown, use: SecretUse): Promise<Record<string, CredentialRefView>> {
   const out: [string, CredentialRefView][] = [];
   const registry = providers;
   for (const [key, value] of Object.entries(storedRefs(stored))) {
@@ -93,7 +100,7 @@ export async function credentialRefViews(stored: unknown): Promise<Record<string
       {
         provider: value.provider,
         name: value.name,
-        resolvable: registry === null ? null : await resolvesNow(registry, value),
+        resolvable: registry === null ? null : await resolvesNow(registry, value, use),
       },
     ]);
   }
@@ -105,14 +112,14 @@ export async function credentialRefViews(stored: unknown): Promise<Record<string
  * reference that does not resolve fails the call with connector.secret_unresolvable naming the secret (its name, never
  * a value).
  */
-export async function resolveCredentials(stored: unknown): Promise<Map<string, SecretValue>> {
+export async function resolveCredentials(stored: unknown, use: SecretUse): Promise<Map<string, SecretValue>> {
   const resolved = new Map<string, SecretValue>();
   const registry = providers;
   for (const [key, ref] of Object.entries(storedRefs(stored))) {
     let value: SecretValue | undefined;
     if (registry !== null && registry.provider(ref.provider) !== undefined) {
       try {
-        value = await registry.resolve(ref);
+        value = await registry.resolve(ref, use);
       } catch {
         value = undefined;
       }

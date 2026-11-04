@@ -58,6 +58,7 @@ import {
 import { controlTotal, DECIMAL_TEXT, testAdapter, testAdapterFixtureRows } from "./adapters/test-adapter.ts";
 import {
   adapterConfigOf,
+  connectorSecretUse,
   connectorRefusals,
   findConnector,
   toIntegrationRun,
@@ -673,7 +674,7 @@ async function fetchStage(
     return { ok: false, code: "connector.source_unavailable", params: {} };
   let fetched: ConnectorFetchResult;
   try {
-    const credentials = await resolveCredentials(config.credential_refs);
+    const credentials = await resolveCredentials(config.credential_refs, connectorSecretUse(connector, config));
     fetched = await withTimeout(
       adapter.fetch(adapterConfigOf(connector, config), { credentials, since }),
       options.adapterTimeoutMs ?? RUN_ADAPTER_TIMEOUT_MS,

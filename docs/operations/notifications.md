@@ -108,6 +108,10 @@ so a value cannot be stored there. Values are resolved at send time through the 
   `SECRETS_DIR`, a directory dedicated to these secrets.
 - Another provider (IT's vault) is used only if IT registers its own adapter. The product ships none.
 
+IT also binds each secret to this setting in `SECRET_BINDINGS_FILE` (`configuration.md`, "The binding"): consumer
+`smtp` with the organization's code and the SMTP host. An unbound secret is refused with `400 validation`
+(`validation.secret_ref_not_bound`).
+
 The names are examples. Provide the values to **both** the API (test) and the worker (sends). A reference that
 cannot be resolved fails the send with `smtp.secret_unavailable`, naming no value. The adapter's own logging is off,
 and no SMTP server text, password or message body is logged or stored. **Rotation:** replace the value under the same

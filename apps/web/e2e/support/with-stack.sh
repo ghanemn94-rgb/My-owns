@@ -80,6 +80,20 @@ fi
 
 node packages/db/dist/cli.js migrate
 node packages/db/dist/cli.js seed-dev
+# F-DG6-181 (T-DG6-BE-Z2; ADR-0052 amendment of 2026-11-04): a SecretRef resolves only when IT binds it. Unless the
+# caller names its own SECRET_BINDINGS_FILE, this stack binds the one synthetic secret a spec names (A17's webhook
+# signing secret) to webhook signing of the seeded organization (code SYN-DEV). Names and scopes only, never a value.
+if [ -z "${SECRET_BINDINGS_FILE:-}" ]; then
+  cat >"$WORK/secret-bindings.json" <<'JSON'
+{
+  "version": 1,
+  "bindings": [
+    { "provider": "env", "name": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET", "consumer": "webhook_signing", "organization": "SYN-DEV" }
+  ]
+}
+JSON
+  export SECRET_BINDINGS_FILE="$WORK/secret-bindings.json"
+fi
 # PORT / APP_BASE_URL / E2E_BASE_URL follow the port of each attempt; after the start they hold the port in use.
 launch_api() {
   export PORT="$1" APP_BASE_URL="http://localhost:$1" E2E_BASE_URL="http://localhost:$1"

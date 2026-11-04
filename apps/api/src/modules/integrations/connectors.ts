@@ -17,6 +17,7 @@
 // version), `lastSuccessAt` (the newest succeeded run; null = never succeeded, shown "Never succeeded"), `lastRun`, and
 // `actionableError` (the newest failed run after the last success, with its why/what-to-do code and the form and
 // import fallbacks; REQ-S17-005). A connector is never labelled "live" or "connected to Mobily" (p6-plan R3).
+import { secretUseHostOfUrl } from "@mth/config";
 import { sql, type Db, type DbOrTx, type Tx } from "@mth/db";
 import { PROBLEM_TYPES, type Permission } from "@mth/shared";
 import { name as nameRule, reason as reasonRule, uuid } from "@mth/shared/schemas";
@@ -37,10 +38,12 @@ import { record as audit } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
   assertSecretRefInNamespace,
+  assertSecretRefsBound,
   HttpProblem,
   iso,
   isoOrNull,
   problems,
+  type SecretUse,
 } from "../platform/index.ts";
 import {
   CONNECTOR_ADAPTER_KINDS,
@@ -318,6 +321,16 @@ export async function checkConfig(
     throw connectorRefusals.adapterSettingsInvalid("/config/endpointUrl");
   if (input.endpointUrl !== null && !ENDPOINT_URL.test(input.endpointUrl))
     throw connectorRefusals.adapterSettingsInvalid("/config/endpointUrl");
+  // F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C, §D): every reference must be bound to `connector`, this (already
+  // authorized) organization's code and the endpoint's host. Runs on create and on every new configuration version, so
+  // changing either the references or the endpoint re-checks (400 validation.secret_ref_not_bound at the reference, or
+  // validation.secret_ref_host_not_bound at /config/endpointUrl; audited as secret_ref.refused).
+  await assertSecretRefsBound(
+    db,
+    Object.entries(credentials.refs).map(([key, ref]) => ({ ref, pointer: `/config/credentialRefs/${key}` })),
+    { consumer: "connector", organizationId, host: secretUseHostOfUrl(input.endpointUrl) },
+    "/config/endpointUrl",
+  );
   if (adapterKind !== "test_adapter" && input.outboundActions.length > 0)
     throw connectorRefusals.adapterSettingsInvalid("/config/outboundActions");
   const fieldMappings = checkFieldMappings(input.fieldMappings);
@@ -690,7 +703,7 @@ export async function toConnector(db: DbOrTx, row: ConnectorRow): Promise<Connec
       versionNo: config.version_no,
       sourceSystemId: config.source_system_id,
       endpointUrl: config.endpoint_url,
-      credentialRefs: await credentialRefViews(config.credential_refs),
+      credentialRefs: await credentialRefViews(config.credential_refs, connectorSecretUse(row, config)),
       fieldMappings: config.field_mappings as FieldMapping[],
       targetTransformationId: config.target_transformation_id,
       cadence: config.cadence,
@@ -1125,6 +1138,17 @@ export async function setConnectorStatus(
 // ------------------------------------------------------------------------------------------------ test run
 
 /** The adapter's view of a configuration version (never a credential value). */
+/**
+ * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §C): the use a connector's credentials resolve for: `connector`, the
+ * connector's own organization and the host of the endpoint the adapter is about to call (null without one).
+ */
+export function connectorSecretUse(
+  row: Pick<ConnectorRow, "organization_id">,
+  config: Pick<ConnectorConfigRow, "endpoint_url">,
+): SecretUse {
+  return { consumer: "connector", organizationId: row.organization_id, host: secretUseHostOfUrl(config.endpoint_url) };
+}
+
 export function adapterConfigOf(row: ConnectorRow, config: ConnectorConfigRow): ConnectorAdapterConfig {
   return {
     connectorId: row.id,
@@ -1162,7 +1186,7 @@ async function fetchForTest(row: ConnectorRow, config: ConnectorConfigRow): Prom
   const adapter = connectorAdapters().get(row.adapter_kind as ConnectorAdapterKind);
   if (!adapter) return { ok: false, code: "connector.source_unavailable", params: {} };
   try {
-    const credentials = await resolveCredentials(config.credential_refs);
+    const credentials = await resolveCredentials(config.credential_refs, connectorSecretUse(row, config));
     const result = await withTimeout(
       adapter.fetch(adapterConfigOf(row, config), { credentials, since: null }),
       ADAPTER_TIMEOUT_MS,

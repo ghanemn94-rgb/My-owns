@@ -40,6 +40,7 @@ import {
   type Session,
   type TestApi,
 } from "../../support/harness.ts";
+import { bindSecrets } from "../../support/secret-bindings.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Body = any;
@@ -138,7 +139,19 @@ async function askCaseForChange(): Promise<Body> {
   return res.body;
 }
 
+let unbindSecrets: () => void = () => undefined;
+
 beforeAll(async () => {
+  // F-DG6-181 (T-DG6-BE-Z2): the assistant"s credential references are bound, as IT would, to `assistant`, the
+  // installation and the endpoint hosts this suite uses.
+  unbindSecrets = bindSecrets(
+    [KEY_NAME, UNSET_NAME].map((name) => ({
+      name,
+      consumer: "assistant" as const,
+      organization: null,
+      hosts: ["127.0.0.1"],
+    })),
+  );
   process.env[KEY_NAME] = KEY_VALUE;
   delete process.env[UNSET_NAME];
   previousLogVariable = process.env[CONNECTION_LOG_VARIABLE];
@@ -158,6 +171,7 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
+  unbindSecrets();
   delete process.env[KEY_NAME];
   if (previousLogVariable === undefined) delete process.env[CONNECTION_LOG_VARIABLE];
   else process.env[CONNECTION_LOG_VARIABLE] = previousLogVariable;
