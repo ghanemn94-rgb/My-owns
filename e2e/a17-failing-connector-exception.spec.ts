@@ -278,6 +278,13 @@ test("A17 / REQ-S12-019: a failing test connector opens one operational exceptio
   );
   await expectAccessible(page, lang, "a17-exception-data-owner");
   await shot(page, lang, "a17-exception-data-owner");
+  // F-DG6-221 (REQ-S15-007): "Last error" is the catalogue text of the exception's code in the page language, never the
+  // server's English lastErrorMessage (the connector's code has the Connectors page's text in both catalogues).
+  const lastErrorCode: string = exceptions[0].lastErrorCode;
+  const lastError = page.locator(`[data-exception='${exceptionId}'] [data-error-text]`);
+  await expect(lastError).toHaveAttribute("data-error-text", lastErrorCode);
+  await expect(lastError).toHaveText(tr(lang, `integrations.actionable.${lastErrorCode.replace(/\./g, "__")}.why`));
+  if (lang === "ar") await expect(lastError).not.toHaveText(String(exceptions[0].lastErrorMessage));
   await expect.soft(row, "freshness label").toHaveAttribute("data-kpi-freshness", "stale");
   await expect.soft(row.locator(`[data-last-value='${LAST_VALUE}']`), "last value").toHaveText(LAST_VALUE);
   // The date is the actual's 2026-01-31 in Asia/Riyadh, Latin digits in both languages (ADR-0009 §2).

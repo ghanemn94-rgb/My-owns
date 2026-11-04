@@ -15,6 +15,7 @@ import { canAnywhere } from "../../../auth/permissions.ts";
 import { useMe } from "../../../auth/session.tsx";
 import { isBlankText } from "../../../components/Form.tsx";
 import { Icon } from "../../../components/Icon.tsx";
+import { fieldErrorMessage } from "../../../lib/problem.ts";
 
 /** The caller's home organization: the organization every P6 administration read and write is scoped to. */
 export function useHomeOrganizationId(): string {
@@ -185,13 +186,18 @@ export function isValidSecretRef(v: SecretRefValue, required: boolean): boolean 
   return SECRET_PROVIDER_PATTERN.test(ref.provider) && SECRET_NAME_PATTERN.test(ref.name);
 }
 
-/** Two inputs for a SecretRef: a provider and a secret name. There is no field for a secret value. */
+/**
+ * Two inputs for a SecretRef: a provider and a secret name. There is no field for a secret value. `invalid` is the
+ * form's own check (the generic text); `errorCode` is a server field error at this reference (F-DG6-222: for example
+ * `validation.secret_ref_not_bound`, a secret IT has not bound to this setting), shown as its translated text.
+ */
 export function SecretRefFields({
   id,
   legend,
   value,
   onChange,
-  invalid,
+  invalid: clientInvalid,
+  errorCode,
   disabled,
 }: {
   id: string;
@@ -199,11 +205,19 @@ export function SecretRefFields({
   value: SecretRefValue;
   onChange: (v: SecretRefValue) => void;
   invalid: boolean;
+  errorCode?: string | undefined;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const invalid = clientInvalid || Boolean(errorCode);
+  const errorId = `${id}-error`;
   return (
-    <fieldset className={`field${invalid ? " field--invalid" : ""}`} data-secret-ref={id} disabled={disabled}>
+    <fieldset
+      className={`field${invalid ? " field--invalid" : ""}`}
+      data-secret-ref={id}
+      data-error-code={errorCode || undefined}
+      disabled={disabled}
+    >
       <legend className="field__label">{legend}</legend>
       <label className="field__label" htmlFor={`${id}-provider`}>
         {t("adminP6.common.provider")}
@@ -214,6 +228,7 @@ export function SecretRefFields({
         autoComplete="off"
         value={value.provider}
         aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
         onChange={(e) => onChange({ ...value, provider: e.target.value })}
       />
       <label className="field__label" htmlFor={`${id}-name`}>
@@ -225,11 +240,12 @@ export function SecretRefFields({
         autoComplete="off"
         value={value.name}
         aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
         onChange={(e) => onChange({ ...value, name: e.target.value })}
       />
       {invalid ? (
-        <p className="field__error">
-          <Icon name="alert" /> {t("adminP6.storage.fieldInvalid")}
+        <p id={errorId} className="field__error">
+          <Icon name="alert" /> {errorCode ? fieldErrorMessage(t, errorCode) : t("adminP6.storage.fieldInvalid")}
         </p>
       ) : null}
     </fieldset>

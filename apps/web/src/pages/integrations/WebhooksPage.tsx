@@ -14,11 +14,12 @@ import { beginSessionGuard, useSessionBoundAction } from "../../auth/sessionBoun
 import { useCursorPager } from "../../components/DataTable.tsx";
 import { Field } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
+import { FormProblemAlert } from "../../components/UnplacedFieldErrors.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { ReasonDialog } from "../../components/ReasonDialog.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
-import { errorMessage, fieldErrorMessage } from "../../lib/problem.ts";
+import { fieldErrorMessage, placeFieldErrors, type UnplacedFieldError } from "../../lib/problem.ts";
 import { Chip } from "../reports/ui.tsx";
 import { OrganizationPicker, useSelectedOrganization } from "../admin/UsersPage.tsx";
 import {
@@ -47,6 +48,26 @@ function EndpointStatus({ status }: { status: "active" | "disabled" }) {
 
 const SECRET_PROVIDER = /^[a-z][a-z0-9_]{0,31}$/;
 const SECRET_NAME = /^[A-Za-z_][A-Za-z0-9_./-]{0,127}$/;
+
+/** The server pointers of the webhook create and rotate bodies -> the form field that shows them (F-DG6-222). */
+const WEBHOOK_FIELDS: Readonly<Record<string, string>> = {
+  "/connectorId": "connector",
+  "/label": "label",
+  "/toleranceSeconds": "tolerance",
+  "/graceHours": "grace",
+  "/reason": "reason",
+};
+
+/**
+ * F-DG6-222: the field a server field error's pointer names on a webhook form, or null (the alert then says it). The
+ * signing secret reference (`/signingSecretRef[/…]`, where the API puts `validation.secret_ref_not_bound` and
+ * `validation.secret_ref_namespace`) is the secret-name field: the value to change, or to ask IT to bind.
+ * `fields` lists the fields the form shows.
+ */
+export function webhookFieldOf(pointer: string, fields: readonly string[]): string | null {
+  const field = /^\/signingSecretRef(?:\/.*)?$/.test(pointer) ? "secretName" : (WEBHOOK_FIELDS[pointer] ?? null);
+  return field !== null && fields.includes(field) ? field : null;
+}
 
 export function WebhooksPage() {
   const { t } = useTranslation();
@@ -190,10 +211,12 @@ function CreateEndpointForm({
   const [tolerance, setTolerance] = useState("300");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<unknown>(null);
+  const [unplaced, setUnplaced] = useState<UnplacedFieldError[]>([]);
   const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setUnplaced([]);
     const errs: Record<string, string> = {};
     if (!connectorId) errs["connector"] = "validation.required";
     if (label.trim() === "") errs["label"] = "validation.required";
@@ -219,6 +242,9 @@ function CreateEndpointForm({
       if (action.stale(err)) return;
       setBusy(false);
       setFormError(err);
+      const placed = placeFieldErrors(err, (p) => webhookFieldOf(p, ["connector", "label", "secretName", "tolerance"]));
+      setErrors(placed.byField as Record<string, string>);
+      setUnplaced(placed.unplaced);
     }
   };
   const err = (k: string) =>
@@ -229,11 +255,7 @@ function CreateEndpointForm({
         {t("integrations.webhooks.new")}
       </h2>
       <form className="stack" onSubmit={(e) => void submit(e)} noValidate aria-busy={busy} data-webhook-form>
-        {formError ? (
-          <p className="banner banner--error" role="alert">
-            <Icon name="alert" /> <span>{errorMessage(t, formError)}</span>
-          </p>
-        ) : null}
+        <FormProblemAlert error={formError} unplaced={unplaced} />
         <Field label={t("integrations.webhooks.connector")} error={err("connector")} required>
           {(c) => (
             <select {...c} value={connectorId} onChange={(e) => setConnectorId(e.target.value)}>
@@ -269,7 +291,7 @@ function CreateEndpointForm({
             />
           )}
         </Field>
-        <Field label={t("integrations.credentials.secretName")} required>
+        <Field label={t("integrations.credentials.secretName")} error={err("secretName")} required>
           {(c) => (
             <input
               {...c}
@@ -468,10 +490,12 @@ function RotateForm({ endpoint: w, onDone }: { endpoint: WebhookEndpoint; onDone
   const [reason, setReason] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<unknown>(null);
+  const [unplaced, setUnplaced] = useState<UnplacedFieldError[]>([]);
   const [busy, setBusy] = useState(false);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setUnplaced([]);
     const errs: Record<string, string> = {};
     if (!SECRET_PROVIDER.test(provider) || !SECRET_NAME.test(name))
       errs["secret"] = "integrations.form.credentialInvalid";
@@ -496,6 +520,9 @@ function RotateForm({ endpoint: w, onDone }: { endpoint: WebhookEndpoint; onDone
       if (action.stale(err)) return;
       setBusy(false);
       setFormError(err);
+      const placed = placeFieldErrors(err, (p) => webhookFieldOf(p, ["secretName", "grace", "reason"]));
+      setErrors(placed.byField as Record<string, string>);
+      setUnplaced(placed.unplaced);
       if (err instanceof ApiError && err.status === 409) await refresh();
     }
   };
@@ -511,11 +538,7 @@ function RotateForm({ endpoint: w, onDone }: { endpoint: WebhookEndpoint; onDone
         {t("integrations.webhooks.rotate")}
       </h2>
       <form className="stack" onSubmit={(e) => void submit(e)} noValidate aria-busy={busy} data-rotate-form>
-        {formError ? (
-          <p className="banner banner--error" role="alert">
-            <Icon name="alert" /> <span>{errorMessage(t, formError)}</span>
-          </p>
-        ) : null}
+        <FormProblemAlert error={formError} unplaced={unplaced} />
         <p className="small muted">{t("integrations.webhooks.rotateIntro")}</p>
         <Field
           label={t("integrations.credentials.provider")}
@@ -534,7 +557,7 @@ function RotateForm({ endpoint: w, onDone }: { endpoint: WebhookEndpoint; onDone
             />
           )}
         </Field>
-        <Field label={t("integrations.credentials.secretName")} required>
+        <Field label={t("integrations.credentials.secretName")} error={err("secretName")} required>
           {(c) => (
             <input
               {...c}

@@ -643,3 +643,50 @@ describe("Administration > AI assistant (ADR-0059 §3, §10)", () => {
     expect(screen.queryByText("Off (not configured)")).toBeNull();
   });
 });
+
+// F-DG6-222 (REQ-S15-011): a credential reference IT has not bound to the assistant (D-209). The API's 400 validation
+// names /credentialRef; the form marks the credential-name field and says why in the reader's language.
+describe.each(LOCALES)("Administration > AI assistant: an unbound credential reference (%s)", (locale) => {
+  it("marks the credential name with the localized reason, and nothing else", async () => {
+    const stored = setting({
+      configured: true,
+      providerKind: "test_adapter",
+      credentialRef: { provider: "env", name: "MTH_SECRET_SYN_AI" },
+      authorizationReference: "IT-TICKET-0001 (synthetic)",
+      reason: "Synthetic",
+      version: 1,
+    });
+    mockApi(
+      meRoute(ADM_TECH),
+      settingRoute(stored),
+      route("PUT", /\/api\/v1\/admin\/assistant$/, () => ({
+        status: 400,
+        body: {
+          type: "urn:mth:problem:validation",
+          title: "Validation failed",
+          status: 400,
+          code: "validation",
+          requestId: "r",
+          errors: [
+            { pointer: "/credentialRef", code: "validation.secret_ref_not_bound", message: "English diagnostics only" },
+          ],
+        },
+      })),
+    );
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    renderApp("/admin/assistant", { i18n });
+    fireEvent.click(await screen.findByRole("button", { name: t("assistant.admin.edit") }));
+    fireEvent.change(screen.getByLabelText(new RegExp(t("assistant.admin.field.reason"))), {
+      target: { value: "Synthetic change" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: t("assistant.admin.save") }));
+    const text = t("problems.validation__secret_ref_not_bound");
+    expect(await screen.findByText(text)).toBeTruthy();
+    const name = screen.getByLabelText(new RegExp(`^${t("assistant.admin.field.credentialName")}`));
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(document.querySelectorAll(".field--invalid")).toHaveLength(1);
+    expect(/[؀-ۿ]/.test(text)).toBe(locale === "ar");
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+  });
+});

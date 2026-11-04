@@ -22,6 +22,7 @@ import {
 } from "../../../api/p6.ts";
 import { useLocale } from "../../../app/locale.ts";
 import { Icon } from "../../../components/Icon.tsx";
+import { fieldErrorMessage, placeFieldErrors } from "../../../lib/problem.ts";
 import { PageHeader, usePageTitle } from "../../../components/Page.tsx";
 import { RegisterTable, type RegisterColumn } from "../../../components/RegisterTable.tsx";
 import { Section } from "../../../components/Section.tsx";
@@ -201,6 +202,20 @@ const toSmtpForm = (s: SmtpSettings | null): SmtpForm => ({
 
 const TEST_TABLE = { sent: ["good", "check"], failed: ["bad", "cross"] } as const;
 
+/** The SMTP fields a server field error may name (`/smtp/<field>`; a reference's own `/provider` or `/name` is it). */
+const SMTP_FIELDS = ["host", "port", "fromAddress", "usernameRef", "passwordRef"] as const;
+type SmtpErrorField = (typeof SMTP_FIELDS)[number];
+
+/**
+ * F-DG6-222: the SMTP field a server field error's pointer names, or null. The API puts
+ * `validation.secret_ref_not_bound` and `validation.secret_ref_namespace` at `/smtp/usernameRef` or `/smtp/passwordRef`,
+ * and `validation.secret_ref_host_not_bound` at `/smtp/host`.
+ */
+export function smtpFieldOf(pointer: string): SmtpErrorField | null {
+  const field = /^\/smtp\/([A-Za-z]+)(?:\/.*)?$/.exec(pointer)?.[1];
+  return field !== undefined && (SMTP_FIELDS as readonly string[]).includes(field) ? (field as SmtpErrorField) : null;
+}
+
 function EmailForm({
   c,
   runner,
@@ -223,6 +238,8 @@ function EmailForm({
   const q = `?organizationId=${encodeURIComponent(organizationId)}`;
   const set = <K extends keyof SmtpForm>(k: K, v: SmtpForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const smtpFilled = Boolean(form.host.trim() || form.fromAddress.trim());
+  // The last refused save's field errors, placed on the SMTP fields (F-DG6-222).
+  const server = placeFieldErrors(runner.error, smtpFieldOf).byField;
   const submit = async () => {
     setSaved(false);
     const user = secretRefOrNull(form.usernameRef);
@@ -261,28 +278,33 @@ function EmailForm({
       setSaved(true);
     }
   };
-  const field = (k: "host" | "port" | "fromAddress", label: string, inputMode?: "numeric" | "email") => (
-    <div className={`field${invalid[k] ? " field--invalid" : ""}`}>
-      <label className="field__label" htmlFor={`smtp-${k}`}>
-        {label}
-      </label>
-      <input
-        id={`smtp-${k}`}
-        dir="ltr"
-        autoComplete="off"
-        {...(inputMode ? { inputMode } : {})}
-        value={form[k]}
-        aria-invalid={invalid[k] || undefined}
-        aria-describedby={invalid[k] ? `smtp-${k}-error` : undefined}
-        onChange={(e) => set(k, e.target.value)}
-      />
-      {invalid[k] ? (
-        <p id={`smtp-${k}-error`} className="field__error">
-          <Icon name="alert" /> {t("adminP6.channels.fieldInvalid")}
-        </p>
-      ) : null}
-    </div>
-  );
+  const field = (k: "host" | "port" | "fromAddress", label: string, inputMode?: "numeric" | "email") => {
+    const serverCode = server[k];
+    const bad = Boolean(invalid[k] || serverCode);
+    return (
+      <div className={`field${bad ? " field--invalid" : ""}`} data-error-code={serverCode || undefined}>
+        <label className="field__label" htmlFor={`smtp-${k}`}>
+          {label}
+        </label>
+        <input
+          id={`smtp-${k}`}
+          dir="ltr"
+          autoComplete="off"
+          {...(inputMode ? { inputMode } : {})}
+          value={form[k]}
+          aria-invalid={bad || undefined}
+          aria-describedby={bad ? `smtp-${k}-error` : undefined}
+          onChange={(e) => set(k, e.target.value)}
+        />
+        {bad ? (
+          <p id={`smtp-${k}-error`} className="field__error">
+            <Icon name="alert" />{" "}
+            {serverCode && !invalid[k] ? fieldErrorMessage(t, serverCode) : t("adminP6.channels.fieldInvalid")}
+          </p>
+        ) : null}
+      </div>
+    );
+  };
   return (
     <form
       className="form"
@@ -329,6 +351,7 @@ function EmailForm({
           value={form.usernameRef}
           onChange={(v) => set("usernameRef", v)}
           invalid={Boolean(invalid.usernameRef || invalid.credentials)}
+          errorCode={invalid.usernameRef || invalid.credentials ? undefined : server.usernameRef}
         />
         <SecretRefFields
           id="smtp-password"
@@ -336,6 +359,7 @@ function EmailForm({
           value={form.passwordRef}
           onChange={(v) => set("passwordRef", v)}
           invalid={Boolean(invalid.passwordRef || invalid.credentials)}
+          errorCode={invalid.passwordRef || invalid.credentials ? undefined : server.passwordRef}
         />
       </div>
       <p className="small muted">{t("adminP6.channels.noCredentials")}</p>
