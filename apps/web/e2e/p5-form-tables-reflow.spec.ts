@@ -184,6 +184,8 @@ test("Form builder: the field table scrolls in its own region at 390 px and with
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 12.9 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(180_000);
   const lang = langOf(info);
   const admin = await apiSession(playwright, "dev.admin");
@@ -263,6 +265,8 @@ test("Form framework on T14: the Attachments table and the export preview scroll
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 17.5 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(180_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

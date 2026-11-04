@@ -83,7 +83,10 @@ test("A22 / REQ-S12-022: the jobs screen shows last success and next run for eve
   baseURL,
 }, info) => {
   const crossBoundary = process.env["QA_A22_CROSS_BOUNDARY"] === "1";
-  test.setTimeout(crossBoundary ? 1_200_000 : 150_000);
+  // F-DG6-144: the local budget raised from 150 s to 300 s. In the DG6 QA round-2 root runs it took 20.7-72 s, and once
+  // timed out at 150 s inside the axe scan at a load of ~24 (docs/delivery/test-evidence/DG6/qa/round-2/05-e2e-root-unset.log),
+  // so at least that long; the budget is 2x that (T-DG6-FE-Z1-evidence/budget-table.txt).
+  test.setTimeout(crossBoundary ? 1_200_000 : 300_000);
   const lang = langOf(info.project.name);
   const admin = await apiSession(playwright, baseURL!, "dev.admin");
   const env = await send(admin, "GET", "/api/v1/environment");

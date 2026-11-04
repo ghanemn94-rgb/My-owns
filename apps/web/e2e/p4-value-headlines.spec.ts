@@ -22,7 +22,9 @@ test.describe.configure({ mode: "serial" });
 // (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test timed out at the default
 // 30 s (31.8 s reported), so at least that long.
 // The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
-test.setTimeout(75_000);
+// T-DG6-FE-Z1B: raised from 75 s to 150 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :127 of z1b-budget-table-pass5.txt took 72.0 s; 2x rounded up to 15 s.
+test.setTimeout(150_000);
 
 let tid = "";
 let lead: ApiSession;

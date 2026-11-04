@@ -47,6 +47,8 @@ test("Reports: live preview, a generated draft snapshot, a stale issue refused, 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 20.5 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -109,6 +111,8 @@ test("Exports: an asynchronous job with progress, listed and cancelled; a snapsh
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 14.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -161,6 +165,8 @@ test("Owner updates: an empty submit is refused and stays a draft; written and s
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 13.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -230,6 +236,8 @@ test("Presentation: a meeting's pack is live; a snapshot of another meeting is r
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 13.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -274,6 +282,8 @@ test("Evidence register: a note shows no checksum and Not stated; the register i
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 7.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(60_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);

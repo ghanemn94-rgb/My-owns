@@ -153,6 +153,8 @@ test("REQ-S12-012: the slip's forecast impact on My Work, the Dependencies page 
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 18.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(300_000);
   const lang = langOf(info);
   const probe = await apiSession(playwright, "dev.lead");

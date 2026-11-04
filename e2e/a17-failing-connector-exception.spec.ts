@@ -40,10 +40,14 @@ const LAST_DATE = "2026-01-31";
 /** A later monthly period that is open while the connector delivers nothing (the KPI's last value stays 2026-01). */
 const LATER_PERIOD = "2044-06";
 
+// Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+// the slowest test it covers took 23.8 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
 test.describe.configure({ timeout: 180_000 });
 
 let worker: ProductionWorker | null = null;
 test.beforeAll(async () => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // the hook is timed inside the test it precedes; the slowest test after it in this file took 23.8 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   worker = await startProductionWorker();
 });

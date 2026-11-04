@@ -19,6 +19,13 @@ import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 root e2e runs at a
+// 1-minute load of 14-25 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/05*.log, 07*.log): its slowest test took 6.6 s.
+// T-DG6-FE-Z1-evidence/budget-table.txt has the table. The budget is at least 2x the worst, rounded up to 15 s,
+// and never below 60 s.
+test.setTimeout(60_000);
+
 const EVIDENCE_DIR = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa-a20");
 const TOKENS_JSON = process.env["QA_TOKENS_JSON"] ?? path.join("packages", "design-tokens", "src", "tokens.json");
 const DEV_ISSUER = "urn:mth:dev-local";

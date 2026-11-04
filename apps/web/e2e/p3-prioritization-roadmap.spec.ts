@@ -34,6 +34,16 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 75 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): lead: ranked table took 32.8 s, a timeout at the default 30 s (06-e2e-product-unset-en.log), so at least that long.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 75 s to 120 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :250 of z1b-budget-table-pass1.txt took 60.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(120_000);
+
 test.afterAll(async ({}, info) => {
   const lang = langOf(info);
   mkdirSync(join(SHOTS, lang), { recursive: true });
@@ -132,6 +142,8 @@ async function completeG1(lead: ApiSession, office: ApiSession) {
 test("setup: a synthetic transformation with G1 approved (demo), three submitted initiatives, scores, a milestone and dependencies", async ({
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 8.6 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

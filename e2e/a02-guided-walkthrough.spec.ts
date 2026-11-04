@@ -26,6 +26,13 @@ import {
   trackRequests,
 } from "../apps/web/e2e/support/ui.ts";
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 75 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 root e2e runs at a
+// 1-minute load of 14-25 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/05*.log, 07*.log): its test took 30.8 s, a timeout at the default 30 s (07-e2e-demo-unset.log), so at least that long.
+// T-DG6-FE-Z1-evidence/budget-table.txt has the table. The budget is at least 2x the worst, rounded up to 15 s,
+// and never below 60 s.
+test.setTimeout(75_000);
+
 const EVIDENCE = process.env["QA_EVIDENCE_DIR"] ?? path.join("test-results", "qa-a02");
 
 /** M0349, verbatim, in order. */

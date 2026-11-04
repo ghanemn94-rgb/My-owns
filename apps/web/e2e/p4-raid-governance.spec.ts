@@ -33,6 +33,16 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): the slowest default-budget test took 23.6 s.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 60 s to 105 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :454 of z1b-budget-table-pass5.txt took 46.4 s; 2x rounded up to 15 s.
+test.setTimeout(105_000);
+
 let tid = "";
 let T = "";
 let orgId = "";
@@ -292,7 +302,12 @@ test("4. Forums: five layers verbatim; a series changed to fortnightly only afte
 // spec) chromium-ar took 21.6-27.8 s and was cut at the default 30 s budget at a load of about 7-8.5 (30.1 s, so a
 // lower bound), with no failed assertion and no step above 1.8 s: the time is the length of the chain, not a slow
 // response. 90 s is 3x that cut figure and over 3x every completed loaded run. Each phase records its elapsed time as a "timing" annotation, so a slow run names the phase.
-const MEETING_WORKSPACE_BUDGET_MS = 90_000;
+// F-DG6-144: raised from 90 s to 105 s, at least 2x its worst loaded time (45.9 s in the DG6 QA round-2 full
+// product runs, docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log; T-DG6-FE-Z1-evidence/budget-table.txt), rounded up to 15 s.
+// T-DG6-FE-Z1B: raised from 105 s to 225 s. In the z1b loaded full runs (load 19-26, above the review's 11-21) test 5
+// timed out at 105 s (1.8 min reported, 108 s, a lower bound) in chromium-ar with the locale unset
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-snapshot-unset-chromium-ar.log); 2x rounded up to 15 s.
+const MEETING_WORKSPACE_BUDGET_MS = 225_000;
 
 function phaseTimer() {
   let last = Date.now();
@@ -306,6 +321,8 @@ function phaseTimer() {
 test("5. Meeting workspace: an incomplete executive ask is refused, then published to T16 and decided in session", async ({
   browser,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 45.9 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(MEETING_WORKSPACE_BUDGET_MS);
   const mark = phaseTimer();
   const lang = langOf(info);

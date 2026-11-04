@@ -36,6 +36,18 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 90 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): 8. Auditor read-only took 43.3 s, timeouts at the default 30 s in 3 of 4 full runs, 43.3 s with a 120 s budget (06c).
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 90 s to 105 s; in T-DG6-FE-Z1's run1 loaded full runs (docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/run1-*-chromium-*.log, load 15-23)
+// 8. Auditor read-only took 40.0-46.2 s (46.2 s, C.UTF-8, chromium-en), so 2x is 92.4 s.
+// T-DG6-FE-Z1B: raised from 105 s to 210 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :502 of z1b-budget-table-pass1.txt took 102.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(210_000);
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 let tid = "";
 let T = "";
@@ -319,7 +331,11 @@ test("5. The Business Owner submits a measurement with evidence: pending, labell
 test("6. One Finance queue item; Finance decides the six items and approves; an amendment corrects without editing", async ({
   browser,
 }, info) => {
-  test.setTimeout(180_000);
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 66.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
+  // T-DG6-FE-Z1B: raised from 180 s to 300 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+  // docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :329 of z1b-budget-table-pass1.txt took 144.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+  test.setTimeout(300_000);
   const lang = langOf(info);
   // T-DG4-FE-R1: the worker gives the Finance task to the benefit's validator, else to the person mapped to the FIN
   // party (worker handlers/benefits.ts); map FIN to the synthetic Finance user so the task has a recipient.

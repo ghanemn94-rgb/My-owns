@@ -30,6 +30,8 @@ import {
 } from "./support/ui.ts";
 
 test.describe.configure({ mode: "serial" });
+// Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+// the slowest test it covers took 10.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
 test.setTimeout(60_000);
 
 const PHONE = { width: 360, height: 800 };

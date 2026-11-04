@@ -93,6 +93,8 @@ test("Studio: the methodology administrator drafts T06 scoring defaults, preview
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 39.4 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(150_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -207,6 +209,8 @@ test("Studio: scoring defaults, source coverage, review policies and migrations 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 20.3 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);

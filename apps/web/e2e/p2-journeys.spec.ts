@@ -31,6 +31,16 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): the slowest default-budget test took 28.0 s.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 60 s to 90 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :892 of z1b-budget-table-pass1.txt took 43.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(90_000);
+
 test.afterAll(async ({}, info) => {
   const lang = langOf(info);
   mkdirSync(join(SHOTS, lang), { recursive: true });
@@ -702,7 +712,11 @@ test("Define → G2: activate a KPI, pass the good outcome test, add a guardrail
 }, info) => {
   // F-DG5-121 (D-170): measured 25.4-27.9 s unloaded and 37.2 s under review load (load 9-12), against the 30 s
   // default; 90 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing asserted changes.
-  test.setTimeout(90_000);
+  // F-DG6-144: raised to 150 s, at least 2x its worst loaded time (72.0 s in the DG6 QA round-2 full product runs,
+  // docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log; T-DG6-FE-Z1-evidence/budget-table.txt), rounded up to 15 s.
+  // T-DG6-FE-Z1B: raised from 150 s to 285 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+  // docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :706 of z1b-budget-table-pass1.txt took 138.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+  test.setTimeout(285_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
   const lead = await apiSession(playwright, "dev.lead");
@@ -1005,7 +1019,11 @@ test("read-only auditor (AUD): every P2 screen without write controls; Unknown a
 }, info) => {
   // F-DG5-121 (D-170): measured 16.9-18.1 s unloaded (under half the 30 s default as headroom) and 26.7 s under review
   // load; 60 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing asserted changes.
-  test.setTimeout(60_000);
+  // F-DG6-144: raised to 105 s, at least 2x its worst loaded time (48.8 s in the DG6 QA round-2 full product runs,
+  // docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log; T-DG6-FE-Z1-evidence/budget-table.txt), rounded up to 15 s.
+  // T-DG6-FE-Z1B: raised from 105 s to 150 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+  // docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :1013 of z1b-budget-table-pass1.txt took 72.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+  test.setTimeout(150_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.auditor");

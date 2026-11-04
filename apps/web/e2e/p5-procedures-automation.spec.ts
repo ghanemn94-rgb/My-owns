@@ -102,6 +102,8 @@ test("Jobs operations: last success and next run for each scheduled job, run now
   page,
   browser,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 8.9 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -138,6 +140,8 @@ test("Automation: the readable builder, the dry-run refusal, a dry run with no s
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 20.1 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(150_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -251,6 +255,8 @@ test("My procedures: launch baseline validation; the instance shows its current 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 12.3 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -314,6 +320,8 @@ test("Procedure builder: the published definitions; in a draft, validation lists
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 13.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -420,6 +428,8 @@ test("Notification preferences: equal quiet-hour times are refused; quiet hours 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 5.7 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -463,6 +473,8 @@ test("Approval routes, gate conditions, the cut-off pack and the failure queue s
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 11.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(90_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);

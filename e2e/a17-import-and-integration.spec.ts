@@ -92,6 +92,8 @@ interface World {
 let world: World;
 const opened: Api[] = [];
 
+// Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+// the slowest test it covers took 20.5 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
 test.describe.configure({ timeout: 120_000 });
 
 /** Open monthly periods with fixed labels (created once per stack; the second project reuses them). */
@@ -118,6 +120,8 @@ const WEBHOOK_PERIODS = ["2042-11", "2042-12", "2043-01", "2043-02", "2043-03"];
 const FORM_PERIOD = "2043-04";
 
 test.beforeAll(async ({ playwright, baseURL }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // the hook is timed inside the test it precedes; the slowest test after it in this file took 20.5 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const base = baseURL!;

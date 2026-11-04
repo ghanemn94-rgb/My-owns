@@ -50,6 +50,18 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 75 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): 2a. prioritization took 32.7 s, a timeout at the default 30 s (06-e2e-product-unset-en.log and 06b), so at least that long; 29.2 s with a 120 s budget (06c).
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 75 s to 90 s; in T-DG6-FE-Z1's run1 loaded full runs (docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/run1-*-chromium-*.log, load 15-23)
+// 4b. business case took 42.0 s (unset, chromium-en), so 2x is 84 s.
+// T-DG6-FE-Z1B: raised from 90 s to 150 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :368 of z1b-budget-table-pass1.txt took 72.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(150_000);
+
 test.afterAll(async ({}, info) => {
   const lang = langOf(info);
   mkdirSync(join(SHOTS, lang), { recursive: true });
@@ -1220,7 +1232,13 @@ test("6c. G4: a decision on a superseded submission is a 409; the demo Sponsor a
 test("7. the read-only auditor sees every P3 screen with the journey's data and no enabled write control; sends nothing", async ({
   page,
 }, info) => {
-  test.setTimeout(120_000);
+  // F-DG6-144: raised to 135 s, at least 2x its worst loaded time (66.0 s in the DG6 QA round-2 full product runs,
+  // docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log; T-DG6-FE-Z1-evidence/budget-table.txt), rounded up to 15 s.
+  // T-DG6-FE-Z1B: raised from 135 s to 180 s; in T-DG6-FE-Z1's run1 loaded full runs it took 1.3-1.4 min (84 s, unset
+  // chromium-ar; docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/run1-*-chromium-*.log), so 2x is 168 s.
+  // T-DG6-FE-Z1B: raised from 180 s to 300 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+  // docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :1230 of z1b-budget-table-pass1.txt took 144.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+  test.setTimeout(300_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
   await signIn(page, lang, "dev.auditor");
