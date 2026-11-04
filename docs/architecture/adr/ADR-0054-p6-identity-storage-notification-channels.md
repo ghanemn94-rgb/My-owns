@@ -179,3 +179,12 @@ Every credential reference in this ADR (`s3_access_key_ref`, `s3_secret_key_ref`
 - **Database (this task):** probe groups ST01–ST09, NC01–NC09, ND01–ND10, PM01–PM04: PASS in the 81/81 run.
 - **Implementers:** BE-G (three-case other-realm test), DO-B (realms, e2e, image pin or BLOCKED, SAML document), BE-H (contract suite × 2 adapters, fake S3, driver selection, admin routes), BE-I (fan-out exactly once, A21 test with no channel, fake SMTP contract, admin routes), DO-C (profiles or fakes, storage and notification documents, residual rows), FE-B (pages). QA-D/QA-E: A12 (no public URL), A18, A21.
 - **Dependencies:** none added. Evidence for the three candidates is in `T-DG6-ARCH-02-evidence/{keycloak-image-evidence,npm-dependency-evidence,support-window-evidence}.txt`.
+
+## Amendment (2026-11-04, T-DG6-ARCH-14; F-DG6-181): SecretRefs are bound to their setting
+
+ADR-0052 §5 (amendment of 2026-11-04) binds every `SecretRef` to one consumer kind, one scope (an organization, or the installation) and, for a secret that is sent anywhere, the hosts it may be sent to. IT declares the binding in `SECRET_BINDINGS_FILE`, outside the database and without values. In this ADR the rule applies to the SMTP channel's `usernameRef`/`passwordRef` (consumer `smtp`, the channel's organization, host `smtp.host`:`smtp.port`; checked on PUT, on the API test send and on every worker delivery) and the S3 storage references (consumer `storage`, the installation, host of the S3 `endpoint`; checked on PUT, on the storage test and at each use).
+
+- **Write time:** a reference that is not bound gives `400 validation`, field error `validation.secret_ref_not_bound`. A bound reference sent to an unlisted host gives `validation.secret_ref_host_not_bound` at the host field. Each refusal writes the audit event `secret_ref.refused`.
+- **Resolve time:** the check runs again and fails closed. An unbound reference resolves as unset, and the existing unresolvable outcome of this ADR applies.
+
+Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
