@@ -35176,7 +35176,10 @@ components:
         kind: { type: string, enum: [base, upside, downside] }
         title: { type: string }
         assumptions: { type: [string, "null"] }
-        values: { type: array, items: { $ref: "#/components/schemas/BenefitScenarioValue" } }
+        values:
+          type: array
+          description: "The scenario's labelled values. A value of a sensitive benefit the caller is not admitted to (the caller gets 404 on the benefit) is omitted: no placeholder and no count (ADR-0051 §2, T-DG6-BE-Z3)."
+          items: { $ref: "#/components/schemas/BenefitScenarioValue" }
         status: { type: string, enum: [active, archived] }
         archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         archivedBy: { $ref: "#/components/schemas/NullableUuid" }

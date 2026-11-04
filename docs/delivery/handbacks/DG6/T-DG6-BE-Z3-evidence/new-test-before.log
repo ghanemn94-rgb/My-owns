@@ -1,0 +1,140 @@
+port-policy: PostgreSQL listening on port 29051 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw1j3b8k_e4c18733 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts (7 tests | 5 failed) 868ms
+   ✓ before marking: every reader sees both value rows (DG4-DG5 unchanged) > TL and AUD read both values in the scenario list and item 32ms
+   ✓ after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > control: TL and AUD get 404 on the benefit itself 19ms
+   × after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > TL and AUD read the scenario (list and item, 200) WITHOUT the sensitive benefit's value row 20ms
+     → expected [ …(2) ] to deeply equal [ Array(1) ]
+   × after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > TL's scenario update returns the scenario without the row (the write presenter follows the same rule) 19ms
+     → expected [ …(2) ] to deeply equal [ Array(1) ]
+   × after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > TL's POST of a value naming the sensitive benefit answers like an unknown benefit (422) and writes nothing 28ms
+     → expected [ 201, undefined ] to deeply equal [ 422, 'validation.reference' ]
+   × after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > positive: the TO and the owner (a named party) still read both value rows with their amounts 15ms
+     → expected [ …(3) ] to deeply equal [ …(2) ]
+   × after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > positive: TL with an explicit grant on the benefit reads the row again (next request); AUD still does not 35ms
+     → expected [ …(3) ] to deeply equal [ …(2) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts > after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > TL and AUD read the scenario (list and item, 200) WITHOUT the sensitive benefit's value row
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "01a1a47f-a144-76ce-8b0d-8154585e9a49",[39m
+[2m    "01a1a47f-a155-728a-b4f1-9b595cc63682",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts:136:30
+    134|         expect(sc).toBeDefined();
+    135|         // Omitted, not a placeholder: only the plain benefit's row, w…
+    136|         expect(valueIds(sc)).toEqual([plainValueId]);
+       |                              ^
+    137|         expect(sc.values[0]).toMatchObject({ benefitId: plainId, amoun…
+    138|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts > after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > TL's scenario update returns the scenario without the row (the write presenter follows the same rule)
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "01a1a47f-a144-76ce-8b0d-8154585e9a49",[39m
+[2m    "01a1a47f-a155-728a-b4f1-9b595cc63682",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts:154:27
+    152|     );
+    153|     scenarioVersion = res.version as number;
+    154|     expect(valueIds(res)).toEqual([plainValueId]);
+       |                           ^
+    155|     expect(JSON.stringify(res)).not.toContain(SENSITIVE_AMOUNT);
+    156|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts > after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > TL's POST of a value naming the sensitive benefit answers like an unknown benefit (422) and writes nothing
+AssertionError: expected [ 201, undefined ] to deeply equal [ 422, 'validation.reference' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   422,[39m
+[32m-   "validation.reference",[39m
+[31m+   201,[39m
+[31m+   undefined,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts:166:47
+    164|     const hidden = await add(sensitiveId);
+    165|     const unknown = await add("01890000-0000-7000-8000-000000000000");
+    166|     expect([hidden.status, hidden.body.code]).toEqual([422, "validatio…
+       |                                               ^
+    167|     expect([hidden.status, hidden.body.code, hidden.body.detail, hidde…
+    168|       unknown.status,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts > after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > positive: the TO and the owner (a named party) still read both value rows with their amounts
+AssertionError: expected [ …(3) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a1a47f-a144-76ce-8b0d-8154585e9a49",[22m
+[2m    "01a1a47f-a155-728a-b4f1-9b595cc63682",[22m
+[31m+   "01a1a47f-a1d1-72dc-a816-e822c52911d8",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts:185:30
+    183|       const { listed, item } = await views(s);
+    184|       for (const sc of [listed, item]) {
+    185|         expect(valueIds(sc)).toEqual([sensitiveValueId, plainValueId].…
+       |                              ^
+    186|         expect((sc.values as Body[]).find((v) => v.id === sensitiveVal…
+    187|           benefitId: sensitiveId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts > after marking one benefit sensitive (T-DG6-BE-Z3, F-DG6-180 class) > positive: TL with an explicit grant on the benefit reads the row again (next request); AUD still does not
+AssertionError: expected [ …(3) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a1a47f-a144-76ce-8b0d-8154585e9a49",[22m
+[2m    "01a1a47f-a155-728a-b4f1-9b595cc63682",[22m
+[31m+   "01a1a47f-a1d1-72dc-a816-e822c52911d8",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts:209:59
+    207|     );
+    208|     const { listed, item } = await views(tl);
+    209|     for (const sc of [listed, item]) expect(valueIds(sc)).toEqual([sen…
+       |                                                           ^
+    210|     const audView = await views(aud);
+    211|     expect(valueIds(audView.item)).toEqual([plainValueId]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  02:59:38
+   Duration  12.24s (transform 4.30s, setup 0ms, collect 7.83s, tests 868ms, environment 0ms, prepare 80ms)
+
