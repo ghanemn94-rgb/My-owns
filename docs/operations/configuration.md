@@ -205,4 +205,4 @@ documented for P6.
 
 P1 uses the private filesystem adapter (`EVIDENCE_STORAGE_DRIVER=filesystem`, `EVIDENCE_STORAGE_PATH`, default
 `/var/lib/mth/evidence`). In Compose this is the `evidence` named volume, owned by uid 10001, mode 0700, and never
-web-served. The optional S3-compatible adapter is a later-stage item (P6).
+web-served. P6 adds the optional S3-compatible adapter, off unless IT configures it: see `storage.md` (its secrets are bound as `storage` in `SECRET_BINDINGS_FILE`, "The binding" above).
