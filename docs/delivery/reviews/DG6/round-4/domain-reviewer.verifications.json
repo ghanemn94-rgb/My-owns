@@ -1,0 +1,41 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-220",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran my round-3 probe dom-r3-sensitive-registers.test.ts on candidate 4b84bf20 (clone @654e39d89, PostgreSQL 16.15), together with BE-Z4's product test sensitive-reach-registers.test.ts: 2 files, 7/7, exit 0. TL and AUD get 404 on the benefit. The corrective case, transition decision and area link are absent from their lists, and the case and decision items answer 404. None of the responses contains the benefit id or code, the case title or the recovery plan. The TO and the owner (controls) see everything. Mutant: BE-Z4's eight source files reverted (git apply -R of 95f981917..654e39d89 -- apps/api/src) gives 5 failed and 2 passed, exit 1. The failures are the 4 negative and after-grant tests and my probe's negative test, and only the positive controls pass. The source was restored afterwards (git diff empty). I also read the diff: the reach parameters correctiveCaseId, transitionDecisionId, performanceAreaLinkId and benefitEnablerId; withoutRestricted on the three lists; 422 validation.reference on creates naming the hidden benefit; the inbox, work-item and My Work redaction through restrictedLinkChildren, whose route patterns match the link paths the worker and API really write (raid.ts:420, corrective-cases.ts:223, sustainment.ts:471, transition-decisions.ts:753). The finding's scope is repaired. A separate path that copies the case's (the benefit's) title into an executive ask is raised as the new finding F-DG6-280.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-4/f220-probe-and-product-test.log",
+        "docs/delivery/test-evidence/DG6/domain/round-4/f220-mutant-revert-bez4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-4/probes/dom-r3-sensitive-registers.test.ts.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-221",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran e2e/a17-failing-connector-exception.spec.ts on the production-initialized stack (with-stack.sh), with its new F-DG6-221 assertion: passed in chromium-en and chromium-ar. In the Arabic screenshot of the data owner's exception page, 'آخر خطأ' (Last error) reads 'لم يستجب نظام المصدر.', the catalogue text of connector.source_unavailable, not the server's English sentence. The code itself is still shown LTR. The linked KPI is Stale with 250.75 and its date 2026/01/31, never 0 or green. Mutant: the round-3 OperationsPages.tsx (together with ConnectorFormPage.tsx) makes 5 'last error in the reader's language' unit tests fail in en and ar (9 failed in total, exit 1). The source was restored afterwards.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-4/e2e-findings-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/fe-z2-mutant-revert.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-222",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran my round-3 reproduction (the probe, extended with R4 soft assertions, as dom-r4-screens.spec.ts) on with-stack.sh. The PUT answers 400 validation with validation.secret_ref_not_bound at /config/credentialRefs/api. Exactly 1 field is marked: the credential row's secret name, with the localized reason. en: 'IT has not bound this secret to this setting...'; ar: 'لم يربط فريق تقنية المعلومات هذا السر بهذا الإعداد...'. The server's English message is not shown on the page. The Arabic run passed in run 1. The English run failed in run 1 at the connector form's toBeVisible, with 'ENOSPC: no space left on device' on the shared scratch volume (an environment failure, disclosed); its rerun alone passed, exit 0. FE-Z2's p6-secret-ref-unbound.spec.ts passed 4/4 (connector and storage, en and ar). Mutant: the round-3 ConnectorFormPage.tsx makes the 4 'connector form: an unbound secret reference' unit tests fail (en and ar), exit 1. The source was restored afterwards.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-4/e2e-findings-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-4/e2e-probe-screens-en-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/en/dom-r4-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/dom-r4-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/p6-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/fe-z2-mutant-revert.log"
+      ]
+    }
+  ]
+}
