@@ -525,7 +525,7 @@ export async function createExecutiveAsk(tx: Tx, ctx: T16Context, f: ExecutiveAs
     ]);
   if (blockerType !== null && blockerId !== null) {
     await lockBlockerAsk(tx, ctx.target.transformationId, blockerType, blockerId);
-    if (!(await blockerExists(tx, ctx.target.transformationId, blockerType, blockerId)))
+    if (!(await blockerExists(tx, ctx.principal, ctx.target.transformationId, blockerType, blockerId)))
       throw executiveDecisionRefusals.blockerNotFound();
     const open = await blockerAskOpen(tx, ctx.target.transformationId, blockerType, blockerId);
     if (open !== null) throw executiveDecisionRefusals.blockerAskOpen(open.code);

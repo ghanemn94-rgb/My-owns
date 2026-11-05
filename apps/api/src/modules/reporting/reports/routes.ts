@@ -60,6 +60,7 @@ import {
   toReportSnapshot,
   toReportSnapshotSummary,
 } from "./snapshots.ts";
+import { documentForReader, snapshotForReader, visibleRefs } from "./restricted.ts";
 
 const JSON_BODY = ["application/json"] as const;
 const DEFINITIONS = "/api/v1/report-definitions";
@@ -137,7 +138,8 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       reportingPeriodId: query.reportingPeriodId,
       parameters: parseParametersQuery(query.parameters),
     });
-    return { snapshotId: null, document: a.document };
+    // ADR-0051 §2 (T-DG6-BE-Z5, F-DG6-300): the rows of records this reader is not admitted to are omitted.
+    return { snapshotId: null, document: await documentForReader(db, principalOf(request), a.document) };
   });
 
   app.post(`${REPORTS}/generate`, { config: generate }, async (request, reply) => {
@@ -155,7 +157,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     return sendVersioned(
       reply,
       201,
-      toReportSnapshot(row),
+      await snapshotForReader(db, principalOf(request), toReportSnapshot(row)),
       `/api/v1/transformations/${transformationId}/report-snapshots/${row.id}`,
     );
   });
@@ -181,11 +183,19 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toReportSnapshotSummary), nextCursor: page.nextCursor };
+    // A snapshot whose subject is a record the reader is not admitted to (a sensitive business case) is absent, as
+    // its GET answers 404 (ADR-0051 §2; T-DG6-BE-Z5). Filtered after pagination, no count.
+    const items = await visibleRefs(db, principalOf(request), page.items, (r) =>
+      r.subject_type === "business_case" ? { recordType: "business_case", recordId: r.subject_id } : null,
+    );
+    return { items: items.map(toReportSnapshotSummary), nextCursor: page.nextCursor };
   });
 
-  /** The snapshot of a readable transformation, or 404. */
-  const snapshotOf = async (transformationId: string, snapshotId: string) => {
+  /**
+   * The snapshot of a readable transformation, or 404; also 404 when its subject is a record the reader is not
+   * admitted to (a sensitive business case: ADR-0051 §2, T-DG6-BE-Z5), for the snapshot and its sub-lists alike.
+   */
+  const snapshotOf = async (request: FastifyRequest, transformationId: string, snapshotId: string) => {
     const row = await db
       .selectFrom("report_snapshot")
       .selectAll()
@@ -193,6 +203,13 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       .where("transformation_id", "=", transformationId)
       .executeTakeFirst();
     if (row === undefined) throw problems.notFound();
+    if (row.subject_type === "business_case") {
+      const visible = await visibleRefs(db, principalOf(request), [row], (r) => ({
+        recordType: "business_case",
+        recordId: r.subject_id,
+      }));
+      if (visible.length === 0) throw problems.notFound();
+    }
     return row;
   };
 
@@ -200,14 +217,16 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     const { transformationId, snapshotId } = parse(sParams, request.params, "params");
     parseQuery(z.strictObject({}), request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return sendVersioned(reply, 200, toReportSnapshot(await snapshotOf(transformationId, snapshotId)));
+    const principal = principalOf(request);
+    const snapshot = toReportSnapshot(await snapshotOf(request, transformationId, snapshotId));
+    return sendVersioned(reply, 200, await snapshotForReader(db, principal, snapshot));
   });
 
   app.get(`${ONE}/sources`, { config: read }, async (request) => {
     const { transformationId, snapshotId } = parse(sParams, request.params, "params");
     const query = parseQuery(pageQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    await snapshotOf(transformationId, snapshotId);
+    await snapshotOf(request, transformationId, snapshotId);
     const hash = filterHash({ table: "report_snapshot_source", snapshotId });
     const after = decodeCursor(query.cursor, hash, 1);
     let q = db.selectFrom("report_snapshot_source").selectAll().where("snapshot_id", "=", snapshotId);
@@ -217,8 +236,12 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
+    const visible = await visibleRefs(db, principalOf(request), page.items, (r) => ({
+      recordType: r.record_type,
+      recordId: r.record_id,
+    }));
     return {
-      items: page.items.map(
+      items: visible.map(
         (r): ReportSnapshotSource => ({
           id: r.id,
           sectionKey: r.section_key,
@@ -238,7 +261,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     const { transformationId, snapshotId } = parse(sParams, request.params, "params");
     const query = parseQuery(versionListQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    await snapshotOf(transformationId, snapshotId);
+    await snapshotOf(request, transformationId, snapshotId);
     const q = db.selectFrom("report_snapshot_version").selectAll().where("snapshot_id", "=", snapshotId);
     const page = await keysetPage(q, SNAPSHOT_VERSION_SORT, query, { list: "report-snapshot-versions", snapshotId });
     return {
@@ -258,7 +281,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     const { transformationId, snapshotId } = parse(sParams, request.params, "params");
     const query = parseQuery(pageQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    await snapshotOf(transformationId, snapshotId);
+    await snapshotOf(request, transformationId, snapshotId);
     const hash = filterHash({ table: "report_snapshot_evidence", snapshotId });
     const after = decodeCursor(query.cursor, hash, 1);
     let q = db.selectFrom("report_snapshot_evidence").selectAll().where("snapshot_id", "=", snapshotId);
@@ -268,8 +291,12 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
+    const visible = await visibleRefs(db, principalOf(request), page.items, (r) => ({
+      recordType: "evidence",
+      recordId: r.evidence_id,
+    }));
     return {
-      items: page.items.map(
+      items: visible.map(
         (r): ReportSnapshotEvidenceItem => ({
           sectionKey: r.section_key,
           evidenceId: r.evidence_id,
@@ -289,7 +316,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     const row = await db
       .transaction()
       .execute((tx) => issueSnapshot(tx, request, transformationId, snapshotId, () => readIssueInput(request)));
-    return sendVersioned(reply, 200, toReportSnapshot(row));
+    return sendVersioned(reply, 200, await snapshotForReader(db, principalOf(request), toReportSnapshot(row)));
   });
 
   app.post(`${ONE}/discard`, { config: issue }, async (request, reply) => {
@@ -297,7 +324,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     const row = await db
       .transaction()
       .execute((tx) => discardSnapshot(tx, request, transformationId, snapshotId, () => readReasonInput(request)));
-    return sendVersioned(reply, 200, toReportSnapshot(row));
+    return sendVersioned(reply, 200, await snapshotForReader(db, principalOf(request), toReportSnapshot(row)));
   });
 
   app.post(`${ONE}/reissue`, { config: issue }, async (request, reply) => {
@@ -306,7 +333,7 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
     return sendVersioned(
       reply,
       201,
-      toReportSnapshot(row),
+      await snapshotForReader(db, principalOf(request), toReportSnapshot(row)),
       `/api/v1/transformations/${transformationId}/report-snapshots/${row.id}`,
     );
   });

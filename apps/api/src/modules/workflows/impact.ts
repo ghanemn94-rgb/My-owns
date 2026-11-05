@@ -29,7 +29,13 @@ import {
 } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  principalOf,
+  reachKey,
+  requireTransformationRead,
+  restrictedRecordRefs,
+  type Principal,
+} from "../access/index.ts";
 import {
   canonicalJson,
   cursorSchema,
@@ -576,12 +582,43 @@ export function toImpactItem(r: ImpactAssessmentItemRow): ImpactItem {
   };
 }
 
+/**
+ * The impact items this reader may see (ADR-0051 §2; T-DG6-BE-Z5, F-DG6-300): an item naming a benefit (or another
+ * record) the reader is not admitted to is omitted; its code and label are never shown. Returns the kept items and
+ * the number omitted.
+ */
+async function visibleItems<I>(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly I[],
+  refOf: (item: I) => { recordType: string | null; recordId: string | null },
+): Promise<{ items: I[]; hidden: number }> {
+  const named = (i: I) => {
+    const r = refOf(i);
+    return r.recordType === null || r.recordId === null ? null : { recordType: r.recordType, recordId: r.recordId };
+  };
+  const refs = items.map(named).filter((r): r is { recordType: string; recordId: string } => r !== null);
+  const restricted = await restrictedRecordRefs(db, principal, refs);
+  if (restricted.size === 0) return { items: [...items], hidden: 0 };
+  const kept = items.filter((i) => {
+    const r = named(i);
+    return r === null || !restricted.has(reachKey(r));
+  });
+  return { items: kept, hidden: items.length - kept.length };
+}
+
+/**
+ * The stored assessments for one reader. The frozen rows are unchanged; an item of a record the reader is not admitted
+ * to is omitted from `items` (read-time rule, ADR-0051 §2). `itemCount` and `contentSha256` stay those of the frozen
+ * assessment (the truthful size of the change's impact; they name no record).
+ */
 export async function presentAssessments(
   db: DbOrTx,
+  principal: Principal,
   rows: readonly ImpactAssessmentRow[],
 ): Promise<ImpactAssessment[]> {
   if (rows.length === 0) return [];
-  const items = await db
+  const all = await db
     .selectFrom("impact_assessment_item")
     .selectAll()
     .where(
@@ -592,6 +629,8 @@ export async function presentAssessments(
     .orderBy("impact_assessment_id")
     .orderBy("ordinal")
     .execute();
+  const items = (await visibleItems(db, principal, all, (i) => ({ recordType: i.record_type, recordId: i.record_id })))
+    .items;
   return rows.map((r) => ({
     id: r.id,
     transformationId: r.transformation_id,
@@ -627,14 +666,23 @@ const pageQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 /** The live preview of a change: materiality, items; every record is in the transformation the caller can read. */
 export async function previewOf(
   db: DbOrTx,
+  principal: Principal,
   transformationId: string,
   change: { changeKind: ChangeKind; subjectType: ChangeSubjectType; subjectId: string },
   materiality: Materiality,
 ): Promise<ImpactPreview> {
-  const items = deriveImpactItems(await loadImpactFacts(db, transformationId, change));
-  // Every derived record belongs to this transformation, which the caller reads (checked by the route), so nothing is
-  // hidden here; the count stays in the contract for records a later derivation reaches across transformations.
-  return { materiality: materiality.materiality, materialityBasis: materiality.basis, items, hiddenItemCount: 0 };
+  const derived = deriveImpactItems(await loadImpactFacts(db, transformationId, change));
+  // Every derived record belongs to this transformation, which the caller reads (checked by the route). A record the
+  // caller is not admitted to (a sensitive benefit: ADR-0051 §2; T-DG6-BE-Z5, F-DG6-300) is omitted and counted in
+  // `hiddenItemCount`, the contract's "affected records outside the caller's scope (never shown as 'no impact')": the
+  // verdict stays truthful (the change has an impact) and the record's code and title are never shown.
+  const { items, hidden } = await visibleItems(db, principal, derived, (i) => i);
+  return {
+    materiality: materiality.materiality,
+    materialityBasis: materiality.basis,
+    items,
+    hiddenItemCount: hidden,
+  };
 }
 
 async function findRequest(db: DbOrTx, transformationId: string, id: string): Promise<ChangeRequestRow> {
@@ -672,7 +720,7 @@ export function registerImpactRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       await requireTransformationRead(db, principalOf(request), transformationId);
       const body = parseBody(changeRequestCreate, request.body);
       const materiality = await portOf().previewDraft(db, transformationId, body);
-      return previewOf(db, transformationId, body, materiality);
+      return previewOf(db, principalOf(request), transformationId, body, materiality);
     },
   );
 
@@ -684,6 +732,7 @@ export function registerImpactRoutes(app: FastifyInstance, { db }: ModuleDeps): 
     const materiality = await portOf().previewSaved(db, cr);
     return previewOf(
       db,
+      principalOf(request),
       transformationId,
       {
         changeKind: cr.change_kind as ChangeKind,
@@ -712,7 +761,7 @@ export function registerImpactRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.change_request_version], hash);
-    return { items: await presentAssessments(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentAssessments(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.get(ASSESSMENT, { config: read }, async (request) => {
@@ -726,7 +775,7 @@ export function registerImpactRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       .where("transformation_id", "=", transformationId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return (await presentAssessments(db, [row]))[0]!;
+    return (await presentAssessments(db, principalOf(request), [row]))[0]!;
   });
 
   return [`POST ${PREVIEW}`, `GET ${CR_PREVIEW}`, `GET ${CR_ASSESSMENTS}`, `GET ${ASSESSMENT}`];

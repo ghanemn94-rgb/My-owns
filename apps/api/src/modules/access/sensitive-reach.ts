@@ -111,6 +111,9 @@ export const SENSITIVE_CHILD_SOURCES: Readonly<Record<string, ChildSource>> = {
   corrective_case: benefitChild("corrective_case"),
   transition_decision: benefitChild("transition_decision"),
   performance_area_link: benefitChild("performance_area_link"),
+  // T-DG6-BE-Z5 (F-DG6-300): a traceability link into a benefit (0041 kpi_benefit) carries its contribution statement
+  // and allocation share; benefit_id is NULL on the other link kinds (no owner).
+  trace_link: benefitChild("trace_link"),
   benefit_overlap: {
     kind: "column",
     table: "benefit_overlap",
@@ -469,6 +472,8 @@ export const SENSITIVE_REACH_PARAMS: Readonly<
   transitionDecisionId: { recordType: "transition_decision" },
   performanceAreaLinkId: { recordType: "performance_area_link" },
   benefitEnablerId: { recordType: "benefit_enabler" },
+  // T-DG6-BE-Z5 (F-DG6-300): a traceability link into a benefit (item, update, remove).
+  traceLinkId: { recordType: "trace_link" },
 };
 
 const REACH_PARAMS: ReadonlyMap<string, { readonly recordType: string; readonly urlIncludes?: string }> = new Map(

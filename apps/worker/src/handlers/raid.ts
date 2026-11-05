@@ -103,8 +103,11 @@ export interface SignalInput {
   readonly calculatedRag?: string;
   /** Benefit: the payload's offTrack (null = Unknown). Ignored for KPI (from the RAG) and checks (always true). */
   readonly offTrack?: boolean | null;
-  /** The case title: the source's own name (S-6: user data, not a system sentence). */
-  readonly title: string;
+  /**
+   * The case title: the source's own name (S-6: user data, not a system sentence); null = the case's own code (a
+   * benefit marked sensitive lends no title: T-DG6-BE-Z5, F-DG6-280).
+   */
+  readonly title: string | null;
   /** The event's business date (the check payload's; for KPI and benefit events, from the event's creation time). */
   readonly businessDate: string | null;
   readonly payload: Record<string, unknown>;
@@ -363,13 +366,14 @@ export async function applySignal(tx: Tx, actor: AuditActor, s: SignalInput): Pr
   const followUp = await followUpOf(tx, s.organizationId, s.businessDate, rule.followUpWorkingDays);
   const id = await newId(tx);
   const src = s.source;
+  const code = await nextCaseCode(tx, s.transformationId);
   const row = await tx
     .insertInto("corrective_case")
     .values({
       id,
       organization_id: s.organizationId,
       transformation_id: s.transformationId,
-      code: await nextCaseCode(tx, s.transformationId),
+      code,
       source_kind: kind,
       source_scope_key: s.sourceScopeKey,
       kpi_definition_id: src.kind === "kpi_deviation" ? src.kpiDefinitionId : null,
@@ -378,7 +382,7 @@ export async function applySignal(tx: Tx, actor: AuditActor, s: SignalInput): Pr
       benefit_id: src.kind === "benefit_variance" ? src.benefitId : null,
       source_record_type: src.kind === "adoption_check" || src.kind === "control_check" ? src.recordType : null,
       source_record_id: src.kind === "adoption_check" || src.kind === "control_check" ? src.recordId : null,
-      title: truncateText(s.title, 500),
+      title: truncateText(s.title ?? code, 500),
       owner_user_id: owner,
       follow_up_date: followUp.date,
       follow_up_calendar_id: followUp.calendarId,
@@ -520,6 +524,17 @@ export async function handleBenefitVariance(db: Db, data: unknown, jobId: string
         .select(["transformation_id", "organization_id", "title"])
         .where("id", "=", p.benefitId)
         .executeTakeFirstOrThrow();
+      // T-DG6-BE-Z5 (F-DG6-280; ADR-0051 §2): a benefit marked sensitive does not lend its title to the case. The case
+      // itself is hidden from readers outside the grant (a benefit child), but its title travels further (the blocker
+      // escalation, notifications), so it is the case's own code (language-neutral, S-6) and names no benefit code,
+      // title or value.
+      const sensitive = await tx
+        .selectFrom("record_sensitivity")
+        .select("id")
+        .where("record_type", "=", "benefit")
+        .where("record_id", "=", p.benefitId)
+        .where("is_sensitive", "=", true)
+        .executeTakeFirst();
       if (benefit.organization_id !== envelope.organizationId)
         throw new Error(`benefit ${p.benefitId} is not in organization ${envelope.organizationId}`);
       return applySignal(tx, jobActor(jobId), {
@@ -532,7 +547,7 @@ export async function handleBenefitVariance(db: Db, data: unknown, jobId: string
         periodStart: p.periodStart,
         periodEnd: p.periodEnd,
         offTrack: p.offTrack,
-        title: benefit.title,
+        title: sensitive === undefined ? benefit.title : null,
         businessDate: await eventBusinessDate(tx, envelope),
         payload: envelope.payload,
       });

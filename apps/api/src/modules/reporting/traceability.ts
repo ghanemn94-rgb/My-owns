@@ -44,7 +44,14 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  principalOf,
+  reachKey,
+  requireTransformationRead,
+  restrictedRecordRefs,
+  withoutRestricted,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -876,13 +883,43 @@ export function walk(
   return seen;
 }
 
+/**
+ * The ids of the transformation's benefits that are sensitive and not admitted to the principal (ADR-0051 §2; T-DG6-BE-Z5,
+ * F-DG6-300). One query when nothing in the principal's organizations is marked sensitive.
+ */
+export async function restrictedBenefitIds(
+  db: DbOrTx,
+  principal: Principal,
+  benefitIds: Iterable<string>,
+): Promise<Set<string>> {
+  const refs = [...new Set(benefitIds)].map((recordId) => ({ recordType: "benefit", recordId }));
+  const restricted = await restrictedRecordRefs(db, principal, refs);
+  return new Set(refs.filter((r) => restricted.has(reachKey(r))).map((r) => r.recordId));
+}
+
+/**
+ * The graph for one reader. A benefit the reader is not admitted to (ADR-0051 §2) is OMITTED: no node, and no edge
+ * that touches it (an edge names its id, its contribution statement and its allocation share). The node counts and
+ * `truncated` are computed without it, so nothing counts it. The orphan flags and allocation totals of the remaining
+ * nodes are computed over ALL edges, so a KPI that feeds only the restricted benefit is not shown as an orphan (the
+ * verdict stays truthful) while the benefit itself stays undisclosed. A root naming such a benefit is refused exactly
+ * as an unknown root (422 trace_link.record_not_found): existence not disclosed.
+ */
 async function buildGraph(
   db: DbOrTx,
+  principal: Principal,
   transformationId: string,
   query: z.infer<typeof graphQuery>,
 ): Promise<TraceabilityGraph> {
   const records = await loadChainRecords(db, transformationId);
-  const edges = await loadEdges(db, transformationId);
+  const allEdges = await loadEdges(db, transformationId);
+  const hidden = await restrictedBenefitIds(
+    db,
+    principal,
+    [...records.values()].filter((r) => r.type === "benefit").map((r) => r.id),
+  );
+  for (const id of hidden) records.delete(id);
+  const edges = hidden.size === 0 ? allEdges : allEdges.filter((e) => !hidden.has(e.from_id) && !hidden.has(e.to_id));
   let ids: string[];
   if (query.rootId !== undefined) {
     const root = records.get(query.rootId);
@@ -905,7 +942,7 @@ async function buildGraph(
   const truncated = known.length > TRACE_NODE_CAP;
   const kept = known.slice(0, TRACE_NODE_CAP);
   const keptIds = new Set(kept.map((r) => r.id));
-  const index = indexEdges(edges);
+  const index = indexEdges(allEdges);
   return {
     transformationId,
     rootType: query.rootType ?? null,
@@ -949,7 +986,8 @@ export function registerTraceabilityRoutes(app: FastifyInstance, { db }: ModuleD
     const { transformationId } = parse(tParams, request.params, "params");
     const query = parseQuery(graphQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return readOnly(db, (tx) => buildGraph(tx, transformationId, query));
+    const principal = principalOf(request);
+    return readOnly(db, (tx) => buildGraph(tx, principal, transformationId, query));
   });
 
   app.get(LINKS, { config: read }, async (request) => {
@@ -977,7 +1015,13 @@ export function registerTraceabilityRoutes(app: FastifyInstance, { db }: ModuleD
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toTraceLink), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Z5, F-DG6-300): a link into a benefit the caller is not admitted to is absent (filtered
+    // after pagination, as every sensitive-reach list filter: a page may hold fewer than `limit` items; no count).
+    const items = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "trace_link",
+      recordId: r.id,
+    }));
+    return { items: items.map(toTraceLink), nextCursor: page.nextCursor };
   });
 
   app.post(LINKS, { config: write }, async (request, reply) => {
@@ -1032,6 +1076,9 @@ export function registerTraceabilityRoutes(app: FastifyInstance, { db }: ModuleD
           .where("transformation_id", "=", transformationId)
           .executeTakeFirst();
         if (!target) throw problems.notFound();
+        // A benefit the caller is not admitted to: 404, as its own GET (ADR-0051 §2; T-DG6-BE-Z5).
+        if (targetType === "benefit" && (await restrictedBenefitIds(tx, principalOf(request), [targetId])).size > 0)
+          throw problems.notFound();
         await lockAllocationSet(tx, targetId);
         const members = await allocationMembers(tx, targetType, targetId);
         const totals = traceAllocationTotals(members.map((m) => m.allocationShare));
