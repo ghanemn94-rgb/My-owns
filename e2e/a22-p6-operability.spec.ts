@@ -32,8 +32,11 @@ import {
 } from "./support/a13-a22-stack.ts";
 
 // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
-// the slowest test it covers took 84.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
-test.describe.configure({ timeout: 240_000 });
+// the slowest test it covers took 84.0 s. Re-measured after T-DG6-BE-Z6 added the forced watch recurrence (one more
+// 60 s watch tick before the acknowledgement): 10 of 10 runs (5 en, 5 ar, --repeat-each=5, root stack, with the unit
+// and integration suites running at the same time) took 2.0 min each (under 123 s); the budget is at least 2x that.
+// Tables: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt, T-DG6-BE-Z6-evidence/a22-repeat5.log.
+test.describe.configure({ timeout: 300_000 });
 
 const DEV_ISSUER = "urn:mth:dev-local";
 
@@ -57,6 +60,34 @@ function ageHeartbeats(): void {
       `BEGIN; SET LOCAL session_replication_role = replica;
        UPDATE worker_heartbeat SET started_at = least(started_at, now() - interval '10 minutes'),
               last_beat_at = now() - interval '5 minutes';
+       COMMIT;`,
+    ],
+    { encoding: "utf8" },
+  );
+}
+
+/**
+ * Simulates "the last occurrence is more than 30 s old" (the watch's RECUR_MIN_GAP_SECONDS) without waiting, so the
+ * API's next 60 s watch tick recurs the exception: its first and last occurrence move 61 s into the past, as cluster
+ * superuser with session_replication_role = replica (the occurrence guard forbids moving them back; T-DG6-BE-Z6).
+ */
+function ageExceptionOccurrence(exceptionId: string): void {
+  if (!/^[0-9a-f-]{36}$/.test(exceptionId)) throw new Error(`not an exception id: ${exceptionId}`);
+  const u = new URL(ownerUrl());
+  u.search = "";
+  execFileSync(
+    "psql",
+    [
+      u.toString(),
+      "-X",
+      "-qAt",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-c",
+      `BEGIN; SET LOCAL session_replication_role = replica;
+       UPDATE operational_exception SET first_occurred_at = first_occurred_at - interval '61 seconds',
+              last_occurred_at = last_occurred_at - interval '61 seconds'
+        WHERE id = '${exceptionId}' AND status = 'open';
        COMMIT;`,
     ],
     { encoding: "utf8" },
@@ -161,12 +192,33 @@ test("A22 / REQ-S20-022: the Operations screen shows the worker heartbeat as the
   const facts = page.locator(`[data-exception='${exceptionId}']`);
   await expect(facts).toHaveAttribute("data-status", "open");
   await expectAccessible(page, lang, "a22-p6-exception-open");
+  // The D-213 race, forced instead of left to the clock (T-DG6-BE-Z6): the page holds the version it loaded; the
+  // API's heartbeat watch then recurs the exception (its last occurrence is aged past the 30 s gap, so the next 60 s
+  // tick counts it) BEFORE the administrator acknowledges. A system recurrence must not make the human's
+  // acknowledgement fail: the page's If-Match is behind the current version, and the acknowledgement still succeeds.
+  const loaded = (await send(admin, "GET", `/api/v1/admin/operations/exceptions/${exceptionId}`)).body;
+  ageExceptionOccurrence(exceptionId);
+  const recurred = await poll(
+    async () => {
+      const b = (await send(admin, "GET", `/api/v1/admin/operations/exceptions/${exceptionId}`)).body;
+      return b.status === "open" && b.occurrenceCount > loaded.occurrenceCount && b.version > loaded.version ? b : null;
+    },
+    "the API heartbeat watch (every 60 s) to recur heartbeat_missed",
+    90_000,
+  );
   await page.locator("[data-action='acknowledge']").click();
   await page.getByLabel(tr(lang, "adminP6.operations.acknowledgeNote")).fill("Synthetic QA acknowledgement");
+  const ackRequest = page.waitForRequest(
+    (r) => r.method() === "POST" && r.url().endsWith(`/api/v1/admin/operations/exceptions/${exceptionId}/acknowledge`),
+  );
   await page
     .locator("form")
     .getByRole("button", { name: tr(lang, "adminP6.operations.acknowledge") })
     .click();
+  // The race was exercised: the page acted on a version older than the recurred one.
+  expect(Number(/^"(\d+)"$/.exec((await ackRequest).headers()["if-match"] ?? "")?.[1])).toBeLessThan(
+    recurred.version as number,
+  );
   await expect(facts).toHaveAttribute("data-status", "acknowledged");
   expect((await send(admin, "GET", `/api/v1/admin/operations/exceptions/${exceptionId}`)).body).toMatchObject({
     status: "acknowledged",

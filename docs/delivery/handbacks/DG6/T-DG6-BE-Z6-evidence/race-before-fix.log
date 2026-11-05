@@ -1,0 +1,130 @@
+port-policy: PostgreSQL listening on port 30101 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw3o0x3w_137f02e8 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts (7 tests | 5 failed) 1157ms
+   × the heartbeat watch recurs between the administrator's load and action (D-213) > acknowledge with the version loaded before a watch tick succeeds; resolve after a second tick succeeds 103ms
+     → {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-755f-769f-8641-f39a57a2059c","currentVersion":2}: expected 409 to be 200 // Object.is equality
+   × every other raiser that recurs: the same rule > the job failure hook (an automation queue's retries exhausted): acknowledge and resolve with a version loaded before a recurrence succeed 52ms
+     → {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-75f0-7783-9aa7-9ec4940bad53","currentVersion":2}: expected 409 to be 200 // Object.is equality
+   × every other raiser that recurs: the same rule > the connector consumer (worker twin, connector_run_failed): acknowledge and resolve with a version loaded before a recurrence succeed 35ms
+     → {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-760f-73df-a23c-83db552730aa","currentVersion":2}: expected 409 to be 200 // Object.is equality
+   × every other raiser that recurs: the same rule > the data_stale raiser (API service, KPI linked): acknowledge and resolve with a version loaded before a recurrence succeed 34ms
+     → {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-7635-7495-9331-9b99109bd269","currentVersion":2}: expected 409 to be 200 // Object.is equality
+   ✓ a real conflict is still 409 (the controls) > human vs human: a second administrator acting on the version both loaded gets 409; nothing is written 74ms
+   × a real conflict is still 409 (the controls) > a human change mixed with system recurrences after the load is still 409 (either order) 66ms
+     → expected [ 409, 409 ] to deeply equal [ 200, 'resolved' ]
+   ✓ a real conflict is still 409 (the controls) > an automatic recovery after the load is 409 (the exception is already resolved); a version ahead is 409 67ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts > the heartbeat watch recurs between the administrator's load and action (D-213) > acknowledge with the version loaded before a watch tick succeeds; resolve after a second tick succeeds
+AssertionError: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-755f-769f-8641-f39a57a2059c","currentVersion":2}: expected 409 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 409[39m
+
+ ❯ apps/api/test/integration/operations/exception-recurrence-race.test.ts:145:50
+    143|     // The administrator acknowledges with the loaded version 1: accep…
+    144|     const ack = await act("acknowledge", id, loaded.version, "Syntheti…
+    145|     expect(ack.status, JSON.stringify(ack.body)).toBe(200);
+       |                                                  ^
+    146|     expect([ack.body.status, ack.body.version, ack.body.occurrenceCoun…
+    147|       "acknowledged",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts > every other raiser that recurs: the same rule > the job failure hook (an automation queue's retries exhausted): acknowledge and resolve with a version loaded before a recurrence succeed
+AssertionError: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-75f0-7783-9aa7-9ec4940bad53","currentVersion":2}: expected 409 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 409[39m
+
+ ❯ apps/api/test/integration/operations/exception-recurrence-race.test.ts:277:52
+    275|       expect(await raise()).toBe(id); // recurrence after the load
+    276|       const ack = await act("acknowledge", id, loaded.version, null);
+    277|       expect(ack.status, JSON.stringify(ack.body)).toBe(200);
+       |                                                    ^
+    278|       expect([ack.body.status, ack.body.version]).toEqual(["acknowledg…
+    279|       expect(await raise()).toBe(id); // recurrence while acknowledged…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts > every other raiser that recurs: the same rule > the connector consumer (worker twin, connector_run_failed): acknowledge and resolve with a version loaded before a recurrence succeed
+AssertionError: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-760f-73df-a23c-83db552730aa","currentVersion":2}: expected 409 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 409[39m
+
+ ❯ apps/api/test/integration/operations/exception-recurrence-race.test.ts:277:52
+    275|       expect(await raise()).toBe(id); // recurrence after the load
+    276|       const ack = await act("acknowledge", id, loaded.version, null);
+    277|       expect(ack.status, JSON.stringify(ack.body)).toBe(200);
+       |                                                    ^
+    278|       expect([ack.body.status, ack.body.version]).toEqual(["acknowledg…
+    279|       expect(await raise()).toBe(id); // recurrence while acknowledged…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts > every other raiser that recurs: the same rule > the data_stale raiser (API service, KPI linked): acknowledge and resolve with a version loaded before a recurrence succeed
+AssertionError: {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1ac33-7635-7495-9331-9b99109bd269","currentVersion":2}: expected 409 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 409[39m
+
+ ❯ apps/api/test/integration/operations/exception-recurrence-race.test.ts:277:52
+    275|       expect(await raise()).toBe(id); // recurrence after the load
+    276|       const ack = await act("acknowledge", id, loaded.version, null);
+    277|       expect(ack.status, JSON.stringify(ack.body)).toBe(200);
+       |                                                    ^
+    278|       expect([ack.body.status, ack.body.version]).toEqual(["acknowledg…
+    279|       expect(await raise()).toBe(id); // recurrence while acknowledged…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts > a real conflict is still 409 (the controls) > a human change mixed with system recurrences after the load is still 409 (either order)
+AssertionError: expected [ 409, 409 ] to deeply equal [ 200, 'resolved' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   200,[39m
+[32m-   "resolved",[39m
+[31m+   409,[39m
+[31m+   409,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/operations/exception-recurrence-race.test.ts:352:43
+    350|     // Loaded after the human change, then only recurrences: accepted.
+    351|     const res = await act("resolve", id, seen + 2, "Synthetic: current…
+    352|     expect([res.status, res.body.status]).toEqual([200, "resolved"]);
+       |                                           ^
+    353|   });
+    354| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  14:53:16
+   Duration  19.52s (transform 6.56s, setup 0ms, collect 12.41s, tests 1.16s, environment 0ms, prepare 93ms)
+

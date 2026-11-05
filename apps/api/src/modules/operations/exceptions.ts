@@ -515,9 +515,49 @@ async function recheckAtCommit(tx: Tx, request: FastifyRequest, locked: Operatio
 }
 
 /**
+ * The optimistic-concurrency rule of acknowledge and resolve (T-DG6-BE-Z6; D-213). A recurrence is written by the
+ * system (the API heartbeat watch, the worker's job-failure hook, the connector consumer, the freshness scan and the
+ * automation starter's raise all reach it through raiseOperationalException or its worker twin) and steps the row's
+ * version (ADR-0003: every update steps it by one, with its audit event and its history row), but it changes only
+ * the occurrence fields (count, last occurrence, last error, latest failure-queue row), never the status, the
+ * acknowledgement or the resolution a human acts on. So an If-Match version that is behind the locked row ONLY by
+ * such recurrences is accepted: every history event after it is `recurred` with no user. Anything else after it (an
+ * acknowledgement or resolution by a human, an automatic `recovered` resolution, an `updated` event) or a version
+ * ahead of the row is the shared 409 version conflict. Returns the version the action is based on when it was
+ * rebased (recorded in the audit event as `based_on_version`), or null when it matched exactly.
+ */
+async function rebaseOverSystemOccurrences(
+  tx: Tx,
+  locked: OperationalExceptionRow,
+  expectedVersion: number,
+): Promise<number | null> {
+  if (locked.version === expectedVersion) return null;
+  if (!Number.isInteger(expectedVersion) || expectedVersion < 1 || expectedVersion > locked.version)
+    throw problems.versionConflict(locked.version);
+  const after = await tx
+    .selectFrom("operational_exception_event")
+    .select(["record_version", "event_kind", "actor_user_id"])
+    .where("operational_exception_id", "=", locked.id)
+    .where("record_version", ">", expectedVersion)
+    .where("record_version", "<=", locked.version)
+    .orderBy("record_version")
+    .execute();
+  const onlySystemOccurrences =
+    after.length === locked.version - expectedVersion &&
+    after.every((e) => e.event_kind === "recurred" && e.actor_user_id === null);
+  if (!onlySystemOccurrences) throw problems.versionConflict(locked.version);
+  return expectedVersion;
+}
+
+/** The audit field of a rebased action: the version the human loaded -> the version the action was applied to. */
+const basedOn = (loaded: number | null, applied: number) =>
+  loaded === null ? {} : { based_on_version: { from: loaded, to: applied } };
+
+/**
  * acknowledgeOperationalException (ADR-0053 §2): open -> acknowledged, with an optional note, once. Under the row lock:
- * authorization re-checked, 409 version, 409 operations.exception_resolved / exception_not_open, then the update and
- * its audit event (prior and new version) in the same transaction.
+ * authorization re-checked, 409 version (a version behind only by system recurrences is accepted:
+ * rebaseOverSystemOccurrences), 409 operations.exception_resolved / exception_not_open, then the update and its audit
+ * event (prior and new version) in the same transaction.
  */
 export async function acknowledgeException(
   tx: Tx,
@@ -529,7 +569,7 @@ export async function acknowledgeException(
   const locked = await findException(tx, id, true);
   if (!locked) throw problems.notFound();
   const me = await recheckAtCommit(tx, request, locked);
-  if (locked.version !== expectedVersion) throw problems.versionConflict(locked.version);
+  const loaded = await rebaseOverSystemOccurrences(tx, locked, expectedVersion);
   if (locked.status === "resolved") throw exceptionRefusals.resolved();
   if (locked.status !== "open") throw exceptionRefusals.notOpen();
   const updated = await tx
@@ -558,6 +598,7 @@ export async function acknowledgeException(
     changes: {
       status: { from: locked.status, to: "acknowledged" },
       acknowledge_note: { from: null, to: note },
+      ...basedOn(loaded, locked.version),
     },
   });
   return updated;
@@ -565,7 +606,7 @@ export async function acknowledgeException(
 
 /**
  * resolveOperationalException (ADR-0053 §2): open | acknowledged -> resolved (`manual`, with the resolver and a note).
- * Final. Never changes a KPI value or freshness label.
+ * Final. Never changes a KPI value or freshness label. The same version rule as acknowledge.
  */
 export async function resolveException(
   tx: Tx,
@@ -577,7 +618,7 @@ export async function resolveException(
   const locked = await findException(tx, id, true);
   if (!locked) throw problems.notFound();
   const me = await recheckAtCommit(tx, request, locked);
-  if (locked.version !== expectedVersion) throw problems.versionConflict(locked.version);
+  const loaded = await rebaseOverSystemOccurrences(tx, locked, expectedVersion);
   if (locked.status === "resolved") throw exceptionRefusals.resolved();
   const updated = await tx
     .updateTable("operational_exception")
@@ -606,6 +647,7 @@ export async function resolveException(
     changes: {
       status: { from: locked.status, to: "resolved" },
       resolution: { from: null, to: "manual" },
+      ...basedOn(loaded, locked.version),
     },
   });
   return updated;

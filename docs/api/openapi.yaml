@@ -22457,7 +22457,7 @@ paths:
     post:
       tags: [operations]
       operationId: acknowledgeOperationalException
-      summary: "Acknowledge an open exception with an optional note (operations.acknowledge; ADM_TECH, KDS). Audit operational_exception.acknowledged. 409 operations.exception_not_open. ADR-0053 §2."
+      summary: "Acknowledge an open exception with an optional note (operations.acknowledge; ADM_TECH, KDS). Audit operational_exception.acknowledged. 409 operations.exception_not_open. If-Match: a version behind the current one only by system recurrences (history events `recurred`, no user) is accepted and recorded as `based_on_version`; any other change since it is 409 version_conflict (T-DG6-BE-Z6). ADR-0053 §2."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -22490,7 +22490,7 @@ paths:
     post:
       tags: [operations]
       operationId: resolveOperationalException
-      summary: "Resolve an open or acknowledged exception with a note (operations.acknowledge; ADM_TECH, KDS). Resolving never changes a KPI value or its freshness label. Audit operational_exception.resolved. 409 operations.exception_resolved. ADR-0053 §2."
+      summary: "Resolve an open or acknowledged exception with a note (operations.acknowledge; ADM_TECH, KDS). Resolving never changes a KPI value or its freshness label. Audit operational_exception.resolved. 409 operations.exception_resolved. If-Match: the same rule as acknowledgeOperationalException (a version behind only by system recurrences is accepted). ADR-0053 §2."
       security:
         - sessionCookie: []
           csrfToken: []
