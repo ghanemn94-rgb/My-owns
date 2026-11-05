@@ -1,0 +1,34 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-280",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 832e5c82 (source d7b21bad3), disposable clone, PostgreSQL 16.15, Node 24.21.0. (1) The round-4 reproduction (my probe dom-r4-sensitive-escalation.test.ts, unchanged) now passes 2/2: TL, who gets 404 on the sensitive benefit and on its case, records the case as a red blocker and gets 422 blocker_status.record_not_found twice; no ask is created; TL, AUD and SP read no benefit title in the executive-decision list, item or inbox; the action register still shows only the case id (BE-Z4 residual, no title). (2) My new probe dom-r5-sensitive-escalation.test.ts goes further, through the REAL consumers: the corrective consumer opens CA-01 before marking (title = the benefit's title) and CA-02 after marking (title = 'CA-02'); TL's write naming the case is byte-identical to an unknown id apart from the request id; the admitted TO records the pre-marking, benefit-titled case red twice (BO, the benefit's owner, gets 403: no meeting.prepare); handleBlockerEscalation creates ONE ask DEC-01 titled 'CA-01'; after the REAL search jobs (runReindex + runIndexFeed) TL, AUD and SP find no title by text search, the inbox notification carries {code:'DEC-01', title:'CA-01'}, and the blocker-status list omits the TO's statuses for them; TO and BO still find the case by its title (positive control). (3) In the UI on the production-initialized stack with the built production worker, en and ar: TL's executive-decision list and detail show 'DEC-01 · CA-01' and no title; following the link to the case gives TL the not-found state; the TO sees the case with its title. (4) Revert mutant: the round-4 versions of the five BE-Z5 files on this path (worker escalations.ts and raid.ts, api blocker-escalation.ts, escalations.ts, executive-decisions.ts) make 8 of 10 tests fail: my R4 probe (TL and AUD read the title), my R5 probe parts 1-3 and the implementer's sensitive-reach-escalation.test.ts 3 of 4. Restored afterwards (git status clean apart from my probe directories). The fix also covers the trigger, because only an admitted user can now name the case. The usefulness question is judged in DOM-R5-05.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/probe-f280-r4repro-and-r5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/f280-mutant-revert-bez5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/dom-r5-sensitive-escalation.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-partB-run3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-tl-ask.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-tl-ask.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-to-case.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-to-case.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-281",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 832e5c82 with the round-4 reproduction on the production-initialized stack (with-stack.sh, Chromium, en and ar). dev.lead creates a transformation that dev.admin cannot list; dev.admin creates a test_adapter kpi_actual connector targeting it and opens Edit. The required 'Target transformation' select now reads 'A transformation you cannot view · <id>' / 'تحوّل لا يمكنك عرضه · <id>', not 'Choose…' / 'اختر…', with the hint 'The saved target is a transformation you cannot view. It is kept when you save, unless you choose another.' (and its Arabic). Saving without touching the field sends PUT with the stored targetTransformationId and gets 200. The label shows the id, not the code. That is acceptable: showing the code would disclose more to a technical administrator without transformation.read (ADR-0051 §7). Revert mutant: with the round-4 ConnectorFormPage.tsx in a throwaway copy, integrations.test.tsx fails 2 of 29 (the en and ar 'a target the administrator cannot view' cases); with the candidate's file it passes 29/29. The copy was deleted afterwards.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-connector-target-unlisted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-connector-target-unlisted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/f281-mutant-revert-fez3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/f281-control-candidate.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/dom-r5-screens.spec.ts.txt"
+      ]
+    }
+  ]
+}

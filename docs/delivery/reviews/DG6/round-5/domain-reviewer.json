@@ -1,0 +1,390 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 5,
+  "candidate_id": "sha256:832e5c823462ad72859017506cde6a54087ddff15d926a2916bf32ce79d14988",
+  "source_commit": "d7b21bad306f6aacf10eaea5848d5449dbc4043e",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-R5-domain-reviewer-20261105T200605Z-59362850",
+    "session_id": "59362850-5714-4f50-9aa4-662b60410ccd"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "solution-architect",
+    "kpi-benefits-engineer",
+    "devops-engineer",
+    "qa-verifier"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am the domain-reviewer. I authored no DG6 implementation, test or register row. I raised F-DG6-280 and F-DG6-281 in round 4. Their repairs were written by backend-workflow-engineer (BE-Z5, BE-Z6), frontend-ux-engineer (FE-Z3) and transformation-analyst (AN-Z3). I formed this verdict before, and without, reading any other reviewer's round-5 record. Every command that built or ran code used a disposable clone under $TMPDIR at d7b21bad3: git clone --shared, non-shallow, with a sparse checkout that leaves out docs/delivery/runs, docs/delivery/test-evidence, trading_agent and the handback *-evidence folders. Those paths are outside the candidate manifest: 0 of the 2740 manifest paths are missing and 0 hashes mismatch. The DG6 DO-G/DO-H/DO-B evidence folders were added back for the load-report unit test. node_modules was copied from the repository working tree (pnpm-lock.yaml byte-identical). My probes lived only in the clone; copies are under probes/. A separate throwaway copy for the F-DG6-281 mutant was deleted afterwards. All product data I created is SYNTHETIC. No in-product G1-G6 decision, sensitivity mark, grant, Finance validation or demo approval cited here approves anything real, and none relates to DG0-DG7. Product gate G6 never implies DG7. I grant no business, Finance or IT approval."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-5/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038",
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-007",
+    "REQ-S15-009",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S15-014",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-001",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-020",
+    "REQ-S20-021",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R5-00-candidate",
+      "procedure": "Verify HEAD and the candidate ID in the repository, and in a disposable clone at the source commit, against the frozen manifest.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6 (repository and clone); git diff --name-only d7b21bad3 HEAD; git rev-parse --is-shallow-repository; manifest entries checked for presence and sha256 in the clone",
+      "environment": "Repository /home/user/My-owns at HEAD 518b0c9f0; clone $TMPDIR/review-dg6 at d7b21bad3; Node 24.21.0.",
+      "expected": "The candidate ID recomputes to sha256:832e5c82…14988 over 2740 files. HEAD differs from the source commit only by freeze metadata.",
+      "actual": "HEAD is 518b0c9f0, the freeze commit on top of d7b21bad3. It changes only the three round-5 assignments, the candidate manifest, progress.md and stages.json, all of which the candidate excludes as metadata. The candidate ID is sha256:832e5c823462ad72859017506cde6a54087ddff15d926a2916bf32ce79d14988 with 2740 files in both the repository and the clone. The clone is not shallow. All 2740 manifest entries are present, and none has a sha256 mismatch.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/candidate-verify.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-01-validators",
+      "procedure": "Run the register validator for DG6 and the historical validators for DG5 to DG1.",
+      "command": "node tools/gates/validate.mjs --register DG6; node tools/gates/validate.mjs --historical --stage DG5|DG4|DG3|DG2|DG1",
+      "environment": "Repository at 518b0c9f0; Node 24.21.0.",
+      "expected": "All six exit 0 with PASS.",
+      "actual": "'PASS register rules at DG6' and 'PASS gate DGn (historical)' for DG5, DG4, DG3, DG2 and DG1. All exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-__register_DG6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-__historical___stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-__historical___stage_DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-__historical___stage_DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-__historical___stage_DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-__historical___stage_DG1.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-02-build",
+      "procedure": "Build every workspace package in the clone.",
+      "command": "pnpm -r build",
+      "environment": "Clone at d7b21bad3; Node 24.21.0.",
+      "expected": "Exit 0.",
+      "actual": "Exit 0. The only warnings are Rollup's notes on zod's comment annotations and Vite's chunk-size advisories, the same as in round 4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-03-finding-verification",
+      "procedure": "Re-run the round-4 reproductions of F-DG6-280 (real API plus the worker's real consumers) and F-DG6-281 (production-initialized stack, en and ar). Run a revert mutant for each. Read each finding in full in findings.json and in my round-4 sidecar. Details are in domain-reviewer.verifications.json.",
+      "command": "QA_PG_PORT=30002 MTH_PORT_POOL=30003-30009 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/zz-domain/ (dom-r4-sensitive-escalation unchanged, plus the new dom-r5-sensitive-escalation); the same with the five BE-Z5 escalation-path files checked out from 654e39d89, plus sensitive-reach-escalation.test.ts; QA_PG_PORT=30010 E2E_API_PORT=30011 MTH_PORT_POOL=30012-30019 E2E_SCREENSHOT_DIR=$TMPDIR/shots-probe apps/web/e2e/support/with-stack.sh npx playwright test e2e/zz-domain/dom-r5-screens.spec.ts --workers=1; npx vitest run --configLoader runner --project unit-web apps/web/src/pages/integrations/integrations.test.tsx (throwaway copy with the round-4 ConnectorFormPage.tsx, then the candidate's)",
+      "environment": "Clone at d7b21bad3; PostgreSQL 16.15 on ports 30002-30019; Chromium (/opt/pw-browsers); Node 24.21.0; production worker started by the spec (apps/worker/dist/main.js).",
+      "expected": "Both reproductions pass on the candidate and fail on their revert mutants.",
+      "actual": "F-DG6-280 is CLOSED_VERIFIED. The R4 probe passes 2/2: TL gets 422 naming the case, no ask is created, and no reader sees the title. The R5 probe's parts 1-3 pass. On the mutant, 8 of 10 tests fail. F-DG6-281 is CLOSED_VERIFIED: in en and ar the select reads 'A transformation you cannot view · <id>' with its hint, and saving keeps the stored id (PUT 200). On the mutant, 2 of 29 tests fail; the control passes 29/29. Disclosures: (a) probe-f280-run1-probe-bug.log is my first run, which errored in part 3 because my probe used a wrong table name ('executive_decision' instead of 'decision'). I fixed it and re-ran. (b) probe-f280-r4repro-and-r5.log exits 1 by design. Exactly one expect.soft assertion fails, part 4 'TL's report total includes an omitted restricted row: D-195 Q3 label expected', which is F-DG6-340 (DOM-R5-04). (c) e2e-own-probe-run1.log, part B failed in en and ar: my probe set session_replication_role through the owner role (permission denied). In e2e-own-probe-run2.log part B timed out waiting for the ask in en and ar. An en-only diagnostic re-run (log not kept) showed that the blocker-escalation consumer answered 'calendar_not_configured', because the production-initialized stack has no default business calendar. That is a probe-setup gap, not a candidate defect. I added a synthetic default calendar. e2e-own-probe-partB-run3.log passes 2/2. Part A passes in run 1 and run 2 in both locales.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG6/round-5/domain-reviewer.verifications.json",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probe-f280-r4repro-and-r5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probe-f280-run1-probe-bug.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/f280-mutant-revert-bez5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/f281-mutant-revert-fez3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/f281-control-candidate.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-partB-run3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/dom-r5-sensitive-escalation.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/dom-r5-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-connector-target-unlisted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-connector-target-unlisted.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-04-be-z5-residuals",
+      "procedure": "Judge each residual declared in BE-Z5's handback §10 under ADR-0051 (as amended 2026-11-04) and D-195 Q3. Where I could, exercise it: my probe runs the real search jobs, and compares the live benefits register report with GET /benefit-totals for TL and TO, using a Finance-validated (synthetic) sensitive benefit.",
+      "command": "Read BE-Z5 handback §§2, 6, 10; apps/api/src/modules/reporting/reports/restricted.ts, traceability.ts, modular.ts, workflows/g6.ts, impact.ts; packages/shared/src/schemas/report.ts; ADR-0051 §2. dom-r5-sensitive-escalation.test.ts parts 3 and 4; dom-r5-screens.spec.ts part B (snapshot and benefits pages, en and ar).",
+      "environment": "Clone at d7b21bad3; PostgreSQL 16.15; Chromium; Node 24.21.0.",
+      "expected": "Each residual is either acceptable under ADR-0051, or raised as a finding.",
+      "actual": "(1) The 71 GET operations the sweep cannot fill are acceptable. Only getBenefitOverlap, getBenefitScenario and getTransitionDecision derive from a benefit, and each is guarded per path parameter (SENSITIVE_REACH_PARAMS) with its own earlier tests. (2) The search index is acceptable and was exercised here: after runReindex and runIndexFeed, a text search for the title gives TL, AUD and SP 0 hits, while TO and BO find it. The ask's search document carries only 'CA-01'. (3) Stored rows created before the fix keep the title. That is acceptable because no released environment holds such rows, and the case itself is hidden from non-admitted readers. (4) Benefit ids in the frozen G6 snapshot are acceptable: ADR-0051 §3 treats ids as not content, and following one answers 404. (5) The counts are acceptable as truthful verdicts that name no record: the G6 placeholder, hiddenItemCount, the frozen itemCount and benefit_missing. The G6 placeholder costs the ADMITTED user the pointer, because the text is reader-independent. The TO can still find the benefit in the register, and the count stays truthful, so I accept it. Report totals: keeping the total is correct under D-195 Q3. But the report omits the restricted row and still carries no 'Includes restricted records' label. For TL, the revenue_uplift totals table shows row B02 at 0.0000 with a validated total of 250000, which is exactly the hidden benefit's individual value, and there is no marker, while GET /benefit-totals answers includesRestrictedRecords=true and the benefits page shows the label (en and ar). The snapshot page shows the totals with no label (en and ar). ADR-0051 §2 requires the label on any aggregate that includes a value the reader is not admitted to. Raised as F-DG6-340 (Medium, not mandatory). The register discloses the gap (REQ-S10-002 notes), but a disclosed deviation from a user decision is still a defect.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/probe-f280-r4repro-and-r5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-partB-run3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-tl-register-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-tl-register-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-tl-benefits.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-tl-benefits.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-to-register-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-to-register-snapshot.png",
+        "docs/delivery/reviews/DG6/round-5/domain-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "DOM-R5-05-be-z6-and-escalation-usefulness",
+      "procedure": "Judge BE-Z6's re-raise rule (hidden conflict, lost system update, stale human overwrite). Then walk the escalation and the reports as a user who may (TO) and a user who may not (TL) see the benefit, in en and ar.",
+      "command": "Read apps/api/src/modules/operations/exceptions.ts (rebaseOverSystemOccurrences, acknowledgeException, resolveException, raiseOperationalException), the 0101 history trigger, ADR-0053 §2 and the BE-Z6 handback; exception-recurrence-race.test.ts runs in DOM-R5-07; e2e/a22-p6-operability.spec.ts runs in DOM-R5-08; dom-r5-screens.spec.ts part B screenshots",
+      "environment": "Repository and clone at d7b21bad3; production-initialized stack with the production worker; Chromium.",
+      "expected": "No real conflict is hidden, no system update is lost, and no stale human write overwrites a newer human one. Each user's outcome is still useful.",
+      "actual": "BE-Z6 meets the operating logic. The rebase is accepted only when every version after the loaded one has a history row whose kind is 'recurred' with a null actor, with no gap. The 0101 trigger classifies an update as 'recurred' only when the status did not change. So any human acknowledge or resolve, an automatic 'recovered' resolution, or an 'updated' event gives 409. A human-vs-human conflict therefore stays 409 in either order. The UPDATE applies to the locked row and sets only the status fields, so the recurrence's count, last occurrence and last error are kept: no system update is lost. The audit event records based_on_version. One consequence is acceptable but undocumented: a human can resolve an exception that recurred after their page loaded. That occurrence stays counted on the resolved row, and the next failure opens a new exception (ADR-0053 'After resolution, a new failure opens a new row'), so the signal returns at the next occurrence; failure-queue rows also stay visible. A raiser acting with a human actor would be conservatively rejected (409), which loses nothing. ADR-0053 §2 was not amended, as the handback requested: raised as F-DG6-341 (Low, documentation). Usefulness: for TL (not admitted), in en and ar, the executive-decision list and detail show 'DEC-01 · CA-01' with origin 'From a blocker escalation', and the case link gives the not-found state. That is enough to know an escalation exists and to ask the TO. For the TO (admitted), the same ask is followed to the case, which shows the benefit title. The ask's owner is unassigned on this stack ('Owner unassigned', with 'Decision owner' listed as missing), the DG4 behaviour where no owner rule applies. A non-admitted SP who owns such an ask sees only the case code. The TO can grant access, and the alternative (the title in every reader's ask) is the leak F-DG6-280 closed. I accept it. The traceability, missing-links and G6 outcomes were judged in DOM-R5-04. The report outcome is F-DG6-340.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-partB-run3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-tl-asks.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-tl-asks.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-tl-ask.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-tl-ask.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-tl-case.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-tl-case.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-to-ask.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-to-ask.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-f280-to-case.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-f280-to-case.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/int-api-p6-run1.log",
+        "docs/delivery/reviews/DG6/round-5/domain-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "DOM-R5-06-qa-integration",
+      "procedure": "Run the whole QA integration suite.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=30020 MTH_PORT_POOL=30021-30024 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration",
+      "environment": "Clone at d7b21bad3; PostgreSQL 16.15; Node 24.21.0; --configLoader runner (read-only node_modules); load average 17-29; shared scratch disk at 89-97%.",
+      "expected": "Every file passes.",
+      "actual": "45/45 files and 437/437 tests passed, exit 0, in a single run with no re-run. The log has no stderr block and no skipped test. This includes a17-s01-005-external-change (no implied external change), a17 imports and connectors, a12 scope isolation, a21 no-AI and a22 operability.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/int-qa-run1.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-07-implementer-integration",
+      "procedure": "Run the implementers' P6 integration files: round 4's 44, plus BE-Z5's four new sensitive-reach files and BE-Z6's exception-recurrence-race.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=30025 MTH_PORT_POOL=30026-30029 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat int-api-files.txt)",
+      "environment": "Clone at d7b21bad3; PostgreSQL 16.15; Node 24.21.0.",
+      "expected": "Every file passes.",
+      "actual": "49/49 files and 584/584 tests passed, exit 0. The sweep, derived, escalation, impact and race files all pass. The log has 4 stderr blocks, each explained: two 'secret_ref.refused … not_bound' warnings, emitted by webhooks.test.ts and channel-fanout.test.ts in the F-DG6-181 cases that assert exactly that refusal; and two 'job run record failed … driver has already been destroyed' lines from automation-version-at-occurrence.test.ts, logged by a background job record after the file's tests passed and its database closed (teardown order, not a test failure; 5/5 passed).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/int-api-p6-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/int-api-files.txt"
+      ]
+    },
+    {
+      "id": "DOM-R5-08-root-e2e-functional",
+      "procedure": "Run the root P6 journeys (A12, A13 x2, A14, A17 x2, A21 degradation, A22 x2) in en and ar on the production-initialized stack. The specs that need a worker start it themselves.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=30030 E2E_API_PORT=30031 MTH_PORT_POOL=30032-30039 E2E_SCREENSHOT_DIR=$TMPDIR/shots-root apps/web/e2e/support/with-stack.sh npx playwright test e2e/a12-p6-scope-isolation.spec.ts e2e/a13-automation-recovery.spec.ts e2e/a13-connector-run-once.spec.ts e2e/a14-compare-reapply.spec.ts e2e/a17-failing-connector-exception.spec.ts e2e/a17-import-and-integration.spec.ts e2e/a21-p6-degradation.spec.ts e2e/a22-operations-jobs.spec.ts e2e/a22-p6-operability.spec.ts --workers=1",
+      "environment": "Clone at d7b21bad3; Chromium; E2E_SCREENSHOT_DIR writable (as the assignment requires); load average about 20.",
+      "expected": "All pass in both locales.",
+      "actual": "38 passed (12.1 min), exit 0. No skip, flake or retry. a22-p6-operability, including BE-Z6's forced re-raise between page load and acknowledge, passes in en and ar. a17-failing-connector-exception passes: one exception, and the KPI shows Stale with its last value and date. The A17 imports stage, isolate the invalid and duplicate rows with reasons, and commit 8 rows with lineage. A stopped or failing connector shows an actionable error and changes no KPI actual. With no channel configured, the in-app inbox carries the reminder (REQ-S12-023). The only non-test line is a psql NOTICE 'database … does not exist, skipping', from a DROP IF EXISTS in the A21 fresh-database step, which is expected.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-root-p6-functional.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-09-root-e2e-a20",
+      "procedure": "Run the A20 layout and brand, UX, S15-014 term-scan, axe and bilingual-shell specs in en and ar.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=30040 E2E_API_PORT=30041 MTH_PORT_POOL=30042-30046 E2E_SCREENSHOT_DIR=$TMPDIR/shots-a20 apps/web/e2e/support/with-stack.sh npx playwright test e2e/a20-p6-layout-brand.spec.ts e2e/a20-p6-ux.spec.ts e2e/a20-s15-014-term-scan.spec.ts e2e/a20-p6-axe.spec.ts e2e/a20-bilingual-shell.spec.ts --workers=1",
+      "environment": "Clone at d7b21bad3; Chromium; load average 15-25.",
+      "expected": "All pass. The only skips are the declared axe 'NOT SCANNED' routes.",
+      "actual": "226 passed and 18 skipped (37.6 min), exit 0, with no flake or retry. The 18 skips are the axe spec's declared NOT SCANNED routes, 9 per locale: sensitive grant, deep-link landing, operational exception, webhook, outbound write, import, approval, benefit and walkthrough. That is the same set as in round 4 and the orchestrator's run. They limit axe coverage (REQ-S15-012 discloses this) and are not failures. This re-runs REQ-S15-014's deferred binding run: no stack trace or infrastructure term in the normal, forced-500 or offline states, in en or ar. I accept the register's disclosed limit (some states scanned in their not-found or not-demo form). This run also covers contrast and the provisional #0078FF token and wordmark (REQ-S15-003), RTL/LTR with a persistent switch (REQ-S15-007), and 360 px review and approval (REQ-S15-009).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-root-a20.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-10-demo-stack-e2e",
+      "procedure": "Run the demo-initialized stack journeys: the guided walkthrough, no-AI operation, the demo role users and the demo labels.",
+      "command": "E2E_PG_PORT=30044 E2E_API_PORT=30045 MTH_PORT_POOL=30046-30049 E2E_SCREENSHOT_DIR=$TMPDIR/shots-demo e2e/support/with-demo-stack.sh npx playwright test e2e/a02-guided-walkthrough.spec.ts e2e/a21-no-ai-operation.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-demo-labels.spec.ts --workers=1",
+      "environment": "Clone at d7b21bad3; demo stack (AUTH_MODE=dev); Chromium.",
+      "expected": "All pass in both locales.",
+      "actual": "12 passed (6.8 min), exit 0, with no skip, flake or retry. The demo role users perform the twelve walkthrough steps. A report is generated with no AI, external notification or export channel (REQ-S17-008). The demo labels mark synthetic approvals as illustrative.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-demo.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-11-own-screen-probe",
+      "procedure": "Run my own EN/AR screen probe on the production-initialized stack: lang/dir and an infrastructure-term scan on the Assistant, Connectors, Operations, Imports, Search and My Work screens; the connector target (F-DG6-281); and one live-selection export.",
+      "command": "QA_PG_PORT=30010 E2E_API_PORT=30011 MTH_PORT_POOL=30012-30019 E2E_SCREENSHOT_DIR=$TMPDIR/shots-probe apps/web/e2e/support/with-stack.sh npx playwright test e2e/zz-domain/dom-r5-screens.spec.ts --workers=1 (part A)",
+      "environment": "Clone at d7b21bad3; Chromium; no worker for part A (by design).",
+      "expected": "Correct lang/dir; no infrastructure term; the assistant off by default; the export starts asynchronously.",
+      "actual": "Part A passed in en and ar in both run 1 and run 2. lang/dir are correct, and no infrastructure term or stack trace appears on any of the six screens. The assistant screen shows it off (not configured) in the disconnected install. A live-selection export answers 202 at once with no snapshot, and the API's assembly watch then assigns its snapshot (REQ-S20-030). The screenshots were viewed. Part B and the disclosures of the probe's own failed runs are in DOM-R5-03.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-admin-integrations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-admin-integrations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-admin-operations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-admin-operations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-imports-entry.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-imports-entry.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-search.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-search.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-my-work.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-my-work.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-exports.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-exports.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-12-unit",
+      "procedure": "Run the unit-node and unit-web projects on Node 24 and on Node 22. Report every failed or interrupted run.",
+      "command": "npx vitest run --configLoader runner --project unit-node --project unit-web (Node 24.21.0; then /opt/node22/bin); then each project separately; Node 22 unit-node again with --maxWorkers=2",
+      "environment": "Clone at d7b21bad3. Node 24.21.0, and Node 22.22.0 at /opt/node22 (the assignment names 22.22.2; the installed one is 22.22.0). Load average 15-29 from three concurrent reviews.",
+      "expected": "Every test passes with exit 0 on both versions.",
+      "actual": "Final clean result: Node 24 unit-node 190 files / 2899 tests, exit 0, and unit-web 121 / 2054, exit 0. Node 22 unit-web 121 / 2054, exit 0, and unit-node 190 / 2899, exit 0 (with --maxWorkers=2). Earlier runs, all disclosed: (1) Node 24 run 1, both projects: exit 1, 6 files failed, 5 tests failed. tests/qa/unit/dlv038-s20-029-load-report.test.ts failed with ENOENT on T-DG6-DO-G-evidence/final/summary.json, because my sparse checkout had left that folder out. I added it back, and it passes in every later run. The other 5 were timing failures under load average 29: three web tests whose findBy waited too long (ExecutionPanel, fe-e Funding decisions, transformations F-DG1-210 ar), architecture.test.ts at its 30 s limit, and branding-layout PDF at its 5 s limit. All 5 pass in run 2 and run 3. (2) Node 22 run 1 was killed by my own 2400 s timeout (exit 124) before it finished. It counts as nothing. (3) Node 24 run 2 and Node 22 run 2: 311/311 files and 4953/4953 tests passed, but each exited 1 on one vitest internal error, '[vitest-worker]: Timeout calling \"onTaskUpdate\"' (a worker RPC timeout under load, not a test). (4) Node 22 run 3 unit-node: 2899/2899 passed, with the same RPC timeout, exit 1. Run 4 with 2 workers is clean. No test failed in any of runs 2-4.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n24-run3-unit-node.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n24-run3-unit-web.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n22-run3-unit-web.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n22-run4-unit-node-maxworkers2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n24-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n24-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n22-run1-timeout.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n22-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/unit-n22-run3-unit-node.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-13-diff-review",
+      "procedure": "Review the whole diff since round 4, 654e39d89..d7b21bad3: product source, tests, OpenAPI, i18n, register and decisions.",
+      "command": "git diff 654e39d89b66c0975ebef293d607f480f58408e3..d7b21bad306f6aacf10eaea5848d5449dbc4043e (110 files outside evidence and runs)",
+      "environment": "Repository.",
+      "expected": "Every change matches its handback, and no change is undisclosed or untrue.",
+      "actual": "The product changes are exactly BE-Z5, FE-Z3 and BE-Z6, as their handbacks describe. BE-Z5 covers sensitive-reach (trace_link), traceability, modular, reports/restricted.ts and routes, gate-facts with g4/g6, impact, blocker-escalation with escalations and executive-decisions, and the worker's escalations and raid. FE-Z3 covers ConnectorFormPage, en/ar integrations and problems, provisional-ar-p6 and problems-all.test. BE-Z6 covers operations/exceptions.ts, two OpenAPI summaries and the e2e a22 race. No migration or dependency changed. The new Arabic texts (kpi__stale, operations__heartbeat_missed, 11 smtp__ codes, 3 field errors, the connector target) are correct in meaning and registered as provisional 'fe-z3'. kpi__stale says the value 'shows as Stale', never zero. AN-Z3's register rows record the repairs and the residuals truthfully, including the report-label gap (REQ-S10-002 notes). Nothing claims official PMI or Mobily branding, and nothing calls planned work delivered.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z5-backend-workflow-engineer.md",
+        "docs/delivery/handbacks/DG6/T-DG6-FE-Z3-frontend-ux-engineer.md",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z6-backend-workflow-engineer.md",
+        "docs/delivery/handbacks/DG6/T-DG6-AN-Z3-transformation-analyst.md"
+      ]
+    },
+    {
+      "id": "DOM-R5-14-operating-truth",
+      "procedure": "Check the operating-truth clauses against the master prompt, the playbook and the screens: no implied external change, Stale/Unknown never zero or green, imports staged, credentials by reference only, a working native fallback, and the assistant's limits.",
+      "command": "DOM-R5-06/08/09/10/11 runs and screenshots; QA a17-s01-005-external-change and a21 suites (within DOM-R5-06); BE-Z5/Z6 code reading (DOM-R5-04/05)",
+      "environment": "Clone at d7b21bad3.",
+      "expected": "M0080 and REQ-S01-005/S17-006 (external change unconfirmed until confirmed); REQ-S12-019 (one exception; Stale with last value and date); REQ-S17-001..005; REQ-S17-007..011 (assistant optional, off, never approves); Unknown never 0 or green.",
+      "actual": "All hold on this candidate. Completing a task leaves the external change 'not confirmed' until reviewed evidence or a test-adapter confirmation arrives. A failing connector opens one exception, and the KPI shows Stale with its last value and date, never zero or green. The freshness-scan residual named in the register was repaired earlier (BE-Y3) and is unchanged. Unknown run counts read Unknown in en and ar. Credentials are SecretRefs only. Imports are staged and validated, the duplicate is detected, a partial failure commits only the valid rows, and lineage leads back to the batch and row. Native forms and imports work with every connector stopped. The assistant is off by default, and every core workflow and report runs without it. No engineering agent or assistant grants a G1-G6, Finance or IT approval. No change since round 4 touches these paths except BE-Z6: a re-raise no longer blocks a human acknowledge, and resolve still never changes a KPI value or its freshness label.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/int-qa-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-root-p6-functional.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-demo.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/dom-r5-admin-integrations.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/dom-r5-admin-integrations.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-15-automation-load-decisions",
+      "procedure": "Judge D-194 to D-196, D-199 item 2, D-202 and D-203 to D-205 on this candidate.",
+      "command": "Read docs/delivery/decisions.md and ADR-0043 G4; git diff 654e39d89..d7b21bad3 on automation, migrations and the load tooling (empty); DOM-R5-07 (the automation-version-at-occurrence and failure-queue suites pass)",
+      "environment": "Repository at 518b0c9f0.",
+      "expected": "Each decision is accepted, or a finding is raised.",
+      "actual": "All are accepted, unchanged from round 4, because no automation, migration or load file changed since then. D-194 to D-196 (plan, scope, the Q3 sensitivity and totals rule): accepted. D-195 Q3 is applied correctly by the totals engines, and F-DG6-340 is only the report surface missing its label. D-199 item 2 (the load dataset): accepted. The REQ-S20-029/030 targets are labelled provisional and measured on one sandbox host, never presented as Mobily capacity. LOAD-T20's 'no sameScopeOther user' is a dataset gap in the proof script, not a latency or access failure, and is disclosed. D-202 (pre-freeze repairs, no product change): accepted. D-203 (batching; no history action on enable), D-204 (a late event is evaluated against the version in force and enabled at its occurrence) and D-205 (a rule disabled now stops its pending events): these meet REQ-S12-019/REQ-S20-013. A backlog no longer drops automations, enabling never acts on history, and the kill switch works during a backlog. The commit-order race (ADR-0043 G4) is accepted as documented. It is bounded by the evaluation lag, never acts for a rule that was not enabled at occurrence, and is not hidden.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/int-api-p6-run1.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-16-environmental-residuals",
+      "procedure": "Record the environmental residuals the assignment names, on their offline or configuration surface.",
+      "command": "None beyond the runs above (offline surfaces: the bundled test issuer, test adapters, the disabled configuration, the load report).",
+      "environment": "Sandbox with no network and no container runtime. No real Mobily system, mail server, messaging service, AI provider, registry, CI or IdP is reachable.",
+      "expected": "PASS on the offline or configuration surface, with each residual noted (the assignment's binding instruction).",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025 A24, D-058) and Keycloak with a real IdP (D-049): not run here. The OIDC clauses pass against the bundled test issuer (REQ-S16-007, within DOM-R5-07). The SAML broker is documented, not run. External systems are exercised only through test adapters and the shipped 'disabled' configuration (A17/A21 runs above). The REQ-S20-029/030 figures are provisional engineering targets from one sandbox host, not verified Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/e2e-root-p6-functional.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG6-340",
+    "F-DG6-341"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-5/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG6/round-5/domain-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG6/domain/round-5/candidate-verify.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/probe-f280-r4repro-and-r5.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/f280-mutant-revert-bez5.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/f281-mutant-revert-fez3.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/e2e-own-probe-partB-run3.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/int-qa-run1.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/int-api-p6-run1.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/e2e-root-p6-functional.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/e2e-root-a20.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/e2e-demo.log",
+    "docs/delivery/test-evidence/DG6/domain/round-5/probes/dom-r5-sensitive-escalation.test.ts.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-5/probes/dom-r5-screens.spec.ts.txt"
+  ],
+  "reviewed_at": "2026-11-05T23:30:00Z",
+  "summary": "FAIL on candidate 832e5c82 (2740 files, source d7b21bad3). Both of my open findings are CLOSED_VERIFIED. F-DG6-280: the round-4 probe passes; the new real-consumer probe shows the case titled by its code, TL refused exactly like an unknown id, the ask titled 'CA-01' and no title in any non-admitted reader's list, item, inbox or search; the revert mutant fails 8 tests. F-DG6-281: the select shows 'A transformation you cannot view · <id>' in en and ar, and saving keeps the target; the mutant fails 2. The full runs pass: QA integration 45/45 files, implementer P6 integration 49/49 files (584 tests), root P6 e2e 38/38, A20 226 passed with the 18 declared axe skips, demo 12/12, and unit on Node 24 and Node 22.22.0 after load-induced reruns, all disclosed. Judging BE-Z5's residuals, one new Medium finding: F-DG6-340. A report table omits a restricted benefit's row but keeps its value in the total with no 'Includes restricted records' label (ADR-0051 §2, D-195 Q3). For TL the total equals the hidden value, unlabelled. BE-Z6's rule is sound. Its ADR-0053 record is missing: F-DG6-341 (Low). The other residuals and decisions are accepted. F-DG6-340 must be repaired before the gate (D-192)."
+}
