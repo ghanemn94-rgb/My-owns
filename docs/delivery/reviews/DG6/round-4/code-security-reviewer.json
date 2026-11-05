@@ -1,0 +1,396 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 4,
+  "candidate_id": "sha256:4b84bf201d45d0b78b6c5fdb856e7c52df69bf62a1b709176d786c207cba1b5b",
+  "source_commit": "654e39d89b66c0975ebef293d607f480f58408e3",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-CS-R4-code-security-reviewer-20261105T020307Z-47eba2c7",
+    "session_id": "47eba2c7-ab3e-4c61-98d4-b95ba80da0ea"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 47eba2c7-ab3e-4c61-98d4-b95ba80da0ea, task T-DG6-REV-CS-R4. I verified the assignment's sha256 (77f00cad85c5bc6448d235f4356c98d905b357540478396bec2ceda959f4769f). I authored no implementation in the DG6 scope and changed no implementation file. Every execution ran in a disposable --shared clone under my run's $TMPDIR, which I removed at the end (90-cleanup.log). I formed this verdict without reading any other reviewer's round-4 record or evidence. Nothing here is a business approval (G1-G6), and product gate G6 never implies DG7. Note on the assignment: its record-format section says `round: 3`, but this is round 4 (the assignment title, the task id and the round-4 paths), so the record says 4."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-4/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-010",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "CS-00-candidate-identity",
+      "procedure": "Verify the assignment hash, HEAD, the diff between the source commit and HEAD, and the candidate ID over the repository tree and over the disposable clone at the source commit.",
+      "command": "checks.sh identity; checks.sh clone w1 (sha256sum; git rev-parse HEAD; git diff --name-only 654e39d HEAD; node tools/gates/candidate.mjs --stage DG6; git clone --shared --no-checkout; sparse checkout; git checkout 654e39d; candidate.mjs in the clone)",
+      "environment": "Node 24.21.0; /home/user/My-owns at HEAD 2efdc024e; $TMPDIR/r/w1",
+      "expected": "candidate sha256:4b84bf20...1cba1b5b over 2732 files in every tree; HEAD equal to the source commit or differing only by records outside the manifest",
+      "actual": "Assignment sha256 matches. HEAD is 2efdc024e, not 654e39d: it is the freeze commit whose parent is 654e39d and which adds only the three round-4 assignments, the candidate manifest and stages.json (listed in 01-candidate-identity.log), all outside the manifest. The repository tree gives sha256:4b84bf201d45d0b78b6c5fdb856e7c52df69bf62a1b709176d786c207cba1b5b over 2732 files, exit 0, at the start and at the end (90-cleanup.log). The clone w1 at 654e39d is not shallow and gives the same ID (05-setup-w1.log), and so does w1 after it was trimmed (06-clone-trim.log, CS-01).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/05-setup-w1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/06-clone-trim.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/90-cleanup.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/checks.sh"
+      ]
+    },
+    {
+      "id": "CS-01-setup-build-and-disk",
+      "procedure": "Set up the disposable clone (node_modules from the repository after checking that its lock file matches), then build every package. Record what the shared volume forced.",
+      "command": "checks.sh clone w1 (cmp pnpm-lock.yaml node_modules/.pnpm/lock.yaml; cp node_modules; pnpm -r --workspace-concurrency=2 build); later: .pnpm replaced by a symlink to the read-only repository store; DG6 handback evidence folders removed from the clone except T-DG6-DO-G-evidence",
+      "environment": "Node 24.21.0, pnpm 10.33.0, offline; w1",
+      "expected": "pnpm -r build exit 0; the clone's product tree unchanged",
+      "actual": "LOCK-MATCH. pnpm -r build: every package Done, build-exit=0, 0 changed paths (05-setup-w1.log). The three reviews share one volume, and it reached 8 MB free during my run. To fit, I replaced the copied node_modules/.pnpm (278 MB) with a symlink to the repository's read-only store, and deleted the docs/delivery/handbacks/DG6/*-evidence folders from the clone (2301 paths, outside the manifest; T-DG6-DO-G-evidence is kept because tests/qa/unit/dlv038-s20-029-load-report.test.ts reads it). The clone's candidate ID is unchanged after both (06-clone-trim.log). The full results below come from runs after these changes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/05-setup-w1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/06-clone-trim.log"
+      ]
+    },
+    {
+      "id": "CS-02-typecheck",
+      "procedure": "Typecheck every workspace package.",
+      "command": "pnpm -r --workspace-concurrency=1 typecheck",
+      "environment": "Node 24.21.0, w1",
+      "expected": "exit 0",
+      "actual": "exit 0; every package's tsc passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/code-security/round-4/11-typecheck.log"]
+    },
+    {
+      "id": "CS-03-lint-format-openapi-no-cdn",
+      "procedure": "Run lint, format check, OpenAPI lint and the no-CDN scan.",
+      "command": "pnpm lint; pnpm format:check; pnpm openapi:lint; pnpm check:no-cdn",
+      "environment": "Node 24.21.0, w1",
+      "expected": "each exit 0",
+      "actual": "lint (eslint --max-warnings=0) exit 0; format:check exit 0 ('All matched files use Prettier code style!'); openapi:lint exit 0 ('PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 932 operations'); check:no-cdn exit 0 ('PASS no-cdn: scanned apps, packages').",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/12-lint.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/13-format-check.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/14-openapi-lint.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/15-no-cdn.log"
+      ]
+    },
+    {
+      "id": "CS-04-historical-validators",
+      "procedure": "Validate the approved gates DG5 to DG1 in historical mode.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG5|DG4|DG3|DG2|DG1",
+      "environment": "Node 24.21.0, /home/user/My-owns at HEAD 2efdc024e",
+      "expected": "PASS, exit 0, for each",
+      "actual": "'PASS gate DGn (historical)', exit 0, for DG5, DG4, DG3, DG2 and DG1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/02-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/02-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/02-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/02-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/02-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "CS-05-unit-node22",
+      "procedure": "Run pnpm test on Node 22 (LANG/LC_ALL unset), then re-run the project whose run exited non-zero, alone.",
+      "command": "checks.sh unit 22 (pnpm test); checks.sh unit-one 22-unit-node22-rerun-unit-node w1 22 unit-node",
+      "environment": "Node 22.22.0 (/opt/node22/bin), w1, load 15-19 on 4 vCPU (three reviews at once)",
+      "expected": "every test passes; exit 0",
+      "actual": "Full run exit 1. Every test passed: unit-node 190/190 files, 2899/2899 tests; unit-web 120/120 files, 2039/2039; unit-formula-nocodegen 3/3 files, 259 passed and 2 skipped (fuzz.test.ts it.skipIf(NOCODEGEN), declared). The exit 1 comes from vitest itself: one unhandled '[vitest-worker]: Timeout calling \"onTaskUpdate\"' (a worker-to-main RPC timeout under load, as in round 3), not from a test. unit-web prints 'TypeError: raci.deliverables is not iterable' and 'Cannot read properties of undefined (reading length)' 10 times, as stderr of extension-fields.test.tsx 'T12: the form header carries the template's provenance strip (/raci)' (en and ar), whose mock omits that data. Those tests pass, and round 3 had the same 10 lines. Re-run of unit-node alone: 190/190 files, 2899 tests, no unhandled error, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/20-unit-node22.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/22-unit-node22-rerun-unit-node.log"
+      ]
+    },
+    {
+      "id": "CS-06-unit-node24",
+      "procedure": "Run pnpm test on Node 24 (LANG/LC_ALL unset), then re-run the project whose run exited non-zero, alone.",
+      "command": "checks.sh unit 24 (pnpm test); checks.sh unit-one 22-unit-node24-rerun-unit-node w1 24 unit-node",
+      "environment": "Node 24.21.0, w1, load 15-19",
+      "expected": "every test passes; exit 0",
+      "actual": "Full run exit 1. Every test passed: unit-node 190/190 files, 2899 tests; unit-web 120/120, 2039; nocodegen 259 passed, 2 skipped (declared). The exit 1 again comes only from one unhandled vitest '[vitest-worker]: Timeout calling \"onTaskUpdate\"'. The same 10 stderr lines from extension-fields.test.tsx appear (passing tests, explained in CS-05). Re-run of unit-node alone: 190/190 files, 2899 tests, exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/21-unit-node24.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/22-unit-node24-rerun-unit-node.log"
+      ]
+    },
+    {
+      "id": "CS-07-integration-lang-unset",
+      "procedure": "Run the integration project (contract.test.ts and migrations 0001-0125 included) on a disposable PostgreSQL with LANG/LC_ALL unset, in 4 shards, and check its file coverage against `vitest list`.",
+      "command": "checks.sh int4 w1 unset 1|2|3|4 (tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --shard=k/4); vitest list --project integration --filesOnly > 32-integration-file-list.txt; checks.sh int-one 34-... w1 unset apps/worker/test/integration/gate-condition-escalation.test.ts",
+      "environment": "Node 22.22.0; PostgreSQL 16.15, server_encoding UTF8, lc_collate C; 117 migration files applied to a fresh database; load 13-20; shared volume at times 8-200 MB free",
+      "expected": "all 417 integration files pass",
+      "actual": "Every candidate file passed: 417 of 417. The final logs: shard 1/4 105 files, 1046 tests, exit 0; shard 2/4 104 candidate files passed (965 tests, 1 skipped, 1 todo); shard 3/4 105 files, 1293 tests, exit 0; shard 4/4 102 files, 911 tests, exit 0. Shard 2/4 exits 1 for one reason only: my probe zz-cs-r4-sens-sweep.test.ts was in the clone's tests/qa/integration when that shard collected its files, and I removed it before it ran ('Cannot find module ...zz-cs-r4-sens-sweep.test.ts'). Its presence also shifted vitest's shard assignment, so apps/worker/test/integration/gate-condition-escalation.test.ts fell in no shard. I found it by comparing the logs with the 417-file list: 416 unique files ran, none twice. Run alone: 2/2 passed, exit 0 (34). Total: 4217 passed, 1 skipped, 1 todo, the same as the orchestrator's 04fcf43 run. The skip is presentation.test.ts it.runIf(!hasMeetingPackAssembler), the alternative to a test that ran; the todo is audit-events.test.ts:386. Both are declared. Earlier attempts are void and kept as evidence. 30-...shard1of4.attempt1-ENOSPC.log was cut mid-line after 41 files (exit 1). 30-...shard1of4.attempt2-ENOSPC.log: 52 files failed with 'No space left on device' in migrations, then cascading skips; 'Test Files 52 failed | 53 passed', exit 1. 30-...shard3of4.attempt1-ENOSPC.log was cut after 70 files (a12-p6-scope-isolation 26 skipped, blank-text 1, guardrails 2: all inside the disk-full window), exit 1. 30-...shard2of4.attempt1-stopped.log: I removed that run's database directory when I tried to stop it (it ran in another PID namespace, so it did not stop), and it then failed '87 failed | 18 passed', exit 1. Every one of those files passed in the final runs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard1of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard2of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard3of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard4of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/32-integration-file-list.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/34-integration-unset-gate-condition-escalation.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard1of4.attempt1-ENOSPC.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard1of4.attempt2-ENOSPC.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard2of4.attempt1-stopped.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard3of4.attempt1-ENOSPC.log"
+      ]
+    },
+    {
+      "id": "CS-08-integration-lang-c-utf8",
+      "procedure": "Run the integration project with LANG=C.UTF-8 in 4 shards and check its file coverage.",
+      "command": "checks.sh int4 w1 cutf8 1|2|3|4",
+      "environment": "Node 22.22.0; LANG=C.UTF-8; PostgreSQL 16.15 UTF8; 117 migrations applied; load 11-19",
+      "expected": "all 417 files pass",
+      "actual": "Four shards, each exit 0: 105 files/1046 tests, 105/967 plus 1 skipped and 1 todo (the declared ones), 105/1293, 102/911. The union is exactly the 417-file list (no file missing, none twice). 4217 passed, 1 skipped, 1 todo. No ENOSPC or unhandled error in any log. response-validation: '932 of 932 live operations (0 pending excluded) ... operations without a validated response: 0'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard1of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard2of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard3of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard4of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/32-integration-file-list.txt"
+      ]
+    },
+    {
+      "id": "CS-09-BE-Z4-review-and-judgements",
+      "procedure": "Review BE-Z4's diff (sensitive-reach.ts params, list filters, deep-links restrictedLinkChildren, work items, My Work, inbox, create refusals). Try every list, item, search, export, inbox, My Work, lineage and audit path that names a corrective case, transition decision or performance-area link. Judge the action-row/meeting/control residual and the other D-211 questions.",
+      "command": "git diff 95f9819..654e39d -- apps/api/src docs/api; source reading (grep of every read of corrective_case, transition_decision, performance_area_link); sensitive-reach-registers.test.ts in CS-07/CS-08; probes 40-42",
+      "environment": "source at 654e39d; integration runs CS-07/CS-08",
+      "expected": "a restricted case, decision or link is absent from lists, 404 by item and write, redacted in the inbox and My Work, 403 on the deep link, redacted in audit; residuals judged",
+      "actual": "BE-Z4 is correct for the records it names. The reach guard covers every route with correctiveCaseId, transitionDecisionId, performanceAreaLinkId or benefitEnablerId (item, close, signals, actions, PATCH, submit, link remove, enabler remove), reads and writes. The three lists filter after pagination with no hidden count. Creates naming a restricted benefit answer 422 validation.reference, like an unknown id. Work items, My Work and the inbox keep ids with inbox.restricted. The deep link answers 403 deep_link.forbidden. Audit events of the three types are redacted, because they have been in SENSITIVE_CHILD_SOURCES since BE-Y1. Search and assistant retrieval do not index these types (SEARCH_RECORD_TYPES). sensitive-reach-registers.test.ts (5 tests) passes in both locales. Residual judged acceptable under ADR-0051: action rows (raid/actions.ts:426-442 linkCodeOf; the action register report shows source kind only), meeting actions and controls (controls.ts:280-292) carry a restricted case's id or code but none of its values. ADR-0051 §3 treats ids as non-content, the code is a counter (CA-nnn), and the action's own title is the action's content, not the benefit's. Observation, not a finding: an executive ask or blocker status (governance/blocker-escalation.ts:52-63, escalations.ts:398) accepts a restricted corrective case id without the reach check, so a caller who knows the UUID learns that it exists (201 versus 422). That needs the UUID and discloses no content. While sweeping these paths I found that the parent benefit itself leaks through other transformation-level views: F-DG6-300 (CS-10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "apps/api/src/modules/access/sensitive-reach.ts",
+        "apps/api/src/modules/tasks/deep-links.ts",
+        "apps/api/src/modules/raid/corrective-cases.ts",
+        "apps/api/src/modules/raid/actions.ts",
+        "apps/api/src/modules/sustainment/controls.ts",
+        "apps/api/src/modules/governance/blocker-escalation.ts",
+        "apps/api/test/integration/access/sensitive-reach-registers.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard3of4.log"
+      ]
+    },
+    {
+      "id": "CS-10-sensitive-benefit-reach-F-DG6-300",
+      "procedure": "Adversarial REQ-S10-002 probes: mark a benefit sensitive, and as TL, AUD and a second BO (all 404 on the benefit) read every transformation-level view that lists benefits. Then sweep every GET with only {transformationId}, plus the live reports, on the demo dataset.",
+      "command": "checks.sh repro 40-repro-sens-title zz-cs-r4-sens-title.test.ts; checks.sh repro 41-repro-sens-title2 zz-cs-r4-sens-title2.test.ts; checks.sh repro 42-repro-sens-sweep zz-cs-r4-sens-sweep.test.ts",
+      "environment": "Node 22.22.0, LANG unset, disposable PostgreSQL 16.15; w1",
+      "expected": "the benefit's code, title and values appear in no response to a reader who gets 404 on it",
+      "actual": "FAIL: F-DG6-300 (High, mandatory). The controls pass: 404 for TL, AUD and BO2, 200 for TO and BO; listBenefits and the dashboards omit the benefit. 40: getTraceability and getMissingLinks return its id, code and title to all three readers (3 of 4 tests fail by design: the assertion that no route holds the title). 41: the live registers report returns its title and planned value 7654321.1234 SAR to TL. A snapshot TL generates (201) returns the same to TL and AUD. GET gates/G6 returns 'B01 <title> has no Finance-validated measurement...' (4 of 5 fail by design). The fifth, an export-start control, failed because my probe used a path the contract does not have: a probe error, not a product result. 42: 128 GETs plus 2 live reports on the demo data. The TO sees the title on 4 routes and the TL on getTraceability and the live registers report (1 of 1 fails by design). Void attempts, kept: 41 attempt 2, import error in my probe; 42 attempt 1 (ENOSPC); 42 attempt 2, the 0004 audit guard refused my probe's direct UPDATE without an audit event (correct product behaviour). The logs of 41's two ENOSPC attempts were overwritten by the next attempt.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S10-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-title.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/40-repro-sens-title.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-title2.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/41-repro-sens-title2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/41-repro-sens-title2.attempt2-import-error.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-sweep.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.attempt1-ENOSPC.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.attempt2-audit-guard.log",
+        "docs/delivery/reviews/DG6/round-4/code-security-reviewer.findings.json"
+      ]
+    },
+    {
+      "id": "CS-11-FE-Z2-review-and-judgements",
+      "procedure": "Review FE-Z2 (placeFieldErrors, connectorFieldOf, SecretRefFields errorCode, UnplacedFieldErrors, ExceptionErrorText, the report filter label). Judge whether the field-error mapping reveals IT's bindings, and whether the problems-all.test.ts gap FE-Z2 disclosed is a real gap.",
+      "command": "git diff 95f9819..654e39d -- apps/web/src; 45-field-error-codes-scan.py; integrations.test.tsx and p6-admin-screens.test.tsx in CS-05/CS-06; apps/web/e2e/p6-secret-ref-unbound.spec.ts in CS-13",
+      "environment": "source at 654e39d; Node 22/24 unit runs; e2e CS-13",
+      "expected": "no new disclosure; every emitted code translated",
+      "actual": "Mapping: acceptable. The web only localizes the 400 field errors the API already returns to the caller who submitted the SecretRef (an ADM_TECH or connector configurator, who must hold the write permission first), placing each on its row. It adds no request and no information. The API's not_bound versus host_not_bound tells such a caller only whether a name IT bound fits this setting's host; a binding is configuration, not a secret, and no value is ever returned. No dangerouslySetInnerHTML or raw server text: the last error is catalogue text or the code, and lastErrorMessage is no longer shown. The problems-all gap is real: F-DG6-301 (Low). Field-error codes inside problems.validation([...]) arrays are not collected, and 3 of 21 such codes have no en/ar text: validation.commit_on_behalf_of, validation.credential_refs, validation.unknown_version. They render the localized generic 'not valid' text, never raw.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.py",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.txt",
+        "apps/web/src/lib/problem.ts",
+        "apps/web/src/i18n/problems-all.test.ts",
+        "apps/web/src/pages/integrations/ConnectorFormPage.tsx",
+        "apps/web/src/pages/admin/operations/OperationsPages.tsx"
+      ]
+    },
+    {
+      "id": "CS-12-role-sweeps",
+      "procedure": "AUD write-deny sweeps (in the integration suite), and my ADM-only sweep over every transformation-scoped GET on the demo dataset.",
+      "command": "aud-write-deny.test.ts and kpi-aud-write-deny.test.ts in CS-07/CS-08; checks.sh repro 43-sweep-adm-only zz-cs-r2-adm-only-sweep.test.ts",
+      "environment": "Node 22.22.0, disposable PostgreSQL",
+      "expected": "AUD 403 on every P6 write; ADM-only 403/404 or nothing on every transformation-scoped read",
+      "actual": "aud-write-deny.test.ts and kpi-aud-write-deny.test.ts pass in both locales (CS-07/CS-08). ADM-only sweep: 1/1 passed, exit 0. 126 operations: 404 x123, 403 x1, 400 x2 (required query parameters); 0 answers with content. The control TO got content on 78.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/43-sweep-adm-only.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r2-adm-only-sweep.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard1of4.log"
+      ]
+    },
+    {
+      "id": "CS-13-deferred-e2e",
+      "procedure": "Re-run the e2e specs the register defers to the freeze verification (A17 failing connector, A17 import and webhook, A12 scope isolation incl. A12-5 assistant scope), plus FE-Z2's new secret-ref-unbound spec, on the production-initialized stack.",
+      "command": "checks.sh e2e 70-e2e-deferred e2e/a17-failing-connector-exception.spec.ts e2e/a17-import-and-integration.spec.ts e2e/a12-p6-scope-isolation.spec.ts apps/web/e2e/p6-secret-ref-unbound.spec.ts (with-stack.sh; --workers=1; E2E_SCREENSHOT_DIR=$TMPDIR/r/shots; MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001, a synthetic test value)",
+      "environment": "Node 24.21.0, pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers), chromium-en and chromium-ar, load about 17",
+      "expected": "all pass",
+      "actual": "28 passed (4.5 m), exit 0. No failure, retry, skip or flaky test.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/code-security/round-4/70-e2e-deferred.log"]
+    },
+    {
+      "id": "CS-14-contract-pending-graph-migrations",
+      "procedure": "Check the contract count and version, the p6-pending lists, the worker import boundary, and the migrations' history and contiguity.",
+      "command": "60-source-checks.log; 46-p6-pending-lists.txt; contract.test.ts and response-validation.test.ts in CS-07/CS-08; architecture.test.ts in CS-05/CS-06",
+      "environment": "source at 654e39d",
+      "expected": "932 operationIds; pending lists empty; worker imports no API code; 0098-0125 contiguous; no DG5 migration modified",
+      "actual": "info.version 1.5.0-p6. 932 operationIds, 0 duplicates. contract.test.ts asserts toHaveLength(932) and passes in both locales. response-validation: 932 of 932. All 29 p6-pending files are empty ([] or a union of empty lists). The worker imports no apps/api code; architecture.test.ts passes. 117 migration files; 0098-0125 is contiguous; no migration changed since round 3; no migration that existed at DG5 was modified (git diff --diff-filter=MDR 660f40c..654e39d: none). config.consumes and the media-type pin: contract.test.ts 'every route accepts exactly the request media types its operation declares' passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/60-source-checks.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/46-p6-pending-lists.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/30-integration-lang-unset-shard3of4.log"
+      ]
+    },
+    {
+      "id": "CS-15-egress-and-ADR-0011-judgements",
+      "procedure": "Judge the D-209 credential-less egress residual and the ADR-0011 object-store omission on this candidate.",
+      "command": "git diff 95f9819..654e39d (no change to connectors, storage, notification channels or the assistant's endpoint handling); reading docs/operations/restricted-network.md and ADR-0011",
+      "environment": "source at 654e39d",
+      "expected": "judgements recorded",
+      "actual": "Unchanged since round 3, so my round-3 judgements stand. Credential-less endpoints (an http_pull without credential, an SMTP relay without AUTH, an assistant endpoint) can still reach internal hosts. This is an acceptable residual. Only an ADM_TECH can configure one. http_pull is https-only, refuses redirects, caps the body and parses a strict envelope. No secret can be carried there (the D-209 binding). D-209 and ADR-0052 leave the rest to the egress policy that restricted-network.md tells IT to configure, and that document lists the S3-compatible object store. ADR-0011 rule 4 lists the IdP, SMTP, connectors and the AI endpoint, not the object store. That is documentation drift with no behavioural effect, so I record it as an observation, not a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/operations/restricted-network.md",
+        "docs/architecture/adr/ADR-0011-packaging-configuration.md",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/60-source-checks.log"
+      ]
+    },
+    {
+      "id": "CS-16-secrets-scan",
+      "procedure": "Scan the round-3-to-4 diff for secrets and public CDNs; check the log-redaction and service-identity suites.",
+      "command": "60-source-checks.log (grep of added lines); log-redaction and service-identity-scope tests in CS-07/CS-08",
+      "environment": "source at 654e39d",
+      "expected": "no secret, no CDN; suites pass",
+      "actual": "No secret-like or CDN string was added since round 3. The only secret-like value in the e2e environment is the synthetic MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET named by the assignment. The log-redaction and service-identity-scope suites pass in both locales.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/code-security/round-4/60-source-checks.log"]
+    },
+    {
+      "id": "CS-17-requirements",
+      "procedure": "Map each of the 36 assigned requirements' acceptance text to the checks above, and judge the register's deferred disclosures.",
+      "command": "see the checks cited",
+      "environment": "this record",
+      "expected": "each acceptance met literally",
+      "actual": "35 of 36 met; REQ-S10-002 is not. Its first clause holds (a BO of X gets 403/404 on Y: the access suites and a12 in both locales). Its second clause, 'a sensitive benefit is hidden from a workstream member without the grant', fails through getTraceability, getMissingLinks, the G6 readiness and the live and stored register reports (F-DG6-300). REQ-S10-004 and REQ-S20-012 (cross-transformation) hold: the leak is inside one transformation. The other 34 hold through their suites: integration in both locales (417/417), unit on Node 22 and 24, the deferred e2e (28/28), and the AUD and ADM-only sweeps. The deferred disclosures (REQ-S12-019, REQ-S17-007, REQ-S20-017 and the rows citing the freeze verification) are acceptable: I re-ran what they defer, the full integration suite in both locales and the A17/A12 e2e, and it passes. The REQ-S10-002 note claims the clause is met, which it is not on these views.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S10-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/40-repro-sens-title.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/41-repro-sens-title2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/70-e2e-deferred.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard2of4.log"
+      ]
+    },
+    {
+      "id": "CS-18-environment-residuals",
+      "procedure": "Record the environmental residuals the assignment lists.",
+      "command": "n/a (from the runs above)",
+      "environment": "this sandbox: no network, no external systems",
+      "expected": "PASS on the offline/config surface, with each residual noted",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058) are unreachable; the offline checks ran (CS-02, CS-03). Keycloak and a real enterprise IdP (D-049): the OIDC clauses ran against the bundled test issuer (oidc and other-realm suites in both locales); the SAML broker is documented, not run. External systems: connectors, outbound writes, notification channels and the assistant ran only through their test adapters and the shipped disabled configuration. Production capacity: the REQ-S20-029/030 targets are provisional engineering targets on one sandbox host (load-dataset.test.ts passes), not verified Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/code-security/round-4/31-integration-lang-cutf8-shard4of4.log"]
+    },
+    {
+      "id": "CS-19-cleanup",
+      "procedure": "Record the clone's state, then remove it; re-check HEAD and the candidate ID.",
+      "command": "90-cleanup.log",
+      "environment": "$TMPDIR/r/w1; /home/user/My-owns",
+      "expected": "no implementation path changed; the clone removed",
+      "actual": "w1 at 654e39d had 2301 changed paths, all the deletions of the trim (CS-01), and no other change. No probe file was left in it, and it was removed. HEAD is unchanged (2efdc024e), the candidate ID at the end is the same over 2732 files, and no tracked file of the repository changed. A wider removal of the test suites' temporary folders in $TMPDIR was refused by the permission classifier. I left them for the runner, which removes $TMPDIR at the end of the run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/code-security/round-4/90-cleanup.log"]
+    }
+  ],
+  "findings": ["F-DG6-300", "F-DG6-301"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-4/code-security-reviewer.findings.json",
+    "docs/delivery/reviews/DG6/round-4/code-security-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/checks.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/40-repro-sens-title.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/41-repro-sens-title2.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/43-sweep-adm-only.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.txt",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/60-source-checks.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/70-e2e-deferred.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/32-integration-file-list.txt",
+    "docs/delivery/test-evidence/DG6/code-security/round-4/90-cleanup.log"
+  ],
+  "reviewed_at": "2026-11-05T04:25:00Z",
+  "summary": "FAIL on candidate 4b84bf20 (source 654e39d). I had no open findings (verifications: []). BE-Z4 is correct for the corrective case, transition decision and performance-area link. FE-Z2 reveals nothing new. But a sensitive benefit itself is not hidden from a workstream member without the grant. getTraceability and getMissingLinks return its id, code and title. The G6 readiness names it. The live registers report and a report snapshot that any reader with report.generate can store return its title and planned value, to TL and AUD. That bypasses D-199's export refusal, because export is the only path checked. F-DG6-300: High, mandatory, REQ-S10-002; BE-B2's handback had left traceability, impact and missing links 'not done'. F-DG6-301: Low, three untranslated field-error codes and a catalogue-test blind spot. Everything else passes: static checks, historical validators DG1-DG5, unit tests on Node 22 and 24 (exit 1 only from vitest's own RPC timeout under load; the re-runs alone exit 0), integration 417/417 files in both locales (4217 passed, 1 skipped, 1 todo, declared), the deferred e2e 28/28, and the AUD and ADM-only sweeps. The shared volume filled up during my run, so several shard attempts are void; all are kept and disclosed in CS-07."
+}

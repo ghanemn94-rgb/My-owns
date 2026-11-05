@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-300",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "A sensitive benefit's code, title and values stay readable by a workstream member without the grant through the traceability graph, the missing-links report, the G6 readiness text and the live and stored register reports",
+      "reproduction": "Candidate 4b84bf20 (source 654e39d), disposable clone, disposable PostgreSQL 16, LANG unset, Node 22.22.0. Probes in docs/delivery/test-evidence/DG6/code-security/round-4/repro/ (run with checks.sh repro). (1) zz-cs-r4-sens-title.test.ts (log 40-repro-sens-title.log), product fixtures of sensitive-reach-registers.test.ts: BO creates a benefit on a launched initiative and renames it 'Synthetic CONFIDENTIAL CS-R4 tariff uplift'; the TO marks it sensitive (PUT .../records/benefit/{id}/sensitivity). TL, AUD and a second BO (no grant, not a named party) get 404 on GET .../benefits/{id} (control passes). The same three users then GET .../traceability (getTraceability) and .../missing-links (getMissingLinks): both answer 200 and carry the benefit's id, code B01 and title (traceability node {recordType:'benefit', code:'B01', label:'Synthetic CONFIDENTIAL CS-R4 tariff uplift', href:.../benefits/{id}}; missing-links item {code:'benefit_outcome_link_missing', label:'B01 Synthetic CONFIDENTIAL CS-R4 tariff uplift'}). 3 of 4 tests fail: 'routes whose body holds the sensitive benefit's title: expected [getTraceability, missing-links] to deeply equal []'. (2) zz-cs-r4-sens-title2.test.ts (log 41-repro-sens-title2.log): the benefit also gets plannedValue 7654321.1234 (BO PATCH, 200) and a G6 gate instance exists (not approved). As TL after marking: GET .../reports/registers/live?parameters={\"register\":\"benefits\"} answers 200 with the benefit's row: code, title and planned value 7654321.1234 SAR, with validated/sustained/submitted amounts; POST .../reports/registers/generate as TL answers 201, and GET .../report-snapshots/{id} returns the same row to TL and to AUD; GET .../gates/G6 answers 200 with missing item 'Benefits evidence: B01 Synthetic CONFIDENTIAL CS-R4b tariff uplift has no Finance-validated measurement and no approved transition decision.' 4 of 5 tests fail (the export-start control used a path the contract does not have: a probe error, not a product result; the export refusal export.includes_restricted_records is the candidate's own tested behaviour). (3) zz-cs-r4-sens-sweep.test.ts (log 42-repro-sens-sweep.log), demo-seeded roaming transformation: benefit B01 retitled (with its audit event) and marked sensitive by a TO; a TL at the transformation gets 404 on it. Over all 128 GET operations whose only path parameter is {transformationId} plus two live reports, the TL sees the title on getTraceability and on the live registers report; listBenefits and getTransformationDashboard (which the TO sees it on) correctly omit it. Source: apps/api/src/modules/reporting/traceability.ts:291-306 (every benefit of the transformation becomes a node with code and title; no sensitivity clause anywhere in the file); apps/api/src/modules/transformations/missing-links-facts.ts:99-142 (label `${b.code} ${b.title}`), served by reporting/modular.ts:382-385; apps/api/src/modules/benefits/gate-facts.ts:20-26 with workflows/g6.ts:50-57 (the readiness message embeds code and title; frozen into gate submissions too); apps/api/src/modules/reporting/reports/routes.ts:129-141 (live) and :143-160 (generate) with reporting/reports/assemblers/registers.ts:180-275 (benefit rows with title and amounts; the assembler takes no principal); same pattern, read but not run: workflows/impact.ts:381-415 and :508 (a KPI change-impact lists the benefits that measure it by code and title). BE-B2's handback (docs/delivery/handbacks/DG6/T-DG6-BE-B2-backend-workflow-engineer.md line 169) lists getTraceability, impact, missing links as 'not done, outside my files'; no later task closed it, and ADR-0051 §2 says 'Lists, search, exports, assistant retrieval: the row is absent'.",
+      "expected": "REQ-S10-002 A12: 'a sensitive benefit is hidden from a workstream member without the grant'. ADR-0051 §2: a reader who gets 404 on a sensitive benefit must not find it, its title or its values in any list, report, export or derived view; an aggregate that includes it is shown with includesRestrictedRecords and no individual value. The traceability graph, the missing-links report, the gate readiness texts (live and frozen), the impact preview and the live and stored reports omit the benefit (or show it as restricted with no code, title or value) for such a reader, and the register report snapshot, like the export, is refused or filtered when it would include a record the requester is not admitted to.",
+      "actual": "A TL, an AUD and a second BO who each get 404 on the benefit read its id, code and title through getTraceability and getMissingLinks, its code and title through the G6 readiness, and its title and planned value (7654321.1234 SAR) through the live registers report. A TL can store that report as a snapshot, which every transformation reader, including AUD, then reads. The export of the same selection is refused (D-199), but the live report and the snapshot are not, so the refusal is bypassed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-title.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/40-repro-sens-title.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-title2.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/41-repro-sens-title2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-sweep.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.log",
+        "apps/api/src/modules/reporting/traceability.ts",
+        "apps/api/src/modules/transformations/missing-links-facts.ts",
+        "apps/api/src/modules/reporting/modular.ts",
+        "apps/api/src/modules/benefits/gate-facts.ts",
+        "apps/api/src/modules/workflows/g6.ts",
+        "apps/api/src/modules/reporting/reports/routes.ts",
+        "apps/api/src/modules/reporting/reports/assemblers/registers.ts",
+        "apps/api/src/modules/workflows/impact.ts",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-B2-backend-workflow-engineer.md",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T03:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 4 on candidate 4b84bf20 (source 654e39d); reproduced by three probes in a disposable clone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-301",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Three field-error codes have no en/ar catalogue text, and problems-all.test.ts does not collect codes inside problems.validation([...]) arrays, so it cannot find them",
+      "reproduction": "45-field-error-codes-scan.py (a read-only scan of apps/api/src/modules for `code:` entries inside `problems.validation([...])` calls, compared with apps/web/src/i18n/en and ar): 21 such codes, 3 without problems.<key> in either language: validation.commit_on_behalf_of (apps/api/src/modules/integrations/connectors.ts:353, emitted twice), validation.credential_refs (connectors.ts:295), validation.unknown_version (apps/api/src/modules/workflows/approval-routes.ts:713). apps/web/src/i18n/problems-all.test.ts collects codes only from problems.businessRule/duplicate/badRequest, `new HttpProblem({...})` and db-errors.ts (lines 57-75), so these three are never checked. fieldErrorMessage (apps/web/src/lib/problem.ts:84-87) falls back to problems.validation__invalid for them; since FE-Z2 the connector form places /config/commitOnBehalfOf on its field (ConnectorFormPage.tsx connectorFieldOf), so a user who picks automatic commit without an on-behalf-of user sees only the generic text.",
+      "expected": "Every code the API emits, including field-error codes inside problems.validation arrays, has an en and an ar text (REQ-S15-007 'a test finds no missing ar or en key'), and the catalogue test collects them.",
+      "actual": "The three codes show the generic 'not valid' text in both languages, and the catalogue test passes without seeing them. The text is localized, with no raw code or English server text, so the effect is a less specific message.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.py",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.txt",
+        "apps/web/src/i18n/problems-all.test.ts",
+        "apps/api/src/modules/integrations/connectors.ts",
+        "apps/api/src/modules/workflows/approval-routes.ts",
+        "apps/web/src/lib/problem.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T03:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 4 while judging FE-Z2's disclosed problems-all.test.ts gap (D-211)."
+        }
+      ]
+    }
+  ]
+}
