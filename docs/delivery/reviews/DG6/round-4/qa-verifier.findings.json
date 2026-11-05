@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-320",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "After the F-DG6-221 repair, 'Last error' on the operational exception page shows the raw code for the stale-data and missed-heartbeat exceptions (kpi.stale, operations.heartbeat_missed), in both languages, because neither code has a catalogue text",
+      "reproduction": "(1) Live, candidate 4b84bf20 (source 654e39d): docs/delivery/test-evidence/DG6/qa/tests/round-4/zz-qa-dg6r4-exception-last-error.spec.ts, run last in the C.UTF-8 root acceptance run on apps/web/e2e/support/with-stack.sh (05b-e2e-root-cutf8-connection-log.log). It lists the dev organization's operational exceptions and opens one per lastErrorCode as dev.admin. Output: 'QA-R4 LAST-ERROR ar: code=operations.heartbeat_missed failureClass=heartbeat_missed shown=\"operations.heartbeat_missed\" catalogueText=false serverMessage=\"No worker heartbeat for 304 seconds (newest beat 2026-11-05T06:27:18.402Z).\"'. The connector codes are localized correctly ('لم يستجب نظام المصدر.', 'محوّل الاختبار الخاص بالموصل متوقف.'). The English screen of the a22-p6-operability heartbeat exception (shots/a22-p6-exception-resolved-en.png) shows 'Error code: operations.heartbeat_missed' and 'Last error: operations.heartbeat_missed'. (2) Cause: OperationsPages.tsx exceptionErrorText() returns integrations.actionable.<code>.why, else problems.<code>, else ''; ExceptionErrorText then shows the code itself. apps/web/src/i18n/{en,ar}/problems.json have no kpi__stale and no operations__heartbeat_missed (12-problem-code-scan.txt). The worker raises the stale-data exception with errorCode DATA_STALE_ERROR_CODE = 'kpi.stale' (apps/worker/src/handlers/operations.ts:61), and the API's heartbeat watch raises 'operations.heartbeat_missed' (apps/api/src/modules/operations/heartbeat.ts:125, 158). The other exception codes have texts: the connector codes (integrations.actionable), automation.retries_exhausted, service_identity.missing and service_identity.out_of_scope. problems-all.test.ts does not see either code, because exception codes are neither problems.* helper arguments nor HttpProblem codes (the D-211 open question).",
+      "expected": "ADR-0007 and the F-DG6-221 repair: 'Last error' is the catalogue text of lastErrorCode in the user's language. CLAUDE.md: Arabic RTL and English LTR for every user-facing string. REQ-S15-007: bilingual errors. The two P6 exception kinds the product raises itself (stale data, REQ-S12-019; missed heartbeat, REQ-S20-022) should have an en and ar text, as the connector codes do, and a completeness test should cover every exception code.",
+      "actual": "For these two codes the value is the raw identifier, in en and in ar. Before FE-Z2, the English screen showed the server's sentence (for example 'No worker heartbeat for 304 seconds ...'). It now shows the same code twice, once as 'Error code' and once as 'Last error'. The effect is bounded to the administrator's Operations screen. It is not English text on the Arabic screen (the F-DG6-221 defect), and no state, value, RAG or approval is affected. The failure class ('Heartbeat missed', localized), the occurrences and the linked KPI's Stale label are shown correctly. It is cosmetic and not blocking.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-4/05b-e2e-root-cutf8-connection-log.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/shots/qa-r4-exception-ar-operations.heartbeat_missed.png",
+        "docs/delivery/test-evidence/DG6/qa/round-4/shots/a22-p6-exception-resolved-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-4/12-problem-code-scan.txt",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-4/zz-qa-dg6r4-exception-last-error.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 4 (T-DG6-REV-QA-R4) on candidate sha256:4b84bf20. Low, non-mandatory, cosmetic; answers D-211 open question 1 for the exception codes."
+        }
+      ]
+    }
+  ]
+}

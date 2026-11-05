@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-260",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-read the finding in findings.json and in round-3/qa-verifier.findings.json. On this candidate (source 654e39d), T-DG6-AN-Z2 updated the notes of REQ-S20-001, -012, -017 and -022. Each row now has a T-DG6-AN-Z2 check, and the AN-P6B clause that reported a failing or absent suite is marked superseded, with the stale phrases removed. The check script reports stale-unsuperseded=0 and exits 0. Mutant (the repair reverted, i.e. the round-3 register at 95f98191): the same script finds 7 stale phrases across the four rows and exits 1, so the check catches the defect. I re-checked every concrete claim in the new notes against its cited evidence: round-3 05-e2e-root-unset.log tests 9-14 and 162-167 are A12-1 to A12-6 in en and ar, all passed; 04c-tests-qa-alone.log has 45/45 files and 437 tests, with the A01, A12, A17 and A22 files and test counts as stated; orchestrator-final-8b22cc0 has 416/416 files and 4212 passed; FE-Z2's 31-e2e-touched-product-specs.log has 54 passed. Every evidence path on the four rows exists. The notes defer the binding re-run of the merged tree to the next round. I ran that re-run here: A01, A12, A17 and A22 pass in both integration runs, in tests/qa alone (45 files, 437 tests), and in both root e2e runs, in en and ar. validate.mjs --register DG6 passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-4/10-f260-register-notes.txt",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-4/f260-register-notes-check.py",
+        "docs/delivery/test-evidence/DG6/qa/round-4/04c-tests-qa-alone.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/05b-e2e-root-cutf8-connection-log.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/09-validate.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-261",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-read the finding in findings.json and in round-3/qa-verifier.findings.json. The repair (T-DG6-FE-Z2) has two independent parts. (a) Product: ReportsPage.tsx labels the snapshot filter reportsP5.snapshots.filterOutput ('Filter by output' / 'التصفية حسب المخرَج'). (b) Spec: step 10 of e2e/a02-demo-users-walkthrough.spec.ts scopes the locator to form[data-form='generate-report'], waits for the charter option, asserts the value and that Generate is enabled. I re-ran the round-3 reproduction on this candidate's real stack (with-stack.sh), with GET /report-definitions held for 4 s, in en and ar, with the locale unset and with C.UTF-8. R, the round-3 locator (getByLabel(field('Output')).first()), now selects the Generate form's select: generate='charter', filter='', Generate enabled. The anchored field() regex no longer matches the filter, so (a) alone fixes it. N, the new spec sequence, gives the same. Mutant M1 reverts (a) by giving the filter back the 'Output' label in the DOM, with the new locator: still charter and enabled, so (b) holds alone. Mutant M2 reverts both: generate='', filter='charter', Generate disabled, which is exactly the round-3 defect, so the probe catches it. The real spec passes in all 8 executions this round (en and ar in 07 unset, 07b C.UTF-8, 07c alone C.UTF-8 and 07d alone unset), with no step-10 timeout.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-4/08-probes-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/08d-probes-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-4/zz-qa-dg6r4-reports-output-label.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-4/07-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/07b-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/07c-e2e-demo-users-walkthrough-cutf8-alone-1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/07d-e2e-demo-users-walkthrough-unset-alone-2.log"
+      ]
+    }
+  ]
+}
