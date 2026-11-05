@@ -1,0 +1,17 @@
+# 34-integration-unset-gate-condition-escalation  started 2026-11-05T03:49:57Z  cwd=/var/tmp/mth-run.0wKR5c/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=17.03 15.44 15.49  commit=654e39d89b66c0975ebef293d607f480f58408e3
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/worker/test/integration/gate-condition-escalation.test.ts
+port-policy: PostgreSQL listening on port 29862 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.0wKR5c/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw30bzhi_624e1597 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/gate-condition-escalation.test.ts (2 tests) 2493ms
+   ✓ gate.condition_escalation_scan (REQ-S04-011) > an overdue open condition escalates once to the approver; a closed one never; on the due date nothing  1311ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  03:50:02
+   Duration  40.99s (transform 12.51s, setup 0ms, collect 29.33s, tests 2.49s, environment 0ms, prepare 336ms)
+
+exit=0  finished 2026-11-05T03:50:49Z  load=17.64 15.91 15.65

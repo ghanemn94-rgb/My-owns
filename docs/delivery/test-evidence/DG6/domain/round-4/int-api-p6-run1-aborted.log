@@ -1,0 +1,82 @@
+$ QA_PG_PORT=29830 MTH_PORT_POOL=29830-29839 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat int-api-files.txt)  (44 files; 2026-11-05T02:48:39Z)
+port-policy: PostgreSQL listening on port 29830 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.I4Z7SJ/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2y568g_90a5d4dd (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (38 tests) 588ms
+stderr | apps/api/test/integration/integrations/webhooks.test.ts > webhook endpoint administration (webhook.configure; ADR-0056 §7) > F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing
+{"level":"warn","event":"secret_ref.refused","consumer":"webhook_signing","organizationId":"01a1a99c-6431-76c6-9eed-c77eb250ff2e","provider":"env","name":"MTH_SECRET_TEST_WEBHOOK_SECRET_A","reason":"not_bound"}
+
+ ✓ |integration| apps/api/test/integration/integrations/webhooks.test.ts (17 tests) 11039ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > answers 202 and stages 10 = 8 + 1 + 1 with its receipt and webhook run, as the connector's service identity  1756ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > applies the connector's field mappings and turns a JSON number into the row reason value_not_decimal  365ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > commits the valid rows after the staging transaction, on behalf of the configured KDS  869ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > leaves the batch staged and records import_batch.auto_commit_refused when the commit-time re-check refuses  473ms
+   ✓ receiveWebhook: every authentication failure is the same 401 and stores nothing > refuses unsigned, wrongly signed, stale, malformed, unknown, disabled-endpoint and disabled-connector deliveries  385ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  369ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > two concurrent deliveries with one id create one receipt and one batch  420ms
+   ✓ rotateWebhookSecret: the previous secret is valid for the grace period only > accepts the new and the previous secret inside the grace period and refuses the previous one after it  1725ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > creates an active endpoint with a server-generated key and a SecretRef; one audit event; no secret value anywhere  436ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing  513ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > lists the organization's endpoints newest first; the cursor walks every endpoint exactly once  383ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > refuses a secret value (422), a non-webhook connector (422), a bad tolerance (400) and an unknown connector (404)  324ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > rotates and disables with If-Match (428, 409), refuses a bad grace (422) and any change after disable (409)  309ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > AUD and KDS get 403 on every mutation, an outsider 404, no session 401; nothing is written  464ms
+ ✓ |integration| apps/api/test/integration/integrations/connectors.test.ts (20 tests) 4315ms
+   ✓ putConnector, mappings, enable and disable > enable and disable: the status machine, the reason, and the queued runs of a disabled connector are cancelled  409ms
+   ✓ putConnector, mappings, enable and disable > every mutation is 403 for AUD and KDS (readers), 404 for an outsider; nothing is written  391ms
+   ✓ testConnector and the derived verification, last success and actionable error > names the unresolvable secret and the missing mapped column in the error (connector.secret_unresolvable, mapping_mismatch)  373ms
+ ❯ |integration| apps/api/test/integration/assistant/conversations.test.ts (21 tests | 21 skipped) 407ms
+   ↓ off means no call (REQ-S17-009; ADR-0059 §3) > with no setting row: create is 422 assistant.disabled, the list is empty and readable
+   ↓ off means no call (REQ-S17-009; ADR-0059 §3) > an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable
+   ↓ off means no call (REQ-S17-009; ADR-0059 §3) > enabled with the HTTP endpoint, BE-T's stub seam answers no_sources and still sends nothing to the model
+   ↓ assistantEnabled: whether the assistant is on, for every holder of assistant.use (T-DG6-BE-X5; REQ-S17-007) > a TL without assistant.configure or operations.read: 403 on the setting, and the list says on/off and nothing else
+   ↓ assistantEnabled: whether the assistant is on, for every holder of assistant.use (T-DG6-BE-X5; REQ-S17-007) > agrees with create: when the list says false, create answers 422 assistant.disabled; when true, create succeeds
+   ↓ assistantEnabled: whether the assistant is on, for every holder of assistant.use (T-DG6-BE-X5; REQ-S17-007) > the signal is providerFor's answer: a test adapter saved and enabled is refused under NODE_ENV=production
+   ↓ assistantEnabled: whether the assistant is on, for every holder of assistant.use (T-DG6-BE-X5; REQ-S17-007) > AUD, a user without assistant.use and an anonymous caller learn nothing: 403, 403, 401
+   ↓ authorization and ownership (ADR-0059 §10) > AUD and a user without assistant.use get 403 on every conversation route
+   ↓ authorization and ownership (ADR-0059 §10) > another user's conversation is 404 on read and post, and never listed
+   ↓ authorization and ownership (ADR-0059 §10) > a focus transformation the caller cannot read is 404 (TL on tA1 asks about tA2); a readable one is accepted
+   ↓ authorization and ownership (ADR-0059 §10) > create: validation (400), version 1 with no message, Location and ETag, one audit event
+   ↓ authorization and ownership (ADR-0059 §10) > create re-checks assistant.use at commit: revoked while waiting is 403 and nothing is created
+   ↓ postAssistantMessage (ADR-0059 §9) > validation (400), If-Match (428 missing, 409 stale), then one turn: prompt + reply, two versions, two audit events
+   ↓ postAssistantMessage (ADR-0059 §9) > post re-checks assistant.use at commit: revoked while waiting is 403 and nothing is appended
+   ↓ postAssistantMessage (ADR-0059 §9) > a reply still awaited is 409 assistant.reply_pending; one awaited past the timeout + 60 s is recovered as `interrupted`
+   ↓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended
+   ↓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full
+   ↓ the list (cursor-paginated, own only, updatedAt desc then id desc) > pages with a stable order; a tampered cursor is 400; the transformation filter applies
+   ↓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > an answer citing a record the owner can no longer read is withheld (content null, readable false), with its suggestion
+   ↓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > a citation of a record that is not (or no longer) indexed is treated as unreadable (fail closed)
+   ↓ the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 41 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts [ apps/worker/test/integration/operations-freshness.test.ts ]
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-calculations.test.ts [ apps/api/test/integration/access/sensitive-reach-calculations.test.ts ]
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts [ apps/api/test/integration/access/sensitive-reach-registers.test.ts ]
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts [ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts ]
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach.test.ts [ apps/api/test/integration/access/sensitive-reach.test.ts ]
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reads.test.ts [ apps/api/test/integration/access/sensitive-reads.test.ts ]
+ FAIL  |integration| apps/api/test/integration/admin/notification-channels.test.ts [ apps/api/test/integration/admin/notification-channels.test.ts ]
+ FAIL  |integration| apps/api/test/integration/admin/storage.test.ts [ apps/api/test/integration/admin/storage.test.ts ]
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts [ apps/api/test/integration/assistant/composition.test.ts ]
+ FAIL  |integration| apps/api/test/integration/assistant/guardrails.test.ts [ apps/api/test/integration/assistant/guardrails.test.ts ]
+ FAIL  |integration| apps/api/test/integration/assistant/injection.test.ts [ apps/api/test/integration/assistant/injection.test.ts ]
+ FAIL  |integration| apps/api/test/integration/assistant/no-write.test.ts [ apps/api/test/integration/assistant/no-write.test.ts ]
+ FAIL  |integration| apps/api/test/integration/assistant/provider.test.ts [ apps/api/test/integration/assistant/provider.test.ts ]
+ FAIL  |integration| apps/api/test/integration/assistant/settings.test.ts [ apps/api/test/integration/assistant/settings.test.ts ]
+ FAIL  |integration| apps/api/test/integration/automation/automation-backlog-enablement.test.ts [ apps/api/test/integration/automation/automation-backlog-enablement.test.ts ]
+ FAIL  |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts [ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts ]
+ FAIL  |integration| apps/api/test/integration/benefits/scenarios.test.ts [ apps/api/test/integration/benefits/scenarios.test.ts ]
+ FAIL  |integration| apps/api/test/integration/evidence/ownership-transfer.test.ts [ apps/api/test/integration/evidence/ownership-transfer.test.ts ]
+ FAIL  |integration| apps/api/test/integration/evidence/preview.test.ts [ apps/api/test/integration/evidence/preview.test.ts ]
+ FAIL  |integration| apps/api/test/integration/evidence/store-contract.test.ts [ apps/api/test/integration/evidence/store-contract.test.ts ]
+ FAIL  |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts [ apps/api/test/integration/hardening/integrity-sweep.test.ts ]
+ FAIL  |integration| apps/api/test/integration/identity/other-realm.test.ts [ apps/api/test/integration/identity/other-realm.test.ts ]
+ FAIL  |integration| apps/api/test/integration/integrations/graceful-degradation.test.ts [ apps/api/test/integration/integrations/graceful-degradation.test.ts ]
+ FAIL  |integration| apps/api/test/integration/integrations/s16-022-entity-group.test.ts [ apps/api/test/integration/integraexit=1 at 2026-11-05T02:49:50Z

@@ -1,0 +1,33 @@
+# 41-repro-sens-title2  started 2026-11-05T02:41:38Z  cwd=/var/tmp/mth-run.0wKR5c/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=16.67 14.48 11.54  commit=654e39d89b66c0975ebef293d607f480f58408e3
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r4-sens-title2.test.ts
+port-policy: PostgreSQL listening on port 29865 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.0wKR5c/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2xw6np_93be5d45 (server_encoding UTF8); applied 117 migrations to a fresh database
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts [ tests/qa/integration/zz-cs-r4-sens-title2.test.ts ]
+Error: Cannot find package '@mth/db' imported from '/var/tmp/mth-run.0wKR5c/claude-0/r/w1/tests/qa/integration/zz-cs-r4-sens-title2.test.ts'
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:8:1
+      6| // Run ONLY in a disposable clone (checks.sh repro). Every value is SY…
+      7| // decision, never a business approval (G1-G6); nothing here touches D…
+      8| import { insertAuditEvent } from "@mth/db";
+       | ^
+      9| import { v7 as uuidv7 } from "uuid";
+     10| import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+Caused by: Error: Failed to load url @mth/db (resolved id: @mth/db) in /var/tmp/mth-run.0wKR5c/claude-0/r/w1/tests/qa/integration/zz-cs-r4-sens-title2.test.ts. Does the file exist?
+ ❯ loadAndTransform ../../../../../../home/user/My-owns/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  02:41:46
+   Duration  8.42s (transform 67ms, setup 0ms, collect 0ms, tests 0ms, environment 5ms, prepare 243ms)
+
+exit=1  finished 2026-11-05T02:41:56Z  load=16.69 14.63 11.65

@@ -1,0 +1,57 @@
+$ QA_PG_PORT=29800 MTH_PORT_POOL=29800-29809 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts apps/api/test/integration/access/sensitive-reach-registers.test.ts  (clone @654e39d89, Node v24.21.0, 2026-11-05T02:13:49Z)
+port-policy: PostgreSQL listening on port 29800 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.I4Z7SJ/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2wwbnq_b598a773 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (5 tests) 3739ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404  626ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row  355ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not  481ms
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > admitted readers (TO: sensitive_record.grant; BO: the owner) see everything (control)
+DOMAIN-PROBE R3 TO: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 TO: GET benefit -> 200; corrective list 200 caseListed=true item 200; transition list 200 decisionListed=true item 200; area links 200 linkListed=true
+DOMAIN-PROBE R3 TO: corrective item body: {"id":"01a1a97c-6686-7483-8baa-d176f04179cf","transformationId":"01a1a97c-63ab-7048-ba7f-484e1689a515","code":"CA-962799","sourceKind":"benefit_variance","sourceScopeKey":"01a1a97c-6559-75cf-b953-4974b41bb3eb","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a97c-6559-75cf-b953-4974b41bb3eb","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle","ownerUserId":"01a1a97c-63ae-7123-8179-e2e15729f1b8","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":1,"createdAt":"2026-11-05T02:14:24.647Z","createdBy":null,"update
+DOMAIN-PROBE R3 TO: transition item body: {"id":"01a1a97c-65f7-73ba-89b0-8e51dcc0960e","transformationId":"01a1a97c-63ab-7048-ba7f-484e1689a515","code":"TD-01","benefitId":"01a1a97c-6559-75cf-b953-4974b41bb3eb","residualOwnerUserId":"01a1a97c-63b0-71b9-a581-9dcc61596198","rationale":"Synthetic: the churn benefit realizes over 18 months after delivery","expectedRealizationEnd":"2031-12-31","monitoringFrequency":"monthly","monitoringInterval":1,"firstMonitoringDate":"2030-01-15","nextMonitoringDate":null,"status":"draft","approvalId":null,"decidedAt":null,"decidedBy":null,"version":1,"createdAt":"2026-11-05T02:14:24.483Z","createdBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8","updatedAt":"2026-11-05T02:14:24.483Z","updatedBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8"}
+DOMAIN-PROBE R3 TO: links body: {"items":[{"id":"01a1a97c-667c-77c4-893e-22583eb9dade","transformationId":"01a1a97c-63ab-7048-ba7f-484e1689a515","performanceAreaId":"01a1a97c-6639-772a-bec6-9c2382ae54c1","linkKind":"benefit","kpiDefinitionId":null,"benefitId":"01a1a97c-6559-75cf-b953-4974b41bb3eb","status":"active","removedAt":null,"removedBy":null,"version":1,"createdAt":"2026-11-05T02:14:24.619Z","createdBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8","updatedAt":"2026-11-05T02:14:24.619Z","updatedBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8"}],"nextCursor":null}
+DOMAIN-PROBE R3 TO: responses contain benefitId=true benefitCode=true caseTitle=true recoveryPlan=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > admitted readers (TO: sensitive_record.grant; BO: the owner) see everything (control)
+DOMAIN-PROBE R3 BO-owner: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 BO-owner: GET benefit -> 200; corrective list 200 caseListed=true item 200; transition list 200 decisionListed=true item 200; area links 200 linkListed=true
+DOMAIN-PROBE R3 BO-owner: corrective item body: {"id":"01a1a97c-6686-7483-8baa-d176f04179cf","transformationId":"01a1a97c-63ab-7048-ba7f-484e1689a515","code":"CA-962799","sourceKind":"benefit_variance","sourceScopeKey":"01a1a97c-6559-75cf-b953-4974b41bb3eb","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a97c-6559-75cf-b953-4974b41bb3eb","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle","ownerUserId":"01a1a97c-63ae-7123-8179-e2e15729f1b8","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":1,"createdAt":"2026-11-05T02:14:24.647Z","createdBy":null,"update
+DOMAIN-PROBE R3 BO-owner: transition item body: {"id":"01a1a97c-65f7-73ba-89b0-8e51dcc0960e","transformationId":"01a1a97c-63ab-7048-ba7f-484e1689a515","code":"TD-01","benefitId":"01a1a97c-6559-75cf-b953-4974b41bb3eb","residualOwnerUserId":"01a1a97c-63b0-71b9-a581-9dcc61596198","rationale":"Synthetic: the churn benefit realizes over 18 months after delivery","expectedRealizationEnd":"2031-12-31","monitoringFrequency":"monthly","monitoringInterval":1,"firstMonitoringDate":"2030-01-15","nextMonitoringDate":null,"status":"draft","approvalId":null,"decidedAt":null,"decidedBy":null,"version":1,"createdAt":"2026-11-05T02:14:24.483Z","createdBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8","updatedAt":"2026-11-05T02:14:24.483Z","updatedBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8"}
+DOMAIN-PROBE R3 BO-owner: links body: {"items":[{"id":"01a1a97c-667c-77c4-893e-22583eb9dade","transformationId":"01a1a97c-63ab-7048-ba7f-484e1689a515","performanceAreaId":"01a1a97c-6639-772a-bec6-9c2382ae54c1","linkKind":"benefit","kpiDefinitionId":null,"benefitId":"01a1a97c-6559-75cf-b953-4974b41bb3eb","status":"active","removedAt":null,"removedBy":null,"version":1,"createdAt":"2026-11-05T02:14:24.619Z","createdBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8","updatedAt":"2026-11-05T02:14:24.619Z","updatedBy":"01a1a97c-63ae-7123-8179-e2e15729f1b8"}],"nextCursor":null}
+DOMAIN-PROBE R3 BO-owner: responses contain benefitId=true benefitCode=true caseTitle=true recoveryPlan=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+DOMAIN-PROBE R3 TL: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 TL: GET benefit -> 404; corrective list 200 caseListed=false item 404; transition list 200 decisionListed=false item 404; area links 200 linkListed=false
+DOMAIN-PROBE R3 TL: corrective item body: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a1a97c-6802-712f-abb7-2ceea37bd5ae"}
+DOMAIN-PROBE R3 TL: transition item body: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a1a97c-6819-70d8-8919-43fa20314628"}
+DOMAIN-PROBE R3 TL: links body: {"items":[],"nextCursor":null}
+DOMAIN-PROBE R3 TL: responses contain benefitId=false benefitCode=false caseTitle=false recoveryPlan=false
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+DOMAIN-PROBE R3 AUD: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 AUD: GET benefit -> 404; corrective list 200 caseListed=false item 404; transition list 200 decisionListed=false item 404; area links 200 linkListed=false
+DOMAIN-PROBE R3 AUD: corrective item body: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a1a97c-684b-744a-8be6-3978b66f9557"}
+DOMAIN-PROBE R3 AUD: transition item body: {"type":"urn:mth:problem:not-found","title":"Not found","status":404,"code":"not_found","requestId":"01a1a97c-68a9-7323-80a0-f3359339e092"}
+DOMAIN-PROBE R3 AUD: links body: {"items":[],"nextCursor":null}
+DOMAIN-PROBE R3 AUD: responses contain benefitId=false benefitCode=false caseTitle=false recoveryPlan=false
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+DOMAIN-PROBE R3 summary {"TL":{"caseInList":false,"decisionInList":false,"linkInList":false,"caseItem":404,"decisionItem":404},"AUD":{"caseInList":false,"decisionInList":false,"linkInList":false,"caseItem":404,"decisionItem":404}}
+
+ ✓ |integration| apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts (2 tests) 1822ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  02:13:52
+   Duration  32.44s (transform 8.02s, setup 0ms, collect 21.73s, tests 5.56s, environment 0ms, prepare 194ms)
+
+exit=0

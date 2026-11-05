@@ -1,0 +1,21 @@
+# DOM-R4-00 candidate verification 2026-11-05T02:10:34Z
+$ git -C /home/user/My-owns rev-parse HEAD
+2efdc024ed589ba18fb3c5f8f3b7c3d5135147bf
+$ (repo) node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:4b84bf201d45d0b78b6c5fdb856e7c52df69bf62a1b709176d786c207cba1b5b","files":2732}
+$ (clone: git clone --shared; sparse excludes docs/delivery/runs, docs/delivery/test-evidence, handbacks/*/*-evidence except DG6 DO-G/DO-H/DO-B, trading_agent) rev-parse HEAD; is-shallow; rev-list --count
+654e39d89b66c0975ebef293d607f480f58408e3
+false
+1918
+$ (clone) candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:4b84bf201d45d0b78b6c5fdb856e7c52df69bf62a1b709176d786c207cba1b5b","files":2732}
+$ manifest entries missing in clone
+0
+$ git diff --name-only 654e39d89 2efdc024e
+docs/delivery/assignments/DG6/round-4/code-security-reviewer.md
+docs/delivery/assignments/DG6/round-4/domain-reviewer.md
+docs/delivery/assignments/DG6/round-4/qa-verifier.md
+docs/delivery/candidates/DG6/4b84bf201d45d0b7.manifest.json
+docs/delivery/stages.json
+$ pnpm-lock.yaml identical to repo (node_modules copied from repo working tree)
+identical

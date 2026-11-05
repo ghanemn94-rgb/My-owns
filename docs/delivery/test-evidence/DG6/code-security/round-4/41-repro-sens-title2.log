@@ -1,0 +1,117 @@
+# 41-repro-sens-title2  started 2026-11-05T02:45:09Z  cwd=/var/tmp/mth-run.0wKR5c/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=16.38 15.49 12.55  commit=654e39d89b66c0975ebef293d607f480f58408e3
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r4-sens-title2.test.ts
+port-policy: PostgreSQL listening on port 29865 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.0wKR5c/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2y0nwt_c276d20e (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts
+[CS-R4b] plannedValue PATCH [33m200[39m 7654321.1234
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit
+[CS-R4b] live registers/benefits as TL [33m200[39m row: {"recordType":"benefit","recordId":"01a1a999-1bc8-723d-84de-6236b37c343b","recordVersion":3,"cells":[{"type":"text","value":"B01","authored":"user","validation":"not_applicable","reason":null},{"type":"text","value":"Synthetic CONFIDENTIAL CS-R4b tariff uplift","authored":"user","validation":"not_applicable","reason":null},{"type":"code","value":"revenue","labelKey":"report.benefit_type.revenue","validation":"not_applicable","reason":null},{"type":"code","value":"revenue_uplift","labelKey":"report.benefit_value_class.revenue_uplift","validation":"not_applicable","reason":null},{"type":"decimal","value":null,"unitKind":"other","currency":null,"valueBasis":"baseline","validation":"unknown","reason":"missing"},{"type":"text","value":null,"authored":"user","validation":"unknown","reason":"missing"},{"type":"decimal","value":null,"unitKind":"other","currency":null,"valueBasis":"target","validation":"unknown","reason":"missing"},{"type":"decimal","value":"7654321.1234","unitKind":"currency","currency":"SAR","valueBasis":"planned","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.0000","unitKind":"currency","currency":"SAR","valueBasis":"validated","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.0000","unitKind":"currency","currency":"SAR","valueBasis":"sustained","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.0000","unitKind":"currency","currency":"SAR","valueBasis":"submitted","validation":"not_applicable
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] generate as TL [33m201[39m {"id":"01a1a999-1efc-712d-bc95-0ac503980d25","transformationId":"01a1a999-16ae-719a-be5d-2b3d02522950","definitionCode":"registers","subjectType":"transformation","subjectId":"01a1a999-16ae-719a-be5d-2b3d02522950","reportingPeriodId":null,"periodLabel":null,"periodStart":null,"periodEnd":null,"asOf"
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] snapshot as TL [33m200[39m row: {"cells":[{"type":"text","value":"B01","reason":null,"authored":"user","validation":"not_applicable"},{"type":"text","value":"Synthetic CONFIDENTIAL CS-R4b tariff uplift","reason":null,"authored":"user","validation":"not_applicable"},{"type":"code","value":"revenue","reason":null,"labelKey":"report.benefit_type.revenue","validation":"not_applicable"},{"type":"code","value":"revenue_uplift","reason":null,"labelKey":"report.benefit_value_class.revenue_uplift","validation":"not_applicable"},{"type":"decimal","value":null,"reason":"missing","currency":null,"unitKind":"other","validation":"unknown"
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] snapshot as AUD [33m200[39m title present: [33mtrue[39m
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit
+[CS-R4b] gates/G6 as TL [33m200[39m :45:18.592Z","updatedBy":null}]},"criteria":[{"key":"g6.benefits_evidence","ordinal":1,"labelEn":"Benefits evidence","labelAr":"أدلة المنافع","mandatory":true,"requiresVerifiedEvidence":false,"completeness":"incomplete","missing":[{"code":"g6.benefit_not_validated","message":"Benefits evidence: B01 Synthetic CONFIDENTIAL CS-R4b tariff uplift has no Finance-validated measurement and no approved transition decision.","pointer":"/benefits/01a1a999-1bc8-723d-84de-6236b37c343b"}],"unverifiedEvidenceI
+
+ ❯ |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts (5 tests | 4 failed) 3758ms
+   ✓ REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: TL gets 404 on the benefit; the TO reads it 55ms
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit 175ms
+     → title in the live report: expected true to be false // Object.is equality
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit 157ms
+     → title in the stored snapshot: expected true to be false // Object.is equality
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: exporting the live selection is refused for TL (export.includes_restricted_records) 7ms
+     → contract: no OpenAPI operation for POST /api/v1/transformations/01a1a999-16ae-719a-be5d-2b3d02522950/exports
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit 331ms
+     → title in the G6 readiness: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit
+AssertionError: title in the live report: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:126:82
+    124|     log("live registers/benefits as TL", r.status, "row:", JSON.string…
+    125|     expect(r.status).toBe(200);
+    126|     expect(JSON.stringify(r.body).includes(S.title), "title in the liv…
+       |                                                                                  ^
+    127|     expect(row, "the sensitive benefit's row in the live report").toBe…
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+AssertionError: title in the stored snapshot: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:143:89
+    141|     const aud = await send("GET", `${c.b.base}/report-snapshots/${g.bo…
+    142|     log("snapshot as AUD", aud.status, "title present:", JSON.stringif…
+    143|     expect(JSON.stringify(snap.body).includes(S.title), "title in the …
+       |                                                                                         ^
+    144|   });
+    145| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: exporting the live selection is refused for TL (export.includes_restricted_records)
+Error: contract: no OpenAPI operation for POST /api/v1/transformations/01a1a999-16ae-719a-be5d-2b3d02522950/exports
+ ❯ assertContract apps/api/test/support/contract.ts:118:18
+    116| export function assertContract(method: string, url: string, res: Contr…
+    117|   const op = findOperation(method, url);
+    118|   if (!op) throw new Error(`contract: no OpenAPI operation for ${metho…
+       |                  ^
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:147:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit
+AssertionError: title in the G6 readiness: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:160:65
+    158|     log("gates/G6 as TL", r.status, i < 0 ? "(no title)" : text.slice(…
+    159|     expect(r.status).toBe(200);
+    160|     expect(text.includes(S.title), "title in the G6 readiness").toBe(f…
+       |                                                                 ^
+    161|   });
+    162| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  02:45:15
+   Duration  32.51s (transform 9.36s, setup 0ms, collect 22.25s, tests 3.76s, environment 0ms, prepare 173ms)
+
+exit=1  finished 2026-11-05T02:45:51Z  load=15.95 15.53 12.70

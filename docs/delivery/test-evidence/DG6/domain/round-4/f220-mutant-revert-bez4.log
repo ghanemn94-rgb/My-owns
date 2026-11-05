@@ -1,0 +1,197 @@
+# MUTANT: git diff 95f981917..654e39d89 -- apps/api/src | git apply -R (BE-Z4's 8 source files reverted), then:
+$ QA_PG_PORT=29804 ... with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/sensitive-reach-registers.test.ts apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts
+port-policy: PostgreSQL listening on port 29804 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.I4Z7SJ/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2x3ccd_a7bbb8df (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (5 tests | 4 failed) 2337ms
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404 235ms
+     → TL: expected [ …(2) ] to not include '01a1a981-374f-7032-ba7c-3be214761b6d'
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes 76ms
+     → PATCH /api/v1/transformations/01a1a981-3408-708c-a7ac-25342aee09af/corrective-actions/01a1a981-374f-7032-ba7c-3be214761b6d {"id":"01a1a981-374f-7032-ba7c-3be214761b6d","transformationId":"01a1a981-3408-708c-a7ac-25342aee09af","code":"CA-976344","sourceKind":"benefit_variance","sourceScopeKey":"01a1a981-3602-7695-bf74-dfb9041d4557","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a981-3602-7695-bf74-dfb9041d4557","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic overwrite","ownerUserId":"01a1a981-340f-77f6-8375-091585f80c1f","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":2,"createdAt":"2026-11-05T02:19:40.239Z","createdBy":null,"updatedAt":"2026-11-05T02:19:40.556Z","updatedBy":"01a1a981-340f-77f6-8375-091585f80c1f"}: expected 200 to be 404 // Object.is equality
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted 17ms
+     → expected { …(2) } to deeply equal { key: 'inbox.restricted', params: {} }
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row 188ms
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not 239ms
+     → expected [ …(2) ] to not include '01a1a981-374f-7032-ba7c-3be214761b6d'
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > admitted readers (TO: sensitive_record.grant; BO: the owner) see everything (control)
+DOMAIN-PROBE R3 TO: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 TO: GET benefit -> 200; corrective list 200 caseListed=true item 200; transition list 200 decisionListed=true item 200; area links 200 linkListed=true
+DOMAIN-PROBE R3 TO: corrective item body: {"id":"01a1a981-4851-7358-8dd6-2016702e26b3","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"CA-954028","sourceKind":"benefit_variance","sourceScopeKey":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle","ownerUserId":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":1,"createdAt":"2026-11-05T02:19:44.593Z","createdBy":null,"update
+DOMAIN-PROBE R3 TO: transition item body: {"id":"01a1a981-4816-725b-809f-400de1be8c78","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"TD-01","benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","residualOwnerUserId":"01a1a981-46b6-7525-8bc5-dfc3567a4c2c","rationale":"Synthetic: the churn benefit realizes over 18 months after delivery","expectedRealizationEnd":"2031-12-31","monitoringFrequency":"monthly","monitoringInterval":1,"firstMonitoringDate":"2030-01-15","nextMonitoringDate":null,"status":"draft","approvalId":null,"decidedAt":null,"decidedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.528Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.528Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}
+DOMAIN-PROBE R3 TO: links body: {"items":[{"id":"01a1a981-4846-75e8-b240-b2cdf8d75536","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","performanceAreaId":"01a1a981-482c-7449-b6e4-cc5c26166675","linkKind":"benefit","kpiDefinitionId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","status":"active","removedAt":null,"removedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.576Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.576Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}],"nextCursor":null}
+DOMAIN-PROBE R3 TO: responses contain benefitId=true benefitCode=true caseTitle=true recoveryPlan=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > admitted readers (TO: sensitive_record.grant; BO: the owner) see everything (control)
+DOMAIN-PROBE R3 BO-owner: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 BO-owner: GET benefit -> 200; corrective list 200 caseListed=true item 200; transition list 200 decisionListed=true item 200; area links 200 linkListed=true
+DOMAIN-PROBE R3 BO-owner: corrective item body: {"id":"01a1a981-4851-7358-8dd6-2016702e26b3","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"CA-954028","sourceKind":"benefit_variance","sourceScopeKey":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle","ownerUserId":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":1,"createdAt":"2026-11-05T02:19:44.593Z","createdBy":null,"update
+DOMAIN-PROBE R3 BO-owner: transition item body: {"id":"01a1a981-4816-725b-809f-400de1be8c78","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"TD-01","benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","residualOwnerUserId":"01a1a981-46b6-7525-8bc5-dfc3567a4c2c","rationale":"Synthetic: the churn benefit realizes over 18 months after delivery","expectedRealizationEnd":"2031-12-31","monitoringFrequency":"monthly","monitoringInterval":1,"firstMonitoringDate":"2030-01-15","nextMonitoringDate":null,"status":"draft","approvalId":null,"decidedAt":null,"decidedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.528Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.528Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}
+DOMAIN-PROBE R3 BO-owner: links body: {"items":[{"id":"01a1a981-4846-75e8-b240-b2cdf8d75536","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","performanceAreaId":"01a1a981-482c-7449-b6e4-cc5c26166675","linkKind":"benefit","kpiDefinitionId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","status":"active","removedAt":null,"removedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.576Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.576Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}],"nextCursor":null}
+DOMAIN-PROBE R3 BO-owner: responses contain benefitId=true benefitCode=true caseTitle=true recoveryPlan=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+DOMAIN-PROBE R3 TL: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 TL: GET benefit -> 404; corrective list 200 caseListed=true item 200; transition list 200 decisionListed=true item 200; area links 200 linkListed=true
+DOMAIN-PROBE R3 TL: corrective item body: {"id":"01a1a981-4851-7358-8dd6-2016702e26b3","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"CA-954028","sourceKind":"benefit_variance","sourceScopeKey":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle","ownerUserId":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":1,"createdAt":"2026-11-05T02:19:44.593Z","createdBy":null,"update
+DOMAIN-PROBE R3 TL: transition item body: {"id":"01a1a981-4816-725b-809f-400de1be8c78","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"TD-01","benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","residualOwnerUserId":"01a1a981-46b6-7525-8bc5-dfc3567a4c2c","rationale":"Synthetic: the churn benefit realizes over 18 months after delivery","expectedRealizationEnd":"2031-12-31","monitoringFrequency":"monthly","monitoringInterval":1,"firstMonitoringDate":"2030-01-15","nextMonitoringDate":null,"status":"draft","approvalId":null,"decidedAt":null,"decidedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.528Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.528Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}
+DOMAIN-PROBE R3 TL: links body: {"items":[{"id":"01a1a981-4846-75e8-b240-b2cdf8d75536","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","performanceAreaId":"01a1a981-482c-7449-b6e4-cc5c26166675","linkKind":"benefit","kpiDefinitionId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","status":"active","removedAt":null,"removedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.576Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.576Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}],"nextCursor":null}
+DOMAIN-PROBE R3 TL: responses contain benefitId=true benefitCode=false caseTitle=true recoveryPlan=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+DOMAIN-PROBE R3 AUD: status-model 200 status=undefined sensitiveBenefitFact=null includesRestrictedRecords=undefined
+DOMAIN-PROBE R3 AUD: GET benefit -> 404; corrective list 200 caseListed=true item 200; transition list 200 decisionListed=true item 200; area links 200 linkListed=true
+DOMAIN-PROBE R3 AUD: corrective item body: {"id":"01a1a981-4851-7358-8dd6-2016702e26b3","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"CA-954028","sourceKind":"benefit_variance","sourceScopeKey":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle","ownerUserId":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":1,"createdAt":"2026-11-05T02:19:44.593Z","createdBy":null,"update
+DOMAIN-PROBE R3 AUD: transition item body: {"id":"01a1a981-4816-725b-809f-400de1be8c78","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","code":"TD-01","benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","residualOwnerUserId":"01a1a981-46b6-7525-8bc5-dfc3567a4c2c","rationale":"Synthetic: the churn benefit realizes over 18 months after delivery","expectedRealizationEnd":"2031-12-31","monitoringFrequency":"monthly","monitoringInterval":1,"firstMonitoringDate":"2030-01-15","nextMonitoringDate":null,"status":"draft","approvalId":null,"decidedAt":null,"decidedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.528Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.528Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}
+DOMAIN-PROBE R3 AUD: links body: {"items":[{"id":"01a1a981-4846-75e8-b240-b2cdf8d75536","transformationId":"01a1a981-46b2-70be-ba5e-d3263797245d","performanceAreaId":"01a1a981-482c-7449-b6e4-cc5c26166675","linkKind":"benefit","kpiDefinitionId":null,"benefitId":"01a1a981-47c5-74ed-87ab-2540c37a6d9d","status":"active","removedAt":null,"removedBy":null,"version":1,"createdAt":"2026-11-05T02:19:44.576Z","createdBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7","updatedAt":"2026-11-05T02:19:44.576Z","updatedBy":"01a1a981-46b5-77f2-a061-e94cfd5e82f7"}],"nextCursor":null}
+DOMAIN-PROBE R3 AUD: responses contain benefitId=true benefitCode=false caseTitle=true recoveryPlan=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+DOMAIN-PROBE R3 summary {"TL":{"caseInList":true,"decisionInList":true,"linkInList":true,"caseItem":200,"decisionItem":200},"AUD":{"caseInList":true,"decisionInList":true,"linkInList":true,"caseItem":200,"decisionItem":200}}
+
+ ❯ |integration| apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts (2 tests | 1 failed) 962ms
+   ✓ DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > admitted readers (TO: sensitive_record.grant; BO: the owner) see everything (control) 155ms
+   × DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404 108ms
+     → TL: expected { caseInList: true, …(4) } to deeply equal { caseInList: false, …(4) }
+     → AUD: expected { caseInList: true, …(4) } to deeply equal { caseInList: false, …(4) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404
+AssertionError: TL: expected [ …(2) ] to not include '01a1a981-374f-7032-ba7c-3be214761b6d'
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:256:32
+    254|       const o = await observe(s);
+    255|       expect(o.benefit, who).toBe(404);
+    256|       expect(o.cases, who).not.toContain(S.caseId);
+       |                                ^
+    257|       expect(o.decisions, who).not.toContain(S.decisionId);
+    258|       expect(o.decisionsOfBenefit, who).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes
+AssertionError: PATCH /api/v1/transformations/01a1a981-3408-708c-a7ac-25342aee09af/corrective-actions/01a1a981-374f-7032-ba7c-3be214761b6d {"id":"01a1a981-374f-7032-ba7c-3be214761b6d","transformationId":"01a1a981-3408-708c-a7ac-25342aee09af","code":"CA-976344","sourceKind":"benefit_variance","sourceScopeKey":"01a1a981-3602-7695-bf74-dfb9041d4557","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a981-3602-7695-bf74-dfb9041d4557","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic overwrite","ownerUserId":"01a1a981-340f-77f6-8375-091585f80c1f","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":2,"createdAt":"2026-11-05T02:19:40.239Z","createdBy":null,"updatedAt":"2026-11-05T02:19:40.556Z","updatedBy":"01a1a981-340f-77f6-8375-091585f80c1f"}: expected 200 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:319:70
+    317|     for (const [method, url, body] of writes) {
+    318|       const r = await send(method, url, { session: s, headers: ifm(1),…
+    319|       expect(r.status, `${method} ${url} ${JSON.stringify(r.body)}`).t…
+       |                                                                      ^
+    320|     }
+    321|     // A create naming the sensitive benefit answers as for an unknown…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted
+AssertionError: expected { …(2) } to deeply equal { key: 'inbox.restricted', params: {} }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "key": "inbox.restricted",[39m
+[32m-   "params": {},[39m
+[31m+   "key": "raid.task.corrective_follow_up",[39m
+[31m+   "params": {[39m
+[31m+     "caseCode": "CA-SYNTH",[39m
+[31m+   },[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:360:66
+    358|       const it1 = items.find((x) => x.id === id);
+    359|       expect(it1, id).toBeDefined();
+    360|       expect({ key: it1.messageKey, params: it1.messageParams }).toEqu…
+       |                                                                  ^
+    361|       const one = ok(await send("GET", `/api/v1/work-items/${id}`, { s…
+    362|       expect({ key: one.messageKey, params: one.messageParams }).toEqu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not
+AssertionError: expected [ …(2) ] to not include '01a1a981-374f-7032-ba7c-3be214761b6d'
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:456:27
+    454|     expect(mine.find((x) => x.recordId === S.caseId).messageKey).toBe(…
+    455|     const aud = await observe(c.b.s.auditor);
+    456|     expect(aud.cases).not.toContain(S.caseId);
+       |                           ^
+    457|     expect(aud.caseItem).toBe(404);
+    458|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+AssertionError: TL: expected { caseInList: true, …(4) } to deeply equal { caseInList: false, …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "caseInList": false,[39m
+[32m-   "caseItem": 404,[39m
+[32m-   "decisionInList": false,[39m
+[32m-   "decisionItem": 404,[39m
+[32m-   "linkInList": false,[39m
+[31m+   "caseInList": true,[39m
+[31m+   "caseItem": 200,[39m
+[31m+   "decisionInList": true,[39m
+[31m+   "decisionItem": 200,[39m
+[31m+   "linkInList": true,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts:115:34
+    113|     console.log(`DOMAIN-PROBE R3 summary ${JSON.stringify(out)}`);
+    114|     for (const who of ["TL", "AUD"]) {
+    115|       expect.soft(out[who], who).toEqual({ caseInList: false, decision…
+       |                                  ^
+    116|     }
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts > DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link > non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404
+AssertionError: AUD: expected { caseInList: true, …(4) } to deeply equal { caseInList: false, …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "caseInList": false,[39m
+[32m-   "caseItem": 404,[39m
+[32m-   "decisionInList": false,[39m
+[32m-   "decisionItem": 404,[39m
+[32m-   "linkInList": false,[39m
+[31m+   "caseInList": true,[39m
+[31m+   "caseItem": 200,[39m
+[31m+   "decisionInList": true,[39m
+[31m+   "decisionItem": 200,[39m
+[31m+   "linkInList": true,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r3-sensitive-registers.test.ts:115:34
+    113|     console.log(`DOMAIN-PROBE R3 summary ${JSON.stringify(out)}`);
+    114|     for (const who of ["TL", "AUD"]) {
+    115|       expect.soft(out[who], who).toEqual({ caseInList: false, decision…
+       |                                  ^
+    116|     }
+    117|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 2 passed (7)
+   Start at  02:19:20
+   Duration  24.66s (transform 7.60s, setup 0ms, collect 16.87s, tests 3.30s, environment 0ms, prepare 70ms)
+
+exit=1

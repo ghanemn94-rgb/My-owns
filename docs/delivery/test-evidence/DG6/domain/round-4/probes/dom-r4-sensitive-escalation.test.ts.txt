@@ -1,0 +1,135 @@
+// DOMAIN REVIEWER PROBE (DG6 round 4), disposable clone only. Every value is SYNTHETIC. Marking a record sensitive is an
+// access decision, never a business approval (G1-G6), and nothing here relates to DG0-DG7.
+// Question: after T-DG6-BE-Z4 hides a sensitive benefit's corrective case, can the case's values (its title, which the
+// corrective consumer copies from the benefit's title) still reach a reader who gets 404 on the benefit, through
+// (a) the action register (BE-Z4 residual: correctiveCaseId / case code), (b) a blocker status naming the case, and
+// (c) the executive ask the blocker-escalation consumer creates (title = blockerName = corrective_case.title)?
+// The probe OBSERVES and logs; the soft assertions at the end state the ADR-0051 §2 expectation.
+import { insertAuditEvent } from "@mth/db";
+import { randomUUID } from "node:crypto";
+import { v7 as uuidv7 } from "uuid";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { call, seedWorld, startApi, type Session, type TestApi, type World } from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+import { businessToday, plusDays } from "../../integration/governance/meeting-fixtures.ts";
+import { envelopeOf } from "../../integration/governance/t16-fixtures.ts";
+import {
+  launchedInitiative,
+  pendingBenefit,
+  seedClosureWorld,
+  type ClosureWorld,
+} from "../../integration/contract/p4-exercises-be-j.ts";
+import { ensureDefaultCalendar } from "../approvals/approval-world.ts";
+import { handleBlockerEscalation } from "../../../../worker/src/handlers/escalations.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+let api: TestApi;
+let w: World;
+let c: ClosureWorld;
+let benefitId = "";
+let benefitTitle = "";
+let caseId = "";
+let caseCode = "";
+const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call<Body>(api.app, m, u, o);
+const log = (s: string) => console.log(`DOMAIN-PROBE R4 ${s}`);
+
+beforeAll(async () => {
+  api = await startApi();
+  w = await seedWorld(api.db);
+  c = await seedClosureWorld(api, w);
+  await ensureDefaultCalendar(api, w, (m, u, o) => call(api.app, m, u, o));
+  const ini = await launchedInitiative(api.db, c.b);
+  const ben = await pendingBenefit(api, c, ini);
+  benefitId = ben.id;
+  const row = await api.db.selectFrom("benefit").select(["title"]).where("id", "=", benefitId).executeTakeFirstOrThrow();
+  benefitTitle = row.title as string;
+  log(`benefit ${ben.code} title=${JSON.stringify(benefitTitle)}`);
+  // a worker-style benefit_variance case: the corrective consumer sets title = benefit.title (raid.ts:535)
+  caseId = uuidv7();
+  caseCode = `CA-9${String(Math.floor(Math.random() * 90000) + 10000)}`;
+  await api.db.transaction().execute(async (tx) => {
+    await tx.insertInto("corrective_case").values({
+      id: caseId, organization_id: c.b.organizationId, transformation_id: c.b.transformationId, code: caseCode,
+      source_kind: "benefit_variance", source_scope_key: benefitId, benefit_id: benefitId, source_record_type: null,
+      source_record_id: null, title: benefitTitle, recovery_plan: "Synthetic CONFIDENTIAL recovery",
+      owner_user_id: c.b.users.bo.id, follow_up_date: "2030-01-15", consecutive_off_track: 2, signal_count: 2,
+      created_source: "worker", created_by: null, updated_by: null,
+    }).execute();
+    await insertAuditEvent(tx, { actorType: "service", actorUserId: null, onBehalfOfUserId: null, requestId: `job:${randomUUID()}`, source: "worker" },
+      { action: "corrective_case.created", recordType: "corrective_case", recordId: caseId, organizationId: c.b.organizationId, transformationId: c.b.transformationId, newVersion: 1 });
+  });
+  const mark = await send("PUT", `${c.b.base}/records/benefit/${benefitId}/sensitivity`, {
+    session: c.s.to.session, headers: ifm(0), body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit" } });
+  expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+}, 240_000);
+afterAll(() => api?.close());
+
+const out: Record<string, Body> = {};
+
+describe("DOMAIN PROBE R4: values of a restricted corrective case outside its own register", () => {
+  it("(a) action on the case: what TL and AUD see in the action register", async () => {
+    const a = await send("POST", `${c.b.base}/corrective-actions/${caseId}/actions`, {
+      session: c.b.s.bo,
+      body: { title: "Synthetic follow-up action", ownerUserId: c.b.users.bo.id, dueDate: "2030-02-01" },
+    });
+    log(`BO creates action on case -> ${a.status} ${JSON.stringify(a.body).slice(0, 400)}`);
+    for (const [who, s] of [["TL", c.b.s.tl], ["AUD", c.b.s.auditor]] as const) {
+      const l = await send("GET", `${c.b.base}/action-register?limit=100`, { session: s });
+      const mine = (l.body.items ?? []).filter((x: Body) => JSON.stringify(x).includes(caseId) || JSON.stringify(x).includes(caseCode));
+      const raw = JSON.stringify(l.body);
+      log(`${who}: GET /actions -> ${l.status}; rows naming the case=${mine.length}; contains benefit title=${raw.includes(benefitTitle)} ${JSON.stringify(mine).slice(0, 600)}`);
+      out[`${who}-actions-title`] = raw.includes(benefitTitle);
+    }
+  });
+
+  it("(b, c) blocker status naming the case, and the executive ask the consumer creates", async () => {
+    const today = await businessToday(api);
+    const forum = await send("POST", `${c.b.base}/forums`, { session: c.s.to.session, body: {
+      nameEn: "Synthetic review R4", nameAr: "منتدى اصطناعي", cadenceLabel: "Weekly", purpose: "Synthetic",
+      participantsLabel: "Synthetic", outputsLabel: "RAID", outputKinds: ["raid"] } });
+    log(`TO creates forum -> ${forum.status} ${JSON.stringify(forum.body).slice(0, 200)}`);
+    const meetings: string[] = [];
+    for (const d of [1, 8]) {
+      const m = await send("POST", `${c.b.base}/meetings`, { session: c.b.s.tl, body: { forumId: forum.body.id, scheduledDate: plusDays(today, d), startTime: "09:00", durationMinutes: 60 } });
+      log(`TL creates meeting -> ${m.status} ${JSON.stringify(m.body).slice(0, 200)}`);
+      const st = await send("POST", `${c.b.base}/meetings/${m.body.id}/start`, { session: c.b.s.tl, headers: { "if-match": '"1"' } });
+      log(`TL starts meeting -> ${st.status}`);
+      meetings.push(m.body.id);
+    }
+    // TL (not admitted to the benefit, so 404 on the case) records the case as a red blocker in both cycles
+    const statusIds: string[] = [];
+    for (const m of meetings) {
+      const r = await send("POST", `${c.b.base}/meetings/${m}/blocker-statuses`, { session: c.b.s.tl, body: { sourceRecordType: "corrective_case", sourceRecordId: caseId, rag: "red" } });
+      log(`TL records blocker status naming the restricted case -> ${r.status} ${JSON.stringify(r.body).slice(0, 400)}`);
+      out.tlBlockerStatus = r.status;
+      if (r.status === 201) statusIds.push(r.body.id);
+    }
+    const caseItem = await send("GET", `${c.b.base}/corrective-actions/${caseId}`, { session: c.b.s.tl });
+    log(`control: TL GET case -> ${caseItem.status}`);
+    for (const sid of statusIds) {
+      const res = await handleBlockerEscalation(api.db, await envelopeOf(api.db, sid), "dom-r4");
+      log(`consumer -> ${JSON.stringify(res)}`);
+      out.consumer = res;
+    }
+    const bl = await send("GET", `${c.b.base}/meetings/${meetings[1]}/blocker-statuses`, { session: c.b.s.tl });
+    log(`TL GET blocker-statuses -> ${bl.status} contains benefit title=${JSON.stringify(bl.body).includes(benefitTitle)} ${JSON.stringify(bl.body).slice(0, 500)}`);
+    for (const [who, s] of [["TL", c.b.s.tl], ["AUD", c.b.s.auditor], ["SP", c.sp.session], ["TO", c.s.to.session]] as const) {
+      const ben = await send("GET", `${c.b.base}/benefits/${benefitId}`, { session: s });
+      const l = await send("GET", `${c.b.base}/executive-decisions?limit=100`, { session: s });
+      const asks = (l.body.items ?? []).filter((x: Body) => JSON.stringify(x).includes(caseId));
+      const inbox = await send("GET", `/api/v1/me/inbox?limit=100`, { session: s });
+      const inboxHit = (inbox.body.items ?? []).filter((x: Body) => JSON.stringify(x).includes(benefitTitle));
+      log(`${who}: GET benefit -> ${ben.status}; GET executive-decisions -> ${l.status}; asks naming the case=${asks.length}; ask title=${JSON.stringify(asks.map((x: Body) => x.title))}; list contains benefit title=${JSON.stringify(l.body).includes(benefitTitle)}; inbox items with the benefit title=${inboxHit.length} ${JSON.stringify(inboxHit).slice(0, 400)}`);
+      if (asks[0]) {
+        const one = await send("GET", `${c.b.base}/executive-decisions/${asks[0].id}`, { session: s });
+        log(`${who}: GET ask item -> ${one.status} fields holding the benefit title=${JSON.stringify(Object.entries(one.body).filter(([, v]) => typeof v === "string" && v.includes(benefitTitle)).map(([k]) => k))} body=${JSON.stringify(one.body).slice(0, 700)}`);
+      }
+      out[`${who}-ask-title`] = JSON.stringify(l.body).includes(benefitTitle) || inboxHit.length > 0;
+      out[`${who}-benefit`] = ben.status;
+    }
+    log(`summary ${JSON.stringify(out)}`);
+    expect.soft(out["TL-ask-title"], "TL (404 on the benefit) must not read the sensitive benefit's title through the ask").toBe(false);
+    expect.soft(out["AUD-ask-title"], "AUD (404 on the benefit) must not read the sensitive benefit's title through the ask").toBe(false);
+  });
+});

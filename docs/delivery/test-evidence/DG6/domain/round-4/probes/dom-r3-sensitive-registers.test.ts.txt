@@ -1,0 +1,118 @@
+// DOMAIN REVIEWER PROBE (DG6 round 3), disposable clone only. Every value is SYNTHETIC. Marking a record sensitive is an
+// access decision, never a business approval (G1-G6), and nothing here relates to DG0-DG7.
+// Question (D-210, carried to round 3): does ADR-0051 §2 hide a sensitive benefit's corrective case, transition
+// decision and performance-area link from a reader who gets 404 on the benefit? This probe only OBSERVES and logs
+// what each reader receives; the assertions at the end state the ADR-0051 §2 expectation (row absent / 404).
+import { insertAuditEvent } from "@mth/db";
+import { randomUUID } from "node:crypto";
+import { v7 as uuidv7 } from "uuid";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { call, seedWorld, startApi, type Session, type TestApi, type World } from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+import {
+  draftDecision,
+  launchedInitiative,
+  pendingBenefit,
+  seedClosureWorld,
+  type ClosureWorld,
+} from "../contract/p4-exercises-be-j.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+let api: TestApi;
+let w: World;
+let c: ClosureWorld;
+let benefitId = "";
+let benefitCode = "";
+let caseId = "";
+let decisionId = "";
+let areaId = "";
+let linkId = "";
+const CASE_TITLE = "Synthetic CONFIDENTIAL tariff uplift variance";
+const RECOVERY = "Synthetic CONFIDENTIAL recovery: reprice the enterprise bundle";
+const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call(api.app, m, u, o);
+
+beforeAll(async () => {
+  api = await startApi();
+  w = await seedWorld(api.db);
+  c = await seedClosureWorld(api, w);
+  const ini = await launchedInitiative(api.db, c.b);
+  const ben = await pendingBenefit(api, c, ini);
+  benefitId = ben.id;
+  benefitCode = ben.code;
+  // transition decision (BO drafts; residual owner bo2)
+  decisionId = (await draftDecision(send, c, benefitId)).id;
+  // performance area + benefit link
+  const area = await send("POST", c.s.areas, { session: c.s.to.session, body: { name: "Synthetic enterprise value area" } });
+  expect(area.status, JSON.stringify(area.body)).toBe(201);
+  areaId = area.body.id;
+  const link = await send("POST", `${c.s.areas}/${areaId}/links`, { session: c.b.s.bo, body: { linkKind: "benefit", benefitId } });
+  expect(link.status, JSON.stringify(link.body)).toBe(201);
+  linkId = link.body.id;
+  // a worker-created benefit_variance corrective case (as the corrective consumer writes it)
+  caseId = uuidv7();
+  await api.db.transaction().execute(async (tx) => {
+    await tx.insertInto("corrective_case").values({
+      id: caseId, organization_id: c.b.organizationId, transformation_id: c.b.transformationId,
+      code: `CA-9${String(Math.floor(Math.random() * 90000) + 10000)}`, source_kind: "benefit_variance",
+      source_scope_key: benefitId, benefit_id: benefitId, source_record_type: null, source_record_id: null,
+      title: CASE_TITLE, recovery_plan: RECOVERY, owner_user_id: c.b.users.bo.id, follow_up_date: "2030-01-15",
+      consecutive_off_track: 2, signal_count: 2, created_source: "worker", created_by: null, updated_by: null,
+    }).execute();
+    await insertAuditEvent(tx, { actorType: "service", actorUserId: null, onBehalfOfUserId: null, requestId: `job:${randomUUID()}`, source: "worker" },
+      { action: "corrective_case.created", recordType: "corrective_case", recordId: caseId, organizationId: c.b.organizationId, transformationId: c.b.transformationId, newVersion: 1 });
+  });
+  // the TO marks the benefit sensitive
+  const mark = await send("PUT", `${c.b.base}/records/benefit/${benefitId}/sensitivity`, {
+    session: c.s.to.session, headers: ifm(0), body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit" } });
+  expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+}, 180_000);
+afterAll(() => api?.close());
+
+async function observe(who: string, s: Session) {
+  const r: Record<string, Body> = {};
+  r.benefit = await send("GET", `${c.b.base}/benefits/${benefitId}`, { session: s });
+  r.caseList = await send("GET", `${c.b.base}/corrective-actions?limit=100`, { session: s });
+  r.caseItem = await send("GET", `${c.b.base}/corrective-actions/${caseId}`, { session: s });
+  r.decisionList = await send("GET", `${c.transitions}?limit=100`, { session: s });
+  r.decisionItem = await send("GET", `${c.transitions}/${decisionId}`, { session: s });
+  r.links = await send("GET", `${c.s.areas}/${areaId}/links`, { session: s });
+  r.statusModel = await send("GET", `${c.b.base}/status-model`, { session: s });
+  const sm = (r.statusModel.body.benefits ?? []).find((x: Body) => x.benefitId === benefitId);
+  console.log(`DOMAIN-PROBE R3 ${who}: status-model ${r.statusModel.status} status=${r.statusModel.body.status} sensitiveBenefitFact=${JSON.stringify(sm ?? null)} includesRestrictedRecords=${r.statusModel.body.includesRestrictedRecords}`);
+  const raw = (x: Body) => JSON.stringify(x.body);
+  const listed = {
+    caseInList: (r.caseList.body.items ?? []).some((x: Body) => x.id === caseId),
+    decisionInList: (r.decisionList.body.items ?? []).some((x: Body) => x.id === decisionId),
+    linkInList: (r.links.body.items ?? []).some((x: Body) => x.id === linkId),
+  };
+  console.log(`DOMAIN-PROBE R3 ${who}: GET benefit -> ${r.benefit.status}; corrective list ${r.caseList.status} caseListed=${listed.caseInList} item ${r.caseItem.status}; transition list ${r.decisionList.status} decisionListed=${listed.decisionInList} item ${r.decisionItem.status}; area links ${r.links.status} linkListed=${listed.linkInList}`);
+  console.log(`DOMAIN-PROBE R3 ${who}: corrective item body: ${raw(r.caseItem).slice(0, 900)}`);
+  console.log(`DOMAIN-PROBE R3 ${who}: transition item body: ${raw(r.decisionItem).slice(0, 900)}`);
+  console.log(`DOMAIN-PROBE R3 ${who}: links body: ${raw(r.links).slice(0, 700)}`);
+  const all = Object.values(r).map(raw).join("\n");
+  console.log(`DOMAIN-PROBE R3 ${who}: responses contain benefitId=${all.includes(benefitId)} benefitCode=${all.includes(benefitCode)} caseTitle=${all.includes(CASE_TITLE)} recoveryPlan=${all.includes(RECOVERY)}`);
+  return { r, listed };
+}
+
+describe("DOMAIN PROBE R3: a sensitive benefit's corrective case, transition decision and area link", () => {
+  it("admitted readers (TO: sensitive_record.grant; BO: the owner) see everything (control)", async () => {
+    for (const [who, s] of [["TO", c.s.to.session], ["BO-owner", c.b.s.bo]] as const) {
+      const { r, listed } = await observe(who, s);
+      expect(r.benefit.status).toBe(200);
+      expect(listed).toEqual({ caseInList: true, decisionInList: true, linkInList: true });
+    }
+  });
+  it("non-admitted readers (TL, AUD) get 404 on the benefit; ADR-0051 §2 expects its child rows absent / 404", async () => {
+    const out: Record<string, unknown> = {};
+    for (const [who, s] of [["TL", c.b.s.tl], ["AUD", c.b.s.auditor]] as const) {
+      const { r, listed } = await observe(who, s);
+      expect(r.benefit.status, `${who} benefit`).toBe(404);
+      out[who] = { ...listed, caseItem: r.caseItem.status, decisionItem: r.decisionItem.status };
+    }
+    console.log(`DOMAIN-PROBE R3 summary ${JSON.stringify(out)}`);
+    for (const who of ["TL", "AUD"]) {
+      expect.soft(out[who], who).toEqual({ caseInList: false, decisionInList: false, linkInList: false, caseItem: 404, decisionItem: 404 });
+    }
+  });
+});
