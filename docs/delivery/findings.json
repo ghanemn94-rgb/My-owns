@@ -15070,14 +15070,35 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-04T13:00:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 3 by domain-reviewer, answering the D-210 open question 1. High and mandatory (access control). Suggested repair: apply withoutRestricted to the corrective-case, transition-decision and area-link lists (and the case's signals and actions), and add correctiveCaseId and transitionDecisionId (and the link item, if it has one) to SENSITIVE_REACH_PARAMS. Add a test with the negative case (TL, AUD) and the positive case (TO, owner, grantee). Then update the REQ-S10-002 register row."
+        },
+        {
+          "at": "2026-11-05T04:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R4-domain-reviewer-20261105T020307Z-73eb839e",
+          "session_id": "73eb839e-7f2c-4b5e-b0e0-c2997277e389"
+        },
+        "at": "2026-11-05T04:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-4/f220-probe-and-product-test.log",
+          "docs/delivery/test-evidence/DG6/domain/round-4/f220-mutant-revert-bez4.log",
+          "docs/delivery/test-evidence/DG6/domain/round-4/probes/dom-r3-sensitive-registers.test.ts.txt"
+        ],
+        "note": "Re-ran my round-3 probe dom-r3-sensitive-registers.test.ts on candidate 4b84bf20 (clone @654e39d89, PostgreSQL 16.15), together with BE-Z4's product test sensitive-reach-registers.test.ts: 2 files, 7/7, exit 0. TL and AUD get 404 on the benefit. The corrective case, transition decision and area link are absent from their lists, and the case and decision items answer 404. None of the responses contains the benefit id or code, the case title or the recovery plan. The TO and the owner (controls) see everything. Mutant: BE-Z4's eight source files reverted (git apply -R of 95f981917..654e39d89 -- apps/api/src) gives 5 failed and 2 passed, exit 1. The failures are the 4 negative and after-grant tests and my probe's negative test, and only the positive controls pass. The source was restored afterwards (git diff empty). I also read the diff: the reach parameters correctiveCaseId, transitionDecisionId, performanceAreaLinkId and benefitEnablerId; withoutRestricted on the three lists; 422 validation.reference on creates naming the hidden benefit; the inbox, work-item and My Work redaction through restrictedLinkChildren, whose route patterns match the link paths the worker and API really write (raid.ts:420, corrective-cases.ts:223, sustainment.ts:471, transition-decisions.ts:753). The finding's scope is repaired. A separate path that copies the case's (the benefit's) title into an executive ask is raised as the new finding F-DG6-280."
+      }
     },
     {
       "id": "F-DG6-221",
@@ -15099,14 +15120,36 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-04T13:45:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 3 by domain-reviewer. Low, not blocking on its own. Suggested repair: render the lastErrorCode's catalogue text (integrations actionable.<code>.why, the same lookup the Connectors page uses) and fall back to the raw message only when no text exists."
+        },
+        {
+          "at": "2026-11-05T04:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R4-domain-reviewer-20261105T020307Z-73eb839e",
+          "session_id": "73eb839e-7f2c-4b5e-b0e0-c2997277e389"
+        },
+        "at": "2026-11-05T04:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-4/e2e-findings-run1.log",
+          "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/a17-exception-data-owner.png",
+          "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/en/a17-exception-data-owner.png",
+          "docs/delivery/test-evidence/DG6/domain/round-4/fe-z2-mutant-revert.log"
+        ],
+        "note": "Re-ran e2e/a17-failing-connector-exception.spec.ts on the production-initialized stack (with-stack.sh), with its new F-DG6-221 assertion: passed in chromium-en and chromium-ar. In the Arabic screenshot of the data owner's exception page, 'آخر خطأ' (Last error) reads 'لم يستجب نظام المصدر.', the catalogue text of connector.source_unavailable, not the server's English sentence. The code itself is still shown LTR. The linked KPI is Stale with 250.75 and its date 2026/01/31, never 0 or green. Mutant: the round-3 OperationsPages.tsx (together with ConnectorFormPage.tsx) makes 5 'last error in the reader's language' unit tests fail in en and ar (9 failed in total, exit 1). The source was restored afterwards."
+      }
     },
     {
       "id": "F-DG6-222",
@@ -15130,14 +15173,38 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-04T14:05:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 3 by domain-reviewer. Medium: a real error-state defect in the new D-209 flow, with a bounded effect (administrator forms only). Suggested repair: map /config/credentialRefs/<key> (and the equivalent pointers of the webhook, SMTP, storage and assistant forms) to the credential row. Add en/ar texts for validation.secret_ref_not_bound, validation.secret_ref_host_not_bound and validation.secret_ref_namespace. Add a component test and an e2e step."
+        },
+        {
+          "at": "2026-11-05T04:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R4-domain-reviewer-20261105T020307Z-73eb839e",
+          "session_id": "73eb839e-7f2c-4b5e-b0e0-c2997277e389"
+        },
+        "at": "2026-11-05T04:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-4/e2e-findings-run1.log",
+          "docs/delivery/test-evidence/DG6/domain/round-4/e2e-probe-screens-en-rerun.log",
+          "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/en/dom-r4-connector-unbound-secret.png",
+          "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/dom-r4-connector-unbound-secret.png",
+          "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/p6-connector-unbound-secret.png",
+          "docs/delivery/test-evidence/DG6/domain/round-4/fe-z2-mutant-revert.log"
+        ],
+        "note": "Re-ran my round-3 reproduction (the probe, extended with R4 soft assertions, as dom-r4-screens.spec.ts) on with-stack.sh. The PUT answers 400 validation with validation.secret_ref_not_bound at /config/credentialRefs/api. Exactly 1 field is marked: the credential row's secret name, with the localized reason. en: 'IT has not bound this secret to this setting...'; ar: 'لم يربط فريق تقنية المعلومات هذا السر بهذا الإعداد...'. The server's English message is not shown on the page. The Arabic run passed in run 1. The English run failed in run 1 at the connector form's toBeVisible, with 'ENOSPC: no space left on device' on the shared scratch volume (an environment failure, disclosed); its rerun alone passed, exit 0. FE-Z2's p6-secret-ref-unbound.spec.ts passed 4/4 (connector and storage, en and ar). Mutant: the round-3 ConnectorFormPage.tsx makes the 4 'connector form: an unbound secret reference' unit tests fail (en and ar), exit 1. The source was restored afterwards."
+      }
     },
     {
       "id": "F-DG6-260",
@@ -15158,14 +15225,38 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-04T17:55:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 3 (continuation run T-DG6-REV-QA-R3B) on candidate sha256:aa219bd2. Low, non-mandatory, documentation drift."
+        },
+        {
+          "at": "2026-11-05T07:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R4-qa-verifier-20261105T020307Z-34f39ecc",
+          "session_id": "34f39ecc-f256-454f-894f-c046f9c75a2a"
+        },
+        "at": "2026-11-05T07:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-4/10-f260-register-notes.txt",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-4/f260-register-notes-check.py",
+          "docs/delivery/test-evidence/DG6/qa/round-4/04c-tests-qa-alone.log",
+          "docs/delivery/test-evidence/DG6/qa/round-4/05b-e2e-root-cutf8-connection-log.log",
+          "docs/delivery/test-evidence/DG6/qa/round-4/09-validate.log",
+          "docs/delivery/requirements.csv"
+        ],
+        "note": "Re-read the finding in findings.json and in round-3/qa-verifier.findings.json. On this candidate (source 654e39d), T-DG6-AN-Z2 updated the notes of REQ-S20-001, -012, -017 and -022. Each row now has a T-DG6-AN-Z2 check, and the AN-P6B clause that reported a failing or absent suite is marked superseded, with the stale phrases removed. The check script reports stale-unsuperseded=0 and exits 0. Mutant (the repair reverted, i.e. the round-3 register at 95f98191): the same script finds 7 stale phrases across the four rows and exits 1, so the check catches the defect. I re-checked every concrete claim in the new notes against its cited evidence: round-3 05-e2e-root-unset.log tests 9-14 and 162-167 are A12-1 to A12-6 in en and ar, all passed; 04c-tests-qa-alone.log has 45/45 files and 437 tests, with the A01, A12, A17 and A22 files and test counts as stated; orchestrator-final-8b22cc0 has 416/416 files and 4212 passed; FE-Z2's 31-e2e-touched-product-specs.log has 54 passed. Every evidence path on the four rows exists. The notes defer the binding re-run of the merged tree to the next round. I ran that re-run here: A01, A12, A17 and A22 pass in both integration runs, in tests/qa alone (45 files, 437 tests), and in both root e2e runs, in en and ar. validate.mjs --register DG6 passes."
+      }
     },
     {
       "id": "F-DG6-261",
@@ -15187,12 +15278,196 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-04T17:55:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 3 (continuation run T-DG6-REV-QA-R3B) on candidate sha256:aa219bd2. Low, non-mandatory, test-side race."
+        },
+        {
+          "at": "2026-11-05T07:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R4-qa-verifier-20261105T020307Z-34f39ecc",
+          "session_id": "34f39ecc-f256-454f-894f-c046f9c75a2a"
+        },
+        "at": "2026-11-05T07:10:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-4/08-probes-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-4/08d-probes-cutf8.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-4/zz-qa-dg6r4-reports-output-label.spec.ts",
+          "docs/delivery/test-evidence/DG6/qa/round-4/07-e2e-demo-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-4/07b-e2e-demo-cutf8.log",
+          "docs/delivery/test-evidence/DG6/qa/round-4/07c-e2e-demo-users-walkthrough-cutf8-alone-1.log",
+          "docs/delivery/test-evidence/DG6/qa/round-4/07d-e2e-demo-users-walkthrough-unset-alone-2.log"
+        ],
+        "note": "Re-read the finding in findings.json and in round-3/qa-verifier.findings.json. The repair (T-DG6-FE-Z2) has two independent parts. (a) Product: ReportsPage.tsx labels the snapshot filter reportsP5.snapshots.filterOutput ('Filter by output' / 'التصفية حسب المخرَج'). (b) Spec: step 10 of e2e/a02-demo-users-walkthrough.spec.ts scopes the locator to form[data-form='generate-report'], waits for the charter option, asserts the value and that Generate is enabled. I re-ran the round-3 reproduction on this candidate's real stack (with-stack.sh), with GET /report-definitions held for 4 s, in en and ar, with the locale unset and with C.UTF-8. R, the round-3 locator (getByLabel(field('Output')).first()), now selects the Generate form's select: generate='charter', filter='', Generate enabled. The anchored field() regex no longer matches the filter, so (a) alone fixes it. N, the new spec sequence, gives the same. Mutant M1 reverts (a) by giving the filter back the 'Output' label in the DOM, with the new locator: still charter and enabled, so (b) holds alone. Mutant M2 reverts both: generate='', filter='charter', Generate disabled, which is exactly the round-3 defect, so the probe catches it. The real spec passes in all 8 executions this round (en and ar in 07 unset, 07b C.UTF-8, 07c alone C.UTF-8 and 07d alone unset), with no step-10 timeout."
+      }
+    },
+    {
+      "id": "F-DG6-280",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "A sensitive benefit's title still reaches readers who get 404 on the benefit, through the executive ask that the blocker escalation copies from its corrective case",
+      "reproduction": "Candidate 4b84bf20 (source 654e39d89), disposable clone and PostgreSQL 16.15. Probe apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts (copy in docs/delivery/test-evidence/DG6/domain/round-4/probes/dom-r4-sensitive-escalation.test.ts.txt). Run: QA_PG_PORT=29802 MTH_PORT_POOL=29800-29809 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <probe>. Setup, all SYNTHETIC: seedClosureWorld plus the default business calendar; BO creates benefit B01 'Synthetic churn reduction'; a worker-style benefit_variance corrective case names it, titled with the benefit's title as the shipped corrective consumer does (apps/worker/src/handlers/raid.ts line 535: title: benefit.title); the TO marks the benefit sensitive. The TO creates a forum. TL creates and starts two meetings and records the case as a red blocker in both (POST .../meetings/{m}/blocker-statuses {sourceRecordType:'corrective_case', sourceRecordId:<case>, rag:'red'}). The probe then delivers the outbox messages to the worker's real consumer handleBlockerEscalation (apps/worker/src/handlers/escalations.ts). Then, as TL, AUD and SP (none admitted to the benefit), and as TO (the control), read GET /benefits/{id}, GET /executive-decisions, GET /executive-decisions/{askId} and GET /me/inbox.",
+      "expected": "ADR-0051 §2: a sensitive record a principal is not admitted to is absent from lists, search, exports and assistant retrieval, and its GET is 404. The 2026-11-04 amendment extends this to the rows that carry its values. Its 'Service principals' paragraph adds that a job never reads a sensitive record unless ADR-0053 declares an exception. REQ-S10-002: 'a sensitive benefit is hidden from a workstream member without the grant'. M0188: permissions are enforced on the server for records, APIs, exports and search. After BE-Z4, TL and AUD get 404 on the case itself. The executive ask that the escalation job creates from that case should therefore not carry the case's (that is, the benefit's) title to them. The ask, or at least its 'decision' text and the owner's notification parameters, should be redacted for a reader who is not admitted, or the job should title the ask neutrally (for example by the case code). It is also questionable that TL, who gets 404 on the case, can record a blocker status that names it (201).",
+      "actual": "Control: TL and AUD get 404 on the benefit and on the case (BE-Z4 works). TL's two blocker statuses naming the restricted case are accepted (201 each). The consumer then returns {outcome:'ask_created'} and creates executive ask DEC-01 with decision = 'Synthetic churn reduction', the sensitive benefit's title, plus blockerRecordType 'corrective_case' and blockerRecordId <case>. TL, AUD and SP all get 200 on GET /executive-decisions, and the list contains the benefit title. They also get 200 on GET /executive-decisions/{id}, whose field 'decision' holds the title. SP, the ask's owner, also receives an inbox notification governance.task.executive_decision_due with messageParams {code:'DEC-01', title:'Synthetic churn reduction'}. The inbox redaction does not apply, because the link names the executive decision. The probe's two expect.soft assertions fail, for TL and AUD, which is the intended red (probe-sensitive-escalation.log, exit 1 by design). By code reading, the ask's title is also indexed by search (apps/worker/src/search/documents.ts: decision spec over title), so the title would also be findable by text. I did not run the search indexer for this. The trigger needs only one person with meeting.prepare who records the case as a red blocker in N consecutive cycles (N = 2 by default). That can be the owner, legitimately, or TL, who learns the case id from the action register, where the case's actions show correctiveCaseId (BE-Z4's residual). The disclosure is of a sensitive benefit's title to every transformation reader.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-4/probe-sensitive-escalation.log",
+        "docs/delivery/test-evidence/DG6/domain/round-4/probes/dom-r4-sensitive-escalation.test.ts.txt",
+        "apps/worker/src/handlers/escalations.ts",
+        "apps/worker/src/handlers/raid.ts",
+        "apps/api/src/modules/governance/escalations.ts",
+        "apps/api/src/modules/governance/executive-decisions.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T02:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 4 by domain-reviewer while verifying F-DG6-220 adversarially. High and mandatory (access control, REQ-S10-002, M0188). This is a different path from F-DG6-220, whose own scope is repaired and verified. Suggested repair, for the architect and backend to decide: (1) the blocker escalation titles an ask about a corrective case of a sensitive benefit neutrally (for example by the case code), or the executive-decision presenters, the notification parameters and the search document redact 'decision' for a reader who is not admitted to the blocker's restricted case; (2) blocker-status writes naming a corrective case apply the same reach check as the case's own routes (404 for a non-admitted caller); (3) sweep the other worker jobs that copy a blocker's or a child's text into another record for the same pattern; (4) add a negative test (TL, AUD, SP) and a positive one (TO, BO)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-281",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The connector edit screen shows 'Choose…' in the required 'Target transformation' select when the stored target is a transformation the administrator cannot list",
+      "reproduction": "Candidate 4b84bf20, production-initialized stack apps/web/e2e/support/with-stack.sh, probe e2e/zz-domain/dom-r4-screens.spec.ts (copy in probes/dom-r4-screens.spec.ts.txt), en and ar. dev.lead creates a transformation. dev.admin creates a test_adapter kpi_actual connector targeting it through the API, then opens Administration > Integrations > the connector > Edit.",
+      "expected": "REQ-S17-001: connectors record their mappings and targets, and the owner can see them. An edit screen should show the stored target, or, when the administrator cannot read that transformation, say so (for example 'A transformation you cannot view' with its code or id). It should not look as if the required field were empty.",
+      "actual": "The select reads 'Choose…' / 'اختر...' (screenshots dom-r4-connector-unbound-secret.png, en and ar). ConnectorFormPage keeps the stored id in its state and sends it unchanged on save, so nothing is lost and the PUT carries the right target. But the options come from useAllTransformations, which lists only what dev.admin can read. A technical administrator who lacks transformation.read by design (ADR-0051 §7) therefore sees a required field that looks unset, and cannot tell which transformation the feed writes to. If they open the select, they cannot choose the original value again. The effect is a misleading display only: no wrong value is stored, and RAG, approvals and state are not affected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/en/dom-r4-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/screenshots/ar/dom-r4-connector-unbound-secret.png",
+        "docs/delivery/test-evidence/DG6/domain/round-4/probes/dom-r4-screens.spec.ts.txt",
+        "apps/web/src/pages/integrations/ConnectorFormPage.tsx"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T02:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 4 by domain-reviewer, answering the D-211 open question on the 'Target transformation' select. Low, not blocking on its own. Suggested repair: when the stored targetTransformationId is not among the options, render an extra option for it ('A transformation you cannot view' plus its id), selected and disabled."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-300",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "A sensitive benefit's code, title and values stay readable by a workstream member without the grant through the traceability graph, the missing-links report, the G6 readiness text and the live and stored register reports",
+      "reproduction": "Candidate 4b84bf20 (source 654e39d), disposable clone, disposable PostgreSQL 16, LANG unset, Node 22.22.0. Probes in docs/delivery/test-evidence/DG6/code-security/round-4/repro/ (run with checks.sh repro). (1) zz-cs-r4-sens-title.test.ts (log 40-repro-sens-title.log), product fixtures of sensitive-reach-registers.test.ts: BO creates a benefit on a launched initiative and renames it 'Synthetic CONFIDENTIAL CS-R4 tariff uplift'; the TO marks it sensitive (PUT .../records/benefit/{id}/sensitivity). TL, AUD and a second BO (no grant, not a named party) get 404 on GET .../benefits/{id} (control passes). The same three users then GET .../traceability (getTraceability) and .../missing-links (getMissingLinks): both answer 200 and carry the benefit's id, code B01 and title (traceability node {recordType:'benefit', code:'B01', label:'Synthetic CONFIDENTIAL CS-R4 tariff uplift', href:.../benefits/{id}}; missing-links item {code:'benefit_outcome_link_missing', label:'B01 Synthetic CONFIDENTIAL CS-R4 tariff uplift'}). 3 of 4 tests fail: 'routes whose body holds the sensitive benefit's title: expected [getTraceability, missing-links] to deeply equal []'. (2) zz-cs-r4-sens-title2.test.ts (log 41-repro-sens-title2.log): the benefit also gets plannedValue 7654321.1234 (BO PATCH, 200) and a G6 gate instance exists (not approved). As TL after marking: GET .../reports/registers/live?parameters={\"register\":\"benefits\"} answers 200 with the benefit's row: code, title and planned value 7654321.1234 SAR, with validated/sustained/submitted amounts; POST .../reports/registers/generate as TL answers 201, and GET .../report-snapshots/{id} returns the same row to TL and to AUD; GET .../gates/G6 answers 200 with missing item 'Benefits evidence: B01 Synthetic CONFIDENTIAL CS-R4b tariff uplift has no Finance-validated measurement and no approved transition decision.' 4 of 5 tests fail (the export-start control used a path the contract does not have: a probe error, not a product result; the export refusal export.includes_restricted_records is the candidate's own tested behaviour). (3) zz-cs-r4-sens-sweep.test.ts (log 42-repro-sens-sweep.log), demo-seeded roaming transformation: benefit B01 retitled (with its audit event) and marked sensitive by a TO; a TL at the transformation gets 404 on it. Over all 128 GET operations whose only path parameter is {transformationId} plus two live reports, the TL sees the title on getTraceability and on the live registers report; listBenefits and getTransformationDashboard (which the TO sees it on) correctly omit it. Source: apps/api/src/modules/reporting/traceability.ts:291-306 (every benefit of the transformation becomes a node with code and title; no sensitivity clause anywhere in the file); apps/api/src/modules/transformations/missing-links-facts.ts:99-142 (label `${b.code} ${b.title}`), served by reporting/modular.ts:382-385; apps/api/src/modules/benefits/gate-facts.ts:20-26 with workflows/g6.ts:50-57 (the readiness message embeds code and title; frozen into gate submissions too); apps/api/src/modules/reporting/reports/routes.ts:129-141 (live) and :143-160 (generate) with reporting/reports/assemblers/registers.ts:180-275 (benefit rows with title and amounts; the assembler takes no principal); same pattern, read but not run: workflows/impact.ts:381-415 and :508 (a KPI change-impact lists the benefits that measure it by code and title). BE-B2's handback (docs/delivery/handbacks/DG6/T-DG6-BE-B2-backend-workflow-engineer.md line 169) lists getTraceability, impact, missing links as 'not done, outside my files'; no later task closed it, and ADR-0051 §2 says 'Lists, search, exports, assistant retrieval: the row is absent'.",
+      "expected": "REQ-S10-002 A12: 'a sensitive benefit is hidden from a workstream member without the grant'. ADR-0051 §2: a reader who gets 404 on a sensitive benefit must not find it, its title or its values in any list, report, export or derived view; an aggregate that includes it is shown with includesRestrictedRecords and no individual value. The traceability graph, the missing-links report, the gate readiness texts (live and frozen), the impact preview and the live and stored reports omit the benefit (or show it as restricted with no code, title or value) for such a reader, and the register report snapshot, like the export, is refused or filtered when it would include a record the requester is not admitted to.",
+      "actual": "A TL, an AUD and a second BO who each get 404 on the benefit read its id, code and title through getTraceability and getMissingLinks, its code and title through the G6 readiness, and its title and planned value (7654321.1234 SAR) through the live registers report. A TL can store that report as a snapshot, which every transformation reader, including AUD, then reads. The export of the same selection is refused (D-199), but the live report and the snapshot are not, so the refusal is bypassed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-title.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/40-repro-sens-title.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-title2.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/41-repro-sens-title2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/repro/zz-cs-r4-sens-sweep.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/42-repro-sens-sweep.log",
+        "apps/api/src/modules/reporting/traceability.ts",
+        "apps/api/src/modules/transformations/missing-links-facts.ts",
+        "apps/api/src/modules/reporting/modular.ts",
+        "apps/api/src/modules/benefits/gate-facts.ts",
+        "apps/api/src/modules/workflows/g6.ts",
+        "apps/api/src/modules/reporting/reports/routes.ts",
+        "apps/api/src/modules/reporting/reports/assemblers/registers.ts",
+        "apps/api/src/modules/workflows/impact.ts",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-B2-backend-workflow-engineer.md",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T03:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 4 on candidate 4b84bf20 (source 654e39d); reproduced by three probes in a disposable clone."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-301",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Three field-error codes have no en/ar catalogue text, and problems-all.test.ts does not collect codes inside problems.validation([...]) arrays, so it cannot find them",
+      "reproduction": "45-field-error-codes-scan.py (a read-only scan of apps/api/src/modules for `code:` entries inside `problems.validation([...])` calls, compared with apps/web/src/i18n/en and ar): 21 such codes, 3 without problems.<key> in either language: validation.commit_on_behalf_of (apps/api/src/modules/integrations/connectors.ts:353, emitted twice), validation.credential_refs (connectors.ts:295), validation.unknown_version (apps/api/src/modules/workflows/approval-routes.ts:713). apps/web/src/i18n/problems-all.test.ts collects codes only from problems.businessRule/duplicate/badRequest, `new HttpProblem({...})` and db-errors.ts (lines 57-75), so these three are never checked. fieldErrorMessage (apps/web/src/lib/problem.ts:84-87) falls back to problems.validation__invalid for them; since FE-Z2 the connector form places /config/commitOnBehalfOf on its field (ConnectorFormPage.tsx connectorFieldOf), so a user who picks automatic commit without an on-behalf-of user sees only the generic text.",
+      "expected": "Every code the API emits, including field-error codes inside problems.validation arrays, has an en and an ar text (REQ-S15-007 'a test finds no missing ar or en key'), and the catalogue test collects them.",
+      "actual": "The three codes show the generic 'not valid' text in both languages, and the catalogue test passes without seeing them. The text is localized, with no raw code or English server text, so the effect is a less specific message.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.py",
+        "docs/delivery/test-evidence/DG6/code-security/round-4/45-field-error-codes-scan.txt",
+        "apps/web/src/i18n/problems-all.test.ts",
+        "apps/api/src/modules/integrations/connectors.ts",
+        "apps/api/src/modules/workflows/approval-routes.ts",
+        "apps/web/src/lib/problem.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/code-security-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T03:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 4 while judging FE-Z2's disclosed problems-all.test.ts gap (D-211)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-320",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "After the F-DG6-221 repair, 'Last error' on the operational exception page shows the raw code for the stale-data and missed-heartbeat exceptions (kpi.stale, operations.heartbeat_missed), in both languages, because neither code has a catalogue text",
+      "reproduction": "(1) Live, candidate 4b84bf20 (source 654e39d): docs/delivery/test-evidence/DG6/qa/tests/round-4/zz-qa-dg6r4-exception-last-error.spec.ts, run last in the C.UTF-8 root acceptance run on apps/web/e2e/support/with-stack.sh (05b-e2e-root-cutf8-connection-log.log). It lists the dev organization's operational exceptions and opens one per lastErrorCode as dev.admin. Output: 'QA-R4 LAST-ERROR ar: code=operations.heartbeat_missed failureClass=heartbeat_missed shown=\"operations.heartbeat_missed\" catalogueText=false serverMessage=\"No worker heartbeat for 304 seconds (newest beat 2026-11-05T06:27:18.402Z).\"'. The connector codes are localized correctly ('لم يستجب نظام المصدر.', 'محوّل الاختبار الخاص بالموصل متوقف.'). The English screen of the a22-p6-operability heartbeat exception (shots/a22-p6-exception-resolved-en.png) shows 'Error code: operations.heartbeat_missed' and 'Last error: operations.heartbeat_missed'. (2) Cause: OperationsPages.tsx exceptionErrorText() returns integrations.actionable.<code>.why, else problems.<code>, else ''; ExceptionErrorText then shows the code itself. apps/web/src/i18n/{en,ar}/problems.json have no kpi__stale and no operations__heartbeat_missed (12-problem-code-scan.txt). The worker raises the stale-data exception with errorCode DATA_STALE_ERROR_CODE = 'kpi.stale' (apps/worker/src/handlers/operations.ts:61), and the API's heartbeat watch raises 'operations.heartbeat_missed' (apps/api/src/modules/operations/heartbeat.ts:125, 158). The other exception codes have texts: the connector codes (integrations.actionable), automation.retries_exhausted, service_identity.missing and service_identity.out_of_scope. problems-all.test.ts does not see either code, because exception codes are neither problems.* helper arguments nor HttpProblem codes (the D-211 open question).",
+      "expected": "ADR-0007 and the F-DG6-221 repair: 'Last error' is the catalogue text of lastErrorCode in the user's language. CLAUDE.md: Arabic RTL and English LTR for every user-facing string. REQ-S15-007: bilingual errors. The two P6 exception kinds the product raises itself (stale data, REQ-S12-019; missed heartbeat, REQ-S20-022) should have an en and ar text, as the connector codes do, and a completeness test should cover every exception code.",
+      "actual": "For these two codes the value is the raw identifier, in en and in ar. Before FE-Z2, the English screen showed the server's sentence (for example 'No worker heartbeat for 304 seconds ...'). It now shows the same code twice, once as 'Error code' and once as 'Last error'. The effect is bounded to the administrator's Operations screen. It is not English text on the Arabic screen (the F-DG6-221 defect), and no state, value, RAG or approval is affected. The failure class ('Heartbeat missed', localized), the occurrences and the linked KPI's Stale label are shown correctly. It is cosmetic and not blocking.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-4/05b-e2e-root-cutf8-connection-log.log",
+        "docs/delivery/test-evidence/DG6/qa/round-4/shots/qa-r4-exception-ar-operations.heartbeat_missed.png",
+        "docs/delivery/test-evidence/DG6/qa/round-4/shots/a22-p6-exception-resolved-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-4/12-problem-code-scan.txt",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-4/zz-qa-dg6r4-exception-last-error.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 4 (T-DG6-REV-QA-R4) on candidate sha256:4b84bf20. Low, non-mandatory, cosmetic; answers D-211 open question 1 for the exception codes."
         }
       ]
     }
