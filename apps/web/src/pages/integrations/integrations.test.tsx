@@ -648,6 +648,99 @@ describe.each(LOCALES)("connector form: an unbound secret reference (%s)", (loca
   });
 });
 
+// F-DG6-281 (REQ-S17-001; T-DG6-FE-Z3): the stored target of a kpi_actual connector is a transformation the
+// administrator cannot list (a technical administrator without transformation.read, ADR-0051 §7). The required select
+// shows that a target is set ("A transformation you cannot view" with its id), keeps it selectable, and a save keeps
+// the stored value. No other read is made for it.
+describe.each(LOCALES)("connector form: a target the administrator cannot view (%s)", (locale) => {
+  const editRoutes = (listed: ReturnType<typeof makeTransformation>[]): Handler[] => [
+    meRoute(ADM_TECH),
+    route("GET", /\/api\/v1\/transformations\?/, () => ({ status: 200, body: { items: listed, nextCursor: null } })),
+    route("PUT", new RegExp(`/api/v1/admin/connectors/${CONNECTOR_ID}$`), (req) => ({
+      status: 200,
+      body: {
+        ...connector(),
+        version: 5,
+        config: { ...connector().config, ...(req.body as { config: object }).config },
+      },
+    })),
+    ...connectorRoutes(),
+  ];
+  const targetSelect = async (t: (k: string) => string) =>
+    (await screen.findByLabelText(new RegExp(t("integrations.field.targetTransformation")))) as HTMLSelectElement;
+
+  it("shows the stored target as set, keeps it selectable, and saves it unchanged", async () => {
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    const api = mockApi(...editRoutes([]));
+    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/edit`, { i18n });
+    const select = await targetSelect(t);
+    const unreadable = i18n.t("integrations.field.targetUnreadable", { id: TR_ID });
+    await waitFor(() => expect(select.selectedOptions[0]?.textContent).toBe(unreadable));
+    expect(select.value).toBe(TR_ID);
+    expect(unreadable).toContain(TR_ID);
+    expect(locale === "ar" ? /[؀-ۿ]/.test(unreadable) : !/[؀-ۿ]/.test(unreadable)).toBe(true);
+    expect(select.selectedOptions[0]!.textContent).not.toBe(t("common.form.choose"));
+    // the hint says why, and the select is described by it
+    const hint = t("integrations.field.targetStoredUnlistedHint");
+    expect(document.getElementById(select.getAttribute("aria-describedby")!.split(" ")[0]!)?.textContent).toBe(hint);
+    // selectable: choose nothing, then the stored target again
+    const stored = [...select.options].find((o) => o.value === TR_ID)!;
+    expect(stored.disabled).toBe(false);
+    fireEvent.change(select, { target: { value: "" } });
+    expect(select.value).toBe("");
+    fireEvent.change(select, { target: { value: TR_ID } });
+    expect(select.value).toBe(TR_ID);
+    // save keeps the stored value
+    fireEvent.change(await screen.findByLabelText(new RegExp(t("integrations.field.reason"))), {
+      target: { value: "Synthetic reason" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: t("integrations.form.save") }));
+    await waitFor(() => expect(api.requests.some((r) => r.method === "PUT")).toBe(true));
+    const put = api.requests.find((r) => r.method === "PUT")!;
+    expect((put.body as { config: { targetTransformationId: string } }).config.targetTransformationId).toBe(TR_ID);
+    // nothing beyond the list is read for the stored target
+    expect(api.requests.some((r) => r.method === "GET" && new RegExp(`/transformations/${TR_ID}`).test(r.url))).toBe(
+      false,
+    );
+  });
+
+  it("shows the listed target by its code and name, with no extra option", async () => {
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    mockApi(...editRoutes([makeTransformation()]));
+    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/edit`, { i18n });
+    const select = await targetSelect(t);
+    await waitFor(() => expect(select.selectedOptions[0]?.textContent).toBe("TR-0001 · Synthetic retail journey"));
+    expect(select.querySelector("[data-stored-target]")).toBeNull();
+    expect(select.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  // F-DG6-301: the form places /config/commitOnBehalfOf on its field with its own text, not the generic one
+  it("says why an automatic commit needs an on-behalf-of user, in the reader's language", async () => {
+    const i18n = i18nFor(locale);
+    const t = i18n.t.bind(i18n);
+    mockApi(
+      meRoute(ADM_TECH),
+      route("GET", /\/api\/v1\/transformations\?/, () => ({ status: 200, body: { items: [], nextCursor: null } })),
+      route("PUT", new RegExp(`/api/v1/admin/connectors/${CONNECTOR_ID}$`), () =>
+        validation400([{ pointer: "/config/commitOnBehalfOf", code: "validation.commit_on_behalf_of" }]),
+      ),
+      ...connectorRoutes(),
+    );
+    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/edit`, { i18n });
+    fireEvent.change(await screen.findByLabelText(new RegExp(t("integrations.field.reason"))), {
+      target: { value: "Synthetic reason" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: t("integrations.form.save") }));
+    const text = t("problems.validation__commit_on_behalf_of");
+    expect(text).not.toBe(t("problems.validation__invalid"));
+    expect(locale === "ar" ? /[؀-ۿ]/.test(text) : !/[؀-ۿ]/.test(text)).toBe(true);
+    await waitFor(() => expect(document.body.textContent).toContain(text));
+    expect(document.body.textContent).not.toContain("English diagnostics only");
+  });
+});
+
 // F-DG6-222: the webhook signing-secret rotation names a reference IT has not bound to webhook signing (D-209): 400 at
 // /signingSecretRef marks the secret-name field with the localized reason.
 describe.each(LOCALES)("webhook rotation: an unbound signing secret (%s)", (locale) => {

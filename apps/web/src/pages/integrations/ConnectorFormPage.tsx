@@ -275,6 +275,12 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
   const [unplaced, setUnplaced] = useState<UnplacedFieldError[]>([]);
   const [busy, setBusy] = useState(false);
   const editing = connector !== null;
+  // T-DG6-FE-Z3 (F-DG6-281; REQ-S17-001): the stored target of a kpi_actual connector stays visible and selectable
+  // when it is not among the transformations this user can list (a technical administrator without
+  // transformation.read, ADR-0051 §7). Only its id is shown: no further read is made, so nothing more is disclosed.
+  const storedTargetId = connector?.config.targetTransformationId ?? "";
+  const storedTargetUnlisted =
+    storedTargetId !== "" && !(transformations.data ?? []).some((x) => x.id === storedTargetId);
   const set =
     <K extends keyof ConnectorFormValues>(key: K) =>
     (e: { target: { value: string } }) =>
@@ -444,12 +450,20 @@ function ConnectorForm({ connector }: { connector: Connector | null }) {
         {values.targetKind === "kpi_actual" ? (
           <Field
             label={t("integrations.field.targetTransformation")}
+            hint={storedTargetUnlisted ? t("integrations.field.targetStoredUnlistedHint") : undefined}
             error={errorText("targetTransformationId")}
             required
           >
             {(c) => (
               <select {...c} value={values.targetTransformationId} onChange={set("targetTransformationId")}>
                 <option value="">{t("common.form.choose")}</option>
+                {storedTargetUnlisted ? (
+                  <option value={storedTargetId} data-stored-target>
+                    {transformations.isPending
+                      ? t("integrations.field.targetStored", { id: storedTargetId })
+                      : t("integrations.field.targetUnreadable", { id: storedTargetId })}
+                  </option>
+                ) : null}
                 {(transformations.data ?? []).map((x) => (
                   <option key={x.id} value={x.id}>
                     {x.code} · {x.name}

@@ -1,0 +1,105 @@
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-z3/apps/web
+
+ ❯ |unit-web| src/i18n/problems-all.test.ts (10 tests | 3 failed) 3874ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > reads the API source and the P6 ADR tables (neither scan is empty) 4ms
+   × problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English 36ms
+     → expected [ …(3) ] to deeply equal []
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar 46ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > translates BE-W's contrast codes exactly as ADR-0061 §6 (en, and the provisional ar) 2ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > collects the field-error codes inside problems.validation([...]) (F-DG6-301) 0ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301) 4ms
+     → en: expected [ 'validation.credential_refs', …(2) ] to deeply equal []
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > pins the derivations of DERIVED_ERROR_CODES to their source 1ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320) 8ms
+     → expected [ …(13) ] to deeply equal []
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > would fail on an untranslated code (the guard is not vacuous) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "validation.commit_on_behalf_of (apps/api/src/modules/integrations/connectors.ts:353): en missing, ar missing",
++   "validation.credential_refs (apps/api/src/modules/integrations/connectors.ts:295): en missing, ar missing",
++   "validation.unknown_version (apps/api/src/modules/workflows/approval-routes.ts:713): en missing, ar missing",
++ ]
+
+ ❯ src/i18n/problems-all.test.ts:293:21
+    291|       if (!ARABIC.test(ar.text) || ar.text === en.text) notArabic.push…
+    292|     }
+    293|     expect(missing).toEqual([]);
+       |                     ^
+    294|     expect(notArabic).toEqual([]);
+    295|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301)
+AssertionError: en: expected [ 'validation.credential_refs', …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "validation.credential_refs",
++   "validation.commit_on_behalf_of",
++   "validation.unknown_version",
++ ]
+
+ ❯ src/i18n/problems-all.test.ts:341:32
+    339|         if (code !== "validation.invalid" && (!textOf(locale, code) ||…
+    340|           fallback.push(code);
+    341|       expect(fallback, locale).toEqual([]);
+       |                                ^
+    342|     }
+    343|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320)
+AssertionError: expected [ …(13) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "kpi.stale (apps/worker/src/handlers/operations.ts:366): en missing, ar missing",
++   "operations.heartbeat_missed (apps/api/src/modules/operations/heartbeat.ts:123): en missing, ar missing",
++   "smtp.auth_failed (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.configuration_invalid (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.connection_failed (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.message_rejected (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.protocol_error (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.recipient_rejected (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.secret_unavailable (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.temporary_failure (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.timeout (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.tls_failed (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++   "smtp.unknown (apps/worker/src/handlers/notifications.ts:537): en missing, ar missing",
++ ]
+
+ ❯ src/i18n/problems-all.test.ts:391:21
+    389|       else if (!ARABIC.test(arText) || arText === enText) missing.push…
+    390|     }
+    391|     expect(missing).toEqual([]);
+       |                     ^
+    392|   });
+    393| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  08:47:46
+   Duration  8.04s (transform 386.73s, setup 196ms, collect 3.11s, tests 3.87s, environment 486ms, prepare 146ms)
+
