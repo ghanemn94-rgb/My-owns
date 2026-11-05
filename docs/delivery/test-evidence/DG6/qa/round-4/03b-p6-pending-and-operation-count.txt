@@ -1,0 +1,41 @@
+### 2026-11-05T02:18:03Z node v24.21.0 cwd=/var/tmp/mth-run.JIxWTV/claude-0/r4 (candidate clone 654e39d)
+$ node $TMPDIR/pending.mjs   (imports every apps/api/test/support/p6-pending*.ts and prints each exported array length)
+  | import { readdirSync } from "node:fs";
+  | const dir = process.cwd() + "/apps/api/test/support/";
+  | for (const f of readdirSync(dir).filter((f) => f.startsWith("p6-pending")).sort()) {
+  |   const m = await import(dir + f);
+  |   for (const [k, v] of Object.entries(m)) if (Array.isArray(v)) console.log(`${f} ${k} length=${v.length}${v.length ? " " + JSON.stringify(v) : ""}`);
+  | }
+p6-pending-arch-01.ts P6_PENDING_ARCH_01 length=0
+p6-pending-arch-02.ts P6_PENDING_ARCH_02 length=0
+p6-pending-arch-03.ts P6_PENDING_ARCH_03 length=0
+p6-pending-arch-04.ts P6_PENDING_ARCH_04 length=0
+p6-pending-arch-05.ts P6_PENDING_ARCH_05 length=0
+p6-pending-arch-06.ts P6_PENDING_ARCH_06 length=0
+p6-pending-be-b.ts P6_PENDING_BE_B length=0
+p6-pending-be-c.ts P6_PENDING_BE_C length=0
+p6-pending-be-d.ts P6_PENDING_BE_D length=0
+p6-pending-be-e.ts P6_PENDING_BE_E length=0
+p6-pending-be-g.ts P6_PENDING_BE_G length=0
+p6-pending-be-h2.ts P6_PENDING_BE_H2 length=0
+p6-pending-be-i.ts P6_PENDING_BE_I length=0
+p6-pending-be-i2.ts P6_PENDING_BE_I2 length=0
+p6-pending-be-j.ts P6_PENDING_BE_J length=0
+p6-pending-be-k.ts P6_PENDING_BE_K length=0
+p6-pending-be-l.ts P6_PENDING_BE_L length=0
+p6-pending-be-l2.ts P6_PENDING_BE_L2 length=0
+p6-pending-be-m2.ts P6_PENDING_BE_M2 length=0
+p6-pending-be-n.ts P6_PENDING_BE_N length=0
+p6-pending-be-n2.ts P6_PENDING_BE_N2 length=0
+p6-pending-be-o.ts P6_PENDING_BE_O length=0
+p6-pending-be-p.ts P6_PENDING_BE_P length=0
+p6-pending-be-q.ts P6_PENDING_BE_Q length=0
+p6-pending-be-q2.ts P6_PENDING_BE_Q2 length=0
+p6-pending-be-t.ts P6_PENDING_BE_T length=0
+p6-pending-be-u.ts P6_PENDING_BE_U length=0
+p6-pending-be-w.ts P6_PENDING_BE_W length=0
+p6-pending.ts P6_PENDING_OPERATIONS length=0
+EXIT 0
+
+$ grep -c "operationId:" docs/api/openapi.yaml
+932

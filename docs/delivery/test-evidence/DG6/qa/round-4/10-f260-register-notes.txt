@@ -1,0 +1,23 @@
+### 2026-11-05T02:42:24Z F-DG6-260 register-notes check
+$ python3 f260-register-notes-check.py 654e39d89b66c0975ebef293d607f480f58408e3   (this candidate)
+654e39d89b REQ-S20-001: AN-Z2 check present: True; status IMPLEMENTED
+654e39d89b REQ-S20-012: AN-Z2 check present: True; status IMPLEMENTED
+654e39d89b REQ-S20-017: AN-Z2 check present: True; status IMPLEMENTED
+654e39d89b REQ-S20-022: AN-Z2 check present: True; status IMPLEMENTED
+stale-unsuperseded=0
+EXIT 0
+
+$ python3 f260-register-notes-check.py 95f981917e4e5572f954d7cd159d869eca142bff   (mutant = the round-3 register, i.e. the repair reverted; must exit 1)
+95f981917e REQ-S20-001: 'not yet in this tree' at 610: STALE (no later check)
+95f981917e REQ-S20-001: 'is still to be recorded' at 668: STALE (no later check)
+95f981917e REQ-S20-001: AN-Z2 check present: False; status IMPLEMENTED
+95f981917e REQ-S20-012: 'still fails' at 401: STALE (no later check)
+95f981917e REQ-S20-012: 'not fully green' at 581: STALE (no later check)
+95f981917e REQ-S20-012: AN-Z2 check present: False; status IMPLEMENTED
+95f981917e REQ-S20-017: 'not fully green' at 412: STALE (no later check)
+95f981917e REQ-S20-017: 'is unrepaired in this tree' at 562: STALE (no later check)
+95f981917e REQ-S20-017: AN-Z2 check present: False; status IMPLEMENTED
+95f981917e REQ-S20-022: 'not yet in this tree' at 632: STALE (no later check)
+95f981917e REQ-S20-022: AN-Z2 check present: False; status IMPLEMENTED
+stale-unsuperseded=7
+EXIT 1

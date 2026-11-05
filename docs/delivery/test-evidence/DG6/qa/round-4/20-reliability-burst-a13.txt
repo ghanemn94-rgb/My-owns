@@ -1,0 +1,141 @@
+### 2026-11-05T06:15:03Z A13 drills, outbound write-once and the D-203 worker burst, from this round's integration logs
+== 04-integration-run1-A.log
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  629ms
+   ✓ kpi.recalculate through the relay and the production worker (REQ-S07-013, REQ-S12-006) > writes one run; a redelivery and a restarted worker write no second run  1010ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  1443ms
+   ✓ REQ-S12-020: kill the worker mid-job and restart it > completes the job once; nothing enters the failure queue  6084ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  548ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1141ms
+ ✓  integration  tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts (1 test) 19174ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a channel send and restarted > the interrupted send stays pending and unaccepted; after the restart it is sent once, never twice  14655ms
+ ✓  integration  tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 9928ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  6149ms
+ ✓  integration  apps/worker/test/integration/restart.test.ts (1 test) 10382ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  6824ms
+ ✓  integration  tests/qa/integration/a13-p6-reindex-kill-restart.test.ts (1 test) 13112ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a search reindex and restarted > the killed reindex leaves no partial documents and says `reindexing`; after the restart it completes once  9286ms
+== 04-integration-run1-B.log
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  7432ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  352ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  2277ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  563ms
+   ✓ raid.corrective_control and raid.corrective_adoption through the production worker (REQ-S12-016) > a failed control check opens one owned case with a 5-working-day follow-up and one work item; replay and restart create none  944ms
+   ✓ a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation  2458ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  24777ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1396ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  2756ms
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+== 04-integration-run2-A.log
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  381ms
+   ✓ kpi.recalculate through the relay and the production worker (REQ-S07-013, REQ-S12-006) > writes one run; a redelivery and a restarted worker write no second run  992ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  1384ms
+   ✓ REQ-S12-020: kill the worker mid-job and restart it > completes the job once; nothing enters the failure queue  5789ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  386ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1168ms
+ ✓  integration  tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts (1 test) 17648ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a channel send and restarted > the interrupted send stays pending and unaccepted; after the restart it is sent once, never twice  13864ms
+ ✓  integration  tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 9394ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  5001ms
+ ✓  integration  apps/worker/test/integration/restart.test.ts (1 test) 11557ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  6702ms
+ ✓  integration  tests/qa/integration/a13-p6-reindex-kill-restart.test.ts (1 test) 13040ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a search reindex and restarted > the killed reindex leaves no partial documents and says `reindexing`; after the restart it completes once  9344ms
+== 04-integration-run2-B.log
+ ✓  integration  tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 126163ms
+   ✓ A13 (REQ-S20-013): the process executing a connector run is killed mid-run and restarted > the killed run stages nothing and stays `running` with Unknown counts; the restarted watch finishes it once  122382ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  7138ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  23734ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1554ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  2007ms
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+stdout | apps/api/test/integration/automation/automation-backlog-enablement.test.ts > O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event
+== 04c-tests-qa-alone.log
+ ✓  integration  tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 126189ms
+   ✓ A13 (REQ-S20-013): the process executing a connector run is killed mid-run and restarted > the killed run stages nothing and stays `running` with Unknown counts; the restarted watch finishes it once  122583ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  6411ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  24881ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1389ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  2735ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  366ms
+ ✓  integration  tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts (1 test) 19105ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a channel send and restarted > the interrupted send stays pending and unaccepted; after the restart it is sent once, never twice  13968ms
+ ✓  integration  tests/qa/integration/a13-p6-reindex-kill-restart.test.ts (1 test) 13385ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a search reindex and restarted > the killed reindex leaves no partial documents and says `reindexing`; after the restart it completes once  9278ms
+ ✓  integration  tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 9203ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  4860ms
+ ✓  integration  tests/qa/integration/a13-p6-outbound-write-once.test.ts (3 tests) 614ms
+
+== worker defaults (packages/config/src/load.ts)
+82:    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_BATCH_SIZE (default 8, 1-50). */
+84:    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_CONCURRENCY (default 4, 1-16, at most the batch size). */
+240:    "WORKER_JOB_BATCH_SIZE",
+244:    "WORKER_JOB_CONCURRENCY",
+248:    problems.push("WORKER_JOB_CONCURRENCY is invalid (must be at most WORKER_JOB_BATCH_SIZE)");
+== 04-integration-run1-B.log
+
+   ✓ O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event  3125ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  4778ms
+ ✓  integration  packages/db/test/integration/demo.test.ts (9 tests) 64325ms
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"00bd321a-a3c8-891a-ad25-cffe974c8a91","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-2645-7f06-b6eb-e2cb54a120a2","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"0143974e-3f13-8830-a830-6ba701e4f4bb","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-275c-708b-82b6-c60ee7d34218","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"0297a401-70d1-8fcc-83b4-e19bc162db39","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-2c4a-7ee7-b643-0456bd4b29a8","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"029c9028-7177-41f9-b2ac-98b8ae9c1056","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-25af-710a-bae6-37d71de3f28a","outcome":"duplicate"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"02dfb405-c4a1-4c95-88a9-528d598ef333","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-25fa-74c3-89eb-e1d3354ec7f0","outcome":"duplicate"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"02f1744f-ff5a-8663-af94-6630fdabd057","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-2b56-7d7e-b9be-f1e00221e23d","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"04b3c81d-fc6d-8e16-939f-f77898919e63","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-296a-78a0-9bbc-df9cbe278b1f","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"04b795b2-bcd8-8d24-b1ea-b943760dc9ac","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b8e7a63","executionId":"01a1aa10-26e3-7cdd-8143-d5282bb9f4df","outcome":"succeeded"}]}
+   ✓ O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per ev
+ ✓  integration  tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 126862ms
+ ✓  integration  tests/qa/integration/a13-p6-outbound-write-once.test.ts (3 tests) 675ms
+   ✓ bounded batches with per-job settlement (D-203 O-1) > at most jobConcurrency run at once; full batches poll again without the polling interval  426ms
+== 04-integration-run2-B.log
+
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact  426ms
+   ✓ O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event  2876ms
+ ✓  integration  tests/qa/integration/a07-historical-integrity.test.ts (12 tests) 12912ms
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"005705c3-89f9-8ba7-a1e6-dedd0cb81771","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f50f-7d89-ad0f-188cab26b7de","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"006da217-831e-4c35-9782-065440b613d4","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f11e-7a97-b6c2-ecddc20c3f97","outcome":"duplicate"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"00829390-9346-8fc0-914e-04200f81ca5a","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f0cf-72a3-b4ff-7500cbadc436","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"01253160-a776-434a-a5e3-8cad2ecfbce1","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f0fa-7da1-8da9-c59a17bbf023","outcome":"duplicate"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"015fb60f-8f6b-83f7-9280-f96d2710d38f","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f510-7a15-8d8c-d6f9595cf1b9","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"022a0ef0-e881-4a19-97e7-0c6339200118","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f0cf-72a3-b4ff-7500cbadc436","outcome":"duplicate"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"02fe207a-28c4-89f3-95be-e5706eba84eb","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f39d-765e-a42c-918b504eb276","outcome":"succeeded"}]}
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"031147a4-2164-4345-bd67-1e578c360928","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"backlog.b1b1302","executionId":"01a1aa3c-f137-74c8-a550-dfa099869670","outcome":"duplicate"}]}
+ ✓  integration  tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 126163ms
+   ✓ O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per ev
+   ✓ bounded batches with per-job settlement (D-203 O-1) > at most jobConcurrency run at once; full batches poll again without the polling interval  459ms
+ ✓  integration  tests/qa/integration/a13-p6-outbound-write-once.test.ts (3 tests) 648ms
+04-integration-run1-B.log job outcomes 305 succeeded executions 245 distinct 245 duplicates 60 executionIds succeeded >1: 0
+04-integration-run2-B.log job outcomes 305 succeeded executions 245 distinct 245 duplicates 60 executionIds succeeded >1: 0
