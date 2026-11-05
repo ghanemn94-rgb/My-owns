@@ -50,11 +50,19 @@ export const G6_EVALUATORS: ReadonlyArray<readonly [string, G6Evaluator]> = [
         missing: benefits
           .filter((b) => b.validatedMeasurementIds.length === 0 && b.approvedTransitionDecisionIds.length === 0)
           .map((b) =>
-            item(
-              "g6.benefit_not_validated",
-              `${L}: ${b.code} ${b.title} has no Finance-validated measurement and no approved transition decision.`,
-              `/benefits/${b.id}`,
-            ),
+            // A sensitive benefit (ADR-0051 §2; T-DG6-BE-Z5, F-DG6-300): the item still counts (the verdict stays
+            // truthful: G6 cannot be submitted while it is missing), but its text and pointer name no code, title or
+            // id. Reader-independent, because the text is frozen into the submission snapshot and the 422 refusal.
+            b.sensitive === true
+              ? item(
+                  "g6.benefit_not_validated",
+                  `${L}: a restricted benefit has no Finance-validated measurement and no approved transition decision.`,
+                )
+              : item(
+                  "g6.benefit_not_validated",
+                  `${L}: ${b.code} ${b.title} has no Finance-validated measurement and no approved transition decision.`,
+                  `/benefits/${b.id}`,
+                ),
           ),
       };
     },

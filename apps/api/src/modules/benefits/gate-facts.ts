@@ -10,6 +10,8 @@ export interface BenefitEvidenceGateFact {
   readonly title: string;
   readonly validatedMeasurementIds: readonly string[];
   readonly approvedTransitionDecisionIds: readonly string[];
+  /** Marked sensitive (record_sensitivity.is_sensitive; ADR-0051 §2): the readiness item is then neutral (g6.ts). */
+  readonly sensitive: boolean;
 }
 
 export async function loadBenefitsGateFacts(
@@ -40,9 +42,18 @@ export async function loadBenefitsGateFacts(
     .orderBy("code")
     .orderBy("id")
     .execute();
+  const marked = await db
+    .selectFrom("record_sensitivity")
+    .select("record_id")
+    .where("transformation_id", "=", transformationId)
+    .where("record_type", "=", "benefit")
+    .where("is_sensitive", "=", true)
+    .execute();
+  const sensitive = new Set(marked.map((m) => m.record_id));
   return {
     transformationId,
     benefits: benefits.map((b) => ({
+      sensitive: sensitive.has(b.id),
       id: b.id,
       code: b.code,
       title: b.title,

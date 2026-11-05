@@ -28,7 +28,7 @@ import {
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf, requireTransformationRead } from "../access/index.ts";
+import { auditContextOf, principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -376,7 +376,13 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toBlockerStatus), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Z5): a status naming a blocker the caller is not admitted to (a corrective case of a
+    // sensitive benefit) is absent (after pagination, no count).
+    const items = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: r.source_record_type,
+      recordId: r.source_record_id,
+    }));
+    return { items: items.map(toBlockerStatus), nextCursor: page.nextCursor };
   });
 
   app.post(STATUSES, { config: { access: { permission: PREPARE }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -395,7 +401,9 @@ export function registerEscalationRoutes(app: FastifyInstance, { db }: ModuleDep
       if (meeting.status === "minutes_published" || meeting.status === "cancelled")
         throw escalationRefusals.meetingFrozen(meeting.status);
       if (meeting.status !== "in_session" && meeting.status !== "held") throw escalationRefusals.notInSession();
-      if (!(await blockerExists(tx, transformationId, body.sourceRecordType, body.sourceRecordId)))
+      if (
+        !(await blockerExists(tx, principalOf(request), transformationId, body.sourceRecordType, body.sourceRecordId))
+      )
         throw escalationRefusals.blockerNotFound();
       const dup = await tx
         .selectFrom("blocker_status")

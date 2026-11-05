@@ -183,6 +183,12 @@ export interface BenefitEvidenceFact {
   readonly id: string;
   readonly code: string;
   readonly title: string;
+  /**
+   * The benefit is marked sensitive (ADR-0051 §2; T-DG6-BE-Z5, F-DG6-300). Its readiness item then names no code, title,
+   * id or value, for every reader: the readiness text is frozen into the submission and the 422 refusal, which readers
+   * outside the grant see.
+   */
+  readonly sensitive?: boolean;
   readonly validatedMeasurementIds: readonly string[];
   readonly approvedTransitionDecisionIds: readonly string[];
 }

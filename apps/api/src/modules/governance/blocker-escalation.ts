@@ -19,6 +19,7 @@
 import type { DbOrTx, Tx } from "@mth/db";
 import { sql } from "@mth/db";
 import type { BlockerRecordType } from "@mth/shared/schemas";
+import { restrictedRecordRefs, type Principal } from "../access/index.ts";
 import { ADVISORY_LOCK_CLASSES } from "../platform/index.ts";
 
 /** The lock key of one blocker's executive ask (ADR-0032 §10). */
@@ -48,9 +49,16 @@ function blockerTable(type: BlockerRecordType) {
   }
 }
 
-/** True when the blocker record exists in the transformation. */
+/**
+ * True when the blocker record exists in the transformation AND the caller may read it. A blocker the caller is not
+ * admitted to (a corrective case of a sensitive benefit: ADR-0051 §2 and its 2026-11-04 amendment; T-DG6-BE-Z5,
+ * F-DG6-280) answers false, so a write naming it is refused exactly as a write naming an unknown id (422
+ * `blocker_status.record_not_found`): its existence is not disclosed, and nobody outside the grant can start the
+ * escalation that would copy it into an ask that every transformation reader sees.
+ */
 export async function blockerExists(
   db: DbOrTx,
+  principal: Principal,
   transformationId: string,
   type: BlockerRecordType,
   id: string,
@@ -61,7 +69,8 @@ export async function blockerExists(
     .where("id", "=", id)
     .where("transformation_id", "=", transformationId)
     .executeTakeFirst();
-  return row !== undefined;
+  if (row === undefined) return false;
+  return (await restrictedRecordRefs(db, principal, [{ recordType: type, recordId: id }])).size === 0;
 }
 
 /** The blocker's open or deferred executive ask, whatever its origin, or null. */
