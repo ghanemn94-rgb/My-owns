@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-420",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Open records' responses name the identifier of a restricted record to a reader who gets 404 on it: a benefit group lists a sensitive benefit as countedBenefitId and in memberBenefitIds (rendered as a member link on the register screen), and an open benefit's measurement lists a sensitive evidence item in evidenceIds; ADR-0051 §2 states existence is not disclosed and does not decide references",
+      "reproduction": "Candidate sha256:0fea8adf (source 031945d8761a253665c6b794e6c8d2efbacdfe65), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0, LANG unset. Probe docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r6-id-refs.test.ts, run with checks.sh repro (log 42-repro-r6-id-refs.log; the two earlier attempts failed in the probe's own setup and are kept as 42-repro-r6-id-refs.attempt1/attempt2-setup-no-measurement.log). Setup, all SYNTHETIC, on the demo seed: a benefit group BG-77 (direct insert with its audit event) whose members are demo benefits B02 and B01, with B02 the counted member; a TO marks B02 sensitive (PUT .../records/benefit/{B02}/sensitivity, 200). A note evidence item created by the TO through POST .../evidence (201) is linked (benefit_evidence, with its audit event) to B01's submitted measurement, then marked sensitive by the TO (200). Reader: a TL scoped to the transformation, with no grant and not a named party. Calls: GET .../benefits/{B02}, GET .../evidence/{ev}, GET .../benefit-groups?limit=100, GET .../benefit-groups/{BG-77}, GET .../benefit-measurements/{B01 measurement}.",
+      "expected": "ADR-0051 §2 'Effect on reads': a record GET of a sensitive record the principal is not admitted to answers 404 'not_found (existence not disclosed; ADR-0006)', and lists omit the row; the amendment of 2026-11-04 even avoids returning a count of hidden rows. REQ-S10-002: 'a sensitive benefit is hidden from a workstream member without the grant'. Either a response does not name a restricted record's identifier to that reader (the reference is omitted, or replaced by a neutral 'restricted record' marker that does not link to it), or the architect records in ADR-0051 §2, and the orchestrator decides, that an opaque identifier of a restricted record may appear in an open record's response, and what the screen shows for it (for example the 'Includes restricted records' label instead of a link that ends in 404).",
+      "actual": "For TL, GET of the benefit and GET of the evidence both answer 404. In the same session, listBenefitGroups and getBenefitGroup answer 200 with countedBenefitId equal to B02's id, and memberBenefitIds holding B02's id (2 members). getBenefitMeasurement answers 200 with evidenceIds holding the sensitive evidence item's id (its title is not in the body). The TO gets the same identifiers and 200 on both records. No title, code or value of a restricted record is exposed: only its identifier, its existence, and in the group its role as the counted member. The web register renders each member and the counted member as a BenefitRef link to the hidden benefit (apps/web/src/pages/benefits/RegisterPages.tsx:139-158; the label falls back when the benefit is not in the reader's benefit index), so the reader sees an entry that leads to 404. Cause: apps/api/src/modules/benefits/groups.ts presentGroups (lines 56-76) reads every member from the benefit table and returns counted_benefit_id unfiltered; apps/api/src/modules/benefits/measurements.ts evidenceOf (lines 208-226) returns every linked evidence id. Neither consults restrictedRecordRefs. By reading the shared response schemas, the same class covers other identifier references of open records to a possibly sensitive benefit, business case or evidence item, for example kpi-actuals evidenceIds (packages/shared/src/schemas/kpi-actuals.ts:149), sustainment-area evidenceIds (sustainment-areas.ts:167) and the single evidenceId references (approval-routes.ts:96, health.ts:57, diagnose.ts:104, day-ninety.ts:25). I did not probe those one by one. The BE-Z5 and BE-Z7B sweep counts as a leak only the title, the code with the title and the planned value, so it cannot see this class. Medium, not mandatory: no content or value of a restricted record is disclosed, but the existence non-disclosure that ADR-0051 §2 states is broken on the API and on the screen. Under D-192 it must be repaired, or decided as above, before the gate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-6/42-repro-r6-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r6-id-refs.test.ts",
+        "apps/api/src/modules/benefits/groups.ts",
+        "apps/api/src/modules/benefits/measurements.ts",
+        "apps/web/src/pages/benefits/RegisterPages.tsx",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-06T08:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 6 (T-DG6-REV-CS-R6) while trying the reads the BE-Z7B sweep does not judge (it matches only titles and values). The code is unchanged since earlier rounds; earlier sweeps, including mine, did not look at identifiers. Owner solution-architect, because the repair is first a policy decision for ADR-0051 §2 (omit or mark, or allow, identifier references), then an implementation in benefits/groups.ts, benefits/measurements.ts and the other reference fields the decision covers, with the web register. Suggested test: the sweep also fails when a not-admitted reader's response contains the restricted record's id, outside the fields the decision allows."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-360",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run on candidate sha256:0fea8adf (source 031945d8), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0. (1) The round-5 reproduction, unchanged (zz-cs-r5-overview-drill.test.ts, log 40): for TL and AUD (both 404 on the benefit), GET /api/v1/overview?organizationId=<org> and ...&transformationId=<t> answer 200 with includesRestrictedRecords true and no object naming the benefit, its plan lines or its title; 3/3 pass, where round 5 failed. (2) Wider (zz-cs-r6-beyond.test.ts part A, log 41): with a sensitive business case BC-02 and a second sensitive benefit B03 (margin_uplift), the overview (org; org+t), the Finance dashboard (org; org+t), the adoption dashboard and the transformation dashboard answer TL and AUD 200 with the same figures as the admitted TO (every member except the items, generatedAt and the flag compared), no mention of BC-02, its lines, B03, its lines or the sensitive evidence item, and includesRestrictedRecords true (adoption has no member, as ADR-0051 §2 as amended records). (3) Mutant M1 (log 50): executive-overview.ts reverted to the round-5 source. The candidate's sweep reports the leak for TL, AUD and AUD(org), and the BE-Z7B test 'F-DG6-360: the Executive Overview' fails: 2 failed, 8 passed, exit 1. File restored (0 changed paths). (4) The unmutated control (log 54): sweep and BE-Z7B test 10/10 pass. Code read: executive-overview.ts:58-79 applies dashboardRestriction, withoutRestrictedItems and restrictedFieldAfter, exactly as the transformation and workstream dashboards do.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-6/40-repro-r5-overview-drill.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/41-repro-r6-beyond.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/50-mutant-M1-overview-unrestricted.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/54-control-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r5-overview-drill.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r6-beyond.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/mutants.sh",
+        "apps/api/src/modules/reporting/executive-overview.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-361",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run on the same candidate and environment. (1) The round-5 reproduction (log 40): the value.gap drill-down of the benefit's class (revenue_uplift) answers TL and AUD 200 with includesRestrictedRecords true and no benefit_plan_value line of the benefit; the admitted TO still sees its planned lines (flag false). Round 5 listed them to TL and AUD. (2) Wider (log 41 part B): every DASHBOARD_METRICS value x (no class | each of the 6 Finance classes) x (no currency | SAR), 238 variants, each followed over EVERY page at limit=2 as TL and as AUD (242 pages). Nothing names BC-02, its investment lines, B03, its plan or measurement lines, or the sensitive evidence item. The flag is the same on every page. The drill value and ruleKey equal the TO's. Every status equals the TO's (226 x 200, 250 x 422, the contract's own refusals of a class or currency a metric does not take). Part D: a sensitive evidence item on an OPEN benefit's submitted line is listed to the TO in 2 drill-downs and removed for TL and AUD on every value and finance metric, with the flag true (restrictedFieldAfter). (3) Mutant M2 (log 51): hides() back to 'default: false' and withoutRestrictedRefs without the SENSITIVE_CHILD_SOURCES pass. The sweep reports leaks on value.gap (with and without currency) and finance.pending_validation for TL, AUD and AUD(org); exit 1. File restored. (4) Control (log 54) passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-6/40-repro-r5-overview-drill.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/41-repro-r6-beyond.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/51-mutant-M2-drill-default-false.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/54-control-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/mutants.sh",
+        "apps/api/src/modules/reporting/dashboards/restricted.ts",
+        "apps/api/src/modules/reporting/dashboards/drilldown.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-362",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Code read of apps/api/test/integration/access/sensitive-reach-sweep.test.ts on this candidate. It fills required query parameters from the contract (enums enumerated; ids from seeded rows; the drill-down by every metric and accepted value class, with and without currency and transformationId). It uses each list's maximum limit and follows every nextCursor (readAll). It fails when an admitted control reader (the admitted TL, then the TO) never gets 2xx on a swept request, unless the operation is in ADMITTED_ERROR_ALLOWED: seven entries, each with a stated reason, and the database facts they rely on are asserted (checkJustifications). A stale allowance also fails. Its floor counts operations actually read with 2xx (> 330). Run on this candidate (control, log 54): 555 requests per reader over 371 operations (520 ids), 75 not fillable, 2428 pages read, 364 operations read with 2xx, refused list empty, 2/2 pass. Mutants M1 and M2 (logs 50, 51) show it now catches both round-5 leaks (F-DG6-360, F-DG6-361), which its round-5 version missed. The round-5 instrumented copy (zz-cs-r5-sweep-instrumented) is of the old sweep, so I did not re-run it; the new sweep's own status check replaces it. Residual, judged in my review record (check CS-R6-RESIDUALS): the 75 unfillable operations. The id-routed benefit children among them are guarded by the path-parameter guard (route parameter names checked against SENSITIVE_REACH_PARAMS). The sweep judges only titles and values, not identifiers, which is new finding F-DG6-420, a different defect class than this one.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-6/54-control-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/50-mutant-M1-overview-unrestricted.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/51-mutant-M2-drill-default-false.log",
+        "apps/api/test/integration/access/sensitive-reach-sweep.test.ts"
+      ]
+    }
+  ]
+}
