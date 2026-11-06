@@ -20,7 +20,7 @@ import {
   readOnly,
 } from "./engine.ts";
 import { appliedFilters, dashboardRefusal, resolveFilters, transformationFilterQuery } from "./filters.ts";
-import { dashboardRestriction, withoutRestrictedItems } from "./restricted.ts";
+import { dashboardRestriction, restrictedFieldAfter, withoutRestrictedItems } from "./restricted.ts";
 import { readableTransformation } from "./scope.ts";
 
 export const WORKSTREAM_DASHBOARD = "/api/v1/transformations/:transformationId/workstreams/:workstreamId/dashboard";
@@ -55,7 +55,7 @@ export function registerWorkstreamDashboardRoutes(app: FastifyInstance, { db }: 
           await loadAreaDefinitions(tx),
           { drillTransformationIds: [t.id], workstream: true },
         );
-        const areas = withoutRestrictedItems(presented, restriction);
+        const areas = await withoutRestrictedItems(tx, principal, presented, restriction);
         return {
           workstreamId: ws.workstreamId,
           transformationId: t.id,
@@ -65,7 +65,7 @@ export function registerWorkstreamDashboardRoutes(app: FastifyInstance, { db }: 
           businessDate: filters.businessDate,
           appliedFilters: appliedFilters(filters),
           areas,
-          ...restriction.field,
+          ...restrictedFieldAfter(restriction, areas !== presented),
         };
       });
     },

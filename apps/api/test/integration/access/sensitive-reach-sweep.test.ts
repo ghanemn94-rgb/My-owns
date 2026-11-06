@@ -22,12 +22,21 @@
 //     upstream links, so the missing-links item is covered by sensitive-reach-derived.test.ts),
 //     so the sweep would notice a fix that simply removed the data for everyone.
 // The resolved operation count has a floor, so a contract change that silently drops operations from the sweep fails.
+//
+// T-DG6-BE-Z7 (F-DG6-362): the sweep is a real guard. Every required query parameter is filled from the contract
+// (organizationId, transformationId, enums enumerated: every dashboard drill-down metric with every value class it
+// accepts, with and without a currency and a subject); `limit` is the contract maximum and every page of a list is
+// read (`nextCursor`), for every reader; a request id that answers 4xx/5xx to both admitted readers (the admitted TL,
+// then the TO) fails the test unless ADMITTED_ERROR_ALLOWED justifies it, and an allowed id that answers 2xx fails as
+// stale; the floor counts operations an admitted reader actually READ. It names the leaks of F-DG6-360 (Executive
+// Overview) and F-DG6-361 (value.gap drill-down) on the tree before their repair (handback evidence).
 import { insertAuditEvent, migrate, seedDemo, sql } from "@mth/db";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { DEMO_ANCHORS } from "../../../../../packages/db/src/demo/data/kpis.ts";
 import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
+import { DASHBOARD_METRICS, FINANCE_VALUE_CLASSES } from "../../../../../packages/shared/src/schemas/dashboards.ts";
 import { REPORT_DEFINITION_CODES, REPORT_REGISTERS } from "../../../../../packages/shared/src/schemas/report.ts";
-import { operations } from "../../support/contract.ts";
+import { openapi, operations } from "../../support/contract.ts";
 import { call, createUser, grant, signIn, startApi, type Session, type TestApi } from "../../support/harness.ts";
 import { handleBlockerEscalation } from "../../../../worker/src/handlers/escalations.ts";
 import { handleBenefitVariance } from "../../../../worker/src/handlers/raid.ts";
@@ -49,7 +58,19 @@ let to: Session;
 let tl: Session;
 let aud: Session;
 let admitted: Session;
-const S = { benefitId: "", code: "", snapshotIds: [] as string[], caseId: "", meetingId: "", askId: "" };
+/** T-DG6-BE-Z7: an AUD at the organization (not admitted), and the admin roles as controls of admin-only reads. */
+let audOrg: Session;
+let admins: Session[] = [];
+const S = {
+  benefitId: "",
+  code: "",
+  valueClass: "",
+  formCode: "",
+  snapshotIds: [] as string[],
+  caseId: "",
+  meetingId: "",
+  askId: "",
+};
 
 const get = (path: string, session: Session) => call<Body>(api.app, "GET", path, { session, contract: false });
 
@@ -79,16 +100,28 @@ beforeAll(async () => {
   tl = await signIn(api.app, uTl.subject);
   aud = await signIn(api.app, uAud.subject);
   admitted = await signIn(api.app, uAdm.subject);
+  audOrg = await signIn(api.app, (await mk("AUD", { type: "organization", id: ORG })).subject);
+  admins = [];
+  for (const role of ["ADM_TECH", "ADM_ACCESS", "ADM_METHOD"])
+    admins.push(await signIn(api.app, (await mk(role, { type: "organization", id: ORG })).subject));
 
   const b = await api.db
     .selectFrom("benefit")
-    .select(["id", "code", "version"])
+    .select(["id", "code", "version", "value_class"])
     .where("transformation_id", "=", T)
     .where("status", "=", "active")
     .orderBy("code")
     .executeTakeFirstOrThrow();
   S.benefitId = b.id;
   S.code = b.code;
+  S.valueClass = String(b.value_class);
+  S.formCode = (
+    await api.db
+      .selectFrom("form_record_type")
+      .select("code")
+      .where("table_name", "=", "benefit")
+      .executeTakeFirstOrThrow()
+  ).code;
   // Synthetic setup: a unique title and a distinctive planned value, with the audit event the 0004 guard requires.
   await api.db.transaction().execute(async (tx) => {
     await sql`UPDATE benefit SET title = ${TITLE}, planned_value = ${PLANNED}::numeric, version = version + 1,
@@ -313,15 +346,168 @@ async function valueOf(
   return out;
 }
 
-/** Every concrete GET path of the contract that the seeded data can fill, plus the explicit extra reads. */
-async function sweepPaths(): Promise<{ resolved: { id: string; path: string }[]; skipped: string[] }> {
+// ------------------------------------------------------------------------------- the query parameters (F-DG6-362)
+
+type Json = Record<string, unknown>;
+interface ContractParam {
+  readonly name: string;
+  readonly in: string;
+  readonly required: boolean;
+  readonly schema: Json;
+}
+
+function deref(node: unknown): Json {
+  let n = node as Json;
+  while (n !== null && typeof n === "object" && typeof n["$ref"] === "string") {
+    let cur: unknown = openapi;
+    for (const part of (n["$ref"] as string).replace(/^#\//, "").split("/")) cur = (cur as Json)[part];
+    n = cur as Json;
+  }
+  return n;
+}
+
+/** The path-level and operation-level parameters of a GET operation (the operation's own win, by name and place). */
+function paramsOf(path: string): ContractParam[] {
+  const item = (openapi["paths"] as Json)[path] as Json;
+  const op = item["get"] as Json;
+  const byKey = new Map<string, ContractParam>();
+  for (const raw of [...((item["parameters"] as unknown[]) ?? []), ...((op["parameters"] as unknown[]) ?? [])]) {
+    const p = deref(raw);
+    byKey.set(`${p["in"]}:${p["name"]}`, {
+      name: p["name"] as string,
+      in: p["in"] as string,
+      required: p["required"] === true,
+      schema: deref(p["schema"] ?? {}),
+    });
+  }
+  return [...byKey.values()];
+}
+
+const enumOf = (schema: Json): string[] | null => {
+  const e = schema["enum"] ?? (schema["items"] ? deref(schema["items"])["enum"] : undefined);
+  return Array.isArray(e) ? e.map(String) : null;
+};
+
+/** The ADR-0037 §5 / amendment K1 and N4 drill-down combinations: every metric, and every value class it accepts. */
+const VALUE_STATE_METRICS = new Set([
+  "value.planned",
+  "value.forecast",
+  "value.submitted",
+  "value.validated",
+  "value.measured",
+  "value.rejected",
+  "value.sustained",
+]);
+const GAP_CLASSES = ["revenue_uplift", "avoided_cost"];
+
+/** The explicit query variants of one operation, each tagged (`variant: true`) when the id names its query. */
+async function queryVariants(
+  operationId: string,
+  path: string,
+  fill: (name: string) => Promise<string[]>,
+): Promise<{ query: Record<string, string>; variant: boolean }[] | null> {
+  const params = paramsOf(path).filter((p) => p.in === "query");
+  const paged = params.some((p) => p.name === "limit");
+  const base: Record<string, string> = {};
+  if (paged) base["limit"] = String(deref(params.find((p) => p.name === "limit")!.schema)["maximum"] ?? 100);
+  if (operationId === "getDashboardDrilldown") {
+    const kpi = await sql<{
+      id: string;
+    }>`SELECT ok.id::text AS id FROM outcome_kpi ok JOIN outcome o ON o.id = ok.outcome_id
+      WHERE o.transformation_id = ${T}::uuid ORDER BY ok.id LIMIT 1`.execute(api.db);
+    const out: { query: Record<string, string>; variant: boolean }[] = [];
+    for (const metric of DASHBOARD_METRICS) {
+      const q = { ...base, organizationId: ORG, metric };
+      if (metric === "outcomes.kpi_status") {
+        // A subject metric: it needs its KPI (ADR-0037 §5).
+        out.push({ query: { ...q, subjectId: kpi.rows[0]?.id ?? "" }, variant: true });
+        continue;
+      }
+      out.push({ query: q, variant: true });
+      out.push({ query: { ...q, transformationId: T }, variant: true });
+      const classes = VALUE_STATE_METRICS.has(metric)
+        ? [...FINANCE_VALUE_CLASSES]
+        : metric === "value.gap"
+          ? GAP_CLASSES
+          : [];
+      for (const valueClass of classes) {
+        out.push({ query: { ...q, valueClass }, variant: true });
+        out.push({ query: { ...q, valueClass, currency: "SAR" }, variant: true });
+      }
+      if (VALUE_STATE_METRICS.has(metric)) out.push({ query: { ...q, subjectId: S.benefitId }, variant: true });
+    }
+    return out;
+  }
+  let variants: { query: Record<string, string>; variant: boolean }[] = [{ query: base, variant: false }];
+  for (const p of params) {
+    if (!p.required) continue;
+    let values: string[] | null;
+    const e = enumOf(p.schema);
+    if (e !== null) values = e;
+    else if (p.name === "q") values = ["CONFIDENTIAL BE-Z5"];
+    else if (p.schema["format"] === "date") values = [new Date().toISOString().slice(0, 10)];
+    else if (p.name === "workingDays") values = ["5"];
+    else if (p.name === "party") values = ["SP"];
+    else if (p.name === "fromVersion") values = ["1"];
+    else if (p.name === "toVersion") values = ["2"];
+    else if (p.name.endsWith("Id")) values = await fill(p.name);
+    else values = null;
+    if (values === null || values.length === 0) return null;
+    if (p.name === "targetKind") {
+      // The adoption indicators of a target other than the transformation name it (targetId, ADR-0040).
+      const ids = new Map<string, string>();
+      for (const kind of values.filter((k) => k !== "transformation")) {
+        const r = await sql<{ id: string }>`SELECT id::text AS id FROM ${sql.table(kind)}
+          WHERE transformation_id = ${T}::uuid ORDER BY id LIMIT 1`.execute(api.db);
+        if (r.rows[0]) ids.set(kind, r.rows[0].id);
+      }
+      variants = variants.flatMap((v) =>
+        values.map((x) => ({
+          query: { ...v.query, targetKind: x, ...(ids.has(x) ? { targetId: ids.get(x)! } : {}) },
+          variant: true,
+        })),
+      );
+      continue;
+    }
+    const many = values.length > 1;
+    variants = variants.flatMap((v) =>
+      values.map((x) => ({ query: { ...v.query, [p.name]: x }, variant: v.variant || many })),
+    );
+  }
+  return variants;
+}
+
+interface SweepRequest {
+  /** The operation id, with its query when the query is one of several enumerated variants. */
+  readonly id: string;
+  readonly operationId: string;
+  readonly path: string;
+}
+
+/**
+ * Path parameters whose row must be one that has the sub-resource the path reads (T-DG6-BE-Z7: otherwise the
+ * admitted reader gets an honest 404 and the operation is never read): `[path suffix, parameter, table, column]`.
+ */
+const SUB_RESOURCE_FILL: readonly (readonly [RegExp, string, string, string])[] = [
+  [/\/launch-plan\/tasks\/\{taskId\}$/, "taskId", "launch_task", "id"],
+  [/\/meetings\/\{meetingId\}\/minutes$/, "meetingId", "meeting_minutes", "meeting_id"],
+  [/\/meetings\/\{meetingId\}\/cutoff-pack$/, "meetingId", "meeting_cutoff_pack", "meeting_id"],
+  [/\/initiatives\/\{initiativeId\}\/schedule$/, "initiativeId", "initiative_schedule", "initiative_id"],
+];
+
+/** Every concrete GET request of the contract that the seeded data can fill, plus the explicit extra reads. */
+async function sweepPaths(): Promise<{ resolved: SweepRequest[]; skipped: string[] }> {
   const cols = await sql<{ table_name: string; column_name: string }>`
     SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'`.execute(api.db);
   const columns = new Map<string, Set<string>>();
   for (const c of cols.rows) columns.set(c.table_name, (columns.get(c.table_name) ?? new Set()).add(c.column_name));
   const tables = new Set(columns.keys());
   const cache = new Map<string, string[]>();
-  const resolved: { id: string; path: string }[] = [];
+  const fill = async (p: string) => {
+    if (!cache.has(p)) cache.set(p, await valueOf(p, tables, columns));
+    return cache.get(p)!;
+  };
+  const resolved: SweepRequest[] = [];
   const skipped: string[] = [];
   for (const o of operations) {
     if (o.method !== "GET") continue;
@@ -329,29 +515,101 @@ async function sweepPaths(): Promise<{ resolved: { id: string; path: string }[];
     let paths = [o.path];
     let ok = true;
     for (const p of params) {
-      if (!cache.has(p)) cache.set(p, await valueOf(p, tables, columns));
-      const values = cache.get(p)!;
+      const sub = SUB_RESOURCE_FILL.find(([re, name]) => name === p && re.test(o.path));
+      const values =
+        sub === undefined
+          ? await fill(p)
+          : (
+              await sql<{ id: string }>`SELECT ${sql.ref(sub[3])}::text AS id FROM ${sql.table(sub[2])}
+                WHERE transformation_id = ${T}::uuid ORDER BY id LIMIT 1`.execute(api.db)
+            ).rows.map((r) => r.id);
       if (values.length === 0) {
         ok = false;
         break;
       }
       paths = paths.flatMap((x) => values.map((v) => x.replace(`{${p}}`, v)));
     }
-    if (!ok) {
+    const variants = ok ? await queryVariants(o.operationId, o.path, fill) : null;
+    if (variants === null) {
       skipped.push(o.operationId);
       continue;
     }
-    for (const path of paths) resolved.push({ id: o.operationId, path });
+    // A form-record or form-schema path names the FORM code of the benefit (T14 at HEAD, read from the registry).
+    if (o.path.includes("/form-records/") || o.path.includes("/form-schemas/"))
+      paths = paths.map((x) => x.replace(/\/(form-records|form-schemas)\/benefit(\/|$)/, `/$1/${S.formCode}$2`));
+    for (const path of paths)
+      for (const v of variants) {
+        const qs = new URLSearchParams(v.query).toString();
+        const shown = new URLSearchParams(Object.entries(v.query).filter(([k]) => k !== "limit")).toString();
+        resolved.push({
+          id: v.variant ? `${o.operationId}(${shown})` : o.operationId,
+          operationId: o.operationId,
+          path: qs === "" ? path : `${path}?${qs}`,
+        });
+      }
   }
   const t = `/api/v1/transformations/${T}`;
   for (const register of REPORT_REGISTERS)
     resolved.push({
       id: `getLiveReport(registers: ${register})`,
+      operationId: "getLiveReport",
       path: `${t}/reports/registers/live?parameters=${encodeURIComponent(JSON.stringify({ register }))}`,
     });
-  resolved.push({ id: "searchRecords(title)", path: `/api/v1/search?q=${encodeURIComponent("CONFIDENTIAL BE-Z5")}` });
-  resolved.push({ id: "listMyInbox(all)", path: "/api/v1/me/inbox?limit=100" });
+  resolved.push({
+    id: "searchRecords(title)",
+    operationId: "searchRecords",
+    path: `/api/v1/search?q=${encodeURIComponent("CONFIDENTIAL BE-Z5")}&limit=100`,
+  });
+  resolved.push({ id: "listMyInbox(all)", operationId: "listMyInbox", path: "/api/v1/me/inbox?limit=100" });
   return { resolved, skipped };
+}
+
+/** Every page of a list (`nextCursor`), as one text, and the first page's status. */
+async function readAll(path: string, session: Session): Promise<{ status: number; text: string; pages: number }> {
+  let r = await get(path, session);
+  const status = r.status;
+  const texts = [typeof r.body === "string" ? r.body : JSON.stringify(r.body)];
+  let pages = 1;
+  while (r.status === 200 && r.body !== null && typeof r.body === "object" && typeof r.body.nextCursor === "string") {
+    const sep = path.includes("?") ? "&" : "?";
+    r = await get(`${path}${sep}cursor=${encodeURIComponent(r.body.nextCursor)}`, session);
+    texts.push(typeof r.body === "string" ? r.body : JSON.stringify(r.body));
+    pages += 1;
+    if (pages > 200) throw new Error(`more than 200 pages: ${path}`);
+  }
+  return { status, text: texts.join("\n"), pages };
+}
+
+/**
+ * The operations that answer an error to BOTH admitted readers (the admitted TL and the organization TO) for a
+ * stated reason that is not a sensitive-record decision. Each entry is re-checked: an entry whose operation now
+ * answers 2xx to an admitted reader fails the test (the list cannot go stale).
+ */
+const ADMITTED_ERROR_ALLOWED: Readonly<Record<string, string>> = {
+  startOidcLogin:
+    "404: the OIDC login route is registered only when an IdP is configured (identity/routes.ts `if (oidc)`); the test API has none (its 302 is covered by the identity suites)",
+  getWorkItem:
+    "404: a work item is read by its assignee only (tasks/routes.ts); no sweep reader is the assignee of a seeded item; listMyWorkItems (read) covers the reader's own items",
+  downloadEvidenceContent:
+    "404: the seeded demo evidence holds no stored bytes (no evidence_content row; checked below); the content route is covered by the evidence suites",
+  previewEvidenceContent:
+    "422/404: the seeded demo evidence holds no stored bytes to preview (no evidence_content row; checked below)",
+  getBrandingLogo:
+    "404: the demo organization has no logo (provisional text wordmark; no branding_version holds a logo; checked below)",
+  getBrandingVersion:
+    "404 to ADM_TECH, 403 to the others: the demo organization has no branding version 1 (no branding_version row; checked below)",
+  getBrandingVersionContrast:
+    "404 to ADM_TECH, 403 to the others: the demo organization has no branding version 1 (no branding_version row; checked below)",
+};
+
+/** The facts the justifications above rely on, checked against the seeded database. */
+async function checkJustifications(evidenceIds: readonly string[]): Promise<void> {
+  const content = await sql<{ n: string }>`SELECT count(*)::text AS n FROM evidence_content
+    WHERE evidence_id = ANY(${evidenceIds}::uuid[])`.execute(api.db);
+  expect(content.rows[0]!.n, "the swept evidence holds no stored bytes").toBe("0");
+  const versions = await sql<{ n: string; logos: string }>`SELECT count(*)::text AS n,
+      count(logo_png)::text AS logos FROM branding_version WHERE organization_id = ${ORG}::uuid`.execute(api.db);
+  expect(versions.rows[0], "the demo organization has no branding version and no logo").toEqual({ n: "0", logos: "0" });
 }
 
 const leaksOf = (text: string): string[] =>
@@ -368,36 +626,98 @@ describe("ADR-0051 §2: a sensitive benefit's title, code-with-title and values 
     expect((await get(item, to)).status).toBe(200);
   });
 
-  it("TL and AUD (not admitted) never receive the title, the code-with-title or the planned value; the admitted TL does", async () => {
+  it("TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does", async () => {
     const { resolved, skipped } = await sweepPaths();
-    console.log(`[BE-Z5 sweep] ${resolved.length} requests per reader; ${skipped.length} operations not fillable`);
-    console.log(`[BE-Z5 sweep] not fillable: ${skipped.join(" ")}`);
-    // A floor: the contract has 446 GET operations at HEAD; most of them must stay in the sweep.
-    expect(new Set(resolved.map((r) => r.id)).size).toBeGreaterThan(330);
+    const ids = new Set(resolved.map((r) => r.id));
+    console.log(
+      `[BE-Z7 sweep] ${resolved.length} requests per reader over ${new Set(resolved.map((r) => r.operationId)).size} operations (${ids.size} ids); ${skipped.length} operations not fillable`,
+    );
+    console.log(`[BE-Z7 sweep] not fillable: ${skipped.join(" ")}`);
     const leaks: string[] = [];
     const seenByAdmitted = new Set<string>();
+    /** id -> the statuses the admitted control readers got (the admitted TL, then the TO when the TL is refused). */
+    const admittedStatus = new Map<string, Set<number>>();
+    const pathOf = new Map<string, string>();
+    let pagesRead = 0;
     for (const op of resolved) {
       for (const [who, s] of [
         ["TL", tl],
         ["AUD", aud],
+        ["AUD(org)", audOrg],
       ] as const) {
-        const r = await get(op.path, s);
-        const found = leaksOf(typeof r.body === "string" ? r.body : JSON.stringify(r.body));
+        const r = await readAll(op.path, s);
+        pagesRead += r.pages;
+        const found = leaksOf(r.text);
         if (found.length > 0) leaks.push(`${who} ${op.id} ${r.status} ${op.path} -> ${found.join(" | ")}`);
       }
-      const a = await get(op.path, admitted);
-      const text = typeof a.body === "string" ? a.body : JSON.stringify(a.body);
-      if (text.includes(TITLE)) seenByAdmitted.add(op.id);
+      // The control readers, in order: the admitted TL, the TO (admitted), then the admin roles for admin-only reads
+      // and the organization AUD for the audit reads (a control only: it shows the request is well-formed and
+      // answered; the leak check is on TL and both AUDs, and the title check below is on the admitted readers).
+      const statuses = admittedStatus.get(op.id) ?? new Set<number>();
+      admittedStatus.set(op.id, statuses);
+      for (const [c, isAdmitted] of [
+        [admitted, true],
+        [to, true],
+        ...admins.map((x) => [x, false] as const),
+        [audOrg, false],
+      ] as const) {
+        const a = await readAll(op.path, c);
+        pagesRead += a.pages;
+        statuses.add(a.status);
+        if (isAdmitted && a.text.includes(TITLE)) seenByAdmitted.add(op.id);
+        // T-DG6-BE-Z7B: an admin control reader is not admitted to the benefit either: what it reads is leak-checked too.
+        if (!isAdmitted) {
+          const found = leaksOf(a.text);
+          if (found.length > 0) leaks.push(`control ${op.id} ${a.status} ${op.path} -> ${found.join(" | ")}`);
+        }
+        if (a.status < 400) break;
+      }
+      if (!pathOf.has(op.id)) pathOf.set(op.id, op.path);
     }
-    if (leaks.length > 0) console.log(`[BE-Z5 sweep] leaks:\n${leaks.join("\n")}`);
+    console.log(`[BE-Z7 sweep] ${pagesRead} pages read`);
+    if (leaks.length > 0) console.log(`[BE-Z7 sweep] leaks:\n${leaks.join("\n")}`);
+    // The admitted control: every request id answers 2xx/3xx at least once to an admitted reader, unless it is in the
+    // justified list; and no listed id answers 2xx/3xx (the list cannot go stale).
+    const refused: string[] = [];
+    const stale: string[] = [];
+    for (const [id, statuses] of admittedStatus) {
+      const read = [...statuses].some((x) => x < 400);
+      const allowed = ADMITTED_ERROR_ALLOWED[id] ?? ADMITTED_ERROR_ALLOWED[id.replace(/\(.*$/, "")];
+      if (!read && allowed === undefined) refused.push(`${id} ${[...statuses].join("/")} ${pathOf.get(id)}`);
+      if (read && allowed !== undefined) stale.push(id);
+    }
+    if (refused.length > 0) console.log(`[BE-Z7 sweep] refused to the admitted readers:\n${refused.join("\n")}`);
+    console.log(
+      `[BE-Z7 sweep] allowed errors: ${[...admittedStatus]
+        .filter(([id]) => ADMITTED_ERROR_ALLOWED[id.replace(/\(.*$/, "")] !== undefined)
+        .map(([id, st]) => `${id}:${[...st].join("/")}`)
+        .join(" ")}`,
+    );
+    await checkJustifications(
+      [...pathOf.values()].flatMap((x) =>
+        [...x.matchAll(/\/evidence\/([0-9a-f-]{36})\/(?:content|preview)/g)].map((m) => m[1]!),
+      ),
+    );
+    const readOps = new Set(
+      resolved.filter((r) => [...(admittedStatus.get(r.id) ?? [])].some((x) => x < 400)).map((r) => r.operationId),
+    );
+    console.log(`[BE-Z7 sweep] ${readOps.size} operations read (2xx) by an admitted reader`);
     expect(leaks).toEqual([]);
+    expect(refused, "every swept request is read by an admitted reader, or justified").toEqual([]);
+    expect(stale, "an allowed error that no longer happens is removed from the list").toEqual([]);
+    // A floor on operations actually READ (not merely called): the contract has 446 GET operations at HEAD.
+    expect(readOps.size).toBeGreaterThan(330);
     for (const id of [
       "getBenefit",
       "listBenefits",
       "getTraceability",
       "getLiveReport(registers: benefits)",
       "getReportSnapshot",
+      "getExecutiveOverview",
+      GAP_CLASSES.includes(S.valueClass)
+        ? `getDashboardDrilldown(organizationId=${ORG}&metric=value.gap&valueClass=${S.valueClass})`
+        : `getDashboardDrilldown(organizationId=${ORG}&metric=value.planned&valueClass=${S.valueClass})`,
     ])
       expect(seenByAdmitted, `the admitted reader sees the title on ${id}`).toContain(id);
-  }, 1_800_000);
+  }, 3_600_000);
 });

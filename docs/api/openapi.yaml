@@ -27165,7 +27165,10 @@ components:
         asOf: { $ref: "#/components/schemas/Timestamp" }
         methodology: { type: object }
         approvalState: { type: string, enum: [approved, pending, not_submitted, changes_requested, rejected, mixed, not_applicable] }
-        sections: { type: array, items: { type: object } }
+        sections:
+          type: array
+          description: "The sections of the zod mirror (packages/shared/src/schemas/report.ts). T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2 'Totals and rollups'; D-195 Q3): a section that references a marked-sensitive record (a row, an item or a source) carries the read-time member includesRestrictedRecords (boolean): true when the reader is not admitted to at least one of them (its rows are omitted, its totals and metrics are unchanged; label access.includesRestrictedRecords), false when the reader is admitted to all; absent otherwise. Never stored: contentSha256 is unchanged."
+          items: { type: object }
         synthetic: { type: boolean, enum: [true], description: "Present, and true, exactly when the document was assembled in a demo database (ADR-0050 §2 (d); D-163): its values are synthetic illustrative examples, and every export prints the illustrative label. Absent in production." }
     LiveReport:
       type: object
@@ -38712,6 +38715,7 @@ components:
         transformationCount: { type: integer, minimum: 0 }
         areas: { type: array, items: { $ref: "#/components/schemas/T10Area" }, minItems: 6, maxItems: 6 }
         transformations: { type: array, items: { $ref: "#/components/schemas/DashboardTransformationRow" } }
+        includesRestrictedRecords: { type: boolean, description: "Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords; T-DG6-BE-Z7)" }
     WorkstreamDashboard:
       type: object
       required: [workstreamId, transformationId, code, name, generatedAt, businessDate, appliedFilters, areas]

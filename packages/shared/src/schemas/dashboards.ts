@@ -247,6 +247,11 @@ export const executiveOverview = z.strictObject({
   transformationCount: z.number().int().min(0),
   areas: sixAreas,
   transformations: z.array(dashboardTransformationRow),
+  /**
+   * Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to
+   * at least one of them (ADR-0051 §2; label access.includesRestrictedRecords; T-DG6-BE-Z7, F-DG6-360).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type ExecutiveOverview = z.infer<typeof executiveOverview>;
 
