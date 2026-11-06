@@ -1031,7 +1031,11 @@ export async function raiseOperationalExceptionTwin(
       .updateTable("operational_exception")
       .set({
         occurrence_count: current.occurrence_count + 1,
-        last_occurred_at: sql<Date>`greatest(now(), ${current.last_occurred_at}::timestamptz)`,
+        // T-DG6-BE-Z8 (F-DG6-380): the stored value is read in SQL, never round-tripped through a JavaScript Date
+        // (millisecond precision): a recurrence whose transaction started before a concurrent one committed (an older
+        // now()) keeps the stored microsecond value, so it never moves backwards and 0101's occurrence guard holds.
+        // The row is current: this runs under the exception's advisory lock and the FOR UPDATE read above.
+        last_occurred_at: sql<Date>`greatest(now(), operational_exception.last_occurred_at)`,
         last_error_code: input.errorCode,
         last_error_message: message,
         ...(input.operationalFailureId ? { operational_failure_id: input.operationalFailureId } : {}),
