@@ -25,6 +25,7 @@ import {
   useFilterState,
   useOrgQuery,
 } from "../dashboards/ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 export function ExecutiveOverviewPage() {
   const { t } = useTranslation();
@@ -65,6 +66,7 @@ export function ExecutiveOverviewPage() {
         <QueryState query={query}>
           {(d) => (
             <>
+              <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
               <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
               <p data-transformation-count={d.transformationCount}>
                 <strong>{t("dashboards.overview.count", { count: d.transformationCount })}</strong>

@@ -86,6 +86,7 @@ export {
   isSensitiveRecordType,
   reachKey,
   reachRefsOfParams,
+  recordRefSensitivity,
   registerSensitiveReachGuard,
   requireRecordReach,
   restrictedRecordRefs,

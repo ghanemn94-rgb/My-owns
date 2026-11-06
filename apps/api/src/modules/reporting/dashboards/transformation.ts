@@ -10,7 +10,7 @@ import { principalOf } from "../../access/index.ts";
 import { parse, parseQuery, type ModuleDeps } from "../../platform/index.ts";
 import { computeAreas, loadAreaDefinitions, loadDashboardContext, presentAreas, readOnly } from "./engine.ts";
 import { appliedFilters, resolveFilters, transformationFilterQuery } from "./filters.ts";
-import { dashboardRestriction, withoutRestrictedItems } from "./restricted.ts";
+import { dashboardRestriction, restrictedFieldAfter, withoutRestrictedItems } from "./restricted.ts";
 import { readableTransformation } from "./scope.ts";
 
 export const TRANSFORMATION_DASHBOARD = "/api/v1/transformations/:transformationId/dashboard";
@@ -44,7 +44,7 @@ export function registerTransformationDashboardRoutes(app: FastifyInstance, { db
             workstream: false,
           },
         );
-        const areas = withoutRestrictedItems(presented, restriction);
+        const areas = await withoutRestrictedItems(tx, principal, presented, restriction);
         return {
           transformationId: t.id,
           generatedAt: ctx.generatedAt,
@@ -52,7 +52,7 @@ export function registerTransformationDashboardRoutes(app: FastifyInstance, { db
           timezone: filters.timezone,
           appliedFilters: appliedFilters(filters),
           areas,
-          ...restriction.field,
+          ...restrictedFieldAfter(restriction, areas !== presented),
         };
       });
     },

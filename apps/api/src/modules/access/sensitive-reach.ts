@@ -418,6 +418,35 @@ export async function restrictedRecordRefs(
 }
 
 /**
+ * T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2 "Totals and rollups"; D-195 Q3): for each of `refs`, whether it discloses a
+ * marked-sensitive record at all (`sensitive`) and whether the principal is not admitted to one (`restricted`, the
+ * same set as `restrictedRecordRefs`). A response that aggregates these records carries `includesRestrictedRecords`
+ * only when `sensitive` is not empty: `true` when `restricted` is not empty, `false` otherwise. One policy decision.
+ */
+export async function recordRefSensitivity(
+  db: DbOrTx,
+  principal: Principal,
+  refs: readonly ReachRef[],
+): Promise<{ sensitive: Set<string>; restricted: Set<string> }> {
+  principal.tracker.decisions += 1;
+  const out = { sensitive: new Set<string>(), restricted: new Set<string>() };
+  if (refs.length === 0) return out;
+  const marked = await markedInOrganizations(db, principal);
+  if (marked.size === 0) return out;
+  const owners = await sensitiveOwnersOf(db, refs);
+  if (owners.size === 0) return out;
+  const all = new Set<string>();
+  for (const s of owners.values()) for (const o of s) all.add(o);
+  const restricted = await notAdmitted(db, principal, all, marked);
+  for (const [key, s] of owners) {
+    const list = [...s];
+    if (list.some((o) => restricted.has(o))) out.restricted.add(key);
+    if (list.some((o) => marked.has(o) || restricted.has(o))) out.sensitive.add(key);
+  }
+  return out;
+}
+
+/**
  * 404 `not_found` when the record (a sensitive record or a child of one) discloses a sensitive record the principal
  * is not admitted to (ADR-0051 §2: existence not disclosed). Callers run the ADR-0006 read check first.
  */

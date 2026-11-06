@@ -21,6 +21,7 @@ import { useLocale } from "../../app/locale.ts";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle, type Crumb } from "../../components/Page.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatPercent } from "../../lib/format.ts";
 import { FormAlert } from "../my-work/p4ui.tsx";
@@ -293,6 +294,8 @@ function SectionView({ section: s }: { section: ReportSection }) {
       <h3 id={headingId} className="card__title">
         {title}
       </h3>
+      {/* T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2): its totals or metrics include a value whose row is not shown. */}
+      <RestrictedRecordsLabel value={s.includesRestrictedRecords} />
       {body}
     </section>
   );

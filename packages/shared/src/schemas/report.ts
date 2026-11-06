@@ -217,6 +217,14 @@ const sectionBase = {
   key: reportSectionKey,
   titleKey: reportI18nKey,
   sources: z.array(reportRecordRef),
+  /**
+   * T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2 "Totals and rollups"; D-195 Q3): a READ-TIME member, set per reader by the
+   * API when the section references a marked-sensitive record (a row, an item or a source): `true` when the reader is
+   * not admitted to at least one of them (its rows are omitted; its totals and metrics are unchanged and labelled
+   * "Includes restricted records"), `false` when the reader is admitted to all. The assemblers never set it, so stored
+   * content and its `contentSha256` are unchanged.
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 };
 
 const fieldsSection = z.strictObject({ ...sectionBase, kind: z.literal("fields"), fields: z.array(reportField) });
