@@ -1,0 +1,32 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-340",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 0fea8adf (source 031945d87), disposable clone, PostgreSQL 16.15, Node 24.21.0, SYNTHETIC data. (1) The round-5 reproduction (my probe dom-r5-sensitive-escalation.test.ts, unchanged, part 4) passes 4/4. TL's totals_sar_revenue_uplift section still has only B02's row with totals realized_validated 250000 (the same as the TO's, D-195 Q3), and the section now carries includesRestrictedRecords (r5repro.log). (2) My round-6 probe (probe1/probe2) reads the live benefits register as TL and TO. TL gets register: true and totals_sar_revenue_uplift: true, the TO false/false, with the same figures; the other sections carry no member. The BE-Z7B test sensitive-reach-dashboards-reports.test.ts passes 8/8 (probe1.log), including the snapshot case and the unchanged contentSha256. (3) Mutant: with apps/api/src/modules/reporting/reports/restricted.ts reverted to d7b21bad3, the two F-DG6-340 tests (live and snapshot) fail and the other six pass (mutant340.log, exit 1). The source was restored afterwards. (4) UI, production-initialized stack, en and ar (e2e-screens-run2.log): TL's benefits register snapshot shows 'Includes restricted records' / 'يشمل سجلات مقيدة' under the register title and under the Revenue uplift totals section. The TO's snapshot shows no label and does show the title. The finding's reproduced scope is closed. The metrics sections that its actual named by code reading are still unlabelled. I raise that as the new finding F-DG6-400 (Medium), with its own runtime reproduction, rather than keep this finding open for a different mechanism.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-6/r5repro.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/mutant340.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/e2e-screens-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-tl-register-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/ar/dom-r6-tl-register-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-to-register-snapshot.png",
+        "apps/api/src/modules/reporting/reports/restricted.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-341",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 0fea8adf by reading ADR-0053 against the code. ADR-0053 §2 now has a dated T-DG6-ARCH-15 paragraph, 'Optimistic concurrency of acknowledge and resolve'. §2 'Refusal codes' and §9 'Every mutation' point to it, and putServiceIdentity keeps the strict rule. Each stated rule matches apps/api/src/modules/operations/exceptions.ts. rebaseOverSystemOccurrences returns null on an equal version. It gives 409 for a version that is not an integer, below 1 or ahead of the row. It accepts a version behind the row only when there are exactly (current - loaded) events in (loaded, current] and each is 'recurred' with actor_user_id null; anything else is 409. basedOn writes changes.based_on_version {from, to}. In acknowledgeException, recheckAtCommit runs before the version rule and the state refusals run after it. The behaviour itself is tested by exception-recurrence-race.test.ts, which passes 7/7 (bez8.log). This is a documentation finding, so a revert mutant does not apply.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md",
+        "apps/api/src/modules/operations/exceptions.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-6/bez8.log"
+      ]
+    }
+  ]
+}

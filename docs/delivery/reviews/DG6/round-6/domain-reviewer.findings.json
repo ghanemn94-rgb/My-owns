@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-400",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Report metrics sections (executive pack 'Current metrics', executive dashboard area metrics) show value headlines that include a restricted benefit's value with no 'Includes restricted records' label, because the section flag is decided only from the section's own row/item/source references",
+      "reproduction": "Candidate 0fea8adf (source 031945d87), disposable clone, PostgreSQL 16.15, Node 24.21.0. SYNTHETIC data. (1) API: probe docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-report-sections.test.ts.txt (the T-DG6-BE-Z7B setup of sensitive-reach-dashboards-reports.test.ts: demo seed, the TO marks benefit B01 sensitive; TL at the transformation is not admitted), copied to apps/api/test/integration/zz-domain/ and run with QA_PG_PORT=30220 MTH_PORT_POOL=30221-30229 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <file>. It GETs /api/v1/transformations/{T}/dashboard and /api/v1/transformations/{T}/reports/executive_pack/live?reportingPeriodId=<2026-09> and /reports/executive_dashboard/live as TL and TO. (2) UI: probe docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-screens.spec.ts.txt on apps/web/e2e/support/with-stack.sh (production-initialized): dev.lead creates a transformation, a synthetic BO adds a sensitive revenue_uplift benefit (planned 300 SAR) and a plain avoided_cost benefit (100 SAR), dev.office marks the first sensitive, creates a monthly reporting period and generates an executive pack snapshot; dev.lead (TL, not admitted) and dev.office (TO) open the snapshot page, en and ar.",
+      "expected": "ADR-0051 §2 'Totals and rollups' and D-195 Q3 (decided by the user): a user without the grant sees aggregates that include the value, labelled 'Includes restricted records' / 'يشمل سجلات مقيدة'. 'When a reader is not admitted to at least one sensitive record whose value the aggregate includes, the response carries includesRestrictedRecords: true and the screen shows the label.' The executive pack's and executive dashboard's metrics sections are such aggregates (they are the DG4 dashboard headlines, which the transformation dashboard itself labels for the same reader).",
+      "actual": "API (probe3.log, probe4.log, probe2.log): for TL, GET /transformations/{T}/dashboard carries includesRestrictedRecords: true (TO: false), but in the live executive pack the section metrics_transformation (and metrics_ws_77) carries no member at all (anyPackSectionFlag=false). Its fields value_planned_top_line_sar = 396000 and value_forecast_top_line_sar = 148500 are exactly B01's own planned and forecast lines for 2026-09 (B01 is the only top-line benefit: probe4 lists every plan line), so the restricted benefit's individual values are shown to TL, unlabelled. In the live executive dashboard report, area_value (kind metrics, sources [transformation], 16 SAR values) has no member while its sibling table items_value is flagged true. The cause is documentForReader (apps/api/src/modules/reporting/reports/restricted.ts): a section is flagged only when sectionRefs(s) (its sources, rows, items) names a marked record; these metrics sections reference only the transformation or workstream, and when no section references one the whole document is returned unchanged. ADR-0051's 2026-11-06 amendment records that scope ('Absent when the section references no marked-sensitive record'), which contradicts its own Totals rule. UI (e2e-screens-run2.log; screenshots dom-r6-tl-exec-pack-snapshot.png, en and ar): the TL's executive pack snapshot shows 'Planned revenue uplift (top line…) SAR 300.00', the sensitive benefit's own value, with label count 0, and offers Start export. The register snapshot and the Executive Overview are labelled correctly for the same TL. By code reading, a TL export of that pack is not refused (exports/assembly.ts checks only assemblySources, which name no sensitive record) and carries no label, because the member is read-time only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-report-sections.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-6/e2e-screens-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-tl-exec-pack-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/ar/dom-r6-tl-exec-pack-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-to-exec-pack-snapshot.png",
+        "apps/api/src/modules/reporting/reports/restricted.ts",
+        "apps/api/src/modules/reporting/reports/assemblers/executive-pack.ts",
+        "apps/api/src/modules/reporting/reports/assemblers/executive-dashboard.ts",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-06T07:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 6 by domain-reviewer while verifying F-DG6-340. F-DG6-340's own reproduction (the benefits register table totals, live and snapshot) is repaired and verified; this is the metrics part that F-DG6-340's actual named by code reading ('every report assembler with totals or metrics over a sensitive record'), now reproduced at runtime through a different mechanism (a section that aggregates dashboard facts but references only its subject). Medium, not mandatory, consistent with F-DG6-340: the figures are the ones D-195 Q3 says every reader sees; the label the user decided is missing. Suggested repair: flag a report section whose figures come from the dashboard facts (executive pack metrics_*, executive dashboard area_*) from the same dashboardRestriction decision the transformation and workstream dashboards use (true when the reader is not admitted to a sensitive benefit or business case of those facts), read-time as today; add a negative test (TL, AUD: true) and a positive one (TO: false); correct the ADR-0051 2026-11-06 sentence 'Absent when the section references no marked-sensitive record'."
+        }
+      ]
+    }
+  ]
+}
