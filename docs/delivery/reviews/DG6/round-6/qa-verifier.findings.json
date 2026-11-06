@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-440",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A report table section whose every row is restricted for the reader shows 'No records' and no totals on screen, although ADR-0051 §2 and D-195 Q3 keep its totals identical for every reader (BE-Z7B residual §7 item 4)",
+      "reproduction": "Candidate sha256:0fea8adf (source 031945d8761a253665c6b794e6c8d2efbacdfe65), disposable clone, e2e/support/with-demo-stack.sh (demo-initialized stack, AUTH_MODE=dev, demo role users via the dev sign-in), chromium-en and chromium-ar. Probe docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts, copied to e2e/ and run with 'e2e/support/with-demo-stack.sh npx playwright test e2e/zz-qa-dg6r6-restricted-label-ui.spec.ts --workers=1'. Steps: (1) roaming.user.to marks demo benefit B01 (01995000-4401-7000-8000-000000000001, transformation ROAMING 01995000-0000-7000-8000-000000000001) sensitive through PUT /api/v1/transformations/{T}/records/benefit/{B01}/sensitivity; (2) roaming.user.tl (TL, not admitted) and the TO each open /transformations/{T}/reports, choose Output 'Registers', Register 'Benefits', and 'Preview live'. API (GET .../reports/registers/live?parameters={\"register\":\"benefits\"}): section totals_sar_revenue_uplift has TL rows 0 (TO 1), TL totals equal to the TO's (realized validated SAR 222750, sustained 0, pending SAR 99000), includesRestrictedRecords true for the TL; this half is correct. Screen: the TO sees 'Revenue uplift' with B01's row and 'Total SAR 222,750.00 · Validated by Finance ... SAR 99,000.00 · Submitted (pending Finance validation) Provisional'. The TL sees 'Revenue uplift', the label 'Includes restricted records' and 'No records' ('لا توجد سجلات' in ar), and no Total row. The TL's screen has 2 totals rows, the TO's 3, and the TL's own preview before the marking had 3. Cause: apps/web/src/pages/reports/ui.tsx SectionView, case 'table': when s.rows.length === 0 it renders only the empty text, and the tfoot with s.totals is rendered only inside the non-empty table. The same SectionView renders the live preview, the snapshot page (SnapshotPage.tsx) and presentation mode, so a stored snapshot shows the same gap. Same result in both languages, with the locale unset (13a, and 07 first run) and with C.UTF-8 (07b).",
+      "expected": "ADR-0051 §2 'Totals and rollups' (D-195 Q3, decided by the user): an aggregate that includes a sensitive record's value is identical for every user; when the reader is not admitted, the screen shows the label 'Includes restricted records' / 'يشمل سجلات مقيدة', and only the record and its individual value are hidden. The 2026-11-06 amendment (T-DG6-ARCH-15) lists 'the table totals and metrics of every report section' among the totals that are the same for every reader. D-195 Q3 rejected totals that differ per user. So the TL should see the section's Total row (SAR 222,750.00 validated; SAR 99,000.00 pending, Provisional) with the label, and no row of B01.",
+      "actual": "The figure the API returns identically is withheld on screen from the reader who is not admitted, so the report totals visible to the TL differ from the TO's. The section also says 'No records' under a totals heading, next to the label. A reader can take that to mean nothing was realized in that value class, although SAR 222,750 is validated. No value leaks: the defect hides more than it should, and exports stay refused for that reader (D-199). The BE-Z7B handback discloses this as residual §7 item 4 ('a fully omitted table shows the empty-table text and not its totals on screen ... unchanged from DG5'). In DG5 no record could be restricted, so the path is new in DG6. The in-tree tests assert the totals in the API only (sensitive-reach-dashboards-reports.test.ts), and restricted-labels.test.tsx renders the label but never a fully omitted section. Medium: a real defect against the binding ADR-0051/D-195 Q3 rule, bounded to the report screens (live preview, snapshot, presentation) and to sections whose every row is restricted. It is not mandatory: REQ-S10-002's literal clause holds, because the benefit is hidden, and no wrong number is shown.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-6/13a-restricted-totals-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/07b-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/07-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TO-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TO-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts",
+        "apps/web/src/pages/reports/ui.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-06T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 6 (T-DG6-REV-QA-R6) on candidate sha256:0fea8adf, answering the D-216 open question on BE-Z7B's residual §7 item 4. Medium, non-mandatory; must be repaired before the gate (D-192)."
+        }
+      ]
+    }
+  ]
+}

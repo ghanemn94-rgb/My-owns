@@ -1,0 +1,16 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-380",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by qa-verifier (the originating reviewer) on candidate sha256:0fea8adf (source 031945d8761a253665c6b794e6c8d2efbacdfe65), in a disposable clone and disposable PostgreSQL 16 clusters. I read the finding in findings.json (still OPEN, one history entry) and in round-5/qa-verifier.findings.json, the BE-Z8 handback and the diff d7b21bad..031945d8 of apps/api/src/modules/operations/exceptions.ts and apps/worker/src/kit.ts. The change is one expression in each raise path: last_occurred_at = greatest(now(), operational_exception.last_occurred_at), so the stored value is read in SQL (microseconds) instead of being round-tripped through a millisecond JavaScript Date. occurrence_count is still current.occurrence_count + 1 under the advisory lock, the FOR UPDATE read and WHERE version = current.version, and the 0101 guard is unchanged (no migration, no retry, no upsert). No other monotonic timestamp is written from a JavaScript value (grep of apps/*/src). (1) The round-5 reproduction, widened (my probe zz-qa-dg6r6-concurrent-job-failure.test.ts, the worker's own captureJobFailure run concurrently for distinct jobs of ONE queue): N = 4, 8 and 16, with the exception not yet open and already open, 10 bursts each (60 bursts): every burst has 0 rejected captures, N(+1) operational_failure rows, N(+1) job.failed outbox rows, exactly one open exception whose occurrence_count is N(+1), N(+1)-1 'recurred' events (no double count), and a final last_occurred_at >= every event's occurred_at. My round-5 Q2 (20 concurrent API raises on one open exception, 5 rounds): 0 rejected, 21/21 occurrences, 20/20 recurred events. The in-tree concurrent-exception-recurrence.test.ts passed 7/7 in the same run (10a, exit 0). (2) Mutant M1 reverts the fix in both files (the old ${current.last_occurred_at}::timestamptz): the defect returns (for example N=8 'rejected 4; failures 4/8'; API raise 'rejected 2; occurrences 19/21'), and all 14 tests fail, the 7 in-tree ones and my 7 (10b, exit 1 by design). Mutant M2 uses plain now() without greatest(): all 14 fail again (10c, exit 1 by design). Both mutants were reverted (git checkout) before any other run. The fix is also exercised by this round's full integration runs and by a22-p6-operability (QA-R6 checks 03, 06b).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-6/10a-f380-probe-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/10b-f380-mutant-revert.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/10c-f380-mutant-now-only.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-concurrent-job-failure.test.ts"
+      ]
+    }
+  ]
+}
