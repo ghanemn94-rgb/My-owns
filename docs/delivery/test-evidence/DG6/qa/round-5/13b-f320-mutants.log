@@ -1,0 +1,74 @@
+## M1: revert FE-Z3's two exception texts (en and ar kpi__stale, operations__heartbeat_missed)
+ apps/web/src/i18n/ar/problems.json | 4 +---
+ apps/web/src/i18n/en/problems.json | 4 +---
+ 2 files changed, 2 insertions(+), 6 deletions(-)
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > reads the API source and the P6 ADR tables (neither scan is empty) 5ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English 29ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar 60ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > translates BE-W's contrast codes exactly as ADR-0061 §6 (en, and the provisional ar) 2ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > collects the field-error codes inside problems.validation([...]) (F-DG6-301) 3ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301) 5ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320) 2ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > pins the derivations of DERIVED_ERROR_CODES to their source 1ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320) 18ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > would fail on an untranslated code (the guard is not vacuous) 1ms
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320)
+      Tests  1 failed | 9 passed (10)
+EXIT 1
+## M2: remove only the Arabic text of kpi.stale
+ apps/web/src/i18n/ar/problems.json | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > reads the API source and the P6 ADR tables (neither scan is empty) 3ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English 18ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar 44ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > translates BE-W's contrast codes exactly as ADR-0061 §6 (en, and the provisional ar) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > collects the field-error codes inside problems.validation([...]) (F-DG6-301) 0ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301) 3ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > pins the derivations of DERIVED_ERROR_CODES to their source 1ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320) 17ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > would fail on an untranslated code (the guard is not vacuous) 1ms
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320)
+      Tests  1 failed | 9 passed (10)
+EXIT 1
+## M3: a new exception raise with an un-catalogued literal errorCode (apps/worker/src/handlers/operations.ts)
+ apps/worker/src/handlers/operations.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > reads the API source and the P6 ADR tables (neither scan is empty) 19ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English 23ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar 41ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > translates BE-W's contrast codes exactly as ADR-0061 §6 (en, and the provisional ar) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > collects the field-error codes inside problems.validation([...]) (F-DG6-301) 0ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301) 2ms
+   × problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320) 11ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > pins the derivations of DERIVED_ERROR_CODES to their source 2ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320) 9ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > would fail on an untranslated code (the guard is not vacuous) 0ms
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320)
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320)
+      Tests  2 failed | 8 passed (10)
+EXIT 1
+## M4: Arabic text = the English text (kpi.stale)
+ apps/web/src/i18n/ar/problems.json | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > reads the API source and the P6 ADR tables (neither scan is empty) 15ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English 34ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar 100ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > translates BE-W's contrast codes exactly as ADR-0061 §6 (en, and the provisional ar) 2ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > collects the field-error codes inside problems.validation([...]) (F-DG6-301) 0ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301) 4ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > pins the derivations of DERIVED_ERROR_CODES to their source 1ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320) 32ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > would fail on an untranslated code (the guard is not vacuous) 1ms
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320)
+      Tests  1 failed | 9 passed (10)
+EXIT 1
+## restored:
+?? apps/api/node_modules
+?? apps/web/node_modules
+?? apps/worker/node_modules
+?? packages/config/node_modules
+?? packages/db/node_modules
+?? packages/reporting/node_modules
+?? packages/shared/node_modules

@@ -1,0 +1,114 @@
+## CONTROL (not the candidate): r5m with ONLY the two lines below changed (column reference instead of the JS Date parameter):
+diff --git a/apps/api/src/modules/operations/exceptions.ts b/apps/api/src/modules/operations/exceptions.ts
+index 4a2ef61da..2c993623a 100644
+--- a/apps/api/src/modules/operations/exceptions.ts
++++ b/apps/api/src/modules/operations/exceptions.ts
+@@ -762,7 +762,7 @@ export async function raiseOperationalException(
+       .updateTable("operational_exception")
+       .set({
+         occurrence_count: current.occurrence_count + 1,
+-        last_occurred_at: sql<Date>`greatest(now(), ${current.last_occurred_at}::timestamptz)`,
++        last_occurred_at: sql<Date>`greatest(now(), operational_exception.last_occurred_at)`,
+         last_error_code: input.errorCode,
+         last_error_message: message,
+         ...(input.operationalFailureId ? { operational_failure_id: input.operationalFailureId } : {}),
+diff --git a/apps/worker/src/kit.ts b/apps/worker/src/kit.ts
+index 7e32d0c77..75beb1d1b 100644
+--- a/apps/worker/src/kit.ts
++++ b/apps/worker/src/kit.ts
+@@ -1031,7 +1031,7 @@ export async function raiseOperationalExceptionTwin(
+       .updateTable("operational_exception")
+       .set({
+         occurrence_count: current.occurrence_count + 1,
+-        last_occurred_at: sql<Date>`greatest(now(), ${current.last_occurred_at}::timestamptz)`,
++        last_occurred_at: sql<Date>`greatest(now(), operational_exception.last_occurred_at)`,
+         last_error_code: input.errorCode,
+         last_error_message: message,
+         ...(input.operationalFailureId ? { operational_failure_id: input.operationalFailureId } : {}),
+port-policy: PostgreSQL listening on port 30133 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.udJEBV/claude-0/r5m
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw40fhry_24b7243b (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q1+Q6: a rebased acknowledge keeps every recurrence's fields and records based_on_version
+QA-R5 Q1 loaded v1 count 1; before ack v4 count 4 msg "Synthetic failure number 4."; after ack v5 count 4 msg "Synthetic failure number 4." status acknowledged
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q1+Q6: a rebased acknowledge keeps every recurrence's fields and records based_on_version
+QA-R5 Q6 audit prior 4 new 5 changes {"status":{"to":"acknowledged","from":"open"},"acknowledge_note":{"to":"QA R5 synthetic acknowledgement","from":null},"based_on_version":{"to":4,"from":1}}
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2: 20 concurrent recurrences around a rebased acknowledge: the ack applies once, no recurrence is lost, no 500
+QA-R5 Q2 ack 200 ; raise rejections 0; final v22 count 21 status acknowledged
+QA-R5 Q2 rejection reasons: 
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 0: ack 200 resolve 409; final acknowledged v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 1: ack 200 resolve 409; final acknowledged v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 2: ack 200 resolve 409; final acknowledged v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 3: ack 409 resolve 200; final resolved v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 4: ack 409 resolve 200; final resolved v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q3: a stale human resolve after another human's acknowledge plus recurrences is 409 and changes nothing
+QA-R5 Q3b stale resolve 409 "version_conflict" current 4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q4: a recurrence attributed to a user is not treated as a system recurrence (409, conservative)
+QA-R5 Q4 user-attributed recurrence then stale ack: 409 "version_conflict"
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q5: If-Match 0, negative, non-numeric, weak or a far-ahead version is refused; nothing is written
+QA-R5 Q5 0 -> 400 validation; -1 -> 400 validation; 999 -> 409 version_conflict; "\"abc\"" -> 400 validation; "W/\"1\"" -> 400 validation; "\"1.5\"" -> 400 validation; "*" -> 400 validation
+
+ ✓ |integration| apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts (6 tests) 4796ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q1+Q6: a rebased acknowledge keeps every recurrence's fields and records based_on_version  729ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q2: 20 concurrent recurrences around a rebased acknowledge: the ack applies once, no recurrence is lost, no 500  438ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins  1035ms
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception not yet open), 5 rounds
+QA-R5 BURST opened=false round 0: queue qarfive.burst_cquslyap; captures 8 (+0 before); rejected 0; operational_failure rows 8 (expected 8); exceptions 1 with occurrences 8 (expected 8); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception not yet open), 5 rounds
+QA-R5 BURST opened=false round 1: queue qarfive.burst_pxdwktvp; captures 8 (+0 before); rejected 0; operational_failure rows 8 (expected 8); exceptions 1 with occurrences 8 (expected 8); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception not yet open), 5 rounds
+QA-R5 BURST opened=false round 2: queue qarfive.burst_kfttywem; captures 8 (+0 before); rejected 0; operational_failure rows 8 (expected 8); exceptions 1 with occurrences 8 (expected 8); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception not yet open), 5 rounds
+QA-R5 BURST opened=false round 3: queue qarfive.burst_cpdzdrtt; captures 8 (+0 before); rejected 0; operational_failure rows 8 (expected 8); exceptions 1 with occurrences 8 (expected 8); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception not yet open), 5 rounds
+QA-R5 BURST opened=false round 4: queue qarfive.burst_mpdrufka; captures 8 (+0 before); rejected 0; operational_failure rows 8 (expected 8); exceptions 1 with occurrences 8 (expected 8); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception already open), 5 rounds
+QA-R5 BURST opened=true round 0: queue qarfive.burst_tyblhoky; captures 8 (+1 before); rejected 0; operational_failure rows 9 (expected 9); exceptions 1 with occurrences 9 (expected 9); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception already open), 5 rounds
+QA-R5 BURST opened=true round 1: queue qarfive.burst_mntkefzw; captures 8 (+1 before); rejected 0; operational_failure rows 9 (expected 9); exceptions 1 with occurrences 9 (expected 9); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception already open), 5 rounds
+QA-R5 BURST opened=true round 2: queue qarfive.burst_melossli; captures 8 (+1 before); rejected 0; operational_failure rows 9 (expected 9); exceptions 1 with occurrences 9 (expected 9); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception already open), 5 rounds
+QA-R5 BURST opened=true round 3: queue qarfive.burst_ccapirgl; captures 8 (+1 before); rejected 0; operational_failure rows 9 (expected 9); exceptions 1 with occurrences 9 (expected 9); reasons []
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts > QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception already open), 5 rounds
+QA-R5 BURST opened=true round 4: queue qarfive.burst_dxfdupji; captures 8 (+1 before); rejected 0; operational_failure rows 9 (expected 9); exceptions 1 with occurrences 9 (expected 9); reasons []
+
+ ✓ |integration| apps/api/test/integration/operations/zz-qa-dg6r5-concurrent-job-failure.test.ts (2 tests) 2928ms
+   ✓ QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception not yet open), 5 rounds  1086ms
+   ✓ QA-R5 concurrent last-attempt job failures on one queue > every one of 8 concurrent failures is captured (exception already open), 5 rounds  1284ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+   Start at  20:40:32
+   Duration  68.20s (transform 13.62s, setup 0ms, collect 42.20s, tests 7.72s, environment 0ms, prepare 110ms)
+
+EXIT 0

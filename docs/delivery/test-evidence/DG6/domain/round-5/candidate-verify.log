@@ -1,0 +1,21 @@
+# DOM-R5-00 candidate verification 2026-11-05T20:07:04Z
+$ git -C /home/user/My-owns rev-parse HEAD
+518b0c9f067c9f98d32c8ad3a1d516aa72f188d6
+$ (repo) node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:832e5c823462ad72859017506cde6a54087ddff15d926a2916bf32ce79d14988","files":2740}
+$ git -C /home/user/My-owns diff --name-only d7b21bad3 HEAD
+docs/delivery/assignments/DG6/round-5/code-security-reviewer.md
+docs/delivery/assignments/DG6/round-5/domain-reviewer.md
+docs/delivery/assignments/DG6/round-5/qa-verifier.md
+docs/delivery/candidates/DG6/832e5c823462ad72.manifest.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+$ (clone: git clone --shared, sparse excludes docs/delivery/runs, docs/delivery/test-evidence, trading_agent, handbacks/*/*-evidence) rev-parse HEAD; is-shallow
+d7b21bad306f6aacf10eaea5848d5449dbc4043e
+false
+$ (clone) candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:832e5c823462ad72859017506cde6a54087ddff15d926a2916bf32ce79d14988","files":2740}
+$ manifest 832e5c823462ad72: entries / missing in clone / sha256 mismatches
+2740 / 0 / 0
+$ pnpm-lock.yaml identical to repo (node_modules copied from repo working tree)
+identical

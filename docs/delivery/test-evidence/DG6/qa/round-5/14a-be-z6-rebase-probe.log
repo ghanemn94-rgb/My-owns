@@ -1,0 +1,133 @@
+port-policy: PostgreSQL listening on port 30130 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.udJEBV/claude-0/r5m
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw408nft_78d01489 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts (7 tests) 6318ms
+   ✓ the heartbeat watch recurs between the administrator's load and action (D-213) > acknowledge with the version loaded before a watch tick succeeds; resolve after a second tick succeeds  699ms
+   ✓ a real conflict is still 409 (the controls) > human vs human: a second administrator acting on the version both loaded gets 409; nothing is written  548ms
+   ✓ a real conflict is still 409 (the controls) > a human change mixed with system recurrences after the load is still 409 (either order)  523ms
+   ✓ a real conflict is still 409 (the controls) > an automatic recovery after the load is 409 (the exception is already resolved); a version ahead is 409  340ms
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q1+Q6: a rebased acknowledge keeps every recurrence's fields and records based_on_version
+QA-R5 Q1 loaded v1 count 1; before ack v4 count 4 msg "Synthetic failure number 4."; after ack v5 count 4 msg "Synthetic failure number 4." status acknowledged
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q1+Q6: a rebased acknowledge keeps every recurrence's fields and records based_on_version
+QA-R5 Q6 audit prior 4 new 5 changes {"status":{"to":"acknowledged","from":"open"},"acknowledge_note":{"to":"QA R5 synthetic acknowledgement","from":null},"based_on_version":{"to":4,"from":1}}
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2: 20 concurrent recurrences around a rebased acknowledge: the ack applies once, no recurrence is lost, no 500
+QA-R5 Q2 ack 200 ; raise rejections 2; final v20 count 19 status acknowledged
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 0: ack 200 resolve 409; final acknowledged v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 1: ack 409 resolve 200; final resolved v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 2: ack 200 resolve 409; final acknowledged v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 3: ack 409 resolve 200; final resolved v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins
+QA-R5 Q3 round 4: ack 409 resolve 200; final resolved v4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q3: a stale human resolve after another human's acknowledge plus recurrences is 409 and changes nothing
+QA-R5 Q3b stale resolve 409 "version_conflict" current 4
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q4: a recurrence attributed to a user is not treated as a system recurrence (409, conservative)
+QA-R5 Q4 user-attributed recurrence then stale ack: 409 "version_conflict"
+
+stdout | apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q5: If-Match 0, negative, non-numeric, weak or a far-ahead version is refused; nothing is written
+QA-R5 Q5 0 -> 400 validation; -1 -> 400 validation; 999 -> 409 version_conflict; "\"abc\"" -> 400 validation; "W/\"1\"" -> 400 validation; "\"1.5\"" -> 400 validation; "*" -> 400 validation
+
+ ❯ |integration| apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts (6 tests | 1 failed) 4776ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q1+Q6: a rebased acknowledge keeps every recurrence's fields and records based_on_version  472ms
+   × QA-R5 BE-Z6 rebase probe > Q2: 20 concurrent recurrences around a rebased acknowledge: the ack applies once, no recurrence is lost, no 500 588ms
+     → expected [ { status: 'rejected', …(1) }, …(1) ] to deeply equal []
+   ✓ QA-R5 BE-Z6 rebase probe > Q2+Q3: two humans acting concurrently on the same stale version after recurrences: exactly one wins  1180ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q3: a stale human resolve after another human's acknowledge plus recurrences is 409 and changes nothing 222ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q4: a recurrence attributed to a user is not treated as a system recurrence (409, conservative) 57ms
+   ✓ QA-R5 BE-Z6 rebase probe > Q5: If-Match 0, negative, non-numeric, weak or a far-ahead version is refused; nothing is written  324ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts > QA-R5 BE-Z6 rebase probe > Q2: 20 concurrent recurrences around a rebased acknowledge: the ack applies once, no recurrence is lost, no 500
+AssertionError: expected [ { status: 'rejected', …(1) }, …(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "reason": error {[39m
+[31m+       "message": "operational_exception: each recurrence counts once and moves last_occurred_at forward",[39m
+[31m+       "length": 252,[39m
+[31m+       "name": "error",[39m
+[31m+       "severity": "ERROR",[39m
+[31m+       "code": "23514",[39m
+[31m+       "detail": undefined,[39m
+[31m+       "hint": undefined,[39m
+[31m+       "position": undefined,[39m
+[31m+       "internalPosition": undefined,[39m
+[31m+       "internalQuery": undefined,[39m
+[31m+       "where": "PL/pgSQL function operational_exception_guard() line 27 at RAISE",[39m
+[31m+       "schema": undefined,[39m
+[31m+       "table": undefined,[39m
+[31m+       "column": undefined,[39m
+[31m+       "dataType": undefined,[39m
+[31m+       "constraint": "operational_exception_occurrence_step",[39m
+[31m+       "file": "pl_exec.c",[39m
+[31m+       "line": "3897",[39m
+[31m+       "routine": "exec_stmt_raise",[39m
+[31m+     },[39m
+[31m+     "status": "rejected",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "reason": error {[39m
+[31m+       "message": "operational_exception: each recurrence counts once and moves last_occurred_at forward",[39m
+[31m+       "length": 252,[39m
+[31m+       "name": "error",[39m
+[31m+       "severity": "ERROR",[39m
+[31m+       "code": "23514",[39m
+[31m+       "detail": undefined,[39m
+[31m+       "hint": undefined,[39m
+[31m+       "position": undefined,[39m
+[31m+       "internalPosition": undefined,[39m
+[31m+       "internalQuery": undefined,[39m
+[31m+       "where": "PL/pgSQL function operational_exception_guard() line 27 at RAISE",[39m
+[31m+       "schema": undefined,[39m
+[31m+       "table": undefined,[39m
+[31m+       "column": undefined,[39m
+[31m+       "dataType": undefined,[39m
+[31m+       "constraint": "operational_exception_occurrence_step",[39m
+[31m+       "file": "pl_exec.c",[39m
+[31m+       "line": "3897",[39m
+[31m+       "routine": "exec_stmt_raise",[39m
+[31m+     },[39m
+[31m+     "status": "rejected",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/operations/zz-qa-dg6r5-exception-rebase.test.ts:141:22
+    139|         `raise rejections ${rejected.length}; final v${row.version} co…
+    140|     );
+    141|     expect(rejected).toEqual([]);
+       |                      ^
+    142|     expect(ackR.value.status).toBe(200);
+    143|     expect(row.status).toBe("acknowledged");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 12 passed (13)
+   Start at  20:35:13
+   Duration  68.91s (transform 13.63s, setup 0ms, collect 42.08s, tests 11.09s, environment 0ms, prepare 98ms)
+
+EXIT 1

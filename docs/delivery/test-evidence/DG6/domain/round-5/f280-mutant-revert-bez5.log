@@ -1,0 +1,434 @@
+# MUTANT: reverted to round-4 (654e39d89b66c0975ebef293d607f480f58408e3): apps/worker/src/handlers/escalations.ts apps/worker/src/handlers/raid.ts apps/api/src/modules/governance/blocker-escalation.ts apps/api/src/modules/governance/escalations.ts apps/api/src/modules/governance/executive-decisions.ts
+port-policy: PostgreSQL listening on port 30002 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Di0wiL/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw3zncag_1b14c699 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-escalation.test.ts (4 tests | 3 failed) 1870ms
+   ✓ ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > control: TL and AUD get 404 on the benefit and on its case; the TO reads both 63ms
+   × ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > the corrective consumer titles the case of a benefit that is sensitive now by the case's own code 89ms
+     → expected 'Synthetic CONFIDENTIAL BE-Z5 churn re…' to be 'CA-02' // Object.is equality
+   × ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > negative: TL cannot record a blocker status or link an ask naming the restricted case (as an unknown id) 234ms
+     → expected 201 to be 422 // Object.is equality
+   × ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > the admitted TO's red cycles create ONE ask titled by the case code only; TL, AUD and SP never read the title 51ms
+     → expected 'Synthetic CONFIDENTIAL BE-Z5 churn re…' to be 'CA-02' // Object.is equality
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts
+DOMAIN-PROBE R5 plain (not sensitive) benefit B02
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts
+DOMAIN-PROBE R5 BO retitles benefit B01 -> 200
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts
+DOMAIN-PROBE R5 consumer before marking -> {"outcome":"done","signal":{"outcome":"case_created","correctiveCaseId":"01a1ad5d-7d6d-706c-960f-91c762a8e5f1","consecutiveOffTrack":1}}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts
+DOMAIN-PROBE R5 early case CA-01 title="Synthetic DOMR5 SECRET churn programme"
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts
+DOMAIN-PROBE R5 TO marks benefit sensitive -> 200
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (1) the real corrective consumer after marking titles the new case by its code
+DOMAIN-PROBE R5 BO closes early case -> 200
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (1) the real corrective consumer after marking titles the new case by its code
+DOMAIN-PROBE R5 consumer after marking -> {"outcome":"done","signal":{"outcome":"case_created","correctiveCaseId":"01a1ad5d-7dd5-7e31-a4f7-f9f7fa104ac1","consecutiveOffTrack":2}}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (1) the real corrective consumer after marking titles the new case by its code
+DOMAIN-PROBE R5 cases of the benefit [{"id":"01a1ad5d-7d6d-706c-960f-91c762a8e5f1","code":"CA-01","title":"Synthetic DOMR5 SECRET churn programme","status":"closed"},{"id":"01a1ad5d-7dd5-7e31-a4f7-f9f7fa104ac1","code":"CA-02","title":"Synthetic DOMR5 SECRET churn programme","status":"open"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (2) TL naming the restricted case: same answer as an unknown id
+DOMAIN-PROBE R5 TO creates forum -> 201
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (2) TL naming the restricted case: same answer as an unknown id
+DOMAIN-PROBE R5 TL blocker status naming the restricted case -> 201 {"id":"01a1ad5d-7e75-7764-b241-85af4a4ef883","meetingId":"01a1ad5d-7e22-74f2-82dc-ca117777e7cb","forumId":"01a1ad5d-7df9-7608-994f-18332d7ef606","cycleDate":"2026-11-06","sourceRecordType":"corrective_case","sourceRecordId":"01a1ad5d-7dd5-7e31-a4f7-f9f7fa104ac1","rag":"red","note":null,"createdAt":"
+DOMAIN-PROBE R5 TL blocker status naming an unknown id -> 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The blocker does not exist in this transformation.","code":"blocker_status.record_not_found","requestId":"01a1ad5d-7e89-77a8-8369-e7069cfae7db","errors":[{"pointer":"/sourceRecordId","code":"blocker_status.r
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 BO blocker status naming the early (benefit-titled, closed) case -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1ad5d-7e9d-7595-9f04-fd408d56a556"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5   fallback TO -> 201 {"id":"01a1ad5d-7ebc-74ab-a703-38f4b8997fb3","meetingId":"01a1ad5d-7e22-74f2-82dc-ca117777e7cb","forumId":"01a1ad5d-7df9-7608-994f-18332d7ef606","cycleDate":"2026-11-06","sourceRecordType":"corrective
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 BO blocker status naming the early (benefit-titled, closed) case -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1ad5d-7ec0-743b-bedb-4b888ff09807"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5   fallback TO -> 201 {"id":"01a1ad5d-7ece-73a8-966b-07b38db55706","meetingId":"01a1ad5d-7e57-7150-a062-7b9f3ae05d4e","forumId":"01a1ad5d-7df9-7608-994f-18332d7ef606","cycleDate":"2026-11-13","sourceRecordType":"corrective
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 escalation consumer -> {"outcome":"not_red_for_cycles","decisionId":null}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 escalation consumer -> {"outcome":"ask_created","decisionId":"01a1ad5d-7edd-7400-bf81-14f57066e94b"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 ask row {"code":"DEC-01","title":"Synthetic DOMR5 SECRET churn programme","kind":"blocker_escalation"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 TL: {"benefit":404,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":1,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 AUD: {"benefit":404,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":1,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 SP: {"benefit":404,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":true,"mywork":200,"myworkLeak":true,"search":200,"searchHits":1,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]}
+DOMAIN-PROBE R5 SP: inbox item for the ask [{"id":"01a1ad5d-7ee1-7049-aa41-9b3c3cc9b5d7","transformationId":"01a1ad5d-7a29-7624-8c0b-27622629e64f","workItemId":"01a1ad5d-7ee0-7811-adba-849feda66a1b","linkPath":"/transformations/01a1ad5d-7a29-7624-8c0b-27622629e64f/executive-decisions/01a1ad5d-7edd-7400-bf81-14f57066e94b","messageKey":"governance.task.executive_decision_due","messageParams":{"code":"DEC-01","title":"Synthetic DOMR5 SECRET c
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 TO: {"benefit":200,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":2,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+DOMAIN-PROBE R5 BO: {"benefit":200,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":2,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]}
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (4) live benefits register report vs /benefit-totals: rows, totals, restricted marker
+DOMAIN-PROBE R5 TL report totals_sar_revenue_uplift: rows=[["B02","Synthetic churn reduction","0.0000","0.0000","0.0000"]] totals=[{"columnKey":"realized_validated","formula":"sum","value":{"type":"decimal","value":"250000","unitKind":"currency","currency":"SAR","valueBasis":"validated","validation":"validated","reason":null}},{"columnKey":"realized_sustained","formula":"sum","value":{"type":"decimal","value":"0","unitKind":"currency","currency":"SAR","valueBasis":"sustained","validation":"not_applicable","reason":null}},{"columnKey":"pending","formula":"sum","value":{"type":"decimal","value":"0","unitKind":"currency","currency":"SAR","valueBasis":"submitted","validation":"not_applicable","reason":null}}] keys=["key","titleKey","sources","kind","columns","rows","totals","emptyKey"]
+DOMAIN-PROBE R5 TL report: status 200; mentions 'restricted'=false; contains title=false
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (4) live benefits register report vs /benefit-totals: rows, totals, restricted marker
+DOMAIN-PROBE R5 TL /benefit-totals -> 200 includesRestrictedRecords=true {"scope":"transformation","scopeId":"01a1ad5d-7a29-7624-8c0b-27622629e64f","allocated":false,"transformationIds":["01a1ad5d-7a29-7624-8c0b-27622629e64f"],"currencies":[{"currency":"SAR","lines":[{"valueClass":"revenue_uplift","state":"planned","total":{"status":"known","amount":"0.0000","currency":"SAR","reason":null},"count":0},{"valueClass":"revenue_uplift","state":"forecast","total":{"status":"known","amount":"0.0000","currency":"SAR","reason":null},"count":0},{"valueClass":"revenue_uplift","state":"measured","total":{"status":"known","amount":"250000.0000","currency":"SAR","reason":null},"
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (4) live benefits register report vs /benefit-totals: rows, totals, restricted marker
+DOMAIN-PROBE R5 TO report totals_sar_revenue_uplift: rows=[["B01","Synthetic DOMR5 SECRET churn programme","250000.0000","0.0000","0.0000"],["B02","Synthetic churn reduction","0.0000","0.0000","0.0000"]] totals=[{"columnKey":"realized_validated","formula":"sum","value":{"type":"decimal","value":"250000","unitKind":"currency","currency":"SAR","valueBasis":"validated","validation":"validated","reason":null}},{"columnKey":"realized_sustained","formula":"sum","value":{"type":"decimal","value":"0","unitKind":"currency","currency":"SAR","valueBasis":"sustained","validation":"not_applicable","reason":null}},{"columnKey":"pending","formula":"sum","value":{"type":"decimal","value":"0","unitKind":"currency","currency":"SAR","valueBasis":"submitted","validation":"not_applicable","reason":null}}] keys=["key","titleKey","sources","kind","columns","rows","totals","emptyKey"]
+DOMAIN-PROBE R5 TO report: status 200; mentions 'restricted'=false; contains title=true
+
+stdout | apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (4) live benefits register report vs /benefit-totals: rows, totals, restricted marker
+DOMAIN-PROBE R5 TO /benefit-totals -> 200 includesRestrictedRecords=false {"scope":"transformation","scopeId":"01a1ad5d-7a29-7624-8c0b-27622629e64f","allocated":false,"transformationIds":["01a1ad5d-7a29-7624-8c0b-27622629e64f"],"currencies":[{"currency":"SAR","lines":[{"valueClass":"revenue_uplift","state":"planned","total":{"status":"known","amount":"0.0000","currency":"SAR","reason":null},"count":0},{"valueClass":"revenue_uplift","state":"forecast","total":{"status":"known","amount":"0.0000","currency":"SAR","reason":null},"count":0},{"valueClass":"revenue_uplift","state":"measured","total":{"status":"known","amount":"250000.0000","currency":"SAR","reason":null},"
+DOMAIN-PROBE R5 summary {"lateTitleIsCode":false,"meetings":["01a1ad5d-7e22-74f2-82dc-ca117777e7cb","01a1ad5d-7e57-7150-a062-7b9f3ae05d4e"],"tlNamed":201,"tlSameAsUnknown":false,"askTitle":"Synthetic DOMR5 SECRET churn programme","TL":{"benefit":404,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":1,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]},"AUD":{"benefit":404,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":1,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]},"SP":{"benefit":404,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":true,"mywork":200,"myworkLeak":true,"search":200,"searchHits":1,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]},"TO":{"benefit":200,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":2,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]},"BO":{"benefit":200,"list":200,"listLeak":true,"item":200,"itemLeak":true,"inbox":200,"inboxLeak":false,"mywork":200,"myworkLeak":false,"search":200,"searchHits":2,"searchLeak":true,"searchByCaseCode":[],"statuses":200,"statusCount":1,"askTitleSeen":[null]},"TL-report-restricted-marker":false,"TL-totals-flag":true,"TO-report-restricted-marker":false,"TO-totals-flag":false}
+
+ ❯ |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts (4 tests | 4 failed) 5784ms
+   × DOMAIN PROBE R5 > (1) the real corrective consumer after marking titles the new case by its code 74ms
+     → a case opened after marking is titled by its own code: expected 'Synthetic DOMR5 SECRET churn programme' to be 'CA-02' // Object.is equality
+   × DOMAIN PROBE R5 > (2) TL naming the restricted case: same answer as an unknown id 185ms
+     → expected 201 to be 422 // Object.is equality
+     → byte-identical apart from the request id: expected false to be true // Object.is equality
+   × DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code 500ms
+     → ask titled by the case code: expected 'Synthetic DOMR5 SECRET churn programme' to be 'CA-01' // Object.is equality
+     → TL reads the sensitive title: expected true to be false // Object.is equality
+     → AUD reads the sensitive title: expected true to be false // Object.is equality
+     → SP reads the sensitive title: expected true to be false // Object.is equality
+   × DOMAIN PROBE R5 > (4) live benefits register report vs /benefit-totals: rows, totals, restricted marker 124ms
+     → TL's report total includes an omitted restricted row: D-195 Q3 label expected: expected false to be true // Object.is equality
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts
+DOMAIN-PROBE R4 benefit B01 title="Synthetic churn reduction"
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (a) action on the case: what TL and AUD see in the action register
+DOMAIN-PROBE R4 BO creates action on case -> 201 {"id":"01a1ad5d-8c12-725f-ab1e-d41603878c70","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","title":"Synthetic follow-up action","description":null,"ownerUserId":"01a1ad5d-8a9e-7288-9c37-fc0eebbc55a6","dueDate":"2030-02-01","followUpDate":null,"status":"open","sourceKind":"corrective_case","sourceWorkshopItemId":null,"raidEntryId":null,"dependencyId":null,"correctiveCaseId":"01a1ad5d-8b
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (a) action on the case: what TL and AUD see in the action register
+DOMAIN-PROBE R4 TL: GET /actions -> 200; rows naming the case=1; contains benefit title=false [{"id":"01a1ad5d-8c12-725f-ab1e-d41603878c70","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","title":"Synthetic follow-up action","description":null,"ownerUserId":"01a1ad5d-8a9e-7288-9c37-fc0eebbc55a6","dueDate":"2030-02-01","followUpDate":null,"status":"open","sourceKind":"corrective_case","sourceWorkshopItemId":null,"raidEntryId":null,"dependencyId":null,"correctiveCaseId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","overdue":false,"version":1,"createdAt":"2026-11-05T20:19:11.498Z","createdBy":"01a1ad5d-8a9e-7288-9c37-fc0eebbc55a6","updatedAt":"2026-11-05T20:19:11.498Z","updatedBy":"01
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (a) action on the case: what TL and AUD see in the action register
+DOMAIN-PROBE R4 AUD: GET /actions -> 200; rows naming the case=1; contains benefit title=false [{"id":"01a1ad5d-8c12-725f-ab1e-d41603878c70","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","title":"Synthetic follow-up action","description":null,"ownerUserId":"01a1ad5d-8a9e-7288-9c37-fc0eebbc55a6","dueDate":"2030-02-01","followUpDate":null,"status":"open","sourceKind":"corrective_case","sourceWorkshopItemId":null,"raidEntryId":null,"dependencyId":null,"correctiveCaseId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","overdue":false,"version":1,"createdAt":"2026-11-05T20:19:11.498Z","createdBy":"01a1ad5d-8a9e-7288-9c37-fc0eebbc55a6","updatedAt":"2026-11-05T20:19:11.498Z","updatedBy":"01
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TO creates forum -> 201 {"id":"01a1ad5d-8c5a-72d8-a930-5f101c4e5c8a","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","templateKey":null,"source":null,"ordinal":1,"nameEn":"Synthetic review R4","nameAr":"منتدى اصطنا
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL creates meeting -> 201 {"id":"01a1ad5d-8c7b-70da-9a01-ae800a2aa1a3","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","forumId":"01a1ad5d-8c5a-72d8-a930-5f101c4e5c8a","seriesId":null,"seriesRuleVersion":null,"occurr
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL starts meeting -> 200
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL creates meeting -> 201 {"id":"01a1ad5d-8ccc-7279-a07d-2a22e3655ef7","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","forumId":"01a1ad5d-8c5a-72d8-a930-5f101c4e5c8a","seriesId":null,"seriesRuleVersion":null,"occurr
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL starts meeting -> 200
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL records blocker status naming the restricted case -> 201 {"id":"01a1ad5d-8cf1-725d-83b9-764c5845bb67","meetingId":"01a1ad5d-8c7b-70da-9a01-ae800a2aa1a3","forumId":"01a1ad5d-8c5a-72d8-a930-5f101c4e5c8a","cycleDate":"2026-11-06","sourceRecordType":"corrective_case","sourceRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","rag":"red","note":null,"createdAt":"2026-11-05T20:19:11.718Z","createdBy":"01a1ad5d-8a9d-7338-92df-d2d30b7b2038"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL records blocker status naming the restricted case -> 201 {"id":"01a1ad5d-8d07-7198-afd2-c4ec1203774f","meetingId":"01a1ad5d-8ccc-7279-a07d-2a22e3655ef7","forumId":"01a1ad5d-8c5a-72d8-a930-5f101c4e5c8a","cycleDate":"2026-11-13","sourceRecordType":"corrective_case","sourceRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","rag":"red","note":null,"createdAt":"2026-11-05T20:19:11.747Z","createdBy":"01a1ad5d-8a9d-7338-92df-d2d30b7b2038"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 control: TL GET case -> 404
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 consumer -> {"outcome":"not_red_for_cycles","decisionId":null}
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 consumer -> {"outcome":"ask_created","decisionId":"01a1ad5d-8d27-7dca-b9ff-2b112b084768"}
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL GET blocker-statuses -> 200 contains benefit title=false {"items":[{"id":"01a1ad5d-8d07-7198-afd2-c4ec1203774f","meetingId":"01a1ad5d-8ccc-7279-a07d-2a22e3655ef7","forumId":"01a1ad5d-8c5a-72d8-a930-5f101c4e5c8a","cycleDate":"2026-11-13","sourceRecordType":"corrective_case","sourceRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","rag":"red","note":null,"createdAt":"2026-11-05T20:19:11.747Z","createdBy":"01a1ad5d-8a9d-7338-92df-d2d30b7b2038"}],"nextCursor":null}
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL: GET benefit -> 404; GET executive-decisions -> 200; asks naming the case=1; ask title=[null]; list contains benefit title=true; inbox items with the benefit title=0 []
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TL: GET ask item -> 200 fields holding the benefit title=["decision"] body={"id":"01a1ad5d-8d27-7dca-b9ff-2b112b084768","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","code":"DEC-01","decision":"Synthetic churn reduction","whyNow":null,"options":[],"recommendationOptionLabel":null,"recommendationText":null,"ownerUserId":"01a1ad5d-8b45-75be-922c-e132be572770","ownerStatus":"assigned","decisionDate":"2026-11-26","impactOfDelay":null,"outcome":null,"chosenOptionLabel":null,"status":"open","overdue":false,"askOrigin":"blocker_escalation","createdSource":"worker","sourceAgendaItemId":null,"decisionRightId":null,"slaDueDate":"2026-11-26","slaUnknownReason":null,"blockerRecordType":"corrective_case","blockerRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","miss
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 AUD: GET benefit -> 404; GET executive-decisions -> 200; asks naming the case=1; ask title=[null]; list contains benefit title=true; inbox items with the benefit title=0 []
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 AUD: GET ask item -> 200 fields holding the benefit title=["decision"] body={"id":"01a1ad5d-8d27-7dca-b9ff-2b112b084768","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","code":"DEC-01","decision":"Synthetic churn reduction","whyNow":null,"options":[],"recommendationOptionLabel":null,"recommendationText":null,"ownerUserId":"01a1ad5d-8b45-75be-922c-e132be572770","ownerStatus":"assigned","decisionDate":"2026-11-26","impactOfDelay":null,"outcome":null,"chosenOptionLabel":null,"status":"open","overdue":false,"askOrigin":"blocker_escalation","createdSource":"worker","sourceAgendaItemId":null,"decisionRightId":null,"slaDueDate":"2026-11-26","slaUnknownReason":null,"blockerRecordType":"corrective_case","blockerRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","miss
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 SP: GET benefit -> 404; GET executive-decisions -> 200; asks naming the case=1; ask title=[null]; list contains benefit title=true; inbox items with the benefit title=1 [{"id":"01a1ad5d-8d2b-72c6-aed8-f4b77f1e367c","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","workItemId":"01a1ad5d-8d2a-7237-8e34-66fbf907a70b","linkPath":"/transformations/01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951/executive-decisions/01a1ad5d-8d27-7dca-b9ff-2b112b084768","messageKey":"governance.task.executive_decision_due","messageParams":{"code":"DEC-01","title":"Synthetic churn reductio
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 SP: GET ask item -> 200 fields holding the benefit title=["decision"] body={"id":"01a1ad5d-8d27-7dca-b9ff-2b112b084768","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","code":"DEC-01","decision":"Synthetic churn reduction","whyNow":null,"options":[],"recommendationOptionLabel":null,"recommendationText":null,"ownerUserId":"01a1ad5d-8b45-75be-922c-e132be572770","ownerStatus":"assigned","decisionDate":"2026-11-26","impactOfDelay":null,"outcome":null,"chosenOptionLabel":null,"status":"open","overdue":false,"askOrigin":"blocker_escalation","createdSource":"worker","sourceAgendaItemId":null,"decisionRightId":null,"slaDueDate":"2026-11-26","slaUnknownReason":null,"blockerRecordType":"corrective_case","blockerRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","miss
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TO: GET benefit -> 200; GET executive-decisions -> 200; asks naming the case=1; ask title=[null]; list contains benefit title=true; inbox items with the benefit title=0 []
+
+stdout | apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+DOMAIN-PROBE R4 TO: GET ask item -> 200 fields holding the benefit title=["decision"] body={"id":"01a1ad5d-8d27-7dca-b9ff-2b112b084768","transformationId":"01a1ad5d-8a9c-71db-8e8b-b6ecf71e9951","code":"DEC-01","decision":"Synthetic churn reduction","whyNow":null,"options":[],"recommendationOptionLabel":null,"recommendationText":null,"ownerUserId":"01a1ad5d-8b45-75be-922c-e132be572770","ownerStatus":"assigned","decisionDate":"2026-11-26","impactOfDelay":null,"outcome":null,"chosenOptionLabel":null,"status":"open","overdue":false,"askOrigin":"blocker_escalation","createdSource":"worker","sourceAgendaItemId":null,"decisionRightId":null,"slaDueDate":"2026-11-26","slaUnknownReason":null,"blockerRecordType":"corrective_case","blockerRecordId":"01a1ad5d-8bdf-7550-8fed-17121b7ab637","miss
+DOMAIN-PROBE R4 summary {"TL-actions-title":false,"AUD-actions-title":false,"tlBlockerStatus":201,"consumer":{"outcome":"ask_created","decisionId":"01a1ad5d-8d27-7dca-b9ff-2b112b084768"},"TL-ask-title":true,"TL-benefit":404,"AUD-ask-title":true,"AUD-benefit":404,"SP-ask-title":true,"SP-benefit":404,"TO-ask-title":true,"TO-benefit":200}
+
+ ❯ |integration| apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts (2 tests | 1 failed) 1075ms
+   ✓ DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (a) action on the case: what TL and AUD see in the action register 80ms
+   × DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates 413ms
+     → TL (404 on the benefit) must not read the sensitive benefit's title through the ask: expected true to be false // Object.is equality
+     → AUD (404 on the benefit) must not read the sensitive benefit's title through the ask: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-escalation.test.ts > ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > the corrective consumer titles the case of a benefit that is sensitive now by the case's own code
+AssertionError: expected 'Synthetic CONFIDENTIAL BE-Z5 churn re…' to be 'CA-02' // Object.is equality
+
+Expected: [32m"CA-02"[39m
+Received: [31m"Synthetic CONFIDENTIAL BE-Z5 churn reduction"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-escalation.test.ts:149:23
+    147|       .executeTakeFirstOrThrow();
+    148|     S.lateCaseId = row.id;
+    149|     expect(row.title).toBe(row.code);
+       |                       ^
+    150|     expect(row.title).not.toContain(TITLE);
+    151|     expect(row.title).not.toContain(S.code);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-escalation.test.ts > ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > negative: TL cannot record a blocker status or link an ask naming the restricted case (as an unknown id)
+AssertionError: expected 201 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 201[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-escalation.test.ts:191:26
+    189|       body: { sourceRecordType: "corrective_case", sourceRecordId: ran…
+    190|     });
+    191|     expect(named.status).toBe(422);
+       |                          ^
+    192|     expect(named.body.code).toBe("blocker_status.record_not_found");
+    193|     const strip = (b: Body) => JSON.stringify({ ...b, requestId: undef…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-escalation.test.ts > ADR-0051 §2: a sensitive benefit's title never reaches an executive ask (F-DG6-280) > the admitted TO's red cycles create ONE ask titled by the case code only; TL, AUD and SP never read the title
+AssertionError: expected 'Synthetic CONFIDENTIAL BE-Z5 churn re…' to be 'CA-02' // Object.is equality
+
+Expected: [32m"CA-02"[39m
+Received: [31m"Synthetic CONFIDENTIAL BE-Z5 churn reduction"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-escalation.test.ts:260:28
+    258|       await api.db.selectFrom("corrective_case").select("code").where(…
+    259|     ).code;
+    260|     expect(asks[0]!.title).toBe(lateCode);
+       |                            ^
+    261|     const readers: [string, Session][] = [
+    262|       ["TL", c.b.s.tl],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+AssertionError: TL (404 on the benefit) must not read the sensitive benefit's title through the ask: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts:132:125
+    130|     }
+    131|     log(`summary ${JSON.stringify(out)}`);
+    132|     expect.soft(out["TL-ask-title"], "TL (404 on the benefit) must not…
+       |                                                                                                                             ^
+    133|     expect.soft(out["AUD-ask-title"], "AUD (404 on the benefit) must n…
+    134|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts > DOMAIN PROBE R4: values of a restricted corrective case outside its own register > (b, c) blocker status naming the case, and the executive ask the consumer creates
+AssertionError: AUD (404 on the benefit) must not read the sensitive benefit's title through the ask: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r4-sensitive-escalation.test.ts:133:127
+    131|     log(`summary ${JSON.stringify(out)}`);
+    132|     expect.soft(out["TL-ask-title"], "TL (404 on the benefit) must not…
+    133|     expect.soft(out["AUD-ask-title"], "AUD (404 on the benefit) must n…
+       |                                                                                                                               ^
+    134|   });
+    135| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (1) the real corrective consumer after marking titles the new case by its code
+AssertionError: a case opened after marking is titled by its own code: expected 'Synthetic DOMR5 SECRET churn programme' to be 'CA-02' // Object.is equality
+
+Expected: [32m"CA-02"[39m
+Received: [31m"Synthetic DOMR5 SECRET churn programme"[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:101:83
+     99|     S.lateCaseId = l.id; S.lateCaseCode = l.code; S.lateTitle = l.titl…
+    100|     out.lateTitleIsCode = l.title === l.code;
+    101|     expect.soft(l.title, "a case opened after marking is titled by its…
+       |                                                                                   ^
+    102|   });
+    103| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (2) TL naming the restricted case: same answer as an unknown id
+AssertionError: expected 201 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 201[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:124:31
+    122|     out.tlNamed = named.status;
+    123|     out.tlSameAsUnknown = named.status === unknown.status && strip(nam…
+    124|     expect.soft(named.status).toBe(422);
+       |                               ^
+    125|     expect.soft(out.tlSameAsUnknown, "byte-identical apart from the re…
+    126|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (2) TL naming the restricted case: same answer as an unknown id
+AssertionError: byte-identical apart from the request id: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:125:82
+    123|     out.tlSameAsUnknown = named.status === unknown.status && strip(nam…
+    124|     expect.soft(named.status).toBe(422);
+    125|     expect.soft(out.tlSameAsUnknown, "byte-identical apart from the re…
+       |                                                                                  ^
+    126|   });
+    127| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+AssertionError: ask titled by the case code: expected 'Synthetic DOMR5 SECRET churn programme' to be 'CA-01' // Object.is equality
+
+Expected: [32m"CA-01"[39m
+Received: [31m"Synthetic DOMR5 SECRET churn programme"[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:146:60
+    144|     log(`ask row ${JSON.stringify(ask ? { code: ask.code, title: ask.t…
+    145|     out.askTitle = ask?.title ?? null;
+    146|     expect.soft(ask?.title, "ask titled by the case code").toBe(S.earl…
+       |                                                            ^
+    147|     await sdb.reindex();
+    148|     await sdb.feed();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+AssertionError: TL reads the sensitive title: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:171:130
+    169|       out[who] = r;
+    170|       if (who !== "TO" && who !== "BO")
+    171|         expect.soft(r.listLeak || r.itemLeak || r.inboxLeak || r.mywor…
+       |                                                                                                                                  ^
+    172|     }
+    173|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+AssertionError: AUD reads the sensitive title: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:171:130
+    169|       out[who] = r;
+    170|       if (who !== "TO" && who !== "BO")
+    171|         expect.soft(r.listLeak || r.itemLeak || r.inboxLeak || r.mywor…
+       |                                                                                                                                  ^
+    172|     }
+    173|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code
+AssertionError: SP reads the sensitive title: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:171:130
+    169|       out[who] = r;
+    170|       if (who !== "TO" && who !== "BO")
+    171|         expect.soft(r.listLeak || r.itemLeak || r.inboxLeak || r.mywor…
+       |                                                                                                                                  ^
+    172|     }
+    173|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/13]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts > DOMAIN PROBE R5 > (4) live benefits register report vs /benefit-totals: rows, totals, restricted marker
+AssertionError: TL's report total includes an omitted restricted row: D-195 Q3 label expected: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r5-sensitive-escalation.test.ts:190:134
+    188|     }
+    189|     log(`summary ${JSON.stringify(out)}`);
+    190|     expect.soft(out["TL-report-restricted-marker"], "TL's report total…
+       |                                                                                                                                      ^
+    191|   });
+    192| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/13]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  8 failed | 2 passed (10)
+   Start at  20:18:38
+   Duration  33.19s (transform 7.69s, setup 0ms, collect 19.27s, tests 8.73s, environment 0ms, prepare 128ms)
+
+exit=1

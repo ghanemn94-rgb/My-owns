@@ -1,0 +1,202 @@
+// DOMAIN REVIEWER PROBE (DG6 round 5), disposable clone only. SYNTHETIC data. Production-initialized dev stack
+// (apps/web/e2e/support/with-stack.sh; this spec starts the built production worker itself for part B).
+// A: P6 screens in en/ar (lang/dir, infrastructure-term scan), the connector edit screen of F-DG6-281 (round-4
+//    reproduction: a stored target the administrator cannot list), and one live-selection export.
+// B: F-DG6-280 walk as a user who may (TO) and a user who may not (TL) see a sensitive benefit: the executive ask the
+//    REAL blocker-escalation consumer creates from a benefit-titled corrective case, its detail, the link to the case,
+//    and a benefits register snapshot vs the benefits page totals label (D-195 Q3).
+// Marking a record sensitive is an access decision, never a business approval (G1-G6); nothing relates to DG0-DG7.
+import { expect, test, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { apiSession, langOf, shot, signIn, SYN_RETAIL, tr } from "../../apps/web/e2e/support/ui.ts";
+import { syntheticUser } from "../../apps/web/e2e/support/p3-journey-setup.ts";
+import { execFileSync } from "node:child_process";
+import { backlog, ownerUrl, poll, psql, startProductionWorker } from "../support/a13-a22-stack.ts";
+
+/** As cluster superuser (the owner URL without its role option), as e2e/a22-p6-operability.spec.ts does. */
+function superSql(sql: string): string {
+  const u = new URL(ownerUrl());
+  u.search = "";
+  return execFileSync("psql", [u.toString(), "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-c", sql], { encoding: "utf8" });
+}
+
+const ORG = "01920000-0000-7000-9000-000000000001";
+const SCREENS: [string, string, string][] = [
+  ["dev.admin", "/admin/assistant", "dom-r5-admin-assistant-off"],
+  ["dev.admin", "/admin/integrations", "dom-r5-admin-integrations"],
+  ["dev.admin", "/admin/operations", "dom-r5-admin-operations"],
+  ["dev.office", "/strategy-kpis/imports", "dom-r5-imports-entry"],
+  ["dev.office", "/search?q=synthetic", "dom-r5-search"],
+  ["dev.office", "/my-work", "dom-r5-my-work"],
+];
+const INFRA = /\b(stack trace|at Object\.|SELECT |postgres|pg-boss|ECONNREFUSED|kysely|node_modules|undefined|NaN|advisory|SKIP LOCKED|outbox|SECRET_BINDINGS_FILE|secret_ref_not_bound)\b/i;
+const log = (s: string) => console.log(`DOMAIN-PROBE R5 ${s}`);
+
+async function settle(page: Page, path: string) {
+  await page.goto(path);
+  await expect(page.locator("main#main h1")).toBeVisible({ timeout: 30_000 });
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
+}
+
+test.describe.configure({ timeout: 600_000 });
+
+test("A: P6 screens, F-DG6-281 connector target, live-selection export", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  let who = "";
+  for (const [user, path, name] of SCREENS) {
+    if (user !== who) { await page.context().clearCookies(); await signIn(page, lang, user); who = user; }
+    await settle(page, path);
+    await expect(page.locator("html")).toHaveAttribute("lang", lang);
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    const text = await page.locator("main#main").innerText();
+    log(`${lang} ${path} h1=${JSON.stringify(await page.locator("main#main h1").innerText())} infraHit=${INFRA.test(text) ? JSON.stringify(text.match(INFRA)![0]) : "none"} chars=${text.length}`);
+    expect.soft(INFRA.test(text), `${path}: ${text.match(INFRA)?.[0]}`).toBe(false);
+    await shot(page, lang, name);
+  }
+
+  // F-DG6-281 (round-4 reproduction): dev.lead's transformation, which dev.admin cannot list, as a connector target.
+  const admin = await apiSession(playwright, "dev.admin");
+  const lead = await apiSession(playwright, "dev.lead");
+  const tr0 = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R5 connector ${lang.toUpperCase()}`, mode: "end_to_end" });
+  const created = await admin.call<{ id: string; version: number }>("POST", "/api/v1/admin/connectors", {
+    organizationId: ORG, code: `dom-r5-${lang}-${randomUUID().slice(0, 6)}`,
+    nameEn: `Synthetic domain R5 source ${lang.toUpperCase()}`, nameAr: `مصدر اصطناعي للمراجعة ${lang.toUpperCase()}`,
+    adapterKind: "test_adapter", targetKind: "kpi_actual",
+    config: { sourceSystemId: `synthetic.kpi-source:dom-r5-${lang}`, endpointUrl: null, credentialRefs: {}, fieldMappings: [],
+      targetTransformationId: tr0.id, cadence: "manual", retryMaxAttempts: 0, retryBackoffSeconds: 60, commitMode: "manual",
+      commitOnBehalfOf: null, outboundActions: [], reconciliationRule: "row_count",
+      adapterSettings: { mode: "healthy", fixture: { rows: [], controlColumn: "value" } }, reason: "Synthetic connector for the domain probe." },
+  });
+  await page.context().clearCookies();
+  await signIn(page, lang, "dev.admin");
+  await page.goto(`/admin/integrations/connectors/${created.id}/edit`);
+  await expect(page.locator("form[data-connector-form]")).toBeVisible({ timeout: 30_000 });
+  await page.waitForLoadState("networkidle");
+  const select = page.getByLabel(tr(lang, "integrations.field.targetTransformation"), { exact: false }).first();
+  const selectedText = await select.evaluate((el) => {
+    const s = el as HTMLSelectElement;
+    return s.tagName === "SELECT" ? (s.selectedOptions[0]?.textContent ?? "") : (el.textContent ?? "");
+  }).catch((e) => `ERR ${String(e).slice(0, 120)}`);
+  const choose = tr(lang, "common.form.choose");
+  const unreadable = tr(lang, "integrations.field.targetUnreadable", { id: tr0.id });
+  const hint = tr(lang, "integrations.field.targetStoredUnlistedHint");
+  const formText = await page.locator("form[data-connector-form]").innerText();
+  log(`${lang} F-281 select shows ${JSON.stringify(selectedText)}; expected ${JSON.stringify(unreadable)}; 'Choose' key text=${JSON.stringify(choose)}; hint shown=${formText.includes(hint)}`);
+  await shot(page, lang, "dom-r5-connector-target-unlisted");
+  expect.soft(selectedText.trim(), "the stored target is shown, not 'Choose…'").toBe(unreadable);
+  expect.soft(formText.includes(hint), "the hint explains it").toBe(true);
+  // Save without touching the target: the PUT keeps the stored id.
+  await page.locator("form[data-connector-form] textarea").last().fill("Synthetic: save without changing the target (domain probe)");
+  const respP = page.waitForResponse((r) => r.url().includes(`/api/v1/admin/connectors/${created.id}`) && r.request().method() === "PUT", { timeout: 60_000 });
+  await page.locator("form[data-connector-form] button[type=submit]").click();
+  const resp = await respP;
+  const sent = JSON.parse(resp.request().postData() ?? "{}");
+  log(`${lang} F-281 save -> ${resp.status()} sent targetTransformationId=${sent?.config?.targetTransformationId} (stored ${tr0.id})`);
+  expect.soft(sent?.config?.targetTransformationId).toBe(tr0.id);
+  expect.soft(resp.status()).toBe(200);
+
+  // Live-selection export (REQ-S20-030): 202 at once; assembled asynchronously.
+  const tr1 = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R5 export ${lang.toUpperCase()}`, mode: "end_to_end" });
+  await lead.call("POST", `/api/v1/transformations/${tr1.id}/raid`, { type: "risk",
+    description: `Synthetic domain R5 risk ${lang}`, impact: "high", probability: "medium", ownerUserId: lead.userId });
+  await page.context().clearCookies();
+  await signIn(page, lang, "dev.lead");
+  await settle(page, "/evidence-reports/exports");
+  const csrf = ((await (await page.request.get("/api/v1/me")).json()) as { csrfToken: string }).csrfToken;
+  const res = await page.request.post("/api/v1/exports", {
+    headers: { "x-csrf-token": csrf, origin: new URL(page.url()).origin, "idempotency-key": randomUUID() },
+    data: { report: { definitionCode: "registers", subjectId: tr1.id, parameters: { register: "raid" } }, format: "csv", language: lang },
+  });
+  const ex = await res.json();
+  log(`${lang} createExport live -> ${res.status()} snapshotId=${ex.snapshotId} status=${ex.status}`);
+  expect(res.status()).toBe(202);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let job: any = null;
+  for (let i = 0; i < 40; i++) {
+    job = await (await page.request.get(`/api/v1/exports/${ex.id}`)).json();
+    if (job.snapshotId !== null || job.status !== "queued") break;
+    await page.waitForTimeout(1000);
+  }
+  log(`${lang} after assembly: status=${job.status} snapshotId=${job.snapshotId}`);
+  await settle(page, "/evidence-reports/exports");
+  await shot(page, lang, "dom-r5-exports");
+});
+
+test("B: F-DG6-280 walk (TO admitted, TL not admitted) and the register snapshot totals label", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  const stamp = Date.now().toString(36);
+  const TITLE = `Synthetic DOMR5 SECRET ${lang} ${stamp}`;
+  const admin = await apiSession(playwright, "dev.admin");
+  const lead = await apiSession(playwright, "dev.lead");
+  const office = await apiSession(playwright, "dev.office");
+  const tid = (await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R5 sensitive ${lang.toUpperCase()} ${stamp}`, mode: "end_to_end" })).id;
+  const T = `/api/v1/transformations/${tid}`;
+  const bo = await syntheticUser(admin, ORG, tid, `dev.domr5.bo.${lang}.${stamp}`, `Synthetic Benefit Owner R5 ${lang}`, "BO", lang);
+  const boApi = await apiSession(playwright, bo.username);
+  const ben = await boApi.call<{ id: string; code: string }>("POST", `${T}/benefits`, {
+    title: TITLE, description: "Synthetic sensitive benefit (domain probe).", benefitType: "revenue", valueClass: "revenue_uplift",
+    ownerUserId: bo.id, currency: "SAR", financialStatementLine: "Revenue - roaming" });
+  await boApi.call("POST", `${T}/benefits/${ben.id}/plan-values`, { valueKind: "planned", periodStart: "2026-01-01", periodEnd: "2026-06-30", amount: "300" });
+  const plain = await boApi.call<{ id: string; code: string }>("POST", `${T}/benefits`, {
+    title: `Synthetic plain benefit ${lang} ${stamp}`, description: "Synthetic", benefitType: "revenue", valueClass: "revenue_uplift",
+    ownerUserId: bo.id, currency: "SAR", financialStatementLine: "Revenue - roaming" });
+  await boApi.call("POST", `${T}/benefits/${plain.id}/plan-values`, { valueKind: "planned", periodStart: "2026-01-01", periodEnd: "2026-06-30", amount: "100" });
+  // A benefit_variance case as the corrective consumer opened it BEFORE the benefit was marked (title = benefit title).
+  const caseId = randomUUID();
+  superSql(`BEGIN; SET LOCAL session_replication_role = replica;
+    INSERT INTO corrective_case (id, organization_id, transformation_id, code, source_kind, source_scope_key, benefit_id,
+      title, recovery_plan, owner_user_id, follow_up_date, consecutive_off_track, signal_count, created_source)
+    VALUES ('${caseId}', '${ORG}', '${tid}', 'CA-01', 'benefit_variance', '${ben.id}', '${ben.id}', '${TITLE}',
+      'Synthetic recovery', '${bo.id}', '2030-01-15', 2, 2, 'worker'); COMMIT;`);
+  await office.call("PUT", `${T}/records/benefit/${ben.id}/sensitivity`, { isSensitive: true, reason: "Synthetic commercially sensitive benefit" }, { ifMatch: 0 });
+  const snap = await office.call<{ id: string }>("POST", `${T}/reports/registers/generate`, { parameters: { register: "benefits" } });
+  // The blocker escalation needs a default business calendar (the consumer answers calendar_not_configured otherwise).
+  const hasCal = psql(`SELECT count(*) FROM business_calendar WHERE organization_id = '${ORG}' AND is_default AND status = 'active'`)[0];
+  if (hasCal === "0")
+    await admin.call("POST", `/api/v1/organizations/${ORG}/calendars`, { code: `CAL${stamp}`.toUpperCase().replace(/[^A-Z0-9]/g, ""), nameEn: "Synthetic calendar", nameAr: "تقويم اصطناعي", isDefault: true });
+  const worker = await startProductionWorker();
+  try {
+    const forum = await office.call<{ id: string }>("POST", `${T}/forums`, { nameEn: "Synthetic review R5", nameAr: "منتدى اصطناعي",
+      cadenceLabel: "Weekly", purpose: "Synthetic", participantsLabel: "Synthetic", outputsLabel: "RAID", outputKinds: ["raid"] });
+    const today = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+    const plus = (d: number) => new Date(Date.parse(today) + d * 86400_000).toISOString().slice(0, 10);
+    for (const d of [1, 8]) {
+      const m = await lead.call<{ id: string }>("POST", `${T}/meetings`, { forumId: forum.id, scheduledDate: plus(d), startTime: "09:00", durationMinutes: 60 });
+      await lead.call("POST", `${T}/meetings/${m.id}/start`, undefined, { ifMatch: 1 });
+      const tlTry = await lead.req.fetch(`${T}/meetings/${m.id}/blocker-statuses`, { method: "POST", headers: { "X-CSRF-Token": ((await (await lead.req.get("/api/v1/me")).json()) as { csrfToken: string }).csrfToken, "Idempotency-Key": randomUUID() },
+        data: { sourceRecordType: "corrective_case", sourceRecordId: caseId, rag: "red" } });
+      log(`${lang} TL blocker status naming the restricted case -> ${tlTry.status()}`);
+      await office.call("POST", `${T}/meetings/${m.id}/blocker-statuses`, { sourceRecordType: "corrective_case", sourceRecordId: caseId, rag: "red" });
+    }
+    const askId = await poll(async () => psql(`SELECT id FROM decision WHERE blocker_record_id = '${caseId}'`)[0], "the escalation ask", 120_000, () => `${backlog()}; outbox=${JSON.stringify(psql(`SELECT event_type || ' ' || coalesce(published_at::text, 'unpublished') FROM outbox_event WHERE payload::text LIKE '%${caseId}%'`))}; jobs=${JSON.stringify(psql(`SELECT name || ' ' || state || ' ' || coalesce(output::text, '') FROM pgboss.job WHERE data::text LIKE '%${tid}%' ORDER BY created_on DESC LIMIT 10`))}; worker=${worker.output().slice(-1500)}`);
+    const askTitle = psql(`SELECT title FROM decision WHERE id = '${askId}'`)[0];
+    log(`${lang} ask ${askId} title=${JSON.stringify(askTitle)}`);
+    expect.soft(askTitle).toBe("CA-01");
+    for (const [user, role] of [["dev.lead", "TL"], ["dev.office", "TO"]] as const) {
+      await page.context().clearCookies();
+      await signIn(page, lang, user);
+      for (const [path, name] of [
+        [`/transformations/${tid}/executive-decisions`, "asks"],
+        [`/transformations/${tid}/executive-decisions/${askId}`, "ask"],
+        [`/transformations/${tid}/corrective-actions/${caseId}`, "case"],
+        [`/transformations/${tid}/reports/${snap.id}`, "register-snapshot"],
+        [`/transformations/${tid}/benefits`, "benefits"],
+      ] as const) {
+        await page.goto(path);
+        await page.waitForLoadState("networkidle");
+        await page.waitForTimeout(1500);
+        const text = await page.locator("main#main").innerText().catch(() => "");
+        const label = tr(lang, "access.includesRestrictedRecords");
+        log(`${lang} ${role} ${name}: title shown=${text.includes(TITLE)} 'CA-01' shown=${text.includes("CA-01")} restricted label shown=${text.includes(label)} h1=${JSON.stringify(await page.locator("main#main h1").first().innerText().catch(() => "-"))} text=${JSON.stringify(text.slice(0, 400))}`);
+        if (role === "TL") expect.soft(text.includes(TITLE), `${role} ${name} must not show the sensitive title`).toBe(false);
+        await shot(page, lang, `dom-r5-f280-${role.toLowerCase()}-${name}`);
+      }
+    }
+  } finally {
+    await worker.stop();
+  }
+});

@@ -1,0 +1,192 @@
+// DOMAIN REVIEWER PROBE (DG6 round 5), disposable clone only. Every value is SYNTHETIC. Marking a record sensitive is an
+// access decision, never a business approval (G1-G6); an executive ask created by the job decides nothing; nothing here
+// relates to DG0-DG7.
+// Questions (F-DG6-280 adversarial verification and BE-Z5 residuals):
+//  (1) the REAL corrective consumer opens a case on a benefit BEFORE it is marked (title = benefit title) and AFTER
+//      (title = code?); (2) TL (not admitted) naming the case in a blocker status / ask link: answer == unknown id?;
+//  (3) BO (the benefit's owner, a named party, admitted) records the case red twice; the REAL escalation consumer makes
+//      an ask: is its title the case code only? what do TL, AUD, SP read in the ask list/item/inbox/my-work, and in
+//      search after the REAL search jobs run?; (4) the live benefits register report: rows vs totals for TL and TO, and
+//      whether the totals of a table that includes an omitted restricted row carry any 'includes restricted' marker,
+//      compared with GET /benefit-totals.
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { randomUUID } from "node:crypto";
+import { handleBlockerEscalation } from "../../../../worker/src/handlers/escalations.ts";
+import { handleBenefitVariance } from "../../../../worker/src/handlers/raid.ts";
+import { ensureDefaultCalendar } from "../approvals/approval-world.ts";
+import {
+  launchedInitiative,
+  pendingBenefit,
+  seedClosureWorld,
+  validatedBenefit,
+  type ClosureWorld,
+} from "../contract/p4-exercises-be-j.ts";
+import { businessToday, plusDays } from "../governance/meeting-fixtures.ts";
+import { envelopeOf } from "../governance/t16-fixtures.ts";
+import { startSearchDb, type SearchDb } from "../search/search-fixtures.ts";
+import { call, seedWorld, type TestApi, type World } from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+let sdb: SearchDb;
+let api: TestApi;
+let w: World;
+let c: ClosureWorld;
+const TITLE = "Synthetic DOMR5 SECRET churn programme";
+const S = { benefitId: "", code: "", earlyCaseId: "", earlyCaseCode: "", lateCaseId: "", lateCaseCode: "", lateTitle: "" };
+const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call<Body>(api.app, m, u, o);
+const log = (s: string) => console.log(`DOMAIN-PROBE R5 ${s}`);
+const out: Record<string, unknown> = {};
+
+const variance = (key: string, month: string) => ({
+  outboxEventId: randomUUID(),
+  eventType: "benefit.variance_evaluated",
+  schemaVersion: 1,
+  idempotencyKey: `benefit.variance_evaluated:dom-r5-${key}-${randomUUID()}`,
+  organizationId: c.b.organizationId,
+  payload: {
+    benefitId: S.benefitId,
+    measurementId: randomUUID(),
+    periodStart: `2026-${month}-01`,
+    periodEnd: `2026-${month}-28`,
+    plannedAmount: "100000.0000",
+    measuredAmount: "80000.0000",
+    variance: "-20000.0000",
+    offTrack: true,
+  },
+});
+
+beforeAll(async () => {
+  sdb = await startSearchDb(`dom_r5_${Date.now()}`);
+  api = sdb.api;
+  w = await seedWorld(api.db);
+  c = await seedClosureWorld(api, w);
+  await ensureDefaultCalendar(api, w, (m, u, o) => call(api.app, m, u, o));
+  const ini = await launchedInitiative(api.db, c.b);
+  const ben = await validatedBenefit(api, c, ini);
+  S.benefitId = ben.id;
+  S.code = ben.code;
+  const plain = await pendingBenefit(api, c, ini);
+  log(`plain (not sensitive) benefit ${plain.code}`);
+  const cur = (await send("GET", `${c.b.base}/benefits/${ben.id}`, { session: c.b.s.bo })).body;
+  const p = await send("PATCH", `${c.b.base}/benefits/${ben.id}`, { session: c.b.s.bo, headers: ifm(cur.version), body: { title: TITLE } });
+  log(`BO retitles benefit ${ben.code} -> ${p.status}`);
+  const early = await handleBenefitVariance(api.db, variance("early", "09"), "dom-r5-early");
+  log(`consumer before marking -> ${JSON.stringify(early).slice(0, 200)}`);
+  const e = await api.db.selectFrom("corrective_case").select(["id", "code", "title"]).where("benefit_id", "=", ben.id).executeTakeFirstOrThrow();
+  S.earlyCaseId = e.id;
+  S.earlyCaseCode = e.code;
+  log(`early case ${e.code} title=${JSON.stringify(e.title)}`);
+  const mark = await send("PUT", `${c.b.base}/records/benefit/${ben.id}/sensitivity`, {
+    session: c.s.to.session, headers: ifm(0), body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit" } });
+  log(`TO marks benefit sensitive -> ${mark.status}`);
+  expect(mark.status).toBe(200);
+}, 400_000);
+afterAll(async () => sdb?.close());
+
+describe("DOMAIN PROBE R5", () => {
+  it("(1) the real corrective consumer after marking titles the new case by its code", async () => {
+    const cur = (await send("GET", `${c.b.base}/corrective-actions/${S.earlyCaseId}`, { session: c.b.s.bo })).body;
+    const cl = await send("POST", `${c.b.base}/corrective-actions/${S.earlyCaseId}/close`, {
+      session: c.b.s.bo, headers: ifm(cur.version), body: { closureNote: "Synthetic closure" } });
+    log(`BO closes early case -> ${cl.status}`);
+    const late = await handleBenefitVariance(api.db, variance("late", "10"), "dom-r5-late");
+    log(`consumer after marking -> ${JSON.stringify(late).slice(0, 200)}`);
+    const rows = await api.db.selectFrom("corrective_case").select(["id", "code", "title", "status"]).where("benefit_id", "=", S.benefitId).orderBy("code").execute();
+    log(`cases of the benefit ${JSON.stringify(rows)}`);
+    const l = rows.find((r) => r.id !== S.earlyCaseId)!;
+    S.lateCaseId = l.id; S.lateCaseCode = l.code; S.lateTitle = l.title;
+    out.lateTitleIsCode = l.title === l.code;
+    expect.soft(l.title, "a case opened after marking is titled by its own code").toBe(l.code);
+  });
+
+  it("(2) TL naming the restricted case: same answer as an unknown id", async () => {
+    const today = await businessToday(api);
+    const forum = await send("POST", `${c.b.base}/forums`, { session: c.s.to.session, body: {
+      nameEn: "Synthetic review R5", nameAr: "منتدى اصطناعي", cadenceLabel: "Weekly", purpose: "Synthetic",
+      participantsLabel: "Synthetic", outputsLabel: "RAID", outputKinds: ["raid"] } });
+    log(`TO creates forum -> ${forum.status}`);
+    const meetings: string[] = [];
+    for (const d of [1, 8]) {
+      const m = await send("POST", `${c.b.base}/meetings`, { session: c.b.s.tl, body: { forumId: forum.body.id, scheduledDate: plusDays(today, d), startTime: "09:00", durationMinutes: 60 } });
+      await send("POST", `${c.b.base}/meetings/${m.body.id}/start`, { session: c.b.s.tl, headers: { "if-match": '"1"' } });
+      meetings.push(m.body.id);
+    }
+    out.meetings = meetings;
+    const named = await send("POST", `${c.b.base}/meetings/${meetings[0]}/blocker-statuses`, { session: c.b.s.tl, body: { sourceRecordType: "corrective_case", sourceRecordId: S.lateCaseId, rag: "red" } });
+    const unknown = await send("POST", `${c.b.base}/meetings/${meetings[0]}/blocker-statuses`, { session: c.b.s.tl, body: { sourceRecordType: "corrective_case", sourceRecordId: randomUUID(), rag: "red" } });
+    const strip = (b: Body) => JSON.stringify({ ...b, requestId: undefined, instance: undefined, traceId: undefined });
+    log(`TL blocker status naming the restricted case -> ${named.status} ${JSON.stringify(named.body).slice(0, 300)}`);
+    log(`TL blocker status naming an unknown id -> ${unknown.status} ${JSON.stringify(unknown.body).slice(0, 300)}`);
+    out.tlNamed = named.status;
+    out.tlSameAsUnknown = named.status === unknown.status && strip(named.body) === strip(unknown.body);
+    expect.soft(named.status).toBe(422);
+    expect.soft(out.tlSameAsUnknown, "byte-identical apart from the request id").toBe(true);
+  });
+
+  it("(3) BO (admitted owner) escalates; non-admitted readers never read the benefit title or code", async () => {
+    const meetings = out.meetings as string[];
+    const ids: string[] = [];
+    for (const m of meetings) {
+      const r = await send("POST", `${c.b.base}/meetings/${m}/blocker-statuses`, { session: c.b.s.bo, body: { sourceRecordType: "corrective_case", sourceRecordId: S.earlyCaseId, rag: "red" } });
+      log(`BO blocker status naming the early (benefit-titled, closed) case -> ${r.status} ${JSON.stringify(r.body).slice(0, 200)}`);
+      let id = r.status === 201 ? r.body.id : null;
+      if (id === null) {
+        const r2 = await send("POST", `${c.b.base}/meetings/${m}/blocker-statuses`, { session: c.s.to.session, body: { sourceRecordType: "corrective_case", sourceRecordId: S.earlyCaseId, rag: "red" } });
+        log(`  fallback TO -> ${r2.status} ${JSON.stringify(r2.body).slice(0, 200)}`);
+        id = r2.status === 201 ? r2.body.id : null;
+      }
+      if (id) ids.push(id);
+    }
+    for (const sid of ids) log(`escalation consumer -> ${JSON.stringify(await handleBlockerEscalation(api.db, await envelopeOf(api.db, sid), "dom-r5"))}`);
+    const ask = await api.db.selectFrom("decision").selectAll().where("blocker_record_id", "=", S.earlyCaseId).executeTakeFirst();
+    log(`ask row ${JSON.stringify(ask ? { code: ask.code, title: ask.title, kind: (ask as Body).ask_origin } : null)}`);
+    out.askTitle = ask?.title ?? null;
+    expect.soft(ask?.title, "ask titled by the case code").toBe(S.earlyCaseCode);
+    await sdb.reindex();
+    await sdb.feed();
+    const needles = [TITLE, `${S.code} ${TITLE}`];
+    for (const [who, s] of [["TL", c.b.s.tl], ["AUD", c.b.s.auditor], ["SP", c.sp.session], ["TO", c.s.to.session], ["BO", c.b.s.bo]] as const) {
+      const ben = await send("GET", `${c.b.base}/benefits/${S.benefitId}`, { session: s });
+      const list = await send("GET", `${c.b.base}/executive-decisions?limit=100`, { session: s });
+      const item = ask ? await send("GET", `${c.b.base}/executive-decisions/${ask.id}`, { session: s }) : null;
+      const inbox = await send("GET", `/api/v1/me/inbox?limit=100`, { session: s });
+      const mywork = await send("GET", `/api/v1/me/work?limit=100`, { session: s });
+      const srch = await send("GET", `/api/v1/search?q=${encodeURIComponent("DOMR5 SECRET")}`, { session: s });
+      const srchCode = await send("GET", `/api/v1/search?q=${encodeURIComponent(S.earlyCaseCode)}`, { session: s });
+      const statuses = await send("GET", `${c.b.base}/meetings/${meetings[1]}/blocker-statuses`, { session: s });
+      const hit = (b: unknown) => needles.some((n) => JSON.stringify(b).includes(n));
+      const r = { benefit: ben.status, list: list.status, listLeak: hit(list.body), item: item?.status, itemLeak: hit(item?.body),
+        inbox: inbox.status, inboxLeak: hit(inbox.body), mywork: mywork.status, myworkLeak: hit(mywork.body),
+        search: srch.status, searchHits: (srch.body?.items ?? []).length, searchLeak: hit(srch.body),
+        searchByCaseCode: (srchCode.body?.items ?? []).map((x: Body) => `${x.recordType}:${x.code ?? ""}:${x.title ?? ""}`),
+        statuses: statuses.status, statusCount: (statuses.body?.items ?? []).length,
+        askTitleSeen: (list.body?.items ?? []).filter((x: Body) => x.blockerRecordId === S.earlyCaseId).map((x: Body) => x.title) };
+      log(`${who}: ${JSON.stringify(r)}`);
+      const inboxAsk = (inbox.body?.items ?? []).filter((x: Body) => String(x.linkPath ?? "").includes(ask?.id ?? "--"));
+      if (inboxAsk.length) log(`${who}: inbox item for the ask ${JSON.stringify(inboxAsk).slice(0, 400)}`);
+      out[who] = r;
+      if (who !== "TO" && who !== "BO")
+        expect.soft(r.listLeak || r.itemLeak || r.inboxLeak || r.myworkLeak || r.searchLeak, `${who} reads the sensitive title`).toBe(false);
+    }
+  });
+
+  it("(4) live benefits register report vs /benefit-totals: rows, totals, restricted marker", async () => {
+    const live = `${c.b.base}/reports/registers/live?parameters=${encodeURIComponent('{"register":"benefits"}')}`;
+    for (const [who, s] of [["TL", c.b.s.tl], ["TO", c.s.to.session]] as const) {
+      const r = await send("GET", live, { session: s });
+      const tables = (r.body?.document?.sections ?? []).filter((x: Body) => String(x.key).startsWith("totals_"));
+      for (const t of tables)
+        log(`${who} report ${t.key}: rows=${JSON.stringify(t.rows.map((x: Body) => x.cells.map((cell: Body) => cell.value ?? cell.amount ?? cell.text ?? cell.state ?? null)))} totals=${JSON.stringify(t.totals)} keys=${JSON.stringify(Object.keys(t))}`);
+      const docText = JSON.stringify(r.body);
+      log(`${who} report: status ${r.status}; mentions 'restricted'=${/restricted/i.test(docText)}; contains title=${docText.includes(TITLE)}`);
+      const bt = await send("GET", `${c.b.base}/benefit-totals`, { session: s });
+      log(`${who} /benefit-totals -> ${bt.status} includesRestrictedRecords=${bt.body?.includesRestrictedRecords} ${JSON.stringify(bt.body).slice(0, 600)}`);
+      out[`${who}-report-restricted-marker`] = /restricted/i.test(docText);
+      out[`${who}-totals-flag`] = bt.body?.includesRestrictedRecords;
+    }
+    log(`summary ${JSON.stringify(out)}`);
+    expect.soft(out["TL-report-restricted-marker"], "TL's report total includes an omitted restricted row: D-195 Q3 label expected").toBe(true);
+  });
+});
