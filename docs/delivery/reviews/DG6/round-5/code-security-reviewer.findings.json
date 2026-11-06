@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-360",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The Executive Overview (getExecutiveOverview, GET /api/v1/overview) lists a sensitive benefit with its code, title and validated value to readers who get 404 on the benefit (TL, AUD), because the route applies no sensitivity restriction",
+      "reproduction": "Candidate 832e5c82 (source d7b21bad306f6aacf10eaea5848d5449dbc4043e), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0, LANG unset. Probe docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r5-overview-drill.test.ts, run with checks.sh repro (log 44-repro-r5-overview-drill.log). It first appeared in the wider probe zz-cs-r5-sens-beyond-sweep.test.ts, part B (log 43-repro-r5-beyond-sweep.log), and again in zz-cs-r5-400-ops.test.ts (log 47-repro-r5-400-ops.log). Setup, all SYNTHETIC: a scratch database seeded with the real demo dataset (seedDemo). Demo benefit B01 (value class revenue_uplift) is retitled 'Synthetic CONFIDENTIAL CS-R5 overview benefit', with its audit event. A TO marks it sensitive (PUT .../records/benefit/{id}/sensitivity, 200). A TL scoped to the transformation and an AUD scoped to the organization, neither with a grant nor a named party, call GET /api/v1/overview?organizationId=<org> and GET /api/v1/overview?organizationId=<org>&transformationId=<t>. Control: the same two readers get 404 on GET .../benefits/{id}, and GET /api/v1/transformations/{t}/dashboard omits the benefit for them (includesRestrictedRecords true), while the TO sees it there.",
+      "expected": "ADR-0051 §2 as amended on 2026-11-04 (a restricted record is absent from lists, dashboards and exports; its values are carried by no row the reader can see), REQ-S10-002 ('a sensitive benefit is hidden from a workstream member without the grant'), M0188, and the dashboard rule of T-DG6-BE-B2 (apps/api/src/modules/reporting/dashboards/restricted.ts header: an item that is a restricted record is not listed, the figures stay the same for every reader, and the response carries includesRestrictedRecords). The per-transformation dashboard (dashboards/transformation.ts:37-47) and the workstream dashboard (dashboards/workstream.ts:51-58) apply dashboardRestriction and withoutRestrictedItems. The Executive Overview is the same read model over several transformations (D-106 (c)) and should apply the same rule.",
+      "actual": "200 for TL and AUD with both queries. The 'value' area holds the item {recordType:'benefit', recordId:<B01>, code:'B01', label:'Synthetic CONFIDENTIAL CS-R5 overview benefit', value:{state:'value', value:'222750', unit:'currency', currency:'SAR'}, valueBasis:'top_line', ownerUserId:<BO>, href:'/api/v1/transformations/<t>/benefits/<B01>'}, and the response has no includesRestrictedRecords member. That is the benefit's identity and its individual validated value. Cause: apps/api/src/modules/reporting/executive-overview.ts lines 37-70 build the areas with presentAreas(ctx, computeAreas(...)) and return them; the file never calls dashboardRestriction or withoutRestrictedItems (git log: unchanged since T-DG4-KBE-G, 96b6539dd). The item itself comes from dashboards/engine.ts:745-760 (value area: one item per benefit with code, title and benefitValidated). No test reads the overview with a sensitive record. The BE-Z5 class sweep (apps/api/test/integration/access/sensitive-reach-sweep.test.ts) lists getExecutiveOverview among its 375 swept operations, but it calls it without the required organizationId, so every answer is 400 (46-sweep-instrumented.log; F-DG6-362). getFinanceDashboard and getAdoptionDashboard with the same parameters do not leak (logs 43 and 47). Every business unit or transformation reader in the organization who can open the Executive Overview can read every sensitive benefit of the transformations they read.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-5/44-repro-r5-overview-drill.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/43-repro-r5-beyond-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/47-repro-r5-400-ops.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/46-sweep-instrumented.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r5-overview-drill.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r5-sens-beyond-sweep.test.ts",
+        "apps/api/src/modules/reporting/executive-overview.ts",
+        "apps/api/src/modules/reporting/dashboards/transformation.ts",
+        "apps/api/src/modules/reporting/dashboards/restricted.ts",
+        "apps/api/src/modules/reporting/dashboards/engine.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T20:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 5 while testing the BE-Z5 residuals adversarially (D-214). Suggested repair: apply dashboardRestriction(tx, principal, ctx.facts) and withoutRestrictedItems to the overview's areas, and add restriction.field to the response if the contract allows it (ExecutiveOverview schema). Add a test that reads the overview as a reader who is not admitted."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-361",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "The value.gap drill-down (getDashboardDrilldown metric=value.gap with the benefit's value class) lists a sensitive benefit's planned lines with its code, title and per-period planned amounts to readers who get 404 on the benefit, because the dashboard restriction does not know benefit_plan_value",
+      "reproduction": "Same world and probe as F-DG6-360: zz-cs-r5-overview-drill.test.ts (log 44-repro-r5-overview-drill.log); first seen in zz-cs-r5-sens-beyond-sweep.test.ts part B (log 43-repro-r5-beyond-sweep.log). Demo benefit B01 (value class revenue_uplift, 4 benefit_plan_value rows) is retitled and marked sensitive by a TO. TL (transformation scope) and AUD (organization scope), neither admitted, call GET /api/v1/dashboard-drilldown?metric=value.gap&valueClass=revenue_uplift&organizationId=<org>&transformationId=<t>&limit=100. Controls: both get 404 on the benefit; the value.planned drill-down of the same class lists nothing of B01 for TL (its items have recordType 'benefit', which the restriction hides); the TO (admitted) sees the lines.",
+      "expected": "ADR-0051 §2 (as amended on 2026-11-04) and the dashboard rule of dashboards/restricted.ts: an item that is a restricted record or a part of one is not listed, and its individual value is never shown. The figures (the gap ratio and its per-currency inputs) stay as they are for every reader (D-195 Q3).",
+      "actual": "200 for TL and AUD, with includesRestrictedRecords: true, and yet items holds the benefit's planned lines: {recordType:'benefit_plan_value', recordId:'01995000-4404-7000-8000-000000000101', code:'B01', label:'Synthetic CONFIDENTIAL CS-R5 overview benefit (planned)', href:'.../benefit-plan-values/...0101', value:{value:'198000', currency:'SAR'}, period:{start:'2026-07-01', end:'2026-07-31'}}, the next one with 297000 SAR, and so on: the benefit's title, code and individual planned amounts per period. Cause: apps/api/src/modules/reporting/dashboards/drilldown.ts lines 470-490 (case 'value.gap') emit one item per value line with recordType l.recordTable. A planned line's recordType is 'benefit_plan_value' and its label is `${b.title} (${l.state})`. The route filters items with restriction.hides (drilldown.ts:686-692), but dashboards/restricted.ts lines 44-62 (hides) handles only 'benefit', 'benefit_measurement', 'business_case' and 'business_case_line'; the default branch returns false. So a restricted benefit's validated lines (benefit_measurement) are hidden, and its planned lines are not. No other drill-down emits benefit_plan_value items (grep of dashboards/*.ts). The BE-Z5 sweep calls getDashboardDrilldown without the required metric and organizationId (400 for every reader; 46-sweep-instrumented.log; F-DG6-362).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-5/44-repro-r5-overview-drill.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/43-repro-r5-beyond-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/46-sweep-instrumented.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r5-overview-drill.test.ts",
+        "apps/api/src/modules/reporting/dashboards/drilldown.ts",
+        "apps/api/src/modules/reporting/dashboards/restricted.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T20:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 5. Suggested repair: hides() maps a benefit_plan_value line to its benefit (as it does for benefit_measurement, from facts.lines) and, more robustly, falls back to the shared SENSITIVE_CHILD_SOURCES rule (benefit_plan_value is already a benefit child there) instead of returning false for an unknown type. Add a test of value.gap per value class as a reader who is not admitted."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-362",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The BE-Z5 class sweep (sensitive-reach-sweep.test.ts) counts an operation as swept whatever it answers: 31 of its operations answer 400 to every reader it checks (required query parameters left out, for example the Executive Overview, the Finance and adoption dashboards and the drill-down), and lists are read on their first page only, so the guard misses the leaks of F-DG6-360 and F-DG6-361",
+      "reproduction": "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r5-sweep-instrumented.test.ts is the candidate's own apps/api/test/integration/access/sensitive-reach-sweep.test.ts, unchanged except that it records the HTTP status of each TL and AUD request and logs a histogram. It was run in the disposable clone next to the original (log 46-sweep-instrumented.log; 2 of 2 tests pass, exit 0). Result: 383 operation ids (418 requests per reader; 71 operations not fillable, the handback's number). Status sets over TL and AUD: 200 x276, 404 x40, 400 x31, 200/403 x13, 403 x12, 200/404 x9, 200/422 x1, 422 x1. The 31 that only ever answered 400 include getExecutiveOverview, getFinanceDashboard, getAdoptionDashboard, getDashboardDrilldown, listAuditEvents, listBusinessCases, listInitiatives, listDecisions, listSensitiveGrants and the bare searchRecords. With their required parameters (zz-cs-r5-400-ops.test.ts, log 47; zz-cs-r5-sens-beyond-sweep.test.ts part B, log 43), most of them answer 200, and two of them leak (F-DG6-360, F-DG6-361). The floor `expect(new Set(resolved.map((r) => r.id)).size).toBeGreaterThan(330)` counts resolved operation ids, not answers that were actually read. Every list is called without limit, so only the first 25 items (PAGINATION.defaultLimit) are read: an audit list that is newest-first, for example, does not reach older events. My probe part A follows every page with limit=100 over 230 list reads and finds no leak there, so on this candidate the page limit hides nothing. It is still a gap in the guard.",
+      "expected": "The handback says (§1 item 2) 'A sweep test guards the class' and (§4) that it covers 375 distinct operations. A sweep that guards REQ-S10-002 should fill the required query parameters of each operation from the contract (organizationId, transformationId, metric and the like, and enumerate small enums such as the dashboard metrics and value classes). It should fail, or at least list, any operation that never answers 2xx to the admitted control reader. Its floor should count operations that the admitted reader actually read. It should follow pagination, or use the maximum limit.",
+      "actual": "On this candidate the sweep passes in the integration suite (and in log 46) while the Executive Overview and the value.gap drill-down leak the sensitive benefit's title and values to TL and AUD. Its reported coverage of 375 operations includes 31 that were never read by anyone it checks. The defect is in the test, with no direct product effect, but this test is the stated regression guard for a class with two High leaks this round. Medium (D-192: repair before the gate).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-5/46-sweep-instrumented.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r5-sweep-instrumented.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/47-repro-r5-400-ops.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/43-repro-r5-beyond-sweep.log",
+        "apps/api/test/integration/access/sensitive-reach-sweep.test.ts",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z5-backend-workflow-engineer.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T20:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 5 while judging BE-Z5's declared residuals (D-214, handback §10 item 1). The residual list itself (71 unfillable operations) is accurate; the gap is in the operations it counts as covered."
+        }
+      ]
+    }
+  ]
+}

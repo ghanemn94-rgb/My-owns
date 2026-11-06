@@ -1,0 +1,36 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-300",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 832e5c82 (source d7b21bad), disposable clone w2, disposable PostgreSQL 16.15, Node 22.22.0, LANG unset, real API, synthetic data. (1) The three round-4 reproductions, copied verbatim into repro/ and run with checks.sh repro, on the same kind of world where the finding was observed. zz-cs-r4-sens-title.test.ts (log 40): 4/4 pass, exit 0 (round 4: 3 of 4 failed). For TL, AUD and BO2, who get 404 on the benefit, getTraceability and getMissingLinks no longer carry its code, title or id. zz-cs-r4-sens-title2.test.ts (log 41): the 4 product assertions pass. The live benefits register has no row of the benefit for TL ('row: null'), the snapshot TL generates holds no row for TL or AUD ('title present: false'), and G6 readiness names no title (round 4: all 4 failed). The one failing test in that file (exit 1) is the round-4 probe error, disclosed then: its export 'control' POSTs to /api/v1/transformations/{t}/exports, which is not in the contract ('contract: no OpenAPI operation'). That is not a product result. The real createExport refusal was re-tested in my new probe zz-cs-r5-sens-beyond-sweep.test.ts part D (log 43): registers(benefits) as TL gives 403 export.includes_restricted_records; the admitted TL's benefits snapshot export as TL also gives 403. zz-cs-r4-sens-sweep.test.ts (log 42): 1/1 pass, exit 0 (round 4: failed on getTraceability and the live register). (2) Fix-reverting mutant (mutants.sh be-z5, log 50): the BE-Z5 diff of the 12 API source files was reverse-applied in w2. The two round-4 repros plus the candidate's sensitive-reach-derived.test.ts then fail: exit 1, 7 failed, 2 passed, 5 skipped. The clone was restored (0 changed paths) and its candidate ID recomputed, sha256:832e5c82...14988. (3) I read the finding in findings.json and in my round-4 sidecar. Every view it names (traceability graph and trace links, missing links, G6 readiness and its frozen text, live and stored register reports, impact preview) is fixed and tested on this candidate. Two OTHER routes still leak the same data class: the Executive Overview and the value.gap drill-down. Neither is named in F-DG6-300, and both sit outside BE-Z5's files. They are raised as new findings F-DG6-360 and F-DG6-361, with the sweep gap that missed them as F-DG6-362. So this closure does not mean REQ-S10-002 is met.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-5/40-repro-r4-sens-title.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/41-repro-r4-sens-title2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/42-repro-r4-sens-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/43-repro-r5-beyond-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/50-mutant-be-z5.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/mutants.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r4-sens-title.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r4-sens-title2.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-cs-r4-sens-sweep.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-301",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 832e5c82 (source d7b21bad). (1) The round-4 scan, copied verbatim (45-field-error-codes-scan.py, output 45-field-error-codes-scan.txt), now finds 21 field-error codes inside problems.validation([...]) and 0 without a problems.<key> text (round 4: 3). By reading the catalogues: validation__commit_on_behalf_of, validation__credential_refs and validation__unknown_version each have an English text and a different Arabic text in apps/web/src/i18n/{en,ar}/problems.json, and so do kpi__stale and operations__heartbeat_missed (F-DG6-320). (2) problems-all.test.ts now collects the codes inside problems.validation( ... ) (apiFieldErrorCodes, a bracket-aware argument scan) and asserts that fieldErrorMessage shows each code's own text, not the generic one, in en and ar. It also resolves every operational-exception errorCode. It passes in unit-web on Node 22 and Node 24 (logs 20 and 21). (3) Fix-reverting mutant (mutants.sh fe-z3, log 51): validation__credential_refs was removed from the en and ar catalogues in w2. problems-all.test.ts then fails, 2 failed and 8 passed: 'has an en and an ar text for every code' and 'shows each field-error code's own text, not the generic one (F-DG6-301)'. After the restore it passes 10/10, and the clone's candidate ID is unchanged.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-5/45-field-error-codes-scan.py",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/45-field-error-codes-scan.txt",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/51-mutant-fe-z3.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-5/mutants.sh",
+        "apps/web/src/i18n/problems-all.test.ts",
+        "apps/web/src/i18n/en/problems.json",
+        "apps/web/src/i18n/ar/problems.json"
+      ]
+    }
+  ]
+}
