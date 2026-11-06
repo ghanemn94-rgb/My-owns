@@ -308,3 +308,29 @@ Requirement rows: REQ-S13-006 ("a system SUM total remains a formula"), REQ-S13-
 - Requirement rows: REQ-S13-006 and REQ-S13-008. Tests: `registers-report.test.ts` and `table-totals-demo.test.ts`, which pass unchanged.
 
 Nothing here approves anything. Product gates G1–G6 are business approvals inside the product, and nothing here touches the engineering gates DG0–DG7. Demo content is synthetic and illustrative, not Mobily performance.
+
+## Amendment (2026-11-06, T-DG6-ARCH-15; T-DG6-BE-Z7B; F-DG6-340): the read-time section member `includesRestrictedRecords` (additive, optional)
+
+**Contract change (OpenAPI 1.5.0-p6, additive).** Every section of `ReportDocument` (§3, "Content") may carry one more optional member: `includesRestrictedRecords` (boolean).
+- **Zod mirror:** `packages/shared/src/schemas/report.ts` `sectionBase`, so it applies to the table, list, fields, metrics and text kinds.
+- **OpenAPI:** the section items are open `type: object`, so the member is documented in the `ReportDocument.sections` description of `docs/api/openapi.yaml`. Typed section schemas there would be a separate contract task (T-DG6-BE-Z7B §5).
+- **Origin:** T-DG6-BE-Z7B (F-DG6-340). It closes the contract need of T-DG6-BE-Z5 §6. The rule is ADR-0051 §2 and D-195 Q3.
+
+**Rule.**
+- **Where it applies.** `documentForReader` (`apps/api/src/modules/reporting/reports/restricted.ts`) sets the member per reader as a document leaves the API. That covers the live report of every definition and every snapshot response: GET, and the generate, issue, discard and reissue bodies.
+- **Absent** when the section references no marked-sensitive record through a row, an item or a source.
+- **`true`** when the reader is not admitted to at least one of them. The section's restricted rows, items and sources are omitted, and its table totals and metrics are unchanged.
+- **`false`** when the reader is admitted to all of them.
+- **How it is decided.** The flag is decided on the section as assembled, before anything is omitted.
+- **On screen.** The live report, snapshot and presentation pages (`ReportDocumentView` `SectionView`) show "Includes restricted records" / "يشمل سجلات مقيدة" (`access.includesRestrictedRecords`, Arabic provisional) under the section title.
+
+**What does not change.**
+- **Never stored.** The member is read-time only, and the assemblers never set it.
+- **Snapshots.** Stored content, `content_sha256` and `content_schema_version` (1) are unchanged. The test re-hashes the stored row.
+- **No sensitive reference.** A document that references no sensitive record is returned as the same object, byte-identical to DG5.
+- **Totals.** Table totals and declared totals (O3, O6) are the same for every reader (D-195 Q3).
+- **Exports.** An export that would include a record the caller is not admitted to is still refused with 403 `export.includes_restricted_records` (D-199; ADR-0051 §2).
+
+**Why it is not breaking.** The member is optional and absent until a record is marked sensitive, and nothing stored changes. No DG5 reopen is needed.
+
+This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result. Demo content is synthetic.

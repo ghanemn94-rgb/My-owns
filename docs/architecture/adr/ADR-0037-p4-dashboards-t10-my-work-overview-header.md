@@ -711,3 +711,25 @@ The KPI's label is free text entered by the organization and is shown as entered
 - **Send the unit kind in `unit` and drop the label.** Rejected: D-124 item 3 keeps the label, and the dashboards would lose '% of users'.
 - **Give the value gap a unit of its own (for example `percent_fraction`) and leave KPI values on `unit`.** Rejected: it fixes the ratio collision (item 2) but not a labelled percentage (a label still hides the kind), and it changes a unit every reader of the gap already handles.
 - **Two flat members (`unitKind`, `unitLabel`).** Rejected for one nullable object: a single member is non-null exactly when the value is KPI-derived, so the classification cannot be half-set.
+
+## Amendment (2026-11-06, T-DG6-ARCH-15; T-DG6-BE-Z7B; F-DG6-360): `ExecutiveOverview.includesRestrictedRecords` (additive, optional)
+
+**Contract change (OpenAPI 1.5.0-p6, additive).** `ExecutiveOverview` (§2, §8; `getExecutiveOverview`) gains one optional member:
+- **Member:** `includesRestrictedRecords` (boolean). It is in `docs/api/openapi.yaml` `components.schemas.ExecutiveOverview` and in the zod mirror `packages/shared/src/schemas/dashboards.ts` `executiveOverview`.
+- **Origin:** T-DG6-BE-Z7 and T-DG6-BE-Z7B (F-DG6-360). The sensitive-record rule is ADR-0051 §2 and D-195 Q3.
+
+It follows the same rule as the member that `TransformationDashboard`, `WorkstreamDashboard`, `FinanceDashboard` and `DashboardDrilldown` already carry (T-DG6-BE-B2; ADR-0051 §2):
+- **Absent** when no benefit or business case of the overview's facts is marked sensitive. The response is then byte-identical to DG4/DG5.
+- **`true`** when the reader is not admitted to at least one of them, or when the shared rule removed an area item (`restrictedFieldAfter`).
+- **`false`** when the reader is admitted to all of them.
+
+The screen shows the label "Includes restricted records" / "يشمل سجلات مقيدة" (`access.includesRestrictedRecords`, Arabic provisional) on the Executive Overview page.
+
+**What does not change.**
+- §8 is unchanged.
+- The figures are the same for every reader: the six areas' headlines and RAG statuses and the `transformations[]` rows. Only `areas[].items` loses the items that are, or are part of, a restricted record (`withoutRestrictedItems`). A reader who is not admitted gets the same figures, compared without `items` and `generatedAt` (`apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts`).
+- The §5 drill-down rule, zero vs Unknown vs n/a, and the §6 scope rule are unchanged. A restricted record never turns a figure into 0 or Unknown.
+
+**Why it is not breaking.** The member is optional and absent until a record is marked sensitive. No existing member, enum or status changes. No DG4 reopen is needed (D-195 Q3).
+
+The drill-down's handling of restricted items is recorded in ADR-0051 §2, "The drill-down rule" (amendment of 2026-11-06). This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

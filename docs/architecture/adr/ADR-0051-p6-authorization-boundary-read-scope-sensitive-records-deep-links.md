@@ -1,6 +1,6 @@
 # ADR-0051: The P6 authorization boundary: one `ReadScope` derived from the ADR-0006 policy, sensitive records and explicit grants, notification deep links with re-authorization and title redaction, evidence authorization after ownership transfer, and the S02-006 route-inventory sweep
 
-- **Status:** Proposed for P6 (DG6). Author: solution-architect (T-DG6-ARCH-01), 2026-10-26.
+- **Status:** Proposed for P6 (DG6). Author: solution-architect (T-DG6-ARCH-01), 2026-10-26. Amended 2026-11-04 (T-DG6-ARCH-14) and 2026-11-06 (T-DG6-ARCH-15); see the amendments at the end.
 - **Requirements (slice E of `docs/architecture/p6-plan.md`):** REQ-S02-006, REQ-S10-002, REQ-S10-004, REQ-S12-024, REQ-S13-013.
 - **Sources (quoted where a design point has one):**
   - M0090 (§2) "All required controls must work against persisted server-side data. … A navigation shell, static dashboard, clickable mockup or browser-local data store does not meet completion criteria."
@@ -75,7 +75,39 @@ Service principals are admitted only through their declared scope (ADR-0053); a 
 - Record GET of a sensitive record the principal is not admitted to: **404** `not_found` (existence not disclosed; ADR-0006).
 - Lists, search, exports, assistant retrieval: the row is absent (`ReadScope.predicate`).
 - Evidence of a sensitive parent: §4.
-- **Totals and rollups (D-195 Q3, decided by the user):** an aggregate that includes a sensitive record's value is computed exactly as in DG4 (identical for every user; decimal arithmetic unchanged; **no DG4 reopen**). When a reader is not admitted to at least one sensitive record whose value the aggregate includes, the response carries `includesRestrictedRecords: true` and the screen shows the label **"Includes restricted records"** / **"يشمل سجلات مقيدة"** (Arabic provisional, i18n key `access.includesRestrictedRecords`). The record and its individual value are never shown. When the reader is admitted to all of them, or none is sensitive, the field is `false` and no label is shown. Which DG4/DG5 aggregate responses gain the optional field is BE-B2's inventory (p6-work-split §E/F.3) (the benefit totals of `benefits/**` and the dashboard totals of `reporting/dashboards/**` at minimum); each is an additive optional property, recorded by the orchestrator in the contract (an implementer's contract need goes in its handback, p6-plan §5.3). Unknown and n/a stay Unknown and n/a; the label never turns an Unknown into a number.
+- **Totals and rollups (D-195 Q3, decided by the user):** an aggregate that includes a sensitive record's value is computed exactly as in DG4 (identical for every user; decimal arithmetic unchanged; **no DG4 reopen**). When a reader is not admitted to at least one sensitive record whose value the aggregate includes, the response carries `includesRestrictedRecords: true` and the screen shows the label **"Includes restricted records"** / **"يشمل سجلات مقيدة"** (Arabic provisional, i18n key `access.includesRestrictedRecords`). The record and its individual value are never shown. When the reader is admitted to all of them, the field is `false` and no label is shown. When none of them is sensitive, the field is **absent** and the response is unchanged byte for byte (corrected 2026-11-06, T-DG6-ARCH-15: the text said `false`; the shipped code and the contract omit the field, so every DG4/DG5 response stays identical until a record is marked). Which DG4/DG5 aggregate responses gain the optional field is BE-B2's inventory (p6-work-split §E/F.3) (the benefit totals of `benefits/**` and the dashboard totals of `reporting/dashboards/**` at minimum); each is an additive optional property, recorded by the orchestrator in the contract (an implementer's contract need goes in its handback, p6-plan §5.3). The shipped list is in "Which responses carry `includesRestrictedRecords`" below. Unknown and n/a stay Unknown and n/a; the label never turns an Unknown into a number.
+
+**Which responses carry `includesRestrictedRecords` (as shipped; T-DG6-BE-B2, T-DG6-BE-Z7, T-DG6-BE-Z7B; F-DG6-340, F-DG6-360, F-DG6-361; recorded 2026-11-06, T-DG6-ARCH-15).** Each is an optional boolean, additive to the contract:
+
+| Response (OpenAPI schema; operation) | When it is present | Owning ADR of the response |
+|---|---|---|
+| `BenefitTotals` (`getBenefitTotals`) | an included benefit or business case is sensitive | ADR-0030 (benefit totals) |
+| `TransformationDashboard`, `WorkstreamDashboard` | a benefit or business case of the dashboard's facts is sensitive, or an entry was removed (below) | ADR-0037 §2 |
+| `FinanceDashboard` | a benefit or business case of the dashboard's facts is sensitive (it lists no items, so nothing is removed) | ADR-0037 §2, N2 |
+| `ExecutiveOverview` (`getExecutiveOverview`; T-DG6-BE-Z7B) | the same | ADR-0037 §8 (amendment of 2026-11-06) |
+| `DashboardDrilldown` (`getDashboardDrilldown`) | the same | ADR-0037 §5 |
+| every section of `ReportDocument`: live report, snapshot GET and the generate, issue, discard and reissue bodies (T-DG6-BE-Z7B) | the section references a marked-sensitive record through a row, an item or a source | ADR-0045 §3 (amendment of 2026-11-06) |
+
+`AdoptionDashboard` filters its items through the same rule but has no such member. Its items are adoption KPIs, which are never a sensitive record type or a child of one, so no item can be removed today (T-DG6-BE-Z7B §7 item 3). A change that lets an adoption item be restricted must add the member in the same change.
+
+**Totals that are the same for every reader (as shipped).** These are computed from the same facts for every reader, exactly as in DG4/DG5:
+- the headlines and area statuses of every dashboard and of the Executive Overview;
+- the overview's `transformations[]` rows;
+- the drill-down's `value` and `calculation.expression`, `ruleKey` and `rounding`;
+- `BenefitTotals`;
+- the table totals and metrics of every report section.
+
+Only the listed entries differ between readers. The flag is decided from the assembled content, before anything is omitted. It is `true` whenever the reader is not admitted to at least one included sensitive record, **and** whenever the shared rule removed an entry (`restrictedFieldAfter`, `apps/api/src/modules/reporting/dashboards/restricted.ts`). A reader who lost an entry is therefore never told that nothing was restricted (absent or `false`). That covers, for example, a sensitive evidence item of an open benefit. A report section is read-time only: the assemblers never set the member, so stored content and `contentSha256` are unchanged (`apps/api/src/modules/reporting/reports/restricted.ts` `documentForReader`).
+
+**The drill-down rule (as shipped; T-DG6-BE-Z7, T-DG6-BE-Z7B; F-DG6-361).** `getDashboardDrilldown` treats every metric and value class the same way:
+- **What is filtered.** Its `items`, `calculation.inputs` and `evidence` go through `withoutRestrictedRefs`.
+- **The order of the checks.** The first check uses the dashboard facts' own records: a benefit, a business case, a business-case line, and every value line keyed by its table and id (`benefit_measurement` and `benefit_plan_value`). Every remaining reference then goes through the shared `SENSITIVE_CHILD_SOURCES` rule (amendment of 2026-11-04). An unknown item type is never passed by default.
+- **Evidence entries.** An evidence entry is checked both as its line and as its evidence item. It is removed when **any** of its references is restricted.
+- **Pagination.** Items are filtered **before** the offset pagination. A page therefore never counts a hidden item, unlike the list filter of the amendment of 2026-11-04.
+- **A restricted benefit as `subjectId`** is refused with 422 `dashboard.metric_subject_mismatch` at `/subjectId`, the same answer as a subject outside the scope (ADR-0037 §13). Its existence is not disclosed.
+- **Response field.** `includesRestrictedRecords` follows the flag rule above.
+
+The Executive Overview, the transformation, workstream and adoption dashboards filter their area items through the same function (`withoutRestrictedItems`).
 
 **Refusals (exact codes and English texts; i18n en/ar keys under `problems.`):**
 
@@ -208,3 +240,39 @@ None of these entities holds money, a rate or a KPI value. The rollup rule of §
 **Checked against the code.** The integrated `HEAD` `561565123` agrees with this rule. No contradiction with §2 was found.
 
 Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
+
+## Amendment (2026-11-06, T-DG6-ARCH-15): §2, restricted records in the Executive Overview, the drill-down and report sections (sweep after T-DG6-BE-Z7B)
+
+**Why.** T-DG6-BE-Z7B (F-DG6-360, F-DG6-361 High; F-DG6-340, F-DG6-362 Medium) shipped three things that §2 did not enumerate:
+- the restricted-records flag on the Executive Overview and on every report section;
+- totals that are the same for every reader on those surfaces;
+- a drill-down filter that covers every metric.
+
+The round-5 ADR sweep records them here so the ADR states the shipped rule.
+
+**What changed in §2 ("Effect on reads", "Totals and rollups"):**
+- **A correction.** When none of the included records is sensitive, the field is **absent**, not `false`. The earlier text said `false`. The shipped code (`benefits/restricted.ts` `restrictedField`, `reporting/dashboards/restricted.ts`, `reporting/reports/restricted.ts`) and the contract descriptions ("Present when …") omit it. This keeps every DG4/DG5 response byte-identical until a record is marked (probe G04). The text now matches the code. No code changes.
+- **New paragraph "Which responses carry `includesRestrictedRecords`":** the six response schemas plus every `ReportDocument` section, each with its owning ADR. It also records that `AdoptionDashboard` filters but has no member, and why.
+- **New paragraph "Totals that are the same for every reader".** It lists the figures that never differ between readers, and the flag rule: `true` also whenever the shared rule removed an entry (`restrictedFieldAfter`).
+- **New paragraph "The drill-down rule".** It covers:
+  - every metric and value class, and the three lists that are filtered;
+  - the facts' own lines first, then `SENSITIVE_CHILD_SOURCES`;
+  - the evidence entry checked twice;
+  - filtering before pagination;
+  - a restricted `subjectId` refused like an out-of-scope subject.
+
+**Contract.** Two additive optional members, both already in `docs/api/openapi.yaml` (1.5.0-p6) and the zod mirrors by T-DG6-BE-Z7B:
+- `ExecutiveOverview.includesRestrictedRecords` (`packages/shared/src/schemas/dashboards.ts` `executiveOverview`);
+- the read-time section member `includesRestrictedRecords` on every `ReportDocument` section (`packages/shared/src/schemas/report.ts` `sectionBase`). In OpenAPI it is documented in the `ReportDocument.sections` description, because the section items are open `type: object`.
+
+They are recorded in the ADRs that own those responses: ADR-0037 (amendment of 2026-11-06) and ADR-0045 (amendment of 2026-11-06). Neither is a breaking change, and no gate needs reopening.
+
+**Checked against the code** at the integrated `HEAD` `a600bf63b` by the solution-architect. The code agrees with the text above, with no contradiction found. The code checked:
+- `apps/api/src/modules/reporting/executive-overview.ts`;
+- `reporting/dashboards/restricted.ts`, `drilldown.ts`, `transformation.ts`, `workstream.ts`, `adoption.ts` and `finance.ts`;
+- `reporting/reports/restricted.ts`;
+- `access/sensitive-reach.ts` (`recordRefSensitivity`).
+
+The latent adoption limit is stated in §2 and is not a defect today.
+
+Nothing else in this ADR changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

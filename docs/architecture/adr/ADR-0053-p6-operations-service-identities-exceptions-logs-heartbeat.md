@@ -1,6 +1,6 @@
 # ADR-0053: P6 operations: a constrained service identity for every job and connector, operational exceptions linked to stale KPIs, the catalogue triggers, structured logs and the redaction list, the post-suite log scan, the worker heartbeat and error alerts, and Administration > Operations
 
-- **Status:** Proposed for P6 (DG6). Author: solution-architect (T-DG6-ARCH-02), 2026-10-26.
+- **Status:** Proposed for P6 (DG6). Author: solution-architect (T-DG6-ARCH-02), 2026-10-26. Amended 2026-11-04 (T-DG6-ARCH-14) and 2026-11-06 (T-DG6-ARCH-15); see the amendments at the end.
 - **Requirements (slice J of `docs/architecture/p6-plan.md`):** REQ-S12-019, REQ-S16-029.
 - **Sources (quoted where a design point has one):**
   - M0239 (§12, starter table) "Connector/job fails or data becomes stale | Create a visible operational exception; retain last known values with freshness labels".
@@ -68,6 +68,30 @@
 
 **One per source and failure class (dedup):** at most one ACTIVE (`open` or `acknowledged`) row per `(organization_id, dedup_key)`: partial unique index `operational_exception_one_active_key` with `NULLS NOT DISTINCT`, so platform rows are unique too (probe OE02). The raising code takes lock **730305** on `<organizationId or 'platform'>:<dedup key>`, then updates the active row (recurrence) or inserts a new one, in the same transaction as the failure it reports, with one audit event (`operational_exception.opened` or `operational_exception.recurred`, actor `service`). After resolution, a new failure opens a new row (OE16). A replay of the same failed job (same `processed_message` key) creates nothing new (the kit's ledger).
 
+**How a recurrence moves `last_occurred_at` (as shipped 2026-11-06, T-DG6-BE-Z8; F-DG6-380; amended T-DG6-ARCH-15).** Both raisers (`raiseOperationalException` in `apps/api/src/modules/operations/exceptions.ts` and its worker twin `raiseOperationalExceptionTwin` in `apps/worker/src/kit.ts`) write the recurrence as `last_occurred_at = greatest(now(), operational_exception.last_occurred_at)`. That is computed in SQL from the stored column. The stored value is never read into the application and written back.
+- **Why SQL.** A JavaScript `Date` keeps milliseconds and the column keeps microseconds. A recurrence whose transaction started before a concurrent one committed has an older `now()`. Its `greatest()` used to return the truncated copy, which is earlier than the stored value, so the `operational_exception_occurrence_step` guard rejected it. `captureJobFailure` writes the exception in the same transaction as the job's `operational_failure` row and its `job.failed` outbox row, so all three were lost.
+- **Why the stored column is the current one.** The `UPDATE` runs under lock 730305 (`<organizationId or 'platform'>:<dedup key>`) and after the `FOR UPDATE` read of the active row, in a READ COMMITTED transaction. Concurrent raises of one exception are serialized, and the column the `SET` reads is the latest committed value. The count still steps by exactly 1, guarded by `WHERE version = <the locked version>`.
+- **Effect.** Every concurrent failure on one source is captured exactly once, whatever the commit order: one `operational_failure` row and one `job.failed` event per job, and one recurrence per job on the one active exception. `last_occurred_at` never moves backwards.
+- **Unchanged.** The 0101 guard, the one-active index, the job-exception ledger and the outbox idempotency keys are unchanged. There is no migration and no retry loop. A real backwards move or a double count still raises `check_violation`.
+- **Test.** `apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts` (bursts of 4 and 8 concurrent `captureJobFailure` calls on one queue; a deterministic interleaving for the API raise and for the worker twin; microsecond precision kept).
+
+**Optimistic concurrency of acknowledge and resolve (as shipped 2026-11-05, T-DG6-BE-Z6; D-213; F-DG6-341; amended T-DG6-ARCH-15).** A recurrence is a system update: it steps `version` by 1, with its audit event and its `operational_exception_event` row (ADR-0003, the 0010 guards, the 0101 history keyed by `record_version`). An administrator who loaded the exception before a recurrence would therefore get a 409 under the strict rule, although the state they acted on had not changed. So `acknowledgeOperationalException` and `resolveOperationalException` use `rebaseOverSystemOccurrences` (`apps/api/src/modules/operations/exceptions.ts`) instead of the strict "If-Match equals the current version" check:
+- **Order under the row lock.** The row is read `FOR UPDATE`. Authorization is re-checked at commit first (404, or 403), so a refused caller learns nothing from the version rule. Then the version rule runs. Then the state-machine refusals (`operations.exception_resolved`, `operations.exception_not_open`) run, on the current row.
+- **Equal version:** the action proceeds as before.
+- **A version that is not an integer, is below 1 or is above the row's version:** 409 `version_conflict` (the ADR-0007 §5b shared problem, with `currentVersion`).
+- **A version that is behind the row:** accepted **only if** every `operational_exception_event` with `<loaded version> < record_version <= <current version>` exists (no gap) and is `event_kind = 'recurred'` with `actor_user_id IS NULL`. So a version that is behind only by system recurrences is accepted.
+- **Anything else in between is 409** `version_conflict`: a human `acknowledged` or `resolved` event, an automatic `recovered` resolution (`resolved` with no user) or an `updated` event. **A conflict between two humans therefore still returns 409**, also when it is mixed with recurrences in either order.
+- **A missing If-Match** is still 428.
+- **Why it is safe.** A recurrence changes only the occurrence fields: `occurrence_count`, `last_occurred_at`, `last_error_code`, `last_error_message` and `operational_failure_id`. It never changes `status`, the acknowledgement or the resolution. The 0101 history trigger classifies an update as `recurred` only when the status did not change. The state the human acted on is still the state being changed.
+- **The audit event** (`operational_exception.acknowledged` or `operational_exception.resolved`) records the true `prior_version` (the locked row's version) and `new_version`. When the action was rebased, it also records the base version as `changes.based_on_version = { from: <the If-Match version the human loaded>, to: <the version the action was applied to> }`. The key is absent when the If-Match matched exactly.
+- **Consequences.**
+  - An acknowledgement covers the occurrences that arrived after the page was loaded.
+  - A resolution after a recurrence closes the row with the folded occurrences still counted on it (`occurrence_count`).
+  - `resolved` stays final. The next failure of the source opens a new exception (the one-active index; OE16).
+- **Every raiser is covered**, because the rule is where the human acts, not in the raisers. The API heartbeat watch, the worker job-failure hook (including the automation queues and starter 16), the connector consumer and the `data_stale` raisers all recur through `raiseOperationalException` or its twin, and each writes `recurred` with no user. The worker has no acknowledge or resolve path.
+- **Not changed:** no table, trigger, guard or grant (no migration), and no schema, response or problem code. The contract states the rule in the two operation summaries of `docs/api/openapi.yaml`. The shared optimistic-concurrency rule (ADR-0003, ADR-0007 §5b) is unchanged for every other record. This is a stated exception for these two operations only.
+- **Tests.** `apps/api/test/integration/operations/exception-recurrence-race.test.ts` (accepted after the heartbeat watch, the job hook, the connector twin and the `data_stale` service; 409 with nothing written for human vs human, a human change mixed with recurrences in either order, an automatic recovery after the load and a version ahead of the row), `apps/web/src/pages/admin/operations/exception-conflict.test.tsx` and `e2e/a22-p6-operability.spec.ts` (the recurrence forced between the page load and the acknowledgement).
+
 **Automatic recovery:** when a job queue, connector or KPI that has an active exception succeeds (a job completes, a connector run succeeds, the KPI's freshness is `fresh` again), the same code resolves the exception with `resolution = 'recovered'`.
 
 **Last known values and freshness labels (M0239 "retain last known values with freshness labels").** No KPI value is written, cleared or zeroed by this slice. The KPI panel keeps DG4's `actual` and `freshness` exactly (ADR-0028). An exception links the KPIs whose data it concerns (`data_stale`: that KPI; connector classes: the KPIs the connector's mappings feed, ADR-0055). For connector classes the API computes the links when the run fails and carries them on the event (`connector.run_failed` `kpiLinks`, ADR-0055 §2; T-DG6-BE-X2). The consumer only inserts them (`operational_exception_kpi`, unique per exception and KPI), and its job identity `job:integrations.connector_exception` stays `declared = granted = {}` (`0116`). `getOperationalException` shows each linked KPI the caller can read with its DG4 `freshness`, last value (decimal string or null = Unknown) and `dataAsOf`; unreadable ones only increase `hiddenKpiCount`. **Acceptance fixture (QA-A/QA-E, A17/A22):** a KPI whose last accepted actual is older than its `staleAfterDays`, fed by the failing test connector: the run fails → exactly one exception (`connector_run_failed`) linked to the KPI, and the KPI shows Stale with its last value and date. An active connector exception does **not** force `stale` on a KPI whose actual is still within `staleAfterDays`: the DG4 freshness rule is unchanged (D-197 item 3).
@@ -94,7 +118,7 @@
 | job error | `service_identity.out_of_scope` | "The job tried to read a record outside its service identity's scope." | "حاولت المهمة قراءة سجل خارج نطاق هوية الخدمة الخاصة بها." |
 | job error | `service_identity.missing` | "The job has no service identity, so it did not run." | "لا توجد هوية خدمة للمهمة، لذلك لم تُشغَّل." |
 
-404 (`not_found`), 409 version conflict and 428 precondition required are the ADR-0007 §5b shared problems. An exception outside the caller's scope answers 404.
+404 (`not_found`), 409 version conflict and 428 precondition required are the ADR-0007 §5b shared problems. An exception outside the caller's scope answers 404. For acknowledge and resolve, an If-Match version that is behind only by system recurrences is not a conflict ("Optimistic concurrency of acknowledge and resolve" above).
 
 ### 3. Catalogue triggers (p6-plan §3 row 8; additive)
 
@@ -147,7 +171,7 @@ FE-B, `pages/admin/operations/**` and `pages/admin/service-identities/**`: the e
 
 - **Scope:** an organization-scope holder sees the organization's exceptions and the platform ones. A transformation-scope holder (for example a KDS assigned to one transformation) sees only exceptions linked to a KPI of a transformation in scope. The check is re-run at commit time on every mutation.
 - **SoD:** no code is `business_approval` or `finance_validation` (probe PM04, PM03); a technical admin gains no business approval (REQ-S10-003). A service identity never holds `configure`, `business_approval` or `finance_validation` (invariant 1).
-- **Every mutation:** authorization re-checked at commit, validation, `If-Match` (409/428), one audit event (`operational_exception.acknowledged`, `operational_exception.resolved`, `service_identity.grant_changed`), no remote I/O in the transaction, a test for each.
+- **Every mutation:** authorization re-checked at commit, validation, `If-Match` (409/428), one audit event (`operational_exception.acknowledged`, `operational_exception.resolved`, `service_identity.grant_changed`), no remote I/O in the transaction, a test for each. **Acknowledge and resolve** accept an If-Match version that is behind only by system recurrences, and then record `changes.based_on_version` in their audit event. A conflict between two humans is still 409 (§2, "Optimistic concurrency of acknowledge and resolve"; T-DG6-BE-Z6). `putServiceIdentity` keeps the strict rule.
 
 ### 10. Decimal and Unknown semantics
 
@@ -185,3 +209,27 @@ No entity here holds money, a rate or FTE. `occurrence_count`, `beat_count` and 
   - `fresh` again resolves the exception `recovered`.
   - The DG4 freshness rule (ADR-0028) and the job identity's scope are unchanged.
 - **Decided, not open:** the question that the replaced bullet left "for the BE-K2 owner and the orchestrator" is closed by the code and its tests named in §2. Nothing else in this ADR changes. This is an engineering design record: it grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
+
+## Amendment (2026-11-06, T-DG6-ARCH-15; F-DG6-341, F-DG6-380): §2 and §9, the acknowledge and resolve version rule and the recurrence timestamp, recorded as shipped
+
+- **Why.** F-DG6-341 (Low, domain-reviewer, DG6 round 5): §2 and §9 stated a strict If-Match rule for acknowledge and resolve. T-DG6-BE-Z6 (D-213) shipped a rule that accepts a version behind only by system recurrences, and the ADR did not record it, nor the `based_on_version` audit field. T-DG6-BE-Z8 (F-DG6-380) then changed how a recurrence writes `last_occurred_at`. This amendment records both.
+- **What changed in this ADR.**
+  - §2 gains two paragraphs after "One per source and failure class (dedup)":
+    - "How a recurrence moves `last_occurred_at`": `greatest(now(), <stored column>)` in SQL, serialized by lock 730305 and `FOR UPDATE`, so every concurrent failure is captured once (T-DG6-BE-Z8).
+    - "Optimistic concurrency of acknowledge and resolve": `rebaseOverSystemOccurrences`, with these rules (T-DG6-BE-Z6):
+      - a version behind only by system recurrences is accepted;
+      - a conflict between two humans, an automatic recovery, an `updated` event or a version ahead of the row is still 409;
+      - a missing If-Match is still 428;
+      - the audit event records the prior, new and base versions (`prior_version`, `new_version`, `changes.based_on_version`).
+  - §2 "Refusal codes": the sentence after the table points to that rule.
+  - §9 "Every mutation": the same pointer. `putServiceIdentity` keeps the strict rule.
+  - The status line names this amendment.
+- **Checked against the code** at the integrated `HEAD` `a600bf63b` by the solution-architect:
+  - `rebaseOverSystemOccurrences`, `basedOn`, `acknowledgeException` and `resolveException` in `apps/api/src/modules/operations/exceptions.ts`. Authorization is re-checked before the version rule, and the state-machine refusals run after it.
+  - The recurrence `SET` in `raiseOperationalException` (same file) and in `raiseOperationalExceptionTwin` (`apps/worker/src/kit.ts`). Both run after `lockException` and the `FOR UPDATE` read.
+  - The strict check in `apps/api/src/modules/access/service-identities.ts`.
+  - The code agrees with the text. No contradiction was found.
+- **Contract.** No change in this amendment. The rule is already stated in the `acknowledgeOperationalException` and `resolveOperationalException` summaries of `docs/api/openapi.yaml` (T-DG6-BE-Z6). Schemas, responses and problem codes are unchanged, and the 409 is still the shared `VersionConflict`.
+- **Unchanged:** the state machine, the one-active index, lock 730305, the 0101 guards and history, the permissions of §9 and every refusal code. No migration.
+
+This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result. Acknowledging an operational exception approves nothing.
