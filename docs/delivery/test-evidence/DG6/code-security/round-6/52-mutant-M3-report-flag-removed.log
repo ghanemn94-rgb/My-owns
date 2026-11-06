@@ -1,0 +1,66 @@
+# 52-mutant-M3-report-flag-removed  started 2026-11-06T07:33:52Z  node=v22.22.0  load=19.45 19.94 15.63  commit=031945d8761a253665c6b794e6c8d2efbacdfe65
+## mutation (git diff of w3):
+ apps/api/src/modules/reporting/reports/restricted.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/reporting/reports/restricted.ts b/apps/api/src/modules/reporting/reports/restricted.ts
+index e2773483e..f31433fc4 100644
+--- a/apps/api/src/modules/reporting/reports/restricted.ts
++++ b/apps/api/src/modules/reporting/reports/restricted.ts
+@@ -75,7 +75,7 @@ export async function documentForReader(
+     // Decided on the section as assembled (before anything is omitted): the totals and metrics include those values.
+     const keys = sectionRefs(s).map(reachKey);
+     const flag = keys.some((k) => sensitive.has(k))
+-      ? { includesRestrictedRecords: keys.some((k) => restricted.has(k)) }
++      ? {}
+       : {};
+     switch (s.kind) {
+       case "table":
+$ vt apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts
+port-policy: PostgreSQL listening on port 30270 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.FzHUHR/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4nru9d_7972f44f (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts (8 tests | 2 failed) 27498ms
+   ✓ F-DG6-360: the Executive Overview > TL and AUD: no item of the sensitive benefit, the same figures as the TO, includesRestrictedRecords true; the TO sees it (false)  1073ms
+   ✓ F-DG6-361: every drill-down metric and value class > TL and AUD: no item, input or evidence entry of the benefit or its lines; the same value; flagged when something was omitted  13951ms
+   ✓ F-DG6-361: every drill-down metric and value class > the value.gap drill-down of the benefit's class lists its lines to the TO (false) and none to TL or AUD (true) 78ms
+   ✓ F-DG6-361: the Finance, adoption, transformation and workstream dashboards > TL and AUD: no mention of the benefit, the same figures as the TO, labelled; the TO sees it on the transformation and workstream dashboards  378ms
+   × F-DG6-340: report totals that include a restricted value > live benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 91ms
+     → TO register: expected undefined to be false // Object.is equality
+   × F-DG6-340: report totals that include a restricted value > snapshot benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 17ms
+     → TO register: expected undefined to be false // Object.is equality
+   ✓ F-DG6-340: report totals that include a restricted value > a register with no sensitive record (kpis) carries no member; the stored content never holds it and its hash is unchanged 60ms
+   ✓ F-DG6-340: report totals that include a restricted value > benefit-totals: the same totals for TL and TO, flagged true for TL and false for the TO (unchanged BE-B2 behaviour) 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-340: report totals that include a restricted value > live benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-340: report totals that include a restricted value > snapshot benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false
+AssertionError: TO register: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:329:89
+    327|       );
+    328|       expect(withRow.length, "the TO sees the benefit's row").toBeGrea…
+    329|       for (const sec of withRow) expect(sec.includesRestrictedRecords,…
+       |                                                                                         ^
+    330|       expect(flagged(admitted)).toEqual([]);
+    331|       for (const [who, s] of NOT_ADMITTED()) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  07:33:59
+   Duration  63.47s (transform 11.16s, setup 0ms, collect 25.62s, tests 27.50s, environment 0ms, prepare 112ms)
+
+exit=1  finished 2026-11-06T07:35:08Z
+restored: 0 changed paths

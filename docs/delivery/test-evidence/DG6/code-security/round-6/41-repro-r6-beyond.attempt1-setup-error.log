@@ -1,0 +1,71 @@
+# 41-repro-r6-beyond  started 2026-11-06T07:15:30Z  cwd=/var/tmp/mth-run.FzHUHR/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=16.35 12.23 6.96  commit=031945d8761a253665c6b794e6c8d2efbacdfe65
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r6-beyond.test.ts
+port-policy: PostgreSQL listening on port 30265 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.FzHUHR/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4n469p_18617981 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] BC BC-02 01995000-4305-7000-8000-000000000002 lines=2
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] mark business_case 01995000-4305-7000-8000-000000000002: 200 {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"business_case","recordId":"01995000-4305-7000-8000-000000000002","isSensitive":true,"reason":"Synthetic commercially sensitive 
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] benefits with validated measurements: B03/margin_uplift, B01/revenue_uplift
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] B2 B03 01995000-4401-7000-8000-000000000003 class=margin_uplift lines=4; B3 B01 class=revenue_uplift
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] mark benefit 01995000-4401-7000-8000-000000000003: 200 {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000003","isSensitive":true,"reason":"Synthetic commercially sensitive record
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] create evidence: 201 {"id":"01a1afb7-2893-710e-99c2-c978cde821c8","organizationId":"01995000-0000-7000-8000-000000000002","transformationId":"01995000-0000-7000-8000-000000000001","kind":"note","title":"Synthetic CONFIDEN
+
+ ❯ |integration| tests/qa/integration/zz-cs-r6-beyond.test.ts (5 tests | 5 skipped) 10485ms
+   ↓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > control: TL and AUD get 404 on BC and B2, TO gets 200
+   ↓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+   ↓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > B: every drill-down metric, class and currency, every page (limit=2)
+   ↓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+   ↓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's validated line
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r6-beyond.test.ts [ tests/qa/integration/zz-cs-r6-beyond.test.ts ]
+error: benefit_evidence: evidence is linked to a draft or submitted measurement of the same benefit
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ InsertQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/insert-query-builder.js:1106:24
+ ❯ tests/qa/integration/zz-cs-r6-beyond.test.ts:177:5
+    175|   await api.db.transaction().execute(async (tx) => {
+    176|     const id = randomUUID();
+    177|     await tx
+       |     ^
+    178|       .insertInto("benefit_evidence")
+    179|       .values({ id, organization_id: ORG, transformation_id: T, benefi…
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ InsertQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/insert-query-builder.js:1106:24
+ ❯ tests/qa/integration/zz-cs-r6-beyond.test.ts:177:5
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 skipped (5)
+   Start at  07:15:35
+   Duration  44.02s (transform 11.15s, setup 0ms, collect 26.63s, tests 10.49s, environment 0ms, prepare 243ms)
+
+exit=1  finished 2026-11-06T07:16:24Z  load=17.76 13.21 7.57

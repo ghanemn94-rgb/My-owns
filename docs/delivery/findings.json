@@ -15628,14 +15628,41 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-5/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-05T22:40:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 5 by domain-reviewer, judging BE-Z5's residual 'report totals kept as truthful verdicts' (D-214). Keeping the total is correct under D-195 Q3. The missing label is the defect. Medium (D-192: repair before the gate). It is not mandatory: the aggregate is the one the user decided every reader sees, but the label the user decided is missing. Suggested repair, for the architect and orchestrator: an additive optional includesRestrictedRecords on the report document or on the table section and metric (the ADR-0051 §2 pattern), set by documentForReader whenever it omits a row or source whose value a total or metric includes; the report and snapshot screens render RestrictedRecordsLabel next to those totals (en/ar); stored content and contentSha256 unchanged (read-time flag); exports refused as today; a negative test (TL, AUD) and a positive one (TO: false)."
+        },
+        {
+          "at": "2026-11-06T07:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 6: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R6-domain-reviewer-20261106T070305Z-14b4606f",
+          "session_id": "14b4606f-caa6-4f06-87f5-736ee27febff"
+        },
+        "at": "2026-11-06T07:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-6/r5repro.log",
+          "docs/delivery/test-evidence/DG6/domain/round-6/probe1.log",
+          "docs/delivery/test-evidence/DG6/domain/round-6/probe2.log",
+          "docs/delivery/test-evidence/DG6/domain/round-6/mutant340.log",
+          "docs/delivery/test-evidence/DG6/domain/round-6/e2e-screens-run2.log",
+          "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-tl-register-snapshot.png",
+          "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/ar/dom-r6-tl-register-snapshot.png",
+          "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-to-register-snapshot.png",
+          "apps/api/src/modules/reporting/reports/restricted.ts"
+        ],
+        "note": "Verified on candidate 0fea8adf (source 031945d87), disposable clone, PostgreSQL 16.15, Node 24.21.0, SYNTHETIC data. (1) The round-5 reproduction (my probe dom-r5-sensitive-escalation.test.ts, unchanged, part 4) passes 4/4. TL's totals_sar_revenue_uplift section still has only B02's row with totals realized_validated 250000 (the same as the TO's, D-195 Q3), and the section now carries includesRestrictedRecords (r5repro.log). (2) My round-6 probe (probe1/probe2) reads the live benefits register as TL and TO. TL gets register: true and totals_sar_revenue_uplift: true, the TO false/false, with the same figures; the other sections carry no member. The BE-Z7B test sensitive-reach-dashboards-reports.test.ts passes 8/8 (probe1.log), including the snapshot case and the unchanged contentSha256. (3) Mutant: with apps/api/src/modules/reporting/reports/restricted.ts reverted to d7b21bad3, the two F-DG6-340 tests (live and snapshot) fail and the other six pass (mutant340.log, exit 1). The source was restored afterwards. (4) UI, production-initialized stack, en and ar (e2e-screens-run2.log): TL's benefits register snapshot shows 'Includes restricted records' / 'يشمل سجلات مقيدة' under the register title and under the Revenue uplift totals section. The TO's snapshot shows no label and does show the title. The finding's reproduced scope is closed. The metrics sections that its actual named by code reading are still unlabelled. I raise that as the new finding F-DG6-400 (Medium), with its own runtime reproduction, rather than keep this finding open for a different mechanism."
+      }
     },
     {
       "id": "F-DG6-341",
@@ -15656,14 +15683,35 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-5/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-05T22:40:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 5 by domain-reviewer, judging BE-Z6 (D-214). Low, documentation only, not blocking. Suggested repair: a dated ADR-0053 §2 amendment recording rebaseOverSystemOccurrences (accepted only when every intervening history event is `recurred` with no user; anything else 409), the `based_on_version` audit field, and the resolve-after-recurrence consequence (the folded occurrence stays counted on the resolved row; the next failure opens a new exception)."
+        },
+        {
+          "at": "2026-11-06T07:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 6: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R6-domain-reviewer-20261106T070305Z-14b4606f",
+          "session_id": "14b4606f-caa6-4f06-87f5-736ee27febff"
+        },
+        "at": "2026-11-06T07:55:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/architecture/adr/ADR-0053-p6-operations-service-identities-exceptions-logs-heartbeat.md",
+          "apps/api/src/modules/operations/exceptions.ts",
+          "docs/delivery/test-evidence/DG6/domain/round-6/bez8.log"
+        ],
+        "note": "Verified on candidate 0fea8adf by reading ADR-0053 against the code. ADR-0053 §2 now has a dated T-DG6-ARCH-15 paragraph, 'Optimistic concurrency of acknowledge and resolve'. §2 'Refusal codes' and §9 'Every mutation' point to it, and putServiceIdentity keeps the strict rule. Each stated rule matches apps/api/src/modules/operations/exceptions.ts. rebaseOverSystemOccurrences returns null on an equal version. It gives 409 for a version that is not an integer, below 1 or ahead of the row. It accepts a version behind the row only when there are exactly (current - loaded) events in (loaded, current] and each is 'recurred' with actor_user_id null; anything else is 409. basedOn writes changes.based_on_version {from, to}. In acknowledgeException, recheckAtCommit runs before the version rule and the state refusals run after it. The behaviour itself is tested by exception-recurrence-race.test.ts, which passes 7/7 (bez8.log). This is a documentation finding, so a revert mutant does not apply."
+      }
     },
     {
       "id": "F-DG6-360",
@@ -15690,14 +15738,40 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-05T20:50:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 5 while testing the BE-Z5 residuals adversarially (D-214). Suggested repair: apply dashboardRestriction(tx, principal, ctx.facts) and withoutRestrictedItems to the overview's areas, and add restriction.field to the response if the contract allows it (ExecutiveOverview schema). Add a test that reads the overview as a reader who is not admitted."
+        },
+        {
+          "at": "2026-11-06T08:56:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 6: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R6-code-security-reviewer-20261106T070305Z-be3eda56",
+          "session_id": "be3eda56-e3dd-47b2-af51-84275b0bb84a"
+        },
+        "at": "2026-11-06T08:56:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-6/40-repro-r5-overview-drill.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/41-repro-r6-beyond.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/50-mutant-M1-overview-unrestricted.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/54-control-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r5-overview-drill.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r6-beyond.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/mutants.sh",
+          "apps/api/src/modules/reporting/executive-overview.ts"
+        ],
+        "note": "Re-run on candidate sha256:0fea8adf (source 031945d8), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0. (1) The round-5 reproduction, unchanged (zz-cs-r5-overview-drill.test.ts, log 40): for TL and AUD (both 404 on the benefit), GET /api/v1/overview?organizationId=<org> and ...&transformationId=<t> answer 200 with includesRestrictedRecords true and no object naming the benefit, its plan lines or its title; 3/3 pass, where round 5 failed. (2) Wider (zz-cs-r6-beyond.test.ts part A, log 41): with a sensitive business case BC-02 and a second sensitive benefit B03 (margin_uplift), the overview (org; org+t), the Finance dashboard (org; org+t), the adoption dashboard and the transformation dashboard answer TL and AUD 200 with the same figures as the admitted TO (every member except the items, generatedAt and the flag compared), no mention of BC-02, its lines, B03, its lines or the sensitive evidence item, and includesRestrictedRecords true (adoption has no member, as ADR-0051 §2 as amended records). (3) Mutant M1 (log 50): executive-overview.ts reverted to the round-5 source. The candidate's sweep reports the leak for TL, AUD and AUD(org), and the BE-Z7B test 'F-DG6-360: the Executive Overview' fails: 2 failed, 8 passed, exit 1. File restored (0 changed paths). (4) The unmutated control (log 54): sweep and BE-Z7B test 10/10 pass. Code read: executive-overview.ts:58-79 applies dashboardRestriction, withoutRestrictedItems and restrictedFieldAfter, exactly as the transformation and workstream dashboards do."
+      }
     },
     {
       "id": "F-DG6-361",
@@ -15720,14 +15794,39 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-05T20:50:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 5. Suggested repair: hides() maps a benefit_plan_value line to its benefit (as it does for benefit_measurement, from facts.lines) and, more robustly, falls back to the shared SENSITIVE_CHILD_SOURCES rule (benefit_plan_value is already a benefit child there) instead of returning false for an unknown type. Add a test of value.gap per value class as a reader who is not admitted."
+        },
+        {
+          "at": "2026-11-06T08:56:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 6: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R6-code-security-reviewer-20261106T070305Z-be3eda56",
+          "session_id": "be3eda56-e3dd-47b2-af51-84275b0bb84a"
+        },
+        "at": "2026-11-06T08:56:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-6/40-repro-r5-overview-drill.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/41-repro-r6-beyond.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/51-mutant-M2-drill-default-false.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/54-control-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/mutants.sh",
+          "apps/api/src/modules/reporting/dashboards/restricted.ts",
+          "apps/api/src/modules/reporting/dashboards/drilldown.ts"
+        ],
+        "note": "Re-run on the same candidate and environment. (1) The round-5 reproduction (log 40): the value.gap drill-down of the benefit's class (revenue_uplift) answers TL and AUD 200 with includesRestrictedRecords true and no benefit_plan_value line of the benefit; the admitted TO still sees its planned lines (flag false). Round 5 listed them to TL and AUD. (2) Wider (log 41 part B): every DASHBOARD_METRICS value x (no class | each of the 6 Finance classes) x (no currency | SAR), 238 variants, each followed over EVERY page at limit=2 as TL and as AUD (242 pages). Nothing names BC-02, its investment lines, B03, its plan or measurement lines, or the sensitive evidence item. The flag is the same on every page. The drill value and ruleKey equal the TO's. Every status equals the TO's (226 x 200, 250 x 422, the contract's own refusals of a class or currency a metric does not take). Part D: a sensitive evidence item on an OPEN benefit's submitted line is listed to the TO in 2 drill-downs and removed for TL and AUD on every value and finance metric, with the flag true (restrictedFieldAfter). (3) Mutant M2 (log 51): hides() back to 'default: false' and withoutRestrictedRefs without the SENSITIVE_CHILD_SOURCES pass. The sweep reports leaks on value.gap (with and without currency) and finance.pending_validation for TL, AUD and AUD(org); exit 1. File restored. (4) Control (log 54) passes."
+      }
     },
     {
       "id": "F-DG6-362",
@@ -15750,14 +15849,36 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-05T20:50:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 5 while judging BE-Z5's declared residuals (D-214, handback §10 item 1). The residual list itself (71 unfillable operations) is accurate; the gap is in the operations it counts as covered."
+        },
+        {
+          "at": "2026-11-06T08:56:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 6: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R6-code-security-reviewer-20261106T070305Z-be3eda56",
+          "session_id": "be3eda56-e3dd-47b2-af51-84275b0bb84a"
+        },
+        "at": "2026-11-06T08:56:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-6/54-control-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/50-mutant-M1-overview-unrestricted.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-6/51-mutant-M2-drill-default-false.log",
+          "apps/api/test/integration/access/sensitive-reach-sweep.test.ts"
+        ],
+        "note": "Code read of apps/api/test/integration/access/sensitive-reach-sweep.test.ts on this candidate. It fills required query parameters from the contract (enums enumerated; ids from seeded rows; the drill-down by every metric and accepted value class, with and without currency and transformationId). It uses each list's maximum limit and follows every nextCursor (readAll). It fails when an admitted control reader (the admitted TL, then the TO) never gets 2xx on a swept request, unless the operation is in ADMITTED_ERROR_ALLOWED: seven entries, each with a stated reason, and the database facts they rely on are asserted (checkJustifications). A stale allowance also fails. Its floor counts operations actually read with 2xx (> 330). Run on this candidate (control, log 54): 555 requests per reader over 371 operations (520 ids), 75 not fillable, 2428 pages read, 364 operations read with 2xx, refused list empty, 2/2 pass. Mutants M1 and M2 (logs 50, 51) show it now catches both round-5 leaks (F-DG6-360, F-DG6-361), which its round-5 version missed. The round-5 instrumented copy (zz-cs-r5-sweep-instrumented) is of the old sweep, so I did not re-run it; the new sweep's own status check replaces it. Residual, judged in my review record (check CS-R6-RESIDUALS): the 75 unfillable operations. The id-routed benefit children among them are guarded by the path-parameter guard (route parameter names checked against SENSITIVE_REACH_PARAMS). The sweep judges only titles and values, not identifiers, which is new finding F-DG6-420, a different defect class than this one."
+      }
     },
     {
       "id": "F-DG6-380",
@@ -15780,12 +15901,134 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-5/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-05T20:45:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 5 (T-DG6-REV-QA-R5) on candidate sha256:832e5c82. High and mandatory (data integrity on the A13 recoverability path). Found while probing the BE-Z6 open question (D-214); the defect is in the raise path, which predates BE-Z6."
+        },
+        {
+          "at": "2026-11-06T10:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R6-qa-verifier-20261106T070305Z-63591ecb",
+          "session_id": "63591ecb-9fd2-4bff-9579-cd17dcd86de1"
+        },
+        "at": "2026-11-06T10:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-6/10a-f380-probe-candidate.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/10b-f380-mutant-revert.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/10c-f380-mutant-now-only.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-concurrent-job-failure.test.ts"
+        ],
+        "note": "Verified by qa-verifier (the originating reviewer) on candidate sha256:0fea8adf (source 031945d8761a253665c6b794e6c8d2efbacdfe65), in a disposable clone and disposable PostgreSQL 16 clusters. I read the finding in findings.json (still OPEN, one history entry) and in round-5/qa-verifier.findings.json, the BE-Z8 handback and the diff d7b21bad..031945d8 of apps/api/src/modules/operations/exceptions.ts and apps/worker/src/kit.ts. The change is one expression in each raise path: last_occurred_at = greatest(now(), operational_exception.last_occurred_at), so the stored value is read in SQL (microseconds) instead of being round-tripped through a millisecond JavaScript Date. occurrence_count is still current.occurrence_count + 1 under the advisory lock, the FOR UPDATE read and WHERE version = current.version, and the 0101 guard is unchanged (no migration, no retry, no upsert). No other monotonic timestamp is written from a JavaScript value (grep of apps/*/src). (1) The round-5 reproduction, widened (my probe zz-qa-dg6r6-concurrent-job-failure.test.ts, the worker's own captureJobFailure run concurrently for distinct jobs of ONE queue): N = 4, 8 and 16, with the exception not yet open and already open, 10 bursts each (60 bursts): every burst has 0 rejected captures, N(+1) operational_failure rows, N(+1) job.failed outbox rows, exactly one open exception whose occurrence_count is N(+1), N(+1)-1 'recurred' events (no double count), and a final last_occurred_at >= every event's occurred_at. My round-5 Q2 (20 concurrent API raises on one open exception, 5 rounds): 0 rejected, 21/21 occurrences, 20/20 recurred events. The in-tree concurrent-exception-recurrence.test.ts passed 7/7 in the same run (10a, exit 0). (2) Mutant M1 reverts the fix in both files (the old ${current.last_occurred_at}::timestamptz): the defect returns (for example N=8 'rejected 4; failures 4/8'; API raise 'rejected 2; occurrences 19/21'), and all 14 tests fail, the 7 in-tree ones and my 7 (10b, exit 1 by design). Mutant M2 uses plain now() without greatest(): all 14 fail again (10c, exit 1 by design). Both mutants were reverted (git checkout) before any other run. The fix is also exercised by this round's full integration runs and by a22-p6-operability (QA-R6 checks 03, 06b)."
+      }
+    },
+    {
+      "id": "F-DG6-400",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Report metrics sections (executive pack 'Current metrics', executive dashboard area metrics) show value headlines that include a restricted benefit's value with no 'Includes restricted records' label, because the section flag is decided only from the section's own row/item/source references",
+      "reproduction": "Candidate 0fea8adf (source 031945d87), disposable clone, PostgreSQL 16.15, Node 24.21.0. SYNTHETIC data. (1) API: probe docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-report-sections.test.ts.txt (the T-DG6-BE-Z7B setup of sensitive-reach-dashboards-reports.test.ts: demo seed, the TO marks benefit B01 sensitive; TL at the transformation is not admitted), copied to apps/api/test/integration/zz-domain/ and run with QA_PG_PORT=30220 MTH_PORT_POOL=30221-30229 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <file>. It GETs /api/v1/transformations/{T}/dashboard and /api/v1/transformations/{T}/reports/executive_pack/live?reportingPeriodId=<2026-09> and /reports/executive_dashboard/live as TL and TO. (2) UI: probe docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-screens.spec.ts.txt on apps/web/e2e/support/with-stack.sh (production-initialized): dev.lead creates a transformation, a synthetic BO adds a sensitive revenue_uplift benefit (planned 300 SAR) and a plain avoided_cost benefit (100 SAR), dev.office marks the first sensitive, creates a monthly reporting period and generates an executive pack snapshot; dev.lead (TL, not admitted) and dev.office (TO) open the snapshot page, en and ar.",
+      "expected": "ADR-0051 §2 'Totals and rollups' and D-195 Q3 (decided by the user): a user without the grant sees aggregates that include the value, labelled 'Includes restricted records' / 'يشمل سجلات مقيدة'. 'When a reader is not admitted to at least one sensitive record whose value the aggregate includes, the response carries includesRestrictedRecords: true and the screen shows the label.' The executive pack's and executive dashboard's metrics sections are such aggregates (they are the DG4 dashboard headlines, which the transformation dashboard itself labels for the same reader).",
+      "actual": "API (probe3.log, probe4.log, probe2.log): for TL, GET /transformations/{T}/dashboard carries includesRestrictedRecords: true (TO: false), but in the live executive pack the section metrics_transformation (and metrics_ws_77) carries no member at all (anyPackSectionFlag=false). Its fields value_planned_top_line_sar = 396000 and value_forecast_top_line_sar = 148500 are exactly B01's own planned and forecast lines for 2026-09 (B01 is the only top-line benefit: probe4 lists every plan line), so the restricted benefit's individual values are shown to TL, unlabelled. In the live executive dashboard report, area_value (kind metrics, sources [transformation], 16 SAR values) has no member while its sibling table items_value is flagged true. The cause is documentForReader (apps/api/src/modules/reporting/reports/restricted.ts): a section is flagged only when sectionRefs(s) (its sources, rows, items) names a marked record; these metrics sections reference only the transformation or workstream, and when no section references one the whole document is returned unchanged. ADR-0051's 2026-11-06 amendment records that scope ('Absent when the section references no marked-sensitive record'), which contradicts its own Totals rule. UI (e2e-screens-run2.log; screenshots dom-r6-tl-exec-pack-snapshot.png, en and ar): the TL's executive pack snapshot shows 'Planned revenue uplift (top line…) SAR 300.00', the sensitive benefit's own value, with label count 0, and offers Start export. The register snapshot and the Executive Overview are labelled correctly for the same TL. By code reading, a TL export of that pack is not refused (exports/assembly.ts checks only assemblySources, which name no sensitive record) and carries no label, because the member is read-time only.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probe4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-report-sections.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-6/probes/dom-r6-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-6/e2e-screens-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-tl-exec-pack-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/ar/dom-r6-tl-exec-pack-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-6/screenshots/en/dom-r6-to-exec-pack-snapshot.png",
+        "apps/api/src/modules/reporting/reports/restricted.ts",
+        "apps/api/src/modules/reporting/reports/assemblers/executive-pack.ts",
+        "apps/api/src/modules/reporting/reports/assemblers/executive-dashboard.ts",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-06T07:50:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 6 by domain-reviewer while verifying F-DG6-340. F-DG6-340's own reproduction (the benefits register table totals, live and snapshot) is repaired and verified; this is the metrics part that F-DG6-340's actual named by code reading ('every report assembler with totals or metrics over a sensitive record'), now reproduced at runtime through a different mechanism (a section that aggregates dashboard facts but references only its subject). Medium, not mandatory, consistent with F-DG6-340: the figures are the ones D-195 Q3 says every reader sees; the label the user decided is missing. Suggested repair: flag a report section whose figures come from the dashboard facts (executive pack metrics_*, executive dashboard area_*) from the same dashboardRestriction decision the transformation and workstream dashboards use (true when the reader is not admitted to a sensitive benefit or business case of those facts), read-time as today; add a negative test (TL, AUD: true) and a positive one (TO: false); correct the ADR-0051 2026-11-06 sentence 'Absent when the section references no marked-sensitive record'."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-420",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Open records' responses name the identifier of a restricted record to a reader who gets 404 on it: a benefit group lists a sensitive benefit as countedBenefitId and in memberBenefitIds (rendered as a member link on the register screen), and an open benefit's measurement lists a sensitive evidence item in evidenceIds; ADR-0051 §2 states existence is not disclosed and does not decide references",
+      "reproduction": "Candidate sha256:0fea8adf (source 031945d8761a253665c6b794e6c8d2efbacdfe65), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0, LANG unset. Probe docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r6-id-refs.test.ts, run with checks.sh repro (log 42-repro-r6-id-refs.log; the two earlier attempts failed in the probe's own setup and are kept as 42-repro-r6-id-refs.attempt1/attempt2-setup-no-measurement.log). Setup, all SYNTHETIC, on the demo seed: a benefit group BG-77 (direct insert with its audit event) whose members are demo benefits B02 and B01, with B02 the counted member; a TO marks B02 sensitive (PUT .../records/benefit/{B02}/sensitivity, 200). A note evidence item created by the TO through POST .../evidence (201) is linked (benefit_evidence, with its audit event) to B01's submitted measurement, then marked sensitive by the TO (200). Reader: a TL scoped to the transformation, with no grant and not a named party. Calls: GET .../benefits/{B02}, GET .../evidence/{ev}, GET .../benefit-groups?limit=100, GET .../benefit-groups/{BG-77}, GET .../benefit-measurements/{B01 measurement}.",
+      "expected": "ADR-0051 §2 'Effect on reads': a record GET of a sensitive record the principal is not admitted to answers 404 'not_found (existence not disclosed; ADR-0006)', and lists omit the row; the amendment of 2026-11-04 even avoids returning a count of hidden rows. REQ-S10-002: 'a sensitive benefit is hidden from a workstream member without the grant'. Either a response does not name a restricted record's identifier to that reader (the reference is omitted, or replaced by a neutral 'restricted record' marker that does not link to it), or the architect records in ADR-0051 §2, and the orchestrator decides, that an opaque identifier of a restricted record may appear in an open record's response, and what the screen shows for it (for example the 'Includes restricted records' label instead of a link that ends in 404).",
+      "actual": "For TL, GET of the benefit and GET of the evidence both answer 404. In the same session, listBenefitGroups and getBenefitGroup answer 200 with countedBenefitId equal to B02's id, and memberBenefitIds holding B02's id (2 members). getBenefitMeasurement answers 200 with evidenceIds holding the sensitive evidence item's id (its title is not in the body). The TO gets the same identifiers and 200 on both records. No title, code or value of a restricted record is exposed: only its identifier, its existence, and in the group its role as the counted member. The web register renders each member and the counted member as a BenefitRef link to the hidden benefit (apps/web/src/pages/benefits/RegisterPages.tsx:139-158; the label falls back when the benefit is not in the reader's benefit index), so the reader sees an entry that leads to 404. Cause: apps/api/src/modules/benefits/groups.ts presentGroups (lines 56-76) reads every member from the benefit table and returns counted_benefit_id unfiltered; apps/api/src/modules/benefits/measurements.ts evidenceOf (lines 208-226) returns every linked evidence id. Neither consults restrictedRecordRefs. By reading the shared response schemas, the same class covers other identifier references of open records to a possibly sensitive benefit, business case or evidence item, for example kpi-actuals evidenceIds (packages/shared/src/schemas/kpi-actuals.ts:149), sustainment-area evidenceIds (sustainment-areas.ts:167) and the single evidenceId references (approval-routes.ts:96, health.ts:57, diagnose.ts:104, day-ninety.ts:25). I did not probe those one by one. The BE-Z5 and BE-Z7B sweep counts as a leak only the title, the code with the title and the planned value, so it cannot see this class. Medium, not mandatory: no content or value of a restricted record is disclosed, but the existence non-disclosure that ADR-0051 §2 states is broken on the API and on the screen. Under D-192 it must be repaired, or decided as above, before the gate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-6/42-repro-r6-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-6/repro/zz-cs-r6-id-refs.test.ts",
+        "apps/api/src/modules/benefits/groups.ts",
+        "apps/api/src/modules/benefits/measurements.ts",
+        "apps/web/src/pages/benefits/RegisterPages.tsx",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-06T08:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 6 (T-DG6-REV-CS-R6) while trying the reads the BE-Z7B sweep does not judge (it matches only titles and values). The code is unchanged since earlier rounds; earlier sweeps, including mine, did not look at identifiers. Owner solution-architect, because the repair is first a policy decision for ADR-0051 §2 (omit or mark, or allow, identifier references), then an implementation in benefits/groups.ts, benefits/measurements.ts and the other reference fields the decision covers, with the web register. Suggested test: the sweep also fails when a not-admitted reader's response contains the restricted record's id, outside the fields the decision allows."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-440",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A report table section whose every row is restricted for the reader shows 'No records' and no totals on screen, although ADR-0051 §2 and D-195 Q3 keep its totals identical for every reader (BE-Z7B residual §7 item 4)",
+      "reproduction": "Candidate sha256:0fea8adf (source 031945d8761a253665c6b794e6c8d2efbacdfe65), disposable clone, e2e/support/with-demo-stack.sh (demo-initialized stack, AUTH_MODE=dev, demo role users via the dev sign-in), chromium-en and chromium-ar. Probe docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts, copied to e2e/ and run with 'e2e/support/with-demo-stack.sh npx playwright test e2e/zz-qa-dg6r6-restricted-label-ui.spec.ts --workers=1'. Steps: (1) roaming.user.to marks demo benefit B01 (01995000-4401-7000-8000-000000000001, transformation ROAMING 01995000-0000-7000-8000-000000000001) sensitive through PUT /api/v1/transformations/{T}/records/benefit/{B01}/sensitivity; (2) roaming.user.tl (TL, not admitted) and the TO each open /transformations/{T}/reports, choose Output 'Registers', Register 'Benefits', and 'Preview live'. API (GET .../reports/registers/live?parameters={\"register\":\"benefits\"}): section totals_sar_revenue_uplift has TL rows 0 (TO 1), TL totals equal to the TO's (realized validated SAR 222750, sustained 0, pending SAR 99000), includesRestrictedRecords true for the TL; this half is correct. Screen: the TO sees 'Revenue uplift' with B01's row and 'Total SAR 222,750.00 · Validated by Finance ... SAR 99,000.00 · Submitted (pending Finance validation) Provisional'. The TL sees 'Revenue uplift', the label 'Includes restricted records' and 'No records' ('لا توجد سجلات' in ar), and no Total row. The TL's screen has 2 totals rows, the TO's 3, and the TL's own preview before the marking had 3. Cause: apps/web/src/pages/reports/ui.tsx SectionView, case 'table': when s.rows.length === 0 it renders only the empty text, and the tfoot with s.totals is rendered only inside the non-empty table. The same SectionView renders the live preview, the snapshot page (SnapshotPage.tsx) and presentation mode, so a stored snapshot shows the same gap. Same result in both languages, with the locale unset (13a, and 07 first run) and with C.UTF-8 (07b).",
+      "expected": "ADR-0051 §2 'Totals and rollups' (D-195 Q3, decided by the user): an aggregate that includes a sensitive record's value is identical for every user; when the reader is not admitted, the screen shows the label 'Includes restricted records' / 'يشمل سجلات مقيدة', and only the record and its individual value are hidden. The 2026-11-06 amendment (T-DG6-ARCH-15) lists 'the table totals and metrics of every report section' among the totals that are the same for every reader. D-195 Q3 rejected totals that differ per user. So the TL should see the section's Total row (SAR 222,750.00 validated; SAR 99,000.00 pending, Provisional) with the label, and no row of B01.",
+      "actual": "The figure the API returns identically is withheld on screen from the reader who is not admitted, so the report totals visible to the TL differ from the TO's. The section also says 'No records' under a totals heading, next to the label. A reader can take that to mean nothing was realized in that value class, although SAR 222,750 is validated. No value leaks: the defect hides more than it should, and exports stay refused for that reader (D-199). The BE-Z7B handback discloses this as residual §7 item 4 ('a fully omitted table shows the empty-table text and not its totals on screen ... unchanged from DG5'). In DG5 no record could be restricted, so the path is new in DG6. The in-tree tests assert the totals in the API only (sensitive-reach-dashboards-reports.test.ts), and restricted-labels.test.tsx renders the label but never a fully omitted section. Medium: a real defect against the binding ADR-0051/D-195 Q3 rule, bounded to the report screens (live preview, snapshot, presentation) and to sections whose every row is restricted. It is not mandatory: REQ-S10-002's literal clause holds, because the benefit is hidden, and no wrong number is shown.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-6/13a-restricted-totals-probe-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/07b-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/07-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TO-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-6/shots/restricted-register-TO-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts",
+        "apps/web/src/pages/reports/ui.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-06T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 6 (T-DG6-REV-QA-R6) on candidate sha256:0fea8adf, answering the D-216 open question on BE-Z7B's residual §7 item 4. Medium, non-mandatory; must be repaired before the gate (D-192)."
         }
       ]
     }

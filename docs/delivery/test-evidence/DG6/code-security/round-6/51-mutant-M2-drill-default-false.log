@@ -1,0 +1,251 @@
+# 51-mutant-M2-drill-default-false  started 2026-11-06T07:31:26Z  node=v22.22.0  load=20.13 20.01 14.92  commit=031945d8761a253665c6b794e6c8d2efbacdfe65
+## mutation (git diff of w3):
+ apps/api/src/modules/reporting/dashboards/restricted.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+diff --git a/apps/api/src/modules/reporting/dashboards/restricted.ts b/apps/api/src/modules/reporting/dashboards/restricted.ts
+index 376e3312f..019bb8df9 100644
+--- a/apps/api/src/modules/reporting/dashboards/restricted.ts
++++ b/apps/api/src/modules/reporting/dashboards/restricted.ts
+@@ -61,7 +61,7 @@ export async function dashboardRestriction(
+       default: {
+         const b = lineBenefit.get(`${recordType}:${recordId}`);
+         // Not a line of these facts: decided by withoutRestrictedRefs (the shared rule), not here.
+-        return b !== undefined && benefits.restricted.has(b);
++        return false && b !== undefined && benefits.restricted.has(b);
+       }
+     }
+   };
+@@ -86,7 +86,7 @@ export async function withoutRestrictedRefs<T>(
+     x.recordType !== null && x.recordId !== null;
+   const kept = rows.filter((row) => !refsOf(row).some((x) => r.hides(x.recordType, x.recordId)));
+   const refs = kept.flatMap((row) => refsOf(row).filter(known));
+-  const restricted = await restrictedRecordRefs(db, principal, refs);
++  const restricted = new Set<string>(); void refs; void restrictedRecordRefs;
+   const out =
+     restricted.size === 0
+       ? kept
+$ vt apps/api/test/integration/access/sensitive-reach-sweep.test.ts apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts
+port-policy: PostgreSQL listening on port 30270 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.FzHUHR/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4nop8u_69098796 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z5 sweep] blocker escalation 1: {"outcome":"not_red_for_cycles","decisionId":null}
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z5 sweep] blocker escalation 8: {"outcome":"ask_created","decisionId":"01a1afc5-ca60-7d6f-ae5c-21f8d2137f73"}
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z7 sweep] 555 requests per reader over 371 operations (520 ids); 75 operations not fillable
+[BE-Z7 sweep] not fillable: completeOidcLogin getWorkstreamOutput getActionItem getTomWorkshop getTomCanvasCell listTomWorkshopParticipants listTomWorkshopItems getRoadmapWave getGroup listGroupMembers getDelegation getDecisionRight previewDecisionRightDueDate getBenefitGroup getBenefitOverlap getBenefitScenario getActionRegisterItem getBudgetLine getInitiativeSchedule getMeetingSeries getMeetingMinutes getAdoptionMetricLink getAssessmentForm getAssessmentFormVersion listAssessmentInvitations getAssessmentRecord getTransitionDecision getPhaseStep listPhaseStepEvidence listGateCriterionReviews getGateException getRiskDisposition getChangeRequest getChangeRequestImpactPreview listImpactAssessments getImpactAssessment getWorkstreamDashboard getInheritedRecord getPortfolio listPortfolioTransformations getWorkstream listWorkstreamInitiatives getMethodologyMigration getFormDraft getProcedureDefinition getProcedureInstance getAutomationExecution getAutomationFailure getJobOperation getMeetingCutoffPack getMyNotificationDigest getExport downloadExport getOwnerUpdate listOwnerUpdateRevisions getKpiRestatement getKpiRestatementReconciliation listKpiRestatementReissueOffers getHealthCheck getHealthCheckScheme getMethodologyBlock listMethodologyBlockLinks listTemplateSourceLinks resolveDeepLink getOperationalException getNotificationChannel getIntegrationRun getImport listImportRows downloadImportTemplate getWebhookEndpoint getOutboundWrite getSavedView getHelpTopic getAssistantConversation
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z7 sweep] 2428 pages read
+[BE-Z7 sweep] leaks:
+TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001 -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001 -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001 -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit
+[BE-Z7 sweep] allowed errors: startOidcLogin:404 downloadEvidenceContent:404 getWorkItem:404 getBrandingLogo:404 getBrandingVersion:403/404 getBrandingVersionContrast:403/404 previewEvidenceContent:422/404
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z7 sweep] 364 operations read (2xx) by an admitted reader
+
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-sweep.test.ts (2 tests | 1 failed) 71805ms
+   ✓ ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > control: TL and AUD get 404 on the benefit; the admitted TL and the TO read it 110ms
+   × ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does 54230ms
+     → expected [ …(12) ] to deeply equal []
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts (8 tests | 2 failed) 26778ms
+   ✓ F-DG6-360: the Executive Overview > TL and AUD: no item of the sensitive benefit, the same figures as the TO, includesRestrictedRecords true; the TO sees it (false)  334ms
+   × F-DG6-361: every drill-down metric and value class > TL and AUD: no item, input or evidence entry of the benefit or its lines; the same value; flagged when something was omitted 14581ms
+     → expected [ …(6) ] to deeply equal []
+   × F-DG6-361: every drill-down metric and value class > the value.gap drill-down of the benefit's class lists its lines to the TO (false) and none to TL or AUD (true) 68ms
+     → TL: expected [ { …(7) }, { …(7) }, { …(7) }, …(1) ] to deeply equal []
+   ✓ F-DG6-361: the Finance, adoption, transformation and workstream dashboards > TL and AUD: no mention of the benefit, the same figures as the TO, labelled; the TO sees it on the transformation and workstream dashboards  594ms
+   ✓ F-DG6-340: report totals that include a restricted value > live benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 53ms
+   ✓ F-DG6-340: report totals that include a restricted value > snapshot benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 155ms
+   ✓ F-DG6-340: report totals that include a restricted value > a register with no sensitive record (kpis) carries no member; the stored content never holds it and its hash is unchanged 232ms
+   ✓ F-DG6-340: report totals that include a restricted value > benefit-totals: the same totals for TL and TO, flagged true for TL and false for the TO (unchanged BE-B2 behaviour) 181ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-361: every drill-down metric and value class > TL and AUD: no item, input or evidence entry of the benefit or its lines; the same value; flagged when something was omitted
+AssertionError: expected [ …(6) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "TL organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001&metric=value.gap&limit=100&valueClass=revenue_uplift: benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_measurement:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (validated)",[39m
+[31m+   "AUD organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001&metric=value.gap&limit=100&valueClass=revenue_uplift: benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_measurement:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (validated)",[39m
+[31m+   "TL organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001&metric=value.gap&limit=100&valueClass=revenue_uplift&currency=SAR: benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_measurement:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (validated)",[39m
+[31m+   "AUD organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001&metric=value.gap&limit=100&valueClass=revenue_uplift&currency=SAR: benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_plan_value:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned), benefit_measurement:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (validated)",[39m
+[31m+   "TL organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001&metric=finance.pending_validation&limit=100: benefit_measurement:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit",[39m
+[31m+   "AUD organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001&metric=finance.pending_validation&limit=100: benefit_measurement:Synthetic CONFIDENTIAL BE-Z7B dashboard benefit",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:262:17
+    260|       }
+    261|     }
+    262|     expect(bad).toEqual([]);
+       |                 ^
+    263|     expect(flagged, "the benefit is in at least one drill-down the adm…
+    264|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-361: every drill-down metric and value class > the value.gap drill-down of the benefit's class lists its lines to the TO (false) and none to TL or AUD (true)
+AssertionError: TL: expected [ { …(7) }, { …(7) }, { …(7) }, …(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "code": "B01",[39m
+[31m+     "href": "/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefit-plan-values/01995000-4404-7000-8000-000000000101",[39m
+[31m+     "label": "Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned)",[39m
+[31m+     "period": {[39m
+[31m+       "asOf": "2026-11-06",[39m
+[31m+       "end": "2026-07-31",[39m
+[31m+       "label": null,[39m
+[31m+       "start": "2026-07-01",[39m
+[31m+     },[39m
+[31m+     "recordId": "01995000-4404-7000-8000-000000000101",[39m
+[31m+     "recordType": "benefit_plan_value",[39m
+[31m+     "value": {[39m
+[31m+       "currency": "SAR",[39m
+[31m+       "kpiUnit": null,[39m
+[31m+       "reasonKey": null,[39m
+[31m+       "state": "value",[39m
+[31m+       "unit": "currency",[39m
+[31m+       "value": "198000",[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "code": "B01",[39m
+[31m+     "href": "/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefit-plan-values/01995000-4404-7000-8000-000000000102",[39m
+[31m+     "label": "Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned)",[39m
+[31m+     "period": {[39m
+[31m+       "asOf": "2026-11-06",[39m
+[31m+       "end": "2026-08-31",[39m
+[31m+       "label": null,[39m
+[31m+       "start": "2026-08-01",[39m
+[31m+     },[39m
+[31m+     "recordId": "01995000-4404-7000-8000-000000000102",[39m
+[31m+     "recordType": "benefit_plan_value",[39m
+[31m+     "value": {[39m
+[31m+       "currency": "SAR",[39m
+[31m+       "kpiUnit": null,[39m
+[31m+       "reasonKey": null,[39m
+[31m+       "state": "value",[39m
+[31m+       "unit": "currency",[39m
+[31m+       "value": "297000",[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "code": "B01",[39m
+[31m+     "href": "/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefit-plan-values/01995000-4404-7000-8000-000000000103",[39m
+[31m+     "label": "Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (planned)",[39m
+[31m+     "period": {[39m
+[31m+       "asOf": "2026-11-06",[39m
+[31m+       "end": "2026-09-30",[39m
+[31m+       "label": null,[39m
+[31m+       "start": "2026-09-01",[39m
+[31m+     },[39m
+[31m+     "recordId": "01995000-4404-7000-8000-000000000103",[39m
+[31m+     "recordType": "benefit_plan_value",[39m
+[31m+     "value": {[39m
+[31m+       "currency": "SAR",[39m
+[31m+       "kpiUnit": null,[39m
+[31m+       "reasonKey": null,[39m
+[31m+       "state": "value",[39m
+[31m+       "unit": "currency",[39m
+[31m+       "value": "396000",[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "code": "B01",[39m
+[31m+     "href": "/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefit-measurements/01995000-4405-7000-8000-000000000001",[39m
+[31m+     "label": "Synthetic CONFIDENTIAL BE-Z7B dashboard benefit (validated)",[39m
+[31m+     "period": {[39m
+[31m+       "asOf": "2026-11-06",[39m
+[31m+       "end": "2026-07-31",[39m
+[31m+       "label": null,[39m
+[31m+       "start": "2026-07-01",[39m
+[31m+     },[39m
+[31m+     "recordId": "01995000-4405-7000-8000-000000000001",[39m
+[31m+     "recordType": "benefit_measurement",[39m
+[31m+     "value": {[39m
+[31m+       "currency": "SAR",[39m
+[31m+       "kpiUnit": null,[39m
+[31m+       "reasonKey": null,[39m
+[31m+       "state": "value",[39m
+[31m+       "unit": "currency",[39m
+[31m+       "value": "222750",[39m
+[31m+     },[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:282:9
+    280|         r.items.filter((i: Body) => S.lineIds.includes(i.recordId)),
+    281|         who,
+    282|       ).toEqual([]);
+       |         ^
+    283|       expect(mentions(r), who).toEqual([]);
+    284|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+AssertionError: expected [ …(12) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=value.gap&valueClass=revenue_uplift&currency=SAR -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "TL getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001 -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001 -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+   "AUD(org) getDashboardDrilldown(organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001) 200 /api/v1/dashboard-drilldown?limit=100&organizationId=01995000-0000-7000-8000-000000000002&metric=finance.pending_validation&transformationId=01995000-0000-7000-8000-000000000001 -> Synthetic CONFIDENTIAL BE-Z5 sweep benefit",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-sweep.test.ts:705:19
+    703|     );
+    704|     console.log(`[BE-Z7 sweep] ${readOps.size} operations read (2xx) b…
+    705|     expect(leaks).toEqual([]);
+       |                   ^
+    706|     expect(refused, "every swept request is read by an admitted reader…
+    707|     expect(stale, "an allowed error that no longer happens is removed …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 7 passed (10)
+   Start at  07:31:32
+   Duration  134.89s (transform 10.79s, setup 0ms, collect 28.92s, tests 98.58s, environment 0ms, prepare 157ms)
+
+exit=1  finished 2026-11-06T07:33:51Z
+restored: 0 changed paths

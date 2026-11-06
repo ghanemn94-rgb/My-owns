@@ -1,0 +1,123 @@
+# 43-repro-r5-beyond-sweep  started 2026-11-06T07:39:43Z  cwd=/var/tmp/mth-run.FzHUHR/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=20.37 18.92 16.46  commit=031945d8761a253665c6b794e6c8d2efbacdfe65
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts
+port-policy: PostgreSQL listening on port 30265 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.FzHUHR/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4nzciu_fa310062 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts
+[CS-R5] blocker escalation 1: {"outcome":"not_red_for_cycles","decisionId":null}
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts
+[CS-R5] blocker escalation 8: {"outcome":"ask_created","decisionId":"01a1afcd-98b2-7a1b-839e-54659004a6da"}
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts
+[CS-R5] ask 01a1afcd-98b2-7a1b-839e-54659004a6da title="CA-01" case=CA-01 benefit=B01
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > A: every GET list operation with {transformationId} only, limit=100, every page
+[CS-R5] A: 230 paginated list reads followed to the end; leaks: 0
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B: 76 dashboard/overview/drill-down URLs per reader; statuses [["TL:200",65],["AUD:200",65],["TL:422",11],["AUD:422",11]]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events TL transformationId=01995000-0000-7000-8000-000000000001: pages=1 statuses=403
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events TL transformationId=01995000-0000-7000-8000-000000000001&recordType=benefit&recordId=01995000-4401-7000-8000-000000000001: pages=1 statuses=403
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events TL transformationId=01995000-0000-7000-8000-000000000001&recordType=corrective_case&recordId=01a1afcd-934b-7e8d-9015-c306971bdf71: pages=1 statuses=403
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events TL transformationId=01995000-0000-7000-8000-000000000001&recordType=decision&recordId=01a1afcd-98b2-7a1b-839e-54659004a6da: pages=1 statuses=403
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B transformation audit TL: pages=7 statuses=200
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events AUD transformationId=01995000-0000-7000-8000-000000000001: pages=7 statuses=200
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events AUD transformationId=01995000-0000-7000-8000-000000000001&recordType=benefit&recordId=01995000-4401-7000-8000-000000000001: pages=1 statuses=200
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events AUD transformationId=01995000-0000-7000-8000-000000000001&recordType=corrective_case&recordId=01a1afcd-934b-7e8d-9015-c306971bdf71: pages=1 statuses=200
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B audit-events AUD transformationId=01995000-0000-7000-8000-000000000001&recordType=decision&recordId=01a1afcd-98b2-7a1b-839e-54659004a6da: pages=1 statuses=200
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B transformation audit AUD: pages=7 statuses=200
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set
+[CS-R5] B control: admitted TL transformation audit pages=7 title seen=true
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C reindex: ["transformation:indexed","initiative:indexed","kpi_definition:indexed","benefit:indexed","raid_entry:indexed","dependency:indexed","decision:indexed","deliverable:indexed","evidence:indexed","business_case:indexed","lesson:indexed","change_request:indexed"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C indexed documents naming the title or the case code: [{"record_type":"benefit","record_id":"01995000-4401-7000-8000-000000000001","title":"Synthetic CONFIDENTIAL CS-R5 probe benefit"},{"record_type":"decision","record_id":"01a1afcd-98b2-7a1b-839e-54659004a6da","title":"CA-01"}]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search TL q="CONFIDENTIAL CS-R5" -> 200 []
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search AUD q="CONFIDENTIAL CS-R5" -> 200 []
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search admitted q="CONFIDENTIAL CS-R5" -> 200 ["benefit:Synthetic CONFIDENTIAL CS-R5 probe benefit"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search TL q="Synthetic CONFIDENTIAL" -> 200 []
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search AUD q="Synthetic CONFIDENTIAL" -> 200 []
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search admitted q="Synthetic CONFIDENTIAL" -> 200 ["benefit:Synthetic CONFIDENTIAL CS-R5 probe benefit"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search TL q="CA-01" -> 200 ["decision:CA-01"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search AUD q="CA-01" -> 200 ["decision:CA-01"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search admitted q="CA-01" -> 200 ["decision:CA-01"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search TL q="B01" -> 200 []
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search AUD q="B01" -> 200 []
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes
+[CS-R5] C search admitted q="B01" -> 200 ["benefit:Synthetic CONFIDENTIAL CS-R5 probe benefit"]
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > D: live exports of every report definition and of the admitted TL's snapshot are refused or hold no restricted row
+[CS-R5] D live exports as TL: charter:422:export.format_not_offered diagnostic:422:export.format_not_offered tom:422:export.format_not_offered business_cases:422:export.format_not_offered roadmap:422:export.format_not_offered registers(raid):202: registers(benefits):403:export.includes_restricted_records registers(kpis):202: registers(decisions):202: registers(dependencies):202: registers(actions):202: meeting_minutes:404:not_found gate_pack:404:not_found executive_dashboard:422:export.format_not_offered handover:404:not_found executive_pack:422:export.format_not_offered meeting_pack:404:not_found
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > D: live exports of every report definition and of the admitted TL's snapshot are refused or hold no restricted row
+[CS-R5] D snapshot export as TL 01a1afcd-99ec-74aa-9119-ca37fce7f2d5: 403 export.includes_restricted_records
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > D: live exports of every report definition and of the admitted TL's snapshot are refused or hold no restricted row
+[CS-R5] D snapshot export as TL 01a1afcd-9a62-779b-9d61-1b64ebadaa4f: 202 
+[CS-R5] D accepted live exports (assembled later by the watch, which re-checks the sources): registers(raid) registers(kpis) registers(decisions) registers(dependencies) registers(actions)
+
+stdout | tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts > CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > E: every stored notification naming the title goes only to an admitted recipient
+[CS-R5] E notifications whose params hold the title: 0 []
+
+ ✓ |integration| tests/qa/integration/zz-cs-r5-sens-beyond-sweep.test.ts (6 tests) 44786ms
+   ✓ CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > A: every GET list operation with {transformationId} only, limit=100, every page  10260ms
+   ✓ CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > B: the organizationId operations (dashboards, overview, drill-downs, global audit) with the parameter set  9187ms
+   ✓ CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > C: the search index built by the real reindex job; TL and AUD search for the title and the codes  584ms
+   ✓ CS-R5: a sensitive benefit beyond the BE-Z5 sweep (ADR-0051 §2, REQ-S10-002) > D: live exports of every report definition and of the admitted TL's snapshot are refused or hold no restricted row  622ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  07:39:49
+   Duration  84.42s (transform 11.99s, setup 0ms, collect 28.65s, tests 44.79s, environment 0ms, prepare 519ms)
+
+exit=0  finished 2026-11-06T07:41:19Z  load=22.79 19.96 17.06

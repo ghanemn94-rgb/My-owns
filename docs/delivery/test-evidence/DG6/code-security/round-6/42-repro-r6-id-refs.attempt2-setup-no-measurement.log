@@ -1,0 +1,33 @@
+# 42-repro-r6-id-refs  started 2026-11-06T07:38:38Z  cwd=/var/tmp/mth-run.FzHUHR/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=15.47 17.96 16.00  commit=031945d8761a253665c6b794e6c8d2efbacdfe65
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r6-id-refs.test.ts
+port-policy: PostgreSQL listening on port 30265 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.FzHUHR/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4nxyao_eaad47e6 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/zz-cs-r6-id-refs.test.ts (1 test | 1 skipped) 15834ms
+   ↓ CS-R6-ID: identifiers of restricted records in open records' responses > benefit group and measurement evidence ids, as TL (not admitted) and TO (admitted)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r6-id-refs.test.ts [ tests/qa/integration/zz-cs-r6-id-refs.test.ts ]
+Error: no result
+ ❯ SelectQueryBuilderImpl.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:329:19
+ ❯ tests/qa/integration/zz-cs-r6-id-refs.test.ts:72:14
+     70|   expect(ev.status).toBe(201);
+     71|   S.evId = ev.body.id;
+     72|   const mm = await api.db
+       |              ^
+     73|     .selectFrom("benefit_measurement")
+     74|     .select(["id", "benefit_id"])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 skipped (1)
+   Start at  07:38:44
+   Duration  54.22s (transform 12.97s, setup 0ms, collect 29.04s, tests 15.83s, environment 0ms, prepare 600ms)
+
+exit=1  finished 2026-11-06T07:39:43Z  load=20.37 18.92 16.46

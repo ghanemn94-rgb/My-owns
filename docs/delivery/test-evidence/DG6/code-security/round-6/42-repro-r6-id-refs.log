@@ -1,0 +1,32 @@
+# 42-repro-r6-id-refs  started 2026-11-06T07:47:20Z  cwd=/var/tmp/mth-run.FzHUHR/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=21.69 21.76 18.95  commit=031945d8761a253665c6b794e6c8d2efbacdfe65
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r6-id-refs.test.ts
+port-policy: PostgreSQL listening on port 30265 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.FzHUHR/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4o978c_b4ab71d4 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r6-id-refs.test.ts
+[CS-R6-ID] hidden B02, open B01 (has the draft/submitted measurement: true)
+
+stdout | tests/qa/integration/zz-cs-r6-id-refs.test.ts > CS-R6-ID: identifiers of restricted records in open records' responses > benefit group and measurement evidence ids, as TL (not admitted) and TO (admitted)
+[CS-R6-ID] TL: GET hidden benefit 404; GET sensitive evidence 404
+[CS-R6-ID] TL: listBenefitGroups 200 group countedBenefitId=<hidden benefit id> memberBenefitIds names hidden=true members=2
+[CS-R6-ID] TL: getBenefitGroup 200 countedBenefitId is hidden=true members names hidden=true
+[CS-R6-ID] TL: getBenefitMeasurement 200 evidenceIds names the sensitive evidence=true body mentions its title=false
+
+stdout | tests/qa/integration/zz-cs-r6-id-refs.test.ts > CS-R6-ID: identifiers of restricted records in open records' responses > benefit group and measurement evidence ids, as TL (not admitted) and TO (admitted)
+[CS-R6-ID] TO: GET hidden benefit 200; GET sensitive evidence 200
+[CS-R6-ID] TO: listBenefitGroups 200 group countedBenefitId=<hidden benefit id> memberBenefitIds names hidden=true members=2
+[CS-R6-ID] TO: getBenefitGroup 200 countedBenefitId is hidden=true members names hidden=true
+[CS-R6-ID] TO: getBenefitMeasurement 200 evidenceIds names the sensitive evidence=true body mentions its title=false
+
+ ✓ |integration| tests/qa/integration/zz-cs-r6-id-refs.test.ts (1 test) 18649ms
+   ✓ CS-R6-ID: identifiers of restricted records in open records' responses > benefit group and measurement evidence ids, as TL (not admitted) and TO (admitted)  370ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  07:47:29
+   Duration  61.36s (transform 12.08s, setup 0ms, collect 30.58s, tests 18.65s, environment 0ms, prepare 633ms)
+
+exit=0  finished 2026-11-06T07:48:35Z  load=22.74 22.18 19.31

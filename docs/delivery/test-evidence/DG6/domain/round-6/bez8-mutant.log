@@ -1,0 +1,148 @@
+port-policy: PostgreSQL listening on port 30220 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.JTSztM/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw4na3g7_20590c0d (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts (7 tests | 7 failed) 4318ms
+   × concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 4 concurrent failures, exception not yet open: 5 rounds, none lost 493ms
+     → expected [ …(5) ] to deeply equal []
+   × concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 4 concurrent failures, exception already open: 5 rounds, none lost 681ms
+     → expected [ …(3) ] to deeply equal []
+   × concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 8 concurrent failures, exception not yet open: 5 rounds, none lost 517ms
+     → expected [ …(5) ] to deeply equal []
+   × concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 8 concurrent failures, exception already open: 5 rounds, none lost 730ms
+     → expected [ …(5) ] to deeply equal []
+   × a recurrence whose transaction started before another committed is kept (F-DG6-380) > the worker twin (connector, freshness, job-failure raisers): early-started transaction recurs after a later one, 5 rounds 69ms
+     → promise rejected "error: operational_exception: each recurr… { …(15) }" instead of resolving
+   × a recurrence whose transaction started before another committed is kept (F-DG6-380) > the API raise (heartbeat watch, data_stale): early-started transaction recurs after a later one, 5 rounds 88ms
+     → promise rejected "error: operational_exception: each recurr… { …(15) }" instead of resolving
+   × a recurrence whose transaction started before another committed is kept (F-DG6-380) > a stored last_occurred_at with sub-millisecond digits, later than now(), is kept exactly by a recurrence 132ms
+     → operational_exception: each recurrence counts once and moves last_occurred_at forward
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 4 concurrent failures, exception not yet open: 5 rounds, none lost
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 8 concurrent failures, exception not yet open: 5 rounds, none lost
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 8 concurrent failures, exception already open: 5 rounds, none lost
+AssertionError: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "round 0: rejected 2 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 2/4; job.failed 2/4; exceptions 1; occurrences 2/4",
++   "round 1: rejected 1 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 3/4; job.failed 3/4; exceptions 1; occurrences 3/4",
++   "round 2: rejected 3 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 1/4; job.failed 1/4; exceptions 1; occurrences 1/4",
++   "round 3: rejected 2 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 2/4; job.failed 2/4; exceptions 1; occurrences 2/4",
++   "round 4: rejected 1 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 3/4; job.failed 3/4; exceptions 1; occurrences 3/4",
++ ]
+
+ ❯ apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts:153:22
+    151|             );
+    152|         }
+    153|         expect(lost).toEqual([]);
+       |                      ^
+    154|       });
+    155| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > concurrent last-attempt job failures on one queue are each captured once (F-DG6-380) > 4 concurrent failures, exception already open: 5 rounds, none lost
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "round 2: rejected 2 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 3/5; job.failed 3/5; exceptions 1; occurrences 3/5",
++   "round 3: rejected 1 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 4/5; job.failed 4/5; exceptions 1; occurrences 4/5",
++   "round 4: rejected 2 [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]; failures 3/5; job.failed 3/5; exceptions 1; occurrences 3/5",
++ ]
+
+ ❯ apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts:153:22
+    151|             );
+    152|         }
+    153|         expect(lost).toEqual([]);
+       |                      ^
+    154|       });
+    155| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > a recurrence whose transaction started before another committed is kept (F-DG6-380) > the worker twin (connector, freshness, job-failure raisers): early-started transaction recurs after a later one, 5 rounds
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > a recurrence whose transaction started before another committed is kept (F-DG6-380) > the API raise (heartbeat watch, data_stale): early-started transaction recurs after a later one, 5 rounds
+AssertionError: promise rejected "error: operational_exception: each recurr… { …(15) }" instead of resolving
+ ❯ apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts:206:23
+    204|         await api.db.transaction().execute((tx) => raise(tx, code));
+    205|         laterCommitted.open();
+    206|         await expect(a).resolves.toBeDefined();
+       |                       ^
+    207|         const ex = await exceptionsOf(code);
+    208|         expect(ex.map((x) => [x.status, x.occurrence_count])).toEqual(…
+
+Caused by: error: operational_exception: each recurrence counts once and moves last_occurred_at forward
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ UpdateQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:460:24
+ ❯ UpdateQueryBuilder.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:476:26
+ ❯ UpdateQueryBuilder.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:488:24
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ UpdateQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:460:24
+ ❯ UpdateQueryBuilder.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:476:26
+ ❯ UpdateQueryBuilder.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:488:24
+ ❯ raiseOperationalExceptionTwin apps/worker/src/kit.ts:1030:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 252, severity: 'ERROR', code: '23514', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: 'PL/pgSQL function operational_exception_guard() line 27 at RAISE', schema: undefined, table: undefined, dataType: undefined, constraint: 'operational_exception_occurrence_step', file: 'pl_exec.c', routine: 'exec_stmt_raise' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts > a recurrence whose transaction started before another committed is kept (F-DG6-380) > a stored last_occurred_at with sub-millisecond digits, later than now(), is kept exactly by a recurrence
+error: operational_exception: each recurrence counts once and moves last_occurred_at forward
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ UpdateQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:460:24
+ ❯ UpdateQueryBuilder.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:476:26
+ ❯ UpdateQueryBuilder.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:488:24
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ UpdateQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:460:24
+ ❯ UpdateQueryBuilder.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:476:26
+ ❯ UpdateQueryBuilder.executeTakeFirstOrThrow node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/update-query-builder.js:488:24
+ ❯ raiseOperationalExceptionTwin apps/worker/src/kit.ts:1030:21
+    1028|     result = { exceptionId: row.id, outcome: "opened" };
+    1029|   } else {
+    1030|     const updated = await tx
+       |                     ^
+    1031|       .updateTable("operational_exception")
+    1032|       .set({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  07:20:11
+   Duration  36.79s (transform 9.91s, setup 0ms, collect 24.39s, tests 4.32s, environment 0ms, prepare 126ms)
+
+exit=1

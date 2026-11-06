@@ -1,0 +1,49 @@
+Reliability facts from integration run 1 (candidate 031945d; extracted with grep from 04-integration-run1-Q0*.log)
+   ✓ a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed  3610ms
+   ✓ a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation  2723ms
+   ✓ O-1: a backlog on one queue drains in bounded batches with bounded concurrency, exactly once (D-203) > 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event  8879ms
+   ✓ approval.escalation_scan (REQ-S10-019) > after the due date plus retries, the approval is escalated exactly once and remains undecided  425ms
+   ✓ QA-E2 O-1: the seeded pending approval is in the demo Business Owner's inbox > the product acts on it: TL (the requester) is refused, a stale version is refused, the BO decides it  355ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  832ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > lists the organization's endpoints newest first; the cursor walks every endpoint exactly once  307ms
+   ✓ REQ-PB-060 A01: a series generates meetings on the configured recurrence > a weekly Workstream Review series creates one meeting per week to the horizon in the same call  420ms
+   ✓ REQ-PB-060 A01: a series generates meetings on the configured recurrence > REQ-S10-005 A06: weekly -> fortnightly regenerates FUTURE meetings only > cancels future empty meetings, keeps today's, past and content meetings, and generates the fortnightly dates  442ms
+ ✓ |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts (7 tests) 1481ms
+ ✓ |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts (7 tests) 3149ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  1248ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  3548ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  575ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  435ms
+   ✓ acceptance transfers routine ownership and creates the first review exactly once (REQ-PB-083) > area -> BAU; KPIs, controls and benefits transferred; one review and one My Work item for the BAU owner  513ms
+   ✓ email enabled: one notification -> one sent delivery, exactly once > a restricted recipient gets the inbox.restricted text; a disabled recipient is skipped without a send  766ms
+   ✓ A09 approval timers escalate but never approve (REQ-S10-019) > after the due date plus retries the approval is escalated exactly once and remains undecided  554ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  6441ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert p
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  435ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-083: the receiving owner's acceptance creates the BAU review task for the BAU owner exactly once  308ms
+   ✓ raid.corrective_control and raid.corrective_adoption through the production worker (REQ-S12-016) > a failed control check opens one owned case with a 5-working-day follow-up and one work item; replay and restart create none  1563ms
+   ✓ kpi.recalculate through the relay and the production worker (REQ-S07-013, REQ-S12-006) > writes one run; a redelivery and a restarted worker write no second run  1160ms
+   ✓ gate.exception_expiry_scan (REQ-S04-013) > notifies the requester and the approver exactly once after expiry; a second scan none; status and gate unchanged  2323ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the same Idempotency-Key returns the existing job (200) and queues nothing more  750ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  26896ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1489ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  2794ms
+ ✓ |integration| apps/worker/test/integration/kpi-period-open-restart.test.ts (1 test) 12842ms
+   ✓ kill the worker partway through kpi.reporting_period_open and restart it (T-DG4-KBE-R1 item 4) > the restart opens the remaining period once and creates no duplicate period or task  8943ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  1803ms
+   ✓ REQ-S12-020: kill the worker mid-job and restart it > completes the job once; nothing enters the failure queue  6918ms
+   ✓ REQ-S12-020: after the retry limit the job is in the failure queue; a retry completes it once > captures the last attempt, keeps ops.failed, and resolves through the retry dispatcher  4231ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  481ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1396ms
+ ✓ |integration| tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 129463ms
+   ✓ A13 (REQ-S20-013): the process executing a connector run is killed mid-run and restarted > the killed run stages nothing and stays `running` with Unknown counts; the restarted watch finishes it once  123492ms
+ ✓ |integration| tests/qa/integration/a13-p6-channel-send-kill-restart.test.ts (1 test) 18580ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a channel send and restarted > the interrupted send stays pending and unaccepted; after the restart it is sent once, never twice  14811ms
+ ✓ |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 11108ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  6965ms
+ ✓ |integration| apps/worker/test/integration/restart.test.ts (1 test) 12666ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  7625ms
+ ✓ |integration| tests/qa/integration/a13-p6-reindex-kill-restart.test.ts (1 test) 15086ms
+   ✓ A13 (REQ-S20-013): the worker is killed during a search reindex and restarted > the killed reindex leaves no partial documents and says `reindexing`; after the restart it completes once  10898ms
+ ✓ |integration| tests/qa/integration/a13-p6-outbound-write-once.test.ts (3 tests) 1100ms
+   ✓ the worker heartbeat writer (ADR-0053 §6) > stop() ends the beats; a restart writes a new instance key and keeps the old row  2910ms
