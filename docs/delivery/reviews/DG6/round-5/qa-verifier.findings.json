@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-380",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-013",
+      "severity": "High",
+      "mandatory_violation": true,
+      "title": "Concurrent last-attempt failures of jobs on one queue lose failure-queue records: a recurrence of the queue's operational exception fails the occurrence guard, which rolls back the failed job's operational_failure row, its exception occurrence and its job.failed event",
+      "reproduction": "Candidate sha256:832e5c82 (source d7b21bad), disposable clone, disposable PostgreSQL 16 (tests/qa/support/with-pg.sh). Probe docs/delivery/test-evidence/DG6/qa/tests/round-5/zz-qa-dg6r5-concurrent-job-failure.test.ts, copied to apps/api/test/integration/operations/ and run with 'npx vitest run --configLoader runner --project integration <file>'. It calls the worker's own captureJobFailure (apps/worker/src/kit.ts), which worker.ts runs after a job's last failed attempt inside runJobBatch with WORKER_JOB_CONCURRENCY lanes (D-203), concurrently for N distinct jobs (distinct job ids and idempotency keys) of ONE queue, five rounds, with the queue's job_failed exception not yet open and already open. (1) N = 8 (14b-concurrent-job-failure-probe.log): every one of the 10 bursts lost captures, 1 to 5 of 8 per burst. Example: 'captures 8 (+0 before); rejected 5; operational_failure rows 3 (expected 8); exceptions 1 with occurrences 3 (expected 8); reasons [\"operational_exception: each recurrence counts once and moves last_occurred_at forward\"]'. (2) N = 4, the default concurrency (14d-concurrent-job-failure-probe-4way.log): 9 of 10 bursts lost 1 or 2 of 4 (for example 'rejected 2; operational_failure rows 2 (expected 4)'). (3) The same guard error appears for 20 concurrent API raises against one exception (14a-be-z6-rebase-probe.log, Q2: 'raise rejections 2; final count 19' of 21). (4) Control, NOT the candidate (14c-concurrent-job-failure-control-fixed.log): with only the two 'last_occurred_at' expressions changed to the column reference 'greatest(now(), operational_exception.last_occurred_at)', all 10 bursts capture every failure (8/8 and 9/9) and Q2 has 0 rejections, which isolates the cause. Cause: raiseOperationalException (apps/api/src/modules/operations/exceptions.ts:765) and raiseOperationalExceptionTwin (apps/worker/src/kit.ts:1034) write last_occurred_at = greatest(now(), ${current.last_occurred_at}::timestamptz), passing back the row's stored value as a JavaScript Date, which has millisecond precision. When two raises of the same exception overlap, the one that commits second can have the earlier transaction start, so now() is older than the stored microsecond timestamp. greatest() then returns the millisecond-truncated copy, which is earlier than the stored value, and the 0101 trigger operational_exception_guard raises check_violation operational_exception_occurrence_step. captureJobFailure runs the raise in the same transaction as the operational_failure insert and the job.failed outbox row (kit.ts 588-687), so all three roll back. worker.ts:142 catches the error and only logs 'failure capture failed', and nothing re-captures it later. No candidate test fails concurrently on one queue: the D-203 burst has no failures, and job-operations.test.ts's concurrent case is run-now.",
+      "expected": "A13 / REQ-S20-013: 'failed jobs remain recoverable'. REQ-S12-019: 'when a connector or job fails ... create a visible operational exception'. ADR-0053 §2: each failure recurs the exception once, and ADR-0043's failure queue gets one operational_failure row per failed job, so that it can be retried. D-203 batches and runs jobs concurrently, so failures of one queue that share a cause (a downstream outage) must each be captured exactly once, whatever their commit order.",
+      "actual": "Under concurrency, at the shipped default of 4, a share of the failed jobs is silently missing from the failure queue (no operational_failure row, so no retry from the product), from the exception's occurrence count, and from the job.failed event (the starter automation). The pg-boss job itself still ends failed, and the worker logs one 'failure capture failed' line. This is a data-integrity loss on the path A13 asks to keep recoverable, and it is independent of BE-Z6: the raise code is unchanged since round 4. The same defect makes a concurrent recurrence fail in the API's raise path; for the connector consumer and the freshness raiser that is a job error, which pg-boss retries.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-5/14b-concurrent-job-failure-probe.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/14d-concurrent-job-failure-probe-4way.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/14c-concurrent-job-failure-control-fixed.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/14a-be-z6-rebase-probe.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/zz-qa-dg6r5-concurrent-job-failure.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/zz-qa-dg6r5-exception-rebase.test.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-5/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-05T20:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 5 (T-DG6-REV-QA-R5) on candidate sha256:832e5c82. High and mandatory (data integrity on the A13 recoverability path). Found while probing the BE-Z6 open question (D-214); the defect is in the raise path, which predates BE-Z6."
+        }
+      ]
+    }
+  ]
+}

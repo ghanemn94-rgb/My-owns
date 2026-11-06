@@ -1,0 +1,22 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-320",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I read F-DG6-320 in findings.json and in round-4/qa-verifier.findings.json. (1) I re-ran the round-4 reproduction on this candidate (sha256:832e5c82, source d7b21bad), on the real stack (apps/web/e2e/support/with-stack.sh), chromium-en and chromium-ar, with a stricter probe that ASSERTS instead of only recording: zz-qa-dg6r5-exception-last-error.spec.ts. It runs last in the root acceptance run, after a17-failing-connector-exception (which makes a KPI Stale) and a22-p6-operability (which opens the heartbeat exception). To get a REAL kpi.stale exception, which no candidate e2e raises, it starts the production worker and runs the scheduled job kpi.freshness_scan once through runJobNow, then waits for the worker's operations.exception_raise. C.UTF-8 run with the connection log (05b), 290 passed, exit 0. For every code, the page shows a catalogue text ([data-error-text]), never the raw code. kpi.stale: en 'The KPI's last accepted data is older than its freshness window, so its value shows as Stale.' (dir ltr), ar 'آخر بيانات مقبولة لمؤشر الأداء أقدم من نافذة الحداثة المحددة له، لذا تظهر قيمته على أنها قديمة.' (dir rtl). operations.heartbeat_missed: en 'The background worker has sent no recent heartbeat, so scheduled jobs may not be running.', ar 'لم يُرسل العامل في الخلفية أي نبضة حديثة، لذا قد لا تكون المهام المجدولة قيد التشغيل.'. The connector codes are unchanged, and the ar text is never the server's English message. In the unset run (05), kpi.stale shows the same texts in en and ar. My probe failed there only on its own precondition: after a22 resolves the heartbeat exception (which has no organization), it is no longer in the org-scoped list. I then extended the probe to read that exception's id as the database owner, and 05b passes with it. (2) Mutants, each in a scratch copy (13b), against the in-tree guard problems-all.test.ts (10 tests, baseline 13a exit 0). M1 reverts FE-Z3's two texts (en and ar). M2 removes only the ar kpi__stale. M3 adds a raise with an uncatalogued literal errorCode. M4 makes the ar text equal to the en text. Each exits 1 on 'shows a catalogue text as Last error for every exception code' (M3 also on 'resolves the errorCode of every ... raise'). The guard therefore catches a revert of the fix, a missing Arabic text, an English-only Arabic and a new uncatalogued exception code. (3) My broader problem-code scan (12) now lists kpi.stale and operations.heartbeat_missed as OK. Residual (not a defect): the Arabic texts are provisional (fe-z3 in provisional-ar-p6.ts) and await a Mobily language review.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-5/05b-e2e-root-cutf8-connection-log.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/05-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/13a-f320-problems-all-baseline.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/13b-f320-mutants.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/12-problem-code-scan.txt",
+        "docs/delivery/test-evidence/DG6/qa/round-5/shots/qa-r5-exception-ar-kpi.stale.png",
+        "docs/delivery/test-evidence/DG6/qa/round-5/shots/qa-r5-exception-ar-operations.heartbeat_missed.png",
+        "docs/delivery/test-evidence/DG6/qa/round-5/shots/qa-r5-exception-en-kpi.stale.png",
+        "docs/delivery/test-evidence/DG6/qa/round-5/shots/qa-r5-exception-en-operations.heartbeat_missed.png",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/zz-qa-dg6r5-exception-last-error.spec.ts"
+      ]
+    }
+  ]
+}
