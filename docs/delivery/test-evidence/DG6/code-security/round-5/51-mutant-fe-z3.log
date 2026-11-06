@@ -1,0 +1,94 @@
+# mutant fe-z3 started 2026-11-05T20:39:24Z
+en removed validation__credential_refs: True
+ar removed validation__credential_refs: True
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/i18n/problems-all.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.XBrvpU/claude-0/r/w2
+
+ ❯ |unit-web| src/i18n/problems-all.test.ts (10 tests | 2 failed) 11915ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > reads the API source and the P6 ADR tables (neither scan is empty) 16ms
+   × problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English 97ms
+     → expected [ Array(1) ] to deeply equal []
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar 43ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > translates BE-W's contrast codes exactly as ADR-0061 §6 (en, and the provisional ar) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > collects the field-error codes inside problems.validation([...]) (F-DG6-301) 0ms
+   × problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301) 3ms
+     → en: expected [ 'validation.credential_refs' ] to deeply equal []
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > resolves the errorCode of every operational-exception raise of the API and the worker (F-DG6-320) 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > pins the derivations of DERIVED_ERROR_CODES to their source 1ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > shows a catalogue text as 'Last error' for every exception code, in en and in ar (F-DG6-320) 4ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > would fail on an untranslated code (the guard is not vacuous) 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > has an en and an ar text for every code, the Arabic in Arabic and different from the English
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "validation.credential_refs (apps/api/src/modules/integrations/connectors.ts:295): en missing, ar missing",[39m
+[31m+ ][39m
+
+ ❯ src/i18n/problems-all.test.ts:299:21
+    297|       if (!ARABIC.test(ar.text) || ar.text === en.text) notArabic.push…
+    298|     }
+    299|     expect(missing).toEqual([]);
+       |                     ^
+    300|     expect(notArabic).toEqual([]);
+    301|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/i18n/problems-all.test.ts > problem catalogue completeness (ADR-0061 §7.3) > shows each field-error code's own text, not the generic one, in en and in ar (F-DG6-301)
+AssertionError: en: expected [ 'validation.credential_refs' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "validation.credential_refs",[39m
+[31m+ ][39m
+
+ ❯ src/i18n/problems-all.test.ts:347:32
+    345|         if (code !== "validation.invalid" && (!textOf(locale, code) ||…
+    346|           fallback.push(code);
+    347|       expect(fallback, locale).toEqual([]);
+       |                                ^
+    348|     }
+    349|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  20:39:28
+   Duration  26.15s (transform 1002.79s, setup 442ms, collect 10.20s, tests 11.92s, environment 2.24s, prepare 237ms)
+
+mutant tests exit=1 (non-zero expected)
+restored: changed paths=0
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:832e5c823462ad72859017506cde6a54087ddff15d926a2916bf32ce79d14988","files":2740}
+$ (restored) npx vitest run --configLoader runner --project unit-web apps/web/src/i18n/problems-all.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.XBrvpU/claude-0/r/w2
+
+ ✓ |unit-web| src/i18n/problems-all.test.ts (10 tests) 13034ms
+   ✓ problem catalogue completeness (ADR-0061 §7.3) > renders every problems.* text without a raw placeholder, in en and in ar  589ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  20:40:00
+   Duration  26.60s (transform 1332.06s, setup 843ms, collect 10.02s, tests 13.03s, environment 1.28s, prepare 555ms)
+
+restored tests exit=0
+exit=0  finished 2026-11-05T20:40:27Z

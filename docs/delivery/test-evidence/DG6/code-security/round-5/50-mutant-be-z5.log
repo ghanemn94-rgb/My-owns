@@ -1,0 +1,255 @@
+# mutant be-z5 started 2026-11-05T20:37:29Z load=24.03 20.04 13.75
+$ git diff 654e39d89b66c0975ebef293d607f480f58408e3..d7b21bad306f6aacf10eaea5848d5449dbc4043e -- <BE-Z5 API source files> | git apply -R
+mutant applied:  M apps/api/src/modules/access/sensitive-reach.ts  M apps/api/src/modules/benefits/gate-facts.ts  M apps/api/src/modules/governance/blocker-escalation.ts  M apps/api/src/modules/governance/escalations.ts  M apps/api/src/modules/governance/executive-decisions.ts  M apps/api/src/modules/reporting/modular.ts  D apps/api/src/modules/reporting/reports/restricted.ts  M apps/api/src/modules/reporting/reports/routes.ts  M apps/api/src/modules/reporting/traceability.ts  M apps/api/src/modules/workflows/g4.ts  M apps/api/src/modules/workflows/g6.ts  M apps/api/src/modules/workflows/impact.ts 
+$ with-pg.sh npx vitest run --configLoader runner --project integration <round-4 repros> sensitive-reach-derived.test.ts
+port-policy: PostgreSQL listening on port 30066 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.XBrvpU/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw40btkj_15f5c45b (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-derived.test.ts (5 tests | 5 skipped) 6068ms
+   ↓ ADR-0051 §2: a sensitive benefit in the derived views (F-DG6-300) > control: the not-admitted readers get 404 on the benefit; the admitted ones read it
+   ↓ ADR-0051 §2: a sensitive benefit in the derived views (F-DG6-300) > traceability: the node and its edges are omitted for a reader who is not admitted; the admitted see it
+   ↓ ADR-0051 §2: a sensitive benefit in the derived views (F-DG6-300) > missing links: the benefit's warning is omitted (no count) for a reader who is not admitted
+   ↓ ADR-0051 §2: a sensitive benefit in the derived views (F-DG6-300) > G6 readiness: a neutral placeholder for every reader; the verdict (count of missing items) is the same
+   ↓ ADR-0051 §2: a sensitive benefit in the derived views (F-DG6-300) > live register report and stored snapshots: the row is omitted for a reader who is not admitted
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts
+[CS-R4b] plannedValue PATCH [33m200[39m 7654321.1234
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit
+[CS-R4b] live registers/benefits as TL [33m200[39m row: {"recordType":"benefit","recordId":"01a1ad6f-a5b3-7418-a602-f39c3bca497f","recordVersion":3,"cells":[{"type":"text","value":"B01","authored":"user","validation":"not_applicable","reason":null},{"type":"text","value":"Synthetic CONFIDENTIAL CS-R4b tariff uplift","authored":"user","validation":"not_applicable","reason":null},{"type":"code","value":"revenue","labelKey":"report.benefit_type.revenue","validation":"not_applicable","reason":null},{"type":"code","value":"revenue_uplift","labelKey":"report.benefit_value_class.revenue_uplift","validation":"not_applicable","reason":null},{"type":"decimal","value":null,"unitKind":"other","currency":null,"valueBasis":"baseline","validation":"unknown","reason":"missing"},{"type":"text","value":null,"authored":"user","validation":"unknown","reason":"missing"},{"type":"decimal","value":null,"unitKind":"other","currency":null,"valueBasis":"target","validation":"unknown","reason":"missing"},{"type":"decimal","value":"7654321.1234","unitKind":"currency","currency":"SAR","valueBasis":"planned","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.0000","unitKind":"currency","currency":"SAR","valueBasis":"validated","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.0000","unitKind":"currency","currency":"SAR","valueBasis":"sustained","validation":"not_applicable","reason":null},{"type":"decimal","value":"0.0000","unitKind":"currency","currency":"SAR","valueBasis":"submitted","validation":"not_applicable
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] generate as TL [33m201[39m {"id":"01a1ad6f-a8ba-76fa-b518-40f306d5de37","transformationId":"01a1ad6f-a01a-765d-94f4-34b1e253012b","definitionCode":"registers","subjectType":"transformation","subjectId":"01a1ad6f-a01a-765d-94f4-34b1e253012b","reportingPeriodId":null,"periodLabel":null,"periodStart":null,"periodEnd":null,"asOf"
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] snapshot as TL [33m200[39m row: {"cells":[{"type":"text","value":"B01","reason":null,"authored":"user","validation":"not_applicable"},{"type":"text","value":"Synthetic CONFIDENTIAL CS-R4b tariff uplift","reason":null,"authored":"user","validation":"not_applicable"},{"type":"code","value":"revenue","reason":null,"labelKey":"report.benefit_type.revenue","validation":"not_applicable"},{"type":"code","value":"revenue_uplift","reason":null,"labelKey":"report.benefit_value_class.revenue_uplift","validation":"not_applicable"},{"type":"decimal","value":null,"reason":"missing","currency":null,"unitKind":"other","validation":"unknown"
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] snapshot as AUD [33m200[39m title present: [33mtrue[39m
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit
+[CS-R4b] gates/G6 as TL [33m200[39m :37:49.597Z","updatedBy":null}]},"criteria":[{"key":"g6.benefits_evidence","ordinal":1,"labelEn":"Benefits evidence","labelAr":"أدلة المنافع","mandatory":true,"requiresVerifiedEvidence":false,"completeness":"incomplete","missing":[{"code":"g6.benefit_not_validated","message":"Benefits evidence: B01 Synthetic CONFIDENTIAL CS-R4b tariff uplift has no Finance-validated measurement and no approved transition decision.","pointer":"/benefits/01a1ad6f-a5b3-7418-a602-f39c3bca497f"}],"unverifiedEvidenceI
+
+ ❯ |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts (5 tests | 4 failed) 4784ms
+   ✓ REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: TL gets 404 on the benefit; the TO reads it 120ms
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit 81ms
+     → title in the live report: expected true to be false // Object.is equality
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit 202ms
+     → title in the stored snapshot: expected true to be false // Object.is equality
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: exporting the live selection is refused for TL (export.includes_restricted_records) 8ms
+     → contract: no OpenAPI operation for POST /api/v1/transformations/01a1ad6f-a01a-765d-94f4-34b1e253012b/exports
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit 598ms
+     → title in the G6 readiness: expected true to be false // Object.is equality
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] TL getTraceability 200: ...:"INI-7001","label":"Synthetic launched initiative 1","status":"launched","href":"/api/v1/initiatives/01a1ad6f-d4d0-728a-9163-7ad61d283b10","orphan":{"upstream":true,"downstream":true},"allocation":null},{"recordType":"benefit","recordId":"01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","code":"B01","label":"Synthetic CONFIDENTIAL CS-R4 tariff uplift","status":"active","href":"/api/v1/transformations/01a1ad6f-d079-75cd-b67d-faefa3508b74/benefits/01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","orphan":{"upstream":t...
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] TL missing-links 200: ...0-728a-9163-7ad61d283b10","label":"INI-7001 Synthetic launched initiative 1","href":"/api/v1/initiatives/01a1ad6f-d4d0-728a-9163-7ad61d283b10/gap-links"},{"code":"benefit_outcome_link_missing","severity":"warning","recordType":"benefit","recordId":"01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","label":"B01 Synthetic CONFIDENTIAL CS-R4 tariff uplift","href":"/api/v1/transformations/01a1ad6f-d079-75cd-b67d-faefa3508b74/benefits/01a1ad6f-d4f6-74f8-8f82-ca9352c5667c"},{"code":"benefit_outcome_link_missing",...
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] TL {"getTraceability":{"status":200,"title":true,"id":true,"code":true,"plainTitle":true},"missing-links":{"status":200,"title":true,"id":true,"code":true,"plainTitle":true},"gate G6 (live readiness)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"gates (all six)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"benefit-groups":{"status":200,"title":false,"id":false,"code":false,"plainTitle":false},"benefits list (control)":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true}}
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] AUD getTraceability 200: ...:"INI-7001","label":"Synthetic launched initiative 1","status":"launched","href":"/api/v1/initiatives/01a1ad6f-d4d0-728a-9163-7ad61d283b10","orphan":{"upstream":true,"downstream":true},"allocation":null},{"recordType":"benefit","recordId":"01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","code":"B01","label":"Synthetic CONFIDENTIAL CS-R4 tariff uplift","status":"active","href":"/api/v1/transformations/01a1ad6f-d079-75cd-b67d-faefa3508b74/benefits/01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","orphan":{"upstream":t...
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] AUD missing-links 200: ...0-728a-9163-7ad61d283b10","label":"INI-7001 Synthetic launched initiative 1","href":"/api/v1/initiatives/01a1ad6f-d4d0-728a-9163-7ad61d283b10/gap-links"},{"code":"benefit_outcome_link_missing","severity":"warning","recordType":"benefit","recordId":"01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","label":"B01 Synthetic CONFIDENTIAL CS-R4 tariff uplift","href":"/api/v1/transformations/01a1ad6f-d079-75cd-b67d-faefa3508b74/benefits/01a1ad6f-d4f6-74f8-8f82-ca9352c5667c"},{"code":"benefit_outcome_link_missing",...
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] AUD {"getTraceability":{"status":200,"title":true,"id":true,"code":true,"plainTitle":true},"missing-links":{"status":200,"title":true,"id":true,"code":true,"plainTitle":true},"gate G6 (live readiness)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"gates (all six)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"benefit-groups":{"status":200,"title":false,"id":false,"code":false,"plainTitle":false},"benefits list (control)":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true}}
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] BO2 getTraceability 200: ...:"INI-7001","label":"Synthetic launched initiative 1","status":"launched","href":"/api/v1/initiatives/01a1ad6f-d4d0-728a-9163-7ad61d283b10","orphan":{"upstream":true,"downstream":true},"allocation":null},{"recordType":"benefit","recordId":"01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","code":"B01","label":"Synthetic CONFIDENTIAL CS-R4 tariff uplift","status":"active","href":"/api/v1/transformations/01a1ad6f-d079-75cd-b67d-faefa3508b74/benefits/01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","orphan":{"upstream":t...
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] BO2 missing-links 200: ...0-728a-9163-7ad61d283b10","label":"INI-7001 Synthetic launched initiative 1","href":"/api/v1/initiatives/01a1ad6f-d4d0-728a-9163-7ad61d283b10/gap-links"},{"code":"benefit_outcome_link_missing","severity":"warning","recordType":"benefit","recordId":"01a1ad6f-d4f6-74f8-8f82-ca9352c5667c","label":"B01 Synthetic CONFIDENTIAL CS-R4 tariff uplift","href":"/api/v1/transformations/01a1ad6f-d079-75cd-b67d-faefa3508b74/benefits/01a1ad6f-d4f6-74f8-8f82-ca9352c5667c"},{"code":"benefit_outcome_link_missing",...
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] BO2 {"getTraceability":{"status":200,"title":true,"id":true,"code":true,"plainTitle":true},"missing-links":{"status":200,"title":true,"id":true,"code":true,"plainTitle":true},"gate G6 (live readiness)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"gates (all six)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"benefit-groups":{"status":200,"title":false,"id":false,"code":false,"plainTitle":false},"benefits list (control)":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true}}
+
+ ❯ |integration| tests/qa/integration/zz-cs-r4-sens-title.test.ts (4 tests | 3 failed) 5161ms
+   ✓ REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > control: TL, AUD and BO2 get 404 on the benefit; the TO and BO read it 241ms
+   × REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title 503ms
+     → TL: routes whose body holds the sensitive benefit's title: expected [ 'getTraceability', 'missing-links' ] to deeply equal []
+   × REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title 605ms
+     → AUD: routes whose body holds the sensitive benefit's title: expected [ 'getTraceability', 'missing-links' ] to deeply equal []
+   × REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title 966ms
+     → BO2: routes whose body holds the sensitive benefit's title: expected [ 'getTraceability', 'missing-links' ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-derived.test.ts [ apps/api/test/integration/access/sensitive-reach-derived.test.ts ]
+AssertionError: the TL's own generate response: expected [ …(3) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "Synthetic CONFIDENTIAL BE-Z5 tariff uplift",[39m
+[31m+   "7654321.1234",[39m
+[31m+   "01a1ad6f-733a-75dc-bc32-68d80a814cf6",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-derived.test.ts:168:62
+    166|   });
+    167|   expect(byTl.status).toBe(201);
+    168|   expect(leaks(byTl.body), "the TL's own generate response").toEqual([…
+       |                                                              ^
+    169|   S.snapshotByTl = byTl.body.id;
+    170| }, 240_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title
+AssertionError: TL: routes whose body holds the sensitive benefit's title: expected [ 'getTraceability', 'missing-links' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getTraceability",[39m
+[31m+   "missing-links",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title.test.ts:105:88
+    103|         .filter(([, v]) => v.title)
+    104|         .map(([k]) => k);
+    105|       expect(leaking, `${who}: routes whose body holds the sensitive b…
+       |                                                                                        ^
+    106|     });
+    107|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title
+AssertionError: AUD: routes whose body holds the sensitive benefit's title: expected [ 'getTraceability', 'missing-links' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getTraceability",[39m
+[31m+   "missing-links",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title.test.ts:105:88
+    103|         .filter(([, v]) => v.title)
+    104|         .map(([k]) => k);
+    105|       expect(leaking, `${who}: routes whose body holds the sensitive b…
+       |                                                                                        ^
+    106|     });
+    107|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title
+AssertionError: BO2: routes whose body holds the sensitive benefit's title: expected [ 'getTraceability', 'missing-links' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getTraceability",[39m
+[31m+   "missing-links",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title.test.ts:105:88
+    103|         .filter(([, v]) => v.title)
+    104|         .map(([k]) => k);
+    105|       expect(leaking, `${who}: routes whose body holds the sensitive b…
+       |                                                                                        ^
+    106|     });
+    107|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit
+AssertionError: title in the live report: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:126:82
+    124|     log("live registers/benefits as TL", r.status, "row:", JSON.string…
+    125|     expect(r.status).toBe(200);
+    126|     expect(JSON.stringify(r.body).includes(S.title), "title in the liv…
+       |                                                                                  ^
+    127|     expect(row, "the sensitive benefit's row in the live report").toBe…
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+AssertionError: title in the stored snapshot: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:143:89
+    141|     const aud = await send("GET", `${c.b.base}/report-snapshots/${g.bo…
+    142|     log("snapshot as AUD", aud.status, "title present:", JSON.stringif…
+    143|     expect(JSON.stringify(snap.body).includes(S.title), "title in the …
+       |                                                                                         ^
+    144|   });
+    145| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: exporting the live selection is refused for TL (export.includes_restricted_records)
+Error: contract: no OpenAPI operation for POST /api/v1/transformations/01a1ad6f-a01a-765d-94f4-34b1e253012b/exports
+ ❯ assertContract apps/api/test/support/contract.ts:118:18
+    116| export function assertContract(method: string, url: string, res: Contr…
+    117|   const op = findOperation(method, url);
+    118|   if (!op) throw new Error(`contract: no OpenAPI operation for ${metho…
+       |                  ^
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:147:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit
+AssertionError: title in the G6 readiness: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:160:65
+    158|     log("gates/G6 as TL", r.status, i < 0 ? "(no title)" : text.slice(…
+    159|     expect(r.status).toBe(200);
+    160|     expect(text.includes(S.title), "title in the G6 readiness").toBe(f…
+       |                                                                 ^
+    161|   });
+    162| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  7 failed | 2 passed | 5 skipped (14)
+   Start at  20:37:40
+   Duration  92.48s (transform 17.11s, setup 0ms, collect 59.05s, tests 16.01s, environment 0ms, prepare 785ms)
+
+mutant tests exit=1 (non-zero expected: the tests must catch the reverted fix)
+restored: changed paths=0
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:832e5c823462ad72859017506cde6a54087ddff15d926a2916bf32ce79d14988","files":2740}
+exit=0  finished 2026-11-05T20:39:24Z

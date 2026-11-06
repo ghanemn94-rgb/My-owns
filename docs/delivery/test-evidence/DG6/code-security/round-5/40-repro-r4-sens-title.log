@@ -1,0 +1,28 @@
+# 40-repro-r4-sens-title  started 2026-11-05T20:28:41Z  cwd=/var/tmp/mth-run.XBrvpU/claude-0/r/w2  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=17.62 13.97 8.64  commit=d7b21bad306f6aacf10eaea5848d5449dbc4043e
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r4-sens-title.test.ts
+port-policy: PostgreSQL listening on port 30065 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.XBrvpU/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw400e9x_c9a8b926 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] TL {"getTraceability":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true},"missing-links":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true},"gate G6 (live readiness)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"gates (all six)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"benefit-groups":{"status":200,"title":false,"id":false,"code":false,"plainTitle":false},"benefits list (control)":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true}}
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] AUD {"getTraceability":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true},"missing-links":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true},"gate G6 (live readiness)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"gates (all six)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"benefit-groups":{"status":200,"title":false,"id":false,"code":false,"plainTitle":false},"benefits list (control)":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true}}
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title.test.ts > REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title
+[CS-R4] BO2 {"getTraceability":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true},"missing-links":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true},"gate G6 (live readiness)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"gates (all six)":{"status":404,"title":false,"id":false,"code":false,"plainTitle":false},"benefit-groups":{"status":200,"title":false,"id":false,"code":false,"plainTitle":false},"benefits list (control)":{"status":200,"title":false,"id":false,"code":false,"plainTitle":true}}
+
+ ✓ |integration| tests/qa/integration/zz-cs-r4-sens-title.test.ts (4 tests) 6801ms
+   ✓ REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > TL: no transformation-level read discloses the sensitive benefit's title  868ms
+   ✓ REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > AUD: no transformation-level read discloses the sensitive benefit's title  1131ms
+   ✓ REQ-S10-002: a sensitive benefit's title on transformation-level reads (CS-R4) > BO2: no transformation-level read discloses the sensitive benefit's title  460ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:28:47
+   Duration  51.05s (transform 12.83s, setup 0ms, collect 31.74s, tests 6.80s, environment 0ms, prepare 559ms)
+
+exit=0  finished 2026-11-05T20:29:44Z  load=18.26 14.73 9.23

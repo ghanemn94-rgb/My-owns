@@ -1,0 +1,57 @@
+# 41-repro-r4-sens-title2  started 2026-11-05T20:29:44Z  cwd=/var/tmp/mth-run.XBrvpU/claude-0/r/w2  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=18.26 14.73 9.23  commit=d7b21bad306f6aacf10eaea5848d5449dbc4043e
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r4-sens-title2.test.ts
+port-policy: PostgreSQL listening on port 30065 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.XBrvpU/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw401sjb_4ebb7630 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts
+[CS-R4b] plannedValue PATCH [33m200[39m 7654321.1234
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit
+[CS-R4b] live registers/benefits as TL [33m200[39m row: null
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] generate as TL [33m201[39m {"id":"01a1ad68-16d6-7204-9175-9e0c8bc2caaa","transformationId":"01a1ad68-0d1d-728b-945c-fa528ba9a06f","definitionCode":"registers","subjectType":"transformation","subjectId":"01a1ad68-0d1d-728b-945c-fa528ba9a06f","reportingPeriodId":null,"periodLabel":null,"periodStart":null,"periodEnd":null,"asOf"
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] snapshot as TL [33m200[39m row: null
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit
+[CS-R4b] snapshot as AUD [33m200[39m title present: [33mfalse[39m
+
+stdout | tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit
+[CS-R4b] gates/G6 as TL [33m200[39m (no title)
+
+ ❯ |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts (5 tests | 1 failed) 5772ms
+   ✓ REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: TL gets 404 on the benefit; the TO reads it 60ms
+   ✓ REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the live benefits register report does not hold the sensitive benefit 116ms
+   ✓ REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: a report snapshot TL generates and then reads does not hold the sensitive benefit 187ms
+   × REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: exporting the live selection is refused for TL (export.includes_restricted_records) 25ms
+     → contract: no OpenAPI operation for POST /api/v1/transformations/01a1ad68-0d1d-728b-945c-fa528ba9a06f/exports
+   ✓ REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > TL: the G6 live readiness does not name the sensitive benefit  431ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r4-sens-title2.test.ts > REQ-S10-002: a sensitive benefit in reports and G6 readiness (CS-R4b) > control: exporting the live selection is refused for TL (export.includes_restricted_records)
+Error: contract: no OpenAPI operation for POST /api/v1/transformations/01a1ad68-0d1d-728b-945c-fa528ba9a06f/exports
+ ❯ assertContract apps/api/test/support/contract.ts:118:18
+    116| export function assertContract(method: string, url: string, res: Contr…
+    117|   const op = findOperation(method, url);
+    118|   if (!op) throw new Error(`contract: no OpenAPI operation for ${metho…
+       |                  ^
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ tests/qa/integration/zz-cs-r4-sens-title2.test.ts:147:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  20:29:53
+   Duration  50.09s (transform 12.96s, setup 0ms, collect 30.49s, tests 5.77s, environment 0ms, prepare 303ms)
+
+exit=1  finished 2026-11-05T20:30:51Z  load=18.37 15.51 9.88
