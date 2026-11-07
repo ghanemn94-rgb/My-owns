@@ -1,0 +1,71 @@
+port-policy: PostgreSQL listening on port 31050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z10
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6mb9ue_d2bd98c6 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts (5 tests | 3 failed) 4745ms
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > control: TL gets 404 on the hidden benefit and the hidden evidence; TO reads both 71ms
+   × F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the group list and item omit the hidden member and mark the counted member as restricted 31ms
+     → expected '{"id":"ea0f0110-abf0-4334-aca6-3c2065…' not to contain '01995000-4401-7000-8000-000000000002'
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > TO (admitted): the group names every member and the counted member, without a marker 13ms
+   × F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the open measurement omits the hidden evidence id and is marked; TO sees it 29ms
+     → expected [ Array(1) ] to not include '01a1b6d7-7291-75ca-8f3c-8437cdfba797'
+   × F-DG6-420 / D-218: an open record's response never names a restricted record's id > writes naming the hidden id keep their existing answers; a TL rename keeps the hidden counted member 35ms
+     → expected '{"id":"ea0f0110-abf0-4334-aca6-3c2065…' not to contain '01995000-4401-7000-8000-000000000002'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts > F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the group list and item omit the hidden member and mark the counted member as restricted
+AssertionError: expected '{"id":"ea0f0110-abf0-4334-aca6-3c2065…' not to contain '01995000-4401-7000-8000-000000000002'
+
+Expected: [32m"01995000-4401-7000-8000-000000000002"[39m
+Received: [31m"{"id":"ea0f0110-abf0-4334-aca6-3c2065b1ef7b","transformationId":"01995000-0000-7000-8000-000000000001","code":"BG-77","title":"Synthetic group BE-Z10","description":null,"countedBenefitId":"01995000-4401-7000-8000-000000000002","memberBenefitIds":["01995000-4401-7000-8000-000000000001","01995000-4401-7000-8000-000000000002"],"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":2,"createdAt":"2026-11-07T16:28:55.262Z","createdBy":"01995000-0000-7000-8000-000000000011","updatedAt":"2026-11-07T16:28:55.262Z"}"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts:195:30
+    193|     expect(one.status).toBe(200);
+    194|     for (const body of [g, one.body]) {
+    195|       expect(text(body)).not.toContain(S.hidden);
+       |                              ^
+    196|       expect(body.countedBenefitId).toBeNull();
+    197|       expect(body.countedBenefitRestricted).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts > F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the open measurement omits the hidden evidence id and is marked; TO sees it
+AssertionError: expected [ Array(1) ] to not include '01a1b6d7-7291-75ca-8f3c-8437cdfba797'
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts:219:40
+    217|     const tlOne = await get(`${base}/benefit-measurements/${S.measurem…
+    218|     expect(tlOne.status).toBe(200);
+    219|     expect(tlOne.body.evidenceIds).not.toContain(S.evId);
+       |                                        ^
+    220|     expect(text(tlOne.body)).not.toContain(S.evId);
+    221|     expect(tlOne.body.includesRestrictedRecords).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts > F-DG6-420 / D-218: an open record's response never names a restricted record's id > writes naming the hidden id keep their existing answers; a TL rename keeps the hidden counted member
+AssertionError: expected '{"id":"ea0f0110-abf0-4334-aca6-3c2065…' not to contain '01995000-4401-7000-8000-000000000002'
+
+Expected: [32m"01995000-4401-7000-8000-000000000002"[39m
+Received: [31m"{"id":"ea0f0110-abf0-4334-aca6-3c2065b1ef7b","transformationId":"01995000-0000-7000-8000-000000000001","code":"BG-77","title":"Synthetic group BE-Z10 renamed","description":null,"countedBenefitId":"01995000-4401-7000-8000-000000000002","memberBenefitIds":["01995000-4401-7000-8000-000000000001","01995000-4401-7000-8000-000000000002"],"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":3,"createdAt":"2026-11-07T16:28:55.262Z","createdBy":"01995000-0000-7000-8000-000000000011","updatedAt":"2026-11-07T16:28:55.512Z"}"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts:242:35
+    240|     });
+    241|     expect(rename.status, text(rename.body)).toBe(200);
+    242|     expect(text(rename.body)).not.toContain(S.hidden);
+       |                                   ^
+    243|     expect(rename.body.countedBenefitRestricted).toBe(true);
+    244|     const after = await get(`${base}/benefit-groups/${S.groupId}`, to);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  16:28:39
+   Duration  16.26s (transform 4.43s, setup 0ms, collect 8.22s, tests 4.75s, environment 0ms, prepare 57ms)
+

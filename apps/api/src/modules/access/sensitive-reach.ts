@@ -474,6 +474,174 @@ export async function withoutRestricted<T>(
   return rows.filter((r) => !restricted.has(reachKey(refOf(r))));
 }
 
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218): the ids among `ids` (references an open record holds to records of `recordType`)
+ * that name a record the principal is not admitted to. A response omits each of them (or, where the open record's
+ * meaning depends on it, shows a neutral restricted marker without the id) and carries `includesRestrictedRecords:
+ * true`. Nulls and duplicates are ignored. One policy decision; the empty set after one query when nothing is marked.
+ */
+export async function restrictedIdsOf(
+  db: DbOrTx,
+  principal: Principal,
+  recordType: string,
+  ids: Iterable<string | null | undefined>,
+): Promise<Set<string>> {
+  const unique = [...new Set([...ids].filter((x): x is string => typeof x === "string" && x !== ""))];
+  const restricted = await restrictedRecordRefs(
+    db,
+    principal,
+    unique.map((recordId) => ({ recordType, recordId })),
+  );
+  return new Set(unique.filter((recordId) => restricted.has(reachKey({ recordType, recordId }))));
+}
+
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218): the ids among `ids` (uuids of unknown record type, such as the values of an audit
+ * event's `changes`) that name a record the principal is not admitted to: a sensitive benefit, business case or
+ * evidence item, or a child that carries one's values (every SENSITIVE_CHILD_SOURCES type). One policy decision;
+ * one query when nothing is marked in the principal's organizations.
+ */
+export async function restrictedIdsAmong(
+  db: DbOrTx,
+  principal: Principal,
+  ids: Iterable<string>,
+): Promise<Set<string>> {
+  const unique = [...new Set([...ids].map((x) => x.toLowerCase()).filter((x) => UUID.test(x)))];
+  if (unique.length === 0 || (await markedInOrganizations(db, principal)).size === 0) {
+    principal.tracker.decisions += 1;
+    return new Set();
+  }
+  // A uuid is checked as a child type only where that child row exists: `sensitiveOwnersOf` fails closed for a child
+  // that cannot be found, which would wrongly restrict an unrelated id (a user, an open record) of unknown type.
+  const refs: ReachRef[] = unique.flatMap((recordId) =>
+    SENSITIVE_RECORD_TYPE_LIST.map((recordType) => ({ recordType, recordId })),
+  );
+  for (const [recordType, source] of CHILD_SOURCES) {
+    const found = await sql<{ id: string }>`SELECT id::text AS id FROM ${sql.table(source.table)}
+      WHERE id = ANY(${unique}::uuid[])`.execute(db);
+    for (const r of found.rows) refs.push({ recordType, recordId: r.id.toLowerCase() });
+  }
+  const keys = await restrictedRecordRefs(db, principal, refs);
+  return new Set(refs.filter((r) => keys.has(reachKey(r))).map((r) => r.recordId));
+}
+
+const UUID_ANYWHERE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/**
+ * Every uuid in a JSON value, lower-cased: a bare uuid, `<recordType>:<uuid>`, or one inside a compound text (a
+ * dedupe key such as `corrective.follow_up:<caseId>:<userId>`).
+ */
+export function uuidsIn(value: unknown): Set<string> {
+  const out = new Set<string>();
+  const walk = (v: unknown): void => {
+    if (typeof v === "string") for (const m of v.matchAll(UUID_ANYWHERE)) out.add(m[0].toLowerCase());
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v !== null && typeof v === "object") Object.values(v).forEach(walk);
+  };
+  walk(value);
+  return out;
+}
+
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218): for items holding one nullable reference `field` to a record of `recordType`
+ * (a gate condition's closure evidence, a health answer's evidence), the items whose reference names a record the
+ * principal is not admitted to get `field: null` and `includesRestrictedRecords: true`.
+ */
+export async function hideRestrictedRefs<T extends object, K extends keyof T & string>(
+  db: DbOrTx,
+  principal: Principal,
+  recordType: string,
+  items: readonly T[],
+  field: K,
+): Promise<T[]> {
+  const idOf = (x: T): string | null => {
+    const v = new Map(Object.entries(x)).get(field);
+    return typeof v === "string" ? v : null;
+  };
+  const hidden = await restrictedIdsOf(db, principal, recordType, items.map(idOf));
+  if (hidden.size === 0) return [...items];
+  return items.map((x) => {
+    const id = idOf(x);
+    if (id === null || !hidden.has(id)) return x;
+    const entries = Object.entries(x).map(([k, v]): [string, unknown] => [k, k === field ? null : v]);
+    return { ...(Object.fromEntries(entries) as T), includesRestrictedRecords: true as const };
+  });
+}
+
+const REF_TEXT = /^(?:[a-z][a-z0-9_]{0,63}:)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof Date);
+
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218): the read-time redaction of a free-form or frozen body (a gate submission's
+ * immutable snapshot, its criterion details, a live gate view) that may name records of the sensitive set by id.
+ * Every string that is a uuid, or `<recordType>:<uuid>`, is checked as a benefit, business case and evidence id; one
+ * the principal is not admitted to is removed: an array element that IS the id, or an object element of an array with
+ * a property equal to it (an evidence entry), is dropped; any other property equal to it becomes null. `restricted`
+ * says whether anything was removed (the caller then sets `includesRestrictedRecords: true`). The stored body and its
+ * hash are unchanged (the shown body is a redacted view of it). One policy decision; one query when nothing is marked.
+ */
+export async function redactRestrictedIds<T>(
+  db: DbOrTx,
+  principal: Principal,
+  value: T,
+): Promise<{ value: T; restricted: boolean }> {
+  const ids = new Set<string>();
+  /** `<recordType>:<uuid>` texts also name their own type (a child row, for example), checked as that type too. */
+  const typed = new Map<string, ReachRef>();
+  const collect = (v: unknown): void => {
+    if (typeof v === "string") {
+      const m = REF_TEXT.exec(v);
+      if (!m) return;
+      const recordId = m[1]!.toLowerCase();
+      ids.add(recordId);
+      const colon = v.lastIndexOf(":");
+      if (colon > 0)
+        typed.set(reachKey({ recordType: v.slice(0, colon), recordId }), { recordType: v.slice(0, colon), recordId });
+    } else if (Array.isArray(v)) v.forEach(collect);
+    else if (isPlainObject(v)) Object.values(v).forEach(collect);
+  };
+  collect(value);
+  if (ids.size === 0) return { value, restricted: false };
+  const refs: ReachRef[] = [
+    ...[...ids].flatMap((recordId) => SENSITIVE_RECORD_TYPE_LIST.map((recordType) => ({ recordType, recordId }))),
+    ...typed.values(),
+  ];
+  const keys = await restrictedRecordRefs(db, principal, refs);
+  if (keys.size === 0) return { value, restricted: false };
+  const hidden = new Set(refs.filter((r) => keys.has(reachKey(r))).map((r) => r.recordId));
+  let restricted = false;
+  const isHidden = (v: unknown): boolean => {
+    if (typeof v !== "string") return false;
+    const m = REF_TEXT.exec(v);
+    return m !== null && hidden.has(m[1]!.toLowerCase());
+  };
+  const walk = (v: unknown): unknown => {
+    if (Array.isArray(v)) {
+      const out: unknown[] = [];
+      for (const el of v) {
+        if (isHidden(el) || (isPlainObject(el) && Object.values(el).some(isHidden))) {
+          restricted = true;
+          continue;
+        }
+        out.push(walk(el));
+      }
+      return out;
+    }
+    if (isPlainObject(v)) {
+      const entries = Object.entries(v).map(([k, x]): [string, unknown] => {
+        if (!isHidden(x)) return [k, walk(x)];
+        restricted = true;
+        return [k, null];
+      });
+      return Object.fromEntries(entries);
+    }
+    return v;
+  };
+  const redacted = walk(value) as T;
+  return { value: redacted, restricted };
+}
+
 // ------------------------------------------------------------------------------------------------ the route guard
 
 /**

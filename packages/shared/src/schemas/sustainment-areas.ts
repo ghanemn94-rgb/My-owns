@@ -181,6 +181,11 @@ export const bauHandover = z.strictObject({
   createdBy: nullableUuid,
   updatedAt: timestamp,
   updatedBy: nullableUuid,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when `evidenceIds` omits an evidence item the reader is not admitted to
+   * (`missingItems` is unchanged); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type BauHandover = z.infer<typeof bauHandover>;
 export const bauHandoverPage = page(bauHandover);

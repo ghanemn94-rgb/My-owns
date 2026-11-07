@@ -21,7 +21,9 @@ import {
   reachKey,
   requireAction,
   requireRead,
+  restrictedIdsAmong,
   restrictedRecordRefs,
+  uuidsIn,
   scopeFilter,
   targetFor,
 } from "../access/index.ts";
@@ -467,11 +469,20 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
       // ADR-0051 §2 (T-DG6-BE-Y1, F-DG6-121): the events of a sensitive record the caller is not admitted to, and of
       // the records that carry its values, keep actor, action, time, record id and versions, never the changed values
       // or the reason (the same redaction as /audit-events; the shared helper access/sensitive-reach.ts).
+      // T-DG6-BE-Z10 (F-DG6-420; D-218): so is the event of an open record whose changes name such a record's id.
       const restricted = await restrictedRecordRefs(db, principal, page.items);
-      if (restricted.size === 0) return page;
+      const open = page.items.filter((e) => !restricted.has(reachKey(e)));
+      const hiddenIds = await restrictedIdsAmong(
+        db,
+        principal,
+        open.flatMap((e) => [...uuidsIn(e.changes)]),
+      );
+      if (restricted.size === 0 && hiddenIds.size === 0) return page;
+      const hides = (e: (typeof page.items)[number]) =>
+        restricted.has(reachKey(e)) || [...uuidsIn(e.changes)].some((id) => hiddenIds.has(id));
       return {
         nextCursor: page.nextCursor,
-        items: page.items.map((e) => (restricted.has(reachKey(e)) ? { ...e, reason: null, changes: null } : e)),
+        items: page.items.map((e) => (hides(e) ? { ...e, reason: null, changes: null } : e)),
       };
     },
   );

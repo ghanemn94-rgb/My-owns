@@ -34,7 +34,10 @@ export const evidenceRegisterItem = z.strictObject({
   reviewStatus: z.enum(EVIDENCE_REVIEW_STATUSES),
   accessibilityStatus: z.enum(EVIDENCE_ACCESSIBILITY_STATUSES),
   status: z.enum(["active", "archived"]),
+  /** The links the reader is admitted to (T-DG6-BE-Z10, D-218: a link to a restricted record is omitted). */
   links: z.array(evidenceRegisterLink),
+  /** True when a link was omitted for the reader (ADR-0051 §2; label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type EvidenceRegisterItem = z.infer<typeof evidenceRegisterItem>;
 

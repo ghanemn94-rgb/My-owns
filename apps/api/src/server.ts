@@ -38,6 +38,7 @@ import {
   registerSensitiveReachGuard,
   registerSensitivityRoutes,
   resolveTarget,
+  restrictedIdsAmong,
   restrictedRecordRefs,
   scopeFilter,
 } from "./modules/access/index.ts";
@@ -542,6 +543,7 @@ export async function buildServer(options: ServerOptions): Promise<{
     },
     readFilter: (request, cols) => scopeFilter(principalOf(request), "audit_event.read", cols),
     restrictedRecords: (request, refs) => restrictedRecordRefs(db, principalOf(request), refs),
+    restrictedIdsAmong: (request, ids) => restrictedIdsAmong(db, principalOf(request), ids),
   });
   registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
   // BE-H2: Administration > Storage (slice C). admin may not import evidence, so the setting read and the storage test's

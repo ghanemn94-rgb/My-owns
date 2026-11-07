@@ -83,16 +83,21 @@ export {
 } from "./sensitivity.ts";
 // T-DG6-BE-Y1 (F-DG6-121..123; ADR-0051 §2): the one helper for every route that reaches a sensitive record's children.
 export {
+  hideRestrictedRefs,
   isSensitiveRecordType,
   reachKey,
   reachRefsOfParams,
   recordRefSensitivity,
+  redactRestrictedIds,
   registerSensitiveReachGuard,
   requireRecordReach,
+  restrictedIdsAmong,
+  restrictedIdsOf,
   restrictedRecordRefs,
   SENSITIVE_CHILD_SOURCES,
   SENSITIVE_REACH_PARAMS,
   sensitiveOwnersOf,
+  uuidsIn,
   withoutRestricted,
   type ReachRef,
 } from "./sensitive-reach.ts";

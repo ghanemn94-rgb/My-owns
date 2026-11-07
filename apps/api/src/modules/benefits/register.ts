@@ -60,6 +60,8 @@ import {
   requireSensitiveRead,
   requireTransformationRead,
   resolveTarget,
+  restrictedIdsOf,
+  type Principal,
 } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
@@ -519,9 +521,14 @@ export async function registerInitiativesOf(
 }
 // ------------------------------------------------------------------------------------------------ end BE-M block
 
-/** T14 register rows (ADR-0029 §4): the ten columns plus step, realization state and counting status. */
+/**
+ * T14 register rows (ADR-0029 §4): the ten columns plus step, realization state and counting status.
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): `latestEvidenceIds` and `evidenceCount` count only the evidence the
+ * reader is admitted to (no hidden id, no hidden count); the row then carries `includesRestrictedRecords: true`.
+ */
 export async function presentRegisterRows(
   db: DbOrTx,
+  principal: Principal,
   rows: readonly BenefitRow[],
 ): Promise<(BenefitRegisterRow & { initiatives: InitiativeRef[] })[]> {
   if (rows.length === 0) return [];
@@ -536,10 +543,17 @@ export async function presentRegisterRows(
     .orderBy("created_at", "desc")
     .orderBy("id", "desc")
     .execute();
+  const hiddenEvidence = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    evidence.map((e) => e.evidence_id),
+  );
   return rows.map((r) => {
     const c = counting.get(r.id);
     const f = facts.get(r.id)!;
-    const mine = evidence.filter((e) => e.benefit_id === r.id);
+    const linked = evidence.filter((e) => e.benefit_id === r.id);
+    const mine = linked.filter((e) => !hiddenEvidence.has(e.evidence_id));
     return {
       id: r.id,
       code: r.code,
@@ -568,6 +582,7 @@ export async function presentRegisterRows(
       currency: r.currency.trim(),
       version: r.version,
       initiatives: initiativesOf.get(r.id) ?? [], // BE-M (ADR-0038 §8)
+      ...(mine.length !== linked.length ? { includesRestrictedRecords: true as const } : {}),
     };
   });
 }
@@ -1140,7 +1155,7 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentRegisterRows(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentRegisterRows(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(BENEFITS, { config: write }, async (request, reply) => {

@@ -26944,6 +26944,7 @@ components:
         completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         completedBy: { $ref: "#/components/schemas/NullableUuid" }
         version: { $ref: "#/components/schemas/Version" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when an evidence suggestion or a response's evidence was omitted for the reader; a restricted response evidence is shown as evidenceId null (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     DayNinetyResponsePut:
       type: object
       required: [answer]
@@ -27026,6 +27027,7 @@ components:
         actionNote: { type: [string, "null"] }
         answeredBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the answer's evidence is an item the reader is not admitted to; evidenceId is then null (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     HealthCheckAction:
       type: object
       required: [rank, actionText]
@@ -27524,7 +27526,8 @@ components:
         reviewStatus: { type: string, enum: [unverified, verified, rejected] }
         accessibilityStatus: { type: string, enum: [unchecked, accessible, inaccessible] }
         status: { type: string, enum: [active, archived] }
-        links: { type: array, items: { $ref: "#/components/schemas/EvidenceRegisterLink" } }
+        links: { type: array, items: { $ref: "#/components/schemas/EvidenceRegisterLink" }, description: "The links the reader is admitted to; a link to a restricted record (a sensitive benefit, business case or evidence item, or one of their value children) is omitted (T-DG6-BE-Z10; D-218)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a link was omitted for the reader (ADR-0051 §2; D-218; label access.includesRestrictedRecords). A sensitive evidence item the reader is not admitted to is not listed at all." }
     EvidenceRegisterPage:
       type: object
       required: [items, nextCursor]
@@ -28024,6 +28027,7 @@ components:
         evidenceId: { $ref: "#/components/schemas/NullableUuid" }
         escalatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         escalatedToUserId: { $ref: "#/components/schemas/NullableUuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the closure's evidence is an item the reader is not admitted to; evidenceId is then null (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     TrackedGateConditionPage:
       type: object
       required: [items, nextCursor]
@@ -31074,6 +31078,7 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item) was removed from the shown body; a submission's stored snapshot and snapshotSha256 are unchanged, so the shown snapshot does not verify against the hash (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     GateSubmissionCriterion:
       type: object
       description: "Criterion completeness frozen at submission."
@@ -31533,6 +31538,7 @@ components:
         submissionEnabled: { type: boolean, description: "P2: true for G1-G3 only." }
         canSubmit: { type: boolean, description: "True when all of these hold: the gate is submission-enabled; it is not approved; each mandatory criterion is complete, or is covered by an accepted gate exception whose expiry date is on or after today's business date in the transformation's timezone (ADR-0035 §4); the sequence rule raises no gate.out_of_sequence (the previous gate is approved unless it falls before a Modular entry phase, and the transformation has reached this gate's phase); and the caller holds gate.submit. It does not evaluate the Modular G3 links precondition (ADR-0038 §7.4, amendment B1). For a Modular transformation, submitGate for G3 can still be refused with 422 gate.modular_links_missing unless a Modular-links waiver is in force, and the other submit-time checks still apply." }
         canDecide: { type: boolean, description: "The caller is the configured approver and not the submitter of the pending submission." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item) was removed from the shown body; a submission's stored snapshot and snapshotSha256 are unchanged, so the shown snapshot does not verify against the hash (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     GateList:
       type: object
       required: [items]
@@ -31560,6 +31566,7 @@ components:
         submission: { $ref: "#/components/schemas/GateSubmission" }
         criteria: { type: array, items: { $ref: "#/components/schemas/GateSubmissionCriterion" } }
         decision: { oneOf: [{ $ref: "#/components/schemas/GateDecision" }, { type: "null" }] }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item) was removed from the shown body; a submission's stored snapshot and snapshotSha256 are unchanged, so the shown snapshot does not verify against the hash (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     GateDecisionCreate:
       type: object
       required: [submissionNo, outcome, rationale]
@@ -32772,6 +32779,8 @@ components:
         decidedBy: { $ref: "#/components/schemas/Uuid" }
         onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
         decidedAt: { $ref: "#/components/schemas/Timestamp" }
+        businessCaseRestricted: { type: boolean, const: true, description: "Present (true) when the decision names a business case the reader is not admitted to; businessCaseId is then null (its id is never returned; T-DG6-BE-Z10; ADR-0051 §2; D-218)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the business case was omitted for the reader (D-218; label access.includesRestrictedRecords)." }
     FundingDecisionCreate:
       type: object
       required: [initiativeId, outcome, currency, rationale]
@@ -32848,6 +32857,8 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        parentCaseRestricted: { type: boolean, const: true, description: "Present (true) when the parent case is one the reader is not admitted to; parentCaseId is then null and its id is never returned (T-DG6-BE-Z10; ADR-0051 §2; D-218)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the parent case was omitted for the reader (D-218; label access.includesRestrictedRecords)." }
     BusinessCaseCreate:
       type: object
       required: [transformationId, level, title]
@@ -32972,6 +32983,7 @@ components:
         netValue: { type: array, items: { $ref: "#/components/schemas/MoneyTotal" } }
         nonFinancialBenefitCount: { type: integer, minimum: 0 }
         warnings: { type: array, description: "business_case.possible_duplicate, business_case.revenue_and_margin.", items: { $ref: "#/components/schemas/Warning" } }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when an included case the reader is not admitted to was omitted from includedCaseIds; the totals are the same for every reader (T-DG6-BE-Z10; ADR-0051 §2; D-195 Q3; D-218; label access.includesRestrictedRecords)." }
     FormulaKind:
       type: string
       enum: [fraction, fraction_delta, percent_change, count, currency, quantity, number]
@@ -34325,6 +34337,7 @@ components:
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a value's evidenceIds omit an evidence item the reader is not admitted to (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     KpiActualValueEntry:
       type: object
       required: [action, dataAsOf]
@@ -34890,6 +34903,7 @@ components:
           type: array
           items: { $ref: "#/components/schemas/InitiativeRef" }
           description: "Optional (ADR-0038 §8): the initiatives of the benefit's current allocation set, names read by join (one source of truth)."
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when linked evidence was omitted for the reader: latestEvidenceIds and evidenceCount then count only the evidence the reader is admitted to (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     BenefitLifecycle:
       type: object
       required: [benefitId, currentStep, steps, history]
@@ -35072,7 +35086,7 @@ components:
       type: object
       required: [id, transformationId, code, title, description, countedBenefitId, memberBenefitIds, status, archivedAt, archivedBy, archiveReason, version, createdAt, createdBy, updatedAt]
       additionalProperties: false
-      description: A shared-benefit group (REQ-PB-058). Only countedBenefitId is counted; while it is null no member is counted.
+      description: "A shared-benefit group (REQ-PB-058). Only countedBenefitId is counted; while it is null and countedBenefitRestricted is absent, no member is counted. T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a reader not admitted to a sensitive member never receives its id: the member is omitted from memberBenefitIds, a restricted counted member is shown as countedBenefitId null with countedBenefitRestricted true, and the group carries includesRestrictedRecords true."
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
         transformationId: { $ref: "#/components/schemas/Uuid" }
@@ -35080,7 +35094,9 @@ components:
         title: { type: string }
         description: { type: [string, "null"] }
         countedBenefitId: { $ref: "#/components/schemas/NullableUuid" }
-        memberBenefitIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        countedBenefitRestricted: { type: boolean, const: true, description: "Present when a member is counted but the reader is not admitted to it (its id is never returned; D-218). Absent otherwise." }
+        memberBenefitIds: { type: array, items: { $ref: "#/components/schemas/Uuid" }, description: "The members the reader is admitted to; a restricted member's id is omitted (D-218)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a member or the counted member was omitted for the reader (ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
         status: { type: string, enum: [active, archived] }
         archivedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         archivedBy: { $ref: "#/components/schemas/NullableUuid" }
@@ -35309,7 +35325,7 @@ components:
         validatedAmount: { $ref: "#/components/schemas/NullableDecimal" }
         basis: { type: string, enum: [validated, provisional], description: "provisional while the benefit's baseline (or the formula version used) is not Finance-validated (REQ-S08-008)." }
         inputs: { type: array, items: { $ref: "#/components/schemas/BenefitMeasurementInput" } }
-        evidenceIds: { type: array, items: { $ref: "#/components/schemas/Uuid" } }
+        evidenceIds: { type: array, items: { $ref: "#/components/schemas/Uuid" }, description: "The linked evidence the reader is admitted to; a restricted item's id is omitted (T-DG6-BE-Z10; D-218)." }
         financeValidationId: { $ref: "#/components/schemas/NullableUuid" }
         submittedBy: { $ref: "#/components/schemas/NullableUuid" }
         submittedAt: { $ref: "#/components/schemas/NullableTimestamp" }
@@ -35320,6 +35336,7 @@ components:
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a linked evidence item was omitted for the reader (ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     BenefitMeasurementCreate:
       type: object
       additionalProperties: false
@@ -35429,6 +35446,7 @@ components:
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when content.evidence omits an evidence item the reader is not admitted to; the stored content snapshot is unchanged (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     FinanceValidationDecision:
       type: object
       required: [decision, items]
@@ -36655,6 +36673,8 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        blockerRecordRestricted: { type: boolean, const: true, description: "Present (true) when the blocker is a record the reader is not admitted to (a sensitive record, or a child carrying its values such as a sensitive benefit's variance case); blockerRecordId is then null and its id is never returned (T-DG6-BE-Z10; ADR-0051 §2; D-218)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the blocker was omitted for the reader (D-218; label access.includesRestrictedRecords)." }
     ExecutiveDecisionCreate:
       type: object
       description: "An executive ask states all seven elements (REQ-S10-012); a missing one is a 400 with the element's pointer."
@@ -37612,6 +37632,7 @@ components:
         createdBy: { $ref: "#/components/schemas/NullableUuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when evidenceIds omits an evidence item the reader is not admitted to; missingItems is unchanged (T-DG6-BE-Z10; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     BauHandoverCreate:
       type: object
       required: [performanceAreaId, receivingOwnerUserId]

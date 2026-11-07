@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 import { useLocale } from "../../app/locale.ts";
 import { Icon } from "../../components/Icon.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { usePeople } from "../../components/People.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
@@ -160,13 +161,15 @@ function Lineage({ m }: { m: BenefitMeasurement }) {
           <div>
             <dt>{t("benefitsP4.field.evidence")}</dt>
             <dd data-evidence-count={m.evidenceIds.length}>
-              {m.evidenceIds.length === 0 ? (
+              {m.evidenceIds.length === 0 && m.includesRestrictedRecords !== true ? (
                 <span className="muted">{t("benefitsP4.lineage.noEvidence")}</span>
-              ) : (
+              ) : m.evidenceIds.length === 0 ? null : (
                 <Link className="link" to={`/transformations/${ws.tid}/evidence`}>
                   {t("benefitsP4.evidenceCount", { count: m.evidenceIds.length })}
                 </Link>
               )}
+              {/* T-DG6-BE-Z10 (D-218): evidence the reader is not admitted to is not counted or linked. */}
+              <RestrictedRecordsLabel value={m.includesRestrictedRecords} />
             </dd>
           </div>
         </dl>

@@ -293,11 +293,16 @@ export const fundingDecision = z.strictObject({
   fundingSource: freeText(1, 300).nullable(),
   conditions: freeText(1, 4000).nullable(),
   rationale: freeText(3, 8000),
+  /** Null when none is named, or when the case is restricted for the reader (then the marker below). */
   businessCaseId: nullableUuid,
   approverRoleCode: roleCode,
   decidedBy: uuid,
   onBehalfOfUserId: nullableUuid,
   decidedAt: timestamp,
+  /** T-DG6-BE-Z10 (F-DG6-420; D-218): present (true) when a case is named but the reader is not admitted to it. */
+  businessCaseRestricted: z.literal(true).optional(),
+  /** True when the business case was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type FundingDecision = z.infer<typeof fundingDecision>;
 export const fundingDecisionPage = z.strictObject({

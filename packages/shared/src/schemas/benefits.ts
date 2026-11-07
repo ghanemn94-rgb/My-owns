@@ -480,6 +480,11 @@ export const benefitRegisterRow = z.strictObject({
   // ARCH-08 / BE-M (D-106 (d)): the initiatives of the benefit's current allocation set. Inline, because
   // schemas/traceability.ts imports from this file (importing its initiativeRef here would be circular).
   initiatives: z.array(z.strictObject({ id: uuid, code: z.string(), name: z.string() })).optional(),
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when linked evidence was omitted for the reader (`latestEvidenceIds` and
+   * `evidenceCount` then count only the evidence the reader is admitted to); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type BenefitRegisterRow = z.infer<typeof benefitRegisterRow>;
 export const benefitRegisterPage = z.strictObject({
@@ -554,7 +559,14 @@ export const benefitGroup = z.strictObject({
   code: z.string().regex(/^BG-[0-9]{2,6}$/),
   title: z.string(),
   description: z.string().nullable(),
+  /** Null when no member is named, or when the counted member is restricted for the reader (then the marker below). */
   countedBenefitId: nullableUuid,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): present (true) when a member is counted but the reader is not
+   * admitted to it; its id is never returned. Absent otherwise.
+   */
+  countedBenefitRestricted: z.literal(true).optional(),
+  /** The members the reader is admitted to (a restricted member's id is omitted). */
   memberBenefitIds: z.array(uuid),
   status: z.enum(["active", "archived"]),
   archivedAt: nullableTimestamp,
@@ -564,6 +576,8 @@ export const benefitGroup = z.strictObject({
   createdAt: timestamp,
   createdBy: uuid,
   updatedAt: timestamp,
+  /** True when a member (or the counted member) was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type BenefitGroup = z.infer<typeof benefitGroup>;
 export const benefitGroupPage = z.strictObject({ items: z.array(benefitGroup), nextCursor: z.string().nullable() });

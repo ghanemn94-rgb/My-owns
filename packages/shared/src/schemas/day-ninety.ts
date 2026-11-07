@@ -51,6 +51,11 @@ export const dayNinetyTest = z.strictObject({
   completedAt: timestamp.nullable(),
   completedBy: uuid.nullable(),
   version,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when a suggestion or a response's evidence was omitted for the reader (a
+   * restricted response evidence is shown as `evidenceId: null`); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export const dayNinetyResponsePut = z.strictObject({
   answer: dayNinetyAnswer,

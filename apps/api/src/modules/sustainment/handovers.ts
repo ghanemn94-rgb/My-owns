@@ -35,7 +35,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -275,6 +275,27 @@ async function findHandover(db: DbOrTx, transformationId: string, id: string, lo
   const row = await q.executeTakeFirst();
   if (!row) throw problems.notFound();
   return row;
+}
+
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): the reader's view of handovers. `evidenceIds` omits an evidence item
+ * the reader is not admitted to, and the handover then carries `includesRestrictedRecords: true`; `missingItems` is
+ * unchanged (the handover holds that evidence whoever reads it).
+ */
+async function shownHandovers(db: DbOrTx, principal: Principal, list: readonly BauHandover[]): Promise<BauHandover[]> {
+  const hidden = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    list.flatMap((h) => h.evidenceIds),
+  );
+  if (hidden.size === 0) return [...list];
+  return list.map((h) => {
+    const evidenceIds = h.evidenceIds.filter((id) => !hidden.has(id));
+    return evidenceIds.length === h.evidenceIds.length
+      ? h
+      : { ...h, evidenceIds, includesRestrictedRecords: true as const };
+  });
 }
 
 async function presentHandover(db: DbOrTx, transformationId: string, id: string): Promise<BauHandover> {
@@ -799,7 +820,10 @@ export function registerHandoverRoutes(app: FastifyInstance, { db }: ModuleDeps)
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentHandovers(db, page.items), nextCursor: page.nextCursor };
+    return {
+      items: await shownHandovers(db, principalOf(request), await presentHandovers(db, page.items)),
+      nextCursor: page.nextCursor,
+    };
   });
 
   app.post(HANDOVERS, { config: prepare }, async (request, reply) => {
@@ -814,7 +838,10 @@ export function registerHandoverRoutes(app: FastifyInstance, { db }: ModuleDeps)
   app.get(HANDOVER_ITEM, { config: read }, async (request, reply) => {
     const { transformationId, bauHandoverId } = parseHandoverParams(request.params);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return sendVersioned(reply, 200, await presentHandover(db, transformationId, bauHandoverId));
+    const [shown] = await shownHandovers(db, principalOf(request), [
+      await presentHandover(db, transformationId, bauHandoverId),
+    ]);
+    return sendVersioned(reply, 200, shown!);
   });
 
   const action =
