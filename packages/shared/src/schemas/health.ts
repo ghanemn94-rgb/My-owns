@@ -59,6 +59,8 @@ export const healthCheckAnswer = z.strictObject({
   actionNote: z.string().nullable(),
   answeredBy: uuid,
   updatedAt: timestamp,
+  /** T-DG6-BE-Z10 (D-218): true when the answer's evidence was omitted for the reader (evidenceId is then null). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type HealthCheckAnswer = z.infer<typeof healthCheckAnswer>;
 

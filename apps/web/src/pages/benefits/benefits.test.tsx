@@ -630,4 +630,69 @@ describe.each(["en", "ar"] as const)("benefits screens (%s)", (locale) => {
       t("benefitsP4.measurements.provisionalLong"),
     );
   });
+
+  // T-DG6-BE-Z10 (F-DG6-420; D-218): a member the reader is not admitted to is not named; the counted member is the
+  // neutral restricted label (never a link that ends in 404, never "none counted"), in English and Arabic.
+  it("benefit groups: a restricted counted member and member show the restricted label, not a link", async () => {
+    const GROUP_ID = "01920000-0000-7000-9000-00000000c0a1";
+    const group = {
+      id: GROUP_ID,
+      transformationId: TR_ID,
+      code: "BG-01",
+      title: "Synthetic shared pool",
+      description: null,
+      countedBenefitId: null,
+      countedBenefitRestricted: true,
+      memberBenefitIds: [BENEFIT_ID],
+      status: "active",
+      archivedAt: null,
+      archivedBy: null,
+      archiveReason: null,
+      version: 2,
+      createdAt: "2026-09-01T08:00:00.000Z",
+      createdBy: USER_ID,
+      updatedAt: "2026-09-02T08:00:00.000Z",
+      includesRestrictedRecords: true,
+    };
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [registerRoute(), route("GET", new RegExp(`${esc(TRP)}/benefit-groups(\\?|$)`), () => page([group]))],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/benefit-groups`, { i18n: createI18n(locale) });
+    const counted = await waitFor(() => {
+      const c = document.querySelector("[data-counted-member]");
+      expect(c).toBeTruthy();
+      return c!;
+    });
+    expect(counted.getAttribute("data-counted-member")).toBe("restricted");
+    expect(counted.textContent).toContain(t("access.includesRestrictedRecords"));
+    expect(counted.textContent).not.toContain(t("benefitsP4.groups.noneCounted"));
+    expect(counted.querySelector("a")).toBeNull();
+    const member = document.querySelector("[data-restricted-member='true']")!;
+    expect(member.textContent).toContain(t("access.includesRestrictedRecords"));
+    expect(member.querySelector("a")).toBeNull();
+  });
+
+  it("T14 register: evidence the reader is not admitted to is not counted and the row shows the restricted label", async () => {
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [
+          registerRoute([registerRow({ evidenceCount: 1, latestEvidenceIds: [], includesRestrictedRecords: true })]),
+          totalsRoute,
+        ],
+      ),
+    );
+    renderApp(`/transformations/${TR_ID}/benefits`, { i18n: createI18n(locale) });
+    const cell = await waitFor(() => {
+      const c = document.querySelector("[data-evidence-count]");
+      expect(c).toBeTruthy();
+      return c!.parentElement!;
+    });
+    expect(cell.textContent).toContain(t("access.includesRestrictedRecords"));
+  });
 });

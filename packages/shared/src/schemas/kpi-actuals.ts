@@ -186,6 +186,11 @@ export const kpiActual = z.strictObject({
   createdAt: timestamp,
   createdBy: uuid,
   updatedAt: timestamp,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when a value's `evidenceIds` omit an evidence item the reader is not admitted
+   * to; label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type KpiActual = z.infer<typeof kpiActual>;
 export const kpiActualPage = page(kpiActual);

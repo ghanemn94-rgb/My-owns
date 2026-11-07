@@ -37,7 +37,14 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
 import { PROBLEM_TYPES } from "@mth/shared";
-import { denialOf, principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
+import {
+  denialOf,
+  principalOf,
+  requireTransformationRead,
+  restrictedIdsOf,
+  withoutRestricted,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -188,6 +195,27 @@ export function toFinanceValidation(r: FinanceValidationRow): FinanceValidation 
     createdBy: r.created_by,
     updatedAt: iso(r.updated_at),
   };
+}
+
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): the read view of validations. The stored content snapshot is unchanged;
+ * its `evidence` list omits an evidence item the reader is not admitted to, and the validation then carries
+ * `includesRestrictedRecords: true`.
+ */
+export async function shownValidations(
+  db: DbOrTx,
+  principal: Principal,
+  list: readonly FinanceValidation[],
+): Promise<FinanceValidation[]> {
+  const ids = list.flatMap((v) => (Array.isArray(v.content?.evidence) ? v.content.evidence : []));
+  const hidden = await restrictedIdsOf(db, principal, "evidence", ids);
+  if (hidden.size === 0) return [...list];
+  return list.map((v) => {
+    const evidence = Array.isArray(v.content?.evidence) ? v.content.evidence : [];
+    const shown = evidence.filter((id) => !hidden.has(id));
+    if (shown.length === evidence.length) return v;
+    return { ...v, content: { ...v.content, evidence: shown }, includesRestrictedRecords: true as const };
+  });
 }
 
 const validationParams = z.strictObject({ transformationId: z.uuid(), financeValidationId: z.uuid() });
@@ -431,7 +459,11 @@ export function registerFinanceValidationRoutes(app: FastifyInstance, { db }: Mo
       recordId: r.id,
     }));
     return {
-      items: visible.map(({ rank: _rank, created_key: _key, ...r }) => toFinanceValidation(r as FinanceValidationRow)),
+      items: await shownValidations(
+        db,
+        principalOf(request),
+        visible.map(({ rank: _rank, created_key: _key, ...r }) => toFinanceValidation(r as FinanceValidationRow)),
+      ),
       nextCursor: page.nextCursor,
     };
   });
@@ -439,11 +471,10 @@ export function registerFinanceValidationRoutes(app: FastifyInstance, { db }: Mo
   app.get(FINANCE_VALIDATION_ITEM, { config: read }, async (request, reply) => {
     const { transformationId, financeValidationId } = parseValidationParams(request.params);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return sendVersioned(
-      reply,
-      200,
+    const [shown] = await shownValidations(db, principalOf(request), [
       toFinanceValidation(await findValidation(db, transformationId, financeValidationId)),
-    );
+    ]);
+    return sendVersioned(reply, 200, shown!);
   });
 
   app.post(`${FINANCE_VALIDATION_ITEM}/decision`, { config: write }, async (request, reply) => {

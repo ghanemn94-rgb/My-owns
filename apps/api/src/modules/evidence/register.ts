@@ -23,11 +23,24 @@
 // transformation.read nowhere gets 403; one who holds it, but not in this transformation, gets 404 (no existence
 // leak; the DG1 read rule). AUD reads. Each list reads in one read-only REPEATABLE READ transaction, so an item and
 // its links come from the same database state.
+//
+// T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a sensitive evidence item the reader is not admitted to is not listed
+// (lists omit the row; no count), and a link to a record the reader is not admitted to (a sensitive benefit, business
+// case or evidence item, or one of their value children) is omitted from `links`; the item then carries
+// `includesRestrictedRecords: true`. A page may therefore hold fewer than `limit` items; its cursor is unchanged.
 import { sql, type Db, type Tx } from "@mth/db";
 import { EVIDENCE_TYPES } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { holdsAnywhere, principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  holdsAnywhere,
+  principalOf,
+  reachKey,
+  requireTransformationRead,
+  restrictedIdsOf,
+  restrictedRecordRefs,
+  type Principal,
+} from "../access/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -82,6 +95,7 @@ export interface EvidenceRegisterItem {
   readonly accessibilityStatus: "unchecked" | "accessible" | "inaccessible";
   readonly status: "active" | "archived";
   readonly links: EvidenceRegisterLink[];
+  readonly includesRestrictedRecords?: true;
 }
 
 export interface EvidenceVersion {
@@ -201,6 +215,7 @@ const dateOrNull = (d: unknown): string | null => (d === null || d === undefined
 /** One page of the evidence register, newest item first (ids are UUIDv7). */
 export async function listEvidenceRegister(
   tx: Tx,
+  principal: Principal,
   transformationId: string,
   query: z.infer<typeof registerQuery>,
 ): Promise<{ items: EvidenceRegisterItem[]; nextCursor: string | null }> {
@@ -248,21 +263,38 @@ export async function listEvidenceRegister(
     .limit(query.limit + 1)
     .execute();
   const page = paginate(rows, query.limit, (r) => [r.id], hash);
-  const ids = page.items.map((r) => r.id);
+  const hiddenItems = await restrictedIdsOf(
+    tx,
+    principal,
+    "evidence",
+    page.items.map((r) => r.id),
+  );
+  const visible = page.items.filter((r) => !hiddenItems.has(r.id));
+  const ids = visible.map((r) => r.id);
   const links = new Map<string, EvidenceRegisterLink[]>();
+  const restrictedLinks = new Set<string>();
   if (ids.length > 0) {
     const linkRows = await sql<{ evidence_id: string; record_type: string; record_id: string; via: string }>`
       SELECT DISTINCT l.evidence_id, l.record_type, l.record_id, l.via FROM (${activeLinks(transformationId)}) l
        WHERE l.evidence_id = ANY(${ids}::uuid[])
        ORDER BY l.evidence_id, l.via, l.record_type, l.record_id`.execute(tx);
+    const hiddenLinks = await restrictedRecordRefs(
+      tx,
+      principal,
+      linkRows.rows.map((l) => ({ recordType: l.record_type, recordId: l.record_id })),
+    );
     for (const l of linkRows.rows) {
+      if (hiddenLinks.has(reachKey({ recordType: l.record_type, recordId: l.record_id }))) {
+        restrictedLinks.add(l.evidence_id);
+        continue;
+      }
       const list = links.get(l.evidence_id) ?? [];
       list.push({ recordType: l.record_type, recordId: l.record_id, via: l.via });
       links.set(l.evidence_id, list);
     }
   }
   return {
-    items: page.items.map(
+    items: visible.map(
       (r): EvidenceRegisterItem => ({
         evidenceId: r.id,
         title: r.title,
@@ -280,6 +312,7 @@ export async function listEvidenceRegister(
         accessibilityStatus: r.accessibility_status as EvidenceRegisterItem["accessibilityStatus"],
         status: r.status as EvidenceRegisterItem["status"],
         links: links.get(r.id) ?? [],
+        ...(restrictedLinks.has(r.id) ? { includesRestrictedRecords: true as const } : {}),
       }),
     ),
     nextCursor: page.nextCursor,
@@ -339,7 +372,7 @@ export function registerEvidenceRegisterRoutes(app: FastifyInstance, db: Db): st
     const query = parseQuery(registerQuery, request.query);
     return readOnly(db, async (tx) => {
       await requireRegisterRead(tx, request, transformationId);
-      return listEvidenceRegister(tx, transformationId, query);
+      return listEvidenceRegister(tx, principalOf(request), transformationId, query);
     });
   });
 

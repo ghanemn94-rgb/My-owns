@@ -52,7 +52,7 @@ import { Decimal } from "decimal.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { hideRestrictedRefs, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { createConfigResolver, type ConfigResolver } from "../methodology/index.ts";
 import {
@@ -830,7 +830,9 @@ export function registerHealthAssessmentRoutes(
     const { transformationId, assessmentId } = parse(assessmentParams, request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
     const body = await readOnly((tx) => presentHealthCheck(tx, transformationId, assessmentId));
-    return sendVersioned(reply, 200, body);
+    // T-DG6-BE-Z10 (F-DG6-420; D-218): an answer's evidence the reader is not admitted to is shown as evidenceId null.
+    const answers = await hideRestrictedRefs(db, principalOf(request), "evidence", body.answers, "evidenceId");
+    return sendVersioned(reply, 200, { ...body, answers });
   });
 
   app.patch(HEALTH_CHECK, { config: assess }, async (request, reply) => {

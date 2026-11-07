@@ -15,6 +15,9 @@
 //     evidence links and contents, form comments/attachments/custom values/drafts, the sensitivity flag and grants;
 //     access/sensitive-reach.ts, T-DG6-BE-Y1, F-DG6-122); their events are listed with changes and reason null and
 //     redacted true. Actor, action, time, record id and versions remain.
+//   - restrictedIdsAmong (T-DG6-BE-Z10; F-DG6-420; D-218): which of the uuids named in an event's `changes` are such
+//     records; the event of an OPEN record whose changes name one (a group's counted member, an ask's blocker) is
+//     redacted the same way, so a restricted record's id never appears in a changed value.
 import { auditEventListQuery, uuid, type GlobalAuditEvent } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -50,6 +53,25 @@ export interface AuditRouteAccess {
   readFilter(request: FastifyRequest, cols: AuditEventTargetColumns): ReturnType<AuditScopePredicate>;
   /** The `auditRecordKey`s of the given records that are sensitive and that the caller is not admitted to. */
   restrictedRecords(request: FastifyRequest, refs: readonly AuditRecordRef[]): Promise<ReadonlySet<string>>;
+  /** The uuids among `ids` that name a record (of any sensitive or child type) the caller is not admitted to. */
+  restrictedIdsAmong(request: FastifyRequest, ids: readonly string[]): Promise<ReadonlySet<string>>;
+}
+
+const UUID_ANYWHERE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/**
+ * Every uuid named in an audit event's `changes`, lower-cased: a bare uuid, `<recordType>:<uuid>`, or one inside a
+ * compound text (a dedupe key such as `corrective.follow_up:<caseId>:<userId>`).
+ */
+export function uuidsInChanges(changes: unknown): string[] {
+  const out = new Set<string>();
+  const walk = (v: unknown): void => {
+    if (typeof v === "string") for (const m of v.matchAll(UUID_ANYWHERE)) out.add(m[0].toLowerCase());
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v !== null && typeof v === "object") Object.values(v).forEach(walk);
+  };
+  walk(changes);
+  return [...out];
 }
 
 const eventParams = z.strictObject({ auditEventId: uuid });
@@ -61,8 +83,10 @@ async function redact(
   rows: readonly AuditEventRow[],
 ): Promise<GlobalAuditEvent[]> {
   const restricted = await access.restrictedRecords(request, rows);
+  const named = rows.filter((r) => !restricted.has(auditRecordKey(r))).flatMap((r) => uuidsInChanges(r.changes));
+  const hiddenIds = named.length === 0 ? new Set<string>() : await access.restrictedIdsAmong(request, named);
   return rows.map((row) =>
-    restricted.has(auditRecordKey(row))
+    restricted.has(auditRecordKey(row)) || uuidsInChanges(row.changes).some((id) => hiddenIds.has(id))
       ? { ...row, reason: null, changes: null, redacted: true }
       : { ...row, redacted: false },
   );

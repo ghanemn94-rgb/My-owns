@@ -59,6 +59,7 @@ import {
   holds,
   loadGrants,
   principalOf,
+  redactRestrictedIds,
   refreshPrincipal,
   requireRecordWrite,
   requireTransformationRead,
@@ -619,6 +620,32 @@ function definitionOf(defs: readonly GateDefinition[], gateCode: string): GateDe
 
 // ------------------------------------------------------------------------------------------------ routes
 
+// T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): the gate reads never name a restricted record (a sensitive benefit,
+// business case or evidence item the reader is not admitted to) by id. The submission's frozen snapshot and criterion
+// details, and the live view's criteria, are shown redacted (`redactRestrictedIds`: the id is dropped or nulled) and
+// the object then carries `includesRestrictedRecords: true`. The stored snapshot and `snapshotSha256` are unchanged:
+// the hash is over the stored snapshot, so a redacted view does not verify against it (the marker says why).
+async function shownSubmission<S extends object>(db: DbOrTx, principal: Principal, s: S): Promise<S> {
+  const r = await redactRestrictedIds(db, principal, s);
+  return r.restricted ? { ...r.value, includesRestrictedRecords: true as const } : s;
+}
+
+async function shownView<V extends { currentSubmission: object | null }>(
+  db: DbOrTx,
+  principal: Principal,
+  view: V,
+): Promise<V> {
+  const current = view.currentSubmission === null ? null : await shownSubmission(db, principal, view.currentSubmission);
+  const { currentSubmission: _omit, ...rest } = view;
+  const r = await redactRestrictedIds(db, principal, rest);
+  const flagged = r.restricted || (current !== null && "includesRestrictedRecords" in current);
+  return {
+    ...(r.value as Omit<V, "currentSubmission">),
+    currentSubmission: current,
+    ...(flagged ? { includesRestrictedRecords: true as const } : {}),
+  } as unknown as V;
+}
+
 export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: GateFactsProvider): string[] {
   const read = { access: { permission: "transformation.read" as const } };
 
@@ -639,7 +666,13 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
     for (const def of defs) {
       const instance = instances.find((i) => i.gate_code === def.code);
       if (!instance) throw problems.notFound();
-      items.push(await gateView(db, principal, target, instance, def, facts, defs, inherited, catalogue));
+      items.push(
+        await shownView(
+          db,
+          principal,
+          await gateView(db, principal, target, instance, def, facts, defs, inherited, catalogue),
+        ),
+      );
     }
     return { items };
   });
@@ -664,7 +697,7 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       catalogue,
     );
     reply.header("ETag", `"${instance.version}"`);
-    return view;
+    return shownView(db, principal, view);
   });
 
   app.patch(`${G}/:gateCode`, { config: { access: { permission: "gate.configure" } } }, async (request, reply) => {
@@ -767,7 +800,10 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.submission_no], hash);
-    return { items: page.items.map(toGateSubmission), nextCursor: page.nextCursor };
+    const principal = principalOf(request);
+    const items = [];
+    for (const r of page.items) items.push(await shownSubmission(db, principal, toGateSubmission(r)));
+    return { items, nextCursor: page.nextCursor };
   });
 
   app.get(`${G}/:gateCode/submissions/:submissionNo`, { config: read }, async (request) => {
@@ -792,9 +828,12 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
       .selectAll()
       .where("gate_submission_id", "=", submission.id)
       .executeTakeFirst();
-    return {
-      submission: toGateSubmission(submission),
-      criteria: criteria.map((c) => ({
+    const principal = principalOf(request);
+    const shown = await shownSubmission(db, principal, toGateSubmission(submission));
+    const shownCriteria = await redactRestrictedIds(
+      db,
+      principal,
+      criteria.map((c) => ({
         id: c.id,
         organizationId: c.organization_id,
         transformationId: c.transformation_id,
@@ -806,7 +845,14 @@ export function registerGateRoutes(app: FastifyInstance, db: Db, gateFacts: Gate
         detail: c.detail as Record<string, unknown>,
         evaluatedAt: iso(c.evaluated_at),
       })),
+    );
+    return {
+      submission: shown,
+      criteria: shownCriteria.value,
       decision: decision ? toGateDecision(decision, await agreementsOf(db, decision.id)) : null,
+      ...(shownCriteria.restricted || "includesRestrictedRecords" in shown
+        ? { includesRestrictedRecords: true as const }
+        : {}),
     };
   });
 

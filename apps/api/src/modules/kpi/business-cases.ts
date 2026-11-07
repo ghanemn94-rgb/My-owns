@@ -49,6 +49,8 @@ import {
   readScopeFor,
   requireSensitiveRead,
   requireTransformationRead,
+  restrictedIdsOf,
+  type Principal,
 } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
@@ -308,6 +310,34 @@ export async function presentCases(db: DbOrTx, rows: readonly BusinessCaseRow[])
 
 export async function presentCase(db: DbOrTx, row: BusinessCaseRow): Promise<BusinessCase> {
   return (await presentCases(db, [row]))[0]!;
+}
+
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): the reader's view of cases. A parent (transformation) case the reader
+ * is not admitted to is the neutral marker `parentCaseId: null`, `parentCaseRestricted: true` (an initiative case's
+ * roll-up depends on it), and the case carries `includesRestrictedRecords: true`.
+ */
+export async function shownCases(
+  db: DbOrTx,
+  principal: Principal,
+  cases: readonly BusinessCase[],
+): Promise<BusinessCase[]> {
+  const hidden = await restrictedIdsOf(
+    db,
+    principal,
+    "business_case",
+    cases.map((c) => c.parentCaseId),
+  );
+  if (hidden.size === 0) return [...cases];
+  return cases.map((c) =>
+    c.parentCaseId === null || !hidden.has(c.parentCaseId)
+      ? c
+      : { ...c, parentCaseId: null, parentCaseRestricted: true as const, includesRestrictedRecords: true as const },
+  );
+}
+
+async function shownCase(db: DbOrTx, request: FastifyRequest, c: BusinessCase): Promise<BusinessCase> {
+  return (await shownCases(db, principalOf(request), [c]))[0]!;
 }
 
 // ------------------------------------------------------------------------------------------------ access helpers
@@ -730,7 +760,10 @@ export function registerBusinessCaseRoutes(app: FastifyInstance, { db }: ModuleD
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
-    return { items: await presentCases(db, page.items), nextCursor: page.nextCursor };
+    return {
+      items: await shownCases(db, principalOf(request), await presentCases(db, page.items)),
+      nextCursor: page.nextCursor,
+    };
   });
 
   app.post(BUSINESS_CASES, { config: write }, async (request, reply) => {
@@ -749,7 +782,7 @@ export function registerBusinessCaseRoutes(app: FastifyInstance, { db }: ModuleD
       const ctx = await openWrite(tx, request, transformationId, [{ permission: EDIT }], null, { atCommit: true });
       return maybeIdempotent(tx, request, ctx.userId, request.body, async () => ({
         status: 201,
-        body: await presentCase(tx, await createCase(tx, ctx, request)),
+        body: await shownCase(tx, request, await presentCase(tx, await createCase(tx, ctx, request))),
       }));
     });
     return sendCreated(request, reply, result, BUSINESS_CASES);
@@ -757,24 +790,34 @@ export function registerBusinessCaseRoutes(app: FastifyInstance, { db }: ModuleD
 
   app.get(CASE_ITEM, { config: read }, async (request, reply) => {
     const row = await readCase(db, request, parseCaseId(request.params));
-    return sendVersioned(reply, 200, await presentCase(db, row));
+    return sendVersioned(reply, 200, await shownCase(db, request, await presentCase(db, row)));
   });
 
   app.patch(CASE_ITEM, { config: write }, async (request, reply) => {
     const id = parseCaseId(request.params);
     const row = await db.transaction().execute((tx) => updateCase(tx, request, id));
-    return sendVersioned(reply, 200, await presentCase(db, row));
+    return sendVersioned(reply, 200, await shownCase(db, request, await presentCase(db, row)));
   });
 
   app.post(`${CASE_ITEM}/archive`, { config: write }, async (request, reply) => {
     const id = parseCaseId(request.params);
     const row = await db.transaction().execute((tx) => archiveCase(tx, request, id));
-    return sendVersioned(reply, 200, await presentCase(db, row));
+    return sendVersioned(reply, 200, await shownCase(db, request, await presentCase(db, row)));
   });
 
   app.get(`${CASE_ITEM}/totals`, { config: read }, async (request) => {
     const row = await readCase(db, request, parseCaseId(request.params));
-    return loadCaseTotals(db, row);
+    const totals = await loadCaseTotals(db, row);
+    // T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2; D-195 Q3): the totals are the same for every reader; an included
+    // initiative case the reader is not admitted to is omitted from `includedCaseIds` (no id), and the response then
+    // carries `includesRestrictedRecords: true`.
+    const hidden = await restrictedIdsOf(db, principalOf(request), "business_case", totals.includedCaseIds);
+    if (hidden.size === 0) return totals;
+    return {
+      ...totals,
+      includedCaseIds: totals.includedCaseIds.filter((id) => !hidden.has(id)),
+      includesRestrictedRecords: true as const,
+    };
   });
 
   app.post(
@@ -783,7 +826,7 @@ export function registerBusinessCaseRoutes(app: FastifyInstance, { db }: ModuleD
     async (request, reply) => {
       const id = parseCaseId(request.params);
       const row = await db.transaction().execute((tx) => validateBaseline(tx, request, id));
-      return sendVersioned(reply, 200, await presentCase(db, row));
+      return sendVersioned(reply, 200, await shownCase(db, request, await presentCase(db, row)));
     },
   );
 

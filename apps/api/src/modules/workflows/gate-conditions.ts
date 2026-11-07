@@ -21,6 +21,7 @@ import {
   auditContextOf,
   commitTimeDenial,
   denialOf,
+  hideRestrictedRefs,
   principalOf,
   refreshPrincipal,
   requireAction,
@@ -146,7 +147,11 @@ export function registerGateConditionRoutes(app: FastifyInstance, { db }: Module
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.due_date, r.id], hash);
-    return { items: page.items.map(toTracked), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z10 (F-DG6-420; D-218): a closure's evidence the reader is not admitted to is shown as evidenceId null.
+    return {
+      items: await hideRestrictedRefs(db, principalOf(request), "evidence", page.items.map(toTracked), "evidenceId"),
+      nextCursor: page.nextCursor,
+    };
   });
 
   app.post(

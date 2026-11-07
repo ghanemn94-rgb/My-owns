@@ -57,7 +57,9 @@ import {
   principalOf,
   requireTransformationRead,
   resolveParty,
+  restrictedIdsOf,
   routingRefusals,
+  type Principal,
   type ResolvedTarget,
 } from "../access/index.ts";
 import { record } from "../audit/index.ts";
@@ -195,8 +197,16 @@ export const EXPECTED_FIELDS: ReadonlyMap<string, string> = new Map([
 
 const dec = (v: string | null): string | null => (v === null ? null : canonicalDecimal(v));
 
-/** The slots with their values, evidence links and reviews (each in value-number order). */
-export async function presentActuals(db: DbOrTx, rows: readonly KpiActualRow[]): Promise<KpiActual[]> {
+/**
+ * The slots with their values, evidence links and reviews (each in value-number order).
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a value's `evidenceIds` omit an evidence item the reader is not
+ * admitted to, and the slot then carries `includesRestrictedRecords: true`.
+ */
+export async function presentActuals(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly KpiActualRow[],
+): Promise<KpiActual[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const [values, evidence, reviews] = await Promise.all([
@@ -210,12 +220,24 @@ export async function presentActuals(db: DbOrTx, rows: readonly KpiActualRow[]):
       .execute(),
     db.selectFrom("kpi_actual_review").selectAll().where("kpi_actual_id", "in", ids).orderBy("value_no").execute(),
   ]);
+  const hiddenEvidence = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    evidence.map((e) => e.evidence_id),
+  );
   const evidenceOf = new Map<string, string[]>();
+  const restrictedSlots = new Set<string>();
   for (const e of evidence) {
+    if (hiddenEvidence.has(e.evidence_id)) {
+      restrictedSlots.add(e.kpi_actual_id);
+      continue;
+    }
     const key = `${e.kpi_actual_id}:${e.value_no}`;
     evidenceOf.set(key, [...(evidenceOf.get(key) ?? []), e.evidence_id]);
   }
   return rows.map((r) => ({
+    ...(restrictedSlots.has(r.id) ? { includesRestrictedRecords: true as const } : {}),
     id: r.id,
     transformationId: r.transformation_id,
     kpiDefinitionId: r.kpi_definition_id,
@@ -1027,8 +1049,8 @@ async function rejectValue(ctx: WriteContext, id: string, expected: number, reas
 
 // ------------------------------------------------------------------------------------------------ routes
 
-async function submission(db: DbOrTx, row: KpiActualRow): Promise<KpiActualSubmission> {
-  const [actual] = await presentActuals(db, [row]);
+async function submission(db: DbOrTx, principal: Principal, row: KpiActualRow): Promise<KpiActualSubmission> {
+  const [actual] = await presentActuals(db, principal, [row]);
   const { downstream, financeReview } = await downstreamOf(db, row.transformation_id, row.kpi_definition_id);
   return { actual: actual!, reviewPending: row.status === "submitted", downstream, financeReview };
 }
@@ -1082,7 +1104,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.period_end, r.id], hash);
-    return { items: await presentActuals(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentActuals(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(DEF_ACTUALS, { config: write(SUBMIT) }, async (request, reply) => {
@@ -1095,7 +1117,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
     return sendSubmission(
       reply,
       201,
-      await submission(db, row),
+      await submission(db, principalOf(request), row),
       `/api/v1/transformations/${transformationId}/kpi-actuals/${row.id}`,
     );
   });
@@ -1105,7 +1127,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
     await requireTransformationRead(db, principalOf(request), transformationId);
     const row = await findSlot(db, transformationId, kpiActualId);
     if (!row) throw problems.notFound();
-    const [body] = await presentActuals(db, [row]);
+    const [body] = await presentActuals(db, principalOf(request), [row]);
     reply.header("ETag", `"${row.version}"`);
     return reply.code(200).send(body);
   });
@@ -1118,7 +1140,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
       const body = parseBody(kpiActualValueEntry, request.body);
       return addValue(ctx, kpiActualId, expected, body);
     });
-    return sendSubmission(reply, 200, await submission(db, row));
+    return sendSubmission(reply, 200, await submission(db, principalOf(request), row));
   });
 
   app.post(`${ACTUAL_ITEM}/submit`, { config: write(SUBMIT, false) }, async (request, reply) => {
@@ -1128,7 +1150,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
       const expected = requireIfMatch(request);
       return submitDraft(ctx, kpiActualId, expected);
     });
-    return sendSubmission(reply, 200, await submission(db, row));
+    return sendSubmission(reply, 200, await submission(db, principalOf(request), row));
   });
 
   for (const [suffix, decideFn] of [
@@ -1150,7 +1172,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
         const expected = requireIfMatch(request);
         return decideFn(ctx, kpiActualId, expected, request);
       });
-      const [body] = await presentActuals(db, [row]);
+      const [body] = await presentActuals(db, principalOf(request), [row]);
       reply.header("ETag", `"${row.version}"`);
       return reply.code(200).send(body);
     });
@@ -1206,6 +1228,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
     return {
       items: await presentActuals(
         db,
+        principalOf(request),
         page.items.map(({ sort_key: _k, ...r }) => r as KpiActualRow),
       ),
       nextCursor: page.nextCursor,

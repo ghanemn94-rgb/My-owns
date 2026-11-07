@@ -83,6 +83,11 @@ export const gateSubmission = z.strictObject({
   createdBy: uuid,
   updatedAt: timestamp,
   updatedBy: uuid,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when an id of a record the reader is not admitted to was removed from the
+   * shown body (the stored snapshot and its hash are unchanged); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type GateSubmission = z.infer<typeof gateSubmission>;
 export const gateSubmissionPage = z.strictObject({ items: z.array(gateSubmission), nextCursor: z.string().nullable() });
@@ -163,6 +168,11 @@ export const gateView = z.strictObject({
   submissionEnabled: z.boolean(),
   canSubmit: z.boolean(),
   canDecide: z.boolean(),
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when an id of a record the reader is not admitted to was removed from the
+   * shown body (the stored snapshot and its hash are unchanged); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export const gateList = z.strictObject({ items: z.array(gateView).length(6) });
 
@@ -170,6 +180,11 @@ export const gateSubmissionView = z.strictObject({
   submission: gateSubmission,
   criteria: z.array(gateSubmissionCriterion),
   decision: gateDecision.nullable(),
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when an id of a record the reader is not admitted to was removed from the
+   * shown body (the stored snapshot and its hash are unchanged); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 
 export const gateApproverConfig = z.strictObject({

@@ -198,6 +198,13 @@ export const businessCase = z.strictObject({
   archivedBy: nullableUuid,
   archiveReason: z.string().min(3).max(1000).nullable(),
   ...stamps,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): present (true) when the parent case is one the reader is not admitted to;
+   * `parentCaseId` is then null (its id is never returned).
+   */
+  parentCaseRestricted: z.literal(true).optional(),
+  /** True when the parent case was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type BusinessCase = z.infer<typeof businessCase>;
 
@@ -321,5 +328,10 @@ export const businessCaseTotals = z.strictObject({
   netValue: moneyTotals,
   nonFinancialBenefitCount: z.number().int().min(0),
   warnings: z.array(warning),
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when an included case was omitted from `includedCaseIds` for the reader
+   * (the totals are unchanged, D-195 Q3); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type BusinessCaseTotals = z.infer<typeof businessCaseTotals>;

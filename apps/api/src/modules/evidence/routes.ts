@@ -37,6 +37,8 @@ import {
   readScopeFor,
   requireRecordWrite,
   requireTransformationRead,
+  restrictedRecordRefs,
+  reachKey,
   type ResolvedTarget,
   type WriteRule,
 } from "../access/index.ts";
@@ -893,7 +895,22 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toEvidenceLink), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a link whose evidence item or linked record is restricted for the
+    // reader is not listed (lists omit the row; no count), so neither id reaches a reader who gets 404 on it.
+    const hidden = await restrictedRecordRefs(
+      db,
+      principalOf(request),
+      page.items.flatMap((r) => [
+        { recordType: "evidence", recordId: r.evidence_id },
+        { recordType: r.record_type, recordId: r.record_id },
+      ]),
+    );
+    const items = page.items.filter(
+      (r) =>
+        !hidden.has(reachKey({ recordType: "evidence", recordId: r.evidence_id })) &&
+        !hidden.has(reachKey({ recordType: r.record_type, recordId: r.record_id })),
+    );
+    return { items: items.map(toEvidenceLink), nextCursor: page.nextCursor };
   });
 
   app.post(LINKS, { config: { access: { permission: "evidence.create" } } }, async (request, reply) => {
