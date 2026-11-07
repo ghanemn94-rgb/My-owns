@@ -272,7 +272,14 @@ const SPECS: readonly SavedViewListSpec[] = [
     listKey: "workstream_outputs",
     operationId: "listWorkstreamOutputs",
     transformationScoped: true,
-    columns: register(["workstreamCode", "title", "outputKind", "recordType", "recordId", "evidenceId", "note"]),
+    // includesRestrictedRecords (T-DG6-BE-Z10B, D-218; boolean, present only as true; label
+    // access.includesRestrictedRecords, en/ar): a per-row read-time property of the item schema, so a column like
+    // initiatives' displayStatus/warnings/flags (ADR-0057 §4: columns are exactly the item's properties). It is neither
+    // a filter (the contract has no such parameter: ADR-0057 §5) nor a sort (not a RegisterSpec.sortColumns column).
+    columns: [
+      ...register(["workstreamCode", "title", "outputKind", "recordType", "recordId", "evidenceId", "note"]),
+      "includesRestrictedRecords",
+    ],
     filters: REGISTER_FILTERS,
     sorts: ["workstreamCode", "title", ...REGISTER_SORT_TAIL],
   },

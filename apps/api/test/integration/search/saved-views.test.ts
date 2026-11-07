@@ -792,6 +792,19 @@ describe("the list registry equals the contract (ADR-0057 §4, §5)", () => {
         sort: [{ key: "z", direction: "asc" }],
       }),
     ).toEqual({ key: "x", pointer: "/columns/0" });
+    // T-DG6-BE-Z11: the read-time includesRestrictedRecords of a workstream output is a column, never a filter or a sort.
+    const restricted = "includesRestrictedRecords";
+    expect(savedViewUnknownKey("workstream_outputs", { columns: [restricted], filters: {}, sort: [] })).toBeNull();
+    expect(
+      savedViewUnknownKey("workstream_outputs", {
+        columns: [],
+        filters: {},
+        sort: [{ key: restricted, direction: "asc" }],
+      }),
+    ).toEqual({ key: restricted, pointer: "/sort/0/key" });
+    expect(
+      savedViewUnknownKey("workstream_outputs", { columns: [], filters: { [restricted]: "true" }, sort: [] }),
+    ).toEqual({ key: restricted, pointer: `/filters/${restricted}` });
     expect(savedViewFilterValueError("initiatives", { waveId: "01920000-0000-7000-8000-000000000001" })).toBeNull();
     expect(
       savedViewFilterValueError("search", { recordType: ["lesson", "benefit"], includeArchived: "true" }),
