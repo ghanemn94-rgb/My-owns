@@ -5587,6 +5587,20 @@ export interface ReportSnapshotTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  /** 0126 (T-DG6-BE-Z9, F-DG6-400): true when the snapshot's aggregate records are in report_snapshot_aggregate. */
+  aggregates_recorded: Generated<boolean>;
+}
+
+/** 0126 (T-DG6-BE-Z9, F-DG6-400): a record a section's aggregate figures include (append-only; not a source). */
+export interface ReportSnapshotAggregateTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  section_key: string;
+  record_type: string;
+  record_id: string;
+  created_at: TimestampDefault;
 }
 
 export interface ReportSnapshotSourceTable {
@@ -5727,6 +5741,7 @@ export interface Database {
   report_snapshot_source: ReportSnapshotSourceTable;
   report_snapshot_version: ReportSnapshotVersionTable;
   report_snapshot_evidence: ReportSnapshotEvidenceTable;
+  report_snapshot_aggregate: ReportSnapshotAggregateTable;
   owner_update: OwnerUpdateTable;
   owner_update_revision: OwnerUpdateRevisionTable;
   export_job: ExportJobTable;
@@ -5738,6 +5753,7 @@ export type ReportSnapshotRow = Selectable<ReportSnapshotTable>;
 export type ReportSnapshotSourceRow = Selectable<ReportSnapshotSourceTable>;
 export type ReportSnapshotVersionRow = Selectable<ReportSnapshotVersionTable>;
 export type ReportSnapshotEvidenceRow = Selectable<ReportSnapshotEvidenceTable>;
+export type ReportSnapshotAggregateRow = Selectable<ReportSnapshotAggregateTable>;
 export type OwnerUpdateRow = Selectable<OwnerUpdateTable>;
 export type OwnerUpdateRevisionRow = Selectable<OwnerUpdateRevisionTable>;
 export type ExportJobRow = Selectable<ExportJobTable>;
@@ -12006,6 +12022,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "aggregates_recorded",
   ],
   report_snapshot_source: [
     "id",
@@ -12043,6 +12060,16 @@ export const SCHEMA_COLUMNS = {
     "content_revision",
     "content_sha256",
     "review_status",
+    "created_at",
+  ],
+  report_snapshot_aggregate: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "section_key",
+    "record_type",
+    "record_id",
     "created_at",
   ],
   owner_update: [

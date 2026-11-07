@@ -118,3 +118,45 @@ export async function withoutRestrictedItems<A extends { items: { recordType: st
   if (kept.size === all.length) return areas;
   return areas.map((a) => ({ ...a, items: a.items.filter((i) => kept.has(i)) }));
 }
+
+/**
+ * T-DG6-BE-Z9 (F-DG6-400; ADR-0051 §2 "Totals and rollups"): the records whose values the facts' aggregate figures
+ * include: every benefit (its own row and its value lines) and every business case (its investment lines). They are
+ * exactly the records `dashboardRestriction` decides the dashboards' flag from, so a report section built from the same
+ * facts (the executive pack's `metrics_<subject>`, the executive dashboard's `area_value`) is labelled for the same
+ * reader as the dashboard. Of the six Template 10 areas only `value` reads them (engine.ts `computeAreas` and
+ * `presentAreas`: benefits, lines and investment); the others read outcomes, initiatives, dependencies, decisions and
+ * adoption indicators, none of which is a sensitive record type or a child of one (access/sensitive-reach.ts).
+ * Deduplicated, in first-seen order.
+ */
+export function factsValueRecords(facts: DashboardFacts): ReachRef[] {
+  const out: ReachRef[] = [];
+  const seen = new Set<string>();
+  const add = (recordType: "benefit" | "business_case", recordId: string) => {
+    const k = `${recordType}:${recordId}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push({ recordType, recordId });
+  };
+  for (const b of facts.benefits) add("benefit", b.benefitId);
+  for (const l of facts.lines) add("benefit", l.benefitId);
+  for (const l of facts.investment) add("business_case", l.businessCaseId);
+  return out;
+}
+
+/** The T10 area whose figures include `factsValueRecords` (see there). */
+export const VALUE_AREA = "value";
+
+/**
+ * T-DG6-BE-Z9 (F-DG6-400): the benefits whose planned values an initiative item's value includes. A Portfolio item
+ * shows the initiative's planned value allocated on the profit-and-cash basis (engine.ts `initiativePlannedValues`:
+ * Σ allocated benefits' planned amounts × share; with a share of 1 it IS the benefit's amount), and whether it is
+ * known, not_applicable or unknown is decided by every benefit allocated to it, so every allocated benefit is
+ * included. The item names only the initiative, so a report table of these items is labelled from these records.
+ */
+export function allocatedBenefitRecords(facts: DashboardFacts, initiativeIds: readonly string[]): ReachRef[] {
+  const wanted = new Set(initiativeIds);
+  const ids = new Set<string>();
+  for (const a of facts.allocations) if (wanted.has(a.initiativeId)) ids.add(a.benefitId);
+  return [...ids].map((recordId) => ({ recordType: "benefit", recordId }));
+}

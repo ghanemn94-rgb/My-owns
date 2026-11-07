@@ -552,6 +552,23 @@ async function insertSnapshot(
     });
   }
   for (const chunk of batches(evidenceRows)) await tx.insertInto("report_snapshot_evidence").values(chunk).execute();
+  // T-DG6-BE-Z9 (F-DG6-400; migration 0126): the records each aggregate section's figures include, beside the content
+  // (which, with its contentSha256, is unchanged). They only decide the read-time label (restricted.ts); not sources.
+  const seenAggregate = new Set<string>();
+  const aggregateRows = [];
+  for (const g of a.output.aggregates ?? []) {
+    const k = `${g.sectionKey}:${g.recordType}:${g.recordId}`;
+    if (seenAggregate.has(k)) continue;
+    seenAggregate.add(k);
+    aggregateRows.push({
+      ...base,
+      id: uuidv7(),
+      section_key: g.sectionKey,
+      record_type: g.recordType,
+      record_id: g.recordId,
+    });
+  }
+  for (const chunk of batches(aggregateRows)) await tx.insertInto("report_snapshot_aggregate").values(chunk).execute();
   await record(tx, ctx, {
     action: reissue === null ? "report_snapshot.generate" : "report_snapshot.reissue",
     recordType: "report_snapshot",

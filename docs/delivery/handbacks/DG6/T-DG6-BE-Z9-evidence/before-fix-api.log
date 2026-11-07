@@ -1,0 +1,122 @@
+port-policy: PostgreSQL listening on port 31050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z9
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6k4nv1_2c9d5654 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts (14 tests | 6 failed) 15088ms
+   ✓ F-DG6-360: the Executive Overview > TL and AUD: no item of the sensitive benefit, the same figures as the TO, includesRestrictedRecords true; the TO sees it (false) 262ms
+   ✓ F-DG6-361: every drill-down metric and value class > TL and AUD: no item, input or evidence entry of the benefit or its lines; the same value; flagged when something was omitted  8523ms
+   ✓ F-DG6-361: every drill-down metric and value class > the value.gap drill-down of the benefit's class lists its lines to the TO (false) and none to TL or AUD (true) 64ms
+   ✓ F-DG6-361: the Finance, adoption, transformation and workstream dashboards > TL and AUD: no mention of the benefit, the same figures as the TO, labelled; the TO sees it on the transformation and workstream dashboards  356ms
+   ✓ F-DG6-340: report totals that include a restricted value > live benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 73ms
+   ✓ F-DG6-340: report totals that include a restricted value > snapshot benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 22ms
+   ✓ F-DG6-340: report totals that include a restricted value > a register with no sensitive record (kpis) carries no member; the stored content never holds it and its hash is unchanged 44ms
+   ✓ F-DG6-340: report totals that include a restricted value > benefit-totals: the same totals for TL and TO, flagged true for TL and false for the TO (unchanged BE-B2 behaviour) 26ms
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 32ms
+     → TO metrics_transformation: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 6ms
+     → TO metrics_transformation: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_dashboard: area_value labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 27ms
+     → TO area_value: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_dashboard: area_value labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 7ms
+     → TO area_value: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > the stored content never holds the member and its hash is unchanged; the included records are kept beside it 3ms
+     → relation "report_snapshot_aggregate" does not exist
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > an aggregate row is append-only and written only by the snapshot's creating transaction 6ms
+     → expected [Function] to throw error matching /creation_only|only in the transaction/ but got 'relation "report_snapshot_aggregate" …'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+AssertionError: TO metrics_transformation: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:423:89
+    421|       it(`${kind} ${code}: ${AGGREGATES[code]!.join(", ")} labelled tr…
+    422|         const admitted = await read(code, kind, to);
+    423|         for (const key of AGGREGATES[code]!) expect(flagOf(admitted, k…
+       |                                                                                         ^
+    424|         for (const [who, s] of NOT_ADMITTED()) {
+    425|           const doc = await read(code, kind, s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_dashboard: area_value labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_dashboard: area_value labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+AssertionError: TO area_value: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:423:89
+    421|       it(`${kind} ${code}: ${AGGREGATES[code]!.join(", ")} labelled tr…
+    422|         const admitted = await read(code, kind, to);
+    423|         for (const key of AGGREGATES[code]!) expect(flagOf(admitted, k…
+       |                                                                                         ^
+    424|         for (const [who, s] of NOT_ADMITTED()) {
+    425|           const doc = await read(code, kind, s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > the stored content never holds the member and its hash is unchanged; the included records are kept beside it
+error: relation "report_snapshot_aggregate" does not exist
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:452:20
+    450|         code,
+    451|       ).toBe(row.content_sha256);
+    452|       const kept = await api.db
+       |                    ^
+    453|         .selectFrom("report_snapshot_aggregate")
+    454|         .select(["section_key", "record_type", "record_id"])
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:452:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > an aggregate row is append-only and written only by the snapshot's creating transaction
+AssertionError: expected [Function] to throw error matching /creation_only|only in the transaction/ but got 'relation "report_snapshot_aggregate" …'
+
+[32m- Expected:[39m 
+/creation_only|only in the transaction/
+
+[31m+ Received:[39m 
+"relation \"report_snapshot_aggregate\" does not exist"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:468:5
+    466|     ).rejects.toThrow();
+    467|     await expect(sql`DELETE FROM report_snapshot_aggregate WHERE snaps…
+    468|     await expect(
+       |     ^
+    469|       sql`INSERT INTO report_snapshot_aggregate (id, organization_id, …
+    470|           VALUES (${randomUUID()}::uuid, ${ORG}::uuid, ${T}::uuid, ${i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 8 passed (14)
+   Start at  15:27:31
+   Duration  27.93s (transform 4.61s, setup 0ms, collect 9.07s, tests 15.09s, environment 0ms, prepare 242ms)
+

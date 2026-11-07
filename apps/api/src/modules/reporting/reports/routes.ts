@@ -139,7 +139,11 @@ export function registerReportRoutes(app: FastifyInstance, deps: ModuleDeps): st
       parameters: parseParametersQuery(query.parameters),
     });
     // ADR-0051 §2 (T-DG6-BE-Z5, F-DG6-300): the rows of records this reader is not admitted to are omitted.
-    return { snapshotId: null, document: await documentForReader(db, principalOf(request), a.document) };
+    // T-DG6-BE-Z9 (F-DG6-400): an aggregate section is also labelled from the records its figures include.
+    return {
+      snapshotId: null,
+      document: await documentForReader(db, principalOf(request), a.document, a.output.aggregates),
+    };
   });
 
   app.post(`${REPORTS}/generate`, { config: generate }, async (request, reply) => {
