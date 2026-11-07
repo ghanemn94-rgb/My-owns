@@ -91,6 +91,11 @@ export const formCustomValues = z.strictObject({
   version: z.number().int().min(0),
   updatedAt: timestamp.nullable(),
   updatedBy: uuid.nullable(),
+  /**
+   * T-DG6-BE-Z10B (F-DG6-420; D-218): true when an attachment or reference value named a record the reader is not
+   * admitted to; that id is omitted from `values` (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type FormCustomValues = z.infer<typeof formCustomValues>;
 

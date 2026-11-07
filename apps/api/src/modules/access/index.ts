@@ -84,7 +84,10 @@ export {
 // T-DG6-BE-Y1 (F-DG6-121..123; ADR-0051 §2): the one helper for every route that reaches a sensitive record's children.
 export {
   hideRestrictedRefs,
+  hideRestrictedRefLists,
+  hideRestrictedTypedRefs,
   isSensitiveRecordType,
+  keptRestrictedRef,
   reachKey,
   reachRefsOfParams,
   recordRefSensitivity,

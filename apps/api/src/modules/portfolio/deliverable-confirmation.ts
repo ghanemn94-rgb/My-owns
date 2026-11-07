@@ -39,7 +39,7 @@ import { freeText, uuid } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead, type Principal } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import { record as audit, type AuditContext } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -155,6 +155,8 @@ export interface DeliverableExternalChangeView {
   confirmationNote: string | null;
   version: number;
   events: DeliverableConfirmationEvent[];
+  /** T-DG6-BE-Z10B: present (true) when `evidenceId` was omitted for the reader. */
+  includesRestrictedRecords?: true;
 }
 
 /** DeliverableConfirmation (openapi): `externalChange` is null when the deliverable was never flagged. */
@@ -203,13 +205,21 @@ async function toView(db: DbOrTx, row: DeliverableExternalChangeRow): Promise<De
 
 async function toConfirmation(
   db: DbOrTx,
+  principal: Principal,
   deliverable: DeliverableRef,
   row: DeliverableExternalChangeRow | undefined,
 ): Promise<DeliverableConfirmation> {
+  const view = row ? await toView(db, row) : null;
+  // T-DG6-BE-Z10B (F-DG6-420; D-218): the confirming evidence item is named only to a reader admitted to it; otherwise
+  // `evidenceId` is null with `includesRestrictedRecords: true` (the confirmation, its source and its actor stay open).
+  const hidden = await restrictedIdsOf(db, principal, "evidence", [view?.evidenceId]);
   return {
     deliverableId: deliverable.id,
     transformationId: deliverable.transformation_id,
-    externalChange: row ? await toView(db, row) : null,
+    externalChange:
+      view !== null && view.evidenceId !== null && hidden.has(view.evidenceId)
+        ? { ...view, evidenceId: null, includesRestrictedRecords: true }
+        : view,
   };
 }
 
@@ -257,7 +267,7 @@ export async function getDeliverableConfirmation(
   const deliverable = await findDeliverable(db, deliverableId);
   await requireTransformationRead(db, principal, deliverable.transformation_id);
   const row = await findFlag(db, deliverableId);
-  return { body: await toConfirmation(db, deliverable, row), version: row?.version ?? 0 };
+  return { body: await toConfirmation(db, principal, deliverable, row), version: row?.version ?? 0 };
 }
 
 // ------------------------------------------------------------------------------------------------ the evidence gate
@@ -376,7 +386,7 @@ export async function putExternalChange(
         confirmation_status: { from: null, to: "unconfirmed" },
       },
     });
-    return { body: await toConfirmation(tx, deliverable, row), version: row.version };
+    return { body: await toConfirmation(tx, ctx.principal, deliverable, row), version: row.version };
   }
 
   if (current.confirmation_status === "confirmed")
@@ -393,7 +403,7 @@ export async function putExternalChange(
   if (current.description !== body.description)
     changes["description"] = { from: current.description, to: body.description };
   if (Object.keys(changes).length === 0)
-    return { body: await toConfirmation(tx, deliverable, current), version: current.version };
+    return { body: await toConfirmation(tx, ctx.principal, deliverable, current), version: current.version };
 
   const action =
     changes["is_external_change"] === undefined ? "changed" : body.isExternalChange ? "flagged" : "withdrawn";
@@ -421,7 +431,7 @@ export async function putExternalChange(
     newVersion: row.version,
     changes,
   });
-  return { body: await toConfirmation(tx, deliverable, row), version: row.version };
+  return { body: await toConfirmation(tx, ctx.principal, deliverable, row), version: row.version };
 }
 
 /**
@@ -479,7 +489,7 @@ export async function confirmExternalChange(
       confirmation_note: { from: null, to: body.note },
     },
   });
-  return { body: await toConfirmation(tx, deliverable, row), version: row.version };
+  return { body: await toConfirmation(tx, ctx.principal, deliverable, row), version: row.version };
 }
 
 // ------------------------------------------------------------------------------------------------ connector result

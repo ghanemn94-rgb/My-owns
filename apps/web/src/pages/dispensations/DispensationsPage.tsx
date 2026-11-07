@@ -19,6 +19,7 @@ import { BLANK_CODE, Dialog, Field, isBlankText, REQUIRED_CODE, useFocusFirstInv
 import { Icon } from "../../components/Icon.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { Section, TextCell } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
@@ -134,9 +135,16 @@ function DispensationRegister() {
             </span>
             <span className="block small">
               {t("dispensations.field.evidence")}:{" "}
-              {d.evidenceId
-                ? (evById.get(d.evidenceId)?.title ?? t("common.value.notVisible"))
-                : t("common.value.none")}
+              {d.evidenceId ? (
+                (evById.get(d.evidenceId)?.title ?? t("common.value.notVisible"))
+              ) : d.includesRestrictedRecords ? (
+                // T-DG6-BE-Z10B (D-218): the dispensation has evidence the reader is not admitted to; never "none".
+                <span data-evidence="restricted">
+                  <RestrictedRecordsLabel value />
+                </span>
+              ) : (
+                t("common.value.none")
+              )}
             </span>
           </span>
         ),

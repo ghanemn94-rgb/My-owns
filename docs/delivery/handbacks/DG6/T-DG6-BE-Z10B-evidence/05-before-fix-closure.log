@@ -1,0 +1,61 @@
+port-policy: PostgreSQL listening on port 31054 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z10b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6r80h9_22cb5cde (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/sustainment/closure.test.ts (10 tests | 1 failed) 3283ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > not delivery-complete: 422 invalid-transition closure.delivery_not_complete 41ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > REQ-PB-009: delivery Complete and no validated benefit cannot be closed (422 invalid-transition) 223ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > a validated benefit needs a BAU owner; then closed (basis validated_value, snapshot), audited; 409 again  517ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > a benefit covered by an approved transition decision closes with basis transition_decision 244ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > concurrent closes: exactly one closure record (one 201, one 409) 174ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > S-4: a TL revoked after the identity hook gets 403 at commit time (initiative and transformation); nothing written 225ms
+   ✓ closeInitiative (ADR-0034 §7; REQ-PB-009) > AUD, WL and BO 403; ADM-only and an outsider 404; nothing written 58ms
+   ✓ closeTransformation (ADR-0034 §7; REQ-S03-003; D-089 Q4) > in order: not open, G6 not approved, value pending, BAU pending; then closed (status closed, never archived)  646ms
+   ✓ closeTransformation (ADR-0034 §7; REQ-S03-003; D-089 Q4) > an archived transformation: 422 transformation.archived (the DG1 code and text) 144ms
+   × closure records never name a restricted benefit (T-DG6-BE-Z10B; F-DG6-420; D-218) > the snapshot's entry of a benefit marked sensitive is omitted for a reader not admitted (marked); the TO sees it 334ms
+     → expected [ { code: 'B06', …(5) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/sustainment/closure.test.ts > closure records never name a restricted benefit (T-DG6-BE-Z10B; F-DG6-420; D-218) > the snapshot's entry of a benefit marked sensitive is omitted for a reader not admitted (marked); the TO sees it
+AssertionError: expected [ { code: 'B06', …(5) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "benefitId": "01a1b755-451a-77dd-a9f3-1e3da0ef236f",[39m
+[31m+     "code": "B06",[39m
+[31m+     "state": "validated",[39m
+[31m+     "sustainmentOwnerUserId": "01a1b755-3abb-76f8-a892-c1d1763763d5",[39m
+[31m+     "transitionDecisionId": null,[39m
+[31m+     "validatedMeasurementIds": [[39m
+[31m+       "01a1b755-4596-73ee-97e1-53340b537f9a",[39m
+[31m+     ],[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/sustainment/closure.test.ts:393:36
+    391|     expect(aud.status).toBe(200);
+    392|     const mine = aud.body.items.find((x: { id: string }) => x.id === r…
+    393|     expect(mine.snapshot.benefits).toEqual([]);
+       |                                    ^
+    394|     expect(mine.includesRestrictedRecords).toBe(true);
+    395|     expect(mine.basis).toBe("validated_value");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  18:46:05
+   Duration  16.16s (transform 4.64s, setup 0ms, collect 8.49s, tests 3.28s, environment 0ms, prepare 87ms)
+
+EXIT=1

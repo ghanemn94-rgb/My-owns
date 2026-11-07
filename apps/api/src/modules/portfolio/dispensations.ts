@@ -18,7 +18,7 @@ import { acceptanceDecision, gateDispensationCreate, reasonRequest, type GateDis
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { requireTransformationRead, principalOf } from "../access/index.ts";
+import { hideRestrictedRefs, principalOf, requireTransformationRead, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   HttpProblem,
@@ -529,6 +529,19 @@ export async function loadInheritedApprovalFacts(
 
 // ------------------------------------------------------------------------------------------------ routes
 
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218): a dispensation whose evidence item the reader is not admitted to shows
+ * `evidenceId: null` with `includesRestrictedRecords: true`; `evidenceVerified` and `counts` are unchanged (the
+ * dispensation holds that evidence whoever reads it, so its verdict is never shown as "no evidence").
+ */
+async function shownDispensations(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly GateDispensation[],
+): Promise<GateDispensation[]> {
+  return hideRestrictedRefs(db, principal, "evidence", items, "evidenceId");
+}
+
 export function registerDispensationRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
   app.get(BASE, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
@@ -551,7 +564,10 @@ export function registerDispensationRoutes(app: FastifyInstance, { db }: ModuleD
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
-    return { items: await presentAll(db, transformationId, page.items), nextCursor: page.nextCursor };
+    return {
+      items: await shownDispensations(db, principalOf(request), await presentAll(db, transformationId, page.items)),
+      nextCursor: page.nextCursor,
+    };
   });
 
   app.post(BASE, { config: { access: { permission: "gate.submit" }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -560,7 +576,7 @@ export function registerDispensationRoutes(app: FastifyInstance, { db }: ModuleD
     return sendVersioned(
       reply,
       201,
-      await presentOne(db, row),
+      (await shownDispensations(db, principalOf(request), [await presentOne(db, row)]))[0]!,
       `/api/v1/transformations/${transformationId}/gate-dispensations/${row.id}`,
     );
   });
@@ -573,7 +589,11 @@ export function registerDispensationRoutes(app: FastifyInstance, { db }: ModuleD
       const row = await db
         .transaction()
         .execute((tx) => decideDispensation(tx, request, transformationId, dispensationId));
-      return sendVersioned(reply, 200, await presentOne(db, row));
+      return sendVersioned(
+        reply,
+        200,
+        (await shownDispensations(db, principalOf(request), [await presentOne(db, row)]))[0]!,
+      );
     },
   );
 
@@ -585,7 +605,11 @@ export function registerDispensationRoutes(app: FastifyInstance, { db }: ModuleD
       const row = await db
         .transaction()
         .execute((tx) => revokeDispensation(tx, request, transformationId, dispensationId));
-      return sendVersioned(reply, 200, await presentOne(db, row));
+      return sendVersioned(
+        reply,
+        200,
+        (await shownDispensations(db, principalOf(request), [await presentOne(db, row)]))[0]!,
+      );
     },
   );
 

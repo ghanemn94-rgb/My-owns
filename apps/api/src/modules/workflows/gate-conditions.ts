@@ -246,7 +246,13 @@ export function registerGateConditionRoutes(app: FastifyInstance, { db }: Module
           "done",
         );
       });
-      const view = await loadTrackedCondition(db, transformationId, conditionId);
+      const loaded = await loadTrackedCondition(db, transformationId, conditionId);
+      // T-DG6-BE-Z10B (F-DG6-420; D-218): the write response follows the list's rule (the closure evidence is named only
+      // to a reader admitted to it), so a write never echoes a restricted id the list would hide.
+      const view =
+        loaded === null
+          ? null
+          : (await hideRestrictedRefs(db, principalOf(request), "evidence", [loaded], "evidenceId"))[0]!;
       return reply
         .status(201)
         .header("location", `/api/v1/transformations/${transformationId}/gate-conditions?status=closed`)

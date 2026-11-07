@@ -16,7 +16,17 @@ import {
   CONDITIONAL_APPROVAL_CATALOGUE_DEFAULT,
   conditionalApprovalEnabled,
 } from "../../../src/modules/workflows/conditional-approval.ts";
-import { auditOf, call, seedWorld, startApi, type TestApi, type World } from "../../support/harness.ts";
+import {
+  auditOf,
+  call,
+  createUser,
+  grant,
+  seedWorld,
+  signIn,
+  startApi,
+  type TestApi,
+  type World,
+} from "../../support/harness.ts";
 import { g5Approval, pendingGate, seedGateWorld, stageGates, type GateWorld } from "../contract/p4-exercises-be-k.ts";
 import { freshKey, pinFixture, seedPublishedVersion } from "../methodology/migration-fixtures.ts";
 
@@ -196,5 +206,66 @@ describe("tracked to closure (listGateConditions, closeGateCondition)", () => {
     expect(closedList.body.items.map((c: Body) => c.id)).toEqual([first.id]);
     expect((await send("GET", url, { session: g.b.s.outsider })).status).toBe(404);
     expect((await send("GET", `${url}?status=late`, { session: g.b.s.tl })).status).toBe(400);
+  });
+});
+
+describe("the close response never names a restricted evidence item (T-DG6-BE-Z10B; F-DG6-420; D-218)", () => {
+  it("the owner (not admitted) closes citing a sensitive evidence item: the 201 body shows evidenceId null and the marker; the TO sees the id", async () => {
+    const g = await seedGateWorld(api, w);
+    const no = await g5Ready(g);
+    const decided = await send("POST", `${g.gates}/G5/decision`, { session: g.sp.session, body: g5Approval(g, no) });
+    expect(decided.status, JSON.stringify(decided.body)).toBe(201);
+    const uTo = await createUser(api.db, g.b.organizationId);
+    await grant(
+      api.db,
+      w.office.id,
+      uTo.id,
+      "TO",
+      { type: "organization", id: g.b.organizationId },
+      g.b.organizationId,
+    );
+    const to = await signIn(api.app, uTo.subject);
+    const ev = await send("POST", `${g.b.base}/evidence`, {
+      session: to,
+      body: {
+        ownerUserId: uTo.id,
+        kind: "note",
+        title: "Synthetic CONFIDENTIAL closure evidence",
+        noteBody: "Synthetic",
+      },
+    });
+    expect(ev.status, JSON.stringify(ev.body)).toBe(201);
+    const mark = await send("PUT", `${g.b.base}/records/evidence/${ev.body.id}/sensitivity`, {
+      session: to,
+      headers: { "if-match": '"0"' },
+      body: { isSensitive: true, reason: "Synthetic sensitive evidence (BE-Z10B)" },
+    });
+    expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+    const url = `${g.b.base}/gate-conditions`;
+    const [c] = (await send("GET", url, { session: g.b.s.bo })).body.items;
+    expect(c.ownerUserId).toBe(g.b.users.bo.id);
+    const closed = await send("POST", `${url}/${c.id}/close`, {
+      session: g.b.s.bo,
+      body: { note: "Synthetic: closed with restricted minutes", evidenceId: ev.body.id },
+    });
+    expect(closed.status, JSON.stringify(closed.body)).toBe(201);
+    expect(closed.body).toMatchObject({
+      id: c.id,
+      status: "closed",
+      evidenceId: null,
+      includesRestrictedRecords: true,
+    });
+    expect(JSON.stringify(closed.body)).not.toContain(ev.body.id);
+    const stored = await api.db
+      .selectFrom("gate_condition_closure")
+      .select("evidence_id")
+      .where("gate_decision_condition_id", "=", c.id)
+      .executeTakeFirstOrThrow();
+    expect(stored.evidence_id).toBe(ev.body.id);
+    const boList = await send("GET", `${url}?status=closed`, { session: g.b.s.bo });
+    expect(JSON.stringify(boList.body)).not.toContain(ev.body.id);
+    const toList = await send("GET", `${url}?status=closed`, { session: to });
+    expect(toList.body.items.find((x: Body) => x.id === c.id)).toMatchObject({ evidenceId: ev.body.id });
+    expect(toList.body.items.find((x: Body) => x.id === c.id).includesRestrictedRecords).toBeUndefined();
   });
 });

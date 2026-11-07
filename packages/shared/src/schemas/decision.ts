@@ -126,5 +126,7 @@ export const tomCanvasCellView = z.strictObject({
   decisions: z.array(decision),
   dependencies: z.array(dependency),
   evidence: z.array(evidence),
+  /** T-DG6-BE-Z10B (F-DG6-420; D-218): true when a linked evidence item was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export const tomCanvas = z.strictObject({ cells: z.array(tomCanvasCellView).length(10) });

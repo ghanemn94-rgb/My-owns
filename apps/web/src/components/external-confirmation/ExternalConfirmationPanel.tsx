@@ -25,6 +25,7 @@ import { errorMessage } from "../../lib/problem.ts";
 import { useEvidenceRegister } from "../../pages/reports/api.ts";
 import { Field } from "../Form.tsx";
 import { Icon } from "../Icon.tsx";
+import { RestrictedRecordsLabel } from "../sensitivity/RestrictedRecordsLabel.tsx";
 import "../../pages/integrations/integrations.css";
 
 export type ExternalChangeType = "customer_system" | "network_upgrade" | "procurement_transaction" | "other";
@@ -53,6 +54,8 @@ export interface ExternalChange {
   readonly confirmedBy: string | null;
   readonly confirmationNote: string | null;
   readonly version: number;
+  /** T-DG6-BE-Z10B (D-218): the confirming evidence is an item the reader is not admitted to (evidenceId null). */
+  readonly includesRestrictedRecords?: true;
 }
 
 export interface DeliverableConfirmation {
@@ -153,7 +156,8 @@ export function ExternalConfirmationPanel({
           {" · "}
           <Link className="link" to={`/transformations/${tid}/evidence-register`}>
             {t("externalChange.provenance.evidence")}
-          </Link>
+          </Link>{" "}
+          <RestrictedRecordsLabel value={x.includesRestrictedRecords} />
           {x.confirmedAt ? ` · ${formatDateTime(x.confirmedAt, locale)}` : ""}
         </span>
       ) : null}

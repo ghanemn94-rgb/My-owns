@@ -109,6 +109,11 @@ export const workstreamOutput = z.strictObject({
   ...workstreamOutputFields,
   status: z.enum(["active", "archived"]),
   ...p2ArchiveFields,
+  /**
+   * T-DG6-BE-Z10B (F-DG6-420; D-218): true when the linked record (`recordId`, the type is kept) or the evidence item
+   * (`evidenceId`) names a record the reader is not admitted to; that id is null (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type WorkstreamOutput = z.infer<typeof workstreamOutput>;
 export const workstreamOutputCreate = z

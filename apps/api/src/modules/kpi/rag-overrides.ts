@@ -26,7 +26,7 @@ import {
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -308,6 +308,25 @@ async function revokeOverride(
   return updated;
 }
 
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218): an override whose evidence item the reader is not admitted to shows `evidenceId:
+ * null` with `evidenceRestricted: true` (it has evidence, never "none") and `includesRestrictedRecords: true`.
+ */
+async function shownOverrides(db: DbOrTx, principal: Principal, items: readonly RagOverride[]): Promise<RagOverride[]> {
+  const hidden = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    items.map((o) => o.evidenceId),
+  );
+  if (hidden.size === 0) return [...items];
+  return items.map((o) =>
+    o.evidenceId !== null && hidden.has(o.evidenceId)
+      ? { ...o, evidenceId: null, evidenceRestricted: true as const, includesRestrictedRecords: true as const }
+      : o,
+  );
+}
+
 export function registerRagOverrideRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
   const { db } = deps;
   const read = { access: { permission: "transformation.read" as const } };
@@ -334,7 +353,14 @@ export function registerRagOverrideRoutes(app: FastifyInstance, deps: ModuleDeps
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
     const now = await dbNow(db);
-    return { items: page.items.map((r) => toRagOverride(r, now)), nextCursor: page.nextCursor };
+    return {
+      items: await shownOverrides(
+        db,
+        principalOf(request),
+        page.items.map((r) => toRagOverride(r, now)),
+      ),
+      nextCursor: page.nextCursor,
+    };
   });
 
   app.post(DEF_OVERRIDES, { config: write }, async (request, reply) => {
@@ -347,7 +373,7 @@ export function registerRagOverrideRoutes(app: FastifyInstance, deps: ModuleDeps
     return sendVersioned(
       reply,
       201,
-      toRagOverride(row, await dbNow(db)),
+      (await shownOverrides(db, principalOf(request), [toRagOverride(row, await dbNow(db))]))[0]!,
       `/api/v1/transformations/${transformationId}/rag-overrides/${row.id}`,
     );
   });
@@ -360,7 +386,11 @@ export function registerRagOverrideRoutes(app: FastifyInstance, deps: ModuleDeps
       const { reason } = parseBody(kpiReasonRequest, request.body);
       return revokeOverride(ctx, ragOverrideId, expected, reason);
     });
-    return sendVersioned(reply, 200, toRagOverride(row, await dbNow(db)));
+    return sendVersioned(
+      reply,
+      200,
+      (await shownOverrides(db, principalOf(request), [toRagOverride(row, await dbNow(db))]))[0]!,
+    );
   });
 
   return [`GET ${DEF_OVERRIDES}`, `POST ${DEF_OVERRIDES}`, `POST ${OVERRIDE_ITEM}/revoke`];

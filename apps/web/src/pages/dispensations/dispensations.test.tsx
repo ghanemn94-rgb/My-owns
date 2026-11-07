@@ -86,6 +86,26 @@ describe.each(["en", "ar"] as const)("Dispensations (%s)", (locale) => {
     expect(document.body.textContent).not.toMatch(/\bDG[0-7]\b/);
   });
 
+  it("T-DG6-BE-Z10B (D-218): an inherited approval whose evidence is restricted shows the restricted label, never 'none'", async () => {
+    const restricted = dispensation({
+      kind: "inherited_approval",
+      gateCode: "G1",
+      reason: null,
+      approvingBody: "Synthetic restricted committee",
+      approvedOn: "2026-02-01",
+      evidenceId: null,
+      evidenceVerified: true,
+      expiresOn: null,
+      includesRestrictedRecords: true,
+    });
+    render(locale, "lead", [route("GET", new RegExp(`${esc(TR)}/gate-dispensations`), () => page([restricted]))]);
+    const row = await rowWith("Synthetic restricted committee");
+    const cell = row.querySelector("[data-evidence='restricted']");
+    expect(cell?.textContent).toContain(t("access.includesRestrictedRecords"));
+    expect(cell?.querySelector("a")).toBeNull();
+    expect(row.textContent).not.toContain(`${t("dispensations.field.evidence")}: ${t("common.value.none")}`);
+  });
+
   it("a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope", async () => {
     const { requests } = render(locale, "lead", [
       route("POST", new RegExp(`${esc(TR)}/gate-dispensations$`), () => ({ status: 201, body: PENDING })),

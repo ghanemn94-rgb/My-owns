@@ -351,6 +351,8 @@ export const gateDispensation = z.strictObject({
   revokedAt: nullableTimestamp,
   revokeReason: freeText(3, 1000).nullable(),
   ...stamps,
+  /** T-DG6-BE-Z10B (F-DG6-420; D-218): true when `evidenceId` was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type GateDispensation = z.infer<typeof gateDispensation>;
 export const gateDispensationPage = z.strictObject({

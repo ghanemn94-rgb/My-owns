@@ -16,7 +16,17 @@
 // All data is SYNTHETIC: the approved G6 is the synthetic fixture approveG6Synthetic (it approves nothing), the
 // transition-decision approval is a synthetic decision of test data, and nothing touches DG0-DG7.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { auditOf, call, seedWorld, signIn, startApi, type TestApi, type World } from "../../support/harness.ts";
+import {
+  auditOf,
+  call,
+  createUser,
+  grant,
+  seedWorld,
+  signIn,
+  startApi,
+  type TestApi,
+  type World,
+} from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
 import { extraUser } from "../benefits/fixtures.ts";
 import { afterIdentity, revokeAll } from "../calendar/session-lock.ts";
@@ -351,4 +361,43 @@ describe("closeTransformation (ADR-0034 §7; REQ-S03-003; D-089 Q4)", () => {
       "Archived transformations are read-only.",
     ]);
   });
+});
+
+describe("closure records never name a restricted benefit (T-DG6-BE-Z10B; F-DG6-420; D-218)", () => {
+  it("the snapshot's entry of a benefit marked sensitive is omitted for a reader not admitted (marked); the TO sees it", async () => {
+    const id = await deliveredInitiative(api, c);
+    const ben = await validatedBenefit(api, c, id, true);
+    const r = await closeI(id, c.b.s.tl, { note: "Synthetic: value validated by Finance (BE-Z10B)" });
+    expect(r.status, JSON.stringify(r.body)).toBe(201);
+    expect(r.body.snapshot.benefits.map((b: { benefitId: string }) => b.benefitId)).toEqual([ben.id]);
+    const uTo = await createUser(api.db, c.b.organizationId);
+    await grant(
+      api.db,
+      w.office.id,
+      uTo.id,
+      "TO",
+      { type: "organization", id: c.b.organizationId },
+      c.b.organizationId,
+    );
+    const to = await signIn(api.app, uTo.subject);
+    const mark = await send("PUT", `${c.b.base}/records/benefit/${ben.id}/sensitivity`, {
+      session: to,
+      headers: { "if-match": '"0"' },
+      body: { isSensitive: true, reason: "Synthetic sensitive benefit (BE-Z10B)" },
+    });
+    expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+    const records = `${c.b.base}/closure-records?limit=100`;
+    const aud = await send("GET", records, { session: c.b.s.auditor });
+    expect(aud.status).toBe(200);
+    const mine = aud.body.items.find((x: { id: string }) => x.id === r.body.id);
+    expect(mine.snapshot.benefits).toEqual([]);
+    expect(mine.includesRestrictedRecords).toBe(true);
+    expect(mine.basis).toBe("validated_value");
+    expect(JSON.stringify(aud.body)).not.toContain(ben.id);
+    const own = (await send("GET", records, { session: to })).body.items.find(
+      (x: { id: string }) => x.id === r.body.id,
+    );
+    expect(own.snapshot.benefits.map((b: { benefitId: string }) => b.benefitId)).toEqual([ben.id]);
+    expect(own.includesRestrictedRecords).toBeUndefined();
+  }, 60_000);
 });
