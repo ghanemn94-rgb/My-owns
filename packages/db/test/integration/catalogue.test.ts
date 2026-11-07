@@ -710,6 +710,8 @@ describe("schema.ts matches the migrated database", () => {
       ["owner_update_revision", "owner_update_revision_append_only", false, false],
       ["owner_update_revision", "owner_update_revision_append_only_truncate", false, false],
       ["owner_update_revision", "owner_update_revision_row_guard", false, false],
+      // 0126 (T-DG6-BE-Z9, F-DG6-400): aggregates_recorded never changes after the insert.
+      ["report_snapshot", "report_snapshot_aggregates_recorded_immutable", false, false],
       ["report_snapshot", "report_snapshot_audit_required", true, true],
       ["report_snapshot", "report_snapshot_guard", false, false],
       ["report_snapshot", "report_snapshot_row_guard", false, false],
@@ -729,6 +731,21 @@ describe("schema.ts matches the migrated database", () => {
       ["report_snapshot_version", "report_snapshot_version_row_guard", false, false],
     ];
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0126: report_snapshot_aggregate is creation-only and append-only, like the other snapshot children", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname = 'report_snapshot_aggregate'
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_append_only", false, false],
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_append_only_truncate", false, false],
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_guard", false, false],
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_row_guard", false, false],
+    ]);
   });
 
   it("0085-0086: the P5 slice G/H guards are attached (deferred audit and completeness checks, append-only children)", async () => {
@@ -1734,6 +1751,7 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       report_snapshot_source: "INSERT,SELECT",
       report_snapshot_version: "INSERT,SELECT",
       report_snapshot_evidence: "INSERT,SELECT",
+      report_snapshot_aggregate: "INSERT,SELECT", // 0126 (T-DG6-BE-Z9): append-only, like the other children
       owner_update: SIU,
       owner_update_revision: "INSERT,SELECT",
       export_job: SIU,

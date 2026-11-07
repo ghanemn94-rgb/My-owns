@@ -37,6 +37,7 @@ import {
   textValue,
   timestampValue,
   userNames,
+  type AggregateRef,
   type Assembler,
   type AssemblyContext,
   type AssembledOutput,
@@ -48,6 +49,7 @@ import { NOT_APPLICABLE, UNKNOWN_NOT_COMPUTABLE } from "../provisional.ts";
 import { workflowsReadPort } from "../../ports.ts";
 
 const S = { gate: "gate", criteria: "criteria", evidence: "evidence" } as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const L = (k: string) => `report.gate_pack.${k}`;
 const column = (key: string, valueKind: ReportColumn["valueKind"]): ReportColumn => ({
   key,
@@ -287,6 +289,9 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
 
   // ---------------------------------------------------------------------------------------------- criteria
   const criterionRows: ReportRow[] = [];
+  // T-DG6-BE-Z9 (F-DG6-400): the evidence items a criterion's `unverified_evidence_count` counts. The row names only
+  // the criterion; these decide the criteria section's read-time "Includes restricted records" label (restricted.ts).
+  const aggregates: AggregateRef[] = [];
   if (submitted) {
     for (const c of recorded) {
       const d = criterionDetail(c.detail);
@@ -300,6 +305,9 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
       // The recorded state is the evaluator's output, a fact with no validation state of its own (ADR-0045 §5 rule 6):
       // not_applicable. It is never labelled validated, and an incomplete criterion is never shown as complete.
       const stateLabel = NOT_APPLICABLE;
+      for (const evidenceId of d.unverifiedEvidenceIds)
+        if (UUID.test(evidenceId))
+          aggregates.push({ sectionKey: S.criteria, recordType: "evidence", recordId: evidenceId });
       criterionRows.push({
         recordType: "gate_submission_criterion",
         recordId: c.id,
@@ -500,6 +508,7 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     sources,
     versions: [],
     evidence,
+    aggregates,
   };
 }
 

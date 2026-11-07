@@ -90,6 +90,36 @@ describe.each(["en", "ar"] as const)("Includes restricted records (%s)", (locale
     expect(container.querySelectorAll("[data-restricted-records='true']")).toHaveLength(1);
   });
 
+  // T-DG6-BE-Z9 (F-DG6-400): a metrics section (the executive pack's "Current metrics") is labelled the same way.
+  it("a metrics section with includesRestrictedRecords true shows the label; false shows nothing", () => {
+    const metrics = (key: string, flag: boolean) =>
+      ({
+        key,
+        titleKey: "report.executive_pack.metrics",
+        kind: "metrics",
+        sources: [],
+        fields: [],
+        includesRestrictedRecords: flag,
+      }) as ReportDocument["sections"][number];
+    const { container } = render(
+      <I18nextProvider i18n={i18n}>
+        <MemoryRouter>
+          <ReportDocumentView
+            doc={{
+              ...doc(),
+              definitionCode: "executive_pack",
+              sections: [metrics("metrics_transformation", true), metrics("metrics_ws_01", false)],
+            }}
+          />
+        </MemoryRouter>
+      </I18nextProvider>,
+    );
+    const inSection = (key: string) =>
+      container.querySelector(`[data-report-section='${key}'] [data-restricted-records='true']`);
+    expect(inSection("metrics_transformation")?.textContent).toContain(label);
+    expect(inSection("metrics_ws_01")).toBeNull();
+  });
+
   for (const flag of [true, false] as const)
     it(`the Executive Overview with includesRestrictedRecords ${flag} ${flag ? "shows" : "does not show"} the label`, async () => {
       mockApi(

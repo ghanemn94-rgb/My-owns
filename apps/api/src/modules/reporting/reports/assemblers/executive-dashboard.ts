@@ -41,12 +41,14 @@ import {
   type DashboardFacts,
 } from "../../dashboards/engine.ts";
 import { resolveFilters } from "../../dashboards/filters.ts";
+import { allocatedBenefitRecords, factsValueRecords, VALUE_AREA } from "../../dashboards/restricted.ts";
 import {
   codeValue,
   dateValue,
   decimalValue,
   textValue,
   userNames,
+  type AggregateRef,
   type Assembler,
   type AssembledOutput,
   type AssemblyContext,
@@ -402,7 +404,14 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     },
   ];
   const seen = new Set<string>(["transformation:" + t.id]);
+  // T-DG6-BE-Z9 (F-DG6-400): the records the aggregate figures include (restricted.ts decides the read-time label).
+  const aggregates: AggregateRef[] = [];
   for (const a of areas) {
+    if (a.code === VALUE_AREA)
+      for (const r of factsValueRecords(dctx.facts)) aggregates.push({ sectionKey: `area_${a.code}`, ...r });
+    const initiativeIds = a.items.filter((i) => i.recordType === "initiative").map((i) => i.recordId);
+    for (const r of allocatedBenefitRecords(dctx.facts, initiativeIds))
+      aggregates.push({ sectionKey: `items_${a.code}`, ...r });
     sections.push({
       key: `area_${a.code}`,
       titleKey: `report.t10_area.${a.code}`,
@@ -474,6 +483,7 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     sources,
     versions: lineage.versions,
     evidence: [],
+    aggregates,
   };
 }
 

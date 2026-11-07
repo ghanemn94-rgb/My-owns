@@ -39,6 +39,7 @@ import {
   presentAreas,
 } from "../../dashboards/engine.ts";
 import { resolveFilters } from "../../dashboards/filters.ts";
+import { factsValueRecords } from "../../dashboards/restricted.ts";
 import {
   codeValue,
   countValue,
@@ -46,6 +47,7 @@ import {
   textValue,
   timestampValue,
   userNames,
+  type AggregateRef,
   type Assembler,
   type AssembledOutput,
   type AssemblyContext,
@@ -270,6 +272,7 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
 
   const sections: ReportSection[] = [];
   const sources: SourceRecord[] = [];
+  const aggregates: AggregateRef[] = [];
   for (const s of subjects) {
     const updateKey = `update_${s.slug}`;
     const metricsKey = `metrics_${s.slug}`;
@@ -375,6 +378,9 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     ];
     // The subject record is already a source of its update section (one source row per record, RS-unique).
     sections.push({ key: metricsKey, titleKey: L("metrics"), kind: "metrics", sources: [subjectRef], fields: metrics });
+    // T-DG6-BE-Z9 (F-DG6-400): the value headlines include the subject's benefits and business cases (the same facts
+    // as its dashboard); they decide the section's read-time "Includes restricted records" label (restricted.ts).
+    for (const r of factsValueRecords(narrowed.facts)) aggregates.push({ sectionKey: metricsKey, ...r });
   }
 
   return {
@@ -384,6 +390,7 @@ async function assemble(ctx: AssemblyContext): Promise<AssembledOutput> {
     sources,
     versions: [],
     evidence: [],
+    aggregates,
   };
 }
 
