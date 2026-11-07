@@ -155,6 +155,8 @@ export const inheritedRecord = z.strictObject({
   withdrawReason: z.string().nullable(),
   version,
   createdAt: timestamp,
+  /** T-DG6-BE-Z10B (F-DG6-420; D-218): true when `evidenceId` was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type InheritedRecord = z.infer<typeof inheritedRecord>;
 

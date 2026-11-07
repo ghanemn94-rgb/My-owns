@@ -20,6 +20,7 @@ import { useLocale } from "../../app/locale.ts";
 import { Unknown } from "../../components/Badges.tsx";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { EvidenceStateChip, RecordStatus } from "../../components/P2Badges.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { PersonName, usePeople } from "../../components/People.tsx";
 import { RecordDialog, type FieldSpec } from "../../components/RecordForm.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
@@ -311,8 +312,12 @@ function DimensionView({ view, onClose }: { view: TomCanvasCellView; onClose: ()
         </div>
         <div>
           <h4 className="small-heading">{t("evidence.title")}</h4>
+          {/* T-DG6-BE-Z10B (D-218): a linked item the reader is not admitted to is not listed; the label says so. */}
+          <RestrictedRecordsLabel value={view.includesRestrictedRecords} />
           {view.evidence.length === 0 ? (
-            <p className="muted">{t("evidence.noneLinked")}</p>
+            view.includesRestrictedRecords ? null : (
+              <p className="muted">{t("evidence.noneLinked")}</p>
+            )
           ) : (
             <ul className="plain-list">
               {view.evidence.map((e) => (

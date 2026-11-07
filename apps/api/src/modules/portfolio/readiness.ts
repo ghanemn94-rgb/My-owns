@@ -11,7 +11,7 @@ import type { DbOrTx } from "@mth/db";
 import type { DiagnosticArea, DiagnosticAreaCoverage, TransformationReadiness } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { hideRestrictedRefs, principalOf, requireTransformationRead, type Principal } from "../access/index.ts";
 import { parse, problems, type ModuleDeps } from "../platform/index.ts";
 import { loadGateFacts } from "../workflows/index.ts";
 import { loadDispensations } from "./dispensations.ts";
@@ -57,7 +57,11 @@ export function diagnosticCoverage(rows: readonly T01ContentFact[]): DiagnosticA
   });
 }
 
-export async function loadReadiness(db: DbOrTx, transformationId: string): Promise<TransformationReadiness> {
+export async function loadReadiness(
+  db: DbOrTx,
+  principal: Principal,
+  transformationId: string,
+): Promise<TransformationReadiness> {
   const t = await db
     .selectFrom("transformation")
     .select(["id", "mode", "entry_phase", "current_phase"])
@@ -71,13 +75,16 @@ export async function loadReadiness(db: DbOrTx, transformationId: string): Promi
     .where("gate_code", "in", ["G1", "G2", "G3", "G4"])
     .execute();
   const dispensations = await loadDispensations(db, transformationId);
+  // T-DG6-BE-Z10B (F-DG6-420; D-218; found by the extended sweep): the gates' dispensations name their evidence only to
+  // a reader admitted to it (as listGateDispensations); the sequencing state below reads `counts`, unchanged.
+  const shown = await hideRestrictedRefs(db, principal, "evidence", dispensations, "evidenceId");
   const facts = await loadGateFacts(db, transformationId);
   const diagnostic = diagnosticCoverage(facts.seededDiagnosticItems);
   const gates = (["G1", "G2", "G3", "G4"] as const).map((gateCode) => ({
     gateCode,
     status: (instances.find((i) => i.gate_code === gateCode)?.status ??
       "draft") as TransformationReadiness["gates"][number]["status"],
-    dispensations: dispensations.filter((d) => d.gateCode === gateCode),
+    dispensations: shown.filter((d) => d.gateCode === gateCode),
   }));
   const mode = t.mode === "modular" ? "modular" : "end_to_end";
   const state = sequencingState({
@@ -112,7 +119,7 @@ export function registerReadinessRoutes(app: FastifyInstance, { db }: ModuleDeps
   app.get(PATH, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return loadReadiness(db, transformationId);
+    return loadReadiness(db, principalOf(request), transformationId);
   });
   return [`GET ${PATH}`, ...registerTransformReadinessRoute(app, db)];
 }

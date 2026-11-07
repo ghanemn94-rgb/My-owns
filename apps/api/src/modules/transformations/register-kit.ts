@@ -137,6 +137,13 @@ export interface RegisterSpecBase<Row extends RegisterRow> {
    */
   readonly afterUpdate?: (before: Row, after: Row, ctx: WriteContext) => Promise<void>;
   /**
+   * T-DG6-BE-Z10B (F-DG6-420; D-218): read-time redaction of the rendered bodies for the reading principal, applied
+   * to every response of the register (list, item, and the create/update/archive responses). A reference to a
+   * sensitive record (or a child of one) the principal is not admitted to is nulled and the body carries
+   * `includesRestrictedRecords: true`. Absent: bodies are returned as rendered.
+   */
+  readonly redact?: (db: DbOrTx, principal: Principal, items: readonly unknown[]) => Promise<unknown[]>;
+  /**
    * P6 (ADR-0057 §5, T-DG6-BE-R): the text columns the list's `q` matches (case-insensitive substring, any column).
    * Absent: the list offers no `q` (a `q` is then an unknown query field, 400).
    */
@@ -471,9 +478,12 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
   const writeAccess = { access: { permission: spec.writeRules[0]!.permission } };
 
   /** Rows -> API bodies through the register's presenter. */
-  const render = async (dbx: DbOrTx, rows: readonly Row[]): Promise<Api[]> =>
-    spec.present ? spec.present(dbx, rows) : rows.map((r) => spec.toApi!(r));
-  const renderOne = async (dbx: DbOrTx, row: Row): Promise<Api> => (await render(dbx, [row]))[0]!;
+  const render = async (dbx: DbOrTx, principal: Principal, rows: readonly Row[]): Promise<Api[]> => {
+    const items = spec.present ? await spec.present(dbx, rows) : rows.map((r) => spec.toApi!(r));
+    return spec.redact ? ((await spec.redact(dbx, principal, items)) as Api[]) : items;
+  };
+  const renderOne = async (dbx: DbOrTx, principal: Principal, row: Row): Promise<Api> =>
+    (await render(dbx, principal, [row]))[0]!;
 
   /** Parent check: the parent row exists in the transformation (404 otherwise). */
   const checkParent = async (dbx: DbOrTx, transformationId: string, params: ReadonlyMap<string, string>) => {
@@ -542,7 +552,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
           hash,
         );
         const rows = page.items.map(({ sort_key: _k, ...row }) => row) as unknown as Row[];
-        return { items: await render(db, rows), nextCursor: page.nextCursor };
+        return { items: await render(db, principalOf(request), rows), nextCursor: page.nextCursor };
       }
       if (after) q = q.where("id", ">", String(after[0]));
       const rows = (await q
@@ -550,7 +560,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
         .limit(query.limit + 1)
         .execute()) as unknown as Row[];
       const pageRows = paginate(rows, query.limit, (r) => [r.id], hash);
-      return { items: await render(db, pageRows.items), nextCursor: pageRows.nextCursor };
+      return { items: await render(db, principalOf(request), pageRows.items), nextCursor: pageRows.nextCursor };
     });
   }
 
@@ -561,7 +571,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
       await requireTransformationRead(db, principalOf(request), params.get("transformationId")!);
       const row = await findRow(db, params);
       if (!row) throw problems.notFound();
-      return sendVersioned(reply, 200, await renderOne(db, row));
+      return sendVersioned(reply, 200, await renderOne(db, principalOf(request), row));
     });
   }
 
@@ -610,7 +620,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
             newVersion: row.version,
             changes: diffFields({} as LooseRow, row as unknown as LooseRow, spec.auditFields),
           });
-          return { status: 201, body: await renderOne(tx, row) };
+          return { status: 201, body: await renderOne(tx, principalOf(request), row) };
         });
       });
       return sendCreated(request, reply, result);
@@ -700,7 +710,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
       const params = paramsOf(request, itemParams);
       const row = await db.transaction().execute(async (tx) => {
         const updated = await updateRow(tx, request, params, request.body);
-        return renderOne(tx, updated);
+        return renderOne(tx, principalOf(request), updated);
       });
       return sendVersioned(reply, 200, row);
     });
@@ -760,7 +770,7 @@ export function registerRegister<Row extends RegisterRow, Api extends { id: stri
           reason,
           changes: { status: { from: current.status ?? null, to: "archived" } },
         });
-        return renderOne(tx, updated);
+        return renderOne(tx, principalOf(request), updated);
       });
       return sendVersioned(reply, 200, row);
     });

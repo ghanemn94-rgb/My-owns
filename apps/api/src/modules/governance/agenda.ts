@@ -41,8 +41,10 @@ import {
   auditContextOf,
   commitTimeDenial,
   denialOf,
+  hideRestrictedRefLists,
   principalOf,
   refreshPrincipal,
+  restrictedIdsOf,
   requireAction,
   requireTransformationRead,
   technicalAdminRefusal,
@@ -404,13 +406,23 @@ export const toAgendaItem = (r: AgendaItemRow, linked: LinkedAsk | undefined): A
   updatedBy: r.updated_by,
 });
 
-export async function toAgendaItems(db: DbOrTx, rows: readonly AgendaItemRow[]): Promise<AgendaItem[]> {
+/**
+ * The agenda items as the principal reads them. T-DG6-BE-Z10B (F-DG6-420; D-218): a material (evidence item) the
+ * reader is not admitted to is omitted from `materialsEvidenceIds` and the item carries `includesRestrictedRecords`;
+ * the brief's missing elements are unchanged (the item holds those materials whoever reads it).
+ */
+export async function toAgendaItems(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly AgendaItemRow[],
+): Promise<AgendaItem[]> {
   const asks = await linkedAsks(db, rows);
-  return rows.map((r) => toAgendaItem(r, r.decision_id === null ? undefined : asks.get(r.decision_id)));
+  const items = rows.map((r) => toAgendaItem(r, r.decision_id === null ? undefined : asks.get(r.decision_id)));
+  return hideRestrictedRefLists(db, principal, "evidence", items, "materialsEvidenceIds");
 }
 
-async function one(db: DbOrTx, row: AgendaItemRow): Promise<AgendaItem> {
-  const [out] = await toAgendaItems(db, [row]);
+async function one(db: DbOrTx, principal: Principal, row: AgendaItemRow): Promise<AgendaItem> {
+  const [out] = await toAgendaItems(db, principal, [row]);
   return out!;
 }
 
@@ -584,7 +596,7 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.ordinal, r.id], hash);
-    return { items: await toAgendaItems(db, page.items), nextCursor: page.nextCursor };
+    return { items: await toAgendaItems(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(ITEMS, { config: { access: { permission: PREPARE }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -666,7 +678,12 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       });
       return inserted;
     });
-    return sendVersioned(reply, 201, await one(db, row), location(transformationId, meetingId, row.id));
+    return sendVersioned(
+      reply,
+      201,
+      await one(db, principalOf(request), row),
+      location(transformationId, meetingId, row.id),
+    );
   });
 
   app.patch(ONE, { config: { access: { permission: PREPARE }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -692,6 +709,14 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
         ["/brief/ownerUserId", body.brief?.ownerUserId],
       ]);
       await checkEvidence(tx, transformationId, body.materialsEvidenceIds);
+      // T-DG6-BE-Z10B (D-218; the Day-90 rule): a material the writer is not admitted to was never shown to them, so a
+      // re-save of the list keeps it (it is not a removal the writer could have chosen).
+      const keptMaterials =
+        body.materialsEvidenceIds === undefined
+          ? []
+          : [...(await restrictedIdsOf(tx, principalOf(request), "evidence", current.materials_evidence_ids))].filter(
+              (id) => !body.materialsEvidenceIds!.includes(id),
+            );
       if (body.decisionId !== undefined && body.decisionId !== null && body.decisionId !== current.decision_id)
         await checkLinkable(tx, transformationId, body.decisionId);
       if (body.ordinal !== undefined && body.ordinal !== current.ordinal)
@@ -703,7 +728,9 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
           ...(body.description !== undefined ? { description: body.description } : {}),
           ...(body.presenterUserId !== undefined ? { presenter_user_id: body.presenterUserId } : {}),
           ...(body.durationMinutes !== undefined ? { duration_minutes: body.durationMinutes } : {}),
-          ...(body.materialsEvidenceIds !== undefined ? { materials_evidence_ids: body.materialsEvidenceIds } : {}),
+          ...(body.materialsEvidenceIds !== undefined
+            ? { materials_evidence_ids: [...body.materialsEvidenceIds, ...keptMaterials] }
+            : {}),
           ...(body.ordinal !== undefined ? { ordinal: body.ordinal } : {}),
           decision_id: decisionId,
           ask_decision_required: brief.ask_decision_required,
@@ -734,7 +761,7 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       });
       return updated;
     });
-    return sendVersioned(reply, 200, await one(db, row));
+    return sendVersioned(reply, 200, await one(db, principalOf(request), row));
   });
 
   // Bodiless actions (no config.consumes; the completeWorkItem precedent, S-3).
@@ -807,7 +834,7 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       });
       return updated;
     });
-    return sendVersioned(reply, 200, await one(db, row));
+    return sendVersioned(reply, 200, await one(db, principalOf(request), row));
   });
 
   app.post(WITHDRAW, { config: { access: { permission: PREPARE } } }, async (request, reply) => {
@@ -855,7 +882,7 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       });
       return updated;
     });
-    return sendVersioned(reply, 200, await one(db, row));
+    return sendVersioned(reply, 200, await one(db, principalOf(request), row));
   });
 
   app.post(OUTCOME, { config: { access: { permission: PREPARE }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -864,7 +891,7 @@ export function registerAgendaRoutes(app: FastifyInstance, { db }: ModuleDeps): 
     const row = await db
       .transaction()
       .execute(async (tx) => recordOutcome(tx, request, transformationId, meetingId, agendaItemId, body));
-    return sendVersioned(reply, 200, await one(db, row));
+    return sendVersioned(reply, 200, await one(db, principalOf(request), row));
   });
 
   return [`GET ${ITEMS}`, `POST ${ITEMS}`, `PATCH ${ONE}`, `POST ${PUBLISH}`, `POST ${WITHDRAW}`, `POST ${OUTCOME}`];

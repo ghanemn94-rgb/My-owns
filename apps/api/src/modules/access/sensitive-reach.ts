@@ -568,6 +568,88 @@ export async function hideRestrictedRefs<T extends object, K extends keyof T & s
   });
 }
 
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218): for items holding a polymorphic reference (`typeField` names the record type,
+ * `idField` its id: a workstream output's linked record, a phase step's output), the items whose reference names a
+ * record the principal is not admitted to (a sensitive record, or a child that carries one's values) get
+ * `idField: null` and `includesRestrictedRecords: true`. The type is kept: it carries no identifier.
+ */
+export async function hideRestrictedTypedRefs<T extends object>(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly T[],
+  typeField: keyof T & string,
+  idField: keyof T & string,
+): Promise<T[]> {
+  const refOf = (x: T): ReachRef | null => {
+    const m = new Map(Object.entries(x));
+    const recordType = m.get(typeField);
+    const recordId = m.get(idField);
+    return typeof recordType === "string" && typeof recordId === "string" && UUID.test(recordId)
+      ? { recordType, recordId }
+      : null;
+  };
+  const refs = items.map(refOf).filter((r): r is ReachRef => r !== null);
+  const hidden = await restrictedRecordRefs(db, principal, refs);
+  if (hidden.size === 0) return [...items];
+  return items.map((x) => {
+    const ref = refOf(x);
+    if (ref === null || !hidden.has(reachKey(ref))) return x;
+    const entries = Object.entries(x).map(([k, v]): [string, unknown] => [k, k === idField ? null : v]);
+    return { ...(Object.fromEntries(entries) as T), includesRestrictedRecords: true as const };
+  });
+}
+
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218): for items holding a list of references `field` to records of `recordType` (an
+ * evidence id list), the hidden ids are omitted and the item carries `includesRestrictedRecords: true`. Nothing is
+ * counted for a hidden id (no hidden count, ADR-0051 §2 amendment).
+ */
+export async function hideRestrictedRefLists<T extends object>(
+  db: DbOrTx,
+  principal: Principal,
+  recordType: string,
+  items: readonly T[],
+  field: keyof T & string,
+): Promise<T[]> {
+  const listOf = (x: T): string[] => {
+    const v = new Map(Object.entries(x)).get(field);
+    return Array.isArray(v) ? v.filter((e): e is string => typeof e === "string") : [];
+  };
+  const hidden = await restrictedIdsOf(db, principal, recordType, items.flatMap(listOf));
+  if (hidden.size === 0) return [...items];
+  return items.map((x) => {
+    const list = listOf(x);
+    if (!list.some((id) => hidden.has(id))) return x;
+    const entries = Object.entries(x).map(([k, v]): [string, unknown] => [
+      k,
+      k === field ? list.filter((id) => !hidden.has(id)) : v,
+    ]);
+    return { ...(Object.fromEntries(entries) as T), includesRestrictedRecords: true as const };
+  });
+}
+
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218) — the re-save rule for a single reference on a replacing write (the Day-90 response
+ * PUT, the health answer PUT). A reader not admitted to the stored record was shown `null` (D-218), so a write that
+ * sends `null` or omits the field is a re-save, not a removal they could have chosen: the stored reference is KEPT.
+ * The writer changes it only explicitly, by sending another id (which their write checks as before). A writer admitted
+ * to the stored record (or a stored reference to an open record) clears it with `null` exactly as before. Returns the
+ * id to store. One policy decision, and only when a stored reference exists and none is sent.
+ */
+export async function keptRestrictedRef(
+  db: DbOrTx,
+  principal: Principal,
+  recordType: string,
+  stored: string | null | undefined,
+  sent: string | null | undefined,
+): Promise<string | null> {
+  if (typeof sent === "string") return sent;
+  if (typeof stored !== "string") return null;
+  const hidden = await restrictedIdsOf(db, principal, recordType, [stored]);
+  return hidden.has(stored) ? stored : null;
+}
+
 const REF_TEXT = /^(?:[a-z][a-z0-9_]{0,63}:)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof Date);

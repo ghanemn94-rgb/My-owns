@@ -36,10 +36,12 @@ import {
   holdsAnywhere,
   principalOf,
   reachKey,
+  requireRecordReach,
   requireTransformationRead,
   restrictedIdsOf,
   restrictedRecordRefs,
   type Principal,
+  type ResolvedTarget,
 } from "../access/index.ts";
 import {
   cursorSchema,
@@ -200,10 +202,14 @@ function activeLinks(transformationId: string) {
 }
 
 /** Denies a caller who holds transformation.read nowhere (403), then scopes it to the transformation (404). */
-async function requireRegisterRead(db: Db | Tx, request: FastifyRequest, transformationId: string): Promise<void> {
+async function requireRegisterRead(
+  db: Db | Tx,
+  request: FastifyRequest,
+  transformationId: string,
+): Promise<ResolvedTarget> {
   const principal = principalOf(request);
   if (!holdsAnywhere(principal, "transformation.read")) throw problems.forbidden();
-  await requireTransformationRead(db, principal, transformationId);
+  return requireTransformationRead(db, principal, transformationId);
 }
 
 function readOnly<R>(db: Db, fn: (tx: Tx) => Promise<R>): Promise<R> {
@@ -380,7 +386,10 @@ export function registerEvidenceRegisterRoutes(app: FastifyInstance, db: Db): st
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
     const query = parseQuery(pageQuery, request.query);
     return readOnly(db, async (tx) => {
-      await requireRegisterRead(tx, request, transformationId);
+      const target = await requireRegisterRead(tx, request, transformationId);
+      // T-DG6-BE-Z10B (F-DG6-420 follow-up; ADR-0051 §2): a sensitive evidence item the reader is not admitted to is
+      // 404, as its own GET (existence not disclosed); its revisions are never listed.
+      await requireRecordReach(tx, principalOf(request), "evidence", evidenceId, target);
       return listEvidenceVersions(tx, transformationId, evidenceId, query);
     });
   });

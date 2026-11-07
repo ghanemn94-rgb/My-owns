@@ -1,0 +1,63 @@
+port-policy: PostgreSQL listening on port 31051 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z10b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6qnhz9_d029f452 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z10 sweep] evidence referenced in: evidence_link=01995000-1050-7000-8000-000000000001
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z10 sweep] business_case referenced in: business_case_line=01995000-4305-7000-8000-000000000001 funding_decision=01995000-4305-7000-8000-000000000002
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z5 sweep] blocker escalation 1: {"outcome":"not_red_for_cycles","decisionId":null}
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z5 sweep] blocker escalation 8: {"outcome":"ask_created","decisionId":"01a1b746-ac1b-7354-b197-8b1c20c57666"}
+
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-sweep.test.ts (2 tests | 2 skipped) 5181ms
+   ↓ ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > control: TL and AUD get 404 on the benefit; the admitted TL and the TO read it
+   ↓ ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-sweep.test.ts [ apps/api/test/integration/access/sensitive-reach-sweep.test.ts ]
+error: inherited_record: only a Modular transformation records inherited items
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ apps/api/test/integration/access/sensitive-reach-sweep.test.ts:466:5
+    464|   const cols = Object.keys(row);
+    465|   await api.db.transaction().execute(async (tx) => {
+    466|     await sql`INSERT INTO ${sql.table(table)} (${sql.join(cols.map((c)…
+       |     ^
+    467|               VALUES (${sql.join(cols.map((c) => sql`${row[c]}`))})`.e…
+    468|     await insertAuditEvent(
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ apps/api/test/integration/access/sensitive-reach-sweep.test.ts:466:5
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ seedRow apps/api/test/integration/access/sensitive-reach-sweep.test.ts:465:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 skipped (2)
+   Start at  18:30:08
+   Duration  16.40s (transform 4.45s, setup 0ms, collect 8.11s, tests 5.18s, environment 0ms, prepare 52ms)
+
+EXIT=1

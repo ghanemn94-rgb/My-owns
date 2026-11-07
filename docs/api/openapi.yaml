@@ -20762,7 +20762,7 @@ paths:
     get:
       tags: [evidence]
       operationId: listEvidenceVersions
-      summary: "The content revisions of a file evidence item, newest first: revision, SHA-256, size, type, file name, uploader and upload time (transformation.read; REQ-S13-010)."
+      summary: "The content revisions of a file evidence item, newest first: revision, SHA-256, size, type, file name, uploader and upload time (transformation.read; REQ-S13-010). A sensitive evidence item the caller is not admitted to answers 404, as its own read (ADR-0051 §2; T-DG6-BE-Z10B)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -28253,6 +28253,7 @@ components:
         version: { type: integer, minimum: 0 }
         updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when an attachment or reference value named a record the reader is not admitted to; that id is omitted from values (an array element dropped, a single reference null); the stored values are unchanged (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     FormCustomValuesPut:
       type: object
       description: "The complete set of extension-field values (absent keys are cleared)."
@@ -30136,6 +30137,7 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the linked record or evidence item is one the reader is not admitted to; that id is then null, recordType is kept (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     WorkstreamOutputCreate:
       type: object
       required: [workstreamCode, title]
@@ -31375,6 +31377,7 @@ components:
         decisions: { type: array, items: { $ref: "#/components/schemas/Decision" } }
         dependencies: { type: array, items: { $ref: "#/components/schemas/Dependency" } }
         evidence: { type: array, items: { $ref: "#/components/schemas/Evidence" } }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when an evidence item linked to the box is one the reader is not admitted to; it is not listed in evidence (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     TomCanvas:
       type: object
       required: [cells]
@@ -32130,6 +32133,7 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the dispensation's evidence item is one the reader is not admitted to; evidenceId is then null while evidenceVerified and counts are unchanged (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     GateDispensationCreate:
       type: object
       required: [kind, gateCode]
@@ -34474,9 +34478,10 @@ components:
         id: { $ref: "#/components/schemas/Uuid" }
         rag: { type: string, enum: [green, amber, red] }
         reason: { type: string }
-        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid", description: "Null only when the evidence item is one the reader is not admitted to; evidenceRestricted is then true (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
         expiresAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
+        evidenceRestricted: { type: boolean, const: true, description: "Present (true) when the override has evidence the reader is not admitted to (evidenceId null); never shown as 'no evidence' (T-DG6-BE-Z10B; D-218; label access.includesRestrictedRecords)." }
     KpiStatus:
       type: object
       description: The KPI panel (REQ-S07-008). The seven elements are always present; a missing one is null with a reason, never 0.
@@ -34532,7 +34537,7 @@ components:
         calculatedRag: { $ref: "#/components/schemas/KpiRag" }
         kpiEvaluationId: { $ref: "#/components/schemas/NullableUuid" }
         reason: { type: string }
-        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid", description: "The override's evidence (mandatory when stored). Null only when the evidence item is one the reader is not admitted to; evidenceRestricted and includesRestrictedRecords are then true (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
         expiresAt: { $ref: "#/components/schemas/Timestamp" }
         inForce: { type: boolean, description: "status active and the current time before expiresAt." }
         status: { type: string, enum: [active, revoked] }
@@ -34543,6 +34548,8 @@ components:
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        evidenceRestricted: { type: boolean, const: true, description: "Present (true) when the override has evidence the reader is not admitted to (evidenceId null); never shown as 'no evidence' (T-DG6-BE-Z10B; D-218)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a reference was omitted for the reader (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     RagOverrideCreate:
       type: object
       required: [scopeKind, scopeId, reportingPeriodId, overrideRag]
@@ -36450,6 +36457,7 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a material named an evidence item the reader is not admitted to; it is omitted from materialsEvidenceIds, and a PATCH that sends materialsEvidenceIds keeps it (the writer never saw it) (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     AgendaItemCreate:
       type: object
       required: [itemKind, title]
@@ -37449,6 +37457,7 @@ components:
         closureNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
         closedAt: { $ref: "#/components/schemas/Timestamp" }
         closedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a benefit entry of the snapshot (with its measurement and decision ids) names a benefit the reader is not admitted to; that entry is omitted from the shown snapshot, the stored snapshot is unchanged (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     TransitionDecision:
       type: object
       description: "A documented transition decision for a long-realization benefit (REQ-S11-007). The benefit's forecast stays forecast."
@@ -39230,6 +39239,7 @@ components:
         withdrawReason: { type: [string, "null"] }
         version: { $ref: "#/components/schemas/Version" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the inherited evidence item is one the reader is not admitted to; evidenceId is then null (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     InheritedRecordCreate:
       type: object
       description: "kind prior_approval is refused (422 inherited_record.prior_approval_use_dispensation): prior approvals are recorded as gate dispensations."
@@ -40989,6 +40999,7 @@ components:
                       confirmationSource: { type: [string, "null"] }
                       actorUserId: { $ref: "#/components/schemas/NullableUuid" }
                       occurredAt: { $ref: "#/components/schemas/Timestamp" }
+                includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the confirming evidence item is one the reader is not admitted to; evidenceId is then null while confirmationSource stays reviewed_evidence (T-DG6-BE-Z10B; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
             - { type: "null" }
     DeliverableExternalChangeUpdate:
       type: object

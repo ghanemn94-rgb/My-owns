@@ -46,6 +46,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import {
+  keptRestrictedRef,
   principalOf,
   reachKey,
   requireTransformationRead,
@@ -418,12 +419,12 @@ async function putResponse(
   const body = parseBody(dayNinetyResponsePut, request.body);
   const expected = requireIfMatch(request);
   const test = await lockOpenTest(tx, transformationId, expected);
-  const evidenceId = body.evidenceId ?? null;
-  if (evidenceId !== null) {
+  const sentEvidenceId = body.evidenceId ?? null;
+  if (sentEvidenceId !== null) {
     const ev = await tx
       .selectFrom("evidence")
       .select("id")
-      .where("id", "=", evidenceId)
+      .where("id", "=", sentEvidenceId)
       .where("transformation_id", "=", transformationId)
       .where("archived_at", "is", null)
       .executeTakeFirst();
@@ -438,6 +439,15 @@ async function putResponse(
     .where("question_code", "=", questionCode)
     .forUpdate()
     .executeTakeFirst();
+  // T-DG6-BE-Z10B (F-DG6-420; D-218): a re-save by a responder not admitted to the stored evidence (shown to them as
+  // `evidenceId: null`) keeps that evidence; only another evidence id sent explicitly replaces it (keptRestrictedRef).
+  const evidenceId = await keptRestrictedRef(
+    tx,
+    principalOf(request),
+    "evidence",
+    existing?.evidence_id,
+    sentEvidenceId,
+  );
 
   let answered = test.answered_count;
   if (!existing) {

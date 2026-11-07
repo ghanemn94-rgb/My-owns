@@ -28,7 +28,7 @@ import { formCustomValuesPut, formRecordTypeCode, uuid, type FormCustomValues } 
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf } from "../access/index.ts";
+import { auditContextOf, principalOf, redactRestrictedIds, restrictedIdsAmong, uuidsIn } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { createConfigResolver } from "../methodology/index.ts";
 import {
@@ -99,6 +99,7 @@ const asObject = (v: unknown): Record<string, unknown> =>
 /** The FormCustomValues body: every active extension field (null = Unknown) and the calculated fields evaluated. */
 async function present(
   db: DbOrTx,
+  request: FastifyRequest,
   p: Params,
   rt: FormRecordTypeRow,
   form: ResolvedForm,
@@ -124,11 +125,16 @@ async function present(
       calculated.set(f.key, toCalculatedEntry(evaluateCalculatedField(cs, vars, inputs)));
     }
   }
+  // T-DG6-BE-Z10B (F-DG6-420; D-218): an attachment (evidence id) or reference value naming a record the reader is
+  // not admitted to is omitted (an array element is dropped, a single reference becomes null); the stored row is
+  // unchanged and the body carries includesRestrictedRecords.
+  const shown = await redactRestrictedIds(db, principalOf(request), Object.fromEntries(values));
   return {
     recordType: rt.code,
     recordId: p.recordId,
     formSchemaVersionId: row?.form_schema_version_id ?? versionId,
-    values: Object.fromEntries(values),
+    values: shown.value,
+    ...(shown.restricted ? { includesRestrictedRecords: true as const } : {}),
     calculated: Object.fromEntries(calculated),
     version: row?.version ?? 0,
     updatedAt: row === undefined ? null : row.updated_at.toISOString(),
@@ -216,6 +222,34 @@ async function lookupMember(tx: Tx, set: string, value: string, organizationId: 
   }
 }
 
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218; the Day-90 re-save rule, keptRestrictedRef): the GET showed this writer the values
+ * without the records they are not admitted to, so a PUT of that view is a re-save, not a removal they could choose. A
+ * stored attachment id the writer is not admitted to stays in its list; a stored single reference to such a record
+ * stays when the writer sends null or omits it (another value replaces it). A writer admitted to everything is unchanged.
+ */
+async function keepRestrictedValues(
+  tx: Tx,
+  request: FastifyRequest,
+  stored: Record<string, unknown>,
+  sent: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const storedIds = uuidsIn(stored);
+  if (storedIds.size === 0) return sent;
+  const hidden = await restrictedIdsAmong(tx, principalOf(request), storedIds);
+  if (hidden.size === 0) return sent;
+  const isHidden = (x: unknown): x is string => typeof x === "string" && hidden.has(x.toLowerCase());
+  const out = new Map(Object.entries(sent));
+  for (const [key, value] of Object.entries(stored)) {
+    if (Array.isArray(value) && value.some(isHidden)) {
+      const now = out.get(key);
+      const list = Array.isArray(now) ? now : [];
+      out.set(key, [...list, ...value.filter((x) => isHidden(x) && !list.includes(x))]);
+    } else if (isHidden(value) && (out.get(key) ?? null) === null) out.set(key, value);
+  }
+  return Object.fromEntries(out);
+}
+
 async function putValues(tx: Tx, request: FastifyRequest, p: Params): Promise<FormCustomValues> {
   const rt = await loadRecordType(tx, p.recordType);
   assertWorking(rt);
@@ -248,7 +282,13 @@ async function putValues(tx: Tx, request: FastifyRequest, p: Params): Promise<Fo
   const current = await loadValuesRow(tx, rt.code, p.recordId, true);
   if ((current?.version ?? 0) !== expected) throw conflict(current?.version ?? null);
   // Unknown (null) is stored as absent: the row holds only known values; absent keys are cleared.
-  const next = Object.fromEntries(Object.entries(v.values).filter(([, x]) => x !== null));
+  const sent = Object.fromEntries(Object.entries(v.values).filter(([, x]) => x !== null));
+  const next = await keepRestrictedValues(
+    tx,
+    request,
+    current === undefined ? {} : asObject(current.field_values),
+    sent,
+  );
   const audit = auditContextOf(request);
   let row: FormCustomValueRow;
   if (current === undefined) {
@@ -300,7 +340,7 @@ async function putValues(tx: Tx, request: FastifyRequest, p: Params): Promise<Fo
         : {}),
     },
   });
-  return present(tx, p, rt, form, pinned.versionId, t.currency, row);
+  return present(tx, request, p, rt, form, pinned.versionId, t.currency, row);
 }
 
 export function registerCustomValueRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
@@ -322,7 +362,7 @@ export function registerCustomValueRoutes(app: FastifyInstance, { db }: ModuleDe
     const pinned = await resolver.pinnedVersion(db, p.transformationId, "form_schema");
     const form = await resolveForm(db, pinned.versionId, rt);
     const row = await loadValuesRow(db, rt.code, p.recordId);
-    const body = await present(db, p, rt, form, pinned.versionId, t.currency, row);
+    const body = await present(db, request, p, rt, form, pinned.versionId, t.currency, row);
     reply.header("ETag", `"${body.version}"`);
     return body;
   });

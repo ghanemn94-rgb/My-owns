@@ -46,6 +46,7 @@ import {
 } from "@mth/shared/schemas";
 import type { Selectable } from "kysely";
 import type { z } from "zod";
+import { hideRestrictedRefs, hideRestrictedTypedRefs } from "../access/index.ts";
 import { HttpProblem, iso, isoOrNull } from "../platform/index.ts";
 import { loadGoodOutcomeEvaluations, type GoodOutcomeEvaluation } from "./good-outcome.ts";
 import {
@@ -431,6 +432,15 @@ export const workstreamOutputRegister: RegisterSpec<OutputRow, WorkstreamOutput>
   },
   auditFields: [...OUTPUT_COLS.map(([, c]) => c), "status"],
   archive: {},
+  // T-DG6-BE-Z10B (F-DG6-420; D-218): a linked record or evidence item the reader is not admitted to is not named.
+  redact: async (db, principal, items) =>
+    hideRestrictedRefs(
+      db,
+      principal,
+      "evidence",
+      await hideRestrictedTypedRefs(db, principal, items as WorkstreamOutput[], "recordType", "recordId"),
+      "evidenceId",
+    ),
 };
 
 // ------------------------------------------------------------------------------------------------ T03
