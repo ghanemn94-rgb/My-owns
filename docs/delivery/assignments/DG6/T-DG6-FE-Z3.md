@@ -1,18 +1,15 @@
-# Assignment T-DG6-FE-Z3: DG6 round-4 repair: catalogue texts for exception and field-error codes, and the connector target display (F-DG6-320, F-DG6-301, F-DG6-281, Low) (frontend-ux-engineer)
-
+# Assignment T-DG6-FE-Z3: DG6 round-6 repair: all-restricted report table hides totals (F-DG6-440, Medium) (frontend-ux-engineer)
 
 ## What to change (read first)
 
-Read the findings verbatim in `docs/delivery/reviews/DG6/round-4/qa-verifier.findings.json` (F-DG6-320), `docs/delivery/reviews/DG6/round-4/code-security-reviewer.findings.json` (F-DG6-301) and `docs/delivery/reviews/DG6/round-4/domain-reviewer.findings.json` (F-DG6-281), with their probes under `docs/delivery/test-evidence/DG6/{qa,code-security,domain}/round-4/`.
+Read F-DG6-440 verbatim in `docs/delivery/reviews/DG6/round-6/qa-verifier.findings.json`, with its probe `docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts`.
 
-1. **F-DG6-320 (Low, REQ-S15-007).** On the operational exception page, "Last error" shows the raw code for `kpi.stale` (worker, `apps/worker/src/handlers/operations.ts`) and `operations.heartbeat_missed` (API, `apps/api/src/modules/operations/heartbeat.ts`), in both languages, because neither has a catalogue text. Add true en and ar texts for both, and for any other exception code the product raises.
-2. **F-DG6-301 (Low, REQ-S15-007).** `validation.commit_on_behalf_of`, `validation.credential_refs` and `validation.unknown_version` (field-error codes inside `problems.validation([...])`) have no en/ar text.  Add them.
-3. **The class, for items 1 and 2:** extend `apps/web/src/i18n/problems-all.test.ts` so it also collects codes inside `problems.validation([...])` arrays and every operational-exception `errorCode` the API and worker raise (including codes held in constants), and fails when any of them lacks an en or ar text. Show that it fails before your texts are added.
-4. **F-DG6-281 (Low, REQ-S17-001).** The connector edit screen (`apps/web/src/pages/integrations/ConnectorFormPage.tsx`) shows "Choose…" in the required "Target transformation" select when the stored target is a transformation the administrator cannot read. Show that a target is set (for example "A transformation you cannot view" with its code or id, in both languages), keep it selectable, and keep the stored value on save. Do not widen what the administrator can read. Add a web unit test and an e2e check with a measured budget, in both locales.
+1. **Fix** `apps/web/src/pages/reports/ui.tsx` SectionView, case 'table': when `s.rows` is empty but `s.totals` exist, render the totals row (and the restricted label) with the empty-rows text, in the live preview, the snapshot page and presentation mode, en and ar, accessible. Check the other section kinds for the same pattern and say what you found.
+2. **Tests.** Port the probe into a product e2e spec (measured budget) that fails before the fix (record the run) and passes after, in chromium-en and chromium-ar, plus a unit test of SectionView.
 
 ## Stage and working tree
 
-- **Stage:** P6 "Integration and system hardening", gate DG6 (FIXING after review round 4).
+- **Stage:** P6 "Integration and system hardening", gate DG6 (FIXING after review round 6).
 - **Working tree:** a separate git worktree prepared by the orchestrator. It is your current working directory (`--cwd`), on branch `dg6/fe-z3`, at the integrated `HEAD`.
   - `node_modules` is installed and the packages are built.
   - Work only in this tree. Never run `git worktree add`.
@@ -27,7 +24,7 @@ Read the findings verbatim in `docs/delivery/reviews/DG6/round-4/qa-verifier.fin
 - **Your scope:** the findings named above. The p6-work-split section that owns each touched file still applies.
 - **The shared rules:** `p6-work-split.md` §2. Reviewers check every one of them.
 - **The design:** the ADRs your section cites (ADR-0051 onward, and the DG1–DG5 ADRs they extend), `docs/api/openapi.yaml`, and the zod mirrors.
-- **Decisions:** D-193 to D-196 in `docs/delivery/decisions.md` (D-195 decides p6-plan Q1–Q14; D-196 decides the ARCH-01 handback questions). Read them verbatim.
+- **Decisions:** D-193 to D-196 and D-212 to D-217 in `docs/delivery/decisions.md` (D-195 decides p6-plan Q1–Q14; D-196 decides the ARCH-01 handback questions). Read them verbatim.
 - **Pending operations:** move each operation you route out of your `apps/api/test/support/p6-pending-*.ts` list. Exercise it in your `p6-exercises-*.ts` so `contract.test.ts` stays green.
 - **Acceptance texts:** the `acceptance` text of every requirement row your section assigns to you (`docs/delivery/requirements.csv`) is binding, and reviewers test it literally. A row that cites a later-stage A-test is judged on its own acceptance text (D-142).
 - **User-facing text** must be true for the release it ships in (F-DG4-160): when your work ships a feature that an existing en/ar string calls planned or later, correct that string in both languages, or list it in your handback for the owner of that file.
@@ -40,7 +37,7 @@ Read the findings verbatim in `docs/delivery/reviews/DG6/round-4/qa-verifier.fin
 
 - **Node:** 24.21.0 at `/opt/nvm/versions/node/v24.21.0/bin`. Run offline.
 - **Browser:** Chromium is pre-installed (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). Never run `playwright install`.
-- **Your harness ports are 28950–28999 only.** Use them for `QA_PG_PORT`, `E2E_PG_PORT`, `E2E_API_PORT` and `MTH_PORT_POOL`.
+- **Your harness ports are 31050–31099 only.** Use them for `QA_PG_PORT`, `E2E_PG_PORT`, `E2E_API_PORT` and `MTH_PORT_POOL`.
 - **Before tests:** remove any empty `.claude/.cc-writes` directories inside source folders.
 - **Tests:** deterministic under load (F-DG4-143 to F-DG4-148); never read whole delivery folders (D-138); never stop processes with `pkill -f` or `pgrep -f`.
 - **The write guard forbids editing:**
@@ -58,7 +55,7 @@ Read the findings verbatim in `docs/delivery/reviews/DG6/round-4/qa-verifier.fin
    - `git ls-files -co --exclude-standard -z | xargs -0 npx prettier --check --ignore-unknown`
    - `pnpm openapi:lint`
 2. `pnpm test` passes with the locale unset and with `C.UTF-8`, in every Vitest invocation it runs. Report the counts.
-3. The full product e2e is **not** required here (it takes about 1.6 h per locale); the orchestrator runs it on the merged tree. Run every spec your change touches (at least the connector, operations and a02 demo specs) in `chromium-en` and `chromium-ar`, and report the counts. Use `apps/web/e2e/support/with-stack.sh` for the product specs and `e2e/support/with-demo-stack.sh` for a02.
+3. The full `pnpm test:integration` is **not** required here (it takes over an hour on this host); the orchestrator runs it on the merged tree. Run every integration file your change touches inside `tests/qa/support/with-pg.sh`, and report the counts. At least: the worker job, failure-queue and automation-recovery files, the `operations` and operational-exception files, and the BE-Z6 race test. Also run `e2e/a22-p6-operability.spec.ts` and `e2e/a13-automation-recovery.spec.ts` on the real stack in both locales.
 4. `node tools/gates/validate.mjs --historical --stage DG5` exits 0.
 
 ## Evidence honesty
@@ -67,7 +64,7 @@ Report every command with its real exit code. Disclose and explain every non-zer
 
 ## Handback
 
-Write `docs/delivery/handbacks/DG6/T-DG6-FE-Z3-frontend-ux-engineer.md`, with logs under `docs/delivery/handbacks/DG6/T-DG6-FE-Z3-evidence/`. Include:
+Write `docs/delivery/handbacks/DG6/T-DG6-BE-Z8-backend-workflow-engineer.md`, with logs under `docs/delivery/handbacks/DG6/T-DG6-BE-Z8-evidence/`. Include:
 - the files changed;
 - the behaviour delivered, per requirement row, quoting its acceptance text;
 - the checks, with exit codes and counts;
