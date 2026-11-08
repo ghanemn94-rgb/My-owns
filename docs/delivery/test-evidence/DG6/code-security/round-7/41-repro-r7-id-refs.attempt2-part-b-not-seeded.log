@@ -1,0 +1,91 @@
+# 41-repro-r7-id-refs  started 2026-11-08T05:07:19Z  cwd=/var/tmp/mth-run.4o9h5g/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=14.44 13.19 9.36  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r7-id-refs.test.ts
+port-policy: PostgreSQL listening on port 30465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7df2gc_ba405138 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] hidden B02, open B01, child candidate B03
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] TL PATCH group countedBenefitId (before marking) -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B1-parent NOT SEEDED: benefit: the parent benefit already has values of its own; a parent is a roll-up of its children
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B2 NOT SEEDED: no meeting in the demo transformation
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B3-launch_task-output NOT SEEDED: launch_task: plan, template item, kind, window, ordinal and a template output type never change
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B4 NOT SEEDED: no procedure instance in the demo transformation
+[CS-R7-ID] seeded: benefit_evidence
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TL: listBenefitGroups 200 counted=null countedBenefitRestricted=true members=1 includesRestrictedRecords=true
+[CS-R7-ID] TL: getBenefitGroup 200 names={"hidden":false,"ev":false} countedBenefitRestricted=true
+[CS-R7-ID] TL: getBenefitMeasurement 200 names={"hidden":false,"ev":false} includesRestrictedRecords=true
+[CS-R7-ID] TL: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":false,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TO: listBenefitGroups 200 counted=<hidden id> countedBenefitRestricted=undefined members=2 includesRestrictedRecords=undefined
+[CS-R7-ID] TO: getBenefitGroup 200 names={"hidden":true,"ev":false} countedBenefitRestricted=undefined
+[CS-R7-ID] TO: getBenefitMeasurement 200 names={"hidden":false,"ev":true} includesRestrictedRecords=undefined
+[CS-R7-ID] TO: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":true}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] TL PATCH group title -> 200 names={"hidden":false,"ev":false} 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] DB after TL PATCH: counted is hidden=true title=Synthetic group CS-R7 renamed
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL
+[CS-R7-ID] TL listTransformationAudit(group) 400 names={"hidden":false,"ev":false}; unfiltered 200
+[CS-R7-ID] D-219: the unfiltered trail names the hidden benefit as a recordId: true; its changes: false
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B1 getBenefit(child of hidden): TL 200 names hidden benefit=false sensitive evidence=false | TO 200 {"hidden":false,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B1 listBenefits: TL 200 names hidden benefit=false sensitive evidence=false | TO 200 {"hidden":true,"ev":true}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B3 listLaunchTasks: TL 200 names hidden benefit=false sensitive evidence=false | TO 200 {"hidden":false,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B3 getLaunchTask: TL 200 names hidden benefit=false sensitive evidence=false | TO 200 {"hidden":false,"ev":false}
+[CS-R7-ID] part B leaks (0):
+
+
+ ❯ |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts (4 tests | 1 failed) 12965ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids  330ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id 39ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL 72ms
+   × CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response 220ms
+     → setup seeded the part B rows: expected 1 to be greater than 1
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+AssertionError: setup seeded the part B rows: expected 1 to be greater than 1
+ ❯ tests/qa/integration/zz-cs-r7-id-refs.test.ts:321:59
+    319|     }
+    320|     log(`part B leaks (${leaks.length}):\n${leaks.join("\n")}`);
+    321|     expect(seeded.length, "setup seeded the part B rows").toBeGreaterT…
+       |                                                           ^
+    322|     expect(leaks).toEqual([]);
+    323|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  05:07:25
+   Duration  49.22s (transform 10.58s, setup 0ms, collect 25.00s, tests 12.96s, environment 0ms, prepare 378ms)
+
+exit=1  finished 2026-11-08T05:08:17Z  load=13.73 13.24 9.60

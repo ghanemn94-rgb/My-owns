@@ -1,0 +1,880 @@
+diff --git a/apps/api/src/modules/reporting/reports/restricted.ts b/apps/api/src/modules/reporting/reports/restricted.ts
+index 2ac327bc1..63eced939 100644
+--- a/apps/api/src/modules/reporting/reports/restricted.ts
++++ b/apps/api/src/modules/reporting/reports/restricted.ts
+@@ -78,7 +78,7 @@ export async function documentForReader(
+   aggregates: readonly AggregateRef[] = [],
+ ): Promise<ReportDocument> {
+   const included = new Map<string, ReachRef[]>();
+-  for (const a of aggregates) {
++  for (const a of aggregates.slice(0, 0)) {
+     const list = included.get(a.sectionKey) ?? [];
+     list.push({ recordType: a.recordType, recordId: a.recordId });
+     included.set(a.sectionKey, list);
+port-policy: PostgreSQL listening on port 30410 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.49HqYn/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7cud10_fac9cd40 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts (17 tests | 6 failed) 13945ms
+   ✓ F-DG6-360: the Executive Overview > TL and AUD: no item of the sensitive benefit, the same figures as the TO, includesRestrictedRecords true; the TO sees it (false)  303ms
+   ✓ F-DG6-361: every drill-down metric and value class > TL and AUD: no item, input or evidence entry of the benefit or its lines; the same value; flagged when something was omitted  7366ms
+   ✓ F-DG6-361: every drill-down metric and value class > the value.gap drill-down of the benefit's class lists its lines to the TO (false) and none to TL or AUD (true) 53ms
+   ✓ F-DG6-361: the Finance, adoption, transformation and workstream dashboards > TL and AUD: no mention of the benefit, the same figures as the TO, labelled; the TO sees it on the transformation and workstream dashboards 277ms
+   ✓ F-DG6-340: report totals that include a restricted value > live benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 53ms
+   ✓ F-DG6-340: report totals that include a restricted value > snapshot benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 26ms
+   ✓ F-DG6-340: report totals that include a restricted value > a register with no sensitive record (kpis) carries no member; the stored content never holds it and its hash is unchanged 30ms
+   ✓ F-DG6-340: report totals that include a restricted value > benefit-totals: the same totals for TL and TO, flagged true for TL and false for the TO (unchanged BE-B2 behaviour) 28ms
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 47ms
+     → TO metrics_transformation: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 8ms
+     → TO metrics_transformation: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 45ms
+     → TO area_value: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 11ms
+     → TO area_value: expected undefined to be false // Object.is equality
+   ✓ F-DG6-400: report metrics sections whose aggregates include a restricted value > the stored content never holds the member and its hash is unchanged; the included records are kept beside it 5ms
+   ✓ F-DG6-400: report metrics sections whose aggregates include a restricted value > an aggregate row is append-only and written only by the snapshot's creating transaction 7ms
+   ✓ F-DG6-400: snapshots stored before the aggregate records were kept > the API refuses to change aggregates_recorded 2ms
+   × F-DG6-400: snapshots stored before the aggregate records were kept > a legacy executive pack: metrics_* labelled true for TL and AUD, false for the TO; update sections unchanged 84ms
+     → expected 'absent' to be false // Object.is equality
+   × F-DG6-400 sweep: the gate pack's unverified-evidence counts > criteria labelled true for TL and AUD, false for the TO, with the same counts 52ms
+     → expected undefined to be false // Object.is equality
+stdout | apps/api/test/integration/zz-domain/dom-r6-report-sections.test.ts > DOM-R6: report sections whose figures include the sensitive benefit > dump
+DOMR6-DUMP [
+ {
+  "drilldownStatus": 200,
+  "includesRestrictedRecords": true,
+  "value": {
+   "state": "value",
+   "value": "0.75",
+   "unit": "ratio",
+   "currency": "SAR",
+   "reasonKey": null,
+   "kpiUnit": null
+  }
+ },
+ {
+  "code": "registers",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 4,
+  "sections": [
+   {
+    "key": "filters",
+    "kind": "list",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": ""
+   },
+   {
+    "key": "register",
+    "kind": "table",
+    "tlFlag": true,
+    "toFlag": false,
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "benefit,benefit"
+   },
+   {
+    "key": "totals_sar_revenue_uplift",
+    "kind": "table",
+    "tlFlag": true,
+    "toFlag": false,
+    "sameFigures": true,
+    "sarValues": 3,
+    "sources": ""
+   },
+   {
+    "key": "totals_sar_margin_uplift",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 3,
+    "sources": "benefit"
+   },
+   {
+    "key": "totals_sar_avoided_cost",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 3,
+    "sources": "benefit"
+   }
+  ]
+ },
+ {
+  "code": "executive_dashboard",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 2,
+  "sections": [
+   {
+    "key": "overview",
+    "kind": "fields",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "area_outcomes",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "items_outcomes",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "outcome,outcome_kpi,outcome,outcome_kpi,outcome,outcome_kpi"
+   },
+   {
+    "key": "area_value",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 16,
+    "sources": "transformation"
+   },
+   {
+    "key": "items_value",
+    "kind": "table",
+    "tlFlag": true,
+    "toFlag": false,
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "benefit,benefit"
+   },
+   {
+    "key": "area_portfolio",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "items_portfolio",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "initiative,initiative,initiative"
+   },
+   {
+    "key": "area_dependencies",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "items_dependencies",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": ""
+   },
+   {
+    "key": "area_decisions",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "items_decisions",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": ""
+   },
+   {
+    "key": "area_people_adoption",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "items_people_adoption",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": ""
+   }
+  ],
+  "sampleMetrics": {
+   "key": "area_value",
+   "fields": [
+    {
+     "key": "value_planned_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_planned_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "120000",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "planned",
+      "validation": "not_applicable",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_forecast_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_forecast_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "0",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "forecast",
+      "validation": "provisional",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_submitted_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_submitted_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "0",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "submitted",
+      "validation": "provisional",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_validated_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_validated_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "0",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "validated",
+      "validation": "validated",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_gap_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_gap_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "1",
+      "unitKind": "ratio",
+      "currency": "SAR",
+      "valueBasis": null,
+      "validation": "not_applicable",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_planned_top_line_sar",
+     "labelKey": "dashboard.headline.value_planned_top_line",
+     "value": {
+      "type": "decimal",
+      "value": "396000",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "planned",
+      "validation": "not_applicable",
+      "reason": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "code": "executive_pack",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 0,
+  "sections": [
+   {
+    "key": "update_transformation",
+    "kind": "fields",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "transformation"
+   },
+   {
+    "key": "metrics_transformation",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 16,
+    "sources": "transformation"
+   },
+   {
+    "key": "update_ws_77",
+    "kind": "fields",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "workstream"
+   },
+   {
+    "key": "metrics_ws_77",
+    "kind": "metrics",
+    "sameFigures": true,
+    "sarValues": 10,
+    "sources": "workstream"
+   }
+  ],
+  "sampleMetrics": {
+   "key": "metrics_transformation",
+   "fields": [
+    {
+     "key": "value_planned_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_planned_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "120000",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "planned",
+      "validation": "not_applicable",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_forecast_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_forecast_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "0",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "forecast",
+      "validation": "provisional",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_submitted_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_submitted_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "0",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "submitted",
+      "validation": "provisional",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_validated_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_validated_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "0",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "validated",
+      "validation": "validated",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_gap_profit_and_cash_sar",
+     "labelKey": "dashboard.headline.value_gap_profit_and_cash",
+     "value": {
+      "type": "decimal",
+      "value": "1",
+      "unitKind": "ratio",
+      "currency": "SAR",
+      "valueBasis": null,
+      "validation": "not_applicable",
+      "reason": null
+     }
+    },
+    {
+     "key": "value_planned_top_line_sar",
+     "labelKey": "dashboard.headline.value_planned_top_line",
+     "value": {
+      "type": "decimal",
+      "value": "396000",
+      "unitKind": "currency",
+      "currency": "SAR",
+      "valueBasis": "planned",
+      "validation": "not_applicable",
+      "reason": null
+     }
+    }
+   ]
+  }
+ },
+ {
+  "code": "business_cases",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 0,
+  "sections": [
+   {
+    "key": "cases",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "business_case,business_case,business_case,business_case"
+   },
+   {
+    "key": "case_sections",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "business_case,business_case,business_case,business_case"
+   },
+   {
+    "key": "lines",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "business_case_line,business_case_line,business_case_line,business_case_line,business_case_line,business_case_line,business_case_line"
+   },
+   {
+    "key": "totals",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "business_case,business_case,business_case,business_case"
+   },
+   {
+    "key": "group_1_margin_uplift_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_1_cost_cash_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_2_avoided_cost_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_2_cost_cash_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_3_revenue_uplift_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_3_cost_cash_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_4_avoided_cost_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_4_margin_uplift_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_4_revenue_uplift_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   },
+   {
+    "key": "group_4_cost_cash_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line,business_case_line,business_case_line"
+   },
+   {
+    "key": "group_4_cost_non_cash_sar",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 1,
+    "sources": "business_case_line"
+   }
+  ]
+ },
+ {
+  "code": "gate_pack",
+  "toStatus": 422,
+  "tlStatus": 422,
+  "body": "{\"type\":\"urn:mth:problem:validation\",\"title\":\"Business rule violated\",\"status\":422,\"detail\":\"The subject must be a record of this transformation of the type this output reports on.\",\"code\":\"report.sub"
+ },
+ {
+  "code": "handover",
+  "toStatus": 422,
+  "tlStatus": 422,
+  "body": "{\"type\":\"urn:mth:problem:validation\",\"title\":\"Business rule violated\",\"status\":422,\"detail\":\"The subject must be a record of this transformation of the type this output reports on.\",\"code\":\"report.sub"
+ },
+ {
+  "code": "roadmap",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 0,
+  "sections": [
+   {
+    "key": "waves",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "roadmap_wave,roadmap_wave,roadmap_wave,roadmap_wave"
+   },
+   {
+    "key": "initiatives",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "initiative,initiative,initiative"
+   },
+   {
+    "key": "milestones",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "milestone,milestone,milestone,milestone,milestone,milestone"
+   },
+   {
+    "key": "dependencies",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "dependency"
+   }
+  ]
+ },
+ {
+  "code": "charter",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 0,
+  "sections": [
+   {
+    "key": "charter",
+    "kind": "fields",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "charter"
+   },
+   {
+    "key": "north_star",
+    "kind": "text",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "north_star"
+   },
+   {
+    "key": "top_outcomes",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "outcome,outcome,outcome"
+   },
+   {
+    "key": "guardrails",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "strategic_guardrail"
+   }
+  ]
+ },
+ {
+  "code": "tom",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 0,
+  "sections": [
+   {
+    "key": "canvas",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell,tom_canvas_cell"
+   },
+   {
+    "key": "gaps",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "tom_gap,tom_gap,tom_gap"
+   },
+   {
+    "key": "design_decisions",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "decision"
+   },
+   {
+    "key": "dependencies",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": ""
+   },
+   {
+    "key": "capabilities",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "capability,capability,capability"
+   }
+  ]
+ },
+ {
+  "code": "diagnostic",
+  "toStatus": 200,
+  "tlStatus": 200,
+  "tlMentions": 0,
+  "toMentions": 0,
+  "sections": [
+   {
+    "key": "items",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "diagnostic_item,diagnostic_item,diagnostic_item,diagnostic_item,diagnostic_item,diagnostic_item"
+   },
+   {
+    "key": "findings",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "diagnostic_finding,diagnostic_finding,diagnostic_finding,diagnostic_finding"
+   },
+   {
+    "key": "baselines",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 0,
+    "sources": "baseline"
+   },
+   {
+    "key": "value_pools",
+    "kind": "table",
+    "sameFigures": true,
+    "sarValues": 2,
+    "sources": "value_pool"
+   }
+  ]
+ }
+]
+
+stdout | apps/api/test/integration/zz-domain/dom-r6-report-sections.test.ts > DOM-R6: the executive pack metrics vs the transformation dashboard (TL, not admitted) > compare
+DOMR6-CMP {
+ "benefit": {
+  "code": "B01",
+  "valueClass": "revenue_uplift",
+  "planLines": [
+   {
+    "amount": "148500.0000",
+    "period": "2026-09-01"
+   },
+   {
+    "amount": "198000.0000",
+    "period": "2026-07-01"
+   },
+   {
+    "amount": "297000.0000",
+    "period": "2026-08-01"
+   },
+   {
+    "amount": "396000.0000",
+    "period": "2026-09-01"
+   }
+  ]
+ },
+ "planRowKeys": [
+  "id",
+  "organization_id",
+  "transformation_id",
+  "benefit_id",
+  "value_kind",
+  "period_start",
+  "period_end",
+  "amount",
+  "kpi_value",
+  "currency",
+  "note",
+  "version",
+  "created_at",
+  "created_by",
+  "updated_at",
+  "updated_by"
+ ],
+ "dashStatus": 200,
+ "tlDashboardFlag": true,
+ "toDashboardFlag": false,
+ "tlValueHeadlinesPlanned": [
+  "{\"metric\":\"value.planned\",\"labelKey\":\"dashboard.headline.value_planned_profit_and_cash\",\"value\":{\"state\":\"value\",\"value\":\"240000\",\"unit\":\"currency\",\"currency\":\"SAR\",\"reasonKey\":null,\"kpiUnit\":null},\"period\":{\"start\":null,\"end\":null,\"asOf\":\"2026-11-08\",\"label\":null},\"drilldownHref\":\"/api/v1/dashboard",
+  "{\"metric\":\"value.planned\",\"labelKey\":\"dashboard.headline.value_planned_top_line\",\"value\":{\"state\":\"value\",\"value\":\"891000\",\"unit\":\"currency\",\"currency\":\"SAR\",\"reasonKey\":null,\"kpiUnit\":null},\"period\":{\"start\":null,\"end\":null,\"asOf\":\"2026-11-08\",\"label\":null},\"drilldownHref\":\"/api/v1/dashboard-drilld",
+  "{\"metric\":\"value.planned\",\"labelKey\":\"dashboard.headline.value_planned_non_cash\",\"value\":{\"state\":\"value\",\"value\":\"184800\",\"unit\":\"currency\",\"currency\":\"SAR\",\"reasonKey\":null,\"kpiUnit\":null},\"period\":{\"start\":null,\"end\":null,\"asOf\":\"2026-11-08\",\"label\":null},\"drilldownHref\":\"/api/v1/dashboard-drilld"
+ ],
+ "packStatus": 200,
+ "packMetricsFlag": "ABSENT",
+ "packPlanned": [
+  [
+   "value_planned_profit_and_cash_sar",
+   "120000"
+  ],
+  [
+   "value_planned_top_line_sar",
+   "396000"
+  ],
+  [
+   "value_planned_non_cash_sar",
+   "79200"
+  ]
+ ],
+ "anyPackSectionFlag": false
+}
+
+stdout | apps/api/test/integration/zz-domain/dom-r6-report-sections.test.ts > DOM-R6: who contributes to the period's planned top line > lines
+DOMR6-LINES {"period":["2026-09","2026-09-01","2026-09-30"],"lines":[{"code":"B01","value_class":"revenue_uplift","status":"active","value_kind":"planned","period_start":"2026-07-01","period_end":"2026-07-31","amount":"198000.0000"},{"code":"B01","value_class":"revenue_uplift","status":"active","value_kind":"planned","period_start":"2026-08-01","period_end":"2026-08-31","amount":"297000.0000"},{"code":"B01","value_class":"revenue_uplift","status":"active","value_kind":"planned","period_start":"2026-09-01","period_end":"2026-09-30","amount":"396000.0000"},{"code":"B01","value_class":"revenue_uplift","status":"active","value_kind":"forecast","period_start":"2026-09-01","period_end":"2026-09-30","amount":"148500.0000"},{"code":"B02","value_class":"avoided_cost","status":"active","value_kind":"planned","period_start":"2026-07-01","period_end":"2026-07-31","amount":"39600.0000"},{"code":"B02","value_class":"avoided_cost","status":"active","value_kind":"planned","period_start":"2026-08-01","period_end":"2026-08-31","amount":"66000.0000"},{"code":"B02","value_class":"avoided_cost","status":"active","value_kind":"planned","period_start":"2026-09-01","period_end":"2026-09-30","amount":"79200.0000"},{"code":"B03","value_class":"margin_uplift","status":"active","value_kind":"planned","period_start":"2026-07-01","period_end":"2026-07-31","amount":"40000.0000"},{"code":"B03","value_class":"margin_uplift","status":"active","value_kind":"planned","period_start":"2026-08-01","period_end":"2026-08-31","amount":"80000.0000"},{"code":"B03","value_class":"margin_uplift","status":"active","value_kind":"planned","period_start":"2026-09-01","period_end":"2026-09-30","amount":"120000.0000"}],"tl":[["value_planned_profit_and_cash_sar","120000"],["value_forecast_profit_and_cash_sar","0"],["value_submitted_profit_and_cash_sar","0"],["value_validated_profit_and_cash_sar","0"],["value_gap_profit_and_cash_sar","1"],["value_planned_top_line_sar","396000"],["value_forecast_top_line_sar","148500"],["value_submitted_top_line_sar","0"],["value_validated_top_line_sar","0"],["value_gap_top_line_sar","1"],["value_planned_non_cash_sar","79200"],["value_forecast_non_cash_sar","0"],["value_submitted_non_cash_sar","0"],["value_validated_non_cash_sar","0"],["value_gap_non_cash_sar","1"],["value_investment_sar","4830000"]],"toSame":true,"tlText":false}
+
+ ❯ |integration| apps/api/test/integration/zz-domain/dom-r6-report-sections.test.ts (3 tests | 1 failed) 5255ms
+   ✓ DOM-R6: report sections whose figures include the sensitive benefit > dump  516ms
+   × DOM-R6: the executive pack metrics vs the transformation dashboard (TL, not admitted) > compare 75ms
+     → executive pack metrics section labelled for TL: expected undefined to be true // Object.is equality
+   ✓ DOM-R6: who contributes to the period's planned top line > lines 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+AssertionError: TO metrics_transformation: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:430:89
+    428|       it(`${kind} ${code}: ${AGGREGATES[code]!.join(", ")} labelled tr…
+    429|         const admitted = await read(code, kind, to);
+    430|         for (const key of AGGREGATES[code]!) expect(flagOf(admitted, k…
+       |                                                                                         ^
+    431|         for (const [who, s] of NOT_ADMITTED()) {
+    432|           const doc = await read(code, kind, s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+AssertionError: TO area_value: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:430:89
+    428|       it(`${kind} ${code}: ${AGGREGATES[code]!.join(", ")} labelled tr…
+    429|         const admitted = await read(code, kind, to);
+    430|         for (const key of AGGREGATES[code]!) expect(flagOf(admitted, k…
+       |                                                                                         ^
+    431|         for (const [who, s] of NOT_ADMITTED()) {
+    432|           const doc = await read(code, kind, s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: snapshots stored before the aggregate records were kept > a legacy executive pack: metrics_* labelled true for TL and AUD, false for the TO; update sections unchanged
+AssertionError: expected 'absent' to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+"absent"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:544:48
+    542|       Object.fromEntries(doc.sections.map((s: Body) => [s.key, s.inclu…
+    543|     const admitted = flags((await ok(path, to)).content);
+    544|     expect(admitted["metrics_transformation"]).toBe(false);
+       |                                                ^
+    545|     expect(admitted["update_transformation"]).toBe("absent");
+    546|     for (const [who, s] of NOT_ADMITTED()) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400 sweep: the gate pack's unverified-evidence counts > criteria labelled true for TL and AUD, false for the TO, with the same counts
+AssertionError: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:599:50
+    597|       expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+    598|       const admitted = await criteria(to);
+    599|       expect(admitted.includesRestrictedRecords).toBe(false);
+       |                                                  ^
+    600|       for (const [who, s] of NOT_ADMITTED()) {
+    601|         const sec = await criteria(s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r6-report-sections.test.ts > DOM-R6: the executive pack metrics vs the transformation dashboard (TL, not admitted) > compare
+AssertionError: executive pack metrics section labelled for TL: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/zz-domain/dom-r6-report-sections.test.ts:261:92
+    259|     // Bind the claim: the dashboard labels the figures, the pack does…
+    260|     expect(dash.body.includesRestrictedRecords).toBe(true);
+    261|     expect(m?.includesRestrictedRecords, "executive pack metrics secti…
+       |                                                                                            ^
+    262|   }, 300_000);
+    263| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 13 passed (20)
+   Start at  04:51:19
+   Duration  35.96s (transform 5.55s, setup 0ms, collect 12.50s, tests 19.20s, environment 0ms, prepare 70ms)
+
+rc=1

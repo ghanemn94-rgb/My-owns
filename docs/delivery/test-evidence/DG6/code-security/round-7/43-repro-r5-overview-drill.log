@@ -1,0 +1,55 @@
+# 43-repro-r5-overview-drill  started 2026-11-08T05:21:58Z  cwd=/var/tmp/mth-run.4o9h5g/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=16.91 16.93 13.98  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r5-overview-drill.test.ts
+port-policy: PostgreSQL listening on port 30465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7dxv63_a185ca93 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts
+[CS-R5-OD] benefit B01 01995000-4401-7000-8000-000000000001 value_class=revenue_uplift plan lines=4
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > control: TL and AUD get 404 on the benefit; the per-transformation dashboard omits it for them
+[CS-R5-OD] control TL transformation dashboard 200: mentions=0 includesRestrictedRecords=true
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > control: TL and AUD get 404 on the benefit; the per-transformation dashboard omits it for them
+[CS-R5-OD] control AUD transformation dashboard 200: mentions=0 includesRestrictedRecords=true
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > control: TL and AUD get 404 on the benefit; the per-transformation dashboard omits it for them
+[CS-R5-OD] control TO transformation dashboard: mentions=1
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getExecutiveOverview: no item of the sensitive benefit for TL or AUD
+[CS-R5-OD] overview TL ?organizationId=01995000-0000-7000-8000-000000000002 -> 200 includesRestrictedRecords=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getExecutiveOverview: no item of the sensitive benefit for TL or AUD
+[CS-R5-OD] overview TL ?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 includesRestrictedRecords=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getExecutiveOverview: no item of the sensitive benefit for TL or AUD
+[CS-R5-OD] overview AUD ?organizationId=01995000-0000-7000-8000-000000000002 -> 200 includesRestrictedRecords=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getExecutiveOverview: no item of the sensitive benefit for TL or AUD
+[CS-R5-OD] overview AUD ?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 includesRestrictedRecords=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getDashboardDrilldown value.gap (the benefit's value class): no line of the sensitive benefit for TL or AUD
+[CS-R5-OD] drill value.gap TL -> 200 includesRestrictedRecords=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getDashboardDrilldown value.gap (the benefit's value class): no line of the sensitive benefit for TL or AUD
+[CS-R5-OD] drill value.gap AUD -> 200 includesRestrictedRecords=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getDashboardDrilldown value.gap (the benefit's value class): no line of the sensitive benefit for TL or AUD
+[CS-R5-OD] drill value.gap TO (admitted) -> 200 includesRestrictedRecords=false mentions=[{"recordType":"benefit_plan_value","recordId":"01995000-4404-7000-8000-000000000101","code":"B01","label":"Synthetic CONFIDENTIAL CS-R5 overview benefit (planned)","href":"/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefit-plan-values/01995000-4404-7000-8000-000000000101","value":{"state":"value","value":"198000","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null},"period":{"start":"2026-07-01","end":"2026-07-31","asOf":"2026-11-08","label":null}},{"recordType":"benefit_plan_value","recordId":"01995000-4404-7000-8000-000000000102","code":"B01","label":"Synthetic CONFIDENTIAL CS-R5 overview benefit (planned)","href":"/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefit-plan-values/01995000-4404-7000-8000-000000000102","value":{"state":"value","value":"297000","unit":"currency","currency":"SAR","reasonKey":null,"kpiUnit":null},"period":{"s
+
+stdout | tests/qa/integration/zz-cs-r5-overview-drill.test.ts > CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getDashboardDrilldown value.gap (the benefit's value class): no line of the sensitive benefit for TL or AUD
+[CS-R5-OD] drill value.planned TL -> 200 mentions=0
+
+ ✓ |integration| tests/qa/integration/zz-cs-r5-overview-drill.test.ts (3 tests) 8504ms
+   ✓ CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > control: TL and AUD get 404 on the benefit; the per-transformation dashboard omits it for them  310ms
+   ✓ CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getExecutiveOverview: no item of the sensitive benefit for TL or AUD  355ms
+   ✓ CS-R5: getExecutiveOverview and the value.gap drill-down for a reader not admitted to a sensitive benefit > getDashboardDrilldown value.gap (the benefit's value class): no line of the sensitive benefit for TL or AUD  502ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  05:22:03
+   Duration  33.79s (transform 7.61s, setup 0ms, collect 18.28s, tests 8.50s, environment 2ms, prepare 387ms)
+
+exit=0  finished 2026-11-08T05:22:39Z  load=17.22 16.99 14.13

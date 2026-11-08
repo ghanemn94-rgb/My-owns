@@ -1,0 +1,48 @@
+# 41-repro-r7-id-refs  started 2026-11-08T05:04:11Z  cwd=/var/tmp/mth-run.4o9h5g/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=14.47 12.77 8.39  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r7-id-refs.test.ts
+port-policy: PostgreSQL listening on port 30465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7db0du_6e15ec77 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] hidden B02, open B01, child candidate B03
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] TO PATCH group countedBenefitId -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1b98b-9f12-73c7-af89-731073d7ffb7"}
+
+ ❯ |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts (4 tests | 4 skipped) 11776ms
+   ↓ CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+   ↓ CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+   ↓ CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL
+   ↓ CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts [ tests/qa/integration/zz-cs-r7-id-refs.test.ts ]
+AssertionError: expected 403 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 403[39m
+
+ ❯ tests/qa/integration/zz-cs-r7-id-refs.test.ts:135:21
+    133|   });
+    134|   log(`TO PATCH group countedBenefitId -> ${pg.status} ${pg.status ===…
+    135|   expect(pg.status).toBe(200);
+       |                     ^
+    136|   const m = await call<Body>(api.app, "PUT", `/api/v1/transformations/…
+    137|     session: to,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 skipped (4)
+   Start at  05:04:16
+   Duration  43.57s (transform 11.59s, setup 0ms, collect 25.50s, tests 11.78s, environment 0ms, prepare 283ms)
+
+exit=1  finished 2026-11-08T05:05:02Z  load=13.98 13.00 8.71

@@ -1,0 +1,331 @@
+# 46-repro-r6-beyond  started 2026-11-08T05:24:09Z  cwd=/var/tmp/mth-run.4o9h5g/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=15.61 16.45 14.20  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r6-beyond.test.ts
+port-policy: PostgreSQL listening on port 30465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7e0my0_5abbf0ce (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] BC BC-02 01995000-4305-7000-8000-000000000002 lines=2
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] mark business_case 01995000-4305-7000-8000-000000000002: 200 {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"business_case","recordId":"01995000-4305-7000-8000-000000000002","isSensitive":true,"reason":"Synthetic commercially sensitive 
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] benefits with validated measurements: B03/margin_uplift, B01/revenue_uplift
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] B2 B03 01995000-4401-7000-8000-000000000003 class=margin_uplift lines=4; (other: B01)
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] mark benefit 01995000-4401-7000-8000-000000000003: 200 {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"benefit","recordId":"01995000-4401-7000-8000-000000000003","isSensitive":true,"reason":"Synthetic commercially sensitive record
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] create evidence: 201 {"id":"01a1b99d-b386-730b-b769-6a9a1cfc2ccc","organizationId":"01995000-0000-7000-8000-000000000002","transformationId":"01995000-0000-7000-8000-000000000001","kind":"note","title":"Synthetic CONFIDEN
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] EV measurement 01995000-4405-7000-8000-000000000003 of B01 status=submitted class=revenue_uplift
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts
+[CS-R6] mark evidence 01a1b99d-b386-730b-b769-6a9a1cfc2ccc: 200 {"transformationId":"01995000-0000-7000-8000-000000000001","recordType":"evidence","recordId":"01a1b99d-b386-730b-b769-6a9a1cfc2ccc","isSensitive":true,"reason":"Synthetic commercially sensitive recor
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > control: TL and AUD get 404 on BC and B2, TO gets 200
+[CS-R6] control TL: benefit 404 case 404
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > control: TL and AUD get 404 on BC and B2, TO gets 200
+[CS-R6] control AUD: benefit 404 case 404
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TO /api/v1/overview?organizationId=01995000-0000-7000-8000-000000000002 -> 200 flag=false mentions=2
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TL /api/v1/overview?organizationId=01995000-0000-7000-8000-000000000002 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A AUD /api/v1/overview?organizationId=01995000-0000-7000-8000-000000000002 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TO /api/v1/overview?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=false mentions=2
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TL /api/v1/overview?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A AUD /api/v1/overview?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TO /api/v1/dashboards/finance?organizationId=01995000-0000-7000-8000-000000000002 -> 200 flag=false mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TL /api/v1/dashboards/finance?organizationId=01995000-0000-7000-8000-000000000002 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A AUD /api/v1/dashboards/finance?organizationId=01995000-0000-7000-8000-000000000002 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TO /api/v1/dashboards/finance?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=false mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TL /api/v1/dashboards/finance?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A AUD /api/v1/dashboards/finance?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TO /api/v1/dashboards/adoption?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=undefined mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TL /api/v1/dashboards/adoption?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=undefined sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A AUD /api/v1/dashboards/adoption?organizationId=01995000-0000-7000-8000-000000000002&transformationId=01995000-0000-7000-8000-000000000001 -> 200 flag=undefined sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TO /api/v1/transformations/01995000-0000-7000-8000-000000000001/dashboard -> 200 flag=false mentions=2
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A TL /api/v1/transformations/01995000-0000-7000-8000-000000000001/dashboard -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards
+[CS-R6] A AUD /api/v1/transformations/01995000-0000-7000-8000-000000000001/dashboard -> 200 flag=true sameFigures=true mentions=[]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > B: every drill-down metric, class and currency, every page (limit=2)
+[CS-R6] B variants=238 pages read (TL+AUD)=242 statuses=[["422",250],["200",226]]
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C subjects meeting_minutes/meeting: 0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C subjects meeting_pack/meeting: 0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C subjects gate_pack/gate_instance: 6
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C subjects handover/bau_handover: 1
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C flagged TL business_cases/live section cases: TO names 3 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section case_sections: TO names 14 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section lines: TO names 4 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section totals: TO names 6 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section group_3_revenue_uplift_sar: TO names 2 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section group_3_cost_cash_sar: TO names 2 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section group_4_revenue_uplift_sar: TO names 2 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL business_cases/live section group_4_cost_cash_sar: TO names 2 restricted ref(s), TO flag false, TL flag true, TL names 0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C flagged AUD business_cases/live section cases: TO names 3 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section case_sections: TO names 14 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section lines: TO names 4 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section totals: TO names 6 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section group_3_revenue_uplift_sar: TO names 2 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section group_3_cost_cash_sar: TO names 2 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section group_4_revenue_uplift_sar: TO names 2 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD business_cases/live section group_4_cost_cash_sar: TO names 2 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C flagged TL registers/live?parameters=%7B%22register%22%3A%22benefits%22 section register: TO names 3 restricted ref(s), TO flag false, TL flag true, TL names 0
+[CS-R6] C flagged TL registers/live?parameters=%7B%22register%22%3A%22benefits%22 section totals_sar_margin_uplift: TO names 3 restricted ref(s), TO flag false, TL flag true, TL names 0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C flagged AUD registers/live?parameters=%7B%22register%22%3A%22benefits%22 section register: TO names 3 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+[CS-R6] C flagged AUD registers/live?parameters=%7B%22register%22%3A%22benefits%22 section totals_sar_margin_uplift: TO names 3 restricted ref(s), TO flag false, AUD flag true, AUD names 0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition
+[CS-R6] C TL charter/live:200/TO 200 | AUD charter/live:200/TO 200 | TL diagnostic/live:200/TO 200 | AUD diagnostic/live:200/TO 200 | TL tom/live:200/TO 200 | AUD tom/live:200/TO 200 | TL business_cases/live:200/TO 200 | AUD business_cases/live:200/TO 200 | TL roadmap/live:200/TO 200 | AUD roadmap/live:200/TO 200 | TL registers/live?parameters=%7B%22register:200/TO 200 | AUD registers/live?parameters=%7B%22register:200/TO 200 | TL registers/live?parameters=%7B%22register:200/TO 200 | AUD registers/live?parameters=%7B%22register:200/TO 200 | TL registers/live?parameters=%7B%22register:200/TO 200 | AUD registers/live?parameters=%7B%22register:200/TO 200 | TL registers/live?parameters=%7B%22register:200/TO 200 | AUD registers/live?parameters=%7B%22register:200/TO 200 | TL registers/live?parameters=%7B%22register:200/TO 200 | AUD registers/live?parameters=%7B%22register:200/TO 200 | TL registers/live?parameters=%7B%22register:200/TO 200 | AUD registers/live?parameters=%7B%22register:200/TO 200 | TL meeting_minutes/live:422/TO 422 | AUD meeting_minutes/live:422/TO 422 | TL gate_pack/live:422/TO 422 | AUD gate_pack/live:422/TO 422 | TL executive_dashboard/live:422/TO 422 | AUD executive_dashboard/live:422/TO 422 | TL handover/live:422/TO 422 | AUD handover/live:422/TO 422 | TL executive_pack/live:422/TO 422 | AUD executive_pack/live:422/TO 422 | TL meeting_pack/live:422/TO 422 | AUD meeting_pack/live:422/TO 422 | TL business_cases/live?subjectId=01995000-4:422/TO 422 | AUD business_cases/live?subjectId=01995000-4:422/TO 422 | TL gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | AUD gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | TL gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | AUD gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | TL gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | AUD gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | TL gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | AUD gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | TL gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | AUD gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | TL gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | AUD gate_pack/live?subjectId=01995000-1013-7:200/TO 200 | TL handover/live?subjectId=01995000-1054-70:200/TO 200 | AUD handover/live?subjectId=01995000-1054-70:200/TO 200
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.planned null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.planned null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.planned null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.planned revenue_uplift -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.planned revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.planned revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.forecast null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.forecast null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.forecast null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.forecast revenue_uplift -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.forecast revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.forecast revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.validated null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.validated null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.validated null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.validated revenue_uplift -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.validated revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.validated revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.submitted null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.submitted null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.submitted null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.submitted revenue_uplift -> 200 evidence=1 EV listed=1 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.submitted revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.submitted revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.investment null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.investment null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.investment null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.investment revenue_uplift -> 422 evidence=undefined EV listed=0 flag=undefined
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.investment revenue_uplift -> 422 evidence=undefined EV listed=0 flag=undefined mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.investment revenue_uplift -> 422 evidence=undefined EV listed=0 flag=undefined mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.gap null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.gap null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.gap null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.gap revenue_uplift -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.gap revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.gap revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO finance.pending_validation null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL finance.pending_validation null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD finance.pending_validation null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO finance.pending_validation revenue_uplift -> 422 evidence=undefined EV listed=0 flag=undefined
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL finance.pending_validation revenue_uplift -> 422 evidence=undefined EV listed=0 flag=undefined mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD finance.pending_validation revenue_uplift -> 422 evidence=undefined EV listed=0 flag=undefined mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.measured null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.measured null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.measured null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.measured revenue_uplift -> 200 evidence=1 EV listed=1 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.measured revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.measured revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.rejected null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.rejected null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.rejected null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.rejected revenue_uplift -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.rejected revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.rejected revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.sustained null -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.sustained null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.sustained null -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TO value.sustained revenue_uplift -> 200 evidence=0 EV listed=0 flag=false
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D TL value.sustained revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+
+stdout | tests/qa/integration/zz-cs-r6-beyond.test.ts > CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric
+[CS-R6] D AUD value.sustained revenue_uplift -> 200 evidence=0 EV listed=0 flag=true mentions=0
+[CS-R6] D the TO saw EV in 2 drill-down(s) (measurement status submitted)
+
+ ✓ |integration| tests/qa/integration/zz-cs-r6-beyond.test.ts (5 tests) 27684ms
+   ✓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > A: overview, Finance, adoption and transformation dashboards  713ms
+   ✓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > B: every drill-down metric, class and currency, every page (limit=2)  16438ms
+   ✓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > C: live reports of every definition  1123ms
+   ✓ CS-R6 beyond the BE-Z7B tests: a sensitive business case, a second sensitive benefit and a sensitive evidence item > D: the sensitive evidence item on an open benefit's draft or submitted line, on every value metric  1690ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  05:24:12
+   Duration  50.47s (transform 8.30s, setup 0ms, collect 18.46s, tests 27.68s, environment 0ms, prepare 243ms)
+
+exit=0  finished 2026-11-08T05:25:06Z  load=12.87 15.58 14.04

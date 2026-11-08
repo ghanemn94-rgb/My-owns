@@ -1,0 +1,325 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - search "Search records" [ref=e10]:
+      - generic [ref=e11]: Search for
+      - textbox "Search for" [ref=e12]:
+        - /placeholder: Search records
+      - button "Search records" [ref=e13] [cursor=pointer]: Search
+    - button "Switch language to العربية" [ref=e15] [cursor=pointer]: العربية
+    - generic [ref=e16]:
+      - generic [ref=e17]: Synthetic Dev Admin
+      - generic [ref=e18]: Synthetic Dev Organization
+    - button "Sign out" [ref=e19] [cursor=pointer]:
+      - img [ref=e20]
+      - generic [ref=e22]: Sign out
+  - generic [ref=e24]:
+    - navigation "Primary navigation" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "My Work" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: My Work
+          - list "My Work" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "Tasks and inbox" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "Approvals" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "Delegations" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "Notification preferences" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "Playbook and Procedures" [ref=e40] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e41]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "Phase steps and review queue" [ref=e44] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e45]:
+              - link "Playbook reader" [ref=e46] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e47]:
+              - link "My procedures" [ref=e48] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e49]:
+              - link "90-day launch plan" [ref=e50] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e51]:
+              - link "Health check" [ref=e52] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e53]:
+          - link "Administration" [ref=e54] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e55]: Administration
+          - list "Administration" [ref=e56]:
+            - listitem [ref=e57]:
+              - link "Calendar" [ref=e58] [cursor=pointer]:
+                - /url: /admin/calendar
+            - listitem [ref=e59]:
+              - link "Jobs" [ref=e60] [cursor=pointer]:
+                - /url: /admin/jobs
+            - listitem [ref=e61]:
+              - link "Form builder" [ref=e62] [cursor=pointer]:
+                - /url: /admin/forms
+            - listitem [ref=e63]:
+              - link "Procedure builder" [ref=e64] [cursor=pointer]:
+                - /url: /admin/procedures
+            - listitem [ref=e65]:
+              - link "Automation" [ref=e66] [cursor=pointer]:
+                - /url: /admin/automation
+            - listitem [ref=e67]:
+              - link "Approval routes" [ref=e68] [cursor=pointer]:
+                - /url: /admin/approval-routes
+            - listitem [ref=e69]:
+              - link "Branding" [ref=e70] [cursor=pointer]:
+                - /url: /admin/branding
+            - listitem [ref=e71]:
+              - link "Demo environment" [ref=e72] [cursor=pointer]:
+                - /url: /admin/demo
+            - listitem [ref=e73]:
+              - link "Job operations" [ref=e74] [cursor=pointer]:
+                - /url: /admin/jobs/operations
+            - listitem [ref=e75]:
+              - link "Audit" [ref=e76] [cursor=pointer]:
+                - /url: /admin/audit
+            - listitem [ref=e77]:
+              - link "Security" [ref=e78] [cursor=pointer]:
+                - /url: /admin/security
+            - listitem [ref=e79]:
+              - link "Sensitive grants" [ref=e80] [cursor=pointer]:
+                - /url: /admin/sensitive-grants
+            - listitem [ref=e81]:
+              - link "Operations" [ref=e82] [cursor=pointer]:
+                - /url: /admin/operations
+            - listitem [ref=e83]:
+              - link "Identity" [ref=e84] [cursor=pointer]:
+                - /url: /admin/identity
+            - listitem [ref=e85]:
+              - link "Storage" [ref=e86] [cursor=pointer]:
+                - /url: /admin/storage
+            - listitem [ref=e87]:
+              - link "Notifications" [ref=e88] [cursor=pointer]:
+                - /url: /admin/notification-channels
+            - listitem [ref=e89]:
+              - link "AI assistant" [ref=e90] [cursor=pointer]:
+                - /url: /admin/assistant
+            - listitem [ref=e91]:
+              - link "Integrations" [ref=e92] [cursor=pointer]:
+                - /url: /admin/integrations
+      - paragraph [ref=e93]:
+        - link "About this product" [ref=e94] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e95]:
+      - generic [ref=e96]:
+        - generic [ref=e99]:
+          - heading "Welcome, Synthetic Dev Admin" [level=1] [ref=e100]
+          - paragraph [ref=e101]: Your actions, drafts, reviews and deadlines in one place.
+        - navigation "My Work pages" [ref=e102]:
+          - link "Approvals" [ref=e103] [cursor=pointer]:
+            - /url: /my-work/approvals
+            - img [ref=e104]
+            - text: Approvals
+          - link "Delegations" [ref=e106] [cursor=pointer]:
+            - /url: /my-work/delegations
+            - img [ref=e107]
+            - text: Delegations
+          - link "Your drafts" [ref=e109] [cursor=pointer]:
+            - /url: /my-work/drafts
+            - img [ref=e110]
+            - text: Your drafts
+        - paragraph [ref=e112]: You have no business-record access yet. An access administrator assigns roles at a scope; job titles never grant access.
+        - generic [ref=e113]:
+          - region "Key decisions" [ref=e114]:
+            - heading "Key decisions" [level=2] [ref=e115]:
+              - img [ref=e116]
+              - text: Key decisions
+            - paragraph [ref=e118]: Business approvals and decisions waiting for you.
+            - paragraph [ref=e119]: No business approval or decision is waiting for you.
+          - region "Key outcomes" [ref=e120]:
+            - heading "Key outcomes" [level=2] [ref=e121]:
+              - img [ref=e122]
+              - text: Key outcomes
+            - paragraph [ref=e124]: Outcome updates you owe (KPI actuals, benefit monitoring) and records waiting for your review.
+            - paragraph [ref=e125]: No outcome update or review is waiting for you.
+          - region "Next actions" [ref=e126]:
+            - heading "Next actions" [level=2] [ref=e127]:
+              - img [ref=e128]
+              - text: Next actions
+            - paragraph [ref=e130]: Your next deadlines, earliest first, and the actions assigned to you.
+            - paragraph [ref=e131]: No action is assigned to you and no deadline is coming up.
+        - generic [ref=e132]:
+          - region "Upcoming deadlines" [ref=e133]:
+            - heading "Upcoming deadlines" [level=2] [ref=e135]
+            - generic [ref=e136]: Open items due within 10 working days of 8 Nov 2026; overdue ones are flagged.
+            - paragraph [ref=e137]: No upcoming deadline.
+          - navigation "My Work sections" [ref=e138]:
+            - list [ref=e139]:
+              - listitem [ref=e140]:
+                - link "Assigned actions 0" [ref=e141] [cursor=pointer]:
+                  - /url: "#mw-assigned_actions"
+                  - text: Assigned actions
+                  - generic [ref=e142]: "0"
+              - listitem [ref=e143]:
+                - link "Drafts 0" [ref=e144] [cursor=pointer]:
+                  - /url: "#mw-drafts"
+                  - text: Drafts
+                  - generic [ref=e145]: "0"
+              - listitem [ref=e146]:
+                - link "Reviews 0" [ref=e147] [cursor=pointer]:
+                  - /url: "#mw-reviews"
+                  - text: Reviews
+                  - generic [ref=e148]: "0"
+              - listitem [ref=e149]:
+                - link "Approvals 0" [ref=e150] [cursor=pointer]:
+                  - /url: "#mw-approvals"
+                  - text: Approvals
+                  - generic [ref=e151]: "0"
+              - listitem [ref=e152]:
+                - link "Missing updates 0" [ref=e153] [cursor=pointer]:
+                  - /url: "#mw-missing_updates"
+                  - text: Missing updates
+                  - generic [ref=e154]: "0"
+              - listitem [ref=e155]:
+                - link "Other 0" [ref=e156] [cursor=pointer]:
+                  - /url: "#mw-other"
+                  - text: Other
+                  - generic [ref=e157]: "0"
+          - region "Assigned actions" [ref=e158]:
+            - heading "Assigned actions" [level=2] [ref=e160]
+            - generic [ref=e161]: Actions and tasks assigned to you.
+            - paragraph [ref=e162]: "Items: 0 (shown: 0)"
+            - generic [ref=e163]:
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - generic [ref=e166]: Search
+                  - searchbox "Search" [ref=e167]
+                - button "Columns" [ref=e169] [cursor=pointer]:
+                  - img [ref=e170]
+                  - text: Columns
+              - generic [ref=e172]:
+                - img [ref=e173]
+                - paragraph [ref=e176]: Nothing here
+          - region "Drafts" [ref=e177]:
+            - heading "Drafts" [level=2] [ref=e179]
+            - generic [ref=e180]: Records you started and have not submitted.
+            - paragraph [ref=e181]: "Items: 0 (shown: 0)"
+            - generic [ref=e182]:
+              - generic [ref=e183]:
+                - generic [ref=e184]:
+                  - generic [ref=e185]: Search
+                  - searchbox "Search" [ref=e186]
+                - button "Columns" [ref=e188] [cursor=pointer]:
+                  - img [ref=e189]
+                  - text: Columns
+              - generic [ref=e191]:
+                - img [ref=e192]
+                - paragraph [ref=e195]: Nothing here
+          - region "Reviews" [ref=e196]:
+            - heading "Reviews" [level=2] [ref=e198]
+            - generic [ref=e199]: Records waiting for your review.
+            - paragraph [ref=e200]: "Items: 0 (shown: 0)"
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - generic [ref=e204]: Search
+                  - searchbox "Search" [ref=e205]
+                - button "Columns" [ref=e207] [cursor=pointer]:
+                  - img [ref=e208]
+                  - text: Columns
+              - generic [ref=e210]:
+                - img [ref=e211]
+                - paragraph [ref=e214]: Nothing here
+          - region "Approvals" [ref=e215]:
+            - heading "Approvals" [level=2] [ref=e217]
+            - generic [ref=e218]: Business approvals and decisions waiting for you.
+            - paragraph [ref=e219]: "Items: 0 (shown: 0)"
+            - generic [ref=e220]:
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - generic [ref=e223]: Search
+                  - searchbox "Search" [ref=e224]
+                - button "Columns" [ref=e226] [cursor=pointer]:
+                  - img [ref=e227]
+                  - text: Columns
+              - generic [ref=e229]:
+                - img [ref=e230]
+                - paragraph [ref=e233]: Nothing here
+          - region "Missing updates" [ref=e234]:
+            - heading "Missing updates" [level=2] [ref=e236]
+            - generic [ref=e237]: "Updates you owe: KPI actuals, benefit monitoring, reviews and control checks."
+            - paragraph [ref=e238]: "Items: 0 (shown: 0)"
+            - generic [ref=e239]:
+              - generic [ref=e240]:
+                - generic [ref=e241]:
+                  - generic [ref=e242]: Search
+                  - searchbox "Search" [ref=e243]
+                - button "Columns" [ref=e245] [cursor=pointer]:
+                  - img [ref=e246]
+                  - text: Columns
+              - generic [ref=e248]:
+                - img [ref=e249]
+                - paragraph [ref=e252]: Nothing here
+          - region "Other" [ref=e253]:
+            - heading "Other" [level=2] [ref=e255]
+            - generic [ref=e256]: Other notices and tasks.
+            - paragraph [ref=e257]: "Items: 0 (shown: 0)"
+            - generic [ref=e258]:
+              - generic [ref=e259]:
+                - generic [ref=e260]:
+                  - generic [ref=e261]: Search
+                  - searchbox "Search" [ref=e262]
+                - button "Columns" [ref=e264] [cursor=pointer]:
+                  - img [ref=e265]
+                  - text: Columns
+              - generic [ref=e267]:
+                - img [ref=e268]
+                - paragraph [ref=e271]: Nothing here
+        - region "Tasks" [ref=e272]:
+          - generic [ref=e273]:
+            - heading "Tasks" [level=2] [ref=e274]
+            - generic [ref=e276]:
+              - generic [ref=e277]: Show
+              - combobox "Show" [ref=e278]:
+                - option "Open" [selected]
+                - option "Done"
+                - option "Cancelled"
+          - generic [ref=e279]: Work assigned to you. Each task links to its record. Approval tasks close by themselves when the approval is decided.
+          - generic [ref=e280]:
+            - generic [ref=e281]:
+              - generic [ref=e282]:
+                - generic [ref=e283]: Search
+                - searchbox "Search" [ref=e284]
+              - button "Columns" [ref=e286] [cursor=pointer]:
+                - img [ref=e287]
+                - text: Columns
+            - generic [ref=e289]:
+              - img [ref=e290]
+              - generic [ref=e292]:
+                - paragraph [ref=e293]: No open tasks
+                - paragraph [ref=e294]: New tasks appear here when an approval, a KPI update or another action is assigned to you.
+        - region "Inbox" [ref=e295]:
+          - generic [ref=e296]:
+            - heading "Inbox" [level=2] [ref=e297]
+            - generic [ref=e299]:
+              - checkbox "Unread only" [ref=e300]
+              - text: Unread only
+          - generic [ref=e301]: Reminders about decisions, outcomes and overdue items. Marking a reminder as read does not change the record.
+          - status [ref=e302]:
+            - strong [ref=e303]: "Unread reminders: 0"
+          - paragraph [ref=e304]: Your inbox is empty.
+```

@@ -1,0 +1,126 @@
+# 51-mutant-M2-measurement-evidence-unfiltered  started 2026-11-08T05:19:55Z  node=v22.22.0  load=17.47 16.51 13.44  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+## mutation (git diff of w3, product paths):
+ apps/api/src/modules/benefits/measurements.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/benefits/measurements.ts b/apps/api/src/modules/benefits/measurements.ts
+index 643d10b85..a8654f03e 100644
+--- a/apps/api/src/modules/benefits/measurements.ts
++++ b/apps/api/src/modules/benefits/measurements.ts
+@@ -238,7 +238,7 @@ export async function presentMeasurements(
+   const ids = rows.map((r) => r.id);
+   const inputs = await inputsOf(db, ids);
+   const evidence = await evidenceOf(db, ids);
+-  const hiddenEvidence = await restrictedIdsOf(db, principal, "evidence", [...evidence.values()].flat());
++  const hiddenEvidence = new Set<string>(); void principal; void restrictedIdsOf;
+   const validations = await db
+     .selectFrom("finance_validation")
+     .select(["id", "benefit_measurement_id", "created_at"])
+$ vt apps/api/test/integration/access/sensitive-reach-id-refs.test.ts tests/qa/integration/zz-cs-r7-id-refs.test.ts -t measurement|F-DG6-420
+port-policy: PostgreSQL listening on port 30470 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7dv8ur_177a27c8 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] hidden B02, open B01, child candidate B03
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] TL PATCH group countedBenefitId (before marking) -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL POST parent benefit -> 201 B04
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL PATCH B03 parentBenefitId -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TO marks the parent sensitive -> 200
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B2-meeting_output-evidence NOT SEEDED: meeting_output: evidence is not an output of this forum
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<random uuid> -> 422 launch_task.output_record_invalid
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<sensitive benefit the TL gets 404 on> -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B4 NOT SEEDED: no procedure instance in the demo transformation
+[CS-R7-ID] seeded: benefit_evidence, B1-parent, B2-meeting, B2-meeting_output-benefit_view, B3-launch_task-output(API, by the not-admitted TL)
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TL: listBenefitGroups 200 counted=null countedBenefitRestricted=true members=1 includesRestrictedRecords=true
+[CS-R7-ID] TL: getBenefitGroup 200 names={"hidden":false,"ev":false} countedBenefitRestricted=true
+[CS-R7-ID] TL: getBenefitMeasurement 200 names={"hidden":false,"ev":true} includesRestrictedRecords=undefined
+[CS-R7-ID] TL: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] TL PATCH group title -> 200 names={"hidden":false,"ev":false} 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] DB after TL PATCH: counted is hidden=true title=Synthetic group CS-R7 renamed
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL
+[CS-R7-ID] TL listTransformationAudit(group) 400 names={"hidden":false,"ev":false}; unfiltered 200
+[CS-R7-ID] D-219: the unfiltered trail names the hidden benefit as a recordId: true; its changes: false
+
+ ❯ |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts (4 tests | 1 failed | 1 skipped) 11766ms
+   × CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids 164ms
+     → expected { hidden: false, ev: true } to deeply equal { hidden: false, ev: false }
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id 147ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL 130ms
+   ↓ CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > a not-admitted TL (tl2) never receives a hidden id from an open record's response
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts (5 tests | 1 failed) 10066ms
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > control: TL gets 404 on the hidden benefit and the hidden evidence; TO reads both 164ms
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the group list and item omit the hidden member and mark the counted member as restricted 86ms
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > TO (admitted): the group names every member and the counted member, without a marker 37ms
+   × F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the open measurement omits the hidden evidence id and is marked; TO sees it 77ms
+     → expected [ Array(1) ] to not include '01a1b99a-341f-77ec-b3f7-9710ca2f91f1'
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > writes naming the hidden id keep their existing answers; a TL rename keeps the hidden counted member 166ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+AssertionError: expected { hidden: false, ev: true } to deeply equal { hidden: false, ev: false }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "ev": false,[39m
+[31m+   "ev": true,[39m
+[2m    "hidden": false,[22m
+[2m  }[22m
+
+ ❯ tests/qa/integration/zz-cs-r7-id-refs.test.ts:307:32
+    305|         expect(names(list.body).hidden).toBe(false);
+    306|         expect(names(one.body)).toEqual({ hidden: false, ev: false });
+    307|         expect(names(ms.body)).toEqual({ hidden: false, ev: false });
+       |                                ^
+    308|         expect(names(ml.body).ev).toBe(false);
+    309|         expect(g.countedBenefitId).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts > F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the open measurement omits the hidden evidence id and is marked; TO sees it
+AssertionError: expected [ Array(1) ] to not include '01a1b99a-341f-77ec-b3f7-9710ca2f91f1'
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts:219:40
+    217|     const tlOne = await get(`${base}/benefit-measurements/${S.measurem…
+    218|     expect(tlOne.status).toBe(200);
+    219|     expect(tlOne.body.evidenceIds).not.toContain(S.evId);
+       |                                        ^
+    220|     expect(text(tlOne.body)).not.toContain(S.evId);
+    221|     expect(tlOne.body.includesRestrictedRecords).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 6 passed | 1 skipped (9)
+   Start at  05:20:00
+   Duration  53.29s (transform 9.60s, setup 0ms, collect 23.15s, tests 21.83s, environment 0ms, prepare 434ms)
+
+exit=1  finished 2026-11-08T05:20:58Z
+restored: 0 changed paths

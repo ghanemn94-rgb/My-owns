@@ -1,0 +1,58 @@
+# 50-mutant-M1-groups-unfiltered  started 2026-11-08T05:19:27Z  node=v22.22.0  load=17.23 16.39 13.30  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+## mutation (git diff of w3, product paths):
+ apps/api/src/modules/benefits/groups.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/benefits/groups.ts b/apps/api/src/modules/benefits/groups.ts
+index 9aff9b353..0f1f00dbc 100644
+--- a/apps/api/src/modules/benefits/groups.ts
++++ b/apps/api/src/modules/benefits/groups.ts
+@@ -75,7 +75,7 @@ export async function presentGroups(
+     )
+     .orderBy("code")
+     .execute();
+-  const hidden = await restrictedIdsOf(db, principal, "benefit", [
++  const hidden = new Set<string>(); void principal; void restrictedIdsOf; void [
+     ...members.map((m) => m.id),
+     ...rows.map((g) => g.counted_benefit_id),
+   ]);
+$ vt apps/api/test/integration/access/sensitive-reach-id-refs.test.ts tests/qa/integration/zz-cs-r7-id-refs.test.ts -t group|F-DG6-420
+port-policy: PostgreSQL listening on port 30470 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7dumhs_e28485d8 (server_encoding UTF8); applied 118 migrations to a fresh database
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts [ tests/qa/integration/zz-cs-r7-id-refs.test.ts ]
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts [ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts ]
+Error: Transform failed with 1 error:
+/var/tmp/mth-run.4o9h5g/claude-0/r/w3/apps/api/src/modules/benefits/groups.ts:81:3: ERROR: Expected ";" but found ")"
+  Plugin: vite:esbuild
+  File: /var/tmp/mth-run.4o9h5g/claude-0/r/w3/apps/api/src/modules/benefits/groups.ts:81:3
+  
+  Expected ";" but found ")"
+  79 |      ...members.map((m) => m.id),
+  80 |      ...rows.map((g) => g.counted_benefit_id),
+  81 |    ]);
+     |     ^
+  82 |    return rows.map((g) => {
+  83 |      const all = members.filter((m) => m.benefit_group_id === g.id).map((m) => m.id);
+  
+ ❯ failureErrorWithLog node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1752:15
+ ❯ node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1019:50
+ ❯ responseCallbacks.<computed> node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:886:9
+ ❯ handleIncomingPacket node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:941:12
+ ❯ Socket.readFromStdout node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:864:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  05:19:31
+   Duration  21.51s (transform 5.96s, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 215ms)
+
+exit=1  finished 2026-11-08T05:19:55Z
+restored: 0 changed paths

@@ -1,0 +1,70 @@
+# 52-control-unmutated  started 2026-11-08T05:18:20Z  node=v22.22.0  load=16.46 15.99 12.93  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+## mutation (git diff of w3, product paths):
+$ vt apps/api/test/integration/access/sensitive-reach-id-refs.test.ts tests/qa/integration/zz-cs-r7-id-refs.test.ts -t F-DG6-420
+port-policy: PostgreSQL listening on port 30470 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7dt6rc_b1d1b5b4 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] hidden B02, open B01, child candidate B03
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] TL PATCH group countedBenefitId (before marking) -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL POST parent benefit -> 201 B04
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL PATCH B03 parentBenefitId -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TO marks the parent sensitive -> 200
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B2-meeting_output-evidence NOT SEEDED: meeting_output: evidence is not an output of this forum
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<random uuid> -> 422 launch_task.output_record_invalid
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<sensitive benefit the TL gets 404 on> -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B4 NOT SEEDED: no procedure instance in the demo transformation
+[CS-R7-ID] seeded: benefit_evidence, B1-parent, B2-meeting, B2-meeting_output-benefit_view, B3-launch_task-output(API, by the not-admitted TL)
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TL: listBenefitGroups 200 counted=null countedBenefitRestricted=true members=1 includesRestrictedRecords=true
+[CS-R7-ID] TL: getBenefitGroup 200 names={"hidden":false,"ev":false} countedBenefitRestricted=true
+[CS-R7-ID] TL: getBenefitMeasurement 200 names={"hidden":false,"ev":false} includesRestrictedRecords=true
+[CS-R7-ID] TL: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TO: listBenefitGroups 200 counted=<hidden id> countedBenefitRestricted=undefined members=2 includesRestrictedRecords=undefined
+[CS-R7-ID] TO: getBenefitGroup 200 names={"hidden":true,"ev":false} countedBenefitRestricted=undefined
+[CS-R7-ID] TO: getBenefitMeasurement 200 names={"hidden":false,"ev":true} includesRestrictedRecords=undefined
+[CS-R7-ID] TO: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":true}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] TL PATCH group title -> 200 names={"hidden":false,"ev":false} 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] DB after TL PATCH: counted is hidden=true title=Synthetic group CS-R7 renamed
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL
+[CS-R7-ID] TL listTransformationAudit(group) 400 names={"hidden":false,"ev":false}; unfiltered 200
+[CS-R7-ID] D-219: the unfiltered trail names the hidden benefit as a recordId: true; its changes: false
+
+ ✓ |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts (4 tests | 1 skipped) 13222ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids  492ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts (5 tests) 10678ms
+
+ Test Files  2 passed (2)
+      Tests  8 passed | 1 skipped (9)
+   Start at  05:18:24
+   Duration  58.47s (transform 9.70s, setup 0ms, collect 25.39s, tests 23.90s, environment 0ms, prepare 146ms)
+
+exit=0  finished 2026-11-08T05:19:26Z
+restored: 0 changed paths

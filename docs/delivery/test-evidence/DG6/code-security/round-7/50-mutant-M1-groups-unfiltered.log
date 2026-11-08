@@ -1,0 +1,167 @@
+# 50-mutant-M1-groups-unfiltered  started 2026-11-08T05:25:37Z  node=v22.22.0  load=11.51 14.98 13.89  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+## mutation (git diff of w3, product paths):
+ apps/api/src/modules/benefits/groups.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/benefits/groups.ts b/apps/api/src/modules/benefits/groups.ts
+index 9aff9b353..20ec50312 100644
+--- a/apps/api/src/modules/benefits/groups.ts
++++ b/apps/api/src/modules/benefits/groups.ts
+@@ -75,7 +75,7 @@ export async function presentGroups(
+     )
+     .orderBy("code")
+     .execute();
+-  const hidden = await restrictedIdsOf(db, principal, "benefit", [
++  const hidden = new Set<string>(); void principal; void restrictedIdsOf; void ([
+     ...members.map((m) => m.id),
+     ...rows.map((g) => g.counted_benefit_id),
+   ]);
+$ vt apps/api/test/integration/access/sensitive-reach-id-refs.test.ts tests/qa/integration/zz-cs-r7-id-refs.test.ts -t group|F-DG6-420
+port-policy: PostgreSQL listening on port 30470 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7e2j6t_624e043d (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] hidden B02, open B01, child candidate B03
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] TL PATCH group countedBenefitId (before marking) -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL POST parent benefit -> 201 B04
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL PATCH B03 parentBenefitId -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TO marks the parent sensitive -> 200
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B2-meeting_output-evidence NOT SEEDED: meeting_output: evidence is not an output of this forum
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<random uuid> -> 422 launch_task.output_record_invalid
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<sensitive benefit the TL gets 404 on> -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B4 NOT SEEDED: no procedure instance in the demo transformation
+[CS-R7-ID] seeded: benefit_evidence, B1-parent, B2-meeting, B2-meeting_output-benefit_view, B3-launch_task-output(API, by the not-admitted TL)
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TL: listBenefitGroups 200 counted=<hidden id> countedBenefitRestricted=undefined members=2 includesRestrictedRecords=undefined
+[CS-R7-ID] TL: getBenefitGroup 200 names={"hidden":true,"ev":false} countedBenefitRestricted=undefined
+[CS-R7-ID] TL: getBenefitMeasurement 200 names={"hidden":false,"ev":false} includesRestrictedRecords=true
+[CS-R7-ID] TL: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] TL PATCH group title -> 200 names={"hidden":true,"ev":false} 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] DB after TL PATCH: counted is hidden=true title=Synthetic group CS-R7 renamed
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL
+[CS-R7-ID] TL listTransformationAudit(group) 400 names={"hidden":false,"ev":false}; unfiltered 200
+[CS-R7-ID] D-219: the unfiltered trail names the hidden benefit as a recordId: true; its changes: false
+
+ ❯ |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts (4 tests | 2 failed | 1 skipped) 8674ms
+   × CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids 133ms
+     → expected true to be false // Object.is equality
+   × CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id 20ms
+     → expected { hidden: true, ev: false } to deeply equal { hidden: false, ev: false }
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL 58ms
+   ↓ CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > a not-admitted TL (tl2) never receives a hidden id from an open record's response
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts (5 tests | 2 failed) 8956ms
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > control: TL gets 404 on the hidden benefit and the hidden evidence; TO reads both 247ms
+   × F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the group list and item omit the hidden member and mark the counted member as restricted 51ms
+     → expected '{"id":"42973c3d-5dea-43f7-874a-074eeb…' not to contain '01995000-4401-7000-8000-000000000002'
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > TO (admitted): the group names every member and the counted member, without a marker 28ms
+   ✓ F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the open measurement omits the hidden evidence id and is marked; TO sees it 191ms
+   × F-DG6-420 / D-218: an open record's response never names a restricted record's id > writes naming the hidden id keep their existing answers; a TL rename keeps the hidden counted member 58ms
+     → expected '{"id":"42973c3d-5dea-43f7-874a-074eeb…' not to contain '01995000-4401-7000-8000-000000000002'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ tests/qa/integration/zz-cs-r7-id-refs.test.ts:305:41
+    303|         expect(one.body.includesRestrictedRecords).toBeUndefined();
+    304|       } else {
+    305|         expect(names(list.body).hidden).toBe(false);
+       |                                         ^
+    306|         expect(names(one.body)).toEqual({ hidden: false, ev: false });
+    307|         expect(names(ms.body)).toEqual({ hidden: false, ev: false });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+AssertionError: expected { hidden: true, ev: false } to deeply equal { hidden: false, ev: false }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "ev": false,[22m
+[32m-   "hidden": false,[39m
+[31m+   "hidden": true,[39m
+[2m  }[22m
+
+ ❯ tests/qa/integration/zz-cs-r7-id-refs.test.ts:331:29
+    329|     log(`DB after TL PATCH: counted is hidden=${row.counted_benefit_id…
+    330|     if (r.status === 200) {
+    331|       expect(names(r.body)).toEqual({ hidden: false, ev: false });
+       |                             ^
+    332|       expect(row.counted_benefit_id).toBe(S.hidden);
+    333|     } else expect([403, 404]).toContain(r.status);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts > F-DG6-420 / D-218: an open record's response never names a restricted record's id > TL (not admitted): the group list and item omit the hidden member and mark the counted member as restricted
+AssertionError: expected '{"id":"42973c3d-5dea-43f7-874a-074eeb…' not to contain '01995000-4401-7000-8000-000000000002'
+
+Expected: [32m"01995000-4401-7000-8000-000000000002"[39m
+Received: [31m"{"id":"42973c3d-5dea-43f7-874a-074eeb36c494","transformationId":"01995000-0000-7000-8000-000000000001","code":"BG-77","title":"Synthetic group BE-Z10","description":null,"countedBenefitId":"01995000-4401-7000-8000-000000000002","memberBenefitIds":["01995000-4401-7000-8000-000000000001","01995000-4401-7000-8000-000000000002"],"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":2,"createdAt":"2026-11-08T05:26:25.160Z","createdBy":"01995000-0000-7000-8000-000000000011","updatedAt":"2026-11-08T05:26:25.160Z"}"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts:195:30
+    193|     expect(one.status).toBe(200);
+    194|     for (const body of [g, one.body]) {
+    195|       expect(text(body)).not.toContain(S.hidden);
+       |                              ^
+    196|       expect(body.countedBenefitId).toBeNull();
+    197|       expect(body.countedBenefitRestricted).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts > F-DG6-420 / D-218: an open record's response never names a restricted record's id > writes naming the hidden id keep their existing answers; a TL rename keeps the hidden counted member
+AssertionError: expected '{"id":"42973c3d-5dea-43f7-874a-074eeb…' not to contain '01995000-4401-7000-8000-000000000002'
+
+Expected: [32m"01995000-4401-7000-8000-000000000002"[39m
+Received: [31m"{"id":"42973c3d-5dea-43f7-874a-074eeb36c494","transformationId":"01995000-0000-7000-8000-000000000001","code":"BG-77","title":"Synthetic group BE-Z10 renamed","description":null,"countedBenefitId":"01995000-4401-7000-8000-000000000002","memberBenefitIds":["01995000-4401-7000-8000-000000000001","01995000-4401-7000-8000-000000000002"],"status":"active","archivedAt":null,"archivedBy":null,"archiveReason":null,"version":3,"createdAt":"2026-11-08T05:26:25.160Z","createdBy":"01995000-0000-7000-8000-000000000011","updatedAt":"2026-11-08T05:26:25.890Z"}"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts:242:35
+    240|     });
+    241|     expect(rename.status, text(rename.body)).toBe(200);
+    242|     expect(text(rename.body)).not.toContain(S.hidden);
+       |                                   ^
+    243|     expect(rename.body.countedBenefitRestricted).toBe(true);
+    244|     const after = await get(`${base}/benefit-groups/${S.groupId}`, to);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 4 passed | 1 skipped (9)
+   Start at  05:25:40
+   Duration  45.39s (transform 8.57s, setup 0ms, collect 22.45s, tests 17.63s, environment 0ms, prepare 87ms)
+
+exit=1  finished 2026-11-08T05:26:30Z
+restored: 0 changed paths

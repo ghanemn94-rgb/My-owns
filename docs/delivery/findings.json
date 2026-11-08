@@ -15960,14 +15960,41 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-6/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-06T07:50:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 6 by domain-reviewer while verifying F-DG6-340. F-DG6-340's own reproduction (the benefits register table totals, live and snapshot) is repaired and verified; this is the metrics part that F-DG6-340's actual named by code reading ('every report assembler with totals or metrics over a sensitive record'), now reproduced at runtime through a different mechanism (a section that aggregates dashboard facts but references only its subject). Medium, not mandatory, consistent with F-DG6-340: the figures are the ones D-195 Q3 says every reader sees; the label the user decided is missing. Suggested repair: flag a report section whose figures come from the dashboard facts (executive pack metrics_*, executive dashboard area_*) from the same dashboardRestriction decision the transformation and workstream dashboards use (true when the reader is not admitted to a sensitive benefit or business case of those facts), read-time as today; add a negative test (TL, AUD: true) and a positive one (TO: false); correct the ADR-0051 2026-11-06 sentence 'Absent when the section references no marked-sensitive record'."
+        },
+        {
+          "at": "2026-11-08T05:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R7-domain-reviewer-20261108T044330Z-90cd41b5",
+          "session_id": "90cd41b5-fd75-482f-8caa-72d9da9d5588"
+        },
+        "at": "2026-11-08T05:45:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-7/r6repro.log",
+          "docs/delivery/test-evidence/DG6/domain/round-7/mutant400.log",
+          "docs/delivery/test-evidence/DG6/domain/round-7/e2e-screens-r7.log",
+          "docs/delivery/test-evidence/DG6/domain/round-7/probes/dom-r6-report-sections.test.ts.txt",
+          "docs/delivery/test-evidence/DG6/domain/round-7/probes/dom-r7-screens.spec.ts.txt",
+          "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/dom-r7-tl-exec-pack-snapshot.png",
+          "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/dom-r7-tl-exec-pack-snapshot.png",
+          "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/dom-r7-tl-exec-dashboard-snapshot.png",
+          "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/dom-r7-to-exec-pack-snapshot.png"
+        ],
+        "note": "Verified adversarially on candidate b64b95ff (source 70f05ed49), in a disposable clone, with PostgreSQL 16.15 and Node 24.21.0. All data is SYNTHETIC. (1) Round-6 reproduction re-run unchanged (my probe dom-r6-report-sections.test.ts, r6repro.log, exit 0, 3/3 passed). Its binding assertion, 'executive pack metrics section labelled for TL', failed in round 6 and now passes. Live executive_pack: metrics_transformation and metrics_ws_77 are true for TL and false for the TO, with sameFigures true. Live executive_dashboard: area_value is true/false, and items_value and items_portfolio are true/false. TL's planned top line is still 396000 (B01's own line, as D-195 Q3 allows every reader to see), now labelled. The benefit's title appears nowhere in TL's bodies (tlMentions 0). Sections with no sensitive aggregate (business_cases, diagnostic, roadmap, charter, tom) carry no member. gate_pack and handover answer 422 without a subject, for both readers, as designed. (2) Mutant (mutant400.log, exit 1 by design): documentForReader ignores the declared aggregates (`aggregates.slice(0, 0)`). Exactly 7 tests failed: the 6 BE-Z9 behaviour tests (live and snapshot executive_pack, live and snapshot executive_dashboard, the legacy pack, gate-pack criteria) and my probe's 'compare'. The 13 others passed (the BE-Z7B tests and the storage/guard tests, which do not depend on the flag). The source was restored. (3) UI on the production-initialized stack, en and ar (e2e-screens-r7.log, exit 0, 6/6, which includes BE-Z9's own p6-report-aggregate-label spec). TL's executive pack snapshot shows 'Includes restricted records' / 'يشمل سجلات مقيدة' directly under 'Current metrics' / 'المؤشرات الحالية', next to 'Planned revenue uplift … SAR 300.00'. TL's executive dashboard snapshot shows the label under 'Value' / 'القيمة' and under its 'Items' table. The TO sees no label on any of the four screens. The finding is closed. Two residuals, neither a reopening: the ADR-0051 'Which responses carry' row, the OpenAPI ReportDocument.sections description and the data dictionary were not updated for the new rule or for table 0126 (raised as F-DG6-460, Low, documentation only). An exported pack file carries no label: judged an observation in DOM-R7-04."
+      }
     },
     {
       "id": "F-DG6-420",
@@ -15990,14 +16017,44 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-6/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-06T08:00:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 6 (T-DG6-REV-CS-R6) while trying the reads the BE-Z7B sweep does not judge (it matches only titles and values). The code is unchanged since earlier rounds; earlier sweeps, including mine, did not look at identifiers. Owner solution-architect, because the repair is first a policy decision for ADR-0051 §2 (omit or mark, or allow, identifier references), then an implementation in benefits/groups.ts, benefits/measurements.ts and the other reference fields the decision covers, with the web register. Suggested test: the sweep also fails when a not-admitted reader's response contains the restricted record's id, outside the fields the decision allows."
+        },
+        {
+          "at": "2026-11-08T06:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R7-code-security-reviewer-20261108T044350Z-f528e971",
+          "session_id": "f528e971-45be-4d1a-8c34-4b63e1feae6a"
+        },
+        "at": "2026-11-08T06:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-7/42-repro-r6-id-refs.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/41-repro-r7-id-refs.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r7-id-refs.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r6-id-refs.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/50-mutant-M1-groups-unfiltered.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/50-mutant-M1-groups-unfiltered.attempt1-mutant-syntax-error.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/51-mutant-M2-measurement-evidence-unfiltered.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/52-control-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/mutants.sh",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/30-integration-lang-unset-shard2of4.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/31-integration-lang-cutf8-shard2of4.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-7/31-integration-lang-cutf8-shard4of4.log"
+        ],
+        "note": "Verified on candidate sha256:b64b95ff (source 70f05ed4) in a disposable clone with a disposable PostgreSQL 16.15, Node 22.22.0. (1) The round-6 reproduction, unchanged (zz-cs-r6-id-refs.test.ts, log 42): for TL (in scope, no grant; 404 on the benefit and on the evidence item) listBenefitGroups and getBenefitGroup now give countedBenefitId null and memberBenefitIds without the hidden benefit, and getBenefitMeasurement no longer names the sensitive evidence item. The TO (admitted) still gets every id. (2) An asserting version (zz-cs-r7-id-refs.test.ts part A, log 41, 3/3 pass): the TL's group and measurement bodies contain neither id anywhere; countedBenefitRestricted and includesRestrictedRecords are true; memberBenefitIds equals the open member; the TO gets the ids and no marker. A TL rename without countedBenefitId answers 200, names no hidden id, and keeps the hidden counted member in the database (the re-save rule). The group's audit events, set through the API with changes naming the hidden id, never show it in changes to TL. (3) Mutants in the disposable clone: M1 (presentGroups ignores restrictedIdsOf) fails 2 of the in-tree sensitive-reach-id-refs tests and 2 of my part A tests (log 50; attempt 1 was a syntax error in my mutation, kept and named). M2 (measurement evidenceIds unfiltered) fails 1 in-tree test and 1 of mine (log 51). The unmutated control passes 8 and skips 1, the part B test excluded by the name filter (log 52). (4) The other reference fields F-DG6-420's 'actual' named by code reading (kpi-actuals, sustainment-area and BAU handover evidenceIds; the approval-route, health, diagnose and Day-90 evidenceId) are in the BE-Z10/Z10B repair. The in-tree sweep seeds and judges them (sensitive-reach-sweep.test.ts secondHalfSetup); it passes in both locales of my integration runs (560 requests per reader over 374 operations; id allowances used are exactly the four D-219 ones), and so do sensitive-reach-id-refs and sensitive-reach-id-refs-writes. The audit recordId and grant-register recordId stay, as D-219 decides. The finding's class is not exhausted: three more open-record references and a write-side existence oracle, outside the fields this finding and its repair name, are raised as the new finding F-DG6-480."
+      }
     },
     {
       "id": "F-DG6-440",
@@ -16023,12 +16080,107 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-6/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-06T09:30:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 6 (T-DG6-REV-QA-R6) on candidate sha256:0fea8adf, answering the D-216 open question on BE-Z7B's residual §7 item 4. Medium, non-mandatory; must be repaired before the gate (D-192)."
+        },
+        {
+          "at": "2026-11-08T09:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R7-qa-verifier-20261108T044410Z-22ff6d7b",
+          "session_id": "22ff6d7b-bda6-4617-9d68-1e8483fd116e"
+        },
+        "at": "2026-11-08T09:05:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-7/07a-e2e-demo-unset-rerun.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/07b-e2e-demo-cutf8.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/07-e2e-demo-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/10a-f440-mutant-unit.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/10b-f440-candidate-unit.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/10c-f440-mutant-build.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/10d-f440-mutant-e2e.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/01h-clone-m-rebuild.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/06a-e2e-product-unset-en.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/06b-e2e-product-unset-ar.log",
+          "docs/delivery/test-evidence/DG6/qa/round-7/shots/probes-unset/restricted-register-TL-en.png",
+          "docs/delivery/test-evidence/DG6/qa/round-7/shots/probes-unset/restricted-register-TL-ar.png",
+          "docs/delivery/test-evidence/DG6/qa/round-7/shots/probes-demo-cutf8/restricted-register-TL-en.png",
+          "docs/delivery/test-evidence/DG6/qa/round-7/shots/f440-mutant/restricted-register-TL-en.png",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-7/zz-qa-dg6r7-restricted-label-ui.spec.ts"
+        ],
+        "note": "Verified by qa-verifier (the originating reviewer) on candidate sha256:b64b95ff5deda5d1ccc9adf8c6bf85b3ed251a5c5cb1cf24e87d8532e3aa4bae (source 70f05ed49d893378efc99cd3e1a4027fc77697e8), in disposable --shared clones under $TMPDIR (r7: the candidate; m: the mutant, then rebuilt from the candidate). I read the finding in findings.json (OPEN, one history entry) and in round-6/qa-verifier.findings.json, the FE-Z3-R6 and FE-Z4 handbacks, and the diff 031945d8..70f05ed4 of apps/web/src/pages/reports/ui.tsx (only commit cf59bad63 touches it): SectionView case 'table' now builds the totals row once and, when there are no rows but there are totals, renders the table with its header, one row whose single cell (colSpan = every column) holds the empty text, and the totals row; with no rows and no totals it keeps the plain empty text. Live preview, the snapshot page and presentation mode all render ReportDocumentView/SectionView (ReportsPage.tsx:325, SnapshotPage.tsx:159, PresentationPage.tsx:181). (1) My round-6 reproduction, unchanged except names (zz-qa-dg6r7-restricted-label-ui.spec.ts), on the real demo stack (e2e/support/with-demo-stack.sh) where the finding was observed, chromium-en and chromium-ar: roaming.user.to marks demo benefit B01 sensitive; roaming.user.tl (not admitted) and the TO open the live benefits register preview. With the locale unset (07a, 22 passed, exit 0) and with C.UTF-8 (07b, 22 passed, exit 0): API totals identical for TL and TO, TL has no B01 row, label shown to the TL and not the TO, and on screen 'TL totals rows 3' equal to the TO's 3 and to the TL's own 3 before the marking (Revenue uplift: Total SAR 222,750.00 Validated by Finance, SAR 99,000.00 pending, Provisional; ar the same in Arabic). Screenshots show the label, 'No records' inside the table and the Total row. The first demo run (07) lost chromium-en renderers to memory pressure ('Target crashed'/'Page crashed'); its chromium-ar run of the same probe passed, and the full re-run (07a) passed in both languages. (2) Mutant: ui.tsx reverted to the round-6 source in clone m, rebuilt (10c, exit 0). section-totals.test.tsx fails 2 of 6 (the 'every row restricted' test in en and ar; 10a, exit 1 by design); my probe fails in en and ar with 'TL totals rows 2 ... TO totals rows 3 ... before 3' and 'No records' (10d); the in-tree apps/web/e2e/p6-report-restricted-totals.spec.ts fails in en and ar at 'live: the TL's totals rows equal the TO's' (10d, exit 1 by design). On the candidate the unit tests pass 16/16 (10b) and the in-tree spec passes in every product run (06a en, 06b ar locale unset; 06c en, 06d ar C.UTF-8). The in-tree spec asserts the clause literally: header, empty cell spanning every column, one totals row with the 'Total' row header and text equal to the admitted reader's, on the live preview and on the stored snapshot, plus axe 0 serious/critical and no benefit id in the TL's DOM. Clone m was restored (git checkout) and rebuilt from the candidate before any other use (01h). Presentation mode is covered through the shared component only; the meeting pack holds no benefit, business case or evidence record, so no presentation section can be fully restricted."
+      }
+    },
+    {
+      "id": "F-DG6-460",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The architecture and contract texts were not updated for T-DG6-BE-Z9. ADR-0051's shipped list, the OpenAPI ReportDocument.sections description and the data dictionary still describe the report-section restricted flag as decided only from a section's own rows, items and sources, and omit report_snapshot_aggregate and report_snapshot.aggregates_recorded (migration 0126)",
+      "reproduction": "Candidate b64b95ff (source 70f05ed49). (1) docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md line 89, in the table 'Which responses carry includesRestrictedRecords (as shipped)': 'every section of ReportDocument … | the section references a marked-sensitive record through a row, an item or a source'. (2) docs/api/openapi.yaml line ~27172, ReportDocument.sections description: 'a section that references a marked-sensitive record (a row, an item or a source) carries the read-time member … absent otherwise'. (3) grep -n report_snapshot_aggregate docs/architecture/data-dictionary.md docs/architecture/erd.md finds nothing; the dictionary's newest P6 migration section is 0125. git diff 031945d87..70f05ed49 -- docs/architecture shows no change in this round. The BE-Z9 handback §7 items 2 and 3 asked for these corrections, and no decision (D-217 to D-220) routes or waives them.",
+      "expected": "The texts that state the shipped rule match the code. Since T-DG6-BE-Z9, a section is also flagged from the records its aggregate figures include: the executive pack metrics_*, the executive dashboard area_value and items_portfolio, and the gate pack criteria. Those records are kept in report_snapshot_aggregate, with the conservative legacy rule for snapshots whose aggregates_recorded is false. The data dictionary covers every migrated table. F-DG6-400's suggested repair named the ADR-0051 sentence explicitly.",
+      "actual": "The code (apps/api/src/modules/reporting/reports/restricted.ts, assembler.ts, migration 0126) and the zod comment in packages/shared/src/schemas/report.ts state the new rule. ADR-0051, the OpenAPI description and the data dictionary still state the old, narrower one, and the dictionary omits the new table and column. There is no behavioural effect: the runtime flag is correct (verified for F-DG6-400). But an API consumer or a later implementer reading the contract or the ADR would believe that metrics sections are never flagged.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "docs/api/openapi.yaml",
+        "docs/architecture/data-dictionary.md",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z9-backend-workflow-engineer.md",
+        "apps/api/src/modules/reporting/reports/restricted.ts",
+        "packages/db/migrations/0126_p6_report_snapshot_aggregate.sql"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-7/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T05:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 7 by domain-reviewer while verifying F-DG6-400, whose runtime repair is CLOSED_VERIFIED. This is documentation and contract-text drift only: Low, not mandatory, not blocking. Suggested repair: amend the ADR-0051 §2 table row and its 2026-11-06 sentence, the OpenAPI description (no schema change), ADR-0045 §3 (the new snapshot child table) and the data dictionary/ERD for 0126."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-480",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-218 is not applied to every open record that references a sensitive record: an open benefit's parentBenefitId, a meeting output's recordId and a launch-plan task's outputRecordId name the id of a sensitive benefit to a reader who gets 404 on it, and a not-admitted writer can set a launch-task output to that id (200 against 422 for an unknown id)",
+      "reproduction": "Candidate sha256:b64b95ff5deda5d1ccc9adf8c6bf85b3ed251a5c5cb1cf24e87d8532e3aa4bae (source 70f05ed49d893378efc99cd3e1a4027fc77697e8), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0, LANG unset. Probe docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r7-id-refs.test.ts, run with checks.sh repro (log 41-repro-r7-id-refs.log; the four earlier attempts are kept and explained in the review record). All data SYNTHETIC on the demo seed. Readers: TL and tl2, two TLs scoped to the transformation with no grant; tl2 created and edited nothing, so it is never a named party. B1, all through the API: the TL creates a benefit B04 with no values (POST /benefits, 201), makes the open benefit B03 its child (PATCH /benefits/{B03} parentBenefitId, 200), then a TO marks B04 sensitive (PUT .../records/benefit/{B04}/sensitivity, 200). B2: a scheduled meeting of a demo forum and a meeting_output of kind benefit_view naming the sensitive demo benefit B02, inserted directly with their audit events (the demo has no meeting). B3, through the API, after B02 is marked: the not-admitted TL sends PATCH /launch-plan/tasks/{the w3_o4 'benefits register' task} with outputRecordId set to a random uuid, then to B02's id. Then tl2 calls GET /benefits/{B03}, GET /meetings/{m}/outputs, GET /launch-plan/tasks and GET /launch-plan/tasks/{task}.",
+      "expected": "D-218 (orchestrator, 2026-11-07): 'a response never names the id of a sensitive record the reader is not admitted to. The reference is omitted; where the open record depends on it, a neutral restricted marker without an id is returned, includesRestrictedRecords: true is set, and the screen shows the restricted label instead of a link.' ADR-0051 §2: a record GET of a sensitive record the principal is not admitted to answers 404, existence not disclosed (ADR-0006). So for tl2: parentBenefitId is null with a restricted marker; the meeting output omits recordId (or the row) and is marked; the task's outputRecordId is null with includesRestrictedRecords: true. A write by a not-admitted principal that names a sensitive record by id answers as for an unknown id (or 404), so the write is not an existence oracle and cannot attach a record the writer cannot see.",
+      "actual": "tl2 gets 404 on B02, on B04 and on the sensitive evidence item (log lines 'tl2 GET ...: 404'). In the same session: (1) getBenefit B03 answers 200 with \"parentBenefitId\":\"<B04's id>\" (apps/api/src/modules/benefits/register.ts:445 presents r.parent_benefit_id unfiltered); (2) listMeetingOutputs answers 200 with \"outputKind\":\"benefit_view\",\"recordType\":\"benefit\",\"recordId\":\"<B02's id>\" (apps/api/src/modules/governance/meeting-outputs.ts:144); (3) listLaunchTasks and getLaunchTask answer 200 with \"outputRecordType\":\"benefit\",\"outputRecordId\":\"<B02's id>\" (apps/api/src/modules/launch/tasks.ts:258). None of these modules calls a restriction helper (grep -c restricted|sensitiv = 0, 60-source-checks.log). Write side: the not-admitted TL's PATCH of the task answers 422 launch_task.output_record_invalid for a random id and 200 for B02's id, and the link is stored. outputRecordExists (tasks.ts:287, used at :370) and meeting-outputs.ts recordExists (:151-162) test existence in the transformation without reach, so a principal who gets 404 on a record can confirm it exists and attach it. By code reading, not reproduced (the demo has no procedure instance): procedure instance links (procedures/steps.ts:290-296, returned as links[].recordId; record types include evidence and finance_validation) and a procedure instance's subjectRecordId (instances.ts) are presented the same way. No title, code or value is exposed: only the identifier, the existence and the role (parent, benefit view, task output). The in-tree sweep cannot see these, because the demo seed has no parent/child pair, no meeting and no launch-task output, and its seeding marks only columns named evidence_id and business_case_id. The BE-Z10 and BE-Z10B handbacks list the fields they repaired and these are not among them. D-219 does not excuse them. The F-DG6-420 fields themselves are repaired (verified separately). Medium, not mandatory, for the same reasons as F-DG6-420 (existence disclosure only), but D-218 is a binding decision and D-192 requires the repair before the gate. Suggested repair: apply restrictedIdsOf / hideRestrictedTypedRefs to these presenters, check reach in outputRecordExists and recordExists, and seed the sweep from every uuid column and record_type/record_id pair that can name a sensitive type, rather than only evidence_id and business_case_id.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/41-repro-r7-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r7-id-refs.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/60-source-checks.log",
+        "apps/api/src/modules/benefits/register.ts",
+        "apps/api/src/modules/governance/meeting-outputs.ts",
+        "apps/api/src/modules/launch/tasks.ts",
+        "apps/api/src/modules/procedures/steps.ts",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T05:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 7 (T-DG6-REV-CS-R7) while checking whether the F-DG6-420 repair (BE-Z10, BE-Z10B, D-218) covers every reference an open record can hold to a sensitive benefit, business case or evidence item, beyond the columns the sweep seeds. Three read paths were reproduced through the API against an uninvolved TL who gets 404 on the record, and one write-side existence oracle. Owner backend-workflow-engineer (the BE-Z10 owner). The decision already exists (D-218), so no architect decision is needed."
         }
       ]
     }

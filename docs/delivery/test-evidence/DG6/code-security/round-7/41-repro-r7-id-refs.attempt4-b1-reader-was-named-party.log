@@ -1,0 +1,120 @@
+# 41-repro-r7-id-refs  started 2026-11-08T05:15:08Z  cwd=/var/tmp/mth-run.4o9h5g/claude-0/r/w3  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=18.23 16.20 12.30  commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r7-id-refs.test.ts
+port-policy: PostgreSQL listening on port 30465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.4o9h5g/claude-0/r/w3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7dp4ms_2e299012 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] hidden B02, open B01, child candidate B03
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] TL PATCH group countedBenefitId (before marking) -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL POST parent benefit -> 201 B04
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TL PATCH B03 parentBenefitId -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B1 TO marks the parent sensitive -> 200
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B2-meeting NOT SEEDED: new row for relation "meeting" violates check constraint "meeting_cutoff_known_or_reason"
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<random uuid> -> 422 launch_task.output_record_invalid
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] B3 oracle: TL PATCH outputRecordId=<sensitive benefit the TL gets 404 on> -> 200 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts
+[CS-R7-ID] SETUP B4 NOT SEEDED: no procedure instance in the demo transformation
+[CS-R7-ID] seeded: benefit_evidence, B1-parent, B3-launch_task-output(API, by the not-admitted TL)
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TL: listBenefitGroups 200 counted=null countedBenefitRestricted=true members=1 includesRestrictedRecords=true
+[CS-R7-ID] TL: getBenefitGroup 200 names={"hidden":false,"ev":false} countedBenefitRestricted=true
+[CS-R7-ID] TL: getBenefitMeasurement 200 names={"hidden":false,"ev":false} includesRestrictedRecords=true
+[CS-R7-ID] TL: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":false}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids
+[CS-R7-ID] TO: listBenefitGroups 200 counted=<hidden id> countedBenefitRestricted=undefined members=2 includesRestrictedRecords=undefined
+[CS-R7-ID] TO: getBenefitGroup 200 names={"hidden":true,"ev":false} countedBenefitRestricted=undefined
+[CS-R7-ID] TO: getBenefitMeasurement 200 names={"hidden":false,"ev":true} includesRestrictedRecords=undefined
+[CS-R7-ID] TO: listBenefitMeasurements 404 names={"hidden":false,"ev":false}; listBenefits 200 names={"hidden":true,"ev":true}
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] TL PATCH group title -> 200 names={"hidden":false,"ev":false} 
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id
+[CS-R7-ID] DB after TL PATCH: counted is hidden=true title=Synthetic group CS-R7 renamed
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL
+[CS-R7-ID] TL listTransformationAudit(group) 400 names={"hidden":false,"ev":false}; unfiltered 200
+[CS-R7-ID] D-219: the unfiltered trail names the hidden benefit as a recordId: true; its changes: false
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B1 getBenefit(open child of the sensitive parent): TL 200 names hidden benefit=true sensitive evidence=false | TO 200 {"hidden":true,"ev":false}
+[CS-R7-ID]   TL excerpt: ...ed actuals of the KPI \"Cost/MB, margin\" (synthetic)","confidence":"H","assumptions":"80,000,000 MB of roaming data per month (synthetic).","parentBenefitId":"01a1b995-a7b8-72db-b970-39b52e02f98c","benefitGroupId":null,"allocationSetNo":0,"lifecycleStep":"mea...
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B1 listBenefits: TL 200 names hidden benefit=true sensitive evidence=false | TO 200 {"hidden":true,"ev":true}
+[CS-R7-ID]   TL excerpt: ...re","realizationState":"validated","counting":{"counted":true,"exclusionReason":null,"overlapOpen":false},"currency":"SAR","version":6,"initiatives":[]},{"id":"01a1b995-a7b8-72db-b970-39b52e02f98c","code":"B04","title":"Synthetic CONFIDENTIAL CS-R7 parent","be...
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B3 listLaunchTasks: TL 200 names hidden benefit=true sensitive evidence=false | TO 200 {"hidden":true,"ev":false}
+[CS-R7-ID]   TL excerpt: ...ownerUserId":"01995000-0000-7000-8000-000000000012","status":"not_started","completedAt":null,"completedBy":null,"outputRecordType":"benefit","outputRecordId":"01995000-4401-7000-8000-000000000002","predecessors":[],"blockedBy":[],"version":2,"updatedAt":"2026...
+
+stdout | tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+[CS-R7-ID] B3 getLaunchTask: TL 200 names hidden benefit=true sensitive evidence=false | TO 200 {"hidden":true,"ev":false}
+[CS-R7-ID]   TL excerpt: ...ownerUserId":"01995000-0000-7000-8000-000000000012","status":"not_started","completedAt":null,"completedBy":null,"outputRecordType":"benefit","outputRecordId":"01995000-4401-7000-8000-000000000002","predecessors":[],"blockedBy":[],"version":2,"updatedAt":"2026...
+[CS-R7-ID] part B leaks (4):
+B1 getBenefit(open child of the sensitive parent) (/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000003) -> hidden benefit id 
+B1 listBenefits (/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefits?limit=100) -> hidden benefit id 
+B3 listLaunchTasks (/api/v1/transformations/01995000-0000-7000-8000-000000000001/launch-plan/tasks?limit=100) -> hidden benefit id 
+B3 getLaunchTask (/api/v1/transformations/01995000-0000-7000-8000-000000000001/launch-plan/tasks/01995000-1056-7000-8000-00000000011f) -> hidden benefit id 
+[CS-R7-ID] B3 write oracle (random id / sensitive id, as the not-admitted TL): 422/200
+
+ ❯ |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts (4 tests | 1 failed) 12243ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > TL gets 404 on both records and no id in the group or measurement bodies; TO gets the ids  462ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > a TL rename (no countedBenefitId) keeps the hidden counted member; the response names no hidden id 64ms
+   ✓ CS-R7-ID part A: F-DG6-420 re-verification > the group's audit trail (an OPEN record's events) does not show the hidden id in changes to TL 217ms
+   × CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response 621ms
+     → expected [ …(4) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r7-id-refs.test.ts > CS-R7-ID part B: reference paths outside the BE-Z10/Z10B list > TL never receives a hidden id from an open record's response
+AssertionError: expected [ …(4) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "B1 getBenefit(open child of the sensitive parent) (/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000003) -> hidden benefit id ",[39m
+[31m+   "B1 listBenefits (/api/v1/transformations/01995000-0000-7000-8000-000000000001/benefits?limit=100) -> hidden benefit id ",[39m
+[31m+   "B3 listLaunchTasks (/api/v1/transformations/01995000-0000-7000-8000-000000000001/launch-plan/tasks?limit=100) -> hidden benefit id ",[39m
+[31m+   "B3 getLaunchTask (/api/v1/transformations/01995000-0000-7000-8000-000000000001/launch-plan/tasks/01995000-1056-7000-8000-00000000011f) -> hidden benefit id ",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r7-id-refs.test.ts:375:19
+    373|     log(`B3 write oracle (random id / sensitive id, as the not-admitte…
+    374|     expect(seeded.length, "setup seeded the part B rows").toBeGreaterT…
+    375|     expect(leaks).toEqual([]);
+       |                   ^
+    376|   });
+    377| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  05:15:15
+   Duration  41.85s (transform 9.92s, setup 0ms, collect 21.99s, tests 12.24s, environment 0ms, prepare 91ms)
+
+exit=1  finished 2026-11-08T05:16:02Z  load=17.33 16.30 12.56

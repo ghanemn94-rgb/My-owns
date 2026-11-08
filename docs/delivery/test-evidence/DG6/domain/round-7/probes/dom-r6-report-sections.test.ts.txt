@@ -1,0 +1,279 @@
+// A sensitive benefit in the Executive Overview, every dashboard drill-down metric, the Finance and adoption
+// dashboards, and the report totals (T-DG6-BE-Z7B; F-DG6-360, F-DG6-361, F-DG6-340; ADR-0051 §2 as amended on
+// 2026-11-04, "Totals and rollups"; D-195 Q3; REQ-S10-002 "a sensitive benefit is hidden from a workstream member
+// without the grant"; M0188), against the run's disposable PostgreSQL seeded with the SYNTHETIC demo dataset.
+// Marking a record sensitive is an access decision, never a business approval (G1-G6); nothing here touches DG0-DG7.
+//
+//   - negative (TL at the transformation, AUD at the organization: no grant, not a named party): no item, input or
+//     evidence entry of the benefit (or of its planned and validated lines) on the overview, on any drill-down metric
+//     with any value class, on the Finance or adoption dashboards; the figures (headlines, statuses, drill-down values)
+//     equal the admitted reader's; `includesRestrictedRecords: true` on the overview and on every drill-down that
+//     omitted something;
+//   - report totals: the live benefits register and its stored snapshot omit the benefit's row for TL and AUD, keep
+//     the totals byte for byte, and carry `includesRestrictedRecords: true` on that section; the TO (admitted) sees the
+//     row, the same totals and `false`; a section that references no sensitive record carries no member, and the stored
+//     content (and its contentSha256) never holds it;
+//   - positive: the TO sees the benefit on the overview and in the value.gap drill-down (`includesRestrictedRecords:
+//     false`).
+// The overview and value.gap assertions fail on the tree before the T-DG6-BE-Z7 repair (the items were listed), and
+// the report assertions fail before T-DG6-BE-Z7B (no member).
+import { insertAuditEvent, migrate, seedDemo, sql } from "@mth/db";
+import { createHash, randomUUID } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
+import { DEMO_ANCHORS } from "../../../../../packages/db/src/demo/data/kpis.ts";
+import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
+import { DASHBOARD_METRICS, FINANCE_VALUE_CLASSES } from "../../../../../packages/shared/src/schemas/dashboards.ts";
+import { canonicalReportJson } from "../../../src/modules/reporting/reports/snapshots.ts";
+import { call, createUser, grant, signIn, startApi, type Session, type TestApi } from "../../support/harness.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+const T = DEMO_ANCHORS.transformationId;
+const ORG = DEMO_ANCHORS.organizationId;
+const TITLE = "Synthetic CONFIDENTIAL BE-Z7B dashboard benefit";
+let api: TestApi;
+let scratch: string | null = null;
+let to: Session;
+let tl: Session;
+let aud: Session;
+const S = { benefitId: "", code: "", valueClass: "", lineIds: [] as string[], snapshotId: "", workstreamId: "" };
+const get = (path: string, session: Session) => call<Body>(api.app, "GET", path, { session, contract: false });
+const ok = async (path: string, session: Session): Promise<Body> => {
+  const r = await get(path, session);
+  expect(r.status, `${path}: ${JSON.stringify(r.body).slice(0, 300)}`).toBe(200);
+  return r.body;
+};
+
+/** Every object of a body that names the benefit or one of its value lines, or carries its title. */
+function mentions(body: Body): Body[] {
+  const out: Body[] = [];
+  const walk = (x: Body) => {
+    if (x === null || typeof x !== "object") return;
+    if (
+      !Array.isArray(x) &&
+      (x.recordId === S.benefitId ||
+        S.lineIds.includes(x.recordId) ||
+        (typeof x.label === "string" && x.label.includes(TITLE)))
+    )
+      out.push(x);
+    for (const v of Object.values(x)) walk(v);
+  };
+  walk(body);
+  if (JSON.stringify(body).includes(TITLE) && out.length === 0) out.push({ title: TITLE });
+  return out;
+}
+
+/** The figures of a dashboard response: everything except the listed items and the generation time. */
+function figures(body: Body): string {
+  return JSON.stringify(body, (k, v) =>
+    k === "items" || k === "generatedAt" || k === "includesRestrictedRecords" ? undefined : v,
+  );
+}
+
+beforeAll(async () => {
+  const { adminUrl } = inject("mthDb");
+  scratch = await createScratchDatabase(adminUrl, "mth_dom_r6");
+  await migrate(roleUrl(adminUrl, scratch, "mth_owner"));
+  await seedDemo(roleUrl(adminUrl, scratch, "mth_owner"), {
+    mthEnv: "demo",
+    runKind: "seed",
+    requestedVia: "cli",
+    requestedBy: null,
+  });
+  api = await startApi({ database: scratch, env: { MTH_ENV: "demo" } });
+  const grantor = DEMO_ANCHORS.users.sp;
+  const mk = async (role: string, s: { type: "organization" | "transformation"; id: string }) => {
+    const u = await createUser(api.db, ORG);
+    await grant(api.db, grantor, u.id, role, s, ORG);
+    return u;
+  };
+  to = await signIn(api.app, (await mk("TO", { type: "organization", id: ORG })).subject);
+  tl = await signIn(api.app, (await mk("TL", { type: "transformation", id: T })).subject);
+  aud = await signIn(api.app, (await mk("AUD", { type: "organization", id: ORG })).subject);
+  const b = await api.db
+    .selectFrom("benefit")
+    .select(["id", "code", "version", "value_class"])
+    .where("transformation_id", "=", T)
+    .where("status", "=", "active")
+    .orderBy("code")
+    .executeTakeFirstOrThrow();
+  S.benefitId = b.id;
+  S.code = b.code;
+  S.valueClass = String(b.value_class);
+  S.lineIds = [
+    ...(await api.db.selectFrom("benefit_plan_value").select("id").where("benefit_id", "=", b.id).execute()),
+    ...(await api.db.selectFrom("benefit_measurement").select("id").where("benefit_id", "=", b.id).execute()),
+  ].map((r) => r.id);
+  expect(S.lineIds.length, "the demo benefit has planned or measured lines").toBeGreaterThan(0);
+  await api.db.transaction().execute(async (tx) => {
+    await sql`UPDATE benefit SET title = ${TITLE}, version = version + 1, updated_at = now()
+               WHERE id = ${b.id}::uuid`.execute(tx);
+    await insertAuditEvent(
+      tx,
+      { actorType: "user", actorUserId: grantor, requestId: `be-z7b-${b.id}`, source: "api" },
+      {
+        action: "benefit.update",
+        recordType: "benefit",
+        recordId: b.id,
+        organizationId: ORG,
+        transformationId: T,
+        priorVersion: b.version,
+        newVersion: b.version + 1,
+      },
+    );
+  });
+  const mark = await call<Body>(api.app, "PUT", `/api/v1/transformations/${T}/records/benefit/${b.id}/sensitivity`, {
+    session: to,
+    headers: { "if-match": '"0"' },
+    body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit" },
+  });
+  expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+  // A synthetic workstream over every initiative of the transformation (the demo dataset has none), so the workstream
+  // dashboard's facts include the benefit (direct writes with their audit events, as the P4 fixtures do).
+  S.workstreamId = randomUUID();
+  await api.db.transaction().execute(async (tx) => {
+    const actor = (id: string) => ({
+      actorType: "user" as const,
+      actorUserId: grantor,
+      requestId: `be-z7b-${id}`,
+      source: "api" as const,
+    });
+    await tx
+      .insertInto("workstream")
+      .values({
+        id: S.workstreamId,
+        organization_id: ORG,
+        transformation_id: T,
+        code: "WS-77",
+        name: "Synthetic workstream BE-Z7B",
+        created_by: grantor,
+        updated_by: grantor,
+      })
+      .execute();
+    await insertAuditEvent(tx, actor(S.workstreamId), {
+      action: "workstream.create",
+      recordType: "workstream",
+      recordId: S.workstreamId,
+      organizationId: ORG,
+      transformationId: T,
+      newVersion: 1,
+    });
+    const initiatives = await tx.selectFrom("initiative").select("id").where("transformation_id", "=", T).execute();
+    for (const { id: initiativeId } of initiatives) {
+      const linkId = randomUUID();
+      await tx
+        .insertInto("workstream_initiative")
+        .values({
+          id: linkId,
+          organization_id: ORG,
+          transformation_id: T,
+          workstream_id: S.workstreamId,
+          initiative_id: initiativeId,
+          created_by: grantor,
+          updated_by: grantor,
+        })
+        .execute();
+      await insertAuditEvent(tx, actor(linkId), {
+        action: "workstream_initiative.create",
+        recordType: "workstream_initiative",
+        recordId: linkId,
+        organizationId: ORG,
+        transformationId: T,
+        newVersion: 1,
+      });
+    }
+  });
+  // A benefits register snapshot generated by the admitted TO (it holds the benefit's row when stored).
+  const snap = await call<Body>(api.app, "POST", `/api/v1/transformations/${T}/reports/registers/generate`, {
+    session: to,
+    body: { parameters: { register: "benefits" } },
+    contract: false,
+  });
+  expect(snap.status, JSON.stringify(snap.body).slice(0, 400)).toBe(201);
+  S.snapshotId = snap.body.id;
+}, 600_000);
+
+afterAll(async () => {
+  await api?.close();
+  if (scratch !== null) await dropScratchDatabase(inject("mthDb").adminUrl, scratch);
+}, 60_000);
+
+// ---- DOM-R6 probe (domain-reviewer, round 6): every report definition, live, TO vs TL. SYNTHETIC data.
+const CODES = ["registers", "executive_dashboard", "executive_pack", "business_cases", "gate_pack", "handover", "roadmap", "charter", "tom", "diagnostic"];
+const PARAMS: Record<string, unknown> = { registers: { register: "benefits" } };
+describe("DOM-R6: report sections whose figures include the sensitive benefit", () => {
+  it("dump", async () => {
+    const out: Body[] = [];
+    // The value drill-down says whether the TL's aggregate includes a restricted record.
+    const dd = await get(`/api/v1/dashboard-drilldown?organizationId=${ORG}&transformationId=${T}&metric=value.gap&valueClass=${["revenue_uplift","avoided_cost"].includes(S.valueClass) ? S.valueClass : "revenue_uplift"}&limit=100`, tl);
+    out.push({ drilldownStatus: dd.status, includesRestrictedRecords: dd.body?.includesRestrictedRecords, value: dd.body?.value, body: dd.status === 200 ? undefined : JSON.stringify(dd.body).slice(0,200) });
+    for (const code of CODES) {
+      const per = await api.db.selectFrom("reporting_period").select("id").where("organization_id", "=", ORG).where("period_start", "<=", new Date().toISOString().slice(0, 10)).orderBy("period_start", "desc").executeTakeFirst().catch(() => undefined);
+      const qs: string[] = [];
+      if (PARAMS[code]) qs.push(`parameters=${encodeURIComponent(JSON.stringify(PARAMS[code]))}`);
+      if (per && ["executive_dashboard", "executive_pack", "meeting_pack"].includes(code)) qs.push(`reportingPeriodId=${per.id}`);
+      const q = qs.length ? "?" + qs.join("&") : "";
+      const path = `/api/v1/transformations/${T}/reports/${code}/live${q}`;
+      const a = await get(path, to);
+      const r = await get(path, tl);
+      const rec: Body = { code, toStatus: a.status, tlStatus: r.status };
+      if (a.status === 200 && r.status === 200) {
+        const ad = a.body.document, td = r.body.document;
+        rec.tlMentions = mentions(td).length;
+        rec.toMentions = mentions(ad).length;
+        rec.sections = td.sections.map((s: Body, i: number) => {
+          const as = ad.sections[i];
+          const money = JSON.stringify(s.fields ?? s.totals ?? null).match(/"currency":"SAR"/g)?.length ?? 0;
+          return { key: s.key, kind: s.kind, tlFlag: s.includesRestrictedRecords, toFlag: as?.includesRestrictedRecords,
+            sameFigures: JSON.stringify(s.fields ?? s.totals ?? null) === JSON.stringify(as?.fields ?? as?.totals ?? null),
+            sarValues: money, sources: s.sources.map((x: Body) => x.recordType).join(",") };
+        });
+        const em = td.sections.find((s: Body) => s.key === "area_value" || /^metrics_/.test(s.key));
+        if (em) rec.sampleMetrics = { key: em.key, fields: em.fields?.filter((f: Body) => JSON.stringify(f).includes("SAR")).slice(0, 6) };
+      } else rec.body = JSON.stringify(r.body).slice(0, 200);
+      out.push(rec);
+    }
+    console.log("DOMR6-DUMP " + JSON.stringify(out, null, 1));
+  }, 300_000);
+});
+
+describe("DOM-R6: the executive pack metrics vs the transformation dashboard (TL, not admitted)", () => {
+  it("compare", async () => {
+    const plan = await api.db.selectFrom("benefit_plan_value").selectAll().where("benefit_id", "=", S.benefitId).execute();
+    const per = await api.db.selectFrom("reporting_period").select("id").where("organization_id", "=", ORG).where("period_start", "<=", new Date().toISOString().slice(0, 10)).orderBy("period_start", "desc").executeTakeFirstOrThrow();
+    const dash = await get(`/api/v1/transformations/${T}/dashboard`, tl);
+    const dashTo = await get(`/api/v1/transformations/${T}/dashboard`, to);
+    const pack = await get(`/api/v1/transformations/${T}/reports/executive_pack/live?reportingPeriodId=${per.id}`, tl);
+    const valueArea = (d: Body) => d.areas.find((a: Body) => a.code === "value");
+    const m = pack.body.document.sections.find((s: Body) => s.key === "metrics_transformation");
+    const planned = (h: Body[]) => h.filter((x: Body) => /planned/.test(JSON.stringify(x))).map((x: Body) => JSON.stringify(x).slice(0, 300));
+    console.log("DOMR6-CMP " + JSON.stringify({
+      benefit: { code: S.code, valueClass: S.valueClass, planLines: plan.map((p: Body) => ({ amount: p.amount ?? p.value ?? p.planned_value, period: p.period_start ?? p.period_label })) },
+      planRowKeys: plan[0] ? Object.keys(plan[0]) : [],
+      dashStatus: dash.status, tlDashboardFlag: dash.body.includesRestrictedRecords, toDashboardFlag: dashTo.body.includesRestrictedRecords,
+      tlValueHeadlinesPlanned: planned(valueArea(dash.body).headlines),
+      packStatus: pack.status, packMetricsFlag: m?.includesRestrictedRecords ?? "ABSENT",
+      packPlanned: m.fields.filter((f: Body) => /planned/.test(f.key)).map((f: Body) => [f.key, f.value.value]),
+      anyPackSectionFlag: pack.body.document.sections.some((s: Body) => s.includesRestrictedRecords !== undefined),
+    }, null, 1));
+    // Bind the claim: the dashboard labels the figures, the pack does not.
+    expect(dash.body.includesRestrictedRecords).toBe(true);
+    expect(m?.includesRestrictedRecords, "executive pack metrics section labelled for TL").toBe(true);
+  }, 300_000);
+});
+
+describe("DOM-R6: who contributes to the period's planned top line", () => {
+  it("lines", async () => {
+    const per = await api.db.selectFrom("reporting_period").selectAll().where("organization_id", "=", ORG).where("period_start", "<=", new Date().toISOString().slice(0, 10)).orderBy("period_start", "desc").executeTakeFirstOrThrow();
+    const lines = await api.db.selectFrom("benefit_plan_value as v").innerJoin("benefit as b", "b.id", "v.benefit_id")
+      .select(["b.code", "b.value_class", "b.status", "b.is_sensitive" as never, "v.value_kind", "v.period_start", "v.period_end", "v.amount"])
+      .where("v.transformation_id", "=", T).orderBy("b.code").execute().catch(async () =>
+        api.db.selectFrom("benefit_plan_value as v").innerJoin("benefit as b", "b.id", "v.benefit_id")
+          .select(["b.code", "b.value_class", "b.status", "v.value_kind", "v.period_start", "v.period_end", "v.amount"])
+          .where("v.transformation_id", "=", T).orderBy("b.code").execute());
+    const tlPack = await get(`/api/v1/transformations/${T}/reports/executive_pack/live?reportingPeriodId=${per.id}`, tl);
+    const toPack = await get(`/api/v1/transformations/${T}/reports/executive_pack/live?reportingPeriodId=${per.id}`, to);
+    const pick = (d: Body) => d.document.sections.find((s: Body) => s.key === "metrics_transformation").fields.filter((f: Body) => /value_/.test(f.key)).map((f: Body) => [f.key, f.value.value]);
+    console.log("DOMR6-LINES " + JSON.stringify({ period: [per.period_label, per.period_start, per.period_end], lines, tl: pick(tlPack.body), toSame: JSON.stringify(pick(tlPack.body)) === JSON.stringify(pick(toPack.body)), tlText: JSON.stringify(tlPack.body).includes(TITLE) }, null, 0));
+  }, 300_000);
+});

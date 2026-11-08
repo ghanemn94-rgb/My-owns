@@ -1,0 +1,82 @@
+# 60-source-checks 2026-11-08T05:19:57Z cwd=/var/tmp/mth-run.4o9h5g/claude-0/r/w3 commit=70f05ed49d893378efc99cd3e1a4027fc77697e8
++ grep -c operationId: docs/api/openapi.yaml
+932
++ grep -m1 '^  version:' docs/api/openapi.yaml
+  version: 1.5.0-p6
++ set +x
+## p6-pending lists (operation literals left in each):
+apps/api/test/support/p6-pending-arch-01.ts: 0 literals
+apps/api/test/support/p6-pending-arch-02.ts: 0 literals
+apps/api/test/support/p6-pending-arch-03.ts: 0 literals
+apps/api/test/support/p6-pending-arch-04.ts: 0 literals
+apps/api/test/support/p6-pending-arch-05.ts: 0 literals
+apps/api/test/support/p6-pending-arch-06.ts: 0 literals
+apps/api/test/support/p6-pending-be-b.ts: 0 literals
+apps/api/test/support/p6-pending-be-c.ts: 0 literals
+apps/api/test/support/p6-pending-be-d.ts: 0 literals
+apps/api/test/support/p6-pending-be-e.ts: 0 literals
+apps/api/test/support/p6-pending-be-g.ts: 0 literals
+apps/api/test/support/p6-pending-be-h2.ts: 0 literals
+apps/api/test/support/p6-pending-be-i.ts: 0 literals
+apps/api/test/support/p6-pending-be-i2.ts: 0 literals
+apps/api/test/support/p6-pending-be-j.ts: 0 literals
+apps/api/test/support/p6-pending-be-k.ts: 0 literals
+apps/api/test/support/p6-pending-be-l.ts: 0 literals
+apps/api/test/support/p6-pending-be-l2.ts: 0 literals
+apps/api/test/support/p6-pending-be-m2.ts: 0 literals
+apps/api/test/support/p6-pending-be-n.ts: 0 literals
+apps/api/test/support/p6-pending-be-n2.ts: 0 literals
+apps/api/test/support/p6-pending-be-o.ts: 0 literals
+apps/api/test/support/p6-pending-be-p.ts: 0 literals
+apps/api/test/support/p6-pending-be-q.ts: 0 literals
+apps/api/test/support/p6-pending-be-q2.ts: 0 literals
+apps/api/test/support/p6-pending-be-t.ts: 0 literals
+apps/api/test/support/p6-pending-be-u.ts: 0 literals
+apps/api/test/support/p6-pending-be-w.ts: 0 literals
+## migrations 0098..0126 (contiguous?):
+0098 0099 0100 0101 0102 0103 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 
+highest: 126
+## worker imports api code?
+(end)
+## secrets-like literals in product source (sk-, BEGIN PRIVATE KEY, password=):
+apps/worker/src/exception-redaction.test.ts
+apps/api/test/integration/operations/exceptions.test.ts
+packages/config/src/redaction.test.ts
+(end)
+## public CDN references in web index/html:
+(end)
+## new uses of restriction helpers in this round's diff:
+ 87 files changed, 4028 insertions(+), 250 deletions(-)
+## unfiltered reference fields found by the probe (code):
+445:    parentBenefitId: r.parent_benefit_id,
+258:    outputRecordId: r.output_record_id,
+144:  recordId: r.record_id,
+287:async function outputRecordExists(tx: Tx, type: string, id: string, transformationId: string): Promise<boolean> {
+370:    if (outputType === null || !(await outputRecordExists(tx, outputType, outputId, transformationId)))
+151:async function recordExists(
+152-  tx: Tx,
+153-  transformationId: string,
+154-  recordType: MeetingOutputRecordType,
+155-  recordId: string,
+156-): Promise<boolean> {
+157-  // recordType is one of the closed enum's table names (zod-validated), never caller text.
+158-  const r = await sql<{ found: boolean }>`
+159-    SELECT EXISTS (SELECT 1 FROM ${sql.table(recordType)} WHERE id = ${recordId}::uuid
+160-                   AND transformation_id = ${transformationId}::uuid) AS found`.execute(tx);
+161-  return r.rows[0]?.found === true;
+162-}
+163-
+290:  const links = await db
+291-    .selectFrom("procedure_instance_link")
+292-    .selectAll()
+293-    .where("procedure_instance_id", "=", instance.id)
+294-    .orderBy("created_at")
+295-    .orderBy("id")
+296-    .execute();
+297-  const approvals = new Map<string, ApprovalRow>();
+298-  if (steps.length > 0) {
+apps/api/src/modules/launch/tasks.ts:0
+apps/api/src/modules/governance/meeting-outputs.ts:0
+apps/api/src/modules/procedures/steps.ts:0
+apps/api/src/modules/governance/minutes.ts:0
+exit=0

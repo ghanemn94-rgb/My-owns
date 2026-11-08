@@ -1,0 +1,893 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - search "Search records" [ref=e10]:
+      - generic [ref=e11]: Search for
+      - textbox "Search for" [ref=e12]:
+        - /placeholder: Search records
+      - button "Search records" [ref=e13] [cursor=pointer]: Search
+    - button "Switch language to العربية" [ref=e15] [cursor=pointer]: العربية
+    - generic [ref=e16]:
+      - generic [ref=e17]: Synthetic Transformation Lead
+      - generic [ref=e18]: Synthetic Dev Organization
+    - button "Sign out" [ref=e19] [cursor=pointer]:
+      - img [ref=e20]
+      - generic [ref=e22]: Sign out
+  - generic [ref=e24]:
+    - navigation "Primary navigation" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "My Work" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: My Work
+          - list "My Work" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "Tasks and inbox" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "Approvals" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "Delegations" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "Notification preferences" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "Executive Overview" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: Executive Overview
+          - list "Executive Overview" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "Dashboards" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "RAG policy" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "Transformations" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: Transformations
+        - listitem [ref=e50]:
+          - link "Playbook and Procedures" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "Phase steps and review queue" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "Playbook reader" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "My procedures" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "90-day launch plan" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "Health check" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "Strategy and KPIs" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "KPIs" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "Target Operating Model" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: Target Operating Model
+        - listitem [ref=e73]:
+          - link "Initiatives and Roadmaps" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "Portfolios" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "Owner updates" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "Governance" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: Governance
+          - list "Governance" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "Groups" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "Forums" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "Meetings" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "Executive decisions (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "Change requests" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "Risks and Actions" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: Risks and Actions
+          - list "Risks and Actions" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "RAID (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "Action register" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "Corrective actions" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "Benefits and Finance" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "Benefits register (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "Change and Adoption" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: Change and Adoption
+          - list "Change and Adoption" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Adoption plan (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "Evidence and Reports" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "Reports and snapshots" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "Exports" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "Presentation mode" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "Evidence register" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "BAU and Improvement" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "Performance areas" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "Improvement backlog" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "Lessons" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "Lesson search" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "About this product" [ref=e142] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e143]:
+      - generic [ref=e144]:
+        - generic [ref=e145]:
+          - navigation "Breadcrumbs" [ref=e146]:
+            - list [ref=e147]:
+              - listitem [ref=e148]:
+                - link "Transformations" [ref=e149] [cursor=pointer]:
+                  - /url: /transformations
+              - listitem [ref=e150]:
+                - text: /
+                - link "TR-0006" [ref=e151] [cursor=pointer]:
+                  - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79
+              - listitem [ref=e152]:
+                - text: /
+                - generic [ref=e153]: Diagnose
+          - generic [ref=e155]:
+            - heading "Diagnose" [level=1] [ref=e156]
+            - paragraph [ref=e157]:
+              - generic [ref=e158]:
+                - generic [ref=e159]: TR-0006
+                - generic [ref=e160]: Synthetic blank-text EN check
+                - generic [ref=e161]:
+                  - img [ref=e162]
+                  - text: Draft – not submitted
+                - generic [ref=e164]: "Phase: Diagnose"
+        - navigation "Transformation workspace" [ref=e165]:
+          - list [ref=e166]:
+            - listitem [ref=e167]:
+              - link "Overview" [ref=e168] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79
+            - listitem [ref=e169]:
+              - link "Diagnose" [ref=e170] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/diagnose
+            - listitem [ref=e171]:
+              - link "Charter" [ref=e172] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/charter
+            - listitem [ref=e173]:
+              - link "Define" [ref=e174] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/define
+            - listitem [ref=e175]:
+              - link "Design" [ref=e176] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/design
+            - listitem [ref=e177]:
+              - link "Portfolio" [ref=e178] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/portfolio
+            - listitem [ref=e179]:
+              - link "Prioritization" [ref=e180] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/prioritization
+            - listitem [ref=e181]:
+              - link "Roadmap" [ref=e182] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/roadmap
+            - listitem [ref=e183]:
+              - link "Dependencies" [ref=e184] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/dependencies
+            - listitem [ref=e185]:
+              - link "Capacity" [ref=e186] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/capacity
+            - listitem [ref=e187]:
+              - link "Business cases" [ref=e188] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/business-cases
+            - listitem [ref=e189]:
+              - link "Benefit formulas" [ref=e190] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/benefit-formulas
+            - listitem [ref=e191]:
+              - link "Decisions" [ref=e192] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/decisions
+            - listitem [ref=e193]:
+              - link "Gates" [ref=e194] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/gates
+            - listitem [ref=e195]:
+              - link "Readiness" [ref=e196] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/readiness
+            - listitem [ref=e197]:
+              - link "Dispensations" [ref=e198] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/dispensations
+            - listitem [ref=e199]:
+              - link "Evidence" [ref=e200] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/evidence
+            - listitem [ref=e201]:
+              - link "Team" [ref=e202] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/team
+            - listitem [ref=e203]:
+              - link "Role mapping" [ref=e204] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/role-mappings
+            - listitem [ref=e205]:
+              - link "Decision rights" [ref=e206] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/decision-rights
+            - listitem [ref=e207]:
+              - link "RACI" [ref=e208] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/raci
+            - listitem [ref=e209]:
+              - link "Transform readiness" [ref=e210] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/transform-readiness
+            - listitem [ref=e211]:
+              - link "Approval records" [ref=e212] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/approval-decisions
+            - listitem [ref=e213]:
+              - link "KPIs" [ref=e214] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/kpis
+            - listitem [ref=e215]:
+              - link "Benefits register (T14)" [ref=e216] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/benefits
+            - listitem [ref=e217]:
+              - link "RAID (T15)" [ref=e218] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/raid
+            - listitem [ref=e219]:
+              - link "Actions" [ref=e220] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/actions
+            - listitem [ref=e221]:
+              - link "Corrective actions" [ref=e222] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/corrective-actions
+            - listitem [ref=e223]:
+              - link "Forums" [ref=e224] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/forums
+            - listitem [ref=e225]:
+              - link "Meetings" [ref=e226] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/meetings
+            - listitem [ref=e227]:
+              - link "Executive decisions (T16)" [ref=e228] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/executive-decisions
+            - listitem [ref=e229]:
+              - link "Adoption" [ref=e230] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/adoption
+            - listitem [ref=e231]:
+              - link "BAU and performance areas" [ref=e232] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/bau
+            - listitem [ref=e233]:
+              - link "Improvement backlog" [ref=e234] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/improvement
+            - listitem [ref=e235]:
+              - link "Lessons" [ref=e236] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/lessons
+            - listitem [ref=e237]:
+              - link "Dashboard (T10)" [ref=e238] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/dashboard
+            - listitem [ref=e239]:
+              - link "Closure" [ref=e240] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/closure
+            - listitem [ref=e241]:
+              - link "Phases" [ref=e242] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/phases
+            - listitem [ref=e243]:
+              - link "Change requests" [ref=e244] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/change-requests
+            - listitem [ref=e245]:
+              - link "Traceability" [ref=e246] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/traceability
+            - listitem [ref=e247]:
+              - link "Modular entry" [ref=e248] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/modular-entry
+            - listitem [ref=e249]:
+              - link "Workstreams" [ref=e250] [cursor=pointer]:
+                - /url: /transformations/01a1b9af-4d0f-70bb-bf6d-a4ad9076df79/workstreams
+        - paragraph [ref=e251]: "Phase 1: understand the current state with evidence, find root causes and size the value at stake."
+        - navigation "On this page" [ref=e252]:
+          - list [ref=e253]:
+            - listitem [ref=e254]:
+              - link "Current-State Diagnostic (T01)" [ref=e255] [cursor=pointer]:
+                - /url: "#t01"
+            - listitem [ref=e256]:
+              - link "Diagnose workstreams" [ref=e257] [cursor=pointer]:
+                - /url: "#workstreams"
+            - listitem [ref=e258]:
+              - link "Baselines" [ref=e259] [cursor=pointer]:
+                - /url: "#baselines"
+            - listitem [ref=e260]:
+              - link "Value pools" [ref=e261] [cursor=pointer]:
+                - /url: "#value-pools"
+        - region "Current-State Diagnostic (T01)" [ref=e262]:
+          - generic [ref=e263]:
+            - heading "Current-State Diagnostic (T01)" [level=2] [ref=e264]
+            - 'button "Export : Current-State Diagnostic (T01)" [ref=e266] [cursor=pointer]':
+              - img [ref=e267]
+              - text: Export
+              - generic [ref=e269]: ": Current-State Diagnostic (T01)"
+          - generic [ref=e270]: "One row for each of the six diagnostic dimensions: current state, evidence or baseline, root cause, impact (in money or on a KPI) and confidence."
+          - paragraph [ref=e271]:
+            - generic [ref=e272]:
+              - img [ref=e273]
+              - text: Custom extension (playbook v1.0)
+            - generic [ref=e275]:
+              - img [ref=e276]
+              - generic [ref=e278]: "Guiding question:"
+              - text: Why change?
+            - generic [ref=e279]:
+              - text: "Source:"
+              - link "B0030" [ref=e281] [cursor=pointer]:
+                - /url: /playbook/reader/B0030
+              - generic [ref=e282]:
+                - text: ","
+                - link "B0031" [ref=e283] [cursor=pointer]:
+                  - /url: /playbook/reader/B0031
+          - generic [ref=e284]:
+            - generic [ref=e285]:
+              - generic [ref=e286]:
+                - generic [ref=e287]: Search
+                - searchbox "Search" [ref=e288]
+              - button "Columns" [ref=e290] [cursor=pointer]:
+                - img [ref=e291]
+                - text: Columns
+            - region "Current-State Diagnostic (T01) (scrollable table)" [ref=e293]:
+              - table "Current-State Diagnostic (T01)" [ref=e294]:
+                - caption [ref=e295]: Current-State Diagnostic (T01)
+                - rowgroup [ref=e296]:
+                  - row "Dimension not sorted Current state not sorted Evidence / baseline Root cause not sorted Impact (money or KPI) Confidence not sorted Owner not sorted Actions" [ref=e297]:
+                    - columnheader "Dimension not sorted" [ref=e298]:
+                      - button "Dimension not sorted" [ref=e299] [cursor=pointer]:
+                        - text: Dimension
+                        - img [ref=e300]
+                        - generic [ref=e302]: not sorted
+                    - columnheader "Current state not sorted" [ref=e303]:
+                      - button "Current state not sorted" [ref=e304] [cursor=pointer]:
+                        - text: Current state
+                        - img [ref=e305]
+                        - generic [ref=e307]: not sorted
+                    - columnheader "Evidence / baseline" [ref=e308]
+                    - columnheader "Root cause not sorted" [ref=e309]:
+                      - button "Root cause not sorted" [ref=e310] [cursor=pointer]:
+                        - text: Root cause
+                        - img [ref=e311]
+                        - generic [ref=e313]: not sorted
+                    - columnheader "Impact (money or KPI)" [ref=e314]
+                    - columnheader "Confidence not sorted" [ref=e315]:
+                      - button "Confidence not sorted" [ref=e316] [cursor=pointer]:
+                        - text: Confidence
+                        - img [ref=e317]
+                        - generic [ref=e319]: not sorted
+                    - columnheader "Owner not sorted" [ref=e320]:
+                      - button "Owner not sorted" [ref=e321] [cursor=pointer]:
+                        - text: Owner
+                        - img [ref=e322]
+                        - generic [ref=e324]: not sorted
+                    - columnheader "Actions" [ref=e325]
+                - rowgroup [ref=e326]:
+                  - 'row "Financial Unknown Unknown Unknown Unknown : Impact not stated Unknown : Confidence not rated Not assigned Edit : Financial Form tools : Financial" [ref=e327]':
+                    - rowheader "Financial" [ref=e328]
+                    - cell "Unknown" [ref=e329]:
+                      - generic [ref=e330]:
+                        - img [ref=e331]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e333]:
+                      - generic [ref=e334]:
+                        - img [ref=e335]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e337]:
+                      - generic [ref=e338]:
+                        - img [ref=e339]
+                        - text: Unknown
+                    - 'cell "Unknown : Impact not stated" [ref=e341]':
+                      - generic "Impact not stated" [ref=e342]:
+                        - img [ref=e343]
+                        - text: Unknown
+                        - generic [ref=e345]: ": Impact not stated"
+                    - 'cell "Unknown : Confidence not rated" [ref=e346]':
+                      - generic "Confidence not rated" [ref=e347]:
+                        - img [ref=e348]
+                        - text: Unknown
+                        - generic [ref=e350]: ": Confidence not rated"
+                    - cell "Not assigned" [ref=e351]
+                    - 'cell "Edit : Financial Form tools : Financial" [ref=e352]':
+                      - 'button "Edit : Financial" [ref=e353] [cursor=pointer]':
+                        - img [ref=e354]
+                        - text: Edit
+                        - generic [ref=e356]: ": Financial"
+                      - 'button "Form tools : Financial" [ref=e357] [cursor=pointer]':
+                        - img [ref=e358]
+                        - text: Form tools
+                        - generic [ref=e360]: ": Financial"
+                  - 'row "Customer Unknown Unknown Unknown Unknown : Impact not stated Unknown : Confidence not rated Not assigned Edit : Customer Form tools : Customer" [ref=e361]':
+                    - rowheader "Customer" [ref=e362]
+                    - cell "Unknown" [ref=e363]:
+                      - generic [ref=e364]:
+                        - img [ref=e365]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e367]:
+                      - generic [ref=e368]:
+                        - img [ref=e369]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e371]:
+                      - generic [ref=e372]:
+                        - img [ref=e373]
+                        - text: Unknown
+                    - 'cell "Unknown : Impact not stated" [ref=e375]':
+                      - generic "Impact not stated" [ref=e376]:
+                        - img [ref=e377]
+                        - text: Unknown
+                        - generic [ref=e379]: ": Impact not stated"
+                    - 'cell "Unknown : Confidence not rated" [ref=e380]':
+                      - generic "Confidence not rated" [ref=e381]:
+                        - img [ref=e382]
+                        - text: Unknown
+                        - generic [ref=e384]: ": Confidence not rated"
+                    - cell "Not assigned" [ref=e385]
+                    - 'cell "Edit : Customer Form tools : Customer" [ref=e386]':
+                      - 'button "Edit : Customer" [ref=e387] [cursor=pointer]':
+                        - img [ref=e388]
+                        - text: Edit
+                        - generic [ref=e390]: ": Customer"
+                      - 'button "Form tools : Customer" [ref=e391] [cursor=pointer]':
+                        - img [ref=e392]
+                        - text: Form tools
+                        - generic [ref=e394]: ": Customer"
+                  - 'row "Process Unknown Unknown Unknown Unknown : Impact not stated Unknown : Confidence not rated Not assigned Edit : Process Form tools : Process" [ref=e395]':
+                    - rowheader "Process" [ref=e396]
+                    - cell "Unknown" [ref=e397]:
+                      - generic [ref=e398]:
+                        - img [ref=e399]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e401]:
+                      - generic [ref=e402]:
+                        - img [ref=e403]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e405]:
+                      - generic [ref=e406]:
+                        - img [ref=e407]
+                        - text: Unknown
+                    - 'cell "Unknown : Impact not stated" [ref=e409]':
+                      - generic "Impact not stated" [ref=e410]:
+                        - img [ref=e411]
+                        - text: Unknown
+                        - generic [ref=e413]: ": Impact not stated"
+                    - 'cell "Unknown : Confidence not rated" [ref=e414]':
+                      - generic "Confidence not rated" [ref=e415]:
+                        - img [ref=e416]
+                        - text: Unknown
+                        - generic [ref=e418]: ": Confidence not rated"
+                    - cell "Not assigned" [ref=e419]
+                    - 'cell "Edit : Process Form tools : Process" [ref=e420]':
+                      - 'button "Edit : Process" [ref=e421] [cursor=pointer]':
+                        - img [ref=e422]
+                        - text: Edit
+                        - generic [ref=e424]: ": Process"
+                      - 'button "Form tools : Process" [ref=e425] [cursor=pointer]':
+                        - img [ref=e426]
+                        - text: Form tools
+                        - generic [ref=e428]: ": Process"
+                  - 'row "People / Org Unknown Unknown Unknown Unknown : Impact not stated Unknown : Confidence not rated Not assigned Edit : People / Org Form tools : People / Org" [ref=e429]':
+                    - rowheader "People / Org" [ref=e430]
+                    - cell "Unknown" [ref=e431]:
+                      - generic [ref=e432]:
+                        - img [ref=e433]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e435]:
+                      - generic [ref=e436]:
+                        - img [ref=e437]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e439]:
+                      - generic [ref=e440]:
+                        - img [ref=e441]
+                        - text: Unknown
+                    - 'cell "Unknown : Impact not stated" [ref=e443]':
+                      - generic "Impact not stated" [ref=e444]:
+                        - img [ref=e445]
+                        - text: Unknown
+                        - generic [ref=e447]: ": Impact not stated"
+                    - 'cell "Unknown : Confidence not rated" [ref=e448]':
+                      - generic "Confidence not rated" [ref=e449]:
+                        - img [ref=e450]
+                        - text: Unknown
+                        - generic [ref=e452]: ": Confidence not rated"
+                    - cell "Not assigned" [ref=e453]
+                    - 'cell "Edit : People / Org Form tools : People / Org" [ref=e454]':
+                      - 'button "Edit : People / Org" [ref=e455] [cursor=pointer]':
+                        - img [ref=e456]
+                        - text: Edit
+                        - generic [ref=e458]: ": People / Org"
+                      - 'button "Form tools : People / Org" [ref=e459] [cursor=pointer]':
+                        - img [ref=e460]
+                        - text: Form tools
+                        - generic [ref=e462]: ": People / Org"
+                  - 'row "Technology Unknown Unknown Unknown Unknown : Impact not stated Unknown : Confidence not rated Not assigned Edit : Technology Form tools : Technology" [ref=e463]':
+                    - rowheader "Technology" [ref=e464]
+                    - cell "Unknown" [ref=e465]:
+                      - generic [ref=e466]:
+                        - img [ref=e467]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e469]:
+                      - generic [ref=e470]:
+                        - img [ref=e471]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e473]:
+                      - generic [ref=e474]:
+                        - img [ref=e475]
+                        - text: Unknown
+                    - 'cell "Unknown : Impact not stated" [ref=e477]':
+                      - generic "Impact not stated" [ref=e478]:
+                        - img [ref=e479]
+                        - text: Unknown
+                        - generic [ref=e481]: ": Impact not stated"
+                    - 'cell "Unknown : Confidence not rated" [ref=e482]':
+                      - generic "Confidence not rated" [ref=e483]:
+                        - img [ref=e484]
+                        - text: Unknown
+                        - generic [ref=e486]: ": Confidence not rated"
+                    - cell "Not assigned" [ref=e487]
+                    - 'cell "Edit : Technology Form tools : Technology" [ref=e488]':
+                      - 'button "Edit : Technology" [ref=e489] [cursor=pointer]':
+                        - img [ref=e490]
+                        - text: Edit
+                        - generic [ref=e492]: ": Technology"
+                      - 'button "Form tools : Technology" [ref=e493] [cursor=pointer]':
+                        - img [ref=e494]
+                        - text: Form tools
+                        - generic [ref=e496]: ": Technology"
+                  - 'row "Data Unknown Unknown Unknown Unknown : Impact not stated Unknown : Confidence not rated Not assigned Edit : Data Form tools : Data" [ref=e497]':
+                    - rowheader "Data" [ref=e498]
+                    - cell "Unknown" [ref=e499]:
+                      - generic [ref=e500]:
+                        - img [ref=e501]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e503]:
+                      - generic [ref=e504]:
+                        - img [ref=e505]
+                        - text: Unknown
+                    - cell "Unknown" [ref=e507]:
+                      - generic [ref=e508]:
+                        - img [ref=e509]
+                        - text: Unknown
+                    - 'cell "Unknown : Impact not stated" [ref=e511]':
+                      - generic "Impact not stated" [ref=e512]:
+                        - img [ref=e513]
+                        - text: Unknown
+                        - generic [ref=e515]: ": Impact not stated"
+                    - 'cell "Unknown : Confidence not rated" [ref=e516]':
+                      - generic "Confidence not rated" [ref=e517]:
+                        - img [ref=e518]
+                        - text: Unknown
+                        - generic [ref=e520]: ": Confidence not rated"
+                    - cell "Not assigned" [ref=e521]
+                    - 'cell "Edit : Data Form tools : Data" [ref=e522]':
+                      - 'button "Edit : Data" [ref=e523] [cursor=pointer]':
+                        - img [ref=e524]
+                        - text: Edit
+                        - generic [ref=e526]: ": Data"
+                      - 'button "Form tools : Data" [ref=e527] [cursor=pointer]':
+                        - img [ref=e528]
+                        - text: Form tools
+                        - generic [ref=e530]: ": Data"
+            - navigation "Pagination" [ref=e531]:
+              - generic [ref=e532]: Page 1 of 1 · 6 of 6 rows
+              - generic [ref=e533]:
+                - generic [ref=e534]: Rows per page
+                - combobox "Rows per page" [ref=e535]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "Previous" [disabled] [ref=e536]
+              - button "Next" [disabled] [ref=e537]
+        - region "Diagnose workstreams" [ref=e538]:
+          - heading "Diagnose workstreams" [level=2] [ref=e540]
+          - generic [ref=e541]: The six workstreams with their key questions. Record findings (symptoms, root causes, opportunities, observations) and the outputs each workstream produced.
+          - generic [ref=e542]:
+            - article "Business & Financial" [ref=e543]:
+              - generic [ref=e544]:
+                - heading "Business & Financial" [level=3] [ref=e545]
+                - generic [ref=e546]:
+                  - 'button "Add finding : Business & Financial" [ref=e547] [cursor=pointer]':
+                    - img [ref=e548]
+                    - text: Add finding
+                    - generic [ref=e550]: ": Business & Financial"
+                  - 'button "Add output : Business & Financial" [ref=e551] [cursor=pointer]':
+                    - img [ref=e552]
+                    - text: Add output
+                    - generic [ref=e554]: ": Business & Financial"
+              - generic [ref=e555]:
+                - generic [ref=e556]:
+                  - term [ref=e557]: Key questions
+                  - definition [ref=e558]: Where is value created/lost? Revenue, margin, cost, churn, productivity?
+                - generic [ref=e559]:
+                  - term [ref=e560]: Typical outputs
+                  - definition [ref=e561]: Baseline P&L bridge, value pools, trend analysis.
+              - generic [ref=e562]:
+                - generic [ref=e563]:
+                  - generic [ref=e564]:
+                    - generic [ref=e565]: Search
+                    - searchbox "Search" [ref=e566]
+                  - button "Columns" [ref=e568] [cursor=pointer]:
+                    - img [ref=e569]
+                    - text: Columns
+                - generic [ref=e571]:
+                  - img [ref=e572]
+                  - paragraph [ref=e575]: No findings recorded for this workstream.
+              - heading "Workstream outputs" [level=4] [ref=e576]
+              - paragraph [ref=e577]: No outputs recorded yet.
+            - article "Customer" [ref=e578]:
+              - generic [ref=e579]:
+                - heading "Customer" [level=3] [ref=e580]
+                - generic [ref=e581]:
+                  - 'button "Add finding : Customer" [ref=e582] [cursor=pointer]':
+                    - img [ref=e583]
+                    - text: Add finding
+                    - generic [ref=e585]: ": Customer"
+                  - 'button "Add output : Customer" [ref=e586] [cursor=pointer]':
+                    - img [ref=e587]
+                    - text: Add output
+                    - generic [ref=e589]: ": Customer"
+              - generic [ref=e590]:
+                - generic [ref=e591]:
+                  - term [ref=e592]: Key questions
+                  - definition [ref=e593]: Where does the customer experience break?
+                - generic [ref=e594]:
+                  - term [ref=e595]: Typical outputs
+                  - definition [ref=e596]: Journey pain points, complaints, NPS/CSAT drivers.
+              - generic [ref=e597]:
+                - generic [ref=e598]:
+                  - generic [ref=e599]:
+                    - generic [ref=e600]: Search
+                    - searchbox "Search" [ref=e601]
+                  - button "Columns" [ref=e603] [cursor=pointer]:
+                    - img [ref=e604]
+                    - text: Columns
+                - generic [ref=e606]:
+                  - img [ref=e607]
+                  - paragraph [ref=e610]: No findings recorded for this workstream.
+              - heading "Workstream outputs" [level=4] [ref=e611]
+              - paragraph [ref=e612]: No outputs recorded yet.
+            - article "Process & Operations" [ref=e613]:
+              - generic [ref=e614]:
+                - heading "Process & Operations" [level=3] [ref=e615]
+                - generic [ref=e616]:
+                  - 'button "Add finding : Process & Operations" [ref=e617] [cursor=pointer]':
+                    - img [ref=e618]
+                    - text: Add finding
+                    - generic [ref=e620]: ": Process & Operations"
+                  - 'button "Add output : Process & Operations" [ref=e621] [cursor=pointer]':
+                    - img [ref=e622]
+                    - text: Add output
+                    - generic [ref=e624]: ": Process & Operations"
+              - generic [ref=e625]:
+                - generic [ref=e626]:
+                  - term [ref=e627]: Key questions
+                  - definition [ref=e628]: Where are delays, rework, bottlenecks, handoffs?
+                - generic [ref=e629]:
+                  - term [ref=e630]: Typical outputs
+                  - definition [ref=e631]: Process map, cycle time, failure demand.
+              - generic [ref=e632]:
+                - generic [ref=e633]:
+                  - generic [ref=e634]:
+                    - generic [ref=e635]: Search
+                    - searchbox "Search" [ref=e636]
+                  - button "Columns" [ref=e638] [cursor=pointer]:
+                    - img [ref=e639]
+                    - text: Columns
+                - generic [ref=e641]:
+                  - img [ref=e642]
+                  - paragraph [ref=e645]: No findings recorded for this workstream.
+              - heading "Workstream outputs" [level=4] [ref=e646]
+              - paragraph [ref=e647]: No outputs recorded yet.
+            - article "Organization & Governance" [ref=e648]:
+              - generic [ref=e649]:
+                - heading "Organization & Governance" [level=3] [ref=e650]
+                - generic [ref=e651]:
+                  - 'button "Add finding : Organization & Governance" [ref=e652] [cursor=pointer]':
+                    - img [ref=e653]
+                    - text: Add finding
+                    - generic [ref=e655]: ": Organization & Governance"
+                  - 'button "Add output : Organization & Governance" [ref=e656] [cursor=pointer]':
+                    - img [ref=e657]
+                    - text: Add output
+                    - generic [ref=e659]: ": Organization & Governance"
+              - generic [ref=e660]:
+                - generic [ref=e661]:
+                  - term [ref=e662]: Key questions
+                  - definition [ref=e663]: Are roles, decision rights, incentives and accountability clear?
+                - generic [ref=e664]:
+                  - term [ref=e665]: Typical outputs
+                  - definition [ref=e666]: RACI gaps, decision latency, governance map.
+              - generic [ref=e667]:
+                - generic [ref=e668]:
+                  - generic [ref=e669]:
+                    - generic [ref=e670]: Search
+                    - searchbox "Search" [ref=e671]
+                  - button "Columns" [ref=e673] [cursor=pointer]:
+                    - img [ref=e674]
+                    - text: Columns
+                - generic [ref=e676]:
+                  - img [ref=e677]
+                  - paragraph [ref=e680]: No findings recorded for this workstream.
+              - heading "Workstream outputs" [level=4] [ref=e681]
+              - paragraph [ref=e682]: No outputs recorded yet.
+            - article "Technology & Data" [ref=e683]:
+              - generic [ref=e684]:
+                - heading "Technology & Data" [level=3] [ref=e685]
+                - generic [ref=e686]:
+                  - 'button "Add finding : Technology & Data" [ref=e687] [cursor=pointer]':
+                    - img [ref=e688]
+                    - text: Add finding
+                    - generic [ref=e690]: ": Technology & Data"
+                  - 'button "Add output : Technology & Data" [ref=e691] [cursor=pointer]':
+                    - img [ref=e692]
+                    - text: Add output
+                    - generic [ref=e694]: ": Technology & Data"
+              - generic [ref=e695]:
+                - generic [ref=e696]:
+                  - term [ref=e697]: Key questions
+                  - definition [ref=e698]: What systems/data constrain performance?
+                - generic [ref=e699]:
+                  - term [ref=e700]: Typical outputs
+                  - definition [ref=e701]: Architecture pain points, automation/data gaps.
+              - generic [ref=e702]:
+                - generic [ref=e703]:
+                  - generic [ref=e704]:
+                    - generic [ref=e705]: Search
+                    - searchbox "Search" [ref=e706]
+                  - button "Columns" [ref=e708] [cursor=pointer]:
+                    - img [ref=e709]
+                    - text: Columns
+                - generic [ref=e711]:
+                  - img [ref=e712]
+                  - paragraph [ref=e715]: No findings recorded for this workstream.
+              - heading "Workstream outputs" [level=4] [ref=e716]
+              - paragraph [ref=e717]: No outputs recorded yet.
+            - article "Capability" [ref=e718]:
+              - generic [ref=e719]:
+                - heading "Capability" [level=3] [ref=e720]
+                - generic [ref=e721]:
+                  - 'button "Add finding : Capability" [ref=e722] [cursor=pointer]':
+                    - img [ref=e723]
+                    - text: Add finding
+                    - generic [ref=e725]: ": Capability"
+                  - 'button "Add output : Capability" [ref=e726] [cursor=pointer]':
+                    - img [ref=e727]
+                    - text: Add output
+                    - generic [ref=e729]: ": Capability"
+              - generic [ref=e730]:
+                - generic [ref=e731]:
+                  - term [ref=e732]: Key questions
+                  - definition [ref=e733]: What skills/capabilities are missing?
+                - generic [ref=e734]:
+                  - term [ref=e735]: Typical outputs
+                  - definition [ref=e736]: Capability heatmap, build/buy/partner needs.
+              - generic [ref=e737]:
+                - generic [ref=e738]:
+                  - generic [ref=e739]:
+                    - generic [ref=e740]: Search
+                    - searchbox "Search" [ref=e741]
+                  - button "Columns" [ref=e743] [cursor=pointer]:
+                    - img [ref=e744]
+                    - text: Columns
+                - generic [ref=e746]:
+                  - img [ref=e747]
+                  - paragraph [ref=e750]: No findings recorded for this workstream.
+              - heading "Workstream outputs" [level=4] [ref=e751]
+              - paragraph [ref=e752]: No outputs recorded yet.
+        - region "Baselines" [ref=e753]:
+          - generic [ref=e754]:
+            - heading "Baselines" [level=2] [ref=e755]
+            - button "Add baseline" [ref=e757] [cursor=pointer]:
+              - img [ref=e758]
+              - text: Add baseline
+          - generic [ref=e760]: Measured starting points. A baseline counts for G1 only with a value, a source and a baseline date, backed by verified evidence.
+          - paragraph [ref=e761]:
+            - generic "The playbook supplies no template for this record; it is a platform extension (M0149)." [ref=e762]:
+              - img [ref=e763]
+              - text: Extension
+            - text: The playbook supplies no template for this record; it is a platform extension (M0149).
+          - generic [ref=e765]:
+            - generic [ref=e766]:
+              - generic [ref=e767]:
+                - generic [ref=e768]: Search
+                - searchbox "Search" [ref=e769]
+              - button "Columns" [ref=e771] [cursor=pointer]:
+                - img [ref=e772]
+                - text: Columns
+            - generic [ref=e774]:
+              - img [ref=e775]
+              - generic [ref=e777]:
+                - paragraph [ref=e778]: No baselines yet.
+                - paragraph [ref=e779]: Add the measured starting points of the metrics this transformation will move.
+        - region "Value pools" [ref=e780]:
+          - generic [ref=e781]:
+            - heading "Value pools" [level=2] [ref=e782]
+            - button "Add value pool" [ref=e784] [cursor=pointer]:
+              - img [ref=e785]
+              - text: Add value pool
+          - generic [ref=e787]: Where value can be created. A pool without amounts is labelled Unquantified; it is never counted as 0.
+          - paragraph [ref=e788]:
+            - generic "The playbook supplies no template for this record; it is a platform extension (M0149)." [ref=e789]:
+              - img [ref=e790]
+              - text: Extension
+            - text: The playbook supplies no template for this record; it is a platform extension (M0149).
+          - generic [ref=e792]:
+            - paragraph [ref=e793]:
+              - text: "Total:"
+              - generic "No value pool recorded" [ref=e794]:
+                - img [ref=e795]
+                - text: Unknown
+                - generic [ref=e797]: ": No value pool recorded"
+            - paragraph [ref=e798]: Totals add only quantified pools of the same currency, exactly (no rounding). Currencies are never added together.
+          - generic [ref=e799]:
+            - generic [ref=e800]:
+              - generic [ref=e801]:
+                - generic [ref=e802]: Search
+                - searchbox "Search" [ref=e803]
+              - button "Columns" [ref=e805] [cursor=pointer]:
+                - img [ref=e806]
+                - text: Columns
+            - generic [ref=e808]:
+              - img [ref=e809]
+              - generic [ref=e811]:
+                - paragraph [ref=e812]: No value pools yet.
+                - paragraph [ref=e813]: Add the value pools found in the diagnostic, quantified or not.
+```
