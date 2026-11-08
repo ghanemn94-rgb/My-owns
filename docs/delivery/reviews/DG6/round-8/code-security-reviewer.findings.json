@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-540",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The in-app inbox still names sensitive records to recipients who get 404 on them: GET /me/inbox keeps a restricted item's linkPath (the hidden record's id), POST /me/inbox/{id}/read returns the unredacted text and link, and notifications about a Finance validation or a benefit overlap of a sensitive benefit are not redacted at all (the benefit's code is shown)",
+      "reproduction": "Candidate sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b), disposable clone, disposable PostgreSQL (tests/qa/support/with-pg.sh), Node 22.22.0, LANG unset, demo seed (all data SYNTHETIC). Probe docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-inbox-text.test.ts, run with checks.sh repro (log 42-probe-r8-inbox-text.log). tl2 is a TL scoped to the demo transformation with no grant (never a named party). P1: a work item and its inbox notification for tl2 in the exact shape of the real producer apps/worker/src/handlers/benefits.ts:250-258 (subject finance_validation, linkPath /transformations/{t}/finance-validations/{fv}, messageKey benefits.task.finance_validation_review, messageParams {benefitCode, periodStart, periodEnd}), created through the API's createWorkItemOnce and released as the delivery job does; then the TO marks the benefit B01 sensitive; tl2 reads GET /me/work-items, GET /me/inbox and POST /me/inbox/{id}/read. P1b, through the REAL producer: a TL creates two benefits B04 and B05 and POST /benefit-overlaps (201), which writes a benefit_overlap_review work item and notification for the Finance recipient; the TO marks B04 sensitive; the recipient reads GET /me/inbox. P1c: a notification whose link is the hidden benefit's own route /transformations/{t}/benefits/{B01} (a route deep-links.ts ROUTES recognises), messageParams {benefitCode}; tl2 reads GET /me/inbox, then POST /me/inbox/{id}/read.",
+      "expected": "D-218: a response never names the id of a sensitive record the reader is not admitted to; D-222 (1) applied it to work items and My Work for the assignee (subject id null, link = the transformation home, marker). ADR-0051 §3 / T-DG6-BE-C: an inbox item whose target the recipient cannot read shows messageKey inbox.restricted with messageParams {}. finance_validation and benefit_overlap are child sources of a benefit in access/sensitive-reach.ts (:110, :117), and tl2 and the Finance recipient get 404 on them. So every response that serializes such a notification (listMyInbox AND markInboxNotificationRead) returns inbox.restricted, params {}, no hidden id in linkPath, and the marker, exactly as the same user's work item for the same event does.",
+      "actual": "Log 42 (P1): tl2 gets 404 on benefit B01 and on its Finance validation; the work item is redacted correctly (subjectId null, linkPath the transformation home, inbox.restricted, marker true), but GET /me/inbox returns messageKey benefits.task.finance_validation_review, messageParams {\"benefitCode\":\"B01\",\"periodStart\":\"2026-07-01\",\"periodEnd\":\"2026-07-31\"} and linkPath /transformations/.../finance-validations/<fv id>; POST /me/inbox/{id}/read returns the same. P1b (real producer): the Finance recipient gets 404 on B04 and on the overlap, the work item is redacted, but GET /me/inbox returns messageParams {\"benefitACode\":\"B04\",\"benefitBCode\":\"B05\",\"dimensions\":\"driver\"} and linkPath /transformations/.../benefit-overlaps/<overlap id>. P1c: GET /me/inbox does show inbox.restricted with params {}, but linkPath is still /transformations/.../benefits/<B01 id> (the hidden id), and POST /me/inbox/{id}/read returns messageKey benefits.task.synthetic_cs_r8, messageParams {\"benefitCode\":\"B01\"} and the same link. Causes (60-source-checks.log): apps/api/src/modules/tasks/routes.ts:361-366 redacts only messageKey/messageParams and keeps linkPath by design ('ids, link, read state and version are unchanged'); routes.ts:370-373 (markInboxNotificationRead) returns toInboxNotification(row) with no readableTargets call at all (BE-Z12B redacted the work-item COMPLETE response the same way but not this one); apps/api/src/modules/tasks/deep-links.ts:74-97 ROUTES and CHILD_ROUTES recognise only benefit, business case, evidence, corrective case and transition decision routes, so targetRefOf (:185) classifies a finance-validations or benefit-overlaps link as transformation-level and readable. The BE-Z12 inventory classifies inbox_notification.target_record_id and .message_params as 'redacted' with operations [listMyInbox] only (apps/api/test/support/sensitive-reference-inventory.ts:531-539, 858-866): it omits markInboxNotificationRead, and inbox_notification.link_path is a text column outside its catalog scope (InventoryKind is fk|uuid|array|json), so the catalog test cannot see it. By code reading, not reproduced: the channel fan-out (tasks/channels/render.ts) decides 'restricted' with the same readableTargets, so an email or Teams body for the P1/P1b notifications would carry the code once a channel is enabled (channels are off by default); and the action-register work item and notification of an action on a restricted corrective case carry messageParams {sourceCode: <the case code>} with an /action-register/ link the reach check does not recognise (raid/actions.ts:185-199, 443-459). Disclosed: codes, periods and the ids of the benefit, overlap and Finance validation, and their existence; no title or value. Medium, not mandatory, for the same reasons as F-DG6-420/F-DG6-480 (identifier and code disclosure), but D-218 is binding and D-192 requires the repair before the gate. Suggested repair: apply the work-item rule to the inbox (null/transformation-home link, inbox.restricted, marker) in list and mark-read; decide readability from the work item's subject (restrictedWorkItems) or add the finance-validations and benefit-overlaps routes; extend the inventory to text columns that hold links or ids (link_path).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-8/42-probe-r8-inbox-text.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-inbox-text.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/60-source-checks.log",
+        "apps/api/src/modules/tasks/routes.ts",
+        "apps/api/src/modules/tasks/deep-links.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts",
+        "apps/api/test/support/sensitive-reference-inventory.ts",
+        "apps/worker/src/handlers/benefits.ts",
+        "apps/api/src/modules/benefits/overlaps.ts",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T19:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 8 (T-DG6-REV-CS-R8) while testing D-225 open question 1 (a column, response or write path that references a sensitive record and that the inventory does not classify, or classifies wrongly). Reproduced on the real API with a disposable PostgreSQL; P1b uses the real POST /benefit-overlaps producer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-541",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Removing an earlier condition in the automation rule editor silently replaces a hidden condition literal with the text \"[restricted]\": the D-222 re-save rule pairs the k-th (field, operator) condition of the request with the k-th of the stored version, so after a removal the returned marker no longer maps to its hidden literal, the exclusion of the sensitive benefit is lost and the rule's behaviour changes, with no refusal and no marker",
+      "reproduction": "Candidate sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b), disposable clone and PostgreSQL, Node 22.22.0, LANG unset; all data SYNTHETIC. Probe docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-automation-resave.test.ts (log 43-probe-r8-automation-resave.log), built on the in-tree BE-Z12B fixtures (seedWorld, seedClosureWorld, pendingBenefit). An ADM_METHOD author (organization scope, not admitted) creates a rule on benefit.variance_evaluated with conditions [benefitId neq P, benefitId neq S, severity eq high] ('not these two benefits'). The TO marks S sensitive. The author GETs version 1 (draft), removes the FIRST condition as the editor's 'remove condition 1' button does (apps/web/src/pages/automation/ContentEditor.tsx:246: conditions.filter((_, j) => j !== i)) and PATCHes the remaining conditions back unchanged, the marker included, with If-Match.",
+      "expected": "D-222 (2): 'a re-save keeps the hidden literal unchanged (same rule as the D-218 re-save)'. A marker the author was shown and sends back unchanged keeps the hidden literal it stands for wherever the condition now sits, or the write is refused (422) because the marker cannot be mapped; the marker text is never stored as an ordinary literal in place of a hidden one.",
+      "actual": "Log 43: the author sees [neq <PLAIN>, neq \"[restricted]\", severity eq high] with includesRestrictedRecords true and the summary 'benefitId is not a restricted record'. The PATCH of [benefitId neq \"[restricted]\", severity eq high] answers 200 with NO includesRestrictedRecords, and the stored conditions are [benefitId neq \"[restricted]\", severity eq high]: S is no longer stored anywhere in the version ('hidden exclusion kept: false; marker text stored as a literal: true'). The admitted TO now sees the literal \"[restricted]\" too. Cause: apps/api/src/modules/automation/versions.ts keepRestrictedLiterals (from :360) keys conditions by field and operator and pairs the n-th sent condition with the n-th stored one; after the removal the sent marker pairs with stored condition 0, whose shown value is <PLAIN>, not the marker, so restore() returns the marker text, which the handback's rule 'a marker with no hidden stored literal behind it stays an ordinary literal' then stores (conditionValueValid accepts any string for eq/neq). Effect: once this draft is submitted, reviewed and approved, the rule fires for the sensitive benefit it was written to exclude (and an 'in' list member can be dropped the same way by inserting or deleting an earlier element); the author was never told. Bounded: it changes a draft that still needs review and approval before it takes effect, it discloses nothing, and an author admitted to S is unaffected. Medium, not mandatory; D-192 requires the repair before the gate. Suggested repair: pair returned markers with the shown version's marker occurrences independently of the k-th (field, op) position (for example by the order of markers in the shown content), or refuse with 422 a marker that does not map to a hidden stored literal; add the removal and reorder cases to sensitive-reference-pending-z12b.test.ts.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-8/43-probe-r8-automation-resave.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-automation-resave.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/60-source-checks.log",
+        "apps/api/src/modules/automation/versions.ts",
+        "apps/web/src/pages/automation/ContentEditor.tsx",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z12B-backend-workflow-engineer.md",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T19:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 8 (T-DG6-REV-CS-R8) while challenging D-222/D-223 (the automation-condition re-save rule) as D-225 invites. Reproduced on the real API with a disposable PostgreSQL."
+        }
+      ]
+    }
+  ]
+}

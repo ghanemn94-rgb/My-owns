@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-480",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:6cda8b33... (source d84d11a6) in a disposable clone with a disposable PostgreSQL, Node 22.22.0, LANG unset. (1) The round-7 reproduction zz-cs-r7-id-refs.test.ts, unchanged, now passes 4/4 (log 41): tl2 (a TL with no grant, never a named party) gets 404 on the hidden benefit B02, the hidden parent B04 and the sensitive evidence, and receives none of their ids from getBenefit of the open child B03, listBenefits, listMeetingOutputs, listLaunchTasks or getLaunchTask ('part B leaks (0)'), while the admitted TO still receives them. The round-7 write oracle is closed: the not-admitted TL's launch-task PATCH answers 422 launch_task.output_record_invalid for a random uuid AND for the sensitive benefit (was 422/200), and nothing is stored. The part-A F-DG6-420 controls still hold (group, measurement, re-save). As in round 7, the demo has no procedure instance (B4) and the evidence meeting output is refused by the forum rule; those rows are covered by the in-tree tests below. (2) In-tree tests, unmutated: sensitive-reach-id-refs-z12 (6), sensitive-reference-pending-z12b (7) and sensitive-reach-registers (6) pass 19/19 (log 59); evidence-link-read-authorization (procedure links), revision-proposals, sensitive-reach-sweep (inventory-seeded, 'not seeded: none') and the catalog-backed sensitive-reference-inventory test pass in both integration runs. (3) Four mutants, each reverting one part of the repair in the clone, are each caught by the in-tree tests (logs 50-53, exit 1): M1 launch-task output read unhidden, M2 the launch-task write oracle restored, M3 work-item subject id and link kept (D-222), M4 benefit parentBenefitId unhidden; every file restored afterwards (0 changed paths). Every path F-DG6-480 names (parentBenefitId, meeting output recordId, launch-task outputRecordId and its write, procedure links and subject) is repaired. The repair's broader claim, that the inventory closes the class, does not hold for the inbox: that new, separate defect is raised as F-DG6-540 and does not reopen the paths verified here.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-8/41-repro-r7-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r7-id-refs.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/59-control-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/50-mutant-M1-launch-task-output-unhidden.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/51-mutant-M2-launch-task-write-oracle.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/52-mutant-M3-work-item-ids-kept.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/53-mutant-M4-benefit-parent-unhidden.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/mutants.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/30-integration-lang-unset-shard1of4.log"
+      ]
+    }
+  ]
+}
