@@ -1,9 +1,14 @@
 // T-DG6-FE-Z3 round-6 repair (F-DG6-440; ADR-0051 §2 "Totals and rollups" and its 2026-11-06 amendment "the table
-// totals and metrics of every report section" are the same for every reader; D-195 Q3; REQ-S10-002) on the REAL demo
-// stack (e2e/support/with-demo-stack.sh: `mth-db seed-demo`, the demo role users roaming.user.* through the dev sign-in,
-// D-165), in chromium-en and chromium-ar. Ported from the qa-verifier's round-6 probe
-// (docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts):
-//  - roaming.user.to (TO) marks one demo benefit sensitive; roaming.user.tl (TL, not admitted) keeps no row of it;
+// totals and metrics of every report section" are the same for every reader; D-195 Q3; REQ-S10-002) on the REAL stack
+// (support/with-stack.sh: the production-initialized stack the full web suite runs on; no mocks), in chromium-en and
+// chromium-ar. Ported from the qa-verifier's round-6 probe
+// (docs/delivery/test-evidence/DG6/qa/tests/round-6/zz-qa-dg6r6-restricted-label-ui.spec.ts). T-DG6-FE-Z4: like
+// p6-report-aggregate-label.spec.ts, the spec creates its own SYNTHETIC users and records instead of using the demo role
+// users of `mth-db seed-demo`, which this stack does not have (in the orchestrator's V9 run, dev-login answered 401):
+//  - dev.lead creates a transformation (TL there: no grant, not admitted to sensitive records); a SYNTHETIC Benefit
+//    Owner adds two financial benefits of different value classes (revenue_uplift, avoided_cost), so the benefits
+//    register has one totals section per class with one row each; dev.office (TO, admitted) marks the revenue_uplift
+//    benefit sensitive;
 //  - through the API, every table section's totals are identical for the TL and the TO, and at least one section has
 //    rows for the TO and none for the TL (every row restricted: the case of the finding);
 //  - ON SCREEN, live benefits register preview: the TL sees no row of the benefit, the label "Includes restricted
@@ -14,14 +19,17 @@
 //  - html lang/dir of the language, axe reports 0 serious/critical issues, and the TL's DOM never names the benefit id.
 // Before the fix the TL's fully restricted section showed only "No records" and no totals row (the probe's "TL 2
 // totals rows, TO 3"). The benefit is unmarked at the end. Marking a record sensitive is an access decision, never a
-// business approval (G1-G6); nothing names DG0-DG7. Every value is SYNTHETIC demo data.
+// business approval (G1-G6); nothing names DG0-DG7. Every value is SYNTHETIC.
 //
-// Budget (F-DG5-145/146/151; p6-work-split §2 rules 13 and 15): the test sets 240 s. Measured loaded worst case:
-// docs/delivery/handbacks/DG6/T-DG6-FE-Z3-R6-evidence/12-e2e-restricted-totals-loaded.log (see the handback's budget
-// line): 10.1 s (chromium-en) while the full `pnpm test` ran on the same machine; 240 s is more than 20x that.
+// Budget (F-DG5-145/146/151; p6-work-split §2 rules 13 and 15): the test sets 240 s. Measured loaded worst case of this
+// version: 9.9 s (chromium-en, docs/delivery/handbacks/DG6/T-DG6-FE-Z4-evidence/03-after-restricted-totals.log, while a
+// 229-test e2e run used the same machine; 9.5 s in 05-after-e2e-regression-set.log while `pnpm test` ran); 240 s is
+// more than 20x that.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { demoApi, demoPage } from "../../../e2e/support/a02-demo.ts";
-import { expectAccessible, langOf, shot, tr, type Lang } from "./support/ui.ts";
+import { asUser, syntheticUser } from "./support/p3-journey-setup.ts";
+import { SYN_RETAIL, apiSession, expectAccessible, langOf, shot, tr, type Lang } from "./support/ui.ts";
+
+const ORG = "01920000-0000-7000-9000-000000000001";
 
 test.describe.configure({ mode: "serial" });
 test.setTimeout(240_000);
@@ -72,27 +80,49 @@ test("F-DG6-440: a report table whose every row is restricted for the reader kee
   playwright,
 }, info) => {
   const lang = langOf(info);
-  const to = await demoApi(playwright, "to");
-  const tl = await demoApi(playwright, "tl");
-  const ts = await to.call<Body>("GET", "/api/v1/transformations?limit=50");
-  let tid = "";
-  let benefit: Body | undefined;
-  for (const t of ts.items as Body[]) {
-    const bs = await to.call<Body>("GET", `/api/v1/transformations/${t.id}/benefits?limit=100`);
-    if ((bs.items as Body[]).length >= 2) {
-      tid = String(t.id);
-      benefit = (bs.items as Body[])[0];
-      break;
-    }
-  }
-  expect(benefit, "a demo transformation with at least two benefits").toBeDefined();
-  const bid = String(benefit!.id);
+  const stamp = Date.now().toString(36);
+  const admin = await apiSession(playwright, "dev.admin");
+  const tl = await apiSession(playwright, "dev.lead");
+  const to = await apiSession(playwright, "dev.office");
+  const tid = (
+    await tl.call<{ id: string }>("POST", "/api/v1/transformations", {
+      businessUnitId: SYN_RETAIL,
+      name: `Synthetic FE-Z4 restricted totals ${lang.toUpperCase()} ${stamp}`,
+      mode: "end_to_end",
+    })
+  ).id;
   const T = `/api/v1/transformations/${tid}`;
+  const owner = await syntheticUser(
+    admin,
+    ORG,
+    tid,
+    `dev.fez4.bo.${lang}.${stamp}`,
+    `Synthetic BO FE-Z4 ${lang}`,
+    "BO",
+    lang,
+  );
+  const bo = await apiSession(playwright, owner.username);
+  const addBenefit = async (title: string, benefitType: string, valueClass: string, line: string) =>
+    bo.call<{ id: string; code: string }>("POST", `${T}/benefits`, {
+      title,
+      description: "Synthetic benefit (T-DG6-FE-Z4 restricted totals).",
+      benefitType,
+      valueClass,
+      ownerUserId: owner.id,
+      currency: "SAR",
+      financialStatementLine: line,
+    });
+  // Two value classes: two totals sections of the benefits register, one row each.
+  const benefit = await addBenefit(`Synthetic FE-Z4 SECRET ${lang} ${stamp}`, "revenue", "revenue_uplift", "Revenue");
+  await addBenefit(`Synthetic FE-Z4 plain ${lang} ${stamp}`, "cost", "avoided_cost", "Opex - network");
+  const bid = String(benefit.id);
   const sensPath = `${T}/records/benefit/${bid}/sensitivity`;
   const livePath = `${T}/reports/registers/live?parameters=${encodeURIComponent(JSON.stringify({ register: "benefits" }))}`;
 
-  const toPage = await demoPage(browser, lang, "to");
-  const tlPage = await demoPage(browser, lang, "tl");
+  const toUser = await asUser(browser, lang, "dev.office");
+  const tlUser = await asUser(browser, lang, "dev.lead");
+  const toPage = toUser.page;
+  const tlPage = tlUser.page;
   const tlBefore = await preview(tlPage, lang, tid);
   const beforeTotals = await totalsOf(tlBefore);
   expect(beforeTotals.length, "the benefits register has totals rows").toBeGreaterThan(0);
@@ -125,7 +155,7 @@ test("F-DG6-440: a report table whose every row is restricted for the reader kee
       }
     }
     expect(fullyRestricted.length, "a table section whose every row is restricted for the TL").toBeGreaterThan(0);
-    console.log(`FE-Z3 ${lang}: benefit ${bid} (${benefit!.code}); fully restricted sections ${fullyRestricted}`);
+    console.log(`FE-Z3 ${lang}: benefit ${bid} (${benefit.code}); fully restricted sections ${fullyRestricted}`);
 
     // On screen, the live preview.
     const tlLive = await preview(tlPage, lang, tid);
@@ -187,5 +217,7 @@ test("F-DG6-440: a report table whose every row is restricted for the reader kee
       { isSensitive: false, reason: "Synthetic FE-Z3 cleanup" },
       { ifMatch: Number(mark.version) },
     );
+    await toUser.close();
+    await tlUser.close();
   }
 });
