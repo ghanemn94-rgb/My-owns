@@ -4,7 +4,8 @@
 
 Read F-DG6-460 verbatim in `docs/delivery/reviews/DG6/round-7/domain-reviewer.findings.json`.
 
-1. Update ADR-0051 (dated amendment), the OpenAPI descriptions (`ReportDocument.sections` and every schema whose restricted-flag or id-redaction rule changed in BE-Z9, BE-Z10, BE-Z10B, BE-Z11 and BE-Z12), and the data dictionary (`report_snapshot_aggregate`, `report_snapshot.aggregates_recorded`, migration `0126`, and any table BE-Z12 changed) so they state the shipped rules: the aggregate flag rule, D-218 id redaction with the restricted marker, the re-save rule, the write rule for hidden references, and D-219's exclusions.
+1. Update ADR-0051 (dated amendment), the OpenAPI descriptions (`ReportDocument.sections` and every schema whose restricted-flag or id-redaction rule changed in BE-Z9, BE-Z10, BE-Z10B, BE-Z11, BE-Z12 and BE-Z12B), and the data dictionary (`report_snapshot_aggregate`, `report_snapshot.aggregates_recorded`, migration `0126`, and any table BE-Z12 changed) so they state the shipped rules: the aggregate flag rule, D-218 id redaction with the restricted marker, the re-save rule, the write rule for hidden references, and D-219's exclusions.
+1b. Include BE-Z12B (D-222, D-223): read §5 "ADR text for the architect" of `docs/delivery/handbacks/DG6/T-DG6-BE-Z12B-backend-workflow-engineer.md`, and also the inventory BE-Z12 built (`apps/api/test/support/sensitive-reference-inventory.ts`) as the reference list of this class.
 2. Docs and contract descriptions only; no behaviour change. Run the openapi lint/contract checks, format and `validate --register DG6`.
 
 ## Stage and working tree
@@ -24,7 +25,7 @@ Read F-DG6-460 verbatim in `docs/delivery/reviews/DG6/round-7/domain-reviewer.fi
 - **Your scope:** the findings named above. The p6-work-split section that owns each touched file still applies.
 - **The shared rules:** `p6-work-split.md` §2. Reviewers check every one of them.
 - **The design:** the ADRs your section cites (ADR-0051 onward, and the DG1–DG5 ADRs they extend), `docs/api/openapi.yaml`, and the zod mirrors.
-- **Decisions:** D-193 to D-196 and D-212 to D-221 in `docs/delivery/decisions.md` (D-195 decides p6-plan Q1–Q14; D-196 decides the ARCH-01 handback questions). Read them verbatim.
+- **Decisions:** D-193 to D-196 and D-212 to D-223 in `docs/delivery/decisions.md` (D-195 decides p6-plan Q1–Q14; D-196 decides the ARCH-01 handback questions). Read them verbatim.
 - **Pending operations:** move each operation you route out of your `apps/api/test/support/p6-pending-*.ts` list. Exercise it in your `p6-exercises-*.ts` so `contract.test.ts` stays green.
 - **Acceptance texts:** the `acceptance` text of every requirement row your section assigns to you (`docs/delivery/requirements.csv`) is binding, and reviewers test it literally. A row that cites a later-stage A-test is judged on its own acceptance text (D-142).
 - **User-facing text** must be true for the release it ships in (F-DG4-160): when your work ships a feature that an existing en/ar string calls planned or later, correct that string in both languages, or list it in your handback for the owner of that file.
