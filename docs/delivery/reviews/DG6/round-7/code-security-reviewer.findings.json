@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-480",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "D-218 is not applied to every open record that references a sensitive record: an open benefit's parentBenefitId, a meeting output's recordId and a launch-plan task's outputRecordId name the id of a sensitive benefit to a reader who gets 404 on it, and a not-admitted writer can set a launch-task output to that id (200 against 422 for an unknown id)",
+      "reproduction": "Candidate sha256:b64b95ff5deda5d1ccc9adf8c6bf85b3ed251a5c5cb1cf24e87d8532e3aa4bae (source 70f05ed49d893378efc99cd3e1a4027fc77697e8), disposable clone, disposable PostgreSQL 16.15, Node 22.22.0, LANG unset. Probe docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r7-id-refs.test.ts, run with checks.sh repro (log 41-repro-r7-id-refs.log; the four earlier attempts are kept and explained in the review record). All data SYNTHETIC on the demo seed. Readers: TL and tl2, two TLs scoped to the transformation with no grant; tl2 created and edited nothing, so it is never a named party. B1, all through the API: the TL creates a benefit B04 with no values (POST /benefits, 201), makes the open benefit B03 its child (PATCH /benefits/{B03} parentBenefitId, 200), then a TO marks B04 sensitive (PUT .../records/benefit/{B04}/sensitivity, 200). B2: a scheduled meeting of a demo forum and a meeting_output of kind benefit_view naming the sensitive demo benefit B02, inserted directly with their audit events (the demo has no meeting). B3, through the API, after B02 is marked: the not-admitted TL sends PATCH /launch-plan/tasks/{the w3_o4 'benefits register' task} with outputRecordId set to a random uuid, then to B02's id. Then tl2 calls GET /benefits/{B03}, GET /meetings/{m}/outputs, GET /launch-plan/tasks and GET /launch-plan/tasks/{task}.",
+      "expected": "D-218 (orchestrator, 2026-11-07): 'a response never names the id of a sensitive record the reader is not admitted to. The reference is omitted; where the open record depends on it, a neutral restricted marker without an id is returned, includesRestrictedRecords: true is set, and the screen shows the restricted label instead of a link.' ADR-0051 §2: a record GET of a sensitive record the principal is not admitted to answers 404, existence not disclosed (ADR-0006). So for tl2: parentBenefitId is null with a restricted marker; the meeting output omits recordId (or the row) and is marked; the task's outputRecordId is null with includesRestrictedRecords: true. A write by a not-admitted principal that names a sensitive record by id answers as for an unknown id (or 404), so the write is not an existence oracle and cannot attach a record the writer cannot see.",
+      "actual": "tl2 gets 404 on B02, on B04 and on the sensitive evidence item (log lines 'tl2 GET ...: 404'). In the same session: (1) getBenefit B03 answers 200 with \"parentBenefitId\":\"<B04's id>\" (apps/api/src/modules/benefits/register.ts:445 presents r.parent_benefit_id unfiltered); (2) listMeetingOutputs answers 200 with \"outputKind\":\"benefit_view\",\"recordType\":\"benefit\",\"recordId\":\"<B02's id>\" (apps/api/src/modules/governance/meeting-outputs.ts:144); (3) listLaunchTasks and getLaunchTask answer 200 with \"outputRecordType\":\"benefit\",\"outputRecordId\":\"<B02's id>\" (apps/api/src/modules/launch/tasks.ts:258). None of these modules calls a restriction helper (grep -c restricted|sensitiv = 0, 60-source-checks.log). Write side: the not-admitted TL's PATCH of the task answers 422 launch_task.output_record_invalid for a random id and 200 for B02's id, and the link is stored. outputRecordExists (tasks.ts:287, used at :370) and meeting-outputs.ts recordExists (:151-162) test existence in the transformation without reach, so a principal who gets 404 on a record can confirm it exists and attach it. By code reading, not reproduced (the demo has no procedure instance): procedure instance links (procedures/steps.ts:290-296, returned as links[].recordId; record types include evidence and finance_validation) and a procedure instance's subjectRecordId (instances.ts) are presented the same way. No title, code or value is exposed: only the identifier, the existence and the role (parent, benefit view, task output). The in-tree sweep cannot see these, because the demo seed has no parent/child pair, no meeting and no launch-task output, and its seeding marks only columns named evidence_id and business_case_id. The BE-Z10 and BE-Z10B handbacks list the fields they repaired and these are not among them. D-219 does not excuse them. The F-DG6-420 fields themselves are repaired (verified separately). Medium, not mandatory, for the same reasons as F-DG6-420 (existence disclosure only), but D-218 is a binding decision and D-192 requires the repair before the gate. Suggested repair: apply restrictedIdsOf / hideRestrictedTypedRefs to these presenters, check reach in outputRecordExists and recordExists, and seed the sweep from every uuid column and record_type/record_id pair that can name a sensitive type, rather than only evidence_id and business_case_id.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/41-repro-r7-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r7-id-refs.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/60-source-checks.log",
+        "apps/api/src/modules/benefits/register.ts",
+        "apps/api/src/modules/governance/meeting-outputs.ts",
+        "apps/api/src/modules/launch/tasks.ts",
+        "apps/api/src/modules/procedures/steps.ts",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T05:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 7 (T-DG6-REV-CS-R7) while checking whether the F-DG6-420 repair (BE-Z10, BE-Z10B, D-218) covers every reference an open record can hold to a sensitive benefit, business case or evidence item, beyond the columns the sweep seeds. Three read paths were reproduced through the API against an uninvolved TL who gets 404 on the record, and one write-side existence oracle. Owner backend-workflow-engineer (the BE-Z10 owner). The decision already exists (D-218), so no architect decision is needed."
+        }
+      ]
+    }
+  ]
+}

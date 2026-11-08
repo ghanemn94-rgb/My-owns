@@ -1,0 +1,24 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-420",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:b64b95ff (source 70f05ed4) in a disposable clone with a disposable PostgreSQL 16.15, Node 22.22.0. (1) The round-6 reproduction, unchanged (zz-cs-r6-id-refs.test.ts, log 42): for TL (in scope, no grant; 404 on the benefit and on the evidence item) listBenefitGroups and getBenefitGroup now give countedBenefitId null and memberBenefitIds without the hidden benefit, and getBenefitMeasurement no longer names the sensitive evidence item. The TO (admitted) still gets every id. (2) An asserting version (zz-cs-r7-id-refs.test.ts part A, log 41, 3/3 pass): the TL's group and measurement bodies contain neither id anywhere; countedBenefitRestricted and includesRestrictedRecords are true; memberBenefitIds equals the open member; the TO gets the ids and no marker. A TL rename without countedBenefitId answers 200, names no hidden id, and keeps the hidden counted member in the database (the re-save rule). The group's audit events, set through the API with changes naming the hidden id, never show it in changes to TL. (3) Mutants in the disposable clone: M1 (presentGroups ignores restrictedIdsOf) fails 2 of the in-tree sensitive-reach-id-refs tests and 2 of my part A tests (log 50; attempt 1 was a syntax error in my mutation, kept and named). M2 (measurement evidenceIds unfiltered) fails 1 in-tree test and 1 of mine (log 51). The unmutated control passes 8 and skips 1, the part B test excluded by the name filter (log 52). (4) The other reference fields F-DG6-420's 'actual' named by code reading (kpi-actuals, sustainment-area and BAU handover evidenceIds; the approval-route, health, diagnose and Day-90 evidenceId) are in the BE-Z10/Z10B repair. The in-tree sweep seeds and judges them (sensitive-reach-sweep.test.ts secondHalfSetup); it passes in both locales of my integration runs (560 requests per reader over 374 operations; id allowances used are exactly the four D-219 ones), and so do sensitive-reach-id-refs and sensitive-reach-id-refs-writes. The audit recordId and grant-register recordId stay, as D-219 decides. The finding's class is not exhausted: three more open-record references and a write-side existence oracle, outside the fields this finding and its repair name, are raised as the new finding F-DG6-480.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/42-repro-r6-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/41-repro-r7-id-refs.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r7-id-refs.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-cs-r6-id-refs.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/50-mutant-M1-groups-unfiltered.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/50-mutant-M1-groups-unfiltered.attempt1-mutant-syntax-error.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/51-mutant-M2-measurement-evidence-unfiltered.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/52-control-unmutated.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/mutants.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/30-integration-lang-unset-shard2of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/31-integration-lang-cutf8-shard2of4.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/31-integration-lang-cutf8-shard4of4.log"
+      ]
+    }
+  ]
+}
