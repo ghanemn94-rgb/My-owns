@@ -1,0 +1,272 @@
+// T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2; REQ-S10-002 "a sensitive benefit is hidden from a workstream
+// member without the grant"): the reference-inventory rows BE-Z12 repaired by code but no test seeded (PENDING), and the
+// automation-condition row D-222 decides, each seeded here against the run's disposable PostgreSQL through the API (and,
+// where only a worker writes the row, a direct insert with its audit event, marked as synthetic setup):
+//   - approval.subject_id: a benefit_transition_decision approval decided by the SP before the benefit is marked;
+//   - sustainment_review.transition_decision_id: a monitoring review of that approved decision;
+//   - procedure_instance.subject_record_id and procedure_instance.input_values: a scope_target_change instance the
+//     benefit's owner launches about the benefit, whose `reason` input names it;
+//   - automation_rule_version.conditions: an admin rule whose conditions compare `benefitId` to the benefit's id.
+// Readers not admitted (no grant, not a named party) get no id of the benefit or of its decision anywhere in these
+// responses: the reference is null (or the condition literal is the neutral marker) with `includesRestrictedRecords:
+// true`. Admitted readers (the TO, who holds sensitive_record.grant; the owner BO) still see the ids. A re-save of the
+// rule version that sends the marker back keeps the stored literal unchanged; after an explicit grant the author sees it.
+// Every value is SYNTHETIC. Marking a record sensitive or granting access is an access decision, never a business
+// approval: the demo Sponsor decision below approves nothing real (G1-G6), and nothing here touches DG0-DG7.
+import { insertAuditEvent } from "@mth/db";
+import { AUTOMATION_RESTRICTED_LITERAL } from "@mth/shared/schemas";
+import { randomUUID } from "node:crypto";
+import { v7 as uuidv7 } from "uuid";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  call,
+  createUser,
+  grant,
+  seedWorld,
+  signIn,
+  startApi,
+  type Res,
+  type Session,
+  type TestApi,
+  type World,
+} from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+import {
+  decideDecision,
+  draftDecision,
+  launchedInitiative,
+  pendingBenefit,
+  seedClosureWorld,
+  type ClosureWorld,
+} from "../contract/p4-exercises-be-j.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+let api: TestApi;
+let w: World;
+let c: ClosureWorld;
+/** The sensitive benefit and what names it; a plain benefit for the controls. */
+const S = { benefitId: "", decisionId: "", approvalId: "", reviewId: "", instanceId: "", ruleId: "" };
+const P = { benefitId: "" };
+let admin: { id: string; session: Session };
+const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call<Body>(api.app, m, u, o);
+const ok = (res: Res<Body>, status = 200) => {
+  expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(status);
+  return res.body as Body;
+};
+/** The hidden ids a response must not name (the benefit and its transition decision). */
+const leaks = (body: unknown) => [S.benefitId, S.decisionId].filter((id) => JSON.stringify(body).includes(id));
+const R = "/api/v1/admin/automation-rules";
+
+beforeAll(async () => {
+  api = await startApi();
+  w = await seedWorld(api.db);
+  c = await seedClosureWorld(api, w);
+  const ini = await launchedInitiative(api.db, c.b);
+  S.benefitId = (await pendingBenefit(api, c, ini)).id;
+  P.benefitId = (await pendingBenefit(api, c, ini)).id;
+
+  // approval.subject_id: the transition decision of the benefit, submitted by BO and decided by the SP (demo data).
+  const decision = await draftDecision(send, c, S.benefitId);
+  S.decisionId = decision.id;
+  S.approvalId = await decideDecision(send, c, decision);
+
+  // sustainment_review.transition_decision_id: the monitoring review the worker opens for an approved decision
+  // (transition-decisions.ts openMonitoringReviews), inserted as that job does, with its audit event (synthetic setup).
+  S.reviewId = uuidv7();
+  await api.db.transaction().execute(async (tx) => {
+    await tx
+      .insertInto("sustainment_review")
+      .values({
+        id: S.reviewId,
+        organization_id: c.b.organizationId,
+        transformation_id: c.b.transformationId,
+        subject_kind: "transition_decision",
+        transition_decision_id: S.decisionId,
+        due_date: "2030-01-15",
+        assignee_user_id: c.b.users.bo2.id,
+        created_source: "worker",
+        created_by: null,
+        updated_by: null,
+      })
+      .execute();
+    await insertAuditEvent(
+      tx,
+      { actorType: "service", actorUserId: null, requestId: `job:${randomUUID()}`, source: "worker" },
+      {
+        action: "sustainment_review.create",
+        recordType: "sustainment_review",
+        recordId: S.reviewId,
+        organizationId: c.b.organizationId,
+        transformationId: c.b.transformationId,
+        newVersion: 1,
+        changes: { transition_decision_id: { from: null, to: S.decisionId } },
+      },
+    );
+  });
+
+  // procedure_instance.subject_record_id / input_values: BO (the owner) raises a scope/target change about the benefit.
+  const launched = ok(
+    await send("POST", "/api/v1/procedure-instances", {
+      session: c.b.s.bo,
+      body: {
+        procedureCode: "scope_target_change",
+        transformationId: c.b.transformationId,
+        subjectRecordType: "benefit",
+        subjectRecordId: S.benefitId,
+        inputValues: { reason: S.benefitId },
+      },
+    }),
+    201,
+  );
+  S.instanceId = launched.id;
+
+  // automation_rule_version.conditions: a methodology admin's rule on the variance trigger naming the benefit.
+  const u = await createUser(api.db, c.b.organizationId);
+  await grant(
+    api.db,
+    w.grantor.id,
+    u.id,
+    "ADM_METHOD",
+    { type: "organization", id: c.b.organizationId },
+    c.b.organizationId,
+  );
+  admin = { id: u.id, session: await signIn(api.app, u.subject) };
+  const rule = ok(
+    await send("POST", R, {
+      session: admin.session,
+      body: {
+        code: `test.z12b.${randomUUID().slice(0, 8)}`,
+        nameEn: "Synthetic variance follow-up",
+        nameAr: "متابعة انحراف تجريبية",
+        scopeLevel: "organization",
+        organizationId: c.b.organizationId,
+        ownerUserId: admin.id,
+        content: {
+          triggerCodes: ["benefit.variance_evaluated"],
+          conditions: [
+            { field: "benefitId", op: "eq", value: S.benefitId },
+            { field: "benefitId", op: "in", value: [P.benefitId, S.benefitId] },
+            { field: "severity", op: "eq", value: "high" },
+          ],
+          actions: [
+            { type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } },
+          ],
+          runAs: "service",
+        },
+      },
+    }),
+    201,
+  );
+  S.ruleId = rule.id;
+
+  // The TO marks the benefit sensitive (an access decision, not an approval).
+  ok(
+    await send("PUT", `${c.b.base}/records/benefit/${S.benefitId}/sensitivity`, {
+      session: c.s.to.session,
+      headers: ifm(0),
+      body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit (BE-Z12B)" },
+    }),
+  );
+}, 240_000);
+afterAll(() => api?.close());
+
+// ---------------------------------------------------------------------------------------------------------------
+// DOMAIN REVIEW PROBE (DG6 round 8, domain-reviewer, T-DG6-REV-DOM-R8). Not part of the candidate. The setup above is
+// copied unchanged from apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (BE-Z12B). Stored
+// version 1 conditions: [benefitId eq S, benefitId in [P, S], severity eq high]; S is sensitive and the author (an
+// ADM_METHOD admin) is not admitted to it. D-222 (2): "a re-save keeps the hidden literal unchanged". These probes edit
+// the version the way the rule editor lets an author edit it (remove an open element or an earlier condition), and
+// check that the hidden literal survives. All data SYNTHETIC.
+describe("DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one", () => {
+  const V = () => `${R}/${S.ruleId}/versions`;
+  const stored = async (ruleId: string) =>
+    (
+      (await api.db
+        .selectFrom("automation_rule_version")
+        .select(["conditions"])
+        .where("automation_rule_id", "=", ruleId)
+        .where("version_no", "=", 1)
+        .executeTakeFirstOrThrow()) as { conditions: Body }
+    ).conditions;
+
+  it("(a) control: the author is shown [eq marker, in [P, marker], severity eq high]", async () => {
+    const one = ok(await send("GET", `${V()}/1`, { session: admin.session }));
+    expect(one.content.conditions[1]).toEqual({
+      field: "benefitId",
+      op: "in",
+      value: [P.benefitId, AUTOMATION_RESTRICTED_LITERAL],
+    });
+  });
+
+  it("(b) removing the open id P from the in-list keeps the hidden S in that list", async () => {
+    const shown = ok(await send("GET", `${V()}/1`, { session: admin.session }));
+    const conditions = shown.content.conditions.map((x: Body) =>
+      x.op === "in" ? { ...x, value: [AUTOMATION_RESTRICTED_LITERAL] } : x,
+    );
+    const saved = ok(
+      await send("PATCH", `${V()}/1`, {
+        session: admin.session,
+        headers: ifm(shown.version),
+        body: { content: { ...shown.content, conditions }, changeSummary: "Synthetic: drop the open benefit" },
+      }),
+    );
+    const after = await stored(S.ruleId);
+    console.log("DOM-R8 (b) stored after re-save:", JSON.stringify(after).replaceAll(S.benefitId, "<S>").replaceAll(P.benefitId, "<P>"));
+    console.log("DOM-R8 (b) response includesRestrictedRecords:", saved.includesRestrictedRecords, "conditions:", JSON.stringify(saved.content.conditions).replaceAll(P.benefitId, "<P>"));
+    const asTo = ok(await send("GET", `${V()}/1`, { session: c.s.to.session }));
+    console.log("DOM-R8 (b) TO (admitted) reads:", JSON.stringify(asTo.content.conditions).replaceAll(S.benefitId, "<S>").replaceAll(P.benefitId, "<P>"), "marker:", asTo.includesRestrictedRecords);
+    expect(after[1]).toEqual({ field: "benefitId", op: "in", value: [S.benefitId] });
+  });
+
+  it("(c) removing an earlier condition with the same field and operator keeps the later hidden literal", async () => {
+    const rule = ok(
+      await send("POST", R, {
+        session: admin.session,
+        body: {
+          code: `test.domr8.${randomUUID().slice(0, 8)}`,
+          nameEn: "Synthetic exclusion rule",
+          nameAr: "قاعدة استثناء تجريبية",
+          scopeLevel: "organization",
+          organizationId: c.b.organizationId,
+          ownerUserId: admin.id,
+          content: {
+            triggerCodes: ["benefit.variance_evaluated"],
+            conditions: [
+              { field: "benefitId", op: "neq", value: P.benefitId },
+              { field: "benefitId", op: "neq", value: S.benefitId },
+            ],
+            actions: [
+              { type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } },
+            ],
+            runAs: "service",
+          },
+        },
+      }),
+      201,
+    );
+    // Literals are not existence-checked (D-223 (2)), so the rule may name S at creation (synthetic setup).
+    const Vr = `${R}/${rule.id}/versions`;
+    const shown = ok(await send("GET", `${Vr}/1`, { session: admin.session }));
+    expect(shown.content.conditions).toEqual([
+      { field: "benefitId", op: "neq", value: P.benefitId },
+      { field: "benefitId", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
+    ]);
+    expect(shown.includesRestrictedRecords).toBe(true);
+    ok(
+      await send("PATCH", `${Vr}/1`, {
+        session: admin.session,
+        headers: ifm(shown.version),
+        body: {
+          content: { ...shown.content, conditions: [shown.content.conditions[1]] },
+          changeSummary: "Synthetic: remove condition 1",
+        },
+      }),
+    );
+    const after = await stored(rule.id);
+    console.log("DOM-R8 (c) stored after removing condition 1:", JSON.stringify(after).replaceAll(S.benefitId, "<S>").replaceAll(P.benefitId, "<P>"));
+    const again = ok(await send("GET", `${Vr}/1`, { session: admin.session }));
+    console.log("DOM-R8 (c) author re-reads:", JSON.stringify(again.content.conditions), "includesRestrictedRecords:", again.includesRestrictedRecords, "summary.en:", again.summary?.en);
+    expect(after).toEqual([{ field: "benefitId", op: "neq", value: S.benefitId }]);
+  });
+});

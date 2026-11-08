@@ -1,0 +1,42 @@
+## 2026-11-08T16:48:33Z clone r8 @ d84d11a (candidate product tree); probe copied to apps/api/test/integration/access/; node v24.21.0
+port-policy: PostgreSQL listening on port 30765 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.ZgnQNn/claude-0/r8
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw82gto8_afceae49 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/zz-qa-dg6r8-condition-ordinal-resave.test.ts > QA-R8: the re-save rule with two restricted literals under one field and operator > the author sees two identical markers; deleting the FIRST and saving keeps which literal?
+QA-R8 ordinal: X=01a1bc10-535a-7043-a023-9989676c9e40 (deleted) Y=01a1bc10-549b-77ad-a6e0-c0658ca45976 (kept by the author); stored now [{"op":"neq","field":"benefitId","value":"01a1bc10-535a-7043-a023-9989676c9e40"},{"op":"eq","field":"severity","value":"high"}]; the remaining condition holds X (the deleted one); author response conditions [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"high"}] marker true
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r8-condition-ordinal-resave.test.ts (1 test | 1 failed) 2800ms
+   × QA-R8: the re-save rule with two restricted literals under one field and operator > the author sees two identical markers; deleting the FIRST and saving keeps which literal? 218ms
+     → the condition the author kept keeps its own literal (Y): expected '01a1bc10-535a-7043-a023-9989676c9e40' to be '01a1bc10-549b-77ad-a6e0-c0658ca45976' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8-condition-ordinal-resave.test.ts > QA-R8: the re-save rule with two restricted literals under one field and operator > the author sees two identical markers; deleting the FIRST and saving keeps which literal?
+AssertionError: the condition the author kept keeps its own literal (Y): expected '01a1bc10-535a-7043-a023-9989676c9e40' to be '01a1bc10-549b-77ad-a6e0-c0658ca45976' // Object.is equality
+
+Expected: [32m"01a1bc10-5[7m49b-77ad-a6e0-c0658ca45976[27m"[39m
+Received: [31m"01a1bc10-5[7m35a-7043-a023-9989676c9e40[27m"[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8-condition-ordinal-resave.test.ts:123:77
+    121|         `author response conditions ${JSON.stringify(saved.content.con…
+    122|     );
+    123|     expect(kept, "the condition the author kept keeps its own literal …
+       |                                                                             ^
+    124|   });
+    125| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:48:38
+   Duration  32.10s (transform 10.27s, setup 0ms, collect 22.14s, tests 2.80s, environment 0ms, prepare 160ms)
+
+EXIT 1

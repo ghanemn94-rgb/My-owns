@@ -1,0 +1,71 @@
+# 52-mutant-M3-work-item-ids-kept  started 2026-11-08T17:11:37Z  node=v22.22.0  load=4.46 6.24 9.17  commit=d84d11a62f52932dd5c0aa932c5c1790c13e7e8b
+## mutation (git diff of w3, product paths):
+ apps/api/src/modules/tasks/routes.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+diff --git a/apps/api/src/modules/tasks/routes.ts b/apps/api/src/modules/tasks/routes.ts
+index 18ab8b40a..092cbd99b 100644
+--- a/apps/api/src/modules/tasks/routes.ts
++++ b/apps/api/src/modules/tasks/routes.ts
+@@ -104,8 +104,8 @@ const workItemFor = (r: WorkItemRow, restricted: boolean): WorkItem =>
+         ...toWorkItem(r),
+         ...INBOX_RESTRICTED,
+         periodLabel: null,
+-        subjectId: null,
+-        linkPath: restrictedWorkItemLink(r.transformation_id),
++        subjectId: r.subject_id,
++        linkPath: r.link_path,
+         includesRestrictedRecords: true,
+       }
+     : toWorkItem(r);
+$ vt apps/api/test/integration/access/sensitive-reach-registers.test.ts -t D-222
+port-policy: PostgreSQL listening on port 30670 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.3kjn9G/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw83af30_25372fba (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (6 tests | 1 failed | 5 skipped) 1537ms
+   ↓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404
+   ↓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes
+   ↓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id 44ms
+     → expected { …(5) } to deeply equal { subjectId: null, …(4) }
+   ↓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row
+   ↓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id
+AssertionError: expected { …(5) } to deeply equal { subjectId: null, …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "key": "inbox.restricted",[22m
+[32m-   "linkPath": "/transformations/01a1bc25-3740-747e-94c7-9c75f57f3888",[39m
+[31m+   "linkPath": "/transformations/01a1bc25-3740-747e-94c7-9c75f57f3888/corrective-actions/01a1bc25-3a1c-729a-bb7f-cb2c1b1e47a1",[39m
+[2m    "marker": true,[22m
+[2m    "periodLabel": null,[22m
+[32m-   "subjectId": null,[39m
+[31m+   "subjectId": "01a1bc25-3a1c-729a-bb7f-cb2c1b1e47a1",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:414:12
+    412|           key: item.messageKey,
+    413|           periodLabel: item.periodLabel,
+    414|         }).toEqual({ subjectId: null, linkPath: home, marker: true, ke…
+       |            ^
+    415|       expect(one.subjectType).toBe(id === N.caseItemId ? "corrective_c…
+    416|       expect(leaks(one), `work item ${id}`).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  17:11:39
+   Duration  19.76s (transform 7.37s, setup 0ms, collect 14.82s, tests 1.54s, environment 0ms, prepare 99ms)
+
+exit=1  finished 2026-11-08T17:11:59Z
+restored: 0 changed tracked paths

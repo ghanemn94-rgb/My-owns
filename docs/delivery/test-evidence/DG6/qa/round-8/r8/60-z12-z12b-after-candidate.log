@@ -1,0 +1,40 @@
+## 2026-11-08T17:57:53Z clone c (candidate d84d11a6) cmd: QA_PG_PORT=30775 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts apps/api/test/integration/access/sensitive-reference-inventory.test.ts apps/api/test/integration/access/sensitive-reach-registers.test.ts
+port-policy: PostgreSQL listening on port 30775 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Rr40PT/claude-0/c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw84y1fi_da4bd335 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (6 tests) 8885ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404  1204ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes  768ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted  523ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id  1261ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row  1299ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not  1367ms
+stdout | apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B2 meeting output: recordId of a hidden benefit is null for tl2 (marked), shown to the TO; naming it answers as an unknown record
+[BE-Z12] createMeetingOutput unknown 422 meeting_output.record_not_found; hidden 422 meeting_output.record_not_found
+
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts (6 tests) 12707ms
+   ✓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it  552ms
+   ✓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B3 launch task: a hidden output answers 422 exactly as an unknown id (was 200); once the TO sets it, tl2 gets null with the marker and a null re-save keeps it  568ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests) 3452ms
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked  303ms
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies  485ms
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+[BE-Z12 inventory] catalog: fk=54 uuid=59 json=84 array=2
+
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real
+[BE-Z12 inventory] redacted=48 holder-restricted=49 cannot-name=91 D-219=2 not-served=6 own-input=3
+
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts (2 tests) 95ms
+
+ Test Files  4 passed (4)
+      Tests  21 passed (21)
+   Start at  17:58:00
+   Duration  78.31s (transform 13.63s, setup 0ms, collect 44.48s, tests 25.14s, environment 0ms, prepare 201ms)
+
+exit=0

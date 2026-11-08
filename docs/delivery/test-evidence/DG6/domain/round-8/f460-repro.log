@@ -1,0 +1,79 @@
+## F-460 repro on d84d11a
+--- (1) ADR-0051 old sentence:
+90:| every section of `ReportDocument`: live report, snapshot GET and the generate, issue, discard and reissue bodies (T-DG6-BE-Z7B, T-DG6-BE-Z9) | the section references a marked-sensitive record through a row, an item or a source, **or its aggregate figures include one** (the executive pack's `metrics_<subject>`, the executive dashboard's `area_value` and `items_portfolio`, the gate pack's `criteria`; corrected 2026-11-08, T-DG6-ARCH-16: see the amendment of that date) | ADR-0045 §3 (amendments of 2026-11-06 and 2026-11-08) |
+--- (2) openapi ReportDocument.sections:
+27173:          description: "The sections of the zod mirror (packages/shared/src/schemas/report.ts). A section carries the read-time member includesRestrictedRecords (boolean) when it references a marked-sensitive record (a row, an item or a source; T-DG6-BE-Z7B, F-DG6-340) or when its aggregate figures include one (T-DG6-BE-Z9, F-DG6-400): the executive pack's metrics_<subject> and the executive dashboard's area_value include the dashboard facts' benefits and business cases, the executive dashboard's items_portfolio rows include the benefits allocated to each initiative, and the gate pack's criteria count unverified evidence items. It is true when the reader is not admitted to at least one of those records (rows and items naming them are omitted; totals and metrics are unchanged and the same for every reader; label access.includesRestrictedRecords), false when the reader is admitted to all, and absent when none is sensitive (the document is then returned unchanged). A live report takes the aggregate records from its assembly; a stored snapshot from report_snapshot_aggregate (migration 0126), or, for a snapshot stored before 0126 (aggregates_recorded false), conservatively from every record of those types marked sensitive in its transformation. The aggregate records are never shown. The member is never stored: content and contentSha256 are unchanged (ADR-0051 §2 'Totals and rollups', amendment of 2026-11-08; ADR-0045 §3; D-195 Q3)."
+--- (3) dictionary/erd:
+docs/architecture/data-dictionary.md:10730:- **Changed by `0126`:** the column `aggregates_recorded` and the trigger `report_snapshot_aggregates_recorded_immutable`, plus the child table `report_snapshot_aggregate`. See "P6 round-6 repair migration 0126" (added 2026-11-08, T-DG6-ARCH-16).
+docs/architecture/data-dictionary.md:14443:Recorded by T-DG6-ARCH-16 (2026-11-08; F-DG6-460) from the shipped `packages/db/migrations/0126_p6_report_snapshot_aggregate.sql` (T-DG6-BE-Z9; F-DG6-400). The column, constraint, index, trigger and grant texts below are `information_schema` / `pg_get_constraintdef` / `pg_indexes.indexdef` / `pg_get_triggerdef` output. They come from a disposable PostgreSQL 16.15 database with all 118 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-16-evidence/01-catalog-0126.log`). The design is ADR-0045 §3 (amendment of 2026-11-08) and ADR-0051 §2 (amendment of 2026-11-08, part A). The migration adds one table and one column to `report_snapshot` (0080, "P5 tables, slice F"). Where this section and the `0080` section differ, this section wins. T-DG6-BE-Z10 to BE-Z12B shipped no migration. Their changes to what the API returns for references to restricted records are read-time rules, recorded in ADR-0051 (amendment of 2026-11-08) and checked by `apps/api/test/support/sensitive-reference-inventory.ts`. No stored column changed.
+docs/architecture/data-dictionary.md:14445:## report_snapshot_aggregate
+docs/architecture/data-dictionary.md:14456:- **Migration:** `0126_p6_report_snapshot_aggregate.sql`. **API module:** `reporting` (`reports/restricted.ts` reads it, and the snapshot writer inserts it).
+docs/architecture/data-dictionary.md:14476:- `report_snapshot_aggregate_key` (UNIQUE): `UNIQUE (snapshot_id, section_key, record_type, record_id)`
+docs/architecture/data-dictionary.md:14477:- `report_snapshot_aggregate_snapshot_fkey` (FK): `FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+docs/architecture/data-dictionary.md:14479:**Indexes:** `report_snapshot_aggregate_pkey` (`id`) and `report_snapshot_aggregate_key`: `UNIQUE (snapshot_id, section_key, record_type, record_id)`. The key also serves the read by snapshot.
+docs/architecture/data-dictionary.md:14483:- `report_snapshot_aggregate_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+docs/architecture/data-dictionary.md:14484:- `report_snapshot_aggregate_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+docs/architecture/data-dictionary.md:14485:- `report_snapshot_aggregate_guard`: BEFORE INSERT FOR EACH ROW → `report_snapshot_child_guard()` (raises `report_snapshot_aggregate_same_transformation` or `report_snapshot_aggregate_creation_only`)
+docs/architecture/data-dictionary.md:14486:- `report_snapshot_aggregate_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+docs/architecture/data-dictionary.md:14492:| aggregates_recorded | boolean | NOT NULL | `true` | **New** (ordinal 38). It is true when the snapshot's aggregate records are in `report_snapshot_aggregate`, which holds for every snapshot written since `0126` (the column default). It is false for the snapshots that existed when `0126` ran: the column was added with default `false` and then given default `true`. For those, the API labels the aggregate sections conservatively, from every record of the section's types marked sensitive in the snapshot's transformation (`legacyAggregates`, `reporting/reports/restricted.ts`). That may over-label and never under-labels. Immutable after insert (`report_snapshot_aggregates_recorded_immutable`). Not in the API. |
+docs/architecture/data-dictionary.md:14496:- `report_snapshot_aggregates_recorded_immutable`: BEFORE UPDATE FOR EACH ROW → `report_snapshot_aggregates_recorded_immutable()`
+docs/architecture/data-dictionary.md:14500:**Backfill:** none. The only existing-row change is `aggregates_recorded = false` on the snapshots stored before `0126`. Content and `content_sha256` are unchanged.
+docs/architecture/data-dictionary.md:14506:| `report_snapshot_aggregates_recorded_immutable()` | 0126 | `search_path = public, pg_temp`; not `SECURITY DEFINER`. On UPDATE it raises `check_violation` with constraint `report_snapshot_aggregates_recorded_immutable` when `aggregates_recorded` changes. So no update can turn a recorded snapshot into a legacy one, or the reverse. | via trigger |
+docs/architecture/data-dictionary.md:14514:| Database | The `section_key` and `record_type` patterns, the per-snapshot UNIQUE key, the composite FK (same transformation), `report_snapshot_child_guard()` (creation transaction only), append-only, and the immutable `aggregates_recorded`. |
+docs/architecture/data-dictionary.md:14516:| API, read (`documentForReader`) | The flag of each aggregate section is decided from its references plus its aggregate records, per reader: true, false, or absent when none is sensitive. When `aggregates_recorded` is false, the records come from `legacyAggregates`. |
+docs/architecture/erd.md:2203:`0126_p6_report_snapshot_aggregate.sql` (T-DG6-BE-Z9; F-DG6-400; the next id above `0125`, D-196) adds one snapshot child table and one column:
+docs/architecture/erd.md:2205:- **`report_snapshot_aggregate`** (new) has one row per (snapshot, section, record) for each record whose values a section's aggregate figures include without naming it. These are the executive pack `metrics_<subject>`, the executive dashboard `area_value` and `items_portfolio`, and the gate pack `criteria`.
+docs/architecture/erd.md:2209:- **`report_snapshot.aggregates_recorded`** (new, boolean, immutable) is false for snapshots stored before `0126`. Their flag is decided conservatively (`legacyAggregates`).
+--- code: aggregate section map
+22://     records it names nowhere (the executive pack's `metrics_<subject>` and the executive dashboard's `area_value`
+23://     include the dashboard facts' benefits and business cases; the executive dashboard's `items_portfolio` rows include
+24://     the benefits allocated to each initiative; the gate pack's criteria count unverified evidence items) is decided
+29://     types marked sensitive in its transformation (`legacyAggregates`). They are never shown and never omit anything.
+128:  ["executive_pack", [{ key: /^metrics_/, types: ["benefit", "business_case"] }]],
+132:      { key: /^area_value$/, types: ["benefit", "business_case"] },
+133:      { key: /^items_portfolio$/, types: ["benefit"] },
+136:  ["gate_pack", [{ key: /^criteria$/, types: ["evidence"] }]],
+144:async function legacyAggregates(
+177:  if (row !== undefined && !row.aggregates_recorded) return legacyAggregates(db, snapshot);
+--- migration 0126:
+-- 0126 P6 DG6 round-6 repair: the records a report section's aggregate figures include (T-DG6-BE-Z9; F-DG6-400;
+-- ADR-0051 §2 "Totals and rollups"; D-195 Q3; ADR-0045 §3). Authored by backend-workflow-engineer. Runs as mth_owner
+-- inside one transaction opened by `mth-db migrate`. Forward-only: never edit once merged. SQL floor: PostgreSQL 16.
+-- Id: the next above the highest shipped file on this branch (0125, D-196 item 2); the orchestrator renumbers at merge
+-- if another task shipped a higher id first.
+--
+-- A report section whose figures are aggregates (the executive pack's `metrics_<subject>`, the executive dashboard's
+-- `area_value`, the gate pack's unverified-evidence counts) references only its subject or its own rows, yet its
+-- figures include the values of other records (the dashboard facts' benefits and business cases; the evidence items
+-- counted). The read-time label "Includes restricted records" is decided from those records, per reader, when the
+-- document leaves the API (apps/api reporting/reports/restricted.ts). A live report knows them from its assembly; a
+-- stored snapshot keeps them here, beside its content, so the content and its contentSha256 are unchanged:
+--   * report_snapshot_aggregate: one row per (snapshot, section, record) the section's aggregate includes. Written
+--     only by the snapshot's creating transaction (report_snapshot_child_guard), append-only, INSERT and SELECT for
+--     mth_app, like report_snapshot_source. It is NOT a source: it never names a row of the document, it is never
+--     listed by GET …/sources, and the export refusal of D-199 (exports/jobs.ts, report_snapshot_source) does not read
+--     it (an aggregate shows a value to every reader, D-195 Q3; it does not include the record).
+--   * report_snapshot.aggregates_recorded boolean: true for every snapshot written from now on (the column default);
+--     false for the snapshots stored before 0126, whose aggregates were not recorded. For those, the API decides the
+--     label conservatively (restricted.ts `legacyAggregates`). Immutable after insert (report_snapshot_aggregates_
+--     recorded_immutable), so no update can turn a recorded snapshot into a legacy one or the reverse.
+-- No existing row changes except that every existing snapshot gets aggregates_recorded = false. Nothing here approves
+-- anything (no business approval, G1-G6), and nothing reads or writes DG0-DG7.
+
+ALTER TABLE report_snapshot ADD COLUMN aggregates_recorded boolean NOT NULL DEFAULT false;
+ALTER TABLE report_snapshot ALTER COLUMN aggregates_recorded SET DEFAULT true;
+
+CREATE FUNCTION report_snapshot_aggregates_recorded_immutable() RETURNS trigger
+LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+BEGIN
+  IF NEW.aggregates_recorded IS DISTINCT FROM OLD.aggregates_recorded THEN
+    RAISE EXCEPTION 'report_snapshot: aggregates_recorded is set when the snapshot is created and never changes'
+      USING ERRCODE = 'check_violation', CONSTRAINT = 'report_snapshot_aggregates_recorded_immutable';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER report_snapshot_aggregates_recorded_immutable BEFORE UPDATE ON report_snapshot
+  FOR EACH ROW EXECUTE FUNCTION report_snapshot_aggregates_recorded_immutable();
+
+CREATE TABLE report_snapshot_aggregate (
+--- openapi lint

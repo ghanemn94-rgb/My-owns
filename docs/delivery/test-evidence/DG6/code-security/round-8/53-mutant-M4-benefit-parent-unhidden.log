@@ -1,0 +1,62 @@
+# 53-mutant-M4-benefit-parent-unhidden  started 2026-11-08T17:11:59Z  node=v22.22.0  load=5.81 6.40 9.14  commit=d84d11a62f52932dd5c0aa932c5c1790c13e7e8b
+## mutation (git diff of w3, product paths):
+ apps/api/src/modules/benefits/register.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/benefits/register.ts b/apps/api/src/modules/benefits/register.ts
+index 8aa8de334..d4d8e3645 100644
+--- a/apps/api/src/modules/benefits/register.ts
++++ b/apps/api/src/modules/benefits/register.ts
+@@ -491,7 +491,7 @@ export async function presentBenefits(
+       stateOf(facts.get(r.id)),
+     );
+   });
+-  const parents = await hideRestrictedRefs(db, principal, "benefit", shown, "parentBenefitId");
++  const parents = shown;
+   return hideRestrictedRefs(db, principal, "business_case_line", parents, "businessCaseLineId");
+ }
+ 
+$ vt apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts -t B1
+port-policy: PostgreSQL listening on port 30670 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.3kjn9G/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw83awkt_8f4a50f2 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts (6 tests | 1 failed | 5 skipped) 4824ms
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > control: tl and tl2 get 404 on the hidden benefit and evidence item; the TO reads both
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it 105ms
+     → expected '01a1bc25-90dd-730b-aebc-7d21050354eb' to be null
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > business-case line: a line of a hidden case is null for tl2 (marked), shown to the TO; naming it answers as an unknown line (no 409 'taken' oracle)
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B2 meeting output: recordId of a hidden benefit is null for tl2 (marked), shown to the TO; naming it answers as an unknown record
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B3 launch task: a hidden output answers 422 exactly as an unknown id (was 200); once the TO sets it, tl2 gets null with the marker and a null re-save keeps it
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > action register: an action of the hidden benefit's corrective case keeps its source kind with correctiveCaseId null for tl2 (marked); the TO sees the case
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it
+AssertionError: expected '01a1bc25-90dd-730b-aebc-7d21050354eb' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"01a1bc25-90dd-730b-aebc-7d21050354eb"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:168:36
+    166|     const r = await get(`${t}/benefits/${child.id}`, tl2);
+    167|     expect(r.status).toBe(200);
+    168|     expect(r.body.parentBenefitId).toBeNull();
+       |                                    ^
+    169|     expect(r.body.includesRestrictedRecords).toBe(true);
+    170|     expect(JSON.stringify(r.body)).not.toContain(p.body.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  17:12:01
+   Duration  19.32s (transform 5.86s, setup 0ms, collect 10.87s, tests 4.82s, environment 0ms, prepare 117ms)
+
+exit=1  finished 2026-11-08T17:12:21Z
+restored: 0 changed tracked paths

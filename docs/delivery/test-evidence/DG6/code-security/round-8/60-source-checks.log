@@ -1,0 +1,209 @@
+# 60-source-checks 2026-11-08T18:00:29Z commit=d84d11a62f52932dd5c0aa932c5c1790c13e7e8b (clone w1)
+## p6-pending lists: quoted operationIds per file (expect 0)
+apps/api/test/support/p6-pending-arch-01.ts 0
+apps/api/test/support/p6-pending-arch-02.ts 0
+apps/api/test/support/p6-pending-arch-03.ts 0
+apps/api/test/support/p6-pending-arch-04.ts 0
+apps/api/test/support/p6-pending-arch-05.ts 0
+apps/api/test/support/p6-pending-arch-06.ts 0
+apps/api/test/support/p6-pending-be-b.ts 0
+apps/api/test/support/p6-pending-be-c.ts 0
+apps/api/test/support/p6-pending-be-d.ts 0
+apps/api/test/support/p6-pending-be-e.ts 0
+apps/api/test/support/p6-pending-be-g.ts 0
+apps/api/test/support/p6-pending-be-h2.ts 0
+apps/api/test/support/p6-pending-be-i.ts 0
+apps/api/test/support/p6-pending-be-i2.ts 0
+apps/api/test/support/p6-pending-be-j.ts 0
+apps/api/test/support/p6-pending-be-k.ts 0
+apps/api/test/support/p6-pending-be-l.ts 0
+apps/api/test/support/p6-pending-be-l2.ts 0
+apps/api/test/support/p6-pending-be-m2.ts 0
+apps/api/test/support/p6-pending-be-n.ts 0
+apps/api/test/support/p6-pending-be-n2.ts 0
+apps/api/test/support/p6-pending-be-o.ts 0
+apps/api/test/support/p6-pending-be-p.ts 0
+apps/api/test/support/p6-pending-be-q.ts 0
+apps/api/test/support/p6-pending-be-q2.ts 0
+apps/api/test/support/p6-pending-be-t.ts 0
+apps/api/test/support/p6-pending-be-u.ts 0
+apps/api/test/support/p6-pending-be-w.ts 0
+apps/api/test/support/p6-pending.ts 0
+## operationId count (plain grep)
+932
+4:  version: 1.5.0-p6
+## inbox list keeps linkPath for a restricted target; mark-read returns the row unredacted
+      .where("read_at", "is", null)
+      .executeTakeFirstOrThrow();
+    // P6 (T-DG6-BE-C; ADR-0051 §3; REQ-S12-024): read-time redaction. An item whose target the recipient cannot read
+    // now is returned with messageKey `inbox.restricted` and messageParams {}; ids, link, read state and version are
+    // unchanged and the stored row is never modified (access restored = text restored).
+    const readable = await readableTargets(db, principalOf(request), page.items);
+    const items = page.items.map((r, i) =>
+      readable.at(i) === true ? toInboxNotification(r) : { ...toInboxNotification(r), ...INBOX_RESTRICTED },
+    );
+    return { items, nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
+  });
+
+  app.post(READ, { config: session }, async (request, reply) => {
+    const { notificationId } = parse(notificationParams, request.params, "params");
+    const row = await db.transaction().execute((tx) => markRead(tx, request, notificationId));
+    return sendVersioned(reply, 200, toInboxNotification(row));
+  });
+## deep-links: record routes recognised (ROUTES, CHILD_ROUTES)
+const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+/** The web routes of the three record types (apps/web/src/app/router.tsx), a sub-path, query or fragment allowed. */
+const ROUTES: readonly (readonly [SensitiveRecordType, RegExp])[] = [
+  ["benefit", new RegExp(`^/transformations/(${UUID})/benefits/(${UUID})(?:[/?#]|$)`)],
+  ["business_case", new RegExp(`^/transformations/(${UUID})/business-cases/(${UUID})(?:[/?#]|$)`)],
+  ["evidence", new RegExp(`^/transformations/(${UUID})/evidence/(${UUID})(?:[/?#]|$)`)],
+];
+
+/** The benefit, business case or evidence item a link path names, or null (a pure function; ADR-0051 §3). */
+export function deepLinkTarget(linkPath: string): DeepLinkTarget | null {
+  for (const [recordType, pattern] of ROUTES) {
+    const m = pattern.exec(linkPath);
+    if (m) return { recordType, recordId: m[2]!.toLowerCase(), transformationId: m[1]!.toLowerCase() };
+  }
+  return null;
+}
+
+/**
+ * The web routes of the records that carry a sensitive benefit's values and have their own page (T-DG6-BE-Z4,
+ * F-DG6-220; ADR-0051 §2 amendment): a corrective case and a transition decision. A notification or work item whose
+ * link names one is readable only when that record is not restricted for the reader (`restrictedRecordRefs`).
+ */
+const CHILD_ROUTES: readonly (readonly [string, RegExp])[] = [
+  ["corrective_case", new RegExp(`^/transformations/(${UUID})/corrective-actions/(${UUID})(?:[/?#]|$)`)],
+  ["transition_decision", new RegExp(`^/transformations/(${UUID})/transition-decisions/(${UUID})(?:[/?#]|$)`)],
+];
+
+## sensitive-reach child sources that have their own web route but are not in ROUTES/CHILD_ROUTES
+110:  finance_validation: benefitChild("finance_validation"),
+117:  benefit_overlap: {
+119:    table: "benefit_overlap",
+763:  benefitOverlapId: { recordType: "benefit_overlap" },
+764:  financeValidationId: { recordType: "finance_validation" },
+## producers whose link names such a record
+apps/worker/src/handlers/benefits.ts:255:      linkPath: `/transformations/${m.transformation_id}/finance-validations/${id}`,
+apps/api/src/modules/benefits/overlaps.ts:2://   GET  /transformations/{t}/benefit-overlaps                          warnings, open first (transformation.read)
+apps/api/src/modules/benefits/overlaps.ts:3://   POST /transformations/{t}/benefit-overlaps                          a user raises a warning (benefit.edit; TL, BO)
+apps/api/src/modules/benefits/overlaps.ts:4://   GET  /transformations/{t}/benefit-overlaps/{overlapId}              one warning
+apps/api/src/modules/benefits/overlaps.ts:5://   POST /transformations/{t}/benefit-overlaps/{overlapId}/resolve      Finance resolves it (finance.validate; FIN only)
+apps/api/src/modules/benefits/overlaps.ts:86:export const OVERLAPS = "/api/v1/transformations/:transformationId/benefit-overlaps";
+apps/api/src/modules/benefits/overlaps.ts:301:        linkPath: `/transformations/${ctx.transformationId}/benefit-overlaps/${id}`,
+## action work item: params carry the linked corrective case code (raid/actions.ts)
+function actionTaskInput(ctx: WriteContext, row: ActionRow, sourceCode: string | null): WorkItemInput {
+  return {
+    organizationId: ctx.organizationId,
+    transformationId: ctx.transformationId,
+    kind: RAID_ACTION_TASK_KIND,
+    assigneeUserId: row.owner_user_id,
+    subjectType: "action_item",
+    subjectId: row.id,
+    linkPath: `/transformations/${ctx.transformationId}/action-register/${row.id}`,
+    messageKey: "raid.task.action_due",
+    messageParams: sourceCode === null ? {} : { sourceCode },
+    dueDate: dateOrNull(row.due_date),
+    dedupeKey: `raid.action:${row.id}:${row.owner_user_id}`,
+  };
+}
+/** The code of the record an action is linked to (the work item's message parameter). */
+async function linkCodeOf(db: DbOrTx, r: ActionRow): Promise<string | null> {
+  if (r.raid_entry_id !== null)
+    return (
+      (await db.selectFrom("raid_entry").select("code").where("id", "=", r.raid_entry_id).executeTakeFirst())?.code ??
+      null
+    );
+  if (r.dependency_id !== null)
+    return (
+      (await db.selectFrom("dependency").select("code").where("id", "=", r.dependency_id).executeTakeFirst())?.code ??
+      null
+    );
+  if (r.corrective_case_id !== null)
+    return (
+      (await db.selectFrom("corrective_case").select("code").where("id", "=", r.corrective_case_id).executeTakeFirst())
+        ?.code ?? null
+    );
+  return null;
+}
+## inventory catalog scope: kinds only fk|uuid|array|json (text columns such as inbox_notification.link_path are outside it)
+30:export type InventoryKind = "fk" | "uuid" | "array" | "json";
+531:    column: "inbox_notification.target_record_id",
+858:    column: "inbox_notification.message_params",
+  {
+    column: "inbox_notification.target_record_id",
+    kind: "uuid",
+    names: "any record a notification targets",
+    operations: ["listMyInbox"],
+    before: "redacted by BE-Y1/Z4 (tasks/deep-links.ts: target not readable -> inbox.restricted without the link)",
+    status: "redacted",
+    fix: "tasks/deep-links.ts readableTargets",
+    exercise: "apps/api/test/integration/tasks/deep-links.test.ts#inbox.restricted",
+  },
+  {
+    column: "inbox_notification.message_params",
+    kind: "json",
+    names: "codes and labels of the notification's subject",
+    operations: ["listMyInbox"],
+    before: "redacted by BE-Y1/Z4 (inbox.restricted with params {})",
+    status: "redacted",
+    fix: "tasks/deep-links.ts",
+    exercise: "apps/api/test/integration/tasks/deep-links.test.ts#inbox.restricted",
+  },
+## automation re-save matching (versions.ts keepRestrictedLiterals)
+360:export async function keepRestrictedLiterals(
+361-  db: DbOrTx,
+362-  principal: Principal,
+363-  stored: readonly AutomationCondition[],
+364-  sent: AutomationRuleContentInput,
+365-): Promise<AutomationRuleContentInput> {
+366-  const conditions = sent.conditions ?? [];
+367-  const hasMarker = (c: AutomationCondition) =>
+368-    c.value === AUTOMATION_RESTRICTED_LITERAL ||
+369-    (Array.isArray(c.value) && c.value.includes(AUTOMATION_RESTRICTED_LITERAL));
+370-  if (!conditions.some(hasMarker) || stored.length === 0) return sent;
+371-  const [shown] = await redactConditionLiterals(db, principal, [stored]);
+372-  if (shown === undefined || !shown.restricted) return sent;
+373-  const keyOf = (c: AutomationCondition) => `${c.field}\u0000${c.op}`;
+374-  const storedByKey = new Map<string, { stored: AutomationCondition; shown: AutomationCondition }[]>();
+375-  stored.forEach((c, i) => {
+376-    const list = storedByKey.get(keyOf(c)) ?? [];
+377-    list.push({ stored: c, shown: shown.conditions.at(i)! });
+378-    storedByKey.set(keyOf(c), list);
+379-  });
+380-  const seen = new Map<string, number>();
+381-  const restore = (sentValue: string, storedValue: unknown, shownValue: unknown): string =>
+382-    sentValue === AUTOMATION_RESTRICTED_LITERAL &&
+383-    shownValue === AUTOMATION_RESTRICTED_LITERAL &&
+384-    typeof storedValue === "string"
+385-      ? storedValue
+386-      : sentValue;
+387-  const merged = conditions.map((c): AutomationCondition => {
+388-    const k = keyOf(c);
+389-    const n = seen.get(k) ?? 0;
+390-    seen.set(k, n + 1);
+391-    const pair = storedByKey.get(k)?.at(n);
+392-    if (pair === undefined || !hasMarker(c)) return c;
+393-    if (typeof c.value === "string") return { ...c, value: restore(c.value, pair.stored.value, pair.shown.value) };
+394-    if (Array.isArray(c.value)) {
+395-      const sv = Array.isArray(pair.stored.value) ? pair.stored.value : [];
+396-      const hv = Array.isArray(pair.shown.value) ? pair.shown.value : [];
+397-      return { ...c, value: c.value.map((x, i) => restore(x, sv.at(i), hv.at(i))) };
+398-    }
+399-    return c;
+400-  });
+401-  return { ...sent, conditions: merged };
+402-}
+403-
+404-const lookup = (m: Readonly<Record<string, string>>, k: string): string => new Map(Object.entries(m)).get(k) ?? k;
+405-
+406-/** The readable summary of content (REQ-S12-002 "readable rule builder"), rendered from the catalogue labels. */
+407-export function summarize(c: AutomationRuleContentStored, catalogue: CatalogueRows): AutomationRuleSummary {
+408-  const trig = (lang: "en" | "ar") =>
+409-    c.triggerCodes
+## editor: remove condition shifts the list (ContentEditor.tsx)
+246-              onClick={() => set({ conditions: value.conditions.filter((_, j) => j !== i) })}
+247-            >
+248:              {t("workflowsP5.rules.removeCondition", { n: i + 1 })}
+exit=0

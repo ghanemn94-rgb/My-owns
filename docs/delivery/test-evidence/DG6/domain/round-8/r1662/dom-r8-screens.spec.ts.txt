@@ -1,0 +1,79 @@
+// DOMAIN REVIEWER PROBE (DG6 round 8), disposable clone only. SYNTHETIC data. Production-initialized dev stack
+// (apps/web/e2e/support/with-stack.sh, no worker). D-222 (2) / D-223 (2) as the rule author sees it, en and ar:
+// a synthetic ADM_METHOD author (not admitted to sensitive records) owns a rule whose conditions are
+// [benefitId neq P (open benefit), benefitId neq S]; the TO then marks S sensitive. (1) The author reads the rule version:
+// the marker and the restricted label. (2) The author removes condition 1 (the open one) and saves the rest back through
+// the same PATCH the editor sends. (3) The author re-reads: what the screen says vs what is stored (psql).
+// Marking a record sensitive is an access decision, never a business approval (G1-G6). Nothing touches DG0-DG7.
+import { expect, test } from "@playwright/test";
+import { apiSession, langOf, shot, signIn, SYN_RETAIL, tr } from "../../apps/web/e2e/support/ui.ts";
+import { syntheticUser } from "../../apps/web/e2e/support/p3-journey-setup.ts";
+import { psql } from "../support/a13-a22-stack.ts";
+
+const ORG = "01920000-0000-7000-9000-000000000001";
+const log = (s: string) => console.log(`DOMAIN-PROBE R8 ${s}`);
+test.describe.configure({ timeout: 600_000 });
+
+test("R8: the restricted automation condition, as the rule author sees it, before and after a re-save", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  const stamp = Date.now().toString(36);
+  const admin = await apiSession(playwright, "dev.admin");
+  const lead = await apiSession(playwright, "dev.lead");
+  const office = await apiSession(playwright, "dev.office");
+  const tid = (await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R8 rule ${lang.toUpperCase()} ${stamp}`, mode: "end_to_end" })).id;
+  const T = `/api/v1/transformations/${tid}`;
+  const bo = await syntheticUser(admin, ORG, tid, `dev.domr8.bo.${lang}.${stamp}`, `Synthetic Benefit Owner R8 ${lang}`, "BO", lang);
+  const boApi = await apiSession(playwright, bo.username);
+  const mk = (title: string) => boApi.call<{ id: string }>("POST", `${T}/benefits`, {
+    title, description: "Synthetic (domain probe).", benefitType: "revenue", valueClass: "revenue_uplift",
+    ownerUserId: bo.id, currency: "SAR", financialStatementLine: "Revenue - roaming" });
+  const S = await mk(`Synthetic DOMR8 SECRET ${lang} ${stamp}`);
+  const P = await mk(`Synthetic DOMR8 open ${lang} ${stamp}`);
+  // The rule author: ADM_METHOD at the organization (automation.configure), no sensitive_record permission.
+  const authorName = `dev.domr8.method.${lang}.${stamp}`;
+  const user = await admin.call<{ id: string }>("POST", "/api/v1/users", { organizationId: ORG, displayName: `Synthetic rule author R8 ${lang}`,
+    preferredLocale: lang, identity: { issuer: "urn:mth:dev-local", subject: authorName } }).catch(async () => null);
+  let authorId = user?.id;
+  if (!authorId) {
+    const u2 = await syntheticUser(admin, ORG, tid, authorName, `Synthetic rule author R8 ${lang}`, "BO", lang);
+    authorId = u2.id;
+  }
+  await admin.call("POST", "/api/v1/role-assignments", { userId: authorId, roleCode: "ADM_METHOD", scope: { type: "organization", id: ORG },
+    reason: "Synthetic rule author for the domain probe (approves nothing real)" });
+  const author = await apiSession(playwright, authorName);
+  const rule = await author.call<{ id: string }>("POST", "/api/v1/admin/automation-rules", {
+    code: `test.domr8.${lang}.${stamp}`, nameEn: `Synthetic exclusion rule R8 ${stamp}`, nameAr: `قاعدة استثناء تجريبية ${stamp}`,
+    scopeLevel: "organization", organizationId: ORG, ownerUserId: authorId,
+    content: { triggerCodes: ["benefit.variance_evaluated"],
+      conditions: [{ field: "benefitId", op: "neq", value: P.id }, { field: "benefitId", op: "neq", value: S.id }],
+      actions: [{ type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } }], runAs: "service" } });
+  await office.call("PUT", `${T}/records/benefit/${S.id}/sensitivity`, { isSensitive: true, reason: "Synthetic commercially sensitive benefit" }, { ifMatch: 0 });
+  const V = `/api/v1/admin/automation-rules/${rule.id}/versions/1`;
+  const stored = () => psql(`SELECT conditions::text FROM automation_rule_version WHERE automation_rule_id = '${rule.id}' AND version_no = 1`)[0]!
+    .replaceAll(S.id, "<S>").replaceAll(P.id, "<P>");
+  const label = tr(lang, "access.includesRestrictedRecords");
+  const view = async (step: string) => {
+    const v = await author.call<{ content: { conditions: unknown[] }; includesRestrictedRecords?: boolean; summary: { en: string; ar: string } }>("GET", V);
+    log(`${lang} ${step} API author: conditions=${JSON.stringify(v.content.conditions).replaceAll(P.id, "<P>")} marker=${v.includesRestrictedRecords} summary=${lang === "en" ? v.summary.en : v.summary.ar}`);
+    log(`${lang} ${step} DB stored: ${stored()}`);
+    await page.goto(`/admin/automation-rules/${rule.id}/versions/1`);
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1500);
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    const text = await page.locator("main#main").innerText().catch(() => "");
+    const conds = text.split("\n").filter((l) => l.includes("benefitId") || l.includes("restricted") || l.includes("مقيد"));
+    log(`${lang} ${step} SCREEN conditions=${JSON.stringify(conds)} labelCount=${text.split(label).length - 1} secretTitle=${text.includes("SECRET")} hasS=${text.includes(S.id)}`);
+    await shot(page, lang, `dom-r8-rule-author-${step}`);
+    return v;
+  };
+  await page.context().clearCookies();
+  await signIn(page, lang, authorName);
+  const before = await view("1-before");
+  expect.soft(before.includesRestrictedRecords).toBe(true);
+  const ver = await author.call<{ version: number; content: Record<string, unknown> & { conditions: unknown[] } }>("GET", V);
+  await author.call("PATCH", V, { content: { ...ver.content, conditions: [ver.content.conditions[1]] }, changeSummary: "Synthetic: remove the first exclusion" }, { ifMatch: ver.version });
+  const after = await view("2-after-removing-condition-1");
+  expect.soft(stored(), "D-222 (2): the hidden literal survives the re-save").toContain("<S>");
+  log(`${lang} after marker=${after.includesRestrictedRecords}`);
+});

@@ -1,0 +1,48 @@
+## 2026-11-08T17:18:00Z node v24.21.0 cmd: pnpm -r typecheck
+packages/reporting typecheck: Done
+apps/web typecheck: Done
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+exit=0
+## 2026-11-08T17:22:02Z node v24.21.0 cmd: pnpm lint
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.Rr40PT/claude-0/c
+> eslint . --max-warnings=0
+
+exit=0
+## 2026-11-08T17:23:00Z node v24.21.0 cmd: pnpm openapi:lint
+
+> mobily-transformation-hub@0.1.0 openapi:lint /var/tmp/mth-run.Rr40PT/claude-0/c
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 932 operations
+exit=0
+## 2026-11-08T17:23:02Z node v24.21.0 cmd: pnpm check:no-cdn
+
+> mobily-transformation-hub@0.1.0 check:no-cdn /var/tmp/mth-run.Rr40PT/claude-0/c
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0
+## 2026-11-08T17:23:03Z node v24.21.0 cmd: pnpm format:check
+
+> mobily-transformation-hub@0.1.0 format:check /var/tmp/mth-run.Rr40PT/claude-0/c
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+## 2026-11-08T17:24:21Z node v24.21.0 cmd: pnpm --filter @mth/design-tokens run check:contrast
+PASS    10.03:1  min 3.0  ui         badge.provisional.bg #FFF1D6 on header.gradient-start #003B73  (provisional badge shape against the header)
+
+Prohibited combinations (must fail; never used by the UI):
+fails    4.09:1  min 4.5  text       text.inverse #FFFFFF on brand.primary #0078FF  (white small text on #0078FF is about 4.09:1; action buttons use action.primary instead)
+fails    3.84:1  min 4.5  text       brand.primary #0078FF on surface.page #F5F8FC  (about 3.84:1; body-size links use action.primary)
+fails    1.27:1  min 3.0  ui         border.default #DCE5EF on surface.card #FFFFFF  (decorative divider only; control boundaries use border.control)
+
+PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented
+exit=0

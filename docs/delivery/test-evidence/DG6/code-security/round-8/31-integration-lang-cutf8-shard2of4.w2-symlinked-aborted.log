@@ -1,0 +1,937 @@
+# 31-integration-lang-cutf8-shard2of4  started 2026-11-08T17:44:46Z  cwd=/var/tmp/mth-run.3kjn9G/claude-0/r/w2  node=v22.22.0  LANG=C.UTF-8 LC_ALL=<unset>  load=19.09 18.93 16.77  commit=d84d11a62f52932dd5c0aa932c5c1790c13e7e8b
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --shard=2/4
+port-policy: PostgreSQL listening on port 30657 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.3kjn9G/claude-0/r/w2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw84h4bg_316d7b4b (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 23985ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  447ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected  691ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S20-006: a NEW T13 record stores the added fields (no deployment between publish and use)  322ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  1014ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S02-001: deleting a template in a draft methodology fails the check and blocks publish  472ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-006: relabelling G3 succeeds; changing its stable ID, deleting a TOM dimension or an ADM approver is rejected  555ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  1847ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S20-006: a submission in a NEW transformation is routed to the new approvers in sequence  1085ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  2905ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  974ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S06-008: the existing transformation still renders v1 forms; the forms migration preview lists the new required field  504ms
+   ✓ A06 scoring defaults (REQ-PB-093): weights and rubric changed in Studio apply to new transformations only > 30/20/20/15/15 and a new Feasibility rubric: a new transformation starts with them, an existing one keeps 25/25  408ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001: a definition missing a trigger or a completion condition is rejected  400ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  540ms
+ ✓ |integration| tests/qa/integration/a08-gate-controls.test.ts (31 tests) 26539ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: the gate page lists the missing mandatory items; canSubmit is false  315ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  1397ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception  430ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-009: a criterion review persists all nine fields; the first review moves the gate to Under Review  311ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  1255ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  1123ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  1342ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  2041ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  2331ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  1860ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  689ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007: an approved disposition resolves the risk and G5 can be submitted  838ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-PB-015: with G5 configured to BO an SP approval is 403; a stale submission number is 409; a BO approval succeeds and records the scale scope  333ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-007, REQ-S03-004: after approval scaling inside the scope succeeds; scaling outside it is blocked  308ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  1729ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/  988ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-014: a decision without rationale is refused (missing 400, blank 422 approval.rationale_required); the stored record includes the request version  479ms
+ ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests) 9783ms
+   ✓ A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-PB-066: a Business scope change approval gets a due date 5 working days after it is raised on the default calendar (weekend and configured holiday skipped)  1016ms
+   ✓ A09 decision-SLA expiry escalates once to the next authority (REQ-S12-011, REQ-S20-009) > REQ-S12-011, REQ-S20-009: an ask whose SLA expired on a working day is escalated once to SP, linked to the ask, with the delay-impact text; re-running creates nothing  592ms
+   ✓ A09 approval timers escalate but never approve (REQ-S10-019) > after the due date plus retries the approval is escalated exactly once and remains undecided  1217ms
+   ✓ A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none  1039ms
+   ✓ A09 Executive Decision Log and the Decisions area (REQ-PB-081, REQ-PB-064, REQ-S10-012, REQ-PB-068) > REQ-PB-064, REQ-PB-081: an open T16 decision due yesterday (Asia/Riyadh) makes the Decisions area Red and is listed; once its Outcome is recorded it is closed and no longer counts  561ms
+   ✓ A09 Executive Decision Log and the Decisions area (REQ-PB-081, REQ-PB-064, REQ-S10-012, REQ-PB-068) > REQ-PB-068, REQ-S10-012: publishing an executive-ask agenda item missing 'Impact of delay' is rejected by the API; a complete one publishes and creates its T16 ask  501ms
+   ✓ A09 committee workflow: quorum, immutable minutes, actions in My Work (REQ-S10-011) > no decision below quorum; published minutes are immutable; actions appear in the owners' My Work  1445ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: a KPI actual for period 2026-10 keeps observation period 2026-10, the Asia/Riyadh business date of its entry and a UTC event timestamp  842ms
+ ✓ |integration| apps/api/test/integration/procedures/seeded-procedures.test.ts (13 tests) 14314ms
+   ✓ the ten seeded procedures (REQ-S06-003) > each of the ten launches (nine in the transformation, the intake in the organization)  628ms
+   ✓ baseline_validation creates, validates and links a baseline (REQ-S06-002, A02 part) > completing it creates a baseline, the FIN step validates it, and the validated baseline is linked  724ms
+   ✓ baseline_validation creates, validates and links a baseline (REQ-S06-002, A02 part) > refuses a baseline from before the launch, from another transformation, or already another instance's output  1429ms
+   ✓ an approval step with an `advance` output (executive_escalation) > the Sponsor's approval completes the step only once the decision is decided; then the instance completes  474ms
+   ✓ tom_approval: a linked canvas cell, parallel reviews and the Sponsor's approval > links a ready canvas cell, runs both reviews in parallel and completes when the Sponsor approves  912ms
+   ✓ kpi_submission: a KPI actual submitted, then accepted, through the DG4 review route > links the submitted actual and completes once its reviewer accepted it  905ms
+   ✓ scope_target_change: a change request raised, assessed and decided by its business approver > links the submitted request and completes when the Sponsor approves the step after deciding the request  1413ms
+   ✓ gate_review: the G1 submission prepared, reviewed and decided by its business approver > links the G1 submission; the finance review is not applicable; the step approval needs the gate decision  2121ms
+   ✓ bau_handover: prepared, accepted by the receiving business owner, then the recurring reviews > links the handover; the BO's step approval needs the handover accepted; the TO closes the procedure  1138ms
+   ✓ benefit_validation: evidence and the Finance validation in parallel; no recovery when on target > links the evidence and the Finance decision; the recovery plan is not applicable  1577ms
+   ✓ initiative_prioritization: scores, the ranking snapshot and the Sponsor's approval > links the ranking snapshot the TO recorded and completes when the Sponsor approves  1150ms
+   ✓ new_transformation_intake (organization scope) > the intake creates the transformation and links its charter; the Sponsor step then waits for its approval  307ms
+ ✓ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests) 46924ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  1775ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  1460ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  834ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  1149ms
+   ✓ REQ-S17-003: a signed webhook call commits valid data; an unsigned or wrongly signed webhook is rejected > a correctly signed delivery is accepted (202), staged 10 = 8 + 1 + 1, and its 8 valid rows commit; a replay changes nothing  658ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  1146ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10289ms
+   ✓ failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes  13843ms
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  2480ms
+stderr | apps/api/test/integration/integrations/webhooks.test.ts > webhook endpoint administration (webhook.configure; ADR-0056 §7) > F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing
+{"level":"warn","event":"secret_ref.refused","consumer":"webhook_signing","organizationId":"01a1bc46-24e6-7367-a26a-7f51799b6437","provider":"env","name":"MTH_SECRET_TEST_WEBHOOK_SECRET_A","reason":"not_bound"}
+
+ ✓ |integration| apps/api/test/integration/integrations/webhooks.test.ts (17 tests) 12409ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > answers 202 and stages 10 = 8 + 1 + 1 with its receipt and webhook run, as the connector's service identity  1405ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > commits the valid rows after the staging transaction, on behalf of the configured KDS  585ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > leaves the batch staged and records import_batch.auto_commit_refused when the commit-time re-check refuses  541ms
+   ✓ receiveWebhook: every authentication failure is the same 401 and stores nothing > refuses unsigned, wrongly signed, stale, malformed, unknown, disabled-endpoint and disabled-connector deliveries  1334ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  1188ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > two concurrent deliveries with one id create one receipt and one batch  917ms
+   ✓ rotateWebhookSecret: the previous secret is valid for the grace period only > accepts the new and the previous secret inside the grace period and refuses the previous one after it  1493ms
+   ✓ receiveWebhook: body limits and format > answers 400 webhook.payload_invalid for a signed body that is not JSON, not UTF-8 or not the documented shape  393ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > creates an active endpoint with a server-generated key and a SecretRef; one audit event; no secret value anywhere  538ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing  504ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > AUD and KDS get 403 on every mutation, an outsider 404, no session 401; nothing is written  501ms
+ ✓ |integration| apps/api/test/integration/methodology/methodology-migrations.test.ts (9 tests) 11009ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > v2 published: the transformation still renders v1; the plan lists the G2 re-approval; execution moves only the pin  5330ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > the preview lists the new required field (forms provider) and needs an input before submit  651ms
+   ✓ decisions, refusals and authorization > requester deciding -> 403 self_approval; decideApproval on the type -> 422 decide_through_record; request changes and resubmit  931ms
+   ✓ decisions, refusals and authorization > a moved pin -> 409 pin_moved; not approved -> 422 not_approved; target invalid; open exists; withdraw  392ms
+   ✓ decisions, refusals and authorization > an approved migration whose pin moved is not executed (409 pin_moved, nothing written)  726ms
+   ✓ decisions, refusals and authorization > withdrawing a submitted migration withdraws its approval too  484ms
+   ✓ decisions, refusals and authorization > AUD and TL get 403 on every write, outsiders 404; If-Match 428/409; reads by methodology.read and transformation.read  1069ms
+   ✓ decisions, refusals and authorization > authorization is re-checked at commit time: a grant revoked while the request waits -> 403, nothing written  649ms
+   ✓ decisions, refusals and authorization > lock class 730252 serialises concurrent creates: exactly one migration, the other 409 open_exists  517ms
+ ✓ |integration| apps/api/test/integration/integrations/outbound.test.ts (22 tests) 7531ms
+   ✓ executeOutboundWrite: a confirmed write and its replay (A13) > replays the same key and payload (keys in another order) with 200: the same write, no new row, effect or audit  347ms
+   ✓ executeOutboundWrite: a confirmed write and its replay (A13) > refuses another request under a used key with 409 outbound_write.idempotency_key_reused  367ms
+   ✓ a write without confirmation stays pending confirmation (A12) > confirm: never -> pending_confirmation; a confirm keeps it pending without a change or an audit event  455ms
+   ✓ a write without confirmation stays pending confirmation (A12) > a stopped adapter (no response) and a failing adapter (it throws) leave the write pending, never confirmed  350ms
+   ✓ confirmed and failed writes never change > a confirmed write: 409 outbound_write.final, and the database guard refuses a direct change  303ms
+   ✓ confirmed and failed writes never change > a definitive rejection -> failed with its code; then 409 outbound_write.final  394ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > KDS, ADM_TECH and AUD get 403 on execute and confirm; nothing is written or dispatched  713ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > outsiders get 404 on reads, a TD elsewhere 404 on writes; a reader without outbound_write.read 403; AUD, TO, KDS read  410ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > the commit-time re-check: a right lost while the request waits is 403 and nothing is written  436ms
+   ✓ refusals > an action the current configuration does not list -> 422; a disabled connector -> 409 connector.disabled  363ms
+   ✓ refusals > a replay still answers after the connector is disabled (no dispatch); a new key is refused  334ms
+   ✓ the dispatch happens outside any transaction, and the confirmation port > calls the connector-confirmation port once, inside transaction 2, when a write becomes confirmed  689ms
+ ✓ |integration| apps/worker/test/integration/operations-freshness.test.ts (11 tests) 4930ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-checks.test.ts (17 tests) 4410ms
+   ✓ putConfigElement and the REQ-S06-006 invariants (ADR-0039 §2, §13) > renaming G3's label succeeds: one element row, the hash recomputed, one audit event per row written  371ms
+   ✓ every element mutation: authorization, If-Match, editability > AUD, TO and BO get 403 on every write; nothing is written  397ms
+   ✓ getConfigAffectedRecords (ADR-0039 §5, §12) > counts the records each pinned transformation of the lineage has for the changed elements; Unknown is never 0  438ms
+   ✓ runConfigCompatibilityCheck (ADR-0039 §5) > label-only changes pass; a changed approver warns and lists the pinned transformations; an unknown role fails  380ms
+   ✓ runConfigPreview: the sandbox writes nothing but its run (ADR-0039 §5) > listConfigCheckRuns lists the runs newest first, filtered by kind, with a cursor  339ms
+ ✓ |integration| apps/api/test/integration/procedures/procedure-instances.test.ts (10 tests) 9522ms
+   ✓ launch and the read model (REQ-S06-002, A02 part) > a baseline_validation instance shows record_baseline as its current step with assignee, due date and missing inputs  323ms
+   ✓ launch and the read model (REQ-S06-002, A02 part) > completing without the inputs -> 422 inputs_missing with missingInputs; then the evidence rule; then output_required  910ms
+   ✓ launch and the read model (REQ-S06-002, A02 part) > with a baseline adapter both steps complete, the validated baseline is linked and the instance completes  530ms
+   ✓ parallel, conditional and approval steps (a published Studio definition) > both parallel steps are active, a false condition is not applicable, the approval step completes only through the canonical approval  487ms
+   ✓ parallel, conditional and approval steps (a published Studio definition) > a running instance stays on its definition version when a newer version is published  2099ms
+   ✓ authorization, If-Match and refusals > launch: AUD 403, a role outside the launch roles 403 procedure.launch_role, scope and publication refusals, 404  531ms
+   ✓ authorization, If-Match and refusals > step writes: 428 without If-Match, 409 when stale, AUD 403, not_active, skip and assign rules, cancel  995ms
+   ✓ lists > lists instances in scope (filters, cursor) and my procedures (assigned or unassigned of my role)  585ms
+ ✓ |integration| apps/api/test/integration/kpi/import-target.test.ts (9 tests) 5302ms
+   ✓ the A17 8/1/1 fixture as CSV (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  994ms
+   ✓ the A17 8/1/1 fixture as XLSX (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  1734ms
+   ✓ row reasons of the KPI rules (ADR-0056 §4, §5) > gives each reason with its field and params, and stages every row (none is dropped)  398ms
+ ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests) 9504ms
+   ✓ A10: a shared benefit rolls up once (REQ-PB-058) > REQ-PB-058: a 10 million SAR benefit shared by two initiatives appears once (10 million SAR) in the totals  436ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S08-013: allocations 60% + 50% are rejected; 60% + 30% saves and shows 10% unallocated  373ms
+   ✓ A10: 110% allocation is rejected (REQ-S08-013, REQ-S03-006) > REQ-S03-006: an allocation link set totalling 110% into one benefit is rejected; 100% is accepted  879ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  1099ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-001: a forecast amount never appears in the validated total; a rejected measurement is kept and shown rejected  951ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-009: revenue uplift and margin are separate Finance-dashboard lines; avoided cost is not cash saving  583ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-011: a 1 million SAR initiative cost reduces transformation net value by exactly 1 million  988ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves  667ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-015, REQ-PB-013: a validation lacking a measurement period is rejected; non-Finance 403; the audit records the validator  522ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  819ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S12-014: submitting benefit evidence creates exactly one Finance queue item; replaying the event creates none  907ms
+ ✓ |integration| apps/api/test/integration/kpi-restatements/restatements.test.ts (9 tests) 6385ms
+   ✓ REQ-S07-016 (a): a KPI change applies prospectively > a target change approved through a change request and activated while Q2 is scheduled leaves Q1's latest evaluation and RAG unchanged; the next opened period uses the new version  1494ms
+   ✓ createKpiRestatement refusals (ADR-0047 §8) > open period 422; draft version 422; 25 periods 422; none 422; duplicate ids 400; outsiders 403; AUD 403; nothing written  410ms
+   ✓ createKpiRestatement refusals (ADR-0047 §8) > a second restatement in progress is 409 open_exists; submitting periods without a value is 422 nothing_to_reconcile  428ms
+   ✓ the reconciliation of a formula KPI > a formula KPI's after side binds each input to its source's latest evaluation (a + a over 21 gives 42, difference 0)  331ms
+   ✓ withdrawKpiRestatement and the shared mutation rules > withdrawing a decided restatement is 422 not_withdrawable (synthetic decided fixture)  426ms
+   ✓ withdrawKpiRestatement and the shared mutation rules > AUD 403 on every write; If-Match 428/409; one audit event per mutation; commit-time re-authorization  607ms
+ ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts (21 tests) 15530ms
+   ✓ submit (draft -> submitted) > REQ-PB-007/REQ-PB-022: before G1 -> 422 invalid-transition with the exact G1 text; errors[] lists every failing precondition; nothing written  1216ms
+   ✓ submit (draft -> submitted) > REQ-PB-006: without an outcome/KPI link -> 'Outcome before activity' validation error at /outcomeContributions; accepted once a link exists  776ms
+   ✓ submit (draft -> submitted) > Modular: an accepted inherited approval of G1 with verified evidence satisfies submit (never a gate decision)  1010ms
+   ✓ withdraw and cancel > withdraw: submitted or ranked -> draft with a reason; draft -> 422 not_withdrawable; no reason -> 400  1124ms
+   ✓ withdraw and cancel > cancel: any non-terminal status -> cancelled with reason and stamps; launched or cancelled -> 422 not_cancellable  1331ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ranking never selects; select writes a portfolio_selection row and shows 'Selected - unfunded'  1274ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > deselect: selected or funded -> ranked with a rationale; ranked or launched -> 422 not_deselectable  1449ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ADR-0021 §6 (T-DG3-ARCH-03): select/deselect on someone's behalf -> 422 selection.on_behalf_not_supported, even under an active delegation; nothing written  998ms
+   ✓ launch (funded -> launched) > REQ-PB-004 (acceptance): End-to-End launch -> 422 'North Star, outcomes and target state not yet approved'; after G2 and G3 approval the same call succeeds  410ms
+   ✓ launch (funded -> launched) > direction is checked BEFORE funding: a selected-unfunded End-to-End initiative gets the sequencing reason, errors[] lists both  558ms
+   ✓ launch (funded -> launched) > 'Selected - unfunded' cannot launch (also after a rejected/deferred or revoked funding decision); other statuses are not launchable  717ms
+   ✓ launch (funded -> launched) > End-to-End: an accepted waiver of G3 (G2 approved) satisfies the direction rule for launch; the gate stays unapproved  318ms
+   ✓ launch (funded -> launched) > Modular: a funded initiative launches without G2/G3 (not held to the End-to-End rule); WL (no initiative.launch) gets 403  317ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > submit: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  713ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > withdraw: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  654ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > select: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  408ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > deselect: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  529ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > launch: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  399ms
+   ✓ latestFundingState() (ADR-0023 §7): the latest funding decision decides, fail closed > none -> unfunded; approved -> funded; deferred after approved -> unfunded; revoked -> revoked  579ms
+ ✓ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests) 2466ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > a note claiming certification gives 422 methodology_reader.prohibited_text (and a DG0-DG7 name too)  305ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > valid reader edits are accepted with one audit event each; If-Match is required (428) and current (409)  470ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests) 8913ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  1161ms
+   ✓ K1 items 1-2: the parameter, the refusal and the three metrics > value.measured, value.rejected and value.sustained without a class sum the profit-and-cash classes (ADR-0037 amendment N3)  402ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  2359ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts (18 tests) 2839ms
+   ✓ My Work items (S-4) > the assignee lists, reads and completes; nobody else sees or completes it  424ms
+   ✓ My Work items (S-4) > list order and pagination: open first by due date (no due date last); cursor pages are disjoint  374ms
+   ✓ F-DG4-100: completeWorkItem's 403 work_item.not_assignee is an audited authorization denial (ADR-0004 §3) > an item of a transformation: the one authorization.denied names the transformation  460ms
+ ✓ |integration| apps/api/test/integration/reporting/modular.test.ts (15 tests) 8413ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied  1111ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > scope: another organization's TO gets 404; a malformed id is 400  325ms
+   ✓ REQ-S03-005: labelled inherited records > inherited evidence and baseline are listed with provenance and the inherited label, beside the prior approval  1041ms
+   ✓ REQ-S03-005: labelled inherited records > End-to-End → 422 inherited_record.not_modular; prior_approval → 422 use_dispensation; nothing written  894ms
+   ✓ REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate  742ms
+   ✓ S-4: authorization, If-Match and audit on every write > AUD and BO get 403 on create and withdraw; nothing written  453ms
+   ✓ S-4: authorization, If-Match and audit on every write > T-DG4-BE-R3 (JK.10 item 3): another organization's TO gets 404 on create and withdraw, as on reads; nothing written  422ms
+   ✓ S-4: authorization, If-Match and audit on every write > withdraw: 428 without If-Match, 409 stale, 404 unknown id, 422 when already withdrawn  457ms
+   ✓ S-4: authorization, If-Match and audit on every write > one audit event per mutation, in the write's transaction  506ms
+   ✓ S-4: authorization, If-Match and audit on every write > T-DG4-BE-R3 getInheritedRecord: 200 + ETag active or withdrawn; 404 for a prior_approval id, unknown id, outsider  644ms
+   ✓ S-4: authorization, If-Match and audit on every write > commit-time: a grant revoked while the create waited is 403; nothing written  413ms
+   ✓ T-DG6-BE-Z12B: D-218 on inherited_record.evidence_id > inherited evidence marked sensitive: AUD sees the record without the evidence id (marked); TO and TL see it  583ms
+ ✓ |integration| apps/api/test/integration/portfolio/structure.test.ts (18 tests) 4691ms
+   ✓ portfolios (ADR-0038 §9) > AUD, BO and a business-unit-scoped TO get 403 on every write; another organization 404; nothing written  371ms
+   ✓ portfolios (ADR-0038 §9) > a transformation in two portfolios → 422 portfolio.transformation_already_placed; removal keeps the row; re-add  372ms
+   ✓ portfolios (ADR-0038 §9) > an archived portfolio is read-only: every later write is 422 portfolio.archived; it stays readable  316ms
+   ✓ workstreams (ADR-0038 §9) > codes WS-01, WS-02, WS-03 in creation order; version 1; one audit event; listed in order  377ms
+   ✓ workstreams (ADR-0038 §9) > AUD and BO get 403 on every write; another organization 404; nothing written  537ms
+   ✓ workstreams (ADR-0038 §9) > an initiative in two workstreams → 422 workstream.initiative_already_assigned; removal keeps the row; re-add  318ms
+ ✓ |integration| apps/api/test/integration/sustainment/handovers.test.ts (11 tests) 5898ms
+   ✓ submission validates every M0217 item (REQ-S11-005) > a handover missing data access is 422 bau_handover.incomplete naming 'data access'; no state change  399ms
+   ✓ submission validates every M0217 item (REQ-S11-005) > a complete submission notifies the receiving owner once (My Work), and freezes the content  302ms
+   ✓ only the receiving owner accepts or returns (REQ-S11-005) > anyone other than the receiving owner gets 403; the receiving owner's acceptance succeeds  1075ms
+   ✓ only the receiving owner accepts or returns (REQ-S11-005) > return needs a reason (400 bau_handover.return_reason_required); returned -> edited -> resubmitted  644ms
+   ✓ acceptance transfers routine ownership and creates the first review exactly once (REQ-PB-083) > area -> BAU; KPIs, controls and benefits transferred; one review and one My Work item for the BAU owner  862ms
+   ✓ the benefit's control cadence follows a weekly handover cadence (ADR-0034 amendment A1; T-DG4-BE-R2) > a weekly handover sets a linked benefit's control_cadence to weekly, version + 1, audited  563ms
+   ✓ preparation rules, gates and concurrency > one handover in progress per cycle (409); only an establishing or reopened area (422); AUD 403; ADM 404  379ms
+   ✓ preparation rules, gates and concurrency > If-Match: missing 428, stale 409 on every handover mutation  400ms
+ ✓ |integration| apps/api/test/integration/approvals/approvals.test.ts (17 tests) 4595ms
+   ✓ routing (REQ-S10-008; ADR-0026 §2, §8) > a mapped person without a business-approver role is refused (422 routing.assignee_not_approver)  388ms
+   ✓ request (ADR-0026 §4, §5) > SLA types: next SteerCo is Unknown (never guessed); urgent needs a reason and a configured route; release plan without a milestone is Unknown  462ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > REQ-S10-014: a decision without rationale is rejected; the stored record includes the request version  418ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > REQ-S10-018: 'request changes' returns the item to the requester without closing it; resubmit opens round 2  465ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > commit-time authorization: a decide right revoked (or a session ended) while the request waits is refused  532ms
+   ✓ listApprovalDecisionRecords (D-089 Q10) > reads the union view of the transformation's decisions (transformation.read; outsiders 404)  301ms
+ ✓ |integration| apps/api/test/integration/portfolio/deliverable-confirmation.test.ts (14 tests) 4634ms
+   ✓ REQ-S01-005: only reviewed evidence or a confirmed connector result confirms an external change > (a) a completed task on the deliverable and its DG3 acceptance leave it Unconfirmed  431ms
+   ✓ REQ-S01-005: only reviewed evidence or a confirmed connector result confirms an external change > (b) a filename-only link and an unverified note are refused 422 and leave it Unconfirmed  328ms
+   ✓ REQ-S01-005: only reviewed evidence or a confirmed connector result confirms an external change > (d) a confirmed test-adapter outbound write confirms it with connector, source system id, reference and time  447ms
+   ✓ REQ-S01-005: only reviewed evidence or a confirmed connector result confirms an external change > a write without confirmation (confirm: never) leaves it Unconfirmed; an unflagged deliverable stays unflagged  372ms
+   ✓ authorization > evidence of another transformation (or unknown) is 404 and confirms nothing  541ms
+   ✓ authorization > the commit-time re-check: a right lost while the request waits on the lock is 403 and nothing is written  441ms
+ ✓ |integration| apps/api/test/integration/sustainment/transition-decisions.test.ts (10 tests) 4893ms
+   ✓ create (ADR-0034 §3, §12) > 422 monitoring_after_end, benefit_validated and validation.reference (exact texts); nothing written  1099ms
+   ✓ decision through the canonical approval (ADR-0034 §3; ADR-0026 §4) > submit routes to SP; the decision is frozen; the requester cannot decide; SP approves  500ms
+   ✓ REQ-S11-007: forecast stays forecast; monitoring tasks for the residual owner (ADR-0034 §3, §6) > parity (D-102 (2)): the worker's runMonitoringScan writes the same rows as the API's scheduleMonitoringReviews  986ms
+ ✓ |integration| apps/api/test/integration/adoption/assessment-records.test.ts (10 tests) 2740ms
+   ✓ REQ-S11-002 A11: a proficiency observation submitted via the form links to the stakeholder group > invited respondent; group link; derived result; invitation responded; review item for the form's creator  320ms
+ ✓ |integration| tests/qa/integration/a11-bau-sustain.test.ts (17 tests) 13175ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-020: G1-G5 were passed natively; the transformation is in Realize and G6 is still Draft  606ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: a performance area with a linked KPI and an ownerless control, created through the API  612ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-S11-005: a handover missing data access is refused (422 naming data access); nothing changes  481ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084: G6 lists the continuous-improvement backlog; an item makes the criterion complete  671ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: benefits evidence through an approved transition decision (BO proposes, the Sponsor decides)  342ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-084, REQ-S04-008: the G6 submission snapshot lists the backlog item; G6 is approved; no DG record is named  321ms
+ ✓ |integration| apps/api/test/integration/environment/walkthrough.test.ts (16 tests) 21831ms
+   ✓ production gives 409 environment.not_demo (ADR-0050 §9) > with and without a transformation, for every signed-in user; nothing is written  341ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > a fresh demo database: a transformation created through the API completes step 1 only; 2-12 incomplete  532ms
+   ✓ the twelve M0349 steps (REQ-S18-004) > 404 outside the caller's scope and for an unknown id (never disclosed); 400; 401  550ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 2 diagnose and agree baseline: FIN validates the baseline; a later edit makes it stale again  525ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 3 define outcomes/KPIs: an outcome, a KPI definition and their T02 link  378ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 4 design TOM: a target-state canvas cell and a TOM gap (either alone is not enough)  550ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  965ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 6 update delivery/adoption: a submitted owner update, then a completed training record  922ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 7 submit KPI actual: the KPI owner submits the period's actual  343ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  1299ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  1129ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 10 generate report: a generated snapshot completes it; a discarded one does not  571ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  1127ms
+   ✓ each rule reads only the given transformation > after every workflow above ran in this database, a new transformation still has step 1 only  302ms
+ ✓ |integration| apps/api/test/integration/reporting/report-snapshots.test.ts (11 tests) 3885ms
+   ✓ REQ-S13-007: issue, immutability after a later KPI change, reissue as version 2 > the issued snapshot keeps the old values and kpi_version; the issued reissue is v2 and v1 is superseded unchanged  537ms
+   ✓ refusals, authorization and concurrency on every write > issue by a WL -> 403; AUD -> 403 on generate, issue, discard and reissue; nothing written  364ms
+   ✓ refusals, authorization and concurrency on every write > commit-time authorization: report.generate / report.issue revoked while the request waits -> 403; nothing written  303ms
+ ✓ |integration| apps/api/test/integration/calendar/calendar.test.ts (13 tests) 3279ms
+   ✓ REQ-S10-006 (A09): working-day SLA over a configured holiday > skips the holiday and the weekend: Wed 2026-10-14 + 5 working days with Thu 15 a holiday -> Thu 2026-10-22  366ms
+   ✓ calendar mutations (S-4) > create: refusals carry the ADR-0025 §1 codes and English texts; nothing written  315ms
+   ✓ calendar mutations (S-4) > update: If-Match 428/409, one audit event, default switch clears the previous default (audited)  442ms
+   ✓ REQ-S15-008: time semantics and per-row currency > changing the organization's default currency affects only new records  346ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/versions.test.ts (10 tests) 2635ms
+   ✓ REQ-S07-001: the dictionary entry holds every listed field > the DG2 create without polarity or unit is still 400; a complete active version reads back every field  455ms
+   ✓ content rules (ADR-0027 §13 exact texts) > measure type must fit the polarity; band, milestone, ratio, reviewer, aggregation and custom-formula rules  331ms
+ ✓ |integration| apps/api/test/integration/sustainment/status-model.test.ts (9 tests) 3245ms
+   ✓ labels (ADR-0034 §2; REQ-PB-009, REQ-S11-006) > REQ-PB-009: delivery Complete without a validated benefit is 'Delivered — value validation pending'  677ms
+   ✓ labels (ADR-0034 §2; REQ-PB-009, REQ-S11-006) > REQ-S11-006: all initiatives complete with value pending is 'Delivery complete - value validation pending'  393ms
+stdout | apps/api/test/integration/operations/service-identity-scope.test.ts > a job's identity cannot read records outside its scope (REQ-S16-029; A12) > for every business-record job identity, organization A's reads admit no row of organization B
+service-identity scope: 37 job identities, 0 rows of organization B admitted
+
+stdout | apps/api/test/integration/operations/service-identity-scope.test.ts > the worker twin equals the API ReadScope (ADR-0053 §1 parity; ADR-0051 §1) > selects the same rows and admits the same records, for every identity in both organizations
+service-scope parity: 1176 (identity, organization, permission, record) pairs, 0 mismatches
+
+ ✓ |integration| apps/api/test/integration/operations/service-identity-scope.test.ts (10 tests) 3807ms
+   ✓ the 0114 seed (ADR-0053 §1) > has one platform job identity per declaration, granted = declared, each with its audit event  308ms
+   ✓ a job's identity cannot read records outside its scope (REQ-S16-029; A12) > for every business-record job identity, organization A's reads admit no row of organization B  639ms
+   ✓ the worker twin equals the API ReadScope (ADR-0053 §1 parity; ADR-0051 §1) > selects the same rows and admits the same records, for every identity in both organizations  917ms
+   ✓ putServiceIdentity (ADR-0053 §1, §9) > lists and reads: the platform identities for an organization-level reader; AUD reads; outsiders refused  443ms
+ ✓ |integration| apps/api/test/integration/governance/meetings.test.ts (12 tests) 5378ms
+   ✓ createMeeting and getMeeting (REQ-S16-019 Meeting) > negative: SP and AUD 403, ADM-only and another organization 404; validation 400; archived forum 422  522ms
+   ✓ createMeeting and getMeeting (REQ-S16-019 Meeting) > commit-time: a TL whose grant is revoked while the request waits gets 403 and nothing is written  476ms
+   ✓ updateMeeting and the state machine (ADR-0032 §3.1) > start -> close; illegal edges are 422 meeting.status_transition; quorum locks once the session starts  420ms
+   ✓ nextForumDateProvider (ADR-0026 §5; D-089 Q6) > the next scheduled Executive SteerCo date, or Unknown; BE-C's T11 preview uses it  540ms
+ ✓ |integration| apps/api/test/integration/groups/groups.test.ts (9 tests) 3599ms
+   ✓ groups (ADR-0026 §1) > members: same organization only, one current membership, removal with a reason kept as history  314ms
+   ✓ governance parties and role mappings (ADR-0026 §2; REQ-S10-008) > create: role_mapping.assign (TL, TO); WL, AUD 403; one active mapping per party; targets validated; audited  855ms
+   ✓ REQ-S16-011: the identity and access entity group through the API, with authorization enforced > creates and reads Organization, BusinessUnit, User, Group, ScopedAssignment and Delegation; reads Role and Permission  466ms
+ ✓ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests) 78679ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  1110ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > a disabled schedule shows next run null 'disabled' and refuses run-now with 422 job.schedule_disabled  446ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  1598ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  10938ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  37616ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  856ms
+ ✓ |integration| apps/api/test/integration/portfolio/capacity.test.ts (7 tests) 8331ms
+   ✓ the conflict rule (ADR-0023 §6) > over-allocated with the decimal shortfall; Unknown without a capacity row; a cancelled initiative's demand does not count  2173ms
+   ✓ the conflict rule (ADR-0023 §6) > the prioritization view carries the capacity flags (DEFAULT_FLAG_SOURCES wired), on the item and its initiative  1064ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > roles: create/update with 400, 403 (AUD, no capacity.edit), 409 duplicate code, 428/409 If-Match, audit  1659ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > capacity: FTE is a decimal string (numbers, 3 decimals, negatives -> 400), month is YYYY-MM-01, one active row per role and month  972ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > demand: planned -> committed -> released; 422s for the wrong state; commit needs capacity.commit (TL 403, TO 200); audit  729ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > a cancelled initiative's demand is read-only: create, update, commit and release -> 422 initiative.read_only  511ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > BE18A: every capacity mutation re-authorises at commit - a grant revoked while the request waits is 403, nothing written  1006ms
+ ✓ |integration| apps/api/test/integration/admin/notification-channels.test.ts (11 tests) 2153ms
+   ✓ testNotificationChannel > 422 not_configured until email is enabled; then one message to the caller's own address and an audit event  324ms
+stdout | apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B2 meeting output: recordId of a hidden benefit is null for tl2 (marked), shown to the TO; naming it answers as an unknown record
+[BE-Z12] createMeetingOutput unknown 422 meeting_output.record_not_found; hidden 422 meeting_output.record_not_found
+
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts (6 tests) 11981ms
+   ✓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it  378ms
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job schedules registered","scheduled":["automation.tick_daily","automation.tick_hourly"],"unscheduled":[],"unhandled":["approval.escalation_scan","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","notifications.delivery_sweep","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"0a4df492-350e-8247-9b3a-0114bf2b1d0b","attempt":{"retryCount":0,"retryLimit":5},"outcome":[]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"outbox relay","published":10,"failed":0}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"3d7cab4a-12c2-89c1-b7ae-d93258859374","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"03eee4fa-b03a-8b26-ad93-c41960886e03","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-c13e-7290-b51a-b054bc6035e0","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"f943ec7c-445f-883c-916b-37167292c939","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-c15d-7d6c-95cb-30fe48a944d0","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"5fa78804-579c-886b-901a-645c155e4ea1","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"e8930397-2424-832b-b097-9f148ef653ae","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"b51c1b2b-f29c-85fe-abf5-b53f2bb1adb9","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-c134-7b27-8801-197a6d077c8c","outcome":"succeeded"},{"ruleCode":"occurrence.o5860c5","executionId":"01a1bc4c-c212-7fa5-9db3-14046ec77632","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"b92692b2-13b1-8dda-8c8b-53374548806c","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"094cfbc7-72a5-89d9-9044-8da1b936bfe7","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-c13d-7f57-9815-9a5999b7aaa4","outcome":"succeeded"},{"ruleCode":"occurrence.o5860c5","executionId":"01a1bc4c-c249-7d52-93ec-4391080071ee","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"f1db6ca1-729a-858e-bbcb-4711e8dc36a6","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"outbox relay","published":31,"failed":0}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job schedules registered","scheduled":["automation.tick_daily","automation.tick_hourly"],"unscheduled":[],"unhandled":["approval.escalation_scan","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","notifications.delivery_sweep","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"751da142-d149-4f2c-9fa4-a4f868ae1f9f","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-c13d-7f57-9815-9a5999b7aaa4","outcome":"duplicate"},{"ruleCode":"occurrence.o5860c5","executionId":"01a1bc4c-c249-7d52-93ec-4391080071ee","outcome":"duplicate"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job schedules registered","scheduled":["automation.tick_daily","automation.tick_hourly"],"unscheduled":[],"unhandled":["approval.escalation_scan","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","notifications.delivery_sweep","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"outbox relay","published":6,"failed":0}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"63e35197-e9e4-844a-b9e6-f288917be061","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-d04f-7606-97da-36e40c4103f0","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"a7972936-13cf-8eb5-a614-d274e26f41f2","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"6f2ad17d-674a-871d-9279-fc3a0518208b","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-d04e-72e8-8133-5a5cb80117f7","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"9e83b183-4b8c-8efa-839b-cebf2b2c8f3e","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"902890a4-a264-8372-93fc-20ce7b2005cd","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"01ad9ade-f707-8b07-98d3-b3570a89012f","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"c3c7bac1-5c26-8798-a5c8-c74c76289af2","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-d04f-7b81-8493-8212f7054b35","outcome":"succeeded"},{"ruleCode":"occurrence.off60a1","executionId":"01a1bc4c-d19e-7bd5-9a9b-e96b7a81752a","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"bbbe6481-2fcb-8fa1-b007-01aa6b761817","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-d05a-7904-954f-3b06851cb19a","outcome":"succeeded"},{"ruleCode":"occurrence.off60a1","executionId":"01a1bc4c-d1a7-75ee-a0f7-8c64c4d3b9e0","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+{"level":"info","msg":"outbox relay","published":26,"failed":0}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+{"level":"info","msg":"job schedules registered","scheduled":["automation.tick_daily","automation.tick_hourly"],"unscheduled":[],"unhandled":["approval.escalation_scan","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","notifications.delivery_sweep","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+{"level":"info","msg":"outbox relay","published":3,"failed":0}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"2e91a11d-7ba4-8ffc-9959-cadd73772b01","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-dd3d-7b74-a08d-a5a038ccdd19","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+{"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"c4cc73d0-47d0-8253-ad4b-7057d61e78bc","attempt":{"retryCount":0,"retryLimit":5},"outcome":[{"ruleCode":"occurrence.o27e439","executionId":"01a1bc4c-dd3d-76cf-92fb-ede2c9dbd9a0","outcome":"succeeded"}]}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"3e498dad-4b38-8310-bda8-5f22b502fa7d","outcome":"done"}
+
+stdout | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts > a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+{"level":"info","msg":"job handled","queue":"transformation.created","jobId":"00afca07-cda2-8e72-8e85-9ca6e9d5d3bb","outcome":"done"}
+
+ ✓ |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts (5 tests) 18607ms
+   ✓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > after 0123 the trigger writes a disable row (the version that stopped) and nothing for a no-op  426ms
+   ✓ a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed  4030ms
+   ✓ a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2  3603ms
+   ✓ a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation  3033ms
+stdout | apps/api/test/integration/portfolio/initiatives-filters.test.ts > the query plan of sort=code (0110 initiative_code_sort_idx; logged, not timed) > EXPLAIN of the route's sort=code page query uses initiative_code_sort_idx
+EXPLAIN listInitiatives sort=code (1,000 initiatives in the transformation):
+Limit  (cost=0.28..13.15 rows=101 width=585)
+  ->  Index Scan using initiative_code_sort_idx on initiative  (cost=0.28..127.72 rows=1000 width=585)
+        Index Cond: (transformation_id = '01a1bc4c-f170-7701-bb1c-249d6fa2a262'::uuid)
+
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives-filters.test.ts (21 tests) 10737ms
+   ✓ listInitiatives: absent parameters return the DG5 response (ADR-0057 §5; p6-work-split §H/G.14 item 7) > every page is byte-identical to the DG5 page: order updated_at desc, id desc; the DG5 hash; a microsecond cursor  3333ms
+   ✓ listInitiatives: absent parameters return the DG5 response (ADR-0057 §5; p6-work-split §H/G.14 item 7) > with `sort` absent, paging returns every one of the 1,000 rows once, in the database's order  364ms
+   ✓ listInitiatives on 1,000 initiatives: every sort key both ways pages through all rows (A20; ADR-0057 §5) > sort=updatedAt: 1,000 rows, no duplicate, no gap, the database's order  481ms
+   ✓ listInitiatives on 1,000 initiatives: every sort key both ways pages through all rows (A20; ADR-0057 §5) > sort=plannedEnd: 1,000 rows, no duplicate, no gap, the database's order  331ms
+   ✓ listInitiatives on 1,000 initiatives: every sort key both ways pages through all rows (A20; ADR-0057 §5) > sort=-plannedEnd: 1,000 rows, no duplicate, no gap, the database's order  833ms
+   ✓ listInitiatives on 1,000 initiatives: every sort key both ways pages through all rows (A20; ADR-0057 §5) > the ADR-0057 §5 default spelling -updatedAt pages all rows in today's order (to the microsecond)  412ms
+   ✓ listInitiatives filters return exactly the matching set (A20; ADR-0057 §5) > q is a case-insensitive substring of code or name; LIKE metacharacters are literal  430ms
+   ✓ listInitiatives filters return exactly the matching set (A20; ADR-0057 §5) > executiveOwnerUserId and workstreamLeadUserId, alone and combined with q and a sort  548ms
+ ✓ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests) 46943ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the same Idempotency-Key returns the existing job (200) and queues nothing more  361ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  29419ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1668ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  2971ms
+   ✓ A13 health check (no job exists, ADR-0048 §8): the retried submit leaves one submitted assessment, one score, three actions > the same submit replayed, and two concurrent submits, change nothing after the first  2162ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/actuals.test.ts (11 tests) 5325ms
+   ✓ direct-accept route (REQ-S07-012, REQ-S07-013, REQ-S07-017) > accepts at once: one slot, value 1 in force, one audit event, one kpi.actual_accepted event  606ms
+   ✓ direct-accept route (REQ-S07-012, REQ-S07-013, REQ-S07-017) > REQ-S07-003: a second actual for the same slot is value version 2 of the same row, never a duplicate row  320ms
+   ✓ review route (REQ-S07-012) > a submitted value is not used until a reviewer accepts it; the accept writes one audit event  443ms
+   ✓ review route (REQ-S07-012) > a rejection needs a reason and gives the submitter a correction task; a new value answers it  512ms
+   ✓ review route (REQ-S07-012) > an unmapped reviewer party is 422 routing.role_unmapped and nothing is written  323ms
+   ✓ refusals of the routine update (ADR-0027 §13) > no active version, period, frequency, scope, currency, shape and evidence, with the exact texts  597ms
+ ✓ |integration| apps/api/test/integration/environment/environment.test.ts (14 tests) 17317ms
+   ✓ GET /environment (REQ-S18-001, REQ-PB-089) > returns synthetic: false in production (production-marked, and unmarked fails safe to production)  376ms
+   ✓ the worker's demo.reset job (ADR-0050 §6) > acknowledges before the drop, then re-creates and re-seeds the database (requested_via api); a redelivery does nothing  4311ms
+ ✓ |integration| apps/api/test/integration/audit/audit-events.test.ts (15 tests | 1 skipped) 1181ms
+ ✓ |integration| apps/api/test/integration/portfolio/budget.test.ts (13 tests) 1926ms
+   ✓ authorization (ADR-0031 §9: budget.edit = TL, FIN) > AUD, WL, TO and BO get 403 on create, update and archive; ADM-only and outsiders 404; nothing written  389ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-adoption.test.ts (9 tests) 5513ms
+   ✓ Finance dashboard (REQ-S13-001 Finance; ADR-0030 §7) > class lines and headlines drill to their records with an equal decimal sum; a gross line always drills to the profit-and-cash basis; the queue count drills to its records  448ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure on the Finance and adoption dashboards > no tile, total or drill-down holds a Y record or figure  724ms
+ ❯ |integration| packages/db/test/integration/demo.test.ts (9 tests | 4 failed) 48952ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  6538ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  14152ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  5593ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  12460ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  4283ms
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset 54ms
+     → ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums 163ms
+     → ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target 80ms
+     → ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+   × REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it) 87ms
+     → ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 61 ⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a01-p6-source-coverage.test.ts [ tests/qa/integration/a01-p6-source-coverage.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a01-p6-source-coverage.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a01-p6-source-coverage.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a01-p6-source-coverage.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/65]⎯
+
+ FAIL  |integration| tests/qa/integration/a04-a05-a10-partials.test.ts [ tests/qa/integration/a04-a05-a10-partials.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a04-a05-a10-partials.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a04-a05-a10-partials.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a04-a05-a10-partials.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/65]⎯
+
+ FAIL  |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts [ tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/65]⎯
+
+ FAIL  |integration| tests/qa/integration/a14-concurrency.test.ts [ tests/qa/integration/a14-concurrency.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a14-concurrency.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a14-concurrency.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a14-concurrency.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/65]⎯
+
+ FAIL  |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts [ tests/qa/integration/a20-s15-014-no-infra-terms.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a20-s15-014-no-infra-terms.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a20-s15-014-no-infra-terms.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/tests/qa/integration/a20-s15-014-no-infra-terms.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/access-derived-race.test.ts [ apps/api/test/integration/access-derived-race.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access-derived-race.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access-derived-race.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access-derived-race.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/access-scope.test.ts [ apps/api/test/integration/access-scope.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access-scope.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access-scope.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access-scope.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/framework-errors.test.ts [ apps/api/test/integration/framework-errors.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/framework-errors.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/framework-errors.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/framework-errors.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/identity.test.ts [ apps/api/test/integration/identity.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/identity.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/identity.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/identity.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/p6-guard-mapping.test.ts [ apps/api/test/integration/p6-guard-mapping.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/p6-guard-mapping.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/p6-guard-mapping.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/p6-guard-mapping.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts [ apps/api/test/integration/platform.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/platform.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/platform.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/platform.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/65]⎯
+
+ FAIL  |integration| apps/worker/test/integration/benefits-queue.test.ts [ apps/worker/test/integration/benefits-queue.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/benefits-queue.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/benefits-queue.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/benefits-queue.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/65]⎯
+
+ FAIL  |integration| apps/worker/test/integration/blocker-escalation.test.ts [ apps/worker/test/integration/blocker-escalation.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/blocker-escalation.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/blocker-escalation.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/blocker-escalation.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/65]⎯
+
+ FAIL  |integration| apps/worker/test/integration/connector-failure-exception.test.ts [ apps/worker/test/integration/connector-failure-exception.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/connector-failure-exception.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/connector-failure-exception.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/connector-failure-exception.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/65]⎯
+
+ FAIL  |integration| apps/worker/test/integration/decision-sla-escalation.test.ts [ apps/worker/test/integration/decision-sla-escalation.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/decision-sla-escalation.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/decision-sla-escalation.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/decision-sla-escalation.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/65]⎯
+
+ FAIL  |integration| apps/worker/test/integration/gate-condition-escalation.test.ts [ apps/worker/test/integration/gate-condition-escalation.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/gate-condition-escalation.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/gate-condition-escalation.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/gate-condition-escalation.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/65]⎯
+
+ FAIL  |integration| apps/worker/test/integration/outbox.test.ts [ apps/worker/test/integration/outbox.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/outbox.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/outbox.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/worker/test/integration/outbox.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/65]⎯
+
+ FAIL  |integration| packages/db/test/integration/pool-bounds.test.ts [ packages/db/test/integration/pool-bounds.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/test/integration/pool-bounds.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/test/integration/pool-bounds.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/test/integration/pool-bounds.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-calculations.test.ts [ apps/api/test/integration/access/sensitive-reach-calculations.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-calculations.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-calculations.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-calculations.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs.test.ts [ apps/api/test/integration/access/sensitive-reach-id-refs.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-id-refs.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-id-refs.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-id-refs.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-impact.test.ts [ apps/api/test/integration/access/sensitive-reach-impact.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-impact.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-impact.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-impact.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-scenarios.test.ts [ apps/api/test/integration/access/sensitive-reach-scenarios.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-scenarios.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-scenarios.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/access/sensitive-reach-scenarios.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/approvals/adm-not-approver.test.ts [ apps/api/test/integration/approvals/adm-not-approver.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/approvals/adm-not-approver.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/approvals/adm-not-approver.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/approvals/adm-not-approver.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/automation/catalogue-sample-payload.test.ts [ apps/api/test/integration/automation/catalogue-sample-payload.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/automation/catalogue-sample-payload.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/automation/catalogue-sample-payload.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/automation/catalogue-sample-payload.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/corrections.test.ts [ apps/api/test/integration/benefits/corrections.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/corrections.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/corrections.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/corrections.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/lifecycle.test.ts [ apps/api/test/integration/benefits/lifecycle.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/lifecycle.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/lifecycle.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/lifecycle.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/benefits/values.test.ts [ apps/api/test/integration/benefits/values.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/values.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/values.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/benefits/values.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/governance/presentation.test.ts [ apps/api/test/integration/governance/presentation.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/governance/presentation.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/governance/presentation.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/governance/presentation.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/adapter-contract.test.ts [ apps/api/test/integration/integrations/adapter-contract.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/adapter-contract.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/adapter-contract.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/adapter-contract.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/graceful-degradation.test.ts [ apps/api/test/integration/integrations/graceful-degradation.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/graceful-degradation.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/graceful-degradation.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/graceful-degradation.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/integrations/secret-composition.test.ts [ apps/api/test/integration/integrations/secret-composition.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/secret-composition.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/secret-composition.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/integrations/secret-composition.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi/formula-preview.test.ts [ apps/api/test/integration/kpi/formula-preview.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi/formula-preview.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi/formula-preview.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi/formula-preview.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts [ apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi/kpi-dg2-repairs.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/kpi-p4/entity-group.test.ts [ apps/api/test/integration/kpi-p4/entity-group.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi-p4/entity-group.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi-p4/entity-group.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/kpi-p4/entity-group.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/jobs/job-schedules.test.ts [ apps/api/test/integration/jobs/job-schedules.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/jobs/job-schedules.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/jobs/job-schedules.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/jobs/job-schedules.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/entity-group.test.ts [ apps/api/test/integration/methodology/entity-group.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/methodology/entity-group.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/methodology/entity-group.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/methodology/entity-group.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/v1-readers.test.ts [ apps/api/test/integration/methodology/v1-readers.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/methodology/v1-readers.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/methodology/v1-readers.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/methodology/v1-readers.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts [ apps/api/test/integration/operations/exception-recurrence-race.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/operations/exception-recurrence-race.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/operations/exception-recurrence-race.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/operations/exception-recurrence-race.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/freshness-scan.test.ts [ apps/api/test/integration/operations/freshness-scan.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/operations/freshness-scan.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/operations/freshness-scan.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/operations/freshness-scan.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/cursor-microsecond-ties.test.ts [ apps/api/test/integration/platform/cursor-microsecond-ties.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/platform/cursor-microsecond-ties.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/platform/cursor-microsecond-ties.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/platform/cursor-microsecond-ties.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/funding.test.ts [ apps/api/test/integration/portfolio/funding.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/funding.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/funding.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/funding.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/initiatives.test.ts [ apps/api/test/integration/portfolio/initiatives.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/initiatives.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/initiatives.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/initiatives.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/portfolio/links.test.ts [ apps/api/test/integration/portfolio/links.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/links.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/links.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/portfolio/links.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/procedures/adopted-step-authorization.test.ts [ apps/api/test/integration/procedures/adopted-step-authorization.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/procedures/adopted-step-authorization.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/procedures/adopted-step-authorization.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/procedures/adopted-step-authorization.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/export-labels.test.ts [ apps/api/test/integration/reporting/export-labels.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/export-labels.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/export-labels.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/export-labels.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/filters.test.ts [ apps/api/test/integration/reporting/filters.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/filters.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/filters.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/filters.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/gate-pack-approver.test.ts [ apps/api/test/integration/reporting/gate-pack-approver.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/gate-pack-approver.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/gate-pack-approver.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/gate-pack-approver.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/my-work.test.ts [ apps/api/test/integration/reporting/my-work.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/my-work.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/my-work.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/my-work.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/one-source-of-truth.test.ts [ apps/api/test/integration/reporting/one-source-of-truth.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/one-source-of-truth.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/one-source-of-truth.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/one-source-of-truth.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/orphans.test.ts [ apps/api/test/integration/reporting/orphans.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/orphans.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/orphans.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/orphans.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/report-synthetic.test.ts [ apps/api/test/integration/reporting/report-synthetic.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/report-synthetic.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/report-synthetic.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/reporting/report-synthetic.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/security/sql-injection.test.ts [ apps/api/test/integration/security/sql-injection.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/security/sql-injection.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/security/sql-injection.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/security/sql-injection.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/sustainment/reopen.test.ts [ apps/api/test/integration/sustainment/reopen.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/sustainment/reopen.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/sustainment/reopen.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/sustainment/reopen.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/sql-agreement.test.ts [ apps/api/test/integration/text-scan/sql-agreement.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/text-scan/sql-agreement.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/text-scan/sql-agreement.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/text-scan/sql-agreement.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/approval-routes.test.ts [ apps/api/test/integration/workflows/approval-routes.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/approval-routes.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/approval-routes.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/approval-routes.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/g4-empty-portfolio.test.ts [ apps/api/test/integration/workflows/g4-empty-portfolio.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/g4-empty-portfolio.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/g4-empty-portfolio.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/g4-empty-portfolio.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-conditions.test.ts [ apps/api/test/integration/workflows/gate-conditions.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/gate-conditions.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/gate-conditions.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/gate-conditions.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-reviews.test.ts [ apps/api/test/integration/workflows/gate-reviews.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/gate-reviews.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/gate-reviews.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/gate-reviews.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/impact.test.ts [ apps/api/test/integration/workflows/impact.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/impact.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/impact.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/impact.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/risk-dispositions.test.ts [ apps/api/test/integration/workflows/risk-dispositions.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/risk-dispositions.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/risk-dispositions.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/risk-dispositions.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/65]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/scale.test.ts [ apps/api/test/integration/workflows/scale.test.ts ]
+Error: Cannot find module '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/scale.test.ts'
+Caused by: Error: Failed to load url /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/scale.test.ts (resolved id: /var/tmp/mth-run.3kjn9G/claude-0/r/w2/apps/api/test/integration/workflows/scale.test.ts). Does the file exist?
+ ❯ loadAndTransform ../w1/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:22907:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/65]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/demo.test.ts > REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset
+Error: ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+ ❯ listMigrationFiles packages/db/src/migrate.ts:63:17
+ ❯ migrate packages/db/src/migrate.ts:137:17
+ ❯ scratch packages/db/test/integration/demo.test.ts:37:23
+ ❯ packages/db/test/integration/demo.test.ts:211:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/65]⎯
+
+ FAIL  |integration| packages/db/test/integration/demo.test.ts > REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums
+Error: ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+ ❯ listMigrationFiles packages/db/src/migrate.ts:63:17
+ ❯ migrate packages/db/src/migrate.ts:137:17
+ ❯ scratch packages/db/test/integration/demo.test.ts:37:23
+ ❯ packages/db/test/integration/demo.test.ts:291:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/65]⎯
+
+ FAIL  |integration| packages/db/test/integration/demo.test.ts > REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target
+Error: ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+ ❯ listMigrationFiles packages/db/src/migrate.ts:63:17
+ ❯ migrate packages/db/src/migrate.ts:137:17
+ ❯ scratch packages/db/test/integration/demo.test.ts:37:23
+ ❯ packages/db/test/integration/demo.test.ts:317:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/65]⎯
+
+ FAIL  |integration| packages/db/test/integration/demo.test.ts > REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)
+Error: ENOENT: no such file or directory, scandir '/var/tmp/mth-run.3kjn9G/claude-0/r/w2/packages/db/migrations/'
+ ❯ listMigrationFiles packages/db/src/migrate.ts:63:17
+ ❯ migrate packages/db/src/migrate.ts:137:17
+ ❯ scratch packages/db/test/integration/demo.test.ts:37:23
+ ❯ packages/db/test/integration/demo.test.ts:345:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/65]⎯
+
+
+ Test Files  62 failed | 46 passed (108)
+      Tests  4 failed | 616 passed | 1 todo (621)
+   Start at  17:44:51
+   Duration  795.23s (transform 19.24s, setup 0ms, collect 206.35s, tests 576.64s, environment 0ms, prepare 536ms)
+
+exit=1  finished 2026-11-08T17:58:12Z  load=16.87 19.51 18.84

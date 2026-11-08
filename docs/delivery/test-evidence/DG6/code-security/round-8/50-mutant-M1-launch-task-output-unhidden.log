@@ -1,0 +1,59 @@
+# 50-mutant-M1-launch-task-output-unhidden  started 2026-11-08T17:10:58Z  node=v22.22.0  load=4.39 6.47 9.37  commit=d84d11a62f52932dd5c0aa932c5c1790c13e7e8b
+## mutation (git diff of w3, product paths):
+ apps/api/src/modules/launch/tasks.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/launch/tasks.ts b/apps/api/src/modules/launch/tasks.ts
+index b871ed2a8..a469d5bfc 100644
+--- a/apps/api/src/modules/launch/tasks.ts
++++ b/apps/api/src/modules/launch/tasks.ts
+@@ -288,7 +288,7 @@ export async function presentTasks(
+     loadCalendar(db, transformationId),
+   ]);
+   const tasks = rows.map((r) => toTask(r, preds.get(r.id) ?? [], calendar));
+-  return hideRestrictedTypedRefs(db, principal, tasks, "outputRecordType", "outputRecordId");
++  void hideRestrictedTypedRefs; void principal; return tasks;
+ }
+ 
+ export async function presentTask(
+$ vt apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts -t B3
+port-policy: PostgreSQL listening on port 30670 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.3kjn9G/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw839kvr_1dc18388 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts (6 tests | 1 failed | 5 skipped) 4695ms
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > control: tl and tl2 get 404 on the hidden benefit and evidence item; the TO reads both
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > business-case line: a line of a hidden case is null for tl2 (marked), shown to the TO; naming it answers as an unknown line (no 409 'taken' oracle)
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B2 meeting output: recordId of a hidden benefit is null for tl2 (marked), shown to the TO; naming it answers as an unknown record
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B3 launch task: a hidden output answers 422 exactly as an unknown id (was 200); once the TO sets it, tl2 gets null with the marker and a null re-save keeps it 130ms
+     → expected '{"id":"01995000-1056-7000-8000-000000…' not to contain '01995000-4401-7000-8000-000000000001'
+   ↓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > action register: an action of the hidden benefit's corrective case keeps its source kind with correctiveCaseId null for tl2 (marked); the TO sees the case
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B3 launch task: a hidden output answers 422 exactly as an unknown id (was 200); once the TO sets it, tl2 gets null with the marker and a null re-save keeps it
+AssertionError: expected '{"id":"01995000-1056-7000-8000-000000…' not to contain '01995000-4401-7000-8000-000000000001'
+
+Expected: [32m"01995000-4401-7000-8000-000000000[7m001[27m"[39m
+Received: [31m"[7m{"id":"01995000-1056-7000-8000-00000000011f","planId":"01995000-1056-7000-8000-000000000001","ordinal":31,"templateItemCode":"w3_o4","windowCode":"days_61_90","taskKind":"output","title":"benefits register","sourceTextEn":"benefits register","notes":null,"startDate":"2026-09-02","dueDate":"2026-10-01","nonWorkingDay":false,"ownerUserId":"01995000-0000-7000-8000-000000000012","status":"not_started","completedAt":null,"completedBy":null,"outputRecordType":"benefit","outputRecordId":"[27m01995000-4401-7000-8000-000000000[7m00[27m[7m1","predecessors":[],"blockedBy":[],"version":2,"updatedAt":"2026-11-08T17:11:17.581Z"}[27m"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:361:42
+    359|     for (const r of [await get(path, tl2), await get(`${t}/launch-plan…
+    360|       expect(r.status).toBe(200);
+    361|       expect(JSON.stringify(r.body)).not.toContain(S.hidden);
+       |                                          ^
+    362|     }
+    363|     const item = (await get(path, tl2)).body;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  17:11:00
+   Duration  17.71s (transform 4.66s, setup 0ms, collect 9.09s, tests 4.70s, environment 0ms, prepare 104ms)
+
+exit=1  finished 2026-11-08T17:11:18Z
+restored: 0 changed tracked paths

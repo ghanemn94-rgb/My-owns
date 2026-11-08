@@ -1,0 +1,85 @@
+port-policy: PostgreSQL listening on port 30604 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.7UPu9I/claude-0/rv8
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw84fpp8_1b792f35 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests | 2 failed) 5356ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > control: TL, AUD and SP get 404 on the benefit and its decision; the TO and BO read both  612ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > approval.subject_id: the SP's approval of the restricted decision names no subject id (marked) 69ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > sustainment_review.transition_decision_id: TL and AUD see the review without the decision id (marked) 55ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > procedure_instance.subject_record_id and input_values: TL sees the instance without the benefit id (marked) 154ms
+   × T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked 187ms
+     → expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'benefitId', …(2) }, …(2) ]
+   × T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies 162ms
+     → expected undefined to be true // Object.is equality
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > positive: with an explicit grant the author sees the literals again (next request) 187ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked
+AssertionError: expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'benefitId', …(2) }, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,17 +1,17 @@[39m
+[2m  [[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "eq",[22m
+[32m-     "value": "[restricted]",[39m
+[31m+     "value": "01a1bc42-ee08-7619-ba06-7e2497b5ad77",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[2m        "01a1bc42-ef70-752b-83ee-f3ceaee3148e",[22m
+[32m-       "[restricted]",[39m
+[31m+       "01a1bc42-ee08-7619-ba06-7e2497b5ad77",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:269:36
+    267|   it("the author, not admitted, sees the marker in place of each hidde…
+    268|     const one = ok(await send("GET", `${V()}/1`, { session: admin.sess…
+    269|     expect(one.content.conditions).toEqual([
+       |                                    ^
+    270|       { field: "benefitId", op: "eq", value: AUTOMATION_RESTRICTED_LIT…
+    271|       { field: "benefitId", op: "in", value: [P.benefitId, AUTOMATION_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:303:45
+    301|       }),
+    302|     );
+    303|     expect(saved.includesRestrictedRecords).toBe(true);
+       |                                             ^
+    304|     expect(leaks(saved), "updateAutomationRuleVersion response").toEqu…
+    305|     const after = await storedConditions();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  17:43:45
+   Duration  42.58s (transform 13.84s, setup 0ms, collect 30.90s, tests 5.36s, environment 0ms, prepare 105ms)
+
+rc=1
