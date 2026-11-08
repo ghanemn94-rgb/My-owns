@@ -27849,6 +27849,7 @@ components:
         startedAt: { $ref: "#/components/schemas/Timestamp" }
         finishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         actionResults: { type: array, items: { $ref: "#/components/schemas/AutomationActionResult" } }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when triggerKey, an action result's idempotencyKey or errorDetail embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B; D-227; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     AutomationExecutionPage:
       type: object
       required: [items, nextCursor]
@@ -27886,6 +27887,7 @@ components:
         allowedActions: { type: array, items: { type: string, enum: [retry, dismiss] } }
         version: { $ref: "#/components/schemas/Version" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when idempotencyKey or errorMessage embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B; D-227; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     OperationalFailurePage:
       type: object
       required: [items, nextCursor]
@@ -35788,6 +35790,7 @@ components:
         createdBy: { $ref: "#/components/schemas/NullableUuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when sourceScopeKey embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B; D-227; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     CorrectiveCaseCreate:
       type: object
       required: [findingRef, title, ownerUserId, followUpDate]
@@ -40659,6 +40662,7 @@ components:
             stagedControlTotal: { $ref: "#/components/schemas/NullableDecimal" }
         importBatchId: { $ref: "#/components/schemas/NullableUuid" }
         version: { type: integer, minimum: 1 }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when idempotencyKey embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B; D-227; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     IntegrationRunDetail:
       type: object
       required: [run, retriedByRunId, events, actionableError]
@@ -40927,6 +40931,7 @@ components:
         requestedBy: { $ref: "#/components/schemas/Uuid" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         version: { type: integer, minimum: 1 }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when idempotencyKey embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B; D-227; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     OutboundWriteDetail:
       type: object
       required: [write, events]

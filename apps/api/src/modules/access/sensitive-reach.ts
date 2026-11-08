@@ -30,6 +30,7 @@
 // Read only. Nothing here is a business approval (G1-G6) and nothing touches DG0-DG7.
 import { sql, type DbOrTx } from "@mth/db";
 import type { FastifyInstance } from "fastify";
+import { RESTRICTED_ID_MARKER } from "@mth/shared/schemas";
 import { problems } from "../platform/index.ts";
 import { denialOf, resolveTarget, type Principal } from "./policy.ts";
 import {
@@ -540,6 +541,71 @@ export function uuidsIn(value: unknown): Set<string> {
   };
   walk(value);
   return out;
+}
+
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): `text` with every uuid in `hidden` replaced by RESTRICTED_ID_MARKER (case-insensitive).
+ * `masked` says whether anything was replaced. Null stays null.
+ */
+export function maskHiddenIds(
+  text: string | null,
+  hidden: ReadonlySet<string>,
+): { readonly text: string | null; readonly masked: boolean } {
+  if (text === null || hidden.size === 0) return { text, masked: false };
+  let masked = false;
+  const out = text.replace(UUID_ANYWHERE, (m) => {
+    if (!hidden.has(m.toLowerCase())) return m;
+    masked = true;
+    return RESTRICTED_ID_MARKER;
+  });
+  return { text: out, masked };
+}
+
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): the ids inside served texts built from record ids (an idempotency, trigger, event or
+ * scope key; an error text) that name a sensitive record, or a child that carries one's values (every
+ * SENSITIVE_CHILD_SOURCES type: a measurement, a Finance validation, an overlap, ...), the principal is not admitted to.
+ * Pass the set to `maskHiddenIds`. One policy decision; one query when nothing is marked.
+ */
+export function hiddenIdsInTexts(
+  db: DbOrTx,
+  principal: Principal,
+  texts: Iterable<string | null | undefined>,
+): Promise<Set<string>> {
+  return restrictedIdsAmong(db, principal, uuidsIn([...texts].filter((t): t is string => typeof t === "string")));
+}
+
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): for items whose top-level text `fields` may embed record ids (an `idempotencyKey`, a
+ * `triggerKey`, ...), each hidden id is replaced by RESTRICTED_ID_MARKER and the item carries
+ * `includesRestrictedRecords: true`. Items with nothing hidden are returned unchanged. One policy decision.
+ */
+export async function maskRestrictedIdsInFields<T extends object>(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly T[],
+  fields: readonly (keyof T & string)[],
+): Promise<T[]> {
+  const textOf = (x: T, f: string): string | null => {
+    const v = new Map(Object.entries(x)).get(f);
+    return typeof v === "string" ? v : null;
+  };
+  const hidden = await hiddenIdsInTexts(
+    db,
+    principal,
+    items.flatMap((x) => fields.map((f) => textOf(x, f))),
+  );
+  if (hidden.size === 0) return [...items];
+  return items.map((x) => {
+    let any = false;
+    const entries = Object.entries(x).map(([k, v]): [string, unknown] => {
+      if (!(fields as readonly string[]).includes(k) || typeof v !== "string") return [k, v];
+      const r = maskHiddenIds(v, hidden);
+      any ||= r.masked;
+      return [k, r.text];
+    });
+    return any ? { ...(Object.fromEntries(entries) as T), includesRestrictedRecords: true as const } : x;
+  });
 }
 
 /**

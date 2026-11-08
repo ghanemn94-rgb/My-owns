@@ -416,6 +416,11 @@ export const automationExecution = z.strictObject({
   startedAt: timestamp,
   finishedAt: nullableTimestamp,
   actionResults: z.array(automationActionResult),
+  /**
+   * D-227: true when the trigger key, an action result's idempotency key or the error detail shows the restricted
+   * marker in place of a record id the reader is not admitted to (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationExecution = z.infer<typeof automationExecution>;
 export const automationExecutionPage = page(automationExecution);
@@ -454,6 +459,11 @@ export const operationalFailure = z.strictObject({
   allowedActions: z.array(z.enum(["retry", "dismiss"])),
   version,
   updatedAt: timestamp,
+  /**
+   * D-227: true when the idempotency key or the error message shows the restricted marker in place of a record id the
+   * reader is not admitted to (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type OperationalFailure = z.infer<typeof operationalFailure>;
 export const operationalFailurePage = page(operationalFailure);

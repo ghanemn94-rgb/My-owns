@@ -1,10 +1,11 @@
 // integrations routes (P6 slices B and A; p6-work-split §B/A). Route file created as a stub by T-DG6-BE-A; each owning
 // task adds one named block, strictly in the order BE-L (connectors), BE-L2 (runs), BE-M2 (imports), BE-N
 // (webhooks), BE-N2 (outbound writes) (p6-work-split §B/A.11).
-import type { FastifyInstance, RawRequestDefaultExpression } from "fastify";
+import type { DbOrTx } from "@mth/db";
+import type { FastifyInstance, FastifyRequest, RawRequestDefaultExpression } from "fastify";
 import { freeText, uuid } from "@mth/shared/schemas";
 import { z } from "zod";
-import { holdsAnywhere, principalOf } from "../access/index.ts";
+import { holdsAnywhere, maskRestrictedIdsInFields, principalOf } from "../access/index.ts";
 import {
   cursorInstantText,
   cursorSchema,
@@ -50,7 +51,9 @@ import {
   toConnectorMappings,
   toIntegrationRun,
   visibleConnector,
+  type ConnectorBody,
   type ConnectorTargetKind,
+  type IntegrationRunBody,
 } from "./connectors.ts";
 import type { ConnectorAdapterKind } from "./adapters/port.ts";
 import {
@@ -149,6 +152,30 @@ const connectorListQuery = z.strictObject({
   limit: limitSchema,
 });
 
+// T-DG6-BE-Z13B (D-227; D-218): a run's or an outbound write's idempotency key can embed a record id (a caller's
+// Idempotency-Key, `manual:<userId>:<key>`, `retry:<runId>`). An id of a sensitive record, or of a child that carries
+// one's values, the reader is not admitted to is replaced by the restricted marker and the item carries
+// `includesRestrictedRecords: true`. Every response that serializes a run or a write goes through these.
+const shownRuns = (db: DbOrTx, request: FastifyRequest, runs: readonly IntegrationRunBody[]) =>
+  maskRestrictedIdsInFields(db, principalOf(request), runs, ["idempotencyKey"]);
+const shownRun = async (db: DbOrTx, request: FastifyRequest, run: IntegrationRunBody) =>
+  (await shownRuns(db, request, [run]))[0]!;
+async function shownConnector(db: DbOrTx, request: FastifyRequest, c: ConnectorBody): Promise<ConnectorBody> {
+  if (c.lastRun === null) return c;
+  const lastRun = await shownRun(db, request, c.lastRun);
+  return lastRun === c.lastRun ? c : { ...c, lastRun };
+}
+const shownWrite = async <T extends { idempotencyKey: string }>(db: DbOrTx, request: FastifyRequest, w: T) =>
+  (await maskRestrictedIdsInFields(db, principalOf(request), [w], ["idempotencyKey"]))[0]!;
+async function shownWriteDetail<T extends { write: { idempotencyKey: string } }>(
+  db: DbOrTx,
+  request: FastifyRequest,
+  d: T,
+): Promise<T> {
+  const write = await shownWrite(db, request, d.write);
+  return write === d.write ? d : { ...d, write };
+}
+
 function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   // listConnectors: by code (cursor over code, id).
   app.get(CONNECTORS, { config: { access: { permission: CONNECTOR_READ } } }, async (request) => {
@@ -165,7 +192,7 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
     });
     const page = paginate(rows, limit, (r) => [r.code, r.id], hash);
     const items = [];
-    for (const row of page.items) items.push(await toConnector(db, row));
+    for (const row of page.items) items.push(await shownConnector(db, request, await toConnector(db, row)));
     return { items, nextCursor: page.nextCursor };
   });
 
@@ -192,7 +219,12 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
           config,
         }),
       );
-      return sendVersioned(reply, 201, await toConnector(db, row), `${CONNECTORS}/${row.id}`);
+      return sendVersioned(
+        reply,
+        201,
+        await shownConnector(db, request, await toConnector(db, row)),
+        `${CONNECTORS}/${row.id}`,
+      );
     },
   );
 
@@ -201,7 +233,7 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
     const { connectorId } = parse(connectorParams, request.params, "params");
     parseQuery(noQuery, request.query);
     const row = await visibleConnector(db, principalOf(request), connectorId);
-    return sendVersioned(reply, 200, await toConnector(db, row));
+    return sendVersioned(reply, 200, await shownConnector(db, request, await toConnector(db, row)));
   });
 
   // putConnector: the names; a configuration (not null) is a new configuration version.
@@ -229,7 +261,7 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
         .execute((tx) =>
           putConnector(tx, request, connectorId, expected, { nameEn: body.nameEn, nameAr: body.nameAr, config }),
         );
-      return sendVersioned(reply, 200, await toConnector(db, row));
+      return sendVersioned(reply, 200, await shownConnector(db, request, await toConnector(db, row)));
     },
   );
 
@@ -253,7 +285,7 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
         const row = await db
           .transaction()
           .execute((tx) => setConnectorStatus(tx, request, connectorId, expected, to, reason));
-        return sendVersioned(reply, 200, await toConnector(db, row));
+        return sendVersioned(reply, 200, await shownConnector(db, request, await toConnector(db, row)));
       },
     );
   }
@@ -268,7 +300,7 @@ function registerConnectorRoutes(app: FastifyInstance, { db }: ModuleDeps): stri
       parseBody(connectorTestRequest, request.body);
       const current = await requireConnectorChange(db, principalOf(request), connectorId);
       if (!testAdapterAvailable(current)) throw connectorRefusals.adapterUnavailable();
-      return toIntegrationRun(await testConnector(db, request, connectorId));
+      return shownRun(db, request, toIntegrationRun(await testConnector(db, request, connectorId)));
     },
   );
 
@@ -359,7 +391,7 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
       limit,
     });
     const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
-    return { items: page.items.map(toIntegrationRun), nextCursor: page.nextCursor };
+    return { items: await shownRuns(db, request, page.items.map(toIntegrationRun)), nextCursor: page.nextCursor };
   });
 
   // runConnector: 202 with the queued run; 200 with the existing run for the same Idempotency-Key.
@@ -370,7 +402,7 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
     const key = parse(idempotencyHeader, request.headers, "header")["idempotency-key"];
     await requireConnectorRun(db, principalOf(request), connectorId);
     const { run, replay } = await queueManualRun(db, request, connectorId, key);
-    return reply.code(replay ? 200 : 202).send(toIntegrationRun(run));
+    return reply.code(replay ? 200 : 202).send(await shownRun(db, request, toIntegrationRun(run)));
   });
 
   // getIntegrationRun: 404 when the connector is unreadable or the run belongs to another connector.
@@ -380,7 +412,9 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
     const connector = await visibleConnector(db, principalOf(request), connectorId);
     const run = await findRunOf(db, connectorId, runId);
     reply.header("ETag", etag(run.version));
-    return toIntegrationRunDetail(db, connector, run);
+    const detail = await toIntegrationRunDetail(db, connector, run);
+    const shown = await shownRun(db, request, detail.run);
+    return shown === detail.run ? detail : { ...detail, run: shown };
   });
 
   // retryIntegrationRun: 202 with the queued retry.
@@ -394,7 +428,7 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
       await requireConnectorRun(db, principalOf(request), connectorId);
       await findRunOf(db, connectorId, runId);
       const run = await queueManualRetry(db, request, connectorId, runId);
-      return reply.code(202).send(toIntegrationRun(run));
+      return reply.code(202).send(await shownRun(db, request, toIntegrationRun(run)));
     },
   );
 
@@ -875,7 +909,12 @@ function registerOutboundRoutes(app: FastifyInstance, { db }: ModuleDeps): strin
       limit,
     });
     const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
-    return { items: page.items.map(toOutboundWrite), nextCursor: page.nextCursor };
+    return {
+      items: await maskRestrictedIdsInFields(db, principalOf(request), page.items.map(toOutboundWrite), [
+        "idempotencyKey",
+      ]),
+      nextCursor: page.nextCursor,
+    };
   });
 
   // executeOutboundWrite: 201 with Location and ETag after the dispatch; 200 with the existing write (replay).
@@ -890,11 +929,11 @@ function registerOutboundRoutes(app: FastifyInstance, { db }: ModuleDeps): strin
       const target = await requireOutboundExecute(db, principalOf(request), transformationId);
       await requireExecuteSubjects(db, target, transformationId, body);
       const { write, replay } = await executeOutboundWrite(db, request, transformationId, body);
-      if (replay) return sendVersioned(reply, 200, toOutboundWrite(write));
+      if (replay) return sendVersioned(reply, 200, await shownWrite(db, request, toOutboundWrite(write)));
       return sendVersioned(
         reply,
         201,
-        toOutboundWrite(write),
+        await shownWrite(db, request, toOutboundWrite(write)),
         `${OUTBOUND.replace(":transformationId", transformationId)}/${write.id}`,
       );
     },
@@ -907,7 +946,7 @@ function registerOutboundRoutes(app: FastifyInstance, { db }: ModuleDeps): strin
     await requireOutboundRead(db, principalOf(request), transformationId);
     const row = await findOutboundWrite(db, transformationId, writeId);
     reply.header("ETag", etag(row.version));
-    return toOutboundWriteDetail(db, row);
+    return shownWriteDetail(db, request, await toOutboundWriteDetail(db, row));
   });
 
   // confirmOutboundWrite: asks the adapter (re-dispatching a `requested` write with its key); no manual confirmation.
@@ -923,7 +962,7 @@ function registerOutboundRoutes(app: FastifyInstance, { db }: ModuleDeps): strin
       const expected = requireIfMatch(request);
       const row = await confirmOutboundWrite(db, request, transformationId, writeId, expected);
       reply.header("ETag", etag(row.version));
-      return toOutboundWriteDetail(db, row);
+      return shownWriteDetail(db, request, await toOutboundWriteDetail(db, row));
     },
   );
 

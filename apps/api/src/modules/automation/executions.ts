@@ -12,7 +12,14 @@ import { sql, type AutomationActionResultRow, type DbOrTx } from "@mth/db";
 import { automationExecutionListQuery, type AutomationExecution } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { holdsAnywhere, organizationsWith, principalOf, type Principal } from "../access/index.ts";
+import {
+  hiddenIdsInTexts,
+  holdsAnywhere,
+  maskHiddenIds,
+  organizationsWith,
+  principalOf,
+  type Principal,
+} from "../access/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -145,6 +152,41 @@ export function presentExecution(
   };
 }
 
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): the executions as served. The trigger key (an outbox key such as
+ * `benefit.variance_evaluated:<measurementId>`), each action result's idempotency key (built from the trigger key) and
+ * the error detail can embed a record id; an id of a sensitive record, or of a child that carries one's values, the
+ * reader is not admitted to is replaced by the restricted marker and the execution carries
+ * `includesRestrictedRecords: true`. The stored rows are unchanged.
+ */
+export async function shownExecutions(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly AutomationExecution[],
+): Promise<AutomationExecution[]> {
+  const hidden = await hiddenIdsInTexts(
+    db,
+    principal,
+    items.flatMap((e) => [e.triggerKey, e.errorDetail, ...e.actionResults.map((r) => r.idempotencyKey)]),
+  );
+  if (hidden.size === 0) return [...items];
+  return items.map((e) => {
+    let masked = false;
+    const mask = (text: string | null): string | null => {
+      const r = maskHiddenIds(text, hidden);
+      masked ||= r.masked;
+      return r.text;
+    };
+    const shown: AutomationExecution = {
+      ...e,
+      triggerKey: mask(e.triggerKey)!,
+      errorDetail: mask(e.errorDetail),
+      actionResults: e.actionResults.map((r) => ({ ...r, idempotencyKey: mask(r.idempotencyKey)! })),
+    };
+    return masked ? { ...shown, includesRestrictedRecords: true as const } : e;
+  });
+}
+
 /** The execution if the reader may see it (its organization is one where the reader holds automation.read), else 404. */
 export async function loadExecutionForRead(
   db: DbOrTx,
@@ -155,7 +197,10 @@ export async function loadExecutionForRead(
   if (row === undefined) throw problems.notFound();
   const orgs = organizationsWith(principal, "automation.read");
   if (row.organization_id !== null && !orgs.includes(row.organization_id)) throw problems.notFound();
-  return presentExecution(row, (await resultsOf(db, [row.id])).get(row.id) ?? []);
+  const [shown] = await shownExecutions(db, principal, [
+    presentExecution(row, (await resultsOf(db, [row.id])).get(row.id) ?? []),
+  ]);
+  return shown!;
 }
 
 export function registerAutomationExecutionRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
@@ -190,7 +235,11 @@ export function registerAutomationExecutionRoutes(app: FastifyInstance, { db }: 
       pageRows.items.map((r) => r.id),
     );
     return {
-      items: pageRows.items.map((r) => presentExecution(r, results.get(r.id) ?? [])),
+      items: await shownExecutions(
+        db,
+        principal,
+        pageRows.items.map((r) => presentExecution(r, results.get(r.id) ?? [])),
+      ),
       nextCursor: pageRows.nextCursor,
     };
   });
